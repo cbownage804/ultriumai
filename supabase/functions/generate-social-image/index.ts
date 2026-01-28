@@ -1,11 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { encodeBase64 } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+import { encode as encodeBase64 } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.53.0";
 import { Image } from "https://deno.land/x/imagescript@1.2.15/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  // Must include all headers sent by supabase-js in browsers.
+  'Access-Control-Allow-Headers': [
+    'authorization',
+    'x-client-info',
+    'apikey',
+    'content-type',
+    'x-supabase-client-platform',
+    'x-supabase-client-platform-version',
+    'x-supabase-client-runtime',
+    'x-supabase-client-runtime-version',
+  ].join(', '),
 };
 
 const TARGET_WIDTH = 1200;
@@ -35,9 +45,37 @@ function dataUrlToBytes(dataUrl: string): Uint8Array {
   return Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
 }
 
+async function fetchLogoBytes(logoUrl: string, fallbackOrigin: string): Promise<Uint8Array | null> {
+  const tryUrls: string[] = [];
+
+  tryUrls.push(logoUrl);
+  // If the request origin isn't available (or fetch fails due to preview/published mismatch),
+  // also try the published domain.
+  try {
+    const u = new URL(logoUrl);
+    const fallback = new URL(u.pathname, fallbackOrigin).toString();
+    if (fallback !== logoUrl) tryUrls.push(fallback);
+  } catch {
+    // ignore malformed URL
+  }
+
+  for (const url of tryUrls) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return new Uint8Array(await res.arrayBuffer());
+      console.warn('Logo fetch failed:', res.status, url);
+    } catch (e) {
+      console.warn('Logo fetch error:', url, e);
+    }
+  }
+
+  return null;
+}
+
 async function ensurePng1200x628AndWatermark(params: {
   imageDataUrl: string;
   logoUrl?: string | null;
+  logoFallbackOrigin?: string;
 }): Promise<string> {
   const baseBytes = dataUrlToBytes(params.imageDataUrl);
   let img = await Image.decode(baseBytes);
@@ -46,9 +84,9 @@ async function ensurePng1200x628AndWatermark(params: {
   img = img.cover(TARGET_WIDTH, TARGET_HEIGHT);
 
   if (params.logoUrl) {
-    const logoRes = await fetch(params.logoUrl);
-    if (logoRes.ok) {
-      const logoBytes = new Uint8Array(await logoRes.arrayBuffer());
+    const fallbackOrigin = params.logoFallbackOrigin || 'https://ultriumai.lovable.app';
+    const logoBytes = await fetchLogoBytes(params.logoUrl, fallbackOrigin);
+    if (logoBytes) {
       let logo = await Image.decode(logoBytes);
 
       // Size: ~16% of width, maintain aspect ratio.
@@ -56,14 +94,12 @@ async function ensurePng1200x628AndWatermark(params: {
       logo = logo.resize(targetLogoWidth, Image.RESIZE_AUTO);
 
       // Slight transparency to feel like a watermark.
-      logo.opacity(0.7);
+      logo.opacity(0.85);
 
       const padding = Math.round(TARGET_WIDTH * 0.02); // ~24px
       const x = Math.max(0, TARGET_WIDTH - logo.width - padding);
       const y = Math.max(0, TARGET_HEIGHT - logo.height - padding);
       img.composite(logo, x, y);
-    } else {
-      console.warn('Logo fetch failed:', logoRes.status, params.logoUrl);
     }
   }
 
@@ -194,6 +230,7 @@ CRITICAL IMAGE DIMENSIONS:
 CRITICAL REQUIREMENTS (MUST FOLLOW):
 - ABSOLUTELY NO text, words, letters, numbers, or typography of any kind
 - ABSOLUTELY NO logos, brand marks, watermarks, or symbols that look like text
+- Avoid any badges, emblems, seals, labels, UI icons, or logo-like marks of any kind
 - Image must be 100% visual - purely imagery with zero text elements
 - No UI elements, buttons, or interface components
 
@@ -249,12 +286,16 @@ COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds pr
 
     // Deterministic post-processing (no AI editing):
     // - enforce exact 1200x628 full-bleed dimensions
-    // - overlay the REAL product logo from /public/logos (prevents model re-drawing)
+    // - ALWAYS overlay the REAL logo from /public/logos (prevents model re-drawing)
+    //   If no product detected, default to SafeSuite as the umbrella Ultrium brand watermark.
     const origin = req.headers.get('origin');
-    const logoUrl = detectedProduct ? getProductLogoUrl(detectedProduct, origin) : null;
+    const watermarkProduct = detectedProduct || 'safesuite';
+    const logoUrl = getProductLogoUrl(watermarkProduct, origin);
     generatedImage = await ensurePng1200x628AndWatermark({
       imageDataUrl: generatedImage,
       logoUrl,
+      // If the origin points at preview, we still want a stable fallback.
+      logoFallbackOrigin: 'https://ultriumai.lovable.app',
     });
 
     // Convert base64 to buffer
