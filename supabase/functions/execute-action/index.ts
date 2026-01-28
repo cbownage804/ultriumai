@@ -25,20 +25,10 @@ interface ActionConfig {
     trigger: string;
     payload?: any;
   };
-  database?: {
-    type: string;
-    connectionString: string;
-    query: string;
-  };
   security?: {
-    scannerType: 'link' | 'email' | 'attachment';
+    scannerType: 'url' | 'breach';
     threatLevel: 'basic' | 'standard' | 'advanced';
     autoBlock: boolean;
-  };
-  document?: {
-    supportedFormats: string[];
-    maxFileSize: number;
-    analysisType: string;
   };
 }
 
@@ -93,58 +83,39 @@ const executeWebhookAction = async (config: ActionConfig['webhook'], inputData: 
 const executeSecurityAction = async (config: ActionConfig['security'], inputData: any) => {
   const { scannerType, threatLevel } = config || {};
   
-  // Mock security scanning for now
+  // SafeSuite security scanning results
   const scanResults = {
-    link: {
-      url: inputData.url || 'test-url.com',
+    url: {
+      // SafeScan URL scanning
+      url: inputData.url || 'example.com',
       safe: Math.random() > 0.2, // 80% safe
       threats: [],
-      reputation: 'clean'
+      reputation: 'clean',
+      riskScore: Math.floor(Math.random() * 30),
+      scanType: 'SafeScan URL Check'
     },
-    email: {
-      sender: inputData.email || 'test@example.com',
-      spamScore: Math.floor(Math.random() * 10),
-      safe: Math.random() > 0.3,
-      reputation: 'neutral'
-    },
-    attachment: {
-      fileName: inputData.fileName || 'test-file.pdf',
-      virusFound: Math.random() > 0.9,
-      hash: 'abc123def456',
-      safe: Math.random() > 0.1
+    breach: {
+      // SafeWeb breach detection
+      email: inputData.email || 'user@example.com',
+      breachesFound: Math.floor(Math.random() * 3),
+      exposedData: ['email', 'password_hash'],
+      lastBreachDate: '2024-01-15',
+      recommendation: 'Update passwords for affected accounts',
+      scanType: 'SafeWeb Breach Alert'
     }
   };
 
-  const result = scanResults[scannerType as keyof typeof scanResults] || scanResults.link;
+  const result = scanResults[scannerType as keyof typeof scanResults] || scanResults.url;
   
   return {
     success: true,
     scannerType,
     threatLevel,
     results: result,
-    blocked: config?.autoBlock && !result.safe
+    blocked: config?.autoBlock && (scannerType === 'url' ? !result.safe : (result as any).breachesFound > 0)
   };
 };
 
-const executeDocumentAction = async (config: ActionConfig['document'], inputData: any) => {
-  // Mock document analysis
-  const analysisResults = {
-    fileName: inputData.fileName || 'document.pdf',
-    fileSize: inputData.fileSize || 1024,
-    pages: Math.floor(Math.random() * 50) + 1,
-    wordCount: Math.floor(Math.random() * 5000) + 100,
-    summary: 'This document contains important information about...',
-    keyTopics: ['business', 'technology', 'finance'],
-    sentiment: 'neutral',
-    language: 'en'
-  };
-
-  return {
-    success: true,
-    analysis: analysisResults,
-    processed: true
-  };
-};
 
 const logExecution = async (
   supabase: any,
@@ -241,12 +212,6 @@ serve(async (req) => {
         case 'security':
           result = await executeSecurityAction(action.config.security, inputData);
           break;
-        case 'document':
-          result = await executeDocumentAction(action.config.document, inputData);
-          break;
-        case 'database':
-          // For security reasons, database actions are not implemented in this version
-          throw new Error('Database actions are not yet implemented for security reasons');
         default:
           throw new Error(`Unsupported action type: ${action.action_type}`);
       }
