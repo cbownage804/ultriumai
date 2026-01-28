@@ -1,8 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encode as encodeBase64 } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.53.0";
-// Adds additional codecs (incl. WebP) for ImageScript's Image.decode()
-import "npm:@imagescript/codecs";
 import { Image } from "https://deno.land/x/imagescript@1.2.15/mod.ts";
 
 const corsHeaders = {
@@ -60,6 +58,13 @@ const getProductLogoUrl = (product: string, origin?: string | null): string => {
 function dataUrlToBytes(dataUrl: string): Uint8Array {
   const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '');
   return Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+}
+
+function getDataUrlMime(dataUrl: string): string | null {
+  if (!dataUrl.startsWith('data:')) return null;
+  const semi = dataUrl.indexOf(';');
+  if (semi === -1) return null;
+  return dataUrl.slice(5, semi);
 }
 
 async function fetchLogoBytes(logoUrl: string, fallbackOrigin?: string): Promise<Uint8Array | null> {
@@ -368,30 +373,34 @@ COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds pr
       throw new Error('No image generated');
     }
 
-    // Deterministic post-processing (no AI editing):
-    // - enforce exact 1080x1080 full-bleed dimensions
-    // - ALWAYS overlay the REAL logo from /public/logos (prevents model re-drawing)
-    //   If no product detected, default to UltriumAI as the brand watermark.
-    const origin = req.headers.get('origin');
-    const watermarkProduct = detectedProduct || 'ultriumai';
-    const logoUrl = getProductLogoUrl(watermarkProduct, origin);
-    console.log('Applying watermark:', watermarkProduct, 'logoUrl:', logoUrl);
-    generatedImage = await ensurePng1200x629AndWatermark({
-      imageDataUrl: generatedImage,
-      logoUrl,
-      // If the origin points at preview, we still want a stable fallback.
-      logoFallbackOrigin: PUBLISHED_ORIGIN,
-    });
+    // Deterministic post-processing (resize + watermark).
+    // IMPORTANT: If post-processing fails (e.g., unsupported image type),
+    // we still return the generated image so the workflow keeps working.
+    try {
+      const origin = req.headers.get('origin');
+      const watermarkProduct = detectedProduct || 'ultriumai';
+      const logoUrl = getProductLogoUrl(watermarkProduct, origin);
+      console.log('Applying watermark:', watermarkProduct, 'logoUrl:', logoUrl);
+      generatedImage = await ensurePng1200x629AndWatermark({
+        imageDataUrl: generatedImage,
+        logoUrl,
+        logoFallbackOrigin: PUBLISHED_ORIGIN,
+      });
+    } catch (e) {
+      console.warn('Post-processing failed; returning original generated image:', e);
+    }
 
     // Convert base64 to buffer
-    const base64Data = generatedImage.replace(/^data:image\/\w+;base64,/, '');
-    const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-    const fileName = `ai-generated/${Date.now()}-${crypto.randomUUID()}.png`;
+    const mime = getDataUrlMime(generatedImage) || 'image/png';
+    const ext = mime === 'image/jpeg' ? 'jpg' : mime.split('/')[1] || 'png';
+    const base64Data = generatedImage.replace(/^data:[^;]+;base64,/, '');
+    const imageBuffer = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+    const fileName = `ai-generated/${Date.now()}-${crypto.randomUUID()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from('social-media-images')
       .upload(fileName, imageBuffer, { 
-        contentType: 'image/png',
+        contentType: mime,
         upsert: false 
       });
 
