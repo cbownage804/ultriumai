@@ -193,3 +193,6 @@ verify_jwt = false
 
 [functions.get-bundle-accounts]
 verify_jwt = false
+
+[functions.studio-assistant]
+verify_jwt = false

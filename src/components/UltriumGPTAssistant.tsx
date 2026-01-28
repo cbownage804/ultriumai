@@ -24,6 +24,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { VisualReportDisplay } from "./VisualReportDisplay";
+import { CreditExhaustedModal } from "./ai-studio/CreditExhaustedModal";
+import { useAICredits } from "@/hooks/useAICredits";
 
 interface Message {
   id: string;
@@ -42,6 +44,8 @@ interface Message {
 export const UltriumGPTAssistant = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { creditsRemaining, hasCredits, refresh: refreshCredits } = useAICredits();
+  const [showCreditModal, setShowCreditModal] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -49,11 +53,13 @@ export const UltriumGPTAssistant = () => {
       content: `Hello! I'm the Studio Assistant, your AI-powered guide for AI Studio.
 
 I can help you with:
-• Building and configuring custom GPTs
-• Deploying your GPTs (embed, API, Teams)
-• Adding knowledge sources and training data
-• Customizing appearance and branding
-• Understanding templates and best practices
+• **Building GPTs** – Create custom AI assistants from scratch or templates
+• **System Prompts** – Write effective prompts that define GPT behavior
+• **Deployment** – Share via link, embed on websites, or use the API
+• **Knowledge Base** – Upload documents to give your GPT context
+• **Customization** – Theme colors, welcome messages, branding
+• **Credits & Billing** – Understand AI Capacity and usage
+• **Troubleshooting** – Fix common issues with GPTs
 
 What would you like help with today?`,
       timestamp: new Date(),
@@ -74,6 +80,12 @@ What would you like help with today?`,
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
+    // Check credits before sending
+    if (!hasCredits) {
+      setShowCreditModal(true);
+      return;
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -87,21 +99,40 @@ What would you like help with today?`,
     setInput("");
 
     try {
-      // Call the UltriumGPT assistant edge function
-      const { data, error } = await supabase.functions.invoke('ultrium-gpt-assistant', {
+      // Build conversation history for context
+      const conversationHistory = messages
+        .filter(m => m.role !== 'system')
+        .map(m => ({
+          role: m.role,
+          content: m.content
+        }));
+
+      // Call the Studio Assistant edge function
+      const { data, error } = await supabase.functions.invoke('studio-assistant', {
         body: {
-          message: userInput,
-          userId: user?.id,
-          context: 'dashboard'
+          messages: [
+            ...conversationHistory,
+            { role: 'user', content: userInput }
+          ]
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check for credit exhaustion
+        if (error.message?.includes('insufficient_credits') || error.message?.includes('402')) {
+          setShowCreditModal(true);
+          throw new Error('Out of AI Capacity');
+        }
+        throw error;
+      }
+
+      // Refresh credits after usage
+      refreshCredits();
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data.response,
+        content: data.message || data.response,
         timestamp: new Date(),
         metadata: data.metadata
       };
@@ -123,8 +154,15 @@ What would you like help with today?`,
         });
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error calling Studio Assistant:', error);
+      
+      // Don't show error for credit exhaustion - modal handles it
+      if (error.message?.includes('Out of AI Capacity')) {
+        setIsLoading(false);
+        return;
+      }
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -404,6 +442,13 @@ What would you like help with today?`,
           </div>
         </div>
       </div>
+
+      {/* Credit Exhausted Modal */}
+      <CreditExhaustedModal
+        isOpen={showCreditModal}
+        onClose={() => setShowCreditModal(false)}
+        creditsRemaining={creditsRemaining}
+      />
     </div>
   );
 };
