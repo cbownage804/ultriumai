@@ -352,7 +352,7 @@ export function SocialPostComposer({ initialContent = '', initialImageUrl }: Soc
                       {content || 'Your post preview will appear here...'}
                     </p>
                     {imageUrl && (
-                      <div className="mt-3 -mx-4 -mb-4">
+                      <div className="mt-3 -mx-4">
                         <img 
                           src={imageUrl} 
                           alt="Preview" 
@@ -362,11 +362,11 @@ export function SocialPostComposer({ initialContent = '', initialImageUrl }: Soc
                         />
                       </div>
                     )}
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50 text-xs text-muted-foreground">
+                    <div className={`flex items-center justify-between pt-3 border-t border-border/50 text-xs text-muted-foreground ${imageUrl ? 'mt-0 px-4 -mx-4 pb-1' : 'mt-3'}`}>
                       <span>0 Likes</span>
                       <span>0 Comments · 0 Shares</span>
                     </div>
-                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/50">
+                    <div className={`flex items-center gap-4 pt-3 border-t border-border/50 ${imageUrl ? 'px-4 -mx-4 pb-4' : 'mt-3'}`}>
                       <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                         <ThumbsUp className="h-4 w-4" />
                         Like
