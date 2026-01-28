@@ -8,7 +8,6 @@ import {
   Sliders,
   BookOpen,
   Zap,
-  Palette,
   BarChart3,
   Users,
   Link2,
@@ -22,7 +21,6 @@ import { GPTIntegrations } from "./GPTIntegrations";
 import { GPTConfiguration } from "./GPTConfiguration";
 import { GPTKnowledgeBase } from "./GPTKnowledgeBase";
 import { GPTActionsPanel } from "./GPTActionsPanel";
-import { GPTWhiteLabelPanel } from "./GPTWhiteLabelPanel";
 import { GPTDeployPanel } from "./GPTDeployPanel";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -40,11 +38,11 @@ interface GPTSettingsPanelProps {
   onBack?: () => void;
 }
 
+// Branding tab removed - all branding options now in Configuration > General and Advanced tabs
 const tabs = [
-  { id: "configuration", label: "Configuration", icon: Sliders, description: "Basic settings" },
+  { id: "configuration", label: "Configuration", icon: Sliders, description: "Settings & branding" },
   { id: "knowledge", label: "Knowledge", icon: BookOpen, description: "Data sources" },
   { id: "actions", label: "Actions", icon: Zap, description: "Automations" },
-  { id: "whitelabel", label: "Branding", icon: Palette, description: "Customize look" },
   { id: "analytics", label: "Analytics", icon: BarChart3, description: "Performance" },
   { id: "sharing", label: "Team", icon: Users, description: "Collaboration" },
   { id: "integrations", label: "Integrations", icon: Link2, description: "Connect apps" },
@@ -72,8 +70,6 @@ export function GPTSettingsPanel({ gpt, onBack }: GPTSettingsPanelProps) {
         return <GPTKnowledgeBase gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
       case "actions":
         return <GPTActionsPanel gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
-      case "whitelabel":
-        return <GPTWhiteLabelPanel gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
       case "analytics":
         return <GPTAnalyticsDashboard gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
       case "sharing":
