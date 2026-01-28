@@ -199,7 +199,10 @@ export const DashboardOverview = () => {
 
       {/* Key Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="group relative overflow-hidden border-l-4 border-l-primary bg-gradient-to-br from-card to-card/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+        <Card 
+          className="group relative overflow-hidden border-l-4 border-l-primary bg-gradient-to-br from-card to-card/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer"
+          onClick={() => navigate('/dashboard/gpt')}
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Your GPTs</CardTitle>
