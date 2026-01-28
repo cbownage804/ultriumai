@@ -29,7 +29,8 @@ import {
   Mail,
   KeyRound,
   UserCog,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 
 interface UserProducts {
@@ -81,6 +82,7 @@ export const UserSubscriptionDialog = ({
 }: UserSubscriptionDialogProps) => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [aiStudioTier, setAiStudioTier] = useState(user?.products.ai_studio?.tier || 'free');
   const [safesuiteTier, setSafesuiteTier] = useState(user?.products.safesuite?.tier || 'free');
   const [vanguardTier, setVanguardTier] = useState(user?.products.vanguard?.tier || 'none');
@@ -95,6 +97,51 @@ export const UserSubscriptionDialog = ({
   }, [user]);
 
   const isStripeManaged = (stripeId: string | null | undefined) => !!stripeId;
+
+  // Sync subscription from Stripe
+  const handleSyncFromStripe = async () => {
+    if (!user) return;
+    setSyncing(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-sync-subscription', {
+        body: {
+          userId: user.user_id,
+          userEmail: user.email,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        // Update local state with synced values
+        if (data.ai_studio?.tier) {
+          setAiStudioTier(data.ai_studio.tier);
+        }
+        if (data.safesuite?.tier) {
+          setSafesuiteTier(data.safesuite.tier);
+        }
+
+        toast({
+          title: "Synced from Stripe",
+          description: `AI Studio: ${data.ai_studio?.tier || 'free'}, SafeSuite: ${data.safesuite?.tier || 'free'}`,
+        });
+
+        onUpdate();
+      } else {
+        throw new Error(data?.message || 'Sync failed');
+      }
+    } catch (error) {
+      console.error('Error syncing from Stripe:', error);
+      toast({
+        title: "Sync failed",
+        description: error instanceof Error ? error.message : "Could not sync from Stripe",
+        variant: "destructive"
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -296,6 +343,29 @@ export const UserSubscriptionDialog = ({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <Separator />
+
+          {/* Sync from Stripe */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Stripe Sync
+            </Label>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="w-full text-blue-500 border-blue-500/30 hover:bg-blue-500/10"
+              onClick={handleSyncFromStripe}
+              disabled={syncing}
+            >
+              <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Syncing...' : 'Sync from Stripe'}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Fetch the user's actual subscription status from Stripe and update the database.
+            </p>
           </div>
 
           <Separator />
