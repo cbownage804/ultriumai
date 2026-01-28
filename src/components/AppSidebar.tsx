@@ -244,48 +244,7 @@ export function AppSidebar() {
         {/* Management section removed - all functionality now lives per-GPT */}
 
 
-        {/* Premium Upgrade Section - Only show for truly free users */}
-        {subscription.subscription_tier === "free" && !isCollapsed && (
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <Card className="mx-2 mb-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30">
-                <CardHeader className="p-3">
-                  <CardTitle className="text-sm flex items-center gap-2 text-purple-700 dark:text-purple-300">
-                    <Crown className="h-4 w-4" />
-                    Upgrade to Pro
-                  </CardTitle>
-                  <CardDescription className="text-xs text-purple-600 dark:text-purple-400">
-                    Unlock advanced AI features
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-3 pt-0">
-                  <ul className="text-xs space-y-1 mb-3 text-purple-600 dark:text-purple-400">
-                    <li className="flex items-center gap-1">
-                      <Check className="h-3 w-3" />
-                      5,000 monthly credits
-                    </li>
-                    <li className="flex items-center gap-1">
-                      <Check className="h-3 w-3" />
-                      Unlimited GPT builds
-                    </li>
-                    <li className="flex items-center gap-1">
-                      <Check className="h-3 w-3" />
-                      Priority support
-                    </li>
-                  </ul>
-                  <Button 
-                    size="sm" 
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-xs"
-                    onClick={() => navigate('/pricing')}
-                  >
-                    <Zap className="h-3 w-3 mr-1" />
-                    Upgrade Now
-                  </Button>
-                </CardContent>
-              </Card>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+        {/* Premium Upgrade Section removed - users can access pricing via menu if needed */}
 
         {/* Account Section */}
         <SidebarGroup className="mt-auto">
