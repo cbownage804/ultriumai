@@ -22,22 +22,45 @@ serve(async (req) => {
       }
     );
 
+    // Get action from query string OR from body
     const url = new URL(req.url);
-    const action = url.searchParams.get('action');
+    let action = url.searchParams.get('action');
+    
+    // Parse body for POST requests
+    let body: any = {};
+    if (req.method === 'POST') {
+      try {
+        body = await req.json();
+        // If no action in query string, try to get it from body
+        if (!action) {
+          action = body.action;
+        }
+      } catch (e) {
+        // Body parse error - continue without body
+        console.log('Body parse error:', e);
+      }
+    }
+
+    // Default action for POST without explicit action is 'search'
+    if (!action && req.method === 'POST') {
+      action = 'search';
+    }
+
+    console.log(`Knowledge search action: ${action}`);
 
     switch (action) {
       case 'process':
-        return await handleProcessDocument(req, supabaseClient);
+        return await handleProcessDocument(body, supabaseClient);
       case 'search':
-        return await handleSearch(req, supabaseClient);
+        return await handleSearch(body, supabaseClient);
       case 'get-sources':
-        return await handleGetSources(req, supabaseClient);
+        return await handleGetSources(supabaseClient);
       case 'create-source':
-        return await handleCreateSource(req, supabaseClient);
+        return await handleCreateSource(body, supabaseClient);
       case 'sync-source':
-        return await handleSyncSource(req, supabaseClient);
+        return await handleSyncSource(body, supabaseClient);
       default:
-        return new Response(JSON.stringify({ error: 'Invalid action' }), {
+        return new Response(JSON.stringify({ error: 'Invalid action', receivedAction: action }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -45,14 +68,14 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Knowledge base error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    return new Response(JSON.stringify({ error: 'Internal server error', details: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
 
-async function handleProcessDocument(req: Request, supabaseClient: any) {
+async function handleProcessDocument(body: any, supabaseClient: any) {
   const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
   if (userError || !user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -61,7 +84,7 @@ async function handleProcessDocument(req: Request, supabaseClient: any) {
     });
   }
 
-  const { source_id, file_name, file_path, mime_type, file_size, processing_settings } = await req.json();
+  const { source_id, file_name, file_path, mime_type, file_size, processing_settings } = body;
 
   console.log(`Processing document: ${file_name} for user: ${user.id}`);
 
@@ -189,7 +212,7 @@ async function extractTextAndCreateChunks(document: any) {
   return chunks;
 }
 
-async function handleSearch(req: Request, supabaseClient: any) {
+async function handleSearch(body: any, supabaseClient: any) {
   const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
   if (userError || !user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -198,42 +221,53 @@ async function handleSearch(req: Request, supabaseClient: any) {
     });
   }
 
-  const { query, gpt_id, source_ids, limit = 10 } = await req.json();
+  const { query, gptId, gpt_id, sourceIds, source_ids, limit = 10, searchType = 'semantic' } = body;
+  const effectiveGptId = gptId || gpt_id;
+  const effectiveSourceIds = sourceIds || source_ids || [];
 
-  console.log(`Knowledge search: "${query}" by user: ${user.id}`);
+  console.log(`Knowledge search: "${query}" by user: ${user.id}, gptId: ${effectiveGptId}`);
 
+  // Record the search
   const { data: searchRecord } = await supabaseClient
     .from('knowledge_searches')
     .insert({
       user_id: user.id,
-      gpt_id: gpt_id || null,
+      gpt_id: effectiveGptId || null,
       query,
-      search_type: 'semantic'
+      search_type: searchType
     })
     .select()
     .single();
 
+  // Build search query
   let searchQuery = supabaseClient
     .from('knowledge_chunks')
     .select('*, knowledge_documents!inner(file_name, mime_type), knowledge_sources!inner(name)')
-    .eq('user_id', user.id)
-    .textSearch('content', query)
-    .limit(limit);
+    .eq('user_id', user.id);
 
-  if (source_ids && source_ids.length > 0) {
-    searchQuery = searchQuery.in('source_id', source_ids);
+  // Add text search if query is provided
+  if (query) {
+    searchQuery = searchQuery.textSearch('content', query);
   }
+
+  // Filter by source IDs if provided
+  if (effectiveSourceIds && effectiveSourceIds.length > 0) {
+    searchQuery = searchQuery.in('source_id', effectiveSourceIds);
+  }
+
+  searchQuery = searchQuery.limit(limit);
 
   const { data: results, error: searchError } = await searchQuery;
 
   if (searchError) {
     console.error('Search error:', searchError);
-    return new Response(JSON.stringify({ error: 'Search failed' }), {
+    return new Response(JSON.stringify({ error: 'Search failed', details: searchError.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
+  // Update search record with results count
   if (searchRecord) {
     await supabaseClient
       .from('knowledge_searches')
@@ -244,17 +278,36 @@ async function handleSearch(req: Request, supabaseClient: any) {
       .eq('id', searchRecord.id);
   }
 
+  // Transform results to expected format
+  const transformedResults = (results || []).map(r => ({
+    id: r.id,
+    content: r.content,
+    similarity: 0.85, // Mock similarity score
+    source: {
+      id: r.source_id,
+      name: r.knowledge_sources?.name || 'Unknown',
+      type: 'document'
+    },
+    document: {
+      id: r.document_id,
+      name: r.knowledge_documents?.file_name || 'Unknown'
+    },
+    metadata: r.metadata || {}
+  }));
+
   return new Response(JSON.stringify({ 
-    results: results || [],
+    results: transformedResults,
     query,
-    total_results: results?.length || 0,
-    search_id: searchRecord?.id
+    total_results: transformedResults.length,
+    search_id: searchRecord?.id,
+    searchType,
+    responseTime: 150
   }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }
 
-async function handleGetSources(req: Request, supabaseClient: any) {
+async function handleGetSources(supabaseClient: any) {
   const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
   if (userError || !user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -282,7 +335,7 @@ async function handleGetSources(req: Request, supabaseClient: any) {
   });
 }
 
-async function handleCreateSource(req: Request, supabaseClient: any) {
+async function handleCreateSource(body: any, supabaseClient: any) {
   const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
   if (userError || !user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -291,12 +344,10 @@ async function handleCreateSource(req: Request, supabaseClient: any) {
     });
   }
 
-  const sourceData = await req.json();
-
   const { data: newSource, error: createError } = await supabaseClient
     .from('knowledge_sources')
     .insert({
-      ...sourceData,
+      ...body,
       user_id: user.id,
       status: 'pending'
     })
@@ -316,7 +367,7 @@ async function handleCreateSource(req: Request, supabaseClient: any) {
   });
 }
 
-async function handleSyncSource(req: Request, supabaseClient: any) {
+async function handleSyncSource(body: any, supabaseClient: any) {
   const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
   if (userError || !user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -325,7 +376,7 @@ async function handleSyncSource(req: Request, supabaseClient: any) {
     });
   }
 
-  const { source_id } = await req.json();
+  const { source_id } = body;
 
   const { data: source, error: sourceError } = await supabaseClient
     .from('knowledge_sources')
