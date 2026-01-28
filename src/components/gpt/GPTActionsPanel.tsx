@@ -15,8 +15,17 @@ import {
   ExternalLink,
   Settings,
   Loader2,
-  Play,
-  Shield
+  Shield,
+  Mail,
+  Ticket,
+  Bell,
+  Database,
+  FileText,
+  Calendar,
+  MessageSquare,
+  Search,
+  Lock,
+  Sparkles
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -49,6 +58,109 @@ interface Action {
   successRate?: number;
   config?: any;
 }
+
+interface ActionTemplate {
+  id: string;
+  name: string;
+  description: string;
+  type: Action['type'];
+  endpoint: string;
+  icon: React.ReactNode;
+  category: string;
+}
+
+const ACTION_TEMPLATES: ActionTemplate[] = [
+  {
+    id: 'create-ticket',
+    name: 'Create Ticket',
+    description: 'Creates a support ticket in your helpdesk system',
+    type: 'webhook',
+    endpoint: 'https://api.helpdesk.com/tickets',
+    icon: <Ticket className="h-5 w-5" />,
+    category: 'Support'
+  },
+  {
+    id: 'send-email',
+    name: 'Send Email',
+    description: 'Sends an email notification to specified recipients',
+    type: 'api',
+    endpoint: 'https://api.sendgrid.com/v3/mail/send',
+    icon: <Mail className="h-5 w-5" />,
+    category: 'Communication'
+  },
+  {
+    id: 'slack-notification',
+    name: 'Slack Notification',
+    description: 'Posts a message to a Slack channel',
+    type: 'webhook',
+    endpoint: 'https://hooks.slack.com/services/...',
+    icon: <MessageSquare className="h-5 w-5" />,
+    category: 'Communication'
+  },
+  {
+    id: 'create-calendar-event',
+    name: 'Create Calendar Event',
+    description: 'Schedules a new event on Google Calendar',
+    type: 'api',
+    endpoint: 'https://www.googleapis.com/calendar/v3/calendars',
+    icon: <Calendar className="h-5 w-5" />,
+    category: 'Productivity'
+  },
+  {
+    id: 'database-query',
+    name: 'Database Query',
+    description: 'Executes a safe read query against your database',
+    type: 'function',
+    endpoint: '',
+    icon: <Database className="h-5 w-5" />,
+    category: 'Data'
+  },
+  {
+    id: 'generate-report',
+    name: 'Generate Report',
+    description: 'Creates a PDF report from provided data',
+    type: 'function',
+    endpoint: '',
+    icon: <FileText className="h-5 w-5" />,
+    category: 'Productivity'
+  },
+  {
+    id: 'web-search',
+    name: 'Web Search',
+    description: 'Searches the web for real-time information',
+    type: 'api',
+    endpoint: 'https://api.bing.microsoft.com/v7.0/search',
+    icon: <Search className="h-5 w-5" />,
+    category: 'Data'
+  },
+  {
+    id: 'security-scan',
+    name: 'Security Scan',
+    description: 'Performs a security check on URLs or emails',
+    type: 'security',
+    endpoint: '',
+    icon: <Shield className="h-5 w-5" />,
+    category: 'Security'
+  },
+  {
+    id: 'push-notification',
+    name: 'Push Notification',
+    description: 'Sends a push notification to mobile devices',
+    type: 'webhook',
+    endpoint: 'https://fcm.googleapis.com/fcm/send',
+    icon: <Bell className="h-5 w-5" />,
+    category: 'Communication'
+  },
+  {
+    id: 'authenticate-user',
+    name: 'Authenticate User',
+    description: 'Verifies user identity and returns auth token',
+    type: 'api',
+    endpoint: '',
+    icon: <Lock className="h-5 w-5" />,
+    category: 'Security'
+  }
+];
 
 export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelProps) {
   const { toast } = useToast();
@@ -277,6 +389,20 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
     }
   };
 
+  const handleUseTemplate = (template: ActionTemplate) => {
+    setEditingAction(null);
+    setFormData({
+      name: template.name,
+      description: template.description,
+      type: template.type,
+      endpoint: template.endpoint,
+      isEnabled: true
+    });
+    setIsDialogOpen(true);
+  };
+
+  const categories = [...new Set(ACTION_TEMPLATES.map(t => t.category))];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -384,6 +510,58 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
             </Dialog>
           </div>
         </CardHeader>
+      </Card>
+
+      {/* Action Templates */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Sparkles className="h-5 w-5" />
+            Action Templates
+          </CardTitle>
+          <CardDescription>
+            Quick-start with pre-configured action templates
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {categories.map((category) => (
+              <div key={category}>
+                <h4 className="text-sm font-medium text-muted-foreground mb-3">{category}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {ACTION_TEMPLATES.filter(t => t.category === category).map((template) => (
+                    <motion.button
+                      key={template.id}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => handleUseTemplate(template)}
+                      className="flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/50 hover:bg-muted/50 transition-all text-left group"
+                    >
+                      <div 
+                        className="p-2 rounded-lg shrink-0"
+                        style={{ backgroundColor: `${themeColor}15` }}
+                      >
+                        <span style={{ color: themeColor }}>{template.icon}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm group-hover:text-primary transition-colors">
+                          {template.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                          {template.description}
+                        </p>
+                        <Badge variant="secondary" className="mt-2 text-xs">
+                          {template.type}
+                        </Badge>
+                      </div>
+                      <Plus className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
       </Card>
 
       {/* Actions List */}
