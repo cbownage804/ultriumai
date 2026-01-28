@@ -245,6 +245,10 @@ export const UserSubscriptionDialog = ({
                   <CreditCard className="h-3 w-3 mr-1" />
                   Stripe
                 </Badge>
+              ) : aiStudioTier === 'free' ? (
+                <Badge variant="outline" className="text-muted-foreground text-xs">
+                  Default
+                </Badge>
               ) : (
                 <Badge variant="outline" className="text-amber-500 border-amber-500/50 text-xs">
                   <Wrench className="h-3 w-3 mr-1" />
@@ -290,6 +294,10 @@ export const UserSubscriptionDialog = ({
                 <Badge variant="outline" className="text-blue-500 border-blue-500/50 text-xs">
                   <CreditCard className="h-3 w-3 mr-1" />
                   Stripe
+                </Badge>
+              ) : safesuiteTier === 'free' ? (
+                <Badge variant="outline" className="text-muted-foreground text-xs">
+                  Default
                 </Badge>
               ) : (
                 <Badge variant="outline" className="text-amber-500 border-amber-500/50 text-xs">
