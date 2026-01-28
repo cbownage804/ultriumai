@@ -389,8 +389,8 @@ export const DashboardOverview = () => {
         <SubscriptionTestSuite />
       )}
 
-      {/* Upgrade Prompts */}
-      {(subscription?.subscription_tier === "free" || !subscription?.subscribed) && (
+      {/* Upgrade Prompts - Only show for truly free/unsubscribed users */}
+      {!subscription?.subscribed && subscription?.subscription_tier === "free" && (
         <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
