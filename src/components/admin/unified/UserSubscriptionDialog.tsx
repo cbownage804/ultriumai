@@ -123,18 +123,23 @@ export const UserSubscriptionDialog = ({
 
       if (data?.success) {
         // Update local state with synced values
-        setAiStudioTier(data.ai_studio?.tier || 'free');
-        setAiStudioStripeManaged(data.ai_studio?.subscribed === true);
+        const newAiTier = data.ai_studio?.tier || 'free';
+        const newSsTier = data.safesuite?.tier || 'free';
+        const aiSubscribed = data.ai_studio?.subscribed === true;
+        const ssSubscribed = data.safesuite?.subscribed === true;
         
-        setSafesuiteTier(data.safesuite?.tier || 'free');
-        setSafesuiteStripeManaged(data.safesuite?.subscribed === true);
+        setAiStudioTier(newAiTier);
+        setAiStudioStripeManaged(aiSubscribed);
+        setSafesuiteTier(newSsTier);
+        setSafesuiteStripeManaged(ssSubscribed);
 
         toast({
           title: "Synced from Stripe",
-          description: `AI Studio: ${data.ai_studio?.tier || 'free'}, SafeSuite: ${data.safesuite?.tier || 'free'}`,
+          description: `AI Studio: ${newAiTier}, SafeSuite: ${newSsTier}`,
         });
 
-        onUpdate();
+        // Refresh parent data after a short delay to allow state to settle
+        setTimeout(() => onUpdate(), 500);
       } else {
         throw new Error(data?.message || 'Sync failed');
       }
