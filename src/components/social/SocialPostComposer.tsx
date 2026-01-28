@@ -335,55 +335,65 @@ export function SocialPostComposer({ initialContent = '', initialImageUrl }: Soc
               <TabsTrigger value="instagram" className="text-xs">📷 Instagram</TabsTrigger>
             </TabsList>
             
-            <TabsContent value={previewPlatform} className="mt-4">
-              <div className="bg-muted/30 rounded-lg p-4">
-                {/* Facebook-style preview */}
-                <div className="flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                    U
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm">UltriumAI</span>
-                      <span className="text-xs text-muted-foreground">Just now · 🌐</span>
-                      <MoreHorizontal className="h-4 w-4 ml-auto text-muted-foreground" />
-                    </div>
-                    <p className="text-sm mt-2 whitespace-pre-wrap">
-                      {content || 'Your post preview will appear here...'}
-                    </p>
-                    {imageUrl && (
-                      <div className="mt-3 -mx-4">
-                        <img 
-                          src={imageUrl} 
-                          alt="Preview" 
-                          className="w-full object-cover cursor-pointer hover:opacity-95 transition-opacity"
-                          onClick={() => window.open(imageUrl, '_blank')}
-                          title="Click to view full size"
-                        />
-                      </div>
-                    )}
-                    <div className={`flex items-center justify-between pt-3 border-t border-border/50 text-xs text-muted-foreground ${imageUrl ? 'mt-0 px-4 -mx-4 pb-1' : 'mt-3'}`}>
-                      <span>0 Likes</span>
-                      <span>0 Comments · 0 Shares</span>
-                    </div>
-                    <div className={`flex items-center gap-4 pt-3 border-t border-border/50 ${imageUrl ? 'px-4 -mx-4 pb-4' : 'mt-3'}`}>
-                      <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                        <ThumbsUp className="h-4 w-4" />
-                        Like
-                      </button>
-                      <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                        <MessageCircle className="h-4 w-4" />
-                        Comment
-                      </button>
-                      <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                        <Share2 className="h-4 w-4" />
-                        Share
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
+             <TabsContent value={previewPlatform} className="mt-4">
+               {/* Full-bleed preview container */}
+               <div className="bg-muted/30 rounded-lg overflow-hidden">
+                 {/* Header */}
+                 <div className="p-4 flex items-start gap-3">
+                   <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                     U
+                   </div>
+                   <div className="flex-1">
+                     <div className="flex items-center gap-2">
+                       <span className="font-semibold text-sm">UltriumAI</span>
+                       <span className="text-xs text-muted-foreground">Just now · 🌐</span>
+                       <MoreHorizontal className="h-4 w-4 ml-auto text-muted-foreground" />
+                     </div>
+                     <p className="text-sm mt-2 whitespace-pre-wrap">
+                       {content || 'Your post preview will appear here...'}
+                     </p>
+                   </div>
+                 </div>
+
+                 {/* Full-bleed image */}
+                 {imageUrl && (
+                   <button
+                     type="button"
+                     onClick={() => window.open(imageUrl, '_blank')}
+                     className="block w-full"
+                     title="Click to view full size"
+                   >
+                     <img
+                       src={imageUrl}
+                       alt="Preview"
+                       className="w-full aspect-[1200/628] object-cover hover:opacity-95 transition-opacity"
+                     />
+                   </button>
+                 )}
+
+                 {/* Reactions + actions */}
+                 <div className="p-4">
+                   <div className="flex items-center justify-between pt-3 border-t border-border/50 text-xs text-muted-foreground">
+                     <span>0 Likes</span>
+                     <span>0 Comments · 0 Shares</span>
+                   </div>
+                   <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/50">
+                     <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                       <ThumbsUp className="h-4 w-4" />
+                       Like
+                     </button>
+                     <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                       <MessageCircle className="h-4 w-4" />
+                       Comment
+                     </button>
+                     <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                       <Share2 className="h-4 w-4" />
+                       Share
+                     </button>
+                   </div>
+                 </div>
+               </div>
+             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
