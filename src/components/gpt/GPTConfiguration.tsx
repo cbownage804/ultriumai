@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -24,6 +24,7 @@ import { GPTConfigIntelligence } from "./config/GPTConfigIntelligence";
 import { GPTConfigAdvanced } from "./config/GPTConfigAdvanced";
 import { GPTConfigSecurity } from "./config/GPTConfigSecurity";
 import { GPTConfigVoice } from "./config/GPTConfigVoice";
+import { gptTemplates, getTemplateFullConfig } from "@/data/gptTemplates";
 
 interface GPTConfigurationProps {
   gptId: string;
@@ -122,24 +123,54 @@ export function GPTConfiguration({ gptId, gptName, themeColor, onUpdate }: GPTCo
     category: "general",
   });
 
+  // Get template config if GPT was created from a template
+  const templateConfig = useMemo(() => {
+    if (!gpt?.template_id) return null;
+    const template = gptTemplates.find(t => t.id === gpt.template_id);
+    if (!template) return null;
+    return getTemplateFullConfig(template.id, template.category, template.config);
+  }, [gpt?.template_id]);
+
   useEffect(() => {
     if (gpt) {
+      // Start with template defaults if available
+      const templateDefaults = templateConfig || {};
+      
       setFormData(prev => ({
         ...prev,
+        // Apply template defaults first
+        ...templateDefaults,
+        // Then override with actual GPT values from database
         name: gpt.name || "",
         description: gpt.description || "",
         system_prompt: gpt.system_prompt || "",
-        preferred_model: gpt.preferred_model || "gpt-4o",
-        enable_web_search: gpt.enable_web_search || false,
-        theme_color: gpt.theme_color || "#3b82f6",
-        placeholder_prompt: gpt.placeholder_prompt || "",
+        preferred_model: gpt.preferred_model || templateDefaults.preferred_model || "gpt-4o",
+        enable_web_search: gpt.enable_web_search ?? templateDefaults.enable_web_search ?? false,
+        theme_color: gpt.theme_color || templateDefaults.theme_color || "#3b82f6",
+        secondary_color: templateDefaults.secondary_color || gpt.theme_color || "#3b82f6",
+        placeholder_prompt: gpt.placeholder_prompt || templateDefaults.placeholder_prompt || "",
         category: gpt.category || "general",
         starter_questions: (gpt.starter_questions as string[]) || [],
-        visibility: gpt.agent_visibility || "private",
+        visibility: gpt.agent_visibility || templateDefaults.visibility || "private",
+        // Template-only fields (prefilled from template)
+        welcome_message: templateDefaults.welcome_message || "",
+        communication_style: templateDefaults.communication_style || "",
+        expertise_areas: templateDefaults.expertise_areas || "",
+        idk_message: templateDefaults.idk_message || "I couldn't find specific information about that. Please contact support for assistance.",
+        show_citations: templateDefaults.show_citations || "none",
+        mention_sources: templateDefaults.mention_sources || "yes",
+        capability_mode: templateDefaults.capability_mode || "optimal",
+        knowledge_source: templateDefaults.knowledge_source || "data_and_general",
+        message_ending: templateDefaults.message_ending || "",
+        error_message: templateDefaults.error_message || "I'm sorry, I encountered an error. Please try again.",
+        anti_hallucination: templateDefaults.anti_hallucination ?? true,
+        enable_feedback: templateDefaults.enable_feedback ?? true,
+        enable_sharing: templateDefaults.enable_sharing ?? true,
+        enable_export: templateDefaults.enable_export ?? false,
       }));
       setHasChanges(false);
     }
-  }, [gpt]);
+  }, [gpt, templateConfig]);
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
