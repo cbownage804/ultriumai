@@ -9,6 +9,17 @@ const corsHeaders = {
 
 // AI Studio Plan Price IDs - These should be created in Stripe
 const PLAN_PRICES: Record<string, { priceId: string; name: string }> = {
+  // MSP Plans
+  msp_starter: { priceId: "price_ai_studio_msp_starter", name: "AI Studio MSP Starter" },
+  msp_pro: { priceId: "price_ai_studio_msp_pro", name: "AI Studio MSP Pro" },
+  msp_elite: { priceId: "price_ai_studio_msp_elite", name: "AI Studio MSP Elite" },
+  // Team Plans
+  team_basic: { priceId: "price_ai_studio_team_basic", name: "AI Studio Team Basic" },
+  team_plus: { priceId: "price_ai_studio_team_plus", name: "AI Studio Team Plus" },
+  // Website Plans
+  website_basic: { priceId: "price_ai_studio_website_basic", name: "AI Studio Website Basic" },
+  website_pro: { priceId: "price_ai_studio_website_pro", name: "AI Studio Website Pro" },
+  // Legacy plan IDs (keep for backwards compatibility)
   creator: { priceId: "price_ai_studio_creator", name: "AI Studio Creator" },
   professional: { priceId: "price_ai_studio_professional", name: "AI Studio Professional" },
   agency: { priceId: "price_ai_studio_agency", name: "AI Studio Agency" },
