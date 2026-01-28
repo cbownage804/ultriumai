@@ -18,8 +18,7 @@ import {
   MessageSquare,
   Star,
   Sparkles,
-  Code,
-  Palette
+  Code
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -121,6 +120,8 @@ export const DashboardOverview = () => {
     return 'evening';
   };
 
+  // Quick Actions - focused on creation and getting help
+  // Management (Analytics, White-label, API) now lives per-GPT
   const quickActions = [
     {
       title: "Build a GPT",
@@ -142,27 +143,6 @@ export const DashboardOverview = () => {
       icon: Sparkles,
       action: () => navigate("/dashboard/ultrium-gpt"),
       color: "bg-purple-500",
-    },
-    {
-      title: "Analytics",
-      description: "View GPT performance",
-      icon: TrendingUp,
-      action: () => navigate("/dashboard/gpt/analyze"),
-      color: "bg-blue-500",
-    },
-    {
-      title: "White-label",
-      description: "Brand your GPTs",
-      icon: Palette,
-      action: () => navigate("/dashboard/white-label"),
-      color: "bg-pink-500",
-    },
-    {
-      title: "API Management",
-      description: "Manage API keys",
-      icon: Code,
-      action: () => navigate("/dashboard/api-management"),
-      color: "bg-green-500",
     },
   ];
 
@@ -287,7 +267,7 @@ export const DashboardOverview = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="relative">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {quickActions.map((action, index) => (
               <Button
                 key={index}
@@ -338,23 +318,23 @@ export const DashboardOverview = () => {
               <Badge variant="outline">Available</Badge>
             </div>
 
-            <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate('/dashboard/white-label')}>
+            <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate('/dashboard/gpt/templates')}>
               <div className="flex items-center space-x-3">
-                <Palette className="h-8 w-8 text-blue-500" />
+                <Star className="h-8 w-8 text-amber-500" />
                 <div>
-                  <h3 className="font-semibold">White-Label Branding</h3>
-                  <p className="text-sm text-muted-foreground">Deploy GPTs under your brand</p>
+                  <h3 className="font-semibold">GPT Templates</h3>
+                  <p className="text-sm text-muted-foreground">36+ pre-built templates to get started</p>
                 </div>
               </div>
               <Badge variant="outline">Available</Badge>
             </div>
 
-            <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate('/dashboard/api-management')}>
+            <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate('/dashboard/ultrium-gpt')}>
               <div className="flex items-center space-x-3">
-                <TrendingUp className="h-8 w-8 text-green-500" />
+                <Sparkles className="h-8 w-8 text-purple-500" />
                 <div>
-                  <h3 className="font-semibold">API Integration</h3>
-                  <p className="text-sm text-muted-foreground">Connect GPTs to external services</p>
+                  <h3 className="font-semibold">Ultrium GPT</h3>
+                  <p className="text-sm text-muted-foreground">Your AI co-pilot for building solutions</p>
                 </div>
               </div>
               <Badge variant="outline">Available</Badge>
