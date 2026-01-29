@@ -4,12 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSafeDesk } from "@/hooks/useSafeDesk";
+import { NewTicketDialog } from "@/components/vanguard/helpdesk/NewTicketDialog";
 import { 
   HeadphonesIcon, 
   Clock, 
@@ -18,11 +16,9 @@ import {
   MessageSquare,
   Settings,
   BarChart3,
-  Users,
   FileText,
   RefreshCw,
   Plus,
-  Star,
   Zap,
   Eye,
   Bot,
@@ -45,25 +41,16 @@ export const HelpdeskDashboard = () => {
 
   const [showCreateTicket, setShowCreateTicket] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<typeof tickets[0] | null>(null);
-  const [newTicket, setNewTicket] = useState({
-    title: '',
-    description: '',
-    priority: 'medium',
-    category: ''
-  });
 
-  const handleCreateTicket = async () => {
-    if (!newTicket.title) return;
+  const handleCreateTicket = async (formData: { title: string; description: string; priority: string }) => {
+    if (!formData.title) return;
     
     await createTicket({
-      title: newTicket.title,
-      description: newTicket.description,
-      priority: newTicket.priority,
-      category: newTicket.category || null
+      title: formData.title,
+      description: formData.description,
+      priority: formData.priority,
+      category: null
     });
-    
-    setNewTicket({ title: '', description: '', priority: 'medium', category: '' });
-    setShowCreateTicket(false);
   };
 
   const getPriorityColor = (priority: string | null) => {
@@ -129,75 +116,18 @@ export const HelpdeskDashboard = () => {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Dialog open={showCreateTicket} onOpenChange={setShowCreateTicket}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-safedesk to-safedesk-dark text-safedesk-foreground hover:opacity-90">
-                <Plus className="h-4 w-4 mr-2" />
-                New Ticket
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Support Ticket</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={newTicket.title}
-                    onChange={(e) => setNewTicket(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="Brief description of the issue"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={newTicket.description}
-                    onChange={(e) => setNewTicket(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Detailed description of the issue"
-                    className="min-h-[100px]"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="priority">Priority</Label>
-                    <Select value={newTicket.priority} onValueChange={(value) => setNewTicket(prev => ({ ...prev, priority: value }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="critical">Critical</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="category">Category</Label>
-                    <Select value={newTicket.category} onValueChange={(value) => setNewTicket(prev => ({ ...prev, category: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="hardware">Hardware</SelectItem>
-                        <SelectItem value="software">Software</SelectItem>
-                        <SelectItem value="network">Network</SelectItem>
-                        <SelectItem value="security">Security</SelectItem>
-                        <SelectItem value="account">Account</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <Button onClick={handleCreateTicket} className="w-full bg-safedesk hover:bg-safedesk-dark">
-                  Create Ticket
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button 
+            className="bg-gradient-to-r from-safedesk to-safedesk-dark text-safedesk-foreground hover:opacity-90"
+            onClick={() => setShowCreateTicket(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Ticket
+          </Button>
+          <NewTicketDialog 
+            open={showCreateTicket} 
+            onOpenChange={setShowCreateTicket}
+            onSubmit={handleCreateTicket}
+          />
         </div>
       </div>
 
