@@ -1,0 +1,196 @@
+// =============================================================================
+// Vanguard Agent Worker Service
+// =============================================================================
+
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+
+namespace VanguardAgent.Services;
+
+public class AgentWorker : BackgroundService
+{
+    private readonly ILogger<AgentWorker> _logger;
+    private readonly ConfigService _configService;
+    private readonly ApiClient _api;
+    private readonly TelemetryCollector _telemetry;
+    private readonly CommandExecutor _commandExecutor;
+
+    private DateTime _lastHeartbeat = DateTime.MinValue;
+    private DateTime _lastTelemetry = DateTime.MinValue;
+    private DateTime _lastCommandPoll = DateTime.MinValue;
+    private bool _isRegistered = false;
+
+    public AgentWorker(
+        ILogger<AgentWorker> logger,
+        ConfigService configService,
+        ApiClient api,
+        TelemetryCollector telemetry,
+        CommandExecutor commandExecutor)
+    {
+        _logger = logger;
+        _configService = configService;
+        _api = api;
+        _telemetry = telemetry;
+        _commandExecutor = commandExecutor;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Vanguard Agent starting...");
+
+        // Ensure device is registered
+        await EnsureRegisteredAsync();
+
+        _logger.LogInformation("Agent registered. Starting monitoring loop.");
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                var now = DateTime.UtcNow;
+                var config = _configService.Config;
+
+                // Heartbeat
+                if ((now - _lastHeartbeat).TotalSeconds >= config.HeartbeatInterval)
+                {
+                    await SendHeartbeatAsync();
+                    _lastHeartbeat = now;
+                }
+
+                // Command polling
+                if ((now - _lastCommandPoll).TotalSeconds >= config.CommandPollInterval)
+                {
+                    await PollAndExecuteCommandsAsync();
+                    _lastCommandPoll = now;
+                }
+
+                // Full telemetry
+                if ((now - _lastTelemetry).TotalSeconds >= config.TelemetryInterval)
+                {
+                    await SendTelemetryAsync();
+                    _lastTelemetry = now;
+                }
+
+                // Sleep for a bit before next loop
+                await Task.Delay(5000, stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in agent loop");
+                await Task.Delay(10000, stoppingToken); // Backoff on error
+            }
+        }
+
+        _logger.LogInformation("Vanguard Agent stopped.");
+    }
+
+    private async Task EnsureRegisteredAsync()
+    {
+        var config = _configService.Config;
+
+        if (!string.IsNullOrEmpty(config.DeviceId))
+        {
+            _logger.LogInformation("Device already registered: {DeviceId}", config.DeviceId);
+            _isRegistered = true;
+            return;
+        }
+
+        _logger.LogInformation("Registering device...");
+
+        var deviceInfo = _telemetry.CollectDeviceInfo();
+        var response = await _api.RegisterDeviceAsync(deviceInfo);
+
+        if (response?.Success == true && !string.IsNullOrEmpty(response.DeviceId))
+        {
+            _configService.SetDeviceId(response.DeviceId);
+            _logger.LogInformation("Device registered successfully: {DeviceId}", response.DeviceId);
+            _isRegistered = true;
+        }
+        else
+        {
+            _logger.LogWarning("Device registration failed. Will retry on next startup.");
+        }
+    }
+
+    private async Task SendHeartbeatAsync()
+    {
+        try
+        {
+            var heartbeat = _telemetry.CollectHeartbeat();
+            var success = await _api.SendHeartbeatAsync(heartbeat);
+
+            if (success)
+            {
+                _logger.LogDebug("Heartbeat sent: CPU={Cpu}%, RAM={Ram}%", heartbeat.CpuPercent, heartbeat.MemoryPercent);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send heartbeat");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending heartbeat");
+        }
+    }
+
+    private async Task SendTelemetryAsync()
+    {
+        try
+        {
+            var telemetry = _telemetry.CollectTelemetry();
+            var success = await _api.SendTelemetryAsync(telemetry);
+
+            if (success)
+            {
+                _logger.LogInformation("Telemetry sent: {Processes} processes, {Services} services",
+                    telemetry.Processes?.Count ?? 0, telemetry.Services?.Count ?? 0);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send telemetry");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending telemetry");
+        }
+    }
+
+    private async Task PollAndExecuteCommandsAsync()
+    {
+        try
+        {
+            var commands = await _api.PollCommandsAsync();
+
+            if (commands == null || commands.Count == 0) return;
+
+            _logger.LogInformation("Received {Count} command(s)", commands.Count);
+
+            foreach (var command in commands)
+            {
+                _logger.LogInformation("Executing command: {Type} - {Id}", command.CommandType, command.Id);
+
+                var result = await _commandExecutor.ExecuteAsync(command);
+                await _api.ReportCommandResultAsync(command.Id, result);
+
+                if (result.Success)
+                {
+                    _logger.LogInformation("Command {Id} completed successfully", command.Id);
+                }
+                else
+                {
+                    _logger.LogWarning("Command {Id} failed: {Error}", command.Id, result.Stderr);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error polling/executing commands");
+        }
+    }
+}
