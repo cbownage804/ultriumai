@@ -80,6 +80,7 @@ const VanguardAIAnalytics = lazy(() => import('@/pages/vanguard/VanguardAIAnalyt
 // New module pages
 const VanguardCortexHub = lazy(() => import('@/pages/vanguard/VanguardCortexHub'));
 const VanguardMSPBilling = lazy(() => import('@/pages/vanguard/VanguardMSPBilling'));
+const VanguardSentinel = lazy(() => import('@/pages/vanguard/VanguardSentinel'));
 const VanguardAICommandCenter = lazy(() => import('@/pages/vanguard/VanguardAICommandCenter'));
 
 // Loading component for lazy-loaded pages
@@ -173,6 +174,8 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-cortex" path="cortex" element={<LazyProtectedPage component={VanguardCortexHub} />} />,
   // MSP Billing Dashboard
   <Route key="vanguard-msp-billing" path="msp-billing" element={<LazyProtectedPage component={VanguardMSPBilling} />} />,
+  // Sentinel M365 Security Monitoring
+  <Route key="vanguard-sentinel" path="sentinel" element={<LazyProtectedPage component={VanguardSentinel} />} />,
   // Recon Product routes (public - no auth required for purchasing)
   <Route key="vanguard-recon" path="recon" element={<LazyPage component={ReconProductPage} />} />,
   <Route key="vanguard-recon-checkout" path="recon/checkout" element={<LazyPage component={ReconCheckoutPage} />} />,

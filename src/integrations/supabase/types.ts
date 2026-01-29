@@ -20005,6 +20005,259 @@ export type Database = {
           },
         ]
       }
+      vanguard_m365_mfa_status: {
+        Row: {
+          admin_roles: string[] | null
+          created_at: string
+          days_since_last_signin: number | null
+          default_mfa_method: string | null
+          display_name: string | null
+          id: string
+          is_admin: boolean | null
+          last_sign_in_at: string | null
+          m365_user_id: string
+          mfa_enabled: boolean | null
+          mfa_methods: string[] | null
+          snapshot_date: string | null
+          tenant_id: string | null
+          user_id: string
+          user_principal_name: string
+        }
+        Insert: {
+          admin_roles?: string[] | null
+          created_at?: string
+          days_since_last_signin?: number | null
+          default_mfa_method?: string | null
+          display_name?: string | null
+          id?: string
+          is_admin?: boolean | null
+          last_sign_in_at?: string | null
+          m365_user_id: string
+          mfa_enabled?: boolean | null
+          mfa_methods?: string[] | null
+          snapshot_date?: string | null
+          tenant_id?: string | null
+          user_id: string
+          user_principal_name: string
+        }
+        Update: {
+          admin_roles?: string[] | null
+          created_at?: string
+          days_since_last_signin?: number | null
+          default_mfa_method?: string | null
+          display_name?: string | null
+          id?: string
+          is_admin?: boolean | null
+          last_sign_in_at?: string | null
+          m365_user_id?: string
+          mfa_enabled?: boolean | null
+          mfa_methods?: string[] | null
+          snapshot_date?: string | null
+          tenant_id?: string | null
+          user_id?: string
+          user_principal_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_m365_mfa_status_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_m365_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_m365_security_events: {
+        Row: {
+          affected_user_email: string | null
+          affected_user_id: string | null
+          affected_user_name: string | null
+          ai_analysis_id: string | null
+          client_id: string | null
+          created_at: string
+          description: string | null
+          detected_at: string | null
+          device_info: Json | null
+          event_details: Json | null
+          event_id: string | null
+          event_timestamp: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          is_processed: boolean | null
+          location_city: string | null
+          location_country: string | null
+          processed_at: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          risk_level: string | null
+          risk_state: string | null
+          severity: string | null
+          status: string | null
+          tenant_id: string | null
+          ticket_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          affected_user_email?: string | null
+          affected_user_id?: string | null
+          affected_user_name?: string | null
+          ai_analysis_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          detected_at?: string | null
+          device_info?: Json | null
+          event_details?: Json | null
+          event_id?: string | null
+          event_timestamp: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          is_processed?: boolean | null
+          location_city?: string | null
+          location_country?: string | null
+          processed_at?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          risk_level?: string | null
+          risk_state?: string | null
+          severity?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          ticket_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          affected_user_email?: string | null
+          affected_user_id?: string | null
+          affected_user_name?: string | null
+          ai_analysis_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          detected_at?: string | null
+          device_info?: Json | null
+          event_details?: Json | null
+          event_id?: string | null
+          event_timestamp?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          is_processed?: boolean | null
+          location_city?: string | null
+          location_country?: string | null
+          processed_at?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          risk_level?: string | null
+          risk_state?: string | null
+          severity?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          ticket_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_m365_security_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vanguard_m365_security_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_m365_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_m365_tenants: {
+        Row: {
+          access_token: string | null
+          client_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          monitor_conditional_access: boolean | null
+          monitor_mailbox_rules: boolean | null
+          monitor_mfa_status: boolean | null
+          monitor_risky_signins: boolean | null
+          permissions_granted: string[] | null
+          refresh_token: string | null
+          sync_error: string | null
+          sync_status: string | null
+          tenant_domain: string | null
+          tenant_id: string
+          tenant_name: string
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          monitor_conditional_access?: boolean | null
+          monitor_mailbox_rules?: boolean | null
+          monitor_mfa_status?: boolean | null
+          monitor_risky_signins?: boolean | null
+          permissions_granted?: string[] | null
+          refresh_token?: string | null
+          sync_error?: string | null
+          sync_status?: string | null
+          tenant_domain?: string | null
+          tenant_id: string
+          tenant_name: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          monitor_conditional_access?: boolean | null
+          monitor_mailbox_rules?: boolean | null
+          monitor_mfa_status?: boolean | null
+          monitor_risky_signins?: boolean | null
+          permissions_granted?: string[] | null
+          refresh_token?: string | null
+          sync_error?: string | null
+          sync_status?: string | null
+          tenant_domain?: string | null
+          tenant_id?: string
+          tenant_name?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_m365_tenants_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vanguard_mesh_agents: {
         Row: {
           agent_id: string
@@ -20714,6 +20967,158 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_sentinel_ai_analysis: {
+        Row: {
+          ai_decision: string | null
+          ai_reasoning: string | null
+          analyzed_at: string | null
+          attack_vector: string | null
+          auto_ticket_created: boolean | null
+          confidence_score: number | null
+          event_id: string | null
+          human_decision: string | null
+          human_notes: string | null
+          human_override: boolean | null
+          id: string
+          is_pattern_match: boolean | null
+          pattern_id: string | null
+          pattern_name: string | null
+          processing_time_ms: number | null
+          recommended_action: string | null
+          related_events: string[] | null
+          remediation_steps: string[] | null
+          risk_score: number | null
+          threat_category: string | null
+          ticket_id: string | null
+          tokens_used: number | null
+          user_id: string
+        }
+        Insert: {
+          ai_decision?: string | null
+          ai_reasoning?: string | null
+          analyzed_at?: string | null
+          attack_vector?: string | null
+          auto_ticket_created?: boolean | null
+          confidence_score?: number | null
+          event_id?: string | null
+          human_decision?: string | null
+          human_notes?: string | null
+          human_override?: boolean | null
+          id?: string
+          is_pattern_match?: boolean | null
+          pattern_id?: string | null
+          pattern_name?: string | null
+          processing_time_ms?: number | null
+          recommended_action?: string | null
+          related_events?: string[] | null
+          remediation_steps?: string[] | null
+          risk_score?: number | null
+          threat_category?: string | null
+          ticket_id?: string | null
+          tokens_used?: number | null
+          user_id: string
+        }
+        Update: {
+          ai_decision?: string | null
+          ai_reasoning?: string | null
+          analyzed_at?: string | null
+          attack_vector?: string | null
+          auto_ticket_created?: boolean | null
+          confidence_score?: number | null
+          event_id?: string | null
+          human_decision?: string | null
+          human_notes?: string | null
+          human_override?: boolean | null
+          id?: string
+          is_pattern_match?: boolean | null
+          pattern_id?: string | null
+          pattern_name?: string | null
+          processing_time_ms?: number | null
+          recommended_action?: string | null
+          related_events?: string[] | null
+          remediation_steps?: string[] | null
+          risk_score?: number | null
+          threat_category?: string | null
+          ticket_id?: string | null
+          tokens_used?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_sentinel_ai_analysis_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_m365_security_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_sentinel_rules: {
+        Row: {
+          ai_auto_dismiss_below: number | null
+          auto_create_ticket: boolean | null
+          block_user: boolean | null
+          created_at: string
+          description: string | null
+          event_types: string[] | null
+          id: string
+          is_active: boolean | null
+          last_triggered_at: string | null
+          notify_email: boolean | null
+          notify_slack: boolean | null
+          require_mfa_reset: boolean | null
+          risk_score_threshold: number | null
+          rule_name: string
+          severity_threshold: string | null
+          times_triggered: number | null
+          updated_at: string
+          use_ai_triage: boolean | null
+          user_id: string
+        }
+        Insert: {
+          ai_auto_dismiss_below?: number | null
+          auto_create_ticket?: boolean | null
+          block_user?: boolean | null
+          created_at?: string
+          description?: string | null
+          event_types?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          notify_email?: boolean | null
+          notify_slack?: boolean | null
+          require_mfa_reset?: boolean | null
+          risk_score_threshold?: number | null
+          rule_name: string
+          severity_threshold?: string | null
+          times_triggered?: number | null
+          updated_at?: string
+          use_ai_triage?: boolean | null
+          user_id: string
+        }
+        Update: {
+          ai_auto_dismiss_below?: number | null
+          auto_create_ticket?: boolean | null
+          block_user?: boolean | null
+          created_at?: string
+          description?: string | null
+          event_types?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          notify_email?: boolean | null
+          notify_slack?: boolean | null
+          require_mfa_reset?: boolean | null
+          risk_score_threshold?: number | null
+          rule_name?: string
+          severity_threshold?: string | null
+          times_triggered?: number | null
+          updated_at?: string
+          use_ai_triage?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
       }
       vanguard_service_tickets: {
         Row: {

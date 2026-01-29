@@ -77,6 +77,7 @@ export function VanguardNavigation() {
       tooltip: 'Actively detects, analyzes, and prioritizes security threats in real time.',
       items: [
         { title: 'Alerts', path: `${basePath}/alerts`, icon: Bell },
+        { title: 'Sentinel (M365)', path: `${basePath}/sentinel`, icon: Shield, badge: 'NEW' },
         { title: 'Threats', path: `${basePath}/threats`, icon: Target },
         { title: 'SOC', path: `${basePath}/soc`, icon: Activity },
       ]
