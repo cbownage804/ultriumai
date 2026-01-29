@@ -73,7 +73,7 @@ const Index = () => {
 
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background safe-area-inset-bottom">
       <OrganizationSchema />
       <ServiceSchema services={services} />
       <FAQSchema faqs={mainFAQs} />
@@ -81,7 +81,7 @@ const Index = () => {
       <Navigation />
       
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-20">
+      <section className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center justify-center overflow-hidden pt-16 sm:pt-20">
         {/* Background Image */}
         <div className="absolute inset-0">
           <img 
@@ -94,51 +94,51 @@ const Index = () => {
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 animate-fade-in">
+          <div className="space-y-6 sm:space-y-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 fade-slide-in">
               <Brain className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">AI Development Agency</span>
             </div>
             
-            <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight animate-slide-up px-2">
+            <h1 className="text-fluid-hero font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight fade-slide-in stagger-1 px-2">
               We Build Custom AI Solutions for Business
             </h1>
             
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed animate-fade-in px-2">
+            <p className="text-fluid-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed fade-slide-in stagger-2 px-4">
               From intelligent GPTs to enterprise security platforms—UltriumAI creates AI tools that work the way your business works. Built for Business. Secure by Design.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center animate-fade-in flex-wrap px-2">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center fade-slide-in stagger-3 px-4">
               <Link to="/products/ai-studio" className="w-full sm:w-auto">
-                <Button size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-6 sm:py-10 h-auto bg-black border-2 border-primary/50 hover:bg-black/80 hover:border-primary shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex flex-col items-center gap-3 sm:gap-4 w-full">
-                  <div className="h-16 w-16 sm:h-28 sm:w-28 rounded-xl sm:rounded-2xl bg-black p-1 sm:p-2 flex items-center justify-center overflow-hidden">
+                <Button size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-10 h-auto bg-black border-2 border-primary/50 hover:bg-black/80 hover:border-primary shadow-lg hover:shadow-xl transition-all duration-300 hover-lift flex flex-col items-center gap-3 sm:gap-4 w-full touch-target tap-scale">
+                  <div className="h-14 w-14 sm:h-28 sm:w-28 rounded-xl sm:rounded-2xl bg-black p-1 sm:p-2 flex items-center justify-center overflow-hidden">
                     <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain scale-125" />
                   </div>
-                  <span className="text-lg sm:text-xl font-semibold">Explore AI Studio</span>
+                  <span className="text-base sm:text-xl font-semibold">Explore AI Studio</span>
                 </Button>
               </Link>
               <Link to="/products/vanguard" className="w-full sm:w-auto">
                 <Button 
                   variant="outline" 
                   size="lg" 
-                  className="text-base sm:text-lg px-6 sm:px-10 py-6 sm:py-10 h-auto bg-black border-2 border-muted-foreground/30 hover:bg-black/80 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105 flex flex-col items-center gap-3 sm:gap-4 w-full"
+                  className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-10 h-auto bg-black border-2 border-muted-foreground/30 hover:bg-black/80 hover:border-cyan-500/50 transition-all duration-300 hover-lift flex flex-col items-center gap-3 sm:gap-4 w-full touch-target tap-scale"
                 >
-                  <div className="h-16 w-16 sm:h-28 sm:w-28 rounded-xl sm:rounded-2xl bg-black p-1 sm:p-2 flex items-center justify-center overflow-hidden">
+                  <div className="h-14 w-14 sm:h-28 sm:w-28 rounded-xl sm:rounded-2xl bg-black p-1 sm:p-2 flex items-center justify-center overflow-hidden">
                     <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
                   </div>
-                  <span className="text-lg sm:text-xl font-semibold">Explore Vanguard</span>
+                  <span className="text-base sm:text-xl font-semibold">Explore Vanguard</span>
                 </Button>
               </Link>
               <Link to="/products/safesuite" className="w-full sm:w-auto">
                 <Button 
                   variant="outline" 
                   size="lg" 
-                  className="text-base sm:text-lg px-6 sm:px-10 py-6 sm:py-10 h-auto bg-black border-2 border-emerald-500/50 hover:bg-black/80 hover:border-emerald-500 transition-all duration-300 hover:scale-105 flex flex-col items-center gap-3 sm:gap-4 w-full"
+                  className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-10 h-auto bg-black border-2 border-emerald-500/50 hover:bg-black/80 hover:border-emerald-500 transition-all duration-300 hover-lift flex flex-col items-center gap-3 sm:gap-4 w-full touch-target tap-scale"
                 >
-                  <div className="h-16 w-16 sm:h-28 sm:w-28 rounded-xl sm:rounded-2xl bg-black p-1 sm:p-2 flex items-center justify-center overflow-hidden">
+                  <div className="h-14 w-14 sm:h-28 sm:w-28 rounded-xl sm:rounded-2xl bg-black p-1 sm:p-2 flex items-center justify-center overflow-hidden">
                     <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain scale-125" />
                   </div>
-                  <span className="text-lg sm:text-xl font-semibold">Try SafeSuite</span>
+                  <span className="text-base sm:text-xl font-semibold">Try SafeSuite</span>
                 </Button>
               </Link>
             </div>
@@ -150,49 +150,49 @@ const Index = () => {
       <SocialProof variant="full" className="bg-muted/30" />
 
       {/* Flagship Products Section */}
-      <section className="py-20 px-4">
+      <section className="py-12 sm:py-20 px-4">
         <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Flagship Products</h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">Our Flagship Products</h2>
+            <p className="text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto px-2">
               Three powerful platforms designed for different needs—all built with security at the core
             </p>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 max-w-7xl mx-auto">
             {/* AI Studio Card */}
-            <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <CardHeader className="pb-4">
-                <div className="w-32 h-32 rounded-xl overflow-hidden mb-4 bg-black p-4">
+            <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 hover:shadow-xl hover-lift transition-all duration-300">
+              <CardHeader className="pb-4 px-4 sm:px-6">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl overflow-hidden mb-3 sm:mb-4 bg-black p-3 sm:p-4">
                   <img src={ultriumGPTLogo} alt="AI Studio" className="w-full h-full object-contain" />
                 </div>
-                <CardTitle className="text-2xl">AI Studio™</CardTitle>
-                <CardDescription className="text-base">Custom GPT Builder Platform</CardDescription>
+                <CardTitle className="text-xl sm:text-2xl">AI Studio™</CardTitle>
+                <CardDescription className="text-sm sm:text-base">Custom GPT Builder Platform</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <p className="text-muted-foreground">
+              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
+                <p className="text-sm sm:text-base text-muted-foreground">
                   Build intelligent AI assistants in minutes. Upload your knowledge, train your GPT, deploy anywhere.
                 </p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                    <span className="text-sm">No-code GPT builder</span>
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">No-code GPT builder</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                    <span className="text-sm">Knowledge training & RAG</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">Knowledge training & RAG</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                    <span className="text-sm">White-label ready</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">White-label ready</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                    <span className="text-sm">Full API access</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">Full API access</span>
                   </div>
                 </div>
                 <Link to="/ai-studio">
-                  <Button className="w-full" size="lg">
+                  <Button className="w-full h-11 sm:h-10 touch-target tap-scale" size="lg">
                     Start Building <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -200,42 +200,42 @@ const Index = () => {
             </Card>
 
             {/* Vanguard Card - Featured */}
-            <Card className="border-2 border-cyan-500/30 bg-gradient-to-br from-[#0a0a0f] to-purple-900/20 hover:shadow-xl hover:shadow-cyan-500/20 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+            <Card className="border-2 border-cyan-500/30 bg-gradient-to-br from-[#0a0a0f] to-purple-900/20 hover:shadow-xl hover:shadow-cyan-500/20 hover-lift transition-all duration-300 relative overflow-hidden">
               <div className="absolute top-0 right-0 bg-gradient-to-r from-cyan-500 to-purple-600 text-white text-xs px-3 py-1 rounded-bl-lg font-medium">
                 v4.0 Enterprise Plus
               </div>
-              <CardHeader className="pb-4">
-                <div className="w-32 h-32 rounded-xl overflow-hidden mb-4 bg-black p-4">
+              <CardHeader className="pb-4 px-4 sm:px-6">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl overflow-hidden mb-3 sm:mb-4 bg-black p-3 sm:p-4">
                   <img src={vanguardLogo} alt="Vanguard" className="w-full h-full object-contain" />
                 </div>
-                <CardTitle className="text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Vanguard™</CardTitle>
-                <CardDescription className="text-base">All-in-One Security AI Platform</CardDescription>
+                <CardTitle className="text-xl sm:text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Vanguard™</CardTitle>
+                <CardDescription className="text-sm sm:text-base">All-in-One Security AI Platform</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <p className="text-muted-foreground">
+              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
+                <p className="text-sm sm:text-base text-muted-foreground">
                   Complete security operations with AI copilot. Now with honeypots, traffic analysis, continuous monitoring & agent mesh.
                 </p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-cyan-500 flex-shrink-0" />
-                    <span className="text-sm">XDR/EDR & Threat Detection</span>
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-500 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">XDR/EDR & Threat Detection</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-cyan-500 flex-shrink-0" />
-                    <span className="text-sm">Honeypots & Deception Technology</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-500 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">Honeypots & Deception Technology</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-cyan-500 flex-shrink-0" />
-                    <span className="text-sm">Traffic Analysis & DNS Tunneling</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-500 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">Traffic Analysis & DNS Tunneling</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-cyan-500 flex-shrink-0" />
-                    <span className="text-sm">AI Security Copilot & Playbooks</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-500 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">AI Security Copilot & Playbooks</span>
                   </div>
                 </div>
                 <Link to="/products/vanguard" className="w-full">
                   <Button 
-                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0" 
+                    className="w-full h-11 sm:h-10 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0 touch-target tap-scale" 
                     size="lg"
                   >
                     Explore Vanguard <ArrowRight className="ml-2 h-4 w-4" />
@@ -245,42 +245,42 @@ const Index = () => {
             </Card>
 
             {/* SafeSuite Card */}
-            <Card className="border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-emerald-900/10 hover:shadow-xl hover:shadow-emerald-500/20 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+            <Card className="border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-emerald-900/10 hover:shadow-xl hover:shadow-emerald-500/20 hover-lift transition-all duration-300 relative overflow-hidden md:col-span-2 lg:col-span-1">
               <div className="absolute top-0 right-0 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs px-3 py-1 rounded-bl-lg font-medium">
                 Consumer & SMB
               </div>
-              <CardHeader className="pb-4">
-                <div className="w-32 h-32 rounded-xl overflow-hidden mb-4 bg-black p-4">
+              <CardHeader className="pb-4 px-4 sm:px-6">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl overflow-hidden mb-3 sm:mb-4 bg-black p-3 sm:p-4">
                   <img src={safesuiteLogo} alt="SafeSuite" className="w-full h-full object-contain" />
                 </div>
-                <CardTitle className="text-2xl bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">SafeSuite™</CardTitle>
-                <CardDescription className="text-base">Complete Personal Security</CardDescription>
+                <CardTitle className="text-xl sm:text-2xl bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">SafeSuite™</CardTitle>
+                <CardDescription className="text-sm sm:text-base">Complete Personal Security</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <p className="text-muted-foreground">
+              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
+                <p className="text-sm sm:text-base text-muted-foreground">
                   All-in-one security for individuals and small teams. Password manager, threat scanning, dark web monitoring & more.
                 </p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
-                    <span className="text-sm">SafePass Password Manager</span>
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-500 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">SafePass Password Manager</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
-                    <span className="text-sm">SafeScan Threat Detection</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-500 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">SafeScan Threat Detection</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
-                    <span className="text-sm">SafeWeb Dark Web Monitoring</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-500 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">SafeWeb Dark Web Monitoring</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
-                    <span className="text-sm">SafeTrack Asset Management</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-500 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">SafeTrack Asset Management</span>
                   </div>
                 </div>
                 <Link to="/products/safesuite" className="w-full">
                   <Button 
-                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white border-0" 
+                    className="w-full h-11 sm:h-10 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white border-0 touch-target tap-scale" 
                     size="lg"
                   >
                     Try SafeSuite <ArrowRight className="ml-2 h-4 w-4" />

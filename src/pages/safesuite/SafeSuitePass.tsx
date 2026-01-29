@@ -94,19 +94,19 @@ export default function SafeSuitePass() {
     <MFAEnforcementGate featureName="the Password Vault">
     <FeatureGate feature="safepass">
       <div 
-        className="min-h-screen space-y-6 p-6 -m-6 relative"
+        className="min-h-screen space-y-4 sm:space-y-6 p-4 sm:p-6 -m-4 sm:-m-6 relative safe-area-inset-bottom"
         style={{
           backgroundImage: `url(${heroSafepassBg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
+          backgroundAttachment: 'scroll'
         }}
       >
         {/* Dark overlay for readability */}
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
         
         {/* Content wrapper */}
-        <div className="relative z-10 space-y-6">
+        <div className="relative z-10 space-y-4 sm:space-y-6">
         <AnimatePresence>
           {showExtensionBanner && (
             <motion.div
@@ -146,18 +146,18 @@ export default function SafeSuitePass() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="max-w-md mx-auto py-12"
+              className="max-w-md mx-auto py-6 sm:py-12 px-2 sm:px-0"
             >
-              <GlowContainer theme="safepass" className="p-8">
+              <GlowContainer theme="safepass" className="p-4 sm:p-8">
                 {/* SafePass Logo - Horizontal Layout */}
                 <motion.div 
-                  className="mx-auto mb-6 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border border-amber-500/30 flex items-center justify-center px-8 py-4"
+                  className="mx-auto mb-4 sm:mb-6 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border border-amber-500/30 flex items-center justify-center px-4 sm:px-8 py-3 sm:py-4"
                   animate={{ 
                     boxShadow: ['0 0 20px rgba(245,158,11,0.2)', '0 0 40px rgba(245,158,11,0.3)', '0 0 20px rgba(245,158,11,0.2)']
                   }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  <img src={safepassLogo} alt="SafePass" className="h-12 w-auto object-contain" />
+                  <img src={safepassLogo} alt="SafePass" className="h-10 sm:h-12 w-auto object-contain" />
                 </motion.div>
                 
                 <MasterPasswordSetup

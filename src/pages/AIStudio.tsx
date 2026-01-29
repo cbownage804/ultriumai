@@ -159,11 +159,11 @@ const AIStudio = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background safe-area-inset-bottom">
       <Navigation />
       
       {/* Hero Section */}
-      <section className="relative pt-20 pb-20 overflow-hidden">
+      <section className="relative pt-16 sm:pt-20 pb-12 sm:pb-20 overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0">
           <img 
@@ -176,26 +176,26 @@ const AIStudio = () => {
         </div>
         
         {/* Decorative elements */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-500/15 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-1/4 left-1/4 w-48 sm:w-96 h-48 sm:h-96 bg-primary/20 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-40 sm:w-80 h-40 sm:h-80 bg-violet-500/15 rounded-full blur-[60px] sm:blur-[100px] pointer-events-none" />
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-10">
-            <div className="space-y-8">
+          <div className="text-center space-y-6 sm:space-y-10">
+            <div className="space-y-6 sm:space-y-8">
               {/* Logo */}
               <div className="flex justify-center">
                 <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-violet-500 rounded-3xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity" />
-                  <div className="relative px-8 py-6 sm:px-14 sm:py-8 bg-black rounded-2xl shadow-2xl shadow-primary/30">
-                    <img src={ultriumGPTLogo} alt="AI Studio" className="h-20 sm:h-24 md:h-32 w-auto object-contain" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-violet-500 rounded-2xl sm:rounded-3xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity" />
+                  <div className="relative px-6 py-4 sm:px-14 sm:py-8 bg-black rounded-xl sm:rounded-2xl shadow-2xl shadow-primary/30">
+                    <img src={ultriumGPTLogo} alt="AI Studio" className="h-16 sm:h-24 md:h-32 w-auto object-contain" />
                   </div>
                 </div>
               </div>
               
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-muted-foreground">
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-muted-foreground px-2">
                 Custom GPT Builder Platform
               </h2>
-              <p className="text-lg sm:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed px-4">
+              <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed px-4">
                 Build intelligent AI assistants in minutes, not months. Deploy custom GPTs trained on YOUR data, 
                 YOUR processes, YOUR way—whether you're an MSP scaling services or a business automating operations.
               </p>
@@ -215,21 +215,21 @@ const AIStudio = () => {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap px-2">
-              <Button size="lg" className="text-lg px-10 py-7 h-auto bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300" onClick={() => window.location.href = '/ultrium-gpt'}>
-                <Play className="mr-2 h-5 w-5" />
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center flex-wrap px-4">
+              <Button size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 h-auto bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 touch-target tap-scale" onClick={() => window.location.href = '/ultrium-gpt'}>
+                <Play className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                 Launch AI Studio
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-10 py-7 h-auto border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
-                <Play className="mr-2 h-5 w-5" />
+              <Button variant="outline" size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 h-auto border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 touch-target tap-scale" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
+                <Play className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                 View Demo
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-10 py-7 h-auto border-border/50 hover:border-violet-500/50 hover:bg-violet-500/5 transition-all duration-300" onClick={() => window.location.href = '/docs/ai-studio'}>
-                <BookOpen className="mr-2 h-5 w-5" />
+              <Button variant="outline" size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 h-auto border-border/50 hover:border-violet-500/50 hover:bg-violet-500/5 transition-all duration-300 touch-target tap-scale" onClick={() => window.location.href = '/docs/ai-studio'}>
+                <BookOpen className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                 Documentation
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-10 py-7 h-auto border-border/50 hover:border-violet-500/50 hover:bg-violet-500/5 transition-all duration-300" onClick={() => window.location.href = '/contact'}>
-                <Calendar className="mr-2 h-5 w-5" />
+              <Button variant="outline" size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 h-auto border-border/50 hover:border-violet-500/50 hover:bg-violet-500/5 transition-all duration-300 touch-target tap-scale" onClick={() => window.location.href = '/contact'}>
+                <Calendar className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                 Schedule Consultation
               </Button>
             </div>
@@ -238,34 +238,34 @@ const AIStudio = () => {
       </section>
 
       {/* Creation Paths Section */}
-      <section className="py-24 relative">
+      <section className="py-12 sm:py-24 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-muted/20 via-transparent to-muted/20 pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 mb-6">
+          <div className="text-center mb-10 sm:mb-20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 mb-4 sm:mb-6">
               <Zap className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">Choose Your Path</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 text-foreground">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-foreground px-2">
               Choose Your GPT Creation Path
             </h2>
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto px-2">
+            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
               Two distinct approaches to get you the custom GPT your business needs—both designed to deliver professional, 
               security-focused results that integrate seamlessly with your operations.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-12">
             {creationPaths.map((path, index) => {
               const Icon = path.icon;
               return (
-                <Card key={index} className={`hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 bg-gradient-to-br ${path.gradient} border-2 border-border/50 hover:border-primary/30 hover:-translate-y-2`}>
-                  <CardHeader className="text-center">
-                    <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center shadow-lg">
-                      <Icon className="h-8 w-8 text-primary" />
+                <Card key={index} className={`hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 bg-gradient-to-br ${path.gradient} border-2 border-border/50 hover:border-primary/30 hover-lift`}>
+                  <CardHeader className="text-center px-4 sm:px-6">
+                    <div className="mx-auto mb-3 sm:mb-4 w-12 h-12 sm:w-16 sm:h-16 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
+                      <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                     </div>
-                    <CardTitle className="text-2xl">{path.title}</CardTitle>
-                    <CardDescription className="text-lg font-semibold text-primary">
+                    <CardTitle className="text-xl sm:text-2xl">{path.title}</CardTitle>
+                    <CardDescription className="text-base sm:text-lg font-semibold text-primary">
                       {path.subtitle}
                     </CardDescription>
                     <p className="text-muted-foreground mt-2">

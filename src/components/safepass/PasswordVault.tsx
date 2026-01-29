@@ -481,81 +481,81 @@ export const PasswordVault = () => {
   const strongPasswords = entries.filter(entry => entry.password_strength >= 80).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Tabs Navigation */}
       <Tabs defaultValue="passwords" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid mb-6 bg-[#1a1a1a] border border-amber-500/10">
-          <TabsTrigger value="passwords" className="flex items-center gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
+        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid mb-4 sm:mb-6 bg-[#1a1a1a] border border-amber-500/10 h-auto p-1">
+          <TabsTrigger value="passwords" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500 touch-target py-2.5 sm:py-2">
             <Key className="h-4 w-4" />
-            <span className="hidden sm:inline">Passwords</span>
+            <span className="hidden sm:inline text-sm">Passwords</span>
           </TabsTrigger>
-          <TabsTrigger value="notes" className="flex items-center gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
+          <TabsTrigger value="notes" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500 touch-target py-2.5 sm:py-2">
             <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">Notes</span>
+            <span className="hidden sm:inline text-sm">Notes</span>
           </TabsTrigger>
-          <TabsTrigger value="cards" className="flex items-center gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
+          <TabsTrigger value="cards" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500 touch-target py-2.5 sm:py-2">
             <CreditCard className="h-4 w-4" />
-            <span className="hidden sm:inline">Cards</span>
+            <span className="hidden sm:inline text-sm">Cards</span>
           </TabsTrigger>
-          <TabsTrigger value="identity" className="flex items-center gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
+          <TabsTrigger value="identity" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500 touch-target py-2.5 sm:py-2">
             <User className="h-4 w-4" />
-            <span className="hidden sm:inline">Identity</span>
+            <span className="hidden sm:inline text-sm">Identity</span>
           </TabsTrigger>
-          <TabsTrigger value="2fa" className="flex items-center gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
+          <TabsTrigger value="2fa" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500 touch-target py-2.5 sm:py-2">
             <Lock className="h-4 w-4" />
-            <span className="hidden sm:inline">2FA</span>
+            <span className="hidden sm:inline text-sm">2FA</span>
           </TabsTrigger>
-          <TabsTrigger value="health" className="flex items-center gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
+          <TabsTrigger value="health" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500 touch-target py-2.5 sm:py-2">
             <Heart className="h-4 w-4" />
-            <span className="hidden sm:inline">Health</span>
+            <span className="hidden sm:inline text-sm">Health</span>
           </TabsTrigger>
         </TabsList>
 
         {/* Passwords Tab */}
-        <TabsContent value="passwords" className="space-y-6">
+        <TabsContent value="passwords" className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">Password Vault</h2>
-          <p className="text-gray-400">Securely store and manage your passwords</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-white">Password Vault</h2>
+          <p className="text-gray-400 text-sm sm:text-base">Securely store and manage your passwords</p>
         </div>
         
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => navigate('/safesuite/pass/import')} className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400">
-            <Upload className="w-4 h-4 mr-2" />
-            Import
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={() => navigate('/safesuite/pass/import')} className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400 h-10 sm:h-9 touch-target tap-scale flex-1 sm:flex-initial min-w-[100px]">
+            <Upload className="w-4 h-4 mr-1 sm:mr-2" />
+            <span className="text-sm">Import</span>
           </Button>
-          <Button variant="outline" onClick={() => navigate('/safesuite/pass/export')} className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400">
-            <Download className="w-4 h-4 mr-2" />
-            Export
+          <Button variant="outline" onClick={() => navigate('/safesuite/pass/export')} className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400 h-10 sm:h-9 touch-target tap-scale flex-1 sm:flex-initial min-w-[100px]">
+            <Download className="w-4 h-4 mr-1 sm:mr-2" />
+            <span className="text-sm">Export</span>
           </Button>
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-amber-500 hover:bg-amber-600 text-black">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Password
+              <Button className="bg-amber-500 hover:bg-amber-600 text-black h-10 sm:h-9 touch-target tap-scale flex-1 sm:flex-initial min-w-[140px]">
+                <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="text-sm">Add Password</span>
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-md border-amber-500/30">
+          <DialogContent className="max-w-md border-amber-500/30 mx-4 sm:mx-auto max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-amber-400">
+              <DialogTitle className="text-amber-400 text-lg sm:text-xl">
                 {editingEntry ? 'Edit Password Entry' : 'Add New Password'}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-sm">
                 Fill in the details for your password entry
               </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4">
               <div>
-                <Label htmlFor="title" className="text-amber-200/80">Title *</Label>
+                <Label htmlFor="title" className="text-amber-200/80 text-sm">Title *</Label>
                 <Input
                   id="title"
                   value={newEntry.title}
                   onChange={(e) => setNewEntry(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="e.g., Gmail Account"
-                  className="border-amber-500/30 focus:border-amber-500 focus:ring-amber-500/20"
+                  className="border-amber-500/30 focus:border-amber-500 focus:ring-amber-500/20 h-11 sm:h-10 text-base sm:text-sm"
                 />
               </div>
 
