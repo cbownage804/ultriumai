@@ -61,7 +61,7 @@ export function VanguardNavigation() {
     {
       header: 'VANGUARD HORIZON',
       description: 'Operational visibility & uptime',
-      tooltip: 'RMM, endpoint management, and availability monitoring',
+      tooltip: 'Operational visibility and health monitoring across all devices and environments.',
       items: [
         { title: 'Devices', path: `${basePath}/devices`, icon: Monitor },
         { title: 'Patches', path: `${basePath}/patches`, icon: Package },
@@ -70,7 +70,7 @@ export function VanguardNavigation() {
     {
       header: 'VANGUARD PURSUIT',
       description: 'Threat detection & intelligence',
-      tooltip: 'Security alerts, threat hunting, and SOC operations',
+      tooltip: 'Actively detects, analyzes, and prioritizes security threats in real time.',
       items: [
         { title: 'Alerts', path: `${basePath}/alerts`, icon: Bell },
         { title: 'Threats', path: `${basePath}/threats`, icon: Target },
@@ -80,7 +80,7 @@ export function VanguardNavigation() {
     {
       header: 'VANGUARD RESPONSE',
       description: 'Incident handling & remediation',
-      tooltip: 'Service desk, ticketing, and customer management',
+      tooltip: 'Manages incidents, tickets, and remediation workflows from detection to resolution.',
       items: [
         { title: 'Tickets', path: `${basePath}/tickets`, icon: Ticket },
         { title: 'Customers', path: `${basePath}/customers`, icon: Building2 },
@@ -89,7 +89,7 @@ export function VanguardNavigation() {
     {
       header: 'VANGUARD RECON',
       description: 'Asset discovery & mapping',
-      tooltip: 'Network discovery and infrastructure visualization',
+      tooltip: 'Discovers and maps devices, networks, and infrastructure for full environment awareness.',
       items: [
         { title: 'Network Discovery', path: `${basePath}/network`, icon: Network },
       ]
@@ -97,7 +97,7 @@ export function VanguardNavigation() {
     {
       header: 'VANGUARD ATLAS',
       description: 'Knowledge & documentation',
-      tooltip: 'Knowledge base, SOPs, and runbooks',
+      tooltip: 'Centralized knowledge, SOPs, and documentation to guide operations and response.',
       items: [
         { title: 'Knowledge Base', path: `${basePath}/knowledge`, icon: BookOpen },
       ]
@@ -105,7 +105,7 @@ export function VanguardNavigation() {
     {
       header: 'VANGUARD LEDGER',
       description: 'Compliance & reporting',
-      tooltip: 'Security reports, compliance frameworks, and analytics',
+      tooltip: 'Compliance-ready reporting, audit trails, and historical operational records.',
       items: [
         { title: 'Reports', path: `${basePath}/reports`, icon: BarChart3 },
       ]
@@ -113,7 +113,7 @@ export function VanguardNavigation() {
     {
       header: 'VANGUARD CORTEX',
       description: 'AI-powered operations',
-      tooltip: 'AI Copilot for intelligent automation and insights',
+      tooltip: 'AI-assisted insights and decision support across the Vanguard platform.',
       items: [
         { title: 'AI Dashboard', path: `${basePath}/ai-dashboard`, icon: Bot, badge: 'AI' },
         { title: 'KB Generator', path: `${basePath}/ai-knowledge`, icon: Wand2 },
