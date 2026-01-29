@@ -34,7 +34,7 @@ serve(async (req) => {
     console.log(`[vanguard-agent-api] Action: ${action}, Device: ${body.device_id || 'N/A'}`);
 
     // Agent-side actions (require X-VANGUARD-KEY)
-    if (['register', 'heartbeat', 'scan_results', 'get_commands', 'command_response', 'security_telemetry'].includes(action)) {
+    if (['register', 'heartbeat', 'scan_results', 'get_commands', 'command_response', 'security_telemetry', 'discovery_results', 'get_scanner_config'].includes(action)) {
       if (agentKey !== VANGUARD_SECRET) {
         console.error('[vanguard-agent-api] Invalid agent key');
         return new Response(
@@ -56,11 +56,15 @@ serve(async (req) => {
           return await handleCommandResponse(supabase, body);
         case 'security_telemetry':
           return await handleSecurityTelemetry(supabase, body);
+        case 'discovery_results':
+          return await handleDiscoveryResults(supabase, body);
+        case 'get_scanner_config':
+          return await getScannerConfig(supabase, body);
       }
     }
     
     // Dashboard-side actions (require JWT auth)
-    if (['ask', 'send_command', 'list_agents', 'get_metrics', 'delete_agent'].includes(action)) {
+    if (['ask', 'send_command', 'list_agents', 'get_metrics', 'delete_agent', 'set_scanner_role', 'list_scanners', 'list_discovered_devices'].includes(action)) {
       if (!authHeader) {
         return new Response(
           JSON.stringify({ error: 'Authorization required' }),
@@ -90,6 +94,12 @@ serve(async (req) => {
           return await getMetrics(supabase, user.id, body);
         case 'delete_agent':
           return await deleteAgent(supabase, user.id, body);
+        case 'set_scanner_role':
+          return await setScannerRole(supabase, user.id, body);
+        case 'list_scanners':
+          return await listScanners(supabase, user.id);
+        case 'list_discovered_devices':
+          return await listDiscoveredDevices(supabase, user.id, body);
       }
     }
     
@@ -853,6 +863,265 @@ function mapThreatStatus(statusId: number): string {
     case 6: return 'blocked';
     default: return 'unknown';
   }
+}
+
+// ============ NETWORK SCANNER HANDLERS ============
+
+// Get scanner configuration for an agent (called by agent)
+async function getScannerConfig(supabase: any, body: any) {
+  const { device_id } = body;
+  
+  if (!device_id) {
+    return new Response(
+      JSON.stringify({ error: 'device_id is required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  const { data: agent, error } = await supabase
+    .from('vanguard_agents')
+    .select('id, is_network_scanner, scanner_subnets, scan_interval_seconds, last_scan_at')
+    .eq('device_id', device_id)
+    .single();
+  
+  if (error || !agent) {
+    return new Response(
+      JSON.stringify({ error: 'Agent not found' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  return new Response(
+    JSON.stringify({
+      is_scanner: agent.is_network_scanner || false,
+      subnets: agent.scanner_subnets || [],
+      scan_interval: agent.scan_interval_seconds || 3600,
+      last_scan: agent.last_scan_at
+    }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+// Handle discovery results from a scanner agent
+async function handleDiscoveryResults(supabase: any, body: any) {
+  const { device_id, devices, scan_duration, subnet } = body;
+  
+  if (!device_id) {
+    return new Response(
+      JSON.stringify({ error: 'device_id is required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Get agent and verify it's a scanner
+  const { data: agent, error } = await supabase
+    .from('vanguard_agents')
+    .select('id, user_id, is_network_scanner')
+    .eq('device_id', device_id)
+    .single();
+  
+  if (error || !agent) {
+    return new Response(
+      JSON.stringify({ error: 'Agent not found' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  if (!agent.is_network_scanner) {
+    console.log(`[vanguard-agent-api] Non-scanner agent ${device_id} tried to submit discovery results`);
+    return new Response(
+      JSON.stringify({ error: 'Agent is not designated as network scanner' }),
+      { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Update last scan timestamp
+  await supabase
+    .from('vanguard_agents')
+    .update({ last_scan_at: new Date().toISOString() })
+    .eq('id', agent.id);
+  
+  // Process discovered devices
+  const discoveredDevices = devices || [];
+  let newDevices = 0;
+  let updatedDevices = 0;
+  
+  for (const device of discoveredDevices) {
+    const deviceRecord = {
+      user_id: agent.user_id,
+      scanner_agent_id: agent.id,
+      ip_address: device.ip_address,
+      mac_address: device.mac_address || null,
+      hostname: device.hostname || null,
+      device_type: device.device_type || 'unknown',
+      manufacturer: device.manufacturer || null,
+      os_info: device.os_info || null,
+      open_ports: device.open_ports || [],
+      services: device.services || {},
+      vulnerabilities: device.vulnerabilities || [],
+      risk_level: device.risk_level || 'unknown',
+      last_seen_at: new Date().toISOString(),
+      metadata: {
+        ...device.metadata,
+        scan_duration,
+        subnet,
+        scanned_by: device_id
+      }
+    };
+    
+    // Upsert - update if exists, insert if new
+    const { data: existing } = await supabase
+      .from('vanguard_discovered_devices')
+      .select('id')
+      .eq('user_id', agent.user_id)
+      .eq('ip_address', device.ip_address)
+      .maybeSingle();
+    
+    if (existing) {
+      await supabase
+        .from('vanguard_discovered_devices')
+        .update({
+          ...deviceRecord,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id);
+      updatedDevices++;
+    } else {
+      await supabase
+        .from('vanguard_discovered_devices')
+        .insert({
+          ...deviceRecord,
+          first_seen_at: new Date().toISOString()
+        });
+      newDevices++;
+    }
+  }
+  
+  console.log(`[vanguard-agent-api] Discovery from ${device_id}: ${newDevices} new, ${updatedDevices} updated devices`);
+  
+  return new Response(
+    JSON.stringify({
+      status: 'ok',
+      new_devices: newDevices,
+      updated_devices: updatedDevices,
+      total_processed: discoveredDevices.length
+    }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+// Set scanner role for an agent (called from dashboard)
+async function setScannerRole(supabase: any, userId: string, body: any) {
+  const { agent_id, is_scanner, subnets, scan_interval } = body;
+  
+  if (!agent_id) {
+    return new Response(
+      JSON.stringify({ error: 'agent_id is required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Verify agent belongs to user
+  const { data: agent, error } = await supabase
+    .from('vanguard_agents')
+    .select('id, name')
+    .eq('id', agent_id)
+    .eq('user_id', userId)
+    .single();
+  
+  if (error || !agent) {
+    return new Response(
+      JSON.stringify({ error: 'Agent not found' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  const updateData: any = {
+    is_network_scanner: is_scanner ?? false,
+    updated_at: new Date().toISOString()
+  };
+  
+  if (subnets !== undefined) {
+    updateData.scanner_subnets = subnets;
+  }
+  
+  if (scan_interval !== undefined) {
+    updateData.scan_interval_seconds = scan_interval;
+  }
+  
+  await supabase
+    .from('vanguard_agents')
+    .update(updateData)
+    .eq('id', agent_id);
+  
+  console.log(`[vanguard-agent-api] Scanner role ${is_scanner ? 'enabled' : 'disabled'} for agent ${agent.name}`);
+  
+  return new Response(
+    JSON.stringify({
+      status: 'ok',
+      agent_id,
+      is_scanner: is_scanner ?? false,
+      subnets: subnets || [],
+      scan_interval: scan_interval || 3600
+    }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+// List all scanner agents for a user
+async function listScanners(supabase: any, userId: string) {
+  const { data: scanners, error } = await supabase
+    .from('vanguard_agents')
+    .select('id, device_id, name, ip_address, status, is_network_scanner, scanner_subnets, scan_interval_seconds, last_scan_at, last_heartbeat')
+    .eq('user_id', userId)
+    .eq('is_network_scanner', true)
+    .order('name');
+  
+  if (error) {
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  return new Response(
+    JSON.stringify({ scanners: scanners || [] }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+// List discovered devices
+async function listDiscoveredDevices(supabase: any, userId: string, body: any) {
+  const { scanner_id, risk_level, limit = 100 } = body;
+  
+  let query = supabase
+    .from('vanguard_discovered_devices')
+    .select('*')
+    .eq('user_id', userId)
+    .order('last_seen_at', { ascending: false })
+    .limit(limit);
+  
+  if (scanner_id) {
+    query = query.eq('scanner_agent_id', scanner_id);
+  }
+  
+  if (risk_level) {
+    query = query.eq('risk_level', risk_level);
+  }
+  
+  const { data: devices, error } = await query;
+  
+  if (error) {
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  return new Response(
+    JSON.stringify({ devices: devices || [] }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
 }
 
 async function sendCommand(supabase: any, userId: string, body: any) {
