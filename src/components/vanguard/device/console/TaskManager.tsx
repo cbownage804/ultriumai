@@ -70,20 +70,12 @@ export function TaskManager({ agentId, sendCommand, currentMetrics }: TaskManage
       if (result?.processes) {
         setProcesses(result.processes);
       } else {
-        // Demo data
-        setProcesses([
-          { pid: 4, name: 'System', cpu: 0.1, memory: 0.5, memoryMB: 40, status: 'running', user: 'SYSTEM' },
-          { pid: 1234, name: 'explorer.exe', cpu: 2.3, memory: 1.8, memoryMB: 145, status: 'running', user: 'User' },
-          { pid: 2345, name: 'chrome.exe', cpu: 15.2, memory: 8.5, memoryMB: 680, status: 'running', user: 'User' },
-          { pid: 3456, name: 'MsMpEng.exe', cpu: 5.1, memory: 2.3, memoryMB: 184, status: 'running', user: 'SYSTEM' },
-          { pid: 4567, name: 'svchost.exe', cpu: 1.2, memory: 1.1, memoryMB: 88, status: 'running', user: 'SYSTEM' },
-          { pid: 5678, name: 'Code.exe', cpu: 8.4, memory: 5.2, memoryMB: 416, status: 'running', user: 'User' },
-          { pid: 6789, name: 'Teams.exe', cpu: 3.5, memory: 4.8, memoryMB: 384, status: 'running', user: 'User' },
-          { pid: 7890, name: 'Slack.exe', cpu: 2.1, memory: 3.2, memoryMB: 256, status: 'running', user: 'User' },
-        ]);
+        // No data from agent - show empty state
+        setProcesses([]);
       }
     } catch (err) {
       console.error('Failed to load processes');
+      setProcesses([]);
     } finally {
       setIsLoading(false);
     }

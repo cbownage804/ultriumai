@@ -61,20 +61,12 @@ export function ServiceManager({ agentId, sendCommand }: ServiceManagerProps) {
       if (result?.services) {
         setServices(result.services);
       } else {
-        // Demo data if no real data
-        setServices([
-          { name: 'wuauserv', displayName: 'Windows Update', status: 'running', startType: 'automatic', pid: 1234, description: 'Enables the detection, download, and installation of updates for Windows' },
-          { name: 'Spooler', displayName: 'Print Spooler', status: 'running', startType: 'automatic', pid: 2345, description: 'Loads files to memory for later printing' },
-          { name: 'BITS', displayName: 'Background Intelligent Transfer', status: 'stopped', startType: 'manual', description: 'Transfers files in the background using idle network bandwidth' },
-          { name: 'WinDefend', displayName: 'Windows Defender', status: 'running', startType: 'automatic', pid: 3456, description: 'Helps protect users from malware' },
-          { name: 'EventLog', displayName: 'Windows Event Log', status: 'running', startType: 'automatic', pid: 4567, description: 'Manages events and event logs' },
-          { name: 'Dnscache', displayName: 'DNS Client', status: 'running', startType: 'automatic', pid: 5678, description: 'Caches Domain Name System (DNS) names' },
-          { name: 'LanmanServer', displayName: 'Server', status: 'running', startType: 'automatic', pid: 6789, description: 'Supports file, print, and named-pipe sharing' },
-          { name: 'RemoteRegistry', displayName: 'Remote Registry', status: 'stopped', startType: 'disabled', description: 'Enables remote users to modify registry settings' },
-        ]);
+        // No data from agent - show empty state
+        setServices([]);
       }
     } catch (err) {
       toast.error('Failed to load services');
+      setServices([]);
     } finally {
       setIsLoading(false);
     }

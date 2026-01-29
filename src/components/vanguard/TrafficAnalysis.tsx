@@ -60,23 +60,9 @@ export function TrafficAnalysis() {
   const [flows, setFlows] = useState<TrafficFlow[]>([]);
   const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   
-  // Sample traffic data
-  const [trafficData] = useState([
-    { time: '00:00', inbound: 45, outbound: 32 },
-    { time: '04:00', inbound: 23, outbound: 18 },
-    { time: '08:00', inbound: 89, outbound: 67 },
-    { time: '12:00', inbound: 156, outbound: 123 },
-    { time: '16:00', inbound: 134, outbound: 98 },
-    { time: '20:00', inbound: 78, outbound: 56 },
-  ]);
-
-  const [protocolData] = useState([
-    { name: 'HTTPS', value: 45, color: '#3b82f6' },
-    { name: 'HTTP', value: 25, color: '#10b981' },
-    { name: 'DNS', value: 15, color: '#f59e0b' },
-    { name: 'SSH', value: 10, color: '#8b5cf6' },
-    { name: 'Other', value: 5, color: '#6b7280' },
-  ]);
+  // Real traffic data from database
+  const [trafficData, setTrafficData] = useState<Array<{ time: string; inbound: number; outbound: number }>>([]);
+  const [protocolData, setProtocolData] = useState<Array<{ name: string; value: number; color: string }>>([]);
 
   useEffect(() => {
     if (agents.length > 0 && !selectedAgent) {
@@ -396,25 +382,38 @@ export function TrafficAnalysis() {
               <CardDescription>Hosts with most network activity</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { ip: '192.168.1.100', bytes: 1245000000, percent: 35 },
-                  { ip: '192.168.1.50', bytes: 890000000, percent: 25 },
-                  { ip: '192.168.1.200', bytes: 534000000, percent: 15 },
-                  { ip: '192.168.1.75', bytes: 356000000, percent: 10 },
-                  { ip: '192.168.1.150', bytes: 178000000, percent: 5 },
-                ].map((host, i) => (
-                  <div key={i} className="flex items-center gap-4">
-                    <div className="w-32 font-mono text-sm">{host.ip}</div>
-                    <div className="flex-1">
-                      <Progress value={host.percent} className="h-2" />
-                    </div>
-                    <div className="w-24 text-right text-sm text-muted-foreground">
-                      {(host.bytes / 1024 / 1024 / 1024).toFixed(2)} GB
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {flows.length > 0 ? (
+                <div className="space-y-3">
+                  {/* Calculate top talkers from actual flows */}
+                  {Object.entries(
+                    flows.reduce((acc, flow) => {
+                      acc[flow.srcIp] = (acc[flow.srcIp] || 0) + flow.bytes;
+                      return acc;
+                    }, {} as Record<string, number>)
+                  )
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 5)
+                    .map(([ip, bytes], i) => {
+                      const totalBytes = flows.reduce((sum, f) => sum + f.bytes, 0);
+                      const percent = totalBytes > 0 ? (bytes / totalBytes) * 100 : 0;
+                      return (
+                        <div key={i} className="flex items-center gap-4">
+                          <div className="w-32 font-mono text-sm">{ip}</div>
+                          <div className="flex-1">
+                            <Progress value={percent} className="h-2" />
+                          </div>
+                          <div className="w-24 text-right text-sm text-muted-foreground">
+                            {(bytes / 1024 / 1024).toFixed(2)} MB
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Capture traffic to see top talkers</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
