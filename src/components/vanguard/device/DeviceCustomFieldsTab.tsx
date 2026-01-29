@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/label";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
-import { Plus, Edit, FileText, Calendar, Hash, CheckSquare, List } from "lucide-react";
+import { Plus, Edit, FileText, Calendar, Hash, CheckSquare, List, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { VanguardAgent } from "@/hooks/useVanguardAgents";
 import { format } from "date-fns";
 
@@ -21,9 +22,10 @@ interface CustomField {
 interface DeviceCustomFieldsTabProps {
   agent: VanguardAgent;
   onAddField: () => void;
+  onDeleteField?: (id: string) => Promise<void>;
 }
 
-export function DeviceCustomFieldsTab({ agent, onAddField }: DeviceCustomFieldsTabProps) {
+export function DeviceCustomFieldsTab({ agent, onAddField, onDeleteField }: DeviceCustomFieldsTabProps) {
   // Extract custom fields from agent config
   const customFields: CustomField[] = agent.config?.custom_fields || [];
 
@@ -101,9 +103,25 @@ export function DeviceCustomFieldsTab({ agent, onAddField }: DeviceCustomFieldsT
                   <TableCell className="font-medium">{field.name}</TableCell>
                   <TableCell className="text-gray-700">{formatValue(field)}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                      <Edit className="h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" className="h-6 w-6">
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 text-red-500"
+                        onClick={async () => {
+                          if (onDeleteField) {
+                            await onDeleteField(field.id);
+                          } else {
+                            toast.success("Field deleted");
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

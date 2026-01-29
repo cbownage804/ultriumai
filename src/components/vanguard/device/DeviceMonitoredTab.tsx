@@ -27,9 +27,10 @@ interface MonitoredDevice {
 interface DeviceMonitoredTabProps {
   agent: VanguardAgent;
   onAddDevice: () => void;
+  onDeleteDevice?: (id: string) => Promise<void>;
 }
 
-export function DeviceMonitoredTab({ agent, onAddDevice }: DeviceMonitoredTabProps) {
+export function DeviceMonitoredTab({ agent, onAddDevice, onDeleteDevice }: DeviceMonitoredTabProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Extract monitored devices from agent config
@@ -43,8 +44,12 @@ export function DeviceMonitoredTab({ agent, onAddDevice }: DeviceMonitoredTabPro
     toast.success("Device status refreshed");
   };
 
-  const handleDelete = (deviceId: string) => {
-    toast.success("Device removed from monitoring");
+  const handleDelete = async (deviceId: string) => {
+    if (onDeleteDevice) {
+      await onDeleteDevice(deviceId);
+    } else {
+      toast.success("Device removed from monitoring");
+    }
   };
 
   const getTypeIcon = (type: string) => {
