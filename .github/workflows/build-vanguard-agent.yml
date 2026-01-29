@@ -1,0 +1,174 @@
+# Vanguard Agent Build Pipeline
+# Auto-compiles Windows EXE agent from C# source
+name: Build Vanguard Agent
+
+on:
+  push:
+    paths:
+      - 'VanguardAgent/**'
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+      create_release:
+        description: 'Create GitHub Release'
+        type: boolean
+        default: true
+
+env:
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  build-windows:
+    name: Build Windows Agent
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Restore dependencies
+        run: dotnet restore VanguardAgent/VanguardAgent.csproj
+      
+      - name: Build & Publish (win-x64)
+        run: |
+          dotnet publish VanguardAgent/VanguardAgent.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            -o ./dist/win-x64
+      
+      - name: Build & Publish (win-arm64)
+        run: |
+          dotnet publish VanguardAgent/VanguardAgent.csproj `
+            -c Release `
+            -r win-arm64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            -o ./dist/win-arm64
+      
+      - name: Prepare release packages
+        run: |
+          # Create win-x64 package
+          New-Item -ItemType Directory -Path ./release -Force
+          Copy-Item ./dist/win-x64/VanguardAgent.exe ./release/VanguardAgent-win-x64.exe
+          
+          # Create win-arm64 package  
+          Copy-Item ./dist/win-arm64/VanguardAgent.exe ./release/VanguardAgent-win-arm64.exe
+          
+          # Create ZIP with installer scripts
+          $zipContent = @(
+            './dist/win-x64/VanguardAgent.exe'
+          )
+          
+          # Copy additional files for ZIP
+          Copy-Item VanguardAgent/config.json ./dist/win-x64/
+          Copy-Item VanguardAgent/README.md ./dist/win-x64/
+          
+          Compress-Archive -Path ./dist/win-x64/* -DestinationPath ./release/VanguardAgent-win-x64.zip -Force
+      
+      - name: Generate checksums
+        run: |
+          $files = Get-ChildItem ./release -File
+          $checksums = @()
+          foreach ($file in $files) {
+            $hash = Get-FileHash $file.FullName -Algorithm SHA256
+            $checksums += "$($hash.Hash)  $($file.Name)"
+          }
+          $checksums | Out-File ./release/checksums-sha256.txt -Encoding UTF8
+          
+          Write-Host "=== Checksums ==="
+          Get-Content ./release/checksums-sha256.txt
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vanguard-agent-windows
+          path: ./release/*
+          retention-days: 30
+
+  release:
+    name: Create GitHub Release
+    needs: build-windows
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true'
+    
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: vanguard-agent-windows
+          path: ./artifacts
+      
+      - name: List artifacts
+        run: ls -la ./artifacts
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: Vanguard Agent v${{ github.event.inputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            ./artifacts/VanguardAgent-win-x64.exe
+            ./artifacts/VanguardAgent-win-arm64.exe
+            ./artifacts/VanguardAgent-win-x64.zip
+            ./artifacts/checksums-sha256.txt
+          body: |
+            ## Ultrium Vanguard Agent v${{ github.event.inputs.version }}
+            
+            Enterprise RMM agent for Windows systems.
+            
+            ### Downloads
+            | Platform | File | Description |
+            |----------|------|-------------|
+            | Windows x64 | `VanguardAgent-win-x64.exe` | Single-file executable |
+            | Windows ARM64 | `VanguardAgent-win-arm64.exe` | ARM64 executable |
+            | Windows x64 | `VanguardAgent-win-x64.zip` | Complete package with installer |
+            
+            ### Installation
+            
+            1. Download `VanguardAgent-win-x64.zip` and extract
+            2. Edit `config.json` with your credentials from the [Ultrium Dashboard](https://ultriumai.com/vanguard)
+            3. Run `install.bat` as Administrator
+            4. The service will start automatically
+            
+            ### Verify Checksums
+            ```powershell
+            Get-FileHash VanguardAgent-win-x64.exe -Algorithm SHA256
+            ```
+            Compare with `checksums-sha256.txt`
+            
+            ### Service Management
+            ```powershell
+            # Check status
+            Get-Service VanguardAgent
+            
+            # Restart
+            Restart-Service VanguardAgent
+            
+            # View logs
+            Get-EventLog -LogName Application -Source VanguardAgent -Newest 20
+            ```
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

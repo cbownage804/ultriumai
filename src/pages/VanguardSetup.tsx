@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { Copy, Check, Terminal, Server, Plus, Loader2, Download, Package, Monitor, Cpu } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -28,6 +29,8 @@ export default function VanguardSetup() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDownloadingWindows, setIsDownloadingWindows] = useState(false);
+  const [windowsDownloadProgress, setWindowsDownloadProgress] = useState(0);
+  const [windowsDownloadMessage, setWindowsDownloadMessage] = useState('');
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -360,21 +363,30 @@ if __name__ == '__main__':
     }
 
     setIsDownloadingWindows(true);
+    setWindowsDownloadProgress(0);
+    setWindowsDownloadMessage('Initializing...');
+    
     try {
       const blob = await generateWindowsAgentZip({
         userId: user.id,
         apiEndpoint: API_ENDPOINT,
         secretKey: VANGUARD_SECRET,
         deviceName: 'Vanguard-Windows',
+        onProgress: (progress, message) => {
+          setWindowsDownloadProgress(progress);
+          setWindowsDownloadMessage(message);
+        },
       });
 
       downloadBlob(blob, 'vanguard-agent-windows.zip');
       toast.success('Windows agent bundle downloaded!');
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Failed to generate download');
+      toast.error('Failed to generate download. The EXE may still be building.');
     } finally {
       setIsDownloadingWindows(false);
+      setWindowsDownloadProgress(0);
+      setWindowsDownloadMessage('');
     }
   };
 
@@ -431,24 +443,24 @@ if __name__ == '__main__':
                       <span>Software inventory & services</span>
                     </div>
                   </div>
-                  <Button 
-                    onClick={handleDownloadWindowsZip}
-                    disabled={isDownloadingWindows || !user?.id}
-                    className="w-full"
-                    variant="outline"
-                  >
-                    {isDownloadingWindows ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Windows Bundle
-                      </>
-                    )}
-                  </Button>
+                  {isDownloadingWindows ? (
+                    <div className="space-y-2">
+                      <Progress value={windowsDownloadProgress} className="h-2" />
+                      <p className="text-xs text-muted-foreground text-center">
+                        {windowsDownloadMessage}
+                      </p>
+                    </div>
+                  ) : (
+                    <Button 
+                      onClick={handleDownloadWindowsZip}
+                      disabled={!user?.id}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download Windows Bundle
+                    </Button>
+                  )}
                 </div>
 
                 {/* Linux/Pi Agent */}
