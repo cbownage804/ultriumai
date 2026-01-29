@@ -10,6 +10,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useStripeCheckout, SAFESUITE_PRICES } from "@/hooks/useStripeCheckout";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { useState } from "react";
+import { Testimonials } from "@/components/marketing/Testimonials";
+import { SocialProof, UserCountBadge } from "@/components/marketing/SocialProof";
+import { CompetitorComparison } from "@/components/marketing/CompetitorComparison";
 
 const SafeSuitePricing = () => {
   const navigate = useNavigate();
@@ -61,11 +64,15 @@ const SafeSuitePricing = () => {
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-foreground/50 bg-clip-text text-transparent">
             SafeSuite Pricing
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-6">
             Personal & SMB security toolkit with password vault, threat scanning, and dark web monitoring.
           </p>
+          <UserCountBadge />
         </div>
       </section>
+
+      {/* Social Proof */}
+      <SocialProof variant="compact" className="pb-8" />
 
       {/* Pricing Cards */}
       <section className="py-16 px-4">
@@ -255,6 +262,17 @@ const SafeSuitePricing = () => {
           </div>
         </div>
       </section>
+
+      {/* Competitor Comparison */}
+      <CompetitorComparison product="safesuite" />
+
+      {/* Testimonials */}
+      <Testimonials 
+        product="safesuite" 
+        maxItems={3}
+        title="Loved by Security-Conscious Teams"
+        subtitle="See why businesses choose SafeSuite over alternatives"
+      />
 
       <Footer />
     </div>

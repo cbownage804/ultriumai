@@ -16,6 +16,8 @@ import ultriumGPTLogo from '@/assets/ultrium-gpt-logo.png';
 import vanguardLogo from '@/assets/vanguard-logo.png';
 import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
 import { useAuth } from '@/hooks/useAuth';
+import { SocialProof } from '@/components/marketing/SocialProof';
+import { Testimonials } from '@/components/marketing/Testimonials';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -142,8 +144,11 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Social Proof Stats */}
+      <SocialProof variant="full" className="bg-muted/30" />
+
       {/* Flagship Products Section */}
-      <section className="py-20 px-4 bg-muted/30">
+      <section className="py-20 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Flagship Products</h2>
@@ -405,6 +410,13 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Testimonials */}
+      <Testimonials 
+        maxItems={6}
+        title="What Our Customers Say"
+        subtitle="Join hundreds of businesses trusting UltriumAI for their security and AI needs"
+      />
 
       {/* FAQ Section */}
       <FAQSection faqs={mainFAQs} />
