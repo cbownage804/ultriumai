@@ -29,17 +29,17 @@ export function VanguardLayout() {
 
         {/* Main Content Area - responsive margin for sidebar */}
         <div className="md:ml-64 transition-all duration-300">
-          {/* Top Header Bar - mobile optimized */}
-          <header className="sticky top-0 z-30 h-14 md:h-16 bg-[#0a0a0f]/80 backdrop-blur-md border-b border-white/10 flex items-center justify-between px-4 md:px-6">
-            <div className="flex items-center gap-2 ml-10 md:ml-0">
+          {/* Top Header Bar - mobile optimized with safe areas */}
+          <header className="sticky top-0 z-30 h-14 md:h-16 bg-[#0a0a0f]/90 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 md:px-6 safe-area-inset-top">
+            <div className="flex items-center gap-2 ml-12 md:ml-0">
               <span className="text-xs md:text-sm text-white/50">Ultrium</span>
-              <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent font-semibold text-sm md:text-base">Vanguard</span>
+              <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent font-semibold text-sm md:text-base animate-glow">Vanguard</span>
             </div>
             
             <div className="flex items-center gap-2 md:gap-3">
               {user && (
-                <div className="flex items-center gap-1 md:gap-2">
-                  <div className="hidden md:flex items-center gap-2 text-sm text-white/60">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="hidden md:flex items-center gap-2 text-sm text-white/60 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
                     <User className="h-4 w-4" />
                     <span className="hidden lg:inline max-w-[150px] truncate">{user.email}</span>
                   </div>
@@ -47,7 +47,7 @@ export function VanguardLayout() {
                     variant="ghost" 
                     size="icon" 
                     onClick={handleSignOut}
-                    className="hover:text-red-400 hover:bg-red-500/10 h-8 w-8 md:h-9 md:w-9 text-white/60"
+                    className="hover:text-red-400 hover:bg-red-500/10 h-10 w-10 md:h-9 md:w-9 text-white/60 touch-target rounded-xl"
                   >
                     <LogOut className="h-4 w-4" />
                   </Button>
@@ -56,8 +56,8 @@ export function VanguardLayout() {
             </div>
           </header>
 
-          {/* Page Content - responsive padding */}
-          <main className="min-h-[calc(100vh-3.5rem)] md:min-h-[calc(100vh-4rem)] pb-16 md:pb-0">
+          {/* Page Content - responsive padding with safe areas */}
+          <main className="min-h-[calc(100vh-3.5rem)] md:min-h-[calc(100vh-4rem)] pb-20 md:pb-0 safe-area-inset-bottom animate-fade-in">
             <Outlet />
           </main>
         </div>
