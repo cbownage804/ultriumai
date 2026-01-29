@@ -1,0 +1,137 @@
+name: Build Vanguard MSI Installers
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.1.0)'
+        required: true
+        default: '1.1.0'
+      create_release:
+        description: 'Create GitHub release'
+        required: false
+        default: 'true'
+        type: boolean
+
+jobs:
+  build-agent-msi:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install WiX Toolset
+        run: dotnet tool install --global wix
+
+      - name: Publish Agent
+        run: |
+          dotnet publish VanguardAgent/VanguardAgent.csproj `
+            -c Release `
+            -r win-x64 `
+            -p:PublishSingleFile=true `
+            -p:SelfContained=true `
+            -p:Version=${{ github.event.inputs.version }} `
+            -o ./publish/agent
+
+      - name: Build Agent MSI
+        run: |
+          wix build VanguardAgent/installer/VanguardAgent.wxs `
+            -d PublishDir=./publish/agent `
+            -o ./msi/VanguardAgent-${{ github.event.inputs.version }}.msi
+
+      - name: Upload Agent MSI
+        uses: actions/upload-artifact@v4
+        with:
+          name: VanguardAgent-MSI
+          path: ./msi/VanguardAgent-*.msi
+
+  build-portal-msi:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install WiX Toolset
+        run: dotnet tool install --global wix
+
+      - name: Publish Portal
+        run: |
+          dotnet publish VanguardPortal/VanguardPortal.csproj `
+            -c Release `
+            -r win-x64 `
+            -p:PublishSingleFile=true `
+            -p:SelfContained=true `
+            -p:Version=${{ github.event.inputs.version }} `
+            -o ./publish/portal
+
+      - name: Build Portal MSI
+        run: |
+          wix build VanguardPortal/installer/VanguardPortal.wxs `
+            -d PublishDir=./publish/portal `
+            -o ./msi/VanguardPortal-${{ github.event.inputs.version }}.msi
+
+      - name: Upload Portal MSI
+        uses: actions/upload-artifact@v4
+        with:
+          name: VanguardPortal-MSI
+          path: ./msi/VanguardPortal-*.msi
+
+  release:
+    needs: [build-agent-msi, build-portal-msi]
+    runs-on: ubuntu-latest
+    if: github.event.inputs.create_release == 'true'
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: msi-v${{ github.event.inputs.version }}
+          name: Vanguard MSI Installers v${{ github.event.inputs.version }}
+          body: |
+            ## MSI Installers v${{ github.event.inputs.version }}
+            
+            Enterprise deployment packages for Vanguard Agent and Portal.
+            
+            ### Silent Installation Examples
+            
+            **Agent (with credentials):**
+            ```powershell
+            msiexec /i VanguardAgent-${{ github.event.inputs.version }}.msi /qn USERID="your-uuid" SECRETKEY="vgd_sk_xxx"
+            ```
+            
+            **Portal (with config):**
+            ```powershell
+            msiexec /i VanguardPortal-${{ github.event.inputs.version }}.msi /qn PORTALKEY="your-portal-key"
+            ```
+            
+            ### Group Policy Deployment
+            These MSI packages are compatible with:
+            - Microsoft Intune
+            - SCCM/MECM
+            - Group Policy Software Installation
+            - PDQ Deploy
+            - Any MSI-compatible RMM
+          files: |
+            artifacts/VanguardAgent-MSI/*.msi
+            artifacts/VanguardPortal-MSI/*.msi
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
