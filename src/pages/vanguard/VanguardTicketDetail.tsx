@@ -359,17 +359,22 @@ export default function VanguardTicketDetail() {
         </div>
 
         {/* Status Bar */}
-        <div className="px-6 py-3 border-t border-cyan-500/10 bg-black/20">
-          <div className="flex items-center gap-8">
+        <div className="px-6 py-4 border-t border-cyan-500/10 bg-white/5">
+          <div className="flex items-center gap-12">
             {/* Status */}
             <div className="flex flex-col gap-1">
               <Label className="text-white/50 text-xs uppercase tracking-wide">Status</Label>
               <Select value={ticket.status} onValueChange={handleStatusChange}>
-                <SelectTrigger className={`w-32 h-8 ${statusColors[ticket.status]} border-0`}>
+                <SelectTrigger className={`w-28 h-8 ${
+                  ticket.status === 'open' ? 'bg-amber-500 text-black border-0' :
+                  ticket.status === 'in_progress' ? 'bg-blue-500 text-white border-0' :
+                  ticket.status === 'resolved' ? 'bg-emerald-500 text-white border-0' :
+                  'bg-slate-600 text-white border-0'
+                }`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-900 border-cyan-500/20">
-                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="open">Pending</SelectItem>
                   <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="resolved">Resolved</SelectItem>
                   <SelectItem value="closed">Closed</SelectItem>
@@ -380,48 +385,41 @@ export default function VanguardTicketDetail() {
             {/* Assign Technician */}
             <div className="flex flex-col gap-1">
               <Label className="text-white/50 text-xs uppercase tracking-wide">Assign technician</Label>
-              <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarFallback className="bg-cyan-500/20 text-cyan-400 text-xs">
-                    {ticket.assigneeInitials}
-                  </AvatarFallback>
-                </Avatar>
-                <Select value={ticket.assignee} onValueChange={handleAssigneeChange}>
-                  <SelectTrigger className="w-40 h-8 bg-transparent border-cyan-500/20 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-cyan-500/20">
-                    <SelectItem value="Emma Greszes">Emma Greszes</SelectItem>
-                    <SelectItem value="John Smith">John Smith</SelectItem>
-                    <SelectItem value="Sarah Johnson">Sarah Johnson</SelectItem>
-                    <SelectItem value="Mike Chen">Mike Chen</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Button variant="ghost" className="h-8 px-2 text-white/80 hover:bg-cyan-500/10">
+                <User className="h-4 w-4 mr-2 text-white/50" />
+                {ticket.assignee === 'Unassigned' ? 'Assign' : ticket.assignee}
+              </Button>
             </div>
 
             {/* Type */}
             <div className="flex flex-col gap-1">
               <Label className="text-white/50 text-xs uppercase tracking-wide">Type</Label>
-              <span className="text-white capitalize">{ticket.type}</span>
+              <span className="text-white capitalize">{ticket.type === 'incident' ? 'Problem' : ticket.type}</span>
             </div>
 
             {/* Activity Status */}
             <div className="flex flex-col gap-1">
               <Label className="text-white/50 text-xs uppercase tracking-wide">Activity status</Label>
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${
-                  ticket.activityStatus === 'read' ? 'bg-emerald-400' : 
-                  ticket.activityStatus === 'unread' ? 'bg-amber-400' : 'bg-slate-400'
-                }`} />
-                <span className="text-white capitalize">{ticket.activityStatus}</span>
+                <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="text-white">Awaiting customer response</span>
               </div>
+            </div>
+
+            {/* SLA */}
+            <div className="flex flex-col gap-1">
+              <Label className="text-white/50 text-xs uppercase tracking-wide">SLA paused...</Label>
             </div>
 
             {/* Sentiment */}
             <div className="flex flex-col gap-1">
               <Label className="text-white/50 text-xs uppercase tracking-wide">Sentiment</Label>
-              <SentimentIcon className={`h-5 w-5 ${sentimentIcons[ticket.sentiment].color}`} />
+              <div className="flex items-center gap-1.5">
+                <SentimentIcon className={`h-5 w-5 ${sentimentIcons[ticket.sentiment].color}`} />
+                <span className={`capitalize ${sentimentIcons[ticket.sentiment].color}`}>
+                  {ticket.sentiment}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -657,20 +655,20 @@ export default function VanguardTicketDetail() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-80 border-l border-cyan-500/20 bg-slate-900/30 p-4">
+        <div className="w-80 border-l border-cyan-500/20 bg-slate-900/30">
           <ScrollArea className="h-[calc(100vh-200px)]">
-            <div className="space-y-6">
-              {/* Time Tracking */}
-              <Card className="bg-slate-800/50 border-cyan-500/20">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-white text-sm flex items-center gap-2">
-                    <Timer className="h-4 w-4 text-cyan-400" />
-                    Time tracking
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+            <div className="p-4 space-y-1">
+              {/* Time Tracking - Collapsible */}
+              <Collapsible defaultOpen>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between px-3 py-4 text-white hover:bg-cyan-500/10 h-auto">
+                    <span className="font-medium">Time tracking</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="px-3 pb-4">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="font-mono text-3xl text-white tracking-wider">
+                    <div className="font-mono text-2xl text-white tracking-wider">
                       {formatTimer(timerSeconds)}
                     </div>
                     <Button
@@ -681,28 +679,30 @@ export default function VanguardTicketDetail() {
                       {isTimerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                     </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Button variant="ghost" size="sm" className="w-full justify-start text-white/60 hover:text-white">
+                  <div className="space-y-1">
+                    <Button variant="ghost" size="sm" className="w-full justify-start text-white/60 hover:text-white text-sm">
                       <Plus className="h-3 w-3 mr-2" />
                       Manual Time Entry
                     </Button>
-                    <Button variant="ghost" size="sm" className="w-full justify-start text-white/60 hover:text-white">
+                    <Button variant="ghost" size="sm" className="w-full justify-start text-white/60 hover:text-white text-sm">
                       <History className="h-3 w-3 mr-2" />
                       View all time entries
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </CollapsibleContent>
+              </Collapsible>
 
-              {/* Contact Info */}
-              <Card className="bg-slate-800/50 border-cyan-500/20">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-white text-sm flex items-center gap-2">
-                    <User className="h-4 w-4 text-cyan-400" />
-                    Contact info
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
+              <Separator className="bg-cyan-500/10" />
+
+              {/* Contact Info - Collapsible */}
+              <Collapsible defaultOpen>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between px-3 py-4 text-white hover:bg-cyan-500/10 h-auto">
+                    <span className="font-medium">Contact info</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="px-3 pb-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <Label className="text-white/50 text-xs">User</Label>
                     <div className="flex items-center gap-2">
@@ -718,55 +718,78 @@ export default function VanguardTicketDetail() {
                   </div>
                   <div className="flex items-center justify-between">
                     <Label className="text-white/50 text-xs">Contract</Label>
-                    <Select defaultValue={ticket.contract}>
-                      <SelectTrigger className="w-32 h-7 bg-transparent border-cyan-500/20 text-white text-sm">
-                        <SelectValue placeholder="Select Contract" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-cyan-500/20">
-                        <SelectItem value="Premium Support">Premium Support</SelectItem>
-                        <SelectItem value="Basic Support">Basic Support</SelectItem>
-                        <SelectItem value="Enterprise">Enterprise</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <span className="text-white/70 text-sm">{ticket.contract || 'None'}</span>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              <Separator className="bg-cyan-500/10" />
+
+              {/* Ticket Properties - Collapsible */}
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between px-3 py-4 text-white hover:bg-cyan-500/10 h-auto">
+                    <span className="font-medium">Ticket properties</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="px-3 pb-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-white/50 text-xs">Priority</Label>
+                    <span className={`text-sm capitalize ${priorityColors[ticket.priority]}`}>
+                      {ticket.priority}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label className="text-white/50 text-xs">Email</Label>
-                    <div className="flex items-center gap-1">
-                      <Mail className="h-3 w-3 text-white/40" />
-                      <Button variant="ghost" size="icon" className="h-5 w-5 text-white/40 hover:text-white">
-                        <Phone className="h-3 w-3" />
-                      </Button>
-                    </div>
+                    <Label className="text-white/50 text-xs">Type</Label>
+                    <span className="text-white/70 text-sm capitalize">{ticket.type}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <Label className="text-white/50 text-xs">Device</Label>
                     {ticket.device ? (
-                      <span className="text-white/70 text-sm">{ticket.device.name}</span>
+                      <span className="text-cyan-400 text-sm">{ticket.device.name}</span>
                     ) : (
-                      <Button variant="ghost" size="sm" className="h-6 text-cyan-400 text-xs">
+                      <Button variant="ghost" size="sm" className="h-6 text-cyan-400 text-xs p-0">
                         <Monitor className="h-3 w-3 mr-1" />
-                        Assign agent
+                        Assign device
                       </Button>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+                </CollapsibleContent>
+              </Collapsible>
 
-              {/* Connect */}
-              <Button variant="outline" className="w-full border-cyan-500/20 text-cyan-400">
-                <Link2 className="h-4 w-4 mr-2" />
-                Connect
-              </Button>
+              <Separator className="bg-cyan-500/10" />
 
-              {/* User's Tickets */}
-              <Collapsible open={showUserTickets} onOpenChange={setShowUserTickets}>
+              {/* Calendar Events - Collapsible */}
+              <Collapsible>
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between text-white/80 hover:bg-cyan-500/10">
-                    <span>{ticket.contact.name}'s tickets ({ticket.userTickets.length + 1})</span>
-                    {showUserTickets ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  <Button variant="ghost" className="w-full justify-between px-3 py-4 text-white hover:bg-cyan-500/10 h-auto">
+                    <span className="font-medium">Calendar Events</span>
+                    <ChevronDown className="h-4 w-4" />
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-2 mt-2">
+                <CollapsibleContent className="px-3 pb-4">
+                  <div className="text-center py-4">
+                    <p className="text-white/40 text-sm">No scheduled events</p>
+                    <Button variant="ghost" size="sm" className="text-cyan-400 mt-2">
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add event
+                    </Button>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              <Separator className="bg-cyan-500/10" />
+
+              {/* User's Tickets - Collapsible */}
+              <Collapsible open={showUserTickets} onOpenChange={setShowUserTickets}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between px-3 py-4 text-white hover:bg-cyan-500/10 h-auto">
+                    <span className="font-medium">{ticket.contact.name}'s tickets ({ticket.userTickets.length + 1})</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="px-3 pb-4 space-y-2">
                   <div className="p-2 rounded bg-cyan-500/10 border border-cyan-500/20">
                     <div className="flex items-center gap-2">
                       <Badge className="bg-emerald-500/20 text-emerald-400 text-xs">Current</Badge>
