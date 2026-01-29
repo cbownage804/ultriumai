@@ -4,7 +4,7 @@ import { Headphones } from 'lucide-react';
 
 export default function VanguardHelpdesk() {
   useEffect(() => {
-    document.title = 'Service Desk | Ultrium Vanguard';
+    document.title = 'Vanguard Response | Ultrium Vanguard';
   }, []);
 
   return (
@@ -14,8 +14,8 @@ export default function VanguardHelpdesk() {
           <Headphones className="h-6 w-6 text-cyan-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">Service Desk</h1>
-          <p className="text-white/60">AI-powered IT service desk and ticket management</p>
+          <h1 className="text-2xl font-bold text-white">Vanguard Response</h1>
+          <p className="text-white/60">AI-powered service desk and incident management</p>
         </div>
       </div>
       <HelpdeskDashboard />

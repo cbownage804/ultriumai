@@ -9,8 +9,8 @@ const VanguardAISessions = () => {
           <FileText className="h-6 w-6 text-cyan-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">AI Session Summaries</h1>
-          <p className="text-white/60">Generate itemized summaries of remote support sessions</p>
+          <h1 className="text-2xl font-bold text-white">Vanguard Cortex — Session Summaries</h1>
+          <p className="text-white/60">AI-generated itemized summaries of remote support sessions</p>
         </div>
       </div>
       <AISessionSummary />

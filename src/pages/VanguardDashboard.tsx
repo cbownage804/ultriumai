@@ -161,12 +161,12 @@ const VanguardDashboard = () => {
         {/* Page Title with Actions */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-cyan-500/20">
+            <div className="p-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30">
               <Shield className="h-6 w-6 text-cyan-400" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-slate-100">Dashboard</h1>
-              <p className="text-sm text-slate-400">Overview of your security operations</p>
+              <h1 className="text-xl font-semibold text-slate-100">Vanguard Command</h1>
+              <p className="text-sm text-slate-400">Unified visibility across Horizon, Pursuit, Response, and Cortex</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -179,14 +179,27 @@ const VanguardDashboard = () => {
           </div>
         </div>
 
-        {/* Top Row: Ticket Status + Alert Status */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
+        {/* Vanguard Response — Ticket Status */}
+        <div className="mb-2">
+          <h2 className="text-xs font-semibold tracking-wider text-cyan-500/70 mb-2">VANGUARD RESPONSE — TICKET STATUS</h2>
+        </div>
+
+        {/* Top Row: Ticket Status + Pursuit Alert Status */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
           <div className="lg:col-span-3">
             <TicketStatusWidget {...ticketStats} />
           </div>
           <div>
+            <div className="mb-2">
+              <h2 className="text-xs font-semibold tracking-wider text-cyan-500/70">VANGUARD PURSUIT — ACTIVE THREATS</h2>
+            </div>
             <AlertStatusWidget {...alertStats} />
           </div>
+        </div>
+
+        {/* Vanguard Horizon — Device Health */}
+        <div className="mb-2">
+          <h2 className="text-xs font-semibold tracking-wider text-cyan-500/70">VANGUARD HORIZON — DEVICE HEALTH</h2>
         </div>
 
         {/* Middle Row: Availability + Recent Alerts + Ticket Activity */}

@@ -21,7 +21,9 @@ import {
   Sparkles,
   Wand2,
   FileText,
-  Bot
+  Bot,
+  Target,
+  Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -34,47 +36,80 @@ interface NavItem {
   path: string;
   icon: React.ElementType;
   badge?: string | number;
-  children?: NavItem[];
+}
+
+interface NavGroup {
+  header: string;
+  items: NavItem[];
 }
 
 export function VanguardNavigation() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [openMenus, setOpenMenus] = useState<string[]>(['Reports']);
   const location = useLocation();
   const basePath = getVanguardBasePath();
 
-  // Navigation items
-  const navItems: NavItem[] = [
-    { title: 'Dashboard', path: `${basePath}/dashboard`, icon: LayoutDashboard },
-    { title: 'Tickets', path: `${basePath}/tickets`, icon: Ticket },
-    { title: 'Customers', path: `${basePath}/customers`, icon: Building2 },
-    { title: 'Devices', path: `${basePath}/devices`, icon: Monitor },
-    { title: 'Alerts', path: `${basePath}/alerts`, icon: Bell },
-    { title: 'App Center', path: `${basePath}/apps`, icon: Package },
-    { title: 'Network Discovery', path: `${basePath}/network`, icon: Network, badge: '+1' },
-    { title: 'Knowledge Base', path: `${basePath}/knowledge`, icon: BookOpen },
+  // Vanguard Command (Dashboard) - standalone item
+  const commandItem: NavItem = { 
+    title: 'Vanguard Command', 
+    path: `${basePath}/dashboard`, 
+    icon: LayoutDashboard 
+  };
+
+  // Navigation groups with branded headers
+  const navGroups: NavGroup[] = [
     {
-      title: 'Reports', 
-      path: `${basePath}/reports`, 
-      icon: BarChart3,
-      children: [
-        { title: 'Overview', path: `${basePath}/reports`, icon: BarChart3 },
-        { title: 'Scheduled Reports', path: `${basePath}/scheduled-reports`, icon: BarChart3 },
-        { title: 'Report Builder', path: `${basePath}/report-builder`, icon: BarChart3 },
+      header: 'VANGUARD HORIZON',
+      items: [
+        { title: 'Devices', path: `${basePath}/devices`, icon: Monitor },
+        { title: 'Patches', path: `${basePath}/patches`, icon: Package },
       ]
     },
     {
-      title: 'AI Copilot', 
-      path: `${basePath}/dashboard`, 
-      icon: Bot,
-      badge: 'AI',
-      children: [
-        { title: 'AI Dashboard', path: `${basePath}/dashboard`, icon: Bot },
+      header: 'VANGUARD PURSUIT',
+      items: [
+        { title: 'Alerts', path: `${basePath}/alerts`, icon: Bell },
+        { title: 'Threats', path: `${basePath}/threats`, icon: Target },
+        { title: 'SOC', path: `${basePath}/soc`, icon: Activity },
+      ]
+    },
+    {
+      header: 'VANGUARD RECON',
+      items: [
+        { title: 'Network Discovery', path: `${basePath}/network`, icon: Network },
+      ]
+    },
+    {
+      header: 'VANGUARD RESPONSE',
+      items: [
+        { title: 'Tickets', path: `${basePath}/tickets`, icon: Ticket },
+        { title: 'Customers', path: `${basePath}/customers`, icon: Building2 },
+      ]
+    },
+    {
+      header: 'VANGUARD ATLAS',
+      items: [
+        { title: 'Knowledge Base', path: `${basePath}/knowledge`, icon: BookOpen },
+      ]
+    },
+    {
+      header: 'VANGUARD LEDGER',
+      items: [
+        { title: 'Reports', path: `${basePath}/reports`, icon: BarChart3 },
+      ]
+    },
+    {
+      header: 'VANGUARD CORTEX',
+      items: [
+        { title: 'AI Dashboard', path: `${basePath}/ai-dashboard`, icon: Bot, badge: 'AI' },
         { title: 'KB Generator', path: `${basePath}/ai-knowledge`, icon: Wand2 },
         { title: 'Session Summaries', path: `${basePath}/ai-sessions`, icon: FileText },
         { title: 'AI Analytics', path: `${basePath}/ai-analytics`, icon: Sparkles },
       ]
     },
+  ];
+
+  // Additional standalone items
+  const additionalItems: NavItem[] = [
     { title: 'Billing', path: `${basePath}/billing`, icon: CreditCard },
     { title: 'Customer Portal', path: `${basePath}/portal`, icon: Globe },
     { title: 'Portal App', path: `${basePath}/portal/download`, icon: Monitor },
@@ -86,11 +121,26 @@ export function VanguardNavigation() {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
-  const toggleMenu = (title: string) => {
-    setOpenMenus(prev => 
-      prev.includes(title) ? prev.filter(m => m !== title) : [...prev, title]
-    );
-  };
+  const renderNavItem = (item: NavItem) => (
+    <NavLink
+      key={item.path}
+      to={item.path}
+      onClick={() => setIsMobileOpen(false)}
+      className={cn(
+        "flex items-center gap-3 px-4 py-2 text-sm transition-colors",
+        "hover:bg-cyan-500/10 text-slate-400 hover:text-cyan-400",
+        isActive(item.path) && "bg-cyan-500/20 text-cyan-400 border-l-2 border-cyan-400"
+      )}
+    >
+      <item.icon className="h-4 w-4 shrink-0" />
+      <span className="flex-1">{item.title}</span>
+      {item.badge && (
+        <span className="text-xs bg-cyan-500 text-white px-1.5 py-0.5 rounded-full font-medium">
+          {item.badge}
+        </span>
+      )}
+    </NavLink>
+  );
 
   return (
     <>
@@ -131,67 +181,28 @@ export function VanguardNavigation() {
 
           {/* Navigation Items */}
           <nav className="flex-1 py-3 overflow-y-auto">
-            {navItems.map((item) => (
-              <div key={item.title}>
-                {item.children ? (
-                  <Collapsible
-                    open={openMenus.includes(item.title)}
-                    onOpenChange={() => toggleMenu(item.title)}
-                  >
-                    <CollapsibleTrigger asChild>
-                      <button
-                        className={cn(
-                          "flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-colors",
-                          "hover:bg-cyan-500/10 text-slate-400 hover:text-cyan-400",
-                          isActive(item.path) && "bg-cyan-500/20 text-cyan-400 border-l-2 border-cyan-400"
-                        )}
-                      >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        <span className="flex-1 text-left">{item.title}</span>
-                        <ChevronDown className={cn(
-                          "h-4 w-4 transition-transform",
-                          openMenus.includes(item.title) && "rotate-180"
-                        )} />
-                      </button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="bg-slate-900/50">
-                      {item.children.map((child) => (
-                        <NavLink
-                          key={child.path}
-                          to={child.path}
-                          onClick={() => setIsMobileOpen(false)}
-                          className={cn(
-                            "flex items-center gap-3 pl-11 pr-4 py-2 text-sm transition-colors",
-                            "hover:bg-cyan-500/10 text-slate-500 hover:text-cyan-400",
-                            isActive(child.path) && "bg-cyan-500/10 text-cyan-400"
-                          )}
-                        >
-                          <span>{child.title}</span>
-                        </NavLink>
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
-                ) : (
-                  <NavLink
-                    to={item.path}
-                    onClick={() => setIsMobileOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-2.5 text-sm transition-colors",
-                      "hover:bg-cyan-500/10 text-slate-400 hover:text-cyan-400",
-                      isActive(item.path) && "bg-cyan-500/20 text-cyan-400 border-l-2 border-cyan-400"
-                    )}
-                  >
-                    <item.icon className="h-4 w-4 shrink-0" />
-                    <span className="flex-1">{item.title}</span>
-                    {item.badge && (
-                      <span className="text-xs bg-cyan-500 text-white px-1.5 py-0.5 rounded-full font-medium">
-                        {item.badge}
-                      </span>
-                    )}
-                  </NavLink>
-                )}
+            {/* Vanguard Command */}
+            {renderNavItem(commandItem)}
+
+            {/* Grouped Navigation */}
+            {navGroups.map((group) => (
+              <div key={group.header} className="mt-4">
+                {/* Section Header */}
+                <div className="px-4 py-2">
+                  <span className="text-[10px] font-semibold tracking-wider text-cyan-500/70">
+                    {group.header}
+                  </span>
+                </div>
+                {/* Section Items */}
+                {group.items.map(renderNavItem)}
               </div>
             ))}
+
+            {/* Divider */}
+            <div className="my-4 border-t border-cyan-500/10" />
+
+            {/* Additional Items */}
+            {additionalItems.map(renderNavItem)}
           </nav>
 
           {/* Footer */}
