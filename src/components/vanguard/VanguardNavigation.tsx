@@ -16,7 +16,8 @@ import {
   Menu, 
   X,
   Gift,
-  ChevronDown
+  ChevronDown,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -59,6 +60,7 @@ export function VanguardNavigation() {
       ]
     },
     { title: 'Billing', path: `${basePath}/billing`, icon: CreditCard },
+    { title: 'Customer Portal', path: `${basePath}/portal`, icon: Globe },
     { title: 'Admin', path: `${basePath}/admin`, icon: Settings },
     { title: 'Refer a Friend', path: `${basePath}/referrals`, icon: Gift },
   ];

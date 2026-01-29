@@ -19511,6 +19511,242 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_portal_settings: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          custom_css: string | null
+          enable_health_status: boolean | null
+          enable_knowledge_base: boolean | null
+          enable_safepass: boolean | null
+          enable_tickets: boolean | null
+          id: string
+          portal_logo_url: string | null
+          portal_name: string
+          primary_color: string | null
+          safepass_subscription_required: boolean | null
+          support_email: string | null
+          support_phone: string | null
+          updated_at: string
+          user_id: string
+          welcome_message: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          custom_css?: string | null
+          enable_health_status?: boolean | null
+          enable_knowledge_base?: boolean | null
+          enable_safepass?: boolean | null
+          enable_tickets?: boolean | null
+          id?: string
+          portal_logo_url?: string | null
+          portal_name?: string
+          primary_color?: string | null
+          safepass_subscription_required?: boolean | null
+          support_email?: string | null
+          support_phone?: string | null
+          updated_at?: string
+          user_id: string
+          welcome_message?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          custom_css?: string | null
+          enable_health_status?: boolean | null
+          enable_knowledge_base?: boolean | null
+          enable_safepass?: boolean | null
+          enable_tickets?: boolean | null
+          id?: string
+          portal_logo_url?: string | null
+          portal_name?: string
+          primary_color?: string | null
+          safepass_subscription_required?: boolean | null
+          support_email?: string | null
+          support_phone?: string | null
+          updated_at?: string
+          user_id?: string
+          welcome_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_portal_settings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_portal_ticket_comments: {
+        Row: {
+          author_name: string | null
+          author_type: string
+          content: string
+          created_at: string
+          id: string
+          is_internal: boolean | null
+          ticket_id: string
+        }
+        Insert: {
+          author_name?: string | null
+          author_type?: string
+          content: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          ticket_id: string
+        }
+        Update: {
+          author_name?: string | null
+          author_type?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_portal_ticket_comments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_portal_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_portal_tickets: {
+        Row: {
+          assigned_to: string | null
+          attachments: Json | null
+          category: string | null
+          created_at: string
+          description: string | null
+          device_id: string | null
+          id: string
+          internal_notes: string | null
+          portal_settings_id: string
+          portal_token_id: string | null
+          priority: string | null
+          resolved_at: string | null
+          status: string | null
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          attachments?: Json | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          internal_notes?: string | null
+          portal_settings_id: string
+          portal_token_id?: string | null
+          priority?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          attachments?: Json | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          internal_notes?: string | null
+          portal_settings_id?: string
+          portal_token_id?: string | null
+          priority?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_portal_tickets_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vanguard_portal_tickets_portal_settings_id_fkey"
+            columns: ["portal_settings_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_portal_settings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vanguard_portal_tickets_portal_token_id_fkey"
+            columns: ["portal_token_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_portal_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_portal_tokens: {
+        Row: {
+          created_at: string
+          customer_email: string
+          customer_name: string | null
+          device_id: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          last_used_at: string | null
+          portal_settings_id: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email: string
+          customer_name?: string | null
+          device_id?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          portal_settings_id: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string
+          customer_name?: string | null
+          device_id?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          portal_settings_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_portal_tokens_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vanguard_portal_tokens_portal_settings_id_fkey"
+            columns: ["portal_settings_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_portal_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vanguard_report_history: {
         Row: {
           error_message: string | null
