@@ -143,7 +143,7 @@ export default function VanguardDevicesPage() {
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <Button className="bg-gradient-to-r from-cyan-500 via-purple-500 to-cyan-600 hover:from-cyan-600 hover:via-purple-600 hover:to-cyan-700 text-white gap-2 shadow-lg shadow-purple-500/25 border-0">
+            <Button className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 hover:from-cyan-500 hover:via-blue-600 hover:to-purple-700 text-white gap-2 shadow-lg shadow-purple-500/30 border-0 font-medium">
               New device
               <ChevronDown className="h-4 w-4" />
             </Button>
