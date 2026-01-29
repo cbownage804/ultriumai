@@ -15,7 +15,6 @@ const VanguardReports = lazy(() => import('@/pages/vanguard/VanguardReports'));
 const VanguardContracts = lazy(() => import('@/pages/vanguard/VanguardContracts'));
 const VanguardAITagging = lazy(() => import('@/pages/vanguard/VanguardAITagging'));
 const VanguardTrustCenter = lazy(() => import('@/pages/vanguard/VanguardTrustCenter'));
-const VanguardFeatures = lazy(() => import('@/pages/vanguard/VanguardFeatures'));
 
 // New navigation pages
 const VanguardTickets = lazy(() => import('@/pages/vanguard/VanguardTickets'));
@@ -155,7 +154,6 @@ export const getVanguardPublicRoutes = () => [
   <Route key="vanguard-auth" path="auth" element={<LazyPage component={VanguardAuthPage} />} />,
   <Route key="vanguard-suite" path="suite" element={<LazyPage component={VanguardSuite} />} />,
   <Route key="vanguard-trust" path="trust" element={<LazyPage component={VanguardTrustCenter} />} />,
-  <Route key="vanguard-features" path="features" element={<LazyPage component={VanguardFeatures} />} />,
 ];
 
 // Legacy export for backwards compatibility
