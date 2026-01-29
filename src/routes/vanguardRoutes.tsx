@@ -71,6 +71,7 @@ const VanguardAIDashboard = lazy(() => import('@/pages/vanguard/VanguardAIDashbo
 const VanguardAIKnowledge = lazy(() => import('@/pages/vanguard/VanguardAIKnowledge'));
 const VanguardAISessions = lazy(() => import('@/pages/vanguard/VanguardAISessions'));
 const VanguardAIAnalytics = lazy(() => import('@/pages/vanguard/VanguardAIAnalytics'));
+const VanguardAICommandCenter = lazy(() => import('@/pages/vanguard/VanguardAICommandCenter'));
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -156,6 +157,7 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-ai-knowledge" path="ai-knowledge" element={<LazyProtectedPage component={VanguardAIKnowledge} />} />,
   <Route key="vanguard-ai-sessions" path="ai-sessions" element={<LazyProtectedPage component={VanguardAISessions} />} />,
   <Route key="vanguard-ai-analytics" path="ai-analytics" element={<LazyProtectedPage component={VanguardAIAnalytics} />} />,
+  <Route key="vanguard-ai-command" path="ai-command" element={<LazyProtectedPage component={VanguardAICommandCenter} />} />,
   <Route key="vanguard-catchall" path="*" element={<Navigate to="/vanguard" replace />} />,
 ];
 
