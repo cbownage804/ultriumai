@@ -6,10 +6,10 @@ import { VanguardAccessGate } from './VanguardAccessGate';
 export function VanguardLayout() {
   return (
     <VanguardAccessGate>
-      {/* Force dark theme for Vanguard - Pure Black with Cyan Accents */}
+      {/* Force dark theme for Vanguard - Pure Black with Cyan & Purple Accents */}
       <div className="dark min-h-screen bg-[#050a0a]">
-        {/* Subtle gradient overlay */}
-        <div className="fixed inset-0 bg-gradient-to-br from-cyan-500/[0.02] via-transparent to-teal-500/[0.02] pointer-events-none" />
+        {/* Subtle gradient overlay with cyan and purple */}
+        <div className="fixed inset-0 bg-gradient-to-br from-cyan-500/[0.02] via-purple-500/[0.01] to-teal-500/[0.02] pointer-events-none" />
         
         {/* Navigation Sidebar */}
         <VanguardNavigation />

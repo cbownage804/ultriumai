@@ -146,11 +146,11 @@ const VanguardDashboard = () => {
           <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/15" onClick={handleRefresh}>
             <RefreshCw className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/15 relative">
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-purple-400 hover:bg-purple-500/15 relative">
             <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-red-500/30 animate-pulse" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-purple-500 rounded-full ring-2 ring-purple-500/30 animate-pulse" />
           </Button>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center text-sm font-medium text-white shadow-lg shadow-cyan-500/30">
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-cyan-400 via-purple-500 to-teal-500 flex items-center justify-center text-sm font-medium text-white shadow-lg shadow-purple-500/30">
             U
           </div>
         </div>
@@ -161,16 +161,16 @@ const VanguardDashboard = () => {
         {/* Page Title with Actions */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500/30 to-cyan-600/20 border border-cyan-500/40 shadow-lg shadow-cyan-500/20">
-              <Shield className="h-6 w-6 text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]" />
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500/30 via-purple-500/20 to-cyan-600/20 border border-cyan-500/40 shadow-lg shadow-purple-500/20">
+              <Shield className="h-6 w-6 text-cyan-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Vanguard Command</h1>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-white via-cyan-100 to-purple-200 bg-clip-text text-transparent">Vanguard Command</h1>
               <p className="text-sm text-slate-400">Unified visibility across Horizon, Pursuit, Response, and Cortex</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/15">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-purple-400 hover:bg-purple-500/15">
               <Maximize2 className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/15">

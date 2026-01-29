@@ -143,11 +143,11 @@ export default function VanguardDevicesPage() {
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <Button className="bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white gap-2 shadow-lg shadow-cyan-500/25 border-0">
+            <Button className="bg-gradient-to-r from-cyan-500 via-purple-500 to-cyan-600 hover:from-cyan-600 hover:via-purple-600 hover:to-cyan-700 text-white gap-2 shadow-lg shadow-purple-500/25 border-0">
               New device
               <ChevronDown className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10">
+            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-purple-400 hover:bg-purple-500/10">
               <Download className="h-5 w-5" />
             </Button>
             <Button variant="ghost" size="icon" className="text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10">
@@ -282,8 +282,8 @@ export default function VanguardDevicesPage() {
                   </td>
                   <td className="px-2 py-3 text-center">
                     {device.hasAI && (
-                      <div className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-cyan-500/20 border border-cyan-500/30">
-                        <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+                      <div className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-purple-500/30">
+                        <Sparkles className="h-3.5 w-3.5 text-purple-400" />
                       </div>
                     )}
                   </td>
