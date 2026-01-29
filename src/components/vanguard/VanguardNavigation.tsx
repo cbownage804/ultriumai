@@ -33,6 +33,7 @@ interface NavItem {
   icon: React.ElementType;
   badge?: string | number;
   children?: NavItem[];
+  logo?: string;
 }
 
 export function VanguardNavigation() {
@@ -51,6 +52,7 @@ export function VanguardNavigation() {
     { title: 'App Center', path: `${basePath}/apps`, icon: Package },
     { title: 'Network Discovery', path: `${basePath}/network`, icon: Network, badge: '+1' },
     { title: 'Knowledge Base', path: `${basePath}/knowledge`, icon: BookOpen },
+    { title: 'SafeDoc', path: `${basePath}/safedoc`, icon: FileText, logo: safedocLogo },
     { 
       title: 'Reports', 
       path: `${basePath}/reports`, 
@@ -167,7 +169,11 @@ export function VanguardNavigation() {
                       isActive(item.path) && "bg-cyan-500/20 text-cyan-400 border-l-2 border-cyan-400"
                     )}
                   >
-                    <item.icon className="h-4 w-4 shrink-0" />
+                    {item.logo ? (
+                      <img src={item.logo} alt={item.title} className="h-4 w-auto shrink-0" />
+                    ) : (
+                      <item.icon className="h-4 w-4 shrink-0" />
+                    )}
                     <span className="flex-1">{item.title}</span>
                     {item.badge && (
                       <span className="text-xs bg-cyan-500 text-white px-1.5 py-0.5 rounded-full font-medium">

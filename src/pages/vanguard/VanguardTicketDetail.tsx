@@ -18,8 +18,9 @@ import {
   Paperclip, Send, User, Building2, Mail, Monitor, Phone,
   MoreVertical, ChevronDown, ChevronUp, Pencil, Plus, Sparkles,
   ThumbsUp, History, ExternalLink, Link2, Copy, CheckCircle2,
-  AlertCircle, XCircle, Timer, Smile, Meh, Frown, Filter
+  AlertCircle, XCircle, Timer, Smile, Meh, Frown, Filter, Key, Server
 } from 'lucide-react';
+import safedocLogo from '@/assets/logos/logo-safedoc.png';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -846,6 +847,61 @@ export default function VanguardTicketDetail() {
                       Add event
                     </Button>
                   </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              <Separator className="bg-cyan-500/10" />
+
+              {/* SafeDoc Quick Access - Collapsible */}
+              <Collapsible defaultOpen>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between px-3 py-4 text-white hover:bg-cyan-500/10 h-auto">
+                    <div className="flex items-center gap-2">
+                      <img src={safedocLogo} alt="SafeDoc" className="h-4 w-auto" />
+                      <span className="font-medium">SafeDoc</span>
+                    </div>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="px-3 pb-4 space-y-2">
+                  <p className="text-white/40 text-xs mb-2">Quick access to {ticket.customer} documentation</p>
+                  
+                  {/* Passwords Quick Access */}
+                  <div className="p-2 rounded bg-slate-800/50 border border-slate-700 hover:border-cyan-500/50 cursor-pointer transition-colors">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Key className="h-3 w-3 text-amber-400" />
+                      <span className="text-white text-xs font-medium">Domain Admin</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <code className="text-cyan-400 text-xs">admin@domain.local</code>
+                      <Button variant="ghost" size="icon" className="h-5 w-5 text-white/40 hover:text-white">
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="p-2 rounded bg-slate-800/50 border border-slate-700 hover:border-cyan-500/50 cursor-pointer transition-colors">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Server className="h-3 w-3 text-blue-400" />
+                      <span className="text-white text-xs font-medium">Main Server</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <code className="text-cyan-400 text-xs">192.168.1.10</code>
+                      <Button variant="ghost" size="icon" className="h-5 w-5 text-white/40 hover:text-white">
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full justify-center text-cyan-400 text-xs mt-1"
+                    onClick={() => toast.info('Opening SafeDoc for ' + ticket.customer)}
+                  >
+                    <ExternalLink className="h-3 w-3 mr-1" />
+                    Open Full SafeDoc
+                  </Button>
                 </CollapsibleContent>
               </Collapsible>
 
