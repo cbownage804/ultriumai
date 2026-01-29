@@ -18850,9 +18850,13 @@ export type Database = {
           hailo_status: Json | null
           id: string
           ip_address: unknown
+          is_network_scanner: boolean | null
           last_heartbeat: string | null
+          last_scan_at: string | null
           location: string | null
           name: string
+          scan_interval_seconds: number | null
+          scanner_subnets: string[] | null
           security_status: Json | null
           status: string
           updated_at: string
@@ -18871,9 +18875,13 @@ export type Database = {
           hailo_status?: Json | null
           id?: string
           ip_address?: unknown
+          is_network_scanner?: boolean | null
           last_heartbeat?: string | null
+          last_scan_at?: string | null
           location?: string | null
           name: string
+          scan_interval_seconds?: number | null
+          scanner_subnets?: string[] | null
           security_status?: Json | null
           status?: string
           updated_at?: string
@@ -18892,9 +18900,13 @@ export type Database = {
           hailo_status?: Json | null
           id?: string
           ip_address?: unknown
+          is_network_scanner?: boolean | null
           last_heartbeat?: string | null
+          last_scan_at?: string | null
           location?: string | null
           name?: string
+          scan_interval_seconds?: number | null
+          scanner_subnets?: string[] | null
           security_status?: Json | null
           status?: string
           updated_at?: string
@@ -19215,6 +19227,90 @@ export type Database = {
           {
             foreignKeyName: "vanguard_baselines_agent_id_fkey"
             columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_discovered_devices: {
+        Row: {
+          created_at: string | null
+          device_type: string | null
+          first_seen_at: string | null
+          hostname: string | null
+          id: string
+          ip_address: unknown
+          is_managed: boolean | null
+          last_seen_at: string | null
+          linked_agent_id: string | null
+          mac_address: string | null
+          manufacturer: string | null
+          metadata: Json | null
+          open_ports: number[] | null
+          os_info: string | null
+          risk_level: string | null
+          scanner_agent_id: string | null
+          services: Json | null
+          updated_at: string | null
+          user_id: string
+          vulnerabilities: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_type?: string | null
+          first_seen_at?: string | null
+          hostname?: string | null
+          id?: string
+          ip_address: unknown
+          is_managed?: boolean | null
+          last_seen_at?: string | null
+          linked_agent_id?: string | null
+          mac_address?: string | null
+          manufacturer?: string | null
+          metadata?: Json | null
+          open_ports?: number[] | null
+          os_info?: string | null
+          risk_level?: string | null
+          scanner_agent_id?: string | null
+          services?: Json | null
+          updated_at?: string | null
+          user_id: string
+          vulnerabilities?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          device_type?: string | null
+          first_seen_at?: string | null
+          hostname?: string | null
+          id?: string
+          ip_address?: unknown
+          is_managed?: boolean | null
+          last_seen_at?: string | null
+          linked_agent_id?: string | null
+          mac_address?: string | null
+          manufacturer?: string | null
+          metadata?: Json | null
+          open_ports?: number[] | null
+          os_info?: string | null
+          risk_level?: string | null
+          scanner_agent_id?: string | null
+          services?: Json | null
+          updated_at?: string | null
+          user_id?: string
+          vulnerabilities?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_discovered_devices_linked_agent_id_fkey"
+            columns: ["linked_agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vanguard_discovered_devices_scanner_agent_id_fkey"
+            columns: ["scanner_agent_id"]
             isOneToOne: false
             referencedRelation: "vanguard_agents"
             referencedColumns: ["id"]
