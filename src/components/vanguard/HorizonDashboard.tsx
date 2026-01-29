@@ -22,6 +22,10 @@ import { PatchManagementPanel } from './horizon/PatchManagementPanel';
 import { FleetScriptLibrary } from './horizon/FleetScriptLibrary';
 import { FleetConfigPolicies } from './horizon/FleetConfigPolicies';
 import { FleetRemoteAccess } from './horizon/FleetRemoteAccess';
+import { BackupIntegrationHub } from './horizon/BackupIntegrationHub';
+import { LicenseManagementPanel } from './horizon/LicenseManagementPanel';
+import { RunbookAutomation } from './horizon/RunbookAutomation';
+import { SLAUptimeMonitoring } from './horizon/SLAUptimeMonitoring';
 import { 
   Monitor, 
   Server, 
@@ -47,6 +51,10 @@ import {
   FileCode,
   Layers,
   MonitorPlay,
+  Cloud,
+  Key,
+  Workflow,
+  Timer,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -262,13 +270,17 @@ export function HorizonDashboard() {
 
       {/* Tabs for different views */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-background/50 border flex-wrap">
+        <TabsList className="bg-background/50 border flex-wrap h-auto p-1">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="patches">Patches</TabsTrigger>
           <TabsTrigger value="scripts">Scripts</TabsTrigger>
           <TabsTrigger value="policies">Policies</TabsTrigger>
           <TabsTrigger value="remote">Remote</TabsTrigger>
+          <TabsTrigger value="backups">Backups</TabsTrigger>
+          <TabsTrigger value="licenses">Licenses</TabsTrigger>
+          <TabsTrigger value="runbooks">Runbooks</TabsTrigger>
+          <TabsTrigger value="sla">SLA</TabsTrigger>
           <TabsTrigger value="alerting">Alerting</TabsTrigger>
           <TabsTrigger value="automation">Automation</TabsTrigger>
           <TabsTrigger value="network">Network</TabsTrigger>
@@ -629,6 +641,26 @@ export function HorizonDashboard() {
         {/* Remote Access Tab */}
         <TabsContent value="remote" className="space-y-6 mt-6">
           <FleetRemoteAccess />
+        </TabsContent>
+
+        {/* Backups Tab */}
+        <TabsContent value="backups" className="space-y-6 mt-6">
+          <BackupIntegrationHub />
+        </TabsContent>
+
+        {/* Licenses Tab */}
+        <TabsContent value="licenses" className="space-y-6 mt-6">
+          <LicenseManagementPanel />
+        </TabsContent>
+
+        {/* Runbooks Tab */}
+        <TabsContent value="runbooks" className="space-y-6 mt-6">
+          <RunbookAutomation />
+        </TabsContent>
+
+        {/* SLA Tab */}
+        <TabsContent value="sla" className="space-y-6 mt-6">
+          <SLAUptimeMonitoring />
         </TabsContent>
 
         {/* Alerting Tab */}
