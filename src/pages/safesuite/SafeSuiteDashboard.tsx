@@ -75,16 +75,16 @@ function SecurityScoreCard({ stats }: { stats: DashboardStats }) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <GlowContainer theme="safeweb" className="col-span-full md:col-span-2 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Shield className="h-5 w-5 text-violet-400" />
-          <h3 className="font-semibold text-white">Security Score</h3>
+      <GlowContainer theme="safeweb" className="col-span-full md:col-span-2 p-4 sm:p-6">
+        <div className="flex items-center gap-2 mb-3 sm:mb-4">
+          <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-violet-400" />
+          <h3 className="font-semibold text-white text-sm sm:text-base">Security Score</h3>
         </div>
-        <p className="text-gray-400 text-sm mb-6">
+        <p className="text-gray-400 text-xs sm:text-sm mb-4 sm:mb-6">
           Your overall security health across all SafeSuite products
         </p>
         
-        <div className="flex items-center gap-8">
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
           <div className="relative">
             <svg className="h-32 w-32 transform -rotate-90">
               <circle
@@ -166,14 +166,15 @@ function QuickActionsCard() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
+      className="h-full"
     >
-      <GlowContainer theme="safepass" className="p-6 h-full">
-        <div className="flex items-center gap-2 mb-4">
-          <Zap className="h-5 w-5 text-amber-400" />
-          <h3 className="font-semibold text-white">Quick Actions</h3>
+      <GlowContainer theme="safepass" className="p-4 sm:p-6 h-full">
+        <div className="flex items-center gap-2 mb-3 sm:mb-4">
+          <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-amber-400" />
+          <h3 className="font-semibold text-white text-sm sm:text-base">Quick Actions</h3>
         </div>
         
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {[
             { to: '/safesuite/pass', icon: safeSuiteProducts.safepass.logo, label: 'Add New Password', theme: 'safepass' },
             { to: '/safesuite/scan', icon: safeSuiteProducts.safescan.logo, label: 'Scan a URL', theme: 'safescan' },
@@ -181,20 +182,20 @@ function QuickActionsCard() {
           ].map((action, idx) => (
             <motion.div
               key={action.to}
-              whileHover={{ x: 4, scale: 1.02 }}
+              whileHover={{ x: 4, scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
             >
               <Link to={action.to}>
                 <Button 
                   variant="outline" 
                   className={cn(
-                    'w-full justify-start gap-3 h-12',
+                    'w-full justify-start gap-2 sm:gap-3 min-h-[44px] sm:h-12 px-3 sm:px-4',
                     'bg-white/5 border-white/10 hover:bg-white/10',
-                    'transition-all duration-200'
+                    'transition-all duration-200 text-sm sm:text-base'
                   )}
                 >
-                  <img src={action.icon} alt="" className="h-5 w-5 rounded object-contain" />
-                  <span className="text-gray-200">{action.label}</span>
+                  <img src={action.icon} alt="" className="h-4 w-4 sm:h-5 sm:w-5 rounded object-contain flex-shrink-0" />
+                  <span className="text-gray-200 truncate">{action.label}</span>
                 </Button>
               </Link>
             </motion.div>
@@ -224,28 +225,29 @@ function ProductCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 * (index + 3) }}
-      whileHover={{ y: -4, scale: 1.02 }}
+      whileHover={{ y: -4, scale: 1.01 }}
+      className="h-full"
     >
-      <Link to={product.path}>
+      <Link to={product.path} className="block h-full">
         <GlowContainer 
           theme={theme}
           className={cn(
-            'p-6 h-full transition-all duration-300',
+            'p-4 sm:p-6 h-full transition-all duration-300',
             isLocked && 'opacity-60'
           )}
         >
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start justify-between mb-3 sm:mb-4">
             <motion.div
               whileHover={{ rotate: 5, scale: 1.1 }}
               className={cn(
-                'p-2 rounded-xl',
+                'p-1.5 sm:p-2 rounded-lg sm:rounded-xl',
                 colors.bg
               )}
             >
               <img 
                 src={product.productLogo} 
                 alt={product.title} 
-                className="h-10 w-10 rounded-lg object-contain"
+                className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-contain"
               />
             </motion.div>
             {isLocked ? (
@@ -508,23 +510,23 @@ export default function SafeSuiteDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] -m-6 p-6 space-y-6">
+    <div className="min-h-screen bg-[#0a0a0a] -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6">
       {/* Welcome header */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4"
       >
-        <div>
-          <h1 className="text-2xl font-bold text-white">Welcome back!</h1>
-          <p className="text-gray-400">
+        <div className="space-y-1">
+          <h1 className="text-fluid-xl font-bold text-white tracking-tight">Welcome back!</h1>
+          <p className="text-fluid-sm text-gray-400">
             Here's your security overview for today
           </p>
         </div>
         {!isSubscribed && (
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Link to="/safesuite/billing">
-              <Button className="gap-2 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 shadow-lg shadow-violet-500/20">
+              <Button className="w-full sm:w-auto gap-2 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 shadow-lg shadow-violet-500/20 btn-touch sm:min-h-[40px]">
                 <Sparkles className="h-4 w-4" />
                 Upgrade to Pro
               </Button>
@@ -545,31 +547,31 @@ export default function SafeSuiteDashboard() {
         <UsageLimitBanner feature="safepass" />
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Stats row - responsive grid */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <AnimatedStatsCard
-          icon={<KeyRound className="h-5 w-5" />}
+          icon={<KeyRound className="h-4 w-4 sm:h-5 sm:w-5" />}
           label="Passwords"
           value={stats.passwordCount}
           theme="safepass"
           delay={0}
         />
         <AnimatedStatsCard
-          icon={<ScanSearch className="h-5 w-5" />}
+          icon={<ScanSearch className="h-4 w-4 sm:h-5 sm:w-5" />}
           label="Scans"
           value={stats.scanCount}
           theme="safescan"
           delay={0.1}
         />
         <AnimatedStatsCard
-          icon={<Globe className="h-5 w-5" />}
+          icon={<Globe className="h-4 w-4 sm:h-5 sm:w-5" />}
           label="Monitored"
           value={stats.monitoredAssets}
           theme="safeweb"
           delay={0.2}
         />
         <AnimatedStatsCard
-          icon={<Package className="h-5 w-5" />}
+          icon={<Package className="h-4 w-4 sm:h-5 sm:w-5" />}
           label="Assets"
           value={stats.trackedAssets}
           theme="safetrack"
@@ -577,21 +579,21 @@ export default function SafeSuiteDashboard() {
         />
       </div>
 
-      {/* Main grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* Security Score */}
-        <div className="md:col-span-2" data-tour="security-score">
+      {/* Main grid - responsive layout */}
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {/* Security Score - full width on mobile, 2 cols on tablet+ */}
+        <div className="col-span-1 md:col-span-2" data-tour="security-score">
           <SecurityScoreCard stats={stats} />
         </div>
 
         {/* Quick Actions */}
-        <div data-tour="quick-actions">
+        <div className="col-span-1" data-tour="quick-actions">
           <QuickActionsCard />
         </div>
 
-        {/* Product Cards */}
+        {/* Product Cards - responsive */}
         {productCardsConfig.map((product, index) => (
-          <div key={product.id} data-tour={product.id}>
+          <div key={product.id} className="col-span-1" data-tour={product.id}>
             <ProductCard
               product={product}
               isLocked={!canUseFeature(product.feature)}
@@ -602,7 +604,9 @@ export default function SafeSuiteDashboard() {
         ))}
 
         {/* Recent Activity */}
-        <RecentActivityCard activities={activities} />
+        <div className="col-span-1 md:col-span-2 lg:col-span-1">
+          <RecentActivityCard activities={activities} />
+        </div>
       </div>
 
       {/* Product Tour */}
