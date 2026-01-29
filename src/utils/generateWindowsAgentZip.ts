@@ -5,6 +5,8 @@ interface WindowsAgentZipOptions {
   apiEndpoint: string;
   secretKey: string;
   deviceName?: string;
+  clientId?: string;
+  clientName?: string;
   onProgress?: (progress: number, message: string) => void;
 }
 
@@ -272,6 +274,8 @@ export async function generateWindowsAgentZip(options: WindowsAgentZipOptions): 
     apiEndpoint,
     secretKey,
     deviceName = 'Vanguard-Windows',
+    clientId,
+    clientName,
     onProgress,
   } = options;
 
@@ -310,13 +314,15 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
     onProgress?.(85, 'Creating config-only bundle...');
   }
 
-  // Create config.json with user credentials
+  // Create config.json with user credentials and optional client association
   const configJson = JSON.stringify({
     user_id: userId,
     secret_key: secretKey,
     device_id: null,
-    device_name: deviceName,
+    device_name: clientName ? `${clientName}-${deviceName}` : deviceName,
     api_endpoint: apiEndpoint,
+    client_id: clientId || null,
+    client_name: clientName || null,
     heartbeat_interval: 60,
     command_poll_interval: 30,
     telemetry_interval: 300,
