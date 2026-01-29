@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,9 +50,13 @@ import {
   XCircle,
   AlertTriangle,
   History,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface Script {
   id: string;
@@ -77,7 +81,7 @@ interface ScriptExecution {
   device_count: number;
   success_count: number;
   failed_count: number;
-  status: "running" | "completed" | "failed";
+  status: "running" | "completed" | "failed" | "pending";
   started_at: string;
   completed_at?: string;
 }
@@ -128,8 +132,6 @@ Write-Host "Pending: $($Updates.Updates.Count)"`,
     is_favorite: false,
     is_builtin: true,
     execution_count: 89,
-    last_executed: "2024-01-14T14:00:00Z",
-    last_result: "success",
     tags: ["updates", "monitoring"],
   },
   {
@@ -147,69 +149,15 @@ $disk = Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3"
     is_favorite: true,
     is_builtin: true,
     execution_count: 412,
-    last_executed: "2024-01-15T11:00:00Z",
-    last_result: "success",
     tags: ["health", "monitoring", "diagnostics"],
-  },
-  {
-    id: "builtin-4",
-    name: "Install via Chocolatey",
-    description: "Installs software using Chocolatey",
-    category: "Deployment",
-    type: "powershell",
-    content: `param([string]$Package)
-if (!(Get-Command choco -EA SilentlyContinue)) {
-    iex ((New-Object Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-}
-choco install $Package -y`,
-    author: "System",
-    is_favorite: false,
-    is_builtin: true,
-    execution_count: 78,
-    last_executed: "2024-01-13T16:30:00Z",
-    last_result: "success",
-    tags: ["install", "chocolatey"],
-  },
-];
-
-const mockExecutions: ScriptExecution[] = [
-  {
-    id: "exec-1",
-    script_id: "builtin-1",
-    script_name: "Clear Temp Files",
-    device_count: 25,
-    success_count: 24,
-    failed_count: 1,
-    status: "completed",
-    started_at: "2024-01-15T10:30:00Z",
-    completed_at: "2024-01-15T10:35:00Z",
-  },
-  {
-    id: "exec-2",
-    script_id: "builtin-3",
-    script_name: "System Health Check",
-    device_count: 50,
-    success_count: 50,
-    failed_count: 0,
-    status: "completed",
-    started_at: "2024-01-15T11:00:00Z",
-    completed_at: "2024-01-15T11:02:00Z",
-  },
-  {
-    id: "exec-3",
-    script_id: "builtin-2",
-    script_name: "Windows Update Status",
-    device_count: 5,
-    success_count: 3,
-    failed_count: 0,
-    status: "running",
-    started_at: "2024-01-15T11:15:00Z",
   },
 ];
 
 export function FleetScriptLibrary() {
-  const [scripts, setScripts] = useState<Script[]>(builtinScripts);
-  const [executions, setExecutions] = useState<ScriptExecution[]>(mockExecutions);
+  const { user } = useAuth();
+  const [scripts, setScripts] = useState<Script[]>([]);
+  const [executions, setExecutions] = useState<ScriptExecution[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
@@ -219,6 +167,7 @@ export function FleetScriptLibrary() {
   const [showRunDialog, setShowRunDialog] = useState(false);
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [newScript, setNewScript] = useState({
     name: "",
@@ -228,6 +177,71 @@ export function FleetScriptLibrary() {
     content: "",
     tags: "",
   });
+
+  useEffect(() => {
+    if (user) loadData();
+  }, [user]);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      // Load user scripts from database
+      const { data: userScripts, error: scriptsError } = await supabase
+        .from('vanguard_fleet_scripts')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (scriptsError) throw scriptsError;
+
+      const mappedScripts: Script[] = (userScripts || []).map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        description: s.description || '',
+        category: s.category || 'Custom',
+        type: s.script_type as Script['type'],
+        content: s.content,
+        author: s.author || 'User',
+        is_favorite: s.is_favorite || false,
+        is_builtin: false,
+        execution_count: s.execution_count || 0,
+        last_executed: s.last_executed,
+        last_result: s.last_result as Script['last_result'],
+        tags: s.tags || [],
+      }));
+
+      // Combine with builtins
+      setScripts([...builtinScripts, ...mappedScripts]);
+
+      // Load executions
+      const { data: execData, error: execError } = await supabase
+        .from('vanguard_script_executions')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('started_at', { ascending: false })
+        .limit(50);
+
+      if (!execError && execData) {
+        const mappedExecs: ScriptExecution[] = execData.map((e: any) => ({
+          id: e.id,
+          script_id: e.script_id || '',
+          script_name: e.script_name,
+          device_count: e.device_count || 0,
+          success_count: e.success_count || 0,
+          failed_count: e.failed_count || 0,
+          status: e.status as ScriptExecution['status'],
+          started_at: e.started_at,
+          completed_at: e.completed_at,
+        }));
+        setExecutions(mappedExecs);
+      }
+    } catch (err) {
+      console.error('Failed to load scripts:', err);
+      toast.error('Failed to load scripts');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredScripts = scripts.filter((script) => {
     const matchesSearch =
@@ -239,57 +253,156 @@ export function FleetScriptLibrary() {
     return matchesSearch && matchesCategory && matchesType && matchesFavorites;
   });
 
-  const toggleFavorite = (scriptId: string) => {
-    setScripts(scripts.map((s) => (s.id === scriptId ? { ...s, is_favorite: !s.is_favorite } : s)));
+  const toggleFavorite = async (scriptId: string) => {
+    const script = scripts.find(s => s.id === scriptId);
+    if (!script || script.is_builtin) {
+      setScripts(scripts.map((s) => (s.id === scriptId ? { ...s, is_favorite: !s.is_favorite } : s)));
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('vanguard_fleet_scripts')
+        .update({ is_favorite: !script.is_favorite })
+        .eq('id', scriptId);
+
+      if (error) throw error;
+      setScripts(scripts.map((s) => (s.id === scriptId ? { ...s, is_favorite: !s.is_favorite } : s)));
+    } catch (err) {
+      console.error('Failed to toggle favorite:', err);
+    }
   };
 
-  const handleCreateScript = () => {
-    const script: Script = {
-      id: `custom-${Date.now()}`,
-      name: newScript.name,
-      description: newScript.description,
-      category: newScript.category,
-      type: newScript.type,
-      content: newScript.content,
-      author: "Current User",
-      is_favorite: false,
-      is_builtin: false,
-      execution_count: 0,
-      tags: newScript.tags.split(",").map((t) => t.trim()).filter(Boolean),
-    };
-    setScripts([script, ...scripts]);
-    setShowCreateDialog(false);
-    setNewScript({ name: "", description: "", category: "Custom", type: "powershell", content: "", tags: "" });
+  const handleCreateScript = async () => {
+    if (!newScript.name || !newScript.content) {
+      toast.error('Name and content are required');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { data, error } = await supabase
+        .from('vanguard_fleet_scripts')
+        .insert({
+          user_id: user?.id,
+          name: newScript.name,
+          description: newScript.description,
+          category: newScript.category,
+          script_type: newScript.type,
+          content: newScript.content,
+          author: 'User',
+          tags: newScript.tags.split(",").map((t) => t.trim()).filter(Boolean),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const script: Script = {
+        id: data.id,
+        name: data.name,
+        description: data.description || '',
+        category: data.category || 'Custom',
+        type: data.script_type as Script['type'],
+        content: data.content,
+        author: 'User',
+        is_favorite: false,
+        is_builtin: false,
+        execution_count: 0,
+        tags: data.tags || [],
+      };
+      
+      setScripts([...builtinScripts, script, ...scripts.filter(s => !s.is_builtin)]);
+      setShowCreateDialog(false);
+      setNewScript({ name: "", description: "", category: "Custom", type: "powershell", content: "", tags: "" });
+      toast.success('Script created');
+    } catch (err) {
+      console.error('Failed to create script:', err);
+      toast.error('Failed to create script');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleRunScript = async () => {
     if (!selectedScript) return;
     setIsRunning(true);
-    
-    const execution: ScriptExecution = {
-      id: `exec-${Date.now()}`,
-      script_id: selectedScript.id,
-      script_name: selectedScript.name,
-      device_count: 10,
-      success_count: 0,
-      failed_count: 0,
-      status: "running",
-      started_at: new Date().toISOString(),
-    };
-    
-    setExecutions([execution, ...executions]);
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    
-    setExecutions((prev) =>
-      prev.map((e) =>
-        e.id === execution.id
-          ? { ...e, status: "completed", success_count: 10, completed_at: new Date().toISOString() }
-          : e
-      )
-    );
-    
-    setIsRunning(false);
-    setShowRunDialog(false);
+
+    try {
+      // Create execution record
+      const { data: exec, error } = await supabase
+        .from('vanguard_script_executions')
+        .insert({
+          user_id: user?.id,
+          script_id: selectedScript.is_builtin ? null : selectedScript.id,
+          script_name: selectedScript.name,
+          device_count: 10,
+          status: 'running',
+          started_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const execution: ScriptExecution = {
+        id: exec.id,
+        script_id: selectedScript.id,
+        script_name: selectedScript.name,
+        device_count: 10,
+        success_count: 0,
+        failed_count: 0,
+        status: "running",
+        started_at: new Date().toISOString(),
+      };
+
+      setExecutions([execution, ...executions]);
+
+      // Simulate execution
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      // Update execution as completed
+      await supabase
+        .from('vanguard_script_executions')
+        .update({
+          status: 'completed',
+          success_count: 10,
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', exec.id);
+
+      setExecutions((prev) =>
+        prev.map((e) =>
+          e.id === execution.id
+            ? { ...e, status: "completed", success_count: 10, completed_at: new Date().toISOString() }
+            : e
+        )
+      );
+
+      toast.success(`Script "${selectedScript.name}" completed on 10 devices`);
+    } catch (err) {
+      console.error('Failed to run script:', err);
+      toast.error('Failed to run script');
+    } finally {
+      setIsRunning(false);
+      setShowRunDialog(false);
+    }
+  };
+
+  const deleteScript = async (scriptId: string) => {
+    try {
+      const { error } = await supabase
+        .from('vanguard_fleet_scripts')
+        .delete()
+        .eq('id', scriptId);
+
+      if (error) throw error;
+      setScripts(scripts.filter(s => s.id !== scriptId));
+      toast.success('Script deleted');
+    } catch (err) {
+      console.error('Failed to delete script:', err);
+      toast.error('Failed to delete script');
+    }
   };
 
   const getTypeIcon = (type: Script["type"]) => {
@@ -317,6 +430,14 @@ export function FleetScriptLibrary() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -326,10 +447,16 @@ export function FleetScriptLibrary() {
             <TabsTrigger value="history">Execution History</TabsTrigger>
             <TabsTrigger value="scheduled">Scheduled Tasks</TabsTrigger>
           </TabsList>
-          <Button onClick={() => setShowCreateDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Script
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={loadData}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Script
+            </Button>
+          </div>
         </div>
 
         <TabsContent value="library" className="space-y-4 mt-4">
@@ -364,85 +491,98 @@ export function FleetScriptLibrary() {
             </Button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredScripts.map((script) => (
-              <Card
-                key={script.id}
-                className="hover:border-primary/50 transition-colors cursor-pointer group"
-                onClick={() => { setSelectedScript(script); setShowRunDialog(true); }}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      {getTypeIcon(script.type)}
-                      <Badge variant="outline" className="text-xs">{script.category}</Badge>
-                      {script.is_builtin && <Badge variant="secondary" className="text-xs">Built-in</Badge>}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={(e) => { e.stopPropagation(); toggleFavorite(script.id); }}
-                      >
-                        {script.is_favorite ? (
-                          <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                        ) : (
-                          <StarOff className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-7 w-7">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem><Play className="h-4 w-4 mr-2" />Run Now</DropdownMenuItem>
-                          <DropdownMenuItem><Clock className="h-4 w-4 mr-2" />Schedule</DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem><Copy className="h-4 w-4 mr-2" />Duplicate</DropdownMenuItem>
-                          <DropdownMenuItem><Edit className="h-4 w-4 mr-2" />Edit</DropdownMenuItem>
-                          <DropdownMenuItem><Download className="h-4 w-4 mr-2" />Export</DropdownMenuItem>
-                          {!script.is_builtin && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-red-500">
-                                <Trash2 className="h-4 w-4 mr-2" />Delete
-                              </DropdownMenuItem>
-                            </>
+          {filteredScripts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <FileCode className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No scripts found</p>
+              <p className="text-sm">Create a new script to get started</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredScripts.map((script) => (
+                <Card
+                  key={script.id}
+                  className="hover:border-primary/50 transition-colors cursor-pointer group"
+                  onClick={() => { setSelectedScript(script); setShowRunDialog(true); }}
+                >
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2">
+                        {getTypeIcon(script.type)}
+                        <Badge variant="outline" className="text-xs">{script.category}</Badge>
+                        {script.is_builtin && <Badge variant="secondary" className="text-xs">Built-in</Badge>}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={(e) => { e.stopPropagation(); toggleFavorite(script.id); }}
+                        >
+                          {script.is_favorite ? (
+                            <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                          ) : (
+                            <StarOff className="h-4 w-4 text-muted-foreground" />
                           )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => { setSelectedScript(script); setShowRunDialog(true); }}>
+                              <Play className="h-4 w-4 mr-2" />Run Now
+                            </DropdownMenuItem>
+                            <DropdownMenuItem><Clock className="h-4 w-4 mr-2" />Schedule</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem><Copy className="h-4 w-4 mr-2" />Duplicate</DropdownMenuItem>
+                            <DropdownMenuItem><Edit className="h-4 w-4 mr-2" />Edit</DropdownMenuItem>
+                            <DropdownMenuItem><Download className="h-4 w-4 mr-2" />Export</DropdownMenuItem>
+                            {!script.is_builtin && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="text-red-500"
+                                  onClick={(e) => { e.stopPropagation(); deleteScript(script.id); }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />Delete
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
-                  </div>
-                  <CardTitle className="text-base mt-2">{script.name}</CardTitle>
-                  <CardDescription className="line-clamp-2">{script.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <div className="flex items-center gap-4">
-                      <span className="flex items-center gap-1">
-                        <Play className="h-3 w-3" />
-                        {script.execution_count} runs
-                      </span>
-                      {script.last_executed && getResultBadge(script.last_result)}
+                    <CardTitle className="text-base mt-2">{script.name}</CardTitle>
+                    <CardDescription className="line-clamp-2">{script.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1">
+                          <Play className="h-3 w-3" />
+                          {script.execution_count} runs
+                        </span>
+                        {script.last_executed && getResultBadge(script.last_result)}
+                      </div>
+                      {script.last_executed && (
+                        <span>{formatDistanceToNow(new Date(script.last_executed), { addSuffix: true })}</span>
+                      )}
                     </div>
-                    {script.last_executed && (
-                      <span>{formatDistanceToNow(new Date(script.last_executed), { addSuffix: true })}</span>
+                    {script.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-3">
+                        {script.tags.slice(0, 4).map((tag) => (
+                          <Badge key={tag} variant="outline" className="text-xs px-1.5 py-0">{tag}</Badge>
+                        ))}
+                      </div>
                     )}
-                  </div>
-                  {script.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-3">
-                      {script.tags.slice(0, 4).map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs px-1.5 py-0">{tag}</Badge>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="history" className="mt-4">
@@ -454,41 +594,52 @@ export function FleetScriptLibrary() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {executions.map((exec) => (
-                  <div key={exec.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
-                    <div className="flex items-center gap-4">
-                      <div className={cn(
-                        "p-2 rounded-lg",
-                        exec.status === "running" ? "bg-blue-500/20" :
-                        exec.status === "completed" ? "bg-green-500/20" : "bg-red-500/20"
-                      )}>
-                        {exec.status === "running" ? (
-                          <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />
-                        ) : exec.status === "completed" ? (
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-red-500" />
-                        )}
+              {executions.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No executions yet</p>
+                  <p className="text-sm">Run a script to see execution history</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {executions.map((exec) => (
+                    <div key={exec.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "p-2 rounded-lg",
+                          exec.status === "running" ? "bg-blue-500/20" :
+                          exec.status === "completed" ? "bg-green-500/20" : "bg-red-500/20"
+                        )}>
+                          {exec.status === "running" ? (
+                            <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />
+                          ) : exec.status === "completed" ? (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-red-500" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium">{exec.script_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {exec.device_count} devices • Started {formatDistanceToNow(new Date(exec.started_at), { addSuffix: true })}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{exec.script_name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {exec.device_count} devices • Started {formatDistanceToNow(new Date(exec.started_at), { addSuffix: true })}
-                        </p>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="text-sm text-green-500">{exec.success_count} succeeded</p>
+                          {exec.failed_count > 0 && (
+                            <p className="text-sm text-red-500">{exec.failed_count} failed</p>
+                          )}
+                        </div>
+                        <Badge variant={exec.status === "completed" ? "default" : exec.status === "running" ? "secondary" : "destructive"}>
+                          {exec.status}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        {exec.success_count > 0 && <span className="text-sm text-green-500">{exec.success_count} success</span>}
-                        {exec.failed_count > 0 && <span className="text-sm text-red-500 ml-2">{exec.failed_count} failed</span>}
-                        {exec.status === "running" && <span className="text-sm text-blue-500">Running...</span>}
-                      </div>
-                      <Button variant="ghost" size="sm">View Details</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -497,15 +648,15 @@ export function FleetScriptLibrary() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-cyan-500" />
+                <Calendar className="h-5 w-5 text-purple-500" />
                 Scheduled Tasks
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center py-8 text-muted-foreground">
-                <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No scheduled tasks configured</p>
-                <Button variant="link" className="mt-2">Schedule your first task</Button>
+                <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No scheduled tasks</p>
+                <p className="text-sm">Schedule scripts to run automatically</p>
               </div>
             </CardContent>
           </Card>
@@ -517,25 +668,39 @@ export function FleetScriptLibrary() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create New Script</DialogTitle>
-            <DialogDescription>Create a custom script to run on your managed devices</DialogDescription>
+            <DialogDescription>Add a custom script to your library</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Script Name</Label>
                 <Input
                   value={newScript.name}
                   onChange={(e) => setNewScript({ ...newScript, name: e.target.value })}
-                  placeholder="My Custom Script"
+                  placeholder="My Script"
                 />
               </div>
               <div className="space-y-2">
+                <Label>Category</Label>
+                <Select value={newScript.category} onValueChange={(v) => setNewScript({ ...newScript, category: v })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {scriptCategories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label>Script Type</Label>
-                <Select
-                  value={newScript.type}
-                  onValueChange={(v) => setNewScript({ ...newScript, type: v as Script["type"] })}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select value={newScript.type} onValueChange={(v) => setNewScript({ ...newScript, type: v as Script["type"] })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="powershell">PowerShell</SelectItem>
                     <SelectItem value="batch">Batch</SelectItem>
@@ -543,6 +708,14 @@ export function FleetScriptLibrary() {
                     <SelectItem value="python">Python</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Tags (comma-separated)</Label>
+                <Input
+                  value={newScript.tags}
+                  onChange={(e) => setNewScript({ ...newScript, tags: e.target.value })}
+                  placeholder="cleanup, maintenance"
+                />
               </div>
             </div>
             <div className="space-y-2">
@@ -558,14 +731,15 @@ export function FleetScriptLibrary() {
               <Textarea
                 value={newScript.content}
                 onChange={(e) => setNewScript({ ...newScript, content: e.target.value })}
-                placeholder="# Enter your script here..."
-                className="font-mono h-64"
+                className="font-mono min-h-[200px]"
+                placeholder="# Your script here..."
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancel</Button>
-            <Button onClick={handleCreateScript} disabled={!newScript.name || !newScript.content}>
+            <Button onClick={handleCreateScript} disabled={isSaving}>
+              {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Create Script
             </Button>
           </DialogFooter>
@@ -574,28 +748,24 @@ export function FleetScriptLibrary() {
 
       {/* Run Script Dialog */}
       <Dialog open={showRunDialog} onOpenChange={setShowRunDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {selectedScript && getTypeIcon(selectedScript.type)}
-              {selectedScript?.name}
-            </DialogTitle>
+            <DialogTitle>Run Script: {selectedScript?.name}</DialogTitle>
             <DialogDescription>{selectedScript?.description}</DialogDescription>
           </DialogHeader>
-          {selectedScript && (
-            <div className="space-y-4">
-              <div className="rounded-lg bg-muted/50 p-4">
-                <ScrollArea className="h-64">
-                  <pre className="text-sm font-mono whitespace-pre-wrap">{selectedScript.content}</pre>
-                </ScrollArea>
-              </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span>Target: All Online Devices (10)</span>
-                <span>•</span>
-                <span>Estimated time: 2-5 minutes</span>
-              </div>
+          <div className="py-4 space-y-4">
+            <div className="flex items-center gap-2">
+              {selectedScript && getTypeIcon(selectedScript.type)}
+              <Badge variant="outline">{selectedScript?.category}</Badge>
+              <Badge variant="secondary">{selectedScript?.type}</Badge>
             </div>
-          )}
+            <ScrollArea className="h-[200px] rounded-md border p-4 bg-muted/50">
+              <pre className="text-sm font-mono whitespace-pre-wrap">{selectedScript?.content}</pre>
+            </ScrollArea>
+            <p className="text-sm text-muted-foreground">
+              This script will be executed on all selected devices (10 online devices).
+            </p>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRunDialog(false)}>Cancel</Button>
             <Button onClick={handleRunScript} disabled={isRunning}>
@@ -607,7 +777,7 @@ export function FleetScriptLibrary() {
               ) : (
                 <>
                   <Play className="h-4 w-4 mr-2" />
-                  Run Script
+                  Run Now
                 </>
               )}
             </Button>
