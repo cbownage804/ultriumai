@@ -128,6 +128,7 @@ import AntivirusPage from '@/pages/products/AntivirusPage';
 import SafeMDRPage from '@/pages/products/SafeMDRPage';
 import AdvancedHelpdeskAdmin from '@/pages/admin/AdvancedHelpdeskAdmin';
 import UnifiedAdminCenter from '@/pages/admin/UnifiedAdminCenter';
+import ReconProvisioningPage from '@/pages/admin/ReconProvisioningPage';
 import EmbedDemo from '@/pages/EmbedDemo';
 import SafeDocEmbedDemo from '@/pages/SafeDocEmbedDemo';
 import MSPDemos from '@/pages/MSPDemos';
@@ -529,6 +530,11 @@ function AppRouter() {
         <Route path="/admin" element={
           <ProtectedRoute>
             <UnifiedAdminCenter />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/recon-provisioning" element={
+          <ProtectedRoute>
+            <ReconProvisioningPage />
           </ProtectedRoute>
         } />
         <Route path="/admin/*" element={

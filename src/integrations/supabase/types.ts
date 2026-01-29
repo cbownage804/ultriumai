@@ -10490,6 +10490,289 @@ export type Database = {
         }
         Relationships: []
       }
+      recon_activation_logs: {
+        Row: {
+          activation_key: string
+          created_at: string | null
+          error_message: string | null
+          id: string
+          inventory_id: string
+          ip_address: unknown
+          metadata: Json | null
+          status: string
+          user_agent: string | null
+        }
+        Insert: {
+          activation_key: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          inventory_id: string
+          ip_address?: unknown
+          metadata?: Json | null
+          status: string
+          user_agent?: string | null
+        }
+        Update: {
+          activation_key?: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          inventory_id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          status?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recon_activation_logs_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "recon_inventory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recon_inventory: {
+        Row: {
+          activated_at: string | null
+          activation_key: string | null
+          agent_id: string | null
+          assigned_order_id: string | null
+          created_at: string | null
+          firmware_version: string | null
+          hardware_tier: string
+          id: string
+          mac_address: string | null
+          notes: string | null
+          provisioned_at: string | null
+          provisioned_by: string | null
+          serial_number: string
+          shipped_at: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          activation_key?: string | null
+          agent_id?: string | null
+          assigned_order_id?: string | null
+          created_at?: string | null
+          firmware_version?: string | null
+          hardware_tier: string
+          id?: string
+          mac_address?: string | null
+          notes?: string | null
+          provisioned_at?: string | null
+          provisioned_by?: string | null
+          serial_number: string
+          shipped_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          activation_key?: string | null
+          agent_id?: string | null
+          assigned_order_id?: string | null
+          created_at?: string | null
+          firmware_version?: string | null
+          hardware_tier?: string
+          id?: string
+          mac_address?: string | null
+          notes?: string | null
+          provisioned_at?: string | null
+          provisioned_by?: string | null
+          serial_number?: string
+          shipped_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recon_inventory_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recon_inventory_assigned_order_id_fkey"
+            columns: ["assigned_order_id"]
+            isOneToOne: false
+            referencedRelation: "recon_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recon_orders: {
+        Row: {
+          billing_address: Json | null
+          created_at: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          delivered_at: string | null
+          hardware_tier: string
+          id: string
+          msp_client_id: string | null
+          notes: string | null
+          order_status: string | null
+          paid_at: string | null
+          quantity: number | null
+          shipped_at: string | null
+          shipping_address: Json
+          shipping_carrier: string | null
+          stripe_checkout_session: string | null
+          stripe_payment_intent: string | null
+          stripe_subscription_id: string | null
+          subscription_price_cents: number
+          subscription_tier: string
+          tracking_number: string | null
+          unit_price_cents: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          billing_address?: Json | null
+          created_at?: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          delivered_at?: string | null
+          hardware_tier: string
+          id?: string
+          msp_client_id?: string | null
+          notes?: string | null
+          order_status?: string | null
+          paid_at?: string | null
+          quantity?: number | null
+          shipped_at?: string | null
+          shipping_address: Json
+          shipping_carrier?: string | null
+          stripe_checkout_session?: string | null
+          stripe_payment_intent?: string | null
+          stripe_subscription_id?: string | null
+          subscription_price_cents: number
+          subscription_tier: string
+          tracking_number?: string | null
+          unit_price_cents: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          billing_address?: Json | null
+          created_at?: string | null
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          delivered_at?: string | null
+          hardware_tier?: string
+          id?: string
+          msp_client_id?: string | null
+          notes?: string | null
+          order_status?: string | null
+          paid_at?: string | null
+          quantity?: number | null
+          shipped_at?: string | null
+          shipping_address?: Json
+          shipping_carrier?: string | null
+          stripe_checkout_session?: string | null
+          stripe_payment_intent?: string | null
+          stripe_subscription_id?: string | null
+          subscription_price_cents?: number
+          subscription_tier?: string
+          tracking_number?: string | null
+          unit_price_cents?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recon_orders_msp_client_id_fkey"
+            columns: ["msp_client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recon_subscriptions: {
+        Row: {
+          billing_cycle: string | null
+          cancel_at_period_end: boolean | null
+          cancelled_at: string | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          order_id: string | null
+          price_cents: number
+          recon_unit_id: string
+          started_at: string | null
+          status: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          tier: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          billing_cycle?: string | null
+          cancel_at_period_end?: boolean | null
+          cancelled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          order_id?: string | null
+          price_cents: number
+          recon_unit_id: string
+          started_at?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          billing_cycle?: string | null
+          cancel_at_period_end?: boolean | null
+          cancelled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          order_id?: string | null
+          price_cents?: number
+          recon_unit_id?: string
+          started_at?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recon_subscriptions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "recon_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recon_subscriptions_recon_unit_id_fkey"
+            columns: ["recon_unit_id"]
+            isOneToOne: false
+            referencedRelation: "recon_inventory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       remote_commands: {
         Row: {
           command: string
