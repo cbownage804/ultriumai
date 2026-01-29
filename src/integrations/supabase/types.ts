@@ -19534,6 +19534,207 @@ export type Database = {
           },
         ]
       }
+      vanguard_client_usage_snapshots: {
+        Row: {
+          api_calls: number | null
+          billable_hours: number | null
+          client_id: string | null
+          created_at: string
+          device_count: number | null
+          features_used: Json | null
+          id: string
+          resolved_tickets: number | null
+          server_count: number | null
+          snapshot_date: string
+          storage_used_gb: number | null
+          ticket_count: number | null
+          user_count: number | null
+          user_id: string
+          workstation_count: number | null
+        }
+        Insert: {
+          api_calls?: number | null
+          billable_hours?: number | null
+          client_id?: string | null
+          created_at?: string
+          device_count?: number | null
+          features_used?: Json | null
+          id?: string
+          resolved_tickets?: number | null
+          server_count?: number | null
+          snapshot_date?: string
+          storage_used_gb?: number | null
+          ticket_count?: number | null
+          user_count?: number | null
+          user_id: string
+          workstation_count?: number | null
+        }
+        Update: {
+          api_calls?: number | null
+          billable_hours?: number | null
+          client_id?: string | null
+          created_at?: string
+          device_count?: number | null
+          features_used?: Json | null
+          id?: string
+          resolved_tickets?: number | null
+          server_count?: number | null
+          snapshot_date?: string
+          storage_used_gb?: number | null
+          ticket_count?: number | null
+          user_count?: number | null
+          user_id?: string
+          workstation_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_client_usage_snapshots_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_compliance_history: {
+        Row: {
+          agent_id: string | null
+          antivirus_enabled: boolean | null
+          antivirus_updated: boolean | null
+          bitlocker_enabled: boolean | null
+          cis_score: number | null
+          compliance_details: Json | null
+          created_at: string
+          critical_updates_pending: number | null
+          firewall_enabled: boolean | null
+          gpo_compliant: boolean | null
+          id: string
+          overall_score: number | null
+          pending_updates: number | null
+          snapshot_date: string
+          user_id: string
+          windows_update_score: number | null
+        }
+        Insert: {
+          agent_id?: string | null
+          antivirus_enabled?: boolean | null
+          antivirus_updated?: boolean | null
+          bitlocker_enabled?: boolean | null
+          cis_score?: number | null
+          compliance_details?: Json | null
+          created_at?: string
+          critical_updates_pending?: number | null
+          firewall_enabled?: boolean | null
+          gpo_compliant?: boolean | null
+          id?: string
+          overall_score?: number | null
+          pending_updates?: number | null
+          snapshot_date?: string
+          user_id: string
+          windows_update_score?: number | null
+        }
+        Update: {
+          agent_id?: string | null
+          antivirus_enabled?: boolean | null
+          antivirus_updated?: boolean | null
+          bitlocker_enabled?: boolean | null
+          cis_score?: number | null
+          compliance_details?: Json | null
+          created_at?: string
+          critical_updates_pending?: number | null
+          firewall_enabled?: boolean | null
+          gpo_compliant?: boolean | null
+          id?: string
+          overall_score?: number | null
+          pending_updates?: number | null
+          snapshot_date?: string
+          user_id?: string
+          windows_update_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_compliance_history_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_csat_responses: {
+        Row: {
+          client_id: string | null
+          contact_email: string | null
+          contact_name: string | null
+          created_at: string
+          feedback_text: string | null
+          follow_up_notes: string | null
+          follow_up_required: boolean | null
+          id: string
+          nps_score: number | null
+          overall_rating: number | null
+          resolution_rating: number | null
+          responded_at: string | null
+          response_time_rating: number | null
+          survey_sent_at: string | null
+          technician_id: string | null
+          technician_rating: number | null
+          ticket_id: string | null
+          user_id: string
+          would_recommend: boolean | null
+        }
+        Insert: {
+          client_id?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          feedback_text?: string | null
+          follow_up_notes?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          nps_score?: number | null
+          overall_rating?: number | null
+          resolution_rating?: number | null
+          responded_at?: string | null
+          response_time_rating?: number | null
+          survey_sent_at?: string | null
+          technician_id?: string | null
+          technician_rating?: number | null
+          ticket_id?: string | null
+          user_id: string
+          would_recommend?: boolean | null
+        }
+        Update: {
+          client_id?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          feedback_text?: string | null
+          follow_up_notes?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          nps_score?: number | null
+          overall_rating?: number | null
+          resolution_rating?: number | null
+          responded_at?: string | null
+          response_time_rating?: number | null
+          survey_sent_at?: string | null
+          technician_id?: string | null
+          technician_rating?: number | null
+          ticket_id?: string | null
+          user_id?: string
+          would_recommend?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_csat_responses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vanguard_discovered_devices: {
         Row: {
           created_at: string | null
@@ -19614,6 +19815,74 @@ export type Database = {
             columns: ["scanner_agent_id"]
             isOneToOne: false
             referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_email_configs: {
+        Row: {
+          auto_create_tickets: boolean | null
+          auto_reply_enabled: boolean | null
+          auto_reply_template: string | null
+          client_id: string | null
+          created_at: string
+          default_category: string | null
+          default_priority: string | null
+          display_name: string | null
+          email_signature: string | null
+          forward_to_technician: boolean | null
+          id: string
+          incoming_email: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          sync_status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_create_tickets?: boolean | null
+          auto_reply_enabled?: boolean | null
+          auto_reply_template?: string | null
+          client_id?: string | null
+          created_at?: string
+          default_category?: string | null
+          default_priority?: string | null
+          display_name?: string | null
+          email_signature?: string | null
+          forward_to_technician?: boolean | null
+          id?: string
+          incoming_email: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          sync_status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_create_tickets?: boolean | null
+          auto_reply_enabled?: boolean | null
+          auto_reply_template?: string | null
+          client_id?: string | null
+          created_at?: string
+          default_category?: string | null
+          default_priority?: string | null
+          display_name?: string | null
+          email_signature?: string | null
+          forward_to_technician?: boolean | null
+          id?: string
+          incoming_email?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          sync_status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_email_configs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
             referencedColumns: ["id"]
           },
         ]
@@ -20227,6 +20496,71 @@ export type Database = {
           },
         ]
       }
+      vanguard_rate_cards: {
+        Row: {
+          after_hours_multiplier: number | null
+          card_name: string
+          client_id: string | null
+          created_at: string
+          effective_from: string | null
+          effective_to: string | null
+          emergency_multiplier: number | null
+          hourly_rate: number
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          minimum_hours: number | null
+          updated_at: string
+          user_id: string
+          weekend_multiplier: number | null
+          work_type: string
+        }
+        Insert: {
+          after_hours_multiplier?: number | null
+          card_name: string
+          client_id?: string | null
+          created_at?: string
+          effective_from?: string | null
+          effective_to?: string | null
+          emergency_multiplier?: number | null
+          hourly_rate: number
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          minimum_hours?: number | null
+          updated_at?: string
+          user_id: string
+          weekend_multiplier?: number | null
+          work_type: string
+        }
+        Update: {
+          after_hours_multiplier?: number | null
+          card_name?: string
+          client_id?: string | null
+          created_at?: string
+          effective_from?: string | null
+          effective_to?: string | null
+          emergency_multiplier?: number | null
+          hourly_rate?: number
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          minimum_hours?: number | null
+          updated_at?: string
+          user_id?: string
+          weekend_multiplier?: number | null
+          work_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_rate_cards_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vanguard_report_history: {
         Row: {
           error_message: string | null
@@ -20578,6 +20912,71 @@ export type Database = {
           },
         ]
       }
+      vanguard_sla_policies: {
+        Row: {
+          business_days: string[] | null
+          business_hours_end: string | null
+          business_hours_only: boolean | null
+          business_hours_start: string | null
+          client_id: string | null
+          created_at: string
+          escalation_after_hours: number | null
+          escalation_enabled: boolean | null
+          id: string
+          is_active: boolean | null
+          policy_name: string
+          priority_level: string
+          resolution_hours: number
+          response_hours: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_days?: string[] | null
+          business_hours_end?: string | null
+          business_hours_only?: boolean | null
+          business_hours_start?: string | null
+          client_id?: string | null
+          created_at?: string
+          escalation_after_hours?: number | null
+          escalation_enabled?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          policy_name: string
+          priority_level?: string
+          resolution_hours?: number
+          response_hours?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_days?: string[] | null
+          business_hours_end?: string | null
+          business_hours_only?: boolean | null
+          business_hours_start?: string | null
+          client_id?: string | null
+          created_at?: string
+          escalation_after_hours?: number | null
+          escalation_enabled?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          policy_name?: string
+          priority_level?: string
+          resolution_hours?: number
+          response_hours?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_sla_policies_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vanguard_subscriptions: {
         Row: {
           admin_override: boolean | null
@@ -20628,6 +21027,142 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vanguard_ticket_sla_tracking: {
+        Row: {
+          created_at: string
+          escalated: boolean | null
+          escalated_at: string | null
+          first_response_at: string | null
+          id: string
+          pause_reason: string | null
+          paused_at: string | null
+          resolution_breached: boolean | null
+          resolution_due_at: string | null
+          resolved_at: string | null
+          response_breached: boolean | null
+          response_due_at: string | null
+          sla_policy_id: string | null
+          ticket_id: string
+          total_pause_minutes: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          escalated?: boolean | null
+          escalated_at?: string | null
+          first_response_at?: string | null
+          id?: string
+          pause_reason?: string | null
+          paused_at?: string | null
+          resolution_breached?: boolean | null
+          resolution_due_at?: string | null
+          resolved_at?: string | null
+          response_breached?: boolean | null
+          response_due_at?: string | null
+          sla_policy_id?: string | null
+          ticket_id: string
+          total_pause_minutes?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          escalated?: boolean | null
+          escalated_at?: string | null
+          first_response_at?: string | null
+          id?: string
+          pause_reason?: string | null
+          paused_at?: string | null
+          resolution_breached?: boolean | null
+          resolution_due_at?: string | null
+          resolved_at?: string | null
+          response_breached?: boolean | null
+          response_due_at?: string | null
+          sla_policy_id?: string | null
+          ticket_id?: string
+          total_pause_minutes?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_ticket_sla_tracking_sla_policy_id_fkey"
+            columns: ["sla_policy_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_sla_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_time_entries: {
+        Row: {
+          billing_status: string | null
+          client_id: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          end_time: string | null
+          hourly_rate: number | null
+          id: string
+          invoice_id: string | null
+          is_billable: boolean | null
+          notes: string | null
+          start_time: string
+          technician_id: string | null
+          ticket_id: string | null
+          total_amount: number | null
+          updated_at: string
+          user_id: string
+          work_type: string | null
+        }
+        Insert: {
+          billing_status?: string | null
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          end_time?: string | null
+          hourly_rate?: number | null
+          id?: string
+          invoice_id?: string | null
+          is_billable?: boolean | null
+          notes?: string | null
+          start_time: string
+          technician_id?: string | null
+          ticket_id?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          user_id: string
+          work_type?: string | null
+        }
+        Update: {
+          billing_status?: string | null
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          end_time?: string | null
+          hourly_rate?: number | null
+          id?: string
+          invoice_id?: string | null
+          is_billable?: boolean | null
+          notes?: string | null
+          start_time?: string
+          technician_id?: string | null
+          ticket_id?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          user_id?: string
+          work_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_time_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vanguard_traffic_captures: {
         Row: {
@@ -20693,6 +21228,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_workflow_states: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          states: Json
+          transitions: Json
+          triggers: Json | null
+          updated_at: string
+          user_id: string
+          workflow_name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          states?: Json
+          transitions?: Json
+          triggers?: Json | null
+          updated_at?: string
+          user_id: string
+          workflow_name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          states?: Json
+          transitions?: Json
+          triggers?: Json | null
+          updated_at?: string
+          user_id?: string
+          workflow_name?: string
+        }
+        Relationships: []
       }
       voice_assistant_interactions: {
         Row: {
