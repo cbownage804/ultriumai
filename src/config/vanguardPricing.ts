@@ -1,0 +1,290 @@
+/**
+ * Vanguard PSA/RMM Pricing Configuration
+ * Per-technician pricing for unlimited endpoints (Atera-style)
+ */
+
+export interface VanguardPlan {
+  id: string;
+  name: string;
+  description: string;
+  monthlyPrice: number; // per technician, billed annually
+  monthlyPriceBilledMonthly: number; // per technician, billed monthly
+  features: string[];
+  highlights: string[];
+  popular?: boolean;
+  enterprise?: boolean;
+  stripePriceId?: string;
+}
+
+// IT Department Plans (Internal IT Teams)
+export const IT_DEPARTMENT_PLANS: VanguardPlan[] = [
+  {
+    id: 'it-professional',
+    name: 'Professional',
+    description: 'For teams that need to manage their corporate devices and networks.',
+    monthlyPrice: 129, // Atera: $149
+    monthlyPriceBilledMonthly: 149, // Atera: $169
+    features: [
+      'Remote monitoring and alerts',
+      'Remote management',
+      'Splashtop (up to 2 concurrent sessions)',
+      'Patch management',
+      'Software management (Chocolatey, Homebrew, WinGet)',
+      'Azure AD integration',
+      'Audit log (1 month retention)',
+      'Custom support address (1)',
+      'Service portal',
+      'File view and transfer (up to 15GB/mo)',
+      'Mobile app (iOS & Android)',
+    ],
+    highlights: [
+      'Remote monitoring and alerts',
+      'Patch management',
+      'Splashtop remote access',
+    ],
+    stripePriceId: 'price_it_professional',
+  },
+  {
+    id: 'it-expert',
+    name: 'Expert',
+    description: 'For expanding teams that need flexibility, dual remote monitoring, and automations.',
+    monthlyPrice: 169, // Atera: $189
+    monthlyPriceBilledMonthly: 209, // Atera: $229
+    popular: true,
+    features: [
+      'Everything in Professional, plus:',
+      'Splashtop concurrent sessions (unlimited)',
+      'AnyDesk remote access',
+      '11 preset reports',
+      'AI ticket auto-tagging',
+      'Custom asset types (up to 5)',
+      'File view and transfer (up to 50GB/mo)',
+      'Audit log (6 months retention)',
+      'Custom support addresses (2)',
+    ],
+    highlights: [
+      'Unlimited Splashtop sessions',
+      'AI ticket auto-tagging',
+      'AnyDesk + Splashtop',
+    ],
+    stripePriceId: 'price_it_expert',
+  },
+  {
+    id: 'it-master',
+    name: 'Master',
+    description: 'For established teams needing greater compliance and more insights.',
+    monthlyPrice: 199, // Atera: $219
+    monthlyPriceBilledMonthly: 249, // Atera: $269
+    features: [
+      'Everything in Expert, plus:',
+      'Custom analytics reports (up to 10)',
+      'Custom asset types (up to 20)',
+      'Audit log (12 months retention)',
+      'Custom support addresses (unlimited)',
+      'File view and transfer (up to 80GB/mo)',
+      'Data recovery',
+    ],
+    highlights: [
+      'Custom analytics reports',
+      '12 months audit log',
+      'Data recovery',
+    ],
+    stripePriceId: 'price_it_master',
+  },
+  {
+    id: 'it-enterprise',
+    name: 'Enterprise',
+    description: 'For departments requiring high-touch and enterprise-level services.',
+    monthlyPrice: 0, // Custom pricing
+    monthlyPriceBilledMonthly: 0,
+    enterprise: true,
+    features: [
+      'Everything in Master, plus:',
+      'Single sign-on (SSO)',
+      'Azure AD continuous sync',
+      'Private software repository',
+      'Custom domain SSL for service portal',
+      'Network Discovery',
+      'Custom reports (unlimited)',
+      'Audit log (7 year retention)',
+      'Script-based custom fields',
+      'HIPAA BAA available',
+      'Custom asset types (unlimited)',
+    ],
+    highlights: [
+      'SSO & Enterprise security',
+      'Dedicated support',
+      'Custom integrations',
+    ],
+  },
+];
+
+// MSP Plans (Managed Service Providers)
+export const MSP_PLANS: VanguardPlan[] = [
+  {
+    id: 'msp-pro',
+    name: 'Pro',
+    description: 'For IT professionals looking to oversee their clients\' IT infrastructure.',
+    monthlyPrice: 109, // Atera: $129
+    monthlyPriceBilledMonthly: 119, // Atera: $139
+    features: [
+      'Remote monitoring and alerts',
+      'Remote management',
+      'Splashtop (up to 2 concurrent sessions)',
+      'Patch management',
+      'Software management',
+      'Knowledge base',
+      'Audit log (1 month retention)',
+      'Custom support addresses (up to 5)',
+      'Help Desk',
+      'File view',
+      'API Access',
+      'SLA and automated time tracking',
+      'Contracts & invoicing',
+      'Azure AD integration',
+      'Mobile app (iOS & Android)',
+    ],
+    highlights: [
+      'Contracts & invoicing',
+      'SLA tracking',
+      'API Access',
+    ],
+    stripePriceId: 'price_msp_pro',
+  },
+  {
+    id: 'msp-growth',
+    name: 'Growth',
+    description: 'For MSPs seeking flexibility, dual remote monitoring tools and asset management.',
+    monthlyPrice: 159, // Atera: $179
+    monthlyPriceBilledMonthly: 169, // Atera: $189
+    popular: true,
+    features: [
+      'Everything in Pro, plus:',
+      'Mac and Linux support',
+      'Splashtop concurrent sessions (unlimited)',
+      'AnyDesk remote access',
+      '11 Preset Reports',
+      'Custom support addresses (up to 10)',
+      'Custom asset types (up to 5)',
+      'File view and transfer (up to 15GB/mo)',
+      'Audit log (6 months retention)',
+      'QuickBooks Online & Xero integrations',
+      'CSV QuickBooks Desktop export',
+    ],
+    highlights: [
+      'Mac & Linux support',
+      'QuickBooks & Xero',
+      'Unlimited remote sessions',
+    ],
+    stripePriceId: 'price_msp_growth',
+  },
+  {
+    id: 'msp-power',
+    name: 'Power',
+    description: 'For mid-size MSPs that need compliance, insights, and custom reports.',
+    monthlyPrice: 189, // Atera: $209
+    monthlyPriceBilledMonthly: 229, // Atera: $249
+    features: [
+      'Everything in Growth, plus:',
+      'Custom reports (up to 10)',
+      'Custom support addresses (unlimited)',
+      'Custom asset types (up to 20)',
+      'File transfer (up to 50GB/mo)',
+      'Audit log (12 months retention)',
+      'Data recovery',
+    ],
+    highlights: [
+      'Custom reports',
+      '12 months audit log',
+      'Data recovery',
+    ],
+    stripePriceId: 'price_msp_power',
+  },
+  {
+    id: 'msp-superpower',
+    name: 'Superpower',
+    description: 'For large MSPs that need Enterprise-grade services.',
+    monthlyPrice: 0, // Custom pricing
+    monthlyPriceBilledMonthly: 0,
+    enterprise: true,
+    features: [
+      'Everything in Power, plus:',
+      'Single sign-on (SSO)',
+      'Azure AD continuous sync',
+      'Private software repository',
+      'Custom domain SSL for Service Portal',
+      'Network Discovery',
+      'Custom reports (unlimited)',
+      'Audit log (7 year retention)',
+      'HIPAA BAA available',
+      'Dedicated account manager',
+      'Priority support',
+    ],
+    highlights: [
+      'Enterprise-grade security',
+      'Dedicated support',
+      'Custom SLAs',
+    ],
+  },
+];
+
+// All plans include (shown at top of pricing page)
+export const ALL_PLANS_INCLUDE = {
+  it: [
+    'Ticketing & service portal',
+    'Windows, Mac, and Linux support',
+    'Classic reports',
+    'IT automations',
+    '24/7 chat support',
+  ],
+  msp: [
+    'Ticketing & helpdesk',
+    'Windows support',
+    'Classic reports',
+    'IT automations',
+    '24/7 chat support',
+  ],
+};
+
+// Add-ons available for all plans
+export const ADDONS = [
+  {
+    id: 'ai-copilot',
+    name: 'AI Copilot',
+    description: 'AI-powered assistance for faster ticket resolution and automation.',
+    monthlyPrice: 50, // per technician
+    features: [
+      'AI ticket summarization',
+      'Suggested responses',
+      'Auto-categorization',
+      'Knowledge base suggestions',
+    ],
+  },
+  {
+    id: 'network-discovery',
+    name: 'Network Discovery',
+    description: 'Scan and monitor networks for devices and security issues.',
+    monthlyPrice: 25, // per technician
+    features: [
+      'Automatic device discovery',
+      'Network mapping',
+      'Security scanning',
+      'Upsell opportunity alerts',
+    ],
+  },
+];
+
+// Helper functions
+export const formatPrice = (cents: number): string => {
+  return `$${cents}`;
+};
+
+export const getAnnualSavings = (plan: VanguardPlan): number => {
+  if (plan.enterprise) return 0;
+  return (plan.monthlyPriceBilledMonthly - plan.monthlyPrice) * 12;
+};
+
+export const getAnnualSavingsPercent = (plan: VanguardPlan): number => {
+  if (plan.enterprise || plan.monthlyPriceBilledMonthly === 0) return 0;
+  return Math.round(((plan.monthlyPriceBilledMonthly - plan.monthlyPrice) / plan.monthlyPriceBilledMonthly) * 100);
+};
