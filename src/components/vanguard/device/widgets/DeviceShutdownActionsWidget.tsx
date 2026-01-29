@@ -61,30 +61,30 @@ export function DeviceShutdownActionsWidget({
   };
 
   return (
-    <Card className="bg-white border-gray-200">
+    <Card className="bg-black/80 border-cyan-500/30 shadow-lg shadow-purple-500/10">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="text-sm font-medium text-gray-500">Scheduled shutdown actions</CardTitle>
+        <CardTitle className="text-sm font-medium text-white/60">Scheduled shutdown actions</CardTitle>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-1">
+            <Button variant="ghost" size="sm" className="gap-1 text-white/60 hover:text-white hover:bg-cyan-500/10">
               <Plus className="h-3 w-3" />
               Shutdown actions
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onLogout}>
+          <DropdownMenuContent align="end" className="bg-black/95 border-cyan-500/30">
+            <DropdownMenuItem onClick={onLogout} className="text-white hover:bg-cyan-500/10">
               <LogOut className="h-4 w-4 mr-2" />
               Log out user now
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onRestart}>
+            <DropdownMenuItem onClick={onRestart} className="text-white hover:bg-cyan-500/10">
               <RefreshCw className="h-4 w-4 mr-2" />
               Restart now
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onShutdown}>
+            <DropdownMenuItem onClick={onShutdown} className="text-white hover:bg-cyan-500/10">
               <Power className="h-4 w-4 mr-2" />
               Shut down now
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onScheduleAction}>
+            <DropdownMenuItem onClick={onScheduleAction} className="text-white hover:bg-cyan-500/10">
               <Clock className="h-4 w-4 mr-2" />
               Schedule action...
             </DropdownMenuItem>
@@ -93,22 +93,22 @@ export function DeviceShutdownActionsWidget({
       </CardHeader>
       <CardContent>
         {scheduledActions.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-2">No scheduled actions</p>
+          <p className="text-sm text-white/40 text-center py-2">No scheduled actions</p>
         ) : (
           <div className="space-y-2">
             {scheduledActions.map((action) => (
               <div 
                 key={action.id} 
-                className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                className="flex items-center justify-between p-2 bg-black/40 border border-cyan-500/20 rounded-lg"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-white/80">
                   {getActionIcon(action.action_type)}
                   <div>
-                    <p className="text-sm font-medium">{getActionLabel(action.action_type)}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm font-medium text-white">{getActionLabel(action.action_type)}</p>
+                    <p className="text-xs text-white/60">
                       {format(new Date(action.scheduled_at), "MMM d, yyyy 'at' h:mm a")}
                       {action.repeat && action.repeat !== 'once' && (
-                        <Badge variant="outline" className="ml-2 text-xs">
+                        <Badge variant="outline" className="ml-2 text-xs border-cyan-500/30 text-cyan-400">
                           {action.repeat}
                         </Badge>
                       )}
@@ -118,7 +118,7 @@ export function DeviceShutdownActionsWidget({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-gray-400 hover:text-red-500"
+                  className="h-6 w-6 text-white/40 hover:text-red-400 hover:bg-red-500/10"
                   onClick={() => onDeleteAction(action.id)}
                 >
                   <Trash2 className="h-3 w-3" />

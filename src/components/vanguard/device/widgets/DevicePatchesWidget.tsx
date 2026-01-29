@@ -20,10 +20,10 @@ export function DevicePatchesWidget({
   onReboot,
 }: DevicePatchesWidgetProps) {
   return (
-    <Card className="bg-white border-gray-200">
+    <Card className="bg-black/80 border-cyan-500/30 shadow-lg shadow-purple-500/10">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="text-sm font-medium text-gray-500">Patches</CardTitle>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onManagePatches}>
+        <CardTitle className="text-sm font-medium text-white/60">Patches</CardTitle>
+        <Button variant="ghost" size="icon" className="h-6 w-6 text-white/40 hover:text-white hover:bg-cyan-500/10" onClick={onManagePatches}>
           <Settings className="h-3 w-3" />
         </Button>
       </CardHeader>
@@ -31,17 +31,17 @@ export function DevicePatchesWidget({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="text-center">
-              <div className="text-2xl font-semibold">{availableCount}</div>
-              <div className="text-xs text-gray-500">Available</div>
+              <div className="text-2xl font-semibold text-white">{availableCount}</div>
+              <div className="text-xs text-white/60">Available</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-semibold">{pendingCount}</div>
-              <div className="text-xs text-gray-500">Pending</div>
+              <div className="text-2xl font-semibold text-white">{pendingCount}</div>
+              <div className="text-xs text-white/60">Pending</div>
             </div>
           </div>
           
           {pendingCount > 0 && (
-            <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">
+            <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
               Reboot required
             </Badge>
           )}
@@ -51,7 +51,7 @@ export function DevicePatchesWidget({
           <Button 
             variant="outline" 
             size="sm" 
-            className="flex-1 gap-1"
+            className="flex-1 gap-1 border-cyan-500/30 text-white hover:bg-cyan-500/10"
             onClick={onManagePatches}
           >
             <Download className="h-3 w-3" />
@@ -61,7 +61,7 @@ export function DevicePatchesWidget({
             <Button 
               variant="outline" 
               size="sm" 
-              className="gap-1"
+              className="gap-1 border-cyan-500/30 text-white hover:bg-cyan-500/10"
               onClick={onReboot}
             >
               <RefreshCw className="h-3 w-3" />
@@ -71,7 +71,7 @@ export function DevicePatchesWidget({
         </div>
         
         {lastChecked && (
-          <p className="text-xs text-gray-400">Last checked: {lastChecked}</p>
+          <p className="text-xs text-white/40">Last checked: {lastChecked}</p>
         )}
       </CardContent>
     </Card>

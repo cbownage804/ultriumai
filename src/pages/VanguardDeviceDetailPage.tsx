@@ -188,18 +188,18 @@ export default function VanguardDeviceDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#f5f5f5] flex items-center justify-center">
-        <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+      <div className="min-h-screen bg-[#050a0a] flex items-center justify-center">
+        <RefreshCw className="h-8 w-8 animate-spin text-cyan-400" />
       </div>
     );
   }
 
   if (!agent) {
     return (
-      <div className="min-h-screen bg-[#f5f5f5] p-6">
+      <div className="min-h-screen bg-[#050a0a] p-6">
         <div className="text-center py-12">
-          <p className="text-gray-500">Device not found</p>
-          <Button variant="outline" className="mt-4" onClick={() => navigate('/vanguard/devices')}>
+          <p className="text-white/60">Device not found</p>
+          <Button variant="outline" className="mt-4 border-cyan-500/30 text-white hover:bg-cyan-500/10" onClick={() => navigate('/vanguard/devices')}>
             Back to Devices
           </Button>
         </div>
@@ -312,26 +312,26 @@ export default function VanguardDeviceDetailPage() {
       case 'safedoc':
         return (
           <div key={widgetId} {...commonProps}>
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="bg-black/80 rounded-lg border border-cyan-500/30 p-4 shadow-lg shadow-purple-500/10">
               <div className="flex items-center gap-2 mb-3">
                 <img src={safedocLogo} alt="SafeDoc" className="h-5 w-auto" />
-                <h3 className="font-medium text-gray-900">SafeDoc Quick Access</h3>
+                <h3 className="font-medium text-white">SafeDoc Quick Access</h3>
               </div>
-              <p className="text-xs text-gray-500 mb-3">
+              <p className="text-xs text-white/60 mb-3">
                 {clientName} documentation
               </p>
               <div className="space-y-2">
-                <div className="p-2 rounded bg-gray-50 border border-gray-200 hover:border-teal-500 cursor-pointer transition-colors">
+                <div className="p-2 rounded bg-black/40 border border-cyan-500/20 hover:border-cyan-500/50 cursor-pointer transition-colors">
                   <div className="flex items-center gap-2 mb-1">
                     <Key className="h-3 w-3 text-amber-500" />
-                    <span className="text-gray-900 text-xs font-medium">Domain Admin</span>
+                    <span className="text-white text-xs font-medium">Domain Admin</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <code className="text-teal-600 text-xs">admin@domain.local</code>
+                    <code className="text-cyan-400 text-xs">admin@domain.local</code>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-5 w-5 text-gray-400 hover:text-gray-700"
+                      className="h-5 w-5 text-white/40 hover:text-white"
                       onClick={(e) => {
                         e.stopPropagation();
                         navigator.clipboard.writeText('admin@domain.local');
@@ -342,17 +342,17 @@ export default function VanguardDeviceDetailPage() {
                     </Button>
                   </div>
                 </div>
-                <div className="p-2 rounded bg-gray-50 border border-gray-200 hover:border-teal-500 cursor-pointer transition-colors">
+                <div className="p-2 rounded bg-black/40 border border-cyan-500/20 hover:border-cyan-500/50 cursor-pointer transition-colors">
                   <div className="flex items-center gap-2 mb-1">
                     <Server className="h-3 w-3 text-blue-500" />
-                    <span className="text-gray-900 text-xs font-medium">Device Config</span>
+                    <span className="text-white text-xs font-medium">Device Config</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <code className="text-teal-600 text-xs">{agent?.ip_address || '192.168.1.x'}</code>
+                    <code className="text-cyan-400 text-xs">{agent?.ip_address || '192.168.1.x'}</code>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-5 w-5 text-gray-400 hover:text-gray-700"
+                      className="h-5 w-5 text-white/40 hover:text-white"
                       onClick={(e) => {
                         e.stopPropagation();
                         navigator.clipboard.writeText(agent?.ip_address || '192.168.1.x');
@@ -366,7 +366,7 @@ export default function VanguardDeviceDetailPage() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="w-full text-teal-600 border-teal-200 hover:bg-teal-50 mt-2"
+                  className="w-full text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/10 mt-2"
                   onClick={() => navigate('/vanguard/safedoc')}
                 >
                   <ExternalLink className="h-3 w-3 mr-1" />
@@ -382,16 +382,16 @@ export default function VanguardDeviceDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5]">
+    <div className="min-h-screen bg-[#050a0a]">
       {/* Page Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-black/80 border-b border-cyan-500/30 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate('/vanguard/devices')}
-              className="text-gray-500"
+              className="text-white/60 hover:text-white hover:bg-cyan-500/10"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -400,8 +400,8 @@ export default function VanguardDeviceDetailPage() {
                 "h-3 w-3 rounded-full",
                 isOnline ? "bg-green-500" : "bg-red-500"
               )} />
-              <h1 className="text-xl font-semibold text-gray-900">{agent.name}</h1>
-              <Badge variant="outline" className="text-gray-500">
+              <h1 className="text-xl font-semibold text-white">{agent.name}</h1>
+              <Badge variant="outline" className="text-white/60 border-cyan-500/30">
                 {agent.os_info || "Unknown OS"}
               </Badge>
             </div>
@@ -411,57 +411,57 @@ export default function VanguardDeviceDetailPage() {
             {isOnline && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="bg-teal-500 hover:bg-teal-600 text-white gap-2">
+                  <Button className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 hover:opacity-90 text-white gap-2">
                     <ExternalLink className="h-4 w-4" />
                     Connect
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Remote Desktop</DropdownMenuItem>
-                  <DropdownMenuItem>Terminal</DropdownMenuItem>
-                  <DropdownMenuItem>File Manager</DropdownMenuItem>
+                <DropdownMenuContent align="end" className="bg-black/95 border-cyan-500/30">
+                  <DropdownMenuItem className="text-white hover:bg-cyan-500/10">Remote Desktop</DropdownMenuItem>
+                  <DropdownMenuItem className="text-white hover:bg-cyan-500/10">Terminal</DropdownMenuItem>
+                  <DropdownMenuItem className="text-white hover:bg-cyan-500/10">File Manager</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
+                <Button variant="outline" className="gap-2 border-cyan-500/30 text-white hover:bg-cyan-500/10">
                   Manage
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Run Script</DropdownMenuItem>
-                <DropdownMenuItem>Deploy Software</DropdownMenuItem>
-                <DropdownMenuItem>Patch Management</DropdownMenuItem>
-                <DropdownMenuItem>Restart Device</DropdownMenuItem>
+              <DropdownMenuContent align="end" className="bg-black/95 border-cyan-500/30">
+                <DropdownMenuItem className="text-white hover:bg-cyan-500/10">Run Script</DropdownMenuItem>
+                <DropdownMenuItem className="text-white hover:bg-cyan-500/10">Deploy Software</DropdownMenuItem>
+                <DropdownMenuItem className="text-white hover:bg-cyan-500/10">Patch Management</DropdownMenuItem>
+                <DropdownMenuItem className="text-white hover:bg-cyan-500/10">Restart Device</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2 border-cyan-500/30 text-white hover:bg-cyan-500/10">
               <Sparkles className="h-4 w-4" />
               Copilot
             </Button>
             
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2 border-cyan-500/30 text-white hover:bg-cyan-500/10">
               <Ticket className="h-4 w-4" />
               Create ticket
             </Button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="text-white/60 hover:text-white hover:bg-cyan-500/10">
                   <MoreHorizontal className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setShowResetDialog(true)}>
+              <DropdownMenuContent align="end" className="bg-black/95 border-cyan-500/30">
+                <DropdownMenuItem onClick={() => setShowResetDialog(true)} className="text-white hover:bg-cyan-500/10">
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Reset page layout
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-600">
+                <DropdownMenuItem className="text-red-400 hover:bg-red-500/10">
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete Agent
                 </DropdownMenuItem>
@@ -477,36 +477,36 @@ export default function VanguardDeviceDetailPage() {
           {/* Left Side - Tabs */}
           <div className="flex-1">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="bg-white border border-gray-200 p-1 flex-wrap h-auto">
-                <TabsTrigger value="overview" className="gap-2 data-[state=active]:bg-gray-100">
+              <TabsList className="bg-black/60 border border-cyan-500/30 p-1 flex-wrap h-auto">
+                <TabsTrigger value="overview" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                   <Monitor className="h-4 w-4" />
                   Overview
                 </TabsTrigger>
-                <TabsTrigger value="hardware" className="gap-2 data-[state=active]:bg-gray-100">
+                <TabsTrigger value="hardware" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                   <Monitor className="h-4 w-4" />
                   Hardware
                 </TabsTrigger>
-                <TabsTrigger value="disks" className="gap-2 data-[state=active]:bg-gray-100">
+                <TabsTrigger value="disks" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                   <HardDrive className="h-4 w-4" />
                   Disks
                 </TabsTrigger>
-                <TabsTrigger value="security" className="gap-2 data-[state=active]:bg-gray-100">
+                <TabsTrigger value="security" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                   <Shield className="h-4 w-4" />
                   OS & Security
                 </TabsTrigger>
-                <TabsTrigger value="custom" className="gap-2 data-[state=active]:bg-gray-100">
+                <TabsTrigger value="custom" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                   <FileText className="h-4 w-4" />
                   Custom fields
                 </TabsTrigger>
-                <TabsTrigger value="passwords" className="gap-2 data-[state=active]:bg-gray-100">
+                <TabsTrigger value="passwords" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                   <Key className="h-4 w-4" />
                   Passwords
                 </TabsTrigger>
-                <TabsTrigger value="attachments" className="gap-2 data-[state=active]:bg-gray-100">
+                <TabsTrigger value="attachments" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                   <Paperclip className="h-4 w-4" />
                   Attachments
                 </TabsTrigger>
-                <TabsTrigger value="monitored" className="gap-2 data-[state=active]:bg-gray-100">
+                <TabsTrigger value="monitored" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                   <Server className="h-4 w-4" />
                   Monitored devices
                 </TabsTrigger>
@@ -577,18 +577,18 @@ export default function VanguardDeviceDetailPage() {
 
       {/* Reset Layout Dialog */}
       <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-        <DialogContent>
+        <DialogContent className="bg-black/95 border-cyan-500/30">
           <DialogHeader>
-            <DialogTitle>Reset page layout?</DialogTitle>
+            <DialogTitle className="text-white">Reset page layout?</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-white/60">
             This will reset all widget positions to their default locations.
           </p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowResetDialog(false)}>
+            <Button variant="outline" onClick={() => setShowResetDialog(false)} className="border-cyan-500/30 text-white hover:bg-cyan-500/10">
               Cancel
             </Button>
-            <Button onClick={handleResetLayout}>
+            <Button onClick={handleResetLayout} className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">
               Reset layout
             </Button>
           </DialogFooter>
