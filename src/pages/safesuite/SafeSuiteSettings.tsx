@@ -51,8 +51,48 @@ export default function SafeSuiteSettings() {
   };
 
   const handleExportData = async () => {
-    toast.info('Preparing data export...');
-    // TODO: Implement data export
+    toast.info('Preparing your data export...');
+    
+    try {
+      const { data: { session } } = await (await import('@/integrations/supabase/client')).supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error('Please sign in to export your data');
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/safesuite-data-export`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to export data');
+      }
+
+      const exportData = await response.json();
+      
+      // Create and download the file
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `safesuite-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Data exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export data. Please try again.');
+    }
   };
 
   const handleSetup2FA = async () => {
