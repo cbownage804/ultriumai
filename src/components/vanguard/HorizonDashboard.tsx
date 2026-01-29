@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useHorizonStats } from '@/hooks/useHorizonStats';
+import { DeviceQuickActions } from './horizon/DeviceQuickActions';
+import { AutomationProfileSelector } from './horizon/AutomationProfileSelector';
 import { 
   Monitor, 
   Server, 
@@ -27,6 +29,7 @@ import {
   TrendingUp,
   Clock,
   Zap,
+  Settings,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -394,10 +397,12 @@ export function HorizonDashboard() {
                 {devices.slice(0, 5).map(device => (
                   <div 
                     key={device.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/20 hover:bg-muted/40 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/vanguard/devices/${device.id}`)}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors group"
                   >
-                    <div className="flex items-center gap-3">
+                    <div 
+                      className="flex items-center gap-3 flex-1 cursor-pointer"
+                      onClick={() => navigate(`/vanguard/devices/${device.id}`)}
+                    >
                       <div className={cn(
                         'w-2 h-2 rounded-full',
                         device.status === 'online' ? 'bg-green-500' :
@@ -411,15 +416,34 @@ export function HorizonDashboard() {
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <Badge variant={device.status === 'online' ? 'default' : 'secondary'}>
-                        {device.status}
-                      </Badge>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {device.last_heartbeat 
-                          ? formatDistanceToNow(new Date(device.last_heartbeat), { addSuffix: true })
-                          : 'Never'}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <Badge variant={device.status === 'online' ? 'default' : 'secondary'}>
+                          {device.status}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {device.last_heartbeat 
+                            ? formatDistanceToNow(new Date(device.last_heartbeat), { addSuffix: true })
+                            : 'Never'}
+                        </p>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                        <AutomationProfileSelector 
+                          deviceId={device.id} 
+                          deviceName={device.name}
+                          currentProfiles={device.config as any}
+                          onUpdate={refetch}
+                        >
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        </AutomationProfileSelector>
+                        <DeviceQuickActions 
+                          deviceId={device.id} 
+                          deviceName={device.name}
+                          onActionComplete={refetch}
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}

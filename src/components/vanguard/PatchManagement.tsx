@@ -4,9 +4,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package, Shield, AlertTriangle, CheckCircle, Clock, Download, Server, Calendar } from 'lucide-react';
+import { Package, Shield, AlertTriangle, CheckCircle, Clock, Download, Server, Calendar, RefreshCw, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useHorizonStats } from '@/hooks/useHorizonStats';
+import { PatchDeploymentDialog } from './horizon/PatchDeploymentDialog';
 import { toast } from 'sonner';
 
 interface PatchInfo {
@@ -23,13 +25,15 @@ interface PatchInfo {
 
 export const PatchManagement = () => {
   const { user } = useAuth();
+  const { devices, refetch: refetchDevices } = useHorizonStats();
   const [patches, setPatches] = useState<PatchInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({
     critical: 0,
     high: 0,
     medium: 0,
     low: 0,
-    compliance: 85
+    compliance: 100
   });
 
   useEffect(() => {
@@ -37,46 +41,53 @@ export const PatchManagement = () => {
   }, [user]);
 
   const loadPatches = async () => {
-    const { data } = await supabase
-      .from('patch_management')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (data && data.length > 0) {
-      const mappedPatches = data.map(p => ({
-        id: p.id,
-        name: p.patch_name,
-        severity: p.severity,
-        category: p.vendor,
-        size: 'N/A',
-        release_date: p.release_date || p.created_at,
-        status: p.status,
-        devices_affected: p.affected_devices || 1,
-        devices_patched: p.status === 'completed' ? (p.affected_devices || 1) : 0
-      }));
-      setPatches(mappedPatches);
-      setStats({
-        critical: mappedPatches.filter(p => p.severity === 'critical' && p.status !== 'completed').length,
-        high: mappedPatches.filter(p => p.severity === 'high' && p.status !== 'completed').length,
-        medium: mappedPatches.filter(p => p.severity === 'medium' && p.status !== 'completed').length,
-        low: mappedPatches.filter(p => p.severity === 'low' && p.status !== 'completed').length,
-        compliance: mappedPatches.length > 0 
-          ? Math.round(mappedPatches.filter(p => p.status === 'completed').length / mappedPatches.length * 100)
-          : 100
-      });
-    } else {
-      // No real patches - show empty state
-      setPatches([]);
-      setStats({
-        critical: 0, high: 0, medium: 0, low: 0,
-        compliance: 100
-      });
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('patch_management')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const mappedPatches = data.map(p => ({
+          id: p.id,
+          name: p.patch_name,
+          severity: p.severity,
+          category: p.vendor,
+          size: 'N/A',
+          release_date: p.release_date || p.created_at,
+          status: p.status,
+          devices_affected: p.affected_devices || 1,
+          devices_patched: p.status === 'completed' ? (p.affected_devices || 1) : 0
+        }));
+        setPatches(mappedPatches);
+        setStats({
+          critical: mappedPatches.filter(p => p.severity === 'critical' && p.status !== 'completed').length,
+          high: mappedPatches.filter(p => p.severity === 'high' && p.status !== 'completed').length,
+          medium: mappedPatches.filter(p => p.severity === 'medium' && p.status !== 'completed').length,
+          low: mappedPatches.filter(p => p.severity === 'low' && p.status !== 'completed').length,
+          compliance: mappedPatches.length > 0 
+            ? Math.round(mappedPatches.filter(p => p.status === 'completed').length / mappedPatches.length * 100)
+            : 100
+        });
+      } else {
+        setPatches([]);
+        setStats({ critical: 0, high: 0, medium: 0, low: 0, compliance: 100 });
+      }
+    } catch (err) {
+      console.error('Error loading patches:', err);
+      toast.error('Failed to load patches');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const deployPatch = async (patchId: string) => {
-    toast.success('Patch deployment scheduled');
-    // Would trigger agent command to deploy patch
+  const handleDeployComplete = () => {
+    loadPatches();
+    refetchDevices();
   };
 
   const getSeverityBadge = (severity: string) => {
@@ -99,8 +110,31 @@ export const PatchManagement = () => {
     return <Badge className={colors[status] || 'bg-muted'}>{status.replace('_', ' ')}</Badge>;
   };
 
+  // Map devices for deployment dialog
+  const devicesList = devices.map(d => ({
+    id: d.id,
+    name: d.name,
+    status: d.status,
+  }));
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Patch Management</h2>
+        <Button variant="outline" size="sm" onClick={loadPatches}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
@@ -179,41 +213,53 @@ export const PatchManagement = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {patches.filter(p => p.status === 'pending').map(patch => (
-                  <div key={patch.id} className="p-4 border rounded-lg">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-medium">{patch.name}</h4>
-                          {getSeverityBadge(patch.severity)}
-                          <Badge variant="outline">{patch.category}</Badge>
+              {patches.filter(p => p.status === 'pending').length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckCircle className="h-12 w-12 mx-auto mb-3 text-green-500 opacity-50" />
+                  <p>No pending patches</p>
+                  <p className="text-sm">All systems are up to date</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {patches.filter(p => p.status === 'pending').map(patch => (
+                    <div key={patch.id} className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-medium">{patch.name}</h4>
+                            {getSeverityBadge(patch.severity)}
+                            <Badge variant="outline">{patch.category}</Badge>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Server className="h-4 w-4" />
+                              {patch.devices_patched}/{patch.devices_affected} devices
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Download className="h-4 w-4" />
+                              {patch.size}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              {new Date(patch.release_date).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <Progress value={(patch.devices_patched / patch.devices_affected) * 100} className="h-2" />
+                          </div>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Server className="h-4 w-4" />
-                            {patch.devices_patched}/{patch.devices_affected} devices
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Download className="h-4 w-4" />
-                            {patch.size}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            {new Date(patch.release_date).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="mt-2">
-                          <Progress value={(patch.devices_patched / patch.devices_affected) * 100} className="h-2" />
-                        </div>
+                        <PatchDeploymentDialog
+                          patch={patch}
+                          devices={devicesList}
+                          onDeploy={handleDeployComplete}
+                        >
+                          <Button size="sm">Deploy</Button>
+                        </PatchDeploymentDialog>
                       </div>
-                      <Button size="sm" onClick={() => deployPatch(patch.id)}>
-                        Deploy
-                      </Button>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
