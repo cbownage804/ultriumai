@@ -8,7 +8,7 @@
     <AssemblyName>VanguardAgent</AssemblyName>
     <Product>Ultrium Vanguard Agent</Product>
     <Company>Ultrium AI</Company>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Description>Enterprise RMM agent for Ultrium Vanguard platform</Description>
     <Copyright>Copyright © Ultrium AI 2024</Copyright>
     <PublishSingleFile>true</PublishSingleFile>
