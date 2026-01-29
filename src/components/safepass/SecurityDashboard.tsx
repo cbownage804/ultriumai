@@ -103,30 +103,30 @@ const SecurityDashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
         <div className="flex items-center space-x-2">
-          <Shield className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl font-bold">Security Dashboard</h2>
+          <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+          <h2 className="text-xl sm:text-2xl font-bold">Security Dashboard</h2>
         </div>
-        <Button onClick={runSecurityScan} className="bg-gradient-primary hover:bg-gradient-primary/90">
+        <Button onClick={runSecurityScan} className="bg-gradient-primary hover:bg-gradient-primary/90 touch-target w-full sm:w-auto">
           <Scan className="h-4 w-4 mr-2" />
           Run Security Scan
         </Button>
       </div>
 
       {/* Security Score Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Security Score</p>
-                <p className={`text-2xl font-bold ${getScoreColor(securityScore?.overall_score || 0)}`}>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Security Score</p>
+                <p className={`text-xl sm:text-2xl font-bold ${getScoreColor(securityScore?.overall_score || 0)}`}>
                   {securityScore?.overall_score || 0}%
                 </p>
               </div>
-              <Shield className={`h-8 w-8 ${getScoreColor(securityScore?.overall_score || 0)}`} />
+              <Shield className={`h-6 w-6 sm:h-8 sm:w-8 ${getScoreColor(securityScore?.overall_score || 0)}`} />
             </div>
             <Progress 
               value={securityScore?.overall_score || 0} 
@@ -136,54 +136,54 @@ const SecurityDashboard = () => {
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Alerts</p>
-                <p className="text-2xl font-bold text-destructive">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Active Alerts</p>
+                <p className="text-xl sm:text-2xl font-bold text-destructive">
                   {alerts.filter(a => a.status === 'active').length}
                 </p>
               </div>
-              <AlertTriangle className="h-8 w-8 text-destructive" />
+              <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-destructive" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Weak Passwords</p>
-                <p className="text-2xl font-bold text-warning">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Weak Passwords</p>
+                <p className="text-xl sm:text-2xl font-bold text-warning">
                   {securityScore?.weak_passwords || 0}
                 </p>
               </div>
-              <AlertCircle className="h-8 w-8 text-warning" />
+              <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-warning" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Breached Passwords</p>
-                <p className="text-2xl font-bold text-destructive">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Breached</p>
+                <p className="text-xl sm:text-2xl font-bold text-destructive">
                   {securityScore?.breached_passwords || 0}
                 </p>
               </div>
-              <XCircle className="h-8 w-8 text-destructive" />
+              <XCircle className="h-6 w-6 sm:h-8 sm:w-8 text-destructive" />
             </div>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="alerts" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="alerts">Security Alerts</TabsTrigger>
-          <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
-          <TabsTrigger value="emergency">Emergency Access</TabsTrigger>
-          <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
+        <TabsList className="w-full flex overflow-x-auto touch-pan-x scrollbar-hide">
+          <TabsTrigger value="alerts" className="flex-1 min-w-[80px] touch-target text-xs sm:text-sm">Alerts</TabsTrigger>
+          <TabsTrigger value="recommendations" className="flex-1 min-w-[80px] touch-target text-xs sm:text-sm">Tips</TabsTrigger>
+          <TabsTrigger value="emergency" className="flex-1 min-w-[80px] touch-target text-xs sm:text-sm">Emergency</TabsTrigger>
+          <TabsTrigger value="monitoring" className="flex-1 min-w-[80px] touch-target text-xs sm:text-sm">Monitor</TabsTrigger>
         </TabsList>
 
         <TabsContent value="alerts">

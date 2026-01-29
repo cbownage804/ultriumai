@@ -176,57 +176,57 @@ export function SoftwareLicenses() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card className="bg-[#141414] border-emerald-500/10">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10">
-                <Package2 className="h-5 w-5 text-emerald-400" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-emerald-500/10 shrink-0">
+                <Package2 className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats.total}</p>
-                <p className="text-xs text-gray-400">Total Licenses</p>
+                <p className="text-xl sm:text-2xl font-bold text-white">{stats.total}</p>
+                <p className="text-[10px] sm:text-xs text-gray-400">Licenses</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-[#141414] border-emerald-500/10">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <Users className="h-5 w-5 text-blue-400" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-blue-500/10 shrink-0">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats.usedSeats}/{stats.totalSeats}</p>
-                <p className="text-xs text-gray-400">Seats Used</p>
+                <p className="text-xl sm:text-2xl font-bold text-white">{stats.usedSeats}/{stats.totalSeats}</p>
+                <p className="text-[10px] sm:text-xs text-gray-400">Seats</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-[#141414] border-emerald-500/10">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-500/10">
-                <Clock className="h-5 w-5 text-amber-400" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-amber-500/10 shrink-0">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-amber-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats.expiring}</p>
-                <p className="text-xs text-gray-400">Expiring Soon</p>
+                <p className="text-xl sm:text-2xl font-bold text-white">{stats.expiring}</p>
+                <p className="text-[10px] sm:text-xs text-gray-400">Expiring</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-[#141414] border-emerald-500/10">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <DollarSign className="h-5 w-5 text-green-400" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-green-500/10 shrink-0">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-green-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">${stats.totalCost.toLocaleString()}</p>
-                <p className="text-xs text-gray-400">Total Cost</p>
+                <p className="text-xl sm:text-2xl font-bold text-white">${stats.totalCost.toLocaleString()}</p>
+                <p className="text-[10px] sm:text-xs text-gray-400">Cost</p>
               </div>
             </div>
           </CardContent>
@@ -234,44 +234,46 @@ export function SoftwareLicenses() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex flex-1 gap-2 w-full sm:w-auto">
+      <div className="flex flex-col gap-3 sm:gap-4">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search licenses..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-[#1a1a1a] border-emerald-500/10"
+              className="pl-10 bg-[#1a1a1a] border-emerald-500/10 touch-target text-base"
             />
           </div>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[140px] bg-[#1a1a1a] border-emerald-500/10">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {CATEGORIES.map(cat => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="w-[120px] bg-[#1a1a1a] border-emerald-500/10">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="expired">Expired</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="flex-1 sm:w-[140px] bg-[#1a1a1a] border-emerald-500/10 touch-target">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {CATEGORIES.map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="flex-1 sm:w-[120px] bg-[#1a1a1a] border-emerald-500/10 touch-target">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="expired">Expired</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <Button
           onClick={() => { resetForm(); setEditingLicense(null); setShowAddDialog(true); }}
-          className="bg-emerald-500 hover:bg-emerald-600 text-black"
+          className="bg-emerald-500 hover:bg-emerald-600 text-black w-full sm:w-auto touch-target"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add License
