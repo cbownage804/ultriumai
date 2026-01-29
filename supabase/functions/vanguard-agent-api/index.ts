@@ -169,6 +169,12 @@ async function handleRegister(supabase: any, body: any) {
     updated_at: new Date().toISOString()
   };
 
+  // Include client_id if provided (for MSP client association)
+  if (body.client_id) {
+    agentData.client_id = body.client_id;
+    console.log(`[vanguard-agent-api] Agent associated with client: ${body.client_id}`);
+  }
+
   // Only include ip_address if valid
   if (ip_address) {
     agentData.ip_address = ip_address;

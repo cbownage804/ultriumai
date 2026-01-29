@@ -18841,6 +18841,7 @@ export type Database = {
         Row: {
           agent_version: string | null
           api_endpoint: string | null
+          client_id: string | null
           config: Json | null
           created_at: string
           device_id: string
@@ -18860,6 +18861,7 @@ export type Database = {
         Insert: {
           agent_version?: string | null
           api_endpoint?: string | null
+          client_id?: string | null
           config?: Json | null
           created_at?: string
           device_id: string
@@ -18879,6 +18881,7 @@ export type Database = {
         Update: {
           agent_version?: string | null
           api_endpoint?: string | null
+          client_id?: string | null
           config?: Json | null
           created_at?: string
           device_id?: string
@@ -18895,7 +18898,15 @@ export type Database = {
           user_id?: string
           vpn_ip?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_agents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vanguard_ai_feedback: {
         Row: {

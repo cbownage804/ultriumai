@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Copy, Check, Terminal, Server, Plus, Loader2, Download, Package, Monitor, Cpu } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Copy, Check, Terminal, Server, Plus, Loader2, Download, Package, Monitor, Cpu, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,10 +18,20 @@ import { generateWindowsAgentZip } from '@/utils/generateWindowsAgentZip';
 const API_ENDPOINT = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api';
 const VANGUARD_SECRET = 'vgd_sk_7Kx9mPqR3nTwYz2JfL8sHcN6bVdXaE4uGtM1oWpQ5iA';
 
+interface MSPClient {
+  id: string;
+  company_name: string;
+}
+
 export default function VanguardSetup() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [copied, setCopied] = useState<string | null>(null);
+  
+  // Client selection state
+  const [clients, setClients] = useState<MSPClient[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [loadingClients, setLoadingClients] = useState(true);
   
   // Manual device registration state
   const [deviceName, setDeviceName] = useState('');
@@ -31,6 +42,34 @@ export default function VanguardSetup() {
   const [isDownloadingWindows, setIsDownloadingWindows] = useState(false);
   const [windowsDownloadProgress, setWindowsDownloadProgress] = useState(0);
   const [windowsDownloadMessage, setWindowsDownloadMessage] = useState('');
+
+  // Fetch MSP clients on mount
+  useEffect(() => {
+    const fetchClients = async () => {
+      if (!user?.id) return;
+      
+      try {
+        // Cast supabase to any to avoid TypeScript deep instantiation issues with msp_clients
+        const sb: any = supabase;
+        const { data, error } = await sb
+          .from('msp_clients')
+          .select('id, company_name')
+          .eq('user_id', user.id)
+          .order('company_name');
+        
+        if (error) throw error;
+        setClients(data || []);
+      } catch (error) {
+        console.error('Failed to fetch clients:', error);
+      } finally {
+        setLoadingClients(false);
+      }
+    };
+    
+    fetchClients();
+  }, [user?.id]);
+
+  const selectedClient = clients.find(c => c.id === selectedClientId);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -372,14 +411,20 @@ if __name__ == '__main__':
         apiEndpoint: API_ENDPOINT,
         secretKey: VANGUARD_SECRET,
         deviceName: 'Vanguard-Windows',
+        clientId: selectedClientId || undefined,
+        clientName: selectedClient?.company_name,
         onProgress: (progress, message) => {
           setWindowsDownloadProgress(progress);
           setWindowsDownloadMessage(message);
         },
       });
 
-      downloadBlob(blob, 'vanguard-agent-windows.zip');
-      toast.success('Windows agent bundle downloaded!');
+      const filename = selectedClient 
+        ? `vanguard-agent-${selectedClient.company_name.replace(/[^a-zA-Z0-9]/g, '-')}-windows.zip`
+        : 'vanguard-agent-windows.zip';
+      
+      downloadBlob(blob, filename);
+      toast.success(`Windows agent bundle downloaded${selectedClient ? ` for ${selectedClient.company_name}` : ''}!`);
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to generate download. The EXE may still be building.');
@@ -415,7 +460,38 @@ if __name__ == '__main__':
                 Choose your platform and download a pre-configured agent package
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+              {/* Client Selector */}
+              {clients.length > 0 && (
+                <div className="p-4 border rounded-lg bg-muted/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Building2 className="h-4 w-4 text-primary" />
+                    <Label className="font-medium">Assign to Client (Optional)</Label>
+                  </div>
+                  <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a client to associate this agent with..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">
+                        <span className="text-muted-foreground">No client (personal use)</span>
+                      </SelectItem>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.company_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedClient && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      The downloaded agent will be pre-configured for <span className="font-medium text-foreground">{selectedClient.company_name}</span>. 
+                      Devices will automatically appear under this client in your dashboard.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="grid md:grid-cols-2 gap-4">
                 {/* Windows Agent */}
                 <div className="border rounded-lg p-4 bg-background hover:border-primary/50 transition-colors">
