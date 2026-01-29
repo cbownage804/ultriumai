@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Monitor, Server, Laptop, HelpCircle, Apple, Terminal, Wifi } from "lucide-react";
+import { Monitor, Server, Laptop, HelpCircle, Apple, Terminal, Wifi, Activity } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AvailabilityMonitoringWidgetProps {
   devices: Array<{
@@ -38,46 +39,47 @@ export function AvailabilityMonitoringWidget({ devices }: AvailabilityMonitoring
   });
 
   return (
-    <Card className="bg-white border-gray-200 shadow-sm">
+    <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-cyan-500/20 backdrop-blur-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
+        <CardTitle className="text-sm font-medium text-cyan-400 flex items-center gap-2">
+          <Activity className="h-4 w-4" />
           Availability monitoring
-          <HelpCircle className="h-3.5 w-3.5 text-gray-400" />
+          <HelpCircle className="h-3.5 w-3.5 text-slate-500 ml-1" />
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-100">
-              <th className="text-left text-xs font-medium text-gray-500 px-4 py-2">Device type</th>
-              <th className="text-center text-xs font-medium text-gray-500 px-4 py-2">Online</th>
-              <th className="text-center text-xs font-medium text-gray-500 px-4 py-2">Offline</th>
+            <tr className="border-b border-cyan-500/10">
+              <th className="text-left text-xs font-medium text-slate-400 px-4 py-2">Device type</th>
+              <th className="text-center text-xs font-medium text-slate-400 px-4 py-2">Online</th>
+              <th className="text-center text-xs font-medium text-slate-400 px-4 py-2">Offline</th>
             </tr>
           </thead>
           <tbody>
             {deviceTypes.map((row) => (
-              <tr key={row.type} className="border-b border-gray-50 last:border-0">
+              <tr key={row.type} className="border-b border-cyan-500/5 last:border-0 hover:bg-cyan-500/5 transition-colors">
                 <td className="px-4 py-2.5">
                   <div className="flex items-center gap-2">
-                    <row.icon className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-700">{row.type}</span>
+                    <row.icon className="h-4 w-4 text-cyan-400" />
+                    <span className="text-sm text-slate-300">{row.type}</span>
                   </div>
                 </td>
                 <td className="text-center px-4 py-2.5">
                   {row.online > 0 ? (
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full bg-green-500" />
-                      <span className="text-sm text-green-600 font-medium">{row.online}</span>
+                      <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                      <span className="text-sm text-green-400 font-medium">{row.online}</span>
                     </span>
                   ) : (
-                    <span className="text-sm text-gray-400">-</span>
+                    <span className="text-sm text-slate-500">-</span>
                   )}
                 </td>
                 <td className="text-center px-4 py-2.5">
                   {row.offline > 0 ? (
-                    <span className="text-sm text-red-500 font-medium">{row.offline}</span>
+                    <span className="text-sm text-red-400 font-medium">{row.offline}</span>
                   ) : (
-                    <span className="text-sm text-gray-400">-</span>
+                    <span className="text-sm text-slate-500">-</span>
                   )}
                 </td>
               </tr>
