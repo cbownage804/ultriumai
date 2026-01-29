@@ -30,6 +30,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          # Only checkout the agent source to avoid Windows checkout failures
+          # from unrelated repo paths that may be invalid on Windows.
+          sparse-checkout: |
+            VanguardAgent
+          sparse-checkout-cone-mode: true
       
       - name: Setup .NET ${{ env.DOTNET_VERSION }}
         uses: actions/setup-dotnet@v4
