@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   Ticket, Plus, Search, Clock, CheckCircle, AlertCircle, 
-  User, Calendar, MoreVertical 
+  User, MoreVertical 
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader,
-  DialogTitle, DialogTrigger, DialogFooter
+  DialogTitle, DialogFooter
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -50,9 +50,6 @@ export const OrgTicketsTab = ({ orgId, orgName, tickets, isLoading, onCreateTick
     ticket.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const openTickets = tickets.filter(t => t.status === 'open' || t.status === 'in_progress');
-  const resolvedTickets = tickets.filter(t => t.status === 'resolved' || t.status === 'closed');
-
   const getPriorityBadge = (priority: string) => {
     const variants: Record<string, { class: string; label: string }> = {
       critical: { class: 'bg-red-500/10 text-red-500 border-red-500/20', label: 'Critical' },
@@ -86,99 +83,7 @@ export const OrgTicketsTab = ({ orgId, orgName, tickets, isLoading, onCreateTick
   };
 
   return (
-    <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Tickets</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{tickets.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-500">Open</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-500">{openTickets.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-500">Resolved</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-500">{resolvedTickets.length}</div>
-          </CardContent>
-        </Card>
-        <Card className="border-dashed">
-          <CardContent className="flex items-center justify-center h-full py-4">
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Ticket
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create Ticket</DialogTitle>
-                  <DialogDescription>
-                    Create a new support ticket for {orgName}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label>Title</Label>
-                    <Input
-                      placeholder="Ticket title..."
-                      value={newTicket.title}
-                      onChange={(e) => setNewTicket(prev => ({ ...prev, title: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Description</Label>
-                    <Textarea
-                      placeholder="Describe the issue..."
-                      value={newTicket.description}
-                      onChange={(e) => setNewTicket(prev => ({ ...prev, description: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Priority</Label>
-                    <Select 
-                      value={newTicket.priority} 
-                      onValueChange={(v) => setNewTicket(prev => ({ ...prev, priority: v }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="critical">Critical</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleCreate} disabled={!newTicket.title}>
-                    Create Ticket
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tickets Table */}
+    <div className="space-y-4">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -191,14 +96,20 @@ export const OrgTicketsTab = ({ orgId, orgName, tickets, isLoading, onCreateTick
                 Support tickets for {orgName}
               </CardDescription>
             </div>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search tickets..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 w-64"
-              />
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search tickets..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 w-64"
+                />
+              </div>
+              <Button onClick={() => setShowCreateDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Ticket
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -286,6 +197,61 @@ export const OrgTicketsTab = ({ orgId, orgName, tickets, isLoading, onCreateTick
           )}
         </CardContent>
       </Card>
+
+      {/* Create Ticket Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Ticket</DialogTitle>
+            <DialogDescription>
+              Create a new support ticket for {orgName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input
+                placeholder="Ticket title..."
+                value={newTicket.title}
+                onChange={(e) => setNewTicket(prev => ({ ...prev, title: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                placeholder="Describe the issue..."
+                value={newTicket.description}
+                onChange={(e) => setNewTicket(prev => ({ ...prev, description: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select 
+                value={newTicket.priority} 
+                onValueChange={(v) => setNewTicket(prev => ({ ...prev, priority: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="critical">Critical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreate} disabled={!newTicket.title}>
+              Create Ticket
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   Shield, Search, AlertTriangle, CheckCircle, Clock, 
-  Eye, MoreVertical, Filter, XCircle
+  Eye, MoreVertical, XCircle
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -49,10 +49,6 @@ export const OrgAlertsTab = ({ orgId, orgName, alerts, isLoading, onResolveAlert
     return matchesSearch && matchesSeverity && matchesStatus;
   });
 
-  const criticalAlerts = alerts.filter(a => a.severity === 'critical' && a.status !== 'resolved');
-  const highAlerts = alerts.filter(a => a.severity === 'high' && a.status !== 'resolved');
-  const newAlerts = alerts.filter(a => a.status === 'new');
-
   const getSeverityBadge = (severity: string) => {
     const variants: Record<string, { class: string; icon: React.ReactNode }> = {
       critical: { class: 'bg-red-500/10 text-red-500 border-red-500/20', icon: <XCircle className="h-3 w-3 mr-1" /> },
@@ -82,44 +78,7 @@ export const OrgAlertsTab = ({ orgId, orgName, alerts, isLoading, onResolveAlert
   };
 
   return (
-    <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className={criticalAlerts.length > 0 ? 'border-red-500/50' : ''}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-red-500">Critical</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">{criticalAlerts.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-orange-500">High</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-500">{highAlerts.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-500">New Alerts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-500">{newAlerts.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{alerts.length}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Alerts Table */}
+    <div className="space-y-4">
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
