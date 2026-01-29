@@ -18,6 +18,10 @@ import { FleetPerformanceGrid } from './horizon/FleetPerformanceGrid';
 import { RMMReportingDashboard } from './horizon/RMMReportingDashboard';
 import { SoftwareAuditPanel } from './horizon/SoftwareAuditPanel';
 import { NetworkTopologyView } from './horizon/NetworkTopologyView';
+import { PatchManagementPanel } from './horizon/PatchManagementPanel';
+import { FleetScriptLibrary } from './horizon/FleetScriptLibrary';
+import { FleetConfigPolicies } from './horizon/FleetConfigPolicies';
+import { FleetRemoteAccess } from './horizon/FleetRemoteAccess';
 import { 
   Monitor, 
   Server, 
@@ -40,6 +44,9 @@ import {
   Clock,
   Zap,
   Settings,
+  FileCode,
+  Layers,
+  MonitorPlay,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -258,6 +265,10 @@ export function HorizonDashboard() {
         <TabsList className="bg-background/50 border flex-wrap">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="patches">Patches</TabsTrigger>
+          <TabsTrigger value="scripts">Scripts</TabsTrigger>
+          <TabsTrigger value="policies">Policies</TabsTrigger>
+          <TabsTrigger value="remote">Remote</TabsTrigger>
           <TabsTrigger value="alerting">Alerting</TabsTrigger>
           <TabsTrigger value="automation">Automation</TabsTrigger>
           <TabsTrigger value="network">Network</TabsTrigger>
@@ -598,6 +609,26 @@ export function HorizonDashboard() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Patches Tab */}
+        <TabsContent value="patches" className="space-y-6 mt-6">
+          <PatchManagementPanel />
+        </TabsContent>
+
+        {/* Scripts Tab */}
+        <TabsContent value="scripts" className="space-y-6 mt-6">
+          <FleetScriptLibrary />
+        </TabsContent>
+
+        {/* Policies Tab */}
+        <TabsContent value="policies" className="space-y-6 mt-6">
+          <FleetConfigPolicies />
+        </TabsContent>
+
+        {/* Remote Access Tab */}
+        <TabsContent value="remote" className="space-y-6 mt-6">
+          <FleetRemoteAccess />
         </TabsContent>
 
         {/* Alerting Tab */}

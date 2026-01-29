@@ -11,3 +11,7 @@ export { FleetPerformanceGrid } from './FleetPerformanceGrid';
 export { RMMReportingDashboard } from './RMMReportingDashboard';
 export { SoftwareAuditPanel } from './SoftwareAuditPanel';
 export { NetworkTopologyView } from './NetworkTopologyView';
+export { PatchManagementPanel } from './PatchManagementPanel';
+export { FleetScriptLibrary } from './FleetScriptLibrary';
+export { FleetConfigPolicies } from './FleetConfigPolicies';
+export { FleetRemoteAccess } from './FleetRemoteAccess';
