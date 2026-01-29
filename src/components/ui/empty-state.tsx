@@ -3,9 +3,12 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LucideIcon, Inbox } from "lucide-react";
 
+/** Type for any component that accepts className */
+type IconComponent = React.ComponentType<{ className?: string }>;
+
 export interface EmptyStateProps {
-  /** Icon to display - can be a LucideIcon component or ReactNode */
-  icon?: LucideIcon | React.ReactNode;
+  /** Icon to display - can be a LucideIcon, any component with className, or ReactNode */
+  icon?: LucideIcon | IconComponent | React.ReactNode;
   /** Main title text */
   title: string;
   /** Description text below the title */
@@ -72,10 +75,10 @@ export function EmptyState({
       return <Inbox className={cn(styles.iconSize, "text-muted-foreground")} />;
     }
     
-    // Check if it's a Lucide icon component
-    if (typeof IconProp === "function") {
-      const LucideIconComponent = IconProp as LucideIcon;
-      return <LucideIconComponent className={cn(styles.iconSize, "text-muted-foreground")} />;
+    // Check if it's a React component (function or forwardRef)
+    if (typeof IconProp === "function" || (typeof IconProp === "object" && IconProp !== null && '$$typeof' in IconProp)) {
+      const IconComponent = IconProp as React.ComponentType<{ className?: string }>;
+      return <IconComponent className={cn(styles.iconSize, "text-muted-foreground")} />;
     }
     
     // It's a ReactNode
