@@ -380,14 +380,14 @@ export function IntegrationHub() {
         <CardContent>
           <div className="space-y-4">
             {[
-              { event: 'Critical vulnerability detected', enabled: true },
-              { event: 'High severity alert triggered', enabled: true },
-              { event: 'New device connected', enabled: false },
-              { event: 'MDR case created', enabled: true },
-              { event: 'Agent offline for 15+ minutes', enabled: true },
-              { event: 'YARA rule match detected', enabled: true },
-              { event: 'File integrity change detected', enabled: false },
-              { event: 'Suspicious process executed', enabled: true }
+              { event: 'Critical vulnerability detected', eventType: 'critical_vuln', enabled: true },
+              { event: 'High severity alert triggered', eventType: 'high_alert', enabled: true },
+              { event: 'New device connected', eventType: 'new_device', enabled: false },
+              { event: 'MDR case created', eventType: 'mdr_case', enabled: true },
+              { event: 'Agent offline for 15+ minutes', eventType: 'agent_offline', enabled: true },
+              { event: 'YARA rule match detected', eventType: 'yara_match', enabled: true },
+              { event: 'File integrity change detected', eventType: 'fim_change', enabled: false },
+              { event: 'Suspicious process executed', eventType: 'suspicious_process', enabled: true }
             ].map((trigger, i) => (
               <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
                 <span className="text-sm">{trigger.event}</span>
