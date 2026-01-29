@@ -1,10 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Building2, Plus } from 'lucide-react';
-import { useSafeDocIT } from '@/hooks/useSafeDocIT';
+import { useVanguardAtlas } from '@/hooks/useVanguardAtlas';
 
-export function SafeDocOrganizations({ selectedOrg, onSelectOrg }: { selectedOrg?: string; onSelectOrg: (id: string) => void }) {
-  const { organizations } = useSafeDocIT();
+export function AtlasOrganizations({ selectedOrg, onSelectOrg }: { selectedOrg?: string; onSelectOrg: (id: string) => void }) {
+  const { organizations } = useVanguardAtlas();
   
   return (
     <div className="space-y-4">

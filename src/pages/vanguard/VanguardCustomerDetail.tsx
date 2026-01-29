@@ -1,6 +1,6 @@
 /**
  * Vanguard Customer Detail Page
- * Atera-style customer profile with tabbed navigation including SafeDoc
+ * Atera-style customer profile with tabbed navigation including Vanguard Atlas
  */
 
 import { useEffect, useState } from 'react';
@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { getVanguardBasePath } from '@/utils/subdomain';
-import safedocLogo from '@/assets/logos/logo-safedoc.png';
+import { Map } from 'lucide-react';
 
 // Mock customer data
 const mockCustomer = {
@@ -79,8 +79,8 @@ const mockDevices = [
   { id: '3', name: 'WS-JSMITH', type: 'Windows 11', status: 'online', ip: '192.168.1.101' },
 ];
 
-// Mock SafeDoc data
-const mockSafeDocData = {
+// Mock Atlas data
+const mockAtlasData = {
   documents: [
     { id: '1', title: 'Network Diagram', category: 'Infrastructure', lastUpdated: '2024-12-15' },
     { id: '2', title: 'Backup Procedures', category: 'Runbook', lastUpdated: '2024-11-20' },
@@ -221,11 +221,11 @@ export default function VanguardCustomerDetail() {
               Alerts
             </TabsTrigger>
             <TabsTrigger 
-              value="safedoc" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent px-4 py-3 flex items-center gap-1"
+              value="atlas" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent px-4 py-3 flex items-center gap-1"
             >
-              <img src={safedocLogo} alt="SafeDoc" className="h-4 w-auto" />
-              SafeDoc
+              <Map className="h-4 w-4 text-cyan-400" />
+              Vanguard Atlas
             </TabsTrigger>
             <TabsTrigger 
               value="attachments" 
@@ -476,8 +476,8 @@ export default function VanguardCustomerDetail() {
             </Card>
           </TabsContent>
 
-          {/* SafeDoc Tab */}
-          <TabsContent value="safedoc" className="mt-0">
+          {/* Vanguard Atlas Tab */}
+          <TabsContent value="atlas" className="mt-0">
             <div className="grid grid-cols-3 gap-6">
               {/* Documents */}
               <Card>
@@ -492,7 +492,7 @@ export default function VanguardCustomerDetail() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {mockSafeDocData.documents.map((doc) => (
+                    {mockAtlasData.documents.map((doc) => (
                       <div 
                         key={doc.id} 
                         className="p-3 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer"
@@ -507,11 +507,11 @@ export default function VanguardCustomerDetail() {
                   </div>
                   <Button 
                     variant="outline" 
-                    className="w-full mt-4 text-teal-600 border-teal-200"
-                    onClick={() => navigate(`${basePath}/safedoc?org=${customerId}`)}
+                    className="w-full mt-4 text-cyan-600 border-cyan-200"
+                    onClick={() => navigate(`${basePath}/atlas?org=${customerId}`)}
                   >
                     <ExternalLink className="h-4 w-4 mr-1" />
-                    Open Full SafeDoc
+                    Open Vanguard Atlas
                   </Button>
                 </CardContent>
               </Card>
@@ -529,7 +529,7 @@ export default function VanguardCustomerDetail() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {mockSafeDocData.passwords.map((pwd) => (
+                    {mockAtlasData.passwords.map((pwd) => (
                       <div 
                         key={pwd.id} 
                         className="p-3 rounded-lg bg-gray-50 hover:bg-gray-100"
@@ -572,7 +572,7 @@ export default function VanguardCustomerDetail() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {mockSafeDocData.configurations.map((config) => (
+                    {mockAtlasData.configurations.map((config) => (
                       <div 
                         key={config.id} 
                         className="p-3 rounded-lg bg-gray-50 hover:bg-gray-100"

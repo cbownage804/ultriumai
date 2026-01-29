@@ -20,7 +20,7 @@ import {
   ThumbsUp, History, ExternalLink, Link2, Copy, CheckCircle2,
   AlertCircle, XCircle, Timer, Smile, Meh, Frown, Filter, Key, Server
 } from 'lucide-react';
-import safedocLogo from '@/assets/logos/logo-safedoc.png';
+import { Map } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -852,13 +852,13 @@ export default function VanguardTicketDetail() {
 
               <Separator className="bg-cyan-500/10" />
 
-              {/* SafeDoc Quick Access - Collapsible */}
+              {/* Vanguard Atlas Quick Access - Collapsible */}
               <Collapsible defaultOpen>
                 <CollapsibleTrigger asChild>
                   <Button variant="ghost" className="w-full justify-between px-3 py-4 text-white hover:bg-cyan-500/10 h-auto">
                     <div className="flex items-center gap-2">
-                      <img src={safedocLogo} alt="SafeDoc" className="h-4 w-auto" />
-                      <span className="font-medium">SafeDoc</span>
+                      <Map className="h-4 w-4 text-cyan-400" />
+                      <span className="font-medium">Vanguard Atlas</span>
                     </div>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
@@ -897,10 +897,10 @@ export default function VanguardTicketDetail() {
                     variant="ghost" 
                     size="sm" 
                     className="w-full justify-center text-cyan-400 text-xs mt-1"
-                    onClick={() => toast.info('Opening SafeDoc for ' + ticket.customer)}
+                    onClick={() => toast.info('Opening Atlas for ' + ticket.customer)}
                   >
                     <ExternalLink className="h-3 w-3 mr-1" />
-                    Open Full SafeDoc
+                    Open Vanguard Atlas
                   </Button>
                 </CollapsibleContent>
               </Collapsible>

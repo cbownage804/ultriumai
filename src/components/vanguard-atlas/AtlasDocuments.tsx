@@ -1,10 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, Plus } from 'lucide-react';
-import { useSafeDocIT } from '@/hooks/useSafeDocIT';
+import { useVanguardAtlas } from '@/hooks/useVanguardAtlas';
 
-export function SafeDocDocuments({ organizationId }: { organizationId?: string }) {
-  const { documents } = useSafeDocIT(organizationId);
+export function AtlasDocuments({ organizationId }: { organizationId?: string }) {
+  const { documents } = useVanguardAtlas(organizationId);
   
   return (
     <div className="space-y-4">

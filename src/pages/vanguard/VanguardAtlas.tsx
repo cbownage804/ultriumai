@@ -1,5 +1,5 @@
 /**
- * SafeDoc - IT Documentation System
+ * Vanguard Atlas - IT Documentation System
  * Full ITGlue replica for Vanguard MSP
  */
 
@@ -12,21 +12,21 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   FileText, Key, Shield, Server, BookOpen, Clock, Building2,
-  Plus, Search, FolderOpen, AlertTriangle, CheckCircle2, Settings
+  Plus, Search, FolderOpen, AlertTriangle, CheckCircle2, Settings, Map
 } from 'lucide-react';
-import { useSafeDocIT } from '@/hooks/useSafeDocIT';
-import { SafeDocOrganizations } from '@/components/safedoc/SafeDocOrganizations';
-import { SafeDocDocuments } from '@/components/safedoc/SafeDocDocuments';
-import { SafeDocPasswords } from '@/components/safedoc/SafeDocPasswords';
-import { SafeDocSSL } from '@/components/safedoc/SafeDocSSL';
-import { SafeDocConfigurations } from '@/components/safedoc/SafeDocConfigurations';
-import { SafeDocRunbooks } from '@/components/safedoc/SafeDocRunbooks';
-import { SafeDocExpirations } from '@/components/safedoc/SafeDocExpirations';
+import { useVanguardAtlas } from '@/hooks/useVanguardAtlas';
+import { AtlasOrganizations } from '@/components/vanguard-atlas/AtlasOrganizations';
+import { AtlasDocuments } from '@/components/vanguard-atlas/AtlasDocuments';
+import { AtlasPasswords } from '@/components/vanguard-atlas/AtlasPasswords';
+import { AtlasSSL } from '@/components/vanguard-atlas/AtlasSSL';
+import { AtlasConfigurations } from '@/components/vanguard-atlas/AtlasConfigurations';
+import { AtlasRunbooks } from '@/components/vanguard-atlas/AtlasRunbooks';
+import { AtlasExpirations } from '@/components/vanguard-atlas/AtlasExpirations';
 
-export default function VanguardSafeDoc() {
+export default function VanguardAtlas() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedOrg, setSelectedOrg] = useState<string | undefined>();
-  const { stats, organizations, isLoading } = useSafeDocIT(selectedOrg);
+  const { stats, organizations, isLoading } = useVanguardAtlas(selectedOrg);
 
   const statCards = [
     { label: 'Organizations', value: stats.organizations, icon: Building2, color: 'text-blue-400', bg: 'bg-blue-500/10' },
@@ -43,8 +43,8 @@ export default function VanguardSafeDoc() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <FileText className="h-6 w-6 text-red-500" />
-            SafeDoc
+            <Map className="h-6 w-6 text-cyan-500" />
+            Vanguard Atlas
           </h1>
           <p className="text-muted-foreground">IT Documentation & Knowledge Management</p>
         </div>
@@ -156,31 +156,31 @@ export default function VanguardSafeDoc() {
 
         <div className="mt-6">
           <TabsContent value="dashboard">
-            <SafeDocOrganizations selectedOrg={selectedOrg} onSelectOrg={setSelectedOrg} />
+            <AtlasOrganizations selectedOrg={selectedOrg} onSelectOrg={setSelectedOrg} />
           </TabsContent>
           
           <TabsContent value="documents">
-            <SafeDocDocuments organizationId={selectedOrg} />
+            <AtlasDocuments organizationId={selectedOrg} />
           </TabsContent>
           
           <TabsContent value="passwords">
-            <SafeDocPasswords organizationId={selectedOrg} />
+            <AtlasPasswords organizationId={selectedOrg} />
           </TabsContent>
           
           <TabsContent value="ssl">
-            <SafeDocSSL organizationId={selectedOrg} />
+            <AtlasSSL organizationId={selectedOrg} />
           </TabsContent>
           
           <TabsContent value="configurations">
-            <SafeDocConfigurations organizationId={selectedOrg} />
+            <AtlasConfigurations organizationId={selectedOrg} />
           </TabsContent>
           
           <TabsContent value="runbooks">
-            <SafeDocRunbooks organizationId={selectedOrg} />
+            <AtlasRunbooks organizationId={selectedOrg} />
           </TabsContent>
           
           <TabsContent value="expirations">
-            <SafeDocExpirations organizationId={selectedOrg} />
+            <AtlasExpirations organizationId={selectedOrg} />
           </TabsContent>
         </div>
       </Tabs>
