@@ -36,7 +36,7 @@ import {
   RotateCcw,
   Copy,
 } from "lucide-react";
-import safedocLogo from '@/assets/logos/logo-safedoc.png';
+// Vanguard Atlas (formerly SafeDoc) - no logo import needed, using Shield icon
 import { useVanguardAgent } from "@/hooks/useVanguardAgents";
 import { useMSP } from "@/hooks/useMSP";
 import { cn } from "@/lib/utils";
@@ -70,10 +70,10 @@ import {
 } from "@/components/vanguard/device/dialogs";
 
 // Widget order for customization
-type WidgetId = 'alert-status' | 'patches' | 'metrics' | 'alerts' | 'profiles' | 'shutdown' | 'activity' | 'safedoc';
+type WidgetId = 'alert-status' | 'patches' | 'metrics' | 'alerts' | 'profiles' | 'shutdown' | 'activity' | 'atlas';
 
 const DEFAULT_WIDGET_ORDER: WidgetId[] = [
-  'safedoc',
+  'atlas',
   'alert-status',
   'patches', 
   'metrics',
@@ -272,7 +272,7 @@ export default function VanguardDeviceDetailPage() {
             <DeviceAlertsWidget
               alerts={mockAlerts}
               onCreateTicket={(id) => toast.info(`Creating ticket for alert ${id}`)}
-              onLaunchCopilot={(id) => toast.info(`Launching Copilot for alert ${id}`)}
+              onLaunchCopilot={(id) => toast.info(`Launching Cortex for alert ${id}`)}
               onResolve={(id) => toast.success(`Alert ${id} resolved`)}
               onSnooze={(id) => toast.success(`Alert ${id} snoozed`)}
               onDelete={(id) => toast.success(`Alert ${id} deleted`)}
@@ -309,13 +309,13 @@ export default function VanguardDeviceDetailPage() {
             <DeviceActivityLogWidget activities={mockActivities} />
           </div>
         );
-      case 'safedoc':
+      case 'atlas':
         return (
           <div key={widgetId} {...commonProps}>
             <div className="bg-black/80 rounded-lg border border-cyan-500/30 p-4 shadow-lg shadow-purple-500/10">
               <div className="flex items-center gap-2 mb-3">
-                <img src={safedocLogo} alt="SafeDoc" className="h-5 w-auto" />
-                <h3 className="font-medium text-white">SafeDoc Quick Access</h3>
+                <Shield className="h-5 w-5 text-cyan-400" />
+                <h3 className="font-medium text-white">Vanguard Atlas</h3>
               </div>
               <p className="text-xs text-white/60 mb-3">
                 {clientName} documentation
@@ -367,10 +367,10 @@ export default function VanguardDeviceDetailPage() {
                   variant="outline" 
                   size="sm" 
                   className="w-full text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/10 mt-2"
-                  onClick={() => navigate('/vanguard/safedoc')}
+                  onClick={() => navigate('/vanguard/atlas')}
                 >
                   <ExternalLink className="h-3 w-3 mr-1" />
-                  Open Full SafeDoc
+                  Open Vanguard Atlas
                 </Button>
               </div>
             </div>
@@ -442,7 +442,7 @@ export default function VanguardDeviceDetailPage() {
             
             <Button variant="outline" className="gap-2 border-cyan-500/30 text-white hover:bg-cyan-500/10">
               <Sparkles className="h-4 w-4" />
-              Copilot
+              Vanguard Cortex
             </Button>
             
             <Button variant="outline" className="gap-2 border-cyan-500/30 text-white hover:bg-cyan-500/10">

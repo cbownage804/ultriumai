@@ -353,7 +353,7 @@ export default function VanguardTicketDetail() {
               </Button>
               <Button className="bg-purple-500 hover:bg-purple-600 text-white">
                 <Sparkles className="h-4 w-4 mr-2" />
-                Copilot
+                Vanguard Cortex
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

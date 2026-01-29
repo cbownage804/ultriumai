@@ -94,7 +94,7 @@ export const platformModules = [
   { icon: 'Database', title: "SIEM", desc: "Log aggregation", color: "from-blue-500 to-blue-600" },
   { icon: 'Network', title: "Network Map", desc: "Topology view", color: "from-indigo-500 to-indigo-600" },
   { icon: 'Lock', title: "Vault", desc: "Credential mgmt", color: "from-amber-500 to-amber-600" },
-  { icon: 'Bot', title: "AI Copilot", desc: "Security assistant", color: "from-violet-500 to-violet-600" },
+  { icon: 'Bot', title: "Vanguard Cortex", desc: "AI operations", color: "from-violet-500 to-violet-600" },
   { icon: 'Layers', title: "Multi-Tenant", desc: "MSP management", color: "from-teal-500 to-teal-600" },
 ];
 
