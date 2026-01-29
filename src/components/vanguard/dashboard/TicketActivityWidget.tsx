@@ -13,15 +13,9 @@ interface TicketActivityWidgetProps {
 }
 
 export function TicketActivityWidget({ data }: TicketActivityWidgetProps) {
-  const chartData = data.length > 0 ? data : [
-    { date: '25 Apr', opened: 0, resolved: 0 },
-    { date: '26 Apr', opened: 0, resolved: 0 },
-    { date: '27 Apr', opened: 0, resolved: 0 },
-    { date: '28 Apr', opened: 3, resolved: 2 },
-    { date: '29 Apr', opened: 0, resolved: 0 },
-    { date: '30 Apr', opened: 0, resolved: 0 },
-    { date: '1 May', opened: 0, resolved: 0 },
-  ];
+  // Use provided data or show empty state - no mock data
+  const chartData = data.length > 0 ? data : [];
+  const hasData = chartData.length > 0 && chartData.some(d => d.opened > 0 || d.resolved > 0);
 
   return (
     <Card className="bg-black/80 border-cyan-500/30 backdrop-blur-sm shadow-xl shadow-purple-500/10">
@@ -44,6 +38,14 @@ export function TicketActivityWidget({ data }: TicketActivityWidgetProps) {
         </div>
       </CardHeader>
       <CardContent>
+        {!hasData ? (
+          <div className="h-[200px] flex items-center justify-center text-slate-500">
+            <div className="text-center">
+              <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No ticket activity yet</p>
+            </div>
+          </div>
+        ) : (
         <div className="h-[200px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -85,6 +87,7 @@ export function TicketActivityWidget({ data }: TicketActivityWidgetProps) {
             </BarChart>
           </ResponsiveContainer>
         </div>
+        )}
       </CardContent>
     </Card>
   );
