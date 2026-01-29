@@ -93,10 +93,10 @@ export function VanguardNavigation() {
         />
       )}
 
-      {/* Sidebar - Dark Vanguard Theme */}
+      {/* Sidebar - Pure Black Vanguard Theme */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-full bg-gradient-to-b from-slate-900 to-slate-950 border-r border-cyan-500/20 z-40 transition-all duration-300 w-56",
+          "fixed left-0 top-0 h-full bg-black border-r border-cyan-500/20 z-40 transition-all duration-300 w-56",
           isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
