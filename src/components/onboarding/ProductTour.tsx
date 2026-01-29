@@ -89,23 +89,25 @@ export const ProductTour = ({
       if (element) {
         const rect = element.getBoundingClientRect();
         setHighlightRect(rect);
-        
-        // Smooth scroll with offset
-        const yOffset = -100;
-        const y = rect.top + window.scrollY + yOffset;
-        window.scrollTo({ top: y, behavior: 'smooth' });
       }
     };
 
     // Small delay to ensure DOM is ready
-    const timer = setTimeout(updateHighlight, 100);
-    window.addEventListener('resize', updateHighlight);
-    window.addEventListener('scroll', updateHighlight);
+    const timer = setTimeout(updateHighlight, 150);
+    
+    // Debounced resize/scroll handler to prevent glitchy updates
+    let resizeTimeout: NodeJS.Timeout;
+    const debouncedUpdate = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(updateHighlight, 50);
+    };
+    
+    window.addEventListener('resize', debouncedUpdate);
     
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('resize', updateHighlight);
-      window.removeEventListener('scroll', updateHighlight);
+      clearTimeout(resizeTimeout);
+      window.removeEventListener('resize', debouncedUpdate);
     };
   }, [isActive, currentStep, steps]);
 

@@ -10,14 +10,19 @@ export const TourOverlay = ({ onClick }: TourOverlayProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.4 }}
-      className="fixed inset-0 z-[100]"
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 z-[100] bg-black/70"
       onClick={onClick}
+      style={{ 
+        // Use will-change for better GPU acceleration on tablets
+        willChange: 'opacity',
+        // Disable backdrop-blur on touch devices to prevent glitchy scroll
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden',
+      }}
     >
-      {/* Multi-layer gradient overlay for depth */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/60 to-black/70" />
-      <div className="absolute inset-0 bg-gradient-to-t from-primary/5 via-transparent to-primary/5" />
-      <div className="absolute inset-0 backdrop-blur-[2px]" />
+      {/* Simple gradient overlay - no blur to avoid iOS/tablet glitches */}
+      <div className="absolute inset-0 bg-gradient-to-t from-primary/5 via-transparent to-primary/5 pointer-events-none" />
     </motion.div>
   );
 };
