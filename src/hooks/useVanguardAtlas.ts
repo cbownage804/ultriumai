@@ -1,18 +1,18 @@
 /**
- * SafeDoc IT Documentation Hook
+ * Vanguard Atlas Documentation Hook
  * For the Vanguard IT documentation system (ITGlue replica)
  */
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
-interface SafeDocOrganization {
+interface AtlasOrganization {
   id: string;
   name: string;
   description?: string;
 }
 
-interface SafeDocStats {
+interface AtlasStats {
   organizations: number;
   documents: number;
   passwords: number;
@@ -23,10 +23,10 @@ interface SafeDocStats {
   sslExpiring: number;
 }
 
-export const useSafeDocIT = (organizationId?: string) => {
+export const useVanguardAtlas = (organizationId?: string) => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [organizations, setOrganizations] = useState<SafeDocOrganization[]>([]);
+  const [organizations, setOrganizations] = useState<AtlasOrganization[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [passwords, setPasswords] = useState<any[]>([]);
   const [sslCertificates, setSslCertificates] = useState<any[]>([]);
@@ -34,7 +34,7 @@ export const useSafeDocIT = (organizationId?: string) => {
   const [runbooks, setRunbooks] = useState<any[]>([]);
   const [expirations, setExpirations] = useState<any[]>([]);
 
-  const stats: SafeDocStats = {
+  const stats: AtlasStats = {
     organizations: organizations.length,
     documents: documents.length,
     passwords: passwords.length,
