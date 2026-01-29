@@ -69,6 +69,7 @@ const VanguardPortalDownload = lazy(() => import('@/pages/vanguard/VanguardPorta
 const VanguardAtlas = lazy(() => import('@/pages/vanguard/VanguardAtlas'));
 const ReconProductPage = lazy(() => import('@/pages/vanguard/ReconProductPage'));
 const ReconCheckoutPage = lazy(() => import('@/pages/vanguard/ReconCheckoutPage'));
+const ReconOrderSuccessPage = lazy(() => import('@/pages/vanguard/ReconOrderSuccessPage'));
 
 // AI Feature pages
 const VanguardAIDashboard = lazy(() => import('@/pages/vanguard/VanguardAIDashboard'));
@@ -164,9 +165,10 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-ai-sessions" path="ai-sessions" element={<LazyProtectedPage component={VanguardAISessions} />} />,
   <Route key="vanguard-ai-analytics" path="ai-analytics" element={<LazyProtectedPage component={VanguardAIAnalytics} />} />,
   <Route key="vanguard-ai-command" path="ai-command" element={<LazyProtectedPage component={VanguardAICommandCenter} />} />,
-  // Recon Product routes
+  // Recon Product routes (public - no auth required for purchasing)
   <Route key="vanguard-recon" path="recon" element={<LazyPage component={ReconProductPage} />} />,
   <Route key="vanguard-recon-checkout" path="recon/checkout" element={<LazyPage component={ReconCheckoutPage} />} />,
+  <Route key="vanguard-recon-success" path="recon/success" element={<LazyPage component={ReconOrderSuccessPage} />} />,
   <Route key="vanguard-catchall" path="*" element={<Navigate to="/vanguard" replace />} />,
 ];
 
