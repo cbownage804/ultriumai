@@ -13,6 +13,7 @@ export { DevicesToolbar } from './DevicesToolbar';
 export { RemoteAccessPanel } from './RemoteAccessPanel';
 export { ScriptLibrary } from './ScriptLibrary';
 export { ConfigurationPolicies } from './ConfigurationPolicies';
+export { PatchManagementPanel } from './PatchManagementPanel';
 
 // Re-export dialogs, widgets, and console
 export * from './dialogs';
