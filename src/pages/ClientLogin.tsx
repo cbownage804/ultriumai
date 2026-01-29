@@ -281,13 +281,7 @@ export const ClientLogin = () => {
                 <Button 
                   variant="link" 
                   className="text-sm text-muted-foreground"
-                  onClick={() => {
-                    // TODO: Implement forgot password
-                    toast({
-                      title: "Password Reset",
-                      description: "Please contact your administrator for password reset assistance."
-                    });
-                  }}
+                  onClick={() => navigate('/auth/forgot-password')}
                 >
                   Forgot your password?
                 </Button>

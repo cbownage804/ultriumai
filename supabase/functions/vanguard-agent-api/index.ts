@@ -6,8 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-vanguard-key',
 };
 
-// Hardcoded secret - in production, use Deno.env.get('VANGUARD_AGENT_SECRET')
-const VANGUARD_SECRET = "vgd_sk_7Kx9mPqR3nTwYz2JfL8sHcN6bVdXaE4uGtM1oWpQ5iA";
+// Agent authentication secret - stored securely in environment
+const VANGUARD_SECRET = Deno.env.get('VANGUARD_AGENT_SECRET') || '';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
