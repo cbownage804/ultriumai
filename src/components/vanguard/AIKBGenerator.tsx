@@ -7,15 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   Sparkles, 
   BookOpen, 
   CheckCircle, 
   Loader2, 
   FileText,
-  Plus,
-  Wand2,
   Copy,
   Save
 } from "lucide-react";
@@ -159,27 +156,15 @@ export function AIKBGenerator() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Wand2 className="h-6 w-6 text-primary" />
-            AI Knowledge Base Generator
-          </h2>
-          <p className="text-muted-foreground">
-            Automatically generate KB articles from resolved tickets
-          </p>
-        </div>
-      </div>
-
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Resolved Tickets */}
-        <Card>
+        <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+            <CardTitle className="text-lg flex items-center gap-2 text-white">
+              <FileText className="h-5 w-5 text-cyan-400" />
               Resolved Tickets
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-white/60">
               Select a resolved ticket to generate a KB article
             </CardDescription>
           </CardHeader>
@@ -187,10 +172,10 @@ export function AIKBGenerator() {
             <ScrollArea className="h-[400px]">
               {loadingTickets ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
                 </div>
               ) : resolvedTickets?.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-white/60">
                   <CheckCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
                   <p>No resolved tickets with AI solutions</p>
                 </div>
@@ -199,23 +184,23 @@ export function AIKBGenerator() {
                   {resolvedTickets?.map((ticket) => (
                     <div
                       key={ticket.id}
-                      className={`p-4 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50 ${
-                        selectedTicket?.id === ticket.id ? 'border-primary bg-primary/5' : ''
+                      className={`p-4 rounded-lg border cursor-pointer transition-colors hover:bg-white/5 ${
+                        selectedTicket?.id === ticket.id ? 'border-cyan-500 bg-cyan-500/10' : 'border-white/10'
                       }`}
                       onClick={() => setSelectedTicket(ticket)}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium truncate">{ticket.title}</h4>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                          <h4 className="font-medium truncate text-white">{ticket.title}</h4>
+                          <p className="text-sm text-white/60 line-clamp-2 mt-1">
                             {ticket.ai_summary || ticket.description}
                           </p>
                           <div className="flex items-center gap-2 mt-2">
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400">
                               {ticket.category}
                             </Badge>
                             {ticket.resolved_at && (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-white/40">
                                 Resolved {new Date(ticket.resolved_at).toLocaleDateString()}
                               </span>
                             )}
@@ -224,6 +209,7 @@ export function AIKBGenerator() {
                         <Button
                           size="sm"
                           variant="ghost"
+                          className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
                           onClick={(e) => {
                             e.stopPropagation();
                             generateKBArticle(ticket);
@@ -246,13 +232,13 @@ export function AIKBGenerator() {
         </Card>
 
         {/* Generated Article Preview */}
-        <Card>
+        <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
+            <CardTitle className="text-lg flex items-center gap-2 text-white">
+              <BookOpen className="h-5 w-5 text-cyan-400" />
               Generated Article
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-white/60">
               Review and edit before publishing
             </CardDescription>
           </CardHeader>
@@ -260,46 +246,48 @@ export function AIKBGenerator() {
             {generatedArticle ? (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Title</Label>
+                  <Label className="text-white/80">Title</Label>
                   <Input
                     value={editedArticle.title}
                     onChange={(e) => setEditedArticle(prev => ({ ...prev, title: e.target.value }))}
+                    className="bg-black/40 border-white/10 text-white placeholder:text-white/40"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Category</Label>
+                  <Label className="text-white/80">Category</Label>
                   <Select
                     value={editedArticle.category}
                     onValueChange={(value) => setEditedArticle(prev => ({ ...prev, category: value }))}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-black/40 border-white/10 text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-black/90 border-white/10">
                       {KB_CATEGORIES.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        <SelectItem key={cat} value={cat} className="text-white hover:bg-white/10">{cat}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Tags (comma-separated)</Label>
+                  <Label className="text-white/80">Tags (comma-separated)</Label>
                   <Input
                     value={editedArticle.tags}
                     onChange={(e) => setEditedArticle(prev => ({ ...prev, tags: e.target.value }))}
                     placeholder="troubleshooting, network, security"
+                    className="bg-black/40 border-white/10 text-white placeholder:text-white/40"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Content</Label>
+                  <Label className="text-white/80">Content</Label>
                   <Textarea
                     value={editedArticle.content}
                     onChange={(e) => setEditedArticle(prev => ({ ...prev, content: e.target.value }))}
                     rows={12}
-                    className="font-mono text-sm"
+                    className="font-mono text-sm bg-black/40 border-white/10 text-white placeholder:text-white/40"
                   />
                 </div>
 
@@ -307,7 +295,7 @@ export function AIKBGenerator() {
                   <Button
                     onClick={() => saveArticleMutation.mutate()}
                     disabled={saveArticleMutation.isPending}
-                    className="flex-1"
+                    className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white"
                   >
                     {saveArticleMutation.isPending ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -318,6 +306,7 @@ export function AIKBGenerator() {
                   </Button>
                   <Button
                     variant="outline"
+                    className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
                     onClick={() => {
                       navigator.clipboard.writeText(editedArticle.content);
                       toast({ title: "Copied", description: "Article content copied to clipboard" });
@@ -328,8 +317,8 @@ export function AIKBGenerator() {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <Sparkles className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <div className="text-center py-12 text-white/60">
+                <Sparkles className="h-12 w-12 mx-auto mb-3 opacity-50 text-cyan-400" />
                 <p>Select a ticket and click the sparkle icon to generate a KB article</p>
               </div>
             )}

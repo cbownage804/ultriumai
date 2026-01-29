@@ -200,27 +200,15 @@ ${generatedSummary.billing_notes}
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <FileText className="h-6 w-6 text-primary" />
-            AI Session Summaries
-          </h2>
-          <p className="text-muted-foreground">
-            Generate itemized summaries of remote support sessions
-          </p>
-        </div>
-      </div>
-
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Sessions */}
-        <Card>
+        <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Monitor className="h-5 w-5" />
+            <CardTitle className="text-lg flex items-center gap-2 text-white">
+              <Monitor className="h-5 w-5 text-cyan-400" />
               Recent Sessions
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-white/60">
               Select a session to generate a summary
             </CardDescription>
           </CardHeader>
@@ -228,10 +216,10 @@ ${generatedSummary.billing_notes}
             <ScrollArea className="h-[400px]">
               {loadingSessions ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
                 </div>
               ) : sessions?.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-white/60">
                   <Terminal className="h-12 w-12 mx-auto mb-2 opacity-50" />
                   <p>No remote sessions found</p>
                 </div>
@@ -240,29 +228,32 @@ ${generatedSummary.billing_notes}
                   {sessions?.map((session) => (
                     <div
                       key={session.id}
-                      className={`p-4 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50 ${
-                        selectedSession?.id === session.id ? 'border-primary bg-primary/5' : ''
+                      className={`p-4 rounded-lg border cursor-pointer transition-colors hover:bg-white/5 ${
+                        selectedSession?.id === session.id ? 'border-cyan-500 bg-cyan-500/10' : 'border-white/10'
                       }`}
                       onClick={() => setSelectedSession(session)}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium flex items-center gap-2">
-                            <Monitor className="h-4 w-4" />
+                          <h4 className="font-medium flex items-center gap-2 text-white">
+                            <Monitor className="h-4 w-4 text-cyan-400" />
                             {session.device?.hostname || session.device_id.slice(0, 8)}
                           </h4>
                           <div className="flex items-center gap-2 mt-2 flex-wrap">
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400">
                               {session.session_type}
                             </Badge>
-                            <Badge variant={session.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+                            <Badge 
+                              variant={session.status === 'active' ? 'default' : 'secondary'} 
+                              className={`text-xs ${session.status === 'active' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-white/10 text-white/60'}`}
+                            >
                               {session.status}
                             </Badge>
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <span className="text-xs text-white/40 flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               {formatDuration(session)}
                             </span>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-white/40">
                               {format(new Date(session.started_at), 'MMM d, yyyy')}
                             </span>
                           </div>
@@ -270,6 +261,7 @@ ${generatedSummary.billing_notes}
                         <Button
                           size="sm"
                           variant="ghost"
+                          className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
                           onClick={(e) => {
                             e.stopPropagation();
                             generateSessionSummary(session);
@@ -292,44 +284,44 @@ ${generatedSummary.billing_notes}
         </Card>
 
         {/* Generated Summary */}
-        <Card>
+        <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
+            <CardTitle className="text-lg flex items-center gap-2 text-white">
+              <Sparkles className="h-5 w-5 text-cyan-400" />
               Session Summary
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-white/60">
               AI-generated summary for billing and documentation
             </CardDescription>
           </CardHeader>
           <CardContent>
             {generatedSummary && selectedSession ? (
               <div className="space-y-4">
-                <div className="p-3 rounded-lg bg-muted/50">
+                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{selectedSession.device?.hostname || selectedSession.device_id.slice(0, 8)}</span>
-                    <Badge variant="outline">{generatedSummary.duration_formatted}</Badge>
+                    <span className="font-medium text-white">{selectedSession.device?.hostname || selectedSession.device_id.slice(0, 8)}</span>
+                    <Badge variant="outline" className="border-cyan-500/30 text-cyan-400">{generatedSummary.duration_formatted}</Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-white/40 mt-1">
                     {format(new Date(selectedSession.started_at), 'PPpp')}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Summary</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <h4 className="text-sm font-medium text-white">Summary</h4>
+                  <p className="text-sm text-white/60">
                     {generatedSummary.summary}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium flex items-center gap-2">
+                  <h4 className="text-sm font-medium text-white flex items-center gap-2">
                     Actions Performed
                   </h4>
                   <ul className="space-y-1">
                     {generatedSummary.actions.map((action, i) => (
-                      <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                        <span className="text-primary font-medium">{i + 1}.</span>
+                      <li key={i} className="text-sm text-white/60 flex items-start gap-2">
+                        <span className="text-cyan-400 font-medium">{i + 1}.</span>
                         {action}
                       </li>
                     ))}
@@ -337,8 +329,8 @@ ${generatedSummary.billing_notes}
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Billing Notes</h4>
-                  <p className="text-sm text-muted-foreground p-2 rounded bg-primary/5 border border-primary/20">
+                  <h4 className="text-sm font-medium text-white">Billing Notes</h4>
+                  <p className="text-sm text-white/60 p-2 rounded bg-cyan-500/10 border border-cyan-500/20">
                     {generatedSummary.billing_notes}
                   </p>
                 </div>
@@ -347,14 +339,14 @@ ${generatedSummary.billing_notes}
                   <Button
                     variant="outline"
                     onClick={copyToClipboard}
-                    className="flex-1"
+                    className="flex-1 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
                   >
                     <Copy className="h-4 w-4 mr-2" />
                     Copy
                   </Button>
                   <Button
                     onClick={downloadSummary}
-                    className="flex-1"
+                    className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Download
@@ -362,8 +354,8 @@ ${generatedSummary.billing_notes}
                 </div>
               </div>
             ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <Sparkles className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <div className="text-center py-12 text-white/60">
+                <Sparkles className="h-12 w-12 mx-auto mb-3 opacity-50 text-cyan-400" />
                 <p>Select a completed session and click the sparkle icon to generate a summary</p>
               </div>
             )}

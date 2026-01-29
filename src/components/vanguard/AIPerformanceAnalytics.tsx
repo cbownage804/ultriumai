@@ -1,12 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
   BarChart3, 
   TrendingUp, 
   Bot, 
   CheckCircle, 
-  XCircle,
   Clock,
   Sparkles,
   ThumbsUp,
@@ -26,12 +24,9 @@ import {
   Tooltip, 
   CartesianGrid,
   BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell
+  Bar
 } from "recharts";
-import { format, subDays, startOfDay } from "date-fns";
+import { format, subDays } from "date-fns";
 
 export function AIPerformanceAnalytics() {
   const { user } = useAuth();
@@ -177,87 +172,73 @@ export function AIPerformanceAnalytics() {
     enabled: !!user,
   });
 
-  const COLORS = ['hsl(var(--primary))', 'hsl(var(--cyber-purple))', 'hsl(var(--copilot-accent))', '#10b981', '#f59e0b'];
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-primary" />
-            AI Performance Analytics
-          </h2>
-          <p className="text-muted-foreground">
-            Track AI Copilot effectiveness and optimization opportunities
-          </p>
-        </div>
-      </div>
-
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">AI Processing Rate</p>
-                <p className="text-3xl font-bold text-primary">{ticketStats?.aiProcessRate || 0}%</p>
+                <p className="text-sm text-white/60">AI Processing Rate</p>
+                <p className="text-3xl font-bold text-cyan-400">{ticketStats?.aiProcessRate || 0}%</p>
               </div>
-              <Bot className="h-10 w-10 text-primary/20" />
+              <Bot className="h-10 w-10 text-cyan-400/20" />
             </div>
-            <Progress value={ticketStats?.aiProcessRate || 0} className="mt-3 h-2" />
-            <p className="text-xs text-muted-foreground mt-2">
+            <Progress value={ticketStats?.aiProcessRate || 0} className="mt-3 h-2 bg-white/10 [&>div]:bg-cyan-500" />
+            <p className="text-xs text-white/60 mt-2">
               {ticketStats?.aiProcessed || 0} of {ticketStats?.total || 0} tickets processed
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Auto-Resolution Rate</p>
-                <p className="text-3xl font-bold text-green-500">{ticketStats?.autoResolveRate || 0}%</p>
+                <p className="text-sm text-white/60">Auto-Resolution Rate</p>
+                <p className="text-3xl font-bold text-emerald-400">{ticketStats?.autoResolveRate || 0}%</p>
               </div>
-              <Zap className="h-10 w-10 text-green-500/20" />
+              <Zap className="h-10 w-10 text-emerald-400/20" />
             </div>
-            <Progress value={ticketStats?.autoResolveRate || 0} className="mt-3 h-2 [&>div]:bg-green-500" />
-            <p className="text-xs text-muted-foreground mt-2">
+            <Progress value={ticketStats?.autoResolveRate || 0} className="mt-3 h-2 bg-white/10 [&>div]:bg-emerald-500" />
+            <p className="text-xs text-white/60 mt-2">
               {ticketStats?.autoResolved || 0} tickets auto-resolved
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Avg Confidence Score</p>
-                <p className="text-3xl font-bold">{ticketStats?.avgConfidence || 0}%</p>
+                <p className="text-sm text-white/60">Avg Confidence Score</p>
+                <p className="text-3xl font-bold text-white">{ticketStats?.avgConfidence || 0}%</p>
               </div>
-              <Target className="h-10 w-10 text-muted-foreground/20" />
+              <Target className="h-10 w-10 text-white/20" />
             </div>
-            <Progress value={ticketStats?.avgConfidence || 0} className="mt-3 h-2" />
-            <p className="text-xs text-muted-foreground mt-2">
+            <Progress value={ticketStats?.avgConfidence || 0} className="mt-3 h-2 bg-white/10 [&>div]:bg-cyan-500" />
+            <p className="text-xs text-white/60 mt-2">
               {ticketStats?.highConfidence || 0} high-confidence solutions
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">User Satisfaction</p>
-                <p className="text-3xl font-bold text-primary">{feedbackStats?.satisfactionRate || 0}%</p>
+                <p className="text-sm text-white/60">User Satisfaction</p>
+                <p className="text-3xl font-bold text-cyan-400">{feedbackStats?.satisfactionRate || 0}%</p>
               </div>
-              <ThumbsUp className="h-10 w-10 text-primary/20" />
+              <ThumbsUp className="h-10 w-10 text-cyan-400/20" />
             </div>
             <div className="flex items-center gap-2 mt-3">
-              <div className="flex items-center gap-1 text-sm text-green-500">
+              <div className="flex items-center gap-1 text-sm text-emerald-400">
                 <ThumbsUp className="h-4 w-4" />
                 {feedbackStats?.positive || 0}
               </div>
-              <div className="flex items-center gap-1 text-sm text-red-500">
+              <div className="flex items-center gap-1 text-sm text-red-400">
                 <ThumbsDown className="h-4 w-4" />
                 {feedbackStats?.negative || 0}
               </div>
@@ -269,13 +250,13 @@ export function AIPerformanceAnalytics() {
       {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Trend Line */}
-        <Card>
+        <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
+            <CardTitle className="text-lg flex items-center gap-2 text-white">
+              <TrendingUp className="h-5 w-5 text-cyan-400" />
               30-Day Trend
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-white/60">
               Ticket volume and AI resolution over time
             </CardDescription>
           </CardHeader>
@@ -283,29 +264,30 @@ export function AIPerformanceAnalytics() {
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={dailyTrends || []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 12 }} 
-                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.6)' }} 
+                    stroke="rgba(255,255,255,0.2)"
                     tickLine={false}
                   />
                   <YAxis 
-                    tick={{ fontSize: 12 }} 
-                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.6)' }} 
+                    stroke="rgba(255,255,255,0.2)"
                     tickLine={false}
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      backgroundColor: 'rgba(0,0,0,0.9)', 
+                      border: '1px solid rgba(34,211,238,0.3)',
+                      borderRadius: '8px',
+                      color: 'white'
                     }}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="total" 
-                    stroke="hsl(var(--muted-foreground))" 
+                    stroke="rgba(255,255,255,0.4)" 
                     strokeWidth={2}
                     name="Total Tickets"
                     dot={false}
@@ -313,7 +295,7 @@ export function AIPerformanceAnalytics() {
                   <Line 
                     type="monotone" 
                     dataKey="aiResolved" 
-                    stroke="hsl(var(--primary))" 
+                    stroke="#22d3ee" 
                     strokeWidth={2}
                     name="AI Resolved"
                     dot={false}
@@ -325,13 +307,13 @@ export function AIPerformanceAnalytics() {
         </Card>
 
         {/* Category Performance */}
-        <Card>
+        <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
+            <CardTitle className="text-lg flex items-center gap-2 text-white">
+              <BarChart3 className="h-5 w-5 text-cyan-400" />
               Performance by Category
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-white/60">
               AI effectiveness across ticket categories
             </CardDescription>
           </CardHeader>
@@ -339,30 +321,31 @@ export function AIPerformanceAnalytics() {
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={categoryStats || []} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis 
                     type="number" 
-                    tick={{ fontSize: 12 }} 
-                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.6)' }} 
+                    stroke="rgba(255,255,255,0.2)"
                     domain={[0, 100]}
                   />
                   <YAxis 
                     type="category" 
                     dataKey="category" 
-                    tick={{ fontSize: 12 }} 
-                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.6)' }} 
+                    stroke="rgba(255,255,255,0.2)"
                     width={100}
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      backgroundColor: 'rgba(0,0,0,0.9)', 
+                      border: '1px solid rgba(34,211,238,0.3)',
+                      borderRadius: '8px',
+                      color: 'white'
                     }}
                   />
                   <Bar 
                     dataKey="avgConfidence" 
-                    fill="hsl(var(--primary))" 
+                    fill="#22d3ee" 
                     name="Avg Confidence %"
                     radius={[0, 4, 4, 0]}
                   />
@@ -374,21 +357,21 @@ export function AIPerformanceAnalytics() {
       </div>
 
       {/* Insights */}
-      <Card>
+      <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
+          <CardTitle className="text-lg flex items-center gap-2 text-white">
+            <Sparkles className="h-5 w-5 text-cyan-400" />
             AI Insights
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+            <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
               <div className="flex items-center gap-2 mb-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                <span className="font-medium text-green-500">Strengths</span>
+                <CheckCircle className="h-5 w-5 text-emerald-400" />
+                <span className="font-medium text-emerald-400">Strengths</span>
               </div>
-              <ul className="space-y-1 text-sm text-muted-foreground">
+              <ul className="space-y-1 text-sm text-white/60">
                 {ticketStats?.avgConfidence && ticketStats.avgConfidence >= 70 && (
                   <li>• High confidence in AI solutions</li>
                 )}
@@ -405,12 +388,12 @@ export function AIPerformanceAnalytics() {
               </ul>
             </div>
 
-            <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+            <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
               <div className="flex items-center gap-2 mb-2">
-                <Clock className="h-5 w-5 text-yellow-500" />
-                <span className="font-medium text-yellow-500">Opportunities</span>
+                <Clock className="h-5 w-5 text-amber-400" />
+                <span className="font-medium text-amber-400">Opportunities</span>
               </div>
-              <ul className="space-y-1 text-sm text-muted-foreground">
+              <ul className="space-y-1 text-sm text-white/60">
                 {categoryStats?.some(c => c.avgConfidence < 60) && (
                   <li>• Improve training for low-confidence categories</li>
                 )}
@@ -421,12 +404,12 @@ export function AIPerformanceAnalytics() {
               </ul>
             </div>
 
-            <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+            <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <span className="font-medium text-primary">Recommendations</span>
+                <TrendingUp className="h-5 w-5 text-cyan-400" />
+                <span className="font-medium text-cyan-400">Recommendations</span>
               </div>
-              <ul className="space-y-1 text-sm text-muted-foreground">
+              <ul className="space-y-1 text-sm text-white/60">
                 <li>• Generate KB articles from resolved tickets</li>
                 <li>• Review negative feedback patterns</li>
                 <li>• Enable autopilot for routine categories</li>
