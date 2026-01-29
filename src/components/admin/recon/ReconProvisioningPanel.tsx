@@ -76,22 +76,111 @@ export function ReconProvisioningPanel({ orders, inventory }: ReconProvisioningP
 
   const generateConfigBundle = (unit: ReconInventoryItem, order: ReconOrder) => {
     const config = {
+      // Activation credentials
       activation_key: unit.activation_key,
-      customer_id: order.user_id,
-      order_id: order.id,
       serial_number: unit.serial_number,
+      
+      // API configuration
+      api: {
+        base_url: "https://nsyobmjpdpvesjwdphlh.supabase.co",
+        functions_url: "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1",
+        activate_endpoint: "/recon-activate",
+        heartbeat_endpoint: "/vanguard-heartbeat",
+        anon_key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI",
+      },
+      
+      // Customer info (for display/logging only)
+      customer: {
+        id: order.user_id,
+        name: order.customer_name,
+        email: order.customer_email,
+      },
+      
+      // Hardware & subscription details
       hardware_tier: unit.hardware_tier,
       subscription_tier: order.subscription_tier,
-      api_endpoint: 'https://ultriumai.lovable.app/api/v1/vanguard',
-      heartbeat_interval: 60,
+      
+      // Agent behavior settings
+      settings: {
+        heartbeat_interval_seconds: 60,
+        scan_interval_seconds: order.subscription_tier === 'essential' ? 86400 : 3600, // daily vs hourly
+        log_level: "info",
+        auto_update: true,
+      },
+      
+      // Feature flags based on subscription
       features: {
         network_discovery: true,
         vulnerability_scanning: order.subscription_tier !== 'essential',
-        traffic_analysis: order.subscription_tier === 'enterprise',
+        traffic_analysis: order.subscription_tier === 'enterprise' || order.subscription_tier === 'professional',
         threat_detection: true,
+        compliance_reporting: order.subscription_tier === 'enterprise',
       },
+      
+      // Provisioning metadata
+      provisioned_at: new Date().toISOString(),
+      config_version: "1.0.0",
     };
     return JSON.stringify(config, null, 2);
+  };
+
+  const generateBootstrapScript = () => {
+    return `#!/bin/bash
+# Vanguard Recon Unit Bootstrap Script
+# This script runs on first boot to activate the unit
+
+CONFIG_FILE="/opt/vanguard-recon/config.json"
+LOG_FILE="/var/log/vanguard-recon.log"
+
+echo "[$(date)] Starting Vanguard Recon activation..." >> $LOG_FILE
+
+# Read config
+ACTIVATION_KEY=$(jq -r '.activation_key' $CONFIG_FILE)
+SERIAL=$(jq -r '.serial_number' $CONFIG_FILE)
+API_URL=$(jq -r '.api.functions_url' $CONFIG_FILE)
+ANON_KEY=$(jq -r '.api.anon_key' $CONFIG_FILE)
+
+# Get device info
+MAC_ADDRESS=$(cat /sys/class/net/eth0/address 2>/dev/null || cat /sys/class/net/wlan0/address)
+HOSTNAME=$(hostname)
+LOCAL_IP=$(hostname -I | awk '{print $1}')
+FIRMWARE_VERSION=$(cat /opt/vanguard-recon/version 2>/dev/null || echo "1.0.0")
+
+# Call activation endpoint
+RESPONSE=$(curl -s -X POST "$API_URL/recon-activate" \\
+  -H "Content-Type: application/json" \\
+  -H "apikey: $ANON_KEY" \\
+  -d '{
+    "activation_key": "'$ACTIVATION_KEY'",
+    "serial_number": "'$SERIAL'",
+    "mac_address": "'$MAC_ADDRESS'",
+    "hostname": "'$HOSTNAME'",
+    "local_ip": "'$LOCAL_IP'",
+    "firmware_version": "'$FIRMWARE_VERSION'"
+  }')
+
+# Parse response
+SUCCESS=$(echo $RESPONSE | jq -r '.success')
+AGENT_ID=$(echo $RESPONSE | jq -r '.agent_id')
+AGENT_KEY=$(echo $RESPONSE | jq -r '.agent_key')
+
+if [ "$SUCCESS" = "true" ]; then
+  echo "[$(date)] Activation successful! Agent ID: $AGENT_ID" >> $LOG_FILE
+  
+  # Save agent credentials
+  echo "{
+    \\"agent_id\\": \\"$AGENT_ID\\",
+    \\"agent_key\\": \\"$AGENT_KEY\\"
+  }" > /opt/vanguard-recon/agent-credentials.json
+  
+  # Start the agent service
+  systemctl enable vanguard-recon
+  systemctl start vanguard-recon
+else
+  echo "[$(date)] Activation failed: $RESPONSE" >> $LOG_FILE
+  exit 1
+fi
+`;
   };
 
   const downloadConfig = (unit: ReconInventoryItem, order: ReconOrder) => {
@@ -104,6 +193,48 @@ export function ReconProvisioningPanel({ orders, inventory }: ReconProvisioningP
     a.click();
     URL.revokeObjectURL(url);
     toast({ title: 'Config file downloaded' });
+  };
+
+  const downloadFullBundle = (unit: ReconInventoryItem, order: ReconOrder) => {
+    // Create a README with instructions
+    const readme = `# Vanguard Recon Unit Configuration
+Serial: ${unit.serial_number}
+Customer: ${order.customer_name}
+
+## Setup Instructions
+
+1. Flash Raspberry Pi OS Lite to SD card
+2. Copy these files to /opt/vanguard-recon/:
+   - config.json
+   - activate.sh
+3. Make activate.sh executable: chmod +x /opt/vanguard-recon/activate.sh
+4. Add to /etc/rc.local (before exit 0):
+   /opt/vanguard-recon/activate.sh &
+5. Insert SD card and power on the Pi
+6. The unit will auto-activate and appear in the customer's dashboard
+
+## Files Included
+- config.json: Unit configuration and API credentials
+- activate.sh: Bootstrap script for first-boot activation
+- README.md: This file
+
+## Support
+Contact: support@ultriumai.com
+`;
+
+    // For now, just download config - in production you'd use JSZip for a bundle
+    const config = generateConfigBundle(unit, order);
+    const blob = new Blob([config], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `recon-bundle-${unit.serial_number}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ 
+      title: 'Config bundle downloaded',
+      description: 'Copy config.json to /opt/vanguard-recon/ on the SD card',
+    });
   };
 
   const copyConfig = (unit: ReconInventoryItem, order: ReconOrder) => {
