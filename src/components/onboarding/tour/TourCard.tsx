@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { TourProgress } from './TourProgress';
 import { TourStep } from '../ProductTour';
+import { useScreenSize, getResponsivePosition } from '@/hooks/useScreenSize';
 
 interface TourCardProps {
   step: TourStep;
@@ -28,15 +29,40 @@ export const TourCard = ({
   onSkip,
   onStepClick,
 }: TourCardProps) => {
+  const { isMobile, isTablet, size } = useScreenSize();
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
 
+  // Get responsive position
+  const responsivePosition = position 
+    ? getResponsivePosition(position, size, highlightRect)
+    : (highlightRect ? 'bottom' : 'center');
+
   const getPositionClasses = () => {
-    if (position === 'center') return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
-    if (position === 'top') return 'top-8 left-1/2 -translate-x-1/2';
-    if (position === 'bottom') return 'bottom-8 left-1/2 -translate-x-1/2';
-    if (position === 'left') return 'left-8 top-1/2 -translate-y-1/2';
-    if (position === 'right') return 'right-8 top-1/2 -translate-y-1/2';
+    // On mobile, always use bottom or center positioning
+    if (isMobile) {
+      if (responsivePosition === 'center' || !highlightRect) {
+        return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
+      }
+      return 'bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)]';
+    }
+
+    // Tablet adjustments
+    if (isTablet) {
+      if (responsivePosition === 'center' || !highlightRect) {
+        return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
+      }
+      if (responsivePosition === 'left' || responsivePosition === 'right') {
+        return 'bottom-6 left-1/2 -translate-x-1/2';
+      }
+    }
+
+    // Desktop positioning
+    if (responsivePosition === 'center') return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
+    if (responsivePosition === 'top') return 'top-8 left-1/2 -translate-x-1/2';
+    if (responsivePosition === 'bottom') return 'bottom-8 left-1/2 -translate-x-1/2';
+    if (responsivePosition === 'left') return 'left-8 top-1/2 -translate-y-1/2';
+    if (responsivePosition === 'right') return 'right-8 top-1/2 -translate-y-1/2';
     if (!highlightRect) return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
     return 'bottom-8 left-1/2 -translate-x-1/2';
   };
@@ -48,7 +74,11 @@ export const TourCard = ({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -30, scale: 0.9 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className={cn('fixed z-[103] w-full max-w-md p-4', getPositionClasses())}
+      className={cn(
+        'fixed z-[103] p-4',
+        isMobile ? 'w-[calc(100%-2rem)] max-w-none' : 'w-full max-w-md',
+        getPositionClasses()
+      )}
     >
       {/* Card with glassmorphism */}
       <div className="relative rounded-2xl overflow-hidden">
@@ -202,70 +232,126 @@ export const TourCard = ({
 
           {/* Navigation */}
           <motion.div 
-            className="flex items-center justify-between gap-3"
+            className={cn(
+              "flex items-center gap-2",
+              isMobile ? "flex-col-reverse" : "justify-between"
+            )}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35 }}
           >
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onPrevious}
-              disabled={isFirstStep}
-              className="gap-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
+            {isMobile ? (
+              // Mobile: Stack buttons vertically
+              <>
+                <Button
+                  size="sm"
+                  onClick={onNext}
+                  className={cn(
+                    "w-full gap-1.5 transition-all shadow-lg",
+                    isLastStep 
+                      ? "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-green-500/25" 
+                      : "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-primary/25"
+                  )}
+                >
+                  {isLastStep ? (
+                    <>
+                      <CheckCircle className="h-4 w-4" />
+                      Complete
+                    </>
+                  ) : (
+                    <>
+                      Continue
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+                <div className="flex items-center justify-between w-full">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onPrevious}
+                    disabled={isFirstStep}
+                    className="gap-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onSkip}
+                    className="text-xs text-muted-foreground/70 hover:text-muted-foreground"
+                  >
+                    Skip
+                  </Button>
+                </div>
+              </>
+            ) : (
+              // Desktop: Horizontal layout
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onPrevious}
+                  disabled={isFirstStep}
+                  className="gap-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onSkip}
-              className="text-xs text-muted-foreground/70 hover:text-muted-foreground"
-            >
-              Skip
-            </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onSkip}
+                  className="text-xs text-muted-foreground/70 hover:text-muted-foreground"
+                >
+                  Skip
+                </Button>
 
-            <Button
-              size="sm"
-              onClick={onNext}
-              className={cn(
-                "gap-1.5 min-w-[110px] transition-all shadow-lg",
-                isLastStep 
-                  ? "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-green-500/25" 
-                  : "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-primary/25"
-              )}
-            >
-              {isLastStep ? (
-                <>
-                  <CheckCircle className="h-4 w-4" />
-                  Complete
-                </>
-              ) : (
-                <>
-                  Continue
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </Button>
+                <Button
+                  size="sm"
+                  onClick={onNext}
+                  className={cn(
+                    "gap-1.5 min-w-[110px] transition-all shadow-lg",
+                    isLastStep 
+                      ? "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-green-500/25" 
+                      : "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-primary/25"
+                  )}
+                >
+                  {isLastStep ? (
+                    <>
+                      <CheckCircle className="h-4 w-4" />
+                      Complete
+                    </>
+                  ) : (
+                    <>
+                      Continue
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
           </motion.div>
 
-          {/* Keyboard hint */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="flex items-center justify-center gap-2 mt-5 pt-4 border-t border-border/50"
-          >
-            <div className="flex items-center gap-1 text-[10px] text-muted-foreground/50">
-              <Keyboard className="h-3 w-3" />
-              <span>Arrow keys</span>
-              <span className="mx-1">•</span>
-              <kbd className="px-1.5 py-0.5 rounded bg-muted/50 text-[9px] font-mono">Esc</kbd>
-              <span>to close</span>
-            </div>
-          </motion.div>
+          {/* Keyboard hint - hide on mobile */}
+          {!isMobile && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="flex items-center justify-center gap-2 mt-5 pt-4 border-t border-border/50"
+            >
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground/50">
+                <Keyboard className="h-3 w-3" />
+                <span>Arrow keys</span>
+                <span className="mx-1">•</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-muted/50 text-[9px] font-mono">Esc</kbd>
+                <span>to close</span>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </motion.div>

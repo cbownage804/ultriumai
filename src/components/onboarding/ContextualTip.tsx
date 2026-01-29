@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lightbulb, ChevronRight, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useScreenSize, getResponsivePosition, getBestPosition } from '@/hooks/useScreenSize';
 
 const SEEN_TIPS_KEY = 'ultrium_seen_tips';
 const TIPS_ENABLED_KEY = 'ultrium_tips_enabled';
@@ -37,6 +38,10 @@ export const ContextualTip = ({
   const [isVisible, setIsVisible] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [hasSeen, setHasSeen] = useState(false);
+  const { isMobile, size } = useScreenSize();
+
+  // Get responsive position
+  const responsivePosition = getResponsivePosition(position, size);
 
   // Check if tip was already seen
   useEffect(() => {
@@ -86,16 +91,19 @@ export const ContextualTip = ({
   const positionClasses = {
     top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
     bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
-    left: 'right-full top-1/2 -translate-y-1/2 mr-2',
-    right: 'left-full top-1/2 -translate-y-1/2 ml-2',
+    left: isMobile ? 'top-full left-1/2 -translate-x-1/2 mt-2' : 'right-full top-1/2 -translate-y-1/2 mr-2',
+    right: isMobile ? 'top-full left-1/2 -translate-x-1/2 mt-2' : 'left-full top-1/2 -translate-y-1/2 ml-2',
   };
 
   const arrowClasses = {
     top: 'top-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-b-transparent border-t-background',
     bottom: 'bottom-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-background',
-    left: 'left-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent border-l-background',
-    right: 'right-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent border-r-background',
+    left: isMobile ? 'bottom-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-background' : 'left-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent border-l-background',
+    right: isMobile ? 'bottom-full left-1/2 -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-background' : 'right-full top-1/2 -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent border-r-background',
   };
+
+  // Use responsive position for mobile
+  const finalPosition = isMobile && (position === 'left' || position === 'right') ? 'bottom' : responsivePosition;
 
   return (
     <div 
@@ -108,13 +116,14 @@ export const ContextualTip = ({
       <AnimatePresence>
         {isVisible && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: position === 'bottom' ? -5 : position === 'top' ? 5 : 0 }}
+            initial={{ opacity: 0, scale: 0.9, y: finalPosition === 'bottom' ? -5 : finalPosition === 'top' ? 5 : 0 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className={cn(
-              'absolute z-[200] w-64 pointer-events-auto',
-              positionClasses[position]
+              'absolute z-[200] pointer-events-auto',
+              isMobile ? 'w-[calc(100vw-2rem)] max-w-64 left-1/2 -translate-x-1/2' : 'w-64',
+              positionClasses[finalPosition]
             )}
             onClick={handleTipInteraction}
             onMouseEnter={handleTipInteraction}
@@ -184,13 +193,15 @@ export const ContextualTip = ({
               </div>
             </div>
 
-            {/* Arrow */}
-            <div 
-              className={cn(
-                'absolute w-0 h-0 border-[6px]',
-                arrowClasses[position]
-              )}
-            />
+            {/* Arrow - hide on mobile for cleaner look */}
+            {!isMobile && (
+              <div 
+                className={cn(
+                  'absolute w-0 h-0 border-[6px]',
+                  arrowClasses[finalPosition]
+                )}
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>

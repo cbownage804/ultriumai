@@ -9,6 +9,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
+import { useScreenSize } from '@/hooks/useScreenSize';
 
 export interface TutorialStep {
   id: string;
@@ -49,6 +50,7 @@ export const InteractiveTutorial = ({
   const [isWaitingForAction, setIsWaitingForAction] = useState(true);
   const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
   const [showHint, setShowHint] = useState(false);
+  const { isMobile, isTablet } = useScreenSize();
 
   const step = steps[currentStep];
   const progress = (completedSteps.size / steps.length) * 100;
@@ -256,10 +258,17 @@ export const InteractiveTutorial = ({
 
       {/* Tutorial Panel */}
       <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: 20 }}
-        className="fixed top-4 right-4 z-[103] w-80 pointer-events-auto"
+        initial={{ opacity: 0, x: isMobile ? 0 : 20, y: isMobile ? 20 : 0 }}
+        animate={{ opacity: 1, x: 0, y: 0 }}
+        exit={{ opacity: 0, x: isMobile ? 0 : 20, y: isMobile ? 20 : 0 }}
+        className={cn(
+          "fixed z-[103] pointer-events-auto",
+          isMobile 
+            ? "bottom-4 left-4 right-4 w-auto" 
+            : isTablet 
+              ? "top-4 right-4 w-72"
+              : "top-4 right-4 w-80"
+        )}
       >
         <div className="rounded-2xl overflow-hidden shadow-2xl">
           {/* Background */}
@@ -307,8 +316,11 @@ export const InteractiveTutorial = ({
               <Progress value={progress} className="h-1.5" />
             </div>
 
-            {/* Step list */}
-            <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
+            {/* Step list - shorter on mobile */}
+            <div className={cn(
+              "space-y-2 mb-4 overflow-y-auto",
+              isMobile ? "max-h-32" : "max-h-48"
+            )}>
               {steps.map((s, idx) => {
                 const isCompleted = completedSteps.has(idx);
                 const isCurrent = idx === currentStep;
