@@ -34,6 +34,12 @@ serve(async (req) => {
       case 'analyze_security':
         return await analyzeSecurityContext(ticketData, LOVABLE_API_KEY);
       
+      case 'generate_kb_article':
+        return await generateKBArticle(supabase, ticketId, ticketData, LOVABLE_API_KEY);
+      
+      case 'generate_session_summary':
+        return await generateSessionSummary(supabase, ticketData, LOVABLE_API_KEY);
+      
       default:
         throw new Error(`Invalid action: ${action}`);
     }
@@ -320,6 +326,197 @@ Identify:
 
   return new Response(
     JSON.stringify({ success: true, analysis }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+async function generateKBArticle(supabase: any, ticketId: string, ticketData: any, apiKey: string) {
+  const systemPrompt = `You are an expert technical writer for an IT/security knowledge base. Your job is to transform resolved support ticket information into clear, helpful KB articles that can help users and technicians solve similar problems in the future.
+
+Write articles that are:
+- Clear and concise
+- Well-structured with headings
+- Include step-by-step instructions where applicable
+- Highlight important warnings or notes
+- Written for a technical audience`;
+
+  const prompt = `Create a knowledge base article from this resolved support ticket:
+
+**Title:** ${ticketData.title}
+**Description:** ${ticketData.description}
+**Category:** ${ticketData.category}
+**AI Summary:** ${ticketData.ai_summary || 'Not available'}
+**AI Solution:** ${ticketData.ai_suggested_solution || 'Not available'}
+
+Generate a comprehensive KB article using the create_kb_article function.`;
+
+  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ],
+      tools: [{
+        type: 'function',
+        function: {
+          name: 'create_kb_article',
+          description: 'Create a structured knowledge base article',
+          parameters: {
+            type: 'object',
+            properties: {
+              title: {
+                type: 'string',
+                description: 'Clear, descriptive title for the KB article'
+              },
+              content: {
+                type: 'string',
+                description: 'Full article content in markdown format with proper headings, steps, and formatting'
+              },
+              category: {
+                type: 'string',
+                description: 'Article category (Security Incidents, Network Issues, Access Management, Malware Remediation, Compliance, General IT, Best Practices)'
+              },
+              tags: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Relevant tags for searchability'
+              },
+              summary: {
+                type: 'string',
+                description: 'Brief 1-2 sentence summary of the article'
+              }
+            },
+            required: ['title', 'content', 'category', 'tags'],
+            additionalProperties: false
+          }
+        }
+      }],
+      tool_choice: { type: 'function', function: { name: 'create_kb_article' } }
+    }),
+  });
+
+  if (!response.ok) {
+    if (response.status === 429) throw { status: 429, message: 'Rate limit exceeded' };
+    if (response.status === 402) throw { status: 402, message: 'Payment required' };
+    throw new Error(`AI Gateway error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+  
+  let article;
+  if (toolCall?.function?.arguments) {
+    article = JSON.parse(toolCall.function.arguments);
+  } else {
+    throw new Error('Failed to generate KB article structure');
+  }
+
+  return new Response(
+    JSON.stringify({ success: true, article }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+async function generateSessionSummary(supabase: any, sessionData: any, apiKey: string) {
+  const durationMinutes = sessionData.duration_seconds 
+    ? Math.round(sessionData.duration_seconds / 60) 
+    : 0;
+  const durationFormatted = durationMinutes >= 60 
+    ? `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`
+    : `${durationMinutes}m`;
+
+  const systemPrompt = `You are an expert IT support documentation specialist. Generate concise, professional summaries of remote support sessions for billing and documentation purposes. Be specific about actions taken.`;
+
+  const prompt = `Generate a summary for this remote support session:
+
+**Device:** ${sessionData.hostname}
+**Session Type:** ${sessionData.session_type}
+**Started:** ${sessionData.started_at}
+**Ended:** ${sessionData.ended_at || 'Still active'}
+**Duration:** ${durationFormatted}
+**Connection Details:** ${JSON.stringify(sessionData.connection_details || {})}
+
+Generate a professional session summary using the create_session_summary function.`;
+
+  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ],
+      tools: [{
+        type: 'function',
+        function: {
+          name: 'create_session_summary',
+          description: 'Create a structured remote session summary',
+          parameters: {
+            type: 'object',
+            properties: {
+              summary: {
+                type: 'string',
+                description: 'Brief 2-3 sentence summary of what was accomplished during the session'
+              },
+              actions: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'List of specific actions performed during the session (be specific and technical)'
+              },
+              duration_formatted: {
+                type: 'string',
+                description: 'Human-readable duration (e.g., "45m" or "1h 30m")'
+              },
+              billing_notes: {
+                type: 'string',
+                description: 'Notes relevant for billing purposes (e.g., "Standard remote support - troubleshooting and resolution")'
+              }
+            },
+            required: ['summary', 'actions', 'duration_formatted', 'billing_notes'],
+            additionalProperties: false
+          }
+        }
+      }],
+      tool_choice: { type: 'function', function: { name: 'create_session_summary' } }
+    }),
+  });
+
+  if (!response.ok) {
+    if (response.status === 429) throw { status: 429, message: 'Rate limit exceeded' };
+    if (response.status === 402) throw { status: 402, message: 'Payment required' };
+    throw new Error(`AI Gateway error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+  
+  let summary;
+  if (toolCall?.function?.arguments) {
+    summary = JSON.parse(toolCall.function.arguments);
+    // Ensure duration is set correctly
+    summary.duration_formatted = summary.duration_formatted || durationFormatted;
+  } else {
+    // Fallback
+    summary = {
+      summary: 'Remote support session completed.',
+      actions: ['Connected to device', 'Performed troubleshooting', 'Session ended'],
+      duration_formatted: durationFormatted,
+      billing_notes: 'Standard remote support session'
+    };
+  }
+
+  return new Response(
+    JSON.stringify({ success: true, summary }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
 }

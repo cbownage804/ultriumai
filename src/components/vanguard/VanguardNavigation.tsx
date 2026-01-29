@@ -17,7 +17,11 @@ import {
   X,
   Gift,
   ChevronDown,
-  Globe
+  Globe,
+  Sparkles,
+  Wand2,
+  FileText,
+  Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -57,6 +61,18 @@ export function VanguardNavigation() {
         { title: 'Overview', path: `${basePath}/reports`, icon: BarChart3 },
         { title: 'Scheduled Reports', path: `${basePath}/scheduled-reports`, icon: BarChart3 },
         { title: 'Report Builder', path: `${basePath}/report-builder`, icon: BarChart3 },
+      ]
+    },
+    {
+      title: 'AI Copilot', 
+      path: `${basePath}/dashboard`, 
+      icon: Bot,
+      badge: 'AI',
+      children: [
+        { title: 'AI Dashboard', path: `${basePath}/dashboard`, icon: Bot },
+        { title: 'KB Generator', path: `${basePath}/ai-knowledge`, icon: Wand2 },
+        { title: 'Session Summaries', path: `${basePath}/ai-sessions`, icon: FileText },
+        { title: 'AI Analytics', path: `${basePath}/ai-analytics`, icon: Sparkles },
       ]
     },
     { title: 'Billing', path: `${basePath}/billing`, icon: CreditCard },
