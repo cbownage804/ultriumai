@@ -131,7 +131,8 @@ export function VanguardNavigation() {
 
   // Additional standalone items
   const additionalItems: NavItem[] = [
-    { title: 'Billing', path: `${basePath}/billing`, icon: CreditCard },
+    { title: 'MSP Billing', path: `${basePath}/msp-billing`, icon: CreditCard },
+    { title: 'Cortex Hub', path: `${basePath}/cortex`, icon: Sparkles, badge: 'NEW' },
     { title: 'Customer Portal', path: `${basePath}/portal`, icon: Globe },
     { title: 'Portal App', path: `${basePath}/portal/download`, icon: Monitor },
     { title: 'Admin', path: `${basePath}/admin`, icon: Settings },
