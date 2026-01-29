@@ -19505,6 +19505,48 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_automation_profiles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          notify_on_complete: boolean | null
+          notify_on_failure: boolean | null
+          run_on_connect: boolean | null
+          schedule: Json
+          tasks: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          notify_on_complete?: boolean | null
+          notify_on_failure?: boolean | null
+          run_on_connect?: boolean | null
+          schedule?: Json
+          tasks?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          notify_on_complete?: boolean | null
+          notify_on_failure?: boolean | null
+          run_on_connect?: boolean | null
+          schedule?: Json
+          tasks?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_baseline_drifts: {
         Row: {
           acknowledged_at: string | null
@@ -19608,6 +19650,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_client_portal_billing: {
+        Row: {
+          api_calls_this_month: number | null
+          client_id: string | null
+          client_name: string
+          created_at: string
+          current_balance: number | null
+          devices_managed: number | null
+          id: string
+          storage_used_gb: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_calls_this_month?: number | null
+          client_id?: string | null
+          client_name: string
+          created_at?: string
+          current_balance?: number | null
+          devices_managed?: number | null
+          id?: string
+          storage_used_gb?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_calls_this_month?: number | null
+          client_id?: string | null
+          client_name?: string
+          created_at?: string
+          current_balance?: number | null
+          devices_managed?: number | null
+          id?: string
+          storage_used_gb?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_client_usage_history: {
+        Row: {
+          api_calls: number | null
+          client_id: string | null
+          created_at: string
+          devices: number | null
+          id: string
+          month: string
+          storage_gb: number | null
+          user_id: string
+        }
+        Insert: {
+          api_calls?: number | null
+          client_id?: string | null
+          created_at?: string
+          devices?: number | null
+          id?: string
+          month: string
+          storage_gb?: number | null
+          user_id: string
+        }
+        Update: {
+          api_calls?: number | null
+          client_id?: string | null
+          created_at?: string
+          devices?: number | null
+          id?: string
+          month?: string
+          storage_gb?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       vanguard_client_usage_snapshots: {
         Row: {
@@ -19851,6 +19965,68 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_device_patches: {
+        Row: {
+          category: string | null
+          created_at: string
+          cve_ids: string[] | null
+          description: string | null
+          device_id: string | null
+          id: string
+          installed_at: string | null
+          kb_number: string
+          release_date: string | null
+          severity: string | null
+          size_mb: number | null
+          status: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          cve_ids?: string[] | null
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          installed_at?: string | null
+          kb_number: string
+          release_date?: string | null
+          severity?: string | null
+          size_mb?: number | null
+          status?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          cve_ids?: string[] | null
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          installed_at?: string | null
+          kb_number?: string
+          release_date?: string | null
+          severity?: string | null
+          size_mb?: number | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_device_patches_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "rmm_devices"
             referencedColumns: ["id"]
           },
         ]
@@ -20717,6 +20893,57 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_patch_policies: {
+        Row: {
+          auto_approve_critical: boolean | null
+          auto_approve_important: boolean | null
+          auto_approve_low: boolean | null
+          auto_approve_moderate: boolean | null
+          created_at: string
+          deployment_window_end: string | null
+          deployment_window_start: string | null
+          exclude_drivers: boolean | null
+          id: string
+          max_concurrent_installs: number | null
+          name: string
+          reboot_policy: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_approve_critical?: boolean | null
+          auto_approve_important?: boolean | null
+          auto_approve_low?: boolean | null
+          auto_approve_moderate?: boolean | null
+          created_at?: string
+          deployment_window_end?: string | null
+          deployment_window_start?: string | null
+          exclude_drivers?: boolean | null
+          id?: string
+          max_concurrent_installs?: number | null
+          name: string
+          reboot_policy?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_approve_critical?: boolean | null
+          auto_approve_important?: boolean | null
+          auto_approve_low?: boolean | null
+          auto_approve_moderate?: boolean | null
+          created_at?: string
+          deployment_window_end?: string | null
+          deployment_window_start?: string | null
+          exclude_drivers?: boolean | null
+          id?: string
+          max_concurrent_installs?: number | null
+          name?: string
+          reboot_policy?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_patches: {
         Row: {
           affected_devices: number | null
@@ -21496,6 +21723,36 @@ export type Database = {
           },
         ]
       }
+      vanguard_sentinel_alert_trends: {
+        Row: {
+          created_at: string
+          day_name: string | null
+          id: string
+          resolved_alerts: number | null
+          total_alerts: number | null
+          trend_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_name?: string | null
+          id?: string
+          resolved_alerts?: number | null
+          total_alerts?: number | null
+          trend_date: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_name?: string | null
+          id?: string
+          resolved_alerts?: number | null
+          total_alerts?: number | null
+          trend_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_sentinel_rules: {
         Row: {
           ai_auto_dismiss_below: number | null
@@ -21558,6 +21815,33 @@ export type Database = {
           times_triggered?: number | null
           updated_at?: string
           use_ai_triage?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_sentinel_threat_distribution: {
+        Row: {
+          color: string | null
+          count: number | null
+          id: string
+          threat_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          count?: number | null
+          id?: string
+          threat_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          count?: number | null
+          id?: string
+          threat_type?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -22054,6 +22338,39 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_threshold_profiles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          rules: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          rules?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          rules?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_ticket_sla_tracking: {
         Row: {
           created_at: string
@@ -22348,6 +22665,45 @@ export type Database = {
           trend?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_vuln_suppression_rules: {
+        Row: {
+          created_at: string
+          criteria: Json | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          reason: string | null
+          suppression_type: string
+          user_id: string
+          vuln_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          criteria?: Json | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          reason?: string | null
+          suppression_type: string
+          user_id: string
+          vuln_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          criteria?: Json | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          reason?: string | null
+          suppression_type?: string
+          user_id?: string
+          vuln_count?: number | null
         }
         Relationships: []
       }
