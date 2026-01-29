@@ -57,20 +57,20 @@ export default function SafeSuiteTrack() {
 
         {/* Tabs Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-[#141414] border border-emerald-500/10">
-            <TabsTrigger value="assets" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400">
-              <Package className="h-4 w-4 mr-2" />
-              Asset Manager
+          <TabsList className="bg-[#141414] border border-emerald-500/10 w-full flex overflow-x-auto touch-pan-x scrollbar-hide">
+            <TabsTrigger value="assets" className="flex-1 min-w-[120px] data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 touch-target text-xs sm:text-sm">
+              <Package className="h-4 w-4 mr-1.5 sm:mr-2 shrink-0" />
+              <span className="truncate">Assets</span>
             </TabsTrigger>
-            <TabsTrigger value="warranty" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400">
-              <FileSearch className="h-4 w-4 mr-2" />
-              Warranty Lookup
+            <TabsTrigger value="warranty" className="flex-1 min-w-[120px] data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 touch-target text-xs sm:text-sm">
+              <FileSearch className="h-4 w-4 mr-1.5 sm:mr-2 shrink-0" />
+              <span className="truncate">Warranty</span>
             </TabsTrigger>
-            <TabsTrigger value="software" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400">
-              <Package2 className="h-4 w-4 mr-2" />
-              Software Licenses
+            <TabsTrigger value="software" className="flex-1 min-w-[120px] data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 touch-target text-xs sm:text-sm">
+              <Package2 className="h-4 w-4 mr-1.5 sm:mr-2 shrink-0" />
+              <span className="truncate">Licenses</span>
               {!isBusiness && !subLoading && (
-                <Lock className="h-3 w-3 ml-1 text-amber-400" />
+                <Lock className="h-3 w-3 ml-1 text-amber-400 shrink-0" />
               )}
             </TabsTrigger>
           </TabsList>

@@ -209,23 +209,23 @@ export const ExpirationReminders = () => {
   const soonCount = expiringEntries.filter(e => e.daysUntilExpiry >= 0 && e.daysUntilExpiry <= 7).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
         <div>
-          <h2 className="text-2xl font-bold">Expiring Passwords</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-xl sm:text-2xl font-bold">Expiring Passwords</h2>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Manage password rotation reminders
           </p>
         </div>
         <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline">
+            <Button variant="outline" className="w-full sm:w-auto touch-target">
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-[95vw] sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Expiration Settings</DialogTitle>
               <DialogDescription>
@@ -239,7 +239,7 @@ export const ExpirationReminders = () => {
                   value={defaultExpiryDays.toString()} 
                   onValueChange={(v) => setDefaultExpiryDays(parseInt(v))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="touch-target">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -261,7 +261,7 @@ export const ExpirationReminders = () => {
                   value={reminderDays.toString()} 
                   onValueChange={(v) => setReminderDays(parseInt(v))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="touch-target">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -290,52 +290,52 @@ export const ExpirationReminders = () => {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 ${
                 expiredCount > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
               }`}>
                 {expiredCount > 0 ? (
-                  <AlertTriangle className="h-6 w-6" />
+                  <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6" />
                 ) : (
-                  <CheckCircle className="h-6 w-6" />
+                  <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6" />
                 )}
               </div>
               <div>
-                <div className="text-2xl font-bold">{expiredCount}</div>
-                <p className="text-sm text-muted-foreground">Expired</p>
+                <div className="text-xl sm:text-2xl font-bold">{expiredCount}</div>
+                <p className="text-xs sm:text-sm text-muted-foreground">Expired</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 ${
                 soonCount > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
               }`}>
-                <Clock className="h-6 w-6" />
+                <Clock className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{soonCount}</div>
-                <p className="text-sm text-muted-foreground">Expiring Soon</p>
+                <div className="text-xl sm:text-2xl font-bold">{soonCount}</div>
+                <p className="text-xs sm:text-sm text-muted-foreground">Soon</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
-                <Bell className="h-6 w-6" />
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{reminders.length}</div>
-                <p className="text-sm text-muted-foreground">Active Reminders</p>
+                <div className="text-xl sm:text-2xl font-bold">{reminders.length}</div>
+                <p className="text-xs sm:text-sm text-muted-foreground">Reminders</p>
               </div>
             </div>
           </CardContent>

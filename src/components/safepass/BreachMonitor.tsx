@@ -339,19 +339,19 @@ export const BreachMonitor = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
         <div>
-          <h2 className="text-2xl font-bold">Breach Monitor</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-xl sm:text-2xl font-bold">Breach Monitor</h2>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Scan your passwords for security vulnerabilities
           </p>
         </div>
         <Button 
           onClick={runBreachScan} 
           disabled={isScanning}
-          className="bg-amber-500 hover:bg-amber-600 text-black"
+          className="bg-amber-500 hover:bg-amber-600 text-black w-full sm:w-auto touch-target"
         >
           {isScanning ? (
             <>
@@ -370,13 +370,13 @@ export const BreachMonitor = () => {
       {/* Scanning Progress */}
       {isScanning && (
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="space-y-2">
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <span>
-                  {scanProgress < 20 ? 'Decrypting passwords...' :
-                   scanProgress < 60 ? 'Checking against breach databases...' :
-                   'Analyzing password security...'}
+                  {scanProgress < 20 ? 'Decrypting...' :
+                   scanProgress < 60 ? 'Checking breaches...' :
+                   'Analyzing security...'}
                 </span>
                 <span>{scanProgress}%</span>
               </div>
@@ -387,47 +387,47 @@ export const BreachMonitor = () => {
       )}
 
       {/* Security Score Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <Card>
-          <CardContent className="p-6 text-center">
-            <div className={`text-4xl font-bold ${getScoreColor(lastScan?.overall_score || 100)}`}>
+          <CardContent className="p-4 sm:p-6 text-center">
+            <div className={`text-2xl sm:text-4xl font-bold ${getScoreColor(lastScan?.overall_score || 100)}`}>
               {lastScan?.overall_score || 100}%
             </div>
-            <p className="text-sm text-muted-foreground mt-1">Security Score</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">Score</p>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <ShieldAlert className="h-8 w-8 text-red-500" />
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <ShieldAlert className="h-6 w-6 sm:h-8 sm:w-8 text-red-500 shrink-0" />
               <div>
-                <div className="text-2xl font-bold">{lastScan?.compromised_count || 0}</div>
-                <p className="text-sm text-muted-foreground">Breached</p>
+                <div className="text-xl sm:text-2xl font-bold">{lastScan?.compromised_count || 0}</div>
+                <p className="text-xs sm:text-sm text-muted-foreground">Breached</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-8 w-8 text-yellow-500" />
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500 shrink-0" />
               <div>
-                <div className="text-2xl font-bold">{lastScan?.weak_count || 0}</div>
-                <p className="text-sm text-muted-foreground">Weak Passwords</p>
+                <div className="text-xl sm:text-2xl font-bold">{lastScan?.weak_count || 0}</div>
+                <p className="text-xs sm:text-sm text-muted-foreground">Weak</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <RefreshCw className="h-8 w-8 text-orange-500" />
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <RefreshCw className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500 shrink-0" />
               <div>
-                <div className="text-2xl font-bold">{lastScan?.reused_count || 0}</div>
-                <p className="text-sm text-muted-foreground">Reused</p>
+                <div className="text-xl sm:text-2xl font-bold">{lastScan?.reused_count || 0}</div>
+                <p className="text-xs sm:text-sm text-muted-foreground">Reused</p>
               </div>
             </div>
           </CardContent>

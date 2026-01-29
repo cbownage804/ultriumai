@@ -371,128 +371,130 @@ export const AssetManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col gap-3 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">Asset Inventory</h2>
-          <p className="text-gray-400 text-sm">
-            Track hardware, warranties, and locations across your organization
+          <h2 className="text-xl sm:text-2xl font-bold text-white">Asset Inventory</h2>
+          <p className="text-gray-400 text-xs sm:text-sm">
+            Track hardware, warranties, and locations
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={handleExport} variant="outline" size="sm" className="border-white/10 hover:bg-white/5">
-            <Download className="h-4 w-4 mr-2" />
-            Export
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={handleExport} variant="outline" size="sm" className="border-white/10 hover:bg-white/5 touch-target flex-1 sm:flex-none">
+            <Download className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Export</span>
           </Button>
-          <Button onClick={() => setShowAddLocation(true)} variant="outline" size="sm" className="border-white/10 hover:bg-white/5">
-            <Building2 className="h-4 w-4 mr-2" />
-            Add Location
+          <Button onClick={() => setShowAddLocation(true)} variant="outline" size="sm" className="border-white/10 hover:bg-white/5 touch-target flex-1 sm:flex-none">
+            <Building2 className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Location</span>
           </Button>
-          <Button onClick={() => { resetAssetForm(); setEditingAsset(null); setShowAddAsset(true); }} size="sm" className="bg-emerald-500 hover:bg-emerald-600">
-            <Plus className="h-4 w-4 mr-2" />
+          <Button onClick={() => { resetAssetForm(); setEditingAsset(null); setShowAddAsset(true); }} size="sm" className="bg-emerald-500 hover:bg-emerald-600 touch-target flex-1 sm:flex-none">
+            <Plus className="h-4 w-4 mr-1 sm:mr-2" />
             Add Asset
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card className="bg-[#141414] border-white/5">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-400">Total Assets</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-gray-400">Assets</CardTitle>
             <Package className="h-4 w-4 text-emerald-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.total}</div>
-            <p className="text-xs text-gray-500">{stats.active} active</p>
+          <CardContent className="pt-0 p-3 sm:p-6">
+            <div className="text-xl sm:text-2xl font-bold text-white">{stats.total}</div>
+            <p className="text-[10px] sm:text-xs text-gray-500">{stats.active} active</p>
           </CardContent>
         </Card>
 
         <Card className="bg-[#141414] border-white/5">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-400">Total Value</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-gray-400">Value</CardTitle>
             <DollarSign className="h-4 w-4 text-emerald-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">
+          <CardContent className="pt-0 p-3 sm:p-6">
+            <div className="text-xl sm:text-2xl font-bold text-white">
               ${stats.totalValue.toLocaleString()}
             </div>
-            <p className="text-xs text-gray-500">Asset portfolio</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">Portfolio</p>
           </CardContent>
         </Card>
 
         <Card className="bg-[#141414] border-white/5">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-400">Maintenance</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-gray-400">Maintenance</CardTitle>
             <RefreshCw className="h-4 w-4 text-amber-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.maintenance}</div>
-            <p className="text-xs text-gray-500">Needs attention</p>
+          <CardContent className="pt-0 p-3 sm:p-6">
+            <div className="text-xl sm:text-2xl font-bold text-white">{stats.maintenance}</div>
+            <p className="text-[10px] sm:text-xs text-gray-500">Attention</p>
           </CardContent>
         </Card>
 
         <Card className="bg-[#141414] border-white/5">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-400">Expiring Soon</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-gray-400">Expiring</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.expiringSoon}</div>
-            <p className="text-xs text-gray-500">Warranties expiring</p>
+          <CardContent className="pt-0 p-3 sm:p-6">
+            <div className="text-xl sm:text-2xl font-bold text-white">{stats.expiringSoon}</div>
+            <p className="text-[10px] sm:text-xs text-gray-500">Warranties</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-3">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="Search by name, serial number, or assigned user..."
+            placeholder="Search assets..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-[#141414] border-white/10"
+            className="pl-10 bg-[#141414] border-white/10 touch-target text-base"
           />
         </div>
 
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-[180px] bg-[#141414] border-white/10">
-            <SelectValue placeholder="Category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {categories.map(cat => (
-              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap gap-2">
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="flex-1 min-w-[120px] sm:w-[150px] sm:flex-none bg-[#141414] border-white/10 touch-target">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map(cat => (
+                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-          <SelectTrigger className="w-[180px] bg-[#141414] border-white/10">
-            <SelectValue placeholder="Location" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Locations</SelectItem>
-            {officeLocations.map(loc => (
-              <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+            <SelectTrigger className="flex-1 min-w-[120px] sm:w-[150px] sm:flex-none bg-[#141414] border-white/10 touch-target">
+              <SelectValue placeholder="Location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              {officeLocations.map(loc => (
+                <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-          <SelectTrigger className="w-[150px] bg-[#141414] border-white/10">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="maintenance">Maintenance</SelectItem>
-            <SelectItem value="retired">Retired</SelectItem>
-            <SelectItem value="lost">Lost</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+            <SelectTrigger className="flex-1 min-w-[100px] sm:w-[130px] sm:flex-none bg-[#141414] border-white/10 touch-target">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="maintenance">Maintenance</SelectItem>
+              <SelectItem value="retired">Retired</SelectItem>
+              <SelectItem value="lost">Lost</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Category Pills */}
