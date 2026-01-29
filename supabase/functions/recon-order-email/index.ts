@@ -204,7 +204,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send customer confirmation email
     const customerEmail = await resend.emails.send({
-      from: "Vanguard Recon <orders@ultriumai.com>",
+      from: "Vanguard Recon <support@ultriumai.com>",
       to: [data.customerEmail],
       subject: `Order Confirmed: ${HARDWARE_NAMES[data.hardwareTier] || "Vanguard Recon"}`,
       html: generateCustomerEmail(data),
@@ -215,7 +215,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send admin notification
     if (data.notifyAdmin !== false) {
       const adminEmail = await resend.emails.send({
-        from: "Vanguard Orders <orders@ultriumai.com>",
+        from: "Vanguard Orders <support@ultriumai.com>",
         to: ["admin@ultriumai.com"], // Replace with your admin email
         subject: `🚨 New Recon Order: ${data.customerName} - ${HARDWARE_NAMES[data.hardwareTier]}`,
         html: generateAdminEmail(data),
