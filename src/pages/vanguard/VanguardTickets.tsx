@@ -14,13 +14,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Ticket, Plus, Search, Filter, Clock, AlertCircle, CheckCircle2, 
   XCircle, User, Building2, MoreVertical, MessageSquare, Eye,
   Paperclip, History, Send, Phone, Mail, MapPin, Monitor, 
   HardDrive, Wifi, Calendar, Tag, AlertTriangle, ExternalLink,
   FileText, Image, Copy, ArrowUpRight, Timer, Target, Zap,
-  Shield, RefreshCw, ChevronRight
+  Shield, RefreshCw, ChevronRight, ChevronDown, Trash2, 
+  UserPlus, GitMerge, Smile, Meh, Frown, Download
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -420,10 +422,13 @@ export default function VanguardTickets() {
   const navigate = useNavigate();
   const basePath = getVanguardBasePath();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('tickets');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [tickets, setTickets] = useState(mockTickets);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<typeof mockTickets[0] | null>(null);
+  const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
+  const [viewType, setViewType] = useState('default');
   const [newTicket, setNewTicket] = useState({
     title: '',
     description: '',
@@ -435,19 +440,64 @@ export default function VanguardTickets() {
     document.title = 'Tickets | Ultrium Vanguard';
   }, []);
 
-  const stats = [
-    { label: 'Open', value: tickets.filter(t => t.status === 'open').length, icon: AlertCircle, color: 'text-blue-400' },
-    { label: 'In Progress', value: tickets.filter(t => t.status === 'in_progress').length, icon: Clock, color: 'text-cyan-400' },
-    { label: 'Resolved Today', value: tickets.filter(t => t.status === 'resolved').length, icon: CheckCircle2, color: 'text-emerald-400' },
-    { label: 'SLA At Risk', value: tickets.filter(t => t.sla.includes('1h') || t.sla.includes('2h')).length, icon: XCircle, color: 'text-red-400' },
-  ];
-
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          ticket.customer.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === 'all' || ticket.status === activeTab;
-    return matchesSearch && matchesTab;
+                          ticket.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          ticket.contact.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
+    return matchesSearch && matchesStatus;
   });
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTickets(filteredTickets.map(t => t.id));
+    } else {
+      setSelectedTickets([]);
+    }
+  };
+
+  const handleSelectTicket = (ticketId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedTickets([...selectedTickets, ticketId]);
+    } else {
+      setSelectedTickets(selectedTickets.filter(id => id !== ticketId));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    setTickets(tickets.filter(t => !selectedTickets.includes(t.id)));
+    toast.success(`${selectedTickets.length} tickets deleted`);
+    setSelectedTickets([]);
+  };
+
+  const handleBulkAssign = () => {
+    setTickets(tickets.map(t => 
+      selectedTickets.includes(t.id) ? { ...t, assignee: 'Current User', status: 'in_progress' as const } : t
+    ));
+    toast.success(`${selectedTickets.length} tickets assigned to you`);
+    setSelectedTickets([]);
+  };
+
+  const handleBulkSetStatus = (status: string) => {
+    setTickets(tickets.map(t => 
+      selectedTickets.includes(t.id) ? { ...t, status: status as Ticket['status'] } : t
+    ));
+    toast.success(`${selectedTickets.length} tickets updated`);
+    setSelectedTickets([]);
+  };
+
+  const getSentimentIcon = (urgency: string) => {
+    if (urgency === 'critical' || urgency === 'high') return { icon: Frown, color: 'text-red-400' };
+    if (urgency === 'medium') return { icon: Meh, color: 'text-yellow-400' };
+    return { icon: Smile, color: 'text-emerald-400' };
+  };
+
+  const getActivityStatus = (ticket: Ticket) => {
+    const hasUnread = ticket.activities.length > 0;
+    if (ticket.status === 'open' && hasUnread) return { label: 'Awaiting response', color: 'text-amber-400', dot: 'bg-amber-400' };
+    if (ticket.status === 'in_progress') return { label: 'Read', color: 'text-emerald-400', dot: 'bg-emerald-400' };
+    return { label: 'Read', color: 'text-emerald-400', dot: 'bg-emerald-400' };
+  };
 
   const handleCreateTicket = () => {
     if (!newTicket.title || !newTicket.customer) {
@@ -527,246 +577,249 @@ export default function VanguardTickets() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="p-6 space-y-4">
+      {/* Top Bar - Atera Style */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-cyan-500/20 rounded-lg">
-            <Ticket className="h-6 w-6 text-cyan-400" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Tickets</h1>
-            <p className="text-white/60 text-sm">Manage support tickets across all customers</p>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="bg-cyan-500 hover:bg-cyan-600 text-black font-medium">
+                New
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-slate-900 border-cyan-500/20">
+              <DropdownMenuItem 
+                className="text-white/80 hover:bg-cyan-500/10"
+                onClick={() => setIsCreateDialogOpen(true)}
+              >
+                <Ticket className="h-4 w-4 mr-2" />
+                New Ticket
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-white/80 hover:bg-cyan-500/10">
+                <Calendar className="h-4 w-4 mr-2" />
+                Scheduled Ticket
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+            <Input 
+              placeholder="Search" 
+              className="pl-10 w-64 bg-slate-800/50 border-cyan-500/20 text-white placeholder:text-white/40"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-cyan-500 hover:bg-cyan-600 text-black font-medium">
-              <Plus className="h-4 w-4 mr-2" />
-              New Ticket
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-slate-900 border-cyan-500/20">
-            <DialogHeader>
-              <DialogTitle className="text-white">Create New Ticket</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label className="text-white/80">Title *</Label>
-                <Input
-                  value={newTicket.title}
-                  onChange={(e) => setNewTicket({ ...newTicket, title: e.target.value })}
-                  placeholder="Brief description of the issue"
-                  className="bg-black/40 border-cyan-500/20 text-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-white/80">Customer *</Label>
-                <Select value={newTicket.customer} onValueChange={(v) => setNewTicket({ ...newTicket, customer: v })}>
-                  <SelectTrigger className="bg-black/40 border-cyan-500/20 text-white">
-                    <SelectValue placeholder="Select customer" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-cyan-500/20">
-                    <SelectItem value="Acme Corp">Acme Corp</SelectItem>
-                    <SelectItem value="TechStart Inc">TechStart Inc</SelectItem>
-                    <SelectItem value="GlobalTech">GlobalTech</SelectItem>
-                    <SelectItem value="DataFlow LLC">DataFlow LLC</SelectItem>
-                    <SelectItem value="StartupXYZ">StartupXYZ</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-white/80">Priority</Label>
-                <Select value={newTicket.priority} onValueChange={(v) => setNewTicket({ ...newTicket, priority: v })}>
-                  <SelectTrigger className="bg-black/40 border-cyan-500/20 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-cyan-500/20">
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-white/80">Description</Label>
-                <Textarea
-                  value={newTicket.description}
-                  onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
-                  placeholder="Detailed description of the issue"
-                  className="bg-black/40 border-cyan-500/20 text-white min-h-[100px]"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="border-cyan-500/20 text-white/80">
-                Cancel
-              </Button>
-              <Button onClick={handleCreateTicket} className="bg-cyan-500 hover:bg-cyan-600 text-black">
-                Create Ticket
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-          >
-            <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-3xl font-bold text-white">{stat.value}</p>
-                    <p className="text-white/60 text-sm">{stat.label}</p>
-                  </div>
-                  <stat.icon className={`h-8 w-8 ${stat.color}`} />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-          <Input 
-            placeholder="Search tickets..." 
-            className="pl-10 bg-black/40 border-cyan-500/20 text-white placeholder:text-white/40"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="border-cyan-500/20 text-white/80">
+            <Download className="h-4 w-4 mr-2" />
+            Install agent
+          </Button>
         </div>
-        <Button variant="outline" className="border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/10">
-          <Filter className="h-4 w-4 mr-2" />
-          Filters
-        </Button>
       </div>
 
-      {/* Tabs */}
+      {/* Page Title */}
+      <h1 className="text-2xl font-bold text-white">Tickets</h1>
+
+      {/* Tabs - Atera Style */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-black/40 border border-cyan-500/20">
-          <TabsTrigger value="all" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">All</TabsTrigger>
-          <TabsTrigger value="open" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">Open</TabsTrigger>
-          <TabsTrigger value="in_progress" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">In Progress</TabsTrigger>
-          <TabsTrigger value="resolved" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">Resolved</TabsTrigger>
+        <TabsList className="bg-transparent border-b border-cyan-500/20 rounded-none h-auto p-0 w-full justify-start">
+          <TabsTrigger 
+            value="tickets" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-400 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 px-4 py-2"
+          >
+            Tickets
+          </TabsTrigger>
+          <TabsTrigger 
+            value="scheduled" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-400 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 px-4 py-2"
+          >
+            Scheduled Tickets
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value={activeTab} className="mt-4">
-          <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
+        <TabsContent value="tickets" className="mt-4 space-y-4">
+          {/* Bulk Actions Bar */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {selectedTickets.length > 0 && (
+                <>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-red-400 hover:bg-red-500/10"
+                    onClick={handleBulkDelete}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-white/60 hover:bg-cyan-500/10"
+                    onClick={handleBulkAssign}
+                  >
+                    <UserPlus className="h-4 w-4 mr-1" />
+                    Assign ticket
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-white/60 hover:bg-cyan-500/10">
+                        <RefreshCw className="h-4 w-4 mr-1" />
+                        Set status
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-slate-900 border-cyan-500/20">
+                      <DropdownMenuItem onClick={() => handleBulkSetStatus('open')} className="text-white/80">Open</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkSetStatus('in_progress')} className="text-white/80">In Progress</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkSetStatus('resolved')} className="text-white/80">Resolved</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkSetStatus('closed')} className="text-white/80">Closed</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button variant="ghost" size="sm" className="text-white/60 hover:bg-cyan-500/10">
+                    <Tag className="h-4 w-4 mr-1" />
+                    Set priority
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-white/60 hover:bg-cyan-500/10">
+                    <GitMerge className="h-4 w-4 mr-1" />
+                    Merge tickets
+                  </Button>
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-white/40 text-sm">Displaying {filteredTickets.length} of {tickets.length} tickets</span>
+              <Select value={viewType} onValueChange={setViewType}>
+                <SelectTrigger className="w-36 bg-slate-800/50 border-cyan-500/20 text-white">
+                  <SelectValue placeholder="Default view" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-cyan-500/20">
+                  <SelectItem value="default">Default view</SelectItem>
+                  <SelectItem value="compact">Compact view</SelectItem>
+                  <SelectItem value="detailed">Detailed view</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" className="border-cyan-500/20 text-white/60">
+                <Filter className="h-4 w-4 mr-2" />
+                Filters
+              </Button>
+            </div>
+          </div>
+
+          {/* Tickets Table - Atera Style */}
+          <Card className="bg-slate-900/50 border-cyan-500/20">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-cyan-500/20">
-                      <th className="text-left p-4 text-white/60 font-medium text-sm">Ticket</th>
-                      <th className="text-left p-4 text-white/60 font-medium text-sm">Customer</th>
-                      <th className="text-left p-4 text-white/60 font-medium text-sm">Priority</th>
-                      <th className="text-left p-4 text-white/60 font-medium text-sm">Status</th>
-                      <th className="text-left p-4 text-white/60 font-medium text-sm">Assignee</th>
-                      <th className="text-left p-4 text-white/60 font-medium text-sm">SLA</th>
-                      <th className="text-left p-4 text-white/60 font-medium text-sm"></th>
+                    <tr className="border-b border-cyan-500/20 bg-slate-800/30">
+                      <th className="w-10 p-3">
+                        <Checkbox 
+                          checked={selectedTickets.length === filteredTickets.length && filteredTickets.length > 0}
+                          onCheckedChange={handleSelectAll}
+                          className="border-white/20"
+                        />
+                      </th>
+                      <th className="text-left p-3 text-white/60 font-medium text-sm">Details</th>
+                      <th className="text-left p-3 text-white/60 font-medium text-sm">SLA</th>
+                      <th className="text-left p-3 text-white/60 font-medium text-sm">Sentiment</th>
+                      <th className="text-left p-3 text-white/60 font-medium text-sm">Assigned Technician</th>
+                      <th className="text-left p-3 text-white/60 font-medium text-sm">Priority</th>
+                      <th className="text-left p-3 text-white/60 font-medium text-sm">Activity Status</th>
+                      <th className="text-left p-3 text-white/60 font-medium text-sm">Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredTickets.map((ticket) => {
-                      const StatusIcon = statusIcons[ticket.status as keyof typeof statusIcons];
+                      const sentiment = getSentimentIcon(ticket.urgency);
+                      const SentimentIcon = sentiment.icon;
+                      const activityStatus = getActivityStatus(ticket);
+                      
                       return (
                         <tr 
                           key={ticket.id} 
                           className="border-b border-cyan-500/10 hover:bg-cyan-500/5 transition-colors cursor-pointer"
                           onClick={() => handleViewDetails(ticket)}
                         >
-                          <td className="p-4">
-                            <div>
-                              <p className="text-white font-medium">{ticket.title}</p>
-                              <p className="text-white/40 text-sm">{ticket.id} • {ticket.created}</p>
+                          <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                            <Checkbox 
+                              checked={selectedTickets.includes(ticket.id)}
+                              onCheckedChange={(checked) => handleSelectTicket(ticket.id, checked as boolean)}
+                              className="border-white/20"
+                            />
+                          </td>
+                          <td className="p-3">
+                            <div className="flex items-start gap-3">
+                              <Avatar className="h-8 w-8 mt-1">
+                                <AvatarFallback className="bg-gradient-to-br from-cyan-500/30 to-purple-500/30 text-white text-xs">
+                                  {ticket.customer.substring(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-cyan-400 font-mono text-sm">#{ticket.id.split('-')[1]}</span>
+                                  <span className="text-white font-medium">{ticket.title}</span>
+                                </div>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-cyan-400/70 text-sm">{ticket.customer}</span>
+                                  <span className="text-white/40 text-sm">{ticket.contact.name}</span>
+                                </div>
+                                <div className="text-white/40 text-xs mt-0.5">
+                                  Created {ticket.created} • Modified {ticket.created}
+                                </div>
+                              </div>
                             </div>
                           </td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-2">
-                              <Building2 className="h-4 w-4 text-white/40" />
-                              <span className="text-white/80">{ticket.customer}</span>
-                            </div>
+                          <td className="p-3">
+                            <Badge 
+                              variant="outline" 
+                              className={`${
+                                ticket.slaProgress >= 75 ? 'border-red-500/50 text-red-400 bg-red-500/10' :
+                                ticket.slaProgress >= 50 ? 'border-amber-500/50 text-amber-400 bg-amber-500/10' :
+                                'border-slate-500/50 text-slate-400 bg-slate-500/10'
+                              }`}
+                            >
+                              {ticket.sla === 'Completed' ? 'N/A' : 'No SLA'}
+                            </Badge>
                           </td>
-                          <td className="p-4">
-                            <Badge className={priorityColors[ticket.priority as keyof typeof priorityColors]}>
+                          <td className="p-3">
+                            <SentimentIcon className={`h-5 w-5 ${sentiment.color}`} />
+                          </td>
+                          <td className="p-3">
+                            <span className="text-white/80">{ticket.assignee}</span>
+                          </td>
+                          <td className="p-3">
+                            <span className={`capitalize ${
+                              ticket.priority === 'critical' ? 'text-red-400' :
+                              ticket.priority === 'high' ? 'text-orange-400' :
+                              ticket.priority === 'medium' ? 'text-yellow-400' :
+                              'text-slate-400'
+                            }`}>
                               {ticket.priority}
-                            </Badge>
-                          </td>
-                          <td className="p-4">
-                            <Badge className={statusColors[ticket.status as keyof typeof statusColors]}>
-                              <StatusIcon className="h-3 w-3 mr-1" />
-                              {ticket.status.replace('_', ' ')}
-                            </Badge>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-2">
-                              <User className="h-4 w-4 text-white/40" />
-                              <span className="text-white/80">{ticket.assignee}</span>
-                            </div>
-                          </td>
-                          <td className="p-4">
-                            <span className={`text-sm ${ticket.sla.includes('remaining') ? 'text-amber-400' : 'text-emerald-400'}`}>
-                              {ticket.sla}
                             </span>
                           </td>
-                          <td className="p-4" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-white/60 hover:text-white">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent className="bg-slate-900 border-cyan-500/20">
-                                <DropdownMenuItem 
-                                  className="text-white/80 hover:bg-cyan-500/10"
-                                  onClick={() => handleViewDetails(ticket)}
-                                >
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  Open Ticket
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="text-white/80 hover:bg-cyan-500/10"
-                                  onClick={() => handleQuickView(ticket)}
-                                >
-                                  <MessageSquare className="h-4 w-4 mr-2" />
-                                  Quick View
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator className="bg-cyan-500/20" />
-                                <DropdownMenuItem 
-                                  className="text-white/80 hover:bg-cyan-500/10"
-                                  onClick={() => handleAssign(ticket.id)}
-                                >
-                                  <User className="h-4 w-4 mr-2" />
-                                  Assign to Me
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="text-white/80 hover:bg-cyan-500/10"
-                                  onClick={() => handleAddNote(ticket.id)}
-                                >
-                                  <MessageSquare className="h-4 w-4 mr-2" />
-                                  Add Note
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator className="bg-cyan-500/20" />
-                                <DropdownMenuItem 
-                                  className="text-emerald-400 hover:bg-emerald-500/10"
-                                  onClick={() => handleCloseTicket(ticket.id)}
-                                >
-                                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                                  Close Ticket
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                          <td className="p-3">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${activityStatus.dot}`} />
+                              <span className={`text-sm ${activityStatus.color}`}>{activityStatus.label}</span>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <span className={`capitalize font-medium ${
+                              ticket.status === 'open' ? 'text-cyan-400' :
+                              ticket.status === 'in_progress' ? 'text-blue-400' :
+                              ticket.status === 'resolved' ? 'text-emerald-400' :
+                              'text-slate-400'
+                            }`}>
+                              {ticket.status === 'open' ? 'Open' : 
+                               ticket.status === 'in_progress' ? 'In Progress' :
+                               ticket.status === 'resolved' ? 'Resolved' : 'Closed'}
+                            </span>
                           </td>
                         </tr>
                       );
@@ -777,7 +830,87 @@ export default function VanguardTickets() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="scheduled" className="mt-4">
+          <Card className="bg-slate-900/50 border-cyan-500/20">
+            <CardContent className="p-12 text-center">
+              <Calendar className="h-12 w-12 mx-auto text-white/20 mb-4" />
+              <h3 className="text-lg font-medium text-white mb-2">No scheduled tickets</h3>
+              <p className="text-white/50 mb-4">Schedule recurring tickets to automate routine maintenance tasks</p>
+              <Button className="bg-cyan-500 hover:bg-cyan-600 text-black">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Scheduled Ticket
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+
+      {/* Create Ticket Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="bg-slate-900 border-cyan-500/20">
+          <DialogHeader>
+            <DialogTitle className="text-white">Create New Ticket</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-white/80">Title *</Label>
+              <Input
+                value={newTicket.title}
+                onChange={(e) => setNewTicket({ ...newTicket, title: e.target.value })}
+                placeholder="Brief description of the issue"
+                className="bg-black/40 border-cyan-500/20 text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-white/80">Customer *</Label>
+              <Select value={newTicket.customer} onValueChange={(v) => setNewTicket({ ...newTicket, customer: v })}>
+                <SelectTrigger className="bg-black/40 border-cyan-500/20 text-white">
+                  <SelectValue placeholder="Select customer" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-cyan-500/20">
+                  <SelectItem value="Acme Corp">Acme Corp</SelectItem>
+                  <SelectItem value="TechStart Inc">TechStart Inc</SelectItem>
+                  <SelectItem value="GlobalTech">GlobalTech</SelectItem>
+                  <SelectItem value="DataFlow LLC">DataFlow LLC</SelectItem>
+                  <SelectItem value="StartupXYZ">StartupXYZ</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-white/80">Priority</Label>
+              <Select value={newTicket.priority} onValueChange={(v) => setNewTicket({ ...newTicket, priority: v })}>
+                <SelectTrigger className="bg-black/40 border-cyan-500/20 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-cyan-500/20">
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="critical">Critical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-white/80">Description</Label>
+              <Textarea
+                value={newTicket.description}
+                onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
+                placeholder="Detailed description of the issue"
+                className="bg-black/40 border-cyan-500/20 text-white min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="border-cyan-500/20 text-white/80">
+              Cancel
+            </Button>
+            <Button onClick={handleCreateTicket} className="bg-cyan-500 hover:bg-cyan-600 text-black">
+              Create Ticket
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Enhanced Ticket Details Dialog */}
       <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
