@@ -63,6 +63,7 @@ export function VanguardNavigation() {
       description: 'Operational visibility & uptime',
       tooltip: 'Operational visibility and health monitoring across all devices and environments.',
       items: [
+        { title: 'RMM Dashboard', path: `${basePath}/rmm`, icon: Monitor },
         { title: 'Devices', path: `${basePath}/devices`, icon: Monitor },
         { title: 'Patches', path: `${basePath}/patches`, icon: Package },
       ]
@@ -82,6 +83,7 @@ export function VanguardNavigation() {
       description: 'Incident handling & remediation',
       tooltip: 'Manages incidents, tickets, and remediation workflows from detection to resolution.',
       items: [
+        { title: 'Helpdesk', path: `${basePath}/helpdesk`, icon: Ticket },
         { title: 'Tickets', path: `${basePath}/tickets`, icon: Ticket },
         { title: 'Customers', path: `${basePath}/customers`, icon: Building2 },
       ]
@@ -92,6 +94,7 @@ export function VanguardNavigation() {
       tooltip: 'Discovers and maps devices, networks, and infrastructure for full environment awareness.',
       items: [
         { title: 'Network Discovery', path: `${basePath}/network`, icon: Network },
+        { title: 'Recon Hardware', path: `${basePath}/recon`, icon: Package },
       ]
     },
     {
@@ -99,7 +102,7 @@ export function VanguardNavigation() {
       description: 'Knowledge & documentation',
       tooltip: 'Centralized knowledge, SOPs, and documentation to guide operations and response.',
       items: [
-        { title: 'Knowledge Base', path: `${basePath}/knowledge`, icon: BookOpen },
+        { title: 'Knowledge Base', path: `${basePath}/atlas`, icon: BookOpen },
       ]
     },
     {

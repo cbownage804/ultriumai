@@ -10,10 +10,10 @@ interface VanguardAccessGateProps {
 }
 
 /**
- * VanguardAccessGate - Restricts Vanguard to UltriumAI employees only
+ * VanguardAccessGate - Access control for Vanguard platform
  * 
- * Vanguard is currently internal-only and requires an @ultriumai.com email.
- * This will be expanded to MSP customers in the future.
+ * Currently allows all authenticated users access for development/testing.
+ * In production, this can be restricted to specific organizations or email domains.
  */
 export function VanguardAccessGate({ children }: VanguardAccessGateProps) {
   const { user, loading } = useAuth();
@@ -29,23 +29,22 @@ export function VanguardAccessGate({ children }: VanguardAccessGateProps) {
     );
   }
 
-  // Only allow @ultriumai.com emails
-  const isUltriumEmployee = user?.email?.toLowerCase().endsWith('@ultriumai.com') || 
-                            user?.email?.toLowerCase().endsWith('@ultriumllc.com');
+  // Allow all authenticated users (can be restricted to specific domains in production)
+  const hasAccess = !!user;
 
-  if (!isUltriumEmployee) {
+  if (!hasAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f] p-4">
         <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-red-500/10 flex items-center justify-center">
-              <Lock className="h-8 w-8 text-red-400" />
+            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-cyan-500/10 flex items-center justify-center">
+              <Shield className="h-8 w-8 text-cyan-400" />
             </div>
             <CardTitle className="text-xl text-white">
-              Internal Access Only
+              Sign In Required
             </CardTitle>
             <CardDescription className="text-white/60">
-              <span className="text-cyan-400">Vanguard</span> is currently available to UltriumAI employees only
+              Sign in to access <span className="text-cyan-400">Vanguard</span> security platform
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -54,13 +53,9 @@ export function VanguardAccessGate({ children }: VanguardAccessGateProps) {
                 <Shield className="h-5 w-5 text-cyan-400 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-white/70">
                   <p className="font-medium text-white mb-1">Enterprise Security Platform</p>
-                  <p>Vanguard is our MSP and enterprise security operations platform. It will be available to customers soon.</p>
+                  <p>Vanguard provides comprehensive MSP and enterprise security operations capabilities.</p>
                 </div>
               </div>
-            </div>
-            
-            <div className="text-center text-sm text-white/50">
-              Logged in as: <span className="text-white/70">{user?.email}</span>
             </div>
             
             <div className="flex flex-col gap-2">
@@ -68,14 +63,14 @@ export function VanguardAccessGate({ children }: VanguardAccessGateProps) {
                 className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600" 
                 asChild
               >
-                <Link to="/contact">
-                  <Mail className="mr-2 h-4 w-4" />
-                  Contact Us for Early Access
+                <Link to="/vanguard/auth">
+                  <Lock className="mr-2 h-4 w-4" />
+                  Sign In to Vanguard
                 </Link>
               </Button>
               <Button variant="ghost" className="w-full text-white/60 hover:text-white hover:bg-white/5" asChild>
-                <Link to="/hub">
-                  Return to Product Hub
+                <Link to="/">
+                  Return to Homepage
                 </Link>
               </Button>
             </div>
