@@ -12,3 +12,4 @@ export { OnboardingChecklist, resetOnboardingChecklist } from './OnboardingCheck
 export { HelpCenter, AVAILABLE_TOURS } from './HelpCenter';
 export { HelpCenterEnhanced } from './HelpCenterEnhanced';
 export { WelcomeModal, resetWelcomeModals } from './WelcomeModal';
+export { SmartTip, FeatureTracker, ActionTracker } from './SmartTip';
