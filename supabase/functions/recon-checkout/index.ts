@@ -7,16 +7,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Recon pricing configuration (in cents)
-const HARDWARE_PRICES: Record<string, number> = {
-  lite: 29900,  // $299
-  pro: 49900,   // $499
+// Recon pricing configuration - Stripe IDs
+const HARDWARE_PRICES: Record<string, { amount: number; priceId: string }> = {
+  lite: { amount: 29900, priceId: "price_1Sv04PH1u6E0bsJTexlWShH7" },   // $299
+  pro: { amount: 49900, priceId: "price_1Sv04QH1u6E0bsJTnsRt9rzA" },    // $499
 };
 
 const SUBSCRIPTION_PRICES: Record<string, { monthly: number; priceId: string }> = {
-  essential: { monthly: 2900, priceId: "price_recon_essential" },
-  professional: { monthly: 4900, priceId: "price_recon_professional" },
-  enterprise: { monthly: 9900, priceId: "price_recon_enterprise" },
+  essential: { monthly: 2900, priceId: "price_1Sv04SH1u6E0bsJTtYePwpO7" },
+  professional: { monthly: 4900, priceId: "price_1Sv04UH1u6E0bsJTeiWRFrsf" },
+  enterprise: { monthly: 9900, priceId: "price_1Sv04VH1u6E0bsJTwblFcd66" },
 };
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
@@ -56,6 +56,7 @@ serve(async (req) => {
     if (!HARDWARE_PRICES[hardwareTier]) {
       throw new Error(`Invalid hardware tier: ${hardwareTier}`);
     }
+    const hardwareConfig = HARDWARE_PRICES[hardwareTier];
     if (!SUBSCRIPTION_PRICES[subscriptionTier]) {
       throw new Error(`Invalid subscription tier: ${subscriptionTier}`);
     }
@@ -84,24 +85,17 @@ serve(async (req) => {
     }
 
     const origin = req.headers.get("origin") || "https://ultriumai.lovable.app";
-    const hardwarePrice = HARDWARE_PRICES[hardwareTier];
+    const hardwareConfig = HARDWARE_PRICES[hardwareTier];
     const subscriptionConfig = SUBSCRIPTION_PRICES[subscriptionTier];
 
-    // Create checkout session with hardware (one-time) + subscription
+    // Create checkout session with hardware (one-time) using real Stripe price IDs
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : customerEmail,
       line_items: [
-        // Hardware (one-time payment)
+        // Hardware (one-time payment) - using real Stripe price ID
         {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: `Vanguard Recon ${hardwareTier === 'pro' ? 'Pro' : 'Lite'}`,
-              description: `Pre-configured security appliance - ${hardwareTier === 'pro' ? 'Raspberry Pi 5 (8GB)' : 'Raspberry Pi 4 (4GB)'}`,
-            },
-            unit_amount: hardwarePrice,
-          },
+          price: hardwareConfig.priceId,
           quantity: 1,
         },
       ],
@@ -114,6 +108,7 @@ serve(async (req) => {
       metadata: {
         hardware_tier: hardwareTier,
         subscription_tier: subscriptionTier,
+        subscription_price_id: subscriptionConfig.priceId,
         customer_name: customerName,
         customer_phone: customerPhone || "",
         user_id: userId || "",
@@ -133,7 +128,7 @@ serve(async (req) => {
           hardware_tier: hardwareTier,
           subscription_tier: subscriptionTier,
           quantity: 1,
-          unit_price_cents: hardwarePrice,
+          unit_price_cents: hardwareConfig.amount,
           subscription_price_cents: subscriptionConfig.monthly,
           shipping_address: shippingAddress,
           customer_email: customerEmail,
