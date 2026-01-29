@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { HelpCircle, Ticket, User } from "lucide-react";
 
 interface CriticalTicket {
@@ -17,81 +16,80 @@ interface CriticalTicketsWidgetProps {
 }
 
 export function CriticalTicketsWidget({ tickets }: CriticalTicketsWidgetProps) {
-  const getPriorityBadge = (priority: string) => {
+  const getPriorityStyles = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Critical</Badge>;
+        return 'text-red-600';
       case 'high':
-        return <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">High</Badge>;
+        return 'text-orange-600';
       case 'medium':
-        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Medium</Badge>;
+        return 'text-yellow-600';
       default:
-        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Low</Badge>;
+        return 'text-gray-600';
     }
   };
 
-  const getSLABadge = (sla: string | undefined) => {
-    if (!sla) return null;
+  const getSLAStyles = (sla: string | undefined) => {
+    if (!sla) return '';
     const isOverdue = sla.startsWith('-');
-    return (
-      <Badge className={isOverdue 
-        ? "bg-red-500/20 text-red-400 border-red-500/30" 
-        : "bg-green-500/20 text-green-400 border-green-500/30"
-      }>
-        {sla}
-      </Badge>
-    );
+    return isOverdue ? 'text-red-500 bg-red-50' : 'text-green-500 bg-green-50';
   };
 
   return (
-    <Card className="bg-card/50 backdrop-blur border-white/10">
+    <Card className="bg-white border-gray-200 shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+        <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
           Critical and overdue tickets
-          <HelpCircle className="h-3 w-3" />
+          <HelpCircle className="h-3.5 w-3.5 text-gray-400" />
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         {tickets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+          <div className="flex flex-col items-center justify-center py-8 text-gray-400">
             <Ticket className="h-8 w-8 mb-2 opacity-50" />
             <p className="text-sm">No critical tickets</p>
           </div>
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">Details</th>
-                <th className="text-center text-xs font-medium text-muted-foreground px-4 py-2">Technician</th>
-                <th className="text-center text-xs font-medium text-muted-foreground px-4 py-2">Priority</th>
-                <th className="text-center text-xs font-medium text-muted-foreground px-4 py-2">SLA</th>
+              <tr className="border-b border-gray-100">
+                <th className="text-left text-xs font-medium text-gray-500 px-4 py-2">Details</th>
+                <th className="text-center text-xs font-medium text-gray-500 px-2 py-2">Technician</th>
+                <th className="text-center text-xs font-medium text-gray-500 px-2 py-2">Priority</th>
+                <th className="text-center text-xs font-medium text-gray-500 px-2 py-2">SLA</th>
               </tr>
             </thead>
             <tbody>
-              {tickets.slice(0, 5).map((ticket) => (
-                <tr key={ticket.id} className="border-b border-white/5 last:border-0">
-                  <td className="px-4 py-3">
+              {tickets.slice(0, 4).map((ticket) => (
+                <tr key={ticket.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 cursor-pointer">
+                  <td className="px-4 py-2.5">
                     <div>
-                      <p className="text-sm">#{ticket.ticket_number} {ticket.title}</p>
-                      <p className="text-xs text-primary">{ticket.client_name}</p>
+                      <p className="text-sm text-gray-800">#{ticket.ticket_number} {ticket.title}</p>
+                      <p className="text-xs text-teal-600">{ticket.client_name}{ticket.technician && ` by ${ticket.technician}`}</p>
                     </div>
                   </td>
-                  <td className="text-center px-4 py-3">
+                  <td className="text-center px-2 py-2.5">
                     {ticket.technician ? (
-                      <div className="flex items-center justify-center gap-1">
-                        <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center">
-                          <User className="h-3 w-3 text-primary" />
+                      <div className="flex items-center justify-center">
+                        <div className="h-7 w-7 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                          <User className="h-4 w-4 text-gray-500" />
                         </div>
                       </div>
                     ) : (
-                      <span className="text-xs text-muted-foreground">Assign</span>
+                      <span className="text-xs text-teal-600 cursor-pointer hover:underline">Assign</span>
                     )}
                   </td>
-                  <td className="text-center px-4 py-3">
-                    {getPriorityBadge(ticket.priority)}
+                  <td className="text-center px-2 py-2.5">
+                    <span className={`text-sm font-medium capitalize ${getPriorityStyles(ticket.priority)}`}>
+                      {ticket.priority}
+                    </span>
                   </td>
-                  <td className="text-center px-4 py-3">
-                    {getSLABadge(ticket.sla_status)}
+                  <td className="text-center px-2 py-2.5">
+                    {ticket.sla_status && (
+                      <span className={`text-xs font-medium px-2 py-1 rounded ${getSLAStyles(ticket.sla_status)}`}>
+                        {ticket.sla_status}
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}
