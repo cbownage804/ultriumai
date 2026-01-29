@@ -49,29 +49,19 @@ public class PortalTrayContext : ApplicationContext
 
     private Icon LoadIcon()
     {
-        // Try to load custom logo from URL or file
-        if (!string.IsNullOrEmpty(_config.LogoUrl))
+        // Try to load custom icon from local file (placed alongside exe)
+        var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "portal.ico");
+        if (File.Exists(iconPath))
         {
             try
             {
-                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "custom-icon.ico");
-                if (File.Exists(iconPath))
-                {
-                    _customIcon = new Icon(iconPath);
-                    return _customIcon;
-                }
+                _customIcon = new Icon(iconPath);
+                return _customIcon;
             }
             catch { }
         }
         
-        // Fall back to embedded resource
-        using var stream = GetType().Assembly.GetManifestResourceStream("VanguardPortal.Resources.portal.ico");
-        if (stream != null)
-        {
-            return new Icon(stream);
-        }
-        
-        // Ultimate fallback to system icon
+        // Use system application icon as fallback
         return SystemIcons.Application;
     }
 
