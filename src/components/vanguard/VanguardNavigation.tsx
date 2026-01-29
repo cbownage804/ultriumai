@@ -27,7 +27,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getVanguardBasePath } from '@/utils/subdomain';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import vanguardLogo from '@/assets/vanguard-logo.png';
 
 interface NavItem {
@@ -200,28 +200,30 @@ export function VanguardNavigation() {
             {renderNavItem(commandItem)}
 
             {/* Grouped Navigation */}
-            {navGroups.map((group) => (
-              <div key={group.header} className="mt-4">
-                {/* Section Header with Tooltip */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="px-4 py-1.5 cursor-help">
-                      <span className="text-[10px] font-semibold tracking-wider text-cyan-500/80 block">
-                        {group.header}
-                      </span>
-                      <span className="text-[9px] text-slate-500 block mt-0.5">
-                        {group.description}
-                      </span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="bg-slate-900 border-cyan-500/30 text-slate-200">
-                    <p className="text-xs max-w-[200px]">{group.tooltip}</p>
-                  </TooltipContent>
-                </Tooltip>
-                {/* Section Items */}
-                {group.items.map(renderNavItem)}
-              </div>
-            ))}
+            <TooltipProvider delayDuration={300}>
+              {navGroups.map((group) => (
+                <div key={group.header} className="mt-4">
+                  {/* Section Header with Tooltip */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="px-4 py-1.5 cursor-help">
+                        <span className="text-[10px] font-semibold tracking-wider text-cyan-500/80 block">
+                          {group.header}
+                        </span>
+                        <span className="text-[9px] text-slate-500 block mt-0.5">
+                          {group.description}
+                        </span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="bg-slate-900 border-cyan-500/30 text-slate-200">
+                      <p className="text-xs max-w-[200px]">{group.tooltip}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  {/* Section Items */}
+                  {group.items.map(renderNavItem)}
+                </div>
+              ))}
+            </TooltipProvider>
 
             {/* Divider */}
             <div className="my-4 border-t border-cyan-500/10" />
