@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  WiX 4 MSI Installer for Vanguard Agent
+  Build: dotnet tool install --global wix
+         wix build VanguardAgent.wxs -o VanguardAgent.msi
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Ultrium Vanguard Agent"
+           Manufacturer="Ultrium AI"
+           Version="1.1.0"
+           UpgradeCode="A1B2C3D4-E5F6-7890-ABCD-EF1234567890"
+           Scope="perMachine">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Vanguard Agent is already installed." />
+
+    <Media Id="1" Cabinet="vanguard.cab" EmbedCab="yes" />
+
+    <!-- Installation directory -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Vanguard">
+        <Component Id="MainExecutable" Guid="B2C3D4E5-F6A7-8901-BCDE-F12345678901">
+          <File Id="VanguardAgentExe" 
+                Source="$(var.PublishDir)\VanguardAgent.exe" 
+                KeyPath="yes" />
+          <File Id="ConfigJson" 
+                Source="$(var.PublishDir)\config.json" />
+        </Component>
+
+        <!-- Windows Service installation -->
+        <Component Id="ServiceComponent" Guid="C3D4E5F6-A7B8-9012-CDEF-123456789012">
+          <ServiceInstall Id="VanguardAgentService"
+                          Name="VanguardAgent"
+                          DisplayName="Ultrium Vanguard Agent"
+                          Description="Enterprise RMM agent for Ultrium Vanguard platform"
+                          Type="ownProcess"
+                          Start="auto"
+                          ErrorControl="normal"
+                          Account="LocalSystem" />
+          <ServiceControl Id="StartVanguardService"
+                          Name="VanguardAgent"
+                          Start="install"
+                          Stop="both"
+                          Remove="uninstall"
+                          Wait="yes" />
+        </Component>
+
+        <!-- Registry entries for configuration -->
+        <Component Id="RegistryEntries" Guid="D4E5F6A7-B8C9-0123-DEF0-234567890123">
+          <RegistryKey Root="HKLM" Key="SOFTWARE\Ultrium\Vanguard">
+            <RegistryValue Type="string" Name="InstallPath" Value="[INSTALLFOLDER]" />
+            <RegistryValue Type="string" Name="Version" Value="1.1.0" />
+          </RegistryKey>
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <!-- Feature definition -->
+    <Feature Id="ProductFeature" Title="Vanguard Agent" Level="1">
+      <ComponentRef Id="MainExecutable" />
+      <ComponentRef Id="ServiceComponent" />
+      <ComponentRef Id="RegistryEntries" />
+    </Feature>
+
+    <!-- Custom properties for silent install -->
+    <Property Id="USERID" Secure="yes" />
+    <Property Id="SECRETKEY" Secure="yes" />
+    <Property Id="CLIENTID" Secure="yes" />
+    <Property Id="DEVICENAME" Secure="yes" />
+
+    <!-- Custom action to update config.json with provided credentials -->
+    <CustomAction Id="UpdateConfig"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand="[INSTALLFOLDER]VanguardAgent.exe --register --user-id [USERID] --secret-key [SECRETKEY]"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore" />
+
+    <InstallExecuteSequence>
+      <Custom Action="UpdateConfig" Before="StartServices">
+        USERID AND SECRETKEY
+      </Custom>
+    </InstallExecuteSequence>
+
+  </Package>
+</Wix>
