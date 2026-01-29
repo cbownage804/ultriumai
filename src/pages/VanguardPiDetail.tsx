@@ -1,5 +1,5 @@
 /**
- * Pi Appliance Detail Page
+ * Recon Unit Detail Page
  * Full security appliance management: Scanner, HAILO AI, Firewall, Traffic Analysis
  */
 
@@ -45,7 +45,7 @@ export default function VanguardPiDetail() {
 
   useEffect(() => {
     if (agent) {
-      document.title = `${agent.name} | Pi Appliance`;
+      document.title = `${agent.name} | Recon Unit`;
     }
   }, [agent]);
 
@@ -64,9 +64,9 @@ export default function VanguardPiDetail() {
         <Card className="bg-black/40 border-purple-500/20">
           <CardContent className="p-12 text-center">
             <Cpu className="h-12 w-12 mx-auto mb-4 text-white/40" />
-            <h3 className="text-lg font-semibold mb-2 text-white">Pi Appliance Not Found</h3>
+            <h3 className="text-lg font-semibold mb-2 text-white">Recon Unit Not Found</h3>
             <p className="text-white/60 mb-4">
-              This appliance may have been removed or you don't have access.
+              This unit may have been removed or you don't have access.
             </p>
             <Button onClick={() => navigate('/vanguard/devices')} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />

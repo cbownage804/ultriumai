@@ -1,5 +1,5 @@
 /**
- * Pi Appliances List Component
+ * Recon Units List Component
  * Full security appliance features: Scanner, HAILO AI, Firewall, Traffic Analysis
  */
 
@@ -94,7 +94,7 @@ export function PiAppliancesList({ agents, isLoading }: PiAppliancesListProps) {
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">{agents.length}</p>
-                <p className="text-xs text-white/60">Pi Appliances</p>
+                <p className="text-xs text-white/60">Recon Units</p>
               </div>
             </div>
           </CardContent>
@@ -159,7 +159,7 @@ export function PiAppliancesList({ agents, isLoading }: PiAppliancesListProps) {
           className="bg-gradient-to-r from-purple-500 to-pink-500 text-white"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Add Pi Appliance
+          Deploy Recon Unit
         </Button>
       </div>
 
@@ -168,16 +168,16 @@ export function PiAppliancesList({ agents, isLoading }: PiAppliancesListProps) {
         <Card className="bg-black/40 border-purple-500/20">
           <CardContent className="p-12 text-center">
             <Cpu className="h-12 w-12 mx-auto mb-4 text-white/40" />
-            <h3 className="text-lg font-semibold mb-2 text-white">No Pi Appliances</h3>
+            <h3 className="text-lg font-semibold mb-2 text-white">No Recon Units</h3>
             <p className="text-white/60 mb-4">
-              Deploy a HAILO-powered Raspberry Pi to enable advanced threat detection and network scanning.
+              Deploy a HAILO-powered Recon Unit to enable advanced threat detection and network scanning.
             </p>
             <Button 
               onClick={() => navigate('/vanguard/setup?type=pi')}
               className="bg-gradient-to-r from-purple-500 to-pink-500 text-white"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Setup Pi Appliance
+              Deploy Recon Unit
             </Button>
           </CardContent>
         </Card>
