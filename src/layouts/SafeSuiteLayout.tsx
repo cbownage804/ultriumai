@@ -483,24 +483,25 @@ function SafeSuiteLayoutInner() {
     <div className="min-h-screen flex bg-background">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block w-64 flex-shrink-0">
-        <div className="fixed top-0 left-0 h-full w-64">
+        <div className="fixed top-0 left-0 h-full w-64 overflow-y-auto">
           <Sidebar />
         </div>
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        {/* Header */}
-        <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-          <div className="flex items-center justify-between h-16 px-4 lg:px-6">
+      <div className="flex-1 flex flex-col min-h-screen w-full">
+        {/* Header - sticky with safe area support */}
+        <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 border-b border-border safe-area-inset-top">
+          <div className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4 lg:px-6">
             {/* Mobile menu button */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild className="lg:hidden">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px]">
                   <Menu className="h-5 w-5" />
+                  <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-64">
+              <SheetContent side="left" className="p-0 w-[280px] sm:w-64">
                 <Sidebar onItemClick={() => setMobileMenuOpen(false)} />
               </SheetContent>
             </Sheet>
@@ -509,33 +510,33 @@ function SafeSuiteLayoutInner() {
             <div className="hidden lg:block" />
 
             {/* Help Center & User menu */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <HelpCenter />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2">
-                  <Avatar className="h-8 w-8">
+                <Button variant="ghost" className="gap-2 min-h-[44px] px-2 sm:px-3">
+                  <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                     <AvatarImage src="" />
-                    <AvatarFallback className="bg-primary/10 text-primary">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs sm:text-sm">
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden sm:inline">{user?.email}</span>
+                  <span className="hidden sm:inline text-sm truncate max-w-[150px]">{user?.email}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel className="truncate">{user?.email}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate(getSafeSuitePath('/settings'))}>
+                <DropdownMenuItem onClick={() => navigate(getSafeSuitePath('/settings'))} className="min-h-[44px]">
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(getSafeSuitePath('/billing'))}>
+                <DropdownMenuItem onClick={() => navigate(getSafeSuitePath('/billing'))} className="min-h-[44px]">
                   <CreditCard className="mr-2 h-4 w-4" />
                   Billing
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                <DropdownMenuItem onClick={handleSignOut} className="text-destructive min-h-[44px]">
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
                 </DropdownMenuItem>
@@ -545,8 +546,8 @@ function SafeSuiteLayoutInner() {
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 p-4 lg:p-6">
+        {/* Page content with responsive padding */}
+        <main className="flex-1 p-4 lg:p-6 safe-area-inset-bottom">
           <Outlet />
         </main>
       </div>
