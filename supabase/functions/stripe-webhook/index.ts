@@ -69,7 +69,92 @@ serve(async (req) => {
     logStep("Event verified", { type: event.type, id: event.id });
 
     switch (event.type) {
-      case "invoice.payment_succeeded":
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customer = await stripe.customers.retrieve(invoice.customer as string) as Stripe.Customer;
+        
+        if (!customer.email) {
+          logStep("No customer email found");
+          break;
+        }
+
+        // Get user by email
+        const { data: users } = await supabaseClient.auth.admin.listUsers();
+        const user = users.users.find(u => u.email === customer.email);
+
+        // Send subscription confirmation email for new subscriptions
+        if (invoice.billing_reason === 'subscription_create' && user) {
+          try {
+            const subscription = invoice.subscription 
+              ? await stripe.subscriptions.retrieve(invoice.subscription as string)
+              : null;
+            
+            await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-subscription-confirmed`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+              },
+              body: JSON.stringify({
+                email: customer.email,
+                name: customer.name,
+                product: subscription?.metadata?.product || 'UltriumAI',
+                plan: subscription?.metadata?.plan_type || 'Premium',
+                amount: invoice.amount_paid,
+                currency: invoice.currency,
+                billingCycle: subscription?.items?.data[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly',
+                nextBillingDate: subscription?.current_period_end 
+                  ? new Date(subscription.current_period_end * 1000).toISOString()
+                  : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+              }),
+            });
+            logStep("Subscription confirmation email sent", { email: customer.email });
+          } catch (emailError) {
+            logStep("Failed to send confirmation email", { error: emailError });
+          }
+        }
+        
+        // Continue to update subscription status
+        if (invoice.subscription) {
+          const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+          // Fall through to subscription handling
+        }
+        break;
+      }
+      
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customer = await stripe.customers.retrieve(invoice.customer as string) as Stripe.Customer;
+        
+        if (!customer.email) break;
+
+        // Send payment failed email
+        try {
+          await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-payment-failed`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+            },
+            body: JSON.stringify({
+              email: customer.email,
+              name: customer.name,
+              product: 'UltriumAI Subscription',
+              amount: invoice.amount_due,
+              currency: invoice.currency,
+              failureReason: invoice.last_finalization_error?.message,
+              retryDate: invoice.next_payment_attempt 
+                ? new Date(invoice.next_payment_attempt * 1000).toISOString() 
+                : null,
+            }),
+          });
+          logStep("Payment failed email sent", { email: customer.email });
+        } catch (emailError) {
+          logStep("Failed to send payment failed email", { error: emailError });
+        }
+        break;
+      }
+
       case "customer.subscription.created":
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
