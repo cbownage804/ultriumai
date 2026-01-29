@@ -1,11 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { X, ArrowLeft, ArrowRight, CheckCircle, Sparkles } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import confetti from 'canvas-confetti';
+import { TourOverlay, TourHighlight, TourCard } from './tour';
 
 export interface TourStep {
   id: string;
@@ -41,19 +38,44 @@ export const ProductTour = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
 
+  // Auto-start logic
   useEffect(() => {
-    // Check if tour was already completed
     const completed = JSON.parse(localStorage.getItem(COMPLETED_TOURS_KEY) || '[]');
     if (completed.includes(tourId)) {
       return;
     }
 
     if (autoStart) {
-      // Delay start to let page render
       const timer = setTimeout(() => setIsActive(true), 1000);
       return () => clearTimeout(timer);
     }
   }, [tourId, autoStart]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!isActive) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'Enter':
+          e.preventDefault();
+          handleNext();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          handlePrevious();
+          break;
+        case 'Escape':
+          e.preventDefault();
+          handleSkip();
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isActive, currentStep, steps.length]);
 
   // Update highlight position when step changes
   useEffect(() => {
@@ -65,43 +87,83 @@ export const ProductTour = ({
     const updateHighlight = () => {
       const element = document.querySelector(steps[currentStep].target!);
       if (element) {
-        setHighlightRect(element.getBoundingClientRect());
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const rect = element.getBoundingClientRect();
+        setHighlightRect(rect);
+        
+        // Smooth scroll with offset
+        const yOffset = -100;
+        const y = rect.top + window.scrollY + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
       }
     };
 
-    updateHighlight();
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(updateHighlight, 100);
     window.addEventListener('resize', updateHighlight);
-    return () => window.removeEventListener('resize', updateHighlight);
+    window.addEventListener('scroll', updateHighlight);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateHighlight);
+      window.removeEventListener('scroll', updateHighlight);
+    };
   }, [isActive, currentStep, steps]);
 
-  const handleNext = () => {
+  const triggerConfetti = useCallback(() => {
+    const count = 200;
+    const defaults = {
+      origin: { y: 0.7 },
+      zIndex: 9999,
+    };
+
+    function fire(particleRatio: number, opts: confetti.Options) {
+      confetti({
+        ...defaults,
+        ...opts,
+        particleCount: Math.floor(count * particleRatio),
+      });
+    }
+
+    fire(0.25, { spread: 26, startVelocity: 55 });
+    fire(0.2, { spread: 60 });
+    fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+    fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+    fire(0.1, { spread: 120, startVelocity: 45 });
+  }, []);
+
+  const handleNext = useCallback(() => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
       handleComplete();
     }
-  };
+  }, [currentStep, steps.length]);
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
-  };
+  }, [currentStep]);
 
   const handleComplete = useCallback(() => {
     const completed = JSON.parse(localStorage.getItem(COMPLETED_TOURS_KEY) || '[]');
     localStorage.setItem(COMPLETED_TOURS_KEY, JSON.stringify([...completed, tourId]));
     setIsActive(false);
+    triggerConfetti();
+    toast.success('🎉 Tour completed! You can replay it anytime from the Help Center.');
     onComplete?.();
-  }, [tourId, onComplete]);
+  }, [tourId, onComplete, triggerConfetti]);
 
-  const handleSkip = () => {
+  const handleSkip = useCallback(() => {
     setIsActive(false);
+    toast.info('Tour skipped. You can replay it anytime from the Help Center.');
     onSkip?.();
-  };
+  }, [onSkip]);
 
-  const progress = ((currentStep + 1) / steps.length) * 100;
+  const handleStepClick = useCallback((step: number) => {
+    setCurrentStep(step);
+  }, []);
+
   const step = steps[currentStep];
 
   if (!isActive || !step) {
@@ -109,152 +171,30 @@ export const ProductTour = ({
   }
 
   return (
-    <>
+    <AnimatePresence mode="wait">
       {/* Overlay */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 z-[100]"
-        onClick={handleSkip}
-      />
+      <TourOverlay onClick={handleSkip} />
 
-      {/* Highlight cutout */}
-      {highlightRect && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed z-[101] pointer-events-none"
-          style={{
-            top: highlightRect.top - 8,
-            left: highlightRect.left - 8,
-            width: highlightRect.width + 16,
-            height: highlightRect.height + 16,
-            boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)',
-            borderRadius: '8px',
-            border: '2px solid hsl(var(--primary))',
-          }}
-        />
-      )}
+      {/* Highlight */}
+      {highlightRect && <TourHighlight rect={highlightRect} />}
 
       {/* Tour card */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentStep}
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.95 }}
-          transition={{ duration: 0.3 }}
-          className={cn(
-            'fixed z-[102] w-full max-w-md p-4',
-            step.position === 'center' && 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-            step.position === 'top' && 'top-4 left-1/2 -translate-x-1/2',
-            step.position === 'bottom' && 'bottom-4 left-1/2 -translate-x-1/2',
-            step.position === 'left' && 'left-4 top-1/2 -translate-y-1/2',
-            step.position === 'right' && 'right-4 top-1/2 -translate-y-1/2',
-            !step.position && !highlightRect && 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-            !step.position && highlightRect && 'bottom-4 left-1/2 -translate-x-1/2'
-          )}
-        >
-          <Card className="shadow-2xl border-primary/20">
-            <CardContent className="p-6">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  <Badge variant="outline" className="text-xs">
-                    Step {currentStep + 1} of {steps.length}
-                  </Badge>
-                </div>
-                <button
-                  onClick={handleSkip}
-                  className="p-1 rounded-full hover:bg-muted transition-colors"
-                >
-                  <X className="h-4 w-4 text-muted-foreground" />
-                </button>
-              </div>
-
-              {/* Progress */}
-              <Progress value={progress} className="h-1 mb-4" />
-
-              {/* Image */}
-              {step.image && (
-                <div className="mb-4 rounded-lg overflow-hidden bg-muted">
-                  <img
-                    src={step.image}
-                    alt={step.title}
-                    className="w-full h-40 object-cover"
-                  />
-                </div>
-              )}
-
-              {/* Content */}
-              <div className="space-y-2 mb-6">
-                <h3 className="text-lg font-semibold">{step.title}</h3>
-                <p className="text-sm text-muted-foreground">{step.description}</p>
-              </div>
-
-              {/* Custom action */}
-              {step.action && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={step.action.onClick}
-                  className="w-full mb-4"
-                >
-                  {step.action.label}
-                </Button>
-              )}
-
-              {/* Navigation */}
-              <div className="flex items-center justify-between">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handlePrevious}
-                  disabled={currentStep === 0}
-                  className="gap-1"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSkip}
-                  className="text-muted-foreground"
-                >
-                  Skip tour
-                </Button>
-
-                <Button
-                  size="sm"
-                  onClick={handleNext}
-                  className="gap-1"
-                >
-                  {currentStep === steps.length - 1 ? (
-                    <>
-                      <CheckCircle className="h-4 w-4" />
-                      Finish
-                    </>
-                  ) : (
-                    <>
-                      Next
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </AnimatePresence>
-    </>
+      <TourCard
+        step={step}
+        currentStep={currentStep}
+        totalSteps={steps.length}
+        position={step.position}
+        highlightRect={highlightRect}
+        onNext={handleNext}
+        onPrevious={handlePrevious}
+        onSkip={handleSkip}
+        onStepClick={handleStepClick}
+      />
+    </AnimatePresence>
   );
 };
 
-// Hook to start a tour programmatically
+// Hook to manage tour state
 export const useProductTour = (tourId: string) => {
   const [isCompleted, setIsCompleted] = useState(false);
 
@@ -275,7 +215,7 @@ export const useProductTour = (tourId: string) => {
   return { isCompleted, resetTour };
 };
 
-// Utility to reset all tours (for testing)
+// Reset all tours
 export const resetAllProductTours = () => {
   localStorage.removeItem(COMPLETED_TOURS_KEY);
 };
