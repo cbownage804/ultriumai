@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Copy, Check, Terminal, Server, Plus, Loader2, Download, Package } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Copy, Check, Terminal, Server, Plus, Loader2, Download, Package, Monitor, Cpu } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { generateVanguardZip, downloadBlob } from '@/utils/generateVanguardZip';
+import { generateWindowsAgentZip } from '@/utils/generateWindowsAgentZip';
 
 const API_ENDPOINT = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api';
 const VANGUARD_SECRET = 'vgd_sk_7Kx9mPqR3nTwYz2JfL8sHcN6bVdXaE4uGtM1oWpQ5iA';
@@ -25,6 +27,7 @@ export default function VanguardSetup() {
   const [deviceIp, setDeviceIp] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingWindows, setIsDownloadingWindows] = useState(false);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -340,13 +343,38 @@ if __name__ == '__main__':
         deviceLocation: 'Default Location',
       });
 
-      downloadBlob(blob, 'vanguard-agent-bundle.zip');
-      toast.success('Agent bundle downloaded successfully!');
+      downloadBlob(blob, 'vanguard-agent-linux.zip');
+      toast.success('Linux agent bundle downloaded!');
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to generate download');
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handleDownloadWindowsZip = async () => {
+    if (!user?.id) {
+      toast.error('Please log in to download the agent bundle');
+      return;
+    }
+
+    setIsDownloadingWindows(true);
+    try {
+      const blob = await generateWindowsAgentZip({
+        userId: user.id,
+        apiEndpoint: API_ENDPOINT,
+        secretKey: VANGUARD_SECRET,
+        deviceName: 'Vanguard-Windows',
+      });
+
+      downloadBlob(blob, 'vanguard-agent-windows.zip');
+      toast.success('Windows agent bundle downloaded!');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to generate download');
+    } finally {
+      setIsDownloadingWindows(false);
     }
   };
 
@@ -359,64 +387,120 @@ if __name__ == '__main__':
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Setup Vanguard Device</h1>
         <p className="text-muted-foreground">
-          Connect your Raspberry Pi or Ubuntu server to the Ultrium Vanguard dashboard
+          Deploy Vanguard agents on Windows, Linux, or Raspberry Pi devices
         </p>
       </div>
 
         <div className="space-y-6">
-          {/* Download Agent Bundle */}
-          <Card className="border-primary/20 bg-primary/5">
+          {/* Download Agent Bundles - Platform Selector */}
+          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5 text-primary" />
                 Download Agent Bundle
               </CardTitle>
               <CardDescription>
-                Download a ready-to-install ZIP package with your credentials pre-configured
+                Choose your platform and download a pre-configured agent package
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span>vanguard_agent.py</span>
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Windows Agent */}
+                <div className="border rounded-lg p-4 bg-background hover:border-primary/50 transition-colors">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 rounded-lg bg-blue-500/10">
+                      <Monitor className="h-6 w-6 text-blue-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Windows Agent</h3>
+                      <p className="text-xs text-muted-foreground">Windows 10/11, Server 2019+</p>
+                    </div>
+                    <Badge variant="secondary" className="ml-auto">EXE</Badge>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span>config.yaml</span>
+                  <div className="space-y-2 text-sm text-muted-foreground mb-4">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-3 w-3 text-green-500" />
+                      <span>Windows Service integration</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-3 w-3 text-green-500" />
+                      <span>PowerShell command execution</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-3 w-3 text-green-500" />
+                      <span>Software inventory & services</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span>install.sh</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span>README.md</span>
-                  </div>
+                  <Button 
+                    onClick={handleDownloadWindowsZip}
+                    disabled={isDownloadingWindows || !user?.id}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    {isDownloadingWindows ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Windows Bundle
+                      </>
+                    )}
+                  </Button>
                 </div>
-                <Button 
-                  onClick={handleDownloadZip} 
-                  disabled={isDownloading || !user?.id}
-                  className="w-full md:w-auto"
-                  size="lg"
-                >
-                  {isDownloading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4 mr-2" />
-                      Download vanguard-agent-bundle.zip
-                    </>
-                  )}
-                </Button>
-                <p className="text-xs text-muted-foreground">
-                  Transfer to your Pi, extract, and run <code className="bg-muted px-1 rounded">sudo ./install.sh</code>
-                </p>
+
+                {/* Linux/Pi Agent */}
+                <div className="border rounded-lg p-4 bg-background hover:border-primary/50 transition-colors">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 rounded-lg bg-orange-500/10">
+                      <Cpu className="h-6 w-6 text-orange-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Linux / Raspberry Pi</h3>
+                      <p className="text-xs text-muted-foreground">Ubuntu, Debian, Raspberry Pi OS</p>
+                    </div>
+                    <Badge variant="secondary" className="ml-auto">Python</Badge>
+                  </div>
+                  <div className="space-y-2 text-sm text-muted-foreground mb-4">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-3 w-3 text-green-500" />
+                      <span>Systemd service integration</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-3 w-3 text-green-500" />
+                      <span>Network scanning (nmap)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-3 w-3 text-green-500" />
+                      <span>Meraki & SNMP integration</span>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={handleDownloadZip} 
+                    disabled={isDownloading || !user?.id}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    {isDownloading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Linux Bundle
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
+              
+              <p className="text-xs text-muted-foreground mt-4 text-center">
+                All bundles include your credentials pre-configured. Just download, extract, and run the installer.
+              </p>
             </CardContent>
           </Card>
 
