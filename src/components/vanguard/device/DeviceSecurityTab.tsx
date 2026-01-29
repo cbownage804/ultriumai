@@ -1,10 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Shield, ShieldCheck, ShieldAlert, Lock, Eye, EyeOff, Copy, Monitor } from "lucide-react";
+import { Shield, ShieldCheck, ShieldAlert, ShieldX, Lock, Eye, EyeOff, Copy, Monitor, Flame, Bug, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { VanguardAgent } from "@/hooks/useVanguardAgents";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface DeviceSecurityTabProps {
   agent: VanguardAgent;
@@ -23,82 +24,160 @@ export function DeviceSecurityTab({ agent }: DeviceSecurityTabProps) {
     toast.success(`${label} copied to clipboard`);
   };
 
-  const getSecurityStatus = (status: string | undefined) => {
-    if (!status) return { color: "bg-gray-100 text-gray-600", label: "Unknown" };
-    const normalized = status.toLowerCase();
-    if (normalized === "enabled" || normalized === "on" || normalized === "active") {
-      return { color: "bg-green-100 text-green-700", label: status };
-    }
-    if (normalized === "disabled" || normalized === "off") {
-      return { color: "bg-red-100 text-red-700", label: status };
-    }
-    return { color: "bg-yellow-100 text-yellow-700", label: status };
-  };
+  // Calculate security score
+  const securityChecks = [
+    securityInfo.antivirus_status?.toLowerCase() === 'enabled',
+    securityInfo.firewall_status?.toLowerCase() === 'enabled',
+    securityInfo.antispyware_status?.toLowerCase() === 'enabled',
+    osInfo.tls_compatible,
+  ];
+  const securityScore = Math.round((securityChecks.filter(Boolean).length / securityChecks.length) * 100);
 
   return (
     <div className="space-y-4">
+      {/* Security Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-cyan-500/20 backdrop-blur-sm md:col-span-1">
+          <CardContent className="p-6 flex flex-col items-center justify-center">
+            <div className={cn(
+              "relative w-24 h-24 rounded-full flex items-center justify-center",
+              securityScore >= 75 ? "bg-green-500/20" : 
+              securityScore >= 50 ? "bg-yellow-500/20" : 
+              "bg-red-500/20"
+            )}>
+              <div className={cn(
+                "absolute inset-1 rounded-full border-4",
+                securityScore >= 75 ? "border-green-500" : 
+                securityScore >= 50 ? "border-yellow-500" : 
+                "border-red-500"
+              )} style={{
+                background: `conic-gradient(${securityScore >= 75 ? '#22c55e' : securityScore >= 50 ? '#eab308' : '#ef4444'} ${securityScore * 3.6}deg, transparent 0deg)`
+              }} />
+              <span className={cn(
+                "text-2xl font-bold",
+                securityScore >= 75 ? "text-green-400" : 
+                securityScore >= 50 ? "text-yellow-400" : 
+                "text-red-400"
+              )}>
+                {securityScore}%
+              </span>
+            </div>
+            <p className="text-sm text-slate-400 mt-3">Security Score</p>
+            <Badge className={cn(
+              "mt-2",
+              securityScore >= 75 ? "bg-green-500/20 text-green-400 border-green-500/30" : 
+              securityScore >= 50 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" : 
+              "bg-red-500/20 text-red-400 border-red-500/30"
+            )}>
+              {securityScore >= 75 ? "Protected" : securityScore >= 50 ? "At Risk" : "Critical"}
+            </Badge>
+          </CardContent>
+        </Card>
+
+        {/* Security Status Cards */}
+        <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-cyan-500/20 backdrop-blur-sm md:col-span-3">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-cyan-400 flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Windows Security Center
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <SecurityStatusCard
+                icon={ShieldCheck}
+                label="Antivirus"
+                name={securityInfo.antivirus_name || "Windows Defender"}
+                status={securityInfo.antivirus_status}
+              />
+              <SecurityStatusCard
+                icon={Bug}
+                label="Anti-Spyware"
+                name={securityInfo.antispyware_name || "Windows Defender"}
+                status={securityInfo.antispyware_status}
+              />
+              <SecurityStatusCard
+                icon={Flame}
+                label="Firewall"
+                name={securityInfo.firewall_name || "Windows Firewall"}
+                status={securityInfo.firewall_status}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Operating System */}
-      <Card className="bg-white border-gray-200">
+      <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-cyan-500/20 backdrop-blur-sm">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-gray-900 flex items-center gap-2">
+          <CardTitle className="text-sm font-medium text-cyan-400 flex items-center gap-2">
             <Monitor className="h-4 w-4" />
             Operating System
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <InfoRow label="OS edition" value={agent.os_info || osInfo.edition || "Unknown"} />
-          <InfoRow label="OS version" value={osInfo.version || "—"} />
-          <InfoRow label="OS build" value={osInfo.build || "—"} />
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <InfoCard label="OS Edition" value={agent.os_info || osInfo.edition || "Unknown"} />
+            <InfoCard label="OS Version" value={osInfo.version || "—"} />
+            <InfoCard label="OS Build" value={osInfo.build || "—"} />
+            <InfoCard 
+              label="TLS 1.2" 
+              value={osInfo.tls_compatible ? "Compatible" : "Not Compatible"} 
+              highlight={osInfo.tls_compatible}
+            />
+          </div>
           
-          {/* Windows Serial Key */}
-          {osInfo.windows_key && (
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-sm text-gray-500">Windows serial key</span>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-900 font-mono">
-                  {showWindowsKey ? osInfo.windows_key : "•••••-•••••-•••••-•••••-•••••"}
+          {/* License Keys */}
+          <div className="space-y-3 pt-4 border-t border-cyan-500/10">
+            {osInfo.windows_key && (
+              <div className="flex items-center justify-between py-2 px-3 bg-slate-900/50 rounded-lg border border-cyan-500/10">
+                <span className="text-sm text-slate-400 flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-cyan-400" />
+                  Windows Serial Key
                 </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => setShowWindowsKey(!showWindowsKey)}
-                >
-                  {showWindowsKey ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => copyToClipboard(osInfo.windows_key, "Windows key")}
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-slate-200 font-mono">
+                    {showWindowsKey ? osInfo.windows_key : "•••••-•••••-•••••-•••••-•••••"}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 hover:bg-cyan-500/20 hover:text-cyan-400"
+                    onClick={() => setShowWindowsKey(!showWindowsKey)}
+                  >
+                    {showWindowsKey ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 hover:bg-cyan-500/20 hover:text-cyan-400"
+                    onClick={() => copyToClipboard(osInfo.windows_key, "Windows key")}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-          
-          <InfoRow 
-            label="TLS 1.2 compatibility" 
-            value={osInfo.tls_compatible ? "Compatible" : "—"} 
-          />
-          
-          {/* Office Information */}
-          <div className="pt-2 border-t border-gray-100">
-            <h4 className="text-xs font-medium text-gray-500 mb-2">Microsoft Office</h4>
-            <InfoRow label="Office version" value={osInfo.office_version || "—"} />
+            )}
             
             {osInfo.office_key && (
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-500">Office serial key</span>
+              <div className="flex items-center justify-between py-2 px-3 bg-slate-900/50 rounded-lg border border-cyan-500/10">
+                <span className="text-sm text-slate-400 flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-orange-400" />
+                  Office Serial Key
+                  {osInfo.office_version && (
+                    <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">
+                      {osInfo.office_version}
+                    </Badge>
+                  )}
+                </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-900 font-mono">
+                  <span className="text-sm text-slate-200 font-mono">
                     {showOfficeKey ? osInfo.office_key : "•••••-•••••-•••••-•••••-•••••"}
                   </span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6"
+                    className="h-7 w-7 hover:bg-cyan-500/20 hover:text-cyan-400"
                     onClick={() => setShowOfficeKey(!showOfficeKey)}
                   >
                     {showOfficeKey ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
@@ -106,7 +185,7 @@ export function DeviceSecurityTab({ agent }: DeviceSecurityTabProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6"
+                    className="h-7 w-7 hover:bg-cyan-500/20 hover:text-cyan-400"
                     onClick={() => copyToClipboard(osInfo.office_key, "Office key")}
                   >
                     <Copy className="h-3 w-3" />
@@ -117,86 +196,66 @@ export function DeviceSecurityTab({ agent }: DeviceSecurityTabProps) {
           </div>
         </CardContent>
       </Card>
-
-      {/* Security Status */}
-      <Card className="bg-white border-gray-200">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-gray-900 flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Security
-          </CardTitle>
-          <p className="text-xs text-gray-400">Information pulled from Windows Security Center</p>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <SecurityRow 
-            label="Antivirus" 
-            value={securityInfo.antivirus_name || "—"}
-            status={securityInfo.antivirus_status}
-          />
-          <SecurityRow 
-            label="Anti-spyware" 
-            value={securityInfo.antispyware_name || "—"}
-            status={securityInfo.antispyware_status}
-          />
-          <SecurityRow 
-            label="Firewall" 
-            value={securityInfo.firewall_name || "—"}
-            status={securityInfo.firewall_status}
-          />
-        </CardContent>
-      </Card>
     </div>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-      <span className="text-sm text-gray-500">{label}</span>
-      <span className="text-sm text-gray-900">{value}</span>
-    </div>
-  );
-}
-
-function SecurityRow({ label, value, status }: { label: string; value: string; status?: string }) {
-  const statusInfo = getSecurityStatusBadge(status);
+function SecurityStatusCard({ 
+  icon: Icon, 
+  label, 
+  name, 
+  status 
+}: { 
+  icon: any; 
+  label: string; 
+  name: string; 
+  status?: string;
+}) {
+  const isEnabled = status?.toLowerCase() === 'enabled' || status?.toLowerCase() === 'on' || status?.toLowerCase() === 'active';
   
   return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-      <span className="text-sm text-gray-500">{label}</span>
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-900">{value}</span>
-        {status && (
-          <Badge className={statusInfo.color}>
-            {statusInfo.icon}
-            {statusInfo.label}
-          </Badge>
-        )}
+    <div className={cn(
+      "p-4 rounded-lg border",
+      isEnabled 
+        ? "bg-green-500/10 border-green-500/20" 
+        : "bg-red-500/10 border-red-500/20"
+    )}>
+      <div className="flex items-center gap-3">
+        <div className={cn(
+          "p-2 rounded-lg",
+          isEnabled ? "bg-green-500/20" : "bg-red-500/20"
+        )}>
+          <Icon className={cn(
+            "h-5 w-5",
+            isEnabled ? "text-green-400" : "text-red-400"
+          )} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-slate-400">{label}</p>
+          <p className="text-sm font-medium text-slate-200 truncate">{name}</p>
+        </div>
+        <Badge className={cn(
+          isEnabled 
+            ? "bg-green-500/20 text-green-400 border-green-500/30" 
+            : "bg-red-500/20 text-red-400 border-red-500/30"
+        )}>
+          {isEnabled ? "Active" : "Disabled"}
+        </Badge>
       </div>
     </div>
   );
 }
 
-function getSecurityStatusBadge(status: string | undefined) {
-  if (!status) return { color: "bg-gray-100 text-gray-600 border-gray-200", label: "", icon: null };
-  const normalized = status.toLowerCase();
-  if (normalized === "enabled" || normalized === "on" || normalized === "active" || normalized === "up to date") {
-    return { 
-      color: "bg-green-100 text-green-700 border-green-200", 
-      label: status,
-      icon: <ShieldCheck className="h-3 w-3 mr-1" />
-    };
-  }
-  if (normalized === "disabled" || normalized === "off") {
-    return { 
-      color: "bg-red-100 text-red-700 border-red-200", 
-      label: status,
-      icon: <ShieldAlert className="h-3 w-3 mr-1" />
-    };
-  }
-  return { 
-    color: "bg-yellow-100 text-yellow-700 border-yellow-200", 
-    label: status,
-    icon: null
-  };
+function InfoCard({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className="p-3 bg-slate-900/50 rounded-lg border border-cyan-500/10">
+      <p className="text-xs text-slate-400">{label}</p>
+      <p className={cn(
+        "text-sm font-medium mt-1",
+        highlight ? "text-green-400" : "text-slate-200"
+      )}>
+        {value}
+      </p>
+    </div>
+  );
 }
