@@ -16,7 +16,6 @@ import {
   Menu, 
   X,
   Gift,
-  ChevronDown,
   Globe,
   Sparkles,
   Wand2,
@@ -28,7 +27,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getVanguardBasePath } from '@/utils/subdomain';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import vanguardLogo from '@/assets/vanguard-logo.png';
 
 interface NavItem {
@@ -40,6 +39,8 @@ interface NavItem {
 
 interface NavGroup {
   header: string;
+  description: string;
+  tooltip: string;
   items: NavItem[];
 }
 
@@ -55,10 +56,12 @@ export function VanguardNavigation() {
     icon: LayoutDashboard 
   };
 
-  // Navigation groups with branded headers
+  // Navigation groups with branded headers - ordered per specification
   const navGroups: NavGroup[] = [
     {
       header: 'VANGUARD HORIZON',
+      description: 'Operational visibility & uptime',
+      tooltip: 'RMM, endpoint management, and availability monitoring',
       items: [
         { title: 'Devices', path: `${basePath}/devices`, icon: Monitor },
         { title: 'Patches', path: `${basePath}/patches`, icon: Package },
@@ -66,6 +69,8 @@ export function VanguardNavigation() {
     },
     {
       header: 'VANGUARD PURSUIT',
+      description: 'Threat detection & intelligence',
+      tooltip: 'Security alerts, threat hunting, and SOC operations',
       items: [
         { title: 'Alerts', path: `${basePath}/alerts`, icon: Bell },
         { title: 'Threats', path: `${basePath}/threats`, icon: Target },
@@ -73,32 +78,42 @@ export function VanguardNavigation() {
       ]
     },
     {
-      header: 'VANGUARD RECON',
-      items: [
-        { title: 'Network Discovery', path: `${basePath}/network`, icon: Network },
-      ]
-    },
-    {
       header: 'VANGUARD RESPONSE',
+      description: 'Incident handling & remediation',
+      tooltip: 'Service desk, ticketing, and customer management',
       items: [
         { title: 'Tickets', path: `${basePath}/tickets`, icon: Ticket },
         { title: 'Customers', path: `${basePath}/customers`, icon: Building2 },
       ]
     },
     {
+      header: 'VANGUARD RECON',
+      description: 'Asset discovery & mapping',
+      tooltip: 'Network discovery and infrastructure visualization',
+      items: [
+        { title: 'Network Discovery', path: `${basePath}/network`, icon: Network },
+      ]
+    },
+    {
       header: 'VANGUARD ATLAS',
+      description: 'Knowledge & documentation',
+      tooltip: 'Knowledge base, SOPs, and runbooks',
       items: [
         { title: 'Knowledge Base', path: `${basePath}/knowledge`, icon: BookOpen },
       ]
     },
     {
       header: 'VANGUARD LEDGER',
+      description: 'Compliance & reporting',
+      tooltip: 'Security reports, compliance frameworks, and analytics',
       items: [
         { title: 'Reports', path: `${basePath}/reports`, icon: BarChart3 },
       ]
     },
     {
       header: 'VANGUARD CORTEX',
+      description: 'AI-powered operations',
+      tooltip: 'AI Copilot for intelligent automation and insights',
       items: [
         { title: 'AI Dashboard', path: `${basePath}/ai-dashboard`, icon: Bot, badge: 'AI' },
         { title: 'KB Generator', path: `${basePath}/ai-knowledge`, icon: Wand2 },
@@ -187,12 +202,22 @@ export function VanguardNavigation() {
             {/* Grouped Navigation */}
             {navGroups.map((group) => (
               <div key={group.header} className="mt-4">
-                {/* Section Header */}
-                <div className="px-4 py-2">
-                  <span className="text-[10px] font-semibold tracking-wider text-cyan-500/70">
-                    {group.header}
-                  </span>
-                </div>
+                {/* Section Header with Tooltip */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="px-4 py-1.5 cursor-help">
+                      <span className="text-[10px] font-semibold tracking-wider text-cyan-500/80 block">
+                        {group.header}
+                      </span>
+                      <span className="text-[9px] text-slate-500 block mt-0.5">
+                        {group.description}
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="bg-slate-900 border-cyan-500/30 text-slate-200">
+                    <p className="text-xs max-w-[200px]">{group.tooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
                 {/* Section Items */}
                 {group.items.map(renderNavItem)}
               </div>
