@@ -170,7 +170,7 @@ export function PiAppliancesList({ agents, isLoading }: PiAppliancesListProps) {
             <Cpu className="h-12 w-12 mx-auto mb-4 text-white/40" />
             <h3 className="text-lg font-semibold mb-2 text-white">No Recon Units</h3>
             <p className="text-white/60 mb-4">
-              Deploy a HAILO-powered Recon Unit to enable advanced threat detection and network scanning.
+              Deploy a Recon Unit to enable advanced threat detection and network scanning.
             </p>
             <Button 
               onClick={() => navigate('/vanguard/setup?type=pi')}
