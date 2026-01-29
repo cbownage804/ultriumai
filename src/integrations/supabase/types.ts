@@ -6197,6 +6197,57 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_captures: {
+        Row: {
+          company_name: string | null
+          company_size: string | null
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          lead_source: string
+          message: string | null
+          metadata: Json | null
+          phone: string | null
+          product_interest: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_name?: string | null
+          company_size?: string | null
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          lead_source?: string
+          message?: string | null
+          metadata?: Json | null
+          phone?: string | null
+          product_interest?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string | null
+          company_size?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          lead_source?: string
+          message?: string | null
+          metadata?: Json | null
+          phone?: string | null
+          product_interest?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       live_response_commands: {
         Row: {
           command: string
