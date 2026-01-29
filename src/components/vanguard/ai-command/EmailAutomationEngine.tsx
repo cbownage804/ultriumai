@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import {
   Trash2, MoreVertical, Tag, User, Building2, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EmailThread {
   id: string;
@@ -41,77 +42,6 @@ interface AutomationRule {
   triggeredCount: number;
 }
 
-const DEMO_EMAILS: EmailThread[] = [
-  {
-    id: '1',
-    subject: 'Cannot access VPN from home',
-    from: 'Sarah Chen',
-    fromEmail: 'sarah.chen@acmecorp.com',
-    company: 'Acme Corp',
-    preview: 'Hi, I\'ve been trying to connect to the corporate VPN since this morning but keep getting timeout errors...',
-    receivedAt: new Date(Date.now() - 5 * 60 * 1000),
-    status: 'auto_responded',
-    aiConfidence: 94,
-    aiCategory: 'Network/VPN',
-    aiSentiment: 'urgent',
-    aiSuggestedResponse: 'Hi Sarah, I understand you\'re having trouble connecting to the VPN. Here are some steps to try...',
-    ticketId: 'TKT-4521',
-    threadCount: 1
-  },
-  {
-    id: '2',
-    subject: 'Re: Monthly invoice question',
-    from: 'Mike Johnson',
-    fromEmail: 'mike.j@techstart.io',
-    company: 'TechStart',
-    preview: 'Thanks for the clarification. One more question - can we get a breakdown of the usage charges?',
-    receivedAt: new Date(Date.now() - 15 * 60 * 1000),
-    status: 'pending_review',
-    aiConfidence: 72,
-    aiCategory: 'Billing',
-    aiSentiment: 'neutral',
-    aiSuggestedResponse: 'Hi Mike, I\'d be happy to provide a detailed breakdown...',
-    threadCount: 4
-  },
-  {
-    id: '3',
-    subject: 'URGENT: Server down!!!',
-    from: 'Alex Rodriguez',
-    fromEmail: 'alex@globalfinance.com',
-    company: 'Global Finance',
-    preview: 'Our production server has been unresponsive for the last 20 minutes. This is critical!',
-    receivedAt: new Date(Date.now() - 2 * 60 * 1000),
-    status: 'processing',
-    aiConfidence: 98,
-    aiCategory: 'Critical/Outage',
-    aiSentiment: 'frustrated',
-    threadCount: 1
-  },
-  {
-    id: '4',
-    subject: 'Password reset not working',
-    from: 'Emma Wilson',
-    fromEmail: 'e.wilson@retailmax.com',
-    company: 'RetailMax',
-    preview: 'I tried to reset my password but never received the email. Can you help?',
-    receivedAt: new Date(Date.now() - 45 * 60 * 1000),
-    status: 'auto_responded',
-    aiConfidence: 91,
-    aiCategory: 'Security/Password',
-    aiSentiment: 'neutral',
-    aiSuggestedResponse: 'Hi Emma, I can help you with your password reset...',
-    ticketId: 'TKT-4520',
-    threadCount: 1
-  }
-];
-
-const AUTOMATION_RULES: AutomationRule[] = [
-  { id: '1', name: 'Auto-respond to password resets', condition: 'Category = Security/Password AND Confidence ≥ 90%', action: 'Send KB article + auto-response', enabled: true, triggeredCount: 234 },
-  { id: '2', name: 'Escalate critical issues', condition: 'Sentiment = frustrated OR Category = Critical', action: 'Create P1 ticket + alert team', enabled: true, triggeredCount: 45 },
-  { id: '3', name: 'Thread billing to account team', condition: 'Category = Billing', action: 'Route to billing queue', enabled: true, triggeredCount: 89 },
-  { id: '4', name: 'After-hours auto-reply', condition: 'Time = Outside business hours', action: 'Send acknowledgment + ETA', enabled: true, triggeredCount: 156 }
-];
-
 const sentimentColors = {
   frustrated: 'text-red-400 bg-red-500/20 border-red-500/30',
   urgent: 'text-orange-400 bg-orange-500/20 border-orange-500/30',
@@ -128,46 +58,140 @@ const statusConfig = {
 };
 
 export function EmailAutomationEngine() {
-  const [emails, setEmails] = useState<EmailThread[]>(DEMO_EMAILS);
-  const [rules, setRules] = useState<AutomationRule[]>(AUTOMATION_RULES);
+  const [emails, setEmails] = useState<EmailThread[]>([]);
+  const [rules, setRules] = useState<AutomationRule[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<EmailThread | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('inbox');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Load emails
+      const { data: emailsData } = await supabase
+        .from('vanguard_email_threads')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('received_at', { ascending: false });
+
+      setEmails((emailsData || []).map((e: any) => ({
+        id: e.id,
+        subject: e.subject,
+        from: e.from_name,
+        fromEmail: e.from_email,
+        company: e.company,
+        preview: e.preview,
+        receivedAt: new Date(e.received_at),
+        status: e.status as EmailThread['status'],
+        aiConfidence: e.ai_confidence || 0,
+        aiCategory: e.ai_category || 'Uncategorized',
+        aiSentiment: e.ai_sentiment || 'neutral',
+        aiSuggestedResponse: e.ai_suggested_response,
+        ticketId: e.ticket_id,
+        threadCount: e.thread_count || 1
+      })));
+
+      // Load rules
+      const { data: rulesData } = await supabase
+        .from('vanguard_email_automation_rules')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      setRules((rulesData || []).map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        condition: r.condition,
+        action: r.action,
+        enabled: r.enabled,
+        triggeredCount: r.triggered_count || 0
+      })));
+
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const processEmail = async (emailId: string, action: 'approve' | 'edit' | 'reject') => {
     setIsProcessing(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    if (action === 'approve') {
+    try {
+      const newStatus = action === 'approve' ? 'auto_responded' : 'pending_review';
+      const ticketId = action === 'approve' ? `TKT-${Math.floor(Math.random() * 10000)}` : null;
+
+      await supabase
+        .from('vanguard_email_threads')
+        .update({ 
+          status: newStatus,
+          ticket_id: ticketId
+        })
+        .eq('id', emailId);
+      
       setEmails(emails.map(e => 
-        e.id === emailId ? { ...e, status: 'auto_responded' as const, ticketId: `TKT-${Math.floor(Math.random() * 10000)}` } : e
+        e.id === emailId ? { 
+          ...e, 
+          status: newStatus as EmailThread['status'], 
+          ticketId: ticketId || undefined 
+        } : e
       ));
-      toast.success('Response sent and ticket created');
-    } else if (action === 'reject') {
-      setEmails(emails.map(e => 
-        e.id === emailId ? { ...e, status: 'pending_review' as const } : e
-      ));
-      toast.info('Email flagged for manual review');
+
+      if (action === 'approve') {
+        toast.success('Response sent and ticket created');
+      } else {
+        toast.info('Email flagged for manual review');
+      }
+    } catch (error) {
+      console.error('Error processing email:', error);
+      toast.error('Failed to process email');
+    } finally {
+      setIsProcessing(false);
+      setSelectedEmail(null);
     }
-    
-    setIsProcessing(false);
-    setSelectedEmail(null);
   };
 
-  const toggleRule = (ruleId: string) => {
-    setRules(rules.map(r => 
-      r.id === ruleId ? { ...r, enabled: !r.enabled } : r
-    ));
-    toast.success('Rule updated');
+  const toggleRule = async (ruleId: string) => {
+    const rule = rules.find(r => r.id === ruleId);
+    if (!rule) return;
+
+    try {
+      await supabase
+        .from('vanguard_email_automation_rules')
+        .update({ enabled: !rule.enabled })
+        .eq('id', ruleId);
+
+      setRules(rules.map(r => 
+        r.id === ruleId ? { ...r, enabled: !r.enabled } : r
+      ));
+      toast.success('Rule updated');
+    } catch (error) {
+      console.error('Error toggling rule:', error);
+      toast.error('Failed to update rule');
+    }
   };
 
   const stats = {
-    totalToday: 47,
-    autoProcessed: 38,
-    pendingReview: 6,
+    totalToday: emails.length,
+    autoProcessed: emails.filter(e => e.status === 'auto_responded').length,
+    pendingReview: emails.filter(e => e.status === 'pending_review').length,
     avgProcessTime: '< 15s'
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -193,7 +217,7 @@ export function EmailAutomationEngine() {
               </div>
               <CheckCircle2 className="h-8 w-8 text-green-400/40" />
             </div>
-            <Progress value={(stats.autoProcessed / stats.totalToday) * 100} className="mt-2 h-1 bg-slate-800" />
+            <Progress value={stats.totalToday > 0 ? (stats.autoProcessed / stats.totalToday) * 100 : 0} className="mt-2 h-1 bg-slate-800" />
           </CardContent>
         </Card>
         <Card className="bg-black/80 border-cyan-500/30">
@@ -243,54 +267,61 @@ export function EmailAutomationEngine() {
                       <Inbox className="h-4 w-4" />
                       Incoming Emails
                     </CardTitle>
-                    <Button size="sm" variant="ghost" className="text-slate-400 hover:text-white">
+                    <Button size="sm" variant="ghost" className="text-slate-400 hover:text-white" onClick={loadData}>
                       <RefreshCw className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardHeader>
                 <ScrollArea className="h-[500px]">
-                  <div className="divide-y divide-slate-800">
-                    {emails.map((email) => (
-                      <motion.div
-                        key={email.id}
-                        className={`p-4 cursor-pointer transition-colors hover:bg-slate-900/50 ${
-                          selectedEmail?.id === email.id ? 'bg-cyan-500/10 border-l-2 border-cyan-400' : ''
-                        }`}
-                        onClick={() => setSelectedEmail(email)}
-                        whileHover={{ x: 2 }}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`w-2 h-2 rounded-full mt-2 ${statusConfig[email.status].color}`} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-white text-sm truncate">{email.from}</span>
-                              {email.company && (
-                                <Badge variant="outline" className="text-xs border-slate-600 text-slate-400">
-                                  {email.company}
+                  {emails.length === 0 ? (
+                    <div className="text-center py-12 text-slate-500">
+                      <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No emails in queue</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-800">
+                      {emails.map((email) => (
+                        <motion.div
+                          key={email.id}
+                          className={`p-4 cursor-pointer transition-colors hover:bg-slate-900/50 ${
+                            selectedEmail?.id === email.id ? 'bg-cyan-500/10 border-l-2 border-cyan-400' : ''
+                          }`}
+                          onClick={() => setSelectedEmail(email)}
+                          whileHover={{ x: 2 }}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`w-2 h-2 rounded-full mt-2 ${statusConfig[email.status].color}`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-white text-sm truncate">{email.from}</span>
+                                {email.company && (
+                                  <Badge variant="outline" className="text-xs border-slate-600 text-slate-400">
+                                    {email.company}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-slate-300 truncate">{email.subject}</p>
+                              <p className="text-xs text-slate-500 truncate mt-1">{email.preview}</p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <Badge variant="outline" className={sentimentColors[email.aiSentiment as keyof typeof sentimentColors] || sentimentColors.neutral}>
+                                  {email.aiSentiment}
                                 </Badge>
-                              )}
+                                <span className="text-xs text-cyan-400">{email.aiConfidence}%</span>
+                                {email.threadCount > 1 && (
+                                  <span className="text-xs text-slate-500">{email.threadCount} messages</span>
+                                )}
+                              </div>
                             </div>
-                            <p className="text-sm text-slate-300 truncate">{email.subject}</p>
-                            <p className="text-xs text-slate-500 truncate mt-1">{email.preview}</p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="outline" className={sentimentColors[email.aiSentiment as keyof typeof sentimentColors] || sentimentColors.neutral}>
-                                {email.aiSentiment}
-                              </Badge>
-                              <span className="text-xs text-cyan-400">{email.aiConfidence}%</span>
-                              {email.threadCount > 1 && (
-                                <span className="text-xs text-slate-500">{email.threadCount} messages</span>
-                              )}
+                            <div className="text-right shrink-0">
+                              <p className="text-xs text-slate-500">
+                                {Math.round((Date.now() - email.receivedAt.getTime()) / 60000)}m ago
+                              </p>
                             </div>
                           </div>
-                          <div className="text-right shrink-0">
-                            <p className="text-xs text-slate-500">
-                              {Math.round((Date.now() - email.receivedAt.getTime()) / 60000)}m ago
-                            </p>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
                 </ScrollArea>
               </Card>
             </div>
@@ -335,7 +366,7 @@ export function EmailAutomationEngine() {
                         </div>
                         <div>
                           <span className="text-slate-500">Sentiment:</span>
-                          <Badge variant="outline" className={`ml-2 ${sentimentColors[selectedEmail.aiSentiment as keyof typeof sentimentColors]}`}>
+                          <Badge variant="outline" className={`ml-2 ${sentimentColors[selectedEmail.aiSentiment as keyof typeof sentimentColors] || sentimentColors.neutral}`}>
                             {selectedEmail.aiSentiment}
                           </Badge>
                         </div>
@@ -401,10 +432,10 @@ export function EmailAutomationEngine() {
                   </CardContent>
                 </Card>
               ) : (
-                <Card className="bg-black/60 border-cyan-500/20 h-[500px] flex items-center justify-center">
-                  <div className="text-center">
-                    <Mail className="h-12 w-12 text-slate-600 mx-auto mb-3" />
-                    <p className="text-slate-400">Select an email to view details</p>
+                <Card className="bg-black/80 border-cyan-500/30 h-full flex items-center justify-center">
+                  <div className="text-center py-12">
+                    <Mail className="h-12 w-12 text-slate-600 mx-auto mb-4" />
+                    <p className="text-slate-500">Select an email to view details</p>
                   </div>
                 </Card>
               )}
@@ -414,45 +445,51 @@ export function EmailAutomationEngine() {
 
         <TabsContent value="rules" className="mt-4">
           <Card className="bg-black/80 border-cyan-500/30">
-            <CardHeader className="border-b border-purple-500/20">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-cyan-400 flex items-center gap-2">
-                  <Filter className="h-5 w-5" />
-                  Email Automation Rules
-                </CardTitle>
-                <Button className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 text-white">
-                  + Add Rule
-                </Button>
-              </div>
+            <CardHeader>
+              <CardTitle className="text-purple-400 flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Automation Rules
+              </CardTitle>
+              <CardDescription className="text-slate-400">
+                Configure automatic email processing rules
+              </CardDescription>
             </CardHeader>
-            <CardContent className="pt-4">
-              <div className="space-y-3">
-                {rules.map((rule) => (
-                  <div key={rule.id} className="p-4 rounded-lg bg-slate-900/50 border border-slate-700 hover:border-purple-500/50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <Switch
-                          checked={rule.enabled}
-                          onCheckedChange={() => toggleRule(rule.id)}
-                        />
-                        <div>
+            <CardContent>
+              {rules.length === 0 ? (
+                <div className="text-center py-12 text-slate-500">
+                  <Filter className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No automation rules configured</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {rules.map((rule) => (
+                    <div
+                      key={rule.id}
+                      className="p-4 rounded-lg bg-slate-900/50 border border-slate-700 flex items-center justify-between"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
                           <h4 className="font-medium text-white">{rule.name}</h4>
-                          <p className="text-sm text-slate-500 mt-0.5">
-                            <span className="text-cyan-400/70">If:</span> {rule.condition}
-                          </p>
-                          <p className="text-sm text-slate-500">
-                            <span className="text-purple-400/70">Then:</span> {rule.action}
-                          </p>
+                          <Badge variant="outline" className="text-xs border-slate-600 text-slate-400">
+                            {rule.triggeredCount} triggered
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
+                          <span className="text-cyan-400">IF</span>
+                          <span>{rule.condition}</span>
+                          <ArrowRight className="h-3 w-3" />
+                          <span className="text-purple-400">THEN</span>
+                          <span>{rule.action}</span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-cyan-400">{rule.triggeredCount}</p>
-                        <p className="text-xs text-slate-500">times triggered</p>
-                      </div>
+                      <Switch
+                        checked={rule.enabled}
+                        onCheckedChange={() => toggleRule(rule.id)}
+                      />
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
