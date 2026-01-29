@@ -9071,6 +9071,135 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_analytics: {
+        Row: {
+          action_taken: string | null
+          created_at: string
+          engagement_ms: number | null
+          event_type: string
+          id: string
+          item_id: string
+          metadata: Json | null
+          step_number: number | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string
+          engagement_ms?: number | null
+          event_type: string
+          id?: string
+          item_id: string
+          metadata?: Json | null
+          step_number?: number | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string
+          engagement_ms?: number | null
+          event_type?: string
+          id?: string
+          item_id?: string
+          metadata?: Json | null
+          step_number?: number | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      onboarding_progress: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string
+          dismissed: boolean | null
+          id: string
+          item_id: string
+          metadata: Json | null
+          progress_type: string
+          step_reached: number | null
+          updated_at: string
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string
+          dismissed?: boolean | null
+          id?: string
+          item_id: string
+          metadata?: Json | null
+          progress_type: string
+          step_reached?: number | null
+          updated_at?: string
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string
+          dismissed?: boolean | null
+          id?: string
+          item_id?: string
+          metadata?: Json | null
+          progress_type?: string
+          step_reached?: number | null
+          updated_at?: string
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      onboarding_triggers: {
+        Row: {
+          action_count: number | null
+          created_at: string
+          feature_id: string
+          first_seen_at: string | null
+          id: string
+          last_seen_at: string | null
+          metadata: Json | null
+          tip_shown: boolean | null
+          trigger_type: string
+          updated_at: string
+          user_id: string
+          visit_count: number | null
+        }
+        Insert: {
+          action_count?: number | null
+          created_at?: string
+          feature_id: string
+          first_seen_at?: string | null
+          id?: string
+          last_seen_at?: string | null
+          metadata?: Json | null
+          tip_shown?: boolean | null
+          trigger_type: string
+          updated_at?: string
+          user_id: string
+          visit_count?: number | null
+        }
+        Update: {
+          action_count?: number | null
+          created_at?: string
+          feature_id?: string
+          first_seen_at?: string | null
+          id?: string
+          last_seen_at?: string | null
+          metadata?: Json | null
+          tip_shown?: boolean | null
+          trigger_type?: string
+          updated_at?: string
+          user_id?: string
+          visit_count?: number | null
+        }
+        Relationships: []
+      }
       one_time_payments: {
         Row: {
           amount: number
