@@ -1,299 +1,221 @@
 
-# Auto-Build System for Vanguard Agents
+# Vanguard Agent Enhancement Plan
 
-## Overview
-Create a fully automated build and distribution system that compiles the Windows EXE agent via GitHub Actions and hosts it for direct download from the Ultrium platform.
+## Current State Analysis
 
-## Architecture
+After reviewing the codebase, I've identified the architecture:
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                     GitHub Repository                           │
-│  ┌─────────────────┐    ┌─────────────────┐                     │
-│  │ VanguardAgent/  │    │ .github/        │                     │
-│  │  (C# Source)    │───▶│  workflows/     │                     │
-│  └─────────────────┘    │   build.yml     │                     │
-│                         └────────┬────────┘                     │
-└────────────────────────────────────────────────────────────────┘
-                                   │
-                                   ▼
-                    ┌──────────────────────────┐
-                    │  GitHub Actions Runner   │
-                    │  (Windows-latest)        │
-                    │                          │
-                    │  1. Build .NET 8 EXE     │
-                    │  2. Sign binaries (opt)  │
-                    │  3. Create Release       │
-                    │  4. Upload artifacts     │
-                    └───────────┬──────────────┘
-                                │
-                   ┌────────────┴────────────┐
-                   ▼                         ▼
-         ┌─────────────────┐      ┌─────────────────────┐
-         │ GitHub Releases │      │ Supabase Storage    │
-         │ VanguardAgent-  │      │ (Optional CDN)      │
-         │ v1.0.0.exe      │      │                     │
-         └────────┬────────┘      └─────────────────────┘
-                  │
-                  ▼
-         ┌─────────────────────────────────────────┐
-         │  Frontend (VanguardSetup.tsx)           │
-         │  ┌───────────────────────────────────┐  │
-         │  │ Download Windows Bundle           │  │
-         │  │ → Fetches EXE from GitHub Release │  │
-         │  │ → Bundles with user's config.json │  │
-         │  │ → Generates complete ZIP          │  │
-         │  └───────────────────────────────────┘  │
-         └─────────────────────────────────────────┘
-```
+**Windows Agent (C#/.NET 8):**
+- Located in `VanguardAgent/` directory
+- Compiled via GitHub Actions workflow to EXE
+- Current capabilities:
+  - Shell/PowerShell command execution
+  - Service control (start/stop/restart)
+  - Process kill
+  - File download
+  - System reboot
+  - Heartbeat with CPU/Memory/Disk metrics
+  - Telemetry (processes, services, network adapters, installed software)
+
+**Frontend Console Features (expecting agent commands):**
+
+| Feature | Expected Command | Agent Support |
+|---------|-----------------|---------------|
+| Terminal | `run_script` | Partial (needs shell type handling) |
+| Service Manager | `get_services`, `service_action` | Partial (needs get_services) |
+| Process Manager | `get_processes`, `kill_process`, `kill_process_tree` | Partial (needs get_processes) |
+| Software Inventory | `get_installed_software`, `install_software`, `uninstall_software` | Missing install/uninstall |
+| Registry Editor | `read_registry` | Missing |
+| Event Viewer | `get_event_logs` | Missing |
+| File Transfer | `list_directory`, file upload/download | Partial |
+
+---
 
 ## Implementation Plan
 
-### Phase 1: GitHub Actions Workflow
+### Phase 1: Extend CommandExecutor.cs
 
-**File: `.github/workflows/build-vanguard-agent.yml`**
+Add new command handlers to support all frontend console features:
 
-Creates automated build pipeline that:
-- Triggers on push to `VanguardAgent/` directory or manual dispatch
-- Runs on Windows runner with .NET 8 SDK
-- Builds self-contained single-file EXE
-- Creates GitHub Release with versioned artifacts
-- Outputs:
-  - `VanguardAgent.exe` (single-file, ~40MB)
-  - `VanguardAgent-win-x64.zip` (complete package)
-  - SHA256 checksums for verification
+```text
+CommandExecutor.cs additions:
+├── get_services      → List all Windows services with status
+├── get_processes     → List processes with CPU/memory stats
+├── kill_process_tree → Kill process and children
+├── run_script        → Enhanced with shell type (cmd/powershell/bash)
+├── install_software  → Chocolatey integration
+├── uninstall_software→ Silent uninstall via registry
+├── read_registry     → Read registry keys/values
+├── get_event_logs    → Query Windows Event Log
+├── list_directory    → List files/folders at path
+└── upload_file       → Receive file from dashboard
+```
 
-### Phase 2: Multi-Platform Build Matrix
+### Phase 2: Update TelemetryCollector.cs
 
-Expand the workflow to build for multiple targets:
-- `win-x64` (Windows 64-bit)
-- `win-arm64` (Windows ARM)
-- `linux-x64` (Linux 64-bit, optional)
+Enhance data collection for richer frontend display:
 
-### Phase 3: Frontend Integration
+```text
+TelemetryCollector.cs additions:
+├── GetProcessesWithCpu()    → Include per-process CPU %
+├── GetServicesDetailed()    → Include start type, description
+├── GetNetworkAdaptersEx()   → Include speed, IPv6
+├── GetDiskVolumes()         → Per-volume info (BitLocker status)
+└── GetSystemTemperature()   → CPU temp if available (WMI)
+```
 
-**Updates to `src/utils/generateWindowsAgentZip.ts`**
+### Phase 3: Update ApiClient.cs Models
 
-1. Fetch pre-built EXE from GitHub Releases API
-2. Bundle the binary with user-specific `config.json`
-3. Include installer scripts
-4. Generate complete downloadable ZIP
+Add request/response models for new commands:
 
-**Updates to `src/pages/VanguardSetup.tsx`**
+```text
+New Models:
+├── RegistryKeyResponse
+├── EventLogEntry
+├── DirectoryListing
+├── SoftwareInstallRequest
+├── ProcessDetailedInfo
+└── ServiceDetailedInfo
+```
 
-1. Add download progress indicator
-2. Show build version/date from GitHub Release
-3. Fallback messaging if build is unavailable
+### Phase 4: Update Agent API Handler
 
-### Phase 4: Supabase Storage CDN (Optional)
+Modify `vanguard-agent-api/index.ts` to handle new command types from dashboard:
 
-For faster downloads, optionally mirror releases to Supabase Storage:
-- Edge function triggered by GitHub webhook
-- Copies releases to `storage/vanguard-releases/`
-- Provides CDN-accelerated downloads
+```text
+Dashboard → API command routing:
+├── get_services      → Passed to agent
+├── get_processes     → Passed to agent
+├── run_script        → Script + shell type
+├── install_software  → Package name + manager
+├── read_registry     → Registry path
+├── get_event_logs    → Log name + level + limit
+└── list_directory    → Directory path
+```
+
+### Phase 5: Version Bump & GitHub Release
+
+Update version in:
+- `VanguardAgent.csproj` → `<Version>1.1.0</Version>`
+- Agent API `AGENT_VERSION` constant
+- Trigger GitHub Actions build
 
 ---
 
 ## Technical Details
 
-### GitHub Actions Workflow
+### New Command Implementations
 
-```yaml
-# .github/workflows/build-vanguard-agent.yml
-name: Build Vanguard Agent
-
-on:
-  push:
-    paths:
-      - 'VanguardAgent/**'
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version tag (e.g., 1.0.0)'
-        required: true
-        default: '1.0.0'
-
-jobs:
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup .NET 8
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-      
-      - name: Restore dependencies
-        run: dotnet restore VanguardAgent/VanguardAgent.csproj
-      
-      - name: Build & Publish
-        run: |
-          dotnet publish VanguardAgent/VanguardAgent.csproj `
-            -c Release `
-            -r win-x64 `
-            --self-contained true `
-            -p:PublishSingleFile=true `
-            -p:IncludeNativeLibrariesForSelfExtract=true `
-            -o ./dist
-      
-      - name: Create Release Package
-        run: |
-          Copy-Item VanguardAgent/config.json ./dist/
-          Copy-Item VanguardAgent/README.md ./dist/
-          Compress-Archive -Path ./dist/* -DestinationPath VanguardAgent-win-x64.zip
-      
-      - name: Generate Checksums
-        run: |
-          Get-FileHash ./dist/VanguardAgent.exe -Algorithm SHA256 | 
-            Format-List | Out-File checksums.txt
-      
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: vanguard-agent-windows
-          path: |
-            ./dist/VanguardAgent.exe
-            ./VanguardAgent-win-x64.zip
-            ./checksums.txt
-
-  release:
-    needs: build-windows
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
-    steps:
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: vanguard-agent-windows
-      
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ github.event.inputs.version }}
-          name: Vanguard Agent v${{ github.event.inputs.version }}
-          files: |
-            VanguardAgent.exe
-            VanguardAgent-win-x64.zip
-            checksums.txt
-          body: |
-            ## Vanguard Agent v${{ github.event.inputs.version }}
-            
-            Enterprise RMM agent for Windows systems.
-            
-            ### Downloads
-            - **VanguardAgent.exe** - Single-file executable
-            - **VanguardAgent-win-x64.zip** - Complete package with installer
-            
-            ### Installation
-            1. Download the ZIP and extract
-            2. Run `install.bat` as Administrator
-            3. Configure credentials in the Ultrium dashboard
-```
-
-### Updated ZIP Generator
-
-```typescript
-// src/utils/generateWindowsAgentZip.ts
-
-const GITHUB_RELEASE_URL = 
-  'https://github.com/YOUR_ORG/YOUR_REPO/releases/latest/download/VanguardAgent.exe';
-
-export async function generateWindowsAgentZip(options: WindowsAgentZipOptions): Promise<Blob> {
-  const { userId, apiEndpoint, secretKey, deviceName } = options;
-
-  // Fetch the pre-built EXE from GitHub Releases
-  const exeResponse = await fetch(GITHUB_RELEASE_URL);
-  if (!exeResponse.ok) {
-    throw new Error('Failed to fetch agent executable');
-  }
-  const exeBlob = await exeResponse.blob();
-
-  const zip = new JSZip();
-
-  // Include the actual EXE binary
-  zip.file('VanguardAgent.exe', exeBlob);
-
-  // User-specific config
-  zip.file('config.json', JSON.stringify({
-    user_id: userId,
-    secret_key: secretKey,
-    device_name: deviceName,
-    api_endpoint: apiEndpoint,
-    // ... other config
-  }, null, 2));
-
-  // Installer scripts
-  zip.file('install.bat', INSTALL_BAT);
-  zip.file('install.ps1', INSTALL_PS1);
-  zip.file('uninstall.bat', UNINSTALL_BAT);
-  zip.file('README.md', WINDOWS_README);
-
-  return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+**1. Get Processes with CPU (ProcessManager support)**
+```csharp
+// Uses System.Diagnostics.PerformanceCounter for per-process CPU
+private List<ProcessDetailedInfo> GetProcessesWithCpu()
+{
+    var result = new List<ProcessDetailedInfo>();
+    foreach (var proc in Process.GetProcesses())
+    {
+        // CPU sampling over 100ms
+        // Memory from WorkingSet64
+        // Thread count, Handle count
+    }
+    return result.OrderByDescending(p => p.CpuPercent).Take(100).ToList();
 }
 ```
 
-### Frontend Download with Progress
+**2. Registry Reader**
+```csharp
+private RegistryResponse ReadRegistry(string path)
+{
+    // Parse HKLM, HKCU, etc from path
+    // Read subkeys and values
+    // Return structured response with type info
+}
+```
 
-```typescript
-// In VanguardSetup.tsx
-const [downloadProgress, setDownloadProgress] = useState(0);
+**3. Event Log Query**
+```csharp
+private List<EventLogEntry> GetEventLogs(string logName, string level, int limit)
+{
+    // Use System.Diagnostics.EventLog
+    // Filter by Application/System/Security
+    // Filter by level (Error, Warning, Information)
+}
+```
 
-const handleDownloadWindowsZip = async () => {
-  setIsDownloadingWindows(true);
-  setDownloadProgress(0);
-  
-  try {
-    // Show fetching EXE progress
-    setDownloadProgress(10);
-    toast.info('Fetching latest agent build...');
-    
-    const blob = await generateWindowsAgentZip({
-      userId: user.id,
-      apiEndpoint: API_ENDPOINT,
-      secretKey: VANGUARD_SECRET,
-      deviceName: 'Vanguard-Windows',
-    });
-    
-    setDownloadProgress(90);
-    downloadBlob(blob, 'vanguard-agent-windows.zip');
-    setDownloadProgress(100);
-    toast.success('Download complete!');
-  } catch (error) {
-    toast.error('Failed to generate download. Build may be in progress.');
-  } finally {
-    setIsDownloadingWindows(false);
-  }
-};
+**4. Chocolatey Integration**
+```csharp
+private async Task<CommandResult> InstallSoftware(string package, string manager)
+{
+    if (manager == "chocolatey")
+    {
+        // choco install {package} -y
+    }
+    else if (manager == "winget")
+    {
+        // winget install --silent {package}
+    }
+}
+```
+
+**5. Directory Listing**
+```csharp
+private DirectoryListing ListDirectory(string path)
+{
+    var info = new DirectoryInfo(path);
+    return new DirectoryListing
+    {
+        Path = path,
+        Files = info.GetFileSystemInfos()
+            .Select(f => new FileEntry { 
+                Name = f.Name, 
+                Type = f is DirectoryInfo ? "directory" : "file",
+                Size = f is FileInfo fi ? fi.Length : 0,
+                Modified = f.LastWriteTimeUtc
+            }).ToList()
+    };
+}
 ```
 
 ---
 
 ## Files to Create/Modify
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `.github/workflows/build-vanguard-agent.yml` | Create | GitHub Actions build pipeline |
-| `VanguardAgent/VanguardAgent.csproj` | Modify | Add version info, ensure build config |
-| `src/utils/generateWindowsAgentZip.ts` | Modify | Fetch EXE from GitHub Releases |
-| `src/pages/VanguardSetup.tsx` | Modify | Add progress indicator, version display |
-| `VanguardAgent/Resources/vanguard.ico` | Create | Application icon (placeholder) |
+| File | Action | Description |
+|------|--------|-------------|
+| `VanguardAgent/Services/CommandExecutor.cs` | Modify | Add 10+ new command handlers |
+| `VanguardAgent/Services/TelemetryCollector.cs` | Modify | Enhanced process/service collection |
+| `VanguardAgent/Services/ApiClient.cs` | Modify | Add new model classes |
+| `VanguardAgent/VanguardAgent.csproj` | Modify | Version bump to 1.1.0 |
+| `supabase/functions/vanguard-agent-api/index.ts` | Modify | Route new commands from dashboard |
+| `.github/workflows/build-vanguard-agent.yml` | No change | Will auto-build on push |
 
 ---
 
-## Deployment Flow
+## Build & Distribution
 
-1. **Code Push**: Any changes to `VanguardAgent/` trigger the build
-2. **Build**: GitHub Actions compiles on Windows runner
-3. **Artifacts**: EXE uploaded as build artifact for testing
-4. **Release**: Manual workflow dispatch creates versioned release
-5. **Download**: Users get latest EXE bundled with their credentials
+The existing GitHub Actions workflow will automatically:
+1. Detect changes in `VanguardAgent/**`
+2. Build for win-x64 and win-arm64
+3. Create release artifacts with checksums
+4. Publish to GitHub Releases (manual trigger)
+
+After implementation, trigger a release:
+```
+gh workflow run build-vanguard-agent.yml -f version=1.1.0 -f create_release=true
+```
 
 ---
 
-## Security Considerations
+## Summary
 
-- EXE is built in a clean GitHub Actions environment
-- SHA256 checksums published with each release
-- Code signing can be added with a certificate (optional future enhancement)
-- User credentials are added at download time, never baked into the EXE
+This plan bridges the gap between the rich frontend console UI and the Windows agent capabilities. After implementation:
+
+- Terminal: Full PowerShell/CMD/Bash support with proper shell switching
+- Service Manager: Live service list with start/stop/restart
+- Process Manager: Real-time CPU/memory stats with kill functionality
+- Software Inventory: Chocolatey install/uninstall integration
+- Registry Editor: Read-only registry browsing
+- Event Viewer: Windows Event Log querying with export
+- File Transfer: Directory browsing with upload/download
+
+All changes maintain the existing authentication flow (X-VANGUARD-KEY) and command queue architecture.
