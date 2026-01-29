@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { X, ArrowLeft, ArrowRight, CheckCircle, Sparkles, Keyboard } from 'lucide-react';
+import { X, ArrowLeft, ArrowRight, CheckCircle, Sparkles, Keyboard, Rocket } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { TourProgress } from './TourProgress';
@@ -34,66 +33,131 @@ export const TourCard = ({
 
   const getPositionClasses = () => {
     if (position === 'center') return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
-    if (position === 'top') return 'top-4 left-1/2 -translate-x-1/2';
-    if (position === 'bottom') return 'bottom-4 left-1/2 -translate-x-1/2';
-    if (position === 'left') return 'left-4 top-1/2 -translate-y-1/2';
-    if (position === 'right') return 'right-4 top-1/2 -translate-y-1/2';
+    if (position === 'top') return 'top-8 left-1/2 -translate-x-1/2';
+    if (position === 'bottom') return 'bottom-8 left-1/2 -translate-x-1/2';
+    if (position === 'left') return 'left-8 top-1/2 -translate-y-1/2';
+    if (position === 'right') return 'right-8 top-1/2 -translate-y-1/2';
     if (!highlightRect) return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
-    return 'bottom-4 left-1/2 -translate-x-1/2';
+    return 'bottom-8 left-1/2 -translate-x-1/2';
   };
 
   return (
     <motion.div
       key={currentStep}
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      initial={{ opacity: 0, y: 30, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      exit={{ opacity: 0, y: -30, scale: 0.9 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className={cn('fixed z-[103] w-full max-w-md p-4', getPositionClasses())}
     >
-      <Card className="shadow-2xl border-primary/20 bg-background/95 backdrop-blur-md overflow-hidden">
-        {/* Gradient accent bar */}
-        <div className="h-1 bg-gradient-to-r from-primary via-primary/80 to-primary/50" />
+      {/* Card with glassmorphism */}
+      <div className="relative rounded-2xl overflow-hidden">
+        {/* Background layers */}
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
         
-        <CardContent className="p-6">
+        {/* Animated border gradient */}
+        <div 
+          className="absolute inset-0 rounded-2xl"
+          style={{
+            background: 'linear-gradient(135deg, hsl(var(--primary) / 0.3), transparent, hsl(var(--primary) / 0.2))',
+            padding: '1px',
+            WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+            WebkitMaskComposite: 'xor',
+            maskComposite: 'exclude',
+          }}
+        />
+        
+        {/* Shimmer effect on card */}
+        <motion.div
+          className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
+            animate={{ x: ['-100%', '200%'] }}
+            transition={{ duration: 3, repeat: Infinity, repeatDelay: 5, ease: 'easeInOut' }}
+          />
+        </motion.div>
+
+        {/* Top accent bar */}
+        <div className="absolute top-0 left-0 right-0 h-1">
+          <div className="h-full bg-gradient-to-r from-primary/50 via-primary to-primary/50" />
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent"
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+          />
+        </div>
+        
+        {/* Content */}
+        <div className="relative p-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <motion.div
-                animate={{ rotate: [0, 15, -15, 0] }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <Sparkles className="h-5 w-5 text-primary" />
-              </motion.div>
-              <span className="text-xs font-medium text-muted-foreground">
-                Step {currentStep + 1} of {totalSteps}
+          <div className="flex items-center justify-between mb-5">
+            <motion.div 
+              className="flex items-center gap-2"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <div className="relative">
+                <motion.div
+                  animate={{ rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                  className="p-1.5 rounded-lg bg-primary/10"
+                >
+                  {isLastStep ? (
+                    <Rocket className="h-4 w-4 text-primary" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 text-primary" />
+                  )}
+                </motion.div>
+                <motion.div
+                  className="absolute -inset-1 rounded-lg bg-primary/20 blur-sm"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              </div>
+              <span className="text-xs font-semibold text-primary">
+                {currentStep + 1} / {totalSteps}
               </span>
-            </div>
-            <button
+            </motion.div>
+            
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
               onClick={onSkip}
-              className="p-1.5 rounded-full hover:bg-muted transition-colors group"
+              className="p-2 rounded-full bg-muted/50 hover:bg-muted transition-colors"
               aria-label="Close tour"
             >
-              <X className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-            </button>
+              <X className="h-4 w-4 text-muted-foreground" />
+            </motion.button>
           </div>
 
-          {/* Progress dots */}
-          <div className="mb-5">
+          {/* Progress */}
+          <motion.div 
+            className="mb-6"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
             <TourProgress 
               currentStep={currentStep} 
               totalSteps={totalSteps}
               onStepClick={onStepClick}
             />
-          </div>
+          </motion.div>
 
           {/* Image */}
           {step.image && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
-              className="mb-4 rounded-lg overflow-hidden bg-muted"
+              transition={{ delay: 0.2 }}
+              className="mb-5 rounded-xl overflow-hidden ring-1 ring-white/10"
             >
               <img
                 src={step.image}
@@ -105,35 +169,50 @@ export const TourCard = ({
 
           {/* Content */}
           <motion.div 
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="space-y-2 mb-6"
+            transition={{ delay: 0.25 }}
+            className="space-y-3 mb-6"
           >
-            <h3 className="text-xl font-semibold tracking-tight">{step.title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
+            <h3 className="text-xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
+              {step.title}
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {step.description}
+            </p>
           </motion.div>
 
           {/* Custom action */}
           {step.action && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={step.action.onClick}
-              className="w-full mb-4"
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
             >
-              {step.action.label}
-            </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={step.action.onClick}
+                className="w-full mb-4 border-primary/20 hover:bg-primary/5"
+              >
+                {step.action.label}
+              </Button>
+            </motion.div>
           )}
 
           {/* Navigation */}
-          <div className="flex items-center justify-between gap-2">
+          <motion.div 
+            className="flex items-center justify-between gap-3"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+          >
             <Button
               variant="ghost"
               size="sm"
               onClick={onPrevious}
               disabled={isFirstStep}
-              className="gap-1.5 transition-all"
+              className="gap-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
             >
               <ArrowLeft className="h-4 w-4" />
               Back
@@ -143,42 +222,52 @@ export const TourCard = ({
               variant="ghost"
               size="sm"
               onClick={onSkip}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-xs text-muted-foreground/70 hover:text-muted-foreground"
             >
-              Skip tour
+              Skip
             </Button>
 
             <Button
               size="sm"
               onClick={onNext}
-              className="gap-1.5 min-w-[100px] transition-all"
+              className={cn(
+                "gap-1.5 min-w-[110px] transition-all shadow-lg",
+                isLastStep 
+                  ? "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-green-500/25" 
+                  : "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-primary/25"
+              )}
             >
               {isLastStep ? (
                 <>
                   <CheckCircle className="h-4 w-4" />
-                  Finish
+                  Complete
                 </>
               ) : (
                 <>
-                  Next
+                  Continue
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </Button>
-          </div>
+          </motion.div>
 
           {/* Keyboard hint */}
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="flex items-center justify-center gap-1.5 mt-4 text-[10px] text-muted-foreground/60"
+            transition={{ delay: 0.6 }}
+            className="flex items-center justify-center gap-2 mt-5 pt-4 border-t border-border/50"
           >
-            <Keyboard className="h-3 w-3" />
-            <span>Use arrow keys to navigate • Esc to close</span>
+            <div className="flex items-center gap-1 text-[10px] text-muted-foreground/50">
+              <Keyboard className="h-3 w-3" />
+              <span>Arrow keys</span>
+              <span className="mx-1">•</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-muted/50 text-[9px] font-mono">Esc</kbd>
+              <span>to close</span>
+            </div>
           </motion.div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </motion.div>
   );
 };
