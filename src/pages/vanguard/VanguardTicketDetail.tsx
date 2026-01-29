@@ -18,7 +18,7 @@ import {
   Paperclip, Send, User, Building2, Mail, Monitor, Phone,
   MoreVertical, ChevronDown, ChevronUp, Pencil, Plus, Sparkles,
   ThumbsUp, History, ExternalLink, Link2, Copy, CheckCircle2,
-  AlertCircle, XCircle, Timer, Smile, Meh, Frown
+  AlertCircle, XCircle, Timer, Smile, Meh, Frown, Filter
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -40,6 +40,14 @@ interface TicketActivity {
   isInternal?: boolean;
   oldValue?: string;
   newValue?: string;
+}
+
+interface ResolutionEntry {
+  id: string;
+  user: string;
+  userInitials: string;
+  timestamp: string;
+  content: string;
 }
 
 interface TicketData {
@@ -69,6 +77,7 @@ interface TicketData {
   };
   contract?: string;
   activities: TicketActivity[];
+  resolutions: ResolutionEntry[];
   userTickets: { id: string; title: string; status: string }[];
   timeEntries: { duration: string; user: string; date: string; note?: string }[];
 }
@@ -169,6 +178,20 @@ const mockTicket: TicketData = {
       userInitials: 'JS',
       content: 'Hi Emma, I\'ve reviewed the issue. Could you please check if the router\'s firmware is up to date?',
       timestamp: 'Feb 9, 2024, 9:30 AM',
+    },
+  ],
+  resolutions: [
+    {
+      id: 'res-1',
+      user: 'Emma Greszes',
+      userInitials: 'EG',
+      timestamp: 'Mar 14, 2024, 12:23 PM',
+      content: `Here how to free up space:
+Clean Up: Delete any emails you no longer need, especially those with large attachments.
+Archive: Consider archiving old emails that you want to keep but don't need regular access to.
+Empty Trash: Make sure to empty your trash folder, as deleted emails often still occupy space until the trash is emptied.
+Manage Subscriptions: Unsubscribe from newsletters or promotional emails that you no longer wish to receive to prevent your mailbox from filling up quickly in the future.
+If you need further assistance with any of these steps or have other concerns, feel free to reach out.`,
     },
   ],
   userTickets: [
@@ -519,10 +542,17 @@ export default function VanguardTicketDetail() {
                 >
                   Ticket activity ({ticket.activities.length})
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="resolution" 
+                  className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-cyan-400 data-[state=active]:text-cyan-400 rounded-none px-4 py-2"
+                >
+                  Resolution ({ticket.resolutions.length})
+                </TabsTrigger>
               </TabsList>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="text-white/60">
+                    <Filter className="h-4 w-4 mr-1" />
                     Sort by: Newest
                     <ChevronDown className="h-4 w-4 ml-1" />
                   </Button>
@@ -648,6 +678,46 @@ export default function VanguardTicketDetail() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="resolution" className="mt-0">
+              <ScrollArea className="h-[calc(100vh-500px)]">
+                <div className="space-y-4">
+                  {ticket.resolutions.length === 0 ? (
+                    <div className="text-center py-8">
+                      <CheckCircle2 className="h-12 w-12 mx-auto text-white/20 mb-3" />
+                      <p className="text-white/40">No resolution notes yet</p>
+                      <Button variant="ghost" className="text-cyan-400 mt-2">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add resolution
+                      </Button>
+                    </div>
+                  ) : (
+                    ticket.resolutions.map((resolution) => (
+                      <div key={resolution.id} className="py-4">
+                        <div className="flex items-start gap-4">
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="bg-slate-600 text-white text-sm">
+                              {resolution.userInitials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-white font-medium">{resolution.user}</span>
+                              <span className="text-white/40 text-sm">{resolution.timestamp}</span>
+                              <ChevronDown className="h-4 w-4 text-white/40" />
+                              <MoreVertical className="h-4 w-4 text-white/40 ml-auto cursor-pointer hover:text-white" />
+                            </div>
+                            <div className="text-white/80 whitespace-pre-wrap leading-relaxed">
+                              {resolution.content}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </ScrollArea>
             </TabsContent>
