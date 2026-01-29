@@ -9,11 +9,12 @@ import safesuiteLogo from '@/assets/safesuite-logo.png';
 import { useAuth } from "@/hooks/useAuth";
 import { useStripeCheckout, SAFESUITE_PRICES } from "@/hooks/useStripeCheckout";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Testimonials } from "@/components/marketing/Testimonials";
 import { SocialProof, UserCountBadge } from "@/components/marketing/SocialProof";
 import { CompetitorComparison } from "@/components/marketing/CompetitorComparison";
 import { RequestDemoForm } from "@/components/marketing/RequestDemoForm";
+import { useConversionTracking } from "@/hooks/useConversionTracking";
 
 const SafeSuitePricing = () => {
   const navigate = useNavigate();
@@ -21,6 +22,12 @@ const SafeSuitePricing = () => {
   const { loading, startCheckout } = useStripeCheckout();
   const { productAccess, tier: currentTier } = useUserSubscription();
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const { trackPricingView, trackPlanSelect, trackCheckoutStart } = useConversionTracking();
+
+  // Track pricing page view
+  useEffect(() => {
+    trackPricingView('safesuite');
+  }, [trackPricingView]);
 
   const handleGetStarted = () => {
     if (user) {
@@ -36,7 +43,13 @@ const SafeSuitePricing = () => {
       return;
     }
     
+    trackPlanSelect(tier, 'safesuite');
     setLoadingTier(tier);
+    
+    // Track checkout start with amount
+    const amount = tier === 'pro' ? 999 : 1500;
+    trackCheckoutStart(tier, amount, 'safesuite');
+    
     await startCheckout({
       product: 'safesuite',
       tier,
