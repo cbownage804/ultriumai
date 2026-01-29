@@ -22,7 +22,9 @@ import {
   FileText,
   Bot,
   Target,
-  Activity
+  Activity,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -46,6 +48,7 @@ interface NavGroup {
 
 export function VanguardNavigation() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
   const basePath = getVanguardBasePath();
 
@@ -139,29 +142,51 @@ export function VanguardNavigation() {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
-  const renderNavItem = (item: NavItem) => (
-    <NavLink
-      key={item.path}
-      to={item.path}
-      onClick={() => setIsMobileOpen(false)}
-      className={cn(
-        "flex items-center gap-3 px-4 py-2.5 text-sm transition-all duration-200",
-        "hover:bg-gradient-to-r hover:from-cyan-500/15 hover:via-blue-500/10 hover:to-purple-500/15 text-slate-400 hover:text-cyan-300",
-        isActive(item.path) && "bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-purple-500/20 text-cyan-400 border-l-2 border-cyan-400 shadow-[inset_0_0_20px_rgba(6,182,212,0.1)]"
-      )}
-    >
-      <item.icon className={cn(
-        "h-4 w-4 shrink-0 transition-colors",
-        isActive(item.path) && "text-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)]"
-      )} />
-      <span className="flex-1">{item.title}</span>
-      {item.badge && (
-        <span className="text-[10px] bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 text-white px-2 py-0.5 rounded-full font-bold shadow-lg shadow-purple-500/40 tracking-wide">
-          {item.badge}
-        </span>
-      )}
-    </NavLink>
-  );
+  const renderNavItem = (item: NavItem) => {
+    const navContent = (
+      <NavLink
+        key={item.path}
+        to={item.path}
+        onClick={() => setIsMobileOpen(false)}
+        className={cn(
+          "flex items-center gap-3 px-4 py-2.5 text-sm transition-all duration-200",
+          "hover:bg-gradient-to-r hover:from-cyan-500/15 hover:via-blue-500/10 hover:to-purple-500/15 text-slate-400 hover:text-cyan-300",
+          isActive(item.path) && "bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-purple-500/20 text-cyan-400 border-l-2 border-cyan-400 shadow-[inset_0_0_20px_rgba(6,182,212,0.1)]",
+          isCollapsed && "justify-center px-2"
+        )}
+      >
+        <item.icon className={cn(
+          "h-4 w-4 shrink-0 transition-colors",
+          isActive(item.path) && "text-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)]"
+        )} />
+        {!isCollapsed && (
+          <>
+            <span className="flex-1">{item.title}</span>
+            {item.badge && (
+              <span className="text-[10px] bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 text-white px-2 py-0.5 rounded-full font-bold shadow-lg shadow-purple-500/40 tracking-wide">
+                {item.badge}
+              </span>
+            )}
+          </>
+        )}
+      </NavLink>
+    );
+
+    if (isCollapsed) {
+      return (
+        <Tooltip key={item.path}>
+          <TooltipTrigger asChild>
+            {navContent}
+          </TooltipTrigger>
+          <TooltipContent side="right" className="bg-black border-cyan-500/40 text-slate-200">
+            <p className="text-xs">{item.title}</p>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return navContent;
+  };
 
   return (
     <>
@@ -186,64 +211,93 @@ export function VanguardNavigation() {
       {/* Sidebar - Pure Black Vanguard Theme with Vivid Cyan & Purple Accents */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-full bg-black border-r border-cyan-500/30 z-40 transition-all duration-300 w-56 shadow-2xl shadow-purple-500/5",
+          "fixed left-0 top-0 h-full bg-black border-r border-cyan-500/30 z-40 transition-all duration-300 shadow-2xl shadow-purple-500/5",
+          isCollapsed ? "w-14" : "w-56",
           isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
         <div className="flex flex-col h-full">
           {/* Logo Section - Vanguard Logo with Gradient Glow */}
-          <div className="flex items-center justify-center px-4 py-4 border-b border-cyan-500/30 bg-gradient-to-b from-purple-500/5 via-cyan-500/5 to-transparent">
-            <img 
-              src={vanguardLogo} 
-              alt="Vanguard" 
-              className="h-10 w-auto object-contain drop-shadow-[0_0_12px_rgba(168,85,247,0.3)]"
-            />
+          <div className={cn(
+            "flex items-center justify-center px-4 py-4 border-b border-cyan-500/30 bg-gradient-to-b from-purple-500/5 via-cyan-500/5 to-transparent",
+            isCollapsed && "px-2"
+          )}>
+            {isCollapsed ? (
+              <Shield className="h-6 w-6 text-cyan-400 drop-shadow-[0_0_12px_rgba(6,182,212,0.5)]" />
+            ) : (
+              <img 
+                src={vanguardLogo} 
+                alt="Vanguard" 
+                className="h-10 w-auto object-contain drop-shadow-[0_0_12px_rgba(168,85,247,0.3)]"
+              />
+            )}
           </div>
+
+          {/* Collapse Toggle Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="hidden md:flex absolute -right-3 top-16 h-6 w-6 rounded-full bg-black border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300 z-50"
+          >
+            {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+          </Button>
 
           {/* Navigation Items */}
           <nav className="flex-1 py-3 overflow-y-auto">
             {/* Vanguard Command */}
-            {renderNavItem(commandItem)}
-
-            {/* Grouped Navigation */}
             <TooltipProvider delayDuration={300}>
+              {renderNavItem(commandItem)}
+
+              {/* Grouped Navigation */}
               {navGroups.map((group) => (
                 <div key={group.header} className="mt-4">
                   {/* Section Header with Tooltip */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="px-4 py-2 cursor-help">
-                        <span className="text-[10px] font-bold tracking-widest text-cyan-400 block drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]">
-                          {group.header}
-                        </span>
-                        <span className="text-[9px] text-slate-500 block mt-0.5">
-                          {group.description}
-                        </span>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="bg-black border-cyan-500/40 text-slate-200 shadow-xl shadow-cyan-500/10">
-                      <p className="text-xs max-w-[200px]">{group.tooltip}</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  {!isCollapsed ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="px-4 py-2 cursor-help">
+                          <span className="text-[10px] font-bold tracking-widest text-cyan-400 block drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]">
+                            {group.header}
+                          </span>
+                          <span className="text-[9px] text-slate-500 block mt-0.5">
+                            {group.description}
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="bg-black border-cyan-500/40 text-slate-200 shadow-xl shadow-cyan-500/10">
+                        <p className="text-xs max-w-[200px]">{group.tooltip}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <div className="my-2 mx-2 border-t border-cyan-500/20" />
+                  )}
                   {/* Section Items */}
                   {group.items.map(renderNavItem)}
                 </div>
               ))}
+
+              {/* Divider */}
+              <div className="my-4 border-t border-cyan-500/10" />
+
+              {/* Additional Items */}
+              {additionalItems.map(renderNavItem)}
             </TooltipProvider>
-
-            {/* Divider */}
-            <div className="my-4 border-t border-cyan-500/10" />
-
-            {/* Additional Items */}
-            {additionalItems.map(renderNavItem)}
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-cyan-500/30 bg-gradient-to-t from-purple-500/5 via-cyan-500/5 to-transparent">
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <Shield className="h-3.5 w-3.5 text-purple-400 drop-shadow-[0_0_4px_rgba(168,85,247,0.5)]" />
-              <span>Powered by <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent font-medium">Ultrium</span></span>
-            </div>
+          <div className={cn(
+            "p-4 border-t border-cyan-500/30 bg-gradient-to-t from-purple-500/5 via-cyan-500/5 to-transparent",
+            isCollapsed && "p-2 flex justify-center"
+          )}>
+            {isCollapsed ? (
+              <Shield className="h-4 w-4 text-purple-400 drop-shadow-[0_0_4px_rgba(168,85,247,0.5)]" />
+            ) : (
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <Shield className="h-3.5 w-3.5 text-purple-400 drop-shadow-[0_0_4px_rgba(168,85,247,0.5)]" />
+                <span>Powered by <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent font-medium">Ultrium</span></span>
+              </div>
+            )}
           </div>
         </div>
       </aside>
