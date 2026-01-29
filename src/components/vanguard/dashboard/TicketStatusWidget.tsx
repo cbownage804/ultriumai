@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 interface TicketStatusWidgetProps {
   open: number;
@@ -10,35 +9,27 @@ interface TicketStatusWidgetProps {
 
 export function TicketStatusWidget({ open, pending, dueToday, overdue }: TicketStatusWidgetProps) {
   return (
-    <Card className="bg-card/50 backdrop-blur border-white/10">
+    <Card className="bg-white border-gray-200 shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">Tickets status</CardTitle>
+        <CardTitle className="text-sm font-medium text-gray-500">Tickets status</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center justify-between gap-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold">{open}</p>
-            <Badge variant="outline" className="mt-1 bg-blue-500/10 text-blue-400 border-blue-500/30">
-              Open
-            </Badge>
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-semibold text-gray-900">{open}</span>
+            <span className="text-sm font-medium text-blue-500 bg-blue-50 px-2 py-0.5 rounded">Open</span>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold">{pending}</p>
-            <Badge variant="outline" className="mt-1 bg-orange-500/10 text-orange-400 border-orange-500/30">
-              Pending
-            </Badge>
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-semibold text-gray-900">{pending}</span>
+            <span className="text-sm font-medium text-orange-500 bg-orange-50 px-2 py-0.5 rounded">Pending</span>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold">{dueToday}</p>
-            <Badge variant="outline" className="mt-1 bg-red-500/10 text-red-400 border-red-500/30">
-              Due today
-            </Badge>
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-semibold text-gray-900">{dueToday}</span>
+            <span className="text-sm font-medium text-red-400 bg-red-50 px-2 py-0.5 rounded">Due today</span>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold">{overdue}</p>
-            <Badge variant="outline" className="mt-1 bg-red-600/10 text-red-500 border-red-600/30">
-              Overdue
-            </Badge>
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-semibold text-gray-900">{overdue}</span>
+            <span className="text-sm font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded">Overdue</span>
           </div>
         </div>
       </CardContent>

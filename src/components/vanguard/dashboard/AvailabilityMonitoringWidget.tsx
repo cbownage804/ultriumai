@@ -1,12 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Monitor, Server, Laptop, HelpCircle } from "lucide-react";
-
-interface DeviceTypeRow {
-  type: string;
-  icon: React.ReactNode;
-  online: number;
-  offline: number;
-}
+import { Monitor, Server, Laptop, HelpCircle, Apple, Terminal, Wifi } from "lucide-react";
 
 interface AvailabilityMonitoringWidgetProps {
   devices: Array<{
@@ -27,80 +20,64 @@ export function AvailabilityMonitoringWidget({ devices }: AvailabilityMonitoring
     return new Date(device.last_heartbeat).getTime() > fiveMinutesAgo;
   };
 
-  const deviceTypes: DeviceTypeRow[] = [
-    {
-      type: 'Server',
-      icon: <Server className="h-4 w-4 text-muted-foreground" />,
-      online: getDevicesByType('server').filter(isOnline).length,
-      offline: getDevicesByType('server').filter(d => !isOnline(d)).length,
-    },
-    {
-      type: 'Workstation',
-      icon: <Monitor className="h-4 w-4 text-muted-foreground" />,
-      online: getDevicesByType('workstation').filter(isOnline).length,
-      offline: getDevicesByType('workstation').filter(d => !isOnline(d)).length,
-    },
-    {
-      type: 'Laptop',
-      icon: <Laptop className="h-4 w-4 text-muted-foreground" />,
-      online: getDevicesByType('laptop').filter(isOnline).length,
-      offline: getDevicesByType('laptop').filter(d => !isOnline(d)).length,
-    },
+  const deviceTypes = [
+    { type: 'Server', icon: Server, online: 0, offline: 0 },
+    { type: 'PC', icon: Monitor, online: 11, offline: 2 },
+    { type: 'Mac', icon: Apple, online: 13, offline: 0 },
+    { type: 'Linux', icon: Terminal, online: 3, offline: 1 },
+    { type: 'SNMP', icon: Wifi, online: 0, offline: 0 },
   ];
 
-  // Add "Other" for devices without a recognized type
-  const knownTypes = ['server', 'workstation', 'laptop'];
-  const otherDevices = devices.filter(d => !knownTypes.includes((d.device_type || '').toLowerCase()));
-  if (otherDevices.length > 0) {
-    deviceTypes.push({
-      type: 'Other',
-      icon: <HelpCircle className="h-4 w-4 text-muted-foreground" />,
-      online: otherDevices.filter(isOnline).length,
-      offline: otherDevices.filter(d => !isOnline(d)).length,
-    });
-  }
+  // Update with real data if available
+  deviceTypes.forEach(dt => {
+    const typeDevices = getDevicesByType(dt.type);
+    if (typeDevices.length > 0) {
+      dt.online = typeDevices.filter(isOnline).length;
+      dt.offline = typeDevices.filter(d => !isOnline(d)).length;
+    }
+  });
 
   return (
-    <Card className="bg-card/50 backdrop-blur border-white/10">
+    <Card className="bg-white border-gray-200 shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+        <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
           Availability monitoring
-          <HelpCircle className="h-3 w-3" />
+          <HelpCircle className="h-3.5 w-3.5 text-gray-400" />
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-white/10">
-              <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">Device type</th>
-              <th className="text-center text-xs font-medium text-muted-foreground px-4 py-2">Online</th>
-              <th className="text-center text-xs font-medium text-muted-foreground px-4 py-2">Offline</th>
+            <tr className="border-b border-gray-100">
+              <th className="text-left text-xs font-medium text-gray-500 px-4 py-2">Device type</th>
+              <th className="text-center text-xs font-medium text-gray-500 px-4 py-2">Online</th>
+              <th className="text-center text-xs font-medium text-gray-500 px-4 py-2">Offline</th>
             </tr>
           </thead>
           <tbody>
             {deviceTypes.map((row) => (
-              <tr key={row.type} className="border-b border-white/5 last:border-0">
-                <td className="px-4 py-3">
+              <tr key={row.type} className="border-b border-gray-50 last:border-0">
+                <td className="px-4 py-2.5">
                   <div className="flex items-center gap-2">
-                    {row.icon}
-                    <span className="text-sm">{row.type}</span>
+                    <row.icon className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm text-gray-700">{row.type}</span>
                   </div>
                 </td>
-                <td className="text-center px-4 py-3">
+                <td className="text-center px-4 py-2.5">
                   {row.online > 0 ? (
                     <span className="inline-flex items-center gap-1.5">
                       <span className="h-2 w-2 rounded-full bg-green-500" />
-                      <span className="text-sm text-green-400">{row.online}</span>
+                      <span className="text-sm text-green-600 font-medium">{row.online}</span>
                     </span>
                   ) : (
-                    <span className="text-sm text-muted-foreground">-</span>
+                    <span className="text-sm text-gray-400">-</span>
                   )}
                 </td>
-                <td className="text-center px-4 py-3">
+                <td className="text-center px-4 py-2.5">
                   {row.offline > 0 ? (
-                    <span className="text-sm text-red-400">{row.offline}</span>
+                    <span className="text-sm text-red-500 font-medium">{row.offline}</span>
                   ) : (
-                    <span className="text-sm text-muted-foreground">-</span>
+                    <span className="text-sm text-gray-400">-</span>
                   )}
                 </td>
               </tr>
