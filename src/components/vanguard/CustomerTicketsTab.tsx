@@ -38,75 +38,8 @@ interface TicketData {
   category: string;
 }
 
-// Mock tickets for demo - in production, this would come from props/API
-const mockTickets: TicketData[] = [
-  { 
-    id: 'TKT-001', 
-    title: 'VPN connection failing intermittently', 
-    status: 'open', 
-    priority: 'high',
-    created_at: '2025-01-28T10:30:00Z',
-    updated_at: '2025-01-28T14:00:00Z',
-    assigned_to: 'Alex Tech',
-    contact_name: 'John Smith',
-    category: 'Network'
-  },
-  { 
-    id: 'TKT-002', 
-    title: 'Email sync issues on mobile devices', 
-    status: 'in_progress', 
-    priority: 'medium',
-    created_at: '2025-01-27T08:15:00Z',
-    updated_at: '2025-01-28T09:00:00Z',
-    assigned_to: 'Sarah Dev',
-    contact_name: 'Sarah Johnson',
-    category: 'Email'
-  },
-  { 
-    id: 'TKT-003', 
-    title: 'New user onboarding - Mike Williams', 
-    status: 'waiting', 
-    priority: 'low',
-    created_at: '2025-01-25T14:00:00Z',
-    updated_at: '2025-01-26T11:00:00Z',
-    assigned_to: null,
-    contact_name: 'HR Department',
-    category: 'Onboarding'
-  },
-  { 
-    id: 'TKT-004', 
-    title: 'Critical - Server unresponsive', 
-    status: 'resolved', 
-    priority: 'critical',
-    created_at: '2025-01-20T02:00:00Z',
-    updated_at: '2025-01-20T05:30:00Z',
-    assigned_to: 'Mike Ops',
-    contact_name: 'John Smith',
-    category: 'Server'
-  },
-  { 
-    id: 'TKT-005', 
-    title: 'Software license renewal request', 
-    status: 'closed', 
-    priority: 'low',
-    created_at: '2025-01-15T09:00:00Z',
-    updated_at: '2025-01-17T16:00:00Z',
-    assigned_to: 'Admin Team',
-    contact_name: 'Finance Dept',
-    category: 'Licensing'
-  },
-  { 
-    id: 'TKT-006', 
-    title: 'Printer not connecting to network', 
-    status: 'open', 
-    priority: 'medium',
-    created_at: '2025-01-29T07:45:00Z',
-    updated_at: '2025-01-29T07:45:00Z',
-    assigned_to: null,
-    contact_name: 'Reception',
-    category: 'Hardware'
-  },
-];
+// Empty default - data comes from props or database
+const defaultTickets: TicketData[] = [];
 
 type SortField = 'created_at' | 'priority' | 'status' | 'title';
 type SortOrder = 'asc' | 'desc';
@@ -135,7 +68,7 @@ interface CustomerTicketsTabProps {
   tickets?: TicketData[];
 }
 
-export function CustomerTicketsTab({ customerId, customerName, tickets = mockTickets }: CustomerTicketsTabProps) {
+export function CustomerTicketsTab({ customerId, customerName, tickets = defaultTickets }: CustomerTicketsTabProps) {
   const navigate = useNavigate();
   const basePath = getVanguardBasePath();
   
