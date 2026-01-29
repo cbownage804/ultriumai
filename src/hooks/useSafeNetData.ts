@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { devLog } from '@/lib/logger';
 
 export interface SafeNetDevice {
   id: string;
@@ -97,12 +98,11 @@ export const useSafeNetData = () => {
 
   const loadDevices = async () => {
     if (!user) {
-      console.log('useSafeNetData: No user found, cannot load devices');
+      devLog.log('useSafeNetData: No user found, cannot load devices');
       return;
     }
 
-    console.log('useSafeNetData: Loading devices for user:', user.id);
-    console.log('useSafeNetData: User object:', user);
+    devLog.log('useSafeNetData: Loading devices for user:', user.id);
 
     try {
       const { data, error } = await supabase
@@ -111,7 +111,7 @@ export const useSafeNetData = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      console.log('useSafeNetData: Query result:', { data, error });
+      devLog.log('useSafeNetData: Query result:', { data, error });
 
       if (error) {
         console.error('useSafeNetData: Database error:', error);
@@ -126,8 +126,7 @@ export const useSafeNetData = () => {
           ? 'online' : device.status || 'offline'
       })) || [];
       
-      console.log('Loaded devices:', transformedDevices);
-      console.log('Raw devices from DB:', data);
+      devLog.log('Loaded devices:', transformedDevices.length);
       setDevices(transformedDevices);
     } catch (error) {
       console.error('Error loading devices:', error);
@@ -222,7 +221,7 @@ export const useSafeNetData = () => {
             filter: `user_id=eq.${user.id}`
           },
           (payload) => {
-            console.log('Device change detected:', payload);
+            devLog.log('Device change detected:', payload);
             // Refresh devices when there's a change
             loadDevices();
           }

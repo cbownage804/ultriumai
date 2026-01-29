@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ContactFormData, INITIAL_FORM_DATA, PRODUCTS } from "@/types/contact";
+import { devLog } from "@/lib/logger";
 
 export const useContactForm = () => {
   // Initialize with fresh timestamp each time form loads
@@ -55,7 +56,7 @@ export const useContactForm = () => {
         throw error;
       }
 
-      console.log('Contact form submitted successfully:', data);
+      devLog.log('Contact form submitted successfully:', data);
       
       toast({
         title: "Message Sent!",

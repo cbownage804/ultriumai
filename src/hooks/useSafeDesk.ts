@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import type { Json } from '@/integrations/supabase/types';
+import { devLog } from '@/lib/logger';
 
 // Ticket types matching helpdesk_tickets schema
 export interface Ticket {
@@ -457,7 +458,7 @@ export const useSafeDesk = () => {
           
           // Auto-trigger AI processing for RMM-generated tickets
           if (newTicket.source === 'rmm_alert' && newTicket.device_context?.auto_generated && newTicket.id) {
-            console.log('[SafeDesk] Auto-triggering AI processing for RMM alert ticket:', newTicket.id);
+            devLog.log('[SafeDesk] Auto-triggering AI processing for RMM alert ticket:', newTicket.id);
             
             // Invoke AI helpdesk assistant for automatic processing
             try {
@@ -477,7 +478,7 @@ export const useSafeDesk = () => {
               if (aiError) {
                 console.error('[SafeDesk] AI processing error:', aiError);
               } else {
-                console.log('[SafeDesk] AI processing complete:', aiResult);
+                devLog.log('[SafeDesk] AI processing complete:', aiResult);
                 
                 // Show AI processing result
                 toast({

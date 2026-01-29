@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { devLog } from '@/lib/logger';
 
 interface GPTVoiceSettings {
   voice: string;
@@ -38,7 +39,7 @@ export const useGPTVoice = ({ gptId, userId, initialSettings }: UseGPTVoiceProps
     setIsLoading(true);
     
     try {
-      console.log('GPT Voice: Converting text to speech');
+      devLog.log('GPT Voice: Converting text to speech');
       
       const { data, error } = await supabase.functions.invoke('gpt-voice-tts', {
         body: {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { devLog } from '@/lib/logger';
 
 interface VanguardMetrics {
   realTimeThreats: number;
@@ -221,7 +222,7 @@ export const useVanguardData = () => {
 
       if (error) throw error;
       
-      console.log('Vanguard threat detection result:', result);
+      devLog.log('Vanguard threat detection result:', result);
       
       // Refresh data after detection
       await Promise.all([fetchThreats(), fetchBehavioralData()]);
@@ -243,7 +244,7 @@ export const useVanguardData = () => {
 
       if (error) throw error;
       
-      console.log('Vanguard behavioral analysis result:', result);
+      devLog.log('Vanguard behavioral analysis result:', result);
       
       // Refresh data after analysis
       await fetchBehavioralData();
@@ -265,7 +266,7 @@ export const useVanguardData = () => {
 
       if (error) throw error;
       
-      console.log('Vanguard autonomous response result:', result);
+      devLog.log('Vanguard autonomous response result:', result);
       
       return result;
     } catch (error) {

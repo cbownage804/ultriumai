@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
+import { devLog } from '@/lib/logger';
 
 interface RealtimeAlert {
   id: string;
@@ -52,7 +53,7 @@ export const useRealtimeAlerts = () => {
   useEffect(() => {
     if (!user) return;
 
-    console.log('[RealtimeAlerts] Setting up subscription...');
+    devLog.log('[RealtimeAlerts] Setting up subscription...');
 
     // Subscribe to security_events inserts
     const securityChannel = supabase
@@ -66,7 +67,7 @@ export const useRealtimeAlerts = () => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('[RealtimeAlerts] New security event:', payload);
+          devLog.log('[RealtimeAlerts] New security event:', payload);
           const event = payload.new as any;
           
           const newAlert: RealtimeAlert = {
@@ -84,7 +85,7 @@ export const useRealtimeAlerts = () => {
         }
       )
       .subscribe((status) => {
-        console.log('[RealtimeAlerts] Security channel status:', status);
+        devLog.log('[RealtimeAlerts] Security channel status:', status);
         setIsConnected(status === 'SUBSCRIBED');
       });
 
@@ -100,7 +101,7 @@ export const useRealtimeAlerts = () => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('[RealtimeAlerts] New incident:', payload);
+          devLog.log('[RealtimeAlerts] New incident:', payload);
           const incident = payload.new as any;
           
           const newAlert: RealtimeAlert = {
@@ -150,7 +151,7 @@ export const useRealtimeAlerts = () => {
       .subscribe();
 
     return () => {
-      console.log('[RealtimeAlerts] Cleaning up subscriptions');
+      devLog.log('[RealtimeAlerts] Cleaning up subscriptions');
       supabase.removeChannel(securityChannel);
       supabase.removeChannel(incidentChannel);
       supabase.removeChannel(threatChannel);

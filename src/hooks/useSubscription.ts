@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { safeWindowOpen } from "@/utils/security";
+import { devLog } from "@/lib/logger";
 
 export interface SubscriptionInfo {
   subscribed: boolean;
@@ -39,7 +40,7 @@ export const useSubscription = () => {
 
     try {
       setIsLoading(true);
-      console.log('Checking subscription for user:', user.email);
+      devLog.log('Checking subscription for user:', user.email);
       
       const { data, error } = await supabase.functions.invoke('check-subscription', {
         headers: {
@@ -49,7 +50,7 @@ export const useSubscription = () => {
 
       if (error) throw error;
       
-      console.log('Subscription data received:', data);
+      devLog.log('Subscription data received:', data);
       
       // If subscription expired and trial period over, force to free tier
       if (data.subscription_end && new Date(data.subscription_end) < now && isTrialExpired && !data.subscribed) {
@@ -73,7 +74,7 @@ export const useSubscription = () => {
           .single();
           
         if (!dbError && dbData) {
-          console.log('Using database fallback:', dbData);
+          devLog.log('Using database fallback:', dbData);
           setSubscription({
             subscribed: dbData.subscribed,
             subscription_tier: dbData.subscription_tier || 'free',

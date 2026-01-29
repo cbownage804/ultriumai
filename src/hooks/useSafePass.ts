@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { encryptData, decryptData, EncryptedData, AADContext } from '@/utils/crypto';
+import { devLog } from '@/lib/logger';
 
 export interface PasswordVault {
   id: string;
@@ -216,7 +217,7 @@ export const useSafePass = () => {
           (typeof (error as any).message === 'string' && (error as any).message.includes('idx_safepass_vaults_user_name'));
 
         if (isDuplicate) {
-          console.log('Vault already exists, skipping creation');
+          devLog.log('Vault already exists, skipping creation');
           return null;
         }
         throw error;

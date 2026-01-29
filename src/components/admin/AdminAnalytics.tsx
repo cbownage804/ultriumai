@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Users, Bot, CreditCard, Activity, Database } from 'lucide-react';
+import { devLog } from '@/lib/logger';
 
 export const AdminAnalytics = () => {
   const [analyticsData, setAnalyticsData] = useState({
@@ -20,11 +21,11 @@ export const AdminAnalytics = () => {
 
   const fetchAnalytics = async () => {
     try {
-      console.log('🔍 Starting admin analytics fetch...');
+      devLog.log('Starting admin analytics fetch...');
       
       // Check authentication first
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('👤 Current user:', user?.email);
+      devLog.log('Current user:', user?.email);
       
       if (!user) {
         throw new Error('User not authenticated');
@@ -34,7 +35,7 @@ export const AdminAnalytics = () => {
       const startDate = new Date();
       startDate.setDate(endDate.getDate() - parseInt(timeRange));
 
-      console.log('📅 Date range:', { startDate: startDate.toISOString(), endDate: endDate.toISOString() });
+      devLog.log('Date range:', { startDate: startDate.toISOString(), endDate: endDate.toISOString() });
 
       const [
         usersRes,
@@ -60,7 +61,7 @@ export const AdminAnalytics = () => {
           .gte('created_at', startDate.toISOString())
       ]);
 
-      console.log('📊 Query results:', {
+      devLog.log('Query results:', {
         users: { data: usersRes.data?.length, error: usersRes.error?.message },
         gpts: { data: gptsRes.data?.length, error: gptsRes.error?.message },
         subscriptions: { data: subscriptionsRes.data?.length, error: subscriptionsRes.error?.message },
