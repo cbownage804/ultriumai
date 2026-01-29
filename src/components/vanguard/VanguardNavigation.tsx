@@ -115,7 +115,7 @@ export function VanguardNavigation() {
       description: 'AI-powered operations',
       tooltip: 'AI-assisted insights and decision support across the Vanguard platform.',
       items: [
-        { title: 'AI Dashboard', path: `${basePath}/ai-dashboard`, icon: Bot, badge: 'AI' },
+        { title: 'AI Command Center', path: `${basePath}/ai-command`, icon: Bot, badge: 'AI' },
         { title: 'KB Generator', path: `${basePath}/ai-knowledge`, icon: Wand2 },
         { title: 'Session Summaries', path: `${basePath}/ai-sessions`, icon: FileText },
         { title: 'AI Analytics', path: `${basePath}/ai-analytics`, icon: Sparkles },
