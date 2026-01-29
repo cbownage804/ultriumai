@@ -12,6 +12,8 @@ const VanguardDeviceDetailPage = lazy(() => import('@/pages/VanguardDeviceDetail
 const VanguardSetup = lazy(() => import('@/pages/VanguardSetup'));
 const VanguardAuthPage = lazy(() => import('@/pages/vanguard/VanguardAuthPage'));
 const VanguardReports = lazy(() => import('@/pages/vanguard/VanguardReports'));
+const VanguardContracts = lazy(() => import('@/pages/vanguard/VanguardContracts'));
+const VanguardAITagging = lazy(() => import('@/pages/vanguard/VanguardAITagging'));
 
 // New navigation pages
 const VanguardTickets = lazy(() => import('@/pages/vanguard/VanguardTickets'));
@@ -115,6 +117,9 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-billing" path="billing" element={<LazyProtectedPage component={VanguardBilling} />} />,
   <Route key="vanguard-admin" path="admin" element={<LazyProtectedPage component={VanguardAdmin} />} />,
   <Route key="vanguard-referrals" path="referrals" element={<LazyProtectedPage component={VanguardReferrals} />} />,
+  // PSA routes
+  <Route key="vanguard-contracts" path="contracts" element={<LazyProtectedPage component={VanguardContracts} />} />,
+  <Route key="vanguard-ai-tagging" path="ai-tagging" element={<LazyProtectedPage component={VanguardAITagging} />} />,
   // New feature routes
   <Route key="vanguard-threat-intel" path="threat-intel" element={<LazyProtectedPage component={ThreatIntelligence} />} />,
   <Route key="vanguard-dark-web" path="dark-web" element={<LazyProtectedPage component={DarkWebMonitor} />} />,
