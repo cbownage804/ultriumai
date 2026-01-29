@@ -7,6 +7,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { SubscriptionStatus } from "@/components/SubscriptionStatus";
 import { CreditUsageDisplay } from "@/components/CreditUsageDisplay";
 import { SubscriptionTestSuite } from "@/components/SubscriptionTestSuite";
+import { ProductTour } from "@/components/onboarding";
+import { AI_STUDIO_TOUR_STEPS } from "@/config/productTours";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useUserCredits } from "@/hooks/useUserCredits";
@@ -230,7 +232,7 @@ export const DashboardOverview = () => {
       </div>
 
       {/* Key Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-tour="stats-overview">
         <Card 
           className="group relative overflow-hidden border-l-4 border-l-primary bg-gradient-to-br from-card to-card/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer"
           onClick={() => navigate('/dashboard/gpt')}
@@ -305,7 +307,7 @@ export const DashboardOverview = () => {
       </div>
 
       {/* Quick Actions */}
-      <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-card via-card to-primary/[0.02]">
+      <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-card via-card to-primary/[0.02]" data-tour="quick-actions">
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <CardHeader className="relative">
           <CardTitle className="flex items-center gap-3">
@@ -347,7 +349,7 @@ export const DashboardOverview = () => {
       </Card>
 
       {/* Pro Tips - clickable with tooltip explanations */}
-      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-secondary/5" data-tour="pro-tips">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -425,6 +427,13 @@ export const DashboardOverview = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Product Tour */}
+      <ProductTour 
+        tourId="ai-studio-intro" 
+        steps={AI_STUDIO_TOUR_STEPS}
+        autoStart={true}
+      />
     </div>
   );
 };
