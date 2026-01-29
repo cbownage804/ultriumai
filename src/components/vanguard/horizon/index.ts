@@ -19,3 +19,5 @@ export { BackupIntegrationHub } from './BackupIntegrationHub';
 export { LicenseManagementPanel } from './LicenseManagementPanel';
 export { RunbookAutomation } from './RunbookAutomation';
 export { SLAUptimeMonitoring } from './SLAUptimeMonitoring';
+export { AssetLifecycleManager } from './AssetLifecycleManager';
+export { EndpointComplianceDashboard } from './EndpointComplianceDashboard';

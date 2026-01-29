@@ -26,6 +26,8 @@ import { BackupIntegrationHub } from './horizon/BackupIntegrationHub';
 import { LicenseManagementPanel } from './horizon/LicenseManagementPanel';
 import { RunbookAutomation } from './horizon/RunbookAutomation';
 import { SLAUptimeMonitoring } from './horizon/SLAUptimeMonitoring';
+import { AssetLifecycleManager } from './horizon/AssetLifecycleManager';
+import { EndpointComplianceDashboard } from './horizon/EndpointComplianceDashboard';
 import { 
   Monitor, 
   Server, 
@@ -273,6 +275,8 @@ export function HorizonDashboard() {
         <TabsList className="bg-background/50 border flex-wrap h-auto p-1">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="assets">Assets</TabsTrigger>
+          <TabsTrigger value="compliance">Compliance</TabsTrigger>
           <TabsTrigger value="patches">Patches</TabsTrigger>
           <TabsTrigger value="scripts">Scripts</TabsTrigger>
           <TabsTrigger value="policies">Policies</TabsTrigger>
@@ -753,6 +757,16 @@ export function HorizonDashboard() {
         {/* Reports Tab */}
         <TabsContent value="reports" className="space-y-6 mt-6">
           <RMMReportingDashboard />
+        </TabsContent>
+
+        {/* Assets Tab */}
+        <TabsContent value="assets" className="space-y-6 mt-6">
+          <AssetLifecycleManager />
+        </TabsContent>
+
+        {/* Compliance Tab */}
+        <TabsContent value="compliance" className="space-y-6 mt-6">
+          <EndpointComplianceDashboard />
         </TabsContent>
 
         {/* Needs Attention Tab */}
