@@ -56,10 +56,12 @@ serve(async (req) => {
     if (!HARDWARE_PRICES[hardwareTier]) {
       throw new Error(`Invalid hardware tier: ${hardwareTier}`);
     }
-    const hardwareConfig = HARDWARE_PRICES[hardwareTier];
     if (!SUBSCRIPTION_PRICES[subscriptionTier]) {
       throw new Error(`Invalid subscription tier: ${subscriptionTier}`);
     }
+
+    const hardwareConfig = HARDWARE_PRICES[hardwareTier];
+    const subscriptionConfig = SUBSCRIPTION_PRICES[subscriptionTier];
 
     // Get user from auth header (optional - guest checkout allowed)
     const authHeader = req.headers.get("Authorization");
@@ -85,8 +87,6 @@ serve(async (req) => {
     }
 
     const origin = req.headers.get("origin") || "https://ultriumai.lovable.app";
-    const hardwareConfig = HARDWARE_PRICES[hardwareTier];
-    const subscriptionConfig = SUBSCRIPTION_PRICES[subscriptionTier];
 
     // Create checkout session with hardware (one-time) using real Stripe price IDs
     const session = await stripe.checkout.sessions.create({
@@ -119,8 +119,9 @@ serve(async (req) => {
     logStep("Checkout session created", { sessionId: session.id });
 
     // Create order record in database
+    let orderId: string | null = null;
     if (userId) {
-      const { error: orderError } = await supabaseClient
+      const { data: orderData, error: orderError } = await supabaseClient
         .from("recon_orders")
         .insert({
           user_id: userId,
@@ -135,13 +136,51 @@ serve(async (req) => {
           customer_name: customerName,
           customer_phone: customerPhone,
           stripe_checkout_session: session.id,
-        });
+        })
+        .select("id")
+        .single();
 
       if (orderError) {
         logStep("Warning: Failed to create order record", { error: orderError.message });
       } else {
-        logStep("Order record created");
+        orderId = orderData.id;
+        logStep("Order record created", { orderId });
       }
+    }
+
+    // Send order notification emails
+    try {
+      const emailPayload = {
+        customerEmail,
+        customerName,
+        orderId: orderId || session.id,
+        hardwareTier,
+        subscriptionTier,
+        hardwarePrice: hardwareConfig.amount,
+        subscriptionPrice: subscriptionConfig.monthly,
+        shippingAddress,
+        notifyAdmin: true,
+      };
+
+      const emailResponse = await fetch(
+        `${Deno.env.get("SUPABASE_URL")}/functions/v1/recon-order-email`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": Deno.env.get("SUPABASE_ANON_KEY") || "",
+          },
+          body: JSON.stringify(emailPayload),
+        }
+      );
+
+      if (emailResponse.ok) {
+        logStep("Order notification emails sent");
+      } else {
+        logStep("Warning: Email notification failed", { status: emailResponse.status });
+      }
+    } catch (emailError) {
+      logStep("Warning: Email notification error", { error: String(emailError) });
     }
 
     return new Response(JSON.stringify({ url: session.url, sessionId: session.id }), {
