@@ -4248,6 +4248,36 @@ export type Database = {
           },
         ]
       }
+      email_automation_log: {
+        Row: {
+          created_at: string
+          email_type: string
+          id: string
+          metadata: Json | null
+          product: string | null
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_type: string
+          id?: string
+          metadata?: Json | null
+          product?: string | null
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_type?: string
+          id?: string
+          metadata?: Json | null
+          product?: string | null
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_scans: {
         Row: {
           completed_at: string | null
