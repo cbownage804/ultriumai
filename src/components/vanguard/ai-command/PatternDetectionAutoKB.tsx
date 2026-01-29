@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,57 +36,6 @@ interface GeneratedArticle {
   tags: string[];
 }
 
-const DEMO_PATTERNS: DetectedPattern[] = [
-  {
-    id: '1',
-    name: 'VPN Connection Timeout Surge',
-    description: 'Significant increase in VPN timeout errors reported across multiple organizations',
-    severity: 'high',
-    ticketCount: 47,
-    affectedCategory: 'Network/VPN',
-    trend: 'increasing',
-    recommendedAction: 'Generate KB article with troubleshooting steps and notify IT team',
-    suggestedKBTitle: 'Troubleshooting VPN Connection Timeouts',
-    autoKBGenerated: false
-  },
-  {
-    id: '2',
-    name: 'Office 365 Sync Issues',
-    description: 'Multiple reports of OneDrive and SharePoint sync failures after recent update',
-    severity: 'medium',
-    ticketCount: 23,
-    affectedCategory: 'Software/Microsoft',
-    trend: 'stable',
-    recommendedAction: 'Create KB article and link to Microsoft known issues',
-    suggestedKBTitle: 'Resolving Office 365 Sync Problems',
-    autoKBGenerated: false
-  },
-  {
-    id: '3',
-    name: 'Password Reset Confusion',
-    description: 'Users reporting unclear instructions in self-service password reset',
-    severity: 'low',
-    ticketCount: 31,
-    affectedCategory: 'Security/Password',
-    trend: 'decreasing',
-    recommendedAction: 'Update existing KB article with clearer step-by-step guide',
-    suggestedKBTitle: 'Self-Service Password Reset Guide',
-    autoKBGenerated: true
-  },
-  {
-    id: '4',
-    name: 'Printer Driver Conflicts',
-    description: 'New Windows update causing printer driver compatibility issues',
-    severity: 'medium',
-    ticketCount: 18,
-    affectedCategory: 'Hardware/Printers',
-    trend: 'increasing',
-    recommendedAction: 'Create KB with driver rollback instructions',
-    suggestedKBTitle: 'Fixing Printer Driver Issues After Windows Update',
-    autoKBGenerated: false
-  }
-];
-
 const severityColors = {
   critical: 'text-red-400 bg-red-500/20 border-red-500/40',
   high: 'text-orange-400 bg-orange-500/20 border-orange-500/40',
@@ -101,12 +50,49 @@ const trendIcons = {
 };
 
 export function PatternDetectionAutoKB() {
-  const [patterns, setPatterns] = useState<DetectedPattern[]>(DEMO_PATTERNS);
+  const [patterns, setPatterns] = useState<DetectedPattern[]>([]);
   const [selectedPattern, setSelectedPattern] = useState<DetectedPattern | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedArticle, setGeneratedArticle] = useState<GeneratedArticle | null>(null);
   const [showArticleDialog, setShowArticleDialog] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadPatterns();
+  }, []);
+
+  const loadPatterns = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('vanguard_kb_patterns')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setPatterns((data || []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        severity: p.severity as 'critical' | 'high' | 'medium' | 'low',
+        ticketCount: p.ticket_count || 0,
+        affectedCategory: p.affected_category,
+        trend: p.trend as 'increasing' | 'stable' | 'decreasing',
+        recommendedAction: p.recommended_action || '',
+        suggestedKBTitle: p.suggested_kb_title,
+        autoKBGenerated: p.auto_kb_generated || false
+      })));
+    } catch (error) {
+      console.error('Error loading patterns:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const generateKBArticle = async (pattern: DetectedPattern) => {
     setIsGenerating(true);
@@ -136,7 +122,12 @@ export function PatternDetectionAutoKB() {
       setGeneratedArticle(article);
       setShowArticleDialog(true);
       
-      // Mark pattern as having KB generated
+      // Mark pattern as having KB generated in database
+      await supabase
+        .from('vanguard_kb_patterns')
+        .update({ auto_kb_generated: true })
+        .eq('id', pattern.id);
+
       setPatterns(patterns.map(p => 
         p.id === pattern.id ? { ...p, autoKBGenerated: true } : p
       ));
@@ -203,7 +194,6 @@ If the above steps don't resolve the issue:
     if (!generatedArticle) return;
 
     try {
-      // Use client_portal_kb which exists in the schema
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -228,11 +218,18 @@ If the above steps don't resolve the issue:
 
   const refreshPatterns = async () => {
     setIsRefreshing(true);
-    // Simulate pattern detection
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await loadPatterns();
     setIsRefreshing(false);
     toast.success('Patterns refreshed');
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -318,80 +315,88 @@ If the above steps don't resolve the issue:
             </CardHeader>
             <ScrollArea className="h-[500px]">
               <div className="p-4 space-y-4">
-                <AnimatePresence>
-                  {patterns.map((pattern, i) => (
-                    <motion.div
-                      key={pattern.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                    >
-                      <Card className="bg-slate-900/50 border-slate-700 hover:border-purple-500/50 transition-colors">
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-start gap-3">
-                              <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-500/30">
-                                <GitBranch className="h-4 w-4 text-purple-400" />
+                {patterns.length === 0 ? (
+                  <div className="text-center py-12 text-slate-500">
+                    <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No patterns detected yet</p>
+                    <p className="text-sm">Patterns will appear as ticket trends are analyzed</p>
+                  </div>
+                ) : (
+                  <AnimatePresence>
+                    {patterns.map((pattern, i) => (
+                      <motion.div
+                        key={pattern.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                      >
+                        <Card className="bg-slate-900/50 border-slate-700 hover:border-purple-500/50 transition-colors">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-start gap-3">
+                                <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-500/30">
+                                  <GitBranch className="h-4 w-4 text-purple-400" />
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-white">{pattern.name}</h4>
+                                  <p className="text-sm text-slate-400 mt-1">{pattern.description}</p>
+                                </div>
                               </div>
-                              <div>
-                                <h4 className="font-medium text-white">{pattern.name}</h4>
-                                <p className="text-sm text-slate-400 mt-1">{pattern.description}</p>
-                              </div>
-                            </div>
-                            <Badge variant="outline" className={severityColors[pattern.severity]}>
-                              {pattern.severity}
-                            </Badge>
-                          </div>
-
-                          <div className="flex items-center gap-4 mb-3 text-sm">
-                            <div className="flex items-center gap-1">
-                              {trendIcons[pattern.trend]}
-                              <span className="text-slate-400">{pattern.trend}</span>
-                            </div>
-                            <span className="text-slate-500">•</span>
-                            <span className="text-cyan-400">{pattern.ticketCount} tickets</span>
-                            <span className="text-slate-500">•</span>
-                            <span className="text-slate-400">{pattern.affectedCategory}</span>
-                          </div>
-
-                          <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700 mb-3">
-                            <div className="flex items-start gap-2">
-                              <Lightbulb className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                              <p className="text-sm text-slate-300">{pattern.recommendedAction}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {pattern.autoKBGenerated ? (
-                              <Badge className="bg-green-500/20 text-green-400 border border-green-500/30">
-                                <CheckCircle2 className="h-3 w-3 mr-1" />
-                                KB Generated
+                              <Badge variant="outline" className={severityColors[pattern.severity]}>
+                                {pattern.severity}
                               </Badge>
-                            ) : (
-                              <Button
-                                size="sm"
-                                className="bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 text-white"
-                                onClick={() => generateKBArticle(pattern)}
-                                disabled={isGenerating && selectedPattern?.id === pattern.id}
-                              >
-                                {isGenerating && selectedPattern?.id === pattern.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                ) : (
-                                  <Wand2 className="h-4 w-4 mr-2" />
-                                )}
-                                Generate KB Article
+                            </div>
+
+                            <div className="flex items-center gap-4 mb-3 text-sm">
+                              <div className="flex items-center gap-1">
+                                {trendIcons[pattern.trend]}
+                                <span className="text-slate-400">{pattern.trend}</span>
+                              </div>
+                              <span className="text-slate-500">•</span>
+                              <span className="text-cyan-400">{pattern.ticketCount} tickets</span>
+                              <span className="text-slate-500">•</span>
+                              <span className="text-slate-400">{pattern.affectedCategory}</span>
+                            </div>
+
+                            <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700 mb-3">
+                              <div className="flex items-start gap-2">
+                                <Lightbulb className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+                                <p className="text-sm text-slate-300">{pattern.recommendedAction}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {pattern.autoKBGenerated ? (
+                                <Badge className="bg-green-500/20 text-green-400 border border-green-500/30">
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                                  KB Generated
+                                </Badge>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  className="bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 text-white"
+                                  onClick={() => generateKBArticle(pattern)}
+                                  disabled={isGenerating && selectedPattern?.id === pattern.id}
+                                >
+                                  {isGenerating && selectedPattern?.id === pattern.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                  ) : (
+                                    <Wand2 className="h-4 w-4 mr-2" />
+                                  )}
+                                  Generate KB Article
+                                </Button>
+                              )}
+                              <Button size="sm" variant="ghost" className="text-slate-400">
+                                <Eye className="h-4 w-4 mr-1" />
+                                View Tickets
                               </Button>
-                            )}
-                            <Button size="sm" variant="ghost" className="text-slate-400">
-                              <Eye className="h-4 w-4 mr-1" />
-                              View Tickets
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                )}
               </div>
             </ScrollArea>
           </Card>
@@ -433,76 +438,59 @@ If the above steps don't resolve the issue:
               </div>
               <div>
                 <label className="text-xs text-slate-500">Analysis Timeframe</label>
-                <Input defaultValue="24 hours" className="mt-1 bg-black/60 border-slate-700" />
-              </div>
-              <div>
-                <label className="text-xs text-slate-500">Auto-KB Confidence</label>
-                <div className="flex items-center gap-2 mt-1">
-                  <Input type="number" defaultValue={85} className="w-20 bg-black/60 border-slate-700" />
-                  <span className="text-slate-400">%</span>
-                </div>
+                <Input type="text" defaultValue="7 days" className="mt-1 bg-black/60 border-slate-700" />
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Generated Article Dialog */}
+      {/* Article Preview Dialog */}
       <Dialog open={showArticleDialog} onOpenChange={setShowArticleDialog}>
-        <DialogContent className="max-w-3xl bg-black/95 border-cyan-500/40">
+        <DialogContent className="max-w-3xl bg-black/95 border-cyan-500/30">
           <DialogHeader>
             <DialogTitle className="text-cyan-400 flex items-center gap-2">
               <Sparkles className="h-5 w-5" />
-              AI-Generated KB Article
+              Generated KB Article
             </DialogTitle>
             <DialogDescription className="text-slate-400">
-              Review and edit the generated article before publishing
+              Review and publish to Knowledge Base
             </DialogDescription>
           </DialogHeader>
           
           {generatedArticle && (
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-slate-400">Title</label>
-                <Input
-                  value={generatedArticle.title}
-                  onChange={(e) => setGeneratedArticle({ ...generatedArticle, title: e.target.value })}
-                  className="mt-1 bg-black/60 border-cyan-500/30"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm text-slate-400">Content (Markdown)</label>
-                <Textarea
-                  value={generatedArticle.content}
-                  onChange={(e) => setGeneratedArticle({ ...generatedArticle, content: e.target.value })}
-                  className="mt-1 h-64 bg-black/60 border-cyan-500/30 font-mono text-sm"
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Tags:</span>
-                {generatedArticle.tags.map((tag) => (
-                  <Badge key={tag} variant="outline" className="border-purple-500/40 text-purple-400">
-                    {tag}
+                <h3 className="text-lg font-semibold text-white mb-2">{generatedArticle.title}</h3>
+                <div className="flex gap-2">
+                  <Badge variant="outline" className="border-cyan-500/40 text-cyan-400">
+                    {generatedArticle.category}
                   </Badge>
-                ))}
+                  {generatedArticle.tags.map((tag, i) => (
+                    <Badge key={i} variant="outline" className="border-slate-600 text-slate-400">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
-                <Button variant="outline" className="border-slate-600" onClick={() => setShowArticleDialog(false)}>
-                  Cancel
-                </Button>
-                <Button variant="outline" className="border-cyan-500/40 text-cyan-400">
+              
+              <ScrollArea className="h-[300px] border border-slate-700 rounded-lg p-4">
+                <pre className="text-sm text-slate-300 whitespace-pre-wrap font-sans">
+                  {generatedArticle.content}
+                </pre>
+              </ScrollArea>
+              
+              <div className="flex gap-3 justify-end">
+                <Button variant="outline" onClick={() => setShowArticleDialog(false)}>
                   <Edit className="h-4 w-4 mr-2" />
-                  Save Draft
+                  Edit Draft
                 </Button>
-                <Button
-                  className="bg-gradient-to-r from-green-500 to-emerald-600 text-white"
+                <Button 
+                  className="bg-gradient-to-r from-cyan-500 to-purple-600"
                   onClick={publishArticle}
                 >
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Publish Article
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Publish to KB
                 </Button>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import {
   Send, Clock, CheckCircle2, Tag, Folder, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface KBDraft {
   id: string;
@@ -24,73 +25,6 @@ interface KBDraft {
   tags: string[];
 }
 
-const DEMO_DRAFTS: KBDraft[] = [
-  {
-    id: '1',
-    title: 'Resolving Outlook Autodiscover Configuration Issues',
-    category: 'Email & Collaboration',
-    status: 'draft',
-    generatedFrom: 'Pattern: Outlook Autodiscover Failures (47 tickets)',
-    createdAt: '2025-01-29',
-    content: `# Resolving Outlook Autodiscover Configuration Issues
-
-## Problem Description
-Users may experience issues connecting Outlook to their mailbox when Autodiscover is not properly configured. Common symptoms include:
-- "Cannot connect to server" errors
-- Outlook continuously prompting for credentials
-- Mobile devices working but desktop Outlook failing
-
-## Root Cause
-This issue typically occurs after:
-- Domain or DNS migrations
-- Changes to MX or CNAME records
-- SSL certificate updates
-
-## Resolution Steps
-
-### Step 1: Verify Autodiscover Records
-1. Open Command Prompt as Administrator
-2. Run: \`nslookup autodiscover.yourdomain.com\`
-3. Verify it points to \`autodiscover.outlook.com\`
-
-### Step 2: Clear Outlook Profile
-1. Close Outlook completely
-2. Open Control Panel > Mail
-3. Click "Show Profiles" > Remove existing profile
-4. Create a new profile
-
-### Step 3: Test Connectivity
-Use Microsoft Remote Connectivity Analyzer to verify configuration.
-
-## Prevention
-- Always test Autodiscover after DNS changes
-- Document DNS configurations before migrations
-- Use monitoring to detect Autodiscover failures`,
-    tags: ['outlook', 'autodiscover', 'email', 'dns', 'troubleshooting']
-  },
-  {
-    id: '2',
-    title: 'FortiClient VPN Connection Stability Guide',
-    category: 'Network & Security',
-    status: 'review',
-    generatedFrom: 'Pattern: VPN Split Tunnel Issues (31 tickets)',
-    createdAt: '2025-01-28',
-    content: `# FortiClient VPN Connection Stability Guide
-
-## Overview
-This guide addresses intermittent VPN disconnections commonly experienced with FortiClient on Windows systems.
-
-## Common Causes
-- MTU size mismatches
-- ISP-level UDP throttling
-- Windows Defender Firewall conflicts
-- Router firmware compatibility
-
-## Quick Fixes...`,
-    tags: ['vpn', 'forticlient', 'network', 'security']
-  }
-];
-
 const CATEGORIES = [
   'Email & Collaboration',
   'Network & Security',
@@ -101,35 +35,169 @@ const CATEGORIES = [
 ];
 
 export function KBArticleGenerator() {
-  const [drafts, setDrafts] = useState<KBDraft[]>(DEMO_DRAFTS);
-  const [selectedDraft, setSelectedDraft] = useState<KBDraft | null>(DEMO_DRAFTS[0]);
+  const [drafts, setDrafts] = useState<KBDraft[]>([]);
+  const [selectedDraft, setSelectedDraft] = useState<KBDraft | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editContent, setEditContent] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleGenerate = async () => {
-    setIsGenerating(true);
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    toast.success('KB article draft generated');
-    setIsGenerating(false);
-  };
+  useEffect(() => {
+    loadDrafts();
+  }, []);
 
-  const handleSave = () => {
-    if (selectedDraft) {
-      setDrafts(drafts.map(d => 
-        d.id === selectedDraft.id ? { ...d, content: editContent } : d
-      ));
-      setEditMode(false);
-      toast.success('Draft saved');
+  const loadDrafts = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('vanguard_kb_drafts')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const mappedDrafts = (data || []).map((d: any) => ({
+        id: d.id,
+        title: d.title,
+        category: d.category,
+        status: d.status as 'draft' | 'review' | 'published',
+        generatedFrom: d.generated_from || '',
+        createdAt: new Date(d.created_at).toISOString().split('T')[0],
+        content: d.content,
+        tags: d.tags || []
+      }));
+
+      setDrafts(mappedDrafts);
+      if (mappedDrafts.length > 0) {
+        setSelectedDraft(mappedDrafts[0]);
+        setEditContent(mappedDrafts[0].content);
+      }
+    } catch (error) {
+      console.error('Error loading drafts:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handlePublish = () => {
-    if (selectedDraft) {
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Generate a new draft
+      const newDraft = {
+        user_id: user.id,
+        title: 'New Generated Article',
+        category: 'General',
+        status: 'draft',
+        generated_from: 'AI Pattern Detection',
+        content: `# New Generated Article
+
+## Overview
+This article was generated from detected patterns.
+
+## Content
+Add your content here...
+
+## Resolution Steps
+1. Step one
+2. Step two
+3. Step three
+
+---
+*Generated by Vanguard Cortex AI*`,
+        tags: ['auto-generated']
+      };
+
+      const { data, error } = await supabase
+        .from('vanguard_kb_drafts')
+        .insert(newDraft)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const mapped: KBDraft = {
+        id: data.id,
+        title: data.title,
+        category: data.category,
+        status: data.status as 'draft' | 'review' | 'published',
+        generatedFrom: data.generated_from || '',
+        createdAt: new Date(data.created_at).toISOString().split('T')[0],
+        content: data.content,
+        tags: data.tags || []
+      };
+
+      setDrafts([mapped, ...drafts]);
+      setSelectedDraft(mapped);
+      setEditContent(mapped.content);
+      toast.success('KB article draft generated');
+    } catch (error) {
+      console.error('Error generating:', error);
+      toast.error('Failed to generate article');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!selectedDraft) return;
+
+    try {
+      await supabase
+        .from('vanguard_kb_drafts')
+        .update({ content: editContent })
+        .eq('id', selectedDraft.id);
+
+      setDrafts(drafts.map(d => 
+        d.id === selectedDraft.id ? { ...d, content: editContent } : d
+      ));
+      setSelectedDraft({ ...selectedDraft, content: editContent });
+      setEditMode(false);
+      toast.success('Draft saved');
+    } catch (error) {
+      console.error('Error saving:', error);
+      toast.error('Failed to save draft');
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!selectedDraft) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Update draft status
+      await supabase
+        .from('vanguard_kb_drafts')
+        .update({ status: 'published' })
+        .eq('id', selectedDraft.id);
+
+      // Also publish to client_portal_kb
+      await supabase.from('client_portal_kb').insert({
+        title: selectedDraft.title,
+        content: selectedDraft.content,
+        category: selectedDraft.category,
+        tags: selectedDraft.tags,
+        is_public: true,
+        is_featured: false,
+        created_by: user.id
+      });
+
       setDrafts(drafts.map(d =>
         d.id === selectedDraft.id ? { ...d, status: 'published' } : d
       ));
+      setSelectedDraft({ ...selectedDraft, status: 'published' });
       toast.success('Article published to Knowledge Base');
+    } catch (error) {
+      console.error('Error publishing:', error);
+      toast.error('Failed to publish article');
     }
   };
 
@@ -143,6 +211,14 @@ export function KBArticleGenerator() {
         return <Badge className="bg-slate-500/20 text-slate-400 border border-slate-500/30">Draft</Badge>;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -187,40 +263,48 @@ export function KBArticleGenerator() {
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[500px]">
-              <div className="space-y-3">
-                {drafts.map((draft) => (
-                  <div
-                    key={draft.id}
-                    onClick={() => {
-                      setSelectedDraft(draft);
-                      setEditContent(draft.content);
-                      setEditMode(false);
-                    }}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                      selectedDraft?.id === draft.id
-                        ? 'bg-cyan-500/10 border-cyan-500/40'
-                        : 'bg-slate-900/50 border-slate-700 hover:border-cyan-500/30'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <FileText className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
-                      {getStatusBadge(draft.status)}
+              {drafts.length === 0 ? (
+                <div className="text-center py-12 text-slate-500">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No drafts yet</p>
+                  <p className="text-sm">Generate your first article</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {drafts.map((draft) => (
+                    <div
+                      key={draft.id}
+                      onClick={() => {
+                        setSelectedDraft(draft);
+                        setEditContent(draft.content);
+                        setEditMode(false);
+                      }}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                        selectedDraft?.id === draft.id
+                          ? 'bg-cyan-500/10 border-cyan-500/40'
+                          : 'bg-slate-900/50 border-slate-700 hover:border-cyan-500/30'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <FileText className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
+                        {getStatusBadge(draft.status)}
+                      </div>
+                      <p className="text-sm text-white font-medium line-clamp-2">{draft.title}</p>
+                      <p className="text-xs text-slate-500 mt-1">{draft.category}</p>
+                      <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
+                        <Clock className="h-3 w-3" />
+                        <span>{draft.createdAt}</span>
+                      </div>
                     </div>
-                    <p className="text-sm text-white font-medium line-clamp-2">{draft.title}</p>
-                    <p className="text-xs text-slate-500 mt-1">{draft.category}</p>
-                    <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
-                      <Clock className="h-3 w-3" />
-                      <span>{draft.createdAt}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </ScrollArea>
           </CardContent>
         </Card>
 
         {/* Article Editor/Preview */}
-        {selectedDraft && (
+        {selectedDraft ? (
           <Card className="bg-black/80 border-cyan-500/30 lg:col-span-2">
             <CardHeader>
               <div className="flex items-start justify-between">
@@ -268,6 +352,7 @@ export function KBArticleGenerator() {
                 <Button
                   size="sm"
                   onClick={handlePublish}
+                  disabled={selectedDraft.status === 'published'}
                   className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 ml-auto"
                 >
                   <Send className="h-4 w-4 mr-1" />
@@ -308,6 +393,13 @@ export function KBArticleGenerator() {
                 ))}
               </div>
             </CardContent>
+          </Card>
+        ) : (
+          <Card className="bg-black/80 border-cyan-500/30 lg:col-span-2 flex items-center justify-center">
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 text-slate-600 mx-auto mb-4" />
+              <p className="text-slate-500">Select a draft to edit or generate a new one</p>
+            </div>
           </Card>
         )}
       </div>

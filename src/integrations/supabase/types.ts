@@ -20333,6 +20333,42 @@ export type Database = {
           },
         ]
       }
+      vanguard_email_automation_rules: {
+        Row: {
+          action: string
+          condition: string
+          created_at: string
+          enabled: boolean
+          id: string
+          name: string
+          triggered_count: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          condition: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name: string
+          triggered_count?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          condition?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+          triggered_count?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_email_configs: {
         Row: {
           auto_create_tickets: boolean | null
@@ -20437,6 +20473,66 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_email_threads: {
+        Row: {
+          ai_category: string | null
+          ai_confidence: number | null
+          ai_sentiment: string | null
+          ai_suggested_response: string | null
+          company: string | null
+          created_at: string
+          from_email: string
+          from_name: string
+          id: string
+          preview: string
+          received_at: string
+          status: string
+          subject: string
+          thread_count: number | null
+          ticket_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_category?: string | null
+          ai_confidence?: number | null
+          ai_sentiment?: string | null
+          ai_suggested_response?: string | null
+          company?: string | null
+          created_at?: string
+          from_email: string
+          from_name: string
+          id?: string
+          preview: string
+          received_at?: string
+          status?: string
+          subject: string
+          thread_count?: number | null
+          ticket_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_category?: string | null
+          ai_confidence?: number | null
+          ai_sentiment?: string | null
+          ai_suggested_response?: string | null
+          company?: string | null
+          created_at?: string
+          from_email?: string
+          from_name?: string
+          id?: string
+          preview?: string
+          received_at?: string
+          status?: string
+          subject?: string
+          thread_count?: number | null
+          ticket_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_endpoint_compliance: {
         Row: {
           agent_id: string | null
@@ -20499,6 +20595,42 @@ export type Database = {
           },
         ]
       }
+      vanguard_escalation_agents: {
+        Row: {
+          active_escalations: number | null
+          avatar: string | null
+          created_at: string
+          id: string
+          name: string
+          skills: string[] | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_escalations?: number | null
+          avatar?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          skills?: string[] | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_escalations?: number | null
+          avatar?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          skills?: string[] | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_escalation_rules: {
         Row: {
           created_at: string
@@ -20533,6 +20665,60 @@ export type Database = {
           priority?: string
           resolution_timeout_minutes?: number
           response_timeout_minutes?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_escalation_tickets: {
+        Row: {
+          ai_confidence: number | null
+          assigned_agent: string | null
+          company: string | null
+          conversation_summary: string
+          created_at: string
+          customer_email: string
+          customer_name: string
+          id: string
+          priority: string
+          scheduled_time: string | null
+          sentiment: string | null
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          assigned_agent?: string | null
+          company?: string | null
+          conversation_summary: string
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          id?: string
+          priority?: string
+          scheduled_time?: string | null
+          sentiment?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          assigned_agent?: string | null
+          company?: string | null
+          conversation_summary?: string
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          id?: string
+          priority?: string
+          scheduled_time?: string | null
+          sentiment?: string | null
+          status?: string
+          type?: string
           updated_at?: string
           user_id?: string
         }
@@ -20765,6 +20951,93 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_kb_drafts: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          generated_from: string | null
+          id: string
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          generated_from?: string | null
+          id?: string
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          generated_from?: string | null
+          id?: string
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_kb_patterns: {
+        Row: {
+          affected_category: string
+          auto_kb_generated: boolean | null
+          created_at: string
+          description: string
+          id: string
+          name: string
+          recommended_action: string | null
+          severity: string
+          suggested_kb_title: string | null
+          ticket_count: number | null
+          trend: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affected_category: string
+          auto_kb_generated?: boolean | null
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          recommended_action?: string | null
+          severity?: string
+          suggested_kb_title?: string | null
+          ticket_count?: number | null
+          trend?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affected_category?: string
+          auto_kb_generated?: boolean | null
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          recommended_action?: string | null
+          severity?: string
+          suggested_kb_title?: string | null
+          ticket_count?: number | null
+          trend?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       vanguard_licenses: {
         Row: {
