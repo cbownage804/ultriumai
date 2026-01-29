@@ -38,6 +38,8 @@ interface TicketActivity {
   content: string;
   timestamp: string;
   isInternal?: boolean;
+  oldValue?: string;
+  newValue?: string;
 }
 
 interface TicketData {
@@ -101,35 +103,71 @@ const mockTicket: TicketData = {
   activities: [
     {
       id: 'act-1',
-      type: 'email',
+      type: 'note',
       user: 'Emma Greszes',
       userInitials: 'EG',
-      content: 'Hi, we are experiencing internet connection issues across multiple workstations in our main office. The connection drops every 15-20 minutes and requires a router restart to fix temporarily. This has been happening since yesterday morning. Please help urgently!',
-      timestamp: 'Feb 8, 2024, 3:46 PM',
-    },
-    {
-      id: 'act-2',
-      type: 'note',
-      user: 'John Smith',
-      userInitials: 'JS',
-      content: 'Initial assessment: Likely a DHCP lease issue or faulty network equipment. Scheduled remote session for tomorrow.',
-      timestamp: 'Feb 8, 2024, 4:15 PM',
+      content: 'Internal note added',
+      timestamp: 'Feb 25, 2024, 3:18 PM',
       isInternal: true,
     },
     {
-      id: 'act-3',
+      id: 'act-2',
       type: 'system',
+      user: 'System',
+      userInitials: 'SY',
+      content: 'An automatic email was sent (bla)',
+      timestamp: 'Feb 25, 2024, 2:32 PM',
+    },
+    {
+      id: 'act-3',
+      type: 'status_change',
+      user: 'Emma Greszes',
+      userInitials: 'EG',
+      content: 'Ticket status changed',
+      timestamp: 'Feb 25, 2024, 2:32 PM',
+      oldValue: 'Test2',
+      newValue: 'Open',
+    },
+    {
+      id: 'act-4',
+      type: 'system',
+      user: 'System',
+      userInitials: 'SY',
+      content: 'An automatic email was sent (bla)',
+      timestamp: 'Feb 25, 2024, 2:32 PM',
+    },
+    {
+      id: 'act-5',
+      type: 'status_change',
+      user: 'Emma Greszes',
+      userInitials: 'EG',
+      content: 'Ticket status changed',
+      timestamp: 'Feb 25, 2024, 2:31 PM',
+      oldValue: 'Open',
+      newValue: 'In Progress',
+    },
+    {
+      id: 'act-6',
+      type: 'email',
+      user: 'Emma Greszes',
+      userInitials: 'EG',
+      content: 'Hi, we are experiencing internet connection issues across multiple workstations. The connection drops every 15-20 minutes.',
+      timestamp: 'Feb 8, 2024, 3:46 PM',
+    },
+    {
+      id: 'act-7',
+      type: 'assignment',
       user: 'System',
       userInitials: 'SY',
       content: 'Ticket assigned to Emma Greszes',
       timestamp: 'Feb 8, 2024, 4:20 PM',
     },
     {
-      id: 'act-4',
+      id: 'act-8',
       type: 'comment',
-      user: 'Emma Greszes',
-      userInitials: 'EG',
-      content: 'Hi Emma, I\'ve reviewed the issue. Could you please check if the router\'s firmware is up to date? Also, can you send me the current DHCP configuration?',
+      user: 'John Smith',
+      userInitials: 'JS',
+      content: 'Hi Emma, I\'ve reviewed the issue. Could you please check if the router\'s firmware is up to date?',
       timestamp: 'Feb 9, 2024, 9:30 AM',
     },
   ],
@@ -541,31 +579,74 @@ export default function VanguardTicketDetail() {
 
             <TabsContent value="activity" className="mt-0">
               <ScrollArea className="h-[calc(100vh-500px)]">
-                <div className="space-y-3">
+                <div className="divide-y divide-cyan-500/10">
                   {ticket.activities.map((activity) => (
                     <div
                       key={activity.id}
-                      className="flex items-start gap-3 p-3 rounded-lg bg-slate-800/30 border border-cyan-500/10"
+                      className="flex items-start gap-4 py-4"
                     >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        activity.type === 'system' ? 'bg-slate-500/20 text-slate-400' :
-                        activity.type === 'note' ? 'bg-amber-500/20 text-amber-400' :
-                        activity.type === 'email' ? 'bg-blue-500/20 text-blue-400' :
-                        'bg-cyan-500/20 text-cyan-400'
-                      }`}>
-                        {activity.type === 'system' && <History className="h-4 w-4" />}
-                        {activity.type === 'note' && <FileText className="h-4 w-4" />}
-                        {activity.type === 'email' && <Mail className="h-4 w-4" />}
-                        {activity.type === 'comment' && <MessageSquare className="h-4 w-4" />}
-                        {activity.type === 'assignment' && <User className="h-4 w-4" />}
-                        {activity.type === 'status_change' && <CheckCircle2 className="h-4 w-4" />}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-white font-medium text-sm">{activity.user}</span>
-                          <span className="text-white/40 text-xs">{activity.timestamp}</span>
+                      {/* Avatar or System Icon */}
+                      {activity.user === 'System' ? (
+                        <div className="w-10 h-10 rounded-full bg-slate-700/50 flex items-center justify-center">
+                          <History className="h-5 w-5 text-slate-400" />
                         </div>
-                        <p className="text-white/60 text-sm mt-1">{activity.content}</p>
+                      ) : (
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-slate-600 text-white text-sm">
+                            {activity.userInitials}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      
+                      <div className="flex-1 min-w-0">
+                        {/* User and Timestamp Row */}
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-white font-medium">{activity.user}</span>
+                          <span className="text-white/40 text-sm">{activity.timestamp}</span>
+                        </div>
+                        
+                        {/* Activity Content */}
+                        <div className="text-white/70">
+                          {activity.type === 'note' && (
+                            <span className="text-cyan-400">Internal note</span>
+                          )}
+                          {activity.type === 'note' && ' added'}
+                          
+                          {activity.type === 'system' && (
+                            <span>
+                              <span className="text-cyan-400">An automatic email</span> was sent (bla)
+                            </span>
+                          )}
+                          
+                          {activity.type === 'status_change' && (
+                            <div>
+                              <span>Ticket status changed</span>
+                              {activity.oldValue && activity.newValue && (
+                                <div className="flex items-center gap-2 mt-2">
+                                  <Badge variant="outline" className="bg-cyan-500/10 border-cyan-500/30 text-cyan-400">
+                                    {activity.oldValue}
+                                  </Badge>
+                                  <span className="text-white/40">→</span>
+                                  <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/30 text-emerald-400">
+                                    {activity.newValue}
+                                  </Badge>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
+                          {activity.type === 'assignment' && (
+                            <span>Ticket assigned to <span className="text-white">{activity.content.replace('Ticket assigned to ', '')}</span></span>
+                          )}
+                          
+                          {activity.type === 'email' && (
+                            <span className="text-white/60">{activity.content}</span>
+                          )}
+                          
+                          {activity.type === 'comment' && (
+                            <span className="text-white/60">{activity.content}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
