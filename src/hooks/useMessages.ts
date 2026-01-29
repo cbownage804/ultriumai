@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Message } from "@/types/chat";
+import { devLog } from "@/lib/logger";
 
 export const useMessages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -24,7 +25,7 @@ export const useMessages = () => {
       
       setMessages(typedMessages);
     } catch (error) {
-      console.error('Error loading messages:', error);
+      devLog.error('Error loading messages:', error);
       toast({
         title: "Error",
         description: "Failed to load messages.",
@@ -48,7 +49,7 @@ export const useMessages = () => {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error saving message:', error);
+      devLog.error('Error saving message:', error);
       throw error;
     }
   };

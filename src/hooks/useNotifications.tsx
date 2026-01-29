@@ -2,6 +2,7 @@ import { useState, useEffect, createContext, useContext, ReactNode, useCallback 
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { devLog } from '@/lib/logger';
 
 export interface Notification {
   id: string;
@@ -109,7 +110,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         };
       }));
     } catch (error: unknown) {
-      console.error('Error loading notifications:', error);
+      devLog.error('Error loading notifications:', error);
     } finally {
       setIsLoading(false);
     }
@@ -143,7 +144,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         created_at: a.created_at
       })));
     } catch (error: unknown) {
-      console.error('Error loading alerts:', error);
+      devLog.error('Error loading alerts:', error);
     }
   }, [user]);
 
@@ -266,7 +267,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         prev.map(n => n.id === id ? { ...n, read_at: new Date().toISOString() } : n)
       );
     } catch (error: unknown) {
-      console.error('Error marking notification as read:', error);
+      devLog.error('Error marking notification as read:', error);
     }
   };
 
@@ -299,7 +300,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         description: "Marked all notifications as read"
       });
     } catch (error: unknown) {
-      console.error('Error marking all notifications as read:', error);
+      devLog.error('Error marking all notifications as read:', error);
     }
   };
 
@@ -325,7 +326,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         description: notes || "Security alert has been acknowledged"
       });
     } catch (error: unknown) {
-      console.error('Error acknowledging alert:', error);
+      devLog.error('Error acknowledging alert:', error);
     }
   };
 
@@ -353,7 +354,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error;
     } catch (error: unknown) {
-      console.error('Error sending notification:', error);
+      devLog.error('Error sending notification:', error);
       throw error;
     }
   };
@@ -388,7 +389,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         variant: alert.severity === 'critical' ? 'destructive' : 'default'
       });
     } catch (error: unknown) {
-      console.error('Error creating security alert:', error);
+      devLog.error('Error creating security alert:', error);
       throw error;
     }
   };

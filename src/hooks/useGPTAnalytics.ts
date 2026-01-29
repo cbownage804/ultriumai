@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { devLog } from "@/lib/logger";
 
 export interface AnalyticsData {
   day: string;
@@ -57,7 +58,7 @@ export const useGPTAnalytics = (gptId?: string) => {
         .from('gpt_analytics') as any)
         .insert(insertData);
     } catch (error) {
-      console.error('Error tracking message analytics:', error);
+      devLog.error('Error tracking message analytics:', error);
     }
   }, [user, gptId]);
 
@@ -78,7 +79,7 @@ export const useGPTAnalytics = (gptId?: string) => {
         .from('gpt_analytics') as any)
         .insert(insertData);
     } catch (error) {
-      console.error('Error tracking session start:', error);
+      devLog.error('Error tracking session start:', error);
     }
   }, [user, gptId]);
 
@@ -99,7 +100,7 @@ export const useGPTAnalytics = (gptId?: string) => {
         .from('gpt_analytics') as any)
         .insert(insertData);
     } catch (error) {
-      console.error('Error tracking session end:', error);
+      devLog.error('Error tracking session end:', error);
     }
   }, [user, gptId]);
 
@@ -213,7 +214,7 @@ export const useGPTAnalytics = (gptId?: string) => {
         }
       };
     } catch (error) {
-      console.error('Error fetching analytics:', error);
+      devLog.error('Error fetching analytics:', error);
       return {
         data: [],
         stats: {

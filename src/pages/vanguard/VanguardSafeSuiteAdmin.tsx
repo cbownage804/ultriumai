@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { EmptyState } from '@/components/ui/empty-state';
 import { 
   Table, 
   TableBody, 
@@ -367,8 +368,17 @@ export default function VanguardSafeSuiteAdmin() {
                 </TableRow>
               ) : filteredClients.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-white/40">
-                    No clients found
+                  <TableCell colSpan={6} className="p-0">
+                    <EmptyState
+                      icon={Users}
+                      title="No clients found"
+                      description="Add your first SafeSuite client to get started"
+                      size="sm"
+                      action={{
+                        label: "Add Client",
+                        onClick: () => {}
+                      }}
+                    />
                   </TableCell>
                 </TableRow>
               ) : (
