@@ -100,8 +100,7 @@ export default function VanguardCustomers() {
   };
 
   const handleViewDashboard = (customer: typeof initialCustomers[0]) => {
-    toast.info(`Opening dashboard for ${customer.name}`);
-    navigate(`${basePath}/dashboard?customer=${customer.id}`);
+    navigate(`${basePath}/customers/${customer.id}`);
   };
 
   const handleViewDevices = (customer: typeof initialCustomers[0]) => {
