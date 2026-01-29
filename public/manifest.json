@@ -1,18 +1,47 @@
 {
-  "name": "UltriumAI",
+  "name": "UltriumAI - Built for Business. Secure by Design",
   "short_name": "UltriumAI",
-  "description": "AI-Powered Cybersecurity Platform for Business",
+  "description": "AI-powered knowledge management and cybersecurity solutions for businesses, MSPs, and MSSPs. Build custom AI agents, automate operations, and protect your organization.",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
   "background_color": "#0a0a0a",
   "theme_color": "#8b5cf6",
-  "orientation": "portrait-primary",
+  "orientation": "any",
+  "scope": "/",
+  "lang": "en-US",
+  "dir": "ltr",
   "icons": [
+    {
+      "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png",
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png",
@@ -21,22 +50,59 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["business", "security", "productivity"],
-  "screenshots": [],
+  "categories": ["business", "productivity", "security", "utilities"],
+  "screenshots": [
+    {
+      "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "UltriumAI Dashboard"
+    },
+    {
+      "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "UltriumAI Mobile"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
+      "description": "Access your UltriumAI dashboard",
       "url": "/hub",
       "icons": [{ "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png", "sizes": "192x192" }]
     },
     {
       "name": "AI Studio",
       "short_name": "AI Studio",
+      "description": "Build custom AI agents",
       "url": "/ai-studio",
+      "icons": [{ "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "SafePass",
+      "short_name": "SafePass",
+      "description": "Password management",
+      "url": "/safepass",
+      "icons": [{ "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "SafeScan",
+      "short_name": "SafeScan",
+      "description": "Threat scanning",
+      "url": "/safescan",
       "icons": [{ "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png", "sizes": "192x192" }]
     }
   ],
   "related_applications": [],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }
