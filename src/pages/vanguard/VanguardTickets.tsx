@@ -517,7 +517,12 @@ export default function VanguardTickets() {
     toast.success(`Ticket ${ticketId} closed`);
   };
 
-  const handleViewDetails = (ticket: typeof mockTickets[0]) => {
+  const handleViewDetails = (ticket: Ticket) => {
+    // Navigate to full ticket detail page
+    navigate(`${basePath}/tickets/${ticket.id}`);
+  };
+
+  const handleQuickView = (ticket: Ticket) => {
     setSelectedTicket(ticket);
   };
 
@@ -728,8 +733,16 @@ export default function VanguardTickets() {
                                   onClick={() => handleViewDetails(ticket)}
                                 >
                                   <Eye className="h-4 w-4 mr-2" />
-                                  View Details
+                                  Open Ticket
                                 </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="text-white/80 hover:bg-cyan-500/10"
+                                  onClick={() => handleQuickView(ticket)}
+                                >
+                                  <MessageSquare className="h-4 w-4 mr-2" />
+                                  Quick View
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator className="bg-cyan-500/20" />
                                 <DropdownMenuItem 
                                   className="text-white/80 hover:bg-cyan-500/10"
                                   onClick={() => handleAssign(ticket.id)}

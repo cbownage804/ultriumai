@@ -15,6 +15,7 @@ const VanguardReports = lazy(() => import('@/pages/vanguard/VanguardReports'));
 
 // New navigation pages
 const VanguardTickets = lazy(() => import('@/pages/vanguard/VanguardTickets'));
+const VanguardTicketDetail = lazy(() => import('@/pages/vanguard/VanguardTicketDetail'));
 const VanguardCustomers = lazy(() => import('@/pages/vanguard/VanguardCustomers'));
 const VanguardAlerts = lazy(() => import('@/pages/vanguard/VanguardAlerts'));
 const VanguardAppCenter = lazy(() => import('@/pages/vanguard/VanguardAppCenter'));
@@ -104,6 +105,7 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-scheduled-reports" path="scheduled-reports" element={<LazyProtectedPage component={AgentReportGenerator} />} />,
   // Navigation routes
   <Route key="vanguard-tickets" path="tickets" element={<LazyProtectedPage component={VanguardTickets} />} />,
+  <Route key="vanguard-ticket-detail" path="tickets/:ticketId" element={<LazyProtectedPage component={VanguardTicketDetail} />} />,
   <Route key="vanguard-customers" path="customers" element={<LazyProtectedPage component={VanguardCustomers} />} />,
   <Route key="vanguard-alerts" path="alerts" element={<LazyProtectedPage component={VanguardAlerts} />} />,
   <Route key="vanguard-apps" path="apps" element={<LazyProtectedPage component={VanguardAppCenter} />} />,
