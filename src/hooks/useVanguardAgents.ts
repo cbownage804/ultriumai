@@ -25,6 +25,18 @@ export interface VanguardAgent {
   disk_usage?: number;
   created_at: string;
   updated_at: string;
+  // Agent type differentiation
+  agent_type: 'windows' | 'pi_appliance';
+  // Pi appliance specific fields
+  is_network_scanner?: boolean;
+  scanner_subnets?: string[];
+  last_scan_at?: string | null;
+  scan_interval_seconds?: number;
+  firewall_rules?: Record<string, any>[];
+  traffic_stats?: Record<string, any>;
+  threat_detections?: Record<string, any>[];
+  ml_model_version?: string | null;
+  inference_stats?: Record<string, any>;
 }
 
 export interface VanguardMetric {
