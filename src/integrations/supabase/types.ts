@@ -19547,6 +19547,113 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_backup_jobs: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          device_name: string
+          duration_minutes: number | null
+          error_message: string | null
+          id: string
+          job_type: string | null
+          last_run: string | null
+          next_run: string | null
+          retention_days: number | null
+          size_gb: number | null
+          status: string | null
+          updated_at: string
+          user_id: string
+          vendor_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          device_name: string
+          duration_minutes?: number | null
+          error_message?: string | null
+          id?: string
+          job_type?: string | null
+          last_run?: string | null
+          next_run?: string | null
+          retention_days?: number | null
+          size_gb?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          vendor_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          device_name?: string
+          duration_minutes?: number | null
+          error_message?: string | null
+          id?: string
+          job_type?: string | null
+          last_run?: string | null
+          next_run?: string | null
+          retention_days?: number | null
+          size_gb?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_backup_jobs_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_backup_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_backup_vendors: {
+        Row: {
+          api_endpoint: string | null
+          api_key_configured: boolean | null
+          config_data: Json | null
+          created_at: string
+          id: string
+          is_connected: boolean | null
+          jobs_monitored: number | null
+          last_sync: string | null
+          updated_at: string
+          user_id: string
+          vendor_name: string
+          vendor_type: string
+        }
+        Insert: {
+          api_endpoint?: string | null
+          api_key_configured?: boolean | null
+          config_data?: Json | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean | null
+          jobs_monitored?: number | null
+          last_sync?: string | null
+          updated_at?: string
+          user_id: string
+          vendor_name: string
+          vendor_type: string
+        }
+        Update: {
+          api_endpoint?: string | null
+          api_key_configured?: boolean | null
+          config_data?: Json | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean | null
+          jobs_monitored?: number | null
+          last_sync?: string | null
+          updated_at?: string
+          user_id?: string
+          vendor_name?: string
+          vendor_type?: string
+        }
+        Relationships: []
+      }
       vanguard_baseline_drifts: {
         Row: {
           acknowledged_at: string | null
@@ -19650,6 +19757,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_client_costs: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          device_cost: number | null
+          id: string
+          infrastructure_cost: number | null
+          licensing_cost: number | null
+          margin_percent: number | null
+          period_end: string
+          period_start: string
+          revenue: number | null
+          support_cost: number | null
+          support_hours: number | null
+          total_cost: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          device_cost?: number | null
+          id?: string
+          infrastructure_cost?: number | null
+          licensing_cost?: number | null
+          margin_percent?: number | null
+          period_end: string
+          period_start: string
+          revenue?: number | null
+          support_cost?: number | null
+          support_hours?: number | null
+          total_cost?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          device_cost?: number | null
+          id?: string
+          infrastructure_cost?: number | null
+          licensing_cost?: number | null
+          margin_percent?: number | null
+          period_end?: string
+          period_start?: string
+          revenue?: number | null
+          support_cost?: number | null
+          support_hours?: number | null
+          total_cost?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       vanguard_client_portal_billing: {
         Row: {
@@ -20183,6 +20344,42 @@ export type Database = {
           },
         ]
       }
+      vanguard_email_templates: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          subject: string
+          template_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          subject: string
+          template_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          subject?: string
+          template_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_endpoint_compliance: {
         Row: {
           agent_id: string | null
@@ -20284,6 +20481,63 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_fleet_scripts: {
+        Row: {
+          author: string | null
+          category: string | null
+          content: string
+          created_at: string
+          description: string | null
+          execution_count: number | null
+          id: string
+          is_builtin: boolean | null
+          is_favorite: boolean | null
+          last_executed: string | null
+          last_result: string | null
+          name: string
+          script_type: string | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author?: string | null
+          category?: string | null
+          content: string
+          created_at?: string
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_builtin?: boolean | null
+          is_favorite?: boolean | null
+          last_executed?: string | null
+          last_result?: string | null
+          name: string
+          script_type?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author?: string | null
+          category?: string | null
+          content?: string
+          created_at?: string
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_builtin?: boolean | null
+          is_favorite?: boolean | null
+          last_executed?: string | null
+          last_result?: string | null
+          name?: string
+          script_type?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_honeypot_events: {
         Row: {
           agent_id: string
@@ -20345,6 +20599,59 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_inbound_emails: {
+        Row: {
+          body: string | null
+          config_id: string | null
+          created_at: string
+          from_address: string
+          has_attachments: boolean | null
+          id: string
+          raw_headers: Json | null
+          received_at: string | null
+          status: string | null
+          subject: string
+          ticket_id: string | null
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          config_id?: string | null
+          created_at?: string
+          from_address: string
+          has_attachments?: boolean | null
+          id?: string
+          raw_headers?: Json | null
+          received_at?: string | null
+          status?: string | null
+          subject: string
+          ticket_id?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          config_id?: string | null
+          created_at?: string
+          from_address?: string
+          has_attachments?: boolean | null
+          id?: string
+          raw_headers?: Json | null
+          received_at?: string | null
+          status?: string | null
+          subject?: string
+          ticket_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_inbound_emails_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_email_configs"
             referencedColumns: ["id"]
           },
         ]
@@ -21575,6 +21882,62 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_script_executions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          device_count: number | null
+          failed_count: number | null
+          id: string
+          output_summary: string | null
+          script_id: string | null
+          script_name: string
+          started_at: string | null
+          status: string | null
+          success_count: number | null
+          target_devices: string[] | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          device_count?: number | null
+          failed_count?: number | null
+          id?: string
+          output_summary?: string | null
+          script_id?: string | null
+          script_name: string
+          started_at?: string | null
+          status?: string | null
+          success_count?: number | null
+          target_devices?: string[] | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          device_count?: number | null
+          failed_count?: number | null
+          id?: string
+          output_summary?: string | null
+          script_id?: string | null
+          script_name?: string
+          started_at?: string | null
+          status?: string | null
+          success_count?: number | null
+          target_devices?: string[] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_script_executions_script_id_fkey"
+            columns: ["script_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_fleet_scripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vanguard_security_events: {
         Row: {
           action_success: boolean | null
@@ -22335,6 +22698,48 @@ export type Database = {
           trigger_event?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_technician_utilization: {
+        Row: {
+          billable_hours: number | null
+          created_at: string
+          id: string
+          non_billable_hours: number | null
+          period_date: string
+          technician_id: string | null
+          technician_name: string
+          tickets_completed: number | null
+          total_hours: number | null
+          user_id: string
+          utilization_percent: number | null
+        }
+        Insert: {
+          billable_hours?: number | null
+          created_at?: string
+          id?: string
+          non_billable_hours?: number | null
+          period_date: string
+          technician_id?: string | null
+          technician_name: string
+          tickets_completed?: number | null
+          total_hours?: number | null
+          user_id: string
+          utilization_percent?: number | null
+        }
+        Update: {
+          billable_hours?: number | null
+          created_at?: string
+          id?: string
+          non_billable_hours?: number | null
+          period_date?: string
+          technician_id?: string | null
+          technician_name?: string
+          tickets_completed?: number | null
+          total_hours?: number | null
+          user_id?: string
+          utilization_percent?: number | null
         }
         Relationships: []
       }
