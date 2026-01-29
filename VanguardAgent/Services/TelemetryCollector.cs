@@ -38,7 +38,7 @@ public class TelemetryCollector
             Hostname = Environment.MachineName,
             OsName = RuntimeInformation.OSDescription,
             OsVersion = Environment.OSVersion.VersionString,
-            AgentVersion = "1.0.0"
+            AgentVersion = "1.1.0"
         };
 
         // Get IP and MAC
@@ -207,11 +207,26 @@ public class TelemetryCollector
             {
                 try
                 {
+                    string startType = "Unknown";
+
+                    // Get start type from WMI
+                    try
+                    {
+                        using var searcher = new ManagementObjectSearcher($"SELECT StartMode FROM Win32_Service WHERE Name = '{svc.ServiceName}'");
+                        foreach (var obj in searcher.Get())
+                        {
+                            startType = obj["StartMode"]?.ToString() ?? "Unknown";
+                            break;
+                        }
+                    }
+                    catch { }
+
                     services.Add(new ServiceInfo
                     {
                         Name = svc.ServiceName,
                         DisplayName = svc.DisplayName,
-                        Status = svc.Status.ToString()
+                        Status = svc.Status.ToString(),
+                        StartType = startType
                     });
                 }
                 catch { }
