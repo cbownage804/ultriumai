@@ -1,29 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Monitor,
   Terminal,
   FolderOpen,
-  Video,
   Eye,
-  Download,
-  Upload,
-  Settings,
-  Power,
-  RotateCcw,
   Pause,
   Play,
   Users,
@@ -34,9 +20,13 @@ import {
   Maximize2,
   X,
   Search,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, differenceInSeconds } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface RemoteSession {
   id: string;
@@ -58,53 +48,77 @@ interface Device {
   last_user?: string;
 }
 
-const mockSessions: RemoteSession[] = [
-  {
-    id: "sess-1",
-    device_id: "dev-1",
-    device_name: "WKS-JOHN-PC",
-    user: "admin@company.com",
-    type: "rdp",
-    status: "active",
-    started_at: new Date(Date.now() - 45 * 60000).toISOString(),
-    duration_seconds: 2700,
-  },
-  {
-    id: "sess-2",
-    device_id: "dev-2",
-    device_name: "SRV-PROD-01",
-    user: "tech@company.com",
-    type: "terminal",
-    status: "active",
-    started_at: new Date(Date.now() - 15 * 60000).toISOString(),
-    duration_seconds: 900,
-  },
-  {
-    id: "sess-3",
-    device_id: "dev-3",
-    device_name: "WKS-SARAH-LAPTOP",
-    user: "admin@company.com",
-    type: "file_transfer",
-    status: "paused",
-    started_at: new Date(Date.now() - 60 * 60000).toISOString(),
-    duration_seconds: 3600,
-  },
-];
-
-const mockDevices: Device[] = [
-  { id: "dev-1", name: "WKS-JOHN-PC", ip_address: "192.168.1.101", status: "online", os: "Windows 11 Pro", last_user: "john@company.com" },
-  { id: "dev-2", name: "SRV-PROD-01", ip_address: "192.168.1.10", status: "online", os: "Windows Server 2022" },
-  { id: "dev-3", name: "WKS-SARAH-LAPTOP", ip_address: "192.168.1.102", status: "online", os: "Windows 11 Pro", last_user: "sarah@company.com" },
-  { id: "dev-4", name: "WKS-MIKE-PC", ip_address: "192.168.1.103", status: "offline", os: "Windows 10 Pro", last_user: "mike@company.com" },
-  { id: "dev-5", name: "SRV-DB-01", ip_address: "192.168.1.11", status: "online", os: "Windows Server 2019" },
-];
-
 export function FleetRemoteAccess() {
-  const [sessions, setSessions] = useState<RemoteSession[]>(mockSessions);
-  const [devices] = useState<Device[]>(mockDevices);
+  const { user } = useAuth();
+  const [sessions, setSessions] = useState<RemoteSession[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("sessions");
   const [searchQuery, setSearchQuery] = useState("");
   const [isConnecting, setIsConnecting] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      // Load devices from vanguard_agents - using correct column names
+      const { data: agentsData, error: agentsError } = await supabase
+        .from('vanguard_agents')
+        .select('id, name, ip_address, status, agent_type, last_heartbeat, device_id')
+        .eq('user_id', user?.id)
+        .order('last_heartbeat', { ascending: false });
+
+      if (agentsError) throw agentsError;
+
+      const mappedDevices: Device[] = (agentsData || []).map((agent: any) => ({
+        id: agent.id,
+        name: agent.name || agent.device_id || 'Unknown',
+        ip_address: agent.ip_address ? String(agent.ip_address) : 'N/A',
+        status: agent.status === 'online' ? 'online' : 'offline',
+        os: agent.agent_type || 'Unknown OS',
+        last_user: undefined,
+      }));
+      setDevices(mappedDevices);
+
+      // Load active sessions from remote_sessions
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('remote_sessions')
+        .select('*')
+        .eq('user_id', user?.id)
+        .in('status', ['active', 'paused', 'initiated'])
+        .order('started_at', { ascending: false });
+
+      if (!sessionsError && sessionsData) {
+        const mappedSessions: RemoteSession[] = sessionsData.map((sess: any) => {
+          const device = mappedDevices.find(d => d.id === sess.device_id);
+          const durationSecs = sess.started_at 
+            ? differenceInSeconds(new Date(), new Date(sess.started_at))
+            : 0;
+          return {
+            id: sess.id,
+            device_id: sess.device_id || '',
+            device_name: device?.name || 'Unknown Device',
+            user: 'current.user@company.com',
+            type: (sess.session_type as RemoteSession["type"]) || 'rdp',
+            status: sess.status === 'initiated' ? 'active' : (sess.status as RemoteSession["status"]),
+            started_at: sess.started_at || new Date().toISOString(),
+            duration_seconds: durationSecs,
+          };
+        });
+        setSessions(mappedSessions);
+      }
+    } catch (err) {
+      console.error('Failed to load remote access data:', err);
+      toast.error('Failed to load remote access data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const onlineDevices = devices.filter((d) => d.status === "online");
   const activeSessions = sessions.filter((s) => s.status !== "disconnected");
@@ -125,37 +139,90 @@ export function FleetRemoteAccess() {
   const handleConnect = async (deviceId: string, type: string) => {
     setIsConnecting(`${deviceId}-${type}`);
     const device = devices.find((d) => d.id === deviceId);
-    
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    
-    const newSession: RemoteSession = {
-      id: `sess-${Date.now()}`,
-      device_id: deviceId,
-      device_name: device?.name || "Unknown",
-      user: "current.user@company.com",
-      type: type as RemoteSession["type"],
-      status: "active",
-      started_at: new Date().toISOString(),
-      duration_seconds: 0,
-    };
-    
-    setSessions([newSession, ...sessions]);
-    setIsConnecting(null);
-    setActiveTab("sessions");
+
+    try {
+      // Create session record with required fields
+      const sessionToken = `sess_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      
+      const { data: newSession, error } = await supabase
+        .from('remote_sessions')
+        .insert({
+          user_id: user?.id,
+          device_id: deviceId,
+          session_type: type,
+          session_token: sessionToken,
+          status: 'active',
+          started_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const session: RemoteSession = {
+        id: newSession.id,
+        device_id: deviceId,
+        device_name: device?.name || "Unknown",
+        user: "current.user@company.com",
+        type: type as RemoteSession["type"],
+        status: "active",
+        started_at: new Date().toISOString(),
+        duration_seconds: 0,
+      };
+
+      setSessions([session, ...sessions]);
+      setActiveTab("sessions");
+      toast.success(`Connected to ${device?.name}`);
+    } catch (err) {
+      console.error('Failed to start session:', err);
+      toast.error('Failed to start remote session');
+    } finally {
+      setIsConnecting(null);
+    }
   };
 
-  const endSession = (sessionId: string) => {
-    setSessions(sessions.filter((s) => s.id !== sessionId));
+  const endSession = async (sessionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('remote_sessions')
+        .update({ 
+          status: 'ended',
+          ended_at: new Date().toISOString()
+        })
+        .eq('id', sessionId);
+
+      if (error) throw error;
+
+      setSessions(sessions.filter((s) => s.id !== sessionId));
+      toast.success('Session ended');
+    } catch (err) {
+      console.error('Failed to end session:', err);
+      toast.error('Failed to end session');
+    }
   };
 
-  const pauseSession = (sessionId: string) => {
-    setSessions(
-      sessions.map((s) =>
-        s.id === sessionId
-          ? { ...s, status: s.status === "paused" ? "active" : "paused" }
-          : s
-      )
-    );
+  const pauseSession = async (sessionId: string) => {
+    const session = sessions.find(s => s.id === sessionId);
+    const newStatus = session?.status === "paused" ? "active" : "paused";
+    
+    try {
+      const { error } = await supabase
+        .from('remote_sessions')
+        .update({ status: newStatus })
+        .eq('id', sessionId);
+
+      if (error) throw error;
+
+      setSessions(
+        sessions.map((s) =>
+          s.id === sessionId
+            ? { ...s, status: newStatus }
+            : s
+        )
+      );
+    } catch (err) {
+      console.error('Failed to update session:', err);
+    }
   };
 
   const getSessionIcon = (type: RemoteSession["type"]) => {
@@ -167,8 +234,25 @@ export function FleetRemoteAccess() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Fleet Remote Access</h2>
+        <Button variant="outline" size="sm" onClick={loadData}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
@@ -188,14 +272,18 @@ export function FleetRemoteAccess() {
         <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
           <CardContent className="p-4 text-center">
             <Users className="h-6 w-6 mx-auto text-purple-500 mb-2" />
-            <p className="text-2xl font-bold">3</p>
-            <p className="text-xs text-muted-foreground">Active Technicians</p>
+            <p className="text-2xl font-bold">{devices.length}</p>
+            <p className="text-xs text-muted-foreground">Total Devices</p>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 border-cyan-500/20">
           <CardContent className="p-4 text-center">
             <Clock className="h-6 w-6 mx-auto text-cyan-500 mb-2" />
-            <p className="text-2xl font-bold">2.5h</p>
+            <p className="text-2xl font-bold">
+              {activeSessions.length > 0 
+                ? formatDuration(Math.round(activeSessions.reduce((sum, s) => sum + s.duration_seconds, 0) / activeSessions.length))
+                : '0m'}
+            </p>
             <p className="text-xs text-muted-foreground">Avg Session Time</p>
           </CardContent>
         </Card>
@@ -308,83 +396,91 @@ export function FleetRemoteAccess() {
 
                 <ScrollArea className="h-[400px]">
                   <div className="space-y-3">
-                    {filteredDevices.map((device) => (
-                      <div
-                        key={device.id}
-                        className={cn(
-                          "p-4 rounded-lg border",
-                          device.status === "online" ? "bg-muted/30" : "bg-muted/10 opacity-60"
-                        )}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={cn(
-                              "p-2 rounded-lg",
-                              device.status === "online" ? "bg-green-500/20" : "bg-gray-500/20"
-                            )}>
+                    {filteredDevices.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Monitor className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No devices found</p>
+                        <p className="text-sm">Deploy agents to see devices here</p>
+                      </div>
+                    ) : (
+                      filteredDevices.map((device) => (
+                        <div
+                          key={device.id}
+                          className={cn(
+                            "p-4 rounded-lg border",
+                            device.status === "online" ? "bg-muted/30" : "bg-muted/10 opacity-60"
+                          )}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={cn(
+                                "p-2 rounded-lg",
+                                device.status === "online" ? "bg-green-500/20" : "bg-gray-500/20"
+                              )}>
+                                {device.status === "online" ? (
+                                  <Wifi className="h-5 w-5 text-green-500" />
+                                ) : (
+                                  <WifiOff className="h-5 w-5 text-gray-500" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-medium">{device.name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {device.ip_address} • {device.os}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
                               {device.status === "online" ? (
-                                <Wifi className="h-5 w-5 text-green-500" />
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleConnect(device.id, "rdp")}
+                                    disabled={isConnecting === `${device.id}-rdp`}
+                                  >
+                                    {isConnecting === `${device.id}-rdp` ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Monitor className="h-4 w-4" />
+                                    )}
+                                    <span className="ml-2">RDP</span>
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleConnect(device.id, "terminal")}
+                                    disabled={isConnecting === `${device.id}-terminal`}
+                                  >
+                                    {isConnecting === `${device.id}-terminal` ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Terminal className="h-4 w-4" />
+                                    )}
+                                    <span className="ml-2">Shell</span>
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleConnect(device.id, "file_transfer")}
+                                    disabled={isConnecting === `${device.id}-file_transfer`}
+                                  >
+                                    {isConnecting === `${device.id}-file_transfer` ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <FolderOpen className="h-4 w-4" />
+                                    )}
+                                    <span className="ml-2">Files</span>
+                                  </Button>
+                                </>
                               ) : (
-                                <WifiOff className="h-5 w-5 text-gray-500" />
+                                <Badge variant="secondary">Offline</Badge>
                               )}
                             </div>
-                            <div>
-                              <p className="font-medium">{device.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {device.ip_address} • {device.os}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {device.status === "online" ? (
-                              <>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleConnect(device.id, "rdp")}
-                                  disabled={isConnecting === `${device.id}-rdp`}
-                                >
-                                  {isConnecting === `${device.id}-rdp` ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Monitor className="h-4 w-4" />
-                                  )}
-                                  <span className="ml-2">RDP</span>
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleConnect(device.id, "terminal")}
-                                  disabled={isConnecting === `${device.id}-terminal`}
-                                >
-                                  {isConnecting === `${device.id}-terminal` ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Terminal className="h-4 w-4" />
-                                  )}
-                                  <span className="ml-2">Shell</span>
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleConnect(device.id, "file_transfer")}
-                                  disabled={isConnecting === `${device.id}-file_transfer`}
-                                >
-                                  {isConnecting === `${device.id}-file_transfer` ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <FolderOpen className="h-4 w-4" />
-                                  )}
-                                  <span className="ml-2">Files</span>
-                                </Button>
-                              </>
-                            ) : (
-                              <Badge variant="secondary">Offline</Badge>
-                            )}
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </ScrollArea>
               </div>
@@ -393,46 +489,105 @@ export function FleetRemoteAccess() {
         </TabsContent>
 
         <TabsContent value="history" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-cyan-500" />
-                Connection History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[
-                  { device: "WKS-JOHN-PC", type: "rdp", user: "admin@company.com", duration: "45 min", date: "Today, 10:30 AM" },
-                  { device: "SRV-PROD-01", type: "terminal", user: "tech@company.com", duration: "15 min", date: "Today, 9:15 AM" },
-                  { device: "WKS-SARAH-LAPTOP", type: "file_transfer", user: "admin@company.com", duration: "5 min", date: "Yesterday, 4:30 PM" },
-                  { device: "SRV-DB-01", type: "rdp", user: "admin@company.com", duration: "2 hr", date: "Yesterday, 2:00 PM" },
-                  { device: "WKS-MIKE-PC", type: "screen_share", user: "tech@company.com", duration: "30 min", date: "2 days ago" },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-muted">
-                        {item.type === "rdp" && <Monitor className="h-4 w-4" />}
-                        {item.type === "terminal" && <Terminal className="h-4 w-4" />}
-                        {item.type === "file_transfer" && <FolderOpen className="h-4 w-4" />}
-                        {item.type === "screen_share" && <Eye className="h-4 w-4" />}
-                      </div>
-                      <div>
-                        <p className="font-medium">{item.device}</p>
-                        <p className="text-xs text-muted-foreground">{item.type.toUpperCase()} • {item.user}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm">{item.duration}</p>
-                      <p className="text-xs text-muted-foreground">{item.date}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <ConnectionHistory userId={user?.id} />
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// Separate component for connection history
+function ConnectionHistory({ userId }: { userId?: string }) {
+  const [history, setHistory] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (userId) loadHistory();
+  }, [userId]);
+
+  const loadHistory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('remote_sessions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'ended')
+        .order('ended_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setHistory(data || []);
+    } catch (err) {
+      console.error('Failed to load history:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getSessionIcon = (type: string) => {
+    switch (type) {
+      case "rdp": case "vnc": return <Monitor className="h-4 w-4" />;
+      case "terminal": return <Terminal className="h-4 w-4" />;
+      case "file_transfer": return <FolderOpen className="h-4 w-4" />;
+      case "screen_share": return <Eye className="h-4 w-4" />;
+      default: return <Monitor className="h-4 w-4" />;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-8 flex justify-center">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Clock className="h-5 w-5 text-cyan-500" />
+          Connection History
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {history.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>No connection history yet</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {history.map((item) => {
+              const duration = item.started_at && item.ended_at
+                ? formatDistanceToNow(new Date(item.started_at), { addSuffix: false })
+                : 'N/A';
+              
+              return (
+                <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-muted">
+                      {getSessionIcon(item.session_type)}
+                    </div>
+                    <div>
+                      <p className="font-medium">Device: {item.device_id?.substring(0, 8)}...</p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.session_type?.toUpperCase() || 'RDP'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right text-sm text-muted-foreground">
+                    <p>{duration}</p>
+                    <p>{item.ended_at ? new Date(item.ended_at).toLocaleDateString() : ''}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
