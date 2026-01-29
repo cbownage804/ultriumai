@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,19 +49,45 @@ import {
   X,
 } from "lucide-react";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+
+interface PortalSettings {
+  portal_name: string;
+  welcome_message: string;
+  primary_color: string;
+  enable_tickets: boolean;
+  enable_health_status: boolean;
+  enable_knowledge_base: boolean;
+  enable_safepass: boolean;
+  safepass_subscription_required: boolean;
+  enable_safescan: boolean;
+  safescan_subscription_required: boolean;
+  enable_safeweb: boolean;
+  safeweb_subscription_required: boolean;
+  enable_safetrack: boolean;
+  safetrack_subscription_required: boolean;
+  support_email: string;
+  support_phone: string;
+  portal_logo_url?: string;
+  msp_user_id?: string;
+  portal_settings_id?: string;
+}
 
 // End-User Portal - Self-service interface for customers
 export default function EndUserPortal() {
+  const [searchParams] = useSearchParams();
+  const portalKey = searchParams.get("portal_key");
+  const initialTab = searchParams.get("tab") || "dashboard";
+  const isEmbedded = searchParams.get("embedded") === "true";
+
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [customerEmail, setCustomerEmail] = useState("");
   const [accessCode, setAccessCode] = useState("");
   const [safePassOpen, setSafePassOpen] = useState(false);
   const [safeScanOpen, setSafeScanOpen] = useState(false);
-
-  // Demo portal settings
-  const portalSettings = {
+  const [portalSettings, setPortalSettings] = useState<PortalSettings>({
     portal_name: "IT Support Portal",
     welcome_message: "Welcome! How can we help you today?",
     primary_color: "#0891b2",
@@ -77,7 +104,7 @@ export default function EndUserPortal() {
     safetrack_subscription_required: true,
     support_email: "support@example.com",
     support_phone: "+1 (555) 123-4567",
-  };
+  });
 
   // Demo data
   const [tickets] = useState([
@@ -138,9 +165,47 @@ export default function EndUserPortal() {
   ]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    const loadPortalSettings = async () => {
+      if (portalKey) {
+        try {
+          const { data, error } = await supabase
+            .from("vanguard_portal_settings")
+            .select("*")
+            .eq("portal_key", portalKey)
+            .maybeSingle();
+
+          if (data) {
+            setPortalSettings({
+              portal_name: data.portal_name || "IT Support Portal",
+              welcome_message: data.welcome_message || "Welcome! How can we help you today?",
+              primary_color: data.primary_color || "#0891b2",
+              enable_tickets: data.enable_tickets ?? true,
+              enable_health_status: data.enable_health_status ?? true,
+              enable_knowledge_base: data.enable_knowledge_base ?? true,
+              enable_safepass: data.enable_safepass ?? false,
+              safepass_subscription_required: data.safepass_subscription_required ?? true,
+              enable_safescan: data.enable_safescan ?? false,
+              safescan_subscription_required: data.safescan_subscription_required ?? true,
+              enable_safeweb: data.enable_safeweb ?? false,
+              safeweb_subscription_required: data.safeweb_subscription_required ?? true,
+              enable_safetrack: data.enable_safetrack ?? false,
+              safetrack_subscription_required: data.safetrack_subscription_required ?? true,
+              support_email: data.support_email || "",
+              support_phone: data.support_phone || "",
+              portal_logo_url: data.portal_logo_url,
+              msp_user_id: data.user_id,
+              portal_settings_id: data.id,
+            });
+          }
+        } catch (err) {
+          console.error("Error loading portal settings:", err);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    loadPortalSettings();
+  }, [portalKey]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,9 +221,29 @@ export default function EndUserPortal() {
     description: "",
   });
 
-  const handleSubmitTicket = () => {
-    setNewTicket({ subject: "", category: "general", priority: "medium", description: "" });
-    setActiveTab("tickets");
+  const handleSubmitTicket = async () => {
+    if (!newTicket.subject || !newTicket.description || !portalSettings.portal_settings_id) return;
+
+    try {
+      // Submit ticket with portal_settings_id to route to correct MSP
+      const { error } = await supabase.from("vanguard_portal_tickets").insert({
+        portal_settings_id: portalSettings.portal_settings_id,
+        portal_key: portalKey,
+        subject: newTicket.subject,
+        category: newTicket.category,
+        priority: newTicket.priority,
+        description: newTicket.description,
+        submitted_via: isEmbedded ? "tray_app" : "web",
+        status: "open",
+      });
+
+      if (error) throw error;
+
+      setNewTicket({ subject: "", category: "general", priority: "medium", description: "" });
+      setActiveTab("tickets");
+    } catch (err) {
+      console.error("Failed to submit ticket:", err);
+    }
   };
 
   if (isLoading) {

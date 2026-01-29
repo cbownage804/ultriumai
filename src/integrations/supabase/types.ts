@@ -19511,11 +19511,56 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_portal_downloads: {
+        Row: {
+          client_id: string | null
+          download_type: string
+          downloaded_at: string
+          id: string
+          ip_address: unknown
+          platform: string
+          portal_settings_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          download_type?: string
+          downloaded_at?: string
+          id?: string
+          ip_address?: unknown
+          platform?: string
+          portal_settings_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          download_type?: string
+          downloaded_at?: string
+          id?: string
+          ip_address?: unknown
+          platform?: string
+          portal_settings_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_portal_downloads_portal_settings_id_fkey"
+            columns: ["portal_settings_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_portal_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vanguard_portal_settings: {
         Row: {
           client_id: string | null
           created_at: string
           custom_css: string | null
+          custom_icon_url: string | null
           enable_health_status: boolean | null
           enable_knowledge_base: boolean | null
           enable_safepass: boolean | null
@@ -19524,6 +19569,9 @@ export type Database = {
           enable_safeweb: boolean | null
           enable_tickets: boolean | null
           id: string
+          portal_app_enabled: boolean | null
+          portal_key: string | null
+          portal_key_created_at: string | null
           portal_logo_url: string | null
           portal_name: string
           primary_color: string | null
@@ -19541,6 +19589,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           custom_css?: string | null
+          custom_icon_url?: string | null
           enable_health_status?: boolean | null
           enable_knowledge_base?: boolean | null
           enable_safepass?: boolean | null
@@ -19549,6 +19598,9 @@ export type Database = {
           enable_safeweb?: boolean | null
           enable_tickets?: boolean | null
           id?: string
+          portal_app_enabled?: boolean | null
+          portal_key?: string | null
+          portal_key_created_at?: string | null
           portal_logo_url?: string | null
           portal_name?: string
           primary_color?: string | null
@@ -19566,6 +19618,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           custom_css?: string | null
+          custom_icon_url?: string | null
           enable_health_status?: boolean | null
           enable_knowledge_base?: boolean | null
           enable_safepass?: boolean | null
@@ -19574,6 +19627,9 @@ export type Database = {
           enable_safeweb?: boolean | null
           enable_tickets?: boolean | null
           id?: string
+          portal_app_enabled?: boolean | null
+          portal_key?: string | null
+          portal_key_created_at?: string | null
           portal_logo_url?: string | null
           portal_name?: string
           primary_color?: string | null
@@ -19645,12 +19701,14 @@ export type Database = {
           device_id: string | null
           id: string
           internal_notes: string | null
+          portal_key: string | null
           portal_settings_id: string
           portal_token_id: string | null
           priority: string | null
           resolved_at: string | null
           status: string | null
           subject: string
+          submitted_via: string | null
           updated_at: string
         }
         Insert: {
@@ -19662,12 +19720,14 @@ export type Database = {
           device_id?: string | null
           id?: string
           internal_notes?: string | null
+          portal_key?: string | null
           portal_settings_id: string
           portal_token_id?: string | null
           priority?: string | null
           resolved_at?: string | null
           status?: string | null
           subject: string
+          submitted_via?: string | null
           updated_at?: string
         }
         Update: {
@@ -19679,12 +19739,14 @@ export type Database = {
           device_id?: string | null
           id?: string
           internal_notes?: string | null
+          portal_key?: string | null
           portal_settings_id?: string
           portal_token_id?: string | null
           priority?: string | null
           resolved_at?: string | null
           status?: string | null
           subject?: string
+          submitted_via?: string | null
           updated_at?: string
         }
         Relationships: [
