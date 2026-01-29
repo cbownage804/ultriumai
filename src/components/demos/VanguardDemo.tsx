@@ -94,6 +94,16 @@ export const VanguardDemo = () => {
 
   return (
     <div className="p-4 space-y-4" role="region" aria-label="Vanguard Platform Demo">
+      {/* Demo Mode Banner */}
+      <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border border-amber-500/30 rounded-lg p-3 flex items-center justify-center gap-2">
+        <Badge className="bg-amber-500 text-white border-0 animate-pulse">
+          DEMO MODE
+        </Badge>
+        <span className="text-sm text-amber-600 dark:text-amber-400">
+          This is a product demonstration with sample data. <a href="/vanguard/auth" className="underline font-medium hover:text-amber-500">Sign up</a> to deploy real agents.
+        </span>
+      </div>
+
       {/* Header with Vanguard branding */}
       <div className="flex justify-center mb-4">
         <img src={vanguardLogo} alt="Vanguard MSP Platform" className="h-28 w-auto" loading="lazy" />
