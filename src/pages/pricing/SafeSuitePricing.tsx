@@ -13,6 +13,7 @@ import { useState } from "react";
 import { Testimonials } from "@/components/marketing/Testimonials";
 import { SocialProof, UserCountBadge } from "@/components/marketing/SocialProof";
 import { CompetitorComparison } from "@/components/marketing/CompetitorComparison";
+import { RequestDemoForm } from "@/components/marketing/RequestDemoForm";
 
 const SafeSuitePricing = () => {
   const navigate = useNavigate();
@@ -231,9 +232,10 @@ const SafeSuitePricing = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-8 pt-0">
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/contact">Contact Sales</Link>
-                </Button>
+                <RequestDemoForm 
+                  defaultProduct="safesuite" 
+                  triggerLabel="Contact Sales"
+                />
               </CardFooter>
             </Card>
           </div>

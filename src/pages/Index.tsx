@@ -18,6 +18,8 @@ import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
 import { useAuth } from '@/hooks/useAuth';
 import { SocialProof } from '@/components/marketing/SocialProof';
 import { Testimonials } from '@/components/marketing/Testimonials';
+import { RequestDemoForm } from '@/components/marketing/RequestDemoForm';
+import { LeadCaptureCard } from '@/components/marketing/LeadCaptureCard';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -395,18 +397,25 @@ const Index = () => {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
             Start building on AI Studio today or schedule a consultation for custom development
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link to="/ai-studio">
               <Button size="lg" className="text-lg px-8 py-6 h-auto">
                 <Brain className="mr-2 h-5 w-5" />
                 Start Free on AI Studio
               </Button>
             </Link>
-            <Link to="/contact">
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto">
-                Schedule Consultation
-              </Button>
-            </Link>
+            <RequestDemoForm triggerLabel="Schedule Consultation" />
+          </div>
+          
+          {/* Newsletter Signup */}
+          <div className="max-w-md mx-auto mt-12">
+            <LeadCaptureCard 
+              title="Get Security & AI Insights"
+              description="Weekly tips on AI automation, security best practices, and product updates."
+              buttonText="Subscribe"
+              variant="featured"
+              source="homepage_newsletter"
+            />
           </div>
         </div>
       </section>
