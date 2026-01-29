@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { ClientSelector } from "@/components/msp/ClientSelector";
 import { supabase } from "@/integrations/supabase/client";
+import { devLog } from "@/lib/logger";
 import { 
   DollarSign, 
   FileText, 
@@ -103,7 +104,7 @@ export const MSPBillingManager = () => {
       // Load billing summary
       await loadBillingSummary();
     } catch (error) {
-      console.error("Error loading data:", error);
+      devLog.error("Error loading data:", error);
       toast({
         title: "Error",
         description: "Failed to load billing data",
@@ -125,7 +126,7 @@ export const MSPBillingManager = () => {
       if (error) throw error;
       setSummary(data.summary);
     } catch (error) {
-      console.error("Error loading billing summary:", error);
+      devLog.error("Error loading billing summary:", error);
     }
   };
 
@@ -161,7 +162,7 @@ export const MSPBillingManager = () => {
         description: "Billing period created successfully"
       });
     } catch (error) {
-      console.error("Error creating billing period:", error);
+      devLog.error("Error creating billing period:", error);
       toast({
         title: "Error",
         description: "Failed to create billing period",
@@ -202,7 +203,7 @@ export const MSPBillingManager = () => {
 
       await loadData();
     } catch (error) {
-      console.error("Error generating invoices:", error);
+      devLog.error("Error generating invoices:", error);
       toast({
         title: "Error",
         description: "Failed to generate invoices",
@@ -231,7 +232,7 @@ export const MSPBillingManager = () => {
 
       await loadData();
     } catch (error) {
-      console.error("Error sending invoice:", error);
+      devLog.error("Error sending invoice:", error);
       toast({
         title: "Error",
         description: "Failed to send invoice",

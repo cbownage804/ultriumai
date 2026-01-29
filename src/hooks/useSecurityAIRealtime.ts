@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { devLog } from '@/lib/logger';
 
 interface AIMessage {
   id: string;
@@ -33,7 +34,7 @@ export function useSecurityAIRealtime(): UseSecurityAIRealtimeReturn {
 
   const connect = useCallback(async () => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
-      console.log('Already connected');
+      devLog.log('Already connected');
       return;
     }
 
@@ -52,7 +53,7 @@ export function useSecurityAIRealtime(): UseSecurityAIRealtimeReturn {
       socketRef.current = ws;
 
       ws.onopen = () => {
-        console.log('Security AI Realtime connected');
+        devLog.log('Security AI Realtime connected');
         setIsConnected(true);
         setIsConnecting(false);
         
@@ -77,7 +78,7 @@ How can I assist with your security today?`,
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('AI Response:', data.type);
+          devLog.log('AI Response:', data.type);
 
           if (data.type === 'response.text.delta') {
             setIsTyping(true);
@@ -125,7 +126,7 @@ How can I assist with your security today?`,
           }
 
           if (data.type === 'error') {
-            console.error('AI Error:', data.error);
+            devLog.error('AI Error:', data.error);
             toast({
               title: 'AI Error',
               description: data.error?.message || 'An error occurred',
@@ -133,12 +134,12 @@ How can I assist with your security today?`,
             });
           }
         } catch (e) {
-          console.error('Failed to parse message:', e);
+          devLog.error('Failed to parse message:', e);
         }
       };
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        devLog.error('WebSocket error:', error);
         setIsConnecting(false);
         toast({
           title: 'Connection Error',
@@ -148,14 +149,14 @@ How can I assist with your security today?`,
       };
 
       ws.onclose = () => {
-        console.log('WebSocket closed');
+        devLog.log('WebSocket closed');
         setIsConnected(false);
         setIsConnecting(false);
         socketRef.current = null;
       };
 
     } catch (error: any) {
-      console.error('Connection error:', error);
+      devLog.error('Connection error:', error);
       setIsConnecting(false);
       toast({
         title: 'Connection Failed',
