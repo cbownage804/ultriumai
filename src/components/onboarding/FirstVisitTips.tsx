@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lightbulb, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useScreenSize } from '@/hooks/useScreenSize';
 
 const FIRST_VISIT_TIPS_KEY = 'ultrium_first_visit_tips';
 
@@ -21,6 +22,7 @@ interface FirstVisitTipsProps {
 export const FirstVisitTips = ({ pageId, tips, delay = 2000 }: FirstVisitTipsProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [currentTip, setCurrentTip] = useState(0);
+  const { isMobile } = useScreenSize();
 
   useEffect(() => {
     // Check if user has seen tips for this page
@@ -65,7 +67,12 @@ export const FirstVisitTips = ({ pageId, tips, delay = 2000 }: FirstVisitTipsPro
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.95 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed bottom-6 right-6 z-[150] w-80"
+        className={cn(
+          "fixed z-[150]",
+          isMobile 
+            ? "bottom-4 left-4 right-4 w-auto" 
+            : "bottom-6 right-6 w-80"
+        )}
       >
         {/* Card */}
         <div className="relative rounded-2xl overflow-hidden shadow-2xl">
