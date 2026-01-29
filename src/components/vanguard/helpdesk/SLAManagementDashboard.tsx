@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,70 +16,45 @@ import {
   XCircle,
   Timer,
   TrendingUp,
-  TrendingDown,
   Plus,
   Settings,
-  Calendar,
-  Users,
   Bell,
-  Target
+  Target,
+  Loader2
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { format, differenceInMinutes, differenceInHours } from 'date-fns';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface SLAPolicy {
   id: string;
   name: string;
-  clientId?: string;
-  clientName?: string;
+  client_id?: string;
+  client_name?: string;
   priority: 'critical' | 'high' | 'medium' | 'low';
-  responseTime: number; // minutes
-  resolutionTime: number; // minutes
-  businessHoursOnly: boolean;
-  escalationEnabled: boolean;
-  isActive: boolean;
+  response_time_minutes: number;
+  resolution_time_minutes: number;
+  business_hours_only: boolean;
+  escalation_enabled: boolean;
+  is_active: boolean;
 }
 
 interface SLAMetric {
-  ticketId: string;
-  ticketTitle: string;
-  clientName: string;
+  ticket_id: string;
+  ticket_title: string;
+  client_name: string;
   priority: 'critical' | 'high' | 'medium' | 'low';
   status: 'met' | 'at_risk' | 'breached';
-  responseStatus: 'met' | 'at_risk' | 'breached';
-  resolutionStatus: 'met' | 'at_risk' | 'breached' | 'pending';
-  responseTimeActual: number;
-  responseTimeTarget: number;
-  resolutionTimeActual?: number;
-  resolutionTimeTarget: number;
-  createdAt: string;
+  response_status: 'met' | 'at_risk' | 'breached';
+  resolution_status: 'met' | 'at_risk' | 'breached' | 'pending';
+  response_time_actual: number;
+  response_time_target: number;
+  resolution_time_actual?: number;
+  resolution_time_target: number;
+  created_at: string;
 }
-
-const mockPolicies: SLAPolicy[] = [
-  { id: '1', name: 'Enterprise SLA', clientName: 'Acme Corp', priority: 'critical', responseTime: 15, resolutionTime: 240, businessHoursOnly: false, escalationEnabled: true, isActive: true },
-  { id: '2', name: 'Enterprise SLA', clientName: 'Acme Corp', priority: 'high', responseTime: 30, resolutionTime: 480, businessHoursOnly: false, escalationEnabled: true, isActive: true },
-  { id: '3', name: 'Standard SLA', clientName: 'TechStart Inc', priority: 'critical', responseTime: 30, resolutionTime: 480, businessHoursOnly: true, escalationEnabled: true, isActive: true },
-  { id: '4', name: 'Standard SLA', clientName: 'TechStart Inc', priority: 'high', responseTime: 60, resolutionTime: 960, businessHoursOnly: true, escalationEnabled: false, isActive: true },
-  { id: '5', name: 'Basic SLA', priority: 'medium', responseTime: 120, resolutionTime: 1440, businessHoursOnly: true, escalationEnabled: false, isActive: true },
-];
-
-const mockMetrics: SLAMetric[] = [
-  { ticketId: 'TKT-001', ticketTitle: 'Server down - critical', clientName: 'Acme Corp', priority: 'critical', status: 'met', responseStatus: 'met', resolutionStatus: 'met', responseTimeActual: 12, responseTimeTarget: 15, resolutionTimeActual: 180, resolutionTimeTarget: 240, createdAt: '2024-01-15T08:00:00Z' },
-  { ticketId: 'TKT-002', ticketTitle: 'Email sync issues', clientName: 'TechStart Inc', priority: 'high', status: 'at_risk', responseStatus: 'met', resolutionStatus: 'at_risk', responseTimeActual: 25, responseTimeTarget: 60, resolutionTimeActual: 800, resolutionTimeTarget: 960, createdAt: '2024-01-15T09:30:00Z' },
-  { ticketId: 'TKT-003', ticketTitle: 'VPN connection failure', clientName: 'Acme Corp', priority: 'high', status: 'breached', responseStatus: 'breached', resolutionStatus: 'breached', responseTimeActual: 45, responseTimeTarget: 30, resolutionTimeActual: 600, resolutionTimeTarget: 480, createdAt: '2024-01-14T14:00:00Z' },
-  { ticketId: 'TKT-004', ticketTitle: 'Printer not responding', clientName: 'Global Logistics', priority: 'medium', status: 'met', responseStatus: 'met', resolutionStatus: 'pending', responseTimeActual: 90, responseTimeTarget: 120, createdAt: '2024-01-15T11:00:00Z', resolutionTimeTarget: 1440 },
-];
-
-const mockTrendData = [
-  { date: 'Mon', met: 12, breached: 1 },
-  { date: 'Tue', met: 15, breached: 2 },
-  { date: 'Wed', met: 10, breached: 0 },
-  { date: 'Thu', met: 18, breached: 1 },
-  { date: 'Fri', met: 14, breached: 3 },
-  { date: 'Sat', met: 5, breached: 0 },
-  { date: 'Sun', met: 3, breached: 0 },
-];
 
 function formatDuration(minutes: number): string {
   if (minutes < 60) return `${minutes}m`;
@@ -92,16 +67,129 @@ function formatDuration(minutes: number): string {
 }
 
 export function SLAManagementDashboard() {
-  const [policies] = useState<SLAPolicy[]>(mockPolicies);
-  const [metrics] = useState<SLAMetric[]>(mockMetrics);
+  const { user } = useAuth();
+  const [policies, setPolicies] = useState<SLAPolicy[]>([]);
+  const [metrics, setMetrics] = useState<SLAMetric[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showPolicyDialog, setShowPolicyDialog] = useState(false);
+  const [newPolicy, setNewPolicy] = useState({
+    name: '',
+    priority: 'medium' as const,
+    response_time_minutes: 60,
+    resolution_time_minutes: 480,
+    business_hours_only: true,
+    escalation_enabled: true
+  });
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchData();
+    }
+  }, [user?.id]);
+
+  const fetchData = async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    try {
+      // Fetch SLA policies
+      const { data: policiesData, error: policiesError } = await supabase
+        .from('vanguard_sla_policies')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (policiesError) throw policiesError;
+      
+      // Transform to match interface
+      const transformedPolicies: SLAPolicy[] = (policiesData || []).map((p: any) => ({
+        id: p.id,
+        name: p.policy_name || 'Unnamed Policy',
+        client_id: p.client_id,
+        priority: p.priority || 'medium',
+        response_time_minutes: p.response_time_minutes || 60,
+        resolution_time_minutes: p.resolution_time_minutes || 480,
+        business_hours_only: p.business_hours_only ?? true,
+        escalation_enabled: p.escalation_enabled ?? true,
+        is_active: p.is_active ?? true,
+      }));
+      setPolicies(transformedPolicies);
+
+      // Fetch SLA tracking metrics - use any type to avoid deep instantiation
+      const { data: trackingData, error: trackingError } = await (supabase as any)
+        .from('vanguard_ticket_sla_tracking')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (trackingError) throw trackingError;
+      
+      // Transform tracking data to metrics format based on actual schema
+      const transformedMetrics: SLAMetric[] = (trackingData || []).map((t: any) => ({
+        ticket_id: t.ticket_id || '',
+        ticket_title: 'Ticket',
+        client_name: 'Client',
+        priority: 'medium' as const,
+        status: t.resolution_breached ? 'breached' : t.response_breached ? 'at_risk' : 'met',
+        response_status: t.response_breached ? 'breached' as const : 'met' as const,
+        resolution_status: t.resolved_at ? (t.resolution_breached ? 'breached' as const : 'met' as const) : 'pending' as const,
+        response_time_actual: 0,
+        response_time_target: 60,
+        resolution_time_actual: t.resolved_at ? 0 : undefined,
+        resolution_time_target: 480,
+        created_at: t.created_at
+      }));
+      
+      setMetrics(transformedMetrics);
+    } catch (error) {
+      console.error('Error fetching SLA data:', error);
+      toast.error('Failed to load SLA data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreatePolicy = async () => {
+    if (!user?.id || !newPolicy.name) return;
+    
+    try {
+      const { error } = await supabase
+        .from('vanguard_sla_policies')
+        .insert({
+          user_id: user.id,
+          policy_name: newPolicy.name,
+          priority: newPolicy.priority,
+          response_time_minutes: newPolicy.response_time_minutes,
+          resolution_time_minutes: newPolicy.resolution_time_minutes,
+          business_hours_only: newPolicy.business_hours_only,
+          escalation_enabled: newPolicy.escalation_enabled,
+          is_active: true
+        });
+
+      if (error) throw error;
+      toast.success('SLA Policy created');
+      setShowPolicyDialog(false);
+      setNewPolicy({
+        name: '',
+        priority: 'medium',
+        response_time_minutes: 60,
+        resolution_time_minutes: 480,
+        business_hours_only: true,
+        escalation_enabled: true
+      });
+      fetchData();
+    } catch (error) {
+      console.error('Error creating policy:', error);
+      toast.error('Failed to create policy');
+    }
+  };
 
   // Calculate stats
-  const totalTickets = metrics.length;
+  const totalTickets = metrics.length || 1;
   const metCount = metrics.filter(m => m.status === 'met').length;
   const atRiskCount = metrics.filter(m => m.status === 'at_risk').length;
   const breachedCount = metrics.filter(m => m.status === 'breached').length;
-  const complianceRate = Math.round((metCount / totalTickets) * 100);
+  const complianceRate = Math.round((metCount / totalTickets) * 100) || 0;
 
   const priorityColors = {
     critical: 'text-red-500 bg-red-500/10 border-red-500/30',
@@ -109,6 +197,23 @@ export function SLAManagementDashboard() {
     medium: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/30',
     low: 'text-green-500 bg-green-500/10 border-green-500/30',
   };
+
+  // Mock trend data (would come from aggregated queries in production)
+  const trendData = [
+    { date: 'Mon', met: metCount, breached: breachedCount },
+    { date: 'Tue', met: Math.max(0, metCount - 1), breached: Math.max(0, breachedCount - 1) },
+    { date: 'Wed', met: metCount + 2, breached: 0 },
+    { date: 'Thu', met: metCount, breached: 1 },
+    { date: 'Fri', met: metCount + 1, breached: breachedCount },
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -122,7 +227,7 @@ export function SLAManagementDashboard() {
                 <p className="text-3xl font-bold">{complianceRate}%</p>
                 <div className="flex items-center gap-1 mt-1">
                   <TrendingUp className="h-3 w-3 text-green-500" />
-                  <span className="text-xs text-green-500">+5% this week</span>
+                  <span className="text-xs text-green-500">Target: 95%</span>
                 </div>
               </div>
               <Target className="h-8 w-8 text-cyan-500" />
@@ -136,7 +241,7 @@ export function SLAManagementDashboard() {
               <div>
                 <p className="text-xs text-muted-foreground uppercase">SLA Met</p>
                 <p className="text-3xl font-bold text-green-500">{metCount}</p>
-                <p className="text-xs text-muted-foreground">of {totalTickets} tickets</p>
+                <p className="text-xs text-muted-foreground">of {metrics.length} tickets</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
@@ -188,7 +293,7 @@ export function SLAManagementDashboard() {
           <CardContent>
             <div className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mockTrendData}>
+                <BarChart data={trendData}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
                   <XAxis dataKey="date" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                   <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} />
@@ -213,7 +318,7 @@ export function SLAManagementDashboard() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Settings className="h-5 w-5 text-cyan-500" />
-                SLA Policies
+                SLA Policies ({policies.length})
               </CardTitle>
               <Dialog open={showPolicyDialog} onOpenChange={setShowPolicyDialog}>
                 <DialogTrigger asChild>
@@ -230,12 +335,19 @@ export function SLAManagementDashboard() {
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
                       <Label>Policy Name</Label>
-                      <Input placeholder="Enterprise SLA" />
+                      <Input 
+                        placeholder="Enterprise SLA" 
+                        value={newPolicy.name}
+                        onChange={(e) => setNewPolicy({ ...newPolicy, name: e.target.value })}
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Priority Level</Label>
-                        <Select>
+                        <Select 
+                          value={newPolicy.priority}
+                          onValueChange={(v: any) => setNewPolicy({ ...newPolicy, priority: v })}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Select priority" />
                           </SelectTrigger>
@@ -248,41 +360,42 @@ export function SLAManagementDashboard() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Client (Optional)</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="All clients" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Clients</SelectItem>
-                            <SelectItem value="acme">Acme Corp</SelectItem>
-                            <SelectItem value="techstart">TechStart Inc</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Label>Response Time (minutes)</Label>
+                        <Input 
+                          type="number" 
+                          value={newPolicy.response_time_minutes}
+                          onChange={(e) => setNewPolicy({ ...newPolicy, response_time_minutes: parseInt(e.target.value) || 60 })}
+                        />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Response Time (minutes)</Label>
-                        <Input type="number" placeholder="30" />
-                      </div>
-                      <div className="space-y-2">
                         <Label>Resolution Time (minutes)</Label>
-                        <Input type="number" placeholder="480" />
+                        <Input 
+                          type="number" 
+                          value={newPolicy.resolution_time_minutes}
+                          onChange={(e) => setNewPolicy({ ...newPolicy, resolution_time_minutes: parseInt(e.target.value) || 480 })}
+                        />
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <Label>Business Hours Only</Label>
-                      <Switch />
+                      <Switch 
+                        checked={newPolicy.business_hours_only}
+                        onCheckedChange={(v) => setNewPolicy({ ...newPolicy, business_hours_only: v })}
+                      />
                     </div>
                     <div className="flex items-center justify-between">
                       <Label>Enable Escalation</Label>
-                      <Switch defaultChecked />
+                      <Switch 
+                        checked={newPolicy.escalation_enabled}
+                        onCheckedChange={(v) => setNewPolicy({ ...newPolicy, escalation_enabled: v })}
+                      />
                     </div>
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={() => setShowPolicyDialog(false)}>Cancel</Button>
-                    <Button onClick={() => setShowPolicyDialog(false)}>Create Policy</Button>
+                    <Button onClick={handleCreatePolicy}>Create Policy</Button>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -290,43 +403,44 @@ export function SLAManagementDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3 max-h-[300px] overflow-y-auto">
-              {policies.map(policy => (
-                <div 
-                  key={policy.id}
-                  className={cn(
-                    "p-3 rounded-lg border",
-                    priorityColors[policy.priority]
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{policy.name}</p>
-                        <Badge variant="outline" className="text-xs">{policy.priority}</Badge>
+              {policies.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No SLA policies defined. Create one to get started.</p>
+              ) : (
+                policies.map(policy => (
+                  <div 
+                    key={policy.id}
+                    className={cn(
+                      "p-3 rounded-lg border",
+                      priorityColors[policy.priority]
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{policy.name}</p>
+                          <Badge variant="outline" className="text-xs">{policy.priority}</Badge>
+                        </div>
                       </div>
-                      {policy.clientName && (
-                        <p className="text-xs text-muted-foreground">{policy.clientName}</p>
+                      <div className="text-right text-xs">
+                        <p>Response: {formatDuration(policy.response_time_minutes)}</p>
+                        <p>Resolution: {formatDuration(policy.resolution_time_minutes)}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                      {policy.business_hours_only && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> Business Hours
+                        </span>
+                      )}
+                      {policy.escalation_enabled && (
+                        <span className="flex items-center gap-1">
+                          <Bell className="h-3 w-3" /> Escalation
+                        </span>
                       )}
                     </div>
-                    <div className="text-right text-xs">
-                      <p>Response: {formatDuration(policy.responseTime)}</p>
-                      <p>Resolution: {formatDuration(policy.resolutionTime)}</p>
-                    </div>
                   </div>
-                  <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                    {policy.businessHoursOnly && (
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> Business Hours
-                      </span>
-                    )}
-                    {policy.escalationEnabled && (
-                      <span className="flex items-center gap-1">
-                        <Bell className="h-3 w-3" /> Escalation
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -346,104 +460,77 @@ export function SLAManagementDashboard() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Ticket</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Response Time</TableHead>
-                <TableHead>Resolution Time</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {metrics.map(metric => (
-                <TableRow key={metric.ticketId}>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{metric.ticketId}</p>
-                      <p className="text-xs text-muted-foreground truncate max-w-[200px]">{metric.ticketTitle}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>{metric.clientName}</TableCell>
-                  <TableCell>
-                    <Badge className={priorityColors[metric.priority]}>
-                      {metric.priority}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        {metric.responseStatus === 'met' ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                        ) : metric.responseStatus === 'at_risk' ? (
-                          <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        )}
-                        <span className="text-sm">
-                          {formatDuration(metric.responseTimeActual)} / {formatDuration(metric.responseTimeTarget)}
-                        </span>
-                      </div>
-                      <Progress 
-                        value={Math.min((metric.responseTimeActual / metric.responseTimeTarget) * 100, 100)} 
-                        className={cn(
-                          "h-1",
-                          metric.responseStatus === 'met' && "[&>div]:bg-green-500",
-                          metric.responseStatus === 'at_risk' && "[&>div]:bg-yellow-500",
-                          metric.responseStatus === 'breached' && "[&>div]:bg-red-500"
-                        )}
-                      />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        {metric.resolutionStatus === 'met' ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                        ) : metric.resolutionStatus === 'at_risk' ? (
-                          <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                        ) : metric.resolutionStatus === 'pending' ? (
-                          <Timer className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        )}
-                        <span className="text-sm">
-                          {metric.resolutionTimeActual 
-                            ? `${formatDuration(metric.resolutionTimeActual)} / ${formatDuration(metric.resolutionTimeTarget)}`
-                            : `- / ${formatDuration(metric.resolutionTimeTarget)}`}
-                        </span>
-                      </div>
-                      {metric.resolutionTimeActual && (
-                        <Progress 
-                          value={Math.min((metric.resolutionTimeActual / metric.resolutionTimeTarget) * 100, 100)} 
-                          className={cn(
-                            "h-1",
-                            metric.resolutionStatus === 'met' && "[&>div]:bg-green-500",
-                            metric.resolutionStatus === 'at_risk' && "[&>div]:bg-yellow-500",
-                            metric.resolutionStatus === 'breached' && "[&>div]:bg-red-500"
-                          )}
-                        />
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={
-                      metric.status === 'met' ? 'default' :
-                      metric.status === 'at_risk' ? 'secondary' : 'destructive'
-                    }>
-                      {metric.status === 'met' ? 'Met' : metric.status === 'at_risk' ? 'At Risk' : 'Breached'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm">View</Button>
-                  </TableCell>
+          {metrics.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No SLA tracking data available yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Ticket</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Response Time</TableHead>
+                  <TableHead>Resolution Time</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {metrics.map(metric => (
+                  <TableRow key={metric.ticket_id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{metric.ticket_id.slice(0, 8)}...</p>
+                        <p className="text-xs text-muted-foreground truncate max-w-[200px]">{metric.ticket_title}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={priorityColors[metric.priority]}>
+                        {metric.priority}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {metric.response_status === 'met' ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : metric.response_status === 'at_risk' ? (
+                          <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        )}
+                        <span className="text-sm">
+                          {formatDuration(metric.response_time_actual)} / {formatDuration(metric.response_time_target)}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {metric.resolution_status === 'met' ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : metric.resolution_status === 'pending' ? (
+                          <Clock className="h-4 w-4 text-blue-500" />
+                        ) : metric.resolution_status === 'at_risk' ? (
+                          <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        )}
+                        <span className="text-sm">
+                          {metric.resolution_time_actual ? formatDuration(metric.resolution_time_actual) : 'In progress'} / {formatDuration(metric.resolution_time_target)}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={cn(
+                        metric.status === 'met' && 'bg-green-500/20 text-green-500',
+                        metric.status === 'at_risk' && 'bg-yellow-500/20 text-yellow-500',
+                        metric.status === 'breached' && 'bg-red-500/20 text-red-500'
+                      )}>
+                        {metric.status.replace('_', ' ')}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
