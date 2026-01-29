@@ -64,47 +64,48 @@ const About = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-24 px-4 overflow-hidden">
+      {/* Hero Section - Fluid typography, mobile optimized */}
+      <section className="relative pt-24 md:pt-32 pb-16 md:pb-24 px-4 overflow-hidden safe-area-inset-top">
         {/* Background Image */}
         <div className="absolute inset-0">
           <img 
             src={heroSecurity} 
             alt="Digital security shield"
             className="w-full h-full object-cover"
+            loading="eager"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
           <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
         </div>
         
         {/* Decorative blurs */}
-        <div className="absolute top-1/3 left-1/4 w-80 h-80 bg-primary/15 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/3 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute top-1/3 left-1/4 w-60 md:w-80 h-60 md:h-80 bg-primary/15 rounded-full blur-[80px] md:blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/3 w-48 md:w-64 h-48 md:h-64 bg-emerald-500/10 rounded-full blur-[60px] md:blur-[80px] pointer-events-none" />
         
         <div className="relative z-10 container mx-auto text-center max-w-4xl">
-          <Badge className="mb-8 px-4 py-2 text-sm" variant="secondary">
-            <Flag className="h-3.5 w-3.5 mr-2" />
+          <Badge className="mb-6 md:mb-8 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm animate-fade-in" variant="secondary">
+            <Flag className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1.5 md:mr-2" />
             Veteran-Owned Business
           </Badge>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight">
+          <h1 className="text-fluid-xl md:text-fluid-hero font-bold mb-6 md:mb-8 leading-tight animate-fade-in-up">
             AI Development & 
             <span className="block bg-gradient-to-r from-primary via-primary to-violet-500 bg-clip-text text-transparent">
               Cybersecurity Agency
             </span>
           </h1>
-          <p className="text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base md:text-xl text-muted-foreground mb-8 md:mb-10 max-w-3xl mx-auto leading-relaxed animate-fade-in-up stagger-1">
             UltriumAI is a veteran-owned technology company building AI-powered tools and cybersecurity 
             solutions for businesses of all sizes. We combine 15+ years of IT and security expertise 
             with cutting-edge artificial intelligence.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center animate-fade-in-up stagger-2">
             <Link to="/hub">
-              <Button size="lg" className="w-full sm:w-auto px-8 py-6 text-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25">
-                Explore Our Products <ArrowRight className="ml-2 h-5 w-5" />
+              <Button size="lg" className="w-full sm:w-auto px-6 md:px-8 py-5 md:py-6 text-base md:text-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 touch-target">
+                Explore Our Products <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
               </Button>
             </Link>
             <Link to="/contact">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 py-6 text-lg border-border/50 hover:border-primary/50 hover:bg-primary/5">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto px-6 md:px-8 py-5 md:py-6 text-base md:text-lg border-border/50 hover:border-primary/50 hover:bg-primary/5 touch-target">
                 Get In Touch
               </Button>
             </Link>
@@ -112,27 +113,27 @@ const About = () => {
         </div>
       </section>
 
-      {/* What We Build */}
-      <section className="py-16 px-4">
+      {/* What We Build - Mobile optimized product cards */}
+      <section className="py-12 md:py-16 px-4">
         <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">What We Build</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">What We Build</h2>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
               Flagship products and custom AI solutions for businesses of all sizes
             </p>
           </div>
           
-          {/* Product Cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
+          {/* Product Cards - Responsive grid */}
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
             {products.map((product, index) => (
-              <Card key={index} className="h-full hover:border-primary/30 transition-colors bg-card/50">
-                <CardHeader className="flex flex-col items-center">
-                  <div className={`px-4 py-3 bg-black rounded-xl ${product.shadowColor} shadow-lg mb-4 flex items-center justify-center min-w-[180px] min-h-[80px]`}>
-                    <img src={product.logo} alt={product.name} className="h-14 w-auto object-contain scale-150" />
+              <Card key={index} className="h-full hover:border-primary/30 transition-all duration-300 bg-card/50 hover:-translate-y-1 hover:shadow-lg group">
+                <CardHeader className="flex flex-col items-center p-4 md:p-6">
+                  <div className={`px-3 md:px-4 py-2 md:py-3 bg-black rounded-xl ${product.shadowColor} shadow-lg mb-3 md:mb-4 flex items-center justify-center min-w-[140px] md:min-w-[180px] min-h-[60px] md:min-h-[80px] group-hover:scale-105 transition-transform`}>
+                    <img src={product.logo} alt={product.name} className="h-10 md:h-14 w-auto object-contain scale-125 md:scale-150" />
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-center">{product.description}</p>
+                <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+                  <p className="text-sm md:text-base text-muted-foreground text-center">{product.description}</p>
                 </CardContent>
               </Card>
             ))}

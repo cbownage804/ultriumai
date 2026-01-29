@@ -166,25 +166,28 @@ const Dashboard = () => {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <SidebarInset className="animate-fade-in">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 animate-slide-in-left backdrop-blur-xl bg-background/80">
-            <SidebarTrigger className="-ml-1 hover-scale" />
-            <div className="flex-1">
-              <h1 className="text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent animate-glow">{getPageTitle()}</h1>
+          {/* Header - mobile optimized with safe areas */}
+          <header className="flex h-14 md:h-16 shrink-0 items-center gap-2 border-b px-3 md:px-4 animate-slide-in-left backdrop-blur-xl bg-background/90 sticky top-0 z-30 safe-area-inset-top">
+            <SidebarTrigger className="-ml-1 hover-scale touch-target h-10 w-10 md:h-9 md:w-9" />
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base md:text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent animate-glow truncate">{getPageTitle()}</h1>
             </div>
-            <CreditIndicator variant="compact" />
-            <HelpCenter />
-            <NotificationCenter />
+            <div className="flex items-center gap-1 md:gap-2">
+              <CreditIndicator variant="compact" />
+              <HelpCenter />
+              <NotificationCenter />
+            </div>
           </header>
-          <div className="flex flex-1 flex-col h-[calc(100vh-4rem)]">
+          <div className="flex flex-1 flex-col h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] safe-area-inset-bottom">
             {/* Welcome modal for first-time users */}
             <WelcomeModal product="ai-studio" />
-            <div className="space-y-4 p-4 animate-fade-in-up stagger-1">
+            <div className="space-y-3 md:space-y-4 p-3 md:p-4 animate-fade-in-up stagger-1">
               <HelpBanner />
               <TrialBanner />
               <SubscriptionRenewalNotice />
               <GracePeriodManager />
             </div>
-            <div className="animate-scale-in stagger-2">
+            <div className="animate-scale-in stagger-2 pb-16 md:pb-0">
               {renderContent()}
             </div>
           </div>

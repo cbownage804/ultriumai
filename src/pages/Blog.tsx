@@ -54,41 +54,41 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4">
+      {/* Header - Mobile optimized with safe areas */}
+      <header className="border-b bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30 safe-area-inset-top">
+        <div className="container mx-auto px-4 py-3 md:py-4">
           <div className="flex items-center justify-between">
-            <Link to="/" className="text-2xl font-bold">UltriumAI Blog</Link>
-            <Button asChild variant="outline">
+            <Link to="/" className="text-xl md:text-2xl font-bold">UltriumAI Blog</Link>
+            <Button asChild variant="outline" size="sm" className="touch-target h-10 md:h-9 text-sm">
               <Link to="/">← Back to Home</Link>
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+      <div className="container mx-auto px-4 py-6 md:py-8 safe-area-inset-bottom">
+        {/* Hero Section - Fluid typography */}
+        <div className="text-center mb-8 md:mb-12 animate-fade-in">
+          <h1 className="text-fluid-lg md:text-fluid-xl font-bold mb-3 md:mb-4">
             Cybersecurity Insights & News
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto">
             Expert insights, industry trends, and product updates from the cybersecurity frontlines
           </p>
         </div>
 
-        {/* Loading State */}
+        {/* Loading State - Mobile optimized skeleton */}
         {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
             {[...Array(6)].map((_, i) => (
-              <Card key={i}>
-                <CardHeader>
-                  <Skeleton className="h-6 w-24 mb-2" />
-                  <Skeleton className="h-8 w-full mb-2" />
-                  <Skeleton className="h-16 w-full" />
+              <Card key={i} className="animate-pulse">
+                <CardHeader className="p-4 md:p-6">
+                  <Skeleton className="h-5 md:h-6 w-20 md:w-24 mb-2" />
+                  <Skeleton className="h-6 md:h-8 w-full mb-2" />
+                  <Skeleton className="h-12 md:h-16 w-full" />
                 </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-10 w-full" />
+                <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+                  <Skeleton className="h-9 md:h-10 w-full" />
                 </CardContent>
               </Card>
             ))}
@@ -97,43 +97,43 @@ const Blog = () => {
 
         {/* Error State */}
         {error && (
-          <div className="text-center py-12 mb-12">
-            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <p className="text-destructive">{error}</p>
-            <Button variant="outline" onClick={() => window.location.reload()} className="mt-4">
+          <div className="text-center py-8 md:py-12 mb-8 md:mb-12">
+            <AlertCircle className="h-10 w-10 md:h-12 md:w-12 text-destructive mx-auto mb-3 md:mb-4" />
+            <p className="text-destructive text-sm md:text-base">{error}</p>
+            <Button variant="outline" onClick={() => window.location.reload()} className="mt-3 md:mt-4 touch-target">
               Try Again
             </Button>
           </div>
         )}
 
-        {/* Featured Posts */}
+        {/* Featured Posts - Mobile responsive */}
         {!loading && !error && featuredPosts.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6">Featured Articles</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="mb-8 md:mb-12">
+            <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Featured Articles</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
               {featuredPosts.map((post) => (
-                <Card key={post.id} className="hover:shadow-xl transition-all duration-300 group border-primary/20">
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <Badge className={getCategoryColor(post.category || 'Uncategorized')}>
+                <Card key={post.id} className="hover:shadow-xl transition-all duration-300 group border-primary/20 hover:-translate-y-1">
+                  <CardHeader className="p-4 md:p-6">
+                    <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                      <Badge className={`${getCategoryColor(post.category || 'Uncategorized')} text-xs`}>
                         {post.category || 'Uncategorized'}
                       </Badge>
-                      <Badge variant="secondary">Featured</Badge>
+                      <Badge variant="secondary" className="text-xs">Featured</Badge>
                     </div>
-                    <CardTitle className="text-xl line-clamp-2 group-hover:text-primary transition-colors">
+                    <CardTitle className="text-lg md:text-xl line-clamp-2 group-hover:text-primary transition-colors">
                       {post.title}
                     </CardTitle>
-                    <CardDescription className="line-clamp-3">
+                    <CardDescription className="line-clamp-2 md:line-clamp-3 text-sm">
                       {post.excerpt}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <User className="h-4 w-4" />
+                  <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-3 md:mb-4">
+                      <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-muted-foreground">
+                        <User className="h-3.5 w-3.5 md:h-4 md:w-4" />
                         UltriumAI Team
                       </div>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 md:gap-3 text-xs md:text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           {post.published_at ? new Date(post.published_at).toLocaleDateString() : 'Draft'}
@@ -145,7 +145,7 @@ const Blog = () => {
                       </div>
                     </div>
                     <Button 
-                      className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                      className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors touch-target h-10 md:h-9"
                       variant="outline"
                       asChild
                     >
@@ -160,19 +160,19 @@ const Blog = () => {
           </div>
         )}
 
-        {/* Search and Filter */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
+        {/* Search and Filter - Touch optimized */}
+        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mb-6 md:mb-8">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search articles..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-11 md:h-10 text-base md:text-sm"
             />
           </div>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="md:w-48">
+            <SelectTrigger className="sm:w-48 h-11 md:h-10 text-base md:text-sm">
               <SelectValue placeholder="Filter by category" />
             </SelectTrigger>
             <SelectContent>
@@ -185,42 +185,42 @@ const Blog = () => {
           </Select>
         </div>
 
-        {/* All Posts Grid */}
+        {/* All Posts Grid - Mobile responsive */}
         {!loading && !error && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {filteredPosts.map((post) => (
-              <Card key={post.id} className="hover:shadow-lg transition-all duration-300 group">
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <Badge className={getCategoryColor(post.category || 'Uncategorized')}>
+              <Card key={post.id} className="hover:shadow-lg transition-all duration-300 group hover:-translate-y-1">
+                <CardHeader className="p-4 md:p-6">
+                  <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                    <Badge className={`${getCategoryColor(post.category || 'Uncategorized')} text-xs`}>
                       {post.category || 'Uncategorized'}
                     </Badge>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5 md:gap-2 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />
                       {estimateReadTime(post.content)}
                     </div>
                   </div>
-                  <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors">
+                  <CardTitle className="text-base md:text-lg line-clamp-2 group-hover:text-primary transition-colors">
                     {post.title}
                   </CardTitle>
-                  <CardDescription className="line-clamp-3">
+                  <CardDescription className="line-clamp-2 md:line-clamp-3 text-sm">
                     {post.excerpt}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <User className="h-4 w-4" />
+                <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3 md:mb-4">
+                    <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-muted-foreground">
+                      <User className="h-3.5 w-3.5 md:h-4 md:w-4" />
                       UltriumAI Team
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1 text-xs md:text-sm text-muted-foreground">
                       <Calendar className="h-3 w-3" />
                       {post.published_at ? new Date(post.published_at).toLocaleDateString() : 'Draft'}
                     </div>
                   </div>
                   <Button 
                     variant="ghost" 
-                    className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                    className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors touch-target h-10 md:h-9"
                     asChild
                   >
                     <Link to={`/blog/${post.slug}`}>
@@ -233,16 +233,17 @@ const Blog = () => {
           </div>
         )}
 
+        {/* No results state */}
         {!loading && !error && filteredPosts.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No articles found matching your criteria.</p>
+          <div className="text-center py-8 md:py-12">
+            <p className="text-sm md:text-base text-muted-foreground">No articles found matching your criteria.</p>
             <Button 
               variant="outline" 
               onClick={() => {
                 setSearchTerm('');
                 setSelectedCategory('all');
               }}
-              className="mt-4"
+              className="mt-3 md:mt-4 touch-target"
             >
               Clear Filters
             </Button>

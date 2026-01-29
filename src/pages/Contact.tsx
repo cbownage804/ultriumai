@@ -83,58 +83,58 @@ const Contact = () => {
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a] to-[#0f0f12]">
       <Navigation />
       
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 relative overflow-hidden">
+      {/* Hero Section - Fluid typography, mobile optimized */}
+      <section className="pt-24 md:pt-32 pb-12 md:pb-20 px-4 relative overflow-hidden safe-area-inset-top">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-cyan-500/5" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] md:w-[600px] md:h-[600px] bg-primary/8 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-cyan-500/5 rounded-full blur-[80px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-primary/8 rounded-full blur-[100px] md:blur-[120px]" />
+        <div className="absolute bottom-0 right-0 w-[200px] h-[200px] md:w-[300px] md:h-[300px] bg-cyan-500/5 rounded-full blur-[60px] md:blur-[80px]" />
         
         <div className="container mx-auto text-center max-w-3xl relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-8">
-            <MessageSquare className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-white/70">We're here to help</span>
+          <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-white/5 rounded-full border border-white/10 mb-6 md:mb-8 animate-fade-in">
+            <MessageSquare className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
+            <span className="text-xs md:text-sm font-medium text-white/70">We're here to help</span>
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-white to-white/50 bg-clip-text text-transparent">
+          <h1 className="text-fluid-xl md:text-fluid-hero font-bold mb-4 md:mb-6 bg-gradient-to-r from-white via-white to-white/50 bg-clip-text text-transparent animate-fade-in-up">
             Let's Talk
           </h1>
-          <p className="text-xl text-white/50 max-w-xl mx-auto leading-relaxed">
+          <p className="text-base md:text-xl text-white/50 max-w-xl mx-auto leading-relaxed animate-fade-in-up stagger-1">
             Have a project in mind? Need enterprise support? We're here to help you succeed.
           </p>
         </div>
       </section>
 
-      {/* Main Content */}
-      <section className="py-20 px-4">
+      {/* Main Content - Mobile responsive grid */}
+      <section className="py-12 md:py-20 px-4 safe-area-inset-bottom">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid lg:grid-cols-5 gap-12">
+          <div className="grid lg:grid-cols-5 gap-8 md:gap-12">
             
             {/* Contact Form - Takes 3 columns */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3 order-2 lg:order-1">
               <Card className="bg-gradient-to-br from-[#141414] to-[#1a1a1f] border-white/10 shadow-2xl shadow-black/20">
-                <CardContent className="p-8 md:p-10">
+                <CardContent className="p-5 md:p-8 lg:p-10">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-                      <Send className="h-5 w-5 text-white" />
+                    <div className="h-9 w-9 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+                      <Send className="h-4 w-4 md:h-5 md:w-5 text-white" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white">Send a Message</h2>
+                    <h2 className="text-xl md:text-2xl font-bold text-white">Send a Message</h2>
                   </div>
-                  <p className="text-white/50 mb-10 ml-13">We typically respond within 24 hours</p>
+                  <p className="text-sm md:text-base text-white/50 mb-6 md:mb-10 ml-12 md:ml-13">We typically respond within 24 hours</p>
                   
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name" className="text-white/80">Full Name *</Label>
+                  <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+                    <div className="grid md:grid-cols-2 gap-3 md:gap-4">
+                      <div className="space-y-1.5 md:space-y-2">
+                        <Label htmlFor="name" className="text-sm text-white/80">Full Name *</Label>
                         <Input
                           id="name"
                           value={formData.name}
                           onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                           placeholder="John Smith"
                           required
-                          className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                          className="bg-white/5 border-white/10 text-white placeholder:text-white/30 h-11 md:h-10 text-base md:text-sm"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email" className="text-white/80">Email Address *</Label>
+                      <div className="space-y-1.5 md:space-y-2">
+                        <Label htmlFor="email" className="text-sm text-white/80">Email Address *</Label>
                         <Input
                           id="email"
                           type="email"
@@ -142,26 +142,26 @@ const Contact = () => {
                           onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                           placeholder="john@company.com"
                           required
-                          className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                          className="bg-white/5 border-white/10 text-white placeholder:text-white/30 h-11 md:h-10 text-base md:text-sm"
                         />
                       </div>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="company" className="text-white/80">Company</Label>
+                    <div className="grid md:grid-cols-2 gap-3 md:gap-4">
+                      <div className="space-y-1.5 md:space-y-2">
+                        <Label htmlFor="company" className="text-sm text-white/80">Company</Label>
                         <Input
                           id="company"
                           value={formData.company}
                           onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
                           placeholder="Acme Corporation"
-                          className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                          className="bg-white/5 border-white/10 text-white placeholder:text-white/30 h-11 md:h-10 text-base md:text-sm"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="inquiryType" className="text-white/80">I'm interested in...</Label>
+                      <div className="space-y-1.5 md:space-y-2">
+                        <Label htmlFor="inquiryType" className="text-sm text-white/80">I'm interested in...</Label>
                         <Select value={formData.inquiryType} onValueChange={(value) => setFormData(prev => ({ ...prev, inquiryType: value }))}>
-                          <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                          <SelectTrigger className="bg-white/5 border-white/10 text-white h-11 md:h-10 text-base md:text-sm">
                             <SelectValue placeholder="Select an option" />
                           </SelectTrigger>
                           <SelectContent>
@@ -176,20 +176,20 @@ const Contact = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="subject" className="text-white/80">Subject *</Label>
+                    <div className="space-y-1.5 md:space-y-2">
+                      <Label htmlFor="subject" className="text-sm text-white/80">Subject *</Label>
                       <Input
                         id="subject"
                         value={formData.subject}
                         onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
                         placeholder="How can we help you?"
                         required
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-white/30 h-11 md:h-10 text-base md:text-sm"
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="message" className="text-white/80">Message *</Label>
+                    <div className="space-y-1.5 md:space-y-2">
+                      <Label htmlFor="message" className="text-sm text-white/80">Message *</Label>
                       <Textarea
                         id="message"
                         value={formData.message}
@@ -197,7 +197,7 @@ const Contact = () => {
                         placeholder="Tell us about your project or question..."
                         rows={5}
                         required
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none text-base md:text-sm"
                       />
                     </div>
 
@@ -205,7 +205,7 @@ const Contact = () => {
                       type="submit" 
                       disabled={isSubmitting} 
                       size="lg"
-                      className="w-full bg-primary hover:bg-primary/90"
+                      className="w-full bg-primary hover:bg-primary/90 h-12 md:h-11 text-base touch-target"
                     >
                       {isSubmitting ? (
                         <>
@@ -225,19 +225,19 @@ const Contact = () => {
             </div>
 
             {/* Contact Info - Takes 2 columns */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4 md:space-y-6 order-1 lg:order-2">
               {/* Quick Contact */}
               <Card className="bg-[#141414] border-white/10">
-                <CardContent className="p-6 space-y-6">
-                  <h3 className="text-lg font-semibold text-white">Quick Contact</h3>
+                <CardContent className="p-4 md:p-6 space-y-4 md:space-y-6">
+                  <h3 className="text-base md:text-lg font-semibold text-white">Quick Contact</h3>
 
-                  <a href="mailto:support@ultriumai.com" className="flex items-center gap-4 p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
-                    <div className="h-12 w-12 rounded-full bg-cyan-500/20 flex items-center justify-center">
-                      <Mail className="h-5 w-5 text-cyan-400" />
+                  <a href="mailto:support@ultriumai.com" className="flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group touch-target">
+                    <div className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                      <Mail className="h-4 w-4 md:h-5 md:w-5 text-cyan-400" />
                     </div>
                     <div>
-                      <p className="text-white font-medium group-hover:text-cyan-400 transition-colors">support@ultriumai.com</p>
-                      <p className="text-sm text-white/50">Email support</p>
+                      <p className="text-sm md:text-base text-white font-medium group-hover:text-cyan-400 transition-colors">support@ultriumai.com</p>
+                      <p className="text-xs md:text-sm text-white/50">Email support</p>
                     </div>
                   </a>
                 </CardContent>
@@ -245,15 +245,15 @@ const Contact = () => {
 
               {/* Enterprise */}
               <Card className="bg-gradient-to-br from-primary/20 to-cyan-500/10 border-primary/30">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Building className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold text-white">Enterprise Solutions</h3>
+                <CardContent className="p-4 md:p-6">
+                  <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+                    <Building className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                    <h3 className="text-base md:text-lg font-semibold text-white">Enterprise Solutions</h3>
                   </div>
-                  <p className="text-sm text-white/60 mb-4">
+                  <p className="text-xs md:text-sm text-white/60 mb-3 md:mb-4">
                     Need a custom solution for your organization? Let's schedule a call.
                   </p>
-                  <Button variant="outline" className="w-full border-primary/50 text-primary hover:bg-primary/10" asChild>
+                  <Button variant="outline" className="w-full border-primary/50 text-primary hover:bg-primary/10 h-11 md:h-10 touch-target" asChild>
                     <a href="mailto:enterprise@ultriumai.com">
                       Contact Enterprise Sales
                       <ArrowRight className="ml-2 h-4 w-4" />

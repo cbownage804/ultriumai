@@ -164,30 +164,30 @@ export function VanguardNavigation() {
 
   return (
     <>
-      {/* Mobile Menu Button */}
+      {/* Mobile Menu Button - Touch optimized */}
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden text-white hover:bg-white/10"
+        className="fixed top-3 left-3 z-50 md:hidden text-white hover:bg-white/10 touch-target h-11 w-11 rounded-xl bg-[#0d0d12]/90 backdrop-blur-xl border border-white/10 shadow-lg"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
       >
         {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
-      {/* Mobile Overlay */}
+      {/* Mobile Overlay - Improved backdrop */}
       {isMobileOpen && (
         <div 
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden"
+          className="fixed inset-0 bg-black/80 backdrop-blur-md z-40 md:hidden animate-fade-in"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Mobile optimized with safe areas */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-full bg-[#0d0d12] border-r border-white/10 z-40 transition-all duration-300",
-          isCollapsed ? "w-16" : "w-64",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          "fixed left-0 top-0 h-full bg-[#0d0d12] border-r border-white/10 z-40 transition-all duration-300 safe-area-inset-top safe-area-inset-bottom",
+          isCollapsed ? "w-16" : "w-72 md:w-64",
+          isMobileOpen ? "translate-x-0 animate-slide-in-left" : "-translate-x-full md:translate-x-0"
         )}
       >
         <div className="flex flex-col h-full">
@@ -270,8 +270,8 @@ export function VanguardNavigation() {
             </div>
           </div>
 
-          {/* Navigation Items */}
-          <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+          {/* Navigation Items - Touch optimized with momentum scrolling */}
+          <nav className="flex-1 p-2 space-y-1 overflow-y-auto overscroll-contain touch-pan-y scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
             {navSections.map((section) => (
               <Collapsible
                 key={section.title}
@@ -281,8 +281,8 @@ export function VanguardNavigation() {
                 <CollapsibleTrigger asChild>
                   <button
                     className={cn(
-                      "flex items-center gap-3 w-full px-3 py-2 rounded-lg transition-all duration-200",
-                      "hover:bg-white/5",
+                      "flex items-center gap-3 w-full px-3 py-3 rounded-lg transition-all duration-200 touch-target",
+                      "hover:bg-white/5 active:bg-white/10",
                       isSectionActive(section) ? "text-cyan-400" : "text-white/70",
                       isCollapsed && "justify-center px-2"
                     )}
@@ -301,17 +301,17 @@ export function VanguardNavigation() {
                 </CollapsibleTrigger>
                 
                 {!isCollapsed && (
-                  <CollapsibleContent className="pl-4 space-y-0.5 mt-1">
+                  <CollapsibleContent className="pl-4 space-y-1 mt-1">
                     {section.items.map((item) => (
                       <NavLink
                         key={item.path}
                         to={item.path}
                         onClick={() => setIsMobileOpen(false)}
                         className={cn(
-                          "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm",
-                          "hover:bg-white/5",
+                          "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 text-sm touch-target",
+                          "hover:bg-white/5 active:bg-white/10",
                           isActive(item.path) 
-                            ? "bg-gradient-to-r from-cyan-500/20 to-purple-600/20 text-cyan-400 border border-cyan-500/30" 
+                            ? "bg-gradient-to-r from-cyan-500/20 to-purple-600/20 text-cyan-400 border border-cyan-500/30 shadow-lg shadow-cyan-500/10" 
                             : "text-white/60"
                         )}
                       >
