@@ -81,18 +81,18 @@ const VanguardDashboard = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Top Header Bar - Dark Vanguard Theme */}
-      <header className="sticky top-0 z-30 h-14 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-cyan-500/20 flex items-center justify-between px-4 backdrop-blur-xl">
+      {/* Top Header Bar - Pure Black Vanguard Theme */}
+      <header className="sticky top-0 z-30 h-14 bg-black/90 border-b border-cyan-500/30 flex items-center justify-between px-4 backdrop-blur-xl shadow-lg shadow-cyan-500/5">
         <div className="flex items-center gap-3">
           {/* New Button */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" className="gap-1 bg-cyan-600 hover:bg-cyan-700 text-white border-0">
+              <Button size="sm" className="gap-1 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white border-0 shadow-lg shadow-cyan-500/25">
                 New
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="bg-slate-900 border-cyan-500/20">
+            <DropdownMenuContent align="start" className="bg-black border-cyan-500/30">
               <DropdownMenuItem 
                 onClick={() => navigate('/vanguard/tickets/new')}
                 className="text-slate-200 focus:bg-cyan-500/20 focus:text-cyan-400"
@@ -116,12 +116,12 @@ const VanguardDashboard = () => {
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cyan-500/60" />
             <Input
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-[300px] h-9 bg-slate-800/50 border-cyan-500/20 text-slate-200 placeholder:text-slate-500 focus:border-cyan-500/50"
+              className="pl-9 w-[300px] h-9 bg-black/60 border-cyan-500/30 text-slate-200 placeholder:text-slate-500 focus:border-cyan-400 focus:ring-cyan-400/20"
             />
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
           </div>
@@ -130,27 +130,27 @@ const VanguardDashboard = () => {
         <div className="flex items-center gap-2">
           <Button 
             size="sm" 
-            className="gap-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30"
+            className="gap-2 bg-black/60 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 hover:border-cyan-400/60"
             onClick={() => navigate('/vanguard/setup')}
           >
             <Download className="h-4 w-4" />
             Install agent
           </Button>
           
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10">
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/15">
             <HelpCircle className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10">
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/15">
             <MessageCircle className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10" onClick={handleRefresh}>
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/15" onClick={handleRefresh}>
             <RefreshCw className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 relative">
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/15 relative">
             <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-red-500/30 animate-pulse" />
           </Button>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center text-sm font-medium text-white">
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center text-sm font-medium text-white shadow-lg shadow-cyan-500/30">
             U
           </div>
         </div>
@@ -161,19 +161,19 @@ const VanguardDashboard = () => {
         {/* Page Title with Actions */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30">
-              <Shield className="h-6 w-6 text-cyan-400" />
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500/30 to-cyan-600/20 border border-cyan-500/40 shadow-lg shadow-cyan-500/20">
+              <Shield className="h-6 w-6 text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-slate-100">Vanguard Command</h1>
+              <h1 className="text-xl font-bold text-white">Vanguard Command</h1>
               <p className="text-sm text-slate-400">Unified visibility across Horizon, Pursuit, Response, and Cortex</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/15">
               <Maximize2 className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/15">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </div>
@@ -181,7 +181,7 @@ const VanguardDashboard = () => {
 
         {/* Vanguard Response — Ticket Status */}
         <div className="mb-2">
-          <h2 className="text-xs font-semibold tracking-wider text-cyan-500/70 mb-2">VANGUARD RESPONSE — TICKET STATUS</h2>
+          <h2 className="text-xs font-bold tracking-widest text-cyan-400 mb-2 drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]">VANGUARD RESPONSE — TICKET STATUS</h2>
         </div>
 
         {/* Top Row: Ticket Status + Pursuit Alert Status */}
@@ -191,7 +191,7 @@ const VanguardDashboard = () => {
           </div>
           <div>
             <div className="mb-2">
-              <h2 className="text-xs font-semibold tracking-wider text-cyan-500/70">VANGUARD PURSUIT — ACTIVE THREATS</h2>
+              <h2 className="text-xs font-bold tracking-widest text-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]">VANGUARD PURSUIT — ACTIVE THREATS</h2>
             </div>
             <AlertStatusWidget {...alertStats} />
           </div>
@@ -199,7 +199,7 @@ const VanguardDashboard = () => {
 
         {/* Vanguard Horizon — Device Health */}
         <div className="mb-2">
-          <h2 className="text-xs font-semibold tracking-wider text-cyan-500/70">VANGUARD HORIZON — DEVICE HEALTH</h2>
+          <h2 className="text-xs font-bold tracking-widest text-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]">VANGUARD HORIZON — DEVICE HEALTH</h2>
         </div>
 
         {/* Middle Row: Availability + Recent Alerts + Ticket Activity */}
@@ -213,9 +213,9 @@ const VanguardDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <CustomerTicketsWidget customers={customerTickets} />
           {/* Map placeholder */}
-          <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 rounded-lg border border-cyan-500/20 p-4 backdrop-blur-sm">
+          <div className="bg-black/80 rounded-xl border border-cyan-500/30 p-4 backdrop-blur-sm shadow-xl shadow-cyan-500/5">
             <h3 className="text-sm font-medium text-cyan-400 mb-3">Map overview</h3>
-            <div className="h-[200px] bg-slate-900/50 rounded flex items-center justify-center text-slate-500 text-sm border border-cyan-500/10">
+            <div className="h-[200px] bg-black/60 rounded-lg flex items-center justify-center text-slate-500 text-sm border border-cyan-500/20">
               Map visualization
             </div>
           </div>
