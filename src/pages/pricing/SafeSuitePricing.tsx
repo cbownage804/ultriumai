@@ -3,14 +3,20 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Shield, Lock, Eye, Users, ArrowRight } from "lucide-react";
+import { Check, Shield, Lock, Eye, Users, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import safesuiteLogo from '@/assets/safesuite-logo.png';
 import { useAuth } from "@/hooks/useAuth";
+import { useStripeCheckout, SAFESUITE_PRICES } from "@/hooks/useStripeCheckout";
+import { useUserSubscription } from "@/hooks/useUserSubscription";
+import { useState } from "react";
 
 const SafeSuitePricing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { loading, startCheckout } = useStripeCheckout();
+  const { productAccess, tier: currentTier } = useUserSubscription();
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
 
   const handleGetStarted = () => {
     if (user) {
@@ -18,6 +24,25 @@ const SafeSuitePricing = () => {
     } else {
       navigate('/auth');
     }
+  };
+
+  const handleCheckout = async (tier: 'pro' | 'business' | 'enterprise') => {
+    if (tier === 'enterprise') {
+      navigate('/contact');
+      return;
+    }
+    
+    setLoadingTier(tier);
+    await startCheckout({
+      product: 'safesuite',
+      tier,
+      billing: 'monthly',
+    });
+    setLoadingTier(null);
+  };
+
+  const isCurrentPlan = (tier: string) => {
+    return productAccess.safesuite?.tier === tier || currentTier === tier;
   };
 
   return (
@@ -110,8 +135,18 @@ const SafeSuitePricing = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-8 pt-0">
-                <Button className="w-full bg-emerald-500 hover:bg-emerald-600" onClick={handleGetStarted}>
-                  Start Pro Trial
+                <Button 
+                  className="w-full bg-emerald-500 hover:bg-emerald-600" 
+                  onClick={() => handleCheckout('pro')}
+                  disabled={loading || loadingTier === 'pro' || isCurrentPlan('pro')}
+                >
+                  {loadingTier === 'pro' ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...</>
+                  ) : isCurrentPlan('pro') ? (
+                    'Current Plan'
+                  ) : (
+                    'Start Pro Trial'
+                  )}
                 </Button>
               </CardFooter>
             </Card>
@@ -144,8 +179,19 @@ const SafeSuitePricing = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-8 pt-0">
-                <Button variant="outline" className="w-full" onClick={handleGetStarted}>
-                  Start Business Trial
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={() => handleCheckout('business')}
+                  disabled={loading || loadingTier === 'business' || isCurrentPlan('business')}
+                >
+                  {loadingTier === 'business' ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...</>
+                  ) : isCurrentPlan('business') ? (
+                    'Current Plan'
+                  ) : (
+                    'Start Business Trial'
+                  )}
                 </Button>
               </CardFooter>
             </Card>
