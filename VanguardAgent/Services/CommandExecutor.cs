@@ -68,6 +68,13 @@ public class CommandExecutor
             // System
             "reboot" => ScheduleReboot(command),
             
+            // Windows Defender / Security
+            "defender_status" => await GetDefenderStatus(),
+            "defender_scan" => await StartDefenderScan(command),
+            "defender_threats" => await GetDefenderThreats(command),
+            "defender_update" => await UpdateDefenderSignatures(),
+            "defender_quarantine" => await GetQuarantinedItems(),
+            
             _ => new CommandResult
             {
                 Success = false,
@@ -1030,4 +1037,114 @@ public class FileSystemEntry
 
     [JsonProperty("extension")]
     public string? Extension { get; set; }
+}
+
+// ==========================================================================
+// WINDOWS DEFENDER COMMANDS - Added for Vanguard Pursuit AV/XDR
+// ==========================================================================
+
+public partial class CommandExecutor
+{
+    private readonly DefenderService _defenderService = new();
+
+    private async Task<CommandResult> GetDefenderStatus()
+    {
+        try
+        {
+            var status = await _defenderService.GetStatusAsync();
+            return new CommandResult
+            {
+                Success = true,
+                ExitCode = 0,
+                Stdout = JsonConvert.SerializeObject(status)
+            };
+        }
+        catch (Exception ex)
+        {
+            return new CommandResult { Success = false, ExitCode = -1, Stderr = ex.Message };
+        }
+    }
+
+    private async Task<CommandResult> StartDefenderScan(RemoteCommand command)
+    {
+        try
+        {
+            var scanType = command.Parameters?.GetValueOrDefault("scan_type")?.ToString() ?? "quick";
+            var customPath = command.Parameters?.GetValueOrDefault("path")?.ToString();
+
+            var result = await _defenderService.StartScanAsync(scanType, customPath);
+            return new CommandResult
+            {
+                Success = result.Success,
+                ExitCode = result.Success ? 0 : -1,
+                Stdout = result.Success ? JsonConvert.SerializeObject(result) : null,
+                Stderr = result.Success ? null : result.Message
+            };
+        }
+        catch (Exception ex)
+        {
+            return new CommandResult { Success = false, ExitCode = -1, Stderr = ex.Message };
+        }
+    }
+
+    private async Task<CommandResult> GetDefenderThreats(RemoteCommand command)
+    {
+        try
+        {
+            var maxResults = 50;
+            if (command.Parameters?.TryGetValue("limit", out var limitObj) == true)
+            {
+                int.TryParse(limitObj?.ToString(), out maxResults);
+            }
+
+            var threats = await _defenderService.GetThreatHistoryAsync(maxResults);
+            return new CommandResult
+            {
+                Success = true,
+                ExitCode = 0,
+                Stdout = JsonConvert.SerializeObject(threats)
+            };
+        }
+        catch (Exception ex)
+        {
+            return new CommandResult { Success = false, ExitCode = -1, Stderr = ex.Message };
+        }
+    }
+
+    private async Task<CommandResult> UpdateDefenderSignatures()
+    {
+        try
+        {
+            var success = await _defenderService.UpdateSignaturesAsync();
+            return new CommandResult
+            {
+                Success = success,
+                ExitCode = success ? 0 : -1,
+                Stdout = success ? "Signature update initiated" : null,
+                Stderr = success ? null : "Failed to update signatures"
+            };
+        }
+        catch (Exception ex)
+        {
+            return new CommandResult { Success = false, ExitCode = -1, Stderr = ex.Message };
+        }
+    }
+
+    private async Task<CommandResult> GetQuarantinedItems()
+    {
+        try
+        {
+            var items = await _defenderService.GetQuarantinedItemsAsync();
+            return new CommandResult
+            {
+                Success = true,
+                ExitCode = 0,
+                Stdout = JsonConvert.SerializeObject(items)
+            };
+        }
+        catch (Exception ex)
+        {
+            return new CommandResult { Success = false, ExitCode = -1, Stderr = ex.Message };
+        }
+    }
 }

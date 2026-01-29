@@ -34,7 +34,7 @@ serve(async (req) => {
     console.log(`[vanguard-agent-api] Action: ${action}, Device: ${body.device_id || 'N/A'}`);
 
     // Agent-side actions (require X-VANGUARD-KEY)
-    if (['register', 'heartbeat', 'scan_results', 'get_commands', 'command_response'].includes(action)) {
+    if (['register', 'heartbeat', 'scan_results', 'get_commands', 'command_response', 'security_telemetry'].includes(action)) {
       if (agentKey !== VANGUARD_SECRET) {
         console.error('[vanguard-agent-api] Invalid agent key');
         return new Response(
@@ -54,6 +54,8 @@ serve(async (req) => {
           return await getCommands(supabase, body);
         case 'command_response':
           return await handleCommandResponse(supabase, body);
+        case 'security_telemetry':
+          return await handleSecurityTelemetry(supabase, body);
       }
     }
     
@@ -732,6 +734,125 @@ async function handleAsk(supabase: any, userId: string, body: any) {
     JSON.stringify({ status: 'queued', command_id: command.id, message: 'Question queued for agent' }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
+}
+
+// ============ SECURITY TELEMETRY HANDLER (Windows Defender) ============
+
+async function handleSecurityTelemetry(supabase: any, body: any) {
+  const { device_id, data } = body;
+  
+  if (!device_id) {
+    return new Response(
+      JSON.stringify({ error: 'device_id is required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Get agent
+  const { data: agent, error: agentError } = await supabase
+    .from('vanguard_agents')
+    .select('id, user_id')
+    .eq('device_id', device_id)
+    .single();
+  
+  if (agentError || !agent) {
+    return new Response(
+      JSON.stringify({ error: 'Agent not found' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  const securityData = data || {};
+  const defenderStatus = securityData.defender_status || {};
+  const recentThreats = securityData.recent_threats || [];
+  const quarantinedItems = securityData.quarantined_items || [];
+  
+  console.log(`[vanguard-agent-api] Security telemetry from ${device_id}: Defender=${defenderStatus.is_enabled ? 'ON' : 'OFF'}, Threats=${recentThreats.length}, Quarantined=${quarantinedItems.length}`);
+  
+  // Update agent with security status
+  const securityStatus = {
+    defender_enabled: defenderStatus.is_enabled || false,
+    real_time_protection: defenderStatus.real_time_protection || false,
+    signature_version: defenderStatus.signature_version || null,
+    signature_last_updated: defenderStatus.signature_last_updated || null,
+    last_full_scan: defenderStatus.last_full_scan || null,
+    last_quick_scan: defenderStatus.last_quick_scan || null,
+    quarantined_count: quarantinedItems.length,
+    recent_threats_count: recentThreats.length,
+    updated_at: new Date().toISOString()
+  };
+  
+  await supabase
+    .from('vanguard_agents')
+    .update({ 
+      security_status: securityStatus,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', agent.id);
+  
+  // Store security events for new threats
+  for (const threat of recentThreats) {
+    // Check if we've already stored this threat (by threat ID + agent)
+    const { data: existing } = await supabase
+      .from('vanguard_security_events')
+      .select('id')
+      .eq('agent_id', agent.id)
+      .eq('threat_id', threat.ThreatId?.toString() || threat.ThreatID?.toString())
+      .maybeSingle();
+    
+    if (!existing) {
+      const threatData = {
+        agent_id: agent.id,
+        user_id: agent.user_id,
+        event_type: 'threat_detected',
+        threat_id: threat.ThreatId?.toString() || threat.ThreatID?.toString(),
+        threat_name: threat.ThreatName || threat.threat_name || 'Unknown Threat',
+        severity: mapThreatSeverity(threat.SeverityID || threat.SeverityId || 2),
+        process_name: threat.ProcessName || threat.process_name,
+        resources: threat.Resources || threat.resources,
+        action_success: threat.ActionSuccess ?? threat.action_success ?? false,
+        threat_status: mapThreatStatus(threat.ThreatStatusID || threat.ThreatStatusId || 1),
+        detected_at: threat.InitialDetectionTime || threat.DetectedAt || new Date().toISOString(),
+        remediated_at: threat.RemediationTime || threat.RemediatedAt,
+        raw_data: threat
+      };
+      
+      await supabase.from('vanguard_security_events').insert(threatData);
+      console.log(`[vanguard-agent-api] Stored new threat: ${threatData.threat_name}`);
+    }
+  }
+  
+  return new Response(
+    JSON.stringify({ 
+      status: 'ok', 
+      stored_threats: recentThreats.length,
+      defender_status: defenderStatus.is_enabled ? 'enabled' : 'disabled'
+    }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+function mapThreatSeverity(severityId: number): string {
+  switch (severityId) {
+    case 1: return 'low';
+    case 2: return 'medium';
+    case 4: return 'high';
+    case 5: return 'critical';
+    default: return 'medium';
+  }
+}
+
+function mapThreatStatus(statusId: number): string {
+  switch (statusId) {
+    case 0: return 'unknown';
+    case 1: return 'detected';
+    case 2: return 'cleaned';
+    case 3: return 'quarantined';
+    case 4: return 'removed';
+    case 5: return 'allowed';
+    case 6: return 'blocked';
+    default: return 'unknown';
+  }
 }
 
 async function sendCommand(supabase: any, userId: string, body: any) {

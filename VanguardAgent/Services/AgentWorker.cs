@@ -17,8 +17,12 @@ public class AgentWorker : BackgroundService
 
     private DateTime _lastHeartbeat = DateTime.MinValue;
     private DateTime _lastTelemetry = DateTime.MinValue;
+    private DateTime _lastSecurityTelemetry = DateTime.MinValue;
     private DateTime _lastCommandPoll = DateTime.MinValue;
     private bool _isRegistered = false;
+
+    // Security telemetry interval (5 minutes by default)
+    private const int SecurityTelemetryIntervalSeconds = 300;
 
     public AgentWorker(
         ILogger<AgentWorker> logger,
@@ -69,6 +73,13 @@ public class AgentWorker : BackgroundService
                 {
                     await SendTelemetryAsync();
                     _lastTelemetry = now;
+                }
+
+                // Security telemetry (Defender status)
+                if ((now - _lastSecurityTelemetry).TotalSeconds >= SecurityTelemetryIntervalSeconds)
+                {
+                    await SendSecurityTelemetryAsync();
+                    _lastSecurityTelemetry = now;
                 }
 
                 // Sleep for a bit before next loop
@@ -158,6 +169,31 @@ public class AgentWorker : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending telemetry");
+        }
+    }
+
+    private async Task SendSecurityTelemetryAsync()
+    {
+        try
+        {
+            var securityData = await _telemetry.CollectSecurityTelemetryAsync();
+            var success = await _api.SendSecurityTelemetryAsync(securityData);
+
+            if (success)
+            {
+                var defenderEnabled = securityData.DefenderStatus?.IsEnabled ?? false;
+                var threatCount = securityData.RecentThreats?.Count ?? 0;
+                _logger.LogInformation("Security telemetry sent: Defender={Enabled}, Threats={Count}",
+                    defenderEnabled ? "ON" : "OFF", threatCount);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send security telemetry");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending security telemetry");
         }
     }
 

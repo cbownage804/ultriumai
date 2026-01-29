@@ -18853,6 +18853,7 @@ export type Database = {
           last_heartbeat: string | null
           location: string | null
           name: string
+          security_status: Json | null
           status: string
           updated_at: string
           user_id: string
@@ -18873,6 +18874,7 @@ export type Database = {
           last_heartbeat?: string | null
           location?: string | null
           name: string
+          security_status?: Json | null
           status?: string
           updated_at?: string
           user_id: string
@@ -18893,6 +18895,7 @@ export type Database = {
           last_heartbeat?: string | null
           location?: string | null
           name?: string
+          security_status?: Json | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -19918,6 +19921,68 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vanguard_security_events: {
+        Row: {
+          action_success: boolean | null
+          agent_id: string | null
+          created_at: string
+          detected_at: string | null
+          event_type: string
+          id: string
+          process_name: string | null
+          raw_data: Json | null
+          remediated_at: string | null
+          resources: string[] | null
+          severity: string
+          threat_id: string | null
+          threat_name: string
+          threat_status: string | null
+          user_id: string
+        }
+        Insert: {
+          action_success?: boolean | null
+          agent_id?: string | null
+          created_at?: string
+          detected_at?: string | null
+          event_type?: string
+          id?: string
+          process_name?: string | null
+          raw_data?: Json | null
+          remediated_at?: string | null
+          resources?: string[] | null
+          severity?: string
+          threat_id?: string | null
+          threat_name: string
+          threat_status?: string | null
+          user_id: string
+        }
+        Update: {
+          action_success?: boolean | null
+          agent_id?: string | null
+          created_at?: string
+          detected_at?: string | null
+          event_type?: string
+          id?: string
+          process_name?: string | null
+          raw_data?: Json | null
+          remediated_at?: string | null
+          resources?: string[] | null
+          severity?: string
+          threat_id?: string | null
+          threat_name?: string
+          threat_status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_security_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vanguard_service_tickets: {
         Row: {

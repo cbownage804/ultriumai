@@ -114,6 +114,26 @@ public class ApiClient
         }
     }
 
+    public async Task<bool> SendSecurityTelemetryAsync(SecurityTelemetry securityData)
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new
+            {
+                action = "security_telemetry",
+                data = securityData
+            };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint, content);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public async Task<List<RemoteCommand>?> PollCommandsAsync()
     {
         try
