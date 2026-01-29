@@ -19,30 +19,42 @@ export default function VanguardReports() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30">
-          <BarChart3 className="h-6 w-6 text-cyan-400" />
+        <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500/30 via-blue-500/20 to-purple-500/30 border border-cyan-500/40 shadow-lg shadow-purple-500/20">
+          <BarChart3 className="h-6 w-6 text-cyan-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">Vanguard Ledger</h1>
-          <p className="text-white/60">Reports, compliance, and security analytics</p>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-cyan-100 to-purple-200 bg-clip-text text-transparent">Vanguard Ledger</h1>
+          <p className="text-slate-400">Reports, compliance, and security analytics</p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
-          <TabsTrigger value="analytics" className="flex items-center gap-2 py-3">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto bg-black/60 border border-cyan-500/30 p-1">
+          <TabsTrigger 
+            value="analytics" 
+            className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:via-blue-500/15 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border-cyan-500/40 text-slate-400"
+          >
             <TrendingUp className="h-4 w-4" />
             <span className="hidden sm:inline">Analytics</span>
           </TabsTrigger>
-          <TabsTrigger value="scheduled" className="flex items-center gap-2 py-3">
+          <TabsTrigger 
+            value="scheduled" 
+            className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:via-blue-500/15 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border-cyan-500/40 text-slate-400"
+          >
             <Calendar className="h-4 w-4" />
             <span className="hidden sm:inline">Scheduled Scans</span>
           </TabsTrigger>
-          <TabsTrigger value="generate" className="flex items-center gap-2 py-3">
+          <TabsTrigger 
+            value="generate" 
+            className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:via-blue-500/15 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border-cyan-500/40 text-slate-400"
+          >
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Generate Report</span>
           </TabsTrigger>
-          <TabsTrigger value="attack-path" className="flex items-center gap-2 py-3">
+          <TabsTrigger 
+            value="attack-path" 
+            className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:via-blue-500/15 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border-cyan-500/40 text-slate-400"
+          >
             <GitBranch className="h-4 w-4" />
             <span className="hidden sm:inline">Attack Paths</span>
           </TabsTrigger>
