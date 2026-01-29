@@ -18839,76 +18839,94 @@ export type Database = {
       }
       vanguard_agents: {
         Row: {
+          agent_type: string | null
           agent_version: string | null
           api_endpoint: string | null
           client_id: string | null
           config: Json | null
           created_at: string
           device_id: string
+          firewall_rules: Json | null
           firmware_version: string | null
           hailo_board_name: string | null
           hailo_status: Json | null
           id: string
+          inference_stats: Json | null
           ip_address: unknown
           is_network_scanner: boolean | null
           last_heartbeat: string | null
           last_scan_at: string | null
           location: string | null
+          ml_model_version: string | null
           name: string
           scan_interval_seconds: number | null
           scanner_subnets: string[] | null
           security_status: Json | null
           status: string
+          threat_detections: Json | null
+          traffic_stats: Json | null
           updated_at: string
           user_id: string
           vpn_ip: string | null
         }
         Insert: {
+          agent_type?: string | null
           agent_version?: string | null
           api_endpoint?: string | null
           client_id?: string | null
           config?: Json | null
           created_at?: string
           device_id: string
+          firewall_rules?: Json | null
           firmware_version?: string | null
           hailo_board_name?: string | null
           hailo_status?: Json | null
           id?: string
+          inference_stats?: Json | null
           ip_address?: unknown
           is_network_scanner?: boolean | null
           last_heartbeat?: string | null
           last_scan_at?: string | null
           location?: string | null
+          ml_model_version?: string | null
           name: string
           scan_interval_seconds?: number | null
           scanner_subnets?: string[] | null
           security_status?: Json | null
           status?: string
+          threat_detections?: Json | null
+          traffic_stats?: Json | null
           updated_at?: string
           user_id: string
           vpn_ip?: string | null
         }
         Update: {
+          agent_type?: string | null
           agent_version?: string | null
           api_endpoint?: string | null
           client_id?: string | null
           config?: Json | null
           created_at?: string
           device_id?: string
+          firewall_rules?: Json | null
           firmware_version?: string | null
           hailo_board_name?: string | null
           hailo_status?: Json | null
           id?: string
+          inference_stats?: Json | null
           ip_address?: unknown
           is_network_scanner?: boolean | null
           last_heartbeat?: string | null
           last_scan_at?: string | null
           location?: string | null
+          ml_model_version?: string | null
           name?: string
           scan_interval_seconds?: number | null
           scanner_subnets?: string[] | null
           security_status?: Json | null
           status?: string
+          threat_detections?: Json | null
+          traffic_stats?: Json | null
           updated_at?: string
           user_id?: string
           vpn_ip?: string | null

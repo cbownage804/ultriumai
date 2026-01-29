@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { VanguardDevicesList } from '@/components/vanguard/VanguardDevicesList';
+import { DevicesTabbedView } from '@/components/vanguard/devices';
 
 export default function VanguardDevices() {
   useEffect(() => {
@@ -8,7 +8,7 @@ export default function VanguardDevices() {
 
   return (
     <div className="container mx-auto p-6">
-      <VanguardDevicesList />
+      <DevicesTabbedView />
     </div>
   );
 }
