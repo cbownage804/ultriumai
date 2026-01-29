@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { EmptyState } from '@/components/ui/empty-state';
 import { 
   BookOpen, Search, Plus, FileText, Video, Link2, Star,
   Clock, Eye, ThumbsUp, Folder, ChevronRight, X, ArrowLeft,
@@ -838,11 +839,15 @@ export default function VanguardKnowledge() {
             </AnimatePresence>
             
             {filteredArticles.length === 0 && (
-              <div className="text-center py-12">
-                <BookOpen className="h-12 w-12 text-slate-700 mx-auto mb-3" />
-                <p className="text-slate-400">No articles found</p>
-                <p className="text-slate-500 text-sm">Try a different search or category</p>
-              </div>
+              <EmptyState
+                icon={BookOpen}
+                title="No articles found"
+                description="Try a different search term or category filter"
+                action={{
+                  label: "Create Article",
+                  onClick: () => setShowCreateDialog(true)
+                }}
+              />
             )}
           </div>
         </div>
