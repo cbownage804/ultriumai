@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,9 +25,13 @@ import {
   AlertTriangle,
   Zap,
   Filter,
-  Target
+  Target,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface WorkflowRule {
   id: string;
@@ -56,77 +60,11 @@ interface EscalationRule {
   id: string;
   name: string;
   priority: 'critical' | 'high' | 'medium' | 'low';
-  responseTimeout: number; // minutes
-  resolutionTimeout: number; // minutes
+  responseTimeout: number;
+  resolutionTimeout: number;
   escalationPath: string[];
   isActive: boolean;
 }
-
-const mockWorkflows: WorkflowRule[] = [
-  {
-    id: '1',
-    name: 'Auto-assign Critical Tickets',
-    description: 'Automatically assign critical tickets to senior technicians',
-    trigger: 'ticket_created',
-    conditions: [{ field: 'priority', operator: 'equals', value: 'critical' }],
-    actions: [
-      { type: 'assign', parameters: { team: 'senior_support' } },
-      { type: 'notify', parameters: { channel: 'slack', message: 'Critical ticket created' } }
-    ],
-    isActive: true,
-    executionCount: 45,
-    lastExecuted: '2024-01-15T10:30:00Z',
-  },
-  {
-    id: '2',
-    name: 'VIP Client Fast Track',
-    description: 'Elevate priority for VIP clients',
-    trigger: 'ticket_created',
-    conditions: [{ field: 'client_tier', operator: 'equals', value: 'vip' }],
-    actions: [
-      { type: 'change_priority', parameters: { priority: 'high' } },
-      { type: 'add_tag', parameters: { tag: 'vip' } }
-    ],
-    isActive: true,
-    executionCount: 23,
-    lastExecuted: '2024-01-15T09:15:00Z',
-  },
-  {
-    id: '3',
-    name: 'SLA Warning Escalation',
-    description: 'Escalate tickets approaching SLA breach',
-    trigger: 'sla_warning',
-    conditions: [{ field: 'sla_percentage', operator: 'greater_than', value: '80' }],
-    actions: [
-      { type: 'escalate', parameters: { level: '1' } },
-      { type: 'notify', parameters: { channel: 'email', recipient: 'manager' } }
-    ],
-    isActive: true,
-    executionCount: 12,
-    lastExecuted: '2024-01-14T16:45:00Z',
-  },
-  {
-    id: '4',
-    name: 'Auto-close Resolved Tickets',
-    description: 'Close tickets 48 hours after resolution if no response',
-    trigger: 'time_elapsed',
-    conditions: [
-      { field: 'status', operator: 'equals', value: 'resolved' },
-      { field: 'hours_since_update', operator: 'greater_than', value: '48' }
-    ],
-    actions: [
-      { type: 'change_status', parameters: { status: 'closed' } }
-    ],
-    isActive: false,
-    executionCount: 156,
-  },
-];
-
-const mockEscalations: EscalationRule[] = [
-  { id: '1', name: 'Critical Path', priority: 'critical', responseTimeout: 15, resolutionTimeout: 240, escalationPath: ['Senior Tech', 'Team Lead', 'Manager', 'Director'], isActive: true },
-  { id: '2', name: 'High Priority Path', priority: 'high', responseTimeout: 30, resolutionTimeout: 480, escalationPath: ['Tech Team', 'Senior Tech', 'Team Lead'], isActive: true },
-  { id: '3', name: 'Standard Path', priority: 'medium', responseTimeout: 120, resolutionTimeout: 1440, escalationPath: ['Tech Team', 'Senior Tech'], isActive: true },
-];
 
 const statusFlow = [
   { from: 'New', to: 'Open', auto: true },
@@ -138,10 +76,93 @@ const statusFlow = [
 ];
 
 export function TicketWorkflowEngine() {
-  const [workflows] = useState<WorkflowRule[]>(mockWorkflows);
-  const [escalations] = useState<EscalationRule[]>(mockEscalations);
+  const { user } = useAuth();
+  const [workflows, setWorkflows] = useState<WorkflowRule[]>([]);
+  const [escalations, setEscalations] = useState<EscalationRule[]>([]);
   const [activeTab, setActiveTab] = useState('workflows');
   const [showWorkflowDialog, setShowWorkflowDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [newWorkflow, setNewWorkflow] = useState({ name: '', description: '', trigger: 'ticket_created' as const });
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const [workflowRes, escalationRes] = await Promise.all([
+        (supabase as any).from('vanguard_workflow_rules').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        (supabase as any).from('vanguard_escalation_rules').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+      ]);
+
+      if (workflowRes.data) {
+        setWorkflows(workflowRes.data.map((w: any) => ({
+          id: w.id,
+          name: w.name,
+          description: w.description || '',
+          trigger: w.trigger_event,
+          conditions: w.conditions || [],
+          actions: w.actions || [],
+          isActive: w.is_active,
+          executionCount: w.execution_count || 0,
+          lastExecuted: w.last_executed_at
+        })));
+      }
+
+      if (escalationRes.data) {
+        setEscalations(escalationRes.data.map((e: any) => ({
+          id: e.id,
+          name: e.name,
+          priority: e.priority,
+          responseTimeout: e.response_timeout_minutes,
+          resolutionTimeout: e.resolution_timeout_minutes,
+          escalationPath: e.escalation_path || [],
+          isActive: e.is_active
+        })));
+      }
+    } catch (error) {
+      console.error('Error loading workflow data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateWorkflow = async () => {
+    if (!user || !newWorkflow.name) return;
+    try {
+      const { error } = await (supabase as any).from('vanguard_workflow_rules').insert({
+        user_id: user.id,
+        name: newWorkflow.name,
+        description: newWorkflow.description,
+        trigger_event: newWorkflow.trigger,
+        conditions: [],
+        actions: [],
+        is_active: true
+      });
+      if (error) throw error;
+      toast.success('Workflow created');
+      setShowWorkflowDialog(false);
+      setNewWorkflow({ name: '', description: '', trigger: 'ticket_created' });
+      loadData();
+    } catch (error) {
+      console.error('Error creating workflow:', error);
+      toast.error('Failed to create workflow');
+    }
+  };
+
+  const toggleWorkflowActive = async (id: string, isActive: boolean) => {
+    try {
+      const { error } = await (supabase as any).from('vanguard_workflow_rules').update({ is_active: !isActive }).eq('id', id);
+      if (error) throw error;
+      setWorkflows(prev => prev.map(w => w.id === id ? { ...w, isActive: !isActive } : w));
+    } catch (error) {
+      console.error('Error toggling workflow:', error);
+    }
+  };
 
   const activeWorkflows = workflows.filter(w => w.isActive).length;
   const totalExecutions = workflows.reduce((sum, w) => sum + w.executionCount, 0);
@@ -154,7 +175,7 @@ export function TicketWorkflowEngine() {
     time_elapsed: 'Time Elapsed',
   };
 
-  const actionLabels = {
+  const actionLabels: Record<string, string> = {
     assign: 'Assign',
     change_status: 'Change Status',
     change_priority: 'Change Priority',
@@ -162,6 +183,14 @@ export function TicketWorkflowEngine() {
     add_tag: 'Add Tag',
     escalate: 'Escalate',
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -247,11 +276,18 @@ export function TicketWorkflowEngine() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Workflow Name</Label>
-                      <Input placeholder="Auto-assign VIP tickets" />
+                      <Input 
+                        placeholder="Auto-assign VIP tickets" 
+                        value={newWorkflow.name}
+                        onChange={(e) => setNewWorkflow(prev => ({ ...prev, name: e.target.value }))}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Trigger</Label>
-                      <Select>
+                      <Select 
+                        value={newWorkflow.trigger}
+                        onValueChange={(val) => setNewWorkflow(prev => ({ ...prev, trigger: val as any }))}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select trigger" />
                         </SelectTrigger>
@@ -265,81 +301,18 @@ export function TicketWorkflowEngine() {
                       </Select>
                     </div>
                   </div>
-                  
                   <div className="space-y-2">
-                    <Label>Conditions (When)</Label>
-                    <Card className="p-3">
-                      <div className="flex gap-2">
-                        <Select>
-                          <SelectTrigger className="w-[150px]">
-                            <SelectValue placeholder="Field" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="priority">Priority</SelectItem>
-                            <SelectItem value="client">Client</SelectItem>
-                            <SelectItem value="category">Category</SelectItem>
-                            <SelectItem value="status">Status</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Select>
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue placeholder="Operator" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="equals">Equals</SelectItem>
-                            <SelectItem value="not_equals">Not Equals</SelectItem>
-                            <SelectItem value="contains">Contains</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input placeholder="Value" className="flex-1" />
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </Card>
-                    <Button variant="outline" size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Condition
-                    </Button>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Actions (Then)</Label>
-                    <Card className="p-3">
-                      <div className="flex gap-2">
-                        <Select>
-                          <SelectTrigger className="w-[150px]">
-                            <SelectValue placeholder="Action" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="assign">Assign To</SelectItem>
-                            <SelectItem value="change_priority">Change Priority</SelectItem>
-                            <SelectItem value="change_status">Change Status</SelectItem>
-                            <SelectItem value="notify">Send Notification</SelectItem>
-                            <SelectItem value="add_tag">Add Tag</SelectItem>
-                            <SelectItem value="escalate">Escalate</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input placeholder="Parameter" className="flex-1" />
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </Card>
-                    <Button variant="outline" size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Action
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Switch defaultChecked />
-                    <Label>Active</Label>
+                    <Label>Description</Label>
+                    <Input 
+                      placeholder="Describe what this workflow does"
+                      value={newWorkflow.description}
+                      onChange={(e) => setNewWorkflow(prev => ({ ...prev, description: e.target.value }))}
+                    />
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setShowWorkflowDialog(false)}>Cancel</Button>
-                  <Button onClick={() => setShowWorkflowDialog(false)}>Create Workflow</Button>
+                  <Button onClick={handleCreateWorkflow}>Create Workflow</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -351,238 +324,128 @@ export function TicketWorkflowEngine() {
               <TabsTrigger value="workflows">Automation Rules</TabsTrigger>
               <TabsTrigger value="escalations">Escalation Paths</TabsTrigger>
               <TabsTrigger value="status">Status Flow</TabsTrigger>
-              <TabsTrigger value="assignments">Auto-Assignment</TabsTrigger>
             </TabsList>
 
-            {/* Workflows Tab */}
             <TabsContent value="workflows" className="mt-4">
               <div className="space-y-3">
-                {workflows.map(workflow => (
-                  <Card key={workflow.id} className={cn(
-                    workflow.isActive ? "border-green-500/30" : "border-muted"
-                  )}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            {workflow.isActive ? (
-                              <Play className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <Pause className="h-4 w-4 text-muted-foreground" />
-                            )}
-                            <p className="font-medium">{workflow.name}</p>
-                            <Badge variant="outline">{triggerLabels[workflow.trigger]}</Badge>
+                {workflows.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Workflow className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No workflow rules configured yet</p>
+                    <Button variant="outline" className="mt-4" onClick={() => setShowWorkflowDialog(true)}>
+                      <Plus className="h-4 w-4 mr-2" />Create First Workflow
+                    </Button>
+                  </div>
+                ) : (
+                  workflows.map(workflow => (
+                    <Card key={workflow.id} className={cn(workflow.isActive ? "border-green-500/30" : "border-muted")}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              {workflow.isActive ? (
+                                <Play className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <Pause className="h-4 w-4 text-muted-foreground" />
+                              )}
+                              <p className="font-medium">{workflow.name}</p>
+                              <Badge variant="outline">{triggerLabels[workflow.trigger]}</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{workflow.description}</p>
+                            <div className="flex items-center gap-4 text-xs">
+                              <div className="flex items-center gap-1">
+                                <Filter className="h-3 w-3" />
+                                <span>{workflow.conditions.length} conditions</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Zap className="h-3 w-3" />
+                                <span>{workflow.actions.length} actions</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Target className="h-3 w-3" />
+                                <span>{workflow.executionCount} executions</span>
+                              </div>
+                            </div>
                           </div>
-                          <p className="text-sm text-muted-foreground">{workflow.description}</p>
-                          
-                          <div className="flex items-center gap-4 text-xs">
-                            <div className="flex items-center gap-1">
-                              <Filter className="h-3 w-3" />
-                              <span>{workflow.conditions.length} conditions</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Zap className="h-3 w-3" />
-                              <span>{workflow.actions.length} actions</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Target className="h-3 w-3" />
-                              <span>{workflow.executionCount} executions</span>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {workflow.actions.map((action, i) => (
-                              <Badge key={i} variant="secondary" className="text-xs">
-                                {actionLabels[action.type]}
-                              </Badge>
-                            ))}
+                          <div className="flex gap-1 items-center">
+                            <Button variant="ghost" size="sm">
+                              <Settings className="h-4 w-4" />
+                            </Button>
+                            <Switch 
+                              checked={workflow.isActive} 
+                              onCheckedChange={() => toggleWorkflowActive(workflow.id, workflow.isActive)}
+                            />
                           </div>
                         </div>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="sm">
-                            <Settings className="h-4 w-4" />
-                          </Button>
-                          <Switch checked={workflow.isActive} />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
             </TabsContent>
 
-            {/* Escalations Tab */}
             <TabsContent value="escalations" className="mt-4">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Priority</TableHead>
-                    <TableHead>Response Timeout</TableHead>
-                    <TableHead>Resolution Timeout</TableHead>
+                    <TableHead>Response Time</TableHead>
+                    <TableHead>Resolution Time</TableHead>
                     <TableHead>Escalation Path</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {escalations.map(rule => (
-                    <TableRow key={rule.id}>
-                      <TableCell className="font-medium">{rule.name}</TableCell>
-                      <TableCell>
-                        <Badge variant={
-                          rule.priority === 'critical' ? 'destructive' :
-                          rule.priority === 'high' ? 'default' : 'secondary'
-                        }>
-                          {rule.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{rule.responseTimeout} min</TableCell>
-                      <TableCell>{rule.resolutionTimeout} min</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-xs">
-                          {rule.escalationPath.map((level, i) => (
-                            <span key={i} className="flex items-center">
-                              {i > 0 && <ArrowRight className="h-3 w-3 mx-1 text-muted-foreground" />}
-                              <Badge variant="outline">{level}</Badge>
-                            </span>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Switch checked={rule.isActive} />
+                  {escalations.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        No escalation rules configured
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    escalations.map(escalation => (
+                      <TableRow key={escalation.id}>
+                        <TableCell className="font-medium">{escalation.name}</TableCell>
+                        <TableCell>
+                          <Badge variant={escalation.priority === 'critical' ? 'destructive' : 'outline'}>
+                            {escalation.priority}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{escalation.responseTimeout} min</TableCell>
+                        <TableCell>{Math.floor(escalation.resolutionTimeout / 60)} hrs</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-xs">
+                            {escalation.escalationPath.map((step, i) => (
+                              <span key={i} className="flex items-center gap-1">
+                                {i > 0 && <ArrowRight className="h-3 w-3" />}
+                                <Badge variant="secondary" className="text-xs">{step}</Badge>
+                              </span>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={escalation.isActive ? 'default' : 'outline'}>
+                            {escalation.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </TabsContent>
 
-            {/* Status Flow Tab */}
             <TabsContent value="status" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Ticket Status Transitions</CardTitle>
-                  <CardDescription>Define allowed status changes and automatic transitions</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap justify-center gap-4 p-6">
-                    {['New', 'Open', 'In Progress', 'Pending', 'Resolved', 'Closed'].map((status, i) => (
-                      <div 
-                        key={status}
-                        className={cn(
-                          "px-4 py-2 rounded-lg border-2 font-medium",
-                          status === 'New' && "border-blue-500 bg-blue-500/10 text-blue-500",
-                          status === 'Open' && "border-cyan-500 bg-cyan-500/10 text-cyan-500",
-                          status === 'In Progress' && "border-yellow-500 bg-yellow-500/10 text-yellow-500",
-                          status === 'Pending' && "border-orange-500 bg-orange-500/10 text-orange-500",
-                          status === 'Resolved' && "border-green-500 bg-green-500/10 text-green-500",
-                          status === 'Closed' && "border-muted bg-muted/20 text-muted-foreground"
-                        )}
-                      >
-                        {status}
-                      </div>
-                    ))}
+              <div className="flex flex-wrap justify-center gap-8 py-8">
+                {statusFlow.map((flow, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Badge variant="outline" className="px-3 py-1">{flow.from}</Badge>
+                    <ArrowRight className={cn("h-4 w-4", flow.auto ? "text-green-500" : "text-muted-foreground")} />
+                    <Badge variant="outline" className="px-3 py-1">{flow.to}</Badge>
+                    {flow.auto && <Badge className="bg-green-500/20 text-green-500 text-xs">Auto</Badge>}
                   </div>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>From Status</TableHead>
-                        <TableHead></TableHead>
-                        <TableHead>To Status</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {statusFlow.map((flow, i) => (
-                        <TableRow key={i}>
-                          <TableCell>
-                            <Badge variant="outline">{flow.from}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{flow.to}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={flow.auto ? 'default' : 'secondary'}>
-                              {flow.auto ? 'Automatic' : 'Manual'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm">Edit</Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Auto-Assignment Tab */}
-            <TabsContent value="assignments" className="mt-4">
-              <div className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      Round-Robin Assignment
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm">Distribute new tickets evenly across available technicians</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Respects working hours, skill matching, and current workload
-                        </p>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Target className="h-4 w-4" />
-                      Skill-Based Routing
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm">Match tickets to technicians based on required skills</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Uses ticket category and technician skill profiles
-                        </p>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Workload Balancing
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm">Consider current ticket load when assigning</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Prevents technician overload during peak times
-                        </p>
-                      </div>
-                      <Switch />
-                    </div>
-                  </CardContent>
-                </Card>
+                ))}
               </div>
             </TabsContent>
           </Tabs>

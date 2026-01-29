@@ -19430,6 +19430,81 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_asset_lifecycle: {
+        Row: {
+          asset_type: string
+          assigned_to: string | null
+          created_at: string
+          depreciation_method: string | null
+          eol_date: string | null
+          id: string
+          last_maintenance_date: string | null
+          location: string | null
+          manufacturer: string | null
+          model: string | null
+          name: string
+          notes: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          salvage_value: number | null
+          serial_number: string | null
+          status: string | null
+          updated_at: string
+          useful_life_years: number | null
+          user_id: string
+          vendor: string | null
+          warranty_expiry: string | null
+        }
+        Insert: {
+          asset_type: string
+          assigned_to?: string | null
+          created_at?: string
+          depreciation_method?: string | null
+          eol_date?: string | null
+          id?: string
+          last_maintenance_date?: string | null
+          location?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          name: string
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          salvage_value?: number | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string
+          useful_life_years?: number | null
+          user_id: string
+          vendor?: string | null
+          warranty_expiry?: string | null
+        }
+        Update: {
+          asset_type?: string
+          assigned_to?: string | null
+          created_at?: string
+          depreciation_method?: string | null
+          eol_date?: string | null
+          id?: string
+          last_maintenance_date?: string | null
+          location?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          name?: string
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          salvage_value?: number | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string
+          useful_life_years?: number | null
+          user_id?: string
+          vendor?: string | null
+          warranty_expiry?: string | null
+        }
+        Relationships: []
+      }
       vanguard_baseline_drifts: {
         Row: {
           acknowledged_at: string | null
@@ -19931,6 +20006,107 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_endpoint_compliance: {
+        Row: {
+          agent_id: string | null
+          av_status: string | null
+          cis_score: number | null
+          compliance_checks: Json | null
+          created_at: string
+          encryption_status: string | null
+          firewall_status: string | null
+          hostname: string
+          id: string
+          last_scan_at: string | null
+          os: string | null
+          overall_score: number | null
+          patch_score: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          av_status?: string | null
+          cis_score?: number | null
+          compliance_checks?: Json | null
+          created_at?: string
+          encryption_status?: string | null
+          firewall_status?: string | null
+          hostname: string
+          id?: string
+          last_scan_at?: string | null
+          os?: string | null
+          overall_score?: number | null
+          patch_score?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          av_status?: string | null
+          cis_score?: number | null
+          compliance_checks?: Json | null
+          created_at?: string
+          encryption_status?: string | null
+          firewall_status?: string | null
+          hostname?: string
+          id?: string
+          last_scan_at?: string | null
+          os?: string | null
+          overall_score?: number | null
+          patch_score?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_endpoint_compliance_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_escalation_rules: {
+        Row: {
+          created_at: string
+          escalation_path: string[] | null
+          id: string
+          is_active: boolean | null
+          name: string
+          priority: string
+          resolution_timeout_minutes: number
+          response_timeout_minutes: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          escalation_path?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          priority: string
+          resolution_timeout_minutes: number
+          response_timeout_minutes: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          escalation_path?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          priority?: string
+          resolution_timeout_minutes?: number
+          response_timeout_minutes?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       vanguard_honeypot_events: {
         Row: {
@@ -20537,6 +20713,60 @@ export type Database = {
           rotations?: Json
           timezone?: string | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_patches: {
+        Row: {
+          affected_devices: number | null
+          category: string
+          created_at: string
+          cve_ids: string[] | null
+          description: string | null
+          id: string
+          installed_devices: number | null
+          kb_number: string
+          release_date: string | null
+          severity: string
+          size_mb: number | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affected_devices?: number | null
+          category: string
+          created_at?: string
+          cve_ids?: string[] | null
+          description?: string | null
+          id?: string
+          installed_devices?: number | null
+          kb_number: string
+          release_date?: string | null
+          severity: string
+          size_mb?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affected_devices?: number | null
+          category?: string
+          created_at?: string
+          cve_ids?: string[] | null
+          description?: string | null
+          id?: string
+          installed_devices?: number | null
+          kb_number?: string
+          release_date?: string | null
+          severity?: string
+          size_mb?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -21529,6 +21759,54 @@ export type Database = {
           },
         ]
       }
+      vanguard_sla_breaches: {
+        Row: {
+          actual_value: number | null
+          breach_type: string
+          client_id: string | null
+          client_name: string | null
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          notes: string | null
+          occurred_at: string
+          status: string | null
+          target_value: number | null
+          ticket_id: string | null
+          user_id: string
+        }
+        Insert: {
+          actual_value?: number | null
+          breach_type: string
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          occurred_at?: string
+          status?: string | null
+          target_value?: number | null
+          ticket_id?: string | null
+          user_id: string
+        }
+        Update: {
+          actual_value?: number | null
+          breach_type?: string
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          occurred_at?: string
+          status?: string | null
+          target_value?: number | null
+          ticket_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_sla_policies: {
         Row: {
           business_days: string[] | null
@@ -21594,6 +21872,51 @@ export type Database = {
           },
         ]
       }
+      vanguard_software_audit: {
+        Row: {
+          category: string | null
+          created_at: string
+          device_count: number | null
+          has_vulnerabilities: boolean | null
+          id: string
+          is_approved: boolean | null
+          name: string
+          publisher: string | null
+          updated_at: string
+          user_id: string
+          version: string | null
+          vulnerability_count: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          device_count?: number | null
+          has_vulnerabilities?: boolean | null
+          id?: string
+          is_approved?: boolean | null
+          name: string
+          publisher?: string | null
+          updated_at?: string
+          user_id: string
+          version?: string | null
+          vulnerability_count?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          device_count?: number | null
+          has_vulnerabilities?: boolean | null
+          id?: string
+          is_approved?: boolean | null
+          name?: string
+          publisher?: string | null
+          updated_at?: string
+          user_id?: string
+          version?: string | null
+          vulnerability_count?: number | null
+        }
+        Relationships: []
+      }
       vanguard_subscriptions: {
         Row: {
           admin_override: boolean | null
@@ -21640,6 +21963,92 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           tier?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_survey_responses: {
+        Row: {
+          client_name: string | null
+          created_at: string
+          feedback: string | null
+          id: string
+          nps_score: number | null
+          rating: number | null
+          technician_name: string | null
+          template_id: string | null
+          ticket_id: string | null
+          ticket_title: string | null
+          user_id: string
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          nps_score?: number | null
+          rating?: number | null
+          technician_name?: string | null
+          template_id?: string | null
+          ticket_id?: string | null
+          ticket_title?: string | null
+          user_id: string
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          nps_score?: number | null
+          rating?: number | null
+          technician_name?: string | null
+          template_id?: string | null
+          ticket_id?: string | null
+          ticket_title?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_survey_responses_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_survey_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_survey_templates: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          questions: Json | null
+          response_rate: number | null
+          trigger_event: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          questions?: Json | null
+          response_rate?: number | null
+          trigger_event: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          questions?: Json | null
+          response_rate?: number | null
+          trigger_event?: string
           updated_at?: string
           user_id?: string
         }
@@ -21845,6 +22254,147 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_uptime_policies: {
+        Row: {
+          breach_notifications: string[] | null
+          client_id: string | null
+          client_name: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          maintenance_window: Json | null
+          name: string
+          resolution_time_target: number | null
+          response_time_target: number | null
+          updated_at: string
+          uptime_target: number
+          user_id: string
+        }
+        Insert: {
+          breach_notifications?: string[] | null
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          maintenance_window?: Json | null
+          name: string
+          resolution_time_target?: number | null
+          response_time_target?: number | null
+          updated_at?: string
+          uptime_target?: number
+          user_id: string
+        }
+        Update: {
+          breach_notifications?: string[] | null
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          maintenance_window?: Json | null
+          name?: string
+          resolution_time_target?: number | null
+          response_time_target?: number | null
+          updated_at?: string
+          uptime_target?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_uptime_records: {
+        Row: {
+          client_id: string | null
+          client_name: string | null
+          created_at: string
+          current_uptime: number | null
+          downtime_minutes_30d: number | null
+          id: string
+          incidents_30d: number | null
+          last_30_days_uptime: number | null
+          last_downtime_at: string | null
+          sla_target: number | null
+          trend: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          current_uptime?: number | null
+          downtime_minutes_30d?: number | null
+          id?: string
+          incidents_30d?: number | null
+          last_30_days_uptime?: number | null
+          last_downtime_at?: string | null
+          sla_target?: number | null
+          trend?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          current_uptime?: number | null
+          downtime_minutes_30d?: number | null
+          id?: string
+          incidents_30d?: number | null
+          last_30_days_uptime?: number | null
+          last_downtime_at?: string | null
+          sla_target?: number | null
+          trend?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_workflow_rules: {
+        Row: {
+          actions: Json | null
+          conditions: Json | null
+          created_at: string
+          description: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          last_executed_at: string | null
+          name: string
+          trigger_event: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actions?: Json | null
+          conditions?: Json | null
+          created_at?: string
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          name: string
+          trigger_event: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actions?: Json | null
+          conditions?: Json | null
+          created_at?: string
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          name?: string
+          trigger_event?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       vanguard_workflow_states: {
         Row: {

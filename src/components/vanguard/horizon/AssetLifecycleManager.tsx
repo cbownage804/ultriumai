@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Package, 
@@ -24,146 +24,39 @@ import {
   Download,
   Plus,
   Search,
-  Filter,
-  BarChart3,
-  CalendarDays,
-  AlertCircle,
-  Archive
+  Loader2
 } from 'lucide-react';
-import { format, differenceInDays, addDays } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface Asset {
   id: string;
   name: string;
   type: 'workstation' | 'server' | 'laptop' | 'network' | 'peripheral' | 'mobile';
-  serialNumber: string;
-  manufacturer: string;
-  model: string;
-  purchaseDate: string;
+  serialNumber?: string;
+  manufacturer?: string;
+  model?: string;
+  purchaseDate?: string;
   purchasePrice: number;
-  vendor: string;
-  warrantyExpiry: string;
+  vendor?: string;
+  warrantyExpiry?: string;
   status: 'active' | 'maintenance' | 'retired' | 'disposed';
   assignedTo?: string;
   location?: string;
   depreciationMethod: 'straight-line' | 'declining-balance';
-  usefulLife: number; // years
+  usefulLife: number;
   salvageValue: number;
   lastMaintenanceDate?: string;
   eolDate?: string;
   notes?: string;
 }
 
-interface AssetHistory {
-  id: string;
-  assetId: string;
-  action: string;
-  date: string;
-  performedBy: string;
-  details: string;
-}
-
-// Mock data
-const mockAssets: Asset[] = [
-  {
-    id: '1',
-    name: 'Dell OptiPlex 7090',
-    type: 'workstation',
-    serialNumber: 'SN-DELL-7090-001',
-    manufacturer: 'Dell',
-    model: 'OptiPlex 7090',
-    purchaseDate: '2022-03-15',
-    purchasePrice: 1299,
-    vendor: 'Dell Direct',
-    warrantyExpiry: '2025-03-15',
-    status: 'active',
-    assignedTo: 'John Smith',
-    location: 'HQ - Floor 2',
-    depreciationMethod: 'straight-line',
-    usefulLife: 5,
-    salvageValue: 100,
-  },
-  {
-    id: '2',
-    name: 'HP ProLiant DL380',
-    type: 'server',
-    serialNumber: 'SN-HP-DL380-001',
-    manufacturer: 'HP',
-    model: 'ProLiant DL380 Gen10',
-    purchaseDate: '2021-06-01',
-    purchasePrice: 8500,
-    vendor: 'CDW',
-    warrantyExpiry: '2024-06-01',
-    status: 'active',
-    location: 'Data Center A',
-    depreciationMethod: 'straight-line',
-    usefulLife: 7,
-    salvageValue: 500,
-    eolDate: '2028-06-01',
-  },
-  {
-    id: '3',
-    name: 'MacBook Pro 14"',
-    type: 'laptop',
-    serialNumber: 'SN-APPLE-MBP-001',
-    manufacturer: 'Apple',
-    model: 'MacBook Pro 14" M3',
-    purchaseDate: '2023-11-01',
-    purchasePrice: 2499,
-    vendor: 'Apple Store',
-    warrantyExpiry: '2024-11-01',
-    status: 'active',
-    assignedTo: 'Sarah Johnson',
-    depreciationMethod: 'declining-balance',
-    usefulLife: 4,
-    salvageValue: 200,
-  },
-  {
-    id: '4',
-    name: 'Cisco Catalyst 9300',
-    type: 'network',
-    serialNumber: 'SN-CISCO-9300-001',
-    manufacturer: 'Cisco',
-    model: 'Catalyst 9300-48P',
-    purchaseDate: '2020-01-15',
-    purchasePrice: 4200,
-    vendor: 'Cisco Partner',
-    warrantyExpiry: '2024-01-15',
-    status: 'maintenance',
-    location: 'Network Closet B',
-    depreciationMethod: 'straight-line',
-    usefulLife: 10,
-    salvageValue: 300,
-    lastMaintenanceDate: '2024-01-10',
-  },
-  {
-    id: '5',
-    name: 'Dell PowerEdge R740',
-    type: 'server',
-    serialNumber: 'SN-DELL-R740-001',
-    manufacturer: 'Dell',
-    model: 'PowerEdge R740',
-    purchaseDate: '2019-08-20',
-    purchasePrice: 12000,
-    vendor: 'Dell Direct',
-    warrantyExpiry: '2023-08-20',
-    status: 'retired',
-    location: 'Data Center A',
-    depreciationMethod: 'straight-line',
-    usefulLife: 7,
-    salvageValue: 800,
-    eolDate: '2024-08-20',
-  },
-];
-
-const mockHistory: AssetHistory[] = [
-  { id: '1', assetId: '1', action: 'Assigned', date: '2022-03-20', performedBy: 'Admin', details: 'Assigned to John Smith' },
-  { id: '2', assetId: '1', action: 'Software Update', date: '2023-06-15', performedBy: 'IT Support', details: 'Windows 11 upgrade' },
-  { id: '3', assetId: '2', action: 'Maintenance', date: '2024-01-10', performedBy: 'Vendor', details: 'Annual maintenance check' },
-];
-
 function calculateDepreciation(asset: Asset): { currentValue: number; depreciatedAmount: number; percentDepreciated: number } {
+  if (!asset.purchaseDate) return { currentValue: asset.purchasePrice, depreciatedAmount: 0, percentDepreciated: 0 };
+  
   const purchaseDate = new Date(asset.purchaseDate);
   const today = new Date();
   const yearsOwned = differenceInDays(today, purchaseDate) / 365;
@@ -175,7 +68,6 @@ function calculateDepreciation(asset: Asset): { currentValue: number; depreciate
     const totalDepreciation = annualDepreciation * Math.min(yearsOwned, asset.usefulLife);
     currentValue = Math.max(asset.purchasePrice - totalDepreciation, asset.salvageValue);
   } else {
-    // Declining balance (double declining)
     const rate = 2 / asset.usefulLife;
     currentValue = asset.purchasePrice * Math.pow(1 - rate, yearsOwned);
     currentValue = Math.max(currentValue, asset.salvageValue);
@@ -187,7 +79,8 @@ function calculateDepreciation(asset: Asset): { currentValue: number; depreciate
   return { currentValue, depreciatedAmount, percentDepreciated: Math.min(percentDepreciated, 100) };
 }
 
-function getWarrantyStatus(expiryDate: string): { status: 'valid' | 'expiring' | 'expired'; daysRemaining: number } {
+function getWarrantyStatus(expiryDate?: string): { status: 'valid' | 'expiring' | 'expired' | 'unknown'; daysRemaining: number } {
+  if (!expiryDate) return { status: 'unknown', daysRemaining: 0 };
   const expiry = new Date(expiryDate);
   const today = new Date();
   const daysRemaining = differenceInDays(expiry, today);
@@ -198,15 +91,103 @@ function getWarrantyStatus(expiryDate: string): { status: 'valid' | 'expiring' |
 }
 
 export function AssetLifecycleManager() {
-  const [assets] = useState<Asset[]>(mockAssets);
+  const { user } = useAuth();
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('inventory');
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newAsset, setNewAsset] = useState({
+    name: '',
+    type: 'workstation' as const,
+    serialNumber: '',
+    manufacturer: '',
+    model: '',
+    purchasePrice: 0,
+    usefulLife: 5,
+    salvageValue: 0
+  });
+
+  useEffect(() => {
+    if (user) {
+      loadAssets();
+    }
+  }, [user]);
+
+  const loadAssets = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const { data, error } = await (supabase as any)
+        .from('vanguard_asset_lifecycle')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        setAssets(data.map((a: any) => ({
+          id: a.id,
+          name: a.name,
+          type: a.asset_type,
+          serialNumber: a.serial_number,
+          manufacturer: a.manufacturer,
+          model: a.model,
+          purchaseDate: a.purchase_date,
+          purchasePrice: a.purchase_price || 0,
+          vendor: a.vendor,
+          warrantyExpiry: a.warranty_expiry,
+          status: a.status,
+          assignedTo: a.assigned_to,
+          location: a.location,
+          depreciationMethod: a.depreciation_method || 'straight-line',
+          usefulLife: a.useful_life_years || 5,
+          salvageValue: a.salvage_value || 0,
+          lastMaintenanceDate: a.last_maintenance_date,
+          eolDate: a.eol_date,
+          notes: a.notes
+        })));
+      }
+    } catch (error) {
+      console.error('Error loading assets:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateAsset = async () => {
+    if (!user || !newAsset.name) return;
+    try {
+      const { error } = await (supabase as any).from('vanguard_asset_lifecycle').insert({
+        user_id: user.id,
+        name: newAsset.name,
+        asset_type: newAsset.type,
+        serial_number: newAsset.serialNumber || null,
+        manufacturer: newAsset.manufacturer || null,
+        model: newAsset.model || null,
+        purchase_price: newAsset.purchasePrice,
+        useful_life_years: newAsset.usefulLife,
+        salvage_value: newAsset.salvageValue,
+        status: 'active',
+        depreciation_method: 'straight-line'
+      });
+      if (error) throw error;
+      toast.success('Asset created');
+      setShowAddDialog(false);
+      setNewAsset({ name: '', type: 'workstation', serialNumber: '', manufacturer: '', model: '', purchasePrice: 0, usefulLife: 5, salvageValue: 0 });
+      loadAssets();
+    } catch (error) {
+      console.error('Error creating asset:', error);
+      toast.error('Failed to create asset');
+    }
+  };
 
   const filteredAssets = assets.filter(asset => {
     const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase());
+                         (asset.serialNumber?.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesType = typeFilter === 'all' || asset.type === typeFilter;
     const matchesStatus = statusFilter === 'all' || asset.status === statusFilter;
     return matchesSearch && matchesType && matchesStatus;
@@ -218,71 +199,73 @@ export function AssetLifecycleManager() {
   const expiredWarranties = assets.filter(a => getWarrantyStatus(a.warrantyExpiry).status === 'expired').length;
   const activeAssets = assets.filter(a => a.status === 'active').length;
 
-  const typeIcons = {
+  const typeIcons: Record<string, string> = {
     workstation: '🖥️',
-    server: '🖲️',
+    server: '🗄️',
     laptop: '💻',
     network: '🌐',
     peripheral: '🖨️',
     mobile: '📱',
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Summary Stats */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-cyan-500/30 bg-cyan-500/5">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground uppercase">Total Assets</p>
-                <p className="text-2xl font-bold">{assets.length}</p>
-                <p className="text-xs text-muted-foreground">{activeAssets} active</p>
-              </div>
-              <Package className="h-8 w-8 text-cyan-500" />
-            </div>
-          </CardContent>
-        </Card>
-        
         <Card className="border-green-500/30 bg-green-500/5">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase">Current Value</p>
+                <p className="text-xs text-muted-foreground uppercase">Total Value</p>
                 <p className="text-2xl font-bold">${totalValue.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Total book value</p>
+                <p className="text-xs text-muted-foreground">Current book value</p>
               </div>
               <DollarSign className="h-8 w-8 text-green-500" />
             </div>
           </CardContent>
         </Card>
-        
-        <Card className={cn(
-          "border-yellow-500/30 bg-yellow-500/5",
-          expiringWarranties > 0 && "animate-pulse"
-        )}>
+
+        <Card className="border-cyan-500/30 bg-cyan-500/5">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase">Expiring Soon</p>
-                <p className="text-2xl font-bold">{expiringWarranties}</p>
+                <p className="text-xs text-muted-foreground uppercase">Active Assets</p>
+                <p className="text-2xl font-bold">{activeAssets}</p>
+                <p className="text-xs text-muted-foreground">of {assets.length} total</p>
+              </div>
+              <Package className="h-8 w-8 text-cyan-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-yellow-500/30 bg-yellow-500/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase">Expiring Warranty</p>
+                <p className="text-2xl font-bold text-yellow-500">{expiringWarranties}</p>
                 <p className="text-xs text-muted-foreground">Within 90 days</p>
               </div>
               <Clock className="h-8 w-8 text-yellow-500" />
             </div>
           </CardContent>
         </Card>
-        
-        <Card className={cn(
-          "border-red-500/30 bg-red-500/5",
-          expiredWarranties > 0 && "border-red-500"
-        )}>
+
+        <Card className="border-red-500/30 bg-red-500/5">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase">Expired</p>
-                <p className="text-2xl font-bold">{expiredWarranties}</p>
-                <p className="text-xs text-muted-foreground">Warranty expired</p>
+                <p className="text-xs text-muted-foreground uppercase">Expired Warranty</p>
+                <p className="text-2xl font-bold text-red-500">{expiredWarranties}</p>
+                <p className="text-xs text-muted-foreground">Needs attention</p>
               </div>
               <AlertTriangle className="h-8 w-8 text-red-500" />
             </div>
@@ -296,483 +279,281 @@ export function AssetLifecycleManager() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Archive className="h-5 w-5 text-cyan-500" />
-                Asset Lifecycle Management
+                <Package className="h-5 w-5 text-cyan-500" />
+                Asset Lifecycle Manager
               </CardTitle>
-              <CardDescription>Track assets from procurement to disposal</CardDescription>
+              <CardDescription>Track assets, depreciation, and warranty status</CardDescription>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Asset
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Add New Asset</DialogTitle>
-                    <DialogDescription>Enter the asset details below</DialogDescription>
-                  </DialogHeader>
-                  <div className="grid grid-cols-2 gap-4 py-4">
+            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Asset
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Asset</DialogTitle>
+                  <DialogDescription>Track a new asset in your inventory</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Asset Name</Label>
-                      <Input placeholder="Dell OptiPlex 7090" />
+                      <Input 
+                        placeholder="Dell OptiPlex 7090"
+                        value={newAsset.name}
+                        onChange={(e) => setNewAsset(prev => ({ ...prev, name: e.target.value }))}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Type</Label>
-                      <Select>
+                      <Select 
+                        value={newAsset.type}
+                        onValueChange={(val) => setNewAsset(prev => ({ ...prev, type: val as any }))}
+                      >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="workstation">Workstation</SelectItem>
-                          <SelectItem value="server">Server</SelectItem>
                           <SelectItem value="laptop">Laptop</SelectItem>
+                          <SelectItem value="server">Server</SelectItem>
                           <SelectItem value="network">Network</SelectItem>
                           <SelectItem value="peripheral">Peripheral</SelectItem>
                           <SelectItem value="mobile">Mobile</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Serial Number</Label>
-                      <Input placeholder="SN-XXXX-XXXX" />
-                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Manufacturer</Label>
-                      <Input placeholder="Dell, HP, Apple..." />
+                      <Input 
+                        placeholder="Dell"
+                        value={newAsset.manufacturer}
+                        onChange={(e) => setNewAsset(prev => ({ ...prev, manufacturer: e.target.value }))}
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label>Purchase Date</Label>
-                      <Input type="date" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Purchase Price</Label>
-                      <Input type="number" placeholder="1299.00" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Warranty Expiry</Label>
-                      <Input type="date" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Vendor</Label>
-                      <Input placeholder="Dell Direct, CDW..." />
+                      <Label>Model</Label>
+                      <Input 
+                        placeholder="OptiPlex 7090"
+                        value={newAsset.model}
+                        onChange={(e) => setNewAsset(prev => ({ ...prev, model: e.target.value }))}
+                      />
                     </div>
                   </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline">Cancel</Button>
-                    <Button>Save Asset</Button>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Serial Number</Label>
+                      <Input 
+                        placeholder="SN-12345"
+                        value={newAsset.serialNumber}
+                        onChange={(e) => setNewAsset(prev => ({ ...prev, serialNumber: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Purchase Price ($)</Label>
+                      <Input 
+                        type="number"
+                        value={newAsset.purchasePrice}
+                        onChange={(e) => setNewAsset(prev => ({ ...prev, purchasePrice: parseFloat(e.target.value) || 0 }))}
+                      />
+                    </div>
                   </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</Button>
+                  <Button onClick={handleCreateAsset}>Add Asset</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
+            <TabsList>
               <TabsTrigger value="inventory">Inventory</TabsTrigger>
-              <TabsTrigger value="warranties">Warranties</TabsTrigger>
               <TabsTrigger value="depreciation">Depreciation</TabsTrigger>
-              <TabsTrigger value="eol">End of Life</TabsTrigger>
-              <TabsTrigger value="history">History</TabsTrigger>
+              <TabsTrigger value="warranty">Warranty</TabsTrigger>
             </TabsList>
 
-            {/* Filters */}
-            <div className="flex gap-4 mb-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search assets..." 
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+            <TabsContent value="inventory" className="mt-4">
+              <div className="flex gap-4 mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search assets..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="workstation">Workstation</SelectItem>
+                    <SelectItem value="laptop">Laptop</SelectItem>
+                    <SelectItem value="server">Server</SelectItem>
+                    <SelectItem value="network">Network</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                    <SelectItem value="retired">Retired</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="workstation">Workstation</SelectItem>
-                  <SelectItem value="server">Server</SelectItem>
-                  <SelectItem value="laptop">Laptop</SelectItem>
-                  <SelectItem value="network">Network</SelectItem>
-                  <SelectItem value="peripheral">Peripheral</SelectItem>
-                  <SelectItem value="mobile">Mobile</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="retired">Retired</SelectItem>
-                  <SelectItem value="disposed">Disposed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            {/* Inventory Tab */}
-            <TabsContent value="inventory">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Asset</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Serial #</TableHead>
-                    <TableHead>Assigned To</TableHead>
-                    <TableHead>Purchase Date</TableHead>
-                    <TableHead>Current Value</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>Assigned To</TableHead>
+                    <TableHead className="text-right">Value</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAssets.map(asset => {
-                    const depreciation = calculateDepreciation(asset);
-                    return (
-                      <TableRow key={asset.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg">{typeIcons[asset.type]}</span>
+                  {filteredAssets.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                        <p>{assets.length === 0 ? 'No assets tracked yet' : 'No assets match your filters'}</p>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredAssets.map(asset => {
+                      const depreciation = calculateDepreciation(asset);
+                      return (
+                        <TableRow key={asset.id}>
+                          <TableCell>
                             <div>
                               <p className="font-medium">{asset.name}</p>
                               <p className="text-xs text-muted-foreground">{asset.manufacturer} {asset.model}</p>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">{asset.serialNumber}</TableCell>
-                        <TableCell>{asset.assignedTo || '-'}</TableCell>
-                        <TableCell>{format(new Date(asset.purchaseDate), 'MMM dd, yyyy')}</TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">${depreciation.currentValue.toLocaleString()}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {depreciation.percentDepreciated.toFixed(0)}% depreciated
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={
-                            asset.status === 'active' ? 'default' :
-                            asset.status === 'maintenance' ? 'secondary' :
-                            asset.status === 'retired' ? 'outline' : 'destructive'
-                          }>
-                            {asset.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="sm">
-                              <FileText className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <History className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                          </TableCell>
+                          <TableCell>
+                            <span className="mr-2">{typeIcons[asset.type]}</span>
+                            {asset.type}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">{asset.serialNumber || '-'}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              asset.status === 'active' ? 'default' :
+                              asset.status === 'maintenance' ? 'secondary' : 'outline'
+                            }>
+                              {asset.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{asset.assignedTo || '-'}</TableCell>
+                          <TableCell className="text-right font-medium">
+                            ${depreciation.currentValue.toLocaleString()}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
                 </TableBody>
               </Table>
             </TabsContent>
 
-            {/* Warranties Tab */}
-            <TabsContent value="warranties">
-              <div className="space-y-4">
-                {/* Warranty Calendar Preview */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <Card className="border-red-500/30">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <AlertCircle className="h-8 w-8 text-red-500" />
-                        <div>
-                          <p className="text-2xl font-bold text-red-500">{expiredWarranties}</p>
-                          <p className="text-sm text-muted-foreground">Expired</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-yellow-500/30">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <Clock className="h-8 w-8 text-yellow-500" />
-                        <div>
-                          <p className="text-2xl font-bold text-yellow-500">{expiringWarranties}</p>
-                          <p className="text-sm text-muted-foreground">Expiring (90 days)</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-green-500/30">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <CheckCircle className="h-8 w-8 text-green-500" />
-                        <div>
-                          <p className="text-2xl font-bold text-green-500">
-                            {assets.filter(a => getWarrantyStatus(a.warrantyExpiry).status === 'valid').length}
-                          </p>
-                          <p className="text-sm text-muted-foreground">Valid</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Asset</TableHead>
-                      <TableHead>Warranty Expiry</TableHead>
-                      <TableHead>Days Remaining</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredAssets.sort((a, b) => 
-                      new Date(a.warrantyExpiry).getTime() - new Date(b.warrantyExpiry).getTime()
-                    ).map(asset => {
-                      const warranty = getWarrantyStatus(asset.warrantyExpiry);
-                      return (
-                        <TableRow key={asset.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg">{typeIcons[asset.type]}</span>
-                              <div>
-                                <p className="font-medium">{asset.name}</p>
-                                <p className="text-xs text-muted-foreground">{asset.serialNumber}</p>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>{format(new Date(asset.warrantyExpiry), 'MMM dd, yyyy')}</TableCell>
-                          <TableCell>
-                            <span className={cn(
-                              "font-medium",
-                              warranty.status === 'expired' && "text-red-500",
-                              warranty.status === 'expiring' && "text-yellow-500",
-                              warranty.status === 'valid' && "text-green-500"
-                            )}>
-                              {warranty.daysRemaining < 0 
-                                ? `${Math.abs(warranty.daysRemaining)} days ago`
-                                : `${warranty.daysRemaining} days`}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              warranty.status === 'valid' ? 'default' :
-                              warranty.status === 'expiring' ? 'secondary' : 'destructive'
-                            }>
-                              {warranty.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="outline" size="sm">Renew</Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </TabsContent>
-
-            {/* Depreciation Tab */}
-            <TabsContent value="depreciation">
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Total Purchase Value</p>
-                          <p className="text-2xl font-bold">
-                            ${assets.reduce((sum, a) => sum + a.purchasePrice, 0).toLocaleString()}
-                          </p>
-                        </div>
-                        <BarChart3 className="h-8 w-8 text-cyan-500" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Total Depreciation</p>
-                          <p className="text-2xl font-bold text-red-500">
-                            -${assets.reduce((sum, a) => sum + calculateDepreciation(a).depreciatedAmount, 0).toLocaleString()}
-                          </p>
-                        </div>
-                        <TrendingDown className="h-8 w-8 text-red-500" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Asset</TableHead>
-                      <TableHead>Purchase Price</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead>Current Value</TableHead>
-                      <TableHead>Depreciation</TableHead>
-                      <TableHead>Progress</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredAssets.map(asset => {
-                      const dep = calculateDepreciation(asset);
-                      return (
-                        <TableRow key={asset.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg">{typeIcons[asset.type]}</span>
-                              <p className="font-medium">{asset.name}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell>${asset.purchasePrice.toLocaleString()}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {asset.depreciationMethod === 'straight-line' ? 'Straight Line' : 'Declining Balance'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="font-medium">${dep.currentValue.toLocaleString()}</TableCell>
-                          <TableCell className="text-red-500">-${dep.depreciatedAmount.toLocaleString()}</TableCell>
-                          <TableCell className="w-40">
-                            <div className="space-y-1">
-                              <Progress value={dep.percentDepreciated} className="h-2" />
-                              <p className="text-xs text-muted-foreground text-right">
-                                {dep.percentDepreciated.toFixed(0)}%
-                              </p>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </TabsContent>
-
-            {/* End of Life Tab */}
-            <TabsContent value="eol">
-              <div className="space-y-4">
-                <Card className="border-orange-500/30 bg-orange-500/5">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle className="h-6 w-6 text-orange-500" />
-                      <div>
-                        <p className="font-medium">End of Life Planning</p>
-                        <p className="text-sm text-muted-foreground">
-                          Track hardware retirement schedules and disposal workflows
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Asset</TableHead>
-                      <TableHead>Age</TableHead>
-                      <TableHead>Useful Life</TableHead>
-                      <TableHead>EOL Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredAssets.map(asset => {
-                      const purchaseDate = new Date(asset.purchaseDate);
-                      const ageYears = differenceInDays(new Date(), purchaseDate) / 365;
-                      const eolDate = asset.eolDate || addDays(purchaseDate, asset.usefulLife * 365).toISOString();
-                      const daysToEol = differenceInDays(new Date(eolDate), new Date());
-                      
-                      return (
-                        <TableRow key={asset.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg">{typeIcons[asset.type]}</span>
-                              <div>
-                                <p className="font-medium">{asset.name}</p>
-                                <p className="text-xs text-muted-foreground">{asset.serialNumber}</p>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>{ageYears.toFixed(1)} years</TableCell>
-                          <TableCell>{asset.usefulLife} years</TableCell>
-                          <TableCell>{format(new Date(eolDate), 'MMM dd, yyyy')}</TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              daysToEol < 0 ? 'destructive' :
-                              daysToEol < 180 ? 'secondary' : 'outline'
-                            }>
-                              {daysToEol < 0 ? 'Past EOL' : 
-                               daysToEol < 180 ? 'Approaching' : 'On Track'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button variant="outline" size="sm">Schedule Retirement</Button>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </TabsContent>
-
-            {/* History Tab */}
-            <TabsContent value="history">
+            <TabsContent value="depreciation" className="mt-4">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
                     <TableHead>Asset</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Performed By</TableHead>
-                    <TableHead>Details</TableHead>
+                    <TableHead>Purchase Price</TableHead>
+                    <TableHead>Current Value</TableHead>
+                    <TableHead>Depreciated</TableHead>
+                    <TableHead>Progress</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockHistory.map(entry => {
-                    const asset = assets.find(a => a.id === entry.assetId);
-                    return (
-                      <TableRow key={entry.id}>
-                        <TableCell>{format(new Date(entry.date), 'MMM dd, yyyy')}</TableCell>
-                        <TableCell>
-                          {asset ? (
+                  {assets.filter(a => a.status === 'active').length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        No active assets to show depreciation
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    assets.filter(a => a.status === 'active').map(asset => {
+                      const dep = calculateDepreciation(asset);
+                      return (
+                        <TableRow key={asset.id}>
+                          <TableCell className="font-medium">{asset.name}</TableCell>
+                          <TableCell>${asset.purchasePrice.toLocaleString()}</TableCell>
+                          <TableCell className="font-medium">${dep.currentValue.toLocaleString()}</TableCell>
+                          <TableCell className="text-red-500">-${dep.depreciatedAmount.toLocaleString()}</TableCell>
+                          <TableCell className="w-48">
                             <div className="flex items-center gap-2">
-                              <span className="text-lg">{typeIcons[asset.type]}</span>
-                              <p className="font-medium">{asset.name}</p>
+                              <Progress value={dep.percentDepreciated} className="flex-1" />
+                              <span className="text-xs text-muted-foreground w-12">{dep.percentDepreciated.toFixed(0)}%</span>
                             </div>
-                          ) : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{entry.action}</Badge>
-                        </TableCell>
-                        <TableCell>{entry.performedBy}</TableCell>
-                        <TableCell className="text-muted-foreground">{entry.details}</TableCell>
-                      </TableRow>
-                    );
-                  })}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TabsContent>
+
+            <TabsContent value="warranty" className="mt-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Asset</TableHead>
+                    <TableHead>Vendor</TableHead>
+                    <TableHead>Expiry Date</TableHead>
+                    <TableHead>Days Remaining</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {assets.filter(a => a.warrantyExpiry).length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        No warranty information available
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    assets.filter(a => a.warrantyExpiry).map(asset => {
+                      const warranty = getWarrantyStatus(asset.warrantyExpiry);
+                      return (
+                        <TableRow key={asset.id}>
+                          <TableCell className="font-medium">{asset.name}</TableCell>
+                          <TableCell>{asset.vendor || '-'}</TableCell>
+                          <TableCell>{asset.warrantyExpiry ? format(new Date(asset.warrantyExpiry), 'MMM dd, yyyy') : '-'}</TableCell>
+                          <TableCell>{warranty.daysRemaining} days</TableCell>
+                          <TableCell>
+                            <Badge className={cn(
+                              warranty.status === 'valid' ? 'bg-green-500/20 text-green-500' :
+                              warranty.status === 'expiring' ? 'bg-yellow-500/20 text-yellow-500' :
+                              'bg-red-500/20 text-red-500'
+                            )}>
+                              {warranty.status === 'valid' && <CheckCircle className="h-3 w-3 mr-1" />}
+                              {warranty.status === 'expiring' && <Clock className="h-3 w-3 mr-1" />}
+                              {warranty.status === 'expired' && <AlertTriangle className="h-3 w-3 mr-1" />}
+                              {warranty.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
                 </TableBody>
               </Table>
             </TabsContent>

@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import {
   Table,
   TableBody,
@@ -17,74 +15,99 @@ import {
 import {
   Package,
   Search,
-  RefreshCw,
   AlertTriangle,
-  Shield,
   CheckCircle,
   XCircle,
   Server,
   Download,
-  Clock,
-  Filter,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useHorizonStats } from "@/hooks/useHorizonStats";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface SoftwareItem {
+  id: string;
   name: string;
   version: string;
   publisher: string;
-  installDate?: string;
   deviceCount: number;
-  devices: string[];
   category: string;
   isApproved: boolean;
   hasVulnerabilities: boolean;
   vulnerabilityCount?: number;
 }
 
-interface DeviceSoftware {
-  deviceId: string;
-  deviceName: string;
-  software: Array<{
-    name: string;
-    version: string;
-    publisher: string;
-    installDate?: string;
-  }>;
-}
-
-// Mock software data - in production this would come from agent telemetry
-const MOCK_SOFTWARE: SoftwareItem[] = [
-  { name: "Google Chrome", version: "120.0.6099", publisher: "Google LLC", deviceCount: 45, devices: [], category: "Browsers", isApproved: true, hasVulnerabilities: false },
-  { name: "Microsoft 365", version: "16.0.17231", publisher: "Microsoft Corporation", deviceCount: 42, devices: [], category: "Productivity", isApproved: true, hasVulnerabilities: false },
-  { name: "Adobe Acrobat Reader", version: "23.006.20380", publisher: "Adobe Inc.", deviceCount: 38, devices: [], category: "Productivity", isApproved: true, hasVulnerabilities: true, vulnerabilityCount: 2 },
-  { name: "7-Zip", version: "23.01", publisher: "Igor Pavlov", deviceCount: 35, devices: [], category: "Utilities", isApproved: true, hasVulnerabilities: false },
-  { name: "Visual Studio Code", version: "1.85.1", publisher: "Microsoft Corporation", deviceCount: 28, devices: [], category: "Development", isApproved: true, hasVulnerabilities: false },
-  { name: "Zoom", version: "5.16.10", publisher: "Zoom Video Communications", deviceCount: 25, devices: [], category: "Communication", isApproved: true, hasVulnerabilities: false },
-  { name: "Slack", version: "4.35.126", publisher: "Slack Technologies", deviceCount: 22, devices: [], category: "Communication", isApproved: true, hasVulnerabilities: false },
-  { name: "TeamViewer", version: "15.49.5", publisher: "TeamViewer AG", deviceCount: 15, devices: [], category: "Remote Access", isApproved: false, hasVulnerabilities: true, vulnerabilityCount: 1 },
-  { name: "WinRAR", version: "6.24", publisher: "RARLAB", deviceCount: 12, devices: [], category: "Utilities", isApproved: false, hasVulnerabilities: true, vulnerabilityCount: 3 },
-  { name: "VLC Media Player", version: "3.0.20", publisher: "VideoLAN", deviceCount: 18, devices: [], category: "Media", isApproved: true, hasVulnerabilities: false },
-  { name: "Notepad++", version: "8.6.2", publisher: "Notepad++ Team", deviceCount: 30, devices: [], category: "Editors", isApproved: true, hasVulnerabilities: false },
-  { name: "Git", version: "2.43.0", publisher: "The Git Development Community", deviceCount: 20, devices: [], category: "Development", isApproved: true, hasVulnerabilities: false },
-  { name: "Python", version: "3.12.1", publisher: "Python Software Foundation", deviceCount: 15, devices: [], category: "Development", isApproved: true, hasVulnerabilities: false },
-  { name: "Node.js", version: "20.10.0", publisher: "OpenJS Foundation", deviceCount: 12, devices: [], category: "Development", isApproved: true, hasVulnerabilities: false },
-  { name: "Unknown App", version: "1.0.0", publisher: "Unknown", deviceCount: 3, devices: [], category: "Unknown", isApproved: false, hasVulnerabilities: false },
-];
-
 const CATEGORIES = ["All", "Browsers", "Productivity", "Development", "Communication", "Utilities", "Remote Access", "Media", "Editors", "Unknown"];
 
 export function SoftwareAuditPanel() {
   const { user } = useAuth();
   const { stats, devices } = useHorizonStats();
-  const [software, setSoftware] = useState<SoftwareItem[]>(MOCK_SOFTWARE);
+  const [software, setSoftware] = useState<SoftwareItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [showVulnerable, setShowVulnerable] = useState(false);
   const [showUnapproved, setShowUnapproved] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      loadSoftware();
+    }
+  }, [user]);
+
+  const loadSoftware = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const { data, error } = await (supabase as any)
+        .from('vanguard_software_audit')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('device_count', { ascending: false });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setSoftware(data.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          version: s.version || '',
+          publisher: s.publisher || 'Unknown',
+          deviceCount: s.device_count || 0,
+          category: s.category || 'Unknown',
+          isApproved: s.is_approved,
+          hasVulnerabilities: s.has_vulnerabilities,
+          vulnerabilityCount: s.vulnerability_count || 0
+        })));
+      }
+    } catch (error) {
+      console.error('Error loading software:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleApproval = async (id: string, currentApproval: boolean) => {
+    try {
+      const { error } = await (supabase as any)
+        .from('vanguard_software_audit')
+        .update({ is_approved: !currentApproval })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setSoftware(prev => prev.map(s => 
+        s.id === id ? { ...s, isApproved: !currentApproval } : s
+      ));
+      toast.success(currentApproval ? 'Software marked as unapproved' : 'Software approved');
+    } catch (error) {
+      console.error('Error updating approval:', error);
+      toast.error('Failed to update approval status');
+    }
+  };
 
   const filteredSoftware = software.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -100,6 +123,18 @@ export function SoftwareAuditPanel() {
   const vulnerableApps = software.filter(s => s.hasVulnerabilities).length;
   const unapprovedApps = software.filter(s => !s.isApproved).length;
   const totalInstallations = software.reduce((sum, s) => sum + s.deviceCount, 0);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="py-12">
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -199,56 +234,63 @@ export function SoftwareAuditPanel() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSoftware.map((item, idx) => (
-                <TableRow key={idx} className="cursor-pointer hover:bg-muted/50">
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {item.hasVulnerabilities && (
-                        <AlertTriangle className="h-4 w-4 text-red-500" />
-                      )}
-                      <span className="font-medium">{item.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">{item.version}</TableCell>
-                  <TableCell className="text-muted-foreground">{item.publisher}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{item.category}</Badge>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant="secondary">{item.deviceCount}</Badge>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      {item.isApproved ? (
-                        <Badge className="bg-green-500/10 text-green-600 border-green-500/30">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Approved
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
-                          <XCircle className="h-3 w-3 mr-1" />
-                          Unapproved
-                        </Badge>
-                      )}
-                      {item.hasVulnerabilities && (
-                        <Badge variant="destructive">
-                          {item.vulnerabilityCount} CVE
-                        </Badge>
-                      )}
-                    </div>
+              {filteredSoftware.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    {software.length === 0 ? 'No software inventory data yet' : 'No software matches your filters'}
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredSoftware.map((item) => (
+                  <TableRow key={item.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {item.hasVulnerabilities && (
+                          <AlertTriangle className="h-4 w-4 text-red-500" />
+                        )}
+                        <span className="font-medium">{item.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">{item.version}</TableCell>
+                    <TableCell className="text-muted-foreground">{item.publisher}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{item.category}</Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="secondary">{item.deviceCount}</Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleApproval(item.id, item.isApproved)}
+                        >
+                          {item.isApproved ? (
+                            <Badge className="bg-green-500/10 text-green-600 border-green-500/30">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Approved
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Unapproved
+                            </Badge>
+                          )}
+                        </Button>
+                        {item.hasVulnerabilities && (
+                          <Badge variant="destructive">
+                            {item.vulnerabilityCount} CVE
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </ScrollArea>
-
-        {filteredSoftware.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>No software found matching your filters</p>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

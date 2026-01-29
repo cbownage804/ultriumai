@@ -1,46 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Star, 
-  ThumbsUp, 
-  ThumbsDown, 
   MessageSquare,
   TrendingUp,
-  TrendingDown,
   Users,
   Mail,
-  Settings,
   Plus,
   BarChart3,
   Smile,
   Meh,
-  Frown
+  Frown,
+  Loader2
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface SurveyResponse {
   id: string;
-  ticketId: string;
-  ticketTitle: string;
+  ticketId?: string;
+  ticketTitle?: string;
   clientName: string;
   rating: number;
   npsScore: number;
-  feedback: string;
+  feedback?: string;
   createdAt: string;
-  technicianName: string;
+  technicianName?: string;
 }
 
 interface SurveyTemplate {
@@ -51,30 +49,6 @@ interface SurveyTemplate {
   isActive: boolean;
   responseRate: number;
 }
-
-const mockResponses: SurveyResponse[] = [
-  { id: '1', ticketId: 'TKT-001', ticketTitle: 'Email sync issue', clientName: 'Acme Corp', rating: 5, npsScore: 10, feedback: 'Excellent support! Issue was resolved quickly.', createdAt: '2024-01-15T10:30:00Z', technicianName: 'John Smith' },
-  { id: '2', ticketId: 'TKT-002', ticketTitle: 'VPN not connecting', clientName: 'TechStart Inc', rating: 4, npsScore: 8, feedback: 'Good service, took a bit longer than expected.', createdAt: '2024-01-14T15:45:00Z', technicianName: 'Sarah Johnson' },
-  { id: '3', ticketId: 'TKT-003', ticketTitle: 'Printer offline', clientName: 'Global Logistics', rating: 3, npsScore: 5, feedback: 'Issue was fixed but communication could be better.', createdAt: '2024-01-13T09:00:00Z', technicianName: 'Mike Wilson' },
-  { id: '4', ticketId: 'TKT-004', ticketTitle: 'Password reset', clientName: 'Acme Corp', rating: 5, npsScore: 9, feedback: '', createdAt: '2024-01-12T14:20:00Z', technicianName: 'John Smith' },
-  { id: '5', ticketId: 'TKT-005', ticketTitle: 'Software installation', clientName: 'DataFlow Ltd', rating: 2, npsScore: 3, feedback: 'Had to follow up multiple times. Not satisfied.', createdAt: '2024-01-11T11:00:00Z', technicianName: 'Sarah Johnson' },
-];
-
-const mockTemplates: SurveyTemplate[] = [
-  { id: '1', name: 'Post-Resolution Survey', triggerEvent: 'ticket_resolved', questions: ['How satisfied are you?', 'Would you recommend us?'], isActive: true, responseRate: 42 },
-  { id: '2', name: 'Quick Feedback', triggerEvent: 'after_response', questions: ['Was this response helpful?'], isActive: false, responseRate: 65 },
-];
-
-const mockTrendData = [
-  { date: 'Jan 8', csat: 4.2, nps: 45 },
-  { date: 'Jan 9', csat: 4.0, nps: 42 },
-  { date: 'Jan 10', csat: 4.5, nps: 55 },
-  { date: 'Jan 11', csat: 3.8, nps: 38 },
-  { date: 'Jan 12', csat: 4.3, nps: 50 },
-  { date: 'Jan 13', csat: 4.1, nps: 48 },
-  { date: 'Jan 14', csat: 4.4, nps: 52 },
-  { date: 'Jan 15', csat: 4.6, nps: 58 },
-];
 
 function StarRating({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md' }) {
   const starSize = size === 'sm' ? 'h-4 w-4' : 'h-5 w-5';
@@ -110,24 +84,102 @@ function NPSBadge({ score }: { score: number }) {
 }
 
 export function CSATSurveyManager() {
-  const [responses] = useState<SurveyResponse[]>(mockResponses);
-  const [templates] = useState<SurveyTemplate[]>(mockTemplates);
+  const { user } = useAuth();
+  const [responses, setResponses] = useState<SurveyResponse[]>([]);
+  const [templates, setTemplates] = useState<SurveyTemplate[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [newTemplate, setNewTemplate] = useState({ name: '', triggerEvent: 'ticket_resolved' as const });
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const [responseRes, templateRes] = await Promise.all([
+        (supabase as any).from('vanguard_survey_responses').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        (supabase as any).from('vanguard_survey_templates').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+      ]);
+
+      if (responseRes.data) {
+        setResponses(responseRes.data.map((r: any) => ({
+          id: r.id,
+          ticketId: r.ticket_id,
+          ticketTitle: r.ticket_title,
+          clientName: r.client_name || 'Unknown',
+          rating: r.rating || 0,
+          npsScore: r.nps_score || 0,
+          feedback: r.feedback,
+          createdAt: r.created_at,
+          technicianName: r.technician_name
+        })));
+      }
+
+      if (templateRes.data) {
+        setTemplates(templateRes.data.map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          triggerEvent: t.trigger_event,
+          questions: t.questions || [],
+          isActive: t.is_active,
+          responseRate: t.response_rate || 0
+        })));
+      }
+    } catch (error) {
+      console.error('Error loading survey data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateTemplate = async () => {
+    if (!user || !newTemplate.name) return;
+    try {
+      const { error } = await (supabase as any).from('vanguard_survey_templates').insert({
+        user_id: user.id,
+        name: newTemplate.name,
+        trigger_event: newTemplate.triggerEvent,
+        questions: [],
+        is_active: true
+      });
+      if (error) throw error;
+      toast.success('Template created');
+      setShowTemplateDialog(false);
+      setNewTemplate({ name: '', triggerEvent: 'ticket_resolved' });
+      loadData();
+    } catch (error) {
+      console.error('Error creating template:', error);
+      toast.error('Failed to create template');
+    }
+  };
 
   // Calculate metrics
-  const avgCsat = responses.reduce((sum, r) => sum + r.rating, 0) / responses.length;
-  const avgNps = responses.reduce((sum, r) => sum + r.npsScore, 0) / responses.length;
+  const avgCsat = responses.length > 0 ? responses.reduce((sum, r) => sum + r.rating, 0) / responses.length : 0;
+  const avgNps = responses.length > 0 ? responses.reduce((sum, r) => sum + r.npsScore, 0) / responses.length : 0;
   const promoters = responses.filter(r => r.npsScore >= 9).length;
   const passives = responses.filter(r => r.npsScore >= 7 && r.npsScore < 9).length;
   const detractors = responses.filter(r => r.npsScore < 7).length;
-  const npsScore = Math.round(((promoters - detractors) / responses.length) * 100);
+  const npsScore = responses.length > 0 ? Math.round(((promoters - detractors) / responses.length) * 100) : 0;
 
   const pieData = [
     { name: 'Promoters', value: promoters, color: 'hsl(142, 76%, 36%)' },
     { name: 'Passives', value: passives, color: 'hsl(45, 93%, 47%)' },
     { name: 'Detractors', value: detractors, color: 'hsl(0, 84%, 60%)' },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -201,12 +253,9 @@ export function CSATSurveyManager() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase">Response Rate</p>
-                <p className="text-3xl font-bold">42%</p>
-                <div className="flex items-center gap-1 mt-1">
-                  <TrendingUp className="h-3 w-3 text-green-500" />
-                  <span className="text-xs text-green-500">+8% this month</span>
-                </div>
+                <p className="text-xs text-muted-foreground uppercase">Active Templates</p>
+                <p className="text-3xl font-bold">{templates.filter(t => t.isActive).length}</p>
+                <p className="text-xs text-muted-foreground">of {templates.length} total</p>
               </div>
               <Mail className="h-8 w-8 text-purple-500" />
             </div>
@@ -233,108 +282,90 @@ export function CSATSurveyManager() {
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="responses">Responses</TabsTrigger>
               <TabsTrigger value="templates">Templates</TabsTrigger>
-              <TabsTrigger value="technicians">By Technician</TabsTrigger>
             </TabsList>
 
-            {/* Overview Tab */}
             <TabsContent value="overview" className="mt-4 space-y-6">
               <div className="grid gap-6 lg:grid-cols-2">
-                {/* Trend Chart */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">CSAT Trend (7 Days)</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[200px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={mockTrendData}>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                          <XAxis dataKey="date" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                          <YAxis domain={[1, 5]} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                          <Tooltip 
-                            contentStyle={{ 
-                              backgroundColor: 'hsl(var(--card))', 
-                              border: '1px solid hsl(var(--border))',
-                              borderRadius: '8px'
-                            }}
-                          />
-                          <Line type="monotone" dataKey="csat" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: 'hsl(var(--primary))' }} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-
                 {/* NPS Distribution */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-sm">NPS Distribution</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-[200px] flex items-center justify-center">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={pieData}
-                            innerRadius={50}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                          >
-                            {pieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip 
-                            contentStyle={{ 
-                              backgroundColor: 'hsl(var(--card))', 
-                              border: '1px solid hsl(var(--border))',
-                              borderRadius: '8px'
-                            }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="flex justify-center gap-4 mt-2">
-                      {pieData.map(item => (
-                        <div key={item.name} className="flex items-center gap-1 text-xs">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                          <span>{item.name}: {item.value}</span>
+                    {responses.length > 0 ? (
+                      <>
+                        <div className="h-[200px] flex items-center justify-center">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={pieData}
+                                innerRadius={50}
+                                outerRadius={80}
+                                paddingAngle={5}
+                                dataKey="value"
+                              >
+                                {pieData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip 
+                                contentStyle={{ 
+                                  backgroundColor: 'hsl(var(--card))', 
+                                  border: '1px solid hsl(var(--border))',
+                                  borderRadius: '8px'
+                                }}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="flex justify-center gap-4 mt-2">
+                          {pieData.map(item => (
+                            <div key={item.name} className="flex items-center gap-1 text-xs">
+                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                              <span>{item.name}: {item.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+                        No survey responses yet
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Recent Feedback */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Recent Feedback</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {responses.filter(r => r.feedback).slice(0, 3).map(response => (
+                        <div key={response.id} className="p-3 rounded-lg bg-muted/20">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <StarRating rating={response.rating} />
+                              <span className="text-sm font-medium">{response.clientName}</span>
+                            </div>
+                            <NPSBadge score={response.npsScore} />
+                          </div>
+                          <p className="text-sm text-muted-foreground">{response.feedback}</p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {response.ticketId} • {format(new Date(response.createdAt), 'MMM dd, yyyy')}
+                          </p>
                         </div>
                       ))}
+                      {responses.filter(r => r.feedback).length === 0 && (
+                        <p className="text-center text-muted-foreground py-4">No feedback comments yet</p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Recent Feedback */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Recent Feedback</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {responses.filter(r => r.feedback).slice(0, 3).map(response => (
-                      <div key={response.id} className="p-3 rounded-lg bg-muted/20">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <StarRating rating={response.rating} />
-                            <span className="text-sm font-medium">{response.clientName}</span>
-                          </div>
-                          <NPSBadge score={response.npsScore} />
-                        </div>
-                        <p className="text-sm text-muted-foreground">{response.feedback}</p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {response.ticketId} • {format(new Date(response.createdAt), 'MMM dd, yyyy')}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
             </TabsContent>
 
-            {/* Responses Tab */}
             <TabsContent value="responses" className="mt-4">
               <Table>
                 <TableHeader>
@@ -344,42 +375,47 @@ export function CSATSurveyManager() {
                     <TableHead>Rating</TableHead>
                     <TableHead>NPS</TableHead>
                     <TableHead>Feedback</TableHead>
-                    <TableHead>Technician</TableHead>
                     <TableHead>Date</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {responses.map(response => (
-                    <TableRow key={response.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{response.ticketId}</p>
-                          <p className="text-xs text-muted-foreground truncate max-w-[150px]">{response.ticketTitle}</p>
-                        </div>
+                  {responses.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        No survey responses yet
                       </TableCell>
-                      <TableCell>{response.clientName}</TableCell>
-                      <TableCell>
-                        <StarRating rating={response.rating} />
-                      </TableCell>
-                      <TableCell>
-                        <NPSBadge score={response.npsScore} />
-                      </TableCell>
-                      <TableCell className="max-w-[200px]">
-                        {response.feedback ? (
-                          <p className="text-sm text-muted-foreground truncate">{response.feedback}</p>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">No comment</span>
-                        )}
-                      </TableCell>
-                      <TableCell>{response.technicianName}</TableCell>
-                      <TableCell>{format(new Date(response.createdAt), 'MMM dd')}</TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    responses.map(response => (
+                      <TableRow key={response.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{response.ticketId || 'N/A'}</p>
+                            <p className="text-xs text-muted-foreground truncate max-w-[150px]">{response.ticketTitle}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{response.clientName}</TableCell>
+                        <TableCell>
+                          <StarRating rating={response.rating} />
+                        </TableCell>
+                        <TableCell>
+                          <NPSBadge score={response.npsScore} />
+                        </TableCell>
+                        <TableCell className="max-w-[200px]">
+                          {response.feedback ? (
+                            <p className="text-sm text-muted-foreground truncate">{response.feedback}</p>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">No comment</span>
+                          )}
+                        </TableCell>
+                        <TableCell>{format(new Date(response.createdAt), 'MMM dd')}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </TabsContent>
 
-            {/* Templates Tab */}
             <TabsContent value="templates" className="mt-4">
               <div className="flex justify-end mb-4">
                 <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
@@ -397,111 +433,65 @@ export function CSATSurveyManager() {
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
                         <Label>Template Name</Label>
-                        <Input placeholder="Post-Resolution Survey" />
+                        <Input 
+                          placeholder="Post-Resolution Survey"
+                          value={newTemplate.name}
+                          onChange={(e) => setNewTemplate(prev => ({ ...prev, name: e.target.value }))}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label>Trigger Event</Label>
-                        <Select>
+                        <Select 
+                          value={newTemplate.triggerEvent}
+                          onValueChange={(val) => setNewTemplate(prev => ({ ...prev, triggerEvent: val as any }))}
+                        >
                           <SelectTrigger>
-                            <SelectValue placeholder="Select trigger" />
+                            <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="ticket_resolved">Ticket Resolved</SelectItem>
                             <SelectItem value="after_response">After Response</SelectItem>
-                            <SelectItem value="manual">Manual Send</SelectItem>
+                            <SelectItem value="manual">Manual</SelectItem>
                           </SelectContent>
                         </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Survey Questions</Label>
-                        <Textarea placeholder="Enter each question on a new line" className="min-h-[100px]" />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Switch defaultChecked />
-                        <Label>Active</Label>
                       </div>
                     </div>
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" onClick={() => setShowTemplateDialog(false)}>Cancel</Button>
-                      <Button onClick={() => setShowTemplateDialog(false)}>Save Template</Button>
+                      <Button onClick={handleCreateTemplate}>Create Template</Button>
                     </div>
                   </DialogContent>
                 </Dialog>
               </div>
 
               <div className="space-y-3">
-                {templates.map(template => (
-                  <Card key={template.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium">{template.name}</p>
-                            <Badge variant="outline">{template.triggerEvent.replace('_', ' ')}</Badge>
-                            {template.isActive && <Badge variant="default">Active</Badge>}
+                {templates.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Mail className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No survey templates yet</p>
+                  </div>
+                ) : (
+                  templates.map(template => (
+                    <Card key={template.id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{template.name}</p>
+                              <Badge variant="outline">{template.triggerEvent.replace('_', ' ')}</Badge>
+                              {template.isActive && <Badge variant="default" className="text-xs">Active</Badge>}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {template.questions.length} questions • {template.responseRate}% response rate
+                            </p>
                           </div>
-                          <p className="text-sm text-muted-foreground">{template.questions.length} questions</p>
+                          <Switch checked={template.isActive} />
                         </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold">{template.responseRate}%</p>
-                          <p className="text-xs text-muted-foreground">Response Rate</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
-            </TabsContent>
-
-            {/* By Technician Tab */}
-            <TabsContent value="technicians" className="mt-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Technician</TableHead>
-                    <TableHead>Avg Rating</TableHead>
-                    <TableHead>NPS</TableHead>
-                    <TableHead>Total Responses</TableHead>
-                    <TableHead>Trend</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {['John Smith', 'Sarah Johnson', 'Mike Wilson'].map(tech => {
-                    const techResponses = responses.filter(r => r.technicianName === tech);
-                    const techAvg = techResponses.reduce((sum, r) => sum + r.rating, 0) / techResponses.length;
-                    const techNps = Math.round(
-                      ((techResponses.filter(r => r.npsScore >= 9).length - 
-                        techResponses.filter(r => r.npsScore < 7).length) / 
-                        techResponses.length) * 100
-                    );
-                    
-                    return (
-                      <TableRow key={tech}>
-                        <TableCell className="font-medium">{tech}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <StarRating rating={Math.round(techAvg)} />
-                            <span>{techAvg.toFixed(1)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={techNps >= 50 ? 'default' : techNps >= 0 ? 'secondary' : 'destructive'}>
-                            {techNps}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{techResponses.length}</TableCell>
-                        <TableCell>
-                          {techNps >= 50 ? (
-                            <TrendingUp className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <TrendingDown className="h-4 w-4 text-red-500" />
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
             </TabsContent>
           </Tabs>
         </CardContent>
