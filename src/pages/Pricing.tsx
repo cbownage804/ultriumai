@@ -13,55 +13,56 @@ import vanguardLogo from '@/assets/vanguard-logo.png';
 
 const Pricing = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a] to-[#0f0f12]">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a] to-[#0f0f12] safe-area-inset-bottom">
       <Navigation />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-20 relative overflow-hidden">
+      <section className="pt-24 sm:pt-32 pb-12 sm:pb-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-emerald-500/5" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] md:w-[700px] md:h-[700px] lg:w-[900px] lg:h-[900px] bg-primary/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-emerald-500/5 rounded-full blur-[80px]" />
-        <div className="absolute top-1/4 right-0 w-[250px] h-[250px] bg-cyan-500/5 rounded-full blur-[60px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] md:w-[700px] md:h-[700px] lg:w-[900px] lg:h-[900px] bg-primary/5 rounded-full blur-[80px] sm:blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[200px] h-[200px] sm:w-[300px] sm:h-[300px] bg-emerald-500/5 rounded-full blur-[60px] sm:blur-[80px]" />
+        <div className="absolute top-1/4 right-0 w-[150px] h-[150px] sm:w-[250px] sm:h-[250px] bg-cyan-500/5 rounded-full blur-[40px] sm:blur-[60px]" />
         
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-6 sm:mb-8">
             <Zap className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium text-white/70">Simple, Transparent Pricing</span>
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold mb-8 bg-gradient-to-r from-white via-white to-white/50 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-6 sm:mb-8 bg-gradient-to-r from-white via-white to-white/50 bg-clip-text text-transparent px-2">
             Choose Your Plan
           </h1>
-          <p className="text-xl text-white/50 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg lg:text-xl text-white/50 max-w-2xl mx-auto leading-relaxed px-4">
             From personal security tools to enterprise AI platforms—find the perfect fit for your needs.
           </p>
         </div>
       </section>
 
       {/* SafeSuite Section */}
-      <section id="safesuite" className="py-20 px-4">
+      <section id="safesuite" className="py-12 sm:py-20 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center px-10 py-5 bg-black rounded-2xl shadow-lg shadow-emerald-500/30 mb-6">
-              <img src={safesuiteLogo} alt="SafeSuite" className="h-24 w-auto" />
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="inline-flex items-center justify-center px-6 sm:px-10 py-3 sm:py-5 bg-black rounded-xl sm:rounded-2xl shadow-lg shadow-emerald-500/30 mb-4 sm:mb-6">
+              <img src={safesuiteLogo} alt="SafeSuite" className="h-16 sm:h-24 w-auto" />
             </div>
-            <p className="text-lg text-white/50 max-w-xl mx-auto">
+            <p className="text-base sm:text-lg text-white/50 max-w-xl mx-auto px-4">
               Personal & SMB security toolkit with password vault, threat scanning, and dark web monitoring.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Horizontal scroll on mobile */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {/* Free */}
-            <Card className="bg-[#141414] border-white/10 hover:border-emerald-500/30 transition-all">
-              <CardContent className="p-8">
-                <h3 className="text-xl font-bold text-white mb-2">Free</h3>
-                <p className="text-white/50 text-sm mb-6">Get started with essential security</p>
+            <Card className="bg-[#141414] border-white/10 hover:border-emerald-500/30 transition-all hover-lift">
+              <CardContent className="p-5 sm:p-8">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2">Free</h3>
+                <p className="text-white/50 text-xs sm:text-sm mb-4 sm:mb-6">Get started with essential security</p>
                 
-                <div className="mb-8">
-                  <span className="text-4xl font-bold text-white">$0</span>
-                  <span className="text-white/50">/month</span>
+                <div className="mb-6 sm:mb-8">
+                  <span className="text-3xl sm:text-4xl font-bold text-white">$0</span>
+                  <span className="text-white/50 text-sm">/month</span>
                 </div>
 
-                <div className="space-y-3 mb-8">
+                <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
                   {[
                     "25 password entries",
                     "5 threat scans/month",
@@ -69,15 +70,15 @@ const Pricing = () => {
                     "Browser extension",
                     "Mobile app access",
                   ].map((feature, i) => (
-                    <div key={i} className="flex items-center gap-3">
+                    <div key={i} className="flex items-center gap-2 sm:gap-3">
                       <Check className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                      <span className="text-sm text-white/70">{feature}</span>
+                      <span className="text-xs sm:text-sm text-white/70">{feature}</span>
                     </div>
                   ))}
                 </div>
               </CardContent>
-              <CardFooter className="p-8 pt-0">
-                <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10" asChild>
+              <CardFooter className="p-5 sm:p-8 pt-0">
+                <Button variant="outline" className="w-full h-11 sm:h-10 border-white/20 text-white hover:bg-white/10 touch-target tap-scale" asChild>
                   <Link to="/auth">
                     Get Started Free
                     <ArrowRight className="ml-2 h-4 w-4" />

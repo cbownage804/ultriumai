@@ -13,16 +13,16 @@ export default function SafeSuiteScan() {
   return (
     <FeatureGate feature="safescan">
       <div 
-        className="min-h-screen space-y-6 p-6 -m-6 relative"
+        className="min-h-screen space-y-4 sm:space-y-6 p-4 sm:p-6 -m-4 sm:-m-6 relative safe-area-inset-bottom"
         style={{
           backgroundImage: `url(${heroSafescanBg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
+          backgroundAttachment: 'scroll'
         }}
       >
         <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-        <div className="relative z-10 space-y-6">
+        <div className="relative z-10 space-y-4 sm:space-y-6">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
