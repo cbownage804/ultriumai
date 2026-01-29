@@ -5,9 +5,50 @@ interface WindowsAgentZipOptions {
   apiEndpoint: string;
   secretKey: string;
   deviceName?: string;
+  onProgress?: (progress: number, message: string) => void;
 }
 
-// C# Program.cs content
+// GitHub Release URL for pre-built EXE
+// Update this after connecting to GitHub and creating your first release
+const GITHUB_RELEASE_BASE_URL = 'https://github.com/ultrium/vanguard-agent/releases/latest/download';
+const EXE_FILENAME = 'VanguardAgent-win-x64.exe';
+
+// Fallback: if GitHub release not available, we'll create a stub
+let cachedExeBlob: Blob | null = null;
+
+async function fetchPreBuiltExe(onProgress?: (progress: number, message: string) => void): Promise<Blob | null> {
+  // Return cached if available
+  if (cachedExeBlob) {
+    return cachedExeBlob;
+  }
+
+  try {
+    onProgress?.(10, 'Fetching pre-built agent from GitHub...');
+    
+    const response = await fetch(`${GITHUB_RELEASE_BASE_URL}/${EXE_FILENAME}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/octet-stream',
+      },
+    });
+
+    if (!response.ok) {
+      console.warn('GitHub Release not available, using config-only bundle');
+      return null;
+    }
+
+    onProgress?.(50, 'Downloading executable...');
+    cachedExeBlob = await response.blob();
+    onProgress?.(80, 'Download complete');
+    
+    return cachedExeBlob;
+  } catch (error) {
+    console.warn('Failed to fetch EXE from GitHub:', error);
+    return null;
+  }
+}
+
+// C# Program.cs content (for build reference only)
 const PROGRAM_CS = `// Ultrium Vanguard Agent - Entry Point
 // Build: dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
 
@@ -231,9 +272,43 @@ export async function generateWindowsAgentZip(options: WindowsAgentZipOptions): 
     apiEndpoint,
     secretKey,
     deviceName = 'Vanguard-Windows',
+    onProgress,
   } = options;
 
   const zip = new JSZip();
+
+  // Try to fetch pre-built EXE from GitHub Releases
+  onProgress?.(5, 'Checking for pre-built agent...');
+  const exeBlob = await fetchPreBuiltExe(onProgress);
+  
+  if (exeBlob) {
+    // Include the actual EXE binary from GitHub Release
+    zip.file('VanguardAgent.exe', exeBlob);
+    onProgress?.(85, 'Bundling with your credentials...');
+  } else {
+    // Fallback: include build instructions if EXE not available
+    zip.file('BUILD_INSTRUCTIONS.md', `# Building VanguardAgent.exe
+
+This ZIP contains configuration and installer scripts. The pre-built EXE is not yet available.
+
+## Build from Source
+\`\`\`powershell
+# Clone the repository  
+git clone https://github.com/ultrium/vanguard-agent.git
+cd vanguard-agent/VanguardAgent
+
+# Build single-file EXE
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+
+# Output: bin/Release/net8.0-windows/win-x64/publish/VanguardAgent.exe
+\`\`\`
+
+## After obtaining VanguardAgent.exe
+1. Place VanguardAgent.exe in this folder
+2. Run install.bat as Administrator
+`);
+    onProgress?.(85, 'Creating config-only bundle...');
+  }
 
   // Create config.json with user credentials
   const configJson = JSON.stringify({
@@ -260,36 +335,14 @@ export async function generateWindowsAgentZip(options: WindowsAgentZipOptions): 
   zip.file('uninstall.bat', UNINSTALL_BAT);
   zip.file('README.md', WINDOWS_README);
 
-  // Note about the EXE
-  zip.file('BUILD_INSTRUCTIONS.md', `# Building VanguardAgent.exe
-
-This ZIP contains configuration and installer scripts. To get the actual EXE:
-
-## Option 1: Download Pre-built (Recommended)
-Download from: https://ultriumai.com/downloads/VanguardAgent.exe
-
-## Option 2: Build from Source
-\`\`\`powershell
-# Clone the repository
-git clone https://github.com/ultrium/vanguard-agent.git
-cd vanguard-agent/VanguardAgent
-
-# Build single-file EXE
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-
-# Output: bin/Release/net8.0-windows/win-x64/publish/VanguardAgent.exe
-\`\`\`
-
-## After obtaining VanguardAgent.exe
-1. Place VanguardAgent.exe in this folder
-2. Run install.bat as Administrator
-`);
-
+  onProgress?.(95, 'Compressing package...');
+  
   const blob = await zip.generateAsync({
     type: 'blob',
     compression: 'DEFLATE',
     compressionOptions: { level: 9 },
   });
 
+  onProgress?.(100, 'Complete!');
   return blob;
 }
