@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileText, Plus, Download, Calendar, BarChart3, PieChart, LineChart, Table, Trash2, Play } from 'lucide-react';
+import { FileText, Plus, Download, Calendar, BarChart3, PieChart, LineChart, Table, Trash2, Play, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ReportWidget {
   id: string;
@@ -25,12 +27,39 @@ interface ReportTemplate {
 }
 
 export const CustomReportBuilder = () => {
-  const [reports, setReports] = useState<ReportTemplate[]>([
-    { id: '1', name: 'Weekly Security Summary', description: 'Overview of security events and incidents', widgets: [{ id: 'w1', type: 'bar', dataSource: 'security_events', title: 'Threats by Day' }], schedule: 'Weekly', lastGenerated: '2024-12-24' },
-    { id: '2', name: 'Monthly Compliance Report', description: 'Compliance scores across all frameworks', widgets: [{ id: 'w1', type: 'pie', dataSource: 'compliance', title: 'Compliance Status' }], schedule: 'Monthly', lastGenerated: '2024-12-01' },
-    { id: '3', name: 'Executive Dashboard Export', description: 'Key metrics for leadership', widgets: [{ id: 'w1', type: 'metric', dataSource: 'executive', title: 'Risk Score' }], lastGenerated: '2024-12-20' },
-  ]);
+  const { user } = useAuth();
+  const [reports, setReports] = useState<ReportTemplate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    if (user) loadReports();
+  }, [user]);
+
+  const loadReports = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bi_reports')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const mapped = (data || []).map(r => ({
+        id: r.id,
+        name: r.report_name,
+        description: r.report_type || '',
+        widgets: Array.isArray(r.report_config) ? (r.report_config as unknown as ReportWidget[]) : [],
+        schedule: r.is_automated ? ((r.schedule_config as any)?.frequency || 'Manual') : undefined,
+        lastGenerated: r.last_generated_at
+      }));
+      setReports(mapped);
+    } catch (err) {
+      console.error('Failed to load reports:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const [isBuilding, setIsBuilding] = useState(false);
   const [newReport, setNewReport] = useState({
     name: '',
@@ -77,25 +106,50 @@ export const CustomReportBuilder = () => {
     }));
   };
 
-  const saveReport = () => {
+  const saveReport = async () => {
     if (!newReport.name) {
       toast.error('Enter a report name');
       return;
     }
-    const report: ReportTemplate = {
-      id: `r-${Date.now()}`,
-      ...newReport
-    };
-    setReports(prev => [...prev, report]);
-    setNewReport({ name: '', description: '', widgets: [] });
-    setSelectedDataSources([]);
-    setIsBuilding(false);
-    toast.success('Report template saved');
+    
+    try {
+      const { error } = await supabase
+        .from('bi_reports')
+        .insert({
+          user_id: user?.id,
+          report_name: newReport.name,
+          report_type: newReport.description,
+          report_config: newReport.widgets as unknown as any,
+          data_sources: selectedDataSources,
+          is_active: true,
+          is_automated: false
+        });
+
+      if (error) throw error;
+
+      setNewReport({ name: '', description: '', widgets: [] });
+      setSelectedDataSources([]);
+      setIsBuilding(false);
+      toast.success('Report template saved');
+      loadReports();
+    } catch (err: any) {
+      toast.error('Failed to save report', { description: err.message });
+    }
   };
 
-  const generateReport = (reportId: string) => {
-    toast.success('Report generation started');
-    // Would trigger actual report generation
+  const generateReport = async (reportId: string) => {
+    try {
+      const { error } = await supabase
+        .from('bi_reports')
+        .update({ last_generated_at: new Date().toISOString() })
+        .eq('id', reportId);
+
+      if (error) throw error;
+      toast.success('Report generation started');
+      loadReports();
+    } catch (err) {
+      toast.error('Report generation failed');
+    }
   };
 
   const getWidgetIcon = (type: string) => {
