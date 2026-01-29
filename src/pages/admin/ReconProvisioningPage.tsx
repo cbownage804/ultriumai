@@ -10,11 +10,13 @@ import {
   Truck,
   Settings,
   RefreshCw,
+  Code,
 } from 'lucide-react';
 import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { ReconOrdersTable } from '@/components/admin/recon/ReconOrdersTable';
 import { ReconInventoryTable } from '@/components/admin/recon/ReconInventoryTable';
 import { ReconProvisioningPanel } from '@/components/admin/recon/ReconProvisioningPanel';
+import { ReconAgentDownloads } from '@/components/admin/recon/ReconAgentDownloads';
 import { useReconOrders } from '@/hooks/useReconOrders';
 import { useReconInventory } from '@/hooks/useReconInventory';
 
@@ -135,6 +137,10 @@ const ReconProvisioningPage = () => {
               <Settings className="h-4 w-4" />
               Provisioning
             </TabsTrigger>
+            <TabsTrigger value="agent" className="gap-2 data-[state=active]:bg-background">
+              <Code className="h-4 w-4" />
+              Agent Software
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders" className="mt-6">
@@ -156,6 +162,10 @@ const ReconProvisioningPage = () => {
               orders={orders || []} 
               inventory={inventory || []} 
             />
+          </TabsContent>
+
+          <TabsContent value="agent" className="mt-6">
+            <ReconAgentDownloads />
           </TabsContent>
         </Tabs>
       </main>
