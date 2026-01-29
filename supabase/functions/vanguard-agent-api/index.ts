@@ -47,7 +47,7 @@ serve(async (req) => {
         case 'register':
           return await handleRegister(supabase, body);
         case 'heartbeat':
-          return await handleHeartbeat(supabase, body);
+          return await handleHeartbeat(supabase, body, req);
         case 'scan_results':
           return await handleScanResults(supabase, body);
         case 'get_commands':
@@ -214,7 +214,7 @@ async function handleRegister(supabase: any, body: any) {
   );
 }
 
-async function handleHeartbeat(supabase: any, body: any) {
+async function handleHeartbeat(supabase: any, body: any, req?: Request) {
   const { device_id } = body;
   
   if (!device_id) {
@@ -223,6 +223,14 @@ async function handleHeartbeat(supabase: any, body: any) {
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
+  
+  // Extract real IP from request headers (set by load balancer/proxy)
+  const realIp = req?.headers.get('x-real-ip') || 
+                 req?.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+                 req?.headers.get('cf-connecting-ip') ||
+                 null;
+  
+  console.log(`[vanguard-agent-api] Heartbeat source IP from headers: ${realIp}`);
 
   // Log raw body to debug what the agent is actually sending
   console.log(`[vanguard-agent-api] Heartbeat raw body:`, JSON.stringify(body));
@@ -331,6 +339,10 @@ async function handleHeartbeat(supabase: any, body: any) {
     }
   } else if (body.ip_address) {
     ipToUpdate = body.ip_address;
+  } else if (realIp) {
+    // Fallback to source IP from request headers
+    ipToUpdate = realIp;
+    console.log(`[vanguard-agent-api] Using source IP from headers: ${realIp}`);
   }
   
   if (ipToUpdate) {
