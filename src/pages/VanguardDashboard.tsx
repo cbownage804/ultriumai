@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { 
   ChevronDown, Download, RefreshCw, Search, HelpCircle, Bell, MessageCircle,
   Maximize2, MoreHorizontal, Shield
@@ -13,7 +12,8 @@ import { useMSP } from "@/hooks/useMSP";
 import { useVanguardAgents } from "@/hooks/useVanguardAgents";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { format, subDays, startOfDay, isAfter, isSameDay } from "date-fns";
 
 // Dashboard widgets
 import { TicketStatusWidget } from "@/components/vanguard/dashboard/TicketStatusWidget";
@@ -29,55 +29,165 @@ const VanguardDashboard = () => {
   const { clients } = useMSP();
   const { agents, refetch: refreshAgents } = useVanguardAgents();
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Real data state
+  const [ticketStats, setTicketStats] = useState({ open: 0, pending: 0, dueToday: 0, overdue: 0 });
+  const [alertStats, setAlertStats] = useState({ warning: 0, critical: 0 });
+  const [recentAlerts, setRecentAlerts] = useState<any[]>([]);
+  const [customerTickets, setCustomerTickets] = useState<any[]>([]);
+  const [criticalTickets, setCriticalTickets] = useState<any[]>([]);
+  const [ticketActivity, setTicketActivity] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Transform to organizations
-  const organizations = clients.map(client => ({
-    id: client.id,
-    company_name: client.company_name,
-    device_count: agents.filter(a => a.client_id === client.id).length,
-  }));
+  // Fetch real data from database
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Fetch tickets for stats
+        const { data: tickets } = await supabase
+          .from('tickets')
+          .select('id, status, due_date, priority, title, created_at, client_id, assigned_to')
+          .eq('user_id', user.id);
+
+        if (tickets) {
+          const now = new Date();
+          const today = startOfDay(now);
+          
+          const open = tickets.filter(t => t.status === 'open').length;
+          const pending = tickets.filter(t => t.status === 'pending' || t.status === 'in_progress').length;
+          const dueToday = tickets.filter(t => t.due_date && isSameDay(new Date(t.due_date), today) && t.status !== 'resolved' && t.status !== 'closed').length;
+          const overdue = tickets.filter(t => t.due_date && new Date(t.due_date) < now && t.status !== 'resolved' && t.status !== 'closed').length;
+          
+          setTicketStats({ open, pending, dueToday, overdue });
+
+          // Critical and overdue tickets
+          const criticalOrOverdue = tickets
+            .filter(t => (t.priority === 'critical' || t.priority === 'high' || (t.due_date && new Date(t.due_date) < now)) && t.status !== 'resolved' && t.status !== 'closed')
+            .slice(0, 4)
+            .map(t => {
+              const client = clients.find(c => c.id === t.client_id);
+              const slaMs = t.due_date ? new Date(t.due_date).getTime() - now.getTime() : null;
+              let slaStatus = '';
+              if (slaMs !== null) {
+                const hours = Math.floor(slaMs / (1000 * 60 * 60));
+                const days = Math.floor(hours / 24);
+                if (hours < 0) {
+                  slaStatus = days < -1 ? `${Math.abs(days)}d` : `${Math.abs(hours)}h`;
+                  slaStatus = '-' + slaStatus;
+                } else {
+                  slaStatus = days >= 1 ? `${days}d` : `${hours}h`;
+                }
+              }
+              return {
+                id: t.id,
+                ticket_number: t.id.slice(0, 8),
+                title: t.title || 'Untitled',
+                client_name: client?.company_name || 'Unknown',
+                technician: t.assigned_to || null,
+                priority: t.priority || 'medium',
+                sla_status: slaStatus
+              };
+            });
+          setCriticalTickets(criticalOrOverdue);
+
+          // Customer tickets aggregation
+          const ticketsByClient: Record<string, { client_id: string; client_name: string; ticket_count: number }> = {};
+          tickets.filter(t => t.status !== 'resolved' && t.status !== 'closed').forEach(t => {
+            if (t.client_id) {
+              const client = clients.find(c => c.id === t.client_id);
+              if (client) {
+                if (!ticketsByClient[t.client_id]) {
+                  ticketsByClient[t.client_id] = {
+                    client_id: t.client_id,
+                    client_name: client.company_name,
+                    ticket_count: 0
+                  };
+                }
+                ticketsByClient[t.client_id].ticket_count++;
+              }
+            }
+          });
+          setCustomerTickets(Object.values(ticketsByClient).slice(0, 5));
+
+          // Ticket activity for last 7 days
+          const activityData = [];
+          for (let i = 6; i >= 0; i--) {
+            const day = subDays(now, i);
+            const dayStart = startOfDay(day);
+            const dayEnd = new Date(dayStart);
+            dayEnd.setDate(dayEnd.getDate() + 1);
+            
+            const opened = tickets.filter(t => {
+              const created = new Date(t.created_at);
+              return created >= dayStart && created < dayEnd;
+            }).length;
+            
+            const resolved = tickets.filter(t => {
+              // Check if resolved on this day (would need resolved_at field, using created_at as fallback)
+              return false; // No resolved_at field available
+            }).length;
+            
+            activityData.push({
+              date: format(day, 'd MMM'),
+              opened,
+              resolved
+            });
+          }
+          setTicketActivity(activityData);
+        }
+
+        // Fetch security events for alerts
+        const { data: securityEvents } = await supabase
+          .from('security_events')
+          .select('id, event_type, severity, description, title, affected_assets, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (securityEvents) {
+          const warning = securityEvents.filter(e => e.severity === 'medium' || e.severity === 'low').length;
+          const critical = securityEvents.filter(e => e.severity === 'high' || e.severity === 'critical').length;
+          setAlertStats({ warning, critical });
+
+          // Map to recent alerts format
+          const recentAlertsData = securityEvents.slice(0, 5).map((event) => {
+            // Extract device/client info from affected_assets if available
+            const assets = event.affected_assets || [];
+            const deviceName = assets.length > 0 ? String(assets[0]) : '';
+              
+            return {
+              id: event.id,
+              title: event.title || event.description || event.event_type || 'Security Event',
+              severity: (event.severity === 'high' || event.severity === 'critical') ? 'critical' as const : 
+                       (event.severity === 'medium') ? 'warning' as const : 'info' as const,
+              device_name: deviceName,
+              client_name: '',
+              created_at: event.created_at
+            };
+          });
+          setRecentAlerts(recentAlertsData);
+        }
+
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [clients, agents]);
 
   const handleRefresh = () => {
     refreshAgents();
+    setIsLoading(true);
+    // Re-trigger the useEffect by forcing a re-render
+    setTimeout(() => setIsLoading(false), 500);
     toast.success('Refreshed');
   };
-
-  // Mock data for widgets
-  const ticketStats = { open: 14, pending: 0, dueToday: 0, overdue: 12 };
-  const alertStats = { warning: 1, critical: 4 };
-  
-  const recentAlerts = [
-    { id: '1', title: 'Machine status unknown - agent has not established c...', severity: 'critical' as const, client_name: 'Hot Pepper Catering', device_name: 'Dana-Ubuntu-VM', created_at: new Date(Date.now() - 2 * 30 * 24 * 60 * 60 * 1000).toISOString() },
-    { id: '2', title: 'Machine status unknown - agent has not established c...', severity: 'critical' as const, client_name: 'Florist of October', device_name: 'Lindgren\'s PC', created_at: new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000).toISOString() },
-    { id: '3', title: 'Network scan has stopped because the scanning agen...', severity: 'critical' as const, client_name: 'Lost Keys Locksmiths', device_name: 'Pearce\'s PC', created_at: new Date(Date.now() - 5 * 30 * 24 * 60 * 60 * 1000).toISOString() },
-    { id: '4', title: 'Machine status unknown - agent has not established c...', severity: 'critical' as const, client_name: 'Lost Keys Locksmiths', device_name: 'Pearce\'s PC', created_at: new Date(Date.now() - 5 * 30 * 24 * 60 * 60 * 1000).toISOString() },
-    { id: '5', title: 'The Fan Speed is lower than the threshold of 500.00 R...', severity: 'warning' as const, client_name: 'Strange Brew Inc', device_name: 'Kudo-MBP16', created_at: new Date(Date.now() - 2 * 30 * 24 * 60 * 60 * 1000).toISOString() },
-  ];
-
-  const customerTickets = [
-    { client_id: '1', client_name: 'DC Electric', ticket_count: 1 },
-    { client_id: '2', client_name: 'Blackbird Financial', ticket_count: 2 },
-    { client_id: '3', client_name: 'Hot Pepper Catering', ticket_count: 2 },
-    { client_id: '4', client_name: 'Florist of October', ticket_count: 1 },
-    { client_id: '5', client_name: 'Lost Keys Locksmiths', ticket_count: 1 },
-  ];
-
-  const criticalTickets = [
-    { id: '1', ticket_number: '37', title: 'Monitor hello yes test', client_name: 'Florist of October', technician: 'Martin Jones', priority: 'critical' as const, sla_status: '1d' },
-    { id: '2', ticket_number: '20', title: "I can't access our company's shared folders", client_name: 'Strange Brew Inc', technician: 'John Smith', priority: 'medium' as const, sla_status: '-5h' },
-    { id: '3', ticket_number: '18', title: 'Important files missing - help', client_name: 'Strange Brew Inc', technician: 'John Smith', priority: 'high' as const, sla_status: '1d' },
-    { id: '4', ticket_number: '17', title: 'Razzmatazz November 23', client_name: 'Florist of October', technician: 'Martin Jones', priority: 'low' as const, sla_status: '-2w' },
-  ];
-
-  const ticketActivity = [
-    { date: '25 Apr', opened: 0, resolved: 0 },
-    { date: '26 Apr', opened: 0, resolved: 0 },
-    { date: '27 Apr', opened: 0, resolved: 0 },
-    { date: '28 Apr', opened: 3, resolved: 2 },
-    { date: '29 Apr', opened: 0, resolved: 0 },
-    { date: '30 Apr', opened: 0, resolved: 0 },
-    { date: '1 May', opened: 0, resolved: 0 },
-  ];
 
   return (
     <div className="min-h-screen">
@@ -148,7 +258,9 @@ const VanguardDashboard = () => {
           </Button>
           <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-purple-400 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-purple-500/15 relative">
             <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-full ring-2 ring-purple-500/30 animate-pulse shadow-lg shadow-purple-500/50" />
+            {(alertStats.warning + alertStats.critical) > 0 && (
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-full ring-2 ring-purple-500/30 animate-pulse shadow-lg shadow-purple-500/50" />
+            )}
           </Button>
           <div className="h-9 w-9 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-purple-500/40">
             U
