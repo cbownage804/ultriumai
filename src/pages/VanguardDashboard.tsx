@@ -3,398 +3,296 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Shield, Search, Bug, AlertTriangle, CheckCircle, Clock, Target, TrendingUp, Eye, Network, Terminal, Globe, FileSearch, Activity, BarChart3, Zap } from "lucide-react";
-import { VulnerabilityScanner } from "@/components/security/VulnerabilityScanner";
-import { ThreatDetection } from "@/components/security/ThreatDetection";
-import { SecurityReports } from "@/components/security/SecurityReports";
-import { ComplianceAuditor } from "@/components/security/ComplianceAuditor";
-import { NetworkConnectors } from "@/components/security/NetworkConnectors";
-import { VanguardOverview } from "@/components/vanguard/VanguardOverview";
-import { VanguardSOC } from "@/components/vanguard/VanguardSOC";
-import { VanguardServiceDesk } from "@/components/vanguard/VanguardServiceDesk";
-import { VanguardAICopilot } from "@/components/vanguard/VanguardAICopilot";
-import { VanguardPentest } from "@/components/vanguard/VanguardPentest";
-import { MDRCaseManagement } from "@/components/vanguard/MDRCaseManagement";
-import { ThreatIntelLookup } from "@/components/vanguard/ThreatIntelLookup";
-import { LiveResponseTerminal } from "@/components/vanguard/LiveResponseTerminal";
-import { MitreAttackMatrix } from "@/components/vanguard/MitreAttackMatrix";
-import { YaraRulesEngine } from "@/components/vanguard/YaraRulesEngine";
-import { FileIntegrityMonitor } from "@/components/vanguard/FileIntegrityMonitor";
-import { ProcessTimeline } from "@/components/vanguard/ProcessTimeline";
-import { AssetRiskScoring } from "@/components/vanguard/AssetRiskScoring";
-import { IntegrationHub } from "@/components/vanguard/IntegrationHub";
-import { ExecutiveSecurityDashboard } from "@/components/vanguard/ExecutiveSecurityDashboard";
-import { ComplianceScanner } from "@/components/vanguard/ComplianceScanner";
-import { RustDeskIntegration } from "@/components/vanguard/RustDeskIntegration";
-import { AgentDeployment } from "@/components/vanguard/AgentDeployment";
-import { CredentialVault } from "@/components/vanguard/CredentialVault";
+import { 
+  Shield, Monitor, Ticket, AlertTriangle, Building2, Download,
+  Settings, BarChart3, RefreshCw
+} from "lucide-react";
+import { OrganizationSidebar } from "@/components/vanguard/OrganizationSidebar";
+import { OrgDevicesTab } from "@/components/vanguard/OrgDevicesTab";
+import { OrgTicketsTab } from "@/components/vanguard/OrgTicketsTab";
+import { OrgAlertsTab } from "@/components/vanguard/OrgAlertsTab";
+import { AddOrganizationDialog } from "@/components/vanguard/AddOrganizationDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useMSP } from "@/hooks/useMSP";
 import { useVanguardAgents } from "@/hooks/useVanguardAgents";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
-interface SecurityScan {
+interface Organization {
   id: string;
-  target: string;
-  scan_type: string;
-  status: string;
-  findings_count: number;
-  critical_count: number;
-  high_count: number;
-  medium_count: number;
-  low_count: number;
-  started_at: string;
-  completed_at?: string;
+  company_name: string;
+  is_active: boolean;
+  device_count?: number;
+  alert_count?: number;
 }
 
 const VanguardDashboard = () => {
-  const [recentScans, setRecentScans] = useState<SecurityScan[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("overview");
-  const { toast } = useToast();
-  const { agents } = useVanguardAgents();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { msp, clients, createClient, isLoading: mspLoading } = useMSP();
+  const { agents, refetch: refreshAgents } = useVanguardAgents();
+  
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("devices");
+  const [showAddOrg, setShowAddOrg] = useState(false);
+  const [orgDevices, setOrgDevices] = useState<any[]>([]);
+  const [orgTickets, setOrgTickets] = useState<any[]>([]);
+  const [orgAlerts, setOrgAlerts] = useState<any[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
+  // Transform MSP clients to organizations with device counts
+  const organizations: Organization[] = clients.map(client => {
+    const deviceCount = agents.filter(a => a.client_id === client.id).length;
+    return {
+      id: client.id,
+      company_name: client.company_name,
+      is_active: client.is_active,
+      device_count: deviceCount,
+      alert_count: client.alerts || 0
+    };
+  });
+
+  const selectedOrg = organizations.find(o => o.id === selectedOrgId);
+
+  // Load organization-specific data when selection changes
   useEffect(() => {
-    loadRecentScans();
-  }, []);
+    if (selectedOrgId) {
+      loadOrgData(selectedOrgId);
+    } else {
+      // Load all data when "All Organizations" is selected
+      loadAllData();
+    }
+  }, [selectedOrgId, agents]);
 
-  const loadRecentScans = async () => {
+  const loadOrgData = async (orgId: string) => {
+    setIsLoadingData(true);
     try {
-      const { data, error } = await supabase
-        .from('security_scans')
-        .select('*')
-        .order('started_at', { ascending: false })
-        .limit(10);
+      // Filter agents for this organization
+      const devices = agents.filter(a => a.client_id === orgId);
+      setOrgDevices(devices);
 
-      if (error) throw error;
-      setRecentScans(data || []);
+      // Load tickets for this organization (mock for now)
+      setOrgTickets([]);
+
+      // Load alerts for this organization (mock for now)
+      setOrgAlerts([]);
     } catch (error) {
-      console.error('Error loading scans:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load recent scans",
-        variant: "destructive",
-      });
+      console.error('Error loading org data:', error);
     } finally {
-      setIsLoading(false);
+      setIsLoadingData(false);
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'running': return <Clock className="h-4 w-4 text-blue-500" />;
-      case 'failed': return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      default: return <Clock className="h-4 w-4 text-muted-foreground" />;
+  const loadAllData = () => {
+    setOrgDevices(agents);
+    setOrgTickets([]);
+    setOrgAlerts([]);
+  };
+
+  const handleAddOrganization = async (data: any) => {
+    const result = await createClient({
+      company_name: data.company_name,
+      contact_name: data.contact_name,
+      contact_email: data.contact_email,
+      phone: data.phone,
+      business_size: data.business_size,
+      monthly_rate: 0
+    });
+
+    if (result) {
+      toast.success(`Organization "${data.company_name}" added successfully`);
+      setSelectedOrgId(result.id);
     }
   };
 
-  const totalFindings = recentScans.reduce((sum, scan) => sum + scan.findings_count, 0);
-  const criticalFindings = recentScans.reduce((sum, scan) => sum + scan.critical_count, 0);
-  const highFindings = recentScans.reduce((sum, scan) => sum + scan.high_count, 0);
+  const handleRefresh = () => {
+    refreshAgents();
+    if (selectedOrgId) {
+      loadOrgData(selectedOrgId);
+    }
+    toast.success('Data refreshed');
+  };
 
-  // Calculate online agents (last heartbeat within 5 minutes)
-  const onlineAgentCount = agents.filter(agent => {
-    if (!agent.last_heartbeat) return false;
-    const lastHeartbeat = new Date(agent.last_heartbeat).getTime();
-    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-    return lastHeartbeat > fiveMinutesAgo;
+  // Calculate stats
+  const totalDevices = agents.length;
+  const onlineDevices = agents.filter(a => {
+    if (!a.last_heartbeat) return false;
+    return Date.now() - new Date(a.last_heartbeat).getTime() < 5 * 60 * 1000;
   }).length;
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-muted rounded w-1/3"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-32 bg-muted rounded-lg"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const totalOrgs = organizations.length;
+  const activeOrgs = organizations.filter(o => o.is_active).length;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-3">
-            <Shield className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Ultrium Vanguard</h1>
-              <p className="text-muted-foreground mt-1">Elite AI-Powered Cybersecurity Operations Platform</p>
+    <div className="flex h-[calc(100vh-4rem)] bg-background">
+      {/* Sidebar */}
+      <OrganizationSidebar
+        organizations={organizations}
+        selectedOrgId={selectedOrgId}
+        onSelectOrg={setSelectedOrgId}
+        onAddOrg={() => setShowAddOrg(true)}
+        isLoading={mspLoading}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="border-b bg-muted/30 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Shield className="h-6 w-6 text-primary" />
+              <div>
+                <h1 className="text-xl font-bold">
+                  {selectedOrg ? selectedOrg.company_name : 'All Organizations'}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {selectedOrg 
+                    ? `Managing ${orgDevices.length} device${orgDevices.length !== 1 ? 's' : ''}`
+                    : `${totalOrgs} organization${totalOrgs !== 1 ? 's' : ''} • ${totalDevices} device${totalDevices !== 1 ? 's' : ''}`
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleRefresh}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+              {selectedOrg && (
+                <Button 
+                  size="sm"
+                  onClick={() => navigate(`/vanguard/setup?client=${selectedOrgId}`)}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Deploy Agent
+                </Button>
+              )}
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Network Agents</CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{agents.length}</div>
-              <p className="text-xs text-muted-foreground">
-                {onlineAgentCount} online
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Critical Issues</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-destructive">{criticalFindings}</div>
-              <p className="text-xs text-muted-foreground">
-                Require immediate attention
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">High Priority</CardTitle>
-              <Bug className="h-4 w-4 text-orange-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-500">{highFindings}</div>
-              <p className="text-xs text-muted-foreground">
-                High severity findings
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Scans</CardTitle>
-              <Search className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{recentScans.length}</div>
-              <p className="text-xs text-muted-foreground">
-                {totalFindings} findings
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <ScrollArea className="w-full whitespace-nowrap">
-            <TabsList className="inline-flex h-10 w-max items-center justify-start gap-1 rounded-md bg-muted p-1">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="servicedesk">Service Desk</TabsTrigger>
-              <TabsTrigger value="copilot">AI Copilot</TabsTrigger>
-              <TabsTrigger value="soc">SOC</TabsTrigger>
-              <TabsTrigger value="mdr">MDR Cases</TabsTrigger>
-              <TabsTrigger value="threatintel">Threat Intel</TabsTrigger>
-              <TabsTrigger value="liveresponse">Live Response</TabsTrigger>
-              <TabsTrigger value="mitre">MITRE ATT&CK</TabsTrigger>
-              <TabsTrigger value="yara">YARA Rules</TabsTrigger>
-              <TabsTrigger value="fim">File Integrity</TabsTrigger>
-              <TabsTrigger value="process">Process Timeline</TabsTrigger>
-              <TabsTrigger value="assetrisk">Asset Risk</TabsTrigger>
-              <TabsTrigger value="integrations">Integrations</TabsTrigger>
-              <TabsTrigger value="executive">Executive</TabsTrigger>
-              <TabsTrigger value="scanner">Threats</TabsTrigger>
-              <TabsTrigger value="network">Network</TabsTrigger>
-              <TabsTrigger value="pentest">Pentest</TabsTrigger>
-              <TabsTrigger value="compliance">Compliance</TabsTrigger>
-              <TabsTrigger value="remotedesktop">Remote Desktop</TabsTrigger>
-              <TabsTrigger value="agentdeploy">Agent Deploy</TabsTrigger>
-              <TabsTrigger value="credentials">Credentials</TabsTrigger>
-              <TabsTrigger value="threats">Advanced</TabsTrigger>
-              <TabsTrigger value="reports">Reports</TabsTrigger>
-            </TabsList>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-
-          <TabsContent value="overview" className="space-y-6">
-            <VanguardOverview 
-              metrics={{
-                totalScans: recentScans.length,
-                criticalIssues: criticalFindings,
-                highPriorityIssues: highFindings,
-                totalFindings: totalFindings,
-                agentCount: agents.length,
-                onlineAgentCount: onlineAgentCount
-              }}
-            />
-
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Security Operations Center</CardTitle>
-                <CardDescription>Launch advanced security modules for comprehensive protection</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Button 
-                    onClick={() => setActiveTab("soc")}
-                    className="h-auto p-4 flex-col gap-2"
-                  >
-                    <Eye className="h-6 w-6" />
-                    <span>SOC Dashboard</span>
-                  </Button>
-
-                  <Button 
-                    onClick={() => setActiveTab("scanner")}
-                    variant="outline"
-                    className="h-auto p-4 flex-col gap-2"
-                  >
-                    <Search className="h-6 w-6" />
-                    <span>Threat Detection</span>
-                  </Button>
-
-                  <Button 
-                    onClick={() => setActiveTab("network")}
-                    variant="outline"
-                    className="h-auto p-4 flex-col gap-2"
-                  >
-                    <Network className="h-6 w-6" />
-                    <span>Network Security</span>
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => setActiveTab("pentest")}
-                    variant="outline"
-                    className="h-auto p-4 flex-col gap-2"
-                  >
-                    <Target className="h-6 w-6" />
-                    <span>Penetration Testing</span>
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => setActiveTab("compliance")}
-                    variant="outline"
-                    className="h-auto p-4 flex-col gap-2"
-                  >
-                    <CheckCircle className="h-6 w-6" />
-                    <span>Compliance</span>
-                  </Button>
-
-                  <Button 
-                    onClick={() => setActiveTab("threats")}
-                    variant="outline"
-                    className="h-auto p-4 flex-col gap-2"
-                  >
-                    <AlertTriangle className="h-6 w-6" />
-                    <span>Advanced Threats</span>
-                  </Button>
-
-                  <Button 
-                    onClick={() => setActiveTab("reports")}
-                    variant="outline"
-                    className="h-auto p-4 flex-col gap-2"
-                  >
-                    <TrendingUp className="h-6 w-6" />
-                    <span>Analytics</span>
-                  </Button>
+        <div className="px-6 py-4 border-b">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="bg-muted/30">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Devices</p>
+                    <p className="text-2xl font-bold">{selectedOrg ? orgDevices.length : totalDevices}</p>
+                  </div>
+                  <Monitor className="h-8 w-8 text-primary opacity-50" />
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+            <Card className="bg-muted/30">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Online</p>
+                    <p className="text-2xl font-bold text-green-500">
+                      {selectedOrg 
+                        ? orgDevices.filter(d => d.last_heartbeat && Date.now() - new Date(d.last_heartbeat).getTime() < 5 * 60 * 1000).length
+                        : onlineDevices
+                      }
+                    </p>
+                  </div>
+                  <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-muted/30">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Open Tickets</p>
+                    <p className="text-2xl font-bold text-blue-500">{orgTickets.filter(t => t.status === 'open').length}</p>
+                  </div>
+                  <Ticket className="h-8 w-8 text-blue-500 opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-muted/30">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Active Alerts</p>
+                    <p className="text-2xl font-bold text-orange-500">{orgAlerts.filter(a => a.status === 'new').length}</p>
+                  </div>
+                  <AlertTriangle className="h-8 w-8 text-orange-500 opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
-          <TabsContent value="servicedesk">
-            <VanguardServiceDesk />
-          </TabsContent>
+        {/* Tabs Content */}
+        <div className="flex-1 overflow-auto">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+            <div className="px-6 pt-4 border-b">
+              <TabsList>
+                <TabsTrigger value="devices" className="gap-2">
+                  <Monitor className="h-4 w-4" />
+                  Devices
+                </TabsTrigger>
+                <TabsTrigger value="tickets" className="gap-2">
+                  <Ticket className="h-4 w-4" />
+                  Tickets
+                </TabsTrigger>
+                <TabsTrigger value="alerts" className="gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  Alerts
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-          <TabsContent value="copilot">
-            <VanguardAICopilot />
-          </TabsContent>
+            <div className="flex-1 p-6 overflow-auto">
+              <TabsContent value="devices" className="mt-0 h-full">
+                <OrgDevicesTab
+                  orgId={selectedOrgId || 'all'}
+                  orgName={selectedOrg?.company_name || 'All Organizations'}
+                  devices={orgDevices}
+                  isLoading={isLoadingData}
+                  onRefresh={handleRefresh}
+                />
+              </TabsContent>
 
-          <TabsContent value="soc">
-            <VanguardSOC />
-          </TabsContent>
+              <TabsContent value="tickets" className="mt-0 h-full">
+                <OrgTicketsTab
+                  orgId={selectedOrgId || 'all'}
+                  orgName={selectedOrg?.company_name || 'All Organizations'}
+                  tickets={orgTickets}
+                  isLoading={isLoadingData}
+                  onCreateTicket={(ticket) => {
+                    console.log('Create ticket:', ticket);
+                    toast.success('Ticket created');
+                  }}
+                />
+              </TabsContent>
 
-          <TabsContent value="mdr">
-            <MDRCaseManagement />
-          </TabsContent>
-
-          <TabsContent value="threatintel">
-            <ThreatIntelLookup />
-          </TabsContent>
-
-          <TabsContent value="liveresponse">
-            <LiveResponseTerminal />
-          </TabsContent>
-
-          <TabsContent value="mitre">
-            <MitreAttackMatrix />
-          </TabsContent>
-
-          <TabsContent value="yara">
-            <YaraRulesEngine />
-          </TabsContent>
-
-          <TabsContent value="fim">
-            <FileIntegrityMonitor />
-          </TabsContent>
-
-          <TabsContent value="process">
-            <ProcessTimeline />
-          </TabsContent>
-
-          <TabsContent value="assetrisk">
-            <AssetRiskScoring />
-          </TabsContent>
-
-          <TabsContent value="integrations">
-            <IntegrationHub />
-          </TabsContent>
-
-          <TabsContent value="executive">
-            <ExecutiveSecurityDashboard />
-          </TabsContent>
-
-          <TabsContent value="scanner">
-            <VulnerabilityScanner onScanComplete={loadRecentScans} />
-          </TabsContent>
-
-
-          <TabsContent value="network">
-            <NetworkConnectors />
-          </TabsContent>
-
-          <TabsContent value="pentest">
-            <VanguardPentest />
-          </TabsContent>
-
-          <TabsContent value="compliance">
-            <ComplianceScanner />
-          </TabsContent>
-
-          <TabsContent value="remotedesktop">
-            <RustDeskIntegration />
-          </TabsContent>
-
-          <TabsContent value="agentdeploy">
-            <AgentDeployment />
-          </TabsContent>
-
-          <TabsContent value="credentials">
-            <CredentialVault />
-          </TabsContent>
-
-          <TabsContent value="threats">
-            <ThreatDetection />
-          </TabsContent>
-
-          <TabsContent value="reports">
-            <SecurityReports scans={recentScans} />
-          </TabsContent>
-        </Tabs>
+              <TabsContent value="alerts" className="mt-0 h-full">
+                <OrgAlertsTab
+                  orgId={selectedOrgId || 'all'}
+                  orgName={selectedOrg?.company_name || 'All Organizations'}
+                  alerts={orgAlerts}
+                  isLoading={isLoadingData}
+                  onResolveAlert={(alertId) => {
+                    console.log('Resolve alert:', alertId);
+                    toast.success('Alert resolved');
+                  }}
+                />
+              </TabsContent>
+            </div>
+          </Tabs>
+        </div>
       </div>
+
+      {/* Add Organization Dialog */}
+      <AddOrganizationDialog
+        open={showAddOrg}
+        onOpenChange={setShowAddOrg}
+        onSubmit={handleAddOrganization}
+      />
     </div>
   );
 };
