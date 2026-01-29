@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { Activity } from "lucide-react";
 
 interface TicketActivityData {
   date: string;
@@ -23,18 +24,21 @@ export function TicketActivityWidget({ data }: TicketActivityWidgetProps) {
   ];
 
   return (
-    <Card className="bg-white border-gray-200 shadow-sm">
+    <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-cyan-500/20 backdrop-blur-sm">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-gray-500">Ticket activity</CardTitle>
+          <CardTitle className="text-sm font-medium text-cyan-400 flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Ticket activity
+          </CardTitle>
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-sm bg-teal-500" />
-              <span className="text-gray-500">Opened</span>
+              <div className="h-2.5 w-2.5 rounded-sm bg-cyan-500" />
+              <span className="text-slate-400">Opened</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="h-2.5 w-2.5 rounded-sm bg-amber-400" />
-              <span className="text-gray-500">Resolved</span>
+              <span className="text-slate-400">Resolved</span>
             </div>
           </div>
         </div>
@@ -47,26 +51,26 @@ export function TicketActivityWidget({ data }: TicketActivityWidgetProps) {
                 dataKey="date" 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fill: '#9ca3af', fontSize: 11 }}
+                tick={{ fill: '#64748b', fontSize: 11 }}
               />
               <YAxis 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fill: '#9ca3af', fontSize: 11 }}
+                tick={{ fill: '#64748b', fontSize: 11 }}
                 domain={[0, 3]}
                 ticks={[0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e5e7eb',
+                  backgroundColor: '#0f172a',
+                  border: '1px solid rgba(6,182,212,0.3)',
                   borderRadius: '8px',
                   fontSize: '12px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  color: '#e2e8f0',
                 }}
               />
-              <Bar dataKey="opened" fill="#14b8a6" radius={[2, 2, 0, 0]} />
-              <Bar dataKey="resolved" fill="#fbbf24" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="opened" fill="#06b6d4" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="resolved" fill="#fbbf24" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

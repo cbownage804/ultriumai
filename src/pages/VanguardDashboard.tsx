@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { 
   ChevronDown, Download, RefreshCw, Search, HelpCircle, Bell, MessageCircle,
-  Maximize2, MoreHorizontal
+  Maximize2, MoreHorizontal, Shield
 } from "lucide-react";
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
@@ -12,6 +13,7 @@ import { useMSP } from "@/hooks/useMSP";
 import { useVanguardAgents } from "@/hooks/useVanguardAgents";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 // Dashboard widgets
 import { TicketStatusWidget } from "@/components/vanguard/dashboard/TicketStatusWidget";
@@ -78,62 +80,77 @@ const VanguardDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5]">
-      {/* Top Header Bar - Atera style */}
-      <header className="sticky top-0 z-30 h-12 bg-white border-b border-gray-200 flex items-center justify-between px-4">
+    <div className="min-h-screen">
+      {/* Top Header Bar - Dark Vanguard Theme */}
+      <header className="sticky top-0 z-30 h-14 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-cyan-500/20 flex items-center justify-between px-4 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           {/* New Button */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1 bg-white text-gray-700 border-gray-300 hover:bg-gray-50">
+              <Button size="sm" className="gap-1 bg-cyan-600 hover:bg-cyan-700 text-white border-0">
                 New
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => navigate('/vanguard/tickets/new')}>New Ticket</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/vanguard/customers/new')}>New Customer</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/vanguard/devices/new')}>New Device</DropdownMenuItem>
+            <DropdownMenuContent align="start" className="bg-slate-900 border-cyan-500/20">
+              <DropdownMenuItem 
+                onClick={() => navigate('/vanguard/tickets/new')}
+                className="text-slate-200 focus:bg-cyan-500/20 focus:text-cyan-400"
+              >
+                New Ticket
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => navigate('/vanguard/customers/new')}
+                className="text-slate-200 focus:bg-cyan-500/20 focus:text-cyan-400"
+              >
+                New Customer
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => navigate('/vanguard/devices/new')}
+                className="text-slate-200 focus:bg-cyan-500/20 focus:text-cyan-400"
+              >
+                New Device
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
             <Input
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-[300px] h-8 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
+              className="pl-9 w-[300px] h-9 bg-slate-800/50 border-cyan-500/20 text-slate-200 placeholder:text-slate-500 focus:border-cyan-500/50"
             />
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <Button 
-            variant="outline" 
             size="sm" 
-            className="gap-2 bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            className="gap-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30"
             onClick={() => navigate('/vanguard/setup')}
           >
             <Download className="h-4 w-4" />
             Install agent
           </Button>
           
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100">
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10">
             <HelpCircle className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100">
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10">
             <MessageCircle className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100" onClick={handleRefresh}>
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10" onClick={handleRefresh}>
             <RefreshCw className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100">
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 relative">
             <Bell className="h-5 w-5" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
           </Button>
-          <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-medium text-gray-600">
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center text-sm font-medium text-white">
             U
           </div>
         </div>
@@ -143,12 +160,20 @@ const VanguardDashboard = () => {
       <div className="p-6">
         {/* Page Title with Actions */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-cyan-500/20">
+              <Shield className="h-6 w-6 text-cyan-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-slate-100">Dashboard</h1>
+              <p className="text-sm text-slate-400">Overview of your security operations</p>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10">
               <Maximize2 className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </div>
@@ -175,9 +200,9 @@ const VanguardDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <CustomerTicketsWidget customers={customerTickets} />
           {/* Map placeholder */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 className="text-sm font-medium text-gray-500 mb-3">Map overview</h3>
-            <div className="h-[200px] bg-gray-100 rounded flex items-center justify-center text-gray-400 text-sm">
+          <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 rounded-lg border border-cyan-500/20 p-4 backdrop-blur-sm">
+            <h3 className="text-sm font-medium text-cyan-400 mb-3">Map overview</h3>
+            <div className="h-[200px] bg-slate-900/50 rounded flex items-center justify-center text-slate-500 text-sm border border-cyan-500/10">
               Map visualization
             </div>
           </div>
