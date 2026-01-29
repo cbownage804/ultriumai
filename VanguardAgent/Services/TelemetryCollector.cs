@@ -15,10 +15,12 @@ public class TelemetryCollector
 {
     private readonly PerformanceCounter? _cpuCounter;
     private readonly ConfigService _configService;
+    private readonly DefenderService _defenderService;
 
     public TelemetryCollector(ConfigService configService)
     {
         _configService = configService;
+        _defenderService = new DefenderService();
 
         try
         {
@@ -29,6 +31,30 @@ public class TelemetryCollector
         {
             // Performance counters may not be available
         }
+    }
+
+    /// <summary>
+    /// Collect Windows Defender security status
+    /// </summary>
+    public async Task<SecurityTelemetry> CollectSecurityTelemetryAsync()
+    {
+        var telemetry = new SecurityTelemetry
+        {
+            Timestamp = DateTime.UtcNow.ToString("O")
+        };
+
+        try
+        {
+            telemetry.DefenderStatus = await _defenderService.GetStatusAsync();
+            telemetry.RecentThreats = await _defenderService.GetThreatHistoryAsync(10);
+            telemetry.QuarantinedItems = await _defenderService.GetQuarantinedItemsAsync();
+        }
+        catch (Exception ex)
+        {
+            telemetry.Error = ex.Message;
+        }
+
+        return telemetry;
     }
 
     public DeviceInfo CollectDeviceInfo()
@@ -305,4 +331,23 @@ public class TelemetryCollector
 
         return software.DistinctBy(s => s.Name).OrderBy(s => s.Name).ToList();
     }
+}
+
+// Security Telemetry for Windows Defender integration
+public class SecurityTelemetry
+{
+    [Newtonsoft.Json.JsonProperty("defender_status")]
+    public DefenderStatus? DefenderStatus { get; set; }
+
+    [Newtonsoft.Json.JsonProperty("recent_threats")]
+    public List<ThreatDetection>? RecentThreats { get; set; }
+
+    [Newtonsoft.Json.JsonProperty("quarantined_items")]
+    public List<QuarantinedItem>? QuarantinedItems { get; set; }
+
+    [Newtonsoft.Json.JsonProperty("error")]
+    public string? Error { get; set; }
+
+    [Newtonsoft.Json.JsonProperty("timestamp")]
+    public string Timestamp { get; set; } = DateTime.UtcNow.ToString("O");
 }
