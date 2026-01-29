@@ -28,15 +28,16 @@ jobs:
     runs-on: windows-latest
     
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          # Only checkout the agent source to avoid Windows checkout failures
-          # from unrelated repo paths that may be invalid on Windows.
-          sparse-checkout: |
-            VanguardAgent
-          sparse-checkout-cone-mode: true
+      - name: Checkout VanguardAgent only
+        shell: pwsh
+        run: |
+          # Use git directly with sparse-checkout to avoid invalid path issues
+          git init
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git config core.sparseCheckout true
+          echo "VanguardAgent/" | Out-File -Encoding ascii .git/info/sparse-checkout
+          git fetch --depth 1 origin ${{ github.ref_name }}
+          git checkout FETCH_HEAD
       
       - name: Setup .NET ${{ env.DOTNET_VERSION }}
         uses: actions/setup-dotnet@v4
