@@ -113,3 +113,26 @@ export const useBillingData = () => {
     refreshBillingData: fetchBillingData,
   };
 };
+
+// Format currency amount (amount is in cents)
+export const formatCurrency = (amount: number, currency: string = 'usd'): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+  }).format(amount / 100);
+};
+
+// Get status badge variant
+export const getInvoiceStatusVariant = (status: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
+  switch (status) {
+    case 'paid':
+      return 'default';
+    case 'open':
+      return 'secondary';
+    case 'uncollectible':
+    case 'void':
+      return 'destructive';
+    default:
+      return 'outline';
+  }
+};
