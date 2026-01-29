@@ -63,10 +63,71 @@ const getSeverityEmoji = (severity: string): string => {
 };
 
 async function sendEmail(to: string[], subject: string, body: string): Promise<boolean> {
-  // In production, integrate with SendGrid, Resend, or AWS SES
-  console.log(`[Email] Sending to ${to.join(', ')}: ${subject}`);
-  // Placeholder - would call email API
-  return true;
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  
+  if (!resendApiKey) {
+    console.error('[Email] RESEND_API_KEY not configured');
+    return false;
+  }
+
+  if (!to.length) {
+    console.error('[Email] No recipients specified');
+    return false;
+  }
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'Vanguard Security <hello@send.ultriumai.com>',
+        to,
+        subject,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5; margin: 0; padding: 20px;">
+            <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%); padding: 24px; text-align: center;">
+                <h1 style="color: white; margin: 0; font-size: 24px;">🛡️ Vanguard Security</h1>
+              </div>
+              <div style="padding: 32px 24px;">
+                <h2 style="color: #18181b; margin: 0 0 16px 0; font-size: 20px;">${subject}</h2>
+                <div style="color: #3f3f46; line-height: 1.6;">
+                  ${body.replace(/\n/g, '<br>')}
+                </div>
+              </div>
+              <div style="background: #f4f4f5; padding: 16px 24px; text-align: center; color: #71717a; font-size: 12px;">
+                <p style="margin: 0;">This is an automated security alert from Vanguard.</p>
+                <p style="margin: 8px 0 0 0;">© ${new Date().getFullYear()} UltriumAI. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('[Email] Resend API error:', errorData);
+      return false;
+    }
+
+    const result = await response.json();
+    console.log('[Email] Sent successfully:', result.id);
+    return true;
+  } catch (error) {
+    console.error('[Email] Error sending email:', error);
+    return false;
+  }
 }
 
 async function sendSlack(webhookUrl: string, payload: NotificationPayload): Promise<boolean> {
