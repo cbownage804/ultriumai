@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,11 @@ import {
 } from 'lucide-react';
 import { M365TenantManager } from './M365TenantManager';
 import { SecurityAlertsFeed } from './SecurityAlertsFeed';
+import { AlertRulesConfig } from './AlertRulesConfig';
+import { AITriageQueue } from './AITriageQueue';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 // Mock chart data
 const alertTrendData = [
@@ -31,7 +35,57 @@ const threatDistribution = [
 ];
 
 export function SentinelDashboard() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [stats, setStats] = useState({
+    activeAlerts: 0,
+    criticalThreats: 0,
+    autoResolved: 0,
+    tenantsMonitored: 0,
+    mttr: '14m'
+  });
+
+  useEffect(() => {
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);
+
+  const fetchStats = async () => {
+    try {
+      // Fetch real stats from database
+      const [eventsRes, tenantsRes, analysisRes] = await Promise.all([
+        supabase
+          .from('vanguard_m365_security_events')
+          .select('id, severity, status', { count: 'exact' })
+          .eq('user_id', user?.id)
+          .in('status', ['new', 'pending', 'needs_review']),
+        supabase
+          .from('vanguard_m365_tenants')
+          .select('id', { count: 'exact' })
+          .eq('user_id', user?.id)
+          .eq('is_active', true),
+        supabase
+          .from('vanguard_sentinel_ai_analysis')
+          .select('id, ai_decision', { count: 'exact' })
+          .eq('user_id', user?.id)
+          .eq('ai_decision', 'dismiss')
+      ]);
+
+      const events = eventsRes.data || [];
+      const criticalCount = events.filter(e => e.severity === 'critical' || e.severity === 'high').length;
+
+      setStats({
+        activeAlerts: eventsRes.count || 0,
+        criticalThreats: criticalCount,
+        autoResolved: analysisRes.count || 0,
+        tenantsMonitored: tenantsRes.count || 0,
+        mttr: '14m' // Would calculate from real data
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
 
   const tabConfig = [
     { value: 'overview', label: 'Overview', icon: BarChart3 },
@@ -92,8 +146,8 @@ export function SentinelDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-400 text-xs">Active Alerts</p>
-                    <p className="text-3xl font-bold text-red-400">12</p>
-                    <p className="text-red-400 text-xs">+3 from yesterday</p>
+                    <p className="text-3xl font-bold text-red-400">{stats.activeAlerts}</p>
+                    <p className="text-slate-500 text-xs">Pending review</p>
                   </div>
                   <AlertTriangle className="h-10 w-10 text-red-400/30" />
                 </div>
@@ -105,7 +159,7 @@ export function SentinelDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-400 text-xs">Critical Threats</p>
-                    <p className="text-3xl font-bold text-orange-400">3</p>
+                    <p className="text-3xl font-bold text-orange-400">{stats.criticalThreats}</p>
                     <p className="text-orange-400 text-xs">Requires attention</p>
                   </div>
                   <Target className="h-10 w-10 text-orange-400/30" />
@@ -118,7 +172,7 @@ export function SentinelDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-400 text-xs">AI Auto-Resolved</p>
-                    <p className="text-3xl font-bold text-green-400">47</p>
+                    <p className="text-3xl font-bold text-green-400">{stats.autoResolved}</p>
                     <p className="text-green-400 text-xs">This week</p>
                   </div>
                   <Brain className="h-10 w-10 text-green-400/30" />
@@ -131,8 +185,8 @@ export function SentinelDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-400 text-xs">Tenants Monitored</p>
-                    <p className="text-3xl font-bold text-cyan-400">8</p>
-                    <p className="text-cyan-400 text-xs">510 users</p>
+                    <p className="text-3xl font-bold text-cyan-400">{stats.tenantsMonitored}</p>
+                    <p className="text-cyan-400 text-xs">Active connections</p>
                   </div>
                   <Building2 className="h-10 w-10 text-cyan-400/30" />
                 </div>
@@ -144,7 +198,7 @@ export function SentinelDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-400 text-xs">MTTR</p>
-                    <p className="text-3xl font-bold text-purple-400">14m</p>
+                    <p className="text-3xl font-bold text-purple-400">{stats.mttr}</p>
                     <p className="text-purple-400 text-xs">Avg resolution</p>
                   </div>
                   <Clock className="h-10 w-10 text-purple-400/30" />
@@ -309,60 +363,12 @@ export function SentinelDashboard() {
 
         {/* AI Triage Tab */}
         <TabsContent value="ai-triage" className="mt-6">
-          <Card className="bg-black/60 border-cyan-500/30">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Brain className="h-5 w-5 text-purple-400" />
-                Cortex AI Triage Queue
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <Brain className="h-16 w-16 text-purple-400/30 mx-auto mb-4" />
-                <h3 className="text-white text-lg font-medium mb-2">AI Triage Processing</h3>
-                <p className="text-slate-400 max-w-md mx-auto">
-                  Cortex AI automatically analyzes incoming security events, assigns risk scores,
-                  and recommends actions. High-confidence threats are auto-escalated.
-                </p>
-                <div className="flex items-center justify-center gap-4 mt-6">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-green-400">47</p>
-                    <p className="text-slate-500 text-xs">Auto-Dismissed</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-yellow-400">8</p>
-                    <p className="text-slate-500 text-xs">Needs Review</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-red-400">3</p>
-                    <p className="text-slate-500 text-xs">Auto-Escalated</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <AITriageQueue />
         </TabsContent>
 
         {/* Rules Tab */}
         <TabsContent value="rules" className="mt-6">
-          <Card className="bg-black/60 border-cyan-500/30">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-cyan-400" />
-                  Alert Rules Configuration
-                </CardTitle>
-                <Button className="bg-gradient-to-r from-cyan-500 to-purple-600">
-                  Create Rule
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-400 text-center py-8">
-                Configure custom alert rules, thresholds, and automated responses.
-              </p>
-            </CardContent>
-          </Card>
+          <AlertRulesConfig />
         </TabsContent>
       </Tabs>
     </div>
