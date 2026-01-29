@@ -1,28 +1,36 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Ticket, Plus, Search, Filter, Clock, AlertCircle, CheckCircle2, 
-  XCircle, User, Building2, MoreVertical, MessageSquare
+  XCircle, User, Building2, MoreVertical, MessageSquare, Eye
 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
+import { getVanguardBasePath } from '@/utils/subdomain';
 
 const mockTickets = [
-  { id: 'TKT-001', title: 'Server not responding', customer: 'Acme Corp', priority: 'critical', status: 'open', assignee: 'John Smith', created: '2h ago', sla: '1h remaining' },
-  { id: 'TKT-002', title: 'Email sync issues', customer: 'TechStart Inc', priority: 'high', status: 'in_progress', assignee: 'Sarah Johnson', created: '4h ago', sla: '3h remaining' },
-  { id: 'TKT-003', title: 'Password reset request', customer: 'GlobalTech', priority: 'medium', status: 'open', assignee: 'Unassigned', created: '1d ago', sla: '4h remaining' },
-  { id: 'TKT-004', title: 'VPN connection drops', customer: 'DataFlow LLC', priority: 'high', status: 'in_progress', assignee: 'Mike Chen', created: '6h ago', sla: '2h remaining' },
-  { id: 'TKT-005', title: 'Printer offline', customer: 'Acme Corp', priority: 'low', status: 'resolved', assignee: 'John Smith', created: '2d ago', sla: 'Completed' },
-  { id: 'TKT-006', title: 'Software installation', customer: 'StartupXYZ', priority: 'medium', status: 'open', assignee: 'Unassigned', created: '3h ago', sla: '5h remaining' },
+  { id: 'TKT-001', title: 'Server not responding', customer: 'Acme Corp', priority: 'critical', status: 'open', assignee: 'John Smith', created: '2h ago', sla: '1h remaining', description: 'Production server is unresponsive since this morning.' },
+  { id: 'TKT-002', title: 'Email sync issues', customer: 'TechStart Inc', priority: 'high', status: 'in_progress', assignee: 'Sarah Johnson', created: '4h ago', sla: '3h remaining', description: 'Outlook not syncing with Exchange server.' },
+  { id: 'TKT-003', title: 'Password reset request', customer: 'GlobalTech', priority: 'medium', status: 'open', assignee: 'Unassigned', created: '1d ago', sla: '4h remaining', description: 'User cannot login to their account.' },
+  { id: 'TKT-004', title: 'VPN connection drops', customer: 'DataFlow LLC', priority: 'high', status: 'in_progress', assignee: 'Mike Chen', created: '6h ago', sla: '2h remaining', description: 'VPN disconnects every 30 minutes.' },
+  { id: 'TKT-005', title: 'Printer offline', customer: 'Acme Corp', priority: 'low', status: 'resolved', assignee: 'John Smith', created: '2d ago', sla: 'Completed', description: 'Office printer not responding.' },
+  { id: 'TKT-006', title: 'Software installation', customer: 'StartupXYZ', priority: 'medium', status: 'open', assignee: 'Unassigned', created: '3h ago', sla: '5h remaining', description: 'Install Microsoft Office on new workstation.' },
 ];
 
 const priorityColors = {
@@ -47,26 +55,84 @@ const statusIcons = {
 };
 
 export default function VanguardTickets() {
+  const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [tickets, setTickets] = useState(mockTickets);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<typeof mockTickets[0] | null>(null);
+  const [newTicket, setNewTicket] = useState({
+    title: '',
+    description: '',
+    priority: 'medium',
+    customer: '',
+  });
 
   useEffect(() => {
     document.title = 'Tickets | Ultrium Vanguard';
   }, []);
 
   const stats = [
-    { label: 'Open', value: 12, icon: AlertCircle, color: 'text-blue-400' },
-    { label: 'In Progress', value: 8, icon: Clock, color: 'text-cyan-400' },
-    { label: 'Resolved Today', value: 15, icon: CheckCircle2, color: 'text-emerald-400' },
-    { label: 'SLA At Risk', value: 3, icon: XCircle, color: 'text-red-400' },
+    { label: 'Open', value: tickets.filter(t => t.status === 'open').length, icon: AlertCircle, color: 'text-blue-400' },
+    { label: 'In Progress', value: tickets.filter(t => t.status === 'in_progress').length, icon: Clock, color: 'text-cyan-400' },
+    { label: 'Resolved Today', value: tickets.filter(t => t.status === 'resolved').length, icon: CheckCircle2, color: 'text-emerald-400' },
+    { label: 'SLA At Risk', value: tickets.filter(t => t.sla.includes('1h') || t.sla.includes('2h')).length, icon: XCircle, color: 'text-red-400' },
   ];
 
-  const filteredTickets = mockTickets.filter(ticket => {
+  const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           ticket.customer.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTab = activeTab === 'all' || ticket.status === activeTab;
     return matchesSearch && matchesTab;
   });
+
+  const handleCreateTicket = () => {
+    if (!newTicket.title || !newTicket.customer) {
+      toast.error('Please fill in required fields');
+      return;
+    }
+
+    const ticketId = `TKT-${String(tickets.length + 1).padStart(3, '0')}`;
+    const createdTicket = {
+      id: ticketId,
+      title: newTicket.title,
+      description: newTicket.description,
+      priority: newTicket.priority,
+      customer: newTicket.customer,
+      status: 'open',
+      assignee: 'Unassigned',
+      created: 'Just now',
+      sla: '24h remaining',
+    };
+
+    setTickets([createdTicket, ...tickets]);
+    setNewTicket({ title: '', description: '', priority: 'medium', customer: '' });
+    setIsCreateDialogOpen(false);
+    toast.success(`Ticket ${ticketId} created successfully`);
+  };
+
+  const handleAssign = (ticketId: string) => {
+    setTickets(tickets.map(t => 
+      t.id === ticketId ? { ...t, assignee: 'Current User', status: 'in_progress' } : t
+    ));
+    toast.success(`Ticket ${ticketId} assigned to you`);
+  };
+
+  const handleAddNote = (ticketId: string) => {
+    toast.success(`Note added to ${ticketId}`);
+  };
+
+  const handleCloseTicket = (ticketId: string) => {
+    setTickets(tickets.map(t => 
+      t.id === ticketId ? { ...t, status: 'resolved', sla: 'Completed' } : t
+    ));
+    toast.success(`Ticket ${ticketId} closed`);
+  };
+
+  const handleViewDetails = (ticket: typeof mockTickets[0]) => {
+    setSelectedTicket(ticket);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -81,10 +147,76 @@ export default function VanguardTickets() {
             <p className="text-white/60 text-sm">Manage support tickets across all customers</p>
           </div>
         </div>
-        <Button className="bg-cyan-500 hover:bg-cyan-600 text-black font-medium">
-          <Plus className="h-4 w-4 mr-2" />
-          New Ticket
-        </Button>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-cyan-500 hover:bg-cyan-600 text-black font-medium">
+              <Plus className="h-4 w-4 mr-2" />
+              New Ticket
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-slate-900 border-cyan-500/20">
+            <DialogHeader>
+              <DialogTitle className="text-white">Create New Ticket</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-white/80">Title *</Label>
+                <Input
+                  value={newTicket.title}
+                  onChange={(e) => setNewTicket({ ...newTicket, title: e.target.value })}
+                  placeholder="Brief description of the issue"
+                  className="bg-black/40 border-cyan-500/20 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-white/80">Customer *</Label>
+                <Select value={newTicket.customer} onValueChange={(v) => setNewTicket({ ...newTicket, customer: v })}>
+                  <SelectTrigger className="bg-black/40 border-cyan-500/20 text-white">
+                    <SelectValue placeholder="Select customer" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-cyan-500/20">
+                    <SelectItem value="Acme Corp">Acme Corp</SelectItem>
+                    <SelectItem value="TechStart Inc">TechStart Inc</SelectItem>
+                    <SelectItem value="GlobalTech">GlobalTech</SelectItem>
+                    <SelectItem value="DataFlow LLC">DataFlow LLC</SelectItem>
+                    <SelectItem value="StartupXYZ">StartupXYZ</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-white/80">Priority</Label>
+                <Select value={newTicket.priority} onValueChange={(v) => setNewTicket({ ...newTicket, priority: v })}>
+                  <SelectTrigger className="bg-black/40 border-cyan-500/20 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-cyan-500/20">
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-white/80">Description</Label>
+                <Textarea
+                  value={newTicket.description}
+                  onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
+                  placeholder="Detailed description of the issue"
+                  className="bg-black/40 border-cyan-500/20 text-white min-h-[100px]"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="border-cyan-500/20 text-white/80">
+                Cancel
+              </Button>
+              <Button onClick={handleCreateTicket} className="bg-cyan-500 hover:bg-cyan-600 text-black">
+                Create Ticket
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Stats */}
@@ -157,7 +289,11 @@ export default function VanguardTickets() {
                     {filteredTickets.map((ticket) => {
                       const StatusIcon = statusIcons[ticket.status as keyof typeof statusIcons];
                       return (
-                        <tr key={ticket.id} className="border-b border-cyan-500/10 hover:bg-cyan-500/5 transition-colors cursor-pointer">
+                        <tr 
+                          key={ticket.id} 
+                          className="border-b border-cyan-500/10 hover:bg-cyan-500/5 transition-colors cursor-pointer"
+                          onClick={() => handleViewDetails(ticket)}
+                        >
                           <td className="p-4">
                             <div>
                               <p className="text-white font-medium">{ticket.title}</p>
@@ -192,7 +328,7 @@ export default function VanguardTickets() {
                               {ticket.sla}
                             </span>
                           </td>
-                          <td className="p-4">
+                          <td className="p-4" onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="text-white/60 hover:text-white">
@@ -200,10 +336,35 @@ export default function VanguardTickets() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent className="bg-slate-900 border-cyan-500/20">
-                                <DropdownMenuItem className="text-white/80 hover:bg-cyan-500/10">View Details</DropdownMenuItem>
-                                <DropdownMenuItem className="text-white/80 hover:bg-cyan-500/10">Assign</DropdownMenuItem>
-                                <DropdownMenuItem className="text-white/80 hover:bg-cyan-500/10">Add Note</DropdownMenuItem>
-                                <DropdownMenuItem className="text-white/80 hover:bg-cyan-500/10">Close Ticket</DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="text-white/80 hover:bg-cyan-500/10"
+                                  onClick={() => handleViewDetails(ticket)}
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="text-white/80 hover:bg-cyan-500/10"
+                                  onClick={() => handleAssign(ticket.id)}
+                                >
+                                  <User className="h-4 w-4 mr-2" />
+                                  Assign to Me
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="text-white/80 hover:bg-cyan-500/10"
+                                  onClick={() => handleAddNote(ticket.id)}
+                                >
+                                  <MessageSquare className="h-4 w-4 mr-2" />
+                                  Add Note
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator className="bg-cyan-500/20" />
+                                <DropdownMenuItem 
+                                  className="text-emerald-400 hover:bg-emerald-500/10"
+                                  onClick={() => handleCloseTicket(ticket.id)}
+                                >
+                                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                                  Close Ticket
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </td>
@@ -217,6 +378,65 @@ export default function VanguardTickets() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Ticket Details Dialog */}
+      <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
+        <DialogContent className="bg-slate-900 border-cyan-500/20 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-3">
+              <Ticket className="h-5 w-5 text-cyan-400" />
+              {selectedTicket?.id} - {selectedTicket?.title}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedTicket && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-4">
+                <Badge className={priorityColors[selectedTicket.priority as keyof typeof priorityColors]}>
+                  {selectedTicket.priority}
+                </Badge>
+                <Badge className={statusColors[selectedTicket.status as keyof typeof statusColors]}>
+                  {selectedTicket.status.replace('_', ' ')}
+                </Badge>
+                <span className="text-white/60 text-sm">Created {selectedTicket.created}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-white/60">Customer</Label>
+                  <p className="text-white">{selectedTicket.customer}</p>
+                </div>
+                <div>
+                  <Label className="text-white/60">Assignee</Label>
+                  <p className="text-white">{selectedTicket.assignee}</p>
+                </div>
+                <div>
+                  <Label className="text-white/60">SLA Status</Label>
+                  <p className={selectedTicket.sla.includes('remaining') ? 'text-amber-400' : 'text-emerald-400'}>
+                    {selectedTicket.sla}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <Label className="text-white/60">Description</Label>
+                <p className="text-white/80 mt-1">{selectedTicket.description}</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedTicket(null)} className="border-cyan-500/20 text-white/80">
+              Close
+            </Button>
+            <Button 
+              onClick={() => {
+                if (selectedTicket) handleAssign(selectedTicket.id);
+                setSelectedTicket(null);
+              }} 
+              className="bg-cyan-500 hover:bg-cyan-600 text-black"
+            >
+              Assign to Me
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

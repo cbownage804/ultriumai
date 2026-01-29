@@ -1,30 +1,37 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Bell, Search, Filter, AlertTriangle, Shield, Monitor, Network,
-  Clock, CheckCircle2, XCircle, Eye, MoreVertical, Volume2, VolumeX
+  Clock, CheckCircle2, XCircle, Eye, MoreVertical, Volume2, VolumeX, Ticket
 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
+import { getVanguardBasePath } from '@/utils/subdomain';
 
-const mockAlerts = [
-  { id: '1', title: 'High CPU Usage Detected', device: 'SRV-PROD-01', customer: 'Acme Corp', severity: 'critical', category: 'performance', time: '2 min ago', status: 'active' },
-  { id: '2', title: 'Suspicious Login Attempt', device: 'WKS-HR-05', customer: 'TechStart Inc', severity: 'high', category: 'security', time: '15 min ago', status: 'active' },
-  { id: '3', title: 'Disk Space Low (< 10%)', device: 'SRV-FILE-02', customer: 'GlobalTech', severity: 'warning', category: 'storage', time: '1 hour ago', status: 'active' },
-  { id: '4', title: 'Service Stopped: SQL Server', device: 'SRV-DB-01', customer: 'DataFlow LLC', severity: 'critical', category: 'service', time: '30 min ago', status: 'acknowledged' },
-  { id: '5', title: 'Network Latency Spike', device: 'ROUTER-MAIN', customer: 'Enterprise Corp', severity: 'warning', category: 'network', time: '2 hours ago', status: 'resolved' },
-  { id: '6', title: 'Antivirus Definitions Outdated', device: 'WKS-DEV-12', customer: 'StartupXYZ', severity: 'low', category: 'security', time: '3 hours ago', status: 'active' },
-  { id: '7', title: 'Backup Failed', device: 'SRV-BACKUP', customer: 'Acme Corp', severity: 'high', category: 'backup', time: '4 hours ago', status: 'active' },
-  { id: '8', title: 'Memory Pressure Warning', device: 'SRV-APP-03', customer: 'TechStart Inc', severity: 'warning', category: 'performance', time: '5 hours ago', status: 'acknowledged' },
+const initialAlerts = [
+  { id: '1', title: 'High CPU Usage Detected', device: 'SRV-PROD-01', customer: 'Acme Corp', severity: 'critical', category: 'performance', time: '2 min ago', status: 'active', description: 'CPU usage exceeded 95% for more than 5 minutes.' },
+  { id: '2', title: 'Suspicious Login Attempt', device: 'WKS-HR-05', customer: 'TechStart Inc', severity: 'high', category: 'security', time: '15 min ago', status: 'active', description: 'Multiple failed login attempts from unknown IP.' },
+  { id: '3', title: 'Disk Space Low (< 10%)', device: 'SRV-FILE-02', customer: 'GlobalTech', severity: 'warning', category: 'storage', time: '1 hour ago', status: 'active', description: 'Only 8% disk space remaining on C: drive.' },
+  { id: '4', title: 'Service Stopped: SQL Server', device: 'SRV-DB-01', customer: 'DataFlow LLC', severity: 'critical', category: 'service', time: '30 min ago', status: 'acknowledged', description: 'SQL Server service has stopped unexpectedly.' },
+  { id: '5', title: 'Network Latency Spike', device: 'ROUTER-MAIN', customer: 'Enterprise Corp', severity: 'warning', category: 'network', time: '2 hours ago', status: 'resolved', description: 'Network latency exceeded 200ms.' },
+  { id: '6', title: 'Antivirus Definitions Outdated', device: 'WKS-DEV-12', customer: 'StartupXYZ', severity: 'low', category: 'security', time: '3 hours ago', status: 'active', description: 'AV definitions are more than 7 days old.' },
+  { id: '7', title: 'Backup Failed', device: 'SRV-BACKUP', customer: 'Acme Corp', severity: 'high', category: 'backup', time: '4 hours ago', status: 'active', description: 'Nightly backup job failed with error code 1203.' },
+  { id: '8', title: 'Memory Pressure Warning', device: 'SRV-APP-03', customer: 'TechStart Inc', severity: 'warning', category: 'performance', time: '5 hours ago', status: 'acknowledged', description: 'Memory usage at 89%, approaching threshold.' },
 ];
 
 const severityColors = {
@@ -50,21 +57,28 @@ const categoryIcons = {
 };
 
 export default function VanguardAlerts() {
+  const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [alerts, setAlerts] = useState(initialAlerts);
+  const [selectedAlert, setSelectedAlert] = useState<typeof initialAlerts[0] | null>(null);
+  const [showCreateTicketDialog, setShowCreateTicketDialog] = useState(false);
+  const [ticketNote, setTicketNote] = useState('');
+  const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
     document.title = 'Alerts | Ultrium Vanguard';
   }, []);
 
   const stats = [
-    { label: 'Critical', value: 5, color: 'text-red-400', bg: 'bg-red-500/20' },
-    { label: 'High', value: 12, color: 'text-orange-400', bg: 'bg-orange-500/20' },
-    { label: 'Warning', value: 28, color: 'text-amber-400', bg: 'bg-amber-500/20' },
-    { label: 'Resolved Today', value: 45, color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
+    { label: 'Critical', value: alerts.filter(a => a.severity === 'critical' && a.status !== 'resolved').length, color: 'text-red-400', bg: 'bg-red-500/20' },
+    { label: 'High', value: alerts.filter(a => a.severity === 'high' && a.status !== 'resolved').length, color: 'text-orange-400', bg: 'bg-orange-500/20' },
+    { label: 'Warning', value: alerts.filter(a => a.severity === 'warning' && a.status !== 'resolved').length, color: 'text-amber-400', bg: 'bg-amber-500/20' },
+    { label: 'Resolved Today', value: alerts.filter(a => a.status === 'resolved').length, color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
   ];
 
-  const filteredAlerts = mockAlerts.filter(alert => {
+  const filteredAlerts = alerts.filter(alert => {
     const matchesSearch = alert.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           alert.device.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           alert.customer.toLowerCase().includes(searchQuery.toLowerCase());
@@ -75,6 +89,61 @@ export default function VanguardAlerts() {
     return matchesSearch && matchesTab;
   });
 
+  const handleAcknowledge = (alertId: string) => {
+    setAlerts(alerts.map(a => 
+      a.id === alertId ? { ...a, status: 'acknowledged' } : a
+    ));
+    toast.success('Alert acknowledged');
+  };
+
+  const handleResolve = (alertId: string) => {
+    setAlerts(alerts.map(a => 
+      a.id === alertId ? { ...a, status: 'resolved' } : a
+    ));
+    toast.success('Alert resolved');
+  };
+
+  const handleAcknowledgeAll = () => {
+    setAlerts(alerts.map(a => 
+      a.status === 'active' ? { ...a, status: 'acknowledged' } : a
+    ));
+    toast.success('All active alerts acknowledged');
+  };
+
+  const handleMuteAll = () => {
+    setIsMuted(!isMuted);
+    toast.success(isMuted ? 'Alert sounds unmuted' : 'All alert sounds muted');
+  };
+
+  const handleViewDetails = (alert: typeof initialAlerts[0]) => {
+    setSelectedAlert(alert);
+  };
+
+  const handleCreateTicket = (alert: typeof initialAlerts[0]) => {
+    setSelectedAlert(alert);
+    setShowCreateTicketDialog(true);
+  };
+
+  const handleSubmitTicket = () => {
+    if (selectedAlert) {
+      toast.success(`Ticket created for alert: ${selectedAlert.title}`);
+      navigate(`${basePath}/tickets`);
+    }
+    setShowCreateTicketDialog(false);
+    setTicketNote('');
+    setSelectedAlert(null);
+  };
+
+  const handleViewDevice = (alert: typeof initialAlerts[0]) => {
+    toast.info(`Navigating to device: ${alert.device}`);
+    navigate(`${basePath}/devices`);
+  };
+
+  const handleSuppress = (alertId: string) => {
+    setAlerts(alerts.filter(a => a.id !== alertId));
+    toast.success('Alert suppressed');
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -82,7 +151,9 @@ export default function VanguardAlerts() {
         <div className="flex items-center gap-3">
           <div className="p-2 bg-cyan-500/20 rounded-lg relative">
             <Bell className="h-6 w-6 text-cyan-400" />
-            <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse" />
+            {alerts.filter(a => a.status === 'active').length > 0 && (
+              <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse" />
+            )}
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">Alerts</h1>
@@ -90,11 +161,18 @@ export default function VanguardAlerts() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/10">
-            <VolumeX className="h-4 w-4 mr-2" />
-            Mute All
+          <Button 
+            variant="outline" 
+            className="border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/10"
+            onClick={handleMuteAll}
+          >
+            {isMuted ? <Volume2 className="h-4 w-4 mr-2" /> : <VolumeX className="h-4 w-4 mr-2" />}
+            {isMuted ? 'Unmute' : 'Mute All'}
           </Button>
-          <Button className="bg-emerald-500 hover:bg-emerald-600 text-black font-medium">
+          <Button 
+            className="bg-emerald-500 hover:bg-emerald-600 text-black font-medium"
+            onClick={handleAcknowledgeAll}
+          >
             <CheckCircle2 className="h-4 w-4 mr-2" />
             Acknowledge All
           </Button>
@@ -194,10 +272,20 @@ export default function VanguardAlerts() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="text-white/60 hover:text-white hover:bg-cyan-500/10">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-white/60 hover:text-white hover:bg-cyan-500/10"
+                          onClick={() => handleViewDetails(alert)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-white/60 hover:text-white hover:bg-cyan-500/10">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-white/60 hover:text-white hover:bg-cyan-500/10"
+                          onClick={() => alert.status === 'active' ? handleAcknowledge(alert.id) : handleResolve(alert.id)}
+                        >
                           <CheckCircle2 className="h-4 w-4" />
                         </Button>
                         <DropdownMenu>
@@ -207,10 +295,35 @@ export default function VanguardAlerts() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className="bg-slate-900 border-cyan-500/20">
-                            <DropdownMenuItem className="text-white/80 hover:bg-cyan-500/10">View Details</DropdownMenuItem>
-                            <DropdownMenuItem className="text-white/80 hover:bg-cyan-500/10">Create Ticket</DropdownMenuItem>
-                            <DropdownMenuItem className="text-white/80 hover:bg-cyan-500/10">Suppress</DropdownMenuItem>
-                            <DropdownMenuItem className="text-white/80 hover:bg-cyan-500/10">View Device</DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-white/80 hover:bg-cyan-500/10"
+                              onClick={() => handleViewDetails(alert)}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-white/80 hover:bg-cyan-500/10"
+                              onClick={() => handleCreateTicket(alert)}
+                            >
+                              <Ticket className="h-4 w-4 mr-2" />
+                              Create Ticket
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-white/80 hover:bg-cyan-500/10"
+                              onClick={() => handleSuppress(alert.id)}
+                            >
+                              <VolumeX className="h-4 w-4 mr-2" />
+                              Suppress
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-cyan-500/20" />
+                            <DropdownMenuItem 
+                              className="text-white/80 hover:bg-cyan-500/10"
+                              onClick={() => handleViewDevice(alert)}
+                            >
+                              <Monitor className="h-4 w-4 mr-2" />
+                              View Device
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -222,6 +335,97 @@ export default function VanguardAlerts() {
           })}
         </TabsContent>
       </Tabs>
+
+      {/* Alert Details Dialog */}
+      <Dialog open={!!selectedAlert && !showCreateTicketDialog} onOpenChange={() => setSelectedAlert(null)}>
+        <DialogContent className="bg-slate-900 border-cyan-500/20 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-cyan-400" />
+              Alert Details
+            </DialogTitle>
+          </DialogHeader>
+          {selectedAlert && (
+            <div className="space-y-4 py-4">
+              <h3 className="text-xl font-semibold text-white">{selectedAlert.title}</h3>
+              <div className="flex items-center gap-4">
+                <Badge className={severityColors[selectedAlert.severity as keyof typeof severityColors]}>
+                  {selectedAlert.severity}
+                </Badge>
+                <Badge className={statusColors[selectedAlert.status as keyof typeof statusColors]}>
+                  {selectedAlert.status}
+                </Badge>
+                <span className="text-white/60 text-sm">{selectedAlert.time}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-white/60">Device</Label>
+                  <p className="text-white">{selectedAlert.device}</p>
+                </div>
+                <div>
+                  <Label className="text-white/60">Customer</Label>
+                  <p className="text-white">{selectedAlert.customer}</p>
+                </div>
+                <div>
+                  <Label className="text-white/60">Category</Label>
+                  <p className="text-white capitalize">{selectedAlert.category}</p>
+                </div>
+              </div>
+              <div>
+                <Label className="text-white/60">Description</Label>
+                <p className="text-white/80 mt-1">{selectedAlert.description}</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedAlert(null)} className="border-cyan-500/20 text-white/80">
+              Close
+            </Button>
+            <Button 
+              onClick={() => {
+                if (selectedAlert) handleCreateTicket(selectedAlert);
+              }} 
+              className="bg-cyan-500 hover:bg-cyan-600 text-black"
+            >
+              Create Ticket
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Ticket Dialog */}
+      <Dialog open={showCreateTicketDialog} onOpenChange={setShowCreateTicketDialog}>
+        <DialogContent className="bg-slate-900 border-cyan-500/20">
+          <DialogHeader>
+            <DialogTitle className="text-white">Create Ticket from Alert</DialogTitle>
+          </DialogHeader>
+          {selectedAlert && (
+            <div className="space-y-4 py-4">
+              <div>
+                <Label className="text-white/60">Alert</Label>
+                <p className="text-white">{selectedAlert.title}</p>
+              </div>
+              <div>
+                <Label className="text-white/80">Additional Notes</Label>
+                <Textarea
+                  value={ticketNote}
+                  onChange={(e) => setTicketNote(e.target.value)}
+                  placeholder="Add any additional context..."
+                  className="bg-black/40 border-cyan-500/20 text-white min-h-[100px]"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateTicketDialog(false)} className="border-cyan-500/20 text-white/80">
+              Cancel
+            </Button>
+            <Button onClick={handleSubmitTicket} className="bg-cyan-500 hover:bg-cyan-600 text-black">
+              Create Ticket
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
