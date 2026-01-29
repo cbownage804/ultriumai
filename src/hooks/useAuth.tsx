@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { isSafeSuiteDomain, isVanguardDomain } from '@/utils/subdomain';
+import { devLog } from '@/lib/logger';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -107,7 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       return { error };
     } catch (error) {
-      console.error('Sign in error:', error);
+      devLog.error('Sign in error:', error);
       return { error };
     }
   };
@@ -149,7 +150,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       return { error };
     } catch (error) {
-      console.error('Sign up error:', error);
+      devLog.error('Sign up error:', error);
       return { error };
     }
   };
@@ -180,7 +181,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.removeItem(authKey);
         localStorage.clear();
       } catch (e) {
-        console.warn('Could not clear localStorage:', e);
+        devLog.warn('Could not clear localStorage:', e);
       }
       
       // Wait for storage clearing to complete, then reload
@@ -190,7 +191,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       return { error };
     } catch (error) {
-      console.error('Sign out error:', error);
+      devLog.error('Sign out error:', error);
       // Clear state even on exception to prevent stuck states
       setUser(null);
       setSession(null);
@@ -206,7 +207,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         localStorage.clear();
       } catch (e) {
-        console.warn('Could not clear localStorage:', e);
+        devLog.warn('Could not clear localStorage:', e);
       }
       
       setTimeout(() => {
@@ -232,7 +233,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       return { error };
     } catch (error) {
-      console.error('Update profile error:', error);
+      devLog.error('Update profile error:', error);
       return { error };
     }
   };
