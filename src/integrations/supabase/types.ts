@@ -20130,6 +20130,63 @@ export type Database = {
           },
         ]
       }
+      vanguard_detected_patterns: {
+        Row: {
+          affected_clients: number | null
+          avg_resolution_time_minutes: number | null
+          category: string | null
+          created_at: string | null
+          first_seen_at: string | null
+          id: string
+          last_seen_at: string | null
+          occurrences: number | null
+          pattern_name: string
+          root_cause: string | null
+          severity: string | null
+          suggested_kb: boolean | null
+          trend: string | null
+          trend_percent: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          affected_clients?: number | null
+          avg_resolution_time_minutes?: number | null
+          category?: string | null
+          created_at?: string | null
+          first_seen_at?: string | null
+          id?: string
+          last_seen_at?: string | null
+          occurrences?: number | null
+          pattern_name: string
+          root_cause?: string | null
+          severity?: string | null
+          suggested_kb?: boolean | null
+          trend?: string | null
+          trend_percent?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          affected_clients?: number | null
+          avg_resolution_time_minutes?: number | null
+          category?: string | null
+          created_at?: string | null
+          first_seen_at?: string | null
+          id?: string
+          last_seen_at?: string | null
+          occurrences?: number | null
+          pattern_name?: string
+          root_cause?: string | null
+          severity?: string | null
+          suggested_kb?: boolean | null
+          trend?: string | null
+          trend_percent?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_device_patches: {
         Row: {
           category: string | null
@@ -21025,6 +21082,48 @@ export type Database = {
           },
         ]
       }
+      vanguard_marketplace_connections: {
+        Row: {
+          category: string
+          configuration: Json | null
+          connected_at: string | null
+          created_at: string | null
+          id: string
+          integration_id: string
+          integration_name: string
+          last_sync_at: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          configuration?: Json | null
+          connected_at?: string | null
+          created_at?: string | null
+          id?: string
+          integration_id: string
+          integration_name: string
+          last_sync_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          configuration?: Json | null
+          connected_at?: string | null
+          created_at?: string | null
+          id?: string
+          integration_id?: string
+          integration_name?: string
+          last_sync_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_mesh_agents: {
         Row: {
           agent_id: string
@@ -21167,6 +21266,39 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_notification_triggers: {
+        Row: {
+          created_at: string | null
+          event_label: string
+          event_type: string
+          id: string
+          is_enabled: boolean | null
+          notification_channels: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_label: string
+          event_type: string
+          id?: string
+          is_enabled?: boolean | null
+          notification_channels?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_label?: string
+          event_type?: string
+          id?: string
+          is_enabled?: boolean | null
+          notification_channels?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_on_call_schedules: {
         Row: {
           created_at: string | null
@@ -21304,6 +21436,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vanguard_pattern_trends: {
+        Row: {
+          created_at: string | null
+          id: string
+          occurrence_count: number | null
+          pattern_id: string | null
+          trend_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          occurrence_count?: number | null
+          pattern_id?: string | null
+          trend_date: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          occurrence_count?: number | null
+          pattern_id?: string | null
+          trend_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_pattern_trends_pattern_id_fkey"
+            columns: ["pattern_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_detected_patterns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vanguard_portal_downloads: {
         Row: {
@@ -21730,6 +21897,54 @@ export type Database = {
           },
         ]
       }
+      vanguard_routing_rules: {
+        Row: {
+          action_target: string | null
+          action_type: string
+          condition_field: string
+          condition_operator: string
+          condition_value: string
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          match_count: number | null
+          name: string
+          priority: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          action_target?: string | null
+          action_type: string
+          condition_field: string
+          condition_operator: string
+          condition_value: string
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          match_count?: number | null
+          name: string
+          priority?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          action_target?: string | null
+          action_type?: string
+          condition_field?: string
+          condition_operator?: string
+          condition_value?: string
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          match_count?: number | null
+          name?: string
+          priority?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_runbook_executions: {
         Row: {
           completed_at: string | null
@@ -21999,6 +22214,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_security_trends: {
+        Row: {
+          created_at: string | null
+          id: string
+          incidents_opened: number | null
+          incidents_resolved: number | null
+          threats_blocked: number | null
+          threats_detected: number | null
+          trend_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          incidents_opened?: number | null
+          incidents_resolved?: number | null
+          threats_blocked?: number | null
+          threats_detected?: number | null
+          trend_date: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          incidents_opened?: number | null
+          incidents_resolved?: number | null
+          threats_blocked?: number | null
+          threats_detected?: number | null
+          trend_date?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       vanguard_sentinel_ai_analysis: {
         Row: {
@@ -22743,6 +22991,57 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_technicians: {
+        Row: {
+          active_tickets: number | null
+          avatar: string | null
+          avg_resolution_time_minutes: number | null
+          created_at: string | null
+          email: string | null
+          id: string
+          is_senior: boolean | null
+          max_capacity: number | null
+          name: string
+          rating: number | null
+          skills: string[] | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          active_tickets?: number | null
+          avatar?: string | null
+          avg_resolution_time_minutes?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_senior?: boolean | null
+          max_capacity?: number | null
+          name: string
+          rating?: number | null
+          skills?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          active_tickets?: number | null
+          avatar?: string | null
+          avg_resolution_time_minutes?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_senior?: boolean | null
+          max_capacity?: number | null
+          name?: string
+          rating?: number | null
+          skills?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_threshold_profiles: {
         Row: {
           created_at: string
@@ -22772,6 +23071,42 @@ export type Database = {
           name?: string
           rules?: Json | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_ticket_categories: {
+        Row: {
+          category_name: string
+          color: string | null
+          created_at: string | null
+          id: string
+          percentage: number | null
+          period_end: string | null
+          period_start: string | null
+          ticket_count: number | null
+          user_id: string
+        }
+        Insert: {
+          category_name: string
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          percentage?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          ticket_count?: number | null
+          user_id: string
+        }
+        Update: {
+          category_name?: string
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          percentage?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          ticket_count?: number | null
           user_id?: string
         }
         Relationships: []

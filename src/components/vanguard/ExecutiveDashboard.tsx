@@ -184,18 +184,68 @@ export const ExecutiveDashboard = () => {
   };
 
   const loadTrendData = async () => {
-    // Generate trend data for the last 14 days
-    const data: TrendData[] = [];
-    for (let i = 13; i >= 0; i--) {
-      const date = subDays(new Date(), i);
-      data.push({
-        date: format(date, 'MMM dd'),
-        threats: Math.floor(Math.random() * 50) + 10,
-        incidents: Math.floor(Math.random() * 5),
-        blocked: Math.floor(Math.random() * 100) + 50
-      });
+    try {
+      const fourteenDaysAgo = subDays(new Date(), 14).toISOString();
+      
+      // Fetch real security trends from the database
+      const { data: trends, error } = await (supabase as any)
+        .from('vanguard_security_trends')
+        .select('*')
+        .eq('user_id', user?.id)
+        .gte('trend_date', fourteenDaysAgo.split('T')[0])
+        .order('trend_date', { ascending: true });
+
+      if (error) throw error;
+
+      if (trends && trends.length > 0) {
+        setTrendData(trends.map((t: any) => ({
+          date: format(new Date(t.trend_date), 'MMM dd'),
+          threats: t.threats_detected || 0,
+          incidents: t.incidents_opened || 0,
+          blocked: t.threats_blocked || 0
+        })));
+      } else {
+        // Fallback: aggregate from security_events if no trend data exists
+        const { data: events } = await supabase
+          .from('security_events')
+          .select('created_at, severity')
+          .gte('created_at', fourteenDaysAgo)
+          .order('created_at', { ascending: true });
+
+        const dayMap: Record<string, TrendData> = {};
+        for (let i = 13; i >= 0; i--) {
+          const d = subDays(new Date(), i);
+          const key = format(d, 'yyyy-MM-dd');
+          dayMap[key] = { date: format(d, 'MMM dd'), threats: 0, incidents: 0, blocked: 0 };
+        }
+
+        (events || []).forEach((evt: any) => {
+          const key = format(new Date(evt.created_at), 'yyyy-MM-dd');
+          if (dayMap[key]) {
+            dayMap[key].threats++;
+            if (evt.severity === 'critical' || evt.severity === 'high') {
+              dayMap[key].incidents++;
+            }
+            dayMap[key].blocked++;
+          }
+        });
+
+        setTrendData(Object.values(dayMap));
+      }
+    } catch (err) {
+      console.error('Failed to load trend data:', err);
+      // Empty fallback
+      const data: TrendData[] = [];
+      for (let i = 13; i >= 0; i--) {
+        data.push({
+          date: format(subDays(new Date(), i), 'MMM dd'),
+          threats: 0,
+          incidents: 0,
+          blocked: 0
+        });
+      }
+      setTrendData(data);
     }
-    setTrendData(data);
   };
 
   const loadTopThreats = async () => {

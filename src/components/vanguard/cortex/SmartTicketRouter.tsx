@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
-  Route, Users, Zap, TrendingUp, Target,
-  CheckCircle2, Clock, BarChart3, Settings, Brain
+  Route, Users, Zap, Target,
+  CheckCircle2, Clock, BarChart3, Settings, Brain, Plus, RefreshCw
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface Technician {
   id: string;
@@ -20,7 +24,7 @@ interface Technician {
   maxCapacity: number;
   avgResolutionTime: string;
   rating: number;
-  status: 'available' | 'busy' | 'away';
+  status: 'available' | 'busy' | 'away' | 'offline';
 }
 
 interface RoutingRule {
@@ -32,112 +36,166 @@ interface RoutingRule {
   matchCount: number;
 }
 
-const DEMO_TECHNICIANS: Technician[] = [
-  {
-    id: '1',
-    name: 'Alex Rodriguez',
-    avatar: 'AR',
-    skills: ['Network', 'Security', 'VPN'],
-    activeTickets: 4,
-    maxCapacity: 8,
-    avgResolutionTime: '2.5h',
-    rating: 4.8,
-    status: 'available'
-  },
-  {
-    id: '2',
-    name: 'Sarah Chen',
-    avatar: 'SC',
-    skills: ['Email', 'O365', 'Azure AD'],
-    activeTickets: 6,
-    maxCapacity: 8,
-    avgResolutionTime: '1.8h',
-    rating: 4.9,
-    status: 'available'
-  },
-  {
-    id: '3',
-    name: 'Marcus Johnson',
-    avatar: 'MJ',
-    skills: ['Hardware', 'Printers', 'Workstations'],
-    activeTickets: 7,
-    maxCapacity: 8,
-    avgResolutionTime: '3.2h',
-    rating: 4.6,
-    status: 'busy'
-  },
-  {
-    id: '4',
-    name: 'Emily Watson',
-    avatar: 'EW',
-    skills: ['Cloud', 'Backup', 'Storage'],
-    activeTickets: 3,
-    maxCapacity: 8,
-    avgResolutionTime: '2.1h',
-    rating: 4.7,
-    status: 'available'
-  }
-];
-
-const DEMO_RULES: RoutingRule[] = [
-  {
-    id: '1',
-    name: 'Priority Critical → Senior Tech',
-    condition: 'priority = "critical"',
-    action: 'Assign to senior technician pool',
-    enabled: true,
-    matchCount: 156
-  },
-  {
-    id: '2',
-    name: 'Email Issues → O365 Specialists',
-    condition: 'category contains "email" OR "outlook"',
-    action: 'Route to O365 skill group',
-    enabled: true,
-    matchCount: 423
-  },
-  {
-    id: '3',
-    name: 'VIP Clients → Dedicated Team',
-    condition: 'client.tier = "enterprise"',
-    action: 'Assign to VIP support team',
-    enabled: true,
-    matchCount: 89
-  },
-  {
-    id: '4',
-    name: 'After Hours → On-Call',
-    condition: 'created_at.hour < 8 OR > 18',
-    action: 'Route to on-call rotation',
-    enabled: false,
-    matchCount: 67
-  }
-];
-
-const CATEGORY_DISTRIBUTION = [
-  { name: 'Email', value: 35, color: '#22d3ee' },
-  { name: 'Network', value: 25, color: '#a78bfa' },
-  { name: 'Hardware', value: 20, color: '#f59e0b' },
-  { name: 'Cloud', value: 15, color: '#4ade80' },
-  { name: 'Other', value: 5, color: '#64748b' }
-];
+interface CategoryData {
+  name: string;
+  value: number;
+  color: string;
+}
 
 export function SmartTicketRouter() {
-  const [technicians] = useState<Technician[]>(DEMO_TECHNICIANS);
-  const [rules, setRules] = useState<RoutingRule[]>(DEMO_RULES);
+  const { user } = useAuth();
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [rules, setRules] = useState<RoutingRule[]>([]);
+  const [categories, setCategories] = useState<CategoryData[]>([]);
   const [autoRouting, setAutoRouting] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAddRule, setShowAddRule] = useState(false);
+  const [newRule, setNewRule] = useState({ name: '', condition: '', action: '' });
 
-  const toggleRule = (ruleId: string) => {
-    setRules(rules.map(r =>
-      r.id === ruleId ? { ...r, enabled: !r.enabled } : r
-    ));
+  useEffect(() => {
+    if (user) loadAllData();
+  }, [user]);
+
+  const loadAllData = async () => {
+    setIsLoading(true);
+    await Promise.all([loadTechnicians(), loadRules(), loadCategories()]);
+    setIsLoading(false);
+  };
+
+  const loadTechnicians = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('vanguard_technicians')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('name');
+
+      if (error) throw error;
+
+      setTechnicians((data || []).map((t: any) => ({
+        id: t.id,
+        name: t.name,
+        avatar: t.avatar || t.name.split(' ').map((n: string) => n[0]).join('').toUpperCase(),
+        skills: t.skills || [],
+        activeTickets: t.active_tickets || 0,
+        maxCapacity: t.max_capacity || 8,
+        avgResolutionTime: `${Math.round((t.avg_resolution_time_minutes || 120) / 60 * 10) / 10}h`,
+        rating: Number(t.rating) || 4.5,
+        status: t.status || 'available'
+      })));
+    } catch (err) {
+      console.error('Failed to load technicians:', err);
+    }
+  };
+
+  const loadRules = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('vanguard_routing_rules')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('priority', { ascending: false });
+
+      if (error) throw error;
+
+      setRules((data || []).map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        condition: `${r.condition_field} ${r.condition_operator} "${r.condition_value}"`,
+        action: `${r.action_type}: ${r.action_target || 'Auto'}`,
+        enabled: r.is_enabled,
+        matchCount: r.match_count || 0
+      })));
+    } catch (err) {
+      console.error('Failed to load routing rules:', err);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('vanguard_ticket_categories')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('percentage', { ascending: false });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setCategories(data.map((c: any) => ({
+          name: c.category_name,
+          value: Number(c.percentage) || 0,
+          color: c.color || '#22d3ee'
+        })));
+      } else {
+        // Default empty state visualization
+        setCategories([
+          { name: 'No Data', value: 100, color: '#64748b' }
+        ]);
+      }
+    } catch (err) {
+      console.error('Failed to load categories:', err);
+    }
+  };
+
+  const toggleRule = async (ruleId: string) => {
+    const rule = rules.find(r => r.id === ruleId);
+    if (!rule) return;
+
+    try {
+      const { error } = await (supabase as any)
+        .from('vanguard_routing_rules')
+        .update({ is_enabled: !rule.enabled, updated_at: new Date().toISOString() })
+        .eq('id', ruleId);
+
+      if (error) throw error;
+
+      setRules(rules.map(r =>
+        r.id === ruleId ? { ...r, enabled: !r.enabled } : r
+      ));
+      toast.success(rule.enabled ? 'Rule disabled' : 'Rule enabled');
+    } catch (err) {
+      toast.error('Failed to update rule');
+    }
+  };
+
+  const addRule = async () => {
+    if (!newRule.name || !newRule.condition || !newRule.action) {
+      toast.error('Please fill all fields');
+      return;
+    }
+
+    try {
+      const { error } = await (supabase as any)
+        .from('vanguard_routing_rules')
+        .insert({
+          user_id: user?.id,
+          name: newRule.name,
+          condition_field: 'custom',
+          condition_operator: 'matches',
+          condition_value: newRule.condition,
+          action_type: 'route',
+          action_target: newRule.action,
+          is_enabled: true
+        });
+
+      if (error) throw error;
+
+      toast.success('Rule created');
+      setNewRule({ name: '', condition: '', action: '' });
+      setShowAddRule(false);
+      loadRules();
+    } catch (err) {
+      toast.error('Failed to create rule');
+    }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'available': return 'bg-green-500';
       case 'busy': return 'bg-amber-500';
-      default: return 'bg-slate-500';
+      case 'away': return 'bg-slate-500';
+      default: return 'bg-red-500';
     }
   };
 
@@ -162,6 +220,10 @@ export function SmartTicketRouter() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" onClick={loadAllData} disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
           <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-black/60 border border-cyan-500/30">
             <Brain className="h-4 w-4 text-cyan-400" />
             <span className="text-sm text-slate-300">Auto-Routing</span>
@@ -191,7 +253,7 @@ export function SmartTicketRouter() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={CATEGORY_DISTRIBUTION}
+                    data={categories}
                     cx="50%"
                     cy="50%"
                     innerRadius={50}
@@ -199,7 +261,7 @@ export function SmartTicketRouter() {
                     paddingAngle={2}
                     dataKey="value"
                   >
-                    {CATEGORY_DISTRIBUTION.map((entry, index) => (
+                    {categories.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -214,7 +276,7 @@ export function SmartTicketRouter() {
               </ResponsiveContainer>
             </div>
             <div className="flex flex-wrap justify-center gap-3 mt-4">
-              {CATEGORY_DISTRIBUTION.map((cat) => (
+              {categories.map((cat) => (
                 <div key={cat.name} className="flex items-center gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
                   <span className="text-xs text-slate-400">{cat.name} ({cat.value}%)</span>
@@ -233,60 +295,68 @@ export function SmartTicketRouter() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
-              {technicians.map((tech) => (
-                <div
-                  key={tech.id}
-                  className="p-4 rounded-lg bg-slate-900/50 border border-slate-700"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                          {tech.avatar}
+            {technicians.length === 0 ? (
+              <div className="text-center py-8 text-slate-500">
+                <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>No technicians configured</p>
+                <p className="text-sm">Add team members to enable smart routing</p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4">
+                {technicians.map((tech) => (
+                  <div
+                    key={tech.id}
+                    className="p-4 rounded-lg bg-slate-900/50 border border-slate-700"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                            {tech.avatar}
+                          </div>
+                          <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-slate-900 ${getStatusColor(tech.status)}`} />
                         </div>
-                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-slate-900 ${getStatusColor(tech.status)}`} />
+                        <div>
+                          <p className="text-sm font-medium text-white">{tech.name}</p>
+                          <p className="text-xs text-slate-500">{tech.avgResolutionTime} avg</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-white">{tech.name}</p>
-                        <p className="text-xs text-slate-500">{tech.avgResolutionTime} avg</p>
+                      <div className="flex items-center gap-1">
+                        <span className="text-amber-400 text-sm">★</span>
+                        <span className="text-sm text-slate-300">{tech.rating}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-amber-400 text-sm">★</span>
-                      <span className="text-sm text-slate-300">{tech.rating}</span>
-                    </div>
-                  </div>
 
-                  {/* Workload Bar */}
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-slate-500">Workload</span>
-                      <span className="text-xs text-slate-400">{tech.activeTickets}/{tech.maxCapacity}</span>
+                    {/* Workload Bar */}
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-slate-500">Workload</span>
+                        <span className="text-xs text-slate-400">{tech.activeTickets}/{tech.maxCapacity}</span>
+                      </div>
+                      <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${getWorkloadColor(tech.activeTickets, tech.maxCapacity)} transition-all`}
+                          style={{ width: `${(tech.activeTickets / tech.maxCapacity) * 100}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${getWorkloadColor(tech.activeTickets, tech.maxCapacity)} transition-all`}
-                        style={{ width: `${(tech.activeTickets / tech.maxCapacity) * 100}%` }}
-                      />
-                    </div>
-                  </div>
 
-                  {/* Skills */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {tech.skills.map((skill) => (
-                      <Badge
-                        key={skill}
-                        variant="outline"
-                        className="border-cyan-500/30 text-cyan-400 text-xs"
-                      >
-                        {skill}
-                      </Badge>
-                    ))}
+                    {/* Skills */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {tech.skills.map((skill) => (
+                        <Badge
+                          key={skill}
+                          variant="outline"
+                          className="border-cyan-500/30 text-cyan-400 text-xs"
+                        >
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -304,44 +374,93 @@ export function SmartTicketRouter() {
                 Configure automatic ticket assignment rules
               </CardDescription>
             </div>
-            <Button variant="outline" size="sm" className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10">
-              <Settings className="h-4 w-4 mr-1" />
-              Add Rule
-            </Button>
+            <Dialog open={showAddRule} onOpenChange={setShowAddRule}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Rule
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-slate-900 border-cyan-500/30">
+                <DialogHeader>
+                  <DialogTitle className="text-white">Create Routing Rule</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <label className="text-sm text-slate-400">Rule Name</label>
+                    <Input
+                      value={newRule.name}
+                      onChange={(e) => setNewRule({ ...newRule, name: e.target.value })}
+                      placeholder="e.g., VIP Clients → Senior Tech"
+                      className="mt-1 bg-black/40 border-slate-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-400">Condition</label>
+                    <Input
+                      value={newRule.condition}
+                      onChange={(e) => setNewRule({ ...newRule, condition: e.target.value })}
+                      placeholder="e.g., priority = critical"
+                      className="mt-1 bg-black/40 border-slate-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-400">Action</label>
+                    <Input
+                      value={newRule.action}
+                      onChange={(e) => setNewRule({ ...newRule, action: e.target.value })}
+                      placeholder="e.g., Assign to senior pool"
+                      className="mt-1 bg-black/40 border-slate-700"
+                    />
+                  </div>
+                  <Button onClick={addRule} className="w-full">
+                    Create Rule
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {rules.map((rule) => (
-              <div
-                key={rule.id}
-                className={`p-4 rounded-lg border transition-all ${
-                  rule.enabled
-                    ? 'bg-slate-900/50 border-slate-700'
-                    : 'bg-slate-900/30 border-slate-800 opacity-60'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-sm font-medium text-white">{rule.name}</p>
-                      <Badge variant="outline" className="border-slate-600 text-slate-400 text-xs">
-                        {rule.matchCount} matches
-                      </Badge>
+          {rules.length === 0 ? (
+            <div className="text-center py-8 text-slate-500">
+              <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>No routing rules configured</p>
+              <p className="text-sm">Create rules to automate ticket assignment</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {rules.map((rule) => (
+                <div
+                  key={rule.id}
+                  className={`p-4 rounded-lg border transition-all ${
+                    rule.enabled
+                      ? 'bg-slate-900/50 border-slate-700'
+                      : 'bg-slate-900/30 border-slate-800 opacity-60'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-sm font-medium text-white">{rule.name}</p>
+                        <Badge variant="outline" className="border-slate-600 text-slate-400 text-xs">
+                          {rule.matchCount} matches
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        <span className="text-cyan-400">IF</span> {rule.condition}{' '}
+                        <span className="text-purple-400">THEN</span> {rule.action}
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-500">
-                      <span className="text-cyan-400">IF</span> {rule.condition}{' '}
-                      <span className="text-purple-400">THEN</span> {rule.action}
-                    </p>
+                    <Switch
+                      checked={rule.enabled}
+                      onCheckedChange={() => toggleRule(rule.id)}
+                    />
                   </div>
-                  <Switch
-                    checked={rule.enabled}
-                    onCheckedChange={() => toggleRule(rule.id)}
-                  />
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
