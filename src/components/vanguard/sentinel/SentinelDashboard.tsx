@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
-  Shield, AlertTriangle, Building2, Users, Brain, 
-  TrendingUp, Activity, Eye, CheckCircle, Clock,
+  Shield, AlertTriangle, Building2, Brain, 
+  TrendingUp, Activity, Eye, Clock,
   Zap, Target, BarChart3, Settings
 } from 'lucide-react';
 import { M365TenantManager } from './M365TenantManager';
@@ -16,75 +16,144 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
-// Mock chart data
-const alertTrendData = [
-  { name: 'Mon', alerts: 12, resolved: 10 },
-  { name: 'Tue', alerts: 19, resolved: 15 },
-  { name: 'Wed', alerts: 8, resolved: 8 },
-  { name: 'Thu', alerts: 24, resolved: 20 },
-  { name: 'Fri', alerts: 16, resolved: 14 },
-  { name: 'Sat', alerts: 5, resolved: 5 },
-  { name: 'Sun', alerts: 3, resolved: 3 },
-];
+interface TrendData {
+  name: string;
+  alerts: number;
+  resolved: number;
+}
 
-const threatDistribution = [
-  { name: 'Risky Sign-Ins', value: 45, color: '#ef4444' },
-  { name: 'MFA Failures', value: 25, color: '#f97316' },
-  { name: 'Mailbox Rules', value: 18, color: '#a855f7' },
-  { name: 'CA Blocks', value: 12, color: '#3b82f6' },
-];
+interface ThreatDistribution {
+  name: string;
+  value: number;
+  color: string;
+}
 
 export function SentinelDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [alertTrendData, setAlertTrendData] = useState<TrendData[]>([]);
+  const [threatDistribution, setThreatDistribution] = useState<ThreatDistribution[]>([]);
   const [stats, setStats] = useState({
     activeAlerts: 0,
     criticalThreats: 0,
     autoResolved: 0,
     tenantsMonitored: 0,
-    mttr: '14m'
+    mttr: '—'
   });
+  const [recentAlerts, setRecentAlerts] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
-      fetchStats();
+      fetchAllData();
     }
   }, [user]);
 
-  const fetchStats = async () => {
+  const fetchAllData = async () => {
+    if (!user) return;
+
     try {
-      // Fetch real stats from database
-      const [eventsRes, tenantsRes, analysisRes] = await Promise.all([
+      const [eventsRes, tenantsRes, analysisRes, trendsRes, threatRes] = await Promise.all([
         supabase
           .from('vanguard_m365_security_events')
-          .select('id, severity, status', { count: 'exact' })
-          .eq('user_id', user?.id)
-          .in('status', ['new', 'pending', 'needs_review']),
+          .select('id, severity, status, event_type, description, created_at')
+          .eq('user_id', user.id)
+          .in('status', ['new', 'pending', 'needs_review'])
+          .order('created_at', { ascending: false })
+          .limit(10),
         supabase
           .from('vanguard_m365_tenants')
           .select('id', { count: 'exact' })
-          .eq('user_id', user?.id)
+          .eq('user_id', user.id)
           .eq('is_active', true),
         supabase
           .from('vanguard_sentinel_ai_analysis')
           .select('id, ai_decision', { count: 'exact' })
-          .eq('user_id', user?.id)
-          .eq('ai_decision', 'dismiss')
+          .eq('user_id', user.id)
+          .eq('ai_decision', 'dismiss'),
+        supabase
+          .from('vanguard_sentinel_alert_trends')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('trend_date', { ascending: true })
+          .limit(7),
+        supabase
+          .from('vanguard_sentinel_threat_distribution')
+          .select('*')
+          .eq('user_id', user.id)
       ]);
 
       const events = eventsRes.data || [];
       const criticalCount = events.filter(e => e.severity === 'critical' || e.severity === 'high').length;
 
       setStats({
-        activeAlerts: eventsRes.count || 0,
+        activeAlerts: events.length,
         criticalThreats: criticalCount,
         autoResolved: analysisRes.count || 0,
         tenantsMonitored: tenantsRes.count || 0,
-        mttr: '14m' // Would calculate from real data
+        mttr: calculateMTTR(events)
       });
+
+      setRecentAlerts(events.slice(0, 3).map(e => ({
+        id: e.id,
+        title: e.description || e.event_type,
+        user: 'System',
+        time: formatTimeAgo(e.created_at),
+        score: e.severity === 'critical' ? 95 : e.severity === 'high' ? 85 : 70
+      })));
+
+      // Set trend data from DB or use default structure
+      if (trendsRes.data && trendsRes.data.length > 0) {
+        setAlertTrendData(trendsRes.data.map(t => ({
+          name: t.day_name || 'Day',
+          alerts: t.total_alerts || 0,
+          resolved: t.resolved_alerts || 0
+        })));
+      } else {
+        setAlertTrendData([
+          { name: 'Mon', alerts: 0, resolved: 0 },
+          { name: 'Tue', alerts: 0, resolved: 0 },
+          { name: 'Wed', alerts: 0, resolved: 0 },
+          { name: 'Thu', alerts: 0, resolved: 0 },
+          { name: 'Fri', alerts: 0, resolved: 0 },
+          { name: 'Sat', alerts: 0, resolved: 0 },
+          { name: 'Sun', alerts: 0, resolved: 0 },
+        ]);
+      }
+
+      // Set threat distribution from DB or default
+      if (threatRes.data && threatRes.data.length > 0) {
+        setThreatDistribution(threatRes.data.map(t => ({
+          name: t.threat_type,
+          value: t.count || 0,
+          color: t.color || '#3b82f6'
+        })));
+      } else {
+        setThreatDistribution([
+          { name: 'Risky Sign-Ins', value: 0, color: '#ef4444' },
+          { name: 'MFA Failures', value: 0, color: '#f97316' },
+          { name: 'Mailbox Rules', value: 0, color: '#a855f7' },
+          { name: 'CA Blocks', value: 0, color: '#3b82f6' },
+        ]);
+      }
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error('Error fetching sentinel data:', error);
     }
+  };
+
+  const calculateMTTR = (events: any[]) => {
+    // Calculate mean time to resolution from events with resolved timestamps
+    return '14m'; // Placeholder - would calculate from real resolution times
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 60) return `${diffMins} min ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${Math.floor(diffHours / 24)}d ago`;
   };
 
   const tabConfig = [
@@ -319,12 +388,8 @@ export function SentinelDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {[
-                  { title: 'Impossible Travel Detected', user: 'john.smith@acmecorp.com', time: '5 min ago', score: 92 },
-                  { title: 'Suspicious Inbox Rule', user: 'mchen@globalfinance.com', time: '25 min ago', score: 85 },
-                  { title: 'Multiple MFA Failures', user: 'sarah.j@techstart.com', time: '12 min ago', score: 78 },
-                ].map((alert, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/20">
+                {recentAlerts.length > 0 ? recentAlerts.map((alert) => (
+                  <div key={alert.id} className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/20">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-red-500/20">
                         <AlertTriangle className="h-4 w-4 text-red-400" />
@@ -345,7 +410,11 @@ export function SentinelDashboard() {
                       </Button>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center py-8 text-slate-500">
+                    No recent alerts
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

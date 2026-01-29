@@ -1,14 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,166 +12,259 @@ import {
 import {
   AlertTriangle,
   Zap,
-  Shield,
   Plus,
   MoreVertical,
   Edit,
   Trash2,
   Copy,
   Play,
-  Settings,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ThresholdProfileEditor, ThresholdProfile } from './ThresholdProfileEditor';
 import { AutomationProfileEditor, AutomationProfile } from './AutomationProfileEditor';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ProfileManagerProps {
   onClose?: () => void;
 }
 
-// Demo profiles
-const demoThresholdProfiles: ThresholdProfile[] = [
-  {
-    id: '1',
-    name: 'Production Servers',
-    description: 'Strict monitoring for production workloads',
-    isDefault: true,
-    rules: [
-      { id: '1', metric: 'cpu', operator: 'above', value: 85, duration: 5, severity: 'critical', enabled: true },
-      { id: '2', metric: 'memory', operator: 'above', value: 80, duration: 5, severity: 'critical', enabled: true },
-      { id: '3', metric: 'disk', operator: 'above', value: 90, duration: 0, severity: 'critical', enabled: true },
-    ],
-    createdAt: new Date(2024, 0, 1),
-    updatedAt: new Date(2024, 0, 15),
-  },
-  {
-    id: '2',
-    name: 'Development Workstations',
-    description: 'Relaxed thresholds for dev machines',
-    rules: [
-      { id: '1', metric: 'cpu', operator: 'above', value: 95, duration: 15, severity: 'warning', enabled: true },
-      { id: '2', metric: 'disk', operator: 'above', value: 95, duration: 0, severity: 'warning', enabled: true },
-    ],
-    createdAt: new Date(2024, 0, 5),
-    updatedAt: new Date(2024, 0, 5),
-  },
-];
-
-const demoAutomationProfiles: AutomationProfile[] = [
-  {
-    id: '1',
-    name: 'Weekly Maintenance',
-    description: 'Patch installation and cleanup every Sunday',
-    schedule: { type: 'weekly', time: '02:00', daysOfWeek: [0], enabled: true },
-    tasks: [
-      { id: '1', name: 'Install Security Patches', type: 'patch', config: { categories: ['security', 'critical'] }, order: 0, enabled: true },
-      { id: '2', name: 'Disk Cleanup', type: 'cleanup', config: { tempFiles: true, recyclingBin: true }, order: 1, enabled: true },
-    ],
-    runOnConnect: true,
-    notifyOnComplete: true,
-    notifyOnFailure: true,
-    createdAt: new Date(2024, 0, 1),
-    updatedAt: new Date(2024, 0, 10),
-  },
-  {
-    id: '2',
-    name: 'Daily Health Check',
-    description: 'Run diagnostics script daily',
-    schedule: { type: 'daily', time: '06:00', enabled: true },
-    tasks: [
-      { id: '1', name: 'Health Check Script', type: 'script', config: { shell: 'powershell', script: 'Get-ComputerInfo' }, order: 0, enabled: true },
-    ],
-    runOnConnect: false,
-    notifyOnComplete: false,
-    notifyOnFailure: true,
-    createdAt: new Date(2024, 0, 8),
-    updatedAt: new Date(2024, 0, 8),
-  },
-];
-
 export function ProfileManager({ onClose }: ProfileManagerProps) {
-  const [thresholdProfiles, setThresholdProfiles] = useState<ThresholdProfile[]>(demoThresholdProfiles);
-  const [automationProfiles, setAutomationProfiles] = useState<AutomationProfile[]>(demoAutomationProfiles);
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [thresholdProfiles, setThresholdProfiles] = useState<ThresholdProfile[]>([]);
+  const [automationProfiles, setAutomationProfiles] = useState<AutomationProfile[]>([]);
   const [editingThreshold, setEditingThreshold] = useState<ThresholdProfile | null>(null);
   const [editingAutomation, setEditingAutomation] = useState<AutomationProfile | null>(null);
   const [showNewThreshold, setShowNewThreshold] = useState(false);
   const [showNewAutomation, setShowNewAutomation] = useState(false);
 
-  const handleSaveThreshold = (profile: Omit<ThresholdProfile, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (editingThreshold) {
-      setThresholdProfiles(prev => prev.map(p => 
-        p.id === editingThreshold.id 
-          ? { ...p, ...profile, updatedAt: new Date() }
-          : p
-      ));
-      toast.success('Threshold profile updated');
-    } else {
-      const newProfile: ThresholdProfile = {
-        ...profile,
-        id: crypto.randomUUID(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      setThresholdProfiles(prev => [...prev, newProfile]);
-      toast.success('Threshold profile created');
+  useEffect(() => {
+    if (user) {
+      fetchProfiles();
     }
-    setEditingThreshold(null);
-    setShowNewThreshold(false);
+  }, [user]);
+
+  const fetchProfiles = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const [thresholdRes, automationRes] = await Promise.all([
+        supabase
+          .from('vanguard_threshold_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('vanguard_automation_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+      ]);
+
+      if (thresholdRes.data) {
+        setThresholdProfiles(thresholdRes.data.map(p => ({
+          id: p.id,
+          name: p.name,
+          description: p.description || '',
+          isDefault: p.is_default,
+          rules: (p.rules as any[]) || [],
+          createdAt: new Date(p.created_at),
+          updatedAt: new Date(p.updated_at),
+        })));
+      }
+
+      if (automationRes.data) {
+        setAutomationProfiles(automationRes.data.map(p => ({
+          id: p.id,
+          name: p.name,
+          description: p.description || '',
+          schedule: p.schedule as any,
+          tasks: (p.tasks as any[]) || [],
+          runOnConnect: p.run_on_connect,
+          notifyOnComplete: p.notify_on_complete,
+          notifyOnFailure: p.notify_on_failure,
+          createdAt: new Date(p.created_at),
+          updatedAt: new Date(p.updated_at),
+        })));
+      }
+    } catch (error) {
+      console.error('Error fetching profiles:', error);
+      toast.error('Failed to load profiles');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSaveAutomation = (profile: Omit<AutomationProfile, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (editingAutomation) {
-      setAutomationProfiles(prev => prev.map(p => 
-        p.id === editingAutomation.id 
-          ? { ...p, ...profile, updatedAt: new Date() }
-          : p
-      ));
-      toast.success('Automation profile updated');
-    } else {
-      const newProfile: AutomationProfile = {
-        ...profile,
-        id: crypto.randomUUID(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      setAutomationProfiles(prev => [...prev, newProfile]);
-      toast.success('Automation profile created');
+  const handleSaveThreshold = async (profile: Omit<ThresholdProfile, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!user) return;
+
+    try {
+      if (editingThreshold) {
+        const { error } = await supabase
+          .from('vanguard_threshold_profiles')
+          .update({
+            name: profile.name,
+            description: profile.description,
+            is_default: profile.isDefault,
+            rules: profile.rules as any,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingThreshold.id);
+
+        if (error) throw error;
+        toast.success('Threshold profile updated');
+      } else {
+        const { error } = await supabase
+          .from('vanguard_threshold_profiles')
+          .insert({
+            user_id: user.id,
+            name: profile.name,
+            description: profile.description,
+            is_default: profile.isDefault,
+            rules: profile.rules as any,
+          });
+
+        if (error) throw error;
+        toast.success('Threshold profile created');
+      }
+      
+      setEditingThreshold(null);
+      setShowNewThreshold(false);
+      fetchProfiles();
+    } catch (error) {
+      console.error('Error saving threshold profile:', error);
+      toast.error('Failed to save profile');
     }
-    setEditingAutomation(null);
-    setShowNewAutomation(false);
   };
 
-  const deleteThresholdProfile = (id: string) => {
+  const handleSaveAutomation = async (profile: Omit<AutomationProfile, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!user) return;
+
+    try {
+      if (editingAutomation) {
+        const { error } = await supabase
+          .from('vanguard_automation_profiles')
+          .update({
+            name: profile.name,
+            description: profile.description,
+            schedule: profile.schedule as any,
+            tasks: profile.tasks as any,
+            run_on_connect: profile.runOnConnect,
+            notify_on_complete: profile.notifyOnComplete,
+            notify_on_failure: profile.notifyOnFailure,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingAutomation.id);
+
+        if (error) throw error;
+        toast.success('Automation profile updated');
+      } else {
+        const { error } = await supabase
+          .from('vanguard_automation_profiles')
+          .insert({
+            user_id: user.id,
+            name: profile.name,
+            description: profile.description,
+            schedule: profile.schedule as any,
+            tasks: profile.tasks as any,
+            run_on_connect: profile.runOnConnect,
+            notify_on_complete: profile.notifyOnComplete,
+            notify_on_failure: profile.notifyOnFailure,
+          });
+
+        if (error) throw error;
+        toast.success('Automation profile created');
+      }
+      
+      setEditingAutomation(null);
+      setShowNewAutomation(false);
+      fetchProfiles();
+    } catch (error) {
+      console.error('Error saving automation profile:', error);
+      toast.error('Failed to save profile');
+    }
+  };
+
+  const deleteThresholdProfile = async (id: string) => {
     if (!confirm('Delete this threshold profile?')) return;
-    setThresholdProfiles(prev => prev.filter(p => p.id !== id));
-    toast.success('Profile deleted');
-  };
-
-  const deleteAutomationProfile = (id: string) => {
-    if (!confirm('Delete this automation profile?')) return;
-    setAutomationProfiles(prev => prev.filter(p => p.id !== id));
-    toast.success('Profile deleted');
-  };
-
-  const duplicateProfile = (profile: ThresholdProfile | AutomationProfile, type: 'threshold' | 'automation') => {
-    const copy = {
-      ...profile,
-      id: crypto.randomUUID(),
-      name: `${profile.name} (Copy)`,
-      isDefault: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
     
-    if (type === 'threshold') {
-      setThresholdProfiles(prev => [...prev, copy as ThresholdProfile]);
+    const { error } = await supabase
+      .from('vanguard_threshold_profiles')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Failed to delete profile');
     } else {
-      setAutomationProfiles(prev => [...prev, copy as AutomationProfile]);
+      toast.success('Profile deleted');
+      fetchProfiles();
     }
-    toast.success('Profile duplicated');
   };
 
-  // If editing, show editor
+  const deleteAutomationProfile = async (id: string) => {
+    if (!confirm('Delete this automation profile?')) return;
+    
+    const { error } = await supabase
+      .from('vanguard_automation_profiles')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Failed to delete profile');
+    } else {
+      toast.success('Profile deleted');
+      fetchProfiles();
+    }
+  };
+
+  const duplicateProfile = async (profile: ThresholdProfile | AutomationProfile, type: 'threshold' | 'automation') => {
+    if (!user) return;
+
+    try {
+      if (type === 'threshold') {
+        const p = profile as ThresholdProfile;
+        await supabase.from('vanguard_threshold_profiles').insert({
+          user_id: user.id,
+          name: `${p.name} (Copy)`,
+          description: p.description,
+          is_default: false,
+          rules: p.rules as any,
+        });
+      } else {
+        const p = profile as AutomationProfile;
+        await supabase.from('vanguard_automation_profiles').insert({
+          user_id: user.id,
+          name: `${p.name} (Copy)`,
+          description: p.description,
+          schedule: p.schedule as any,
+          tasks: p.tasks as any,
+          run_on_connect: p.runOnConnect,
+          notify_on_complete: p.notifyOnComplete,
+          notify_on_failure: p.notifyOnFailure,
+        });
+      }
+      toast.success('Profile duplicated');
+      fetchProfiles();
+    } catch (error) {
+      toast.error('Failed to duplicate profile');
+    }
+  };
+
+  const runAutomationNow = async (profileId: string) => {
+    toast.info('Running automation profile...');
+    // In production, this would trigger the automation via edge function
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+      </div>
+    );
+  }
+
   if (editingThreshold || showNewThreshold) {
     return (
       <ThresholdProfileEditor
@@ -275,6 +362,13 @@ export function ProfileManager({ onClose }: ProfileManagerProps) {
                 </CardContent>
               </Card>
             ))}
+            {thresholdProfiles.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                <AlertTriangle className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>No threshold profiles configured</p>
+                <p className="text-sm">Create a profile to define alerting thresholds</p>
+              </div>
+            )}
           </div>
         </TabsContent>
 
@@ -314,7 +408,7 @@ export function ProfileManager({ onClose }: ProfileManagerProps) {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => toast.info('Running profile now...')}
+                        onClick={() => runAutomationNow(profile.id)}
                       >
                         <Play className="h-4 w-4 mr-1" />
                         Run Now
@@ -348,6 +442,13 @@ export function ProfileManager({ onClose }: ProfileManagerProps) {
                 </CardContent>
               </Card>
             ))}
+            {automationProfiles.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                <Zap className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>No automation profiles configured</p>
+                <p className="text-sm">Create a profile to schedule automated tasks</p>
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>

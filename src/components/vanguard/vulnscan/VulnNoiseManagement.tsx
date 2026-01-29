@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +12,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { 
-  VolumeX, Filter, Eye, EyeOff, CheckCircle, XCircle, 
-  Clock, AlertTriangle, Search, Trash2, Plus, Calendar
+  VolumeX, Filter, EyeOff, CheckCircle, XCircle, 
+  Clock, AlertTriangle, Search, Trash2, Calendar, Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Vulnerability {
   id: string;
@@ -39,7 +40,7 @@ interface Vulnerability {
 interface SuppressionRule {
   id: string;
   name: string;
-  type: 'false_positive' | 'accepted_risk' | 'addressed' | 'temporary';
+  suppression_type: 'false_positive' | 'accepted_risk' | 'addressed' | 'temporary';
   criteria: {
     cve_ids?: string[];
     titles?: string[];
@@ -47,11 +48,11 @@ interface SuppressionRule {
     services?: string[];
     ports?: number[];
   };
-  reason: string;
-  expiresAt: string | null;
-  createdAt: string;
-  vulnCount: number;
-  isActive: boolean;
+  reason: string | null;
+  expires_at: string | null;
+  created_at: string;
+  vuln_count: number;
+  is_active: boolean;
 }
 
 interface VulnNoiseManagementProps {
@@ -67,21 +68,56 @@ const SUPPRESSION_TYPES = [
 ];
 
 export function VulnNoiseManagement({ vulnerabilities, onVulnUpdate }: VulnNoiseManagementProps) {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("suppress");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedVulns, setSelectedVulns] = useState<Set<string>>(new Set());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Suppression form state
   const [suppressionType, setSuppressionType] = useState<string>("false_positive");
   const [suppressionReason, setSuppressionReason] = useState("");
   const [expirationDate, setExpirationDate] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-
-  // Mock suppression rules (in real impl, stored in DB)
   const [suppressionRules, setSuppressionRules] = useState<SuppressionRule[]>([]);
 
-  // Filter vulnerabilities
+  useEffect(() => {
+    if (user) {
+      fetchSuppressionRules();
+    }
+  }, [user]);
+
+  const fetchSuppressionRules = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('vanguard_vuln_suppression_rules')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setSuppressionRules((data || []).map(r => ({
+        id: r.id,
+        name: r.name,
+        suppression_type: r.suppression_type as SuppressionRule['suppression_type'],
+        criteria: (r.criteria as any) || {},
+        reason: r.reason,
+        expires_at: r.expires_at,
+        created_at: r.created_at,
+        vuln_count: r.vuln_count || 0,
+        is_active: r.is_active,
+      })));
+    } catch (error) {
+      console.error('Error fetching suppression rules:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const filteredVulns = useMemo(() => {
     return vulnerabilities.filter(v => 
       v.status !== 'patched' && 
@@ -90,7 +126,6 @@ export function VulnNoiseManagement({ vulnerabilities, onVulnUpdate }: VulnNoise
     );
   }, [vulnerabilities, searchQuery]);
 
-  // Group by type for bulk actions
   const vulnGroups = useMemo(() => {
     const groups = new Map<string, Vulnerability[]>();
     
@@ -122,65 +157,88 @@ export function VulnNoiseManagement({ vulnerabilities, onVulnUpdate }: VulnNoise
   };
 
   const handleSuppressSelected = async () => {
-    if (selectedVulns.size === 0) {
+    if (!user || selectedVulns.size === 0) {
       toast.error('Select vulnerabilities to suppress');
       return;
     }
 
     setIsSaving(true);
 
-    // Update status to suppressed
-    const suppressedStatus = suppressionType === 'false_positive' ? 'false_positive' :
-                             suppressionType === 'accepted_risk' ? 'accepted_risk' :
-                             suppressionType === 'addressed' ? 'addressed' : 'suppressed';
+    try {
+      const suppressedStatus = suppressionType === 'false_positive' ? 'false_positive' :
+                               suppressionType === 'accepted_risk' ? 'accepted_risk' :
+                               suppressionType === 'addressed' ? 'addressed' : 'suppressed';
 
-    const { error } = await supabase
-      .from('safenet_vulnerabilities')
-      .update({ status: suppressedStatus })
-      .in('id', Array.from(selectedVulns));
+      const { error: updateError } = await supabase
+        .from('safenet_vulnerabilities')
+        .update({ status: suppressedStatus })
+        .in('id', Array.from(selectedVulns));
 
-    if (error) {
-      toast.error('Failed to suppress vulnerabilities');
-    } else {
-      // Create suppression rule
+      if (updateError) throw updateError;
+
       const selectedVulnData = vulnerabilities.filter(v => selectedVulns.has(v.id));
-      const newRule: SuppressionRule = {
-        id: Date.now().toString(),
-        name: `Bulk suppression - ${selectedVulnData[0]?.cve_id || selectedVulnData[0]?.title}`,
-        type: suppressionType as SuppressionRule['type'],
-        criteria: {
-          cve_ids: [...new Set(selectedVulnData.map(v => v.cve_id).filter(Boolean) as string[])],
-          titles: [...new Set(selectedVulnData.map(v => v.title))],
-        },
-        reason: suppressionReason,
-        expiresAt: expirationDate || null,
-        createdAt: new Date().toISOString(),
-        vulnCount: selectedVulns.size,
-        isActive: true,
-      };
       
-      setSuppressionRules([newRule, ...suppressionRules]);
+      const { error: ruleError } = await supabase
+        .from('vanguard_vuln_suppression_rules')
+        .insert({
+          user_id: user.id,
+          name: `Bulk suppression - ${selectedVulnData[0]?.cve_id || selectedVulnData[0]?.title}`,
+          suppression_type: suppressionType,
+          criteria: {
+            cve_ids: [...new Set(selectedVulnData.map(v => v.cve_id).filter(Boolean) as string[])],
+            titles: [...new Set(selectedVulnData.map(v => v.title))],
+          },
+          reason: suppressionReason || null,
+          expires_at: expirationDate ? new Date(expirationDate).toISOString() : null,
+          vuln_count: selectedVulns.size,
+          is_active: true,
+        });
+
+      if (ruleError) throw ruleError;
+
       toast.success(`${selectedVulns.size} vulnerabilities suppressed`);
       setSelectedVulns(new Set());
       setIsDialogOpen(false);
       setSuppressionReason("");
       setExpirationDate("");
+      fetchSuppressionRules();
       onVulnUpdate();
+    } catch (error) {
+      console.error('Error suppressing vulnerabilities:', error);
+      toast.error('Failed to suppress vulnerabilities');
+    } finally {
+      setIsSaving(false);
     }
-
-    setIsSaving(false);
   };
 
-  const toggleRuleActive = (ruleId: string) => {
-    setSuppressionRules(rules => 
-      rules.map(r => r.id === ruleId ? { ...r, isActive: !r.isActive } : r)
-    );
-    toast.success('Rule updated');
+  const toggleRuleActive = async (ruleId: string, currentActive: boolean) => {
+    const { error } = await supabase
+      .from('vanguard_vuln_suppression_rules')
+      .update({ is_active: !currentActive })
+      .eq('id', ruleId);
+
+    if (error) {
+      toast.error('Failed to update rule');
+    } else {
+      toast.success('Rule updated');
+      fetchSuppressionRules();
+    }
   };
 
-  const deleteRule = (ruleId: string) => {
-    setSuppressionRules(rules => rules.filter(r => r.id !== ruleId));
-    toast.success('Rule deleted');
+  const deleteRule = async (ruleId: string) => {
+    if (!confirm('Delete this suppression rule?')) return;
+
+    const { error } = await supabase
+      .from('vanguard_vuln_suppression_rules')
+      .delete()
+      .eq('id', ruleId);
+
+    if (error) {
+      toast.error('Failed to delete rule');
+    } else {
+      toast.success('Rule deleted');
+      fetchSuppressionRules();
+    }
   };
 
   const getSeverityColor = (severity: string) => {
@@ -217,7 +275,7 @@ export function VulnNoiseManagement({ vulnerabilities, onVulnUpdate }: VulnNoise
                 <EyeOff className="h-5 w-5 text-gray-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{suppressionRules.filter(r => r.isActive).length}</p>
+                <p className="text-2xl font-bold">{suppressionRules.filter(r => r.is_active).length}</p>
                 <p className="text-xs text-muted-foreground">Active Rules</p>
               </div>
             </div>
@@ -231,7 +289,7 @@ export function VulnNoiseManagement({ vulnerabilities, onVulnUpdate }: VulnNoise
               </div>
               <div>
                 <p className="text-2xl font-bold">
-                  {suppressionRules.reduce((sum, r) => sum + r.vulnCount, 0)}
+                  {suppressionRules.reduce((sum, r) => sum + r.vuln_count, 0)}
                 </p>
                 <p className="text-xs text-muted-foreground">Suppressed</p>
               </div>
@@ -246,7 +304,7 @@ export function VulnNoiseManagement({ vulnerabilities, onVulnUpdate }: VulnNoise
               </div>
               <div>
                 <p className="text-2xl font-bold">
-                  {suppressionRules.filter(r => r.expiresAt).length}
+                  {suppressionRules.filter(r => r.expires_at).length}
                 </p>
                 <p className="text-xs text-muted-foreground">Temporary</p>
               </div>
@@ -368,7 +426,11 @@ export function VulnNoiseManagement({ vulnerabilities, onVulnUpdate }: VulnNoise
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {suppressionRules.length === 0 ? (
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : suppressionRules.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Filter className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>No suppression rules configured</p>
@@ -380,32 +442,32 @@ export function VulnNoiseManagement({ vulnerabilities, onVulnUpdate }: VulnNoise
                     <div 
                       key={rule.id}
                       className={`flex items-center justify-between p-4 rounded-lg border ${
-                        rule.isActive ? 'bg-card' : 'bg-muted/50 opacity-60'
+                        rule.is_active ? 'bg-card' : 'bg-muted/50 opacity-60'
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <Switch
-                          checked={rule.isActive}
-                          onCheckedChange={() => toggleRuleActive(rule.id)}
+                          checked={rule.is_active}
+                          onCheckedChange={() => toggleRuleActive(rule.id, rule.is_active)}
                         />
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{rule.name}</span>
                             <Badge className={
-                              SUPPRESSION_TYPES.find(t => t.value === rule.type)?.color
+                              SUPPRESSION_TYPES.find(t => t.value === rule.suppression_type)?.color
                             }>
-                              {SUPPRESSION_TYPES.find(t => t.value === rule.type)?.label}
+                              {SUPPRESSION_TYPES.find(t => t.value === rule.suppression_type)?.label}
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {rule.reason || 'No reason provided'} • {rule.vulnCount} vulns suppressed
+                            {rule.reason || 'No reason provided'} • {rule.vuln_count} vulns suppressed
                           </p>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                            <span>Created {formatDistanceToNow(new Date(rule.createdAt), { addSuffix: true })}</span>
-                            {rule.expiresAt && (
+                            <span>Created {formatDistanceToNow(new Date(rule.created_at), { addSuffix: true })}</span>
+                            {rule.expires_at && (
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
-                                Expires {format(new Date(rule.expiresAt), 'MMM d, yyyy')}
+                                Expires {format(new Date(rule.expires_at), 'MMM d, yyyy')}
                               </span>
                             )}
                           </div>
@@ -434,10 +496,10 @@ export function VulnNoiseManagement({ vulnerabilities, onVulnUpdate }: VulnNoise
           <DialogHeader>
             <DialogTitle>Suppress Vulnerabilities</DialogTitle>
             <DialogDescription>
-              Suppress {selectedVulns.size} selected vulnerabilities from dashboards and reports
+              Configure how to suppress {selectedVulns.size} selected vulnerabilities
             </DialogDescription>
           </DialogHeader>
-
+          
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Suppression Type</Label>
@@ -459,7 +521,7 @@ export function VulnNoiseManagement({ vulnerabilities, onVulnUpdate }: VulnNoise
             </div>
 
             <div className="space-y-2">
-              <Label>Reason / Justification</Label>
+              <Label>Reason (optional)</Label>
               <Textarea
                 value={suppressionReason}
                 onChange={(e) => setSuppressionReason(e.target.value)}
@@ -476,9 +538,6 @@ export function VulnNoiseManagement({ vulnerabilities, onVulnUpdate }: VulnNoise
                   value={expirationDate}
                   onChange={(e) => setExpirationDate(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Vulnerabilities will automatically reappear after this date
-                </p>
               </div>
             )}
           </div>
@@ -488,7 +547,17 @@ export function VulnNoiseManagement({ vulnerabilities, onVulnUpdate }: VulnNoise
               Cancel
             </Button>
             <Button onClick={handleSuppressSelected} disabled={isSaving}>
-              {isSaving ? 'Suppressing...' : `Suppress ${selectedVulns.size} Vulns`}
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Suppressing...
+                </>
+              ) : (
+                <>
+                  <VolumeX className="h-4 w-4 mr-2" />
+                  Suppress {selectedVulns.size} Vulnerabilities
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
