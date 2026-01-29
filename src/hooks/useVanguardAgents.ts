@@ -18,6 +18,11 @@ export interface VanguardAgent {
   status: 'online' | 'offline' | 'warning' | 'critical';
   last_heartbeat: string | null;
   config: Record<string, any>;
+  client_id: string | null;
+  os_info?: string;
+  cpu_usage?: number;
+  memory_usage?: number;
+  disk_usage?: number;
   created_at: string;
   updated_at: string;
 }
