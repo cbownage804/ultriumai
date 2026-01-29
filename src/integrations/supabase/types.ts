@@ -19519,12 +19519,18 @@ export type Database = {
           enable_health_status: boolean | null
           enable_knowledge_base: boolean | null
           enable_safepass: boolean | null
+          enable_safescan: boolean | null
+          enable_safetrack: boolean | null
+          enable_safeweb: boolean | null
           enable_tickets: boolean | null
           id: string
           portal_logo_url: string | null
           portal_name: string
           primary_color: string | null
           safepass_subscription_required: boolean | null
+          safescan_subscription_required: boolean | null
+          safetrack_subscription_required: boolean | null
+          safeweb_subscription_required: boolean | null
           support_email: string | null
           support_phone: string | null
           updated_at: string
@@ -19538,12 +19544,18 @@ export type Database = {
           enable_health_status?: boolean | null
           enable_knowledge_base?: boolean | null
           enable_safepass?: boolean | null
+          enable_safescan?: boolean | null
+          enable_safetrack?: boolean | null
+          enable_safeweb?: boolean | null
           enable_tickets?: boolean | null
           id?: string
           portal_logo_url?: string | null
           portal_name?: string
           primary_color?: string | null
           safepass_subscription_required?: boolean | null
+          safescan_subscription_required?: boolean | null
+          safetrack_subscription_required?: boolean | null
+          safeweb_subscription_required?: boolean | null
           support_email?: string | null
           support_phone?: string | null
           updated_at?: string
@@ -19557,12 +19569,18 @@ export type Database = {
           enable_health_status?: boolean | null
           enable_knowledge_base?: boolean | null
           enable_safepass?: boolean | null
+          enable_safescan?: boolean | null
+          enable_safetrack?: boolean | null
+          enable_safeweb?: boolean | null
           enable_tickets?: boolean | null
           id?: string
           portal_logo_url?: string | null
           portal_name?: string
           primary_color?: string | null
           safepass_subscription_required?: boolean | null
+          safescan_subscription_required?: boolean | null
+          safetrack_subscription_required?: boolean | null
+          safeweb_subscription_required?: boolean | null
           support_email?: string | null
           support_phone?: string | null
           updated_at?: string
