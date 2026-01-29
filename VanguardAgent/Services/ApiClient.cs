@@ -213,7 +213,27 @@ public class DeviceInfo
     public double TotalMemoryGb { get; set; }
 
     [JsonProperty("agent_version")]
-    public string AgentVersion { get; set; } = "1.0.0";
+    public string AgentVersion { get; set; } = "1.1.0";
+
+    // Device Classification - Auto-detected
+    [JsonProperty("device_type")]
+    public string DeviceType { get; set; } = "Workstation"; // Server, Workstation, Domain Controller
+
+    [JsonProperty("form_factor")]
+    public string FormFactor { get; set; } = "Desktop"; // Laptop, Desktop, Tablet, All-in-One, Rack Server
+
+    [JsonProperty("is_virtual_machine")]
+    public bool IsVirtualMachine { get; set; } = false;
+
+    // Hardware Details
+    [JsonProperty("manufacturer")]
+    public string Manufacturer { get; set; } = "";
+
+    [JsonProperty("model")]
+    public string Model { get; set; } = "";
+
+    [JsonProperty("serial_number")]
+    public string SerialNumber { get; set; } = "";
 }
 
 public class HeartbeatPayload

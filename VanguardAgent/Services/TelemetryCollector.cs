@@ -67,6 +67,11 @@ public class TelemetryCollector
             AgentVersion = "1.1.0"
         };
 
+        // Detect device type (Server vs Workstation) and form factor (Laptop vs Desktop)
+        info.DeviceType = DetectDeviceType();
+        info.FormFactor = DetectFormFactor();
+        info.IsVirtualMachine = DetectVirtualMachine();
+
         // Get IP and MAC
         try
         {
@@ -101,17 +106,175 @@ public class TelemetryCollector
         // Get total memory
         try
         {
-            using var searcher = new ManagementObjectSearcher("SELECT TotalPhysicalMemory FROM Win32_ComputerSystem");
+            using var searcher = new ManagementObjectSearcher("SELECT TotalPhysicalMemory, Model, Manufacturer FROM Win32_ComputerSystem");
             foreach (var obj in searcher.Get())
             {
                 var bytes = Convert.ToInt64(obj["TotalPhysicalMemory"]);
                 info.TotalMemoryGb = Math.Round(bytes / 1024.0 / 1024.0 / 1024.0, 2);
+                info.Model = obj["Model"]?.ToString() ?? "";
+                info.Manufacturer = obj["Manufacturer"]?.ToString() ?? "";
+                break;
+            }
+        }
+        catch { }
+
+        // Get serial number and BIOS info
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("SELECT SerialNumber FROM Win32_BIOS");
+            foreach (var obj in searcher.Get())
+            {
+                info.SerialNumber = obj["SerialNumber"]?.ToString() ?? "";
                 break;
             }
         }
         catch { }
 
         return info;
+    }
+
+    /// <summary>
+    /// Detect if this is a Server or Workstation OS
+    /// </summary>
+    private string DetectDeviceType()
+    {
+        try
+        {
+            // Method 1: Check ProductType from Win32_OperatingSystem
+            // ProductType: 1 = Workstation, 2 = Domain Controller, 3 = Server
+            using var searcher = new ManagementObjectSearcher("SELECT ProductType, Caption FROM Win32_OperatingSystem");
+            foreach (var obj in searcher.Get())
+            {
+                var productType = Convert.ToInt32(obj["ProductType"]);
+                var caption = obj["Caption"]?.ToString() ?? "";
+
+                if (productType == 2) return "Domain Controller";
+                if (productType == 3) return "Server";
+                
+                // Double-check with OS name for edge cases
+                if (caption.Contains("Server", StringComparison.OrdinalIgnoreCase)) return "Server";
+            }
+            
+            return "Workstation";
+        }
+        catch
+        {
+            // Fallback: check OS description
+            var osDesc = RuntimeInformation.OSDescription;
+            if (osDesc.Contains("Server", StringComparison.OrdinalIgnoreCase)) return "Server";
+            return "Workstation";
+        }
+    }
+
+    /// <summary>
+    /// Detect form factor: Laptop, Desktop, Tablet, or Virtual Machine
+    /// </summary>
+    private string DetectFormFactor()
+    {
+        try
+        {
+            // Method 1: Check chassis type from Win32_SystemEnclosure
+            // ChassisTypes: 3,4,5,6,7,15,16 = Desktop; 8,9,10,11,12,14,18,21 = Laptop/Portable; 30,31,32 = Tablet
+            using var searcher = new ManagementObjectSearcher("SELECT ChassisTypes FROM Win32_SystemEnclosure");
+            foreach (var obj in searcher.Get())
+            {
+                var chassisTypes = obj["ChassisTypes"] as ushort[];
+                if (chassisTypes != null && chassisTypes.Length > 0)
+                {
+                    var chassisType = chassisTypes[0];
+                    
+                    // Laptop/Notebook/Portable
+                    if (new ushort[] { 8, 9, 10, 11, 12, 14, 18, 21 }.Contains(chassisType))
+                        return "Laptop";
+                    
+                    // Desktop/Tower/Mini Tower
+                    if (new ushort[] { 3, 4, 5, 6, 7, 15, 16 }.Contains(chassisType))
+                        return "Desktop";
+                    
+                    // Tablet
+                    if (new ushort[] { 30, 31, 32 }.Contains(chassisType))
+                        return "Tablet";
+                    
+                    // All-in-One
+                    if (chassisType == 13)
+                        return "All-in-One";
+                    
+                    // Blade server or rack mount
+                    if (new ushort[] { 17, 23 }.Contains(chassisType))
+                        return "Rack Server";
+                }
+            }
+            
+            // Method 2: Check for battery (laptops have batteries)
+            using var batterySearcher = new ManagementObjectSearcher("SELECT * FROM Win32_Battery");
+            var batteries = batterySearcher.Get();
+            if (batteries.Count > 0)
+            {
+                return "Laptop";
+            }
+            
+            return "Desktop";
+        }
+        catch
+        {
+            return "Unknown";
+        }
+    }
+
+    /// <summary>
+    /// Detect if running in a virtual machine
+    /// </summary>
+    private bool DetectVirtualMachine()
+    {
+        try
+        {
+            // Check Win32_ComputerSystem Model
+            using var searcher = new ManagementObjectSearcher("SELECT Model, Manufacturer FROM Win32_ComputerSystem");
+            foreach (var obj in searcher.Get())
+            {
+                var model = obj["Model"]?.ToString()?.ToLower() ?? "";
+                var manufacturer = obj["Manufacturer"]?.ToString()?.ToLower() ?? "";
+                
+                // VMware
+                if (model.Contains("vmware") || manufacturer.Contains("vmware"))
+                    return true;
+                
+                // Hyper-V
+                if (model.Contains("virtual machine") || manufacturer.Contains("microsoft corporation"))
+                {
+                    // Check if it's actually Hyper-V
+                    using var baseboardSearcher = new ManagementObjectSearcher("SELECT Product FROM Win32_BaseBoard");
+                    foreach (var bb in baseboardSearcher.Get())
+                    {
+                        var product = bb["Product"]?.ToString()?.ToLower() ?? "";
+                        if (product.Contains("virtual"))
+                            return true;
+                    }
+                }
+                
+                // VirtualBox
+                if (model.Contains("virtualbox") || manufacturer.Contains("innotek"))
+                    return true;
+                
+                // KVM/QEMU
+                if (model.Contains("kvm") || model.Contains("qemu") || manufacturer.Contains("qemu"))
+                    return true;
+                
+                // Xen
+                if (manufacturer.Contains("xen"))
+                    return true;
+                
+                // Parallels
+                if (model.Contains("parallels") || manufacturer.Contains("parallels"))
+                    return true;
+            }
+            
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public HeartbeatPayload CollectHeartbeat()
