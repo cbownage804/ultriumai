@@ -40,6 +40,8 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { UsageSummary } from '@/components/safesuite/UsageMeter';
 import { MFAEnforcementGate } from '@/components/safesuite/MFAEnforcementGate';
+import { InvoiceHistory } from '@/components/billing/InvoiceHistory';
+import { SubscriptionOverview } from '@/components/billing/SubscriptionOverview';
 
 export default function SafeSuiteBilling() {
   const { subscription, tier, tierConfig, loading: subLoading } = useSafeSuiteSubscription();
@@ -309,6 +311,24 @@ export default function SafeSuiteBilling() {
           );
         })}
       </div>
+
+      {/* All Subscriptions Overview */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <SubscriptionOverview />
+      </motion.div>
+
+      {/* Invoice History */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <InvoiceHistory />
+      </motion.div>
 
       {/* FAQ Section */}
       <Card>
