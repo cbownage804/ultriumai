@@ -177,23 +177,60 @@ export const VANGUARD_FEATURE_CATEGORIES: FeatureCategory[] = [
       {
         id: 'ai-copilot',
         name: 'AI Copilot',
-        description: 'AI assistant that summarizes issues, suggests resolutions, and accelerates troubleshooting.',
+        description: 'AI assistant that summarizes issues, generates scripts, suggests resolutions, and accelerates troubleshooting with real-time device diagnostics.',
         icon: Sparkles,
         route: '/vanguard/dashboard',
         isNew: true
       },
       {
+        id: 'ticket-summaries',
+        name: 'Instant Ticket Summaries',
+        description: 'AI-generated summaries of ticket history so technicians can jump straight into resolution without reviewing long threads.',
+        icon: FileText,
+        route: '/vanguard/tickets',
+        isNew: true
+      },
+      {
+        id: 'script-generation',
+        name: 'AI Script Generation',
+        description: 'Turn plain-text instructions into PowerShell, Bash, or Python scripts instantly. No coding required.',
+        icon: Terminal,
+        route: '/vanguard/dashboard'
+      },
+      {
+        id: 'command-generation',
+        name: 'Command-Line Generation',
+        description: 'Describe the problem in simple words and get the exact command to execute on the device.',
+        icon: Terminal,
+        route: '/vanguard/dashboard'
+      },
+      {
+        id: 'kb-auto-generation',
+        name: 'Knowledge Base Auto-Generation',
+        description: 'Automatically generate KB articles from successful ticket resolutions to build an ever-growing solution library.',
+        icon: BookOpen,
+        route: '/vanguard/knowledge',
+        isNew: true
+      },
+      {
+        id: 'session-summaries',
+        name: 'Remote Session Summaries',
+        description: 'Generate itemized summaries of all actions performed during remote support sessions for documentation and billing.',
+        icon: FileText,
+        route: '/vanguard/devices'
+      },
+      {
         id: 'ai-autopilot',
         name: 'AI Autopilot',
-        description: 'Autonomous IT agent that handles tier-1 tickets, common issues, and routine maintenance.',
+        description: 'Autonomous IT agent that handles tier-1 tickets, common issues, and routine maintenance 24/7 without human intervention.',
         icon: Zap,
-        comingSoon: true,
+        route: '/vanguard/dashboard',
         isPremium: true
       },
       {
         id: 'predictive-analytics',
         name: 'Predictive Analytics',
-        description: 'AI-driven predictions for hardware failures, capacity planning, and security risks.',
+        description: 'AI-driven predictions for hardware failures, capacity planning, and security risks before they impact users.',
         icon: Target,
         route: '/vanguard/executive'
       },
@@ -203,6 +240,14 @@ export const VANGUARD_FEATURE_CATEGORIES: FeatureCategory[] = [
         description: 'AI correlates related alerts to reduce noise and identify root causes faster.',
         icon: Bell,
         route: '/vanguard/advanced-alerting'
+      },
+      {
+        id: 'ai-reporting',
+        name: 'AI Performance Analytics',
+        description: 'Track AI Copilot performance to identify where it excels and where to optimize.',
+        icon: BarChart3,
+        route: '/vanguard/reports',
+        isNew: true
       }
     ]
   },
