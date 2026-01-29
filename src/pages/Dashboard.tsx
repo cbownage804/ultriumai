@@ -32,7 +32,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useOnboarding } from "@/hooks/useOnboarding";
-import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
+import { OnboardingFlow, HelpCenter, OnboardingChecklist, WelcomeModal } from "@/components/onboarding";
 import { StudioAssistant } from "@/components/StudioAssistant";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { CreditIndicator } from "@/components/credits/CreditIndicator";
@@ -125,7 +125,14 @@ const Dashboard = () => {
   };
 
   const renderContent = () => {
-    if (isDashboardOverview) return <DashboardOverview />;
+    if (isDashboardOverview) return (
+      <>
+        <div className="px-6 pt-2">
+          <OnboardingChecklist product="ai_studio" />
+        </div>
+        <DashboardOverview />
+      </>
+    );
     if (isUltriumGPTPage) return <div className="p-6"><StudioAssistant /></div>;
     if (isGPTDashboard) return <GPTDashboard />;
     if (isChatPage) return <ChatInterface />;
@@ -165,9 +172,12 @@ const Dashboard = () => {
               <h1 className="text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent animate-glow">{getPageTitle()}</h1>
             </div>
             <CreditIndicator variant="compact" />
+            <HelpCenter />
             <NotificationCenter />
           </header>
           <div className="flex flex-1 flex-col h-[calc(100vh-4rem)]">
+            {/* Welcome modal for first-time users */}
+            <WelcomeModal product="ai-studio" />
             <div className="space-y-4 p-4 animate-fade-in-up stagger-1">
               <HelpBanner />
               <TrialBanner />
