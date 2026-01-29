@@ -1,9 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { 
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
 } from "@/components/ui/select";
-import { Cpu, MemoryStick, HardDrive } from "lucide-react";
+import { Cpu, MemoryStick, HardDrive, Thermometer, Activity } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +10,7 @@ interface MetricData {
   cpu: number;
   memory: number;
   disk: number;
+  temperature?: number;
 }
 
 interface DeviceMetricsWidgetProps {
@@ -43,12 +43,58 @@ export function DeviceMetricsWidget({
 
   const metrics = getMetricsForPeriod();
 
+  const getStatusColor = (value: number) => {
+    if (value >= 90) return "text-red-400";
+    if (value >= 75) return "text-amber-400";
+    return "text-cyan-400";
+  };
+
+  const getProgressColor = (value: number) => {
+    if (value >= 90) return "bg-red-500";
+    if (value >= 75) return "bg-amber-500";
+    return "bg-cyan-500";
+  };
+
+  const metricItems = [
+    { 
+      label: "CPU", 
+      value: metrics.cpu, 
+      icon: Cpu,
+      gradient: "from-cyan-500/20 to-cyan-600/5"
+    },
+    { 
+      label: "Memory", 
+      value: metrics.memory, 
+      icon: MemoryStick,
+      gradient: "from-blue-500/20 to-blue-600/5"
+    },
+    { 
+      label: "Disk", 
+      value: metrics.disk, 
+      icon: HardDrive,
+      gradient: "from-violet-500/20 to-violet-600/5"
+    },
+    { 
+      label: "Temp", 
+      value: metrics.temperature || 45, 
+      icon: Thermometer,
+      gradient: "from-orange-500/20 to-orange-600/5",
+      suffix: "°C",
+      noProgress: true
+    },
+  ];
+
   return (
-    <Card className="bg-white border-gray-200">
+    <Card className="border-0 bg-gradient-to-br from-slate-900/50 to-slate-800/30">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="text-sm font-medium text-gray-500">Metrics</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <div className="p-1.5 rounded-lg bg-cyan-500/10">
+            <Activity className="h-4 w-4 text-cyan-400" />
+          </div>
+          System Metrics
+        </CardTitle>
         <Select value={period} onValueChange={(v) => setPeriod(v as any)}>
-          <SelectTrigger className="w-[120px] h-7 text-xs">
+          <SelectTrigger className="w-[130px] h-8 text-xs bg-white/5 border-white/10">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -59,49 +105,48 @@ export function DeviceMetricsWidget({
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <MetricBar
-          label="CPU"
-          value={metrics.cpu}
-          icon={<Cpu className="h-4 w-4" />}
-        />
-        <MetricBar
-          label="Memory"
-          value={metrics.memory}
-          icon={<MemoryStick className="h-4 w-4" />}
-        />
-        <MetricBar
-          label="Disk"
-          value={metrics.disk}
-          icon={<HardDrive className="h-4 w-4" />}
-        />
+      <CardContent>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {metricItems.map((metric) => (
+            <div 
+              key={metric.label}
+              className={cn(
+                "relative overflow-hidden rounded-xl p-4",
+                "bg-gradient-to-br",
+                metric.gradient
+              )}
+            >
+              <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/5 to-transparent rounded-bl-full" />
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                  <metric.icon className="h-4 w-4 text-cyan-400" />
+                </div>
+                <span className={cn(
+                  "text-2xl font-bold tabular-nums",
+                  getStatusColor(metric.value)
+                )}>
+                  {metric.value.toFixed(0)}{metric.suffix || '%'}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">{metric.label}</p>
+              {!metric.noProgress && (
+                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div 
+                    className={cn("h-full rounded-full transition-all duration-500", getProgressColor(metric.value))}
+                    style={{ width: `${Math.min(metric.value, 100)}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
         
         {period !== 'current' && (
-          <p className="text-xs text-gray-400 text-center">
+          <p className="text-xs text-muted-foreground text-center mt-4">
             Average usage over {period === '24h' ? 'last 24 hours' : period === 'week' ? 'last week' : 'last month'}
           </p>
         )}
       </CardContent>
     </Card>
-  );
-}
-
-function MetricBar({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
-  const percentage = Math.min(100, Math.max(0, value));
-  const color = percentage > 90 ? "bg-red-500" : percentage > 70 ? "bg-yellow-500" : "bg-green-500";
-
-  return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-gray-500 flex items-center gap-2">
-          {icon}
-          {label}
-        </span>
-        <span className="font-medium">{percentage.toFixed(0)}%</span>
-      </div>
-      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-        <div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${percentage}%` }} />
-      </div>
-    </div>
   );
 }
