@@ -130,27 +130,27 @@ const VanguardDashboard = () => {
         <div className="flex items-center gap-2">
           <Button 
             size="sm" 
-            className="gap-2 bg-black/60 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 hover:border-cyan-400/60"
+            className="gap-2 bg-black/60 hover:bg-gradient-to-r hover:from-cyan-500/20 hover:via-blue-500/15 hover:to-purple-500/20 text-cyan-400 border border-transparent bg-clip-padding relative before:absolute before:inset-0 before:rounded-md before:p-[1px] before:bg-gradient-to-r before:from-cyan-400 before:via-blue-500 before:to-purple-600 before:-z-10 before:content-[''] shadow-lg shadow-purple-500/20"
             onClick={() => navigate('/vanguard/setup')}
           >
             <Download className="h-4 w-4" />
             Install agent
           </Button>
           
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/15">
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-purple-500/15">
             <HelpCircle className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/15">
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-purple-500/15">
             <MessageCircle className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/15" onClick={handleRefresh}>
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-purple-500/15" onClick={handleRefresh}>
             <RefreshCw className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-purple-400 hover:bg-purple-500/15 relative">
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-purple-400 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-purple-500/15 relative">
             <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-purple-500 rounded-full ring-2 ring-purple-500/30 animate-pulse" />
+            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-full ring-2 ring-purple-500/30 animate-pulse shadow-lg shadow-purple-500/50" />
           </Button>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-cyan-400 via-purple-500 to-teal-500 flex items-center justify-center text-sm font-medium text-white shadow-lg shadow-purple-500/30">
+          <div className="h-9 w-9 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-purple-500/40">
             U
           </div>
         </div>
