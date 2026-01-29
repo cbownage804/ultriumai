@@ -28,11 +28,12 @@ const getInitialColors = (name: string): { bg: string; text: string; border: str
 
 export function CustomerTicketsWidget({ customers }: CustomerTicketsWidgetProps) {
   return (
-    <Card className="bg-black/80 border-cyan-500/30 backdrop-blur-sm shadow-xl shadow-cyan-500/5">
-      <CardHeader className="pb-2">
+    <Card className="bg-black/80 border-cyan-500/30 backdrop-blur-sm shadow-xl shadow-purple-500/10">
+      <CardHeader className="pb-2 border-b border-purple-500/10">
         <CardTitle className="text-sm font-medium text-cyan-400 flex items-center gap-2">
-          <Users className="h-4 w-4 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)]" />
+          <Users className="h-4 w-4 drop-shadow-[0_0_4px_rgba(168,85,247,0.5)]" />
           Customer tickets
+          <span className="ml-auto text-[9px] text-purple-300 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 px-1.5 py-0.5 rounded-full border border-purple-500/30">{customers.length} active</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-1">
