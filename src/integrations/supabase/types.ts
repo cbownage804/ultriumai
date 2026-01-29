@@ -19661,6 +19661,51 @@ export type Database = {
           },
         ]
       }
+      vanguard_config_policies: {
+        Row: {
+          assigned_devices: number | null
+          assigned_groups: string[] | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          priority: number | null
+          settings: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_devices?: number | null
+          assigned_groups?: string[] | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          priority?: number | null
+          settings?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_devices?: number | null
+          assigned_groups?: string[] | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          priority?: number | null
+          settings?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_csat_responses: {
         Row: {
           client_id: string | null
@@ -20004,6 +20049,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_licenses: {
+        Row: {
+          assigned_to: string[] | null
+          auto_renew: boolean | null
+          category: string | null
+          cost: number | null
+          created_at: string
+          expiration_date: string | null
+          id: string
+          license_key: string | null
+          license_type: string
+          notes: string | null
+          purchase_date: string | null
+          renewal_cost: number | null
+          software_name: string
+          total_seats: number | null
+          updated_at: string
+          used_seats: number | null
+          user_id: string
+          vendor: string | null
+        }
+        Insert: {
+          assigned_to?: string[] | null
+          auto_renew?: boolean | null
+          category?: string | null
+          cost?: number | null
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          license_key?: string | null
+          license_type?: string
+          notes?: string | null
+          purchase_date?: string | null
+          renewal_cost?: number | null
+          software_name: string
+          total_seats?: number | null
+          updated_at?: string
+          used_seats?: number | null
+          user_id: string
+          vendor?: string | null
+        }
+        Update: {
+          assigned_to?: string[] | null
+          auto_renew?: boolean | null
+          category?: string | null
+          cost?: number | null
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          license_key?: string | null
+          license_type?: string
+          notes?: string | null
+          purchase_date?: string | null
+          renewal_cost?: number | null
+          software_name?: string
+          total_seats?: number | null
+          updated_at?: string
+          used_seats?: number | null
+          user_id?: string
+          vendor?: string | null
+        }
+        Relationships: []
       }
       vanguard_m365_mfa_status: {
         Row: {
@@ -20857,6 +20965,110 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_runbook_executions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_step: string | null
+          id: string
+          runbook_id: string | null
+          started_at: string | null
+          status: string
+          step_results: Json | null
+          target_devices: string[] | null
+          triggered_by: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_step?: string | null
+          id?: string
+          runbook_id?: string | null
+          started_at?: string | null
+          status?: string
+          step_results?: Json | null
+          target_devices?: string[] | null
+          triggered_by?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_step?: string | null
+          id?: string
+          runbook_id?: string | null
+          started_at?: string | null
+          status?: string
+          step_results?: Json | null
+          target_devices?: string[] | null
+          triggered_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_runbook_executions_runbook_id_fkey"
+            columns: ["runbook_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_runbooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_runbooks: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          last_run: string | null
+          name: string
+          steps: Json | null
+          success_rate: number | null
+          total_runs: number | null
+          trigger_config: Json | null
+          trigger_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_run?: string | null
+          name: string
+          steps?: Json | null
+          success_rate?: number | null
+          total_runs?: number | null
+          trigger_config?: Json | null
+          trigger_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_run?: string | null
+          name?: string
+          steps?: Json | null
+          success_rate?: number | null
+          total_runs?: number | null
+          trigger_config?: Json | null
+          trigger_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       vanguard_scheduled_reports: {
         Row: {
