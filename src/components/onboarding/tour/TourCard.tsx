@@ -44,17 +44,16 @@ export const TourCard = ({
       if (responsivePosition === 'center' || !highlightRect) {
         return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
       }
-      return 'bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)]';
+      return 'bottom-4 left-1/2 -translate-x-1/2';
     }
 
-    // Tablet adjustments
+    // Tablet adjustments - always center horizontally with safe margins
     if (isTablet) {
       if (responsivePosition === 'center' || !highlightRect) {
         return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
       }
-      if (responsivePosition === 'left' || responsivePosition === 'right') {
-        return 'bottom-6 left-1/2 -translate-x-1/2';
-      }
+      // For all other positions on tablet, center the card at the bottom
+      return 'bottom-6 left-1/2 -translate-x-1/2';
     }
 
     // Desktop positioning
@@ -67,6 +66,13 @@ export const TourCard = ({
     return 'bottom-8 left-1/2 -translate-x-1/2';
   };
 
+  // Width class based on screen size
+  const getWidthClass = () => {
+    if (isMobile) return 'w-[calc(100%-2rem)] max-w-none';
+    if (isTablet) return 'w-[calc(100%-4rem)] max-w-md mx-4';
+    return 'w-full max-w-md';
+  };
+
   return (
     <motion.div
       key={currentStep}
@@ -76,7 +82,7 @@ export const TourCard = ({
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
         'fixed z-[103] p-4',
-        isMobile ? 'w-[calc(100%-2rem)] max-w-none' : 'w-full max-w-md',
+        getWidthClass(),
         getPositionClasses()
       )}
     >
