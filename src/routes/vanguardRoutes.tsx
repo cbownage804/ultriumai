@@ -17,6 +17,7 @@ const VanguardReports = lazy(() => import('@/pages/vanguard/VanguardReports'));
 const VanguardTickets = lazy(() => import('@/pages/vanguard/VanguardTickets'));
 const VanguardTicketDetail = lazy(() => import('@/pages/vanguard/VanguardTicketDetail'));
 const VanguardCustomers = lazy(() => import('@/pages/vanguard/VanguardCustomers'));
+const VanguardCustomerDetail = lazy(() => import('@/pages/vanguard/VanguardCustomerDetail'));
 const VanguardAlerts = lazy(() => import('@/pages/vanguard/VanguardAlerts'));
 const VanguardAppCenter = lazy(() => import('@/pages/vanguard/VanguardAppCenter'));
 const VanguardKnowledge = lazy(() => import('@/pages/vanguard/VanguardKnowledge'));
@@ -107,6 +108,7 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-tickets" path="tickets" element={<LazyProtectedPage component={VanguardTickets} />} />,
   <Route key="vanguard-ticket-detail" path="tickets/:ticketId" element={<LazyProtectedPage component={VanguardTicketDetail} />} />,
   <Route key="vanguard-customers" path="customers" element={<LazyProtectedPage component={VanguardCustomers} />} />,
+  <Route key="vanguard-customer-detail" path="customers/:customerId" element={<LazyProtectedPage component={VanguardCustomerDetail} />} />,
   <Route key="vanguard-alerts" path="alerts" element={<LazyProtectedPage component={VanguardAlerts} />} />,
   <Route key="vanguard-apps" path="apps" element={<LazyProtectedPage component={VanguardAppCenter} />} />,
   <Route key="vanguard-knowledge" path="knowledge" element={<LazyProtectedPage component={VanguardKnowledge} />} />,
