@@ -1,5 +1,5 @@
 /**
- * Tabbed View for separating Pi Appliances from Windows Devices
+ * Tabbed View for separating Recon Units from Windows Devices
  */
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -41,7 +41,7 @@ export function DevicesTabbedView() {
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-black gap-2 px-4 py-2"
           >
             <Cpu className="h-4 w-4" />
-            Pi Appliances
+            Recon Units
             <Badge variant="secondary" className="ml-1 bg-white/10 text-white/80">
               {piAppliances.length}
             </Badge>
