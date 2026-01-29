@@ -21,9 +21,10 @@ interface Password {
 interface DevicePasswordsTabProps {
   agent: VanguardAgent;
   onAddPassword: () => void;
+  onDeletePassword?: (id: string) => Promise<void>;
 }
 
-export function DevicePasswordsTab({ agent, onAddPassword }: DevicePasswordsTabProps) {
+export function DevicePasswordsTab({ agent, onAddPassword, onDeletePassword }: DevicePasswordsTabProps) {
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
   
   // Extract passwords from agent config
@@ -44,8 +45,12 @@ export function DevicePasswordsTab({ agent, onAddPassword }: DevicePasswordsTabP
     toast.success("Password copied to clipboard");
   };
 
-  const handleDelete = (id: string) => {
-    toast.success("Password deleted");
+  const handleDelete = async (id: string) => {
+    if (onDeletePassword) {
+      await onDeletePassword(id);
+    } else {
+      toast.success("Password deleted");
+    }
   };
 
   return (

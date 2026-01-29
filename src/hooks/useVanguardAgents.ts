@@ -213,6 +213,152 @@ export function useVanguardAgent(agentId: string | undefined) {
     };
   }, [agentId, fetchAgent]);
 
+  // Update agent config helper
+  const updateAgentConfig = useCallback(async (configUpdates: Partial<Record<string, any>>) => {
+    if (!agentId || !user || !agent) throw new Error('Not authenticated or no agent');
+
+    const newConfig = { ...agent.config, ...configUpdates };
+    
+    const { error } = await supabase
+      .from('vanguard_agents')
+      .update({ 
+        config: newConfig, 
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', agentId)
+      .eq('user_id', user.id);
+
+    if (error) throw error;
+    
+    // Update local state
+    setAgent(prev => prev ? { ...prev, config: newConfig } : null);
+    
+    return newConfig;
+  }, [agentId, user, agent]);
+
+  // Password management
+  const addPassword = useCallback(async (password: {
+    name: string;
+    username?: string;
+    password: string;
+    notes?: string;
+  }) => {
+    const passwords = agent?.config?.passwords || [];
+    const newPassword = {
+      id: crypto.randomUUID(),
+      ...password,
+      created_at: new Date().toISOString(),
+    };
+    
+    await updateAgentConfig({ passwords: [...passwords, newPassword] });
+    toast.success('Password saved securely');
+    return newPassword;
+  }, [agent, updateAgentConfig]);
+
+  const deletePassword = useCallback(async (passwordId: string) => {
+    const passwords = agent?.config?.passwords || [];
+    const filtered = passwords.filter((p: any) => p.id !== passwordId);
+    await updateAgentConfig({ passwords: filtered });
+    toast.success('Password deleted');
+  }, [agent, updateAgentConfig]);
+
+  // Custom fields management
+  const addCustomField = useCallback(async (field: {
+    name: string;
+    type: string;
+    value: any;
+    options?: string[];
+  }) => {
+    const fields = agent?.config?.custom_fields || [];
+    const newField = {
+      id: crypto.randomUUID(),
+      ...field,
+    };
+    
+    await updateAgentConfig({ custom_fields: [...fields, newField] });
+    toast.success('Custom field added');
+    return newField;
+  }, [agent, updateAgentConfig]);
+
+  const updateCustomField = useCallback(async (fieldId: string, updates: Partial<{
+    name: string;
+    type: string;
+    value: any;
+    options?: string[];
+  }>) => {
+    const fields = agent?.config?.custom_fields || [];
+    const updated = fields.map((f: any) => 
+      f.id === fieldId ? { ...f, ...updates } : f
+    );
+    await updateAgentConfig({ custom_fields: updated });
+    toast.success('Custom field updated');
+  }, [agent, updateAgentConfig]);
+
+  const deleteCustomField = useCallback(async (fieldId: string) => {
+    const fields = agent?.config?.custom_fields || [];
+    const filtered = fields.filter((f: any) => f.id !== fieldId);
+    await updateAgentConfig({ custom_fields: filtered });
+    toast.success('Custom field deleted');
+  }, [agent, updateAgentConfig]);
+
+  // Attachments management
+  const addAttachment = useCallback(async (attachment: {
+    name: string;
+    size: number;
+    type: string;
+    file: File;
+  }) => {
+    // In a real implementation, you would upload the file to storage first
+    // For now, we'll store metadata only
+    const attachments = agent?.config?.attachments || [];
+    const newAttachment = {
+      id: crypto.randomUUID(),
+      name: attachment.name,
+      size: attachment.size,
+      type: attachment.type,
+      uploaded_at: new Date().toISOString(),
+      // In production: store the storage URL here after upload
+    };
+    
+    await updateAgentConfig({ attachments: [...attachments, newAttachment] });
+    toast.success('Attachment added');
+    return newAttachment;
+  }, [agent, updateAgentConfig]);
+
+  const deleteAttachment = useCallback(async (attachmentId: string) => {
+    const attachments = agent?.config?.attachments || [];
+    const filtered = attachments.filter((a: any) => a.id !== attachmentId);
+    await updateAgentConfig({ attachments: filtered });
+    toast.success('Attachment deleted');
+  }, [agent, updateAgentConfig]);
+
+  // Monitored devices management
+  const addMonitoredDevice = useCallback(async (device: {
+    name: string;
+    type: string;
+    ip_address: string;
+    port?: number;
+  }) => {
+    const devices = agent?.config?.monitored_devices || [];
+    const newDevice = {
+      id: crypto.randomUUID(),
+      ...device,
+      status: 'offline' as const,
+      last_checked: new Date().toISOString(),
+    };
+    
+    await updateAgentConfig({ monitored_devices: [...devices, newDevice] });
+    toast.success('Monitored device added');
+    return newDevice;
+  }, [agent, updateAgentConfig]);
+
+  const deleteMonitoredDevice = useCallback(async (deviceId: string) => {
+    const devices = agent?.config?.monitored_devices || [];
+    const filtered = devices.filter((d: any) => d.id !== deviceId);
+    await updateAgentConfig({ monitored_devices: filtered });
+    toast.success('Monitored device removed');
+  }, [agent, updateAgentConfig]);
+
   const askVanguard = async (question: string): Promise<string> => {
     if (!agentId || !user) throw new Error('Not authenticated');
 
@@ -254,5 +400,28 @@ export function useVanguardAgent(agentId: string | undefined) {
     return response.data;
   };
 
-  return { agent, metrics, commands, isLoading, askVanguard, sendCommand, refetch: fetchAgent };
+  return { 
+    agent, 
+    metrics, 
+    commands, 
+    isLoading, 
+    askVanguard, 
+    sendCommand, 
+    refetch: fetchAgent,
+    // Config management
+    updateAgentConfig,
+    // Password CRUD
+    addPassword,
+    deletePassword,
+    // Custom field CRUD
+    addCustomField,
+    updateCustomField,
+    deleteCustomField,
+    // Attachment CRUD
+    addAttachment,
+    deleteAttachment,
+    // Monitored device CRUD
+    addMonitoredDevice,
+    deleteMonitoredDevice,
+  };
 }

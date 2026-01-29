@@ -22,9 +22,10 @@ interface Attachment {
 interface DeviceAttachmentsTabProps {
   agent: VanguardAgent;
   onUpload: () => void;
+  onDeleteAttachment?: (id: string) => Promise<void>;
 }
 
-export function DeviceAttachmentsTab({ agent, onUpload }: DeviceAttachmentsTabProps) {
+export function DeviceAttachmentsTab({ agent, onUpload, onDeleteAttachment }: DeviceAttachmentsTabProps) {
   const [searchQuery, setSearchQuery] = useState("");
   
   // Extract attachments from agent config
@@ -52,8 +53,12 @@ export function DeviceAttachmentsTab({ agent, onUpload }: DeviceAttachmentsTabPr
     toast.success(`Downloading ${attachment.name}...`);
   };
 
-  const handleDelete = (id: string) => {
-    toast.success("Attachment deleted");
+  const handleDelete = async (id: string) => {
+    if (onDeleteAttachment) {
+      await onDeleteAttachment(id);
+    } else {
+      toast.success("Attachment deleted");
+    }
   };
 
   return (

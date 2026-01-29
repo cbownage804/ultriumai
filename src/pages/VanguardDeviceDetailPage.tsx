@@ -59,6 +59,14 @@ import { DeviceProfilesWidget } from "@/components/vanguard/device/widgets/Devic
 import { DeviceShutdownActionsWidget } from "@/components/vanguard/device/widgets/DeviceShutdownActionsWidget";
 import { DeviceActivityLogWidget } from "@/components/vanguard/device/widgets/DeviceActivityLogWidget";
 
+// Dialog Components
+import {
+  AddPasswordDialog,
+  AddCustomFieldDialog,
+  AddAttachmentDialog,
+  AddMonitoredDeviceDialog,
+} from "@/components/vanguard/device/dialogs";
+
 // Widget order for customization
 type WidgetId = 'alert-status' | 'patches' | 'metrics' | 'alerts' | 'profiles' | 'shutdown' | 'activity';
 
@@ -75,14 +83,37 @@ const DEFAULT_WIDGET_ORDER: WidgetId[] = [
 export default function VanguardDeviceDetailPage() {
   const { deviceId } = useParams();
   const navigate = useNavigate();
-  const { agent, metrics, isLoading, refetch } = useVanguardAgent(deviceId);
+  const { 
+    agent, 
+    metrics, 
+    isLoading, 
+    refetch,
+    sendCommand,
+    addPassword,
+    deletePassword,
+    addCustomField,
+    updateCustomField,
+    deleteCustomField,
+    addAttachment,
+    deleteAttachment,
+    addMonitoredDevice,
+    deleteMonitoredDevice,
+  } = useVanguardAgent(deviceId);
   const { clients } = useMSP();
+  
+  // UI State
   const [activeTab, setActiveTab] = useState("overview");
   const [availabilityMonitoring, setAvailabilityMonitoring] = useState(true);
   const [alertsPaused, setAlertsPaused] = useState(false);
   const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(DEFAULT_WIDGET_ORDER);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [draggedWidget, setDraggedWidget] = useState<WidgetId | null>(null);
+  
+  // Dialog State
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showCustomFieldDialog, setShowCustomFieldDialog] = useState(false);
+  const [showAttachmentDialog, setShowAttachmentDialog] = useState(false);
+  const [showMonitoredDeviceDialog, setShowMonitoredDeviceDialog] = useState(false);
 
   // Handlers
   const handleResetLayout = () => {
@@ -117,8 +148,13 @@ export default function VanguardDeviceDetailPage() {
     toast.info("Opening patch management...");
   };
 
-  const handleReboot = () => {
-    toast.success("Reboot command sent");
+  const handleReboot = async () => {
+    try {
+      await sendCommand('reboot');
+      toast.success("Reboot command sent to device");
+    } catch (err) {
+      toast.error("Failed to send reboot command");
+    }
   };
 
   const handleManageProfiles = () => {
@@ -129,12 +165,22 @@ export default function VanguardDeviceDetailPage() {
     toast.info("Opening shutdown scheduler...");
   };
 
-  const handleLogout = () => {
-    toast.success("Logout command sent");
+  const handleLogout = async () => {
+    try {
+      await sendCommand('logout_user');
+      toast.success("Logout command sent");
+    } catch (err) {
+      toast.error("Failed to send logout command");
+    }
   };
 
-  const handleShutdown = () => {
-    toast.success("Shutdown command sent");
+  const handleShutdown = async () => {
+    try {
+      await sendCommand('shutdown');
+      toast.success("Shutdown command sent");
+    } catch (err) {
+      toast.error("Failed to send shutdown command");
+    }
   };
 
   if (isLoading) {
@@ -421,28 +467,32 @@ export default function VanguardDeviceDetailPage() {
               <TabsContent value="custom" className="mt-4">
                 <DeviceCustomFieldsTab 
                   agent={agent} 
-                  onAddField={() => toast.info("Opening custom field editor...")}
+                  onAddField={() => setShowCustomFieldDialog(true)}
+                  onDeleteField={deleteCustomField}
                 />
               </TabsContent>
 
               <TabsContent value="passwords" className="mt-4">
                 <DevicePasswordsTab 
                   agent={agent}
-                  onAddPassword={() => toast.info("Opening password form...")}
+                  onAddPassword={() => setShowPasswordDialog(true)}
+                  onDeletePassword={deletePassword}
                 />
               </TabsContent>
 
               <TabsContent value="attachments" className="mt-4">
                 <DeviceAttachmentsTab 
                   agent={agent}
-                  onUpload={() => toast.info("Opening file uploader...")}
+                  onUpload={() => setShowAttachmentDialog(true)}
+                  onDeleteAttachment={deleteAttachment}
                 />
               </TabsContent>
 
               <TabsContent value="monitored" className="mt-4">
                 <DeviceMonitoredTab 
                   agent={agent}
-                  onAddDevice={() => toast.info("Opening add monitored device form...")}
+                  onAddDevice={() => setShowMonitoredDeviceDialog(true)}
+                  onDeleteDevice={deleteMonitoredDevice}
                 />
               </TabsContent>
             </Tabs>
@@ -474,6 +524,42 @@ export default function VanguardDeviceDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Password Dialog */}
+      <AddPasswordDialog
+        open={showPasswordDialog}
+        onOpenChange={setShowPasswordDialog}
+        onSave={async (password) => {
+          await addPassword(password);
+        }}
+      />
+
+      {/* Add Custom Field Dialog */}
+      <AddCustomFieldDialog
+        open={showCustomFieldDialog}
+        onOpenChange={setShowCustomFieldDialog}
+        onSave={async (field) => {
+          await addCustomField(field);
+        }}
+      />
+
+      {/* Add Attachment Dialog */}
+      <AddAttachmentDialog
+        open={showAttachmentDialog}
+        onOpenChange={setShowAttachmentDialog}
+        onSave={async (attachment) => {
+          await addAttachment(attachment);
+        }}
+      />
+
+      {/* Add Monitored Device Dialog */}
+      <AddMonitoredDeviceDialog
+        open={showMonitoredDeviceDialog}
+        onOpenChange={setShowMonitoredDeviceDialog}
+        onSave={async (device) => {
+          await addMonitoredDevice(device);
+        }}
+      />
     </div>
   );
 }
