@@ -17,13 +17,15 @@ import {
   X,
   Gift,
   ChevronDown,
-  Globe
+  Globe,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getVanguardBasePath } from '@/utils/subdomain';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import vanguardLogo from '@/assets/vanguard-logo.png';
+import safedocLogo from '@/assets/logos/logo-safedoc.png';
 
 interface NavItem {
   title: string;
