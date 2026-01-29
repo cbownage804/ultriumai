@@ -16,6 +16,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Globe,
   Ticket,
   Heart,
@@ -36,6 +42,10 @@ import {
   Phone,
   Mail,
   ExternalLink,
+  Scan,
+  Eye,
+  MapPin,
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -46,6 +56,8 @@ export default function EndUserPortal() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [customerEmail, setCustomerEmail] = useState("");
   const [accessCode, setAccessCode] = useState("");
+  const [safePassOpen, setSafePassOpen] = useState(false);
+  const [safeScanOpen, setSafeScanOpen] = useState(false);
 
   // Demo portal settings
   const portalSettings = {
@@ -57,6 +69,12 @@ export default function EndUserPortal() {
     enable_knowledge_base: true,
     enable_safepass: true,
     safepass_subscription_required: true,
+    enable_safescan: true,
+    safescan_subscription_required: true,
+    enable_safeweb: true,
+    safeweb_subscription_required: true,
+    enable_safetrack: true,
+    safetrack_subscription_required: true,
     support_email: "support@example.com",
     support_phone: "+1 (555) 123-4567",
   };
@@ -297,8 +315,26 @@ export default function EndUserPortal() {
               )}
               {portalSettings.enable_safepass && (
                 <TabsTrigger value="safepass" className="data-[state=active]:bg-amber-500/20">
-                  <Shield className="h-4 w-4 mr-2" />
+                  <Lock className="h-4 w-4 mr-2" />
                   SafePass
+                </TabsTrigger>
+              )}
+              {portalSettings.enable_safescan && (
+                <TabsTrigger value="safescan" className="data-[state=active]:bg-red-500/20">
+                  <Scan className="h-4 w-4 mr-2" />
+                  SafeScan
+                </TabsTrigger>
+              )}
+              {portalSettings.enable_safeweb && (
+                <TabsTrigger value="safeweb" className="data-[state=active]:bg-blue-500/20">
+                  <Eye className="h-4 w-4 mr-2" />
+                  SafeWeb
+                </TabsTrigger>
+              )}
+              {portalSettings.enable_safetrack && (
+                <TabsTrigger value="safetrack" className="data-[state=active]:bg-green-500/20">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  SafeTrack
                 </TabsTrigger>
               )}
             </TabsList>
@@ -746,10 +782,217 @@ export default function EndUserPortal() {
                       </Button>
                     </div>
                   ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                        <div className="flex items-center gap-3">
+                          <Lock className="h-5 w-5 text-amber-400" />
+                          <span className="text-white">Access your password vault</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                            onClick={() => setSafePassOpen(true)}
+                          >
+                            Open Here
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-amber-600 hover:bg-amber-700"
+                            onClick={() => window.open('/safesuite/safepass', '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Open Web
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* SafeScan Tab */}
+            <TabsContent value="safescan">
+              <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-red-500/20">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-red-500/20 flex items-center justify-center">
+                      <Scan className="h-6 w-6 text-red-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-white">SafeScan Vulnerability Scanner</CardTitle>
+                      <CardDescription className="text-slate-400">
+                        Scan your devices for security vulnerabilities
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {portalSettings.safescan_subscription_required ? (
                     <div className="text-center py-12">
-                      <p className="text-slate-400">
-                        SafePass integration would load here for subscribed users
+                      <div className="h-16 w-16 rounded-2xl bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                        <Scan className="h-8 w-8 text-red-400" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-white mb-2">
+                        SafeSuite Subscription Required
+                      </h3>
+                      <p className="text-slate-400 max-w-md mx-auto mb-6">
+                        SafeScan vulnerability scanner is available with an active SafeSuite subscription.
+                        Contact your IT administrator to upgrade.
                       </p>
+                      <Button className="bg-red-600 hover:bg-red-700">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Learn More About SafeSuite
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+                        <div className="flex items-center gap-3">
+                          <Scan className="h-5 w-5 text-red-400" />
+                          <span className="text-white">Run a security scan on your devices</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                            onClick={() => setSafeScanOpen(true)}
+                          >
+                            Open Here
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={() => window.open('/safesuite/safescan', '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Open Web
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* SafeWeb Tab - Opens to Web */}
+            <TabsContent value="safeweb">
+              <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-blue-500/20">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                      <Eye className="h-6 w-6 text-blue-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-white">SafeWeb Dark Web Monitoring</CardTitle>
+                      <CardDescription className="text-slate-400">
+                        Monitor the dark web for your exposed credentials
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {portalSettings.safeweb_subscription_required ? (
+                    <div className="text-center py-12">
+                      <div className="h-16 w-16 rounded-2xl bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
+                        <Eye className="h-8 w-8 text-blue-400" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-white mb-2">
+                        SafeSuite Subscription Required
+                      </h3>
+                      <p className="text-slate-400 max-w-md mx-auto mb-6">
+                        SafeWeb dark web monitoring is available with an active SafeSuite subscription.
+                        Contact your IT administrator to upgrade.
+                      </p>
+                      <Button className="bg-blue-600 hover:bg-blue-700">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Learn More About SafeSuite
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                        <div className="flex items-start gap-3">
+                          <Eye className="h-5 w-5 text-blue-400 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-white font-medium">Dark Web Monitoring Dashboard</p>
+                            <p className="text-sm text-slate-400 mt-1">
+                              SafeWeb opens in the full web application for comprehensive dark web monitoring and alerts.
+                            </p>
+                          </div>
+                          <Button
+                            className="bg-blue-600 hover:bg-blue-700"
+                            onClick={() => window.open('/safesuite/safeweb', '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Open SafeWeb
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* SafeTrack Tab - Opens to Web */}
+            <TabsContent value="safetrack">
+              <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-green-500/20">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+                      <MapPin className="h-6 w-6 text-green-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-white">SafeTrack Asset Manager</CardTitle>
+                      <CardDescription className="text-slate-400">
+                        Track assets and manage warranties
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {portalSettings.safetrack_subscription_required ? (
+                    <div className="text-center py-12">
+                      <div className="h-16 w-16 rounded-2xl bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+                        <MapPin className="h-8 w-8 text-green-400" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-white mb-2">
+                        SafeSuite Subscription Required
+                      </h3>
+                      <p className="text-slate-400 max-w-md mx-auto mb-6">
+                        SafeTrack asset management is available with an active SafeSuite subscription.
+                        Contact your IT administrator to upgrade.
+                      </p>
+                      <Button className="bg-green-600 hover:bg-green-700">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Learn More About SafeSuite
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+                        <div className="flex items-start gap-3">
+                          <MapPin className="h-5 w-5 text-green-400 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-white font-medium">Asset & Warranty Management</p>
+                            <p className="text-sm text-slate-400 mt-1">
+                              SafeTrack opens in the full web application for comprehensive asset tracking and warranty management.
+                            </p>
+                          </div>
+                          <Button
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => window.open('/safesuite/safetrack', '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Open SafeTrack
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -758,6 +1001,58 @@ export default function EndUserPortal() {
           </Tabs>
         </motion.div>
       </main>
+
+      {/* SafePass Popup Modal */}
+      <Dialog open={safePassOpen} onOpenChange={setSafePassOpen}>
+        <DialogContent className="max-w-4xl h-[80vh] bg-slate-900 border-amber-500/30">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Lock className="h-5 w-5 text-amber-400" />
+              SafePass Password Manager
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+            <div className="h-16 w-16 rounded-2xl bg-amber-500/20 flex items-center justify-center mx-auto mb-4">
+              <Lock className="h-8 w-8 text-amber-400" />
+            </div>
+            <h3 className="text-lg font-medium text-white mb-2">SafePass Vault</h3>
+            <p className="text-slate-400 mb-6">Your passwords would load here in the embedded view.</p>
+            <Button
+              className="bg-amber-600 hover:bg-amber-700"
+              onClick={() => window.open('/safesuite/safepass', '_blank')}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Open in Full Window
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* SafeScan Popup Modal */}
+      <Dialog open={safeScanOpen} onOpenChange={setSafeScanOpen}>
+        <DialogContent className="max-w-4xl h-[80vh] bg-slate-900 border-red-500/30">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Scan className="h-5 w-5 text-red-400" />
+              SafeScan Vulnerability Scanner
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+            <div className="h-16 w-16 rounded-2xl bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+              <Scan className="h-8 w-8 text-red-400" />
+            </div>
+            <h3 className="text-lg font-medium text-white mb-2">Security Scanner</h3>
+            <p className="text-slate-400 mb-6">Your vulnerability scan would run here in the embedded view.</p>
+            <Button
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => window.open('/safesuite/safescan', '_blank')}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Open in Full Window
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Footer */}
       <footer className="border-t border-slate-700 mt-12 py-6 px-6">

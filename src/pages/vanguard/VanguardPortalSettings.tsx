@@ -28,6 +28,9 @@ import {
   Lock,
   CheckCircle,
   AlertCircle,
+  Scan,
+  MapPin,
+  Eye,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,6 +46,12 @@ interface PortalSettings {
   enable_knowledge_base: boolean;
   enable_safepass: boolean;
   safepass_subscription_required: boolean;
+  enable_safescan: boolean;
+  safescan_subscription_required: boolean;
+  enable_safeweb: boolean;
+  safeweb_subscription_required: boolean;
+  enable_safetrack: boolean;
+  safetrack_subscription_required: boolean;
   welcome_message: string;
   support_email: string;
   support_phone: string;
@@ -58,6 +67,12 @@ const defaultSettings: PortalSettings = {
   enable_knowledge_base: true,
   enable_safepass: false,
   safepass_subscription_required: true,
+  enable_safescan: false,
+  safescan_subscription_required: true,
+  enable_safeweb: false,
+  safeweb_subscription_required: true,
+  enable_safetrack: false,
+  safetrack_subscription_required: true,
   welcome_message: "Welcome to your IT support portal. How can we help you today?",
   support_email: "",
   support_phone: "",
@@ -100,6 +115,12 @@ export default function VanguardPortalSettings() {
           enable_knowledge_base: data.enable_knowledge_base ?? true,
           enable_safepass: data.enable_safepass ?? false,
           safepass_subscription_required: data.safepass_subscription_required ?? true,
+          enable_safescan: data.enable_safescan ?? false,
+          safescan_subscription_required: data.safescan_subscription_required ?? true,
+          enable_safeweb: data.enable_safeweb ?? false,
+          safeweb_subscription_required: data.safeweb_subscription_required ?? true,
+          enable_safetrack: data.enable_safetrack ?? false,
+          safetrack_subscription_required: data.safetrack_subscription_required ?? true,
           welcome_message: data.welcome_message || defaultSettings.welcome_message,
           support_email: data.support_email || "",
           support_phone: data.support_phone || "",
@@ -241,9 +262,21 @@ export default function VanguardPortalSettings() {
               <Ticket className="h-4 w-4 mr-2" />
               Features
             </TabsTrigger>
-            <TabsTrigger value="safepass" className="data-[state=active]:bg-cyan-500/20">
-              <Shield className="h-4 w-4 mr-2" />
+            <TabsTrigger value="safepass" className="data-[state=active]:bg-amber-500/20">
+              <Lock className="h-4 w-4 mr-2" />
               SafePass
+            </TabsTrigger>
+            <TabsTrigger value="safescan" className="data-[state=active]:bg-red-500/20">
+              <Scan className="h-4 w-4 mr-2" />
+              SafeScan
+            </TabsTrigger>
+            <TabsTrigger value="safeweb" className="data-[state=active]:bg-blue-500/20">
+              <Eye className="h-4 w-4 mr-2" />
+              SafeWeb
+            </TabsTrigger>
+            <TabsTrigger value="safetrack" className="data-[state=active]:bg-green-500/20">
+              <MapPin className="h-4 w-4 mr-2" />
+              SafeTrack
             </TabsTrigger>
             <TabsTrigger value="branding" className="data-[state=active]:bg-cyan-500/20">
               <Palette className="h-4 w-4 mr-2" />
@@ -455,6 +488,216 @@ export default function VanguardPortalSettings() {
                           <p className="mt-1 text-amber-300/80">
                             Customers will need an active SafeSuite subscription to access the password
                             manager. Non-subscribed users will see an upgrade prompt.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* SafeScan Tab */}
+          <TabsContent value="safescan">
+            <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-red-500/20">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-xl bg-red-500/20 flex items-center justify-center">
+                    <Scan className="h-6 w-6 text-red-400" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-white">SafeScan Integration</CardTitle>
+                    <CardDescription className="text-slate-400">
+                      Allow customers to run vulnerability scans from the portal (opens in popup)
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-red-500/30">
+                  <div className="flex items-center gap-3">
+                    <Scan className="h-5 w-5 text-red-400" />
+                    <div>
+                      <p className="text-white font-medium">Enable SafeScan in Portal</p>
+                      <p className="text-sm text-slate-400">
+                        Customers can run security scans (opens in popup with web option)
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={settings.enable_safescan}
+                    onCheckedChange={(checked) => updateSetting("enable_safescan", checked)}
+                  />
+                </div>
+
+                {settings.enable_safescan && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="space-y-4"
+                  >
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-5 w-5 text-green-400" />
+                        <div>
+                          <p className="text-white font-medium">Require SafeSuite Subscription</p>
+                          <p className="text-sm text-slate-400">
+                            Only show SafeScan to customers with active SafeSuite subscription
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={settings.safescan_subscription_required}
+                        onCheckedChange={(checked) =>
+                          updateSetting("safescan_subscription_required", checked)
+                        }
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* SafeWeb Tab */}
+          <TabsContent value="safeweb">
+            <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-blue-500/20">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                    <Eye className="h-6 w-6 text-blue-400" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-white">SafeWeb Integration</CardTitle>
+                    <CardDescription className="text-slate-400">
+                      Dark web monitoring - opens directly to web portal
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-blue-500/30">
+                  <div className="flex items-center gap-3">
+                    <Eye className="h-5 w-5 text-blue-400" />
+                    <div>
+                      <p className="text-white font-medium">Enable SafeWeb in Portal</p>
+                      <p className="text-sm text-slate-400">
+                        Customers can access dark web monitoring (opens in web portal)
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={settings.enable_safeweb}
+                    onCheckedChange={(checked) => updateSetting("enable_safeweb", checked)}
+                  />
+                </div>
+
+                {settings.enable_safeweb && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="space-y-4"
+                  >
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-5 w-5 text-green-400" />
+                        <div>
+                          <p className="text-white font-medium">Require SafeSuite Subscription</p>
+                          <p className="text-sm text-slate-400">
+                            Only show SafeWeb to customers with active SafeSuite subscription
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={settings.safeweb_subscription_required}
+                        onCheckedChange={(checked) =>
+                          updateSetting("safeweb_subscription_required", checked)
+                        }
+                      />
+                    </div>
+
+                    <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                      <div className="flex items-start gap-3">
+                        <ExternalLink className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                        <div className="text-sm text-blue-200">
+                          <p className="font-medium">Opens in Web Portal</p>
+                          <p className="mt-1 text-blue-300/80">
+                            SafeWeb will open directly in the SafeSuite web application for the full dark web monitoring experience.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* SafeTrack Tab */}
+          <TabsContent value="safetrack">
+            <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-green-500/20">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+                    <MapPin className="h-6 w-6 text-green-400" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-white">SafeTrack Integration</CardTitle>
+                    <CardDescription className="text-slate-400">
+                      Asset tracking and warranty management - opens directly to web portal
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-green-500/30">
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-5 w-5 text-green-400" />
+                    <div>
+                      <p className="text-white font-medium">Enable SafeTrack in Portal</p>
+                      <p className="text-sm text-slate-400">
+                        Customers can access asset tracking (opens in web portal)
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={settings.enable_safetrack}
+                    onCheckedChange={(checked) => updateSetting("enable_safetrack", checked)}
+                  />
+                </div>
+
+                {settings.enable_safetrack && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="space-y-4"
+                  >
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-5 w-5 text-green-400" />
+                        <div>
+                          <p className="text-white font-medium">Require SafeSuite Subscription</p>
+                          <p className="text-sm text-slate-400">
+                            Only show SafeTrack to customers with active SafeSuite subscription
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={settings.safetrack_subscription_required}
+                        onCheckedChange={(checked) =>
+                          updateSetting("safetrack_subscription_required", checked)
+                        }
+                      />
+                    </div>
+
+                    <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+                      <div className="flex items-start gap-3">
+                        <ExternalLink className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
+                        <div className="text-sm text-green-200">
+                          <p className="font-medium">Opens in Web Portal</p>
+                          <p className="mt-1 text-green-300/80">
+                            SafeTrack will open directly in the SafeSuite web application for full asset and warranty management.
                           </p>
                         </div>
                       </div>
