@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { safeWindowOpen } from "@/utils/security";
+import { devLog } from "@/lib/logger";
 import { FileText, Upload, Download, Search, AlertCircle, CheckCircle, Clock, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -71,7 +72,7 @@ export const ConversationManager = () => {
       
       setConversations(conversationsWithCount);
     } catch (error) {
-      console.error('Error loading conversations:', error);
+      devLog.error('Error loading conversations:', error);
       toast({
         title: "Error",
         description: "Failed to load conversations",
@@ -88,7 +89,7 @@ export const ConversationManager = () => {
       // For now, we'll simulate with empty array
       setExports([]);
     } catch (error) {
-      console.error('Error loading exports:', error);
+      devLog.error('Error loading exports:', error);
     }
   };
 
@@ -135,7 +136,7 @@ export const ConversationManager = () => {
       
       setSelectedConversations([]);
     } catch (error) {
-      console.error('Error exporting conversations:', error);
+      devLog.error('Error exporting conversations:', error);
       toast({
         title: "Error",
         description: "Failed to export conversations",
@@ -173,7 +174,7 @@ export const ConversationManager = () => {
       setSelectedConversations([]);
       await loadConversations();
     } catch (error) {
-      console.error('Error deleting conversations:', error);
+      devLog.error('Error deleting conversations:', error);
       toast({
         title: "Error",
         description: "Failed to delete conversations",

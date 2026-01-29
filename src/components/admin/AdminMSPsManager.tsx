@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { devLog } from '@/lib/logger';
 import { Search, Edit, Eye, Plus, Building2 } from 'lucide-react';
 
 export const AdminMSPsManager = () => {
@@ -22,7 +23,7 @@ export const AdminMSPsManager = () => {
 
   const fetchMSPs = async () => {
     try {
-      console.log('🔍 Fetching MSPs for admin dashboard...');
+      devLog.log('🔍 Fetching MSPs for admin dashboard...');
       
       // Simplified query to avoid JOIN issues
       const { data, error } = await supabase
@@ -30,12 +31,12 @@ export const AdminMSPsManager = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      console.log('🏢 MSPs data:', { count: data?.length, error: error?.message });
+      devLog.log('🏢 MSPs data:', { count: data?.length, error: error?.message });
 
       if (error) throw error;
       setMsps(data || []);
     } catch (error: any) {
-      console.error('❌ Error fetching MSPs:', error);
+      devLog.error('❌ Error fetching MSPs:', error);
       toast({
         title: "Error",
         description: `Failed to fetch MSPs: ${error.message}`,
