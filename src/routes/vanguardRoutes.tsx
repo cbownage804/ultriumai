@@ -8,7 +8,7 @@ const VanguardLanding = lazy(() => import('@/pages/vanguard/VanguardLanding'));
 const VanguardHome = lazy(() => import('@/pages/vanguard/VanguardHome'));
 const VanguardDashboard = lazy(() => import('@/pages/VanguardDashboard'));
 const VanguardDevicesPage = lazy(() => import('@/pages/VanguardDevicesPage'));
-const VanguardDeviceDetail = lazy(() => import('@/pages/VanguardDeviceDetail'));
+const VanguardDeviceDetailPage = lazy(() => import('@/pages/VanguardDeviceDetailPage'));
 const VanguardSetup = lazy(() => import('@/pages/VanguardSetup'));
 const VanguardAuthPage = lazy(() => import('@/pages/vanguard/VanguardAuthPage'));
 const VanguardReports = lazy(() => import('@/pages/vanguard/VanguardReports'));
@@ -77,7 +77,7 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-home" index element={<LazyProtectedPage component={VanguardHome} />} />,
   <Route key="vanguard-dashboard" path="dashboard" element={<LazyProtectedPage component={VanguardDashboard} />} />,
   <Route key="vanguard-devices" path="devices" element={<LazyProtectedPage component={VanguardDevicesPage} />} />,
-  <Route key="vanguard-device-detail" path="devices/:deviceId" element={<LazyProtectedPage component={VanguardDeviceDetail} />} />,
+  <Route key="vanguard-device-detail" path="devices/:deviceId" element={<LazyProtectedPage component={VanguardDeviceDetailPage} />} />,
   <Route key="vanguard-setup" path="setup" element={<LazyProtectedPage component={VanguardSetup} />} />,
   <Route key="vanguard-threats" path="threats" element={<LazyProtectedPage component={ThreatDetection} />} />,
   <Route key="vanguard-soc" path="soc" element={<LazyProtectedPage component={VanguardSOC} />} />,

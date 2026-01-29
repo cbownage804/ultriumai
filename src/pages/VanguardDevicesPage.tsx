@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { formatDistanceToNow, format } from "date-fns";
 
 export default function VanguardDevicesPage() {
+  const navigate = useNavigate();
   const { agents } = useVanguardAgents();
   const { clients } = useMSP();
   const [searchQuery, setSearchQuery] = useState("");
@@ -259,9 +261,10 @@ export default function VanguardDevicesPage() {
               {filteredDevices.map((device) => (
                 <tr
                   key={device.id}
-                  className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                  className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/vanguard/devices/${device.id}`)}
                 >
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={selectedDevices.includes(device.id)}
                       onCheckedChange={() => toggleDeviceSelection(device.id)}
@@ -270,7 +273,7 @@ export default function VanguardDevicesPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-gray-900">{device.name}</span>
-                      <button className="text-gray-300 hover:text-yellow-400">
+                      <button className="text-gray-300 hover:text-yellow-400" onClick={(e) => e.stopPropagation()}>
                         <Star className="h-4 w-4" />
                       </button>
                     </div>
