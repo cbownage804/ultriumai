@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { devLog } from "@/lib/logger";
 import { 
   Monitor, 
   Shield, 
@@ -115,7 +116,7 @@ export const RMMDashboard = () => {
   };
 
   const handleDownloadInstaller = () => {
-    console.log('Starting RMM Agent download...');
+    devLog.log('Starting RMM Agent download...');
     
     // Simple PowerShell installer - no server calls
     const script = `# Ultrium RMM Agent Installer v2.1 - Demo
@@ -151,9 +152,9 @@ if ($Install) {
       a.download = 'UltriumRMMAgent-Installer.ps1';
       a.click();
       URL.revokeObjectURL(url);
-      console.log('✅ Download completed');
+      devLog.log('✅ Download completed');
     } catch (err) {
-      console.error('Download failed:', err);
+      devLog.error('Download failed:', err);
       alert('Download failed');
     }
   };

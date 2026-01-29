@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { SecuritySettings, AuditLog, SecurityEvent } from "@/types/security";
 import { securitySettingsSchema, validateForm } from "@/utils/validation";
+import { devLog } from "@/lib/logger";
 
 export const useSecurity = () => {
   const { user, session } = useAuth();
@@ -54,7 +55,7 @@ export const useSecurity = () => {
         setSecuritySettings(newSettings as any);
       }
     } catch (error) {
-      console.error('Error loading security settings:', error);
+      devLog.error('Error loading security settings:', error);
       toast({
         title: "Error",
         description: "Failed to load security settings.",
@@ -79,7 +80,7 @@ export const useSecurity = () => {
       if (error) throw error;
       setAuditLogs((data as any) || []);
     } catch (error) {
-      console.error('Error loading audit logs:', error);
+      devLog.error('Error loading audit logs:', error);
     }
   };
 
@@ -101,7 +102,7 @@ export const useSecurity = () => {
       // Refresh audit logs
       await loadAuditLogs();
     } catch (error) {
-      console.error('Error logging security event:', error);
+      devLog.error('Error logging security event:', error);
     }
   };
 
@@ -119,7 +120,7 @@ export const useSecurity = () => {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error setting up 2FA:', error);
+      devLog.error('Error setting up 2FA:', error);
       toast({
         title: "Error",
         description: "Failed to setup two-factor authentication.",
@@ -154,7 +155,7 @@ export const useSecurity = () => {
       await loadSecuritySettings();
       return true;
     } catch (error) {
-      console.error('Error enabling 2FA:', error);
+      devLog.error('Error enabling 2FA:', error);
       toast({
         title: "Error",
         description: "Failed to enable two-factor authentication.",
@@ -189,7 +190,7 @@ export const useSecurity = () => {
       await loadSecuritySettings();
       return true;
     } catch (error) {
-      console.error('Error disabling 2FA:', error);
+      devLog.error('Error disabling 2FA:', error);
       toast({
         title: "Error",
         description: "Failed to disable two-factor authentication.",
@@ -231,7 +232,7 @@ export const useSecurity = () => {
 
       await loadSecuritySettings();
     } catch (error) {
-      console.error('Error updating security settings:', error);
+      devLog.error('Error updating security settings:', error);
       toast({
         title: "Error",
         description: "Failed to update security settings.",

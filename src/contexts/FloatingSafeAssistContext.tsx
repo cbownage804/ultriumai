@@ -9,6 +9,7 @@ import { useConversation } from '@elevenlabs/react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { devLog } from '@/lib/logger';
 
 // Voice minutes by tier (conservative limits)
 const VOICE_MINUTES_BY_TIER: Record<string, number> = {
@@ -68,10 +69,10 @@ export function FloatingSafeAssistProvider({ children }: { children: ReactNode }
   // ElevenLabs voice conversation - shared instance
   const conversation = useConversation({
     onConnect: () => {
-      console.log('Voice connected (shared)');
+      devLog.log('Voice connected (shared)');
     },
     onDisconnect: () => {
-      console.log('Voice disconnected (shared)');
+      devLog.log('Voice disconnected (shared)');
     },
     onMessage: (message: any) => {
       // Handle user transcript
@@ -80,7 +81,7 @@ export function FloatingSafeAssistProvider({ children }: { children: ReactNode }
       }
     },
     onError: (error) => {
-      console.error('Voice error:', error);
+      devLog.error('Voice error:', error);
       toast({
         title: "Voice Error",
         description: "Connection issue. Please try again.",

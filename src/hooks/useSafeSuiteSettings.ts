@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { devLog } from '@/lib/logger';
 
 export interface SafeSuiteUserSettings {
   notifications: {
@@ -74,7 +75,7 @@ export const useSafeSuiteSettings = () => {
       }
     } catch (err) {
       // Settings table may not exist, use defaults
-      console.log('Using default settings');
+      devLog.log('Using default settings');
     } finally {
       setLoading(false);
     }
@@ -107,7 +108,7 @@ export const useSafeSuiteSettings = () => {
       toast.success('Settings saved successfully');
       return true;
     } catch (err) {
-      console.error('Failed to save settings:', err);
+      devLog.error('Failed to save settings:', err);
       toast.error('Failed to save settings');
       return false;
     } finally {
