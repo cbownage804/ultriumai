@@ -16862,7 +16862,7 @@ export type Database = {
           subscription_id: string | null
           subscription_tier: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           cancel_at_period_end?: boolean | null
@@ -16879,7 +16879,7 @@ export type Database = {
           subscription_id?: string | null
           subscription_tier?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           cancel_at_period_end?: boolean | null
@@ -16896,7 +16896,7 @@ export type Database = {
           subscription_id?: string | null
           subscription_tier?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
