@@ -11,6 +11,13 @@ import { AutomationProfileSelector } from './horizon/AutomationProfileSelector';
 import { DeviceTypeBreakdown } from './horizon/DeviceTypeBreakdown';
 import { ResourceTrendingChart } from './horizon/ResourceTrendingChart';
 import { BulkActionsPanel } from './horizon/BulkActionsPanel';
+import { AlertThresholdManager } from './horizon/AlertThresholdManager';
+import { MaintenanceWindowManager } from './horizon/MaintenanceWindowManager';
+import { CommandQueuePanel } from './horizon/CommandQueuePanel';
+import { FleetPerformanceGrid } from './horizon/FleetPerformanceGrid';
+import { RMMReportingDashboard } from './horizon/RMMReportingDashboard';
+import { SoftwareAuditPanel } from './horizon/SoftwareAuditPanel';
+import { NetworkTopologyView } from './horizon/NetworkTopologyView';
 import { 
   Monitor, 
   Server, 
@@ -248,11 +255,15 @@ export function HorizonDashboard() {
 
       {/* Tabs for different views */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-background/50 border">
+        <TabsList className="bg-background/50 border flex-wrap">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="attention">Needs Attention</TabsTrigger>
+          <TabsTrigger value="alerting">Alerting</TabsTrigger>
+          <TabsTrigger value="automation">Automation</TabsTrigger>
+          <TabsTrigger value="network">Network</TabsTrigger>
+          <TabsTrigger value="software">Software</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="attention">Attention</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -589,9 +600,9 @@ export function HorizonDashboard() {
           </Card>
         </TabsContent>
 
-        {/* Security Tab */}
-        <TabsContent value="security" className="space-y-6 mt-6">
-          <div className="grid gap-6 md:grid-cols-2">
+        {/* Alerting Tab */}
+        <TabsContent value="alerting" className="space-y-6 mt-6">
+          <div className="grid gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -649,6 +660,36 @@ export function HorizonDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Alert Threshold Manager */}
+          <AlertThresholdManager />
+        </TabsContent>
+
+        {/* Automation Tab */}
+        <TabsContent value="automation" className="space-y-6 mt-6">
+          {/* Fleet Performance Grid */}
+          <FleetPerformanceGrid />
+
+          {/* Command Queue */}
+          <CommandQueuePanel />
+
+          {/* Maintenance Windows */}
+          <MaintenanceWindowManager />
+        </TabsContent>
+
+        {/* Network Tab */}
+        <TabsContent value="network" className="space-y-6 mt-6">
+          <NetworkTopologyView />
+        </TabsContent>
+
+        {/* Software Tab */}
+        <TabsContent value="software" className="space-y-6 mt-6">
+          <SoftwareAuditPanel />
+        </TabsContent>
+
+        {/* Reports Tab */}
+        <TabsContent value="reports" className="space-y-6 mt-6">
+          <RMMReportingDashboard />
         </TabsContent>
 
         {/* Needs Attention Tab */}
