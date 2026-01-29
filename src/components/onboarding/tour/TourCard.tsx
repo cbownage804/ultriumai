@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { TourProgress } from './TourProgress';
 import { TourStep } from '../ProductTour';
-import { useScreenSize, getResponsivePosition } from '@/hooks/useScreenSize';
+import { useScreenSize } from '@/hooks/useScreenSize';
+import { useMemo } from 'react';
 
 interface TourCardProps {
   step: TourStep;
@@ -18,6 +19,10 @@ interface TourCardProps {
   onStepClick: (step: number) => void;
 }
 
+const CARD_WIDTH = 380;
+const CARD_HEIGHT = 320;
+const SPACING = 16;
+
 export const TourCard = ({
   step,
   currentStep,
@@ -29,63 +34,102 @@ export const TourCard = ({
   onSkip,
   onStepClick,
 }: TourCardProps) => {
-  const { isMobile, isTablet, size } = useScreenSize();
+  const { isMobile, isTablet, width: screenWidth, height: screenHeight } = useScreenSize();
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
 
-  // Get responsive position
-  const responsivePosition = position 
-    ? getResponsivePosition(position, size, highlightRect)
-    : (highlightRect ? 'bottom' : 'center');
-
-  const getPositionClasses = () => {
-    // On mobile, always use bottom or center positioning with safe margins
-    if (isMobile) {
-      if (responsivePosition === 'center' || !highlightRect) {
-        return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
-      }
-      return 'bottom-4 inset-x-4';
+  // Calculate smart position based on highlight rect and available space
+  const cardStyle = useMemo(() => {
+    // No highlight - center the card
+    if (!highlightRect) {
+      return {
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+      };
     }
 
-    // Tablet adjustments - use inset positioning for safe margins
-    if (isTablet) {
-      if (responsivePosition === 'center' || !highlightRect) {
-        return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
-      }
-      // Position at bottom with safe insets on both sides
-      return 'bottom-6 inset-x-4';
+    const cardWidth = isMobile ? screenWidth - 32 : isTablet ? Math.min(CARD_WIDTH, screenWidth - 32) : CARD_WIDTH;
+    const cardHeight = CARD_HEIGHT;
+
+    // Calculate available space in each direction
+    const spaceAbove = highlightRect.top - SPACING;
+    const spaceBelow = screenHeight - highlightRect.bottom - SPACING;
+    const spaceLeft = highlightRect.left - SPACING;
+    const spaceRight = screenWidth - highlightRect.right - SPACING;
+
+    // Determine best position based on preferred position and available space
+    let bestPosition = position || 'bottom';
+    
+    // Check if preferred position works, otherwise find best alternative
+    const canFitBelow = spaceBelow >= cardHeight + SPACING;
+    const canFitAbove = spaceAbove >= cardHeight + SPACING;
+    const canFitRight = spaceRight >= cardWidth + SPACING && !isMobile;
+    const canFitLeft = spaceLeft >= cardWidth + SPACING && !isMobile;
+
+    if (bestPosition === 'bottom' && !canFitBelow) {
+      bestPosition = canFitAbove ? 'top' : canFitRight ? 'right' : canFitLeft ? 'left' : 'bottom';
+    } else if (bestPosition === 'top' && !canFitAbove) {
+      bestPosition = canFitBelow ? 'bottom' : canFitRight ? 'right' : canFitLeft ? 'left' : 'top';
+    } else if (bestPosition === 'right' && !canFitRight) {
+      bestPosition = canFitLeft ? 'left' : canFitBelow ? 'bottom' : canFitAbove ? 'top' : 'right';
+    } else if (bestPosition === 'left' && !canFitLeft) {
+      bestPosition = canFitRight ? 'right' : canFitBelow ? 'bottom' : canFitAbove ? 'top' : 'left';
     }
 
-    // Desktop positioning
-    if (responsivePosition === 'center') return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
-    if (responsivePosition === 'top') return 'top-8 left-1/2 -translate-x-1/2';
-    if (responsivePosition === 'bottom') return 'bottom-8 left-1/2 -translate-x-1/2';
-    if (responsivePosition === 'left') return 'left-8 top-1/2 -translate-y-1/2';
-    if (responsivePosition === 'right') return 'right-8 top-1/2 -translate-y-1/2';
-    if (!highlightRect) return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
-    return 'bottom-8 left-1/2 -translate-x-1/2';
-  };
+    // For mobile/tablet, prefer bottom or top positioning
+    if (isMobile || isTablet) {
+      bestPosition = canFitBelow ? 'bottom' : canFitAbove ? 'top' : 'bottom';
+    }
 
-  // Width class based on screen size
-  const getWidthClass = () => {
-    if (isMobile) return 'w-auto'; // Let inset-x handle width
-    if (isTablet) return 'w-auto max-w-lg mx-auto'; // Center with max-width
-    return 'w-full max-w-md';
-  };
+    // Calculate position coordinates
+    const highlightCenterX = highlightRect.left + highlightRect.width / 2;
+    const highlightCenterY = highlightRect.top + highlightRect.height / 2;
+
+    let top: number | string = 'auto';
+    let left: number | string = 'auto';
+    let transform = '';
+
+    switch (bestPosition) {
+      case 'bottom':
+        top = highlightRect.bottom + SPACING;
+        left = Math.max(16, Math.min(highlightCenterX - cardWidth / 2, screenWidth - cardWidth - 16));
+        break;
+      case 'top':
+        top = highlightRect.top - cardHeight - SPACING;
+        left = Math.max(16, Math.min(highlightCenterX - cardWidth / 2, screenWidth - cardWidth - 16));
+        break;
+      case 'right':
+        top = Math.max(16, Math.min(highlightCenterY - cardHeight / 2, screenHeight - cardHeight - 16));
+        left = highlightRect.right + SPACING;
+        break;
+      case 'left':
+        top = Math.max(16, Math.min(highlightCenterY - cardHeight / 2, screenHeight - cardHeight - 16));
+        left = highlightRect.left - cardWidth - SPACING;
+        break;
+      default:
+        top = highlightRect.bottom + SPACING;
+        left = Math.max(16, Math.min(highlightCenterX - cardWidth / 2, screenWidth - cardWidth - 16));
+    }
+
+    return {
+      top: typeof top === 'number' ? `${top}px` : top,
+      left: typeof left === 'number' ? `${left}px` : left,
+      transform,
+      width: isMobile ? 'calc(100% - 32px)' : `${cardWidth}px`,
+      maxWidth: isMobile ? 'none' : `${cardWidth}px`,
+    };
+  }, [highlightRect, position, isMobile, isTablet, screenWidth, screenHeight]);
 
   return (
     <motion.div
       key={currentStep}
-      initial={{ opacity: 0, y: 30, scale: 0.9 }}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -30, scale: 0.9 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className={cn(
-        'fixed z-[103]',
-        isMobile || isTablet ? '' : 'p-4',
-        getWidthClass(),
-        getPositionClasses()
-      )}
+      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed z-[103]"
+      style={cardStyle}
     >
       {/* Card with glassmorphism */}
       <div className="relative rounded-2xl overflow-hidden">
