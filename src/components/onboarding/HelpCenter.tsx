@@ -147,9 +147,18 @@ export const HelpCenter = () => {
     // Navigate to appropriate page and trigger tour
     const tour = AVAILABLE_TOURS.find(t => t.id === tourId);
     if (tour) {
+      // Get current path to determine context
+      const currentPath = window.location.pathname;
+      const isSafeSuiteContext = currentPath.includes('/safesuite') || currentPath.includes('/pass') || currentPath.includes('/scan') || currentPath.includes('/web') || currentPath.includes('/track');
+      
       switch (tour.product) {
         case 'safesuite':
-          window.location.href = '/safesuite?tour=true';
+          // Stay on SafeSuite dashboard if already there, otherwise navigate
+          if (isSafeSuiteContext) {
+            window.location.href = currentPath.includes('/dashboard') ? `${currentPath}?tour=true` : '/safesuite/dashboard?tour=true';
+          } else {
+            window.location.href = '/safesuite/dashboard?tour=true';
+          }
           break;
         case 'ai-studio':
           window.location.href = '/dashboard?tour=true';

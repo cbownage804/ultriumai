@@ -38,8 +38,10 @@ import {
   ChevronRight,
   ChevronDown,
   Sparkles,
-  Coins
+  Coins,
+  HelpCircle
 } from 'lucide-react';
+import { HelpCenter } from '@/components/onboarding/HelpCenter';
 import { cn } from '@/lib/utils';
 import { FloatingSafeAssist } from '@/components/safeassist/FloatingSafeAssist';
 import { FloatingSafeAssistProvider, useFloatingSafeAssist } from '@/contexts/FloatingSafeAssistContext';
@@ -506,7 +508,9 @@ function SafeSuiteLayoutInner() {
             {/* Desktop spacer */}
             <div className="hidden lg:block" />
 
-            {/* User menu */}
+            {/* Help Center & User menu */}
+            <div className="flex items-center gap-2">
+              <HelpCenter />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2">
@@ -537,6 +541,7 @@ function SafeSuiteLayoutInner() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           </div>
         </header>
 
