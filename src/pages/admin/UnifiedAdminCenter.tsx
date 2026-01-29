@@ -14,7 +14,8 @@ import {
   FileText,
   Building2,
   Share2,
-  UserPlus
+  UserPlus,
+  TrendingUp
 } from 'lucide-react';
 import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { AdminOverviewTab } from '@/components/admin/unified/AdminOverviewTab';
@@ -26,6 +27,7 @@ import { AdminAuditLogTab } from '@/components/admin/unified/AdminAuditLogTab';
 import { MSPCapacityReportingTab } from '@/components/admin/unified/MSPCapacityReportingTab';
 import { SocialMediaManager } from '@/components/social/SocialMediaManager';
 import { LeadManagementTab } from '@/components/admin/unified/LeadManagementTab';
+import { ConversionAnalyticsTab } from '@/components/admin/unified/ConversionAnalyticsTab';
 
 const UnifiedAdminCenter = () => {
   const navigate = useNavigate();
@@ -117,6 +119,10 @@ const UnifiedAdminCenter = () => {
               <UserPlus className="h-4 w-4" />
               Leads
             </TabsTrigger>
+            <TabsTrigger value="conversions" className="gap-2 data-[state=active]:bg-background">
+              <TrendingUp className="h-4 w-4" />
+              Conversions
+            </TabsTrigger>
             <TabsTrigger value="audit-log" className="gap-2 data-[state=active]:bg-background">
               <FileText className="h-4 w-4" />
               Audit Log
@@ -153,6 +159,10 @@ const UnifiedAdminCenter = () => {
 
           <TabsContent value="leads" className="mt-6">
             <LeadManagementTab />
+          </TabsContent>
+
+          <TabsContent value="conversions" className="mt-6">
+            <ConversionAnalyticsTab />
           </TabsContent>
 
           <TabsContent value="audit-log" className="mt-6">

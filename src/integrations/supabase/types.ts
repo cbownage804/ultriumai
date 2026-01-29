@@ -3154,6 +3154,42 @@ export type Database = {
         }
         Relationships: []
       }
+      conversion_goals: {
+        Row: {
+          created_at: string
+          goal_name: string
+          goal_value: number | null
+          id: string
+          metadata: Json | null
+          product: string | null
+          session_id: string
+          source: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          goal_name: string
+          goal_value?: number | null
+          id?: string
+          metadata?: Json | null
+          product?: string | null
+          session_id: string
+          source?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          goal_name?: string
+          goal_value?: number | null
+          id?: string
+          metadata?: Json | null
+          product?: string | null
+          session_id?: string
+          source?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       copilot_conversations: {
         Row: {
           created_at: string
@@ -4573,6 +4609,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      funnel_events: {
+        Row: {
+          created_at: string
+          funnel_name: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          product: string | null
+          session_id: string
+          step_name: string
+          step_order: number
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          funnel_name: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          product?: string | null
+          session_id: string
+          step_name: string
+          step_order: number
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          funnel_name?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          product?: string | null
+          session_id?: string
+          step_name?: string
+          step_order?: number
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       gpt_actions: {
         Row: {
