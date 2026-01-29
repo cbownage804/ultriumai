@@ -35,12 +35,15 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ScannerRoleToggle } from '@/components/vanguard/ScannerRoleToggle';
+import { DiscoveredDevicesPanel, LiveTrafficPanel, ThreatAlertsPanel, VulnerabilityScanPanel } from '@/components/vanguard/recon';
+import { useVanguardScanner } from '@/hooks/useVanguardScanner';
 import { toast } from 'sonner';
 
 export default function VanguardPiDetail() {
   const { agentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
   const { agent, metrics, isLoading, sendCommand, refetch } = useVanguardAgent(agentId);
+  const { discoveredDevices, fetchDiscoveredDevices } = useVanguardScanner();
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
@@ -276,36 +279,38 @@ export default function VanguardPiDetail() {
             lastScan={agent.last_scan_at || null}
             onUpdate={refetch}
           />
+          
+          {/* Discovered Devices */}
+          {agent.is_network_scanner && (
+            <DiscoveredDevicesPanel agentId={agent.id} />
+          )}
+          
+          {/* Vulnerability Scanning */}
+          <VulnerabilityScanPanel agentId={agent.id} discoveredDevices={discoveredDevices} />
         </TabsContent>
 
         {/* Threats Tab */}
         <TabsContent value="threats" className="space-y-4">
-          <Card className="bg-black/40 border-purple-500/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white">
-                <Shield className="h-5 w-5 text-red-400" />
-                Threat Detections
-              </CardTitle>
-              <CardDescription className="text-white/60">
-                Real-time threat monitoring powered by HAILO AI
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {threatCount === 0 ? (
-                <div className="text-center py-12 text-white/40">
-                  <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No threats detected</p>
-                  <p className="text-sm">Your network is secure</p>
-                </div>
-              ) : (
-                <ScrollArea className="h-[400px]">
-                  {agent.threat_detections?.map((threat: any, i: number) => (
-                    <ThreatCard key={i} threat={threat} />
-                  ))}
-                </ScrollArea>
-              )}
-            </CardContent>
-          </Card>
+          <ThreatAlertsPanel 
+            threats={(agent.threat_detections || []).map((t: any, i: number) => ({
+              id: `threat-${i}`,
+              type: t.type || 'unknown',
+              severity: t.severity || 'medium',
+              title: t.title || t.type || 'Security Alert',
+              description: t.description,
+              source_ip: t.source_ip,
+              destination_ip: t.destination_ip,
+              port: t.port,
+              protocol: t.protocol,
+              mitre_tactic: t.mitre_tactic,
+              mitre_technique: t.mitre_technique,
+              detected_at: t.detected_at || new Date().toISOString(),
+              status: t.status || 'active',
+              confidence: t.confidence
+            }))}
+            onResolve={(id) => toast.success(`Threat ${id} marked as resolved`)}
+            onInvestigate={(id) => toast.info(`Opening investigation for ${id}`)}
+          />
         </TabsContent>
 
         {/* Firewall Tab */}
@@ -349,36 +354,11 @@ export default function VanguardPiDetail() {
 
         {/* Traffic Tab */}
         <TabsContent value="traffic" className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <Card className="bg-black/40 border-purple-500/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <Network className="h-5 w-5 text-blue-400" />
-                  Traffic Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <InfoRow label="Total Bytes In" value={formatBytes(trafficStats.bytes_in || 0)} />
-                <InfoRow label="Total Bytes Out" value={formatBytes(trafficStats.bytes_out || 0)} />
-                <InfoRow label="Packets In" value={(trafficStats.packets_in || 0).toLocaleString()} />
-                <InfoRow label="Packets Out" value={(trafficStats.packets_out || 0).toLocaleString()} />
-                <InfoRow label="Active Connections" value={(trafficStats.active_connections || 0).toString()} />
-              </CardContent>
-            </Card>
-
-            <Card className="bg-black/40 border-purple-500/20">
-              <CardHeader>
-                <CardTitle className="text-white">Top Protocols</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <ProtocolBar protocol="HTTPS" percentage={45} color="green" />
-                <ProtocolBar protocol="HTTP" percentage={20} color="blue" />
-                <ProtocolBar protocol="DNS" percentage={15} color="cyan" />
-                <ProtocolBar protocol="SSH" percentage={10} color="purple" />
-                <ProtocolBar protocol="Other" percentage={10} color="slate" />
-              </CardContent>
-            </Card>
-          </div>
+          <LiveTrafficPanel 
+            trafficStats={trafficStats} 
+            networkRxBytes={metrics?.[0]?.network_rx_bytes}
+            networkTxBytes={metrics?.[0]?.network_tx_bytes}
+          />
         </TabsContent>
       </Tabs>
     </div>
