@@ -21,7 +21,9 @@ import {
   ThumbsDown,
   Send,
   RefreshCw,
-  Filter
+  Filter,
+  UserPlus,
+  Building2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -63,6 +65,19 @@ const PRIORITIES = [
   { value: 'critical', label: 'Critical', color: 'bg-destructive' },
 ];
 
+interface MSPClient {
+  id: string;
+  company_name: string;
+}
+
+interface ClientContact {
+  id: string;
+  contact_name: string;
+  email: string;
+  phone: string | null;
+  role: string | null;
+}
+
 export function VanguardServiceDesk() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -74,19 +89,70 @@ export function VanguardServiceDesk() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Customer/Contact state
+  const [clients, setClients] = useState<MSPClient[]>([]);
+  const [contacts, setContacts] = useState<ClientContact[]>([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  
   // New ticket form
   const [newTicket, setNewTicket] = useState({
     title: '',
     description: '',
     category: 'general',
     priority: 'medium',
+    client_id: '',
+    contact_id: '',
     requester_name: '',
     requester_email: ''
   });
 
   useEffect(() => {
     loadTickets();
+    loadClients();
   }, [user]);
+
+  // Load contacts when client changes
+  useEffect(() => {
+    if (newTicket.client_id) {
+      loadContacts(newTicket.client_id);
+    } else {
+      setContacts([]);
+    }
+  }, [newTicket.client_id]);
+
+  const loadClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('msp_clients')
+        .select('id, company_name')
+        .order('company_name');
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error loading clients:', error);
+    }
+  };
+
+  const loadContacts = async (clientId: string) => {
+    setLoadingContacts(true);
+    try {
+      const { data, error } = await supabase
+        .from('client_contacts')
+        .select('id, contact_name, email, phone, role')
+        .eq('client_id', clientId)
+        .eq('is_active', true)
+        .order('contact_name');
+
+      if (error) throw error;
+      setContacts(data || []);
+    } catch (error) {
+      console.error('Error loading contacts:', error);
+      setContacts([]);
+    } finally {
+      setLoadingContacts(false);
+    }
+  };
 
   const loadTickets = async () => {
     if (!user) return;
@@ -147,9 +213,12 @@ export function VanguardServiceDesk() {
         description: '',
         category: 'general',
         priority: 'medium',
+        client_id: '',
+        contact_id: '',
         requester_name: '',
         requester_email: ''
       });
+      setContacts([]);
 
       toast({
         title: "Ticket Created",
@@ -424,6 +493,77 @@ export function VanguardServiceDesk() {
               </DialogHeader>
               
               <div className="space-y-4">
+                {/* Customer Selection */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      Customer
+                    </Label>
+                    <Select 
+                      value={newTicket.client_id} 
+                      onValueChange={(v) => setNewTicket(prev => ({ ...prev, client_id: v, contact_id: '' }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a customer..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border shadow-lg z-50">
+                        {clients.map(client => (
+                          <SelectItem key={client.id} value={client.id}>{client.company_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Contact Dropdown - appears after customer is selected */}
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      Contact
+                      {loadingContacts && <RefreshCw className="h-3 w-3 animate-spin" />}
+                    </Label>
+                    {newTicket.client_id ? (
+                      contacts.length > 0 ? (
+                        <Select 
+                          value={newTicket.contact_id} 
+                          onValueChange={(v) => {
+                            const contact = contacts.find(c => c.id === v);
+                            setNewTicket(prev => ({ 
+                              ...prev, 
+                              contact_id: v,
+                              requester_name: contact?.contact_name || '',
+                              requester_email: contact?.email || ''
+                            }));
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a contact..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border shadow-lg z-50">
+                            {contacts.map(contact => (
+                              <SelectItem key={contact.id} value={contact.id}>
+                                {contact.contact_name} {contact.role && `(${contact.role})`}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start text-muted-foreground"
+                          onClick={() => toast({ title: "Add Contact", description: "Navigate to customer settings to add contacts" })}
+                        >
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          Add Contact
+                        </Button>
+                      )
+                    ) : (
+                      <div className="h-10 px-3 py-2 rounded-md border border-input bg-muted/50 text-muted-foreground text-sm flex items-center">
+                        Select a customer first
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div>
                   <Label>Title</Label>
                   <Input
@@ -453,7 +593,7 @@ export function VanguardServiceDesk() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-background border shadow-lg z-50">
                         {CATEGORIES.map(cat => (
                           <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                         ))}
@@ -470,7 +610,7 @@ export function VanguardServiceDesk() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-background border shadow-lg z-50">
                         {PRIORITIES.map(pri => (
                           <SelectItem key={pri.value} value={pri.value}>{pri.label}</SelectItem>
                         ))}
