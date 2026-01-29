@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,8 @@ import {
   Lightbulb, BookOpen, RefreshCw, Copy, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface TicketSummary {
   id: string;
@@ -22,71 +24,111 @@ interface TicketSummary {
   confidence: number;
 }
 
-const DEMO_SUMMARIES: TicketSummary[] = [
-  {
-    id: '1',
-    ticketTitle: 'Email not syncing on Outlook - Multiple users affected',
-    originalLength: 2847,
-    summary: 'Multiple users at Acme Corp experiencing Outlook sync issues since 9 AM. Affects O365 mailboxes on Windows devices. Autodiscover appears misconfigured after recent DNS changes.',
-    keyPoints: [
-      'Issue started after DNS migration on 01/28',
-      '15 users affected across 3 departments',
-      'Mobile devices working normally',
-      'Autodiscover DNS record pointing to old server'
-    ],
-    suggestedActions: [
-      'Update Autodiscover CNAME record to point to outlook.office365.com',
-      'Clear Outlook profile cache on affected machines',
-      'Verify MX records are correctly configured'
-    ],
-    relatedArticles: [
-      { title: 'Outlook Autodiscover Troubleshooting Guide', relevance: 95 },
-      { title: 'O365 DNS Configuration Best Practices', relevance: 88 }
-    ],
-    generatedAt: '2 min ago',
-    confidence: 94
-  },
-  {
-    id: '2',
-    ticketTitle: 'VPN connection drops intermittently',
-    originalLength: 1523,
-    summary: 'Remote worker experiencing VPN disconnections every 30-45 minutes. Using FortiClient on Windows 11. Issue correlates with ISP-provided router firmware update.',
-    keyPoints: [
-      'Disconnections occur at regular intervals',
-      'No issues when connected via mobile hotspot',
-      'Router firmware updated 3 days ago',
-      'MTU size may be causing fragmentation'
-    ],
-    suggestedActions: [
-      'Adjust VPN MTU settings to 1400',
-      'Contact ISP about UDP port blocking',
-      'Test with previous router firmware if available'
-    ],
-    relatedArticles: [
-      { title: 'FortiClient VPN Stability Issues', relevance: 91 },
-      { title: 'MTU Configuration for VPN Tunnels', relevance: 85 }
-    ],
-    generatedAt: '5 min ago',
-    confidence: 87
-  }
-];
+interface RecentTicket {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  created_at: string;
+}
 
 export function AITicketSummarizer() {
-  const [summaries] = useState<TicketSummary[]>(DEMO_SUMMARIES);
-  const [selectedSummary, setSelectedSummary] = useState<TicketSummary | null>(DEMO_SUMMARIES[0]);
+  const { user } = useAuth();
+  const [summaries, setSummaries] = useState<TicketSummary[]>([]);
+  const [recentTickets, setRecentTickets] = useState<RecentTicket[]>([]);
+  const [selectedSummary, setSelectedSummary] = useState<TicketSummary | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [ticketContent, setTicketContent] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const handleGenerateSummary = async () => {
-    if (!ticketContent.trim()) {
-      toast.error('Please paste ticket content first');
+  useEffect(() => {
+    if (user) {
+      fetchRecentTickets();
+    }
+  }, [user]);
+
+  const fetchRecentTickets = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('id, title, description, status, created_at')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setRecentTickets(data || []);
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateSummary = async (ticketId?: string, content?: string) => {
+    const textToAnalyze = content || ticketContent;
+    if (!textToAnalyze.trim()) {
+      toast.error('Please paste ticket content or select a ticket');
       return;
     }
+    
     setIsGenerating(true);
-    // Simulate AI processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    toast.success('Summary generated successfully');
-    setIsGenerating(false);
+    try {
+      const { data, error } = await supabase.functions.invoke('vanguard-ai-ticket-processor', {
+        body: {
+          action: 'process_ticket',
+          ticketId: ticketId || 'manual',
+          ticketData: {
+            title: 'Manual Analysis',
+            description: textToAnalyze,
+            category: 'General',
+            priority: 'medium'
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      const newSummary: TicketSummary = {
+        id: Date.now().toString(),
+        ticketTitle: ticketId ? recentTickets.find(t => t.id === ticketId)?.title || 'Analyzed Ticket' : 'Manual Analysis',
+        originalLength: textToAnalyze.length,
+        summary: data.solution || data.analysis || 'Summary generated',
+        keyPoints: data.keyPoints || extractKeyPoints(data.solution || data.analysis || ''),
+        suggestedActions: data.suggestedActions || extractActions(data.solution || data.analysis || ''),
+        relatedArticles: data.relatedArticles || [],
+        generatedAt: 'Just now',
+        confidence: data.confidence || 85
+      };
+
+      setSummaries(prev => [newSummary, ...prev]);
+      setSelectedSummary(newSummary);
+      toast.success('Summary generated successfully');
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      toast.error('Failed to generate summary');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const extractKeyPoints = (text: string): string[] => {
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 20);
+    return sentences.slice(0, 4).map(s => s.trim());
+  };
+
+  const extractActions = (text: string): string[] => {
+    const actionWords = ['should', 'need to', 'recommend', 'suggest', 'must', 'consider'];
+    const sentences = text.split(/[.!?]+/);
+    return sentences
+      .filter(s => actionWords.some(w => s.toLowerCase().includes(w)))
+      .slice(0, 3)
+      .map(s => s.trim());
+  };
+
+  const handleSelectTicket = (ticket: RecentTicket) => {
+    setTicketContent(`Title: ${ticket.title}\n\nDescription: ${ticket.description}`);
+    handleGenerateSummary(ticket.id, `Title: ${ticket.title}\n\nDescription: ${ticket.description}`);
   };
 
   const copyToClipboard = (text: string) => {
@@ -115,164 +157,197 @@ export function AITicketSummarizer() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Input Section */}
-        <Card className="bg-black/80 border-cyan-500/30">
-          <CardHeader>
-            <CardTitle className="text-cyan-400 text-sm">Paste Ticket Content</CardTitle>
-            <CardDescription className="text-slate-400">
-              Paste the ticket thread or conversation to generate a summary
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Textarea
-              placeholder="Paste ticket content, emails, or chat transcripts here..."
-              className="min-h-[200px] bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-500"
-              value={ticketContent}
-              onChange={(e) => setTicketContent(e.target.value)}
-            />
-            <Button
-              onClick={handleGenerateSummary}
-              disabled={isGenerating}
-              className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Generate Summary
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <Card className="bg-black/80 border-cyan-500/30">
+            <CardHeader>
+              <CardTitle className="text-cyan-400 text-sm">Paste Ticket Content</CardTitle>
+              <CardDescription className="text-slate-400">
+                Paste the ticket thread or conversation to generate a summary
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Textarea
+                placeholder="Paste ticket content, emails, or chat transcripts here..."
+                className="min-h-[150px] bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-500"
+                value={ticketContent}
+                onChange={(e) => setTicketContent(e.target.value)}
+              />
+              <Button
+                onClick={() => handleGenerateSummary()}
+                disabled={isGenerating}
+                className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generate Summary
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
 
-        {/* Recent Summaries */}
-        <Card className="bg-black/80 border-cyan-500/30">
+          {/* Recent Tickets */}
+          <Card className="bg-black/80 border-cyan-500/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-cyan-400 text-sm">Or Select Recent Ticket</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[200px]">
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
+                  </div>
+                ) : recentTickets.length === 0 ? (
+                  <p className="text-slate-500 text-sm text-center py-4">No recent tickets found</p>
+                ) : (
+                  <div className="space-y-2">
+                    {recentTickets.map(ticket => (
+                      <button
+                        key={ticket.id}
+                        onClick={() => handleSelectTicket(ticket)}
+                        className="w-full p-3 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 text-left transition-colors border border-slate-700 hover:border-cyan-500/30"
+                      >
+                        <p className="text-white text-sm font-medium truncate">{ticket.title}</p>
+                        <p className="text-slate-500 text-xs truncate">{ticket.description?.slice(0, 80)}...</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Summary Output */}
+        <Card className="bg-black/80 border-purple-500/30">
           <CardHeader>
-            <CardTitle className="text-purple-400 text-sm">Recent Summaries</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-purple-400 text-sm flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                AI Summary
+              </CardTitle>
+              {selectedSummary && (
+                <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                  {selectedSummary.confidence}% confidence
+                </Badge>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[280px]">
-              <div className="space-y-3">
-                {summaries.map((summary) => (
-                  <div
-                    key={summary.id}
-                    onClick={() => setSelectedSummary(summary)}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                      selectedSummary?.id === summary.id
-                        ? 'bg-cyan-500/10 border-cyan-500/40'
-                        : 'bg-slate-900/50 border-slate-700 hover:border-cyan-500/30'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm text-white font-medium line-clamp-1">
-                        {summary.ticketTitle}
-                      </p>
-                      <Badge variant="outline" className="border-green-500/40 text-green-400 text-xs shrink-0">
-                        {summary.confidence}%
-                      </Badge>
+            {!selectedSummary ? (
+              <div className="text-center py-12">
+                <Sparkles className="h-12 w-12 text-purple-400/30 mx-auto mb-4" />
+                <p className="text-slate-500">Select a ticket or paste content to generate a summary</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-[400px] pr-4">
+                <div className="space-y-4">
+                  {/* Summary */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-white text-sm font-medium">Summary</h4>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-6 text-xs text-slate-400"
+                        onClick={() => copyToClipboard(selectedSummary.summary)}
+                      >
+                        <Copy className="h-3 w-3 mr-1" />Copy
+                      </Button>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {summary.originalLength} chars → {summary.summary.length} chars • {summary.generatedAt}
+                    <p className="text-slate-300 text-sm bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+                      {selectedSummary.summary}
                     </p>
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
+
+                  {/* Key Points */}
+                  {selectedSummary.keyPoints.length > 0 && (
+                    <div>
+                      <h4 className="text-white text-sm font-medium mb-2 flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-400" />
+                        Key Points
+                      </h4>
+                      <ul className="space-y-1.5">
+                        {selectedSummary.keyPoints.map((point, i) => (
+                          <li key={i} className="flex items-start gap-2 text-slate-300 text-sm">
+                            <ArrowRight className="h-4 w-4 text-cyan-400 mt-0.5 shrink-0" />
+                            {point}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Suggested Actions */}
+                  {selectedSummary.suggestedActions.length > 0 && (
+                    <div>
+                      <h4 className="text-white text-sm font-medium mb-2 flex items-center gap-2">
+                        <Lightbulb className="h-4 w-4 text-yellow-400" />
+                        Suggested Actions
+                      </h4>
+                      <ul className="space-y-1.5">
+                        {selectedSummary.suggestedActions.map((action, i) => (
+                          <li key={i} className="flex items-start gap-2 text-slate-300 text-sm">
+                            <span className="text-yellow-400 font-medium">{i + 1}.</span>
+                            {action}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Related Articles */}
+                  {selectedSummary.relatedArticles.length > 0 && (
+                    <div>
+                      <h4 className="text-white text-sm font-medium mb-2 flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-blue-400" />
+                        Related KB Articles
+                      </h4>
+                      <div className="space-y-2">
+                        {selectedSummary.relatedArticles.map((article, i) => (
+                          <div key={i} className="flex items-center justify-between p-2 rounded bg-slate-800/50 border border-slate-700">
+                            <span className="text-cyan-400 text-sm">{article.title}</span>
+                            <Badge variant="outline" className="text-xs">{article.relevance}%</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Selected Summary Details */}
-      {selectedSummary && (
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Summary */}
-          <Card className="bg-black/80 border-cyan-500/30">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-cyan-400 text-sm flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Summary
-              </CardTitle>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 text-slate-400 hover:text-cyan-400"
-                onClick={() => copyToClipboard(selectedSummary.summary)}
-              >
-                <Copy className="h-3.5 w-3.5" />
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-slate-300 leading-relaxed">
-                {selectedSummary.summary}
-              </p>
-              <div className="mt-4 space-y-2">
-                <p className="text-xs text-slate-500 font-medium">Key Points:</p>
-                {selectedSummary.keyPoints.map((point, idx) => (
-                  <div key={idx} className="flex items-start gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-green-400 mt-0.5 shrink-0" />
-                    <span className="text-xs text-slate-400">{point}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Suggested Actions */}
-          <Card className="bg-black/80 border-cyan-500/30">
-            <CardHeader>
-              <CardTitle className="text-amber-400 text-sm flex items-center gap-2">
-                <Lightbulb className="h-4 w-4" />
-                Suggested Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {selectedSummary.suggestedActions.map((action, idx) => (
-                <div
-                  key={idx}
-                  className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20"
+      {/* Previous Summaries */}
+      {summaries.length > 1 && (
+        <Card className="bg-black/80 border-slate-700">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-white text-sm">Previous Summaries</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2 flex-wrap">
+              {summaries.slice(1).map(summary => (
+                <Button
+                  key={summary.id}
+                  variant="outline"
+                  size="sm"
+                  className="border-slate-600 text-slate-300"
+                  onClick={() => setSelectedSummary(summary)}
                 >
-                  <div className="flex items-start gap-2">
-                    <ArrowRight className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                    <span className="text-sm text-slate-300">{action}</span>
-                  </div>
-                </div>
+                  {summary.ticketTitle.slice(0, 30)}...
+                </Button>
               ))}
-            </CardContent>
-          </Card>
-
-          {/* Related KB Articles */}
-          <Card className="bg-black/80 border-cyan-500/30">
-            <CardHeader>
-              <CardTitle className="text-purple-400 text-sm flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                Related Articles
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {selectedSummary.relatedArticles.map((article, idx) => (
-                <div
-                  key={idx}
-                  className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 cursor-pointer hover:bg-purple-500/20 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-300">{article.title}</span>
-                    <Badge variant="outline" className="border-purple-500/40 text-purple-400 text-xs">
-                      {article.relevance}% match
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-              <Button variant="ghost" className="w-full text-purple-400 hover:text-purple-300 hover:bg-purple-500/10">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Find More Articles
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
