@@ -1,279 +1,306 @@
 
-# UltriumAI Platform Rollout Implementation Plan
+
+# Vanguard Recon Unit: Commercialization & Admin Provisioning System
 
 ## Overview
-This plan implements the comprehensive brand and naming consolidation rollout across all 5 phases as specified. All changes are **UI labeling, navigation, and presentation only** — no functionality, enforcement, permissions, or billing logic changes.
+
+This plan outlines the full system for turning your Recon Unit (Raspberry Pi security appliance) into a purchasable product with real pentesting and vulnerability scanning capabilities. It includes an internal admin portal for pre-configuration and order fulfillment.
 
 ---
 
-## Phase 1: Brand & Naming Consolidation
+## Business Model
 
-### 1.1 Vanguard Module Naming Map
-
-The following branded names will be applied throughout the platform:
-
-| Capability | Branded Module Name | Current Label |
-|------------|---------------------|---------------|
-| RMM / Ops Monitoring | **Vanguard Horizon** | Devices, RMM |
-| Security / SOC / Detection | **Vanguard Pursuit** | Alerts, SOC, Threats |
-| Network Discovery | **Vanguard Recon** | Network Discovery |
-| Incident / Helpdesk | **Vanguard Response** | Tickets, Service Desk |
-| AI Copilot | **Vanguard Cortex** | AI Copilot |
-| Knowledge Base | **Vanguard Atlas** | Knowledge Base |
-| Compliance / Reports | **Vanguard Ledger** | Reports, Compliance |
-
-### 1.2 Files to Update
-
-**Navigation Component:**
-- `src/components/vanguard/VanguardNavigation.tsx` — Update all nav item titles to use branded names
-
-**Page Headers (document.title + visible headers):**
-- `src/pages/vanguard/VanguardRMM.tsx` — "Vanguard Horizon"
-- `src/pages/vanguard/VanguardHelpdesk.tsx` — "Vanguard Response"  
-- `src/pages/vanguard/VanguardAlerts.tsx` — "Vanguard Pursuit"
-- `src/pages/vanguard/VanguardKnowledge.tsx` — "Vanguard Atlas"
-- `src/pages/vanguard/VanguardReports.tsx` — "Vanguard Ledger"
-- `src/pages/vanguard/VanguardAIKnowledge.tsx` — "Vanguard Cortex"
-- `src/pages/vanguard/VanguardAISessions.tsx` — "Vanguard Cortex"
-- `src/pages/vanguard/VanguardAIAnalytics.tsx` — "Vanguard Cortex"
-- Network-related pages — "Vanguard Recon"
+**Product: Vanguard Recon™**
+- **Hardware**: Pre-configured Raspberry Pi with security scanning software
+- **Pricing**: One-time hardware + monthly subscription
+  - Hardware: $299-$499 (depending on model)
+  - Monthly: $49/unit (includes scanning, monitoring, updates)
+- **Target**: SMBs and MSP customers who want on-premise network security
 
 ---
 
-## Phase 2: Dashboard & Navigation Alignment
-
-### 2.1 Dashboard Branding
-
-**File:** `src/pages/VanguardDashboard.tsx`
-
-Changes:
-- Rename "Dashboard" title → **"Vanguard Command"**
-- Add subtitle: *"Unified visibility across Horizon, Pursuit, Response, and Cortex"*
-- Update `document.title` to "Vanguard Command | Ultrium Vanguard"
-
-### 2.2 Sidebar Navigation Structure
-
-**File:** `src/components/vanguard/VanguardNavigation.tsx`
-
-Reorganize navigation with semantic grouping headers:
+## System Architecture
 
 ```text
-Vanguard Command (Dashboard)
-
-━━ VANGUARD HORIZON ━━
-  • Devices
-  • Agent Health
-  • Patches
-
-━━ VANGUARD PURSUIT ━━  
-  • Alerts
-  • Threats
-  • SOC
-  • Vulnerabilities
-
-━━ VANGUARD RECON ━━
-  • Network Discovery
-  • Asset Mapping
-
-━━ VANGUARD RESPONSE ━━
-  • Tickets
-  • SLAs
-  • Customers
-
-━━ VANGUARD ATLAS ━━
-  • Knowledge Base
-  • SOPs
-
-━━ VANGUARD LEDGER ━━
-  • Reports
-  • Compliance
-
-━━ VANGUARD CORTEX ━━
-  • AI Dashboard
-  • KB Generator
-  • Session Summaries
-  • AI Analytics
+┌─────────────────────────────────────────────────────────────────┐
+│                    ADMIN PORTAL (Internal Only)                 │
+│                  /admin/recon-provisioning                      │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+│  │   Orders    │  │  Inventory  │  │  Provision  │              │
+│  │  Management │  │   Tracking  │  │   & Ship    │              │
+│  └─────────────┘  └─────────────┘  └─────────────┘              │
+│                                                                 │
+│  • View/manage incoming orders                                  │
+│  • Pre-configure units with customer credentials                │
+│  • Generate activation keys                                     │
+│  • Track shipping & deployment status                           │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    CUSTOMER PURCHASE FLOW                       │
+│                  /vanguard/recon (Public)                       │
+├─────────────────────────────────────────────────────────────────┤
+│  1. Product landing page with capabilities                      │
+│  2. Configuration options (coverage area, add-ons)              │
+│  3. Stripe checkout (hardware + subscription)                   │
+│  4. Order confirmation → triggers admin workflow                │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    SHIPPED RECON UNIT                           │
+├─────────────────────────────────────────────────────────────────┤
+│  • Pre-loaded with customer's activation key                    │
+│  • Connects to Vanguard API on first boot                       │
+│  • Auto-registers with customer's account                       │
+│  • Begins network scanning immediately                          │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-Implementation approach:
-- Add section header dividers using subtle cyan text
-- Keep existing routes unchanged
-- Group items logically under branded headers
+---
 
-### 2.3 Dashboard Widget Grouping
+## Implementation Phases
 
-**File:** `src/pages/VanguardDashboard.tsx`
+### Phase 1: Database Schema (Recon Orders & Inventory)
 
-Add section headers above widget groups:
-- "Vanguard Response — Ticket Status" above TicketStatusWidget
-- "Vanguard Pursuit — Active Threats" above AlertStatusWidget
-- "Vanguard Horizon — Device Health" above AvailabilityMonitoringWidget
-- "Vanguard Cortex — AI Operations" (future AI widget placeholder)
+**New Tables Required:**
+
+1. **`recon_orders`** - Customer orders for Recon Units
+   - `id`, `user_id`, `msp_client_id`, `order_status`, `hardware_tier`
+   - `quantity`, `shipping_address`, `stripe_payment_id`
+   - `created_at`, `shipped_at`, `activated_at`
+
+2. **`recon_inventory`** - Physical unit tracking
+   - `id`, `serial_number`, `mac_address`, `hardware_tier`
+   - `status` (available, assigned, shipped, active, retired)
+   - `assigned_order_id`, `activation_key`
+   - `provisioned_at`, `provisioned_by`
+
+3. **`recon_subscriptions`** - Monthly billing for active units
+   - `id`, `user_id`, `recon_unit_id`, `stripe_subscription_id`
+   - `tier`, `status`, `started_at`, `ends_at`
 
 ---
 
-## Phase 3: Marketing Site & Product Pages
+### Phase 2: Admin Provisioning Portal
 
-### 3.1 Product Pages Verification
+**Route**: `/admin/recon-provisioning` (Internal Only)
 
-Confirm these public routes exist and are accessible:
-- `/products/ai-studio` ✓ (AIStudioProductPage.tsx)
-- `/products/vanguard` ✓ (VanguardProductPage.tsx)  
-- `/products/safesuite` ✓ (SafeSuiteProductPage.tsx)
+**Features:**
 
-### 3.2 Update VanguardProductPage.tsx
+1. **Orders Dashboard**
+   - View all pending orders
+   - Filter by status: Pending → Provisioning → Shipped → Active
+   - Customer details, shipping info, order date
 
-**File:** `src/pages/products/VanguardProductPage.tsx`
+2. **Inventory Management**
+   - Add new units (enter serial number, MAC address)
+   - Track available vs assigned units
+   - View activation status
 
-Changes:
-- Replace "SafeOps™ RMM" → "Vanguard Horizon (RMM & Monitoring)"
-- Replace "SafeDesk™ Helpdesk" → "Vanguard Response (Service Desk)"
-- Add module names to capability cards where appropriate
-- Keep CTAs routing to `/contact` (not `/auth`)
+3. **Provisioning Workflow**
+   - Select order → Assign unit from inventory
+   - Generate unique activation key (tied to customer + unit)
+   - One-click generate config file for flashing
+   - Mark as shipped with tracking number
 
-### 3.3 Navigation Rules
-
-**File:** `src/components/Navigation.tsx`
-
-Verify:
-- Products dropdown routes to `/products/*` pages ✓
-- No auto-redirect to login from product exploration
-- Separate "Dashboard" link for authenticated users ✓
-
----
-
-## Phase 4: Social Content System
-
-No code changes required — this phase defines content rules for the existing social media generator.
-
-**Verification only:**
-- Confirm AI Studio content emphasizes "Business AI Control Plane"
-- Confirm SafeSuite content emphasizes practical security
-- Confirm links route to `/products/*` pages
+4. **Unit Configuration Generator**
+   - Download pre-configured SD card image or config bundle
+   - Includes: customer ID, activation key, API endpoints
+   - Zero-touch deployment ready
 
 ---
 
-## Phase 5: Sales Enablement
+### Phase 3: Customer Purchase Flow
 
-No code changes required — this phase is post-launch documentation work.
+**Route**: `/vanguard/recon` (Public Product Page)
+
+**Page Sections:**
+
+1. **Hero** - "Network Security, On Your Terms"
+2. **Capabilities**
+   - Network Discovery & Asset Mapping
+   - Vulnerability Scanning (CVE detection)
+   - Live Traffic Monitoring
+   - Threat Detection & Alerting
+   - Compliance Reporting
+
+3. **Hardware Tiers**
+   - **Recon Lite** ($299): Pi 4, suitable for <50 devices
+   - **Recon Pro** ($499): Pi 5 w/ AI accelerator, <200 devices
+   
+4. **Subscription Tiers**
+   - **Essential** ($29/mo): Basic scanning, monthly reports
+   - **Professional** ($49/mo): Full scanning, real-time alerts, API access
+   - **Enterprise** ($99/mo): Multi-site, custom rules, white-label reports
+
+5. **Checkout Flow**
+   - Hardware selection + subscription tier
+   - Shipping address collection
+   - Stripe checkout integration
+   - Confirmation email with ETA
+
+---
+
+### Phase 4: Agent Enhancements (Pi-Side)
+
+**Current State**: The Python agent sends heartbeats and basic metrics.
+
+**Enhancements for Real Scanning:**
+
+1. **Network Discovery Module**
+   - ARP scanning for device enumeration
+   - Service detection (nmap-style)
+   - OS fingerprinting
+
+2. **Vulnerability Scanning**
+   - OpenVAS or custom CVE scanner integration
+   - Scheduled scans (daily/weekly)
+   - Results reported to `vanguard_discovered_devices`
+
+3. **Traffic Analysis**
+   - Packet capture for anomaly detection
+   - Protocol distribution logging
+   - Bandwidth monitoring per device
+
+4. **Threat Detection**
+   - Known malicious IP/domain checking
+   - Port scan detection
+   - Unusual traffic pattern alerts
+
+---
+
+### Phase 5: Stripe Integration
+
+**Products to Create:**
+
+1. **Hardware Products**
+   - `prod_recon_lite` - Vanguard Recon Lite ($299)
+   - `prod_recon_pro` - Vanguard Recon Pro ($499)
+
+2. **Subscription Products**
+   - `price_recon_essential` - $29/mo
+   - `price_recon_professional` - $49/mo  
+   - `price_recon_enterprise` - $99/mo
+
+**Checkout Flow:**
+- Single checkout for hardware + first month subscription
+- Subscription auto-renews monthly
+- Unit activation required for subscription to start billing
 
 ---
 
 ## Technical Implementation Details
 
-### Navigation Component Restructure
+### New Files to Create
 
-The VanguardNavigation.tsx will be updated to use a grouped structure:
-
-```typescript
-interface NavGroup {
-  header: string;
-  brandName: string;
-  items: NavItem[];
-}
-
-const navGroups: NavGroup[] = [
-  {
-    header: 'VANGUARD HORIZON',
-    brandName: 'Horizon',
-    items: [
-      { title: 'Devices', path: `${basePath}/devices`, icon: Monitor },
-      { title: 'Patches', path: `${basePath}/patches`, icon: Package },
-    ]
-  },
-  {
-    header: 'VANGUARD PURSUIT',
-    brandName: 'Pursuit',
-    items: [
-      { title: 'Alerts', path: `${basePath}/alerts`, icon: Bell },
-      { title: 'SOC', path: `${basePath}/soc`, icon: Shield },
-      { title: 'Threats', path: `${basePath}/threats`, icon: Target },
-    ]
-  },
-  // ... additional groups
-];
+```text
+src/
+├── pages/
+│   └── admin/
+│       └── ReconProvisioningPage.tsx        # Admin portal
+│   └── vanguard/
+│       └── ReconProductPage.tsx             # Customer-facing product page
+│       └── ReconCheckoutPage.tsx            # Purchase flow
+├── components/
+│   └── admin/
+│       └── recon/
+│           ├── ReconOrdersTable.tsx         # Orders management
+│           ├── ReconInventoryTable.tsx      # Inventory tracking
+│           ├── ReconProvisioningForm.tsx    # Unit provisioning
+│           └── ReconConfigGenerator.tsx     # Config file generator
+│   └── vanguard/
+│       └── recon/
+│           ├── ReconHeroSection.tsx         # Product hero
+│           ├── ReconCapabilities.tsx        # Features showcase
+│           ├── ReconPricingCards.tsx        # Hardware + subscription tiers
+│           └── ReconOrderForm.tsx           # Purchase form
+├── hooks/
+│   └── useReconOrders.ts                    # Order management hook
+│   └── useReconInventory.ts                 # Inventory management hook
+├── config/
+│   └── reconPricing.ts                      # Pricing configuration
+supabase/
+├── migrations/
+│   └── xxx_create_recon_tables.sql          # New tables
+├── functions/
+│   └── recon-order-webhook/                 # Stripe webhook handler
+│   └── recon-activate/                      # Unit activation endpoint
 ```
 
-### Page Header Pattern
+### Database Migration Example
 
-Each page will follow this consistent header pattern:
+```sql
+-- Recon Orders
+CREATE TABLE recon_orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  msp_client_id UUID REFERENCES msp_clients(id),
+  order_status TEXT DEFAULT 'pending',
+  hardware_tier TEXT NOT NULL,
+  subscription_tier TEXT NOT NULL,
+  quantity INTEGER DEFAULT 1,
+  shipping_address JSONB NOT NULL,
+  stripe_payment_intent TEXT,
+  stripe_subscription_id TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  shipped_at TIMESTAMPTZ,
+  tracking_number TEXT,
+  activated_at TIMESTAMPTZ
+);
 
-```typescript
-<div className="flex items-center gap-3">
-  <div className="p-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30">
-    <Icon className="h-6 w-6 text-cyan-400" />
-  </div>
-  <div>
-    <h1 className="text-2xl font-bold text-white">Vanguard {ModuleName}</h1>
-    <p className="text-white/60">{Capability description}</p>
-  </div>
-</div>
+-- Recon Inventory
+CREATE TABLE recon_inventory (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  serial_number TEXT UNIQUE NOT NULL,
+  mac_address TEXT UNIQUE,
+  hardware_tier TEXT NOT NULL,
+  status TEXT DEFAULT 'available',
+  assigned_order_id UUID REFERENCES recon_orders(id),
+  activation_key TEXT UNIQUE,
+  provisioned_at TIMESTAMPTZ,
+  provisioned_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS Policies (admin-only access)
+ALTER TABLE recon_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE recon_inventory ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admin full access to orders"
+  ON recon_orders FOR ALL
+  USING (is_admin_user());
+
+CREATE POLICY "Admin full access to inventory"
+  ON recon_inventory FOR ALL
+  USING (is_admin_user());
 ```
 
 ---
 
-## Files to Modify (Complete List)
+## Recommended Implementation Order
 
-### Phase 1 & 2 (Core Navigation & Branding)
-
-| File | Changes |
-|------|---------|
-| `src/components/vanguard/VanguardNavigation.tsx` | Add grouped structure with branded headers |
-| `src/pages/VanguardDashboard.tsx` | Rename to "Vanguard Command", add section headers |
-| `src/pages/vanguard/VanguardHome.tsx` | Update module cards with branded names |
-| `src/pages/vanguard/VanguardRMM.tsx` | "Vanguard Horizon (Endpoint Management)" |
-| `src/pages/vanguard/VanguardHelpdesk.tsx` | "Vanguard Response (Service Desk)" |
-| `src/pages/vanguard/VanguardAlerts.tsx` | "Vanguard Pursuit (Alerts)" |
-| `src/pages/vanguard/VanguardKnowledge.tsx` | "Vanguard Atlas (Knowledge Base)" |
-| `src/pages/vanguard/VanguardReports.tsx` | "Vanguard Ledger (Reports & Compliance)" |
-| `src/pages/vanguard/VanguardAIKnowledge.tsx` | "Vanguard Cortex (KB Generator)" |
-| `src/pages/vanguard/VanguardAISessions.tsx` | "Vanguard Cortex (Session Summaries)" |
-| `src/pages/vanguard/VanguardAIAnalytics.tsx` | "Vanguard Cortex (AI Analytics)" |
-
-### Phase 3 (Marketing Pages)
-
-| File | Changes |
-|------|---------|
-| `src/pages/products/VanguardProductPage.tsx` | Update SafeOps/SafeDesk branding to Horizon/Response |
+1. **Database tables & RLS** - Foundation for everything
+2. **Admin provisioning portal** - So you can start managing units
+3. **Inventory management** - Track your physical units
+4. **Product pricing config** - Define tiers in code
+5. **Customer product page** - Public-facing sales page
+6. **Stripe integration** - Checkout flow
+7. **Agent enhancements** - Real scanning capabilities (can be done in parallel)
+8. **Activation flow** - Zero-touch deployment
 
 ---
 
-## Acceptance Verification Checklist
+## Summary
 
-### Phase 1
-- [ ] All UI labels reflect finalized module names
-- [ ] No legacy generic labels visible to users
-- [ ] No functionality changes occurred
+This system creates a complete product lifecycle:
+1. **Customer purchases** → Order created, Stripe charged
+2. **Admin provisions** → Assigns inventory, generates config
+3. **Unit shipped** → Customer receives pre-configured device
+4. **First boot** → Auto-activates, begins scanning
+5. **Monthly billing** → Subscription continues while active
 
-### Phase 2  
-- [ ] Dashboard renamed to "Vanguard Command"
-- [ ] New user immediately understands module ownership
-- [ ] Navigation grouped semantically by module
-- [ ] No UI regressions or broken navigation
+The admin portal at `/admin/recon-provisioning` gives you complete control over inventory, orders, and provisioning - visible only to UltriumAI employees.
 
-### Phase 3
-- [ ] Incognito users can fully explore all products
-- [ ] Navigation never surprises users with login
-- [ ] CTAs lead to pricing/contact, not forced auth
-
----
-
-## Implementation Order
-
-1. **VanguardNavigation.tsx** — Core navigation restructure with grouped headers
-2. **VanguardDashboard.tsx** — Rename to Vanguard Command with widget sections
-3. **Individual page files** — Update all page titles and headers
-4. **VanguardHome.tsx** — Update module cards with branded names
-5. **VanguardProductPage.tsx** — Update marketing page branding
-
----
-
-## Constraints Enforced
-
-- ✓ No pricing tier changes
-- ✓ No token/credit/query exposure
-- ✓ No "unlimited" language
-- ✓ No AI capacity visibility
-- ✓ No auto-redirects to login
-- ✓ No backend behavior changes
-- ✓ UI labeling only
