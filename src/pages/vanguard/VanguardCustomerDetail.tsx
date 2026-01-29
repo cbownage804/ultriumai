@@ -13,14 +13,13 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
-  ArrowLeft, Building2, Phone, MapPin, Hash, Globe, Star, Calendar,
-  Users, Monitor, Package, Ticket, AlertTriangle, Key, Paperclip, 
-  Home, MoreHorizontal, Pencil, Plus, Mail, ExternalLink, Copy,
-  CheckCircle, Server, FileText, Shield
+  ArrowLeft, Building2, Phone, MapPin, Hash, Star, Calendar,
+  Package, AlertTriangle, Key, Paperclip, 
+  MoreHorizontal, Pencil, Plus, ExternalLink, Copy,
+  CheckCircle, Server, FileText
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -30,7 +29,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { getVanguardBasePath } from '@/utils/subdomain';
-import { Map } from 'lucide-react';
+import { Map, Monitor, Users } from 'lucide-react';
+import { CustomerTicketsTab } from '@/components/vanguard/CustomerTicketsTab';
 
 // Mock customer data
 const mockCustomer = {
@@ -445,20 +445,10 @@ export default function VanguardCustomerDetail() {
 
           {/* Tickets Tab */}
           <TabsContent value="tickets" className="mt-0">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Open Tickets ({customer.stats.tickets})</CardTitle>
-                <Button size="sm" variant="outline" onClick={() => navigate(`${basePath}/tickets?customer=${customerId}`)}>
-                  View All Tickets
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12 text-gray-500">
-                  <Ticket className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>View tickets for this customer</p>
-                </div>
-              </CardContent>
-            </Card>
+            <CustomerTicketsTab 
+              customerId={customerId || ''} 
+              customerName={customer.name}
+            />
           </TabsContent>
 
           {/* Alerts Tab */}
