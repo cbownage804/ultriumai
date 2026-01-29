@@ -3,20 +3,67 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Shield, Radar, Server, Cloud, ArrowRight } from "lucide-react";
+import { Check, Shield, Radar, Server, Cloud, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import vanguardLogo from '@/assets/vanguard-logo.png';
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { useConversionTracking } from "@/hooks/useConversionTracking";
+import { RequestDemoForm } from "@/components/marketing/RequestDemoForm";
 
 const VanguardPricing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const { trackPricingView, trackPlanSelect, trackCheckoutStart } = useConversionTracking();
+
+  // Track pricing page view
+  useEffect(() => {
+    trackPricingView('vanguard');
+  }, [trackPricingView]);
+
+  const handleCheckout = async (tier: 'starter' | 'professional') => {
+    if (!user) {
+      navigate('/auth?redirect=' + encodeURIComponent('/pricing/vanguard'));
+      return;
+    }
+
+    trackPlanSelect(tier, 'vanguard');
+    setCheckoutLoading(tier);
+    
+    try {
+      // Track checkout start
+      const amount = tier === 'starter' ? 19900 : 49900;
+      trackCheckoutStart(tier, amount, 'vanguard');
+
+      const { data, error } = await supabase.functions.invoke('vanguard-checkout', {
+        body: { 
+          tier,
+          seats: 1,
+          includeOnboarding: true
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      toast.error('Failed to start checkout. Please try again.');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
 
   const handleGetStarted = () => {
     if (user) {
       navigate('/vanguard');
     } else {
-      navigate('/auth');
+      navigate('/auth?redirect=' + encodeURIComponent('/pricing/vanguard'));
     }
   };
 
@@ -73,8 +120,17 @@ const VanguardPricing = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-8 pt-0">
-                <Button variant="outline" className="w-full" onClick={handleGetStarted}>
-                  Start Free Trial
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={() => handleCheckout('starter')}
+                  disabled={checkoutLoading === 'starter'}
+                >
+                  {checkoutLoading === 'starter' ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...</>
+                  ) : (
+                    'Start Free Trial'
+                  )}
                 </Button>
               </CardFooter>
             </Card>
@@ -110,8 +166,16 @@ const VanguardPricing = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-8 pt-0">
-                <Button className="w-full bg-orange-500 hover:bg-orange-600" onClick={handleGetStarted}>
-                  Start Pro Trial
+                <Button 
+                  className="w-full bg-orange-500 hover:bg-orange-600" 
+                  onClick={() => handleCheckout('professional')}
+                  disabled={checkoutLoading === 'professional'}
+                >
+                  {checkoutLoading === 'professional' ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...</>
+                  ) : (
+                    'Start Pro Trial'
+                  )}
                 </Button>
               </CardFooter>
             </Card>
@@ -144,9 +208,10 @@ const VanguardPricing = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-8 pt-0">
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/contact">Contact Sales</Link>
-                </Button>
+                <RequestDemoForm 
+                  defaultProduct="vanguard" 
+                  triggerLabel="Contact Sales"
+                />
               </CardFooter>
             </Card>
           </div>

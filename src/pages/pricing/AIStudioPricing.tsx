@@ -10,27 +10,44 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { MSP_PLANS, TEAM_PLANS, WEBSITE_PLANS } from "@/types/aiStudioCredits";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useConversionTracking } from "@/hooks/useConversionTracking";
 
 const AIStudioPricing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { subscription, isLoading: subscriptionLoading } = useSubscription();
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const { trackPricingView, trackPlanSelect, trackCheckoutStart } = useConversionTracking();
 
   const isSubscribed = subscription?.subscribed;
 
+  // Track pricing page view
+  useEffect(() => {
+    trackPricingView('ai_studio');
+  }, [trackPricingView]);
+
   const handleGetStarted = async (planId?: string) => {
     if (!user) {
-      navigate('/auth');
+      navigate('/auth?redirect=' + encodeURIComponent('/pricing/ai-studio'));
       return;
     }
 
     // If user is already subscribed, go to checkout to upgrade
     if (planId) {
+      trackPlanSelect(planId, 'ai_studio');
       setCheckoutLoading(planId);
+      
       try {
+        // Get amount for tracking based on plan
+        const planAmounts: Record<string, number> = {
+          msp_starter: 9900, msp_pro: 24900, msp_elite: 49900, platform_pro: 99900,
+          team_basic: 4900, team_plus: 14900,
+          website_basic: 2900, website_pro: 7900,
+        };
+        trackCheckoutStart(planId, planAmounts[planId] || 0, 'ai_studio');
+        
         const { data, error } = await supabase.functions.invoke('ai-studio-checkout', {
           body: { plan_id: planId }
         });
