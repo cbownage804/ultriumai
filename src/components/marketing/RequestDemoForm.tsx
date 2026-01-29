@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { Calendar, Building2, Users, Mail, Phone, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useConversionTracking } from "@/hooks/useConversionTracking";
 
 const demoRequestSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required").max(50),
@@ -51,6 +52,14 @@ export const RequestDemoForm = ({
 }: RequestDemoFormProps) => {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { trackFunnelStep, trackDemoRequest } = useConversionTracking();
+
+  // Track demo form view when dialog opens
+  useEffect(() => {
+    if (open) {
+      trackFunnelStep('demo_request', 'demo_form_view', { product: defaultProduct });
+    }
+  }, [open, defaultProduct, trackFunnelStep]);
 
   const {
     register,
@@ -68,6 +77,9 @@ export const RequestDemoForm = ({
   const onSubmit = async (data: DemoRequestData) => {
     setIsSubmitting(true);
     try {
+      // Track funnel step
+      trackFunnelStep('demo_request', 'demo_submit', { product: data.product });
+
       // Use type assertion for the new lead_captures table
       const { error } = await (supabase as any).from('lead_captures').insert({
         first_name: data.firstName,
@@ -83,6 +95,9 @@ export const RequestDemoForm = ({
       });
 
       if (error) throw error;
+
+      // Track conversion
+      trackDemoRequest(data.product);
 
       toast.success("Demo request submitted!", {
         description: "Our team will contact you within 24 hours.",
