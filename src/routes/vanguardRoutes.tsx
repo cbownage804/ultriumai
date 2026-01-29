@@ -13,6 +13,16 @@ const VanguardSetup = lazy(() => import('@/pages/VanguardSetup'));
 const VanguardAuthPage = lazy(() => import('@/pages/vanguard/VanguardAuthPage'));
 const VanguardReports = lazy(() => import('@/pages/vanguard/VanguardReports'));
 
+// New navigation pages
+const VanguardTickets = lazy(() => import('@/pages/vanguard/VanguardTickets'));
+const VanguardCustomers = lazy(() => import('@/pages/vanguard/VanguardCustomers'));
+const VanguardAlerts = lazy(() => import('@/pages/vanguard/VanguardAlerts'));
+const VanguardAppCenter = lazy(() => import('@/pages/vanguard/VanguardAppCenter'));
+const VanguardKnowledge = lazy(() => import('@/pages/vanguard/VanguardKnowledge'));
+const VanguardBilling = lazy(() => import('@/pages/vanguard/VanguardBilling'));
+const VanguardAdmin = lazy(() => import('@/pages/vanguard/VanguardAdmin'));
+const VanguardReferrals = lazy(() => import('@/pages/vanguard/VanguardReferrals'));
+
 // Lazy load dedicated page components
 const ThreatDetection = lazy(() => import('@/components/security/ThreatDetection').then(m => ({ default: m.ThreatDetection })));
 const VanguardSOC = lazy(() => import('@/components/vanguard/VanguardSOC').then(m => ({ default: m.VanguardSOC })));
@@ -90,6 +100,15 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-advanced-alerting" path="advanced-alerting" element={<LazyProtectedPage component={AdvancedAlertingPanel} />} />,
   <Route key="vanguard-agent-analytics" path="agent-analytics" element={<LazyProtectedPage component={AgentFleetAnalytics} />} />,
   <Route key="vanguard-scheduled-reports" path="scheduled-reports" element={<LazyProtectedPage component={AgentReportGenerator} />} />,
+  // Navigation routes
+  <Route key="vanguard-tickets" path="tickets" element={<LazyProtectedPage component={VanguardTickets} />} />,
+  <Route key="vanguard-customers" path="customers" element={<LazyProtectedPage component={VanguardCustomers} />} />,
+  <Route key="vanguard-alerts" path="alerts" element={<LazyProtectedPage component={VanguardAlerts} />} />,
+  <Route key="vanguard-apps" path="apps" element={<LazyProtectedPage component={VanguardAppCenter} />} />,
+  <Route key="vanguard-knowledge" path="knowledge" element={<LazyProtectedPage component={VanguardKnowledge} />} />,
+  <Route key="vanguard-billing" path="billing" element={<LazyProtectedPage component={VanguardBilling} />} />,
+  <Route key="vanguard-admin" path="admin" element={<LazyProtectedPage component={VanguardAdmin} />} />,
+  <Route key="vanguard-referrals" path="referrals" element={<LazyProtectedPage component={VanguardReferrals} />} />,
   // New feature routes
   <Route key="vanguard-threat-intel" path="threat-intel" element={<LazyProtectedPage component={ThreatIntelligence} />} />,
   <Route key="vanguard-dark-web" path="dark-web" element={<LazyProtectedPage component={DarkWebMonitor} />} />,
