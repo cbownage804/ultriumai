@@ -180,7 +180,7 @@ export function DeviceAlertsWidget({
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => onLaunchCopilot?.(alert.id)}>
                             <Sparkles className="h-4 w-4 mr-2 text-cyan-400" />
-                            Launch Copilot
+                            Launch Cortex
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => onCreateTicket?.(alert.id)}>
                             <Ticket className="h-4 w-4 mr-2" />
