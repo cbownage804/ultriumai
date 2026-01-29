@@ -6,7 +6,8 @@ import { VanguardAccessGate } from './VanguardAccessGate';
 export function VanguardLayout() {
   return (
     <VanguardAccessGate>
-      <div className="min-h-screen bg-gradient-to-br from-[#0a1a1a] via-[#0f2525] to-[#0a1a1a]">
+      {/* Force dark theme for Vanguard */}
+      <div className="dark min-h-screen bg-gradient-to-br from-[#0a1a1a] via-[#0f2525] to-[#0a1a1a]">
         {/* Navigation Sidebar */}
         <VanguardNavigation />
 
