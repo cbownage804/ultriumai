@@ -39,21 +39,21 @@ export const TourCard = ({
     : (highlightRect ? 'bottom' : 'center');
 
   const getPositionClasses = () => {
-    // On mobile, always use bottom or center positioning
+    // On mobile, always use bottom or center positioning with safe margins
     if (isMobile) {
       if (responsivePosition === 'center' || !highlightRect) {
         return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
       }
-      return 'bottom-4 left-1/2 -translate-x-1/2';
+      return 'bottom-4 inset-x-4';
     }
 
-    // Tablet adjustments - always center horizontally with safe margins
+    // Tablet adjustments - use inset positioning for safe margins
     if (isTablet) {
       if (responsivePosition === 'center' || !highlightRect) {
         return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
       }
-      // For all other positions on tablet, center the card at the bottom
-      return 'bottom-6 left-1/2 -translate-x-1/2';
+      // Position at bottom with safe insets on both sides
+      return 'bottom-6 inset-x-4';
     }
 
     // Desktop positioning
@@ -68,8 +68,8 @@ export const TourCard = ({
 
   // Width class based on screen size
   const getWidthClass = () => {
-    if (isMobile) return 'w-[calc(100%-2rem)] max-w-none';
-    if (isTablet) return 'w-[calc(100%-4rem)] max-w-md mx-4';
+    if (isMobile) return 'w-auto'; // Let inset-x handle width
+    if (isTablet) return 'w-auto max-w-lg mx-auto'; // Center with max-width
     return 'w-full max-w-md';
   };
 
@@ -81,7 +81,8 @@ export const TourCard = ({
       exit={{ opacity: 0, y: -30, scale: 0.9 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
-        'fixed z-[103] p-4',
+        'fixed z-[103]',
+        isMobile || isTablet ? '' : 'p-4',
         getWidthClass(),
         getPositionClasses()
       )}
