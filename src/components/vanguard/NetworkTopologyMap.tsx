@@ -59,8 +59,8 @@ export const NetworkTopologyMap = () => {
       });
       setNodes(mappedNodes);
     } else {
-      // Use mock data for demo
-      setNodes(generateMockTopology());
+      // No data - show empty state
+      setNodes([]);
     }
   };
 
@@ -74,22 +74,22 @@ export const NetworkTopologyMap = () => {
     return 'workstation';
   };
 
-  const generateMockTopology = (): NetworkNode[] => {
-    return [
-      { id: 'gw', label: 'Internet Gateway', type: 'router', ip: '192.168.1.1', status: 'online', x: 400, y: 50, connections: ['fw'] },
-      { id: 'fw', label: 'Firewall', type: 'router', ip: '192.168.1.2', status: 'online', x: 400, y: 130, connections: ['sw1', 'sw2'] },
-      { id: 'sw1', label: 'Core Switch 1', type: 'switch', ip: '192.168.1.10', status: 'online', x: 250, y: 220, connections: ['srv1', 'srv2', 'ws1', 'ws2'] },
-      { id: 'sw2', label: 'Core Switch 2', type: 'switch', ip: '192.168.1.11', status: 'online', x: 550, y: 220, connections: ['srv3', 'ws3', 'ws4', 'mob1'] },
-      { id: 'srv1', label: 'DC-PRIMARY', type: 'server', ip: '192.168.1.20', status: 'online', x: 100, y: 320, connections: [] },
-      { id: 'srv2', label: 'FILE-SERVER', type: 'server', ip: '192.168.1.21', status: 'online', x: 220, y: 320, connections: [] },
-      { id: 'srv3', label: 'WEB-SERVER', type: 'server', ip: '192.168.1.22', status: 'warning', x: 550, y: 320, connections: [] },
-      { id: 'ws1', label: 'WORKSTATION-01', type: 'workstation', ip: '192.168.1.100', status: 'online', x: 100, y: 420, connections: [] },
-      { id: 'ws2', label: 'WORKSTATION-02', type: 'workstation', ip: '192.168.1.101', status: 'online', x: 220, y: 420, connections: [] },
-      { id: 'ws3', label: 'WORKSTATION-03', type: 'workstation', ip: '192.168.1.102', status: 'offline', x: 450, y: 420, connections: [] },
-      { id: 'ws4', label: 'LAPTOP-01', type: 'workstation', ip: '192.168.1.103', status: 'online', x: 570, y: 420, connections: [] },
-      { id: 'mob1', label: 'MOBILE-01', type: 'mobile', ip: '192.168.1.150', status: 'online', x: 690, y: 420, connections: [] },
-    ];
-  };
+  // Empty state message in canvas
+  const drawEmptyState = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#6B7280';
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No network devices discovered yet', canvas.width / 2, canvas.height / 2 - 20);
+    ctx.font = '14px sans-serif';
+    ctx.fillStyle = '#9CA3AF';
+    ctx.fillText('Run a network scan from an online agent to populate the topology', canvas.width / 2, canvas.height / 2 + 10);
+  }, []);
 
   const drawTopology = useCallback(() => {
     const canvas = canvasRef.current;
@@ -97,6 +97,12 @@ export const NetworkTopologyMap = () => {
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    
+    // If no nodes, show empty state
+    if (nodes.length === 0) {
+      drawEmptyState();
+      return;
+    }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();

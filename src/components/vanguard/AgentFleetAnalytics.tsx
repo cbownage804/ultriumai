@@ -140,25 +140,42 @@ export const AgentFleetAnalytics = () => {
 
         setPerformanceData(perfData);
       } else {
-        // Generate sample data for demo
-        const sampleData = Array.from({ length: 24 }, (_, i) => ({
-          timestamp: new Date(Date.now() - (23 - i) * 60 * 60 * 1000).toLocaleTimeString(),
-          avgCpu: 20 + Math.random() * 40,
-          avgMemory: 40 + Math.random() * 30,
-          avgDisk: 50 + Math.random() * 20,
-          responseTime: 50 + Math.random() * 100
-        }));
-        setPerformanceData(sampleData);
+        // No analytics data - empty state
+        setPerformanceData([]);
       }
 
-      // Generate command stats
-      setCommandStats([
-        { command: 'scan_network', count: 156, successRate: 98.2, avgDuration: 45 },
-        { command: 'scan_ports', count: 89, successRate: 99.1, avgDuration: 120 },
-        { command: 'get_system_info', count: 342, successRate: 100, avgDuration: 2 },
-        { command: 'scan_vulnerabilities', count: 67, successRate: 95.5, avgDuration: 180 },
-        { command: 'collect_logs', count: 234, successRate: 97.8, avgDuration: 30 },
-      ]);
+      // Fetch real command stats from vanguard_agent_commands
+      const { data: commands } = await supabase
+        .from('vanguard_agent_commands')
+        .select('command_type, status, created_at, completed_at')
+        .gte('created_at', startTime);
+      
+      if (commands && commands.length > 0) {
+        // Aggregate command stats
+        const statsMap: Record<string, { count: number; success: number; durations: number[] }> = {};
+        commands.forEach(cmd => {
+          if (!statsMap[cmd.command_type]) {
+            statsMap[cmd.command_type] = { count: 0, success: 0, durations: [] };
+          }
+          statsMap[cmd.command_type].count++;
+          if (cmd.status === 'completed') statsMap[cmd.command_type].success++;
+          if (cmd.completed_at && cmd.created_at) {
+            const duration = (new Date(cmd.completed_at).getTime() - new Date(cmd.created_at).getTime()) / 1000;
+            statsMap[cmd.command_type].durations.push(duration);
+          }
+        });
+        
+        const cmdStats: CommandStats[] = Object.entries(statsMap).map(([cmd, data]) => ({
+          command: cmd,
+          count: data.count,
+          successRate: data.count > 0 ? (data.success / data.count) * 100 : 0,
+          avgDuration: data.durations.length > 0 ? data.durations.reduce((a, b) => a + b, 0) / data.durations.length : 0
+        })).sort((a, b) => b.count - a.count).slice(0, 10);
+        
+        setCommandStats(cmdStats);
+      } else {
+        setCommandStats([]);
+      }
 
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -389,10 +406,11 @@ export const AgentFleetAnalytics = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+              {platformData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <RechartsPie>
                     <Pie
-                      data={platformData.length ? platformData : [{ name: 'Linux', value: 12 }, { name: 'Windows', value: 8 }, { name: 'macOS', value: 3 }]}
+                      data={platformData}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -401,13 +419,18 @@ export const AgentFleetAnalytics = () => {
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {(platformData.length ? platformData : [{ name: 'Linux', value: 12 }, { name: 'Windows', value: 8 }, { name: 'macOS', value: 3 }]).map((entry, index) => (
+                      {platformData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip />
                   </RechartsPie>
                 </ResponsiveContainer>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                  <p>No agents deployed yet</p>
+                </div>
+              )}
               </CardContent>
             </Card>
 
@@ -419,25 +442,31 @@ export const AgentFleetAnalytics = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <RechartsPie>
-                    <Pie
-                      data={versionData.length ? versionData : [{ name: 'v4.0.0', value: 15 }, { name: 'v3.5.0', value: 5 }, { name: 'v3.0.0', value: 3 }]}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {(versionData.length ? versionData : [{ name: 'v4.0.0', value: 15 }, { name: 'v3.5.0', value: 5 }, { name: 'v3.0.0', value: 3 }]).map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </RechartsPie>
-                </ResponsiveContainer>
+                {versionData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <RechartsPie>
+                      <Pie
+                        data={versionData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {versionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </RechartsPie>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                    <p>No version data available</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

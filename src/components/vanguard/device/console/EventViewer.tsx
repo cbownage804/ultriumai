@@ -55,20 +55,8 @@ interface EventViewerProps {
   sendCommand: (cmd: string, payload?: any) => Promise<any>;
 }
 
-// Demo events
-const demoEvents: EventLog[] = [
-  { id: '1', level: 'error', source: 'Application Error', eventId: 1000, message: 'Faulting application name: chrome.exe, version: 120.0.6099.130', timestamp: new Date(Date.now() - 1000 * 60 * 5), category: 'Application', user: 'SYSTEM' },
-  { id: '2', level: 'warning', source: 'Windows Update', eventId: 12, message: 'Installation of update KB5034123 failed with error code 0x80070005', timestamp: new Date(Date.now() - 1000 * 60 * 15), category: 'System' },
-  { id: '3', level: 'information', source: 'Service Control Manager', eventId: 7036, message: 'The Windows Defender service entered the running state.', timestamp: new Date(Date.now() - 1000 * 60 * 30), category: 'System' },
-  { id: '4', level: 'critical', source: 'Kernel-Power', eventId: 41, message: 'The system has rebooted without cleanly shutting down first.', timestamp: new Date(Date.now() - 1000 * 60 * 60), category: 'System' },
-  { id: '5', level: 'warning', source: 'ESENT', eventId: 455, message: 'svchost (1234,R,98) TILEREPOSITORYS-1-5-18: Error -1023 occurred', timestamp: new Date(Date.now() - 1000 * 60 * 90), category: 'Application' },
-  { id: '6', level: 'information', source: 'Security-Auditing', eventId: 4624, message: 'An account was successfully logged on.', timestamp: new Date(Date.now() - 1000 * 60 * 120), category: 'Security', user: 'DOMAIN\\User' },
-  { id: '7', level: 'error', source: 'Schannel', eventId: 36887, message: 'A fatal alert was received from the remote endpoint.', timestamp: new Date(Date.now() - 1000 * 60 * 180), category: 'System' },
-  { id: '8', level: 'information', source: 'EventLog', eventId: 6013, message: 'The system uptime is 345600 seconds.', timestamp: new Date(Date.now() - 1000 * 60 * 240), category: 'System' },
-];
-
 export function EventViewer({ agentId, sendCommand }: EventViewerProps) {
-  const [events, setEvents] = useState<EventLog[]>(demoEvents);
+  const [events, setEvents] = useState<EventLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [logType, setLogType] = useState<'all' | 'Application' | 'System' | 'Security'>('all');
@@ -90,7 +78,8 @@ export function EventViewer({ agentId, sendCommand }: EventViewerProps) {
         })));
       }
     } catch (err) {
-      // Keep demo data
+      // No data - show empty state
+      setEvents([]);
     } finally {
       setIsLoading(false);
     }

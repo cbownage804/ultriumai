@@ -52,19 +52,9 @@ interface FileTransferProps {
   sendCommand: (cmd: string, payload?: any) => Promise<any>;
 }
 
-// Demo file structure
-const demoFiles: RemoteFile[] = [
-  { name: '..', type: 'directory', size: 0, modified: new Date() },
-  { name: 'Users', type: 'directory', size: 0, modified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30) },
-  { name: 'Program Files', type: 'directory', size: 0, modified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60) },
-  { name: 'Windows', type: 'directory', size: 0, modified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 90) },
-  { name: 'pagefile.sys', type: 'file', size: 4294967296, modified: new Date() },
-  { name: 'hiberfil.sys', type: 'file', size: 3221225472, modified: new Date() },
-];
-
 export function FileTransfer({ agentId, sendCommand }: FileTransferProps) {
   const [currentPath, setCurrentPath] = useState('C:\\');
-  const [files, setFiles] = useState<RemoteFile[]>(demoFiles);
+  const [files, setFiles] = useState<RemoteFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [transfers, setTransfers] = useState<TransferJob[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
@@ -81,7 +71,8 @@ export function FileTransfer({ agentId, sendCommand }: FileTransferProps) {
         setCurrentPath(path);
       }
     } catch (err) {
-      // Keep demo data
+      // No data - show empty state
+      setFiles([]);
     } finally {
       setIsLoading(false);
     }

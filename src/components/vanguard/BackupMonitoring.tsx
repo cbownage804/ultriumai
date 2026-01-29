@@ -62,14 +62,9 @@ export const BackupMonitoring = () => {
         totalSize: `${(data.reduce((sum, b) => sum + (b.size_bytes || 0), 0) / 1099511627776).toFixed(2)} TB`
       });
     } else {
-      // Show demo data if no real backups exist
-      const mockBackups: BackupJob[] = [
-        { id: '1', device_name: 'DC-PRIMARY', backup_type: 'Full System', status: 'success', last_backup: '2024-12-25T02:00:00Z', next_backup: '2024-12-26T02:00:00Z', size: '245 GB', retention_days: 30, success_rate: 98 },
-        { id: '2', device_name: 'SQL-SERVER-01', backup_type: 'Database', status: 'success', last_backup: '2024-12-25T04:00:00Z', next_backup: '2024-12-25T16:00:00Z', size: '156 GB', retention_days: 14, success_rate: 100 },
-        { id: '3', device_name: 'FILE-SERVER', backup_type: 'Incremental', status: 'in_progress', last_backup: '2024-12-24T23:00:00Z', next_backup: '2024-12-25T23:00:00Z', size: '1.2 TB', retention_days: 60, success_rate: 95 },
-      ];
-      setBackups(mockBackups);
-      setStats({ total: 3, successful: 2, failed: 0, inProgress: 1, totalSize: '1.6 TB' });
+      // No backups - show empty state
+      setBackups([]);
+      setStats({ total: 0, successful: 0, failed: 0, inProgress: 0, totalSize: '0 GB' });
     }
   };
 

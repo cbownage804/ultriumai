@@ -71,24 +71,12 @@ export function ProcessManager({ agentId, sendCommand }: ProcessManagerProps) {
       if (result?.processes) {
         setProcesses(result.processes);
       } else {
-        // Demo data
-        setProcesses([
-          { pid: 4, name: 'System', cpu: 0.5, memory: 0.3, memoryMB: 24, threads: 180, handles: 3500, status: 'running', user: 'SYSTEM' },
-          { pid: 1234, name: 'explorer.exe', cpu: 2.1, memory: 1.5, memoryMB: 120, threads: 45, handles: 1200, status: 'running', user: 'User', path: 'C:\\Windows\\explorer.exe' },
-          { pid: 2345, name: 'chrome.exe', cpu: 18.5, memory: 12.3, memoryMB: 984, threads: 120, handles: 2800, status: 'running', user: 'User', path: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' },
-          { pid: 2346, name: 'chrome.exe', cpu: 5.2, memory: 4.1, memoryMB: 328, threads: 25, handles: 450, status: 'running', user: 'User' },
-          { pid: 2347, name: 'chrome.exe', cpu: 3.8, memory: 3.5, memoryMB: 280, threads: 18, handles: 320, status: 'running', user: 'User' },
-          { pid: 3456, name: 'MsMpEng.exe', cpu: 8.2, memory: 3.8, memoryMB: 304, threads: 35, handles: 890, status: 'running', user: 'SYSTEM', path: 'C:\\ProgramData\\Microsoft\\Windows Defender\\Platform' },
-          { pid: 4567, name: 'svchost.exe', cpu: 1.5, memory: 1.2, memoryMB: 96, threads: 28, handles: 650, status: 'running', user: 'SYSTEM' },
-          { pid: 4568, name: 'svchost.exe', cpu: 0.8, memory: 0.9, memoryMB: 72, threads: 15, handles: 420, status: 'running', user: 'LOCAL SERVICE' },
-          { pid: 5678, name: 'Code.exe', cpu: 12.4, memory: 8.5, memoryMB: 680, threads: 85, handles: 1500, status: 'running', user: 'User', path: 'C:\\Users\\User\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe' },
-          { pid: 6789, name: 'Teams.exe', cpu: 4.5, memory: 6.2, memoryMB: 496, threads: 55, handles: 980, status: 'running', user: 'User' },
-          { pid: 7890, name: 'Slack.exe', cpu: 2.8, memory: 4.5, memoryMB: 360, threads: 42, handles: 720, status: 'running', user: 'User' },
-          { pid: 8901, name: 'OneDrive.exe', cpu: 1.2, memory: 2.1, memoryMB: 168, threads: 22, handles: 380, status: 'running', user: 'User' },
-        ]);
+        // No data from agent - show empty state
+        setProcesses([]);
       }
     } catch (err) {
       console.error('Failed to load processes');
+      setProcesses([]);
     } finally {
       setIsLoading(false);
     }
