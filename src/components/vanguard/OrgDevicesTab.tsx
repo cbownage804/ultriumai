@@ -79,46 +79,7 @@ export const OrgDevicesTab = ({ orgId, orgName, devices, isLoading, onRefresh }:
   };
 
   return (
-    <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Devices</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{devices.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-500">Online</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-500">{onlineDevices.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Offline</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{devices.length - onlineDevices.length}</div>
-          </CardContent>
-        </Card>
-        <Card className="border-dashed">
-          <CardContent className="flex items-center justify-center h-full py-4">
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => navigate(`/vanguard/setup?client=${orgId}`)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Deploy Agent
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="space-y-4">
 
       {/* Device Table */}
       <Card>
