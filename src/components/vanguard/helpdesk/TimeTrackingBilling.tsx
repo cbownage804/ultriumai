@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,74 +6,45 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
-  Clock, 
-  Play, 
-  Pause, 
-  Square,
-  DollarSign,
-  Timer,
-  Calendar,
-  FileText,
-  Download,
-  Plus,
-  Users,
-  TrendingUp,
-  Receipt,
-  CreditCard
+  Clock, Play, Pause, Square, DollarSign, Timer,
+  Calendar, FileText, Download, Plus, Users,
+  TrendingUp, Receipt, CreditCard, Loader2
 } from 'lucide-react';
 import { format, differenceInMinutes, differenceInSeconds } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface TimeEntry {
   id: string;
-  ticketId: string;
-  ticketTitle: string;
-  clientName: string;
-  technicianName: string;
-  startTime: string;
-  endTime?: string;
-  duration: number; // minutes
+  ticket_id: string | null;
+  ticket_title?: string;
+  client_id: string | null;
+  client_name?: string;
+  technician_name: string;
+  start_time: string;
+  end_time: string | null;
+  duration_minutes: number;
   description: string;
-  isBillable: boolean;
-  rate: number; // per hour
+  is_billable: boolean;
+  hourly_rate: number;
   status: 'running' | 'paused' | 'completed';
 }
 
 interface RateCard {
   id: string;
-  clientName: string;
-  standardRate: number;
-  afterHoursRate: number;
-  emergencyRate: number;
-  minimumBillable: number; // minutes
-  roundingIncrement: number; // minutes
+  client_id: string;
+  client_name: string;
+  service_type: string;
+  rate_per_hour: number;
+  description: string | null;
 }
-
-interface InvoicePreview {
-  clientName: string;
-  totalHours: number;
-  totalAmount: number;
-  entries: TimeEntry[];
-}
-
-const mockTimeEntries: TimeEntry[] = [
-  { id: '1', ticketId: 'TKT-001', ticketTitle: 'Server migration', clientName: 'Acme Corp', technicianName: 'John Smith', startTime: '2024-01-15T09:00:00Z', endTime: '2024-01-15T11:30:00Z', duration: 150, description: 'Completed server migration and testing', isBillable: true, rate: 150, status: 'completed' },
-  { id: '2', ticketId: 'TKT-002', ticketTitle: 'Email configuration', clientName: 'TechStart Inc', technicianName: 'Sarah Johnson', startTime: '2024-01-15T13:00:00Z', endTime: '2024-01-15T14:15:00Z', duration: 75, description: 'Setup new email accounts', isBillable: true, rate: 125, status: 'completed' },
-  { id: '3', ticketId: 'TKT-003', ticketTitle: 'Network troubleshooting', clientName: 'Acme Corp', technicianName: 'Mike Wilson', startTime: '2024-01-15T15:00:00Z', duration: 45, description: 'Investigating network issues', isBillable: true, rate: 150, status: 'running' },
-  { id: '4', ticketId: 'TKT-004', ticketTitle: 'Internal documentation', clientName: 'Internal', technicianName: 'John Smith', startTime: '2024-01-15T08:00:00Z', endTime: '2024-01-15T08:45:00Z', duration: 45, description: 'Updated internal wiki', isBillable: false, rate: 0, status: 'completed' },
-];
-
-const mockRateCards: RateCard[] = [
-  { id: '1', clientName: 'Acme Corp', standardRate: 150, afterHoursRate: 225, emergencyRate: 300, minimumBillable: 15, roundingIncrement: 15 },
-  { id: '2', clientName: 'TechStart Inc', standardRate: 125, afterHoursRate: 187.5, emergencyRate: 250, minimumBillable: 30, roundingIncrement: 15 },
-  { id: '3', clientName: 'Global Logistics', standardRate: 135, afterHoursRate: 202.5, emergencyRate: 270, minimumBillable: 15, roundingIncrement: 6 },
-];
 
 function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60);
@@ -81,456 +52,421 @@ function formatDuration(minutes: number): string {
   return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 }
 
-function RunningTimer({ startTime }: { startTime: string }) {
-  const [elapsed, setElapsed] = useState(0);
-  
-  useState(() => {
-    const interval = setInterval(() => {
-      setElapsed(differenceInSeconds(new Date(), new Date(startTime)));
-    }, 1000);
-    return () => clearInterval(interval);
-  });
-
-  const hours = Math.floor(elapsed / 3600);
-  const minutes = Math.floor((elapsed % 3600) / 60);
-  const seconds = elapsed % 60;
-
-  return (
-    <span className="font-mono text-green-500">
-      {String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-    </span>
-  );
+function formatMoney(amount: number): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
 
 export function TimeTrackingBilling() {
-  const [timeEntries] = useState<TimeEntry[]>(mockTimeEntries);
-  const [rateCards] = useState<RateCard[]>(mockRateCards);
-  const [activeTab, setActiveTab] = useState('entries');
-  const [showEntryDialog, setShowEntryDialog] = useState(false);
-  const [showRateDialog, setShowRateDialog] = useState(false);
+  const { user } = useAuth();
+  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  const [rateCards, setRateCards] = useState<RateCard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTimer, setActiveTimer] = useState<TimeEntry | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [showNewEntry, setShowNewEntry] = useState(false);
+  const [newEntry, setNewEntry] = useState({
+    description: '',
+    ticketId: '',
+    clientId: '',
+    isBillable: true,
+    rate: 125
+  });
+
+  useEffect(() => {
+    if (user) {
+      fetchData();
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (activeTimer) {
+      timerRef.current = setInterval(() => {
+        const start = new Date(activeTimer.start_time);
+        setElapsedSeconds(differenceInSeconds(new Date(), start));
+      }, 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setElapsedSeconds(0);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [activeTimer]);
+
+  const fetchData = async () => {
+    try {
+      // Fetch time entries
+      const { data: entries, error: entriesError } = await supabase
+        .from('vanguard_time_entries')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (entriesError) throw entriesError;
+
+      // Fetch rate cards
+      const { data: rates, error: ratesError } = await supabase
+        .from('vanguard_rate_cards')
+        .select('*, msp_clients(company_name)')
+        .eq('user_id', user?.id);
+
+      if (ratesError) throw ratesError;
+
+      // Map entries with additional info
+      const mappedEntries: TimeEntry[] = (entries || []).map((e: any) => ({
+        id: e.id,
+        ticket_id: e.ticket_id,
+        ticket_title: e.description?.split(':')[0] || 'Ticket Work',
+        client_id: e.client_id,
+        client_name: 'Client',
+        technician_name: e.technician_id || 'Technician',
+        start_time: e.start_time,
+        end_time: e.end_time,
+        duration_minutes: e.duration_minutes || 0,
+        description: e.description || '',
+        is_billable: e.is_billable,
+        hourly_rate: e.hourly_rate || 0,
+        status: e.end_time ? 'completed' : 'running'
+      }));
+
+      setTimeEntries(mappedEntries);
+
+      // Find active timer
+      const running = mappedEntries.find(e => !e.end_time);
+      if (running) {
+        setActiveTimer(running);
+      }
+
+      // Map rate cards
+      const mappedRates: RateCard[] = (rates || []).map((r: any) => ({
+        id: r.id,
+        client_id: r.client_id,
+        client_name: r.msp_clients?.company_name || 'Unknown Client',
+        service_type: r.service_type,
+        rate_per_hour: r.rate_per_hour,
+        description: r.description
+      }));
+
+      setRateCards(mappedRates);
+
+    } catch (error) {
+      console.error('Error fetching time data:', error);
+      toast.error('Failed to load time entries');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startTimer = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('vanguard_time_entries')
+        .insert({
+          user_id: user?.id,
+          ticket_id: newEntry.ticketId || null,
+          client_id: newEntry.clientId || null,
+          technician_id: user?.id,
+          start_time: new Date().toISOString(),
+          description: newEntry.description || 'Work session',
+          is_billable: newEntry.isBillable,
+          hourly_rate: newEntry.rate
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newTimer: TimeEntry = {
+        id: data.id,
+        ticket_id: data.ticket_id,
+        client_id: data.client_id,
+        technician_name: data.technician_id || 'Technician',
+        start_time: data.start_time,
+        end_time: null,
+        duration_minutes: 0,
+        description: data.description,
+        is_billable: data.is_billable,
+        hourly_rate: data.hourly_rate,
+        status: 'running'
+      };
+
+      setActiveTimer(newTimer);
+      setTimeEntries(prev => [newTimer, ...prev]);
+      setShowNewEntry(false);
+      setNewEntry({ description: '', ticketId: '', clientId: '', isBillable: true, rate: 125 });
+      toast.success('Timer started');
+    } catch (error) {
+      console.error('Error starting timer:', error);
+      toast.error('Failed to start timer');
+    }
+  };
+
+  const stopTimer = async () => {
+    if (!activeTimer) return;
+
+    try {
+      const endTime = new Date();
+      const durationMins = differenceInMinutes(endTime, new Date(activeTimer.start_time));
+
+      const { error } = await supabase
+        .from('vanguard_time_entries')
+        .update({
+          end_time: endTime.toISOString(),
+          duration_minutes: Math.max(1, durationMins)
+        })
+        .eq('id', activeTimer.id);
+
+      if (error) throw error;
+
+      setTimeEntries(prev => prev.map(e => 
+        e.id === activeTimer.id 
+          ? { ...e, end_time: endTime.toISOString(), duration_minutes: durationMins, status: 'completed' as const }
+          : e
+      ));
+      setActiveTimer(null);
+      toast.success(`Timer stopped: ${formatDuration(durationMins)}`);
+    } catch (error) {
+      console.error('Error stopping timer:', error);
+      toast.error('Failed to stop timer');
+    }
+  };
+
+  const formatElapsed = (seconds: number): string => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   // Calculate stats
-  const totalBillableHours = timeEntries.filter(e => e.isBillable).reduce((sum, e) => sum + e.duration, 0) / 60;
-  const totalRevenue = timeEntries.filter(e => e.isBillable).reduce((sum, e) => sum + (e.duration / 60) * e.rate, 0);
-  const runningTimers = timeEntries.filter(e => e.status === 'running').length;
-  const nonBillableHours = timeEntries.filter(e => !e.isBillable).reduce((sum, e) => sum + e.duration, 0) / 60;
+  const todayEntries = timeEntries.filter(e => {
+    const entryDate = new Date(e.start_time).toDateString();
+    return entryDate === new Date().toDateString();
+  });
+  const todayMinutes = todayEntries.reduce((sum, e) => sum + (e.duration_minutes || 0), 0);
+  const billableMinutes = timeEntries.filter(e => e.is_billable).reduce((sum, e) => sum + (e.duration_minutes || 0), 0);
+  const totalRevenue = timeEntries
+    .filter(e => e.is_billable)
+    .reduce((sum, e) => sum + ((e.duration_minutes / 60) * e.hourly_rate), 0);
 
-  // Group entries by client for invoicing
-  const clientTotals = timeEntries
-    .filter(e => e.isBillable && e.status === 'completed')
-    .reduce((acc, entry) => {
-      if (!acc[entry.clientName]) {
-        acc[entry.clientName] = { hours: 0, amount: 0 };
-      }
-      acc[entry.clientName].hours += entry.duration / 60;
-      acc[entry.clientName].amount += (entry.duration / 60) * entry.rate;
-      return acc;
-    }, {} as Record<string, { hours: number; amount: number }>);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-green-500/30 bg-green-500/5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30">
+            <Clock className="h-5 w-5 text-cyan-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-white">Time Tracking & Billing</h2>
+            <p className="text-sm text-slate-400">Track billable hours and generate invoices</p>
+          </div>
+        </div>
+        <Dialog open={showNewEntry} onOpenChange={setShowNewEntry}>
+          <DialogTrigger asChild>
+            <Button className="bg-gradient-to-r from-cyan-500 to-purple-600">
+              <Plus className="h-4 w-4 mr-2" />
+              New Time Entry
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-slate-900 border-cyan-500/30">
+            <DialogHeader>
+              <DialogTitle className="text-white">Start Time Entry</DialogTitle>
+              <DialogDescription className="text-slate-400">
+                Begin tracking time for a task or ticket
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label className="text-slate-300">Description</Label>
+                <Textarea 
+                  placeholder="What are you working on?"
+                  value={newEntry.description}
+                  onChange={(e) => setNewEntry({ ...newEntry, description: e.target.value })}
+                  className="mt-1 bg-black/40 border-slate-700 text-white"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-slate-300">Hourly Rate</Label>
+                  <Input 
+                    type="number"
+                    value={newEntry.rate}
+                    onChange={(e) => setNewEntry({ ...newEntry, rate: Number(e.target.value) })}
+                    className="mt-1 bg-black/40 border-slate-700 text-white"
+                  />
+                </div>
+                <div className="flex items-center justify-between pt-6">
+                  <Label className="text-slate-300">Billable</Label>
+                  <Switch 
+                    checked={newEntry.isBillable}
+                    onCheckedChange={(checked) => setNewEntry({ ...newEntry, isBillable: checked })}
+                  />
+                </div>
+              </div>
+              <Button onClick={startTimer} className="w-full bg-green-600 hover:bg-green-700">
+                <Play className="h-4 w-4 mr-2" />
+                Start Timer
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Active Timer */}
+      {activeTimer && (
+        <Card className="bg-gradient-to-r from-green-500/10 to-cyan-500/10 border-green-500/30">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-green-400 text-sm font-medium mb-1">Timer Running</p>
+                <p className="text-white text-lg">{activeTimer.description || 'Work session'}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-4xl font-mono text-green-400">{formatElapsed(elapsedSeconds)}</p>
+                <Button 
+                  onClick={stopTimer}
+                  className="mt-2 bg-red-600 hover:bg-red-700"
+                >
+                  <Square className="h-4 w-4 mr-2" />
+                  Stop
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="bg-black/60 border-cyan-500/30">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase">Billable Hours</p>
-                <p className="text-3xl font-bold text-green-500">{totalBillableHours.toFixed(1)}</p>
-                <p className="text-xs text-muted-foreground">This period</p>
+                <p className="text-slate-400 text-xs">Today</p>
+                <p className="text-2xl font-bold text-white">{formatDuration(todayMinutes)}</p>
               </div>
-              <Clock className="h-8 w-8 text-green-500" />
+              <Timer className="h-8 w-8 text-cyan-400/50" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-cyan-500/30 bg-cyan-500/5">
+        <Card className="bg-black/60 border-cyan-500/30">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase">Revenue</p>
-                <p className="text-3xl font-bold">${totalRevenue.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Unbilled</p>
+                <p className="text-slate-400 text-xs">Billable Hours</p>
+                <p className="text-2xl font-bold text-green-400">{(billableMinutes / 60).toFixed(1)}h</p>
               </div>
-              <DollarSign className="h-8 w-8 text-cyan-500" />
+              <DollarSign className="h-8 w-8 text-green-400/50" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className={cn(
-          "border-yellow-500/30 bg-yellow-500/5",
-          runningTimers > 0 && "animate-pulse"
-        )}>
+        <Card className="bg-black/60 border-cyan-500/30">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase">Active Timers</p>
-                <p className="text-3xl font-bold text-yellow-500">{runningTimers}</p>
-                <p className="text-xs text-muted-foreground">Currently running</p>
+                <p className="text-slate-400 text-xs">Total Revenue</p>
+                <p className="text-2xl font-bold text-purple-400">{formatMoney(totalRevenue)}</p>
               </div>
-              <Timer className="h-8 w-8 text-yellow-500" />
+              <TrendingUp className="h-8 w-8 text-purple-400/50" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-muted">
+        <Card className="bg-black/60 border-cyan-500/30">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase">Non-Billable</p>
-                <p className="text-3xl font-bold text-muted-foreground">{nonBillableHours.toFixed(1)}</p>
-                <p className="text-xs text-muted-foreground">Hours</p>
+                <p className="text-slate-400 text-xs">Entries This Month</p>
+                <p className="text-2xl font-bold text-white">{timeEntries.length}</p>
               </div>
-              <Clock className="h-8 w-8 text-muted-foreground" />
+              <FileText className="h-8 w-8 text-slate-400/50" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content */}
-      <Card>
+      {/* Time Entries Table */}
+      <Card className="bg-black/60 border-cyan-500/30">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-cyan-500" />
-                Time Tracking & Billing
-              </CardTitle>
-              <CardDescription>Track billable hours and generate invoices</CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-              <Dialog open={showEntryDialog} onOpenChange={setShowEntryDialog}>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Manual Entry
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Time Entry</DialogTitle>
-                    <DialogDescription>Manually log time for a ticket</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label>Ticket</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select ticket" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="tkt-001">TKT-001 - Server migration</SelectItem>
-                          <SelectItem value="tkt-002">TKT-002 - Email configuration</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Date</Label>
-                        <Input type="date" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Duration (minutes)</Label>
-                        <Input type="number" placeholder="60" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Description</Label>
-                      <Textarea placeholder="What did you work on?" />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label>Billable</Label>
-                      <Switch defaultChecked />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setShowEntryDialog(false)}>Cancel</Button>
-                    <Button onClick={() => setShowEntryDialog(false)}>Save Entry</Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
+          <CardTitle className="text-white text-lg">Recent Time Entries</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="entries">Time Entries</TabsTrigger>
-              <TabsTrigger value="rates">Rate Cards</TabsTrigger>
-              <TabsTrigger value="invoicing">Invoicing</TabsTrigger>
-              <TabsTrigger value="reports">Reports</TabsTrigger>
-            </TabsList>
-
-            {/* Time Entries Tab */}
-            <TabsContent value="entries" className="mt-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ticket</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Technician</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Rate</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Actions</TableHead>
+          {timeEntries.length === 0 ? (
+            <div className="text-center py-12">
+              <Clock className="h-12 w-12 text-slate-600 mx-auto mb-4" />
+              <p className="text-slate-400">No time entries yet. Start tracking to see your work.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="border-slate-700">
+                  <TableHead className="text-slate-400">Description</TableHead>
+                  <TableHead className="text-slate-400">Date</TableHead>
+                  <TableHead className="text-slate-400">Duration</TableHead>
+                  <TableHead className="text-slate-400">Rate</TableHead>
+                  <TableHead className="text-slate-400">Amount</TableHead>
+                  <TableHead className="text-slate-400">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {timeEntries.slice(0, 20).map(entry => (
+                  <TableRow key={entry.id} className="border-slate-700/50">
+                    <TableCell>
+                      <div>
+                        <p className="text-white text-sm">{entry.description || 'Work session'}</p>
+                        <p className="text-slate-500 text-xs">{entry.technician_name}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-slate-300 text-sm">
+                      {format(new Date(entry.start_time), 'MMM d, HH:mm')}
+                    </TableCell>
+                    <TableCell className="text-cyan-400 font-medium">
+                      {entry.status === 'running' ? (
+                        <Badge className="bg-green-500/20 text-green-400">Running</Badge>
+                      ) : (
+                        formatDuration(entry.duration_minutes)
+                      )}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {entry.is_billable ? formatMoney(entry.hourly_rate) + '/hr' : (
+                        <span className="text-slate-500">Non-billable</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-green-400 font-medium">
+                      {entry.is_billable 
+                        ? formatMoney((entry.duration_minutes / 60) * entry.hourly_rate)
+                        : '-'
+                      }
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={cn(
+                        entry.status === 'running' && 'bg-green-500/20 text-green-400 border-green-500/30',
+                        entry.status === 'completed' && 'bg-slate-500/20 text-slate-400 border-slate-500/30'
+                      )}>
+                        {entry.status}
+                      </Badge>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {timeEntries.map(entry => (
-                    <TableRow key={entry.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{entry.ticketId}</p>
-                          <p className="text-xs text-muted-foreground truncate max-w-[150px]">{entry.ticketTitle}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{entry.clientName}</TableCell>
-                      <TableCell>{entry.technicianName}</TableCell>
-                      <TableCell>
-                        {entry.status === 'running' ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            <RunningTimer startTime={entry.startTime} />
-                          </div>
-                        ) : (
-                          formatDuration(entry.duration)
-                        )}
-                      </TableCell>
-                      <TableCell className="max-w-[200px]">
-                        <p className="text-sm text-muted-foreground truncate">{entry.description}</p>
-                      </TableCell>
-                      <TableCell>
-                        {entry.isBillable ? (
-                          <span>${entry.rate}/hr</span>
-                        ) : (
-                          <Badge variant="outline">Non-billable</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {entry.isBillable && entry.status === 'completed' && (
-                          <span className="font-medium text-green-500">
-                            ${((entry.duration / 60) * entry.rate).toFixed(2)}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {entry.status === 'running' ? (
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" title="Pause">
-                              <Pause className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" title="Stop">
-                              <Square className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : entry.status === 'paused' ? (
-                          <Button variant="ghost" size="sm" title="Resume">
-                            <Play className="h-4 w-4" />
-                          </Button>
-                        ) : (
-                          <Button variant="ghost" size="sm">Edit</Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TabsContent>
-
-            {/* Rate Cards Tab */}
-            <TabsContent value="rates" className="mt-4">
-              <div className="flex justify-end mb-4">
-                <Dialog open={showRateDialog} onOpenChange={setShowRateDialog}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Rate Card
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Create Rate Card</DialogTitle>
-                      <DialogDescription>Define billing rates for a client</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label>Client</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select client" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="acme">Acme Corp</SelectItem>
-                            <SelectItem value="techstart">TechStart Inc</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label>Standard Rate</Label>
-                          <Input type="number" placeholder="150" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>After Hours</Label>
-                          <Input type="number" placeholder="225" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Emergency</Label>
-                          <Input type="number" placeholder="300" />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Minimum (minutes)</Label>
-                          <Input type="number" placeholder="15" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Rounding (minutes)</Label>
-                          <Input type="number" placeholder="15" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setShowRateDialog(false)}>Cancel</Button>
-                      <Button onClick={() => setShowRateDialog(false)}>Save Rate Card</Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Standard Rate</TableHead>
-                    <TableHead>After Hours</TableHead>
-                    <TableHead>Emergency</TableHead>
-                    <TableHead>Minimum</TableHead>
-                    <TableHead>Rounding</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rateCards.map(rate => (
-                    <TableRow key={rate.id}>
-                      <TableCell className="font-medium">{rate.clientName}</TableCell>
-                      <TableCell>${rate.standardRate}/hr</TableCell>
-                      <TableCell>${rate.afterHoursRate}/hr</TableCell>
-                      <TableCell>${rate.emergencyRate}/hr</TableCell>
-                      <TableCell>{rate.minimumBillable} min</TableCell>
-                      <TableCell>{rate.roundingIncrement} min</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm">Edit</Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TabsContent>
-
-            {/* Invoicing Tab */}
-            <TabsContent value="invoicing" className="mt-4">
-              <div className="space-y-4">
-                <Card className="border-cyan-500/30">
-                  <CardHeader>
-                    <CardTitle className="text-sm">Unbilled Time by Client</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {Object.entries(clientTotals).map(([client, data]) => (
-                        <div key={client} className="flex items-center justify-between p-3 rounded-lg bg-muted/20">
-                          <div>
-                            <p className="font-medium">{client}</p>
-                            <p className="text-sm text-muted-foreground">{data.hours.toFixed(1)} hours</p>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <span className="text-lg font-bold text-green-500">
-                              ${data.amount.toFixed(2)}
-                            </span>
-                            <Button size="sm">
-                              <Receipt className="h-4 w-4 mr-2" />
-                              Generate Invoice
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Recent Invoices</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Receipt className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                      <p>No invoices generated yet</p>
-                      <p className="text-sm">Generate invoices from unbilled time above</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* Reports Tab */}
-            <TabsContent value="reports" className="mt-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Hours by Technician</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {['John Smith', 'Sarah Johnson', 'Mike Wilson'].map(tech => {
-                        const techHours = timeEntries
-                          .filter(e => e.technicianName === tech)
-                          .reduce((sum, e) => sum + e.duration, 0) / 60;
-                        const billableHours = timeEntries
-                          .filter(e => e.technicianName === tech && e.isBillable)
-                          .reduce((sum, e) => sum + e.duration, 0) / 60;
-                        const utilization = (billableHours / techHours) * 100 || 0;
-                        
-                        return (
-                          <div key={tech} className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                              <span>{tech}</span>
-                              <span>{techHours.toFixed(1)}h ({utilization.toFixed(0)}% billable)</span>
-                            </div>
-                            <Progress value={utilization} className="h-2" />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Revenue by Client</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {Object.entries(clientTotals).map(([client, data]) => (
-                        <div key={client} className="flex justify-between items-center">
-                          <span className="text-sm">{client}</span>
-                          <div className="text-right">
-                            <p className="font-medium">${data.amount.toFixed(2)}</p>
-                            <p className="text-xs text-muted-foreground">{data.hours.toFixed(1)}h</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
