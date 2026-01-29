@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { UsageLimitBanner } from '@/components/safesuite/SafeSuitePaywall';
 import { SubscriptionBanner } from '@/components/safesuite/SubscriptionBanner';
+import { OnboardingChecklist } from '@/components/onboarding';
 import { motion } from 'framer-motion';
 import { GlowContainer, AnimatedStatsCard, StaggerContainer, StaggerItem, SAFESUITE_THEMES } from '@/components/safesuite/SafeSuiteEffects';
 import {
@@ -533,6 +534,9 @@ export default function SafeSuiteDashboard() {
 
       {/* Subscription Status Banner */}
       <SubscriptionBanner />
+
+      {/* Onboarding Checklist for new users */}
+      <OnboardingChecklist product="safesuite" />
 
       {/* Usage limit banners */}
       <div className="space-y-2">
