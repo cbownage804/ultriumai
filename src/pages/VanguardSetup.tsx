@@ -462,35 +462,67 @@ if __name__ == '__main__':
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Client Selector */}
-              {clients.length > 0 && (
-                <div className="p-4 border rounded-lg bg-muted/30">
-                  <div className="flex items-center gap-2 mb-3">
+              <div className="p-4 border rounded-lg bg-muted/30">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-primary" />
                     <Label className="font-medium">Assign to Client (Optional)</Label>
                   </div>
-                  <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a client to associate this agent with..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">
-                        <span className="text-muted-foreground">No client (personal use)</span>
-                      </SelectItem>
-                      {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.company_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedClient && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      The downloaded agent will be pre-configured for <span className="font-medium text-foreground">{selectedClient.company_name}</span>. 
-                      Devices will automatically appear under this client in your dashboard.
-                    </p>
-                  )}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => navigate('/msp')}
+                    className="text-xs"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Manage Clients
+                  </Button>
                 </div>
-              )}
+                {loadingClients ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading clients...
+                  </div>
+                ) : clients.length === 0 ? (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      No clients found. Add clients to assign agents to specific organizations.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate('/msp')}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Your First Client
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a client to associate this agent with..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">
+                          <span className="text-muted-foreground">No client (personal use)</span>
+                        </SelectItem>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.company_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedClient && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        The downloaded agent will be pre-configured for <span className="font-medium text-foreground">{selectedClient.company_name}</span>. 
+                        Devices will automatically appear under this client in your dashboard.
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 {/* Windows Agent */}
