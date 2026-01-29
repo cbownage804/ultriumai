@@ -18,6 +18,8 @@ import { useVanguardData } from '@/hooks/useVanguardData';
 import { useVanguardAgents } from '@/hooks/useVanguardAgents';
 import { getVanguardBasePath } from '@/utils/subdomain';
 import { VanguardDataStatus, VanguardEmptyState } from '@/components/vanguard/VanguardEmptyState';
+import { ProductTour } from '@/components/onboarding';
+import { VANGUARD_TOUR_STEPS } from '@/config/productTours';
 
 
 export default function VanguardHome() {
@@ -214,7 +216,7 @@ export default function VanguardHome() {
             />
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4 md:mt-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4 md:mt-6" data-tour="quick-stats">
             {quickStats.map((stat, index) => (
               <Card key={index} className="bg-background/50 backdrop-blur-sm">
                 <CardContent className="p-3 md:p-4">
@@ -242,29 +244,33 @@ export default function VanguardHome() {
       <div>
         <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Security Modules</h2>
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          {modules.map((module, index) => (
-            <Card 
-              key={index} 
-              className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-              onClick={() => navigate(module.path)}
-            >
-              <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
-                <div className={`inline-flex p-2 md:p-3 rounded-lg md:rounded-xl bg-gradient-to-br ${module.color} w-fit mb-1 md:mb-2`}>
-                  <module.icon className="h-4 w-4 md:h-6 md:w-6 text-white" />
-                </div>
-                <CardTitle className="text-sm md:text-lg flex items-center justify-between">
-                  <span className="line-clamp-1">{module.title}</span>
-                  <ArrowRight className="h-3 w-3 md:h-4 md:w-4 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block" />
-                </CardTitle>
-                <CardDescription className="text-xs md:text-sm line-clamp-2">{module.description}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
+          {modules.map((module, index) => {
+            const tourId = module.title.toLowerCase().replace(/\s+/g, '-');
+            return (
+              <Card 
+                key={index} 
+                className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                onClick={() => navigate(module.path)}
+                data-tour={tourId === 'dashboard' ? 'soc-dashboard' : tourId === 'devices' ? 'devices' : tourId === 'threat-detection' ? 'threat-detection' : undefined}
+              >
+                <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
+                  <div className={`inline-flex p-2 md:p-3 rounded-lg md:rounded-xl bg-gradient-to-br ${module.color} w-fit mb-1 md:mb-2`}>
+                    <module.icon className="h-4 w-4 md:h-6 md:w-6 text-white" />
+                  </div>
+                  <CardTitle className="text-sm md:text-lg flex items-center justify-between">
+                    <span className="line-clamp-1">{module.title}</span>
+                    <ArrowRight className="h-3 w-3 md:h-4 md:w-4 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block" />
+                  </CardTitle>
+                  <CardDescription className="text-xs md:text-sm line-clamp-2">{module.description}</CardDescription>
+                </CardHeader>
+              </Card>
+            );
+          })}
         </div>
       </div>
 
       {/* Advanced Modules Grid */}
-      <div>
+      <div data-tour="advanced-features">
         <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Advanced Features</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
           {advancedModules.map((module, index) => (
@@ -297,6 +303,13 @@ export default function VanguardHome() {
           View Full Dashboard
         </Button>
       </div>
+
+      {/* Product Tour */}
+      <ProductTour 
+        tourId="vanguard-intro" 
+        steps={VANGUARD_TOUR_STEPS}
+        autoStart={true}
+      />
     </div>
   );
 }

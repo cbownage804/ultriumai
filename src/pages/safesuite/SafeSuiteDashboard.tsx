@@ -16,7 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { UsageLimitBanner } from '@/components/safesuite/SafeSuitePaywall';
 import { SubscriptionBanner } from '@/components/safesuite/SubscriptionBanner';
-import { OnboardingChecklist } from '@/components/onboarding';
+import { OnboardingChecklist, ProductTour } from '@/components/onboarding';
+import { SAFESUITE_TOUR_STEPS } from '@/config/productTours';
 import { motion } from 'framer-motion';
 import { GlowContainer, AnimatedStatsCard, StaggerContainer, StaggerItem, SAFESUITE_THEMES } from '@/components/safesuite/SafeSuiteEffects';
 import {
@@ -579,27 +580,37 @@ export default function SafeSuiteDashboard() {
       {/* Main grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Security Score */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-2" data-tour="security-score">
           <SecurityScoreCard stats={stats} />
         </div>
 
         {/* Quick Actions */}
-        <QuickActionsCard />
+        <div data-tour="quick-actions">
+          <QuickActionsCard />
+        </div>
 
         {/* Product Cards */}
         {productCardsConfig.map((product, index) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            isLocked={!canUseFeature(product.feature)}
-            stat={getStatForProduct(product.id)}
-            index={index}
-          />
+          <div key={product.id} data-tour={product.id}>
+            <ProductCard
+              product={product}
+              isLocked={!canUseFeature(product.feature)}
+              stat={getStatForProduct(product.id)}
+              index={index}
+            />
+          </div>
         ))}
 
         {/* Recent Activity */}
         <RecentActivityCard activities={activities} />
       </div>
+
+      {/* Product Tour */}
+      <ProductTour 
+        tourId="safesuite-intro" 
+        steps={SAFESUITE_TOUR_STEPS}
+        autoStart={true}
+      />
     </div>
   );
 }
