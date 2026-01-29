@@ -15,3 +15,7 @@ export { PatchManagementPanel } from './PatchManagementPanel';
 export { FleetScriptLibrary } from './FleetScriptLibrary';
 export { FleetConfigPolicies } from './FleetConfigPolicies';
 export { FleetRemoteAccess } from './FleetRemoteAccess';
+export { BackupIntegrationHub } from './BackupIntegrationHub';
+export { LicenseManagementPanel } from './LicenseManagementPanel';
+export { RunbookAutomation } from './RunbookAutomation';
+export { SLAUptimeMonitoring } from './SLAUptimeMonitoring';
