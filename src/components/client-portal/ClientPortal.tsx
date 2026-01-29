@@ -1,5 +1,9 @@
+/**
+ * Atera-style Client Portal
+ * Enhanced customer portal with ticketing, knowledge base synced with SafeDoc, and branding
+ */
+
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +17,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "@/hooks/use-toast";
 import { 
   Plus, 
-  Search, 
   Bell, 
   FileText, 
   HelpCircle, 
@@ -22,18 +25,18 @@ import {
   Shield,
   Cloud,
   Monitor,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
   Activity,
   DollarSign,
-  Calendar,
+  Clock,
   BookOpen,
   MessageSquare,
-  Key
+  Calendar,
+  Ticket as TicketIcon
 } from "lucide-react";
 import safedocLogo from '@/assets/logos/logo-safedoc.png';
 import { format } from "date-fns";
+import { PortalTicketList, type Ticket } from "./PortalTicketList";
+import { PortalKnowledgeBase, type KBArticle } from "./PortalKnowledgeBase";
 
 interface Service {
   id: string;
@@ -45,29 +48,6 @@ interface Service {
   monthly_cost?: number;
   contract_end_date?: string;
   last_check_at: string;
-}
-
-interface PortalRequest {
-  id: string;
-  request_type: string;
-  title: string;
-  description: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  status: 'submitted' | 'reviewing' | 'approved' | 'in_progress' | 'completed' | 'rejected';
-  created_at: string;
-  requested_completion_date?: string;
-  estimated_cost?: number;
-}
-
-interface KnowledgeArticle {
-  id: string;
-  category: string;
-  title: string;
-  content: string;
-  tags: string[];
-  view_count: number;
-  helpful_count: number;
-  created_at: string;
 }
 
 interface PortalNotification {
@@ -84,22 +64,19 @@ interface PortalNotification {
 const ClientPortal = () => {
   const { user } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
-  const [requests, setRequests] = useState<PortalRequest[]>([]);
-  const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeArticle[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [knowledgeBase, setKnowledgeBase] = useState<KBArticle[]>([]);
   const [notifications, setNotifications] = useState<PortalNotification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [showRequestDialog, setShowRequestDialog] = useState(false);
+  const [showNewTicketDialog, setShowNewTicketDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState("tickets");
 
-  // New request form state
-  const [newRequest, setNewRequest] = useState({
-    request_type: "service_request" as const,
+  // New ticket form state
+  const [newTicket, setNewTicket] = useState({
     title: "",
     description: "",
     priority: "medium" as const,
-    business_justification: "",
-    requested_completion_date: "",
+    category: "general",
   });
 
   useEffect(() => {
@@ -111,7 +88,63 @@ const ClientPortal = () => {
   const fetchPortalData = async () => {
     setLoading(true);
     
-    // Demo data since we're building incrementally
+    // Demo ticket data in Atera style
+    setTickets([
+      {
+        id: '1',
+        ticket_number: '13',
+        title: 'New employee onboarding',
+        description: 'Need to set up accounts and equipment for new hire starting Monday',
+        customer_name: 'Aix University',
+        contact_name: 'James Myler',
+        technician_name: 'Allen Conley',
+        status: 'open',
+        priority: 'critical',
+        created_at: new Date(Date.now() - 360000).toISOString(),
+        updated_at: new Date(Date.now() - 720000).toISOString(),
+      },
+      {
+        id: '2',
+        ticket_number: '525',
+        title: 'Recurring problem with Dell XP 13 900 and display drivers',
+        description: 'Display driver crashes intermittently, especially when using external monitors',
+        customer_name: 'Aix University',
+        contact_name: 'Leslie Warren',
+        technician_name: 'Allen Conley',
+        status: 'open',
+        priority: 'critical',
+        created_at: new Date(Date.now() - 1440000).toISOString(),
+        updated_at: new Date(Date.now() - 1440000).toISOString(),
+      },
+      {
+        id: '3',
+        ticket_number: '1233',
+        title: 'New employee onboarding',
+        description: 'Setting up workstation for new marketing team member',
+        customer_name: 'IT Max LTD',
+        contact_name: 'Joel Nair',
+        technician_name: 'Allen Conley',
+        status: 'open',
+        priority: 'critical',
+        created_at: new Date(Date.now() - 2160000).toISOString(),
+        updated_at: new Date(Date.now() - 720000).toISOString(),
+      },
+      {
+        id: '4',
+        ticket_number: '30',
+        title: 'Access to the finance database folder',
+        description: 'Request access to shared drive for finance reports',
+        customer_name: 'Aix University',
+        contact_name: 'Travis Taylor',
+        technician_name: 'Allen Conley',
+        status: 'open',
+        priority: 'low',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        updated_at: new Date(Date.now() - 86400000).toISOString(),
+      },
+    ]);
+
+    // Demo services
     setServices([
       {
         id: '1',
@@ -146,49 +179,86 @@ const ClientPortal = () => {
       }
     ]);
 
-    setRequests([
-      {
-        id: '1',
-        request_type: 'service_request',
-        title: 'Additional VPN License',
-        description: 'Need an additional VPN license for new remote employee',
-        priority: 'medium',
-        status: 'in_progress',
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        estimated_cost: 25.00,
-      },
-      {
-        id: '2',
-        request_type: 'access_request',
-        title: 'SharePoint Access for Marketing Team',
-        description: 'Request access to marketing SharePoint site for new team member',
-        priority: 'high',
-        status: 'approved',
-        created_at: new Date(Date.now() - 172800000).toISOString(),
-      }
-    ]);
-
+    // Demo KB articles synced with SafeDoc
     setKnowledgeBase([
       {
         id: '1',
-        category: 'Email',
         title: 'How to Set Up Email Forwarding',
-        content: 'Follow these steps to set up email forwarding in Outlook...',
+        content: 'Follow these steps to set up email forwarding in Outlook. First, open Outlook and navigate to Settings. Click on "Mail" and then "Forwarding". Enter the email address you want to forward to and save your changes.',
+        category: 'How-To Guides',
         tags: ['email', 'outlook', 'forwarding'],
-        view_count: 45,
-        helpful_count: 12,
+        is_featured: true,
+        view_count: 145,
+        helpful_count: 42,
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        source: 'kb',
       },
       {
         id: '2',
-        category: 'Security',
         title: 'Best Practices for Password Management',
-        content: 'Learn how to create and manage secure passwords...',
+        content: 'Learn how to create and manage secure passwords. Use a minimum of 12 characters, include uppercase, lowercase, numbers, and symbols. Never reuse passwords across different accounts.',
+        category: 'Getting Started',
         tags: ['security', 'passwords', 'best-practices'],
-        view_count: 78,
+        is_featured: true,
+        view_count: 278,
+        helpful_count: 89,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        source: 'kb',
+      },
+      {
+        id: '3',
+        title: 'Network Diagram - Main Office',
+        content: 'This document provides a comprehensive overview of the main office network topology, including router configurations, VLAN assignments, and firewall rules.',
+        category: 'How-To Guides',
+        tags: ['network', 'infrastructure', 'documentation'],
+        is_featured: false,
+        view_count: 67,
         helpful_count: 23,
         created_at: new Date().toISOString(),
-      }
+        updated_at: new Date().toISOString(),
+        source: 'safedoc',
+      },
+      {
+        id: '4',
+        title: 'VPN Setup Guide',
+        content: 'Step-by-step instructions for configuring VPN access on Windows, Mac, and mobile devices. Includes troubleshooting tips for common connection issues.',
+        category: 'How-To Guides',
+        tags: ['vpn', 'remote-access', 'security'],
+        is_featured: true,
+        view_count: 192,
+        helpful_count: 56,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        source: 'safedoc',
+      },
+      {
+        id: '5',
+        title: 'What to do if you receive a suspicious email?',
+        content: 'If you receive a suspicious email, do not click any links or download attachments. Report it immediately using the "Report Phishing" button in Outlook or forward it to security@company.com.',
+        category: 'FAQ',
+        tags: ['security', 'phishing', 'email'],
+        is_featured: false,
+        view_count: 89,
+        helpful_count: 34,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        source: 'kb',
+      },
+      {
+        id: '6',
+        title: 'Backup Verification Procedures',
+        content: 'Daily backup verification checklist and procedures for ensuring data integrity. Includes steps for testing restore processes.',
+        category: 'Troubleshooting',
+        tags: ['backup', 'disaster-recovery', 'runbook'],
+        is_featured: false,
+        view_count: 34,
+        helpful_count: 12,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        source: 'safedoc',
+      },
     ]);
 
     setNotifications([
@@ -206,8 +276,8 @@ const ClientPortal = () => {
     setLoading(false);
   };
 
-  const handleSubmitRequest = async () => {
-    if (!user || !newRequest.title.trim() || !newRequest.description.trim()) {
+  const handleSubmitTicket = async () => {
+    if (!user || !newTicket.title.trim() || !newTicket.description.trim()) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -216,41 +286,32 @@ const ClientPortal = () => {
       return;
     }
 
-    try {
-      // Demo: Add to local state
-      const demoRequest: PortalRequest = {
-        id: Date.now().toString(),
-        request_type: newRequest.request_type,
-        title: newRequest.title,
-        description: newRequest.description,
-        priority: newRequest.priority,
-        status: 'submitted',
-        created_at: new Date().toISOString(),
-        requested_completion_date: newRequest.requested_completion_date || undefined,
-      };
+    const demoTicket: Ticket = {
+      id: Date.now().toString(),
+      ticket_number: Math.floor(Math.random() * 9000 + 1000).toString(),
+      title: newTicket.title,
+      description: newTicket.description,
+      customer_name: 'Your Organization',
+      contact_name: user.email,
+      status: 'open',
+      priority: newTicket.priority as Ticket['priority'],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
 
-      setRequests(prev => [demoRequest, ...prev]);
-      setShowRequestDialog(false);
-      setNewRequest({
-        request_type: "service_request",
-        title: "",
-        description: "",
-        priority: "medium",
-        business_justification: "",
-        requested_completion_date: "",
-      });
+    setTickets(prev => [demoTicket, ...prev]);
+    setShowNewTicketDialog(false);
+    setNewTicket({
+      title: "",
+      description: "",
+      priority: "medium",
+      category: "general",
+    });
 
-      toast({
-        title: "Success",
-        description: "Request submitted successfully",
-      });
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to submit request",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Ticket Created",
+      description: `Ticket #${demoTicket.ticket_number} has been submitted successfully.`,
+    });
   };
 
   const getServiceIcon = (type: string) => {
@@ -275,40 +336,11 @@ const ClientPortal = () => {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return 'bg-red-500 text-white';
-      case 'high': return 'bg-orange-500 text-white';
-      case 'medium': return 'bg-yellow-500 text-black';
-      case 'low': return 'bg-green-500 text-white';
-      default: return 'bg-gray-500 text-white';
-    }
-  };
-
-  const getRequestStatusColor = (status: string) => {
-    switch (status) {
-      case 'submitted': return 'bg-blue-100 text-blue-800';
-      case 'reviewing': return 'bg-yellow-100 text-yellow-800';
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'in_progress': return 'bg-purple-100 text-purple-800';
-      case 'completed': return 'bg-emerald-100 text-emerald-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const filteredKB = knowledgeBase.filter(article => {
-    const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         article.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         article.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = selectedCategory === 'all' || article.category.toLowerCase() === selectedCategory.toLowerCase();
-    return matchesSearch && matchesCategory;
-  });
-
   const totalMonthlyCost = services.reduce((sum, service) => sum + (service.monthly_cost || 0), 0);
   const activeServices = services.filter(s => s.service_status === 'active').length;
   const averageHealth = services.length > 0 ? 
     Math.round(services.reduce((sum, s) => sum + s.service_health, 0) / services.length) : 100;
+  const openTickets = tickets.filter(t => t.status === 'open' || t.status === 'pending').length;
 
   if (loading) {
     return (
@@ -323,49 +355,49 @@ const ClientPortal = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Client Portal</h1>
-          <p className="text-muted-foreground">Manage your services, submit requests, and access resources</p>
+          <h1 className="text-3xl font-bold text-foreground">Customer Portal</h1>
+          <p className="text-muted-foreground">Open and track tickets, access your knowledge base, and manage services</p>
         </div>
-        <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
+        <Dialog open={showNewTicketDialog} onOpenChange={setShowNewTicketDialog}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-teal-500 hover:bg-teal-600">
               <Plus className="h-4 w-4 mr-2" />
-              New Request
+              New Ticket
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Submit New Request</DialogTitle>
+              <DialogTitle>Submit New Ticket</DialogTitle>
               <DialogDescription>
-                Submit a new service request, access request, or report an issue.
+                Describe your issue or request and we'll get back to you as soon as possible.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="request-type">Request Type</Label>
+                  <Label htmlFor="category">Category</Label>
                   <Select
-                    value={newRequest.request_type}
-                    onValueChange={(value) => setNewRequest(prev => ({ ...prev, request_type: value as any }))}
+                    value={newTicket.category}
+                    onValueChange={(value) => setNewTicket(prev => ({ ...prev, category: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="service_request">Service Request</SelectItem>
-                      <SelectItem value="access_request">Access Request</SelectItem>
-                      <SelectItem value="change_request">Change Request</SelectItem>
-                      <SelectItem value="incident_report">Incident Report</SelectItem>
-                      <SelectItem value="consultation">Consultation</SelectItem>
-                      <SelectItem value="quote_request">Quote Request</SelectItem>
+                      <SelectItem value="general">General Support</SelectItem>
+                      <SelectItem value="hardware">Hardware Issue</SelectItem>
+                      <SelectItem value="software">Software Issue</SelectItem>
+                      <SelectItem value="network">Network/Connectivity</SelectItem>
+                      <SelectItem value="email">Email</SelectItem>
+                      <SelectItem value="access">Access Request</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="priority">Priority</Label>
                   <Select
-                    value={newRequest.priority}
-                    onValueChange={(value) => setNewRequest(prev => ({ ...prev, priority: value as any }))}
+                    value={newTicket.priority}
+                    onValueChange={(value) => setNewTicket(prev => ({ ...prev, priority: value as any }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -374,19 +406,19 @@ const ClientPortal = () => {
                       <SelectItem value="low">Low</SelectItem>
                       <SelectItem value="medium">Medium</SelectItem>
                       <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title">Subject *</Label>
                 <Input
                   id="title"
-                  value={newRequest.title}
-                  onChange={(e) => setNewRequest(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Brief description of your request"
+                  value={newTicket.title}
+                  onChange={(e) => setNewTicket(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Brief description of your issue"
                 />
               </div>
 
@@ -394,41 +426,19 @@ const ClientPortal = () => {
                 <Label htmlFor="description">Description *</Label>
                 <Textarea
                   id="description"
-                  value={newRequest.description}
-                  onChange={(e) => setNewRequest(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Detailed description of your request"
-                  rows={4}
+                  value={newTicket.description}
+                  onChange={(e) => setNewTicket(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Please provide as much detail as possible..."
+                  rows={5}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="completion-date">Requested Completion Date</Label>
-                  <Input
-                    id="completion-date"
-                    type="date"
-                    value={newRequest.requested_completion_date}
-                    onChange={(e) => setNewRequest(prev => ({ ...prev, requested_completion_date: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="justification">Business Justification</Label>
-                  <Textarea
-                    id="justification"
-                    value={newRequest.business_justification}
-                    onChange={(e) => setNewRequest(prev => ({ ...prev, business_justification: e.target.value }))}
-                    placeholder="Why is this request needed?"
-                    rows={3}
-                  />
-                </div>
-              </div>
-
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowRequestDialog(false)}>
+                <Button variant="outline" onClick={() => setShowNewTicketDialog(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleSubmitRequest}>
-                  Submit Request
+                <Button onClick={handleSubmitTicket} className="bg-teal-500 hover:bg-teal-600">
+                  Submit Ticket
                 </Button>
               </div>
             </div>
@@ -475,6 +485,17 @@ const ClientPortal = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
+              <TicketIcon className="h-4 w-4 text-teal-500" />
+              <div>
+                <p className="text-sm font-medium">Open Tickets</p>
+                <p className="text-2xl font-bold">{openTickets}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
               <Activity className="h-4 w-4 text-green-500" />
               <div>
                 <p className="text-sm font-medium">Active Services</p>
@@ -486,7 +507,7 @@ const ClientPortal = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <CheckCircle className="h-4 w-4 text-blue-500" />
+              <Shield className="h-4 w-4 text-blue-500" />
               <div>
                 <p className="text-sm font-medium">Health Score</p>
                 <p className="text-2xl font-bold">{averageHealth}%</p>
@@ -505,32 +526,71 @@ const ClientPortal = () => {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-orange-500" />
-              <div>
-                <p className="text-sm font-medium">Open Requests</p>
-                <p className="text-2xl font-bold">{requests.filter(r => !['completed', 'rejected'].includes(r.status)).length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="services" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="services">Services</TabsTrigger>
-          <TabsTrigger value="requests">Requests</TabsTrigger>
-          <TabsTrigger value="safedoc" className="flex items-center gap-1">
-            <img src={safedocLogo} alt="SafeDoc" className="h-4 w-auto" />
-            SafeDoc
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="bg-white border">
+          <TabsTrigger value="tickets" className="flex items-center gap-1">
+            <TicketIcon className="h-4 w-4" />
+            Tickets
           </TabsTrigger>
-          <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
-          <TabsTrigger value="support">Support</TabsTrigger>
+          <TabsTrigger value="knowledge" className="flex items-center gap-1">
+            <BookOpen className="h-4 w-4" />
+            Knowledge Base
+          </TabsTrigger>
+          <TabsTrigger value="services" className="flex items-center gap-1">
+            <Server className="h-4 w-4" />
+            Services
+          </TabsTrigger>
+          <TabsTrigger value="support" className="flex items-center gap-1">
+            <MessageSquare className="h-4 w-4" />
+            Support
+          </TabsTrigger>
         </TabsList>
 
+        {/* Tickets Tab - Atera Style */}
+        <TabsContent value="tickets" className="space-y-4">
+          <PortalTicketList 
+            tickets={tickets}
+            onNewTicket={() => setShowNewTicketDialog(true)}
+            onViewTicket={(ticket) => {
+              toast({
+                title: `Ticket #${ticket.ticket_number}`,
+                description: ticket.title,
+              });
+            }}
+            isCustomerView={true}
+          />
+        </TabsContent>
+
+        {/* Knowledge Base Tab - Synced with SafeDoc */}
+        <TabsContent value="knowledge" className="space-y-4">
+          <PortalKnowledgeBase
+            articles={knowledgeBase}
+            customerId={user?.id}
+            portalBranding={{
+              companyName: 'Knowledge Base',
+              primaryColor: '#0d9488'
+            }}
+            onViewArticle={(article) => {
+              console.log('Viewing article:', article.id);
+            }}
+            onMarkHelpful={(articleId) => {
+              setKnowledgeBase(prev => prev.map(a => 
+                a.id === articleId 
+                  ? { ...a, helpful_count: a.helpful_count + 1 }
+                  : a
+              ));
+              toast({
+                title: "Thank you!",
+                description: "Your feedback helps us improve.",
+              });
+            }}
+          />
+        </TabsContent>
+
+        {/* Services Tab */}
         <TabsContent value="services" className="space-y-4">
           <div className="grid gap-4">
             {services.map((service) => {
@@ -540,8 +600,8 @@ const ClientPortal = () => {
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-4">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <IconComponent className="h-6 w-6 text-primary" />
+                        <div className="p-2 bg-teal-50 rounded-lg">
+                          <IconComponent className="h-6 w-6 text-teal-600" />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
@@ -576,227 +636,13 @@ const ClientPortal = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="requests" className="space-y-4">
-          <div className="grid gap-4">
-            {requests.map((request) => (
-              <Card key={request.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-semibold">{request.title}</h3>
-                        <Badge className={getPriorityColor(request.priority)}>
-                          {request.priority}
-                        </Badge>
-                        <Badge variant="outline" className={getRequestStatusColor(request.status)}>
-                          {request.status.replace('_', ' ')}
-                        </Badge>
-                      </div>
-                      <p className="text-muted-foreground mb-3">{request.description}</p>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <span>Type: {request.request_type.replace('_', ' ')}</span>
-                        <span>Submitted: {format(new Date(request.created_at), 'MMM dd, yyyy')}</span>
-                        {request.estimated_cost && (
-                          <span>Est. Cost: ${request.estimated_cost}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="safedoc" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <img src={safedocLogo} alt="SafeDoc" className="h-6 w-auto" />
-                IT Documentation
-              </CardTitle>
-              <CardDescription>
-                Access your organization's IT documentation, passwords, and configurations
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="docs" className="w-full">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="docs" className="flex items-center gap-1">
-                    <FileText className="h-4 w-4" />
-                    Documents
-                  </TabsTrigger>
-                  <TabsTrigger value="passwords" className="flex items-center gap-1">
-                    <Key className="h-4 w-4" />
-                    Passwords
-                  </TabsTrigger>
-                  <TabsTrigger value="configs" className="flex items-center gap-1">
-                    <Server className="h-4 w-4" />
-                    Configurations
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="docs" className="space-y-3">
-                  <div className="relative mb-4">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search documents..." className="pl-10" />
-                  </div>
-                  <div className="grid gap-3">
-                    <Card className="bg-muted/30">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <FileText className="h-5 w-5 text-primary mt-0.5" />
-                          <div className="flex-1">
-                            <h4 className="font-medium">Network Diagram</h4>
-                            <p className="text-sm text-muted-foreground">Main office network topology</p>
-                            <Badge variant="secondary" className="mt-2 text-xs">Infrastructure</Badge>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-muted/30">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <FileText className="h-5 w-5 text-primary mt-0.5" />
-                          <div className="flex-1">
-                            <h4 className="font-medium">Backup Procedures</h4>
-                            <p className="text-sm text-muted-foreground">Daily backup verification steps</p>
-                            <Badge variant="secondary" className="mt-2 text-xs">Runbook</Badge>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-muted/30">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <FileText className="h-5 w-5 text-primary mt-0.5" />
-                          <div className="flex-1">
-                            <h4 className="font-medium">VPN Setup Guide</h4>
-                            <p className="text-sm text-muted-foreground">Remote access configuration</p>
-                            <Badge variant="secondary" className="mt-2 text-xs">How-To</Badge>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="passwords" className="space-y-3">
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Key className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Password access requires additional authentication.</p>
-                    <Button variant="outline" className="mt-4">
-                      Request Password Access
-                    </Button>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="configs" className="space-y-3">
-                  <div className="grid gap-3">
-                    <Card className="bg-muted/30">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <Server className="h-5 w-5 text-primary mt-0.5" />
-                          <div className="flex-1">
-                            <h4 className="font-medium">Main Server</h4>
-                            <p className="text-sm text-muted-foreground">Windows Server 2022 - Domain Controller</p>
-                            <div className="flex gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs">192.168.1.10</Badge>
-                              <Badge variant="secondary" className="text-xs">Online</Badge>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-muted/30">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <Shield className="h-5 w-5 text-primary mt-0.5" />
-                          <div className="flex-1">
-                            <h4 className="font-medium">Edge Firewall</h4>
-                            <p className="text-sm text-muted-foreground">FortiGate 60F</p>
-                            <div className="flex gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs">192.168.1.1</Badge>
-                              <Badge variant="secondary" className="text-xs">Online</Badge>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="knowledge" className="space-y-4">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search knowledge base..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="security">Security</SelectItem>
-                <SelectItem value="network">Network</SelectItem>
-                <SelectItem value="software">Software</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-4">
-            {filteredKB.map((article) => (
-              <Card key={article.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <BookOpen className="h-5 w-5 text-primary" />
-                        <h3 className="text-lg font-semibold">{article.title}</h3>
-                        <Badge variant="secondary">{article.category}</Badge>
-                      </div>
-                      <p className="text-muted-foreground mb-3 line-clamp-2">{article.content}</p>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <span>Views: {article.view_count}</span>
-                        <span>Helpful: {article.helpful_count}</span>
-                        <span>Updated: {format(new Date(article.created_at), 'MMM dd, yyyy')}</span>
-                      </div>
-                      {article.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-3">
-                          {article.tags.map((tag, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
+        {/* Support Tab */}
         <TabsContent value="support" className="space-y-4">
           <div className="grid md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <MessageSquare className="h-5 w-5" />
+                  <MessageSquare className="h-5 w-5 text-teal-500" />
                   <span>Contact Support</span>
                 </CardTitle>
                 <CardDescription>
@@ -814,7 +660,7 @@ const ClientPortal = () => {
                   <p className="text-lg font-semibold">support@yourcompany.com</p>
                   <p className="text-xs text-muted-foreground">Response within 4 hours</p>
                 </div>
-                <Button className="w-full" onClick={() => setShowRequestDialog(true)}>
+                <Button className="w-full bg-teal-500 hover:bg-teal-600" onClick={() => setShowNewTicketDialog(true)}>
                   Submit Support Request
                 </Button>
               </CardContent>
@@ -823,7 +669,7 @@ const ClientPortal = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Calendar className="h-5 w-5" />
+                  <Calendar className="h-5 w-5 text-teal-500" />
                   <span>Support Hours</span>
                 </CardTitle>
                 <CardDescription>
