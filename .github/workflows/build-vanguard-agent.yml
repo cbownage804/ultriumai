@@ -23,21 +23,33 @@ env:
   DOTNET_VERSION: '8.0.x'
 
 jobs:
+  prepare-source:
+    name: Prepare Agent Source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository (Linux)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Upload VanguardAgent source
+        uses: actions/upload-artifact@v4
+        with:
+          name: vanguard-agent-source
+          path: VanguardAgent/
+          retention-days: 1
+
   build-windows:
     name: Build Windows Agent
     runs-on: windows-latest
+    needs: prepare-source
     
     steps:
-      - name: Checkout VanguardAgent only
-        shell: pwsh
-        run: |
-          # Use git directly with sparse-checkout to avoid invalid path issues
-          git init
-          git remote add origin "https://github.com/${{ github.repository }}.git"
-          git config core.sparseCheckout true
-          echo "VanguardAgent/" | Out-File -Encoding ascii .git/info/sparse-checkout
-          git fetch --depth 1 origin ${{ github.ref_name }}
-          git checkout FETCH_HEAD
+      - name: Download VanguardAgent source
+        uses: actions/download-artifact@v4
+        with:
+          name: vanguard-agent-source
+          path: VanguardAgent
       
       - name: Setup .NET ${{ env.DOTNET_VERSION }}
         uses: actions/setup-dotnet@v4
