@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { devLog } from '@/lib/logger';
 
 // Types for remote access
 type RemoteSession = {
@@ -269,9 +270,9 @@ export const useRemoteAccess = () => {
   // Connect to WebSocket for live session
   const connectWebSocket = async (sessionToken: string) => {
     try {
-      console.log('Connecting WebSocket with token:', sessionToken);
+      devLog.log('Connecting WebSocket with token:', sessionToken);
       const wsUrl = `wss://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/rmm-realtime?token=${sessionToken}`;
-      console.log('WebSocket URL:', wsUrl);
+      devLog.log('WebSocket URL:', wsUrl);
       
       // Add a timeout to the WebSocket connection
       const ws = new WebSocket(wsUrl);
@@ -286,7 +287,7 @@ export const useRemoteAccess = () => {
 
         ws.onopen = () => {
           clearTimeout(connectionTimeout);
-          console.log('WebSocket connected successfully');
+          devLog.log('WebSocket connected successfully');
           setActiveWebSocket(ws);
           toast({
             title: "Live Session Connected",
@@ -306,15 +307,15 @@ export const useRemoteAccess = () => {
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
-          console.log('WebSocket message received:', message);
+          devLog.log('WebSocket message received:', message);
           
           // Handle different message types
           switch (message.type) {
             case 'session_ready':
-              console.log('Session ready:', message);
+              devLog.log('Session ready:', message);
               break;
             case 'ai_response':
-              console.log('AI response:', message.data);
+              devLog.log('AI response:', message.data);
               break;
             case 'auth_error':
               console.error('WebSocket auth error:', message.message);
@@ -338,7 +339,7 @@ export const useRemoteAccess = () => {
       };
 
       ws.onclose = (event) => {
-        console.log('WebSocket closed - Code:', event.code, 'Reason:', event.reason);
+        devLog.log('WebSocket closed - Code:', event.code, 'Reason:', event.reason);
         setActiveWebSocket(null);
         
         // Only show disconnection message if it was an unexpected close
@@ -368,28 +369,28 @@ export const useRemoteAccess = () => {
     if (!user) return;
 
     try {
-      console.log('Loading sessions...');
+      devLog.log('Loading sessions...');
       const { data, error } = await supabase
         .from('remote_sessions')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      console.log('Sessions response:', { data, error });
+      devLog.log('Sessions response:', { data, error });
 
       if (error) {
         console.error('Sessions database error:', error);
         throw error;
       }
 
-      console.log('Sessions loaded successfully:', data);
+      devLog.log('Sessions loaded successfully:', data?.length || 0);
       setSessions(data || []);
     } catch (error) {
       console.error('Error loading sessions:', error);
       // For testing purposes, create a mock session that matches any requested session ID
       // We'll create it with a generic ID first, but the RemoteDesktopViewer will provide the correct ID
       const mockSessions: RemoteSession[] = [];
-      console.log('Using mock sessions for testing:', mockSessions);
+      devLog.log('Using mock sessions for testing:', mockSessions);
       setSessions(mockSessions);
     }
   };

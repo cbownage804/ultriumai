@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Volume2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { devLog } from '@/lib/logger';
 
 interface VoiceControlsProps {
   onTranscription: (text: string) => void;
@@ -30,7 +31,7 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
 
   const startRecording = async () => {
     try {
-      console.log('Starting recording - checking browser support...');
+      devLog.log('Starting recording - checking browser support...');
       
       // Check MediaRecorder support
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -41,7 +42,7 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
         throw new Error('MediaRecorder API not supported in this browser');
       }
 
-      console.log('Browser support confirmed, requesting microphone access...');
+      devLog.log('Browser support confirmed, requesting microphone access...');
       
       // Request microphone access with Firefox-compatible constraints
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -53,7 +54,7 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
         } 
       });
 
-      console.log('Microphone access granted, creating MediaRecorder...');
+      devLog.log('Microphone access granted, creating MediaRecorder...');
 
       // Firefox-compatible MediaRecorder options
       let options: MediaRecorderOptions = {};
@@ -61,45 +62,45 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
       // Check supported formats and use Firefox-compatible ones
       if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
         options.mimeType = 'audio/webm;codecs=opus';
-        console.log('Using audio/webm;codecs=opus format');
+        devLog.log('Using audio/webm;codecs=opus format');
       } else if (MediaRecorder.isTypeSupported('audio/webm')) {
         options.mimeType = 'audio/webm';
-        console.log('Using audio/webm format');
+        devLog.log('Using audio/webm format');
       } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
         options.mimeType = 'audio/mp4';
-        console.log('Using audio/mp4 format');
+        devLog.log('Using audio/mp4 format');
       } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
         options.mimeType = 'audio/ogg;codecs=opus';
-        console.log('Using audio/ogg;codecs=opus format');
+        devLog.log('Using audio/ogg;codecs=opus format');
       } else {
-        console.log('Using default MediaRecorder format');
+        devLog.log('Using default MediaRecorder format');
       }
 
       const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
-      console.log('MediaRecorder created successfully with format:', options.mimeType || 'default');
+      devLog.log('MediaRecorder created successfully with format:', options.mimeType || 'default');
 
       mediaRecorder.ondataavailable = (event) => {
-        console.log('Data available:', event.data.size, 'bytes');
+        devLog.log('Data available:', event.data.size, 'bytes');
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
       };
 
       mediaRecorder.onstop = async () => {
-        console.log('Recording stopped, processing audio...');
+        devLog.log('Recording stopped, processing audio...');
         const mimeType = options.mimeType || 'audio/webm';
         const audioBlob = new Blob(chunksRef.current, { type: mimeType });
-        console.log('Audio blob created:', audioBlob.size, 'bytes, type:', audioBlob.type);
+        devLog.log('Audio blob created:', audioBlob.size, 'bytes, type:', audioBlob.type);
         
         await processAudio(audioBlob, mimeType);
         
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => {
           track.stop();
-          console.log('Track stopped:', track.kind);
+          devLog.log('Track stopped:', track.kind);
         });
       };
 
@@ -117,7 +118,7 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
       mediaRecorder.start(1000); // 1-second timeslices
       setIsRecording(true);
       
-      console.log('Recording started successfully');
+      devLog.log('Recording started successfully');
       
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -146,11 +147,11 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
   };
 
   const stopRecording = () => {
-    console.log('Stopping recording...');
+    devLog.log('Stopping recording...');
     if (mediaRecorderRef.current && isRecording) {
       if (mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.stop();
-        console.log('MediaRecorder.stop() called');
+        devLog.log('MediaRecorder.stop() called');
       }
       setIsRecording(false);
     }
@@ -158,18 +159,17 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
 
   const processAudio = async (audioBlob: Blob, mimeType: string) => {
     try {
-      console.log('Processing audio blob:', audioBlob.size, 'bytes, type:', audioBlob.type);
-      console.log('MIME type to send:', mimeType);
+      devLog.log('Processing audio blob:', audioBlob.size, 'bytes, type:', audioBlob.type);
       
       // Convert blob to base64
       const arrayBuffer = await audioBlob.arrayBuffer();
-      console.log('ArrayBuffer size:', arrayBuffer.byteLength);
+      devLog.log('ArrayBuffer size:', arrayBuffer.byteLength);
       
       const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-      console.log('Base64 audio length:', base64Audio.length);
+      devLog.log('Base64 audio length:', base64Audio.length);
 
       // Send to speech-to-text function
-      console.log('Sending to speech-to-text function...');
+      devLog.log('Sending to speech-to-text function...');
       const { data, error } = await supabase.functions.invoke('ai-voice-stt', {
         body: { 
           audio: base64Audio,
@@ -182,10 +182,10 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
         throw error;
       }
 
-      console.log('STT response:', data);
+      devLog.log('STT response:', data);
 
       if (data.text) {
-        console.log('Transcription successful:', data.text);
+        devLog.log('Transcription successful:', data.text);
         onTranscription(data.text);
         toast({
           title: "Speech Recognized",
