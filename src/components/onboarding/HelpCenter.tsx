@@ -43,7 +43,7 @@ interface TourInfo {
   product: 'safesuite' | 'ai-studio' | 'vanguard' | 'general';
 }
 
-const AVAILABLE_TOURS: TourInfo[] = [
+export const AVAILABLE_TOURS: TourInfo[] = [
   {
     id: 'safesuite-intro',
     name: 'SafeSuite Overview',
