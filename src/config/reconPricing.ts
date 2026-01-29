@@ -6,6 +6,8 @@ export const RECON_HARDWARE_TIERS = {
     name: 'Recon Lite',
     description: 'Perfect for small offices and home networks',
     priceCents: 29900, // $299
+    stripePriceId: 'price_1Sv04PH1u6E0bsJTexlWShH7',
+    stripeProductId: 'prod_TslbN3v4y0pyws',
     specs: {
       model: 'Raspberry Pi 4 (4GB)',
       maxDevices: 50,
@@ -18,6 +20,8 @@ export const RECON_HARDWARE_TIERS = {
     name: 'Recon Pro',
     description: 'Enterprise-grade security for growing businesses',
     priceCents: 49900, // $499
+    stripePriceId: 'price_1Sv04QH1u6E0bsJTnsRt9rzA',
+    stripeProductId: 'prod_TslbyY4IYThHJu',
     specs: {
       model: 'Raspberry Pi 5 (8GB) + AI Accelerator',
       maxDevices: 200,
@@ -40,6 +44,8 @@ export const RECON_SUBSCRIPTION_TIERS = {
     description: 'Core security monitoring for basic protection',
     monthlyPriceCents: 2900, // $29/mo
     yearlyPriceCents: 29000, // $290/yr (save ~17%)
+    stripePriceId: 'price_1Sv04SH1u6E0bsJTtYePwpO7',
+    stripeProductId: 'prod_TslbebGUa9LHTI',
     features: [
       'Daily network scans',
       'Monthly security reports',
@@ -54,6 +60,8 @@ export const RECON_SUBSCRIPTION_TIERS = {
     description: 'Full security suite with real-time protection',
     monthlyPriceCents: 4900, // $49/mo
     yearlyPriceCents: 49000, // $490/yr
+    stripePriceId: 'price_1Sv04UH1u6E0bsJTeiWRFrsf',
+    stripeProductId: 'prod_TslbEnIrNFoUzJ',
     features: [
       'Real-time continuous scanning',
       'Weekly security reports',
@@ -71,6 +79,8 @@ export const RECON_SUBSCRIPTION_TIERS = {
     description: 'Multi-site management with white-label options',
     monthlyPriceCents: 9900, // $99/mo
     yearlyPriceCents: 99000, // $990/yr
+    stripePriceId: 'price_1Sv04VH1u6E0bsJTwblFcd66',
+    stripeProductId: 'prod_Tslb2tcBdVNDHn',
     features: [
       'Everything in Professional',
       'Multi-site management',
