@@ -29,8 +29,10 @@ import {
   DollarSign,
   Calendar,
   BookOpen,
-  MessageSquare
+  MessageSquare,
+  Key
 } from "lucide-react";
+import safedocLogo from '@/assets/logos/logo-safedoc.png';
 import { format } from "date-fns";
 
 interface Service {
@@ -518,9 +520,13 @@ const ClientPortal = () => {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="services" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="services">Services</TabsTrigger>
           <TabsTrigger value="requests">Requests</TabsTrigger>
+          <TabsTrigger value="safedoc" className="flex items-center gap-1">
+            <img src={safedocLogo} alt="SafeDoc" className="h-4 w-auto" />
+            SafeDoc
+          </TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
           <TabsTrigger value="support">Support</TabsTrigger>
         </TabsList>
@@ -600,6 +606,128 @@ const ClientPortal = () => {
               </Card>
             ))}
           </div>
+        </TabsContent>
+
+        <TabsContent value="safedoc" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <img src={safedocLogo} alt="SafeDoc" className="h-6 w-auto" />
+                IT Documentation
+              </CardTitle>
+              <CardDescription>
+                Access your organization's IT documentation, passwords, and configurations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="docs" className="w-full">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="docs" className="flex items-center gap-1">
+                    <FileText className="h-4 w-4" />
+                    Documents
+                  </TabsTrigger>
+                  <TabsTrigger value="passwords" className="flex items-center gap-1">
+                    <Key className="h-4 w-4" />
+                    Passwords
+                  </TabsTrigger>
+                  <TabsTrigger value="configs" className="flex items-center gap-1">
+                    <Server className="h-4 w-4" />
+                    Configurations
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="docs" className="space-y-3">
+                  <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Search documents..." className="pl-10" />
+                  </div>
+                  <div className="grid gap-3">
+                    <Card className="bg-muted/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <FileText className="h-5 w-5 text-primary mt-0.5" />
+                          <div className="flex-1">
+                            <h4 className="font-medium">Network Diagram</h4>
+                            <p className="text-sm text-muted-foreground">Main office network topology</p>
+                            <Badge variant="secondary" className="mt-2 text-xs">Infrastructure</Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-muted/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <FileText className="h-5 w-5 text-primary mt-0.5" />
+                          <div className="flex-1">
+                            <h4 className="font-medium">Backup Procedures</h4>
+                            <p className="text-sm text-muted-foreground">Daily backup verification steps</p>
+                            <Badge variant="secondary" className="mt-2 text-xs">Runbook</Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-muted/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <FileText className="h-5 w-5 text-primary mt-0.5" />
+                          <div className="flex-1">
+                            <h4 className="font-medium">VPN Setup Guide</h4>
+                            <p className="text-sm text-muted-foreground">Remote access configuration</p>
+                            <Badge variant="secondary" className="mt-2 text-xs">How-To</Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="passwords" className="space-y-3">
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Key className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Password access requires additional authentication.</p>
+                    <Button variant="outline" className="mt-4">
+                      Request Password Access
+                    </Button>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="configs" className="space-y-3">
+                  <div className="grid gap-3">
+                    <Card className="bg-muted/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <Server className="h-5 w-5 text-primary mt-0.5" />
+                          <div className="flex-1">
+                            <h4 className="font-medium">Main Server</h4>
+                            <p className="text-sm text-muted-foreground">Windows Server 2022 - Domain Controller</p>
+                            <div className="flex gap-2 mt-2">
+                              <Badge variant="outline" className="text-xs">192.168.1.10</Badge>
+                              <Badge variant="secondary" className="text-xs">Online</Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-muted/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <Shield className="h-5 w-5 text-primary mt-0.5" />
+                          <div className="flex-1">
+                            <h4 className="font-medium">Edge Firewall</h4>
+                            <p className="text-sm text-muted-foreground">FortiGate 60F</p>
+                            <div className="flex gap-2 mt-2">
+                              <Badge variant="outline" className="text-xs">192.168.1.1</Badge>
+                              <Badge variant="secondary" className="text-xs">Online</Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="knowledge" className="space-y-4">

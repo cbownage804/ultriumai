@@ -34,7 +34,9 @@ import {
   RefreshCw,
   GripVertical,
   RotateCcw,
+  Copy,
 } from "lucide-react";
+import safedocLogo from '@/assets/logos/logo-safedoc.png';
 import { useVanguardAgent } from "@/hooks/useVanguardAgents";
 import { useMSP } from "@/hooks/useMSP";
 import { cn } from "@/lib/utils";
@@ -68,9 +70,10 @@ import {
 } from "@/components/vanguard/device/dialogs";
 
 // Widget order for customization
-type WidgetId = 'alert-status' | 'patches' | 'metrics' | 'alerts' | 'profiles' | 'shutdown' | 'activity';
+type WidgetId = 'alert-status' | 'patches' | 'metrics' | 'alerts' | 'profiles' | 'shutdown' | 'activity' | 'safedoc';
 
 const DEFAULT_WIDGET_ORDER: WidgetId[] = [
+  'safedoc',
   'alert-status',
   'patches', 
   'metrics',
@@ -304,6 +307,73 @@ export default function VanguardDeviceDetailPage() {
         return (
           <div key={widgetId} {...commonProps}>
             <DeviceActivityLogWidget activities={mockActivities} />
+          </div>
+        );
+      case 'safedoc':
+        return (
+          <div key={widgetId} {...commonProps}>
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <img src={safedocLogo} alt="SafeDoc" className="h-5 w-auto" />
+                <h3 className="font-medium text-gray-900">SafeDoc Quick Access</h3>
+              </div>
+              <p className="text-xs text-gray-500 mb-3">
+                {clientName} documentation
+              </p>
+              <div className="space-y-2">
+                <div className="p-2 rounded bg-gray-50 border border-gray-200 hover:border-teal-500 cursor-pointer transition-colors">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Key className="h-3 w-3 text-amber-500" />
+                    <span className="text-gray-900 text-xs font-medium">Domain Admin</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <code className="text-teal-600 text-xs">admin@domain.local</code>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-5 w-5 text-gray-400 hover:text-gray-700"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigator.clipboard.writeText('admin@domain.local');
+                        toast.success('Copied username');
+                      }}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="p-2 rounded bg-gray-50 border border-gray-200 hover:border-teal-500 cursor-pointer transition-colors">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Server className="h-3 w-3 text-blue-500" />
+                    <span className="text-gray-900 text-xs font-medium">Device Config</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <code className="text-teal-600 text-xs">{agent?.ip_address || '192.168.1.x'}</code>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-5 w-5 text-gray-400 hover:text-gray-700"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigator.clipboard.writeText(agent?.ip_address || '192.168.1.x');
+                        toast.success('Copied IP address');
+                      }}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full text-teal-600 border-teal-200 hover:bg-teal-50 mt-2"
+                  onClick={() => navigate('/vanguard/safedoc')}
+                >
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  Open Full SafeDoc
+                </Button>
+              </div>
+            </div>
           </div>
         );
       default:
