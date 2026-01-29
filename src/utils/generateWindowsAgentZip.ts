@@ -10,7 +10,7 @@ interface WindowsAgentZipOptions {
 
 // GitHub Release URL for pre-built EXE
 // Fetches latest release from your connected GitHub repo
-const GITHUB_RELEASE_BASE_URL = 'https://github.com/UltrtiumAI/ultra-kb-nexus-assist/releases/latest/download';
+const GITHUB_RELEASE_BASE_URL = 'https://github.com/cbownage804/ultriumai/releases/latest/download';
 const EXE_FILENAME = 'VanguardAgent-win-x64.exe';
 
 // Fallback: if GitHub release not available, we'll create a stub
