@@ -143,8 +143,8 @@ export function VanguardNavigation() {
       onClick={() => setIsMobileOpen(false)}
       className={cn(
         "flex items-center gap-3 px-4 py-2.5 text-sm transition-all duration-200",
-        "hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-purple-500/10 text-slate-400 hover:text-cyan-300",
-        isActive(item.path) && "bg-gradient-to-r from-cyan-500/25 via-purple-500/10 to-cyan-500/10 text-cyan-400 border-l-2 border-cyan-400 shadow-[inset_0_0_20px_rgba(6,182,212,0.1)]"
+        "hover:bg-gradient-to-r hover:from-cyan-500/15 hover:via-blue-500/10 hover:to-purple-500/15 text-slate-400 hover:text-cyan-300",
+        isActive(item.path) && "bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-purple-500/20 text-cyan-400 border-l-2 border-cyan-400 shadow-[inset_0_0_20px_rgba(6,182,212,0.1)]"
       )}
     >
       <item.icon className={cn(
@@ -153,7 +153,7 @@ export function VanguardNavigation() {
       )} />
       <span className="flex-1">{item.title}</span>
       {item.badge && (
-        <span className="text-xs bg-gradient-to-r from-purple-500 to-cyan-500 text-white px-1.5 py-0.5 rounded-full font-medium shadow-lg shadow-purple-500/30">
+        <span className="text-[10px] bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 text-white px-2 py-0.5 rounded-full font-bold shadow-lg shadow-purple-500/40 tracking-wide">
           {item.badge}
         </span>
       )}

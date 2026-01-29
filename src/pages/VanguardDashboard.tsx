@@ -87,7 +87,7 @@ const VanguardDashboard = () => {
           {/* New Button */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" className="gap-1 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white border-0 shadow-lg shadow-cyan-500/25">
+              <Button size="sm" className="gap-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 hover:from-cyan-500 hover:via-blue-600 hover:to-purple-700 text-white border-0 shadow-lg shadow-purple-500/30 font-medium">
                 New
                 <ChevronDown className="h-3 w-3" />
               </Button>
