@@ -24,20 +24,20 @@ export function TicketActivityWidget({ data }: TicketActivityWidgetProps) {
   ];
 
   return (
-    <Card className="bg-black/80 border-cyan-500/30 backdrop-blur-sm shadow-xl shadow-cyan-500/5">
-      <CardHeader className="pb-2">
+    <Card className="bg-black/80 border-cyan-500/30 backdrop-blur-sm shadow-xl shadow-purple-500/10">
+      <CardHeader className="pb-2 border-b border-purple-500/10">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium text-cyan-400 flex items-center gap-2">
-            <Activity className="h-4 w-4 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)]" />
+            <Activity className="h-4 w-4 drop-shadow-[0_0_4px_rgba(168,85,247,0.5)]" />
             Ticket activity
           </CardTitle>
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-sm bg-cyan-400 shadow-lg shadow-cyan-500/50" />
+              <div className="h-2.5 w-2.5 rounded-sm bg-gradient-to-r from-cyan-400 to-purple-400 shadow-lg shadow-cyan-500/50" />
               <span className="text-slate-400">Opened</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-sm bg-amber-400 shadow-lg shadow-amber-500/50" />
+              <div className="h-2.5 w-2.5 rounded-sm bg-gradient-to-r from-purple-400 to-pink-400 shadow-lg shadow-purple-500/50" />
               <span className="text-slate-400">Resolved</span>
             </div>
           </div>
@@ -63,15 +63,25 @@ export function TicketActivityWidget({ data }: TicketActivityWidgetProps) {
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#000',
-                  border: '1px solid rgba(6,182,212,0.4)',
+                  border: '1px solid rgba(168,85,247,0.4)',
                   borderRadius: '8px',
                   fontSize: '12px',
                   color: '#e2e8f0',
-                  boxShadow: '0 10px 40px rgba(6,182,212,0.15)'
+                  boxShadow: '0 10px 40px rgba(168,85,247,0.15)'
                 }}
               />
-              <Bar dataKey="opened" fill="#22d3ee" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="resolved" fill="#fbbf24" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="opened" fill="url(#openedGradient)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="resolved" fill="url(#resolvedGradient)" radius={[4, 4, 0, 0]} />
+              <defs>
+                <linearGradient id="openedGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#22d3ee" />
+                  <stop offset="100%" stopColor="#a855f7" />
+                </linearGradient>
+                <linearGradient id="resolvedGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#a855f7" />
+                  <stop offset="100%" stopColor="#ec4899" />
+                </linearGradient>
+              </defs>
             </BarChart>
           </ResponsiveContainer>
         </div>

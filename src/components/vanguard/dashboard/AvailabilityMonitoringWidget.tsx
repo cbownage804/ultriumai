@@ -39,12 +39,12 @@ export function AvailabilityMonitoringWidget({ devices }: AvailabilityMonitoring
   });
 
   return (
-    <Card className="bg-black/80 border-cyan-500/30 backdrop-blur-sm shadow-xl shadow-cyan-500/5">
-      <CardHeader className="pb-2">
+    <Card className="bg-black/80 border-cyan-500/30 backdrop-blur-sm shadow-xl shadow-purple-500/10">
+      <CardHeader className="pb-2 border-b border-purple-500/10">
         <CardTitle className="text-sm font-medium text-cyan-400 flex items-center gap-2">
-          <Activity className="h-4 w-4 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)]" />
+          <Activity className="h-4 w-4 drop-shadow-[0_0_4px_rgba(168,85,247,0.5)]" />
           Availability monitoring
-          <HelpCircle className="h-3.5 w-3.5 text-slate-500 ml-1" />
+          <span className="ml-auto h-2 w-2 rounded-full bg-purple-500 animate-pulse shadow-lg shadow-purple-500/50" />
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">

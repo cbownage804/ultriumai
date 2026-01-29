@@ -39,12 +39,12 @@ export function CriticalTicketsWidget({ tickets }: CriticalTicketsWidgetProps) {
   };
 
   return (
-    <Card className="bg-black/80 border-cyan-500/30 backdrop-blur-sm shadow-xl shadow-cyan-500/5">
-      <CardHeader className="pb-2">
+    <Card className="bg-black/80 border-cyan-500/30 backdrop-blur-sm shadow-xl shadow-purple-500/10">
+      <CardHeader className="pb-2 border-b border-purple-500/10">
         <CardTitle className="text-sm font-medium text-cyan-400 flex items-center gap-2">
-          <AlertCircle className="h-4 w-4 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)]" />
+          <AlertCircle className="h-4 w-4 drop-shadow-[0_0_4px_rgba(168,85,247,0.5)]" />
           Critical and overdue tickets
-          <HelpCircle className="h-3.5 w-3.5 text-slate-500 ml-1" />
+          <span className="ml-auto text-[10px] font-bold text-red-400 bg-gradient-to-r from-red-500/20 to-purple-500/20 px-1.5 py-0.5 rounded border border-red-500/30 animate-pulse">URGENT</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
