@@ -61,6 +61,7 @@ export function VanguardNavigation() {
     },
     { title: 'Billing', path: `${basePath}/billing`, icon: CreditCard },
     { title: 'Customer Portal', path: `${basePath}/portal`, icon: Globe },
+    { title: 'Portal App', path: `${basePath}/portal/download`, icon: Monitor },
     { title: 'Admin', path: `${basePath}/admin`, icon: Settings },
     { title: 'Refer a Friend', path: `${basePath}/referrals`, icon: Gift },
   ];
