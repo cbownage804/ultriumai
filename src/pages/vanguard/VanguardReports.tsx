@@ -19,10 +19,12 @@ export default function VanguardReports() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center gap-3">
-        <BarChart3 className="h-6 w-6 text-primary" />
+        <div className="p-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30">
+          <BarChart3 className="h-6 w-6 text-cyan-400" />
+        </div>
         <div>
-          <h1 className="text-2xl font-bold">Reports & Analytics</h1>
-          <p className="text-muted-foreground">Comprehensive security reporting and trend analysis</p>
+          <h1 className="text-2xl font-bold text-white">Vanguard Ledger</h1>
+          <p className="text-white/60">Reports, compliance, and security analytics</p>
         </div>
       </div>
 

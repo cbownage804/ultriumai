@@ -9,8 +9,8 @@ const VanguardAIKnowledge = () => {
           <Wand2 className="h-6 w-6 text-cyan-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">AI Knowledge Base Generator</h1>
-          <p className="text-white/60">Automatically generate KB articles from resolved tickets</p>
+          <h1 className="text-2xl font-bold text-white">Vanguard Cortex — KB Generator</h1>
+          <p className="text-white/60">AI-powered knowledge base article generation from resolved tickets</p>
         </div>
       </div>
       <AIKBGenerator />

@@ -4,7 +4,7 @@ import { Monitor } from 'lucide-react';
 
 export default function VanguardRMM() {
   useEffect(() => {
-    document.title = 'Endpoint Management | Ultrium Vanguard';
+    document.title = 'Vanguard Horizon | Ultrium Vanguard';
   }, []);
 
   return (
@@ -14,8 +14,8 @@ export default function VanguardRMM() {
           <Monitor className="h-6 w-6 text-cyan-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">Endpoint Management</h1>
-          <p className="text-white/60">Remote monitoring, endpoint management, and automation</p>
+          <h1 className="text-2xl font-bold text-white">Vanguard Horizon</h1>
+          <p className="text-white/60">Endpoint management, remote monitoring, and automation</p>
         </div>
       </div>
       <RMMDashboard />

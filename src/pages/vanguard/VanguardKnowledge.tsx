@@ -83,7 +83,7 @@ export default function VanguardKnowledge() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    document.title = 'Knowledge Base | Ultrium Vanguard';
+    document.title = 'Vanguard Atlas | Ultrium Vanguard';
   }, []);
 
   const filteredArticles = articles.filter(article => {
@@ -278,8 +278,8 @@ export default function VanguardKnowledge() {
             <BookOpen className="h-6 w-6 text-cyan-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Knowledge Base</h1>
-            <p className="text-white/60 text-sm">Documentation and tutorials</p>
+            <h1 className="text-2xl font-bold text-white">Vanguard Atlas</h1>
+            <p className="text-white/60 text-sm">Knowledge base, documentation, and SOPs</p>
           </div>
         </div>
         <Button 

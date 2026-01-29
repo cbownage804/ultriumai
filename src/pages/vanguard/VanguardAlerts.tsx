@@ -68,7 +68,7 @@ export default function VanguardAlerts() {
   const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
-    document.title = 'Alerts | Ultrium Vanguard';
+    document.title = 'Vanguard Pursuit | Ultrium Vanguard';
   }, []);
 
   const stats = [
@@ -156,8 +156,8 @@ export default function VanguardAlerts() {
             )}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Alerts</h1>
-            <p className="text-white/60 text-sm">Monitor and respond to system alerts</p>
+            <h1 className="text-2xl font-bold text-white">Vanguard Pursuit</h1>
+            <p className="text-white/60 text-sm">Security alerts, threat detection, and response</p>
           </div>
         </div>
         <div className="flex gap-2">

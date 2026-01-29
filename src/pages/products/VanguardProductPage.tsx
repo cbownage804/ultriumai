@@ -41,19 +41,19 @@ const VanguardProductPage = () => {
   const products = [
     {
       logo: safeopsLogo,
-      title: "SafeOps™ RMM",
+      title: "Vanguard Horizon (RMM & Monitoring)",
       description: "Remote monitoring and management with real-time endpoint visibility, automated patching, and proactive maintenance workflows.",
       bgColor: "bg-black"
     },
     {
       logo: safedeskLogo,
-      title: "SafeDesk™ Helpdesk",
+      title: "Vanguard Response (Service Desk)",
       description: "AI-powered IT service desk with smart ticket routing, SLA management, automated resolutions, and seamless escalation workflows.",
       bgColor: "bg-black"
     },
     {
       logo: safedocLogo,
-      title: "SafeDoc™ Documentation",
+      title: "Vanguard Atlas (Knowledge Base)",
       description: "Centralized IT documentation and knowledge base with AI-powered search, runbook automation, and client-facing portals.",
       bgColor: "bg-black"
     },
