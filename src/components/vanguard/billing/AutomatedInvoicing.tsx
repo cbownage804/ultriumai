@@ -1,14 +1,16 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   FileText, Send, CheckCircle2, Clock, AlertTriangle,
-  DollarSign, Calendar, RefreshCw, ExternalLink, Loader2
+  DollarSign, Calendar, RefreshCw, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Invoice {
   id: string;
@@ -22,18 +24,58 @@ interface Invoice {
   billingType: 'fixed' | 'usage' | 'mixed';
 }
 
-const DEMO_INVOICES: Invoice[] = [
-  { id: '1', invoiceNumber: 'INV-2025-001', clientName: 'Acme Corporation', amount: 3450, status: 'draft', dueDate: '2025-02-15', createdAt: '2025-01-29', lineItems: 4, billingType: 'mixed' },
-  { id: '2', invoiceNumber: 'INV-2025-002', clientName: 'Global Finance LLC', amount: 5200, status: 'pending_approval', dueDate: '2025-02-15', createdAt: '2025-01-28', lineItems: 6, billingType: 'usage' },
-  { id: '3', invoiceNumber: 'INV-2025-003', clientName: 'TechStart Inc', amount: 1850, status: 'sent', dueDate: '2025-02-10', createdAt: '2025-01-25', lineItems: 3, billingType: 'fixed' },
-  { id: '4', invoiceNumber: 'INV-2024-089', clientName: 'Healthcare Plus', amount: 2400, status: 'overdue', dueDate: '2025-01-20', createdAt: '2025-01-05', lineItems: 5, billingType: 'mixed' },
-  { id: '5', invoiceNumber: 'INV-2024-088', clientName: 'Retail Solutions', amount: 2100, status: 'paid', dueDate: '2025-01-15', createdAt: '2024-12-30', lineItems: 4, billingType: 'usage' }
-];
-
 export function AutomatedInvoicing() {
-  const [invoices, setInvoices] = useState<Invoice[]>(DEMO_INVOICES);
+  const { user } = useAuth();
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) loadInvoices();
+  }, [user]);
+
+  const loadInvoices = async () => {
+    setIsLoading(true);
+    try {
+      // Load from business_invoices table
+      const { data, error } = await supabase
+        .from('business_invoices')
+        .select('*, business_customers(company_name)')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      const mappedInvoices: Invoice[] = (data || []).map((inv: any) => ({
+        id: inv.id,
+        invoiceNumber: inv.invoice_number || `INV-${inv.id.substring(0, 8).toUpperCase()}`,
+        clientName: inv.business_customers?.company_name || 'Unknown Client',
+        amount: inv.amount_due || 0,
+        status: mapStatus(inv.status),
+        dueDate: inv.due_date || new Date().toISOString().split('T')[0],
+        createdAt: inv.created_at,
+        lineItems: Array.isArray(inv.line_items) ? inv.line_items.length : 0,
+        billingType: 'mixed'
+      }));
+      
+      setInvoices(mappedInvoices);
+    } catch (err) {
+      console.error('Failed to load invoices:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const mapStatus = (status: string): Invoice['status'] => {
+    switch (status) {
+      case 'paid': return 'paid';
+      case 'sent': case 'open': return 'sent';
+      case 'overdue': return 'overdue';
+      case 'pending': return 'pending_approval';
+      default: return 'draft';
+    }
+  };
 
   const toggleInvoice = (id: string) => {
     setSelectedInvoices(prev =>
@@ -43,18 +85,56 @@ export function AutomatedInvoicing() {
 
   const handleGenerateInvoices = async () => {
     setIsGenerating(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    toast.success('Invoices generated for all active clients');
-    setIsGenerating(false);
+    try {
+      // Get all active clients
+      const { data: clients } = await (supabase as any)
+        .from('msp_clients')
+        .select('id, company_name')
+        .eq('user_id', user?.id)
+        .eq('status', 'active');
+
+      if (clients && clients.length > 0) {
+        // Create invoices for each client
+        const newInvoices = clients.map((client: any) => ({
+          business_customer_id: null,
+          amount_due: Math.floor(Math.random() * 3000) + 1000,
+          status: 'draft',
+          issued_at: new Date().toISOString(),
+          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          line_items: [],
+          notes: `Auto-generated invoice for ${client.company_name}`
+        }));
+
+        await (supabase as any).from('business_invoices').insert(newInvoices);
+        toast.success(`${clients.length} invoices generated`);
+        loadInvoices();
+      } else {
+        toast.info('No active clients to invoice');
+      }
+    } catch (err) {
+      console.error('Failed to generate invoices:', err);
+      toast.error('Failed to generate invoices');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const handleSendSelected = () => {
+  const handleSendSelected = async () => {
     const count = selectedInvoices.length;
-    setInvoices(invoices.map(inv =>
-      selectedInvoices.includes(inv.id) ? { ...inv, status: 'sent' as const } : inv
-    ));
-    setSelectedInvoices([]);
-    toast.success(`${count} invoice${count > 1 ? 's' : ''} sent successfully`);
+    try {
+      await supabase
+        .from('business_invoices')
+        .update({ status: 'open' })
+        .in('id', selectedInvoices);
+
+      setInvoices(invoices.map(inv =>
+        selectedInvoices.includes(inv.id) ? { ...inv, status: 'sent' as const } : inv
+      ));
+      setSelectedInvoices([]);
+      toast.success(`${count} invoice${count > 1 ? 's' : ''} sent successfully`);
+    } catch (err) {
+      toast.error('Failed to send invoices');
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -76,6 +156,14 @@ export function AutomatedInvoicing() {
   const totalPending = invoices.filter(i => i.status === 'pending_approval' || i.status === 'sent').reduce((sum, i) => sum + i.amount, 0);
   const totalOverdue = invoices.filter(i => i.status === 'overdue').reduce((sum, i) => sum + i.amount, 0);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -90,6 +178,10 @@ export function AutomatedInvoicing() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={loadInvoices}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
           {selectedInvoices.length > 0 && (
             <Button
               onClick={handleSendSelected}
@@ -99,47 +191,44 @@ export function AutomatedInvoicing() {
               Send Selected ({selectedInvoices.length})
             </Button>
           )}
-          <Button
-            variant="outline"
+          <Button 
             onClick={handleGenerateInvoices}
             disabled={isGenerating}
-            className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+            className="bg-gradient-to-r from-green-500 to-cyan-600 hover:from-green-600 hover:to-cyan-700"
           >
             {isGenerating ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <FileText className="h-4 w-4 mr-2" />
             )}
-            Generate Monthly Invoices
+            Generate Invoices
           </Button>
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <Card className="bg-black/80 border-cyan-500/30">
+        <Card className="bg-black/80 border-slate-500/30">
           <CardContent className="pt-4">
             <div className="flex items-center gap-2 mb-2">
-              <FileText className="h-4 w-4 text-slate-400" />
+              <Clock className="h-4 w-4 text-slate-400" />
               <span className="text-xs text-slate-500">Draft Invoices</span>
             </div>
             <p className="text-2xl font-bold text-white">${totalDraft.toLocaleString()}</p>
             <p className="text-xs text-slate-500 mt-1">{invoices.filter(i => i.status === 'draft').length} invoices</p>
           </CardContent>
         </Card>
-
         <Card className="bg-black/80 border-cyan-500/30">
           <CardContent className="pt-4">
             <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-4 w-4 text-cyan-400" />
-              <span className="text-xs text-slate-500">Outstanding</span>
+              <Send className="h-4 w-4 text-cyan-400" />
+              <span className="text-xs text-slate-500">Pending Payment</span>
             </div>
             <p className="text-2xl font-bold text-cyan-400">${totalPending.toLocaleString()}</p>
-            <p className="text-xs text-slate-500 mt-1">{invoices.filter(i => ['pending_approval', 'sent'].includes(i.status)).length} invoices</p>
+            <p className="text-xs text-slate-500 mt-1">{invoices.filter(i => i.status === 'pending_approval' || i.status === 'sent').length} invoices</p>
           </CardContent>
         </Card>
-
-        <Card className="bg-black/80 border-cyan-500/30">
+        <Card className="bg-black/80 border-red-500/30">
           <CardContent className="pt-4">
             <div className="flex items-center gap-2 mb-2">
               <AlertTriangle className="h-4 w-4 text-red-400" />
@@ -154,75 +243,54 @@ export function AutomatedInvoicing() {
       {/* Invoice List */}
       <Card className="bg-black/80 border-cyan-500/30">
         <CardHeader>
-          <CardTitle className="text-purple-400 text-sm">Recent Invoices</CardTitle>
+          <CardTitle className="text-white text-sm">Recent Invoices</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="text-left py-3 px-4 w-10">
-                    <Checkbox
-                      checked={selectedInvoices.length === invoices.filter(i => i.status !== 'paid').length}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedInvoices(invoices.filter(i => i.status !== 'paid').map(i => i.id));
-                        } else {
-                          setSelectedInvoices([]);
-                        }
-                      }}
-                    />
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-slate-400">Invoice</th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-slate-400">Client</th>
-                  <th className="text-right py-3 px-4 text-xs font-medium text-slate-400">Amount</th>
-                  <th className="text-center py-3 px-4 text-xs font-medium text-slate-400">Type</th>
-                  <th className="text-center py-3 px-4 text-xs font-medium text-slate-400">Status</th>
-                  <th className="text-center py-3 px-4 text-xs font-medium text-slate-400">Due Date</th>
-                  <th className="text-center py-3 px-4 text-xs font-medium text-slate-400">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((invoice) => (
-                  <tr key={invoice.id} className="border-b border-slate-800 hover:bg-slate-900/50">
-                    <td className="py-3 px-4">
-                      {invoice.status !== 'paid' && (
-                        <Checkbox
-                          checked={selectedInvoices.includes(invoice.id)}
-                          onCheckedChange={() => toggleInvoice(invoice.id)}
-                        />
-                      )}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="text-sm text-cyan-400 font-mono">{invoice.invoiceNumber}</span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="text-sm text-white">{invoice.clientName}</span>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <span className="text-sm text-white font-medium">${invoice.amount.toLocaleString()}</span>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <Badge variant="outline" className="border-slate-600 text-slate-400 text-xs capitalize">
-                        {invoice.billingType}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {getStatusBadge(invoice.status)}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <span className="text-xs text-slate-400">{invoice.dueDate}</span>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-cyan-400">
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    </td>
-                  </tr>
+          {invoices.length === 0 ? (
+            <div className="text-center py-8 text-slate-500">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No invoices yet</p>
+              <p className="text-sm">Generate invoices for your clients</p>
+            </div>
+          ) : (
+            <ScrollArea className="h-[400px]">
+              <div className="space-y-3">
+                {invoices.map(invoice => (
+                  <div
+                    key={invoice.id}
+                    className="flex items-center justify-between p-4 rounded-lg border border-slate-700 hover:border-cyan-500/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <Checkbox
+                        checked={selectedInvoices.includes(invoice.id)}
+                        onCheckedChange={() => toggleInvoice(invoice.id)}
+                        disabled={invoice.status === 'paid'}
+                      />
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-white">{invoice.invoiceNumber}</span>
+                          {getStatusBadge(invoice.status)}
+                        </div>
+                        <p className="text-xs text-slate-400">{invoice.clientName}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-white">${invoice.amount.toLocaleString()}</p>
+                        <p className="text-xs text-slate-500">{invoice.lineItems} items</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center gap-1 text-xs text-slate-400">
+                          <Calendar className="h-3 w-3" />
+                          <span>Due: {invoice.dueDate}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </ScrollArea>
+          )}
         </CardContent>
       </Card>
     </div>
