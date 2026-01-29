@@ -84,22 +84,34 @@ export const ProductTour = ({
       return;
     }
 
-    const updateHighlight = () => {
+    const updateHighlight = (shouldScroll = false) => {
       const element = document.querySelector(steps[currentStep].target!);
       if (element) {
-        const rect = element.getBoundingClientRect();
-        setHighlightRect(rect);
+        // Scroll element into view first if needed
+        if (shouldScroll) {
+          element.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+        }
+        
+        // Update rect after a brief delay to let scroll settle
+        setTimeout(() => {
+          const rect = element.getBoundingClientRect();
+          setHighlightRect(rect);
+        }, shouldScroll ? 300 : 0);
       }
     };
 
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(updateHighlight, 150);
+    // Initial update with scroll
+    const timer = setTimeout(() => updateHighlight(true), 150);
     
-    // Debounced resize/scroll handler to prevent glitchy updates
+    // Debounced resize handler (no scroll)
     let resizeTimeout: NodeJS.Timeout;
     const debouncedUpdate = () => {
       clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(updateHighlight, 50);
+      resizeTimeout = setTimeout(() => updateHighlight(false), 50);
     };
     
     window.addEventListener('resize', debouncedUpdate);
