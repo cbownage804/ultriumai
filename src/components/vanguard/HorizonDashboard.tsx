@@ -8,6 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useHorizonStats } from '@/hooks/useHorizonStats';
 import { DeviceQuickActions } from './horizon/DeviceQuickActions';
 import { AutomationProfileSelector } from './horizon/AutomationProfileSelector';
+import { DeviceTypeBreakdown } from './horizon/DeviceTypeBreakdown';
+import { ResourceTrendingChart } from './horizon/ResourceTrendingChart';
+import { BulkActionsPanel } from './horizon/BulkActionsPanel';
 import { 
   Monitor, 
   Server, 
@@ -378,6 +381,15 @@ export function HorizonDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Device Type Breakdown */}
+          <DeviceTypeBreakdown devices={devices} />
+
+          {/* Resource Trending */}
+          <ResourceTrendingChart />
+
+          {/* Bulk Actions */}
+          <BulkActionsPanel devices={devices} onActionComplete={refetch} />
 
           {/* Recent Devices */}
           <Card>
