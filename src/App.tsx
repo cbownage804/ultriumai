@@ -21,6 +21,7 @@ import { PageSkeleton, LoadingSpinner } from '@/components/ui/PageSkeleton';
 // Core pages (always loaded)
 import Index from '@/pages/Index';
 import AuthPage from '@/pages/AuthPage';
+import AuthCallback from '@/pages/AuthCallback';
 import NotFound from '@/pages/NotFound';
 
 // SafeSuite Layout imports (needed for nested routes)
@@ -319,6 +320,7 @@ function AppRouter() {
         </Route>
         <Route path="/agent" element={<AgentComponent />} />
         <Route path="/auth" element={user ? <RoleBasedRedirect /> : <AuthPage />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/hub" element={
           <ProtectedRoute>
             <SuspenseWrapper variant="cards">
