@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   ChevronDown, Download, RefreshCw, Search, HelpCircle, Bell, MessageCircle,
-  Maximize2, MoreHorizontal, Shield
+  Maximize2, MoreHorizontal, Shield, Play
 } from "lucide-react";
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
@@ -11,9 +11,12 @@ import {
 import { useMSP } from "@/hooks/useMSP";
 import { useVanguardAgents } from "@/hooks/useVanguardAgents";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays, startOfDay, isAfter, isSameDay } from "date-fns";
+import { ProductTour, useProductTour } from '@/components/onboarding';
+import { VANGUARD_TOUR_STEPS } from '@/config/productTours';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Dashboard widgets
 import { TicketStatusWidget } from "@/components/vanguard/dashboard/TicketStatusWidget";
@@ -26,9 +29,12 @@ import { TicketActivityWidget } from "@/components/vanguard/dashboard/TicketActi
 
 const VanguardDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { clients } = useMSP();
   const { agents, refetch: refreshAgents } = useVanguardAgents();
   const [searchQuery, setSearchQuery] = useState('');
+  const { isCompleted: isTourCompleted, resetTour } = useProductTour('vanguard-command');
+  const [showTour, setShowTour] = useState(false);
   
   // Real data state
   const [ticketStats, setTicketStats] = useState({ open: 0, pending: 0, dueToday: 0, overdue: 0 });
@@ -38,6 +44,27 @@ const VanguardDashboard = () => {
   const [criticalTickets, setCriticalTickets] = useState<any[]>([]);
   const [ticketActivity, setTicketActivity] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Check URL params to see if tour should start
+  useEffect(() => {
+    if (searchParams.get('tour') === 'true') {
+      resetTour();
+      setShowTour(true);
+    }
+  }, [searchParams, resetTour]);
+
+  // Auto-show tour on first visit (after loading)
+  useEffect(() => {
+    if (!isLoading && !isTourCompleted && !showTour) {
+      const timer = setTimeout(() => setShowTour(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, isTourCompleted, showTour]);
+
+  const handleStartTour = () => {
+    resetTour();
+    setShowTour(true);
+  };
 
   // Fetch real data from database
   useEffect(() => {
@@ -190,9 +217,10 @@ const VanguardDashboard = () => {
   };
 
   return (
+    <TooltipProvider>
     <div className="min-h-screen">
       {/* Top Header Bar - Pure Black Vanguard Theme */}
-      <header className="sticky top-0 z-30 h-14 bg-black/90 border-b border-cyan-500/30 flex items-center justify-between px-4 backdrop-blur-xl shadow-lg shadow-cyan-500/5">
+      <header data-tour="vanguard-header" className="sticky top-0 z-30 h-14 bg-black/90 border-b border-cyan-500/30 flex items-center justify-between px-4 backdrop-blur-xl shadow-lg shadow-cyan-500/5">
         <div className="flex items-center gap-3">
           {/* New Button */}
           <DropdownMenu>
@@ -247,9 +275,39 @@ const VanguardDashboard = () => {
             Install agent
           </Button>
           
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-purple-500/15">
-            <HelpCircle className="h-5 w-5" />
-          </Button>
+          {/* Tour Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                data-tour="help-button"
+                className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-purple-500/15"
+                onClick={handleStartTour}
+              >
+                <Play className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="bg-black/90 border-cyan-500/30 text-cyan-100">
+              <p>Replay guided tour</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-purple-500/15"
+              >
+                <HelpCircle className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="bg-black/90 border-cyan-500/30 text-cyan-100">
+              <p>Help Center</p>
+            </TooltipContent>
+          </Tooltip>
+          
           <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-cyan-400 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-purple-500/15">
             <MessageCircle className="h-5 w-5" />
           </Button>
@@ -298,10 +356,10 @@ const VanguardDashboard = () => {
 
         {/* Top Row: Ticket Status + Pursuit Alert Status */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3" data-tour="ticket-status">
             <TicketStatusWidget {...ticketStats} />
           </div>
-          <div>
+          <div data-tour="alert-status">
             <div className="mb-2">
               <h2 className="text-xs font-bold tracking-widest text-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]">VANGUARD PURSUIT — ACTIVE THREATS</h2>
             </div>
@@ -316,14 +374,22 @@ const VanguardDashboard = () => {
 
         {/* Middle Row: Availability + Recent Alerts + Ticket Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-          <AvailabilityMonitoringWidget devices={agents} />
-          <RecentAlertsWidget alerts={recentAlerts} />
-          <TicketActivityWidget data={ticketActivity} />
+          <div data-tour="availability-monitoring">
+            <AvailabilityMonitoringWidget devices={agents} />
+          </div>
+          <div data-tour="recent-alerts">
+            <RecentAlertsWidget alerts={recentAlerts} />
+          </div>
+          <div data-tour="ticket-activity">
+            <TicketActivityWidget data={ticketActivity} />
+          </div>
         </div>
 
         {/* Bottom Row: Customer Tickets + Map + Critical Tickets */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <CustomerTicketsWidget customers={customerTickets} />
+          <div data-tour="customer-tickets">
+            <CustomerTicketsWidget customers={customerTickets} />
+          </div>
           {/* Map placeholder */}
           <div className="bg-black/80 rounded-xl border border-cyan-500/30 p-4 backdrop-blur-sm shadow-xl shadow-cyan-500/5">
             <h3 className="text-sm font-medium text-cyan-400 mb-3">Map overview</h3>
@@ -331,10 +397,24 @@ const VanguardDashboard = () => {
               Map visualization
             </div>
           </div>
-          <CriticalTicketsWidget tickets={criticalTickets} />
+          <div data-tour="critical-tickets">
+            <CriticalTicketsWidget tickets={criticalTickets} />
+          </div>
         </div>
       </div>
+
+      {/* Product Tour */}
+      {showTour && (
+        <ProductTour 
+          tourId="vanguard-command" 
+          steps={VANGUARD_TOUR_STEPS}
+          autoStart={true}
+          onComplete={() => setShowTour(false)}
+          onSkip={() => setShowTour(false)}
+        />
+      )}
     </div>
+    </TooltipProvider>
   );
 };
 

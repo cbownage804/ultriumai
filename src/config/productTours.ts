@@ -102,8 +102,94 @@ export const AI_STUDIO_TOUR_STEPS: TourStep[] = [
   },
 ];
 
-// Vanguard Product Tour
+// Vanguard Command Center Product Tour - Comprehensive walkthrough
 export const VANGUARD_TOUR_STEPS: TourStep[] = [
+  {
+    id: 'welcome',
+    title: 'Welcome to Vanguard Command! 🎯',
+    description: 'Your unified security operations center. This dashboard gives you complete visibility across all your clients, devices, and security events.',
+    position: 'center',
+  },
+  {
+    id: 'quick-actions',
+    title: 'Quick Actions Bar',
+    description: 'Create new tickets, customers, or devices instantly. The search bar helps you find anything across your entire organization.',
+    target: '[data-tour="vanguard-header"]',
+    position: 'bottom',
+  },
+  {
+    id: 'ticket-status',
+    title: 'Vanguard Response — Ticket Status',
+    description: 'Track your helpdesk tickets at a glance. See open, pending, due today, and overdue tickets. Click any status to jump to filtered views.',
+    target: '[data-tour="ticket-status"]',
+    position: 'bottom',
+  },
+  {
+    id: 'alert-status',
+    title: 'Vanguard Pursuit — Active Threats',
+    description: 'Real-time security alerts from all your endpoints. Warning and Critical alerts require immediate attention.',
+    target: '[data-tour="alert-status"]',
+    position: 'left',
+  },
+  {
+    id: 'device-health',
+    title: 'Vanguard Horizon — Device Health',
+    description: 'Monitor the availability of all devices across your fleet. Servers, PCs, Macs, Linux machines, and SNMP devices are tracked in real-time.',
+    target: '[data-tour="availability-monitoring"]',
+    position: 'right',
+  },
+  {
+    id: 'recent-alerts',
+    title: 'Recent Alerts',
+    description: 'See the latest security events from across your network. Click any alert to investigate and respond.',
+    target: '[data-tour="recent-alerts"]',
+    position: 'top',
+  },
+  {
+    id: 'ticket-activity',
+    title: 'Ticket Activity',
+    description: 'Track ticket trends over time. Opened vs resolved tickets help you measure team performance and workload.',
+    target: '[data-tour="ticket-activity"]',
+    position: 'top',
+  },
+  {
+    id: 'customer-tickets',
+    title: 'Customer Tickets',
+    description: 'See which clients have the most active tickets. Helps you identify accounts that need more attention.',
+    target: '[data-tour="customer-tickets"]',
+    position: 'right',
+  },
+  {
+    id: 'critical-tickets',
+    title: 'Critical & Overdue Tickets',
+    description: 'Urgent tickets that need immediate action. Never miss an SLA deadline with this priority view.',
+    target: '[data-tour="critical-tickets"]',
+    position: 'left',
+  },
+  {
+    id: 'navigation',
+    title: 'Navigation Sidebar',
+    description: 'Access all Vanguard modules from the sidebar: Horizon (RMM), Pursuit (Threats), Response (Helpdesk), Recon (Discovery), Atlas (Documentation), and Cortex (AI).',
+    target: '[data-tour="vanguard-sidebar"]',
+    position: 'right',
+  },
+  {
+    id: 'help-center',
+    title: 'Need Help?',
+    description: 'Click the ? icon anytime to replay this tour, access documentation, or get support. You can restart the tour from the Help Center.',
+    target: '[data-tour="help-button"]',
+    position: 'bottom',
+  },
+  {
+    id: 'complete',
+    title: 'You\'re Ready to Command! 🚀',
+    description: 'Start by installing an agent on your first device or exploring the navigation. Welcome to the team!',
+    position: 'center',
+  },
+];
+
+// Legacy simplified tour for VanguardHome (kept for backwards compatibility)
+export const VANGUARD_HOME_TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
     title: 'Welcome to Vanguard! 🎯',

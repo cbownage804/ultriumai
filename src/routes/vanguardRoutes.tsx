@@ -108,8 +108,10 @@ const LazyPage = ({ component: Component }: { component: React.ComponentType }) 
 
 // Export protected routes (for inside VanguardLayout)
 export const getVanguardProtectedRoutes = () => [
-  <Route key="vanguard-home" index element={<LazyProtectedPage component={VanguardHome} />} />,
-  <Route key="vanguard-dashboard" path="dashboard" element={<LazyProtectedPage component={VanguardDashboard} />} />,
+  // VanguardDashboard (Command Center) is now the default landing page
+  <Route key="vanguard-dashboard" index element={<LazyProtectedPage component={VanguardDashboard} />} />,
+  <Route key="vanguard-dashboard-alias" path="dashboard" element={<LazyProtectedPage component={VanguardDashboard} />} />,
+  <Route key="vanguard-home" path="home" element={<LazyProtectedPage component={VanguardHome} />} />,
   <Route key="vanguard-devices" path="devices" element={<LazyProtectedPage component={VanguardDevicesPage} />} />,
   <Route key="vanguard-device-detail" path="devices/:deviceId" element={<LazyProtectedPage component={VanguardDeviceDetailPage} />} />,
   <Route key="vanguard-pi-detail" path="pi/:agentId" element={<LazyProtectedPage component={VanguardPiDetail} />} />,
