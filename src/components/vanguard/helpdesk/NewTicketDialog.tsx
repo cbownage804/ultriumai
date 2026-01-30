@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,10 +12,13 @@ import {
   MessageSquare,
   Calendar,
   Tag,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface NewTicketDialogProps {
   open: boolean;
@@ -23,7 +26,7 @@ interface NewTicketDialogProps {
   onSubmit: (ticket: TicketFormData) => void;
 }
 
-interface TicketFormData {
+export interface TicketFormData {
   customer: string;
   contact: string;
   title: string;
@@ -40,27 +43,25 @@ interface TicketFormData {
   tags: string[];
 }
 
-const mockCustomers = [
-  { id: '1', name: 'Acme Corp' },
-  { id: '2', name: 'TechStart Inc' },
-  { id: '3', name: 'Global Logistics' },
-  { id: '4', name: 'DataFlow Ltd' },
-];
+interface Customer {
+  id: string;
+  company_name: string;
+}
 
-const mockContacts = [
-  { id: '1', name: 'John Smith', email: 'john@acme.com', customerId: '1' },
-  { id: '2', name: 'Sarah Johnson', email: 'sarah@techstart.io', customerId: '2' },
-  { id: '3', name: 'Mike Wilson', email: 'mike@global.com', customerId: '3' },
-];
+interface Contact {
+  id: string;
+  contact_name: string;
+  email: string;
+  client_id: string;
+}
 
+// Technicians are team members - we'll use profiles
 const mockTechnicians = [
-  { id: '1', name: 'Alex Thompson' },
-  { id: '2', name: 'Emma Greszes' },
-  { id: '3', name: 'David Chen' },
-  { id: '4', name: 'Lisa Park' },
+  { id: 'unassigned', name: 'Unassigned' },
 ];
 
 export function NewTicketDialog({ open, onOpenChange, onSubmit }: NewTicketDialogProps) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState<TicketFormData>({
     customer: '',
     contact: '',
@@ -79,10 +80,66 @@ export function NewTicketDialog({ open, onOpenChange, onSubmit }: NewTicketDialo
   });
 
   const [contactSearch, setContactSearch] = useState('');
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
 
-  const filteredContacts = formData.customer 
-    ? mockContacts.filter(c => c.customerId === formData.customer)
-    : mockContacts;
+  // Fetch real customers from database
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      if (!user || !open) return;
+      
+      setIsLoadingCustomers(true);
+      try {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore - Supabase types can cause deep instantiation issues
+        const { data, error } = await supabase
+          .from('msp_clients')
+          .select('id, company_name')
+          .eq('user_id', user.id);
+        
+        if (error) throw error;
+        const customerData = (data || []) as Customer[];
+        setCustomers(customerData.sort((a, b) => a.company_name.localeCompare(b.company_name)));
+      } catch (err) {
+        console.error('Error fetching customers:', err);
+      } finally {
+        setIsLoadingCustomers(false);
+      }
+    };
+
+    fetchCustomers();
+  }, [user, open]);
+
+  // Fetch contacts when customer changes
+  useEffect(() => {
+    const fetchContacts = async () => {
+      if (!formData.customer) {
+        setContacts([]);
+        return;
+      }
+      
+      try {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore - Supabase types can cause deep instantiation issues
+        const { data, error } = await supabase
+          .from('client_contacts')
+          .select('id, contact_name, email, client_id')
+          .eq('client_id', formData.customer);
+        
+        if (error) throw error;
+        setContacts((data || []) as Contact[]);
+      } catch (err) {
+        console.error('Error fetching contacts:', err);
+      }
+    };
+
+    fetchContacts();
+  }, [formData.customer]);
+
+  const filteredContacts = contacts.filter(c => 
+    c.contact_name.toLowerCase().includes(contactSearch.toLowerCase())
+  );
 
   const handleSubmit = () => {
     if (!formData.title || !formData.customer) return;
@@ -150,14 +207,15 @@ export function NewTicketDialog({ open, onOpenChange, onSubmit }: NewTicketDialo
                 <Select 
                   value={formData.customer} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, customer: value, contact: '' }))}
+                  disabled={isLoadingCustomers}
                 >
                   <SelectTrigger className="bg-background border-input">
-                    <SelectValue placeholder="Select customer" />
+                    <SelectValue placeholder={isLoadingCustomers ? "Loading..." : "Select customer"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockCustomers.map(customer => (
+                    {customers.map(customer => (
                       <SelectItem key={customer.id} value={customer.id}>
-                        {customer.name}
+                        {customer.company_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -180,21 +238,22 @@ export function NewTicketDialog({ open, onOpenChange, onSubmit }: NewTicketDialo
                 </div>
                 {filteredContacts.length > 0 && contactSearch && (
                   <div className="border rounded-md mt-1 max-h-32 overflow-y-auto">
-                    {filteredContacts
-                      .filter(c => c.name.toLowerCase().includes(contactSearch.toLowerCase()))
-                      .map(contact => (
+                    {filteredContacts.map(contact => (
                         <div 
                           key={contact.id}
                           className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
                           onClick={() => {
                             setFormData(prev => ({ ...prev, contact: contact.id }));
-                            setContactSearch(contact.name);
+                            setContactSearch(contact.contact_name);
                           }}
                         >
-                          {contact.name} <span className="text-muted-foreground">({contact.email})</span>
+                          {contact.contact_name} <span className="text-muted-foreground">({contact.email})</span>
                         </div>
                       ))}
                   </div>
+                )}
+                {contacts.length === 0 && formData.customer && (
+                  <p className="text-xs text-muted-foreground">No contacts found for this customer.</p>
                 )}
                 <Button variant="ghost" size="sm" className="text-cyan-500 hover:text-cyan-600 p-0 h-auto">
                   <Plus className="h-4 w-4 mr-1" />

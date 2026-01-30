@@ -64,9 +64,13 @@ export const HelpdeskDashboard = () => {
       title: formData.title,
       description: formData.description,
       priority: formData.priority,
+      status: formData.status || 'open',
       category: formData.type || null,
       source: formData.source || 'manual',
       tags: formData.tags?.length > 0 ? formData.tags : null,
+      customer_id: formData.customer, // Real UUID from msp_clients
+      contact_id: formData.contact || null, // Real UUID from client_contacts
+      sla_due_at: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
     });
     
     setShowCreateTicket(false);
