@@ -269,7 +269,7 @@ export function VanguardNavigation() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="px-4 py-2 cursor-help flex items-start gap-2">
-                          <ModuleLogo module={group.module} size="sm" glow className="mt-0.5 shrink-0" />
+                          <ModuleLogo module={group.module} size="md" glow className="mt-0.5 shrink-0" />
                           <div>
                             <span className="text-[10px] font-bold tracking-widest text-cyan-400 block drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]">
                               {group.header}
@@ -282,7 +282,7 @@ export function VanguardNavigation() {
                       </TooltipTrigger>
                       <TooltipContent side="right" className="bg-black border-cyan-500/40 text-slate-200 shadow-xl shadow-cyan-500/10">
                         <div className="flex items-center gap-2">
-                          <ModuleLogo module={group.module} size="md" glow />
+                          <ModuleLogo module={group.module} size="lg" glow />
                           <p className="text-xs max-w-[200px]">{group.tooltip}</p>
                         </div>
                       </TooltipContent>
@@ -291,12 +291,12 @@ export function VanguardNavigation() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="my-2 flex justify-center">
-                          <ModuleLogo module={group.module} size="xs" glow />
+                          <ModuleLogo module={group.module} size="sm" glow />
                         </div>
                       </TooltipTrigger>
                       <TooltipContent side="right" className="bg-black border-cyan-500/40 text-slate-200 shadow-xl shadow-cyan-500/10">
                         <div className="flex items-center gap-2">
-                          <ModuleLogo module={group.module} size="sm" glow />
+                          <ModuleLogo module={group.module} size="md" glow />
                           <div>
                             <p className="text-xs font-semibold text-cyan-400">{group.header}</p>
                             <p className="text-[10px] text-slate-400">{group.description}</p>
