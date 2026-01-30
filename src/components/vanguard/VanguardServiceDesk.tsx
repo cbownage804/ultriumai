@@ -385,62 +385,62 @@ export function VanguardServiceDesk() {
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card>
+        <Card className="bg-black/80 border-cyan-500/30 shadow-lg shadow-purple-500/10">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Tickets</p>
-                <p className="text-2xl font-bold">{ticketStats.total}</p>
+                <p className="text-sm text-white/60">Total Tickets</p>
+                <p className="text-2xl font-bold text-white">{ticketStats.total}</p>
               </div>
-              <Search className="h-8 w-8 text-muted-foreground" />
+              <Search className="h-8 w-8 text-cyan-400/50" />
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-black/80 border-blue-500/30 shadow-lg shadow-blue-500/10">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Open</p>
-                <p className="text-2xl font-bold text-blue-500">{ticketStats.open}</p>
+                <p className="text-sm text-white/60">Open</p>
+                <p className="text-2xl font-bold text-blue-400">{ticketStats.open}</p>
               </div>
-              <AlertTriangle className="h-8 w-8 text-blue-500" />
+              <AlertTriangle className="h-8 w-8 text-blue-400/50" />
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-black/80 border-yellow-500/30 shadow-lg shadow-yellow-500/10">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">In Progress</p>
-                <p className="text-2xl font-bold text-yellow-500">{ticketStats.inProgress}</p>
+                <p className="text-sm text-white/60">In Progress</p>
+                <p className="text-2xl font-bold text-yellow-400">{ticketStats.inProgress}</p>
               </div>
-              <Clock className="h-8 w-8 text-yellow-500" />
+              <Clock className="h-8 w-8 text-yellow-400/50" />
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-black/80 border-green-500/30 shadow-lg shadow-green-500/10">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Resolved</p>
-                <p className="text-2xl font-bold text-green-500">{ticketStats.resolved}</p>
+                <p className="text-sm text-white/60">Resolved</p>
+                <p className="text-2xl font-bold text-green-400">{ticketStats.resolved}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
+              <CheckCircle className="h-8 w-8 text-green-400/50" />
             </div>
           </CardContent>
         </Card>
         
-        <Card className="border-primary/30 bg-primary/5">
+        <Card className="bg-black/80 border-purple-500/30 shadow-lg shadow-purple-500/10">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">AI Resolved</p>
-                <p className="text-2xl font-bold text-primary">{ticketStats.aiResolved}</p>
+                <p className="text-sm text-white/60">AI Resolved</p>
+                <p className="text-2xl font-bold text-purple-400">{ticketStats.aiResolved}</p>
               </div>
-              <Sparkles className="h-8 w-8 text-primary" />
+              <Sparkles className="h-8 w-8 text-purple-400/50" />
             </div>
           </CardContent>
         </Card>
@@ -450,43 +450,43 @@ export function VanguardServiceDesk() {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex gap-2 flex-1 w-full sm:w-auto">
           <div className="relative flex-1 sm:max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/40" />
             <Input
               placeholder="Search tickets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 bg-black/40 border-cyan-500/20 text-white placeholder:text-white/40"
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[140px] bg-black/40 border-cyan-500/20 text-white">
               <Filter className="h-4 w-4 mr-2" />
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="resolved">Resolved</SelectItem>
-              <SelectItem value="closed">Closed</SelectItem>
+            <SelectContent className="bg-black/95 border-cyan-500/30">
+              <SelectItem value="all" className="text-white/80 focus:bg-cyan-500/10">All Status</SelectItem>
+              <SelectItem value="open" className="text-white/80 focus:bg-cyan-500/10">Open</SelectItem>
+              <SelectItem value="in_progress" className="text-white/80 focus:bg-cyan-500/10">In Progress</SelectItem>
+              <SelectItem value="resolved" className="text-white/80 focus:bg-cyan-500/10">Resolved</SelectItem>
+              <SelectItem value="closed" className="text-white/80 focus:bg-cyan-500/10">Closed</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadTickets}>
+          <Button variant="outline" onClick={loadTickets} className="border-cyan-500/30 text-white/80 hover:bg-cyan-500/10">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
           
           <Dialog>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700">
                 <Plus className="h-4 w-4 mr-2" />
                 New Ticket
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl bg-black/95 border-cyan-500/30">
               <DialogHeader>
                 <DialogTitle>Create Support Ticket</DialogTitle>
                 <DialogDescription>
