@@ -19,18 +19,17 @@ export default defineConfig(({ mode }) => ({
     componentTagger(),
   ].filter(Boolean),
   optimizeDeps: {
-    // Prevent Vite from prebundling React itself. Prebundling creates a separate module instance
-    // (node_modules/.vite/deps/*) which can cause recurring "dispatcher is null" hook crashes
-    // if *any* part of the app resolves React from a different path.
-    exclude: [
+    // Prebundle React entrypoints so Vite can provide correct ESM named exports (e.g. Fragment)
+    // while our `resolve.dedupe` below ensures there is still only ONE React instance.
+    include: [
       'react',
       'react-dom',
       'react-dom/client',
       'react/jsx-runtime',
       'react/jsx-dev-runtime',
     ],
-    // Still force re-optimization runs in dev for other deps.
-    force: mode === 'development',
+    // Force re-optimization so stale prebundles can't keep reintroducing multiple instances.
+    force: true,
   },
   resolve: {
     alias: {
@@ -38,7 +37,15 @@ export default defineConfig(({ mode }) => ({
     },
     // Fixes "Invalid hook call" / "dispatcher is null" by ensuring the app and all deps
     // share a single React instance.
-    dedupe: ["react", "react-dom"],
+    dedupe: [
+      "react",
+      "react-dom",
+      // React subpath entrypoints can otherwise resolve as separate module instances
+      // (especially under prebundling / different import graphs).
+      "react-dom/client",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+    ],
   },
   build: {
     // Optimize bundle size
