@@ -1,5 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect, Suspense, lazy } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect, Suspense, lazy, useState } from 'react';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/toaster';
 import { NotificationProvider } from '@/hooks/useNotifications';
@@ -207,8 +207,6 @@ import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvide
 import { AuthProvider } from '@/hooks/useAuth';
 import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
 import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { useAnalytics } from '@/hooks/useAnalytics';
 
 // Suspense wrapper with branded loading state
