@@ -341,7 +341,11 @@ export default function VanguardTickets() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-cyan-500/20 text-white/80">
+          <Button 
+            variant="outline" 
+            className="border-cyan-500/20 text-white/80"
+            onClick={() => navigate('/vanguard/setup')}
+          >
             <Download className="h-4 w-4 mr-2" />
             Install agent
           </Button>
