@@ -1,6 +1,7 @@
 /**
  * Vanguard Customer Detail Page
  * Atera-style customer profile with tabbed navigation including Vanguard Atlas
+ * Updated to use Vanguard Dark Glass theme
  */
 
 import { useEffect, useState } from 'react';
@@ -120,34 +121,34 @@ export default function VanguardCustomerDetail() {
     return Array.from({ length: 5 }).map((_, i) => (
       <Star 
         key={i} 
-        className={`h-4 w-4 ${i < Math.floor(rating) ? 'text-amber-400 fill-amber-400' : 'text-slate-600'}`}
+        className={`h-4 w-4 ${i < Math.floor(rating) ? 'text-amber-400 fill-amber-400' : 'text-white/20'}`}
       />
     ));
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5]">
+    <div className="min-h-screen bg-[#050a0a]">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-black/80 border-b border-cyan-500/20 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate(`${basePath}/customers`)}
-              className="text-gray-500"
+              className="text-white/60 hover:text-white hover:bg-white/10"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             
             {/* Customer Logo/Avatar */}
-            <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
+            <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center">
               <Building2 className="h-6 w-6 text-white" />
             </div>
             
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">{customer.name}</h1>
-              <div className="flex items-center gap-4 text-sm text-gray-500">
+              <h1 className="text-xl font-semibold text-white">{customer.name}</h1>
+              <div className="flex items-center gap-4 text-sm text-white/60">
                 <span className="flex items-center gap-1">
                   <Phone className="h-3 w-3" />
                   {customer.phone}
@@ -166,12 +167,12 @@ export default function VanguardCustomerDetail() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-white/60 hover:text-white hover:bg-white/10">
                 <MoreHorizontal className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => toast.info('Edit customer')}>
+            <DropdownMenuContent align="end" className="bg-black/90 border-cyan-500/30">
+              <DropdownMenuItem onClick={() => toast.info('Edit customer')} className="text-white hover:bg-white/10">
                 <Pencil className="h-4 w-4 mr-2" />
                 Edit Customer
               </DropdownMenuItem>
@@ -181,55 +182,55 @@ export default function VanguardCustomerDetail() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-black/60 border-b border-cyan-500/20">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-transparent h-auto p-0 border-0 ml-6">
             <TabsTrigger 
               value="overview" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent px-4 py-3"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 hover:text-white"
             >
               Overview
             </TabsTrigger>
             <TabsTrigger 
               value="users" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent px-4 py-3"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 hover:text-white"
             >
               Users
             </TabsTrigger>
             <TabsTrigger 
               value="devices" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent px-4 py-3"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 hover:text-white"
             >
               Devices
             </TabsTrigger>
             <TabsTrigger 
               value="assets" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent px-4 py-3"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 hover:text-white"
             >
               Assets
             </TabsTrigger>
             <TabsTrigger 
               value="tickets" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent px-4 py-3"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 hover:text-white"
             >
               Tickets
             </TabsTrigger>
             <TabsTrigger 
               value="alerts" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent px-4 py-3"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 hover:text-white"
             >
               Alerts
             </TabsTrigger>
             <TabsTrigger 
               value="atlas" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent px-4 py-3 flex items-center gap-1"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 flex items-center gap-1 hover:text-white"
             >
               <Map className="h-4 w-4 text-cyan-400" />
               Vanguard Atlas
             </TabsTrigger>
             <TabsTrigger 
               value="attachments" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent px-4 py-3"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 hover:text-white"
             >
               Attachments
             </TabsTrigger>
@@ -244,99 +245,99 @@ export default function VanguardCustomerDetail() {
           <TabsContent value="overview" className="mt-0">
             <div className="grid grid-cols-3 gap-6">
               {/* System Fields */}
-              <div>
-                <h3 className="font-medium text-gray-900 mb-4">System fields</h3>
+              <div className="bg-black/40 rounded-lg border border-cyan-500/20 p-6">
+                <h3 className="font-medium text-white mb-4">System fields</h3>
                 <div className="space-y-4">
                   <div className="flex justify-between">
-                    <Label className="text-gray-500">Phone</Label>
-                    <span className="text-gray-900">{customer.phone}</span>
+                    <Label className="text-white/60">Phone</Label>
+                    <span className="text-white">{customer.phone}</span>
                   </div>
                   <div className="flex justify-between items-start">
-                    <Label className="text-gray-500">Address</Label>
+                    <Label className="text-white/60">Address</Label>
                     <div className="text-right">
-                      <span className="text-gray-900">{customer.address}</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 ml-1">
+                      <span className="text-white">{customer.address}</span>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 ml-1 text-white/40 hover:text-cyan-400">
                         <MapPin className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
                   <div className="flex justify-between">
-                    <Label className="text-gray-500">Postal/Zip</Label>
-                    <span className="text-gray-900">{customer.postalCode}</span>
+                    <Label className="text-white/60">Postal/Zip</Label>
+                    <span className="text-white">{customer.postalCode}</span>
                   </div>
                   <div className="flex justify-between">
-                    <Label className="text-gray-500">Fax</Label>
-                    <span className="text-gray-400">{customer.fax || 'Enter fax'}</span>
+                    <Label className="text-white/60">Fax</Label>
+                    <span className="text-white/40">{customer.fax || 'Enter fax'}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <Label className="text-gray-500 flex items-center gap-1">
+                    <Label className="text-white/60 flex items-center gap-1">
                       Domains
-                      <span className="text-gray-400 text-xs">ⓘ</span>
+                      <span className="text-white/40 text-xs">ⓘ</span>
                     </Label>
                     <div className="flex items-center gap-1">
-                      <span className="text-gray-900">{customer.domains[0]}</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6">
+                      <span className="text-white">{customer.domains[0]}</span>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-white/40 hover:text-cyan-400">
                         <Plus className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
                   <div className="flex justify-between">
-                    <Label className="text-gray-500">Website</Label>
-                    <span className="text-gray-400">{customer.website || 'Enter URL'}</span>
+                    <Label className="text-white/60">Website</Label>
+                    <span className="text-white/40">{customer.website || 'Enter URL'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <Label className="text-gray-500">SLA</Label>
-                    <span className="text-gray-900">{customer.sla}</span>
+                    <Label className="text-white/60">SLA</Label>
+                    <span className="text-white">{customer.sla}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <Label className="text-gray-500">Feedback</Label>
+                    <Label className="text-white/60">Feedback</Label>
                     <div className="flex items-center gap-1">
                       {renderStars(customer.feedback)}
-                      <Button variant="ghost" size="icon" className="h-6 w-6 ml-1">
-                        <span className="text-gray-400 text-xs">ⓘ</span>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 ml-1 text-white/40">
+                        <span className="text-white/40 text-xs">ⓘ</span>
                       </Button>
                     </div>
                   </div>
                   <div className="flex justify-between">
-                    <Label className="text-gray-500">Created</Label>
-                    <span className="text-gray-900">{customer.created}</span>
+                    <Label className="text-white/60">Created</Label>
+                    <span className="text-white">{customer.created}</span>
                   </div>
                   <div className="flex justify-between">
-                    <Label className="text-gray-500">Modified</Label>
-                    <span className="text-gray-900">{customer.modified}</span>
+                    <Label className="text-white/60">Modified</Label>
+                    <span className="text-white">{customer.modified}</span>
                   </div>
                 </div>
               </div>
 
               {/* Custom Fields */}
-              <div>
-                <h3 className="font-medium text-gray-900 mb-4">Custom fields</h3>
+              <div className="bg-black/40 rounded-lg border border-cyan-500/20 p-6">
+                <h3 className="font-medium text-white mb-4">Custom fields</h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <Label className="text-gray-500">Security audit</Label>
+                    <Label className="text-white/60">Security audit</Label>
                     <Select defaultValue={customer.customFields.securityAudit}>
-                      <SelectTrigger className="w-32 h-8">
+                      <SelectTrigger className="w-32 h-8 bg-white/5 border-cyan-500/30 text-white">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Completed">Completed</SelectItem>
-                        <SelectItem value="In Progress">In Progress</SelectItem>
-                        <SelectItem value="Scheduled">Scheduled</SelectItem>
+                      <SelectContent className="bg-black/90 border-cyan-500/30">
+                        <SelectItem value="Completed" className="text-white hover:bg-white/10">Completed</SelectItem>
+                        <SelectItem value="In Progress" className="text-white hover:bg-white/10">In Progress</SelectItem>
+                        <SelectItem value="Scheduled" className="text-white hover:bg-white/10">Scheduled</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="flex justify-between items-center">
-                    <Label className="text-gray-500">Service history</Label>
+                    <Label className="text-white/60">Service history</Label>
                     <Input 
                       placeholder="Enter value" 
-                      className="w-32 h-8 text-sm"
+                      className="w-32 h-8 text-sm bg-white/5 border-cyan-500/30 text-white placeholder:text-white/40"
                     />
                   </div>
                   <div className="flex justify-between items-center">
-                    <Label className="text-gray-500">Last visit</Label>
+                    <Label className="text-white/60">Last visit</Label>
                     <div className="flex items-center gap-1">
-                      <span className="text-gray-900">{customer.customFields.lastVisit}</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6">
+                      <span className="text-white">{customer.customFields.lastVisit}</span>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-white/40 hover:text-cyan-400">
                         <Calendar className="h-3 w-3" />
                       </Button>
                     </div>
@@ -345,12 +346,12 @@ export default function VanguardCustomerDetail() {
               </div>
 
               {/* Notes */}
-              <div>
-                <h3 className="font-medium text-gray-900 mb-4">Notes</h3>
+              <div className="bg-black/40 rounded-lg border border-cyan-500/20 p-6">
+                <h3 className="font-medium text-white mb-4">Notes</h3>
                 <Textarea 
                   value={customer.notes}
                   onChange={(e) => setCustomer({...customer, notes: e.target.value})}
-                  className="min-h-[200px] resize-none"
+                  className="min-h-[200px] resize-none bg-white/5 border-cyan-500/30 text-white placeholder:text-white/40"
                   placeholder="Add notes..."
                 />
               </div>
@@ -359,10 +360,10 @@ export default function VanguardCustomerDetail() {
 
           {/* Users Tab */}
           <TabsContent value="users" className="mt-0">
-            <Card>
+            <Card className="bg-black/40 border-cyan-500/20">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Users ({mockUsers.length})</CardTitle>
-                <Button size="sm" className="bg-teal-500 hover:bg-teal-600">
+                <CardTitle className="text-white">Users ({mockUsers.length})</CardTitle>
+                <Button size="sm" className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white">
                   <Plus className="h-4 w-4 mr-1" />
                   Add User
                 </Button>
@@ -370,24 +371,24 @@ export default function VanguardCustomerDetail() {
               <CardContent>
                 <div className="space-y-3">
                   {mockUsers.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100">
+                    <div key={user.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-cyan-500/10">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-teal-100 text-teal-700">
+                          <AvatarFallback className="bg-cyan-500/20 text-cyan-400">
                             {user.name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{user.name}</span>
+                            <span className="font-medium text-white">{user.name}</span>
                             {user.isPrimary && (
-                              <Badge className="bg-teal-100 text-teal-700">Primary</Badge>
+                              <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">Primary</Badge>
                             )}
                           </div>
-                          <span className="text-sm text-gray-500">{user.email}</span>
+                          <span className="text-sm text-white/60">{user.email}</span>
                         </div>
                       </div>
-                      <Badge variant="outline">{user.role}</Badge>
+                      <Badge variant="outline" className="border-white/20 text-white/70">{user.role}</Badge>
                     </div>
                   ))}
                 </div>
@@ -397,26 +398,26 @@ export default function VanguardCustomerDetail() {
 
           {/* Devices Tab */}
           <TabsContent value="devices" className="mt-0">
-            <Card>
+            <Card className="bg-black/40 border-cyan-500/20">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Devices ({mockDevices.length})</CardTitle>
-                <Button size="sm" variant="outline" onClick={() => navigate(`${basePath}/devices?customer=${customerId}`)}>
+                <CardTitle className="text-white">Devices ({mockDevices.length})</CardTitle>
+                <Button size="sm" variant="outline" className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" onClick={() => navigate(`${basePath}/devices?customer=${customerId}`)}>
                   View All Devices
                 </Button>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {mockDevices.map((device) => (
-                    <div key={device.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer">
+                    <div key={device.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-cyan-500/10 cursor-pointer">
                       <div className="flex items-center gap-3">
                         <div className={`h-3 w-3 rounded-full ${device.status === 'online' ? 'bg-green-500' : 'bg-red-500'}`} />
-                        <Monitor className="h-5 w-5 text-gray-400" />
+                        <Monitor className="h-5 w-5 text-white/40" />
                         <div>
-                          <span className="font-medium">{device.name}</span>
-                          <div className="text-sm text-gray-500">{device.type}</div>
+                          <span className="font-medium text-white">{device.name}</span>
+                          <div className="text-sm text-white/60">{device.type}</div>
                         </div>
                       </div>
-                      <code className="text-sm text-teal-600">{device.ip}</code>
+                      <code className="text-sm text-cyan-400">{device.ip}</code>
                     </div>
                   ))}
                 </div>
@@ -426,15 +427,15 @@ export default function VanguardCustomerDetail() {
 
           {/* Assets Tab */}
           <TabsContent value="assets" className="mt-0">
-            <Card>
+            <Card className="bg-black/40 border-cyan-500/20">
               <CardHeader>
-                <CardTitle>Assets</CardTitle>
+                <CardTitle className="text-white">Assets</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-white/60">
                   <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No assets documented yet</p>
-                  <Button variant="outline" className="mt-4">
+                  <Button variant="outline" className="mt-4 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10">
                     <Plus className="h-4 w-4 mr-1" />
                     Add Asset
                   </Button>
@@ -453,12 +454,12 @@ export default function VanguardCustomerDetail() {
 
           {/* Alerts Tab */}
           <TabsContent value="alerts" className="mt-0">
-            <Card>
+            <Card className="bg-black/40 border-cyan-500/20">
               <CardHeader>
-                <CardTitle>Active Alerts ({customer.stats.alerts})</CardTitle>
+                <CardTitle className="text-white">Active Alerts ({customer.stats.alerts})</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-white/60">
                   <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No critical alerts</p>
                 </div>
@@ -470,13 +471,13 @@ export default function VanguardCustomerDetail() {
           <TabsContent value="atlas" className="mt-0">
             <div className="grid grid-cols-3 gap-6">
               {/* Documents */}
-              <Card>
+              <Card className="bg-black/40 border-cyan-500/20">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="text-base flex items-center gap-2 text-white">
                     <FileText className="h-4 w-4 text-teal-500" />
                     Documents
                   </CardTitle>
-                  <Button size="sm" variant="ghost">
+                  <Button size="sm" variant="ghost" className="text-white/40 hover:text-cyan-400">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </CardHeader>
@@ -485,19 +486,19 @@ export default function VanguardCustomerDetail() {
                     {mockAtlasData.documents.map((doc) => (
                       <div 
                         key={doc.id} 
-                        className="p-3 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer"
+                        className="p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-cyan-500/10 cursor-pointer"
                       >
-                        <div className="font-medium text-sm">{doc.title}</div>
+                        <div className="font-medium text-sm text-white">{doc.title}</div>
                         <div className="flex items-center justify-between mt-1">
-                          <Badge variant="secondary" className="text-xs">{doc.category}</Badge>
-                          <span className="text-xs text-gray-500">{doc.lastUpdated}</span>
+                          <Badge className="bg-white/10 text-white/70 text-xs">{doc.category}</Badge>
+                          <span className="text-xs text-white/50">{doc.lastUpdated}</span>
                         </div>
                       </div>
                     ))}
                   </div>
                   <Button 
                     variant="outline" 
-                    className="w-full mt-4 text-cyan-600 border-cyan-200"
+                    className="w-full mt-4 text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/10"
                     onClick={() => navigate(`${basePath}/atlas?org=${customerId}`)}
                   >
                     <ExternalLink className="h-4 w-4 mr-1" />
@@ -507,13 +508,13 @@ export default function VanguardCustomerDetail() {
               </Card>
 
               {/* Passwords */}
-              <Card>
+              <Card className="bg-black/40 border-cyan-500/20">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="text-base flex items-center gap-2 text-white">
                     <Key className="h-4 w-4 text-amber-500" />
                     Passwords
                   </CardTitle>
-                  <Button size="sm" variant="ghost">
+                  <Button size="sm" variant="ghost" className="text-white/40 hover:text-cyan-400">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </CardHeader>
@@ -522,18 +523,18 @@ export default function VanguardCustomerDetail() {
                     {mockAtlasData.passwords.map((pwd) => (
                       <div 
                         key={pwd.id} 
-                        className="p-3 rounded-lg bg-gray-50 hover:bg-gray-100"
+                        className="p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-cyan-500/10"
                       >
                         <div className="flex items-center justify-between">
-                          <div className="font-medium text-sm">{pwd.name}</div>
-                          <Badge variant="secondary" className="text-xs">{pwd.category}</Badge>
+                          <div className="font-medium text-sm text-white">{pwd.name}</div>
+                          <Badge className="bg-white/10 text-white/70 text-xs">{pwd.category}</Badge>
                         </div>
                         <div className="flex items-center justify-between mt-1">
-                          <code className="text-xs text-teal-600">{pwd.username}</code>
+                          <code className="text-xs text-cyan-400">{pwd.username}</code>
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-6 w-6"
+                            className="h-6 w-6 text-white/40 hover:text-cyan-400"
                             onClick={() => copyToClipboard(pwd.username, pwd.id)}
                           >
                             {copiedId === pwd.id ? (
@@ -550,13 +551,13 @@ export default function VanguardCustomerDetail() {
               </Card>
 
               {/* Configurations */}
-              <Card>
+              <Card className="bg-black/40 border-cyan-500/20">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="text-base flex items-center gap-2 text-white">
                     <Server className="h-4 w-4 text-blue-500" />
                     Configurations
                   </CardTitle>
-                  <Button size="sm" variant="ghost">
+                  <Button size="sm" variant="ghost" className="text-white/40 hover:text-cyan-400">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </CardHeader>
@@ -565,18 +566,18 @@ export default function VanguardCustomerDetail() {
                     {mockAtlasData.configurations.map((config) => (
                       <div 
                         key={config.id} 
-                        className="p-3 rounded-lg bg-gray-50 hover:bg-gray-100"
+                        className="p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-cyan-500/10"
                       >
                         <div className="flex items-center justify-between">
-                          <div className="font-medium text-sm">{config.name}</div>
-                          <Badge variant="outline" className="text-xs">{config.type}</Badge>
+                          <div className="font-medium text-sm text-white">{config.name}</div>
+                          <Badge variant="outline" className="text-xs border-white/20 text-white/70">{config.type}</Badge>
                         </div>
                         <div className="flex items-center justify-between mt-1">
-                          <code className="text-xs text-teal-600">{config.ip}</code>
+                          <code className="text-xs text-cyan-400">{config.ip}</code>
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-6 w-6"
+                            className="h-6 w-6 text-white/40 hover:text-cyan-400"
                             onClick={() => copyToClipboard(config.ip, `config-${config.id}`)}
                           >
                             {copiedId === `config-${config.id}` ? (
@@ -596,15 +597,15 @@ export default function VanguardCustomerDetail() {
 
           {/* Attachments Tab */}
           <TabsContent value="attachments" className="mt-0">
-            <Card>
+            <Card className="bg-black/40 border-cyan-500/20">
               <CardHeader>
-                <CardTitle>Attachments</CardTitle>
+                <CardTitle className="text-white">Attachments</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-white/60">
                   <Paperclip className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No attachments yet</p>
-                  <Button variant="outline" className="mt-4">
+                  <Button variant="outline" className="mt-4 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10">
                     <Plus className="h-4 w-4 mr-1" />
                     Upload Attachment
                   </Button>
