@@ -17,6 +17,7 @@ import { format, subDays, startOfDay, isAfter, isSameDay } from "date-fns";
 import { ProductTour, useProductTour } from '@/components/onboarding';
 import { VANGUARD_TOUR_STEPS } from '@/config/productTours';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { VanguardUserMenu } from "@/components/vanguard/VanguardUserMenu";
 
 // Dashboard widgets
 import { TicketStatusWidget } from "@/components/vanguard/dashboard/TicketStatusWidget";
@@ -320,9 +321,7 @@ const VanguardDashboard = () => {
               <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-full ring-2 ring-purple-500/30 animate-pulse shadow-lg shadow-purple-500/50" />
             )}
           </Button>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-purple-500/40">
-            U
-          </div>
+          <VanguardUserMenu />
         </div>
       </header>
 
