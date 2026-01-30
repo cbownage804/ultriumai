@@ -122,36 +122,25 @@ export const HelpdeskDashboard = () => {
   }
 
   return (
-    <div className="space-y-6 p-6 bg-gradient-to-br from-background via-background to-cyan-500/5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-cyan-400 to-cyan-600 bg-clip-text text-transparent">
-            <HeadphonesIcon className="h-10 w-10 text-cyan-500" />
-            Vanguard Response
-          </h1>
-          <p className="text-lg text-muted-foreground mt-2">
-            AI-powered service desk and incident management
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="border-cyan-500/20 hover:bg-cyan-500/5 hover:text-cyan-500" onClick={() => loadTickets()}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Button 
-            className="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white hover:opacity-90"
-            onClick={() => setShowCreateTicket(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Ticket
-          </Button>
-          <NewTicketDialog 
-            open={showCreateTicket} 
-            onOpenChange={setShowCreateTicket}
-            onSubmit={handleCreateTicket}
-          />
-        </div>
+    <div className="space-y-6">
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-3">
+        <Button variant="outline" className="border-cyan-500/20 hover:bg-cyan-500/5 hover:text-cyan-500" onClick={() => loadTickets()}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+        <Button 
+          className="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white hover:opacity-90"
+          onClick={() => setShowCreateTicket(true)}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          New Ticket
+        </Button>
+        <NewTicketDialog 
+          open={showCreateTicket} 
+          onOpenChange={setShowCreateTicket}
+          onSubmit={handleCreateTicket}
+        />
       </div>
 
       {/* Stats Overview */}
