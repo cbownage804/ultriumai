@@ -47,6 +47,16 @@ export interface MSPClient {
   status: 'healthy' | 'warning' | 'critical';
 }
 
+export interface VanguardModule {
+  id: string;
+  name: string;
+  fullName: string;
+  description: string;
+  icon: string;
+  color: string;
+  gradient: string;
+}
+
 export const mockRMMDevices: RMMDevice[] = [
   { id: 1, name: "PROD-WEB-01", customer: "Acme Corp", os: "Ubuntu 22.04", status: "online", cpu: 45, memory: 62, patches: "current" },
   { id: 2, name: "DC-PRIMARY", customer: "TechStart Inc", os: "Windows Server 2022", status: "online", cpu: 28, memory: 71, patches: "pending" },
@@ -63,10 +73,10 @@ export const mockTickets: Ticket[] = [
 ];
 
 export const mockSOCAlerts: SOCAlert[] = [
-  { id: 1, title: "Suspicious PowerShell Execution", severity: "critical", device: "DC-PRIMARY", source: "EDR", time: "5m ago", status: "investigating", mitre: "T1059.001" },
-  { id: 2, title: "Brute Force Login Attempts Detected", severity: "high", device: "PROD-WEB-01", source: "SIEM", time: "12m ago", status: "new", mitre: "T1110" },
-  { id: 3, title: "Unusual Outbound Traffic Pattern", severity: "medium", device: "FILE-SERVER-01", source: "Network", time: "45m ago", status: "investigating", mitre: "T1041" },
-  { id: 4, title: "Failed MFA Attempts - Executive Account", severity: "high", device: "EXEC-LAPTOP-01", source: "Identity", time: "1h ago", status: "resolved", mitre: "T1078" },
+  { id: 1, title: "Suspicious PowerShell Execution", severity: "critical", device: "DC-PRIMARY", source: "Pursuit EDR", time: "5m ago", status: "investigating", mitre: "T1059.001" },
+  { id: 2, title: "Brute Force Login Attempts Detected", severity: "high", device: "PROD-WEB-01", source: "Cortex SIEM", time: "12m ago", status: "new", mitre: "T1110" },
+  { id: 3, title: "Unusual Outbound Traffic Pattern", severity: "medium", device: "FILE-SERVER-01", source: "Recon", time: "45m ago", status: "investigating", mitre: "T1041" },
+  { id: 4, title: "Failed MFA Attempts - Executive Account", severity: "high", device: "EXEC-LAPTOP-01", source: "Sentinel", time: "1h ago", status: "resolved", mitre: "T1078" },
 ];
 
 export const mockCompliance: ComplianceFramework[] = [
@@ -83,24 +93,88 @@ export const mockMSPClients: MSPClient[] = [
   { name: "Legal Partners LLP", devices: 32, tickets: 2, threats: 0, status: "healthy" },
 ];
 
+// Official Vanguard Module Definitions
+export const vanguardModules: VanguardModule[] = [
+  {
+    id: 'horizon',
+    name: 'Horizon',
+    fullName: 'Vanguard Horizon',
+    description: 'RMM & Health Monitoring',
+    icon: 'Monitor',
+    color: 'cyan',
+    gradient: 'from-cyan-400 via-blue-500 to-purple-600'
+  },
+  {
+    id: 'pursuit',
+    name: 'Pursuit',
+    fullName: 'Vanguard Pursuit',
+    description: 'Threat Detection & Security',
+    icon: 'Target',
+    color: 'red',
+    gradient: 'from-red-500 to-orange-600'
+  },
+  {
+    id: 'response',
+    name: 'Response',
+    fullName: 'Vanguard Response',
+    description: 'Incident Management & Helpdesk',
+    icon: 'Ticket',
+    color: 'purple',
+    gradient: 'from-purple-500 to-violet-600'
+  },
+  {
+    id: 'recon',
+    name: 'Recon',
+    fullName: 'Vanguard Recon',
+    description: 'Network Discovery & Assets',
+    icon: 'Network',
+    color: 'blue',
+    gradient: 'from-blue-500 to-indigo-600'
+  },
+  {
+    id: 'atlas',
+    name: 'Atlas',
+    fullName: 'Vanguard Atlas',
+    description: 'Knowledge Base & Documentation',
+    icon: 'FileText',
+    color: 'amber',
+    gradient: 'from-amber-500 to-orange-600'
+  },
+  {
+    id: 'ledger',
+    name: 'Ledger',
+    fullName: 'Vanguard Ledger',
+    description: 'Compliance & Audit Trails',
+    icon: 'ClipboardCheck',
+    color: 'emerald',
+    gradient: 'from-emerald-500 to-green-600'
+  },
+  {
+    id: 'cortex',
+    name: 'Cortex',
+    fullName: 'Vanguard Cortex',
+    description: 'AI-Assisted Operations',
+    icon: 'Bot',
+    color: 'violet',
+    gradient: 'from-violet-500 to-purple-600'
+  }
+];
+
+// Platform module cards for overview
 export const platformModules = [
-  { icon: 'Monitor', title: "RMM", desc: "Remote monitoring", color: "from-cyan-500 to-cyan-600" },
-  { icon: 'Ticket', title: "Helpdesk", desc: "IT service desk", color: "from-purple-500 to-purple-600" },
-  { icon: 'Eye', title: "SOC", desc: "Security operations", color: "from-red-500 to-red-600" },
-  { icon: 'Target', title: "Threat Detection", desc: "AI-powered", color: "from-orange-500 to-orange-600" },
-  { icon: 'FileCheck', title: "Compliance", desc: "Multi-framework", color: "from-green-500 to-green-600" },
-  { icon: 'Shield', title: "Pen Testing", desc: "Automated scans", color: "from-rose-500 to-rose-600" },
-  { icon: 'Globe', title: "Dark Web", desc: "Credential monitoring", color: "from-slate-600 to-slate-700" },
-  { icon: 'Database', title: "SIEM", desc: "Log aggregation", color: "from-blue-500 to-blue-600" },
-  { icon: 'Network', title: "Network Map", desc: "Topology view", color: "from-indigo-500 to-indigo-600" },
-  { icon: 'Lock', title: "Vault", desc: "Credential mgmt", color: "from-amber-500 to-amber-600" },
-  { icon: 'Bot', title: "Vanguard Cortex", desc: "AI operations", color: "from-violet-500 to-violet-600" },
-  { icon: 'Layers', title: "Multi-Tenant", desc: "MSP management", color: "from-teal-500 to-teal-600" },
+  { icon: 'Monitor', title: "Horizon", desc: "RMM & Monitoring", color: "from-cyan-500 to-cyan-600", module: "horizon" },
+  { icon: 'Target', title: "Pursuit", desc: "Threat Detection", color: "from-red-500 to-red-600", module: "pursuit" },
+  { icon: 'Ticket', title: "Response", desc: "Service Desk", color: "from-purple-500 to-purple-600", module: "response" },
+  { icon: 'Network', title: "Recon", desc: "Asset Discovery", color: "from-blue-500 to-indigo-600", module: "recon" },
+  { icon: 'FileText', title: "Atlas", desc: "Knowledge Base", color: "from-amber-500 to-orange-600", module: "atlas" },
+  { icon: 'ClipboardCheck', title: "Ledger", desc: "Compliance", color: "from-emerald-500 to-green-600", module: "ledger" },
+  { icon: 'Bot', title: "Cortex", desc: "AI Operations", color: "from-violet-500 to-purple-600", module: "cortex" },
+  { icon: 'Shield', title: "Sentinel", desc: "M365 Security", color: "from-rose-500 to-rose-600", module: "sentinel" },
 ];
 
 export const liveActivityFeed = [
-  { icon: 'Shield', text: "Threat blocked on DC-PRIMARY", time: "2m ago", color: "text-red-400" },
-  { icon: 'CheckCircle', text: "Ticket TKT-1038 resolved", time: "5m ago", color: "text-green-400" },
-  { icon: 'Monitor', text: "Agent deployed to LAPTOP-042", time: "8m ago", color: "text-cyan-400" },
-  { icon: 'FileCheck', text: "SOC 2 compliance scan completed", time: "12m ago", color: "text-emerald-400" },
+  { icon: 'Shield', text: "Pursuit blocked threat on DC-PRIMARY", time: "2m ago", color: "text-red-400" },
+  { icon: 'CheckCircle', text: "Response ticket TKT-1038 resolved", time: "5m ago", color: "text-green-400" },
+  { icon: 'Monitor', text: "Horizon agent deployed to LAPTOP-042", time: "8m ago", color: "text-cyan-400" },
+  { icon: 'FileCheck', text: "Ledger: SOC 2 compliance scan completed", time: "12m ago", color: "text-emerald-400" },
 ];
