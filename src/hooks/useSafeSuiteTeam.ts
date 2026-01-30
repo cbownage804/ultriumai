@@ -210,7 +210,8 @@ export function useSafeSuiteTeam() {
         throw error;
       }
 
-      // TODO: Send invitation email via edge function
+      // Note: Email invitations will be sent when safesuite-invite edge function is implemented
+      // For now, users can accept invites when they log in with matching email
       toast.success(`Invitation sent to ${email}`);
       await loadTeam();
       return true;

@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAccountType } from "@/hooks/useAccountType";
 import { useMSP } from "@/hooks/useMSP";
+import { devLog } from "@/lib/logger";
 
 interface AddDeviceDialogProps {
   trigger?: React.ReactNode;
@@ -75,7 +76,7 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
 
       onDeviceAdded?.();
     } catch (error) {
-      console.error('Failed to generate agent:', error);
+      devLog.error('Failed to generate agent:', error);
       toast({
         title: "Generation Failed",
         description: "Failed to generate RMM agent configuration",
@@ -293,7 +294,7 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
                       <Button 
                         className="flex-1"
                         onClick={() => {
-                          console.log('Starting RMM Agent download from dialog...');
+                          devLog.log('Starting RMM Agent download from dialog...');
                           
                           // Simple PowerShell installer - no server calls
                           const script = `# Ultrium RMM Agent Installer v2.1 - Demo
@@ -329,9 +330,9 @@ if ($Install) {
                             a.download = 'UltriumRMMAgent-Installer.ps1';
                             a.click();
                             URL.revokeObjectURL(url);
-                            console.log('✅ Download completed from dialog');
+                            devLog.log('✅ Download completed from dialog');
                           } catch (err) {
-                            console.error('Download failed:', err);
+                            devLog.error('Download failed:', err);
                             alert('Download failed');
                           }
                         }}

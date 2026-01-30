@@ -54,6 +54,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { devLog } from "@/lib/logger";
 
 interface ConnectorInstance {
   id: string;
@@ -153,7 +154,7 @@ export const SafeNetConnector = () => {
         .order('created_at', { ascending: false });
 
       if (connectorsError) {
-        console.error('Error loading connectors:', connectorsError);
+        devLog.error('Error loading connectors:', connectorsError);
         setLoading(false);
         return;
       }
@@ -292,7 +293,7 @@ export const SafeNetConnector = () => {
       
       setAllDevices(Object.values(deviceMap));
     } catch (error) {
-      console.error('Error loading connectors:', error);
+      devLog.error('Error loading connectors:', error);
       toast({
         title: "Error",
         description: "Failed to load connector data",
@@ -329,7 +330,7 @@ export const SafeNetConnector = () => {
         .single();
 
       if (error) {
-        console.error('Error creating connector:', error);
+        devLog.error('Error creating connector:', error);
         toast({
           title: "Error",
           description: "Failed to generate connector key",
@@ -345,7 +346,7 @@ export const SafeNetConnector = () => {
         description: "Use this key during connector installation. The connector will register when first run.",
       });
     } catch (error) {
-      console.error('Error generating connector key:', error);
+      devLog.error('Error generating connector key:', error);
       toast({
         title: "Error",
         description: "Failed to generate connector key",
@@ -391,7 +392,7 @@ export const SafeNetConnector = () => {
       setThreatDetails(allThreats);
       setShowThreatsDialog(true);
     } catch (error) {
-      console.error('Error loading threat details:', error);
+      devLog.error('Error loading threat details:', error);
       toast({
         title: "Error",
         description: "Failed to load threat details",

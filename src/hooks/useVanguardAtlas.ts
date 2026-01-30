@@ -46,7 +46,8 @@ export const useVanguardAtlas = (organizationId?: string) => {
   };
 
   useEffect(() => {
-    // TODO: Load data from Supabase when tables are ready
+    // Note: Atlas documentation tables not yet implemented
+    // This hook will be connected to Supabase when atlas_* tables are created
     setIsLoading(false);
   }, [user, organizationId]);
 

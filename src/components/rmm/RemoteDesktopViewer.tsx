@@ -11,6 +11,7 @@ import { RemoteFileTransfer } from "./RemoteFileTransfer";
 import { RemoteClipboard } from "./RemoteClipboard";
 import { RemoteSettings } from "./RemoteSettings";
 import { SafeKBInjection } from "./SafeKBInjection";
+import { devLog } from "@/lib/logger";
 
 interface RemoteDesktopViewerProps {
   sessionId: string;
@@ -73,7 +74,7 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
           session = sessions.find(s => s.id === sessionId);
           
           if (!session) {
-            console.log('Session not found after retry, using simulation mode');
+            devLog.log('Session not found after retry, using simulation mode');
             toast({
               title: "Simulation Mode",
               description: "Running in simulation mode - session data not found",
@@ -84,7 +85,7 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
         }
 
         const sessionToken = session.session_token;
-        console.log('Connecting with session token:', sessionToken);
+        devLog.log('Connecting with session token:', sessionToken);
         
         const ws = await connectWebSocket(sessionToken);
         
@@ -93,7 +94,7 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
           setupCanvasRendering(ws);
         } else {
           // Fallback: Show simulated interface when WebSocket connection fails
-          console.log('WebSocket connection failed, showing simulated interface');
+          devLog.log('WebSocket connection failed, showing simulated interface');
           toast({
             title: "Simulated Mode",
             description: "Remote session running in simulation mode - WebSocket connection unavailable",
@@ -101,7 +102,7 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
           });
         }
       } catch (error) {
-        console.error('Failed to connect to remote session:', error);
+        devLog.error('Failed to connect to remote session:', error);
         toast({
           title: "Connection Failed",
           description: "Could not establish remote desktop connection",
@@ -135,7 +136,7 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
             }
             break;
           case 'cursor_position':
-            console.log('Cursor position:', message.data);
+            devLog.log('Cursor position:', message.data);
             break;
           case 'session_ready':
             toast({
@@ -145,7 +146,7 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
             break;
         }
       } catch (error) {
-        console.error('Error processing WebSocket message:', error);
+        devLog.error('Error processing WebSocket message:', error);
       }
     };
   }, [deviceName, toast, screenFrameHandler]);
@@ -171,7 +172,7 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
       await endSession(sessionId);
       onClose();
     } catch (error) {
-      console.error('Failed to close session:', error);
+      devLog.error('Failed to close session:', error);
       onClose(); // Close anyway
     }
   }, [endSession, sessionId, onClose]);
