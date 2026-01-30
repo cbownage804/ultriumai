@@ -84,7 +84,7 @@ export const HelpdeskDashboard = () => {
 
   const getStatusIcon = (status: string | null) => {
     switch (status) {
-      case 'open': return <Clock className="h-4 w-4 text-safedesk" />;
+      case 'open': return <Clock className="h-4 w-4 text-cyan-500" />;
       case 'in_progress': return <RefreshCw className="h-4 w-4 text-orange-500" />;
       case 'resolved': return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'closed': return <CheckCircle className="h-4 w-4 text-gray-500" />;
@@ -112,31 +112,31 @@ export const HelpdeskDashboard = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-safedesk"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-6 bg-gradient-to-br from-background via-background to-safedesk-soft/20">
+    <div className="space-y-6 p-6 bg-gradient-to-br from-background via-background to-cyan-500/5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-safedesk to-safedesk-glow bg-clip-text text-transparent">
-            <HeadphonesIcon className="h-10 w-10 text-safedesk" />
-            SafeDesk System
+          <h1 className="text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-cyan-400 to-cyan-600 bg-clip-text text-transparent">
+            <HeadphonesIcon className="h-10 w-10 text-cyan-500" />
+            Vanguard Response
           </h1>
           <p className="text-lg text-muted-foreground mt-2">
-            AI-powered support ticket management
+            AI-powered service desk and incident management
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="border-safedesk/20 hover:bg-safedesk/5 hover:text-safedesk" onClick={() => loadTickets()}>
+          <Button variant="outline" className="border-cyan-500/20 hover:bg-cyan-500/5 hover:text-cyan-500" onClick={() => loadTickets()}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
           <Button 
-            className="bg-gradient-to-r from-safedesk to-safedesk-dark text-safedesk-foreground hover:opacity-90"
+            className="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white hover:opacity-90"
             onClick={() => setShowCreateTicket(true)}
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -152,14 +152,14 @@ export const HelpdeskDashboard = () => {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-safedesk-soft/30 to-safedesk-soft/10 dark:from-safedesk-soft dark:to-safedesk-soft/50">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 dark:from-cyan-900/30 dark:to-cyan-900/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Open Tickets</CardTitle>
-            <Clock className="h-5 w-5 text-safedesk" />
+            <Clock className="h-5 w-5 text-cyan-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-safedesk">{stats.openTickets}</div>
-            <p className="text-xs text-safedesk-muted mt-2">{stats.inProgressTickets} in progress</p>
+            <div className="text-3xl font-bold text-cyan-500">{stats.openTickets}</div>
+            <p className="text-xs text-cyan-400 mt-2">{stats.inProgressTickets} in progress</p>
           </CardContent>
         </Card>
 
@@ -198,14 +198,14 @@ export const HelpdeskDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-safedesk-soft/30 to-safedesk-soft/10 dark:from-safedesk-soft dark:to-safedesk-soft/50">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 dark:from-cyan-900/30 dark:to-cyan-900/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Tickets</CardTitle>
-            <TrendingUp className="h-5 w-5 text-safedesk" />
+            <TrendingUp className="h-5 w-5 text-cyan-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-safedesk">{stats.totalTickets}</div>
-            <p className="text-xs text-safedesk-muted mt-2">All time</p>
+            <div className="text-3xl font-bold text-cyan-500">{stats.totalTickets}</div>
+            <p className="text-xs text-cyan-400 mt-2">All time</p>
           </CardContent>
         </Card>
       </div>
@@ -213,19 +213,19 @@ export const HelpdeskDashboard = () => {
       {/* Main Content Tabs */}
       <Tabs defaultValue="tickets" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 bg-muted/50">
-          <TabsTrigger value="tickets" className="data-[state=active]:bg-safedesk data-[state=active]:text-safedesk-foreground">
+          <TabsTrigger value="tickets" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
             <FileText className="h-4 w-4 mr-2" />
             Tickets ({tickets.length})
           </TabsTrigger>
-          <TabsTrigger value="overdue" className="data-[state=active]:bg-safedesk data-[state=active]:text-safedesk-foreground">
+          <TabsTrigger value="overdue" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
             <AlertTriangle className="h-4 w-4 mr-2" />
             Overdue ({overdueTickets.length})
           </TabsTrigger>
-          <TabsTrigger value="categories" className="data-[state=active]:bg-safedesk data-[state=active]:text-safedesk-foreground">
+          <TabsTrigger value="categories" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
             <BarChart3 className="h-4 w-4 mr-2" />
             Categories
           </TabsTrigger>
-          <TabsTrigger value="settings" className="data-[state=active]:bg-safedesk data-[state=active]:text-safedesk-foreground">
+          <TabsTrigger value="settings" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
             <Settings className="h-4 w-4 mr-2" />
             Settings
           </TabsTrigger>
@@ -236,7 +236,7 @@ export const HelpdeskDashboard = () => {
           <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-safedesk" />
+                <FileText className="h-5 w-5 text-cyan-500" />
                 Active Support Tickets
               </CardTitle>
               <CardDescription>Manage and track customer support requests</CardDescription>
@@ -245,7 +245,7 @@ export const HelpdeskDashboard = () => {
               <div className="space-y-4">
                 {tickets.length > 0 ? (
                   tickets.slice(0, 10).map((ticket) => (
-                    <div key={ticket.id} className="p-4 border rounded-lg bg-gradient-to-r from-background to-muted/20 hover:border-safedesk/30 transition-colors">
+                    <div key={ticket.id} className="p-4 border rounded-lg bg-gradient-to-r from-background to-muted/20 hover:border-cyan-500/30 transition-colors">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           {getStatusIcon(ticket.status)}
@@ -357,7 +357,7 @@ export const HelpdeskDashboard = () => {
           <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-safedesk" />
+                <BarChart3 className="h-5 w-5 text-cyan-500" />
                 Ticket Categories
               </CardTitle>
               <CardDescription>Distribution of support requests by category</CardDescription>
@@ -394,8 +394,8 @@ export const HelpdeskDashboard = () => {
             <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-safedesk" />
-                  SafeDesk Configuration
+                  <Settings className="h-5 w-5 text-cyan-500" />
+                  Vanguard Response Configuration
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -408,7 +408,7 @@ export const HelpdeskDashboard = () => {
                   <h4 className="font-medium mb-2">Auto-Assignment</h4>
                   <p className="text-sm text-muted-foreground">Round-robin distribution enabled</p>
                 </div>
-                <Button className="w-full bg-safedesk hover:bg-safedesk-dark text-safedesk-foreground">
+                <Button className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">
                   <Settings className="h-4 w-4 mr-2" />
                   Configure Settings
                 </Button>
@@ -418,7 +418,7 @@ export const HelpdeskDashboard = () => {
             <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5 text-safedesk" />
+                  <MessageSquare className="h-5 w-5 text-cyan-500" />
                   Communication
                 </CardTitle>
               </CardHeader>
@@ -429,9 +429,9 @@ export const HelpdeskDashboard = () => {
                 </div>
                 <div className="p-3 border rounded-lg">
                   <h4 className="font-medium mb-2">AI Assistant</h4>
-                  <p className="text-sm text-muted-foreground">SafeDesk AI is active and ready</p>
+                  <p className="text-sm text-muted-foreground">Vanguard Cortex AI is active and ready</p>
                 </div>
-                <Button className="w-full bg-safedesk hover:bg-safedesk-dark text-safedesk-foreground">
+                <Button className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Manage Templates
                 </Button>
@@ -448,7 +448,7 @@ export const HelpdeskDashboard = () => {
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5 text-safedesk" />
+                  <MessageSquare className="w-5 h-5 text-cyan-500" />
                   Ticket #{selectedTicket.id.slice(0, 8)}
                 </DialogTitle>
               </DialogHeader>
