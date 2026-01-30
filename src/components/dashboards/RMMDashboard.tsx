@@ -10,6 +10,7 @@ import {
   Download,
   Zap
 } from "lucide-react";
+import { devLog } from '@/lib/logger';
 
 // Import refactored components
 import { RMMOverview } from "@/components/rmm/RMMOverview";
@@ -51,7 +52,7 @@ export const RMMDashboard = () => {
     pendingPatches: 0, // Will be populated when patch management is implemented
     scriptsRunning: stats.scriptsRunning,
   };
-  console.log('Current active tab:', activeTab);
+  devLog.log('Current active tab:', activeTab);
 
   // Get devices by type for component props
   const serverData = getDevicesByType('server').map(device => ({
@@ -146,7 +147,7 @@ export const RMMDashboard = () => {
             link.href = '/UltriumRMMAgent-GUI-Installer.ps1';
             link.download = 'UltriumRMMAgent-GUI-Installer.ps1';
             link.click();
-              console.log('✅ Full installer download completed');
+              devLog.log('✅ Full installer download completed');
             }}
           >
             <Download className="h-4 w-4 mr-2" />

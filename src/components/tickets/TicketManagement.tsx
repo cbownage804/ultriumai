@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "@/hooks/use-toast";
+import { devLog } from "@/lib/logger";
 import { 
   Plus, 
   Search, 
@@ -121,7 +122,7 @@ const TicketManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.log('Tickets table not found, using demo data');
+        devLog.log('Tickets table not found, using demo data');
         // Demo data for demonstration
         setTickets([
           {
@@ -168,7 +169,7 @@ const TicketManagement = () => {
         })));
       }
     } catch (err) {
-      console.error('Error fetching tickets:', err);
+      devLog.error('Error fetching tickets:', err);
       toast({
         title: "Error",
         description: "Failed to load tickets",
@@ -208,7 +209,7 @@ const TicketManagement = () => {
         .insert(ticketData as any);
 
       if (error) {
-        console.error('Error creating ticket:', error);
+        devLog.error('Error creating ticket:', error);
         // For demo purposes, add to local state
         const demoTicket: TicketData = {
           id: Date.now().toString(),
@@ -248,7 +249,7 @@ const TicketManagement = () => {
         description: "Ticket created successfully",
       });
     } catch (err) {
-      console.error('Error creating ticket:', err);
+      devLog.error('Error creating ticket:', err);
       toast({
         title: "Error",
         description: "Failed to create ticket",
@@ -270,7 +271,7 @@ const TicketManagement = () => {
         .eq('id', ticketId);
 
       if (error) {
-        console.error('Error updating ticket status:', error);
+        devLog.error('Error updating ticket status:', error);
         // For demo purposes, update local state
         setTickets(prev => prev.map(ticket => 
           ticket.id === ticketId 
@@ -286,7 +287,7 @@ const TicketManagement = () => {
         description: "Ticket status updated",
       });
     } catch (err) {
-      console.error('Error updating ticket status:', err);
+      devLog.error('Error updating ticket status:', err);
       toast({
         title: "Error",
         description: "Failed to update ticket status",

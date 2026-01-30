@@ -9,6 +9,7 @@ import { Mic, MicOff, Loader2, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { devLog } from '@/lib/logger';
 
 interface VoiceButtonProps {
   onTranscript?: (text: string) => void;
@@ -28,10 +29,10 @@ export function VoiceButton({
 
   const conversation = useConversation({
     onConnect: () => {
-      console.log('Voice connected');
+      devLog.log('Voice connected');
     },
     onDisconnect: () => {
-      console.log('Voice disconnected');
+      devLog.log('Voice disconnected');
     },
     onMessage: (message: any) => {
       // Handle user transcript
@@ -44,7 +45,7 @@ export function VoiceButton({
       }
     },
     onError: (error) => {
-      console.error('Voice error:', error);
+      devLog.error('Voice error:', error);
       toast({
         title: "Voice Error",
         description: "Failed to connect to voice assistant. Please try again.",

@@ -21,6 +21,7 @@ import {
   Zap
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { devLog } from '@/lib/logger';
 
 interface DashboardStats {
   totalUsers: number;
@@ -71,7 +72,7 @@ export const AdminDashboardOverview = ({ onTabChange }: { onTabChange?: (tab: st
 
   const fetchDashboardStats = async () => {
     try {
-      console.log('🔍 Fetching admin dashboard overview...');
+      devLog.log('🔍 Fetching admin dashboard overview...');
       
       const today = new Date();
       today.setHours(0, 0, 0, 0);

@@ -11,6 +11,7 @@ import { Edit, Mail, KeyRound, MoreHorizontal, Ban, UserCheck, Calendar, CheckCi
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DataTableWithSearch } from './DataTableWithSearch';
 import { format } from 'date-fns';
+import { devLog } from '@/lib/logger';
 
 export const AdminUsersManager = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -25,7 +26,7 @@ export const AdminUsersManager = () => {
 
   const fetchUsers = async () => {
     try {
-      console.log('🔍 Fetching users for admin dashboard...');
+      devLog.log('🔍 Fetching users for admin dashboard...');
       
       // Fetch profiles first, then join with related data
       const { data: profilesData, error: profilesError } = await supabase
@@ -52,11 +53,11 @@ export const AdminUsersManager = () => {
         user_credits: creditsData?.filter(credit => credit.user_id === profile.user_id) || []
       })) || [];
 
-      console.log('👥 Users data:', { count: combinedData?.length });
+      devLog.log('👥 Users data:', { count: combinedData?.length });
 
       setUsers(combinedData || []);
     } catch (error: any) {
-      console.error('❌ Error fetching users:', error);
+      devLog.error('❌ Error fetching users:', error);
       toast({
         title: "Error",
         description: `Failed to fetch users: ${error.message}`,
@@ -75,7 +76,7 @@ export const AdminUsersManager = () => {
         schema: 'public',
         table: 'profiles'
       }, (payload) => {
-        console.log('🔴 Users table change:', payload);
+        devLog.log('🔴 Users table change:', payload);
         fetchUsers(); // Refresh data on any change
       })
       .subscribe();
