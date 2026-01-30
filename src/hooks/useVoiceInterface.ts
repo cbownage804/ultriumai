@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { devLog } from '@/lib/logger';
 
 interface VoiceSettings {
   voice: string;
@@ -26,7 +27,7 @@ export const useVoiceInterface = () => {
     setIsLoading(true);
     
     try {
-      console.log('Converting text to speech:', text.substring(0, 100));
+      devLog.log('Converting text to speech:', text.substring(0, 100));
       
       const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
         body: {
@@ -62,13 +63,13 @@ export const useVoiceInterface = () => {
       
       audioRef.current.onloadstart = () => {
         setIsPlaying(true);
-        console.log('Audio started loading');
+        devLog.log('Audio started loading');
       };
       
       audioRef.current.onended = () => {
         setIsPlaying(false);
         URL.revokeObjectURL(audioUrl);
-        console.log('Audio playback ended');
+        devLog.log('Audio playback ended');
       };
       
       audioRef.current.onerror = (e) => {
@@ -83,7 +84,7 @@ export const useVoiceInterface = () => {
       };
       
       await audioRef.current.play();
-      console.log('Audio playback started successfully');
+      devLog.log('Audio playback started successfully');
       
     } catch (error) {
       console.error('Voice synthesis error:', error);

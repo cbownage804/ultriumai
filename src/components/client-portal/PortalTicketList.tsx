@@ -10,13 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { EmptyState } from "@/components/ui/empty-state";
 import { 
   Search, 
   Plus, 
   Filter,
   Clock,
   User,
-  ChevronDown
+  ChevronDown,
+  Ticket
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import {
@@ -154,9 +156,12 @@ export function PortalTicketList({
           {/* Tickets */}
           <div className="divide-y">
             {sortedTickets.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <p>No tickets found matching your filters.</p>
-              </div>
+              <EmptyState
+                icon={Ticket}
+                title="No tickets found"
+                description="No tickets match your current filters. Try adjusting your search criteria."
+                size="sm"
+              />
             ) : (
               sortedTickets.map((ticket) => (
                 <div 

@@ -60,6 +60,7 @@ import { SecurePasswordGenerator } from "@/components/safepass/SecurePasswordGen
 import { AppAIChat } from "@/components/shared/AppAIChat";
 import { DarkWebCheck } from "@/components/shared/DarkWebCheck";
 import { useAuth } from "@/hooks/useAuth";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface SafePassAppProps {
   isWhiteLabeled?: boolean;
@@ -715,9 +716,12 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                   </TableBody>
                 </Table>
                 {filteredEntries.length === 0 && (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">No password entries found</p>
-                  </div>
+                  <EmptyState
+                    icon={Key}
+                    title="No password entries found"
+                    description="Add your first password to get started with secure credential management."
+                    size="sm"
+                  />
                 )}
               </ScrollArea>
             </CardContent>

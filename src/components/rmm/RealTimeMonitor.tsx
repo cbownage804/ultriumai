@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { 
   Activity, 
   Wifi, 
@@ -266,10 +267,12 @@ export const RealTimeMonitor = () => {
             ))}
 
             {devices.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <Monitor className="h-12 w-12 mx-auto mb-4 opacity-50 text-safeops" />
-                <p>No devices found. Deploy SafeOps agents to start monitoring.</p>
-              </div>
+              <EmptyState
+                icon={Monitor}
+                title="No devices found"
+                description="Deploy SafeOps agents to start monitoring your endpoints in real-time."
+                size="md"
+              />
             )}
           </div>
         </CardContent>

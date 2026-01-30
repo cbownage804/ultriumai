@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { EmptyState } from "@/components/ui/empty-state";
 import { 
   Plus, 
   Search, 
@@ -23,7 +24,8 @@ import {
   RefreshCw,
   Filter,
   UserPlus,
-  Building2
+  Building2,
+  Ticket
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -662,10 +664,13 @@ export function VanguardServiceDesk() {
       <div className="grid gap-4">
         {filteredTickets.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center">
-              <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No tickets found</p>
-              <p className="text-sm text-muted-foreground">Create a new ticket to get started</p>
+            <CardContent>
+              <EmptyState
+                icon={Ticket}
+                title="No tickets found"
+                description="Create a new ticket to get started with your support requests."
+                size="md"
+              />
             </CardContent>
           </Card>
         ) : (

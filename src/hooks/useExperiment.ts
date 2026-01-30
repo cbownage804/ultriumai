@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { devLog } from '@/lib/logger';
 
 interface Experiment {
   id: string;
@@ -156,7 +157,7 @@ export function useExperiment({
     const result = variantAssignments[experimentId];
     
     if (!result) {
-      console.warn(`[useExperiment] Unknown experiment: ${experimentId}`);
+      devLog.warn(`[useExperiment] Unknown experiment: ${experimentId}`);
       return { variant: 'control', isControl: true, experimentId };
     }
     
@@ -187,7 +188,7 @@ export function useExperiment({
     const result = variantAssignments[experimentId];
     
     if (!result) {
-      console.warn(`[useExperiment] Cannot track conversion for unknown experiment: ${experimentId}`);
+      devLog.warn(`[useExperiment] Cannot track conversion for unknown experiment: ${experimentId}`);
       return;
     }
     
@@ -200,7 +201,7 @@ export function useExperiment({
       });
     }
     
-    console.log(`[useExperiment] Conversion tracked: ${experimentId} (${result.variant}) - ${conversionType}`);
+    devLog.log(`[useExperiment] Conversion tracked: ${experimentId} (${result.variant}) - ${conversionType}`);
   }, [variantAssignments]);
 
   /**
