@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
+import { devLog } from '@/lib/logger';
 
 // Demo notification creator for testing
 export const useNotificationDemo = () => {
@@ -79,9 +80,9 @@ export const useNotificationDemo = () => {
         await createSecurityAlert(alert);
       }
 
-      console.log('Demo notifications and alerts created successfully');
+      devLog.log('Demo notifications and alerts created successfully');
     } catch (error) {
-      console.error('Error creating demo notifications:', error);
+      devLog.error('Error creating demo notifications:', error);
     }
   };
 
