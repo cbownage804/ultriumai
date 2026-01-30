@@ -1,73 +1,230 @@
-# Welcome to your Lovable project
+# UltriumAI Platform
 
-## Project info
+A comprehensive enterprise security and AI operations platform built with React, TypeScript, and Supabase.
 
-**URL**: https://lovable.dev/projects/51e5cd04-5f19-440a-a7ba-de30fc766877
+## 🎯 Overview
 
-## How can I edit this code?
+UltriumAI is a unified platform consisting of three major product suites:
 
-There are several ways of editing your application.
+- **Vanguard** - Enterprise MSP/MSSP security and operations platform
+- **SafeSuite** - Consumer/SMB password management and security tools  
+- **AI Studio** - Custom GPT builder and AI orchestration platform
 
-**Use Lovable**
+## 🏗️ Architecture
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/51e5cd04-5f19-440a-a7ba-de30fc766877) and start prompting.
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Frontend                              │
+│  React 18 + TypeScript + Vite + TailwindCSS + Framer Motion │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     Supabase Backend                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │   Database   │  │  Edge Funcs  │  │   Auth/Storage   │  │
+│  │  PostgreSQL  │  │    Deno      │  │                  │  │
+│  └──────────────┘  └──────────────┘  └──────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   External Integrations                      │
+│  Stripe • Lovable AI Gateway • Third-party APIs             │
+└─────────────────────────────────────────────────────────────┘
+```
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🚀 Quick Start
 
-**Use your preferred IDE**
+### Prerequisites
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Node.js 18+ or Bun 1.0+
+- Git
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Installation
 
-Follow these steps:
+```bash
+# Clone the repository
+git clone <repository-url>
+cd ultriumai
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Install dependencies
+bun install
+# or
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
+bun dev
+# or
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📁 Project Structure
 
-**Use GitHub Codespaces**
+```
+src/
+├── components/          # React components
+│   ├── ui/             # Base UI components (shadcn/ui)
+│   ├── vanguard/       # Vanguard-specific components
+│   ├── safesuite/      # SafeSuite components
+│   ├── ai-studio/      # AI Studio components
+│   └── shared/         # Cross-product shared components
+├── hooks/              # Custom React hooks
+├── pages/              # Page components (routes)
+├── layouts/            # Layout wrappers
+├── lib/                # Utility functions
+├── config/             # Configuration files
+├── integrations/       # Third-party integrations
+│   └── supabase/       # Supabase client & types
+└── routes/             # Route configurations
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+supabase/
+├── functions/          # Edge functions (Deno)
+├── migrations/         # Database migrations
+└── config.toml         # Supabase configuration
 
-## What technologies are used for this project?
+e2e/                    # Playwright E2E tests
+```
 
-This project is built with:
+## 🎨 Design System
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Theme
 
-## How can I deploy this project?
+The platform uses a dark theme with product-specific accent colors:
 
-Simply open [Lovable](https://lovable.dev/projects/51e5cd04-5f19-440a-a7ba-de30fc766877) and click on Share -> Publish.
+| Product    | Primary Color | CSS Variable     |
+|------------|---------------|------------------|
+| Vanguard   | Cyan/Teal     | `--cyan-500`     |
+| SafePass   | Amber         | `--amber-500`    |
+| SafeScan   | Red           | `--red-500`      |
+| AI Studio  | Violet        | `--violet-500`   |
 
-## Can I connect a custom domain to my Lovable project?
+### CSS Architecture
 
-Yes, you can!
+- **Base styles**: `src/index.css`
+- **Tailwind config**: `tailwind.config.ts`
+- **Component variants**: shadcn/ui + custom extensions
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🔐 Authentication
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Authentication is handled via Supabase Auth supporting:
+
+- Email/Password
+- Magic Link
+- Google OAuth
+- MFA (TOTP)
+
+Protected routes use `<ProtectedRoute>` wrapper.
+
+## 📊 Database
+
+### Key Tables
+
+| Category | Tables |
+|----------|--------|
+| Users | `profiles`, `user_roles` |
+| Vanguard | `vanguard_agents`, `vanguard_metrics`, `vanguard_commands` |
+| Tickets | `helpdesk_tickets`, `ticket_comments` |
+| AI Studio | `custom_gpts`, `gpt_conversations` |
+| SafePass | `safepass_vaults`, `safepass_entries` |
+
+### Row-Level Security
+
+All tables have RLS policies enforcing `auth.uid() = user_id` patterns.
+
+## 🧪 Testing
+
+### Unit Tests (Vitest)
+
+```bash
+bun run test
+# or
+npm run test
+```
+
+### E2E Tests (Playwright)
+
+```bash
+# Run all tests
+bun run test:e2e
+
+# Run specific test file
+bun run test:e2e e2e/vanguard.spec.ts
+
+# Run with UI
+bun run test:e2e --ui
+```
+
+## 🚢 Deployment
+
+### Lovable Cloud (Recommended)
+
+The project is optimized for Lovable Cloud deployment. Push to main branch to trigger automatic deployment.
+
+**Project URL**: https://lovable.dev/projects/51e5cd04-5f19-440a-a7ba-de30fc766877
+
+### Manual Deployment
+
+1. Build the project:
+   ```bash
+   bun run build
+   ```
+
+2. Deploy the `dist` folder to your hosting provider.
+
+## 🔧 Development
+
+### Code Style
+
+- TypeScript strict mode enabled
+- ESLint + Prettier for formatting
+- Conventional commits recommended
+
+### Logging
+
+Use `devLog` utility for development logging:
+```typescript
+import { devLog } from '@/lib/logger';
+devLog.log('Debug message');
+devLog.error('Error message');
+```
+
+### Adding New Pages
+
+1. Create component in `src/pages/`
+2. Add lazy-loaded route in `src/App.tsx`:
+   ```typescript
+   const NewPage = lazy(() => import('@/pages/NewPage'));
+   ```
+3. Wrap with `<Suspense>` and `<PageSkeleton>`
+
+### Adding Edge Functions
+
+1. Create folder in `supabase/functions/`
+2. Add `index.ts` with `Deno.serve()` handler
+3. Functions auto-deploy on push
+
+## 📝 Key Configurations
+
+| Config | Location |
+|--------|----------|
+| Vanguard Pricing | `src/config/vanguardPricing.ts` |
+| SafeSuite Products | `src/config/safeSuiteProducts.ts` |
+| AI Models | Edge functions via Lovable AI Gateway |
+
+## 🔗 Useful Links
+
+- [Supabase Dashboard](https://supabase.com/dashboard/project/nsyobmjpdpvesjwdphlh)
+- [Edge Function Logs](https://supabase.com/dashboard/project/nsyobmjpdpvesjwdphlh/functions)
+- [Database Schema](https://supabase.com/dashboard/project/nsyobmjpdpvesjwdphlh/database/tables)
+- [Lovable Project](https://lovable.dev/projects/51e5cd04-5f19-440a-a7ba-de30fc766877)
+
+## 📄 License
+
+Proprietary - All rights reserved.
+
+---
+
+Built with ❤️ by UltriumAI
