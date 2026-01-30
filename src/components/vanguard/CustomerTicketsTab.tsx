@@ -140,11 +140,11 @@ export function CustomerTicketsTab({ customerId, customerName, tickets = default
   const openTicketsCount = tickets.filter(t => !['resolved', 'closed'].includes(t.status)).length;
 
   return (
-    <Card className="bg-white shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between border-b">
+    <Card className="bg-black/80 border-cyan-500/30 shadow-xl shadow-purple-500/10">
+      <CardHeader className="flex flex-row items-center justify-between border-b border-cyan-500/20">
         <div className="flex items-center gap-3">
-          <Ticket className="h-5 w-5 text-gray-500" />
-          <CardTitle className="text-gray-900">
+          <Ticket className="h-5 w-5 text-cyan-400" />
+          <CardTitle className="text-white">
             Tickets ({openTicketsCount} open)
           </CardTitle>
         </div>
@@ -171,7 +171,7 @@ export function CustomerTicketsTab({ customerId, customerName, tickets = default
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
             <Input
               placeholder="Search tickets..."
               value={searchQuery}
@@ -232,8 +232,8 @@ export function CustomerTicketsTab({ customerId, customerName, tickets = default
             <TableBody>
               {filteredAndSortedTickets.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-gray-500">
-                    <Ticket className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <TableCell colSpan={7} className="text-center py-12 text-white/50">
+                    <Ticket className="h-12 w-12 mx-auto mb-4 opacity-50 text-cyan-400" />
                     <p>No tickets found</p>
                   </TableCell>
                 </TableRow>
