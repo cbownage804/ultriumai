@@ -7,13 +7,14 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
-  Brain, Bot, Sparkles, Zap, TrendingUp, Clock,
+  Bot, Sparkles, Zap, TrendingUp, Clock,
   CheckCircle2, ArrowUpRight,
   Mail, RefreshCw, Ticket, MessageSquare,
   Gauge, CircleDot, GitBranch, BarChart3, Headphones, Settings
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 
 // Import sub-components
 import { EmailAutomationEngine } from '@/components/vanguard/ai-command/EmailAutomationEngine';
@@ -80,7 +81,7 @@ export default function VanguardAICommandCenter() {
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500/30 via-blue-500/20 to-purple-500/30 border border-cyan-500/40 shadow-lg shadow-purple-500/20 relative">
-            <Brain className="h-7 w-7 text-cyan-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
+            <ModuleLogo module="cortex" size="lg" glow />
             <motion.div
               className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-emerald-500"
               animate={{ scale: [1, 1.2, 1] }}

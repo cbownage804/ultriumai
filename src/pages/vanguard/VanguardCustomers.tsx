@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { getVanguardBasePath } from '@/utils/subdomain';
 import { AddCustomerDialog } from '@/components/vanguard/AddCustomerDialog';
 import { useMSP } from '@/hooks/useMSP';
+import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 
 interface CustomerDisplay {
   id: string;
@@ -135,11 +136,11 @@ export default function VanguardCustomers() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-cyan-500/20 rounded-lg">
-            <Building2 className="h-6 w-6 text-cyan-400" />
+          <div className="p-2 bg-cyan-500/20 rounded-xl border border-cyan-500/30">
+            <ModuleLogo module="response" size="lg" glow />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Customers</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-cyan-100 to-purple-200 bg-clip-text text-transparent">Customers</h1>
             <p className="text-white/60 text-sm">Manage your client organizations</p>
           </div>
         </div>

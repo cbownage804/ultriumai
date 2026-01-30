@@ -12,8 +12,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   FileText, Key, Shield, Server, BookOpen, Clock, Building2,
-  Plus, Search, FolderOpen, AlertTriangle, CheckCircle2, Settings, Map, ArrowLeft, ChevronRight
+  Plus, Search, FolderOpen, AlertTriangle, CheckCircle2, Settings, ArrowLeft, ChevronRight
 } from 'lucide-react';
+import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 import { useVanguardAtlas } from '@/hooks/useVanguardAtlas';
 import { useMSP } from '@/hooks/useMSP';
 import { AtlasDocuments } from '@/components/vanguard-atlas/AtlasDocuments';
@@ -47,12 +48,16 @@ export default function VanguardAtlas() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <Map className="h-6 w-6 text-cyan-500" />
-              Vanguard Atlas
-            </h1>
-            <p className="text-muted-foreground">IT Documentation & Knowledge Management</p>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-cyan-500/20 border border-cyan-500/30">
+              <ModuleLogo module="atlas" size="lg" glow />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-cyan-100 to-purple-200 bg-clip-text text-transparent">
+                Vanguard Atlas
+              </h1>
+              <p className="text-muted-foreground">IT Documentation & Knowledge Management</p>
+            </div>
           </div>
         </div>
 

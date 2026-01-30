@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Brain, FileText, GitBranch, Route, BarChart3 } from 'lucide-react';
+import { FileText, GitBranch, Route, BarChart3 } from 'lucide-react';
 import { 
   AITicketSummarizer, 
   PatternDetectionEngine, 
@@ -9,6 +9,7 @@ import {
   SmartTicketRouter, 
   CortexAnalyticsDashboard 
 } from '@/components/vanguard/cortex';
+import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 
 export default function VanguardCortexHub() {
   const [activeTab, setActiveTab] = useState('summarizer');
@@ -31,7 +32,7 @@ export default function VanguardCortexHub() {
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500/30 via-cyan-500/20 to-blue-500/30 border border-purple-500/40 shadow-lg shadow-purple-500/20">
-            <Brain className="h-7 w-7 text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
+            <ModuleLogo module="cortex" size="lg" glow />
           </div>
           <div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-purple-100 to-cyan-200 bg-clip-text text-transparent">
@@ -41,7 +42,7 @@ export default function VanguardCortexHub() {
           </div>
         </div>
         <Badge className="bg-gradient-to-r from-purple-400 via-cyan-500 to-blue-600 text-white px-3 py-1">
-          <Brain className="h-3.5 w-3.5 mr-1" />
+          <ModuleLogo module="cortex" size="xs" className="mr-1" />
           AI Intelligence Center
         </Badge>
       </div>

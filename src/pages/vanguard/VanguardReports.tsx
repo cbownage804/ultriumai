@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  BarChart3, 
   Calendar, 
   FileText, 
   GitBranch,
@@ -13,6 +12,7 @@ import { ComplianceReportGenerator } from '@/components/vanguard/ComplianceRepor
 import { AttackPathVisualization } from '@/components/vanguard/AttackPathVisualization';
 import { VanguardAnalyticsDashboard } from '@/components/vanguard/VanguardAnalyticsDashboard';
 import { HelpdeskReports } from '@/components/vanguard/reports/HelpdeskReports';
+import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 
 export default function VanguardReports() {
   const [activeTab, setActiveTab] = useState('helpdesk');
@@ -21,7 +21,7 @@ export default function VanguardReports() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500/30 via-blue-500/20 to-purple-500/30 border border-cyan-500/40 shadow-lg shadow-purple-500/20">
-          <BarChart3 className="h-6 w-6 text-cyan-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
+          <ModuleLogo module="ledger" size="lg" glow />
         </div>
         <div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-cyan-100 to-purple-200 bg-clip-text text-transparent">Vanguard Ledger</h1>

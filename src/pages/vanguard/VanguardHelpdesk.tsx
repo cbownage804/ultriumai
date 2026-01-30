@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { HelpdeskDashboard } from '@/components/dashboards/HelpdeskDashboard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SLAManagementDashboard, EmailIntegrationHub, CSATSurveyManager, TimeTrackingBilling, TicketWorkflowEngine } from '@/components/vanguard/helpdesk';
-import { Headphones } from 'lucide-react';
+import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 
 export default function VanguardHelpdesk() {
   const [activeTab, setActiveTab] = useState('tickets');
@@ -14,11 +14,11 @@ export default function VanguardHelpdesk() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6 flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30">
-          <Headphones className="h-6 w-6 text-cyan-400" />
+        <div className="p-2 rounded-xl bg-cyan-500/20 border border-cyan-500/30">
+          <ModuleLogo module="response" size="lg" glow />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">Vanguard Response</h1>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-cyan-100 to-purple-200 bg-clip-text text-transparent">Vanguard Response</h1>
           <p className="text-white/60">AI-powered service desk and incident management</p>
         </div>
       </div>
