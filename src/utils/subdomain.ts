@@ -56,7 +56,7 @@ export function getVanguardBasePath(): string {
   if (subdomain === 'vanguard') {
     return '/app';
   }
-  return '/vanguard';
+  return '/vanguard/app';
 }
 
 export function getSafeSuiteBasePath(): string {
