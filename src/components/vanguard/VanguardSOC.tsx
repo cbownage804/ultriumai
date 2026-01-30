@@ -455,20 +455,20 @@ export const VanguardSOC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Main Alerts Panel */}
         <div className="lg:col-span-2 space-y-4 md:space-y-6 order-2 lg:order-1">
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="bg-black/80 border-cyan-500/30 shadow-xl shadow-purple-500/10">
+            <CardHeader className="pb-3 border-b border-cyan-500/20">
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Target className="h-5 w-5 text-cyan-400" />
                     Active Threats
                   </CardTitle>
-                  <CardDescription>Security incidents requiring attention</CardDescription>
+                  <CardDescription className="text-white/60">Security incidents requiring attention</CardDescription>
                 </div>
                 <select 
                   value={selectedTimeframe}
                   onChange={(e) => setSelectedTimeframe(e.target.value)}
-                  className="px-3 py-1 border rounded text-sm bg-background"
+                  className="px-3 py-1 border border-cyan-500/30 rounded text-sm bg-black/40 text-white"
                 >
                   <option value="1h">Last Hour</option>
                   <option value="24h">Last 24h</option>
@@ -548,22 +548,22 @@ export const VanguardSOC = () => {
         {/* Right Sidebar */}
         <div className="space-y-6">
           {/* Live Threat Feed */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-sm">
+          <Card className="bg-black/80 border-cyan-500/30 shadow-lg shadow-purple-500/10">
+            <CardHeader className="pb-3 border-b border-cyan-500/20">
+              <CardTitle className="flex items-center gap-2 text-sm text-white">
                 <Radio className="h-4 w-4 text-green-500 animate-pulse" />
                 Live Feed
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <div className="space-y-2 max-h-[200px] overflow-y-auto">
                 {liveFeed.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-4">
+                  <p className="text-xs text-white/50 text-center py-4">
                     Waiting for events...
                   </p>
                 ) : (
                   liveFeed.map((item) => (
-                    <div key={item.id} className="flex items-start gap-2 text-xs p-2 rounded bg-muted/50">
+                    <div key={item.id} className="flex items-start gap-2 text-xs p-2 rounded bg-white/5">
                       <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
                         item.severity === 'critical' ? 'bg-red-500' :
                         item.severity === 'high' ? 'bg-orange-500' :
@@ -571,8 +571,8 @@ export const VanguardSOC = () => {
                         'bg-blue-500'
                       }`} />
                       <div className="min-w-0">
-                        <p className="truncate">{item.message}</p>
-                        <p className="text-muted-foreground">
+                        <p className="truncate text-white/80">{item.message}</p>
+                        <p className="text-white/40">
                           {item.timestamp.toLocaleTimeString()}
                         </p>
                       </div>
@@ -584,32 +584,32 @@ export const VanguardSOC = () => {
           </Card>
 
           {/* Agent Status */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <Users className="h-4 w-4" />
+          <Card className="bg-black/80 border-cyan-500/30 shadow-lg shadow-purple-500/10">
+            <CardHeader className="pb-3 border-b border-cyan-500/20">
+              <CardTitle className="flex items-center gap-2 text-sm text-white">
+                <Users className="h-4 w-4 text-cyan-400" />
                 Agent Fleet
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               {agents.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">No agents deployed</p>
+                <p className="text-xs text-white/50 text-center py-4">No agents deployed</p>
               ) : (
                 <div className="space-y-2">
                   {agents.slice(0, 6).map(agent => {
                     const isOnline = agent.last_heartbeat && 
                       new Date(agent.last_heartbeat).getTime() > Date.now() - 5 * 60 * 1000;
                     return (
-                      <div key={agent.id} className="flex items-center justify-between p-2 rounded bg-muted/50">
+                      <div key={agent.id} className="flex items-center justify-between p-2 rounded bg-white/5">
                         <div className="flex items-center gap-2">
                           {isOnline ? (
                             <Wifi className="h-3 w-3 text-green-500" />
                           ) : (
                             <WifiOff className="h-3 w-3 text-red-500" />
                           )}
-                          <span className="text-sm font-medium truncate max-w-[120px]">{agent.name}</span>
+                          <span className="text-sm font-medium truncate max-w-[120px] text-white/80">{agent.name}</span>
                         </div>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs border-cyan-500/30 text-white/60">
                           {agent.location || 'Unknown'}
                         </Badge>
                       </div>
