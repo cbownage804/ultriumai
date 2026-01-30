@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { getVanguardBasePath } from '@/utils/subdomain';
+import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 
 const initialAlerts = [
   { id: '1', title: 'High CPU Usage Detected', device: 'SRV-PROD-01', customer: 'Acme Corp', severity: 'critical', category: 'performance', time: '2 min ago', status: 'active', description: 'CPU usage exceeded 95% for more than 5 minutes.' },
@@ -149,14 +150,14 @@ export default function VanguardAlerts() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-cyan-500/20 rounded-lg relative">
-            <Bell className="h-6 w-6 text-cyan-400" />
+          <div className="p-2 bg-cyan-500/20 rounded-xl border border-cyan-500/30 relative">
+            <ModuleLogo module="pursuit" size="lg" glow />
             {alerts.filter(a => a.status === 'active').length > 0 && (
               <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse" />
             )}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Vanguard Pursuit</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-cyan-100 to-purple-200 bg-clip-text text-transparent">Vanguard Pursuit</h1>
             <p className="text-white/60 text-sm">Security alerts, threat detection, and response</p>
           </div>
         </div>

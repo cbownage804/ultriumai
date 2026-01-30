@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
-  Shield, AlertTriangle, Building2, Brain, 
+  AlertTriangle, Building2, Brain, 
   TrendingUp, Activity, Eye, Clock,
   Zap, Target, BarChart3, Settings
 } from 'lucide-react';
@@ -15,6 +15,7 @@ import { AITriageQueue } from './AITriageQueue';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { ModuleLogo } from '../ModuleLogo';
 
 interface TrendData {
   name: string;
@@ -170,7 +171,7 @@ export function SentinelDashboard() {
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/30 via-cyan-500/20 to-purple-500/30 border border-blue-500/40 shadow-lg shadow-blue-500/20">
-            <Shield className="h-7 w-7 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+            <ModuleLogo module="pursuit" size="lg" glow />
           </div>
           <div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent">

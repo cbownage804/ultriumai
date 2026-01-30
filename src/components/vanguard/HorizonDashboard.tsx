@@ -60,6 +60,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { ModuleLogo } from './ModuleLogo';
 
 interface StatCardProps {
   title: string;
@@ -140,16 +141,18 @@ export function HorizonDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-cyan-500/20">
-              <Monitor className="h-5 w-5 text-cyan-500" />
-            </div>
-            Vanguard Horizon
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Operational visibility and device health monitoring
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-cyan-500/20 border border-cyan-500/30">
+            <ModuleLogo module="horizon" size="lg" glow />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-cyan-100 to-purple-200 bg-clip-text text-transparent">
+              Vanguard Horizon
+            </h1>
+            <p className="text-muted-foreground">
+              Operational visibility and device health monitoring
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={refetch}>
