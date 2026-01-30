@@ -23,6 +23,7 @@ import Index from '@/pages/Index';
 import AuthPage from '@/pages/AuthPage';
 import AuthCallback from '@/pages/AuthCallback';
 import NotFound from '@/pages/NotFound';
+import LegacyVanguardRedirect from '@/routes/LegacyVanguardRedirect';
 
 // SafeSuite Layout imports (needed for nested routes)
 import SafeSuiteLayout from '@/layouts/SafeSuiteLayout';
@@ -315,6 +316,10 @@ function AppRouter() {
         
         {/* Vanguard Dashboard redirects to app */}
         <Route path="/vanguard/dashboard" element={<Navigate to="/vanguard/app/dashboard" replace />} />
+
+         {/* Legacy Vanguard routes (pre /vanguard/app move) */}
+         <Route path="/vanguard/*" element={<LegacyVanguardRedirect />} />
+
         <Route path="/agent" element={<AgentComponent />} />
         <Route path="/auth" element={user ? <RoleBasedRedirect /> : <AuthPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
