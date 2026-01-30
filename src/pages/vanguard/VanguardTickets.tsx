@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -147,14 +147,19 @@ const impactLabels = {
 export default function VanguardTickets() {
   const navigate = useNavigate();
   const basePath = getVanguardBasePath();
+  const { clients } = useMSP();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('tickets');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [organizationFilter, setOrganizationFilter] = useState('all');
+  const [assigneeFilter, setAssigneeFilter] = useState('all');
   const [tickets, setTickets] = useState(mockTickets);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<typeof mockTickets[0] | null>(null);
   const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
   const [viewType, setViewType] = useState('default');
+  const [showFilters, setShowFilters] = useState(false);
   const [newTicket, setNewTicket] = useState({
     title: '',
     description: '',
@@ -162,17 +167,33 @@ export default function VanguardTickets() {
     customer: '',
   });
 
+  // Extract unique assignees from tickets
+  const uniqueAssignees = useMemo(() => {
+    const assignees = new Set<string>();
+    tickets.forEach(t => {
+      if (t.assignee && t.assignee !== 'Unassigned') {
+        assignees.add(t.assignee);
+      }
+    });
+    return Array.from(assignees);
+  }, [tickets]);
+
   useEffect(() => {
     document.title = 'Tickets | Ultrium Vanguard';
   }, []);
 
-  const filteredTickets = tickets.filter(ticket => {
-    const matchesSearch = ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          ticket.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          ticket.contact.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredTickets = useMemo(() => {
+    return tickets.filter(ticket => {
+      const matchesSearch = ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            ticket.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            ticket.contact.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
+      const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
+      const matchesOrg = organizationFilter === 'all' || ticket.customerId === organizationFilter;
+      const matchesAssignee = assigneeFilter === 'all' || ticket.assignee === assigneeFilter;
+      return matchesSearch && matchesStatus && matchesPriority && matchesOrg && matchesAssignee;
+    });
+  }, [tickets, searchQuery, statusFilter, priorityFilter, organizationFilter, assigneeFilter]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -434,12 +455,222 @@ export default function VanguardTickets() {
                   <SelectItem value="detailed">Detailed view</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" className="border-cyan-500/20 text-white/60">
+              <Button 
+                variant="outline" 
+                className={`border-cyan-500/20 ${showFilters ? 'bg-cyan-500/20 text-cyan-400' : 'text-white/60'}`}
+                onClick={() => setShowFilters(!showFilters)}
+              >
                 <Filter className="h-4 w-4 mr-2" />
                 Filters
+                {(organizationFilter !== 'all' || priorityFilter !== 'all' || assigneeFilter !== 'all' || statusFilter !== 'all') && (
+                  <Badge className="ml-2 bg-cyan-500 text-black text-xs h-5 px-1.5">
+                    {[organizationFilter, priorityFilter, assigneeFilter, statusFilter].filter(f => f !== 'all').length}
+                  </Badge>
+                )}
               </Button>
             </div>
           </div>
+
+          {/* Filter Panel */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <Card className="bg-slate-900/80 border-cyan-500/30">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-semibold text-cyan-400 flex items-center gap-2">
+                        <Filter className="h-4 w-4" />
+                        Filter Tickets
+                      </h3>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-slate-400 hover:text-white"
+                        onClick={() => {
+                          setOrganizationFilter('all');
+                          setPriorityFilter('all');
+                          setAssigneeFilter('all');
+                          setStatusFilter('all');
+                        }}
+                      >
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Reset
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {/* Organization Filter */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-slate-400">Organization</Label>
+                        <Select value={organizationFilter} onValueChange={setOrganizationFilter}>
+                          <SelectTrigger className="bg-slate-800/50 border-cyan-500/20 text-white">
+                            <Building2 className="h-4 w-4 mr-2 text-cyan-400" />
+                            <SelectValue placeholder="All Organizations" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-900 border-cyan-500/20">
+                            <SelectItem value="all">All Organizations</SelectItem>
+                            {clients.map(client => (
+                              <SelectItem key={client.id} value={client.id}>
+                                {client.company_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Status Filter */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-slate-400">Status</Label>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger className="bg-slate-800/50 border-cyan-500/20 text-white">
+                            <SelectValue placeholder="All Statuses" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-900 border-cyan-500/20">
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="open">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-blue-400" />
+                                Open
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="in_progress">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-cyan-400" />
+                                In Progress
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="resolved">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                                Resolved
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="closed">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-slate-400" />
+                                Closed
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Priority Filter */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-slate-400">Priority</Label>
+                        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                          <SelectTrigger className="bg-slate-800/50 border-cyan-500/20 text-white">
+                            <SelectValue placeholder="All Priorities" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-900 border-cyan-500/20">
+                            <SelectItem value="all">All Priorities</SelectItem>
+                            <SelectItem value="critical">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-red-500" />
+                                Critical
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="high">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-orange-500" />
+                                High
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="medium">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                                Medium
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="low">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-slate-500" />
+                                Low
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Assigned Technician Filter */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-slate-400">Assigned To</Label>
+                        <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
+                          <SelectTrigger className="bg-slate-800/50 border-cyan-500/20 text-white">
+                            <User className="h-4 w-4 mr-2 text-purple-400" />
+                            <SelectValue placeholder="All Technicians" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-900 border-cyan-500/20">
+                            <SelectItem value="all">All Technicians</SelectItem>
+                            <SelectItem value="Unassigned">Unassigned</SelectItem>
+                            {uniqueAssignees.map(assignee => (
+                              <SelectItem key={assignee} value={assignee}>
+                                {assignee}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Active Filters Display */}
+                    {(organizationFilter !== 'all' || priorityFilter !== 'all' || assigneeFilter !== 'all' || statusFilter !== 'all') && (
+                      <div className="mt-4 pt-4 border-t border-cyan-500/20">
+                        <div className="flex flex-wrap gap-2">
+                          {organizationFilter !== 'all' && (
+                            <Badge 
+                              variant="outline" 
+                              className="bg-cyan-500/10 border-cyan-500/30 text-cyan-400 cursor-pointer hover:bg-cyan-500/20"
+                              onClick={() => setOrganizationFilter('all')}
+                            >
+                              <Building2 className="h-3 w-3 mr-1" />
+                              {clients.find(c => c.id === organizationFilter)?.company_name || 'Organization'}
+                              <XCircle className="h-3 w-3 ml-1" />
+                            </Badge>
+                          )}
+                          {statusFilter !== 'all' && (
+                            <Badge 
+                              variant="outline" 
+                              className="bg-blue-500/10 border-blue-500/30 text-blue-400 cursor-pointer hover:bg-blue-500/20"
+                              onClick={() => setStatusFilter('all')}
+                            >
+                              Status: {statusFilter.replace('_', ' ')}
+                              <XCircle className="h-3 w-3 ml-1" />
+                            </Badge>
+                          )}
+                          {priorityFilter !== 'all' && (
+                            <Badge 
+                              variant="outline" 
+                              className="bg-orange-500/10 border-orange-500/30 text-orange-400 cursor-pointer hover:bg-orange-500/20"
+                              onClick={() => setPriorityFilter('all')}
+                            >
+                              Priority: {priorityFilter}
+                              <XCircle className="h-3 w-3 ml-1" />
+                            </Badge>
+                          )}
+                          {assigneeFilter !== 'all' && (
+                            <Badge 
+                              variant="outline" 
+                              className="bg-purple-500/10 border-purple-500/30 text-purple-400 cursor-pointer hover:bg-purple-500/20"
+                              onClick={() => setAssigneeFilter('all')}
+                            >
+                              <User className="h-3 w-3 mr-1" />
+                              {assigneeFilter}
+                              <XCircle className="h-3 w-3 ml-1" />
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Tickets Table - Atera Style */}
           <Card className="bg-slate-900/50 border-cyan-500/20">
