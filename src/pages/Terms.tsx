@@ -24,7 +24,7 @@ const Terms = () => {
               Legal agreement governing your use of UltriumAI services
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Last updated: January 5, 2025
+              Last updated: January 30, 2026
             </p>
           </div>
 

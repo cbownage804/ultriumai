@@ -24,7 +24,7 @@ const Privacy = () => {
               Your privacy and data security are fundamental to our mission
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Last updated: January 5, 2025
+              Last updated: January 30, 2026
             </p>
           </div>
 
