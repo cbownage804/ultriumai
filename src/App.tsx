@@ -44,6 +44,7 @@ const VanguardDevices = lazy(() => import('@/pages/VanguardDevices'));
 const VanguardDeviceDetail = lazy(() => import('@/pages/VanguardDeviceDetail'));
 const VanguardSetup = lazy(() => import('@/pages/VanguardSetup'));
 const UltriumVanguard = lazy(() => import('@/pages/UltriumVanguard'));
+const VanguardAuthPage = lazy(() => import('@/pages/vanguard/VanguardAuthPage'));
 
 // Lazy-loaded - MSP pages
 const MSPDashboardPage = lazy(() => import('@/pages/MSPDashboardPage'));
@@ -303,21 +304,19 @@ function AppRouter() {
       <Routes>
         <Route path="/" element={<Index />} />
         
-        {/* Vanguard Public Routes (auth page) */}
-        {getVanguardPublicRoutes()
-          .filter((route) => Boolean(route.props.path))
-          .map((route) => (
-            <Route
-              key={`vanguard-public-${route.props.path}`}
-              path={`/vanguard/${route.props.path}`}
-              element={route.props.element}
-            />
-          ))}
+        {/* Vanguard Public Landing Page (no auth required) */}
+        <Route path="/vanguard" element={<SuspenseWrapper><VanguardProductPage /></SuspenseWrapper>} />
         
-        {/* Vanguard Protected Routes (inside layout) */}
-        <Route path="/vanguard" element={<VanguardLayout />}>
+        {/* Vanguard Auth Route */}
+        <Route path="/vanguard/auth" element={<SuspenseWrapper><VanguardAuthPage /></SuspenseWrapper>} />
+        
+        {/* Vanguard Protected App Routes (inside layout) */}
+        <Route path="/vanguard/app" element={<VanguardLayout />}>
           {getVanguardProtectedRoutes()}
         </Route>
+        
+        {/* Vanguard Dashboard redirects to app */}
+        <Route path="/vanguard/dashboard" element={<Navigate to="/vanguard/app/dashboard" replace />} />
         <Route path="/agent" element={<AgentComponent />} />
         <Route path="/auth" element={user ? <RoleBasedRedirect /> : <AuthPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
