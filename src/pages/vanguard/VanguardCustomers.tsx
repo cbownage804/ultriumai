@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { 
   Building2, Plus, Search, Filter, Monitor, Shield, AlertTriangle,
-  MoreVertical, Users, DollarSign, Eye, Ticket, Settings
+  MoreVertical, Users, DollarSign, Eye, Ticket, Settings, Loader2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -22,15 +22,18 @@ import {
 import { toast } from 'sonner';
 import { getVanguardBasePath } from '@/utils/subdomain';
 import { AddCustomerDialog } from '@/components/vanguard/AddCustomerDialog';
+import { useMSP } from '@/hooks/useMSP';
 
-const initialCustomers = [
-  { id: '1', name: 'Acme Corporation', devices: 45, alerts: 3, status: 'healthy', mrr: 2500, contacts: 5, securityScore: 92 },
-  { id: '2', name: 'TechStart Inc', devices: 28, alerts: 8, status: 'warning', mrr: 1800, contacts: 3, securityScore: 78 },
-  { id: '3', name: 'GlobalTech Solutions', devices: 120, alerts: 1, status: 'healthy', mrr: 5500, contacts: 12, securityScore: 96 },
-  { id: '4', name: 'DataFlow LLC', devices: 35, alerts: 15, status: 'critical', mrr: 2100, contacts: 4, securityScore: 45 },
-  { id: '5', name: 'StartupXYZ', devices: 12, alerts: 0, status: 'healthy', mrr: 800, contacts: 2, securityScore: 88 },
-  { id: '6', name: 'Enterprise Corp', devices: 250, alerts: 5, status: 'warning', mrr: 12000, contacts: 25, securityScore: 82 },
-];
+interface CustomerDisplay {
+  id: string;
+  name: string;
+  devices: number;
+  alerts: number;
+  status: 'healthy' | 'warning' | 'critical';
+  mrr: number;
+  contacts: number;
+  securityScore: number;
+}
 
 const statusColors = {
   healthy: 'bg-emerald-500/20 text-emerald-400',
@@ -44,21 +47,43 @@ const scoreColors = (score: number) => {
   return 'text-red-400';
 };
 
+const getHealthStatus = (alerts: number): 'healthy' | 'warning' | 'critical' => {
+  if (alerts >= 10) return 'critical';
+  if (alerts >= 5) return 'warning';
+  return 'healthy';
+};
+
 export default function VanguardCustomers() {
   const navigate = useNavigate();
   const basePath = getVanguardBasePath();
+  const { clients, isLoading: mspLoading } = useMSP();
   const [searchQuery, setSearchQuery] = useState('');
-  const [customers, setCustomers] = useState(initialCustomers);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<typeof initialCustomers[0] | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerDisplay | null>(null);
 
   useEffect(() => {
     document.title = 'Customers | Ultrium Vanguard';
   }, []);
 
+  // Transform MSP clients into display format
+  const customers: CustomerDisplay[] = useMemo(() => {
+    return clients.map(client => ({
+      id: client.id,
+      name: client.company_name,
+      devices: client.endpoints || 0,
+      alerts: client.alerts || 0,
+      status: getHealthStatus(client.alerts || 0),
+      mrr: client.monthly_rate || 0,
+      contacts: 1, // Default, could be fetched separately
+      securityScore: (client.alerts || 0) < 3 ? 92 : (client.alerts || 0) < 8 ? 75 : 50,
+    }));
+  }, [clients]);
+
   const totalDevices = customers.reduce((acc, c) => acc + c.devices, 0);
   const totalMRR = customers.reduce((acc, c) => acc + c.mrr, 0);
-  const avgSecurityScore = Math.round(customers.reduce((acc, c) => acc + c.securityScore, 0) / customers.length);
+  const avgSecurityScore = customers.length > 0 
+    ? Math.round(customers.reduce((acc, c) => acc + c.securityScore, 0) / customers.length)
+    : 0;
 
   const stats = [
     { label: 'Total Customers', value: customers.length, icon: Building2, color: 'text-cyan-400' },
@@ -71,38 +96,39 @@ export default function VanguardCustomers() {
     customer.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleCustomerCreated = (newClient: any) => {
-    // Add the new customer to the list (with demo data for UI)
-    const createdCustomer = {
-      id: newClient.id,
-      name: newClient.company_name,
-      devices: 0,
-      alerts: 0,
-      status: 'healthy' as const,
-      mrr: newClient.monthly_rate || 0,
-      contacts: 1,
-      securityScore: 100,
-    };
-    setCustomers([createdCustomer, ...customers]);
+  const handleCustomerCreated = () => {
+    // Component will re-render when clients update
+    toast.success('Customer added successfully');
   };
 
-  const handleViewDashboard = (customer: typeof initialCustomers[0]) => {
+  const handleViewDashboard = (customer: CustomerDisplay) => {
     navigate(`${basePath}/customers/${customer.id}`);
   };
 
-  const handleViewDevices = (customer: typeof initialCustomers[0]) => {
+  const handleViewDevices = (customer: CustomerDisplay) => {
     toast.info(`Viewing devices for ${customer.name}`);
     navigate(`${basePath}/devices?customer=${customer.id}`);
   };
 
-  const handleViewTickets = (customer: typeof initialCustomers[0]) => {
+  const handleViewTickets = (customer: CustomerDisplay) => {
     toast.info(`Viewing tickets for ${customer.name}`);
     navigate(`${basePath}/tickets?customer=${customer.id}`);
   };
 
-  const handleEditCustomer = (customer: typeof initialCustomers[0]) => {
+  const handleEditCustomer = (customer: CustomerDisplay) => {
     setSelectedCustomer(customer);
   };
+
+  if (mspLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+          <p className="text-white/60">Loading customers...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
