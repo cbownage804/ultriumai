@@ -45,6 +45,7 @@ interface NavGroup {
   description: string;
   tooltip: string;
   module: ModuleName;
+  dashboardPath: string;
   items: NavItem[];
 }
 
@@ -68,6 +69,7 @@ export function VanguardNavigation() {
       description: 'Operational visibility & uptime',
       tooltip: 'Operational visibility and health monitoring across all devices and environments.',
       module: 'horizon',
+      dashboardPath: `${basePath}/rmm`,
       items: [
         { title: 'RMM Dashboard', path: `${basePath}/rmm`, icon: Monitor },
         { title: 'Devices', path: `${basePath}/devices`, icon: Monitor },
@@ -79,6 +81,7 @@ export function VanguardNavigation() {
       description: 'Threat detection & intelligence',
       tooltip: 'Actively detects, analyzes, and prioritizes security threats in real time.',
       module: 'pursuit',
+      dashboardPath: `${basePath}/alerts`,
       items: [
         { title: 'Alerts', path: `${basePath}/alerts`, icon: Bell },
         { title: 'Sentinel (M365)', path: `${basePath}/sentinel`, icon: Shield, badge: 'NEW' },
@@ -91,6 +94,7 @@ export function VanguardNavigation() {
       description: 'Incident handling & remediation',
       tooltip: 'Manages incidents, tickets, and remediation workflows from detection to resolution.',
       module: 'response',
+      dashboardPath: `${basePath}/helpdesk`,
       items: [
         { title: 'Helpdesk', path: `${basePath}/helpdesk`, icon: Ticket },
         { title: 'Tickets', path: `${basePath}/tickets`, icon: Ticket },
@@ -102,6 +106,7 @@ export function VanguardNavigation() {
       description: 'Asset discovery & mapping',
       tooltip: 'Discovers and maps devices, networks, and infrastructure for full environment awareness.',
       module: 'recon',
+      dashboardPath: `${basePath}/network`,
       items: [
         { title: 'Network Discovery', path: `${basePath}/network`, icon: Network },
         { title: 'Recon Hardware', path: `${basePath}/recon`, icon: Package },
@@ -112,6 +117,7 @@ export function VanguardNavigation() {
       description: 'Knowledge & documentation',
       tooltip: 'Centralized knowledge, SOPs, and documentation to guide operations and response.',
       module: 'atlas',
+      dashboardPath: `${basePath}/atlas`,
       items: [
         { title: 'Knowledge Base', path: `${basePath}/atlas`, icon: BookOpen },
       ]
@@ -121,6 +127,7 @@ export function VanguardNavigation() {
       description: 'Compliance & reporting',
       tooltip: 'Compliance-ready reporting, audit trails, and historical operational records.',
       module: 'ledger',
+      dashboardPath: `${basePath}/reports`,
       items: [
         { title: 'Reports', path: `${basePath}/reports`, icon: BarChart3 },
       ]
@@ -130,6 +137,7 @@ export function VanguardNavigation() {
       description: 'AI-powered operations',
       tooltip: 'AI-assisted insights and decision support across the Vanguard platform.',
       module: 'cortex',
+      dashboardPath: `${basePath}/cortex`,
       items: [
         { title: 'AI Command Center', path: `${basePath}/ai-command`, icon: Bot, badge: 'AI' },
         { title: 'KB Generator', path: `${basePath}/ai-knowledge`, icon: Wand2 },
@@ -264,21 +272,25 @@ export function VanguardNavigation() {
               {/* Grouped Navigation */}
               {navGroups.map((group) => (
                 <div key={group.header} className="mt-4">
-                  {/* Section Header with Module Logo */}
+                  {/* Section Header with Module Logo - Clickable */}
                   {!isCollapsed ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="px-4 py-2 cursor-help flex items-start gap-2">
+                        <NavLink
+                          to={group.dashboardPath}
+                          onClick={() => setIsMobileOpen(false)}
+                          className="px-4 py-2 flex items-start gap-2 cursor-pointer hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-purple-500/10 transition-all duration-200 rounded-md mx-1"
+                        >
                           <ModuleLogo module={group.module} size="md" glow className="mt-0.5 shrink-0" />
                           <div>
-                            <span className="text-[10px] font-bold tracking-widest text-cyan-400 block drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]">
+                            <span className="text-[10px] font-bold tracking-widest text-cyan-400 block drop-shadow-[0_0_4px_rgba(6,182,212,0.3)] hover:text-cyan-300 transition-colors">
                               {group.header}
                             </span>
                             <span className="text-[9px] text-slate-500 block mt-0.5">
                               {group.description}
                             </span>
                           </div>
-                        </div>
+                        </NavLink>
                       </TooltipTrigger>
                       <TooltipContent side="right" className="bg-black border-cyan-500/40 text-slate-200 shadow-xl shadow-cyan-500/10">
                         <div className="flex items-center gap-2">
@@ -290,9 +302,13 @@ export function VanguardNavigation() {
                   ) : (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="my-2 flex justify-center">
+                        <NavLink
+                          to={group.dashboardPath}
+                          onClick={() => setIsMobileOpen(false)}
+                          className="my-2 flex justify-center cursor-pointer hover:bg-cyan-500/10 rounded-md py-1 mx-1 transition-all duration-200"
+                        >
                           <ModuleLogo module={group.module} size="sm" glow />
-                        </div>
+                        </NavLink>
                       </TooltipTrigger>
                       <TooltipContent side="right" className="bg-black border-cyan-500/40 text-slate-200 shadow-xl shadow-cyan-500/10">
                         <div className="flex items-center gap-2">
