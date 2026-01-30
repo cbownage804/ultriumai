@@ -27,29 +27,17 @@ export default defineConfig(({ mode }) => ({
       'react/jsx-runtime',
       'react/jsx-dev-runtime',
     ],
+    // Force a clean re-optimization in dev so stale prebundled deps don't reintroduce
+    // multiple React instances (fixes recurring "dispatcher is null").
+    force: mode === 'development',
   },
   resolve: {
-    alias: [
-      // App alias
-      { find: "@", replacement: path.resolve(__dirname, "./src") },
-
-      // Hard-pin React entrypoints to a single physical path.
-      // Use regex matches so `react` does NOT rewrite `react/*` (which caused ENOTDIR before).
-      { find: /^react$/, replacement: path.resolve(__dirname, "node_modules/react/index.js") },
-      { find: /^react\/jsx-runtime$/, replacement: path.resolve(__dirname, "node_modules/react/jsx-runtime.js") },
-      { find: /^react\/jsx-dev-runtime$/, replacement: path.resolve(__dirname, "node_modules/react/jsx-dev-runtime.js") },
-      { find: /^react-dom$/, replacement: path.resolve(__dirname, "node_modules/react-dom/index.js") },
-      { find: /^react-dom\/client$/, replacement: path.resolve(__dirname, "node_modules/react-dom/client.js") },
-    ],
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
     // Fixes "Invalid hook call" / "dispatcher is null" by ensuring the app and all deps
     // share a single React instance.
-    dedupe: [
-      "react",
-      "react-dom",
-      "react-dom/client",
-      "react/jsx-runtime",
-      "react/jsx-dev-runtime",
-    ],
+    dedupe: ["react", "react-dom"],
   },
   build: {
     // Optimize bundle size
