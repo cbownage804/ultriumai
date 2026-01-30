@@ -19,16 +19,17 @@ export default defineConfig(({ mode }) => ({
     componentTagger(),
   ].filter(Boolean),
   optimizeDeps: {
-    // Ensure Vite's prebundling doesn't create separate module instances for React internals.
-    include: [
+    // Prevent Vite from prebundling React itself. Prebundling creates a separate module instance
+    // (node_modules/.vite/deps/*) which can cause recurring "dispatcher is null" hook crashes
+    // if *any* part of the app resolves React from a different path.
+    exclude: [
       'react',
       'react-dom',
       'react-dom/client',
       'react/jsx-runtime',
       'react/jsx-dev-runtime',
     ],
-    // Force a clean re-optimization in dev so stale prebundled deps don't reintroduce
-    // multiple React instances (fixes recurring "dispatcher is null").
+    // Still force re-optimization runs in dev for other deps.
     force: mode === 'development',
   },
   resolve: {
