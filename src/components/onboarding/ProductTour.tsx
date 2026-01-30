@@ -169,10 +169,15 @@ export const ProductTour = ({
   }, [tourId, onComplete, triggerConfetti]);
 
   const handleSkip = useCallback(() => {
+    // Save to localStorage so tour doesn't show again
+    const completed = JSON.parse(localStorage.getItem(COMPLETED_TOURS_KEY) || '[]');
+    if (!completed.includes(tourId)) {
+      localStorage.setItem(COMPLETED_TOURS_KEY, JSON.stringify([...completed, tourId]));
+    }
     setIsActive(false);
     toast.info('Tour skipped. You can replay it anytime from the Help Center.');
     onSkip?.();
-  }, [onSkip]);
+  }, [tourId, onSkip]);
 
   const handleStepClick = useCallback((step: number) => {
     setCurrentStep(step);
