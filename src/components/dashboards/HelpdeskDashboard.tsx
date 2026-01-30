@@ -42,15 +42,34 @@ export const HelpdeskDashboard = () => {
   const [showCreateTicket, setShowCreateTicket] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<typeof tickets[0] | null>(null);
 
-  const handleCreateTicket = async (formData: { title: string; description: string; priority: string }) => {
-    if (!formData.title) return;
+  const handleCreateTicket = async (formData: {
+    customer: string;
+    contact: string;
+    title: string;
+    description: string;
+    technician: string;
+    type: string;
+    contract: string;
+    formTemplate: string;
+    priority: string;
+    status: string;
+    impact: string;
+    dueDate: string;
+    source: string;
+    tags: string[];
+  }) => {
+    if (!formData.title || !formData.customer) return;
     
     await createTicket({
       title: formData.title,
       description: formData.description,
       priority: formData.priority,
-      category: null
+      category: formData.type || null,
+      source: formData.source || 'manual',
+      tags: formData.tags?.length > 0 ? formData.tags : null,
     });
+    
+    setShowCreateTicket(false);
   };
 
   const getPriorityColor = (priority: string | null) => {

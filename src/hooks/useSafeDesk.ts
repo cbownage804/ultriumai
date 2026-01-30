@@ -199,10 +199,13 @@ export const useSafeDesk = () => {
           title: ticketData.title || 'New Ticket',
           description: ticketData.description,
           priority: ticketData.priority || 'medium',
-          status: 'open',
+          status: ticketData.status || 'open',
           category: ticketData.category,
           customer_id: ticketData.customer_id,
-          sla_due_at: slaDueAt
+          contact_id: ticketData.contact_id,
+          source: ticketData.source || 'manual',
+          tags: ticketData.tags,
+          sla_due_at: ticketData.sla_due_at || slaDueAt
         })
         .select()
         .single();
