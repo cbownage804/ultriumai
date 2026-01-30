@@ -212,6 +212,7 @@ export function VanguardNavigation() {
 
       {/* Sidebar - Pure Black Vanguard Theme with Vivid Cyan & Purple Accents */}
       <aside
+        data-tour="vanguard-sidebar"
         className={cn(
           "fixed left-0 top-0 h-full bg-black border-r border-cyan-500/30 z-40 transition-all duration-300 shadow-2xl shadow-purple-500/5",
           isCollapsed ? "w-14" : "w-56",

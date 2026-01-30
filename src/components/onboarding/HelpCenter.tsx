@@ -45,6 +45,15 @@ interface TourInfo {
 
 export const AVAILABLE_TOURS: TourInfo[] = [
   {
+    id: 'vanguard-command',
+    name: 'Vanguard Command Tour',
+    description: 'Complete walkthrough of the Vanguard Command dashboard - tickets, alerts, devices, and more.',
+    icon: <Target className="h-5 w-5 text-cyan-500" />,
+    steps: 12,
+    duration: '5 min',
+    product: 'vanguard',
+  },
+  {
     id: 'safesuite-intro',
     name: 'SafeSuite Overview',
     description: 'Learn the basics of password management, threat scanning, and dark web monitoring.',
@@ -64,11 +73,11 @@ export const AVAILABLE_TOURS: TourInfo[] = [
   },
   {
     id: 'vanguard-intro',
-    name: 'Vanguard SOC Tour',
-    description: 'Master enterprise security operations and threat monitoring.',
+    name: 'Vanguard Home Tour',
+    description: 'Quick overview of Vanguard modules and navigation.',
     icon: <Target className="h-5 w-5 text-red-500" />,
-    steps: 5,
-    duration: '5 min',
+    steps: 7,
+    duration: '3 min',
     product: 'vanguard',
   },
   {
@@ -164,7 +173,14 @@ export const HelpCenter = () => {
           window.location.href = '/dashboard?tour=true';
           break;
         case 'vanguard':
-          window.location.href = '/vanguard?tour=true';
+          // Route to the appropriate Vanguard tour
+          if (tourId === 'vanguard-command') {
+            window.location.href = '/vanguard?tour=true';
+          } else if (tourId === 'vanguard-intro') {
+            window.location.href = '/vanguard/home?tour=true';
+          } else {
+            window.location.href = '/vanguard?tour=true';
+          }
           break;
         default:
           toast.success(`Starting ${tour.name}...`);

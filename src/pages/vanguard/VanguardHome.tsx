@@ -19,7 +19,7 @@ import { useVanguardAgents } from '@/hooks/useVanguardAgents';
 import { getVanguardBasePath } from '@/utils/subdomain';
 import { VanguardDataStatus, VanguardEmptyState } from '@/components/vanguard/VanguardEmptyState';
 import { ProductTour } from '@/components/onboarding';
-import { VANGUARD_TOUR_STEPS } from '@/config/productTours';
+import { VANGUARD_HOME_TOUR_STEPS } from '@/config/productTours';
 
 
 export default function VanguardHome() {
@@ -307,7 +307,7 @@ export default function VanguardHome() {
       {/* Product Tour */}
       <ProductTour 
         tourId="vanguard-intro" 
-        steps={VANGUARD_TOUR_STEPS}
+        steps={VANGUARD_HOME_TOUR_STEPS}
         autoStart={true}
       />
     </div>
