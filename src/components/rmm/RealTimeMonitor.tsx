@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAccountType } from "@/hooks/useAccountType";
+import { devLog } from "@/lib/logger";
 
 interface DeviceStatus {
   id: string;
@@ -45,7 +46,7 @@ export const RealTimeMonitor = () => {
         schema: 'public',
         table: 'rmm_devices'
       }, (payload) => {
-        console.log('Real-time device update:', payload);
+        devLog.log('Real-time device update:', payload);
         loadDevices(); // Reload devices on any change
       })
       .subscribe();
@@ -69,7 +70,7 @@ export const RealTimeMonitor = () => {
       if (error) throw error;
       setDevices(data || []);
     } catch (error) {
-      console.error('Failed to load devices:', error);
+      devLog.error('Failed to load devices:', error);
     } finally {
       setLoading(false);
     }

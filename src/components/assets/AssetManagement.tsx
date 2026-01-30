@@ -69,6 +69,7 @@ import { useSafeTrackAssets, type Asset, type AssetFormData, type OfficeLocation
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { devLog } from "@/lib/logger";
 
 // Category icon mapping
 const getCategoryIcon = (iconName: string | null | undefined) => {
@@ -223,7 +224,7 @@ export const AssetManagement = () => {
 
   // AI Serial Number Lookup
   const handleAiLookup = async () => {
-    console.log("AI Lookup triggered with serial:", assetForm.serial_number);
+    devLog.log("AI Lookup triggered with serial:", assetForm.serial_number);
     
     const serialNumber = assetForm.serial_number?.trim();
     if (!serialNumber || serialNumber.length < 3) {
@@ -236,15 +237,15 @@ export const AssetManagement = () => {
     toast.info("Looking up device info...");
 
     try {
-      console.log("Calling safetrack-ai-lookup with:", serialNumber);
+      devLog.log("Calling safetrack-ai-lookup with:", serialNumber);
       const { data, error } = await supabase.functions.invoke('safetrack-ai-lookup', {
         body: { serialNumber }
       });
 
-      console.log("AI Lookup response:", data, error);
+      devLog.log("AI Lookup response:", data, error);
 
       if (error) {
-        console.error("Supabase function error:", error);
+        devLog.error("Supabase function error:", error);
         throw error;
       }
 
@@ -278,7 +279,7 @@ export const AssetManagement = () => {
         toast.error(data?.error || "Could not identify device from serial number");
       }
     } catch (err: any) {
-      console.error("AI lookup error:", err);
+      devLog.error("AI lookup error:", err);
       toast.error(err?.message || "AI lookup failed. Try again later.");
     } finally {
       setIsAiLookupLoading(false);

@@ -40,6 +40,7 @@ import {
   Trash2
 } from "lucide-react";
 import { toast } from "sonner";
+import { devLog } from "@/lib/logger";
 
 interface ClientUser {
   id: string;
@@ -83,7 +84,7 @@ export const MSPUserManagement = () => {
 
   const loadUsers = async () => {
     try {
-      console.log('Loading client users...');
+      devLog.log('Loading client users...');
       
       // First get basic client users data
       const { data: clientUsers, error: clientUsersError } = await supabase
@@ -92,11 +93,11 @@ export const MSPUserManagement = () => {
         .order('created_at', { ascending: false });
 
       if (clientUsersError) {
-        console.error('Error loading client users:', clientUsersError);
+        devLog.error('Error loading client users:', clientUsersError);
         throw clientUsersError;
       }
 
-      console.log('Found client users:', clientUsers);
+      devLog.log('Found client users:', clientUsers);
 
       if (!clientUsers || clientUsers.length === 0) {
         setUsers([]);
@@ -111,7 +112,7 @@ export const MSPUserManagement = () => {
         .in('id', userIds);
 
       if (profilesError) {
-        console.error('Error loading profiles:', profilesError);
+        devLog.error('Error loading profiles:', profilesError);
       }
 
       // Get client details
@@ -122,7 +123,7 @@ export const MSPUserManagement = () => {
         .in('id', clientIds);
 
       if (clientsError) {
-        console.error('Error loading client details:', clientsError);
+        devLog.error('Error loading client details:', clientsError);
       }
 
       // Combine the data
@@ -132,10 +133,10 @@ export const MSPUserManagement = () => {
         msp_clients: clients?.find(c => c.id === user.client_id)
       }));
 
-      console.log('Enriched users:', enrichedUsers);
+      devLog.log('Enriched users:', enrichedUsers);
       setUsers(enrichedUsers as ClientUser[]);
     } catch (error) {
-      console.error('Error loading users:', error);
+      devLog.error('Error loading users:', error);
       toast.error("Failed to load users");
     } finally {
       setLoading(false);
@@ -152,7 +153,7 @@ export const MSPUserManagement = () => {
       if (error) throw error;
       setClients((data as any) || []);
     } catch (error) {
-      console.error('Error loading clients:', error);
+      devLog.error('Error loading clients:', error);
     }
   };
 
@@ -198,7 +199,7 @@ export const MSPUserManagement = () => {
       setNewUserRole("client_staff");
       loadUsers();
     } catch (error) {
-      console.error('Error adding user:', error);
+      devLog.error('Error adding user:', error);
       toast.error("Failed to add user");
     }
   };
@@ -215,7 +216,7 @@ export const MSPUserManagement = () => {
       toast.success(`User ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
       loadUsers();
     } catch (error) {
-      console.error('Error updating user status:', error);
+      devLog.error('Error updating user status:', error);
       toast.error("Failed to update user status");
     }
   };
