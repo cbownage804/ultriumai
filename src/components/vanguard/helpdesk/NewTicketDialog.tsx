@@ -9,9 +9,13 @@ import { Separator } from '@/components/ui/separator';
 import { 
   Plus, 
   Search,
-  MessageSquare
+  MessageSquare,
+  Calendar,
+  Tag,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 interface NewTicketDialogProps {
   open: boolean;
@@ -29,6 +33,11 @@ interface TicketFormData {
   contract: string;
   formTemplate: string;
   priority: string;
+  status: string;
+  impact: string;
+  dueDate: string;
+  source: string;
+  tags: string[];
 }
 
 const mockCustomers = [
@@ -61,7 +70,12 @@ export function NewTicketDialog({ open, onOpenChange, onSubmit }: NewTicketDialo
     type: 'incident',
     contract: '',
     formTemplate: '',
-    priority: 'low',
+    priority: 'medium',
+    status: 'open',
+    impact: 'low',
+    dueDate: '',
+    source: 'manual',
+    tags: [],
   });
 
   const [contactSearch, setContactSearch] = useState('');
@@ -82,7 +96,12 @@ export function NewTicketDialog({ open, onOpenChange, onSubmit }: NewTicketDialo
       type: 'incident',
       contract: '',
       formTemplate: '',
-      priority: 'low',
+      priority: 'medium',
+      status: 'open',
+      impact: 'low',
+      dueDate: '',
+      source: 'manual',
+      tags: [],
     });
     onOpenChange(false);
   };
@@ -314,6 +333,26 @@ export function NewTicketDialog({ open, onOpenChange, onSubmit }: NewTicketDialo
                 </Select>
               </div>
 
+              {/* Status */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Status</Label>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">Open</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="waiting">Waiting on Customer</SelectItem>
+                    <SelectItem value="resolved">Resolved</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Priority */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Priority</Label>
@@ -329,6 +368,105 @@ export function NewTicketDialog({ open, onOpenChange, onSubmit }: NewTicketDialo
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="high">High</SelectItem>
                     <SelectItem value="critical">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Impact */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Impact</Label>
+                <Select 
+                  value={formData.impact} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, impact: value }))}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low - Single User</SelectItem>
+                    <SelectItem value="medium">Medium - Department</SelectItem>
+                    <SelectItem value="high">High - Business Unit</SelectItem>
+                    <SelectItem value="critical">Critical - Entire Organization</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Source */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Source</Label>
+                <Select 
+                  value={formData.source} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, source: value }))}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual">Manual Entry</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="phone">Phone Call</SelectItem>
+                    <SelectItem value="portal">Customer Portal</SelectItem>
+                    <SelectItem value="chat">Live Chat</SelectItem>
+                    <SelectItem value="alert">System Alert</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Due Date */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Due Date</Label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    type="datetime-local"
+                    className="pl-10 bg-background"
+                    value={formData.dueDate}
+                    onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              {/* Tags */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-1">
+                  <Tag className="h-3 w-3" />
+                  Tags
+                </Label>
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {formData.tags.map((tag, index) => (
+                    <Badge 
+                      key={index} 
+                      variant="secondary" 
+                      className="text-xs cursor-pointer hover:bg-destructive/20"
+                      onClick={() => setFormData(prev => ({ 
+                        ...prev, 
+                        tags: prev.tags.filter((_, i) => i !== index) 
+                      }))}
+                    >
+                      {tag}
+                      <X className="h-3 w-3 ml-1" />
+                    </Badge>
+                  ))}
+                </div>
+                <Select 
+                  onValueChange={(value) => {
+                    if (!formData.tags.includes(value)) {
+                      setFormData(prev => ({ ...prev, tags: [...prev.tags, value] }));
+                    }
+                  }}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Add tag..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                    <SelectItem value="vip">VIP Customer</SelectItem>
+                    <SelectItem value="escalated">Escalated</SelectItem>
+                    <SelectItem value="security">Security</SelectItem>
+                    <SelectItem value="billing">Billing</SelectItem>
+                    <SelectItem value="hardware">Hardware</SelectItem>
+                    <SelectItem value="software">Software</SelectItem>
+                    <SelectItem value="network">Network</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
