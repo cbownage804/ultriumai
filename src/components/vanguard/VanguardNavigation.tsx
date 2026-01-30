@@ -31,6 +31,7 @@ import { cn } from '@/lib/utils';
 import { getVanguardBasePath } from '@/utils/subdomain';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import vanguardLogo from '@/assets/vanguard-logo.png';
+import { ModuleLogo, ModuleName } from './ModuleLogo';
 
 interface NavItem {
   title: string;
@@ -43,6 +44,7 @@ interface NavGroup {
   header: string;
   description: string;
   tooltip: string;
+  module: ModuleName;
   items: NavItem[];
 }
 
@@ -65,6 +67,7 @@ export function VanguardNavigation() {
       header: 'VANGUARD HORIZON',
       description: 'Operational visibility & uptime',
       tooltip: 'Operational visibility and health monitoring across all devices and environments.',
+      module: 'horizon',
       items: [
         { title: 'RMM Dashboard', path: `${basePath}/rmm`, icon: Monitor },
         { title: 'Devices', path: `${basePath}/devices`, icon: Monitor },
@@ -75,6 +78,7 @@ export function VanguardNavigation() {
       header: 'VANGUARD PURSUIT',
       description: 'Threat detection & intelligence',
       tooltip: 'Actively detects, analyzes, and prioritizes security threats in real time.',
+      module: 'pursuit',
       items: [
         { title: 'Alerts', path: `${basePath}/alerts`, icon: Bell },
         { title: 'Sentinel (M365)', path: `${basePath}/sentinel`, icon: Shield, badge: 'NEW' },
@@ -86,6 +90,7 @@ export function VanguardNavigation() {
       header: 'VANGUARD RESPONSE',
       description: 'Incident handling & remediation',
       tooltip: 'Manages incidents, tickets, and remediation workflows from detection to resolution.',
+      module: 'response',
       items: [
         { title: 'Helpdesk', path: `${basePath}/helpdesk`, icon: Ticket },
         { title: 'Tickets', path: `${basePath}/tickets`, icon: Ticket },
@@ -96,6 +101,7 @@ export function VanguardNavigation() {
       header: 'VANGUARD RECON',
       description: 'Asset discovery & mapping',
       tooltip: 'Discovers and maps devices, networks, and infrastructure for full environment awareness.',
+      module: 'recon',
       items: [
         { title: 'Network Discovery', path: `${basePath}/network`, icon: Network },
         { title: 'Recon Hardware', path: `${basePath}/recon`, icon: Package },
@@ -105,6 +111,7 @@ export function VanguardNavigation() {
       header: 'VANGUARD ATLAS',
       description: 'Knowledge & documentation',
       tooltip: 'Centralized knowledge, SOPs, and documentation to guide operations and response.',
+      module: 'atlas',
       items: [
         { title: 'Knowledge Base', path: `${basePath}/atlas`, icon: BookOpen },
       ]
@@ -113,6 +120,7 @@ export function VanguardNavigation() {
       header: 'VANGUARD LEDGER',
       description: 'Compliance & reporting',
       tooltip: 'Compliance-ready reporting, audit trails, and historical operational records.',
+      module: 'ledger',
       items: [
         { title: 'Reports', path: `${basePath}/reports`, icon: BarChart3 },
       ]
@@ -121,6 +129,7 @@ export function VanguardNavigation() {
       header: 'VANGUARD CORTEX',
       description: 'AI-powered operations',
       tooltip: 'AI-assisted insights and decision support across the Vanguard platform.',
+      module: 'cortex',
       items: [
         { title: 'AI Command Center', path: `${basePath}/ai-command`, icon: Bot, badge: 'AI' },
         { title: 'KB Generator', path: `${basePath}/ai-knowledge`, icon: Wand2 },
@@ -255,25 +264,46 @@ export function VanguardNavigation() {
               {/* Grouped Navigation */}
               {navGroups.map((group) => (
                 <div key={group.header} className="mt-4">
-                  {/* Section Header with Tooltip */}
+                  {/* Section Header with Module Logo */}
                   {!isCollapsed ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="px-4 py-2 cursor-help">
-                          <span className="text-[10px] font-bold tracking-widest text-cyan-400 block drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]">
-                            {group.header}
-                          </span>
-                          <span className="text-[9px] text-slate-500 block mt-0.5">
-                            {group.description}
-                          </span>
+                        <div className="px-4 py-2 cursor-help flex items-start gap-2">
+                          <ModuleLogo module={group.module} size="sm" glow className="mt-0.5 shrink-0" />
+                          <div>
+                            <span className="text-[10px] font-bold tracking-widest text-cyan-400 block drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]">
+                              {group.header}
+                            </span>
+                            <span className="text-[9px] text-slate-500 block mt-0.5">
+                              {group.description}
+                            </span>
+                          </div>
                         </div>
                       </TooltipTrigger>
                       <TooltipContent side="right" className="bg-black border-cyan-500/40 text-slate-200 shadow-xl shadow-cyan-500/10">
-                        <p className="text-xs max-w-[200px]">{group.tooltip}</p>
+                        <div className="flex items-center gap-2">
+                          <ModuleLogo module={group.module} size="md" glow />
+                          <p className="text-xs max-w-[200px]">{group.tooltip}</p>
+                        </div>
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <div className="my-2 mx-2 border-t border-cyan-500/20" />
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="my-2 flex justify-center">
+                          <ModuleLogo module={group.module} size="xs" glow />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="bg-black border-cyan-500/40 text-slate-200 shadow-xl shadow-cyan-500/10">
+                        <div className="flex items-center gap-2">
+                          <ModuleLogo module={group.module} size="sm" glow />
+                          <div>
+                            <p className="text-xs font-semibold text-cyan-400">{group.header}</p>
+                            <p className="text-[10px] text-slate-400">{group.description}</p>
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                   {/* Section Items */}
                   {group.items.map(renderNavItem)}
