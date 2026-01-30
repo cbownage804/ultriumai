@@ -16,6 +16,7 @@ import { SEOHead } from "@/components/SEOHead";
 import { ProductDemoWrapper } from "@/components/demos/ProductDemoWrapper";
 import { VanguardDemo } from "@/components/demos/VanguardDemo";
 import { SafeTrackDemo } from "@/components/demos/SafeTrackDemo";
+import { ModuleLogo, type ModuleName } from "@/components/vanguard/ModuleLogo";
 
 const VanguardProductPage = () => {
   const audiences = [
@@ -37,9 +38,19 @@ const VanguardProductPage = () => {
   ];
 
   // Vanguard Modules - the core of the platform
-  const modules = [
+  const modules: {
+    moduleId: ModuleName;
+    name: string;
+    tagline: string;
+    description: string;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+    capabilities: string[];
+    bestFor: string;
+  }[] = [
     {
-      icon: Globe,
+      moduleId: "horizon",
       name: "Vanguard Horizon",
       tagline: "Operational Visibility & Device Health",
       description: "Vanguard Horizon provides continuous insight into the health, availability, and performance of every device in your environment. It acts as your operational early-warning system, identifying issues before they impact users.",
@@ -55,7 +66,7 @@ const VanguardProductPage = () => {
       bestFor: "MSPs and IT teams that need proactive monitoring and operational stability across all clients and sites."
     },
     {
-      icon: Target,
+      moduleId: "pursuit",
       name: "Vanguard Pursuit",
       tagline: "Active Threat Detection & Security Intelligence",
       description: "Vanguard Pursuit is the security hunting layer of the platform. It continuously analyzes activity across endpoints and networks to identify suspicious behavior, surface threats, and prioritize risk.",
@@ -71,7 +82,7 @@ const VanguardProductPage = () => {
       bestFor: "Teams that need real-time threat visibility without managing a full SOC stack."
     },
     {
-      icon: AlertTriangle,
+      moduleId: "response",
       name: "Vanguard Response",
       tagline: "Incident Management & Service Resolution",
       description: "Vanguard Response turns alerts and issues into action. It manages incidents, tickets, and remediation workflows to ensure problems are tracked, owned, and resolved efficiently.",
@@ -87,7 +98,7 @@ const VanguardProductPage = () => {
       bestFor: "MSPs delivering managed services with accountability and response guarantees."
     },
     {
-      icon: Compass,
+      moduleId: "recon",
       name: "Vanguard Recon",
       tagline: "Network Discovery & Asset Intelligence",
       description: "Vanguard Recon maps your environment so nothing is hidden or forgotten. It discovers devices, networks, and infrastructure components to provide accurate asset awareness.",
@@ -103,7 +114,7 @@ const VanguardProductPage = () => {
       bestFor: "Teams onboarding new clients, auditing environments, or reducing blind spots."
     },
     {
-      icon: BookOpen,
+      moduleId: "atlas",
       name: "Vanguard Atlas",
       tagline: "Knowledge Base & Operational Intelligence",
       description: "Vanguard Atlas centralizes institutional knowledge so your team always knows what to do and how to do it. It connects documentation, SOPs, and runbooks directly to operations.",
@@ -119,7 +130,7 @@ const VanguardProductPage = () => {
       bestFor: "Scaling MSPs and IT teams that want consistency and faster issue resolution."
     },
     {
-      icon: FileText,
+      moduleId: "ledger",
       name: "Vanguard Ledger",
       tagline: "Compliance, Reporting & Audit Trails",
       description: "Vanguard Ledger provides the evidence layer of the platform. It records activity, produces reports, and supports compliance and audit requirements without manual effort.",
@@ -135,7 +146,7 @@ const VanguardProductPage = () => {
       bestFor: "Organizations that must prove security posture, service delivery, or regulatory compliance."
     },
     {
-      icon: Brain,
+      moduleId: "cortex",
       name: "Vanguard Cortex",
       tagline: "AI-Assisted Operations & Decision Support",
       description: "Vanguard Cortex is the intelligence layer that ties everything together. It uses AI to assist technicians and operators by summarizing data, answering questions, and accelerating decision-making.",
@@ -291,20 +302,18 @@ const VanguardProductPage = () => {
           </div>
 
           <div className="space-y-8">
-            {modules.map((module, i) => {
-              const IconComponent = module.icon;
-              return (
-                <Card key={i} className={`bg-card border ${module.borderColor} hover:shadow-lg transition-all overflow-hidden`}>
-                  <CardContent className="p-0">
-                    <div className="grid lg:grid-cols-3 gap-0">
-                      {/* Module Header */}
-                      <div className={`${module.bgColor} p-8 flex flex-col justify-center`}>
-                        <div className={`w-16 h-16 rounded-2xl bg-background/80 flex items-center justify-center mb-4`}>
-                          <IconComponent className={`h-8 w-8 ${module.color}`} />
-                        </div>
-                        <h3 className={`text-2xl font-bold mb-2 ${module.color}`}>{module.name}</h3>
-                        <p className="text-foreground font-medium">{module.tagline}</p>
+            {modules.map((module, i) => (
+              <Card key={i} className={`bg-card border ${module.borderColor} hover:shadow-lg transition-all overflow-hidden`}>
+                <CardContent className="p-0">
+                  <div className="grid lg:grid-cols-3 gap-0">
+                    {/* Module Header */}
+                    <div className={`${module.bgColor} p-8 flex flex-col justify-center`}>
+                      <div className="w-20 h-20 rounded-2xl bg-background/80 flex items-center justify-center mb-4 p-2">
+                        <ModuleLogo module={module.moduleId} size="xl" glow />
                       </div>
+                      <h3 className={`text-2xl font-bold mb-2 ${module.color}`}>{module.name}</h3>
+                      <p className="text-foreground font-medium">{module.tagline}</p>
+                    </div>
 
                       {/* Module Details */}
                       <div className="lg:col-span-2 p-8">
@@ -337,8 +346,7 @@ const VanguardProductPage = () => {
                     </div>
                   </CardContent>
                 </Card>
-              );
-            })}
+            ))}
           </div>
         </div>
       </section>
