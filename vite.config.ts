@@ -22,6 +22,9 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    // Fixes "Invalid hook call" / "dispatcher is null" by ensuring the app and all deps
+    // share a single React instance.
+    dedupe: ["react", "react-dom"],
   },
   build: {
     // Optimize bundle size
