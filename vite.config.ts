@@ -18,9 +18,27 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
+  optimizeDeps: {
+    // Ensure Vite's prebundling doesn't create separate module instances for React internals.
+    include: [
+      'react',
+      'react-dom',
+      'react-dom/client',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
+    ],
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+
+      // Hard-pin React entrypoints to a single physical path.
+      // This prevents "dispatcher is null" (invalid hook call) caused by multiple React instances.
+      react: path.resolve(__dirname, 'node_modules/react/index.js'),
+      'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
+      'react/jsx-dev-runtime': path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime.js'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom/index.js'),
+      'react-dom/client': path.resolve(__dirname, 'node_modules/react-dom/client.js'),
     },
     // Fixes "Invalid hook call" / "dispatcher is null" by ensuring the app and all deps
     // share a single React instance.
