@@ -78,13 +78,13 @@ export const useGPTVoice = ({ gptId, userId, initialSettings }: UseGPTVoiceProps
       
       audioRef.current.onloadstart = () => {
         setIsPlaying(true);
-        console.log('GPT Voice: Audio started loading');
+        devLog.log('GPT Voice: Audio started loading');
       };
       
       audioRef.current.onended = () => {
         setIsPlaying(false);
         URL.revokeObjectURL(audioUrl);
-        console.log('GPT Voice: Audio playback ended');
+        devLog.log('GPT Voice: Audio playback ended');
       };
       
       audioRef.current.onerror = (e) => {
@@ -99,7 +99,7 @@ export const useGPTVoice = ({ gptId, userId, initialSettings }: UseGPTVoiceProps
       };
       
       await audioRef.current.play();
-      console.log('GPT Voice: Audio playback started successfully');
+      devLog.log('GPT Voice: Audio playback started successfully');
       
       // Show success message for customer API key usage
       if (data.apiKeyType === 'customer') {

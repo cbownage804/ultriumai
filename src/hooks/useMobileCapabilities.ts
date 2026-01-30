@@ -6,6 +6,7 @@ import { Geolocation } from '@capacitor/geolocation'
 import { Device } from '@capacitor/device'
 import { Network } from '@capacitor/network'
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
+import { devLog } from '@/lib/logger'
 
 export const useMobileCapabilities = () => {
   const [isNative, setIsNative] = useState(false)
@@ -35,7 +36,7 @@ export const useMobileCapabilities = () => {
         
         // Listen for registration success
         PushNotifications.addListener('registration', (token) => {
-          console.log('Push registration success, token: ' + token.value)
+          devLog.log('Push registration success, token: ' + token.value)
         })
 
         // Listen for registration errors
@@ -45,12 +46,12 @@ export const useMobileCapabilities = () => {
 
         // Listen for push notifications
         PushNotifications.addListener('pushNotificationReceived', (notification) => {
-          console.log('Push notification received: ', notification)
+          devLog.log('Push notification received: ', notification)
         })
 
         // Handle notification taps
         PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-          console.log('Push notification action performed', notification.actionId, notification.inputValue)
+          devLog.log('Push notification action performed', notification.actionId, notification.inputValue)
         })
       } catch (error) {
         console.error('Error registering for push notifications:', error)

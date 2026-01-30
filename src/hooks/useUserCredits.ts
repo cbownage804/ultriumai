@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { devLog } from "@/lib/logger";
 
 /**
  * Lovable-style credit system:
@@ -239,7 +240,7 @@ export const useUserCredits = () => {
         .limit(50);
       
       if (error) {
-        console.log('Credit history not available:', error.message);
+        devLog.log('Credit history not available:', error.message);
         return;
       }
       
@@ -316,7 +317,7 @@ export const useUserCredits = () => {
             description
           }]);
       } catch (e) {
-        console.log('Credit history logging skipped');
+        devLog.log('Credit history logging skipped');
       }
 
       // Update local state
@@ -354,7 +355,7 @@ export const useUserCredits = () => {
             description
           }]);
       } catch (e) {
-        console.log('Credit history logging skipped');
+        devLog.log('Credit history logging skipped');
       }
 
       setCredits(prev => ({

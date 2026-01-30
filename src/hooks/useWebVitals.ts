@@ -1,4 +1,5 @@
 import { useEffect, useCallback } from 'react';
+import { devLog } from '@/lib/logger';
 
 // Core Web Vitals types
 interface WebVitalMetric {
@@ -182,7 +183,7 @@ export function useWebVitals({
     // Log to console in development
     if (enableLogging) {
       const color = metric.rating === 'good' ? 'green' : metric.rating === 'needs-improvement' ? 'orange' : 'red';
-      console.log(
+      devLog.log(
         `%c[Web Vitals] ${metric.name}: ${metric.value.toFixed(2)} (${metric.rating})`,
         `color: ${color}; font-weight: bold;`
       );
