@@ -254,3 +254,10 @@ verify_jwt = true
 
 [functions.scheduled-report-generator]
 verify_jwt = true
+
+# Enterprise Helpdesk Features
+[functions.ai-ticket-analyzer]
+verify_jwt = true
+
+[functions.process-inbound-email]
+verify_jwt = false

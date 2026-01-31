@@ -2045,6 +2045,48 @@ export type Database = {
           },
         ]
       }
+      canned_responses: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          shortcut: string | null
+          tags: string[] | null
+          updated_at: string | null
+          use_count: number | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          shortcut?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          use_count?: number | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          shortcut?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          use_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       client_announcements: {
         Row: {
           announcement_type: string
@@ -2148,6 +2190,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      client_contracts: {
+        Row: {
+          auto_renew: boolean | null
+          client_id: string | null
+          contract_name: string
+          contract_type: string | null
+          created_at: string | null
+          end_date: string | null
+          id: string
+          monthly_rate: number | null
+          notes: string | null
+          overage_rate: number | null
+          renewal_terms: Json | null
+          rollover_hours: number | null
+          start_date: string
+          status: string | null
+          total_hours: number | null
+          total_incidents: number | null
+          updated_at: string | null
+          used_hours: number | null
+          used_incidents: number | null
+          user_id: string
+        }
+        Insert: {
+          auto_renew?: boolean | null
+          client_id?: string | null
+          contract_name: string
+          contract_type?: string | null
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          monthly_rate?: number | null
+          notes?: string | null
+          overage_rate?: number | null
+          renewal_terms?: Json | null
+          rollover_hours?: number | null
+          start_date: string
+          status?: string | null
+          total_hours?: number | null
+          total_incidents?: number | null
+          updated_at?: string | null
+          used_hours?: number | null
+          used_incidents?: number | null
+          user_id: string
+        }
+        Update: {
+          auto_renew?: boolean | null
+          client_id?: string | null
+          contract_name?: string
+          contract_type?: string | null
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          monthly_rate?: number | null
+          notes?: string | null
+          overage_rate?: number | null
+          renewal_terms?: Json | null
+          rollover_hours?: number | null
+          start_date?: string
+          status?: string | null
+          total_hours?: number | null
+          total_incidents?: number | null
+          updated_at?: string | null
+          used_hours?: number | null
+          used_incidents?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       client_email_configs: {
         Row: {
@@ -2718,6 +2829,105 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      community_posts: {
+        Row: {
+          author_client_id: string | null
+          author_contact_id: string | null
+          author_name: string
+          category: string | null
+          content: string
+          created_at: string | null
+          id: string
+          is_answered: boolean | null
+          is_pinned: boolean | null
+          reply_count: number | null
+          status: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          upvote_count: number | null
+          user_id: string
+          view_count: number | null
+        }
+        Insert: {
+          author_client_id?: string | null
+          author_contact_id?: string | null
+          author_name: string
+          category?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          is_answered?: boolean | null
+          is_pinned?: boolean | null
+          reply_count?: number | null
+          status?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          upvote_count?: number | null
+          user_id: string
+          view_count?: number | null
+        }
+        Update: {
+          author_client_id?: string | null
+          author_contact_id?: string | null
+          author_name?: string
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_answered?: boolean | null
+          is_pinned?: boolean | null
+          reply_count?: number | null
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          upvote_count?: number | null
+          user_id?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      community_replies: {
+        Row: {
+          author_client_id: string | null
+          author_contact_id: string | null
+          author_name: string
+          content: string
+          created_at: string | null
+          id: string
+          is_accepted_answer: boolean | null
+          is_staff_reply: boolean | null
+          post_id: string | null
+          upvote_count: number | null
+        }
+        Insert: {
+          author_client_id?: string | null
+          author_contact_id?: string | null
+          author_name: string
+          content: string
+          created_at?: string | null
+          id?: string
+          is_accepted_answer?: boolean | null
+          is_staff_reply?: boolean | null
+          post_id?: string | null
+          upvote_count?: number | null
+        }
+        Update: {
+          author_client_id?: string | null
+          author_contact_id?: string | null
+          author_name?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_accepted_answer?: boolean | null
+          is_staff_reply?: boolean | null
+          post_id?: string | null
+          upvote_count?: number | null
+        }
+        Relationships: []
       }
       compliance_alerts: {
         Row: {
@@ -4344,6 +4554,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dispatch_appointments: {
+        Row: {
+          actual_end: string | null
+          actual_start: string | null
+          appointment_type: string | null
+          client_id: string | null
+          color: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          location: string | null
+          notes: string | null
+          scheduled_end: string
+          scheduled_start: string
+          status: string | null
+          technician_id: string
+          technician_name: string
+          ticket_id: string | null
+          title: string
+          travel_time_minutes: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          actual_end?: string | null
+          actual_start?: string | null
+          appointment_type?: string | null
+          client_id?: string | null
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          scheduled_end: string
+          scheduled_start: string
+          status?: string | null
+          technician_id: string
+          technician_name: string
+          ticket_id?: string | null
+          title: string
+          travel_time_minutes?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          actual_end?: string | null
+          actual_start?: string | null
+          appointment_type?: string | null
+          client_id?: string | null
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          scheduled_end?: string
+          scheduled_start?: string
+          status?: string | null
+          technician_id?: string
+          technician_name?: string
+          ticket_id?: string | null
+          title?: string
+          travel_time_minutes?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       document_scans: {
         Row: {
@@ -6561,15 +6840,24 @@ export type Database = {
       }
       knowledge_base_articles: {
         Row: {
+          author_id: string | null
           category: string | null
+          category_id: string | null
           content: string
           created_at: string
+          excerpt: string | null
           helpful_count: number | null
           id: string
+          is_featured: boolean | null
           is_internal: boolean | null
+          is_public: boolean | null
           is_published: boolean | null
           not_helpful_count: number | null
+          published_at: string | null
           related_articles: string[] | null
+          search_vector: unknown
+          slug: string | null
+          status: string | null
           summary: string | null
           tags: string[] | null
           title: string
@@ -6578,15 +6866,24 @@ export type Database = {
           view_count: number | null
         }
         Insert: {
+          author_id?: string | null
           category?: string | null
+          category_id?: string | null
           content: string
           created_at?: string
+          excerpt?: string | null
           helpful_count?: number | null
           id?: string
+          is_featured?: boolean | null
           is_internal?: boolean | null
+          is_public?: boolean | null
           is_published?: boolean | null
           not_helpful_count?: number | null
+          published_at?: string | null
           related_articles?: string[] | null
+          search_vector?: unknown
+          slug?: string | null
+          status?: string | null
           summary?: string | null
           tags?: string[] | null
           title: string
@@ -6595,15 +6892,24 @@ export type Database = {
           view_count?: number | null
         }
         Update: {
+          author_id?: string | null
           category?: string | null
+          category_id?: string | null
           content?: string
           created_at?: string
+          excerpt?: string | null
           helpful_count?: number | null
           id?: string
+          is_featured?: boolean | null
           is_internal?: boolean | null
+          is_public?: boolean | null
           is_published?: boolean | null
           not_helpful_count?: number | null
+          published_at?: string | null
           related_articles?: string[] | null
+          search_vector?: unknown
+          slug?: string | null
+          status?: string | null
           summary?: string | null
           tags?: string[] | null
           title?: string
@@ -6964,6 +7270,105 @@ export type Database = {
           product_interest?: string | null
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      live_chat_conversations: {
+        Row: {
+          assigned_technician_id: string | null
+          assigned_technician_name: string | null
+          channel: string | null
+          client_id: string | null
+          contact_id: string | null
+          created_at: string | null
+          ended_at: string | null
+          feedback: string | null
+          first_response_at: string | null
+          id: string
+          metadata: Json | null
+          rating: number | null
+          started_at: string | null
+          status: string | null
+          ticket_id: string | null
+          user_id: string
+          visitor_email: string | null
+          visitor_name: string | null
+        }
+        Insert: {
+          assigned_technician_id?: string | null
+          assigned_technician_name?: string | null
+          channel?: string | null
+          client_id?: string | null
+          contact_id?: string | null
+          created_at?: string | null
+          ended_at?: string | null
+          feedback?: string | null
+          first_response_at?: string | null
+          id?: string
+          metadata?: Json | null
+          rating?: number | null
+          started_at?: string | null
+          status?: string | null
+          ticket_id?: string | null
+          user_id: string
+          visitor_email?: string | null
+          visitor_name?: string | null
+        }
+        Update: {
+          assigned_technician_id?: string | null
+          assigned_technician_name?: string | null
+          channel?: string | null
+          client_id?: string | null
+          contact_id?: string | null
+          created_at?: string | null
+          ended_at?: string | null
+          feedback?: string | null
+          first_response_at?: string | null
+          id?: string
+          metadata?: Json | null
+          rating?: number | null
+          started_at?: string | null
+          status?: string | null
+          ticket_id?: string | null
+          user_id?: string
+          visitor_email?: string | null
+          visitor_name?: string | null
+        }
+        Relationships: []
+      }
+      live_chat_messages: {
+        Row: {
+          attachments: Json | null
+          content: string
+          conversation_id: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message_type: string | null
+          sender_name: string | null
+          sender_type: string
+        }
+        Insert: {
+          attachments?: Json | null
+          content: string
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_type?: string | null
+          sender_name?: string | null
+          sender_type: string
+        }
+        Update: {
+          attachments?: Json | null
+          content?: string
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_type?: string | null
+          sender_name?: string | null
+          sender_type?: string
         }
         Relationships: []
       }
@@ -9808,6 +10213,81 @@ export type Database = {
           updated_at?: string
           user_id?: string
           visit_count?: number | null
+        }
+        Relationships: []
+      }
+      oncall_rotations: {
+        Row: {
+          created_at: string | null
+          end_datetime: string
+          id: string
+          notes: string | null
+          rotation_type: string | null
+          schedule_id: string | null
+          start_datetime: string
+          technician_email: string | null
+          technician_id: string
+          technician_name: string
+          technician_phone: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_datetime: string
+          id?: string
+          notes?: string | null
+          rotation_type?: string | null
+          schedule_id?: string | null
+          start_datetime: string
+          technician_email?: string | null
+          technician_id: string
+          technician_name: string
+          technician_phone?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_datetime?: string
+          id?: string
+          notes?: string | null
+          rotation_type?: string | null
+          schedule_id?: string | null
+          start_datetime?: string
+          technician_email?: string | null
+          technician_id?: string
+          technician_name?: string
+          technician_phone?: string | null
+        }
+        Relationships: []
+      }
+      oncall_schedules: {
+        Row: {
+          created_at: string | null
+          escalation_timeout_minutes: number | null
+          id: string
+          is_active: boolean | null
+          schedule_name: string
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          escalation_timeout_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          schedule_name: string
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          escalation_timeout_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          schedule_name?: string
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -18753,6 +19233,131 @@ export type Database = {
           },
         ]
       }
+      ticket_ai_analysis: {
+        Row: {
+          category_confidence: number | null
+          created_at: string | null
+          escalation_recommended: boolean | null
+          estimated_resolution_hours: number | null
+          id: string
+          model_version: string | null
+          priority_confidence: number | null
+          priority_factors: Json | null
+          processed_at: string | null
+          sentiment: string | null
+          sentiment_score: number | null
+          similar_ticket_ids: string[] | null
+          suggested_category: string | null
+          suggested_kb_articles: string[] | null
+          suggested_priority: string | null
+          suggested_responses: Json | null
+          ticket_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category_confidence?: number | null
+          created_at?: string | null
+          escalation_recommended?: boolean | null
+          estimated_resolution_hours?: number | null
+          id?: string
+          model_version?: string | null
+          priority_confidence?: number | null
+          priority_factors?: Json | null
+          processed_at?: string | null
+          sentiment?: string | null
+          sentiment_score?: number | null
+          similar_ticket_ids?: string[] | null
+          suggested_category?: string | null
+          suggested_kb_articles?: string[] | null
+          suggested_priority?: string | null
+          suggested_responses?: Json | null
+          ticket_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category_confidence?: number | null
+          created_at?: string | null
+          escalation_recommended?: boolean | null
+          estimated_resolution_hours?: number | null
+          id?: string
+          model_version?: string | null
+          priority_confidence?: number | null
+          priority_factors?: Json | null
+          processed_at?: string | null
+          sentiment?: string | null
+          sentiment_score?: number | null
+          similar_ticket_ids?: string[] | null
+          suggested_category?: string | null
+          suggested_kb_articles?: string[] | null
+          suggested_priority?: string | null
+          suggested_responses?: Json | null
+          ticket_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_ai_analysis_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_approvals: {
+        Row: {
+          approval_type: string
+          approver_id: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          request_data: Json | null
+          request_reason: string | null
+          requested_at: string | null
+          requested_by: string
+          responded_at: string | null
+          response_reason: string | null
+          status: string | null
+          ticket_id: string | null
+          user_id: string
+        }
+        Insert: {
+          approval_type: string
+          approver_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          request_data?: Json | null
+          request_reason?: string | null
+          requested_at?: string | null
+          requested_by: string
+          responded_at?: string | null
+          response_reason?: string | null
+          status?: string | null
+          ticket_id?: string | null
+          user_id: string
+        }
+        Update: {
+          approval_type?: string
+          approver_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          request_data?: Json | null
+          request_reason?: string | null
+          requested_at?: string | null
+          requested_by?: string
+          responded_at?: string | null
+          response_reason?: string | null
+          status?: string | null
+          ticket_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ticket_assignments: {
         Row: {
           agent_id: string
@@ -19062,6 +19667,7 @@ export type Database = {
           category: string
           client_id: string | null
           closed_at: string | null
+          contract_id: string | null
           created_at: string
           customer_satisfaction: number | null
           description: string
@@ -19070,7 +19676,11 @@ export type Database = {
           first_response_at: string | null
           id: string
           internal_notes: string | null
+          is_merged: boolean | null
+          is_subtask: boolean | null
           last_activity_at: string
+          merged_into_id: string | null
+          merged_ticket_ids: string[] | null
           metadata: Json | null
           parent_ticket_id: string | null
           priority: string
@@ -19079,6 +19689,7 @@ export type Database = {
           sla_policy_id: string | null
           source: string
           status: string
+          subtask_order: number | null
           tags: string[] | null
           ticket_number: string
           title: string
@@ -19092,6 +19703,7 @@ export type Database = {
           category?: string
           client_id?: string | null
           closed_at?: string | null
+          contract_id?: string | null
           created_at?: string
           customer_satisfaction?: number | null
           description: string
@@ -19100,7 +19712,11 @@ export type Database = {
           first_response_at?: string | null
           id?: string
           internal_notes?: string | null
+          is_merged?: boolean | null
+          is_subtask?: boolean | null
           last_activity_at?: string
+          merged_into_id?: string | null
+          merged_ticket_ids?: string[] | null
           metadata?: Json | null
           parent_ticket_id?: string | null
           priority?: string
@@ -19109,6 +19725,7 @@ export type Database = {
           sla_policy_id?: string | null
           source?: string
           status?: string
+          subtask_order?: number | null
           tags?: string[] | null
           ticket_number: string
           title: string
@@ -19122,6 +19739,7 @@ export type Database = {
           category?: string
           client_id?: string | null
           closed_at?: string | null
+          contract_id?: string | null
           created_at?: string
           customer_satisfaction?: number | null
           description?: string
@@ -19130,7 +19748,11 @@ export type Database = {
           first_response_at?: string | null
           id?: string
           internal_notes?: string | null
+          is_merged?: boolean | null
+          is_subtask?: boolean | null
           last_activity_at?: string
+          merged_into_id?: string | null
+          merged_ticket_ids?: string[] | null
           metadata?: Json | null
           parent_ticket_id?: string | null
           priority?: string
@@ -19139,6 +19761,7 @@ export type Database = {
           sla_policy_id?: string | null
           source?: string
           status?: string
+          subtask_order?: number | null
           tags?: string[] | null
           ticket_number?: string
           title?: string
