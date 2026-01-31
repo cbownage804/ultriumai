@@ -242,3 +242,15 @@ verify_jwt = true
 
 [functions.ai-smart-scheduler]
 verify_jwt = true
+
+[functions.ai-ticket-router]
+verify_jwt = true
+
+[functions.ai-escalation-engine]
+verify_jwt = true
+
+[functions.ai-csat-analyzer]
+verify_jwt = true
+
+[functions.scheduled-report-generator]
+verify_jwt = true

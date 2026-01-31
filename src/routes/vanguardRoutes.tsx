@@ -108,6 +108,15 @@ const VanguardAICommandCenter = lazy(() => import('@/pages/vanguard/VanguardAICo
 const HorizonScriptsPage = lazy(() => import('@/pages/vanguard/HorizonScriptsPage'));
 const HorizonAutomationPage = lazy(() => import('@/pages/vanguard/HorizonAutomationPage'));
 
+// Advanced SLA and Automation pages
+const ResponseSLAEnforcementPage = lazy(() => import('@/pages/vanguard/ResponseSLAEnforcementPage'));
+const LedgerAdvancedAnalyticsPage = lazy(() => import('@/pages/vanguard/LedgerAdvancedAnalyticsPage'));
+const CustomerPortalPreviewPage = lazy(() => import('@/pages/vanguard/CustomerPortalPreviewPage'));
+const AITicketRoutingPage = lazy(() => import('@/pages/vanguard/AITicketRoutingPage'));
+const EscalationEnginePage = lazy(() => import('@/pages/vanguard/EscalationEnginePage'));
+const CSATSurveyPage = lazy(() => import('@/pages/vanguard/CSATSurveyPage'));
+const ScheduledReportsPage = lazy(() => import('@/pages/vanguard/ScheduledReportsPage'));
+
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
   <div className="min-h-[60vh] flex items-center justify-center">
@@ -224,6 +233,14 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-msp-billing" path="msp-billing" element={<LazyProtectedPage component={VanguardMSPBilling} />} />,
   // Sentinel M365 Security Monitoring
   <Route key="vanguard-sentinel" path="sentinel" element={<LazyProtectedPage component={VanguardSentinel} />} />,
+  // Advanced SLA, Analytics, Portal, and Automation routes
+  <Route key="vanguard-sla-enforcement" path="sla-enforcement" element={<LazyProtectedPage component={ResponseSLAEnforcementPage} />} />,
+  <Route key="vanguard-advanced-analytics" path="advanced-analytics" element={<LazyProtectedPage component={LedgerAdvancedAnalyticsPage} />} />,
+  <Route key="vanguard-portal-preview" path="portal-preview" element={<LazyProtectedPage component={CustomerPortalPreviewPage} />} />,
+  <Route key="vanguard-ai-routing" path="ai-routing" element={<LazyProtectedPage component={AITicketRoutingPage} />} />,
+  <Route key="vanguard-escalation" path="escalation" element={<LazyProtectedPage component={EscalationEnginePage} />} />,
+  <Route key="vanguard-csat-surveys" path="csat-surveys" element={<LazyProtectedPage component={CSATSurveyPage} />} />,
+  <Route key="vanguard-scheduled-reports" path="report-scheduler" element={<LazyProtectedPage component={ScheduledReportsPage} />} />,
   // Recon Product routes (public - no auth required for purchasing)
   <Route key="vanguard-recon" path="recon" element={<LazyPage component={ReconProductPage} />} />,
   <Route key="vanguard-recon-checkout" path="recon/checkout" element={<LazyPage component={ReconCheckoutPage} />} />,
