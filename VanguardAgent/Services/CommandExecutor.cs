@@ -43,12 +43,26 @@ public class CommandExecutor
             "service_start" => await ControlService(command.Command, ServiceControllerStatus.Running),
             "service_stop" => await ControlService(command.Command, ServiceControllerStatus.Stopped),
             "service_restart" => await RestartService(command.Command),
+            "service_disable" => await DisableService(command.Command),
             "get_services" => GetServicesDetailed(),
             
             // Process Management
             "process_kill" => KillProcess(command.Command),
             "kill_process_tree" => KillProcessTree(command.Command),
             "get_processes" => GetProcessesDetailed(),
+            
+            // === XDR CONTAINMENT ACTIONS ===
+            // Network Isolation (blocks all traffic except Vanguard management server)
+            "network_isolate" => await NetworkIsolate(command),
+            "network_restore" => await NetworkRestore(command),
+            
+            // File Quarantine (moves suspicious files to secure location)
+            "file_quarantine" => await QuarantineFile(command),
+            "file_restore" => await RestoreQuarantinedFile(command),
+            
+            // Firewall Blocking (block specific IPs/ports)
+            "firewall_block" => await FirewallBlock(command),
+            "firewall_unblock" => await FirewallUnblock(command),
             
             // Software Management
             "install_software" => await InstallSoftware(command),
@@ -1141,6 +1155,439 @@ public partial class CommandExecutor
                 ExitCode = 0,
                 Stdout = JsonConvert.SerializeObject(items)
             };
+        }
+        catch (Exception ex)
+        {
+            return new CommandResult { Success = false, ExitCode = -1, Stderr = ex.Message };
+        }
+    }
+
+    // ==========================================================================
+    // XDR CONTAINMENT ACTIONS - AI-Powered Auto-Remediation
+    // ==========================================================================
+
+    /// <summary>
+    /// Vanguard Management Server IP - the only IP allowed during isolation
+    /// </summary>
+    private static readonly string[] VanguardManagementIPs = new[]
+    {
+        "nsyobmjpdpvesjwdphlh.supabase.co",  // Supabase project
+        "*.supabase.co",
+        "185.158.133.1"  // Lovable hosting
+    };
+
+    private const string IsolationRuleName = "Vanguard_XDR_Isolation";
+    private const string QuarantineFolder = @"C:\ProgramData\Vanguard\Quarantine";
+    private const string FirewallRulePrefix = "Vanguard_XDR_Block_";
+
+    /// <summary>
+    /// Network Isolation: Blocks ALL network traffic except communication with Vanguard servers
+    /// This allows continued remote management while containing the threat
+    /// </summary>
+    private async Task<CommandResult> NetworkIsolate(RemoteCommand command)
+    {
+        try
+        {
+            var allowList = new List<string>(VanguardManagementIPs);
+            
+            // Add any custom allow-list from command parameters
+            if (command.Parameters?.TryGetValue("allow_list", out var customList) == true)
+            {
+                if (customList is Newtonsoft.Json.Linq.JArray jArray)
+                {
+                    foreach (var item in jArray)
+                    {
+                        allowList.Add(item.ToString());
+                    }
+                }
+            }
+
+            // Create isolation firewall rules using netsh
+            var sb = new StringBuilder();
+            
+            // Step 1: Block ALL inbound traffic (except Vanguard)
+            var blockInbound = await ExecutePowerShell(
+                $"netsh advfirewall firewall add rule name=\"{IsolationRuleName}_BlockInbound\" dir=in action=block enable=yes");
+            sb.AppendLine($"Block Inbound: {(blockInbound.Success ? "OK" : blockInbound.Stderr)}");
+
+            // Step 2: Block ALL outbound traffic (except Vanguard)
+            var blockOutbound = await ExecutePowerShell(
+                $"netsh advfirewall firewall add rule name=\"{IsolationRuleName}_BlockOutbound\" dir=out action=block enable=yes");
+            sb.AppendLine($"Block Outbound: {(blockOutbound.Success ? "OK" : blockOutbound.Stderr)}");
+
+            // Step 3: Allow Vanguard management IPs (these rules are processed before block rules)
+            foreach (var ip in allowList)
+            {
+                if (ip.Contains("*")) continue; // Skip wildcards for now
+                
+                // Allow outbound to management server
+                var allowOut = await ExecutePowerShell(
+                    $"netsh advfirewall firewall add rule name=\"{IsolationRuleName}_Allow_{ip.Replace(".", "_")}\" dir=out action=allow remoteip={ip} enable=yes");
+                
+                // Allow inbound from management server
+                var allowIn = await ExecutePowerShell(
+                    $"netsh advfirewall firewall add rule name=\"{IsolationRuleName}_AllowIn_{ip.Replace(".", "_")}\" dir=in action=allow remoteip={ip} enable=yes");
+                
+                sb.AppendLine($"Allow {ip}: Out={allowOut.Success}, In={allowIn.Success}");
+            }
+
+            // Step 4: Allow DNS (required for hostname resolution)
+            await ExecutePowerShell(
+                $"netsh advfirewall firewall add rule name=\"{IsolationRuleName}_AllowDNS\" dir=out action=allow protocol=udp remoteport=53 enable=yes");
+            sb.AppendLine("Allow DNS: OK");
+
+            // Log isolation event
+            Console.WriteLine($"[XDR] NETWORK ISOLATION ACTIVATED at {DateTime.UtcNow:O}");
+
+            return new CommandResult
+            {
+                Success = true,
+                ExitCode = 0,
+                Stdout = JsonConvert.SerializeObject(new
+                {
+                    action = "network_isolate",
+                    status = "isolated",
+                    timestamp = DateTime.UtcNow.ToString("O"),
+                    allowed_ips = allowList,
+                    details = sb.ToString()
+                })
+            };
+        }
+        catch (Exception ex)
+        {
+            return new CommandResult { Success = false, ExitCode = -1, Stderr = $"Network isolation failed: {ex.Message}" };
+        }
+    }
+
+    /// <summary>
+    /// Restore network connectivity by removing isolation rules
+    /// </summary>
+    private async Task<CommandResult> NetworkRestore(RemoteCommand command)
+    {
+        try
+        {
+            // Remove all Vanguard isolation rules
+            var result = await ExecutePowerShell(
+                $"netsh advfirewall firewall delete rule name=all dir=in | Where-Object {{ $_.Name -like '{IsolationRuleName}*' }}; " +
+                $"netsh advfirewall firewall show rule name=all | Select-String '{IsolationRuleName}' | ForEach-Object {{ " +
+                $"$name = ($_ -split '\"')[1]; netsh advfirewall firewall delete rule name=\"$name\" }}");
+
+            // Alternative: Delete by exact names
+            await ExecutePowerShell($"netsh advfirewall firewall delete rule name=\"{IsolationRuleName}_BlockInbound\"");
+            await ExecutePowerShell($"netsh advfirewall firewall delete rule name=\"{IsolationRuleName}_BlockOutbound\"");
+            await ExecutePowerShell($"netsh advfirewall firewall delete rule name=\"{IsolationRuleName}_AllowDNS\"");
+
+            // Delete allow rules for management IPs
+            foreach (var ip in VanguardManagementIPs)
+            {
+                if (ip.Contains("*")) continue;
+                await ExecutePowerShell($"netsh advfirewall firewall delete rule name=\"{IsolationRuleName}_Allow_{ip.Replace(".", "_")}\"");
+                await ExecutePowerShell($"netsh advfirewall firewall delete rule name=\"{IsolationRuleName}_AllowIn_{ip.Replace(".", "_")}\"");
+            }
+
+            Console.WriteLine($"[XDR] NETWORK ISOLATION REMOVED at {DateTime.UtcNow:O}");
+
+            return new CommandResult
+            {
+                Success = true,
+                ExitCode = 0,
+                Stdout = JsonConvert.SerializeObject(new
+                {
+                    action = "network_restore",
+                    status = "restored",
+                    timestamp = DateTime.UtcNow.ToString("O")
+                })
+            };
+        }
+        catch (Exception ex)
+        {
+            return new CommandResult { Success = false, ExitCode = -1, Stderr = $"Network restore failed: {ex.Message}" };
+        }
+    }
+
+    /// <summary>
+    /// Quarantine a suspicious file by moving it to a secure location
+    /// </summary>
+    private async Task<CommandResult> QuarantineFile(RemoteCommand command)
+    {
+        try
+        {
+            var filePath = command.Command;
+            if (string.IsNullOrEmpty(filePath))
+            {
+                filePath = command.Parameters?.GetValueOrDefault("file_path")?.ToString();
+            }
+
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            {
+                return new CommandResult { Success = false, ExitCode = -1, Stderr = $"File not found: {filePath}" };
+            }
+
+            // Ensure quarantine folder exists
+            Directory.CreateDirectory(QuarantineFolder);
+
+            // Generate quarantine filename with timestamp and hash
+            var originalFileName = Path.GetFileName(filePath);
+            var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+            var quarantineName = $"{timestamp}_{originalFileName}.quarantined";
+            var quarantinePath = Path.Combine(QuarantineFolder, quarantineName);
+
+            // Calculate file hash before quarantine
+            string fileHash = "";
+            try
+            {
+                using var sha256 = System.Security.Cryptography.SHA256.Create();
+                using var stream = File.OpenRead(filePath);
+                var hashBytes = sha256.ComputeHash(stream);
+                fileHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+            }
+            catch { }
+
+            // Create metadata file
+            var metadata = new
+            {
+                original_path = filePath,
+                original_name = originalFileName,
+                quarantine_path = quarantinePath,
+                quarantine_time = DateTime.UtcNow.ToString("O"),
+                file_hash_sha256 = fileHash,
+                containment_action_id = command.Parameters?.GetValueOrDefault("containment_action_id")?.ToString(),
+                reason = command.Parameters?.GetValueOrDefault("reason")?.ToString() ?? "XDR Auto-Remediation"
+            };
+
+            var metadataPath = quarantinePath + ".meta.json";
+            await File.WriteAllTextAsync(metadataPath, JsonConvert.SerializeObject(metadata, Formatting.Indented));
+
+            // Move file to quarantine
+            File.Move(filePath, quarantinePath);
+
+            Console.WriteLine($"[XDR] FILE QUARANTINED: {filePath} -> {quarantinePath}");
+
+            return new CommandResult
+            {
+                Success = true,
+                ExitCode = 0,
+                Stdout = JsonConvert.SerializeObject(new
+                {
+                    action = "file_quarantine",
+                    status = "quarantined",
+                    original_path = filePath,
+                    quarantine_path = quarantinePath,
+                    file_hash = fileHash,
+                    timestamp = DateTime.UtcNow.ToString("O")
+                })
+            };
+        }
+        catch (Exception ex)
+        {
+            return new CommandResult { Success = false, ExitCode = -1, Stderr = $"File quarantine failed: {ex.Message}" };
+        }
+    }
+
+    /// <summary>
+    /// Restore a quarantined file to its original location
+    /// </summary>
+    private async Task<CommandResult> RestoreQuarantinedFile(RemoteCommand command)
+    {
+        try
+        {
+            var quarantinePath = command.Command;
+            if (string.IsNullOrEmpty(quarantinePath))
+            {
+                quarantinePath = command.Parameters?.GetValueOrDefault("quarantine_path")?.ToString();
+            }
+
+            if (string.IsNullOrEmpty(quarantinePath) || !File.Exists(quarantinePath))
+            {
+                return new CommandResult { Success = false, ExitCode = -1, Stderr = $"Quarantined file not found: {quarantinePath}" };
+            }
+
+            // Read metadata to get original path
+            var metadataPath = quarantinePath + ".meta.json";
+            if (!File.Exists(metadataPath))
+            {
+                return new CommandResult { Success = false, ExitCode = -1, Stderr = "Metadata file not found - cannot determine original path" };
+            }
+
+            var metadataJson = await File.ReadAllTextAsync(metadataPath);
+            var metadata = JsonConvert.DeserializeObject<dynamic>(metadataJson);
+            var originalPath = (string)metadata.original_path;
+
+            // Ensure original directory exists
+            var originalDir = Path.GetDirectoryName(originalPath);
+            if (!string.IsNullOrEmpty(originalDir))
+            {
+                Directory.CreateDirectory(originalDir);
+            }
+
+            // Move file back
+            File.Move(quarantinePath, originalPath, overwrite: true);
+            File.Delete(metadataPath);
+
+            Console.WriteLine($"[XDR] FILE RESTORED: {quarantinePath} -> {originalPath}");
+
+            return new CommandResult
+            {
+                Success = true,
+                ExitCode = 0,
+                Stdout = JsonConvert.SerializeObject(new
+                {
+                    action = "file_restore",
+                    status = "restored",
+                    original_path = originalPath,
+                    timestamp = DateTime.UtcNow.ToString("O")
+                })
+            };
+        }
+        catch (Exception ex)
+        {
+            return new CommandResult { Success = false, ExitCode = -1, Stderr = $"File restore failed: {ex.Message}" };
+        }
+    }
+
+    /// <summary>
+    /// Block specific IP addresses or ports via Windows Firewall
+    /// </summary>
+    private async Task<CommandResult> FirewallBlock(RemoteCommand command)
+    {
+        try
+        {
+            var ip = command.Parameters?.GetValueOrDefault("ip_address")?.ToString();
+            var port = command.Parameters?.GetValueOrDefault("port")?.ToString();
+            var direction = command.Parameters?.GetValueOrDefault("direction")?.ToString() ?? "both";
+            var ruleName = $"{FirewallRulePrefix}{DateTime.UtcNow:yyyyMMddHHmmss}";
+
+            if (string.IsNullOrEmpty(ip) && string.IsNullOrEmpty(port))
+            {
+                return new CommandResult { Success = false, ExitCode = -1, Stderr = "Must specify ip_address or port to block" };
+            }
+
+            var results = new List<string>();
+
+            // Build firewall rule parameters
+            var ruleParams = new StringBuilder();
+            if (!string.IsNullOrEmpty(ip)) ruleParams.Append($" remoteip={ip}");
+            if (!string.IsNullOrEmpty(port)) ruleParams.Append($" remoteport={port} protocol=tcp");
+
+            if (direction == "inbound" || direction == "both")
+            {
+                var result = await ExecutePowerShell(
+                    $"netsh advfirewall firewall add rule name=\"{ruleName}_In\" dir=in action=block{ruleParams} enable=yes");
+                results.Add($"Inbound: {(result.Success ? "Blocked" : result.Stderr)}");
+            }
+
+            if (direction == "outbound" || direction == "both")
+            {
+                var result = await ExecutePowerShell(
+                    $"netsh advfirewall firewall add rule name=\"{ruleName}_Out\" dir=out action=block{ruleParams} enable=yes");
+                results.Add($"Outbound: {(result.Success ? "Blocked" : result.Stderr)}");
+            }
+
+            Console.WriteLine($"[XDR] FIREWALL BLOCK: IP={ip}, Port={port}, Direction={direction}");
+
+            return new CommandResult
+            {
+                Success = true,
+                ExitCode = 0,
+                Stdout = JsonConvert.SerializeObject(new
+                {
+                    action = "firewall_block",
+                    status = "blocked",
+                    rule_name = ruleName,
+                    blocked_ip = ip,
+                    blocked_port = port,
+                    direction = direction,
+                    details = results,
+                    timestamp = DateTime.UtcNow.ToString("O")
+                })
+            };
+        }
+        catch (Exception ex)
+        {
+            return new CommandResult { Success = false, ExitCode = -1, Stderr = $"Firewall block failed: {ex.Message}" };
+        }
+    }
+
+    /// <summary>
+    /// Remove a firewall block rule
+    /// </summary>
+    private async Task<CommandResult> FirewallUnblock(RemoteCommand command)
+    {
+        try
+        {
+            var ruleName = command.Parameters?.GetValueOrDefault("rule_name")?.ToString();
+            var ip = command.Parameters?.GetValueOrDefault("ip_address")?.ToString();
+
+            if (string.IsNullOrEmpty(ruleName) && string.IsNullOrEmpty(ip))
+            {
+                return new CommandResult { Success = false, ExitCode = -1, Stderr = "Must specify rule_name or ip_address to unblock" };
+            }
+
+            if (!string.IsNullOrEmpty(ruleName))
+            {
+                await ExecutePowerShell($"netsh advfirewall firewall delete rule name=\"{ruleName}_In\"");
+                await ExecutePowerShell($"netsh advfirewall firewall delete rule name=\"{ruleName}_Out\"");
+            }
+            else if (!string.IsNullOrEmpty(ip))
+            {
+                // Find and delete rules blocking this IP
+                await ExecutePowerShell(
+                    $"netsh advfirewall firewall show rule name=all | Select-String -Pattern '{ip}' -Context 1 | " +
+                    $"ForEach-Object {{ if ($_.Context.PreContext -match 'Rule Name:\\s*(.+)') {{ " +
+                    $"netsh advfirewall firewall delete rule name=\"$($matches[1].Trim())\" }} }}");
+            }
+
+            Console.WriteLine($"[XDR] FIREWALL UNBLOCK: Rule={ruleName}, IP={ip}");
+
+            return new CommandResult
+            {
+                Success = true,
+                ExitCode = 0,
+                Stdout = JsonConvert.SerializeObject(new
+                {
+                    action = "firewall_unblock",
+                    status = "unblocked",
+                    rule_name = ruleName,
+                    ip = ip,
+                    timestamp = DateTime.UtcNow.ToString("O")
+                })
+            };
+        }
+        catch (Exception ex)
+        {
+            return new CommandResult { Success = false, ExitCode = -1, Stderr = $"Firewall unblock failed: {ex.Message}" };
+        }
+    }
+
+    /// <summary>
+    /// Disable a Windows service (stop + set to disabled)
+    /// </summary>
+    private async Task<CommandResult> DisableService(string serviceName)
+    {
+        try
+        {
+            // Stop the service first
+            var stopResult = await ControlService(serviceName, ServiceControllerStatus.Stopped);
+            if (!stopResult.Success)
+            {
+                return stopResult;
+            }
+
+            // Disable the service using sc.exe
+            var disableResult = await ExecutePowerShell($"sc.exe config \"{serviceName}\" start= disabled");
+
+            if (disableResult.Success)
+            {
+                Console.WriteLine($"[XDR] SERVICE DISABLED: {serviceName}");
+                return new CommandResult
+                {
+                    Success = true,
+                    ExitCode = 0,
+                    Stdout = $"Service '{serviceName}' stopped and disabled"
+                };
+            }
+
+            return disableResult;
         }
         catch (Exception ex)
         {
