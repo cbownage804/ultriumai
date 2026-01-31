@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 // Lazy load Vanguard pages for better performance
-const VanguardLanding = lazy(() => import('@/pages/vanguard/VanguardLanding'));
+const VanguardProductPage = lazy(() => import('@/pages/products/VanguardProductPage'));
 const VanguardHome = lazy(() => import('@/pages/vanguard/VanguardHome'));
 const VanguardDashboard = lazy(() => import('@/pages/VanguardDashboard'));
 const VanguardDevicesPage = lazy(() => import('@/pages/VanguardDevicesPage'));
@@ -277,7 +277,7 @@ export const getVanguardProtectedRoutes = () => [
 
 // Export public routes (landing, auth - outside VanguardLayout)
 export const getVanguardPublicRoutes = () => [
-  <Route key="vanguard-landing" index element={<LazyPage component={VanguardLanding} />} />,
+  <Route key="vanguard-landing" index element={<LazyPage component={VanguardProductPage} />} />,
   <Route key="vanguard-auth" path="auth" element={<LazyPage component={VanguardAuthPage} />} />,
   <Route key="vanguard-suite" path="suite" element={<LazyPage component={VanguardSuite} />} />,
   <Route key="vanguard-trust" path="trust" element={<LazyPage component={VanguardTrustCenter} />} />,
