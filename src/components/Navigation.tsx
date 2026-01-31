@@ -8,6 +8,7 @@ import { useAccountType } from "@/hooks/useAccountType";
 import { useToast } from "@/hooks/use-toast";
 import { createNavigationHandler } from "@/hooks/useScrollToTop";
 import ThemeToggle from "./ThemeToggle";
+import { isVanguardDomain, isSafeSuiteDomain } from "@/utils/subdomain";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,17 @@ const Navigation = () => {
   const { toast } = useToast();
   
   const handleNavigation = createNavigationHandler(navigate);
+  
+  // Get the correct dashboard path based on subdomain
+  const getDashboardPath = () => {
+    if (isVanguardDomain()) {
+      return '/app/dashboard';
+    }
+    if (isSafeSuiteDomain()) {
+      return '/dashboard';
+    }
+    return '/hub';
+  };
   
   const handleNavigationWithMenuClose = (path: string) => {
     handleNavigation(path);
@@ -209,7 +221,7 @@ const Navigation = () => {
             {user && (
               <>
                 <button 
-                  onClick={() => handleNavigation('/hub')}
+                  onClick={() => handleNavigation(getDashboardPath())}
                   className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200"
                 >
                   Dashboard
@@ -313,7 +325,7 @@ const Navigation = () => {
 
               {user && (
                 <>
-                  <button onClick={() => handleNavigationWithMenuClose('/hub')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
+                  <button onClick={() => handleNavigationWithMenuClose(getDashboardPath())} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
                     Dashboard
                   </button>
                   {isUltriumEmployee && (
