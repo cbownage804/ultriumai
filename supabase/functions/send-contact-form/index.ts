@@ -279,6 +279,35 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email send response:", JSON.stringify(emailResponse, null, 2));
 
+    // === SAVE TO LEADS TABLE FOR ADMIN TRACKING ===
+    const { error: leadError } = await supabase
+      .from("leads")
+      .insert({
+        first_name: sanitizedData.firstName,
+        last_name: sanitizedData.lastName,
+        email: sanitizedData.email,
+        phone: sanitizedData.phone || null,
+        company: sanitizedData.company || null,
+        business_type: sanitizedData.businessType,
+        service_provider_type: sanitizedData.serviceProviderType || null,
+        business_size: sanitizedData.businessSize || null,
+        industry: sanitizedData.industry || null,
+        project_type: sanitizedData.projectType || null,
+        product_type: sanitizedData.productType,
+        white_labeled: sanitizedData.whiteLabeled,
+        message: sanitizedData.message || null,
+        product_interests: sanitizedData.productInterests,
+        source: "contact_form",
+        status: "new"
+      });
+
+    if (leadError) {
+      console.error("Failed to save lead:", leadError);
+      // Don't fail the request, just log it
+    } else {
+      console.log("Lead saved successfully for:", sanitizedData.email);
+    }
+
     // Check if Resend returned an error
     if (emailResponse.error) {
       console.error("Resend API error:", emailResponse.error);
