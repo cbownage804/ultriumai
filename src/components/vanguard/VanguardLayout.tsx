@@ -20,9 +20,10 @@ export function VanguardLayout() {
           {/* Global Command Palette */}
           <VanguardCommandPalette />
           
-          {/* Top Bar with Notifications & Language */}
-          <div className="fixed top-0 right-0 z-40 p-3 flex items-center gap-2">
+          {/* Top Bar with Notifications & Language - positioned to avoid overlap */}
+          <div className="fixed top-4 right-4 z-40 flex items-center gap-3 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 border border-cyan-500/20">
             <LanguageSwitcher />
+            <div className="w-px h-5 bg-cyan-500/30" />
             <RealtimeNotificationCenter />
           </div>
           
