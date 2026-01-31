@@ -75,10 +75,14 @@ export function ServiceManager({ agentId, sendCommand }: ServiceManagerProps) {
   const handleServiceAction = async (serviceName: string, action: 'start' | 'stop' | 'restart') => {
     setActionInProgress(`${serviceName}-${action}`);
     try {
-      await sendCommand('service_action', { service: serviceName, action });
-      toast.success(`${action} command sent for ${serviceName}`);
+      const result = await sendCommand('service_action', { service: serviceName, action });
+      if (result?.pending) {
+        toast.info(`${action} command queued for ${serviceName} - waiting for agent`);
+      } else {
+        toast.success(`${action} command sent for ${serviceName}`);
+      }
       // Refresh after a delay
-      setTimeout(() => loadServices(), 2000);
+      setTimeout(() => loadServices(), 3000);
     } catch (err) {
       toast.error(`Failed to ${action} ${serviceName}`);
     } finally {

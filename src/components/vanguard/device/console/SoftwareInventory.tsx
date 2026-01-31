@@ -60,8 +60,14 @@ export function SoftwareInventory({ agentId, sendCommand }: SoftwareInventoryPro
   const [searchQuery, setSearchQuery] = useState("");
   const [showInstallDialog, setShowInstallDialog] = useState(false);
   const [installPackage, setInstallPackage] = useState("");
+  const [packageManager, setPackageManager] = useState<"chocolatey" | "winget">("chocolatey");
   const [installing, setInstalling] = useState(false);
   const [uninstallingName, setUninstallingName] = useState<string | null>(null);
+
+  // Auto-load on mount
+  useEffect(() => {
+    loadSoftware();
+  }, [agentId]);
 
   const loadSoftware = async () => {
     setIsLoading(true);
@@ -74,9 +80,11 @@ export function SoftwareInventory({ agentId, sendCommand }: SoftwareInventoryPro
             installDate: s.installDate ? new Date(s.installDate) : undefined,
           }))
         );
+      } else if (result?.pending) {
+        toast.info("Software list request queued - waiting for agent");
       }
     } catch (err) {
-      // Keep demo data
+      // Keep current data
     } finally {
       setIsLoading(false);
     }
@@ -87,14 +95,18 @@ export function SoftwareInventory({ agentId, sendCommand }: SoftwareInventoryPro
 
     setInstalling(true);
     try {
-      await sendCommand("install_software", {
+      const result = await sendCommand("install_software", {
         package: installPackage,
-        manager: "chocolatey", // or 'winget'
+        manager: packageManager,
       });
-      toast.success(`Installing ${installPackage}...`);
+      if (result?.pending) {
+        toast.info(`Installation of ${installPackage} queued - waiting for agent`);
+      } else {
+        toast.success(`Installing ${installPackage}...`);
+      }
       setShowInstallDialog(false);
       setInstallPackage("");
-      setTimeout(loadSoftware, 5000);
+      setTimeout(loadSoftware, 10000);
     } catch (err) {
       toast.error(`Failed to install ${installPackage}`);
     } finally {
@@ -107,9 +119,13 @@ export function SoftwareInventory({ agentId, sendCommand }: SoftwareInventoryPro
 
     setUninstallingName(name);
     try {
-      await sendCommand("uninstall_software", { name });
-      toast.success(`Uninstalling ${name}...`);
-      setTimeout(loadSoftware, 5000);
+      const result = await sendCommand("uninstall_software", { name });
+      if (result?.pending) {
+        toast.info(`Uninstall of ${name} queued - waiting for agent`);
+      } else {
+        toast.success(`Uninstalling ${name}...`);
+      }
+      setTimeout(loadSoftware, 10000);
     } catch (err) {
       toast.error(`Failed to uninstall ${name}`);
     } finally {
