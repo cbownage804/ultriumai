@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -51,6 +52,7 @@ import {
   AlertTriangle,
   History,
   RefreshCw,
+  Server,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -84,6 +86,13 @@ interface ScriptExecution {
   status: "running" | "completed" | "failed" | "pending";
   started_at: string;
   completed_at?: string;
+}
+
+interface Agent {
+  id: string;
+  name: string;
+  status: string;
+  device_id: string;
 }
 
 const scriptCategories = [
@@ -157,6 +166,8 @@ export function FleetScriptLibrary() {
   const { user } = useAuth();
   const [scripts, setScripts] = useState<Script[]>([]);
   const [executions, setExecutions] = useState<ScriptExecution[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -178,6 +189,8 @@ export function FleetScriptLibrary() {
     tags: "",
   });
 
+  const onlineAgents = agents.filter(a => a.status === 'online');
+
   useEffect(() => {
     if (user) loadData();
   }, [user]);
@@ -185,6 +198,17 @@ export function FleetScriptLibrary() {
   const loadData = async () => {
     setIsLoading(true);
     try {
+      // Load agents for device selection
+      const { data: agentsData } = await supabase
+        .from('vanguard_agents')
+        .select('id, name, status, device_id')
+        .eq('user_id', user?.id)
+        .order('name');
+
+      if (agentsData) {
+        setAgents(agentsData as Agent[]);
+      }
+
       // Load user scripts from database
       const { data: userScripts, error: scriptsError } = await supabase
         .from('vanguard_fleet_scripts')
@@ -241,6 +265,22 @@ export function FleetScriptLibrary() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSelectAllAgents = () => {
+    if (selectedAgents.length === onlineAgents.length) {
+      setSelectedAgents([]);
+    } else {
+      setSelectedAgents(onlineAgents.map(a => a.id));
+    }
+  };
+
+  const toggleAgentSelection = (agentId: string) => {
+    setSelectedAgents(prev =>
+      prev.includes(agentId)
+        ? prev.filter(id => id !== agentId)
+        : [...prev, agentId]
+    );
   };
 
   const filteredScripts = scripts.filter((script) => {
@@ -325,10 +365,16 @@ export function FleetScriptLibrary() {
   };
 
   const handleRunScript = async () => {
-    if (!selectedScript) return;
+    if (!selectedScript || selectedAgents.length === 0) {
+      toast.error('Please select at least one device');
+      return;
+    }
     setIsRunning(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
       // Create execution record
       const { data: exec, error } = await supabase
         .from('vanguard_script_executions')
@@ -336,7 +382,7 @@ export function FleetScriptLibrary() {
           user_id: user?.id,
           script_id: selectedScript.is_builtin ? null : selectedScript.id,
           script_name: selectedScript.name,
-          device_count: 10,
+          device_count: selectedAgents.length,
           status: 'running',
           started_at: new Date().toISOString(),
         })
@@ -349,7 +395,7 @@ export function FleetScriptLibrary() {
         id: exec.id,
         script_id: selectedScript.id,
         script_name: selectedScript.name,
-        device_count: 10,
+        device_count: selectedAgents.length,
         success_count: 0,
         failed_count: 0,
         status: "running",
@@ -358,28 +404,71 @@ export function FleetScriptLibrary() {
 
       setExecutions([execution, ...executions]);
 
-      // Simulate execution
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      // Queue script execution commands for each selected agent via vanguard-agent-api
+      let successCount = 0;
+      let failedCount = 0;
 
-      // Update execution as completed
+      for (const agentId of selectedAgents) {
+        try {
+          const { error: cmdError } = await supabase.functions.invoke('vanguard-agent-api?action=send_command', {
+            body: {
+              agent_id: agentId,
+              command_type: 'run_script',
+              payload: {
+                script_id: selectedScript.is_builtin ? null : selectedScript.id,
+                script_name: selectedScript.name,
+                script_type: selectedScript.type,
+                script_content: selectedScript.content,
+                execution_id: exec.id,
+              }
+            },
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
+          });
+
+          if (cmdError) {
+            console.error('Failed to queue command for agent:', agentId, cmdError);
+            failedCount++;
+          } else {
+            successCount++;
+          }
+        } catch (err) {
+          console.error('Error sending command to agent:', agentId, err);
+          failedCount++;
+        }
+      }
+
+      // Update execution with initial queue results
+      const finalStatus = failedCount === selectedAgents.length ? 'failed' : 
+                          successCount === selectedAgents.length ? 'pending' : 'running';
+
       await supabase
         .from('vanguard_script_executions')
         .update({
-          status: 'completed',
-          success_count: 10,
-          completed_at: new Date().toISOString(),
+          status: finalStatus,
+          success_count: successCount,
+          failed_count: failedCount,
         })
         .eq('id', exec.id);
 
       setExecutions((prev) =>
         prev.map((e) =>
           e.id === execution.id
-            ? { ...e, status: "completed", success_count: 10, completed_at: new Date().toISOString() }
+            ? { ...e, status: finalStatus as ScriptExecution['status'], success_count: successCount, failed_count: failedCount }
             : e
         )
       );
 
-      toast.success(`Script "${selectedScript.name}" completed on 10 devices`);
+      if (successCount > 0) {
+        toast.success(`Script "${selectedScript.name}" queued for ${successCount} device(s)`, {
+          description: failedCount > 0 ? `${failedCount} device(s) failed to queue` : 'Commands sent to agents'
+        });
+      } else {
+        toast.error('Failed to queue script for any devices');
+      }
+
+      setSelectedAgents([]);
     } catch (err) {
       console.error('Failed to run script:', err);
       toast.error('Failed to run script');
@@ -747,8 +836,8 @@ export function FleetScriptLibrary() {
       </Dialog>
 
       {/* Run Script Dialog */}
-      <Dialog open={showRunDialog} onOpenChange={setShowRunDialog}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={showRunDialog} onOpenChange={(open) => { setShowRunDialog(open); if (!open) setSelectedAgents([]); }}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Run Script: {selectedScript?.name}</DialogTitle>
             <DialogDescription>{selectedScript?.description}</DialogDescription>
@@ -759,25 +848,66 @@ export function FleetScriptLibrary() {
               <Badge variant="outline">{selectedScript?.category}</Badge>
               <Badge variant="secondary">{selectedScript?.type}</Badge>
             </div>
-            <ScrollArea className="h-[200px] rounded-md border p-4 bg-muted/50">
+            
+            <ScrollArea className="h-[150px] rounded-md border p-4 bg-muted/50">
               <pre className="text-sm font-mono whitespace-pre-wrap">{selectedScript?.content}</pre>
             </ScrollArea>
-            <p className="text-sm text-muted-foreground">
-              This script will be executed on all selected devices (10 online devices).
-            </p>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Target Devices ({selectedAgents.length} selected)</Label>
+                <Button variant="ghost" size="sm" onClick={handleSelectAllAgents}>
+                  {selectedAgents.length === onlineAgents.length ? 'Deselect All' : 'Select All Online'}
+                </Button>
+              </div>
+              <ScrollArea className="h-[180px] border rounded-lg p-2">
+                {agents.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <Server className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No agents available</p>
+                    <p className="text-xs">Deploy Vanguard agents to your devices first</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {agents.map(agent => (
+                      <div
+                        key={agent.id}
+                        className="flex items-center gap-3 p-2 rounded hover:bg-muted/50"
+                      >
+                        <Checkbox
+                          checked={selectedAgents.includes(agent.id)}
+                          onCheckedChange={() => toggleAgentSelection(agent.id)}
+                          disabled={agent.status !== 'online'}
+                        />
+                        <Server className="h-4 w-4 text-muted-foreground" />
+                        <span className={agent.status !== 'online' ? 'text-muted-foreground' : ''}>
+                          {agent.name || agent.device_id}
+                        </span>
+                        <Badge
+                          variant={agent.status === 'online' ? 'default' : 'secondary'}
+                          className="ml-auto text-xs"
+                        >
+                          {agent.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRunDialog(false)}>Cancel</Button>
-            <Button onClick={handleRunScript} disabled={isRunning}>
+            <Button onClick={handleRunScript} disabled={isRunning || selectedAgents.length === 0}>
               {isRunning ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Running...
+                  Queuing...
                 </>
               ) : (
                 <>
                   <Play className="h-4 w-4 mr-2" />
-                  Run Now
+                  Run on {selectedAgents.length} Device(s)
                 </>
               )}
             </Button>
