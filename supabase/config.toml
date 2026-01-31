@@ -233,3 +233,12 @@ verify_jwt = true
 
 [functions.ai-customer-health]
 verify_jwt = true
+
+[functions.ai-workload-optimizer]
+verify_jwt = true
+
+[functions.ai-knowledge-search]
+verify_jwt = true
+
+[functions.ai-smart-scheduler]
+verify_jwt = true

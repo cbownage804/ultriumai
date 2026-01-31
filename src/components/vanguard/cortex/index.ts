@@ -6,3 +6,4 @@ export { CortexAnalyticsDashboard } from './CortexAnalyticsDashboard';
 export { ScreenRecordingKBGenerator } from './ScreenRecordingKBGenerator';
 export { CortexAITools } from './CortexAITools';
 export { CortexAIToolsExtended } from './CortexAIToolsExtended';
+export { CortexAIToolsAdvanced } from './CortexAIToolsAdvanced';
