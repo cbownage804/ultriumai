@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Settings, Bell, Mail, Phone, MessageSquare, Moon, Clock, Globe, Save, Volume2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Settings, Bell, Mail, Phone, MessageSquare, Moon, Clock, Globe, Save, Volume2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,41 +8,127 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { PremiumCard } from '../ui';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 export const NotificationPreferences = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [prefsId, setPrefsId] = useState<string | null>(null);
+  
   const [preferences, setPreferences] = useState({
-    emailNotifications: true,
-    pushNotifications: true,
-    smsNotifications: false,
-    slackNotifications: true,
-    soundEnabled: true,
-    soundVolume: [70],
-    quietHoursEnabled: true,
-    quietHoursStart: '22:00',
-    quietHoursEnd: '08:00',
-    timezone: 'America/New_York',
-    digestEnabled: true,
-    digestFrequency: 'daily',
-    criticalOverride: true,
+    email_notifications: true,
+    push_notifications: true,
+    security_alerts: true,
+    ticket_updates: true,
+    system_notifications: true,
+    quiet_hours_start: '22:00',
+    quiet_hours_end: '08:00',
+    notification_frequency: 'realtime',
   });
 
-  const handleSave = () => {
-    toast({ title: 'Preferences saved successfully' });
+  const [localSettings, setLocalSettings] = useState({
+    soundEnabled: true,
+    soundVolume: [70],
+    quietHoursEnabled: false,
+    criticalOverride: true,
+    digestEnabled: false,
+    digestFrequency: 'daily',
+    slackNotifications: true,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  });
+
+  useEffect(() => {
+    if (user) loadPreferences();
+  }, [user]);
+
+  const loadPreferences = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setPrefsId(data.id);
+        setPreferences({
+          email_notifications: data.email_notifications ?? true,
+          push_notifications: data.push_notifications ?? true,
+          security_alerts: data.security_alerts ?? true,
+          ticket_updates: data.ticket_updates ?? true,
+          system_notifications: data.system_notifications ?? true,
+          quiet_hours_start: data.quiet_hours_start ?? '22:00',
+          quiet_hours_end: data.quiet_hours_end ?? '08:00',
+          notification_frequency: data.notification_frequency ?? 'realtime',
+        });
+        setLocalSettings(prev => ({
+          ...prev,
+          quietHoursEnabled: !!(data.quiet_hours_start && data.quiet_hours_end),
+        }));
+      }
+    } catch (error: any) {
+      console.error('Error loading preferences:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const notificationTypes = [
-    { id: 'ticket_created', label: 'New Tickets', enabled: true },
-    { id: 'ticket_assigned', label: 'Ticket Assignments', enabled: true },
-    { id: 'ticket_updated', label: 'Ticket Updates', enabled: false },
-    { id: 'sla_warning', label: 'SLA Warnings', enabled: true },
-    { id: 'sla_breach', label: 'SLA Breaches', enabled: true },
-    { id: 'security_alert', label: 'Security Alerts', enabled: true },
-    { id: 'incident_created', label: 'New Incidents', enabled: true },
-    { id: 'escalation', label: 'Escalations', enabled: true },
-    { id: 'report_ready', label: 'Reports Ready', enabled: false },
-    { id: 'system_update', label: 'System Updates', enabled: false },
-  ];
+  const handleSave = async () => {
+    if (!user) return;
+    setIsSaving(true);
+
+    try {
+      const prefsToSave = {
+        user_id: user.id,
+        email_notifications: preferences.email_notifications,
+        push_notifications: preferences.push_notifications,
+        security_alerts: preferences.security_alerts,
+        ticket_updates: preferences.ticket_updates,
+        system_notifications: preferences.system_notifications,
+        quiet_hours_start: localSettings.quietHoursEnabled ? preferences.quiet_hours_start : null,
+        quiet_hours_end: localSettings.quietHoursEnabled ? preferences.quiet_hours_end : null,
+        notification_frequency: preferences.notification_frequency,
+      };
+
+      if (prefsId) {
+        const { error } = await supabase
+          .from('notification_preferences')
+          .update(prefsToSave)
+          .eq('id', prefsId);
+
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from('notification_preferences')
+          .insert([prefsToSave])
+          .select()
+          .single();
+
+        if (error) throw error;
+        setPrefsId(data.id);
+      }
+
+      toast({ title: 'Preferences saved successfully' });
+    } catch (error: any) {
+      console.error('Error saving preferences:', error);
+      toast({ title: 'Error saving preferences', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -65,8 +150,8 @@ export const NotificationPreferences = () => {
                 </div>
               </div>
               <Switch
-                checked={preferences.emailNotifications}
-                onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, emailNotifications: checked }))}
+                checked={preferences.email_notifications}
+                onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, email_notifications: checked }))}
               />
             </div>
 
@@ -79,8 +164,8 @@ export const NotificationPreferences = () => {
                 </div>
               </div>
               <Switch
-                checked={preferences.pushNotifications}
-                onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, pushNotifications: checked }))}
+                checked={preferences.push_notifications}
+                onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, push_notifications: checked }))}
               />
             </div>
 
@@ -88,13 +173,13 @@ export const NotificationPreferences = () => {
               <div className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-green-400" />
                 <div>
-                  <p className="font-medium">SMS Notifications</p>
-                  <p className="text-xs text-muted-foreground">Critical alerts via SMS</p>
+                  <p className="font-medium">Security Alerts</p>
+                  <p className="text-xs text-muted-foreground">Critical security notifications</p>
                 </div>
               </div>
               <Switch
-                checked={preferences.smsNotifications}
-                onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, smsNotifications: checked }))}
+                checked={preferences.security_alerts}
+                onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, security_alerts: checked }))}
               />
             </div>
 
@@ -107,8 +192,8 @@ export const NotificationPreferences = () => {
                 </div>
               </div>
               <Switch
-                checked={preferences.slackNotifications}
-                onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, slackNotifications: checked }))}
+                checked={localSettings.slackNotifications}
+                onCheckedChange={(checked) => setLocalSettings(prev => ({ ...prev, slackNotifications: checked }))}
               />
             </div>
           </div>
@@ -131,20 +216,20 @@ export const NotificationPreferences = () => {
                 </div>
               </div>
               <Switch
-                checked={preferences.soundEnabled}
-                onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, soundEnabled: checked }))}
+                checked={localSettings.soundEnabled}
+                onCheckedChange={(checked) => setLocalSettings(prev => ({ ...prev, soundEnabled: checked }))}
               />
             </div>
 
-            {preferences.soundEnabled && (
+            {localSettings.soundEnabled && (
               <div className="space-y-2 px-3">
                 <div className="flex items-center justify-between">
                   <Label>Volume</Label>
-                  <span className="text-sm text-muted-foreground">{preferences.soundVolume[0]}%</span>
+                  <span className="text-sm text-muted-foreground">{localSettings.soundVolume[0]}%</span>
                 </div>
                 <Slider
-                  value={preferences.soundVolume}
-                  onValueChange={(value) => setPreferences(prev => ({ ...prev, soundVolume: value }))}
+                  value={localSettings.soundVolume}
+                  onValueChange={(value) => setLocalSettings(prev => ({ ...prev, soundVolume: value }))}
                   max={100}
                   step={10}
                   className="w-full"
@@ -171,20 +256,20 @@ export const NotificationPreferences = () => {
                 </div>
               </div>
               <Switch
-                checked={preferences.quietHoursEnabled}
-                onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, quietHoursEnabled: checked }))}
+                checked={localSettings.quietHoursEnabled}
+                onCheckedChange={(checked) => setLocalSettings(prev => ({ ...prev, quietHoursEnabled: checked }))}
               />
             </div>
 
-            {preferences.quietHoursEnabled && (
+            {localSettings.quietHoursEnabled && (
               <>
                 <div className="grid grid-cols-2 gap-4 px-3">
                   <div className="space-y-2">
                     <Label>Start Time</Label>
                     <Input
                       type="time"
-                      value={preferences.quietHoursStart}
-                      onChange={(e) => setPreferences(prev => ({ ...prev, quietHoursStart: e.target.value }))}
+                      value={preferences.quiet_hours_start}
+                      onChange={(e) => setPreferences(prev => ({ ...prev, quiet_hours_start: e.target.value }))}
                       className="bg-white/5 border-white/10"
                     />
                   </div>
@@ -192,8 +277,8 @@ export const NotificationPreferences = () => {
                     <Label>End Time</Label>
                     <Input
                       type="time"
-                      value={preferences.quietHoursEnd}
-                      onChange={(e) => setPreferences(prev => ({ ...prev, quietHoursEnd: e.target.value }))}
+                      value={preferences.quiet_hours_end}
+                      onChange={(e) => setPreferences(prev => ({ ...prev, quiet_hours_end: e.target.value }))}
                       className="bg-white/5 border-white/10"
                     />
                   </div>
@@ -205,8 +290,8 @@ export const NotificationPreferences = () => {
                     <p className="text-xs text-muted-foreground">Allow critical alerts during quiet hours</p>
                   </div>
                   <Switch
-                    checked={preferences.criticalOverride}
-                    onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, criticalOverride: checked }))}
+                    checked={localSettings.criticalOverride}
+                    onCheckedChange={(checked) => setLocalSettings(prev => ({ ...prev, criticalOverride: checked }))}
                   />
                 </div>
               </>
@@ -225,8 +310,8 @@ export const NotificationPreferences = () => {
             <div className="space-y-2">
               <Label>Timezone</Label>
               <Select 
-                value={preferences.timezone} 
-                onValueChange={(value) => setPreferences(prev => ({ ...prev, timezone: value }))}
+                value={localSettings.timezone} 
+                onValueChange={(value) => setLocalSettings(prev => ({ ...prev, timezone: value }))}
               >
                 <SelectTrigger className="bg-white/5 border-white/10">
                   <SelectValue />
@@ -251,17 +336,17 @@ export const NotificationPreferences = () => {
                 </div>
               </div>
               <Switch
-                checked={preferences.digestEnabled}
-                onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, digestEnabled: checked }))}
+                checked={localSettings.digestEnabled}
+                onCheckedChange={(checked) => setLocalSettings(prev => ({ ...prev, digestEnabled: checked }))}
               />
             </div>
 
-            {preferences.digestEnabled && (
+            {localSettings.digestEnabled && (
               <div className="space-y-2 px-3">
                 <Label>Digest Frequency</Label>
                 <Select 
-                  value={preferences.digestFrequency} 
-                  onValueChange={(value) => setPreferences(prev => ({ ...prev, digestFrequency: value }))}
+                  value={localSettings.digestFrequency} 
+                  onValueChange={(value) => setLocalSettings(prev => ({ ...prev, digestFrequency: value }))}
                 >
                   <SelectTrigger className="bg-white/5 border-white/10">
                     <SelectValue />
@@ -286,10 +371,17 @@ export const NotificationPreferences = () => {
         </h3>
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {notificationTypes.map((type) => (
+          {[
+            { id: 'ticket_updates', label: 'Ticket Updates', key: 'ticket_updates' as const },
+            { id: 'system_notifications', label: 'System Notifications', key: 'system_notifications' as const },
+            { id: 'security_alerts', label: 'Security Alerts', key: 'security_alerts' as const },
+          ].map((type) => (
             <div key={type.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
               <span className="text-sm">{type.label}</span>
-              <Switch defaultChecked={type.enabled} />
+              <Switch 
+                checked={preferences[type.key]}
+                onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, [type.key]: checked }))}
+              />
             </div>
           ))}
         </div>
@@ -297,8 +389,12 @@ export const NotificationPreferences = () => {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSave} className="bg-gradient-to-r from-cyan-500 to-blue-500">
-          <Save className="h-4 w-4 mr-2" />
+        <Button 
+          onClick={handleSave} 
+          className="bg-gradient-to-r from-cyan-500 to-blue-500"
+          disabled={isSaving}
+        >
+          {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
           Save Preferences
         </Button>
       </div>

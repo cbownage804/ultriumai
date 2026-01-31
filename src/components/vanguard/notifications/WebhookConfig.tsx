@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, Plus, Edit, Trash2, TestTube, Check, X, Slack, Globe, Zap } from 'lucide-react';
+import { MessageSquare, Plus, Edit, Trash2, TestTube, Slack, Globe, Zap, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,28 +11,51 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { PremiumCard } from '../ui';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Webhook {
   id: string;
   name: string;
-  type: 'slack' | 'teams' | 'discord' | 'custom';
+  webhook_type: string;
   url: string;
   events: string[];
-  isActive: boolean;
-  lastTriggered: string;
-  successRate: number;
+  is_active: boolean;
+  last_triggered_at: string | null;
+  success_count: number;
+  failure_count: number;
+  created_at: string;
 }
 
 export const WebhookConfig = () => {
   const { toast } = useToast();
-  const [webhooks, setWebhooks] = useState<Webhook[]>([
-    { id: '1', name: 'Slack - #security-alerts', type: 'slack', url: 'https://hooks.slack.com/...', events: ['critical_alert', 'incident_created'], isActive: true, lastTriggered: '5 min ago', successRate: 99.8 },
-    { id: '2', name: 'Teams - IT Ops', type: 'teams', url: 'https://outlook.office.com/webhook/...', events: ['ticket_created', 'sla_breach'], isActive: true, lastTriggered: '15 min ago', successRate: 100 },
-    { id: '3', name: 'Discord - Dev Team', type: 'discord', url: 'https://discord.com/api/webhooks/...', events: ['deployment', 'error'], isActive: false, lastTriggered: '2 days ago', successRate: 95.5 },
-    { id: '4', name: 'Custom - PagerDuty', type: 'custom', url: 'https://events.pagerduty.com/...', events: ['critical_alert', 'incident_escalated'], isActive: true, lastTriggered: '1 hour ago', successRate: 99.2 },
-  ]);
+  const { user } = useAuth();
+  const [webhooks, setWebhooks] = useState<Webhook[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingWebhook, setEditingWebhook] = useState<Webhook | null>(null);
   const [testing, setTesting] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) loadWebhooks();
+  }, [user]);
+
+  const loadWebhooks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('webhook_configs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setWebhooks(data || []);
+    } catch (error: any) {
+      console.error('Error loading webhooks:', error);
+      toast({ title: 'Error loading webhooks', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -52,23 +75,142 @@ export const WebhookConfig = () => {
     }
   };
 
-  const handleTest = async (id: string) => {
-    setTesting(id);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setTesting(null);
-    toast({ title: 'Webhook test successful', description: 'Message delivered successfully' });
+  const handleTest = async (webhook: Webhook) => {
+    setTesting(webhook.id);
+    try {
+      // Send a test payload to the webhook URL
+      const response = await fetch(webhook.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: '🧪 Test notification from Vanguard',
+          type: 'test',
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (response.ok) {
+        await supabase
+          .from('webhook_configs')
+          .update({ 
+            success_count: webhook.success_count + 1,
+            last_triggered_at: new Date().toISOString()
+          })
+          .eq('id', webhook.id);
+
+        setWebhooks(prev => prev.map(w => 
+          w.id === webhook.id 
+            ? { ...w, success_count: w.success_count + 1, last_triggered_at: new Date().toISOString() }
+            : w
+        ));
+        toast({ title: 'Webhook test successful', description: 'Message delivered' });
+      } else {
+        throw new Error(`HTTP ${response.status}`);
+      }
+    } catch (error: any) {
+      await supabase
+        .from('webhook_configs')
+        .update({ failure_count: webhook.failure_count + 1 })
+        .eq('id', webhook.id);
+
+      setWebhooks(prev => prev.map(w => 
+        w.id === webhook.id ? { ...w, failure_count: w.failure_count + 1 } : w
+      ));
+      toast({ title: 'Webhook test failed', description: error.message, variant: 'destructive' });
+    } finally {
+      setTesting(null);
+    }
   };
 
-  const handleToggle = (id: string) => {
-    setWebhooks(prev => prev.map(w => 
-      w.id === id ? { ...w, isActive: !w.isActive } : w
-    ));
+  const handleToggle = async (webhook: Webhook) => {
+    try {
+      const { error } = await supabase
+        .from('webhook_configs')
+        .update({ is_active: !webhook.is_active })
+        .eq('id', webhook.id);
+
+      if (error) throw error;
+      setWebhooks(prev => prev.map(w => 
+        w.id === webhook.id ? { ...w, is_active: !w.is_active } : w
+      ));
+    } catch (error) {
+      toast({ title: 'Error updating webhook', variant: 'destructive' });
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setWebhooks(prev => prev.filter(w => w.id !== id));
-    toast({ title: 'Webhook deleted', variant: 'destructive' });
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('webhook_configs')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      setWebhooks(prev => prev.filter(w => w.id !== id));
+      toast({ title: 'Webhook deleted' });
+    } catch (error) {
+      toast({ title: 'Error deleting webhook', variant: 'destructive' });
+    }
   };
+
+  const handleSave = async (webhookData: Partial<Webhook>) => {
+    if (!user) return;
+    try {
+      if (editingWebhook) {
+        const { error } = await supabase
+          .from('webhook_configs')
+          .update(webhookData)
+          .eq('id', editingWebhook.id);
+
+        if (error) throw error;
+        setWebhooks(prev => prev.map(w => 
+          w.id === editingWebhook.id ? { ...w, ...webhookData } : w
+        ));
+        toast({ title: 'Webhook updated' });
+      } else {
+        const { data, error } = await supabase
+          .from('webhook_configs')
+          .insert([{ 
+            name: webhookData.name!,
+            url: webhookData.url!,
+            webhook_type: webhookData.webhook_type,
+            events: webhookData.events,
+            user_id: user.id 
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+        setWebhooks(prev => [data as Webhook, ...prev]);
+        toast({ title: 'Webhook created' });
+      }
+      setIsCreateOpen(false);
+      setEditingWebhook(null);
+    } catch (error: any) {
+      toast({ title: 'Error saving webhook', variant: 'destructive' });
+    }
+  };
+
+  const formatTime = (dateStr: string | null) => {
+    if (!dateStr) return 'Never';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)} hours ago`;
+    return `${Math.floor(diffMins / 1440)} days ago`;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -77,18 +219,30 @@ export const WebhookConfig = () => {
           <h3 className="text-lg font-semibold">Webhook Integrations</h3>
           <p className="text-sm text-muted-foreground">Connect to Slack, Teams, Discord, and custom endpoints</p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <Dialog open={isCreateOpen || !!editingWebhook} onOpenChange={(open) => {
+          if (!open) {
+            setIsCreateOpen(false);
+            setEditingWebhook(null);
+          }
+        }}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-cyan-500 to-blue-500">
+            <Button className="bg-gradient-to-r from-cyan-500 to-blue-500" onClick={() => setIsCreateOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Add Webhook
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg bg-[hsl(var(--vanguard-card))] border-white/10">
             <DialogHeader>
-              <DialogTitle>Add Webhook Integration</DialogTitle>
+              <DialogTitle>{editingWebhook ? 'Edit Webhook' : 'Add Webhook Integration'}</DialogTitle>
             </DialogHeader>
-            <WebhookEditor onSave={() => setIsCreateOpen(false)} />
+            <WebhookEditor 
+              webhook={editingWebhook}
+              onSave={handleSave}
+              onCancel={() => {
+                setIsCreateOpen(false);
+                setEditingWebhook(null);
+              }}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -96,10 +250,10 @@ export const WebhookConfig = () => {
       {/* Quick Connect */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { name: 'Slack', icon: Slack, color: 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-400' },
-          { name: 'MS Teams', icon: MessageSquare, color: 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-400' },
-          { name: 'Discord', icon: MessageSquare, color: 'bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400' },
-          { name: 'Custom', icon: Zap, color: 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400' },
+          { name: 'Slack', type: 'slack', icon: Slack, color: 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-400' },
+          { name: 'MS Teams', type: 'teams', icon: MessageSquare, color: 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-400' },
+          { name: 'Discord', type: 'discord', icon: MessageSquare, color: 'bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400' },
+          { name: 'Custom', type: 'custom', icon: Zap, color: 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400' },
         ].map((platform) => (
           <Button
             key={platform.name}
@@ -114,100 +268,121 @@ export const WebhookConfig = () => {
       </div>
 
       {/* Webhook List */}
-      <div className="grid gap-4">
-        {webhooks.map((webhook, index) => (
-          <motion.div
-            key={webhook.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-          >
-            <PremiumCard variant="glass" className="p-4">
-              <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-xl bg-gradient-to-br ${getTypeColor(webhook.type)}`}>
-                  {getTypeIcon(webhook.type)}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium">{webhook.name}</h4>
-                    <Badge variant="outline" className="text-xs capitalize">
-                      {webhook.type}
-                    </Badge>
-                    {!webhook.isActive && (
-                      <Badge variant="secondary" className="text-xs bg-yellow-500/20 text-yellow-400">
-                        Paused
+      {webhooks.length === 0 ? (
+        <PremiumCard variant="glass" className="p-8 text-center">
+          <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h4 className="text-lg font-medium mb-2">No webhooks configured</h4>
+          <p className="text-sm text-muted-foreground mb-4">Connect your first webhook to start receiving notifications</p>
+        </PremiumCard>
+      ) : (
+        <div className="grid gap-4">
+          {webhooks.map((webhook, index) => (
+            <motion.div
+              key={webhook.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <PremiumCard variant="glass" className="p-4">
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-xl bg-gradient-to-br ${getTypeColor(webhook.webhook_type)}`}>
+                    {getTypeIcon(webhook.webhook_type)}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-medium">{webhook.name}</h4>
+                      <Badge variant="outline" className="text-xs capitalize">
+                        {webhook.webhook_type}
                       </Badge>
-                    )}
+                      {!webhook.is_active && (
+                        <Badge variant="secondary" className="text-xs bg-yellow-500/20 text-yellow-400">
+                          Paused
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {webhook.events.map(event => (
+                        <Badge key={event} variant="secondary" className="text-xs bg-white/5">
+                          {event.replace('_', ' ')}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span>Last triggered: {formatTime(webhook.last_triggered_at)}</span>
+                      <span className={
+                        webhook.success_count + webhook.failure_count === 0 ? 'text-muted-foreground' :
+                        (webhook.success_count / (webhook.success_count + webhook.failure_count)) >= 0.99 ? 'text-green-400' : 
+                        (webhook.success_count / (webhook.success_count + webhook.failure_count)) >= 0.95 ? 'text-yellow-400' : 'text-red-400'
+                      }>
+                        {webhook.success_count + webhook.failure_count === 0 
+                          ? 'No deliveries yet'
+                          : `${((webhook.success_count / (webhook.success_count + webhook.failure_count)) * 100).toFixed(1)}% success`
+                        }
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {webhook.events.map(event => (
-                      <Badge key={event} variant="secondary" className="text-xs bg-white/5">
-                        {event.replace('_', ' ')}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>Last triggered: {webhook.lastTriggered}</span>
-                    <span className={webhook.successRate >= 99 ? 'text-green-400' : webhook.successRate >= 95 ? 'text-yellow-400' : 'text-red-400'}>
-                      {webhook.successRate}% success
-                    </span>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={webhook.isActive}
-                    onCheckedChange={() => handleToggle(webhook.id)}
-                  />
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8"
-                    onClick={() => handleTest(webhook.id)}
-                    disabled={testing === webhook.id}
-                  >
-                    {testing === webhook.id ? (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                      >
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={webhook.is_active}
+                      onCheckedChange={() => handleToggle(webhook)}
+                    />
+                    
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => handleTest(webhook)}
+                      disabled={testing === webhook.id}
+                    >
+                      {testing === webhook.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
                         <TestTube className="h-4 w-4" />
-                      </motion.div>
-                    ) : (
-                      <TestTube className="h-4 w-4" />
-                    )}
-                  </Button>
-                  
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-red-400 hover:text-red-300"
-                    onClick={() => handleDelete(webhook.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                      )}
+                    </Button>
+                    
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => setEditingWebhook(webhook)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-red-400 hover:text-red-300"
+                      onClick={() => handleDelete(webhook.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </PremiumCard>
-          </motion.div>
-        ))}
-      </div>
+              </PremiumCard>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-const WebhookEditor = ({ onSave }: { onSave: () => void }) => {
-  const { toast } = useToast();
-  const [name, setName] = useState('');
-  const [type, setType] = useState('');
-  const [url, setUrl] = useState('');
-  const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
+interface WebhookEditorProps {
+  webhook?: Webhook | null;
+  onSave: (data: Partial<Webhook>) => void;
+  onCancel: () => void;
+}
+
+const WebhookEditor = ({ webhook, onSave, onCancel }: WebhookEditorProps) => {
+  const [name, setName] = useState(webhook?.name || '');
+  const [webhookType, setWebhookType] = useState(webhook?.webhook_type || 'custom');
+  const [url, setUrl] = useState(webhook?.url || '');
+  const [selectedEvents, setSelectedEvents] = useState<string[]>(webhook?.events || []);
+  const [isSaving, setIsSaving] = useState(false);
 
   const eventOptions = [
     { id: 'ticket_created', label: 'Ticket Created' },
@@ -220,9 +395,16 @@ const WebhookEditor = ({ onSave }: { onSave: () => void }) => {
     { id: 'deployment', label: 'Deployment' },
   ];
 
-  const handleSave = () => {
-    toast({ title: 'Webhook saved successfully' });
-    onSave();
+  const handleSubmit = async () => {
+    if (!name || !url) return;
+    setIsSaving(true);
+    await onSave({ 
+      name, 
+      webhook_type: webhookType, 
+      url, 
+      events: selectedEvents 
+    });
+    setIsSaving(false);
   };
 
   return (
@@ -239,7 +421,7 @@ const WebhookEditor = ({ onSave }: { onSave: () => void }) => {
 
       <div className="space-y-2">
         <Label>Platform Type</Label>
-        <Select value={type} onValueChange={setType}>
+        <Select value={webhookType} onValueChange={setWebhookType}>
           <SelectTrigger className="bg-white/5 border-white/10">
             <SelectValue placeholder="Select platform" />
           </SelectTrigger>
@@ -287,12 +469,16 @@ const WebhookEditor = ({ onSave }: { onSave: () => void }) => {
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button variant="outline" className="border-white/10">
-          <TestTube className="h-4 w-4 mr-2" />
-          Test
+        <Button variant="outline" className="border-white/10" onClick={onCancel}>
+          Cancel
         </Button>
-        <Button onClick={handleSave} className="bg-gradient-to-r from-cyan-500 to-blue-500">
-          Save Webhook
+        <Button 
+          onClick={handleSubmit} 
+          className="bg-gradient-to-r from-cyan-500 to-blue-500"
+          disabled={isSaving || !name || !url}
+        >
+          {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          {webhook ? 'Update Webhook' : 'Save Webhook'}
         </Button>
       </div>
     </div>
