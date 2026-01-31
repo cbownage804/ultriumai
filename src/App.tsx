@@ -198,6 +198,7 @@ const SafeNetConnectorPage = lazy(() => import('@/pages/SafeNetConnectorPage'));
 const SafeNetMSPPage = lazy(() => import('@/pages/SafeNetMSPPage'));
 const SafeNetMobilePage = lazy(() => import('@/pages/SafeNetMobilePage'));
 const HelpdeskFeedback = lazy(() => import('@/pages/helpdesk/HelpdeskFeedback'));
+const SurveyPage = lazy(() => import('@/pages/SurveyPage'));
 const ClientPortalDashboard = lazy(() => import('@/pages/client/ClientPortalDashboard'));
 const ClientTicketsPage = lazy(() => import('@/pages/client/ClientTicketsPage'));
 const ClientBillingPage = lazy(() => import('@/pages/client/ClientBillingPage'));
@@ -342,6 +343,9 @@ function AppRouter() {
         <Route path="/terms" element={<SuspenseWrapper><Terms /></SuspenseWrapper>} />
         <Route path="/privacy" element={<SuspenseWrapper><Privacy /></SuspenseWrapper>} />
         <Route path="/security" element={<SuspenseWrapper><SecurityPolicy /></SuspenseWrapper>} />
+        
+        {/* Public Survey Page (no auth required) */}
+        <Route path="/survey" element={<SuspenseWrapper variant="form"><SurveyPage /></SuspenseWrapper>} />
         <Route path="/onboarding" element={
           <ProtectedRoute>
             <SuspenseWrapper variant="form">

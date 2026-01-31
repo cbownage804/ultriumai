@@ -7,22 +7,23 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Star, 
   MessageSquare,
-  TrendingUp,
-  Users,
   Mail,
   Plus,
   BarChart3,
   Smile,
   Meh,
   Frown,
-  Loader2
+  Loader2,
+  Copy,
+  Send,
+  Link2
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -89,8 +90,18 @@ export function CSATSurveyManager() {
   const [templates, setTemplates] = useState<SurveyTemplate[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [showSendDialog, setShowSendDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
   const [newTemplate, setNewTemplate] = useState({ name: '', triggerEvent: 'ticket_resolved' as const });
+  const [surveyForm, setSurveyForm] = useState({
+    ticketId: '',
+    ticketTitle: '',
+    clientName: '',
+    clientEmail: '',
+    technicianName: '',
+  });
+  const [generatedLink, setGeneratedLink] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -159,9 +170,64 @@ export function CSATSurveyManager() {
     }
   };
 
+  const handleGenerateSurveyLink = async () => {
+    if (!user || !surveyForm.clientName) {
+      toast.error('Client name is required');
+      return;
+    }
+    
+    setIsSending(true);
+    try {
+      // Generate unique token
+      const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
+      const { error } = await (supabase as any)
+        .from('vanguard_survey_tokens')
+        .insert({
+          user_id: user.id,
+          ticket_id: surveyForm.ticketId || null,
+          ticket_title: surveyForm.ticketTitle || null,
+          client_name: surveyForm.clientName,
+          client_email: surveyForm.clientEmail || null,
+          technician_name: surveyForm.technicianName || null,
+          token,
+          expires_at: expiresAt.toISOString(),
+        });
+
+      if (error) throw error;
+
+      const surveyUrl = `${window.location.origin}/survey?token=${token}`;
+      setGeneratedLink(surveyUrl);
+      toast.success('Survey link generated!');
+    } catch (error) {
+      console.error('Error generating survey link:', error);
+      toast.error('Failed to generate survey link');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedLink);
+    toast.success('Link copied to clipboard');
+  };
+
+  const resetSendDialog = () => {
+    setSurveyForm({
+      ticketId: '',
+      ticketTitle: '',
+      clientName: '',
+      clientEmail: '',
+      technicianName: '',
+    });
+    setGeneratedLink('');
+    setShowSendDialog(false);
+  };
+
   // Calculate metrics
   const avgCsat = responses.length > 0 ? responses.reduce((sum, r) => sum + r.rating, 0) / responses.length : 0;
-  const avgNps = responses.length > 0 ? responses.reduce((sum, r) => sum + r.npsScore, 0) / responses.length : 0;
   const promoters = responses.filter(r => r.npsScore >= 9).length;
   const passives = responses.filter(r => r.npsScore >= 7 && r.npsScore < 9).length;
   const detractors = responses.filter(r => r.npsScore < 7).length;
@@ -274,6 +340,103 @@ export function CSATSurveyManager() {
               </CardTitle>
               <CardDescription>Track and analyze customer feedback</CardDescription>
             </div>
+            <Dialog open={showSendDialog} onOpenChange={(open) => { if (!open) resetSendDialog(); else setShowSendDialog(true); }}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send Survey
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Generate Survey Link</DialogTitle>
+                  <DialogDescription>Create a survey link to send to a customer</DialogDescription>
+                </DialogHeader>
+                {!generatedLink ? (
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="clientName">Client Name *</Label>
+                      <Input
+                        id="clientName"
+                        value={surveyForm.clientName}
+                        onChange={(e) => setSurveyForm(prev => ({ ...prev, clientName: e.target.value }))}
+                        placeholder="John Doe"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="clientEmail">Client Email</Label>
+                      <Input
+                        id="clientEmail"
+                        type="email"
+                        value={surveyForm.clientEmail}
+                        onChange={(e) => setSurveyForm(prev => ({ ...prev, clientEmail: e.target.value }))}
+                        placeholder="john@example.com"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="ticketId">Ticket ID</Label>
+                        <Input
+                          id="ticketId"
+                          value={surveyForm.ticketId}
+                          onChange={(e) => setSurveyForm(prev => ({ ...prev, ticketId: e.target.value }))}
+                          placeholder="TKT-001"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="technicianName">Technician</Label>
+                        <Input
+                          id="technicianName"
+                          value={surveyForm.technicianName}
+                          onChange={(e) => setSurveyForm(prev => ({ ...prev, technicianName: e.target.value }))}
+                          placeholder="Tech name"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ticketTitle">Ticket Subject</Label>
+                      <Input
+                        id="ticketTitle"
+                        value={surveyForm.ticketTitle}
+                        onChange={(e) => setSurveyForm(prev => ({ ...prev, ticketTitle: e.target.value }))}
+                        placeholder="Issue description"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4 py-4">
+                    <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Link2 className="h-5 w-5 text-green-500" />
+                        <p className="font-medium text-green-500">Survey Link Generated!</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        This link expires in 7 days. Share it with your customer.
+                      </p>
+                      <div className="flex gap-2">
+                        <Input value={generatedLink} readOnly className="text-xs font-mono" />
+                        <Button variant="outline" size="icon" onClick={copyToClipboard}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <DialogFooter>
+                  {!generatedLink ? (
+                    <>
+                      <Button variant="outline" onClick={resetSendDialog}>Cancel</Button>
+                      <Button onClick={handleGenerateSurveyLink} disabled={isSending || !surveyForm.clientName}>
+                        {isSending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Link2 className="h-4 w-4 mr-2" />}
+                        Generate Link
+                      </Button>
+                    </>
+                  ) : (
+                    <Button onClick={resetSendDialog}>Done</Button>
+                  )}
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
         <CardContent>
