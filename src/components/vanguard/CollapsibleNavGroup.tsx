@@ -1,0 +1,188 @@
+import { useState, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ModuleLogo, ModuleName } from './ModuleLogo';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
+interface NavItem {
+  title: string;
+  path: string;
+  icon: React.ElementType;
+  badge?: string | number;
+}
+
+interface CollapsibleNavGroupProps {
+  header: string;
+  description: string;
+  tooltip: string;
+  module: ModuleName;
+  dashboardPath: string;
+  items: NavItem[];
+  isCollapsed: boolean;
+  onMobileClose: () => void;
+}
+
+const STORAGE_KEY = 'vanguard-nav-collapsed-groups';
+
+export function CollapsibleNavGroup({
+  header,
+  description,
+  tooltip,
+  module,
+  dashboardPath,
+  items,
+  isCollapsed,
+  onMobileClose,
+}: CollapsibleNavGroupProps) {
+  const location = useLocation();
+  
+  // Check if any item in this group is active
+  const isGroupActive = items.some(item => 
+    location.pathname === item.path || location.pathname.startsWith(item.path + '/')
+  );
+
+  // Load initial state from localStorage, default to open if group has active item
+  const [isOpen, setIsOpen] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const collapsed = JSON.parse(saved) as string[];
+        // If this group's header is in the collapsed list, it should be closed
+        // Unless it has an active item
+        if (isGroupActive) return true;
+        return !collapsed.includes(header);
+      }
+    } catch (e) {
+      console.error('Failed to load nav state:', e);
+    }
+    return true; // Default to open
+  });
+
+  // Auto-expand when a child becomes active
+  useEffect(() => {
+    if (isGroupActive && !isOpen) {
+      setIsOpen(true);
+    }
+  }, [isGroupActive, location.pathname]);
+
+  // Save collapsed state to localStorage
+  const handleToggle = (open: boolean) => {
+    setIsOpen(open);
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      let collapsed: string[] = saved ? JSON.parse(saved) : [];
+      
+      if (open) {
+        // Remove from collapsed list
+        collapsed = collapsed.filter(h => h !== header);
+      } else {
+        // Add to collapsed list
+        if (!collapsed.includes(header)) {
+          collapsed.push(header);
+        }
+      }
+      
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(collapsed));
+    } catch (e) {
+      console.error('Failed to save nav state:', e);
+    }
+  };
+
+  const isActive = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
+
+  const renderNavItem = (item: NavItem) => (
+    <NavLink
+      key={item.path}
+      to={item.path}
+      onClick={onMobileClose}
+      className={cn(
+        "flex items-center gap-3 px-4 py-2 text-sm transition-all duration-200 ml-2",
+        "hover:bg-gradient-to-r hover:from-cyan-500/15 hover:via-blue-500/10 hover:to-purple-500/15 text-slate-400 hover:text-cyan-300",
+        isActive(item.path) && "bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-purple-500/20 text-cyan-400 border-l-2 border-cyan-400 shadow-[inset_0_0_20px_rgba(6,182,212,0.1)]"
+      )}
+    >
+      <item.icon className={cn(
+        "h-4 w-4 shrink-0 transition-colors",
+        isActive(item.path) && "text-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)]"
+      )} />
+      <span className="flex-1">{item.title}</span>
+      {item.badge && (
+        <span className="text-[10px] bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 text-white px-2 py-0.5 rounded-full font-bold shadow-lg shadow-purple-500/40 tracking-wide">
+          {item.badge}
+        </span>
+      )}
+    </NavLink>
+  );
+
+  // Collapsed sidebar view - just show module icon
+  if (isCollapsed) {
+    return (
+      <div className="my-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <NavLink
+              to={dashboardPath}
+              onClick={onMobileClose}
+              className="flex justify-center cursor-pointer hover:bg-cyan-500/10 rounded-md py-1 mx-1 transition-all duration-200"
+            >
+              <ModuleLogo module={module} size="sm" glow />
+            </NavLink>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="bg-black border-cyan-500/40 text-slate-200 shadow-xl shadow-cyan-500/10">
+            <div className="flex items-center gap-2">
+              <ModuleLogo module={module} size="md" glow />
+              <div>
+                <p className="text-xs font-semibold text-cyan-400">{header}</p>
+                <p className="text-[10px] text-slate-400">{description}</p>
+              </div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    );
+  }
+
+  // Expanded sidebar view with collapsible group
+  return (
+    <Collapsible open={isOpen} onOpenChange={handleToggle} className="mt-2">
+      <CollapsibleTrigger asChild>
+        <div
+          className={cn(
+            "px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-purple-500/10 transition-all duration-200 rounded-md mx-1 group",
+            isGroupActive && "bg-gradient-to-r from-cyan-500/5 to-purple-500/5"
+          )}
+        >
+          <ModuleLogo module={module} size="md" glow className="shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1">
+              <span className={cn(
+                "text-[10px] font-bold tracking-widest block drop-shadow-[0_0_4px_rgba(6,182,212,0.3)] transition-colors",
+                isGroupActive ? "text-cyan-300" : "text-cyan-400"
+              )}>
+                {header}
+              </span>
+            </div>
+            <span className="text-[9px] text-slate-500 block mt-0.5 truncate">
+              {description}
+            </span>
+          </div>
+          {isOpen ? (
+            <ChevronDown className="h-3.5 w-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors shrink-0" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors shrink-0" />
+          )}
+        </div>
+      </CollapsibleTrigger>
+      
+      <CollapsibleContent className="animate-accordion-down">
+        <div className="py-1">
+          {items.map(renderNavItem)}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}

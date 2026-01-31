@@ -24,7 +24,8 @@ import {
   Target,
   Activity,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -32,6 +33,7 @@ import { getVanguardBasePath } from '@/utils/subdomain';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import vanguardLogo from '@/assets/vanguard-logo.png';
 import { ModuleLogo, ModuleName } from './ModuleLogo';
+import { CollapsibleNavGroup } from './CollapsibleNavGroup';
 
 interface NavItem {
   title: string;
@@ -281,65 +283,38 @@ export function VanguardNavigation() {
 
           {/* Navigation Items */}
           <nav className="flex-1 py-3 overflow-y-auto">
+            {/* Command Palette Trigger */}
+            {!isCollapsed && (
+              <button
+                onClick={() => {
+                  const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true });
+                  document.dispatchEvent(event);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-2 mb-2 text-sm text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-all rounded-md mx-1"
+              >
+                <Search className="h-4 w-4" />
+                <span className="flex-1 text-left">Search...</span>
+                <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400">⌘K</kbd>
+              </button>
+            )}
+            
             {/* Vanguard Command */}
             <TooltipProvider delayDuration={300}>
               {renderNavItem(commandItem)}
 
-              {/* Grouped Navigation */}
+              {/* Grouped Navigation with Collapsible Groups */}
               {navGroups.map((group) => (
-                <div key={group.header} className="mt-4">
-                  {/* Section Header with Module Logo - Clickable */}
-                  {!isCollapsed ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <NavLink
-                          to={group.dashboardPath}
-                          onClick={() => setIsMobileOpen(false)}
-                          className="px-4 py-2 flex items-start gap-2 cursor-pointer hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-purple-500/10 transition-all duration-200 rounded-md mx-1"
-                        >
-                          <ModuleLogo module={group.module} size="md" glow className="mt-0.5 shrink-0" />
-                          <div>
-                            <span className="text-[10px] font-bold tracking-widest text-cyan-400 block drop-shadow-[0_0_4px_rgba(6,182,212,0.3)] hover:text-cyan-300 transition-colors">
-                              {group.header}
-                            </span>
-                            <span className="text-[9px] text-slate-500 block mt-0.5">
-                              {group.description}
-                            </span>
-                          </div>
-                        </NavLink>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="bg-black border-cyan-500/40 text-slate-200 shadow-xl shadow-cyan-500/10">
-                        <div className="flex items-center gap-2">
-                          <ModuleLogo module={group.module} size="lg" glow />
-                          <p className="text-xs max-w-[200px]">{group.tooltip}</p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <NavLink
-                          to={group.dashboardPath}
-                          onClick={() => setIsMobileOpen(false)}
-                          className="my-2 flex justify-center cursor-pointer hover:bg-cyan-500/10 rounded-md py-1 mx-1 transition-all duration-200"
-                        >
-                          <ModuleLogo module={group.module} size="sm" glow />
-                        </NavLink>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="bg-black border-cyan-500/40 text-slate-200 shadow-xl shadow-cyan-500/10">
-                        <div className="flex items-center gap-2">
-                          <ModuleLogo module={group.module} size="md" glow />
-                          <div>
-                            <p className="text-xs font-semibold text-cyan-400">{group.header}</p>
-                            <p className="text-[10px] text-slate-400">{group.description}</p>
-                          </div>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                  {/* Section Items */}
-                  {group.items.map(renderNavItem)}
-                </div>
+                <CollapsibleNavGroup
+                  key={group.header}
+                  header={group.header}
+                  description={group.description}
+                  tooltip={group.tooltip}
+                  module={group.module}
+                  dashboardPath={group.dashboardPath}
+                  items={group.items}
+                  isCollapsed={isCollapsed}
+                  onMobileClose={() => setIsMobileOpen(false)}
+                />
               ))}
 
               {/* Divider */}

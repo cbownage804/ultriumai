@@ -1,5 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { VanguardNavigation } from './VanguardNavigation';
+import { VanguardCommandPalette } from './VanguardCommandPalette';
+import { VanguardBreadcrumbs } from './VanguardBreadcrumbs';
 import { Toaster } from '@/components/ui/toaster';
 import { VanguardAccessGate } from './VanguardAccessGate';
 
@@ -10,6 +12,9 @@ export function VanguardLayout() {
       <div className="dark min-h-screen bg-[#050a0a]">
         {/* Subtle gradient overlay with cyan and purple */}
         <div className="fixed inset-0 bg-gradient-to-br from-cyan-500/[0.02] via-purple-500/[0.01] to-teal-500/[0.02] pointer-events-none" />
+        
+        {/* Global Command Palette */}
+        <VanguardCommandPalette />
         
         {/* Navigation Sidebar */}
         <VanguardNavigation />

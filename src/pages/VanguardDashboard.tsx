@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   ChevronDown, Download, RefreshCw, Search, HelpCircle, Bell, MessageCircle,
-  Maximize2, MoreHorizontal, Shield, Play
+  Maximize2, MoreHorizontal, Shield, Play, Command
 } from "lucide-react";
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
@@ -18,6 +18,8 @@ import { ProductTour, useProductTour } from '@/components/onboarding';
 import { VANGUARD_TOUR_STEPS } from '@/config/productTours';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { VanguardUserMenu } from "@/components/vanguard/VanguardUserMenu";
+import { WidgetCustomizer } from "@/components/vanguard/WidgetCustomizer";
+import { useWidgetLayout } from "@/hooks/useWidgetLayout";
 
 // Dashboard widgets
 import { TicketStatusWidget } from "@/components/vanguard/dashboard/TicketStatusWidget";
@@ -36,6 +38,7 @@ const VanguardDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { isCompleted: isTourCompleted, resetTour } = useProductTour('vanguard-command');
   const [showTour, setShowTour] = useState(false);
+  const { isWidgetVisible, setIsCustomizing } = useWidgetLayout();
   
   // Real data state
   const [ticketStats, setTicketStats] = useState({ open: 0, pending: 0, dueToday: 0, overdue: 0 });
@@ -45,6 +48,12 @@ const VanguardDashboard = () => {
   const [criticalTickets, setCriticalTickets] = useState<any[]>([]);
   const [ticketActivity, setTicketActivity] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Open command palette
+  const openCommandPalette = () => {
+    const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true });
+    document.dispatchEvent(event);
+  };
 
   // Check URL params to see if tour should start
   useEffect(() => {
@@ -253,16 +262,16 @@ const VanguardDashboard = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Search */}
+          {/* Search - Opens Command Palette */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cyan-500/60" />
-            <Input
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-[300px] h-9 bg-black/60 border-cyan-500/30 text-slate-200 placeholder:text-slate-500 focus:border-cyan-400 focus:ring-cyan-400/20"
-            />
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+            <button
+              onClick={openCommandPalette}
+              className="w-[300px] h-9 pl-9 pr-12 bg-black/60 border border-cyan-500/30 rounded-md text-left text-slate-500 hover:border-cyan-400 hover:text-slate-400 transition-colors"
+            >
+              Search...
+            </button>
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400">⌘K</kbd>
           </div>
         </div>
 
@@ -339,6 +348,7 @@ const VanguardDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <WidgetCustomizer />
             <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-purple-400 hover:bg-purple-500/15">
               <Maximize2 className="h-4 w-4" />
             </Button>
@@ -355,15 +365,19 @@ const VanguardDashboard = () => {
 
         {/* Top Row: Ticket Status + Pursuit Alert Status */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-          <div className="lg:col-span-3" data-tour="ticket-status">
-            <TicketStatusWidget {...ticketStats} />
-          </div>
-          <div data-tour="alert-status">
-            <div className="mb-2">
-              <h2 className="text-xs font-bold tracking-widest text-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]">VANGUARD PURSUIT — ACTIVE THREATS</h2>
+          {isWidgetVisible('ticket-status') && (
+            <div className="lg:col-span-3" data-tour="ticket-status">
+              <TicketStatusWidget {...ticketStats} />
             </div>
-            <AlertStatusWidget {...alertStats} />
-          </div>
+          )}
+          {isWidgetVisible('alert-status') && (
+            <div data-tour="alert-status">
+              <div className="mb-2">
+                <h2 className="text-xs font-bold tracking-widest text-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]">VANGUARD PURSUIT — ACTIVE THREATS</h2>
+              </div>
+              <AlertStatusWidget {...alertStats} />
+            </div>
+          )}
         </div>
 
         {/* Vanguard Horizon — Device Health */}
@@ -373,22 +387,30 @@ const VanguardDashboard = () => {
 
         {/* Middle Row: Availability + Recent Alerts + Ticket Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-          <div data-tour="availability-monitoring">
-            <AvailabilityMonitoringWidget devices={agents} />
-          </div>
-          <div data-tour="recent-alerts">
-            <RecentAlertsWidget alerts={recentAlerts} />
-          </div>
-          <div data-tour="ticket-activity">
-            <TicketActivityWidget data={ticketActivity} />
-          </div>
+          {isWidgetVisible('availability') && (
+            <div data-tour="availability-monitoring">
+              <AvailabilityMonitoringWidget devices={agents} />
+            </div>
+          )}
+          {isWidgetVisible('recent-alerts') && (
+            <div data-tour="recent-alerts">
+              <RecentAlertsWidget alerts={recentAlerts} />
+            </div>
+          )}
+          {isWidgetVisible('ticket-activity') && (
+            <div data-tour="ticket-activity">
+              <TicketActivityWidget data={ticketActivity} />
+            </div>
+          )}
         </div>
 
         {/* Bottom Row: Customer Tickets + Map + Critical Tickets */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div data-tour="customer-tickets">
-            <CustomerTicketsWidget customers={customerTickets} />
-          </div>
+          {isWidgetVisible('customer-tickets') && (
+            <div data-tour="customer-tickets">
+              <CustomerTicketsWidget customers={customerTickets} />
+            </div>
+          )}
           {/* Map placeholder */}
           <div className="bg-black/80 rounded-xl border border-cyan-500/30 p-4 backdrop-blur-sm shadow-xl shadow-cyan-500/5">
             <h3 className="text-sm font-medium text-cyan-400 mb-3">Map overview</h3>
@@ -396,9 +418,11 @@ const VanguardDashboard = () => {
               Map visualization
             </div>
           </div>
-          <div data-tour="critical-tickets">
-            <CriticalTicketsWidget tickets={criticalTickets} />
-          </div>
+          {isWidgetVisible('critical-tickets') && (
+            <div data-tour="critical-tickets">
+              <CriticalTicketsWidget tickets={criticalTickets} />
+            </div>
+          )}
         </div>
       </div>
 
