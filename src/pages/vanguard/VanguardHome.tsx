@@ -144,6 +144,7 @@ export default function VanguardHome() {
   ];
 
   const advancedModules = [
+    { title: 'Analytics Hub', icon: LineChart, path: `${basePath}/analytics`, gradient: 'from-cyan-500 to-blue-600' },
     { title: 'Threat Intelligence', icon: Globe, path: `${basePath}/threat-intel`, gradient: 'from-red-600 to-orange-500' },
     { title: 'User Behavior', icon: Users, path: `${basePath}/user-behavior`, gradient: 'from-violet-500 to-purple-600' },
     { title: 'Dark Web Monitor', icon: Eye, path: `${basePath}/dark-web`, gradient: 'from-gray-700 to-gray-900' },

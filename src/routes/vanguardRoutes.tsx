@@ -50,6 +50,7 @@ const BackupMonitoring = lazy(() => import('@/components/vanguard/BackupMonitori
 const NetworkTopologyMap = lazy(() => import('@/components/vanguard/NetworkTopologyMap').then(m => ({ default: m.NetworkTopologyMap })));
 const AssetInventory = lazy(() => import('@/components/vanguard/AssetInventory').then(m => ({ default: m.AssetInventory })));
 const ExecutiveDashboard = lazy(() => import('@/components/vanguard/ExecutiveDashboard').then(m => ({ default: m.ExecutiveDashboard })));
+const AnalyticsHub = lazy(() => import('@/components/vanguard/analytics/AnalyticsHub').then(m => ({ default: m.AnalyticsHub })));
 const ComplianceScorecard = lazy(() => import('@/components/vanguard/ComplianceScorecard').then(m => ({ default: m.ComplianceScorecard })));
 const CustomReportBuilder = lazy(() => import('@/components/vanguard/CustomReportBuilder').then(m => ({ default: m.CustomReportBuilder })));
 const MultiTenantManager = lazy(() => import('@/components/vanguard/MultiTenantManager').then(m => ({ default: m.MultiTenantManager })));
@@ -197,6 +198,7 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-scripts" path="scripts" element={<LazyProtectedPage component={HorizonScriptsPage} />} />,
   <Route key="vanguard-automation" path="automation" element={<LazyProtectedPage component={HorizonAutomationPage} />} />,
   <Route key="vanguard-executive" path="executive" element={<LazyProtectedPage component={ExecutiveDashboard} />} />,
+  <Route key="vanguard-analytics-hub" path="analytics" element={<LazyProtectedPage component={AnalyticsHub} />} />,
   <Route key="vanguard-scorecard" path="scorecard" element={<LazyProtectedPage component={ComplianceScorecard} />} />,
   <Route key="vanguard-report-builder" path="report-builder" element={<LazyProtectedPage component={CustomReportBuilder} />} />,
   <Route key="vanguard-tenants" path="tenants" element={<LazyProtectedPage component={MultiTenantManager} />} />,
