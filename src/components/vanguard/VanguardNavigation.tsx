@@ -103,6 +103,11 @@ export function VanguardNavigation() {
         { title: 'Helpdesk', path: `${basePath}/helpdesk`, icon: Ticket },
         { title: 'Tickets', path: `${basePath}/tickets`, icon: Ticket },
         { title: 'Customers', path: `${basePath}/customers`, icon: Building2 },
+        { title: 'SLA Management', path: `${basePath}/sla`, icon: Activity },
+        { title: 'Workflows', path: `${basePath}/workflows`, icon: Settings },
+        { title: 'Email Integration', path: `${basePath}/email-integration`, icon: Bell },
+        { title: 'Time & Billing', path: `${basePath}/time-billing`, icon: CreditCard },
+        { title: 'CSAT Surveys', path: `${basePath}/csat`, icon: Gift },
       ]
     },
     {
@@ -133,7 +138,12 @@ export function VanguardNavigation() {
       module: 'ledger',
       dashboardPath: `${basePath}/reports`,
       items: [
-        { title: 'Reports', path: `${basePath}/reports`, icon: BarChart3 },
+        { title: 'Reports Dashboard', path: `${basePath}/reports`, icon: BarChart3 },
+        { title: 'Helpdesk Reports', path: `${basePath}/helpdesk-reports`, icon: Ticket },
+        { title: 'Security Analytics', path: `${basePath}/security-reports`, icon: Shield },
+        { title: 'Scheduled Scans', path: `${basePath}/scheduled-scans`, icon: Activity },
+        { title: 'Compliance', path: `${basePath}/compliance-reports`, icon: FileText },
+        { title: 'Attack Paths', path: `${basePath}/attack-paths`, icon: Target },
       ]
     },
     {
@@ -143,10 +153,12 @@ export function VanguardNavigation() {
       module: 'cortex',
       dashboardPath: `${basePath}/cortex`,
       items: [
-        { title: 'AI Command Center', path: `${basePath}/ai-command`, icon: Bot, badge: 'AI' },
-        { title: 'KB Generator', path: `${basePath}/ai-knowledge`, icon: Wand2 },
-        { title: 'Session Summaries', path: `${basePath}/ai-sessions`, icon: FileText },
-        { title: 'AI Analytics', path: `${basePath}/ai-analytics`, icon: Sparkles },
+        { title: 'Cortex Hub', path: `${basePath}/cortex`, icon: Sparkles },
+        { title: 'AI Summarizer', path: `${basePath}/cortex-summarizer`, icon: FileText },
+        { title: 'Pattern Detection', path: `${basePath}/cortex-patterns`, icon: Activity },
+        { title: 'KB Generator', path: `${basePath}/cortex-kb`, icon: Wand2 },
+        { title: 'Smart Router', path: `${basePath}/cortex-router`, icon: Network },
+        { title: 'AI Analytics', path: `${basePath}/cortex-analytics`, icon: BarChart3 },
       ]
     },
   ];

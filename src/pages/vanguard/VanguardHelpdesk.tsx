@@ -1,22 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { HelpdeskDashboard } from '@/components/dashboards/HelpdeskDashboard';
-import { VanguardTabs, VanguardTabContent, VanguardTab } from '@/components/vanguard/shared';
-import { SLAManagementDashboard, EmailIntegrationHub, CSATSurveyManager, TimeTrackingBilling, TicketWorkflowEngine } from '@/components/vanguard/helpdesk';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
-import { Ticket, Clock, Workflow, Mail, DollarSign, Star } from 'lucide-react';
-
-const helpdeskTabs: VanguardTab[] = [
-  { id: 'tickets', label: 'Tickets', icon: Ticket },
-  { id: 'sla', label: 'SLA Management', icon: Clock },
-  { id: 'workflows', label: 'Workflows', icon: Workflow },
-  { id: 'email', label: 'Email Integration', icon: Mail },
-  { id: 'time', label: 'Time & Billing', icon: DollarSign },
-  { id: 'csat', label: 'CSAT Surveys', icon: Star },
-];
 
 export default function VanguardHelpdesk() {
-  const [activeTab, setActiveTab] = useState('tickets');
-
   useEffect(() => {
     document.title = 'Vanguard Response | Ultrium Vanguard';
   }, []);
@@ -33,31 +19,7 @@ export default function VanguardHelpdesk() {
         </div>
       </div>
       
-      <VanguardTabs
-        tabs={helpdeskTabs}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        colorTheme="purple"
-      >
-        <VanguardTabContent value="tickets" className="mt-6">
-          <HelpdeskDashboard />
-        </VanguardTabContent>
-        <VanguardTabContent value="sla" className="mt-6">
-          <SLAManagementDashboard />
-        </VanguardTabContent>
-        <VanguardTabContent value="workflows" className="mt-6">
-          <TicketWorkflowEngine />
-        </VanguardTabContent>
-        <VanguardTabContent value="email" className="mt-6">
-          <EmailIntegrationHub />
-        </VanguardTabContent>
-        <VanguardTabContent value="time" className="mt-6">
-          <TimeTrackingBilling />
-        </VanguardTabContent>
-        <VanguardTabContent value="csat" className="mt-6">
-          <CSATSurveyManager />
-        </VanguardTabContent>
-      </VanguardTabs>
+      <HelpdeskDashboard />
     </div>
   );
 }
