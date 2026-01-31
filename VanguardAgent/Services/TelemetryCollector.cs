@@ -130,7 +130,182 @@ public class TelemetryCollector
         }
         catch { }
 
+        // Auto-detect remote access tools
+        DetectRemoteAccessTools(info);
+
         return info;
+    }
+
+    /// <summary>
+    /// Detect installed remote access tools and their IDs
+    /// </summary>
+    private void DetectRemoteAccessTools(DeviceInfo info)
+    {
+        // Detect RustDesk
+        info.RustDeskId = DetectRustDeskId();
+        info.RustDeskRelayServer = DetectRustDeskRelay();
+
+        // Detect AnyDesk
+        info.AnyDeskId = DetectAnyDeskId();
+
+        // Detect TeamViewer
+        info.TeamViewerId = DetectTeamViewerId();
+    }
+
+    /// <summary>
+    /// Detect RustDesk ID from config file or registry
+    /// </summary>
+    private string? DetectRustDeskId()
+    {
+        try
+        {
+            // Method 1: Check RustDesk config file (portable or installed)
+            var rustdeskPaths = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RustDesk", "config", "RustDesk.toml"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RustDesk", "config", "RustDesk.toml"),
+                @"C:\Program Files\RustDesk\RustDesk.toml",
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "rustdesk", "RustDesk.toml")
+            };
+
+            foreach (var path in rustdeskPaths)
+            {
+                if (File.Exists(path))
+                {
+                    var content = File.ReadAllText(path);
+                    // Look for id = "123456789" pattern
+                    var match = System.Text.RegularExpressions.Regex.Match(content, @"id\s*=\s*""?(\d{9,})""?");
+                    if (match.Success)
+                    {
+                        return match.Groups[1].Value;
+                    }
+                }
+            }
+
+            // Method 2: Check RustDesk2.toml (newer versions)
+            var rustdesk2Paths = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RustDesk", "config", "RustDesk2.toml"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RustDesk", "config", "RustDesk2.toml"),
+            };
+
+            foreach (var path in rustdesk2Paths)
+            {
+                if (File.Exists(path))
+                {
+                    var content = File.ReadAllText(path);
+                    var match = System.Text.RegularExpressions.Regex.Match(content, @"id\s*=\s*""?(\d{9,})""?");
+                    if (match.Success)
+                    {
+                        return match.Groups[1].Value;
+                    }
+                }
+            }
+
+            // Method 3: Try reading from registry (some installations store here)
+            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\RustDesk");
+            var regId = key?.GetValue("Id")?.ToString();
+            if (!string.IsNullOrEmpty(regId)) return regId;
+        }
+        catch { }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Detect RustDesk relay server configuration
+    /// </summary>
+    private string? DetectRustDeskRelay()
+    {
+        try
+        {
+            var configPaths = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RustDesk", "config", "RustDesk.toml"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RustDesk", "config", "RustDesk.toml"),
+            };
+
+            foreach (var path in configPaths)
+            {
+                if (File.Exists(path))
+                {
+                    var content = File.ReadAllText(path);
+                    // Look for relay-server or custom-rendezvous-server
+                    var match = System.Text.RegularExpressions.Regex.Match(content, @"(?:relay-server|custom-rendezvous-server)\s*=\s*""([^""]+)""");
+                    if (match.Success)
+                    {
+                        return match.Groups[1].Value;
+                    }
+                }
+            }
+        }
+        catch { }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Detect AnyDesk ID from config
+    /// </summary>
+    private string? DetectAnyDeskId()
+    {
+        try
+        {
+            // AnyDesk stores ID in system.conf or service.conf
+            var anydeskPaths = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "AnyDesk", "system.conf"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "AnyDesk", "system.conf"),
+            };
+
+            foreach (var path in anydeskPaths)
+            {
+                if (File.Exists(path))
+                {
+                    var content = File.ReadAllText(path);
+                    // Look for ad.anynet.id= pattern
+                    var match = System.Text.RegularExpressions.Regex.Match(content, @"ad\.anynet\.id=(\d+)");
+                    if (match.Success)
+                    {
+                        return match.Groups[1].Value;
+                    }
+                }
+            }
+        }
+        catch { }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Detect TeamViewer ID from registry
+    /// </summary>
+    private string? DetectTeamViewerId()
+    {
+        try
+        {
+            // TeamViewer stores ClientID in registry
+            var regPaths = new[]
+            {
+                @"SOFTWARE\TeamViewer",
+                @"SOFTWARE\WOW6432Node\TeamViewer"
+            };
+
+            foreach (var regPath in regPaths)
+            {
+                using var key = Registry.LocalMachine.OpenSubKey(regPath);
+                var clientId = key?.GetValue("ClientID")?.ToString();
+                if (!string.IsNullOrEmpty(clientId)) return clientId;
+            }
+
+            // Try current user
+            using var userKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\TeamViewer");
+            var userId = userKey?.GetValue("ClientID")?.ToString();
+            if (!string.IsNullOrEmpty(userId)) return userId;
+        }
+        catch { }
+
+        return null;
     }
 
     /// <summary>
