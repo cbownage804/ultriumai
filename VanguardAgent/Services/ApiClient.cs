@@ -200,6 +200,24 @@ public class ApiClient
             return false;
         }
     }
+
+    /// <summary>
+    /// Send security event to XDR engine (from BehavioralMonitor)
+    /// </summary>
+    public async Task<bool> SendSecurityEventAsync(object threatData)
+    {
+        try
+        {
+            SetHeaders();
+            var content = new StringContent(JsonConvert.SerializeObject(threatData), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint, content);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }
 
 // API Models
