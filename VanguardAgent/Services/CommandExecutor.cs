@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 
 namespace VanguardAgent.Services;
 
-public class CommandExecutor
+public partial class CommandExecutor
 {
     private readonly ConfigService _configService;
 
