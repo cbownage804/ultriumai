@@ -62,6 +62,7 @@ export function EventViewer({ agentId, sendCommand }: EventViewerProps) {
   const [logType, setLogType] = useState<'all' | 'Application' | 'System' | 'Security'>('all');
   const [levelFilter, setLevelFilter] = useState<'all' | 'error' | 'warning' | 'information' | 'critical'>('all');
   const [selectedEvent, setSelectedEvent] = useState<EventLog | null>(null);
+  const [lastLoadTime, setLastLoadTime] = useState<Date | null>(null);
 
   const loadEvents = async () => {
     setIsLoading(true);
@@ -76,6 +77,10 @@ export function EventViewer({ agentId, sendCommand }: EventViewerProps) {
           ...e,
           timestamp: new Date(e.timestamp)
         })));
+        setLastLoadTime(new Date());
+      } else if (result?.pending) {
+        // Command queued but agent offline
+        toast.info('Command queued - waiting for agent response');
       }
     } catch (err) {
       // No data - show empty state
@@ -84,6 +89,11 @@ export function EventViewer({ agentId, sendCommand }: EventViewerProps) {
       setIsLoading(false);
     }
   };
+
+  // Auto-load on mount
+  useEffect(() => {
+    loadEvents();
+  }, [agentId]);
 
   const filteredEvents = events.filter(e => {
     const matchesSearch = e.message.toLowerCase().includes(searchQuery.toLowerCase()) ||

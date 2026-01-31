@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,9 +23,10 @@ import {
   ChevronDown,
   Folder,
   File,
-  RefreshCw,
   Search,
   AlertTriangle,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -47,71 +48,29 @@ interface RegistryEditorProps {
   sendCommand: (cmd: string, payload?: any) => Promise<any>;
 }
 
-// Demo registry structure
-const demoRegistry: RegistryKey[] = [
-  {
-    name: 'HKEY_LOCAL_MACHINE',
-    path: 'HKLM',
-    children: [
-      {
-        name: 'SOFTWARE',
-        path: 'HKLM\\SOFTWARE',
-        children: [
-          {
-            name: 'Microsoft',
-            path: 'HKLM\\SOFTWARE\\Microsoft',
-            children: [
-              {
-                name: 'Windows',
-                path: 'HKLM\\SOFTWARE\\Microsoft\\Windows',
-                values: [
-                  { name: 'CurrentVersion', type: 'REG_SZ', data: '10.0' },
-                  { name: 'BuildNumber', type: 'REG_DWORD', data: '22621' },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      {
-        name: 'SYSTEM',
-        path: 'HKLM\\SYSTEM',
-        children: [
-          {
-            name: 'CurrentControlSet',
-            path: 'HKLM\\SYSTEM\\CurrentControlSet',
-            values: [
-              { name: 'ControlSet', type: 'REG_DWORD', data: '1' },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    name: 'HKEY_CURRENT_USER',
-    path: 'HKCU',
-    children: [
-      {
-        name: 'Software',
-        path: 'HKCU\\Software',
-        children: [],
-      },
-    ],
-  },
+// Root registry hives
+const rootHives: RegistryKey[] = [
+  { name: 'HKEY_LOCAL_MACHINE', path: 'HKLM', children: [] },
+  { name: 'HKEY_CURRENT_USER', path: 'HKCU', children: [] },
+  { name: 'HKEY_CLASSES_ROOT', path: 'HKCR', children: [] },
+  { name: 'HKEY_USERS', path: 'HKU', children: [] },
+  { name: 'HKEY_CURRENT_CONFIG', path: 'HKCC', children: [] },
 ];
 
 function RegistryTreeNode({ 
   node, 
   level = 0, 
-  onSelect 
+  onSelect,
+  loadingPath,
 }: { 
   node: RegistryKey; 
   level?: number; 
   onSelect: (node: RegistryKey) => void;
+  loadingPath?: string | null;
 }) {
   const [isOpen, setIsOpen] = useState(level < 1);
   const hasChildren = node.children && node.children.length > 0;
+  const isLoading = loadingPath === node.path;
 
   return (
     <div>
@@ -121,10 +80,12 @@ function RegistryTreeNode({
           style={{ paddingLeft: `${level * 16 + 8}px` }}
           onClick={() => {
             onSelect(node);
-            if (hasChildren) setIsOpen(!isOpen);
+            setIsOpen(!isOpen);
           }}
         >
-          {hasChildren ? (
+          {isLoading ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : hasChildren || level === 0 ? (
             <CollapsibleTrigger asChild>
               <Button variant="ghost" size="icon" className="h-4 w-4 p-0">
                 {isOpen ? (
@@ -135,10 +96,10 @@ function RegistryTreeNode({
               </Button>
             </CollapsibleTrigger>
           ) : (
-            <span className="w-4" />
+            <ChevronRight className="h-3 w-3 text-muted-foreground" />
           )}
           <Folder className="h-4 w-4 text-yellow-500" />
-          <span className="text-sm">{node.name}</span>
+          <span className="text-sm truncate">{node.name}</span>
         </div>
         {hasChildren && (
           <CollapsibleContent>
@@ -148,6 +109,7 @@ function RegistryTreeNode({
                 node={child}
                 level={level + 1}
                 onSelect={onSelect}
+                loadingPath={loadingPath}
               />
             ))}
           </CollapsibleContent>
@@ -158,40 +120,74 @@ function RegistryTreeNode({
 }
 
 export function RegistryEditor({ agentId, sendCommand }: RegistryEditorProps) {
+  const [registryTree, setRegistryTree] = useState<RegistryKey[]>(rootHives);
   const [selectedKey, setSelectedKey] = useState<RegistryKey | null>(null);
   const [searchPath, setSearchPath] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingPath, setLoadingPath] = useState<string | null>(null);
+
+  const loadRegistryKey = async (path: string): Promise<RegistryKey | null> => {
+    setLoadingPath(path);
+    try {
+      const result = await sendCommand('read_registry', { path });
+      if (result?.keys || result?.values) {
+        return {
+          name: path.split('\\').pop() || path,
+          path,
+          children: result.keys?.map((k: string) => ({
+            name: k,
+            path: `${path}\\${k}`,
+            children: [],
+          })) || [],
+          values: result.values || [],
+        };
+      }
+      return null;
+    } catch (err) {
+      console.error('Failed to load registry key:', err);
+      return null;
+    } finally {
+      setLoadingPath(null);
+    }
+  };
 
   const handleNavigate = async () => {
     if (!searchPath.trim()) return;
     
     setIsLoading(true);
     try {
-      const result = await sendCommand('read_registry', { path: searchPath });
-      if (result?.values) {
-        setSelectedKey({
-          name: searchPath.split('\\').pop() || searchPath,
-          path: searchPath,
-          values: result.values,
-        });
+      const result = await loadRegistryKey(searchPath);
+      if (result) {
+        setSelectedKey(result);
+        toast.success('Registry key loaded');
+      } else {
+        toast.error('Registry key not found or inaccessible');
       }
-      toast.success('Registry key loaded');
-    } catch (err) {
-      toast.error('Failed to read registry key');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleSelectKey = async (node: RegistryKey) => {
+    setSelectedKey(node);
+    if (!node.values || node.values.length === 0) {
+      const updated = await loadRegistryKey(node.path);
+      if (updated) {
+        setSelectedKey(updated);
+      }
+    }
+  };
+
   const getTypeBadge = (type: string) => {
     const colors: Record<string, string> = {
-      'REG_SZ': 'bg-blue-100 text-blue-800',
-      'REG_DWORD': 'bg-green-100 text-green-800',
-      'REG_BINARY': 'bg-purple-100 text-purple-800',
-      'REG_EXPAND_SZ': 'bg-orange-100 text-orange-800',
-      'REG_MULTI_SZ': 'bg-pink-100 text-pink-800',
+      'REG_SZ': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+      'REG_DWORD': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+      'REG_BINARY': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+      'REG_EXPAND_SZ': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+      'REG_MULTI_SZ': 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
+      'REG_QWORD': 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
     };
-    return <Badge className={colors[type] || 'bg-gray-100 text-gray-800'}>{type}</Badge>;
+    return <Badge className={colors[type] || 'bg-muted text-muted-foreground'}>{type}</Badge>;
   };
 
   return (
@@ -215,7 +211,7 @@ export function RegistryEditor({ agentId, sendCommand }: RegistryEditorProps) {
             onKeyDown={(e) => e.key === 'Enter' && handleNavigate()}
           />
           <Button onClick={handleNavigate} disabled={isLoading}>
-            <Search className="h-4 w-4 mr-2" />
+            {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
             Navigate
           </Button>
         </div>
@@ -224,11 +220,12 @@ export function RegistryEditor({ agentId, sendCommand }: RegistryEditorProps) {
         <div className="grid grid-cols-3 gap-4 h-[400px]">
           {/* Tree View */}
           <ScrollArea className="col-span-1 border rounded-lg p-2">
-            {demoRegistry.map((node, i) => (
+            {registryTree.map((node, i) => (
               <RegistryTreeNode
                 key={i}
                 node={node}
-                onSelect={setSelectedKey}
+                onSelect={handleSelectKey}
+                loadingPath={loadingPath}
               />
             ))}
           </ScrollArea>
@@ -239,7 +236,8 @@ export function RegistryEditor({ agentId, sendCommand }: RegistryEditorProps) {
               <div className="p-3">
                 <div className="flex items-center gap-2 mb-3 pb-2 border-b">
                   <Folder className="h-4 w-4 text-yellow-500" />
-                  <span className="font-mono text-sm text-muted-foreground">{selectedKey.path}</span>
+                  <span className="font-mono text-sm text-muted-foreground truncate">{selectedKey.path}</span>
+                  {loadingPath === selectedKey.path && <Loader2 className="h-4 w-4 animate-spin" />}
                 </div>
                 <ScrollArea className="h-[340px]">
                   {selectedKey.values && selectedKey.values.length > 0 ? (
@@ -256,19 +254,21 @@ export function RegistryEditor({ agentId, sendCommand }: RegistryEditorProps) {
                           <TableRow key={i}>
                             <TableCell className="font-medium">
                               <div className="flex items-center gap-2">
-                                <File className="h-4 w-4 text-gray-400" />
+                                <File className="h-4 w-4 text-muted-foreground" />
                                 {value.name || '(Default)'}
                               </div>
                             </TableCell>
                             <TableCell>{getTypeBadge(value.type)}</TableCell>
-                            <TableCell className="font-mono text-sm">{value.data}</TableCell>
+                            <TableCell className="font-mono text-sm max-w-[200px] truncate" title={value.data}>
+                              {value.data}
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   ) : (
                     <div className="text-center text-muted-foreground py-8">
-                      No values in this key
+                      {loadingPath === selectedKey.path ? 'Loading values...' : 'No values in this key'}
                     </div>
                   )}
                 </ScrollArea>

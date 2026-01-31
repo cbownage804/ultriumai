@@ -94,9 +94,13 @@ export function ProcessManager({ agentId, sendCommand }: ProcessManagerProps) {
     
     setKillingPids(prev => new Set(prev).add(pid));
     try {
-      await sendCommand('kill_process', { pid });
-      toast.success(`Terminated ${name}`);
-      setTimeout(loadProcesses, 1000);
+      const result = await sendCommand('kill_process', { pid });
+      if (result?.pending) {
+        toast.info(`Kill command queued for ${name} - waiting for agent`);
+      } else {
+        toast.success(`Terminated ${name}`);
+      }
+      setTimeout(loadProcesses, 2000);
     } catch (err) {
       toast.error(`Failed to terminate ${name}`);
     } finally {
@@ -113,9 +117,13 @@ export function ProcessManager({ agentId, sendCommand }: ProcessManagerProps) {
     
     setKillingPids(prev => new Set(prev).add(pid));
     try {
-      await sendCommand('kill_process_tree', { pid });
-      toast.success(`Terminated ${name} and children`);
-      setTimeout(loadProcesses, 1000);
+      const result = await sendCommand('kill_process_tree', { pid });
+      if (result?.pending) {
+        toast.info(`Kill tree command queued for ${name} - waiting for agent`);
+      } else {
+        toast.success(`Terminated ${name} and children`);
+      }
+      setTimeout(loadProcesses, 2000);
     } catch (err) {
       toast.error(`Failed to terminate process tree`);
     } finally {
