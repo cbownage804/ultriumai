@@ -25,6 +25,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { getVanguardBasePath } from '@/utils/subdomain';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -63,6 +64,7 @@ interface SavedView {
 export function VanguardDevicesList() {
   const { agents, isLoading, refetch, deleteAgent } = useVanguardAgents();
   const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
 
   // State for toolbar
   const [searchQuery, setSearchQuery] = useState('');
@@ -213,7 +215,7 @@ export function VanguardDevicesList() {
         onSaveView={handleSaveView}
         onLoadView={handleLoadView}
         onRefresh={refetch}
-        onAddDevice={() => navigate('/vanguard/setup')}
+        onAddDevice={() => navigate(`${basePath}/setup`)}
       />
 
       {agents.length === 0 ? (
@@ -224,7 +226,7 @@ export function VanguardDevicesList() {
             <p className="text-muted-foreground mb-4">
               Connect your first Vanguard appliance to start monitoring.
             </p>
-            <Button onClick={() => navigate('/vanguard/setup')}>
+            <Button type="button" onClick={() => navigate(`${basePath}/setup`)}>
               Add Your First Device
             </Button>
           </CardContent>
@@ -237,7 +239,7 @@ export function VanguardDevicesList() {
               agent={agent} 
               isSelected={selectedDevices.includes(agent.id)}
               onSelect={() => toggleSelectDevice(agent.id)}
-              onClick={() => navigate(`/vanguard/devices/${agent.id}`)}
+              onClick={() => navigate(`${basePath}/devices/${agent.id}`)}
               onDelete={() => deleteAgent(agent.id)}
             />
           ))}
@@ -272,7 +274,7 @@ export function VanguardDevicesList() {
                 <TableRow 
                   key={agent.id} 
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => navigate(`/vanguard/devices/${agent.id}`)}
+                  onClick={() => navigate(`${basePath}/devices/${agent.id}`)}
                 >
                   <TableCell onClick={e => e.stopPropagation()}>
                     <Checkbox 

@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger, DropdownMenuSeparator 
 } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
+import { getVanguardBasePath } from '@/utils/subdomain';
 
 interface Device {
   id: string;
@@ -39,6 +40,7 @@ interface OrgDevicesTabProps {
 export const OrgDevicesTab = ({ orgId, orgName, devices, isLoading, onRefresh }: OrgDevicesTabProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
 
   const filteredDevices = devices.filter(device =>
     device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -132,7 +134,7 @@ export const OrgDevicesTab = ({ orgId, orgName, devices, isLoading, onRefresh }:
               </p>
               {!searchQuery && (
                 <Button 
-                  onClick={() => navigate(`/vanguard/setup?client=${orgId}`)}
+                  onClick={() => navigate(`${basePath}/setup?client=${orgId}`)}
                   className="bg-gradient-to-r from-cyan-500 to-purple-600"
                 >
                   <Download className="h-4 w-4 mr-2" />

@@ -235,7 +235,7 @@ export function DevicesToolbar({
           <RefreshCw className="h-4 w-4" />
         </Button>
 
-        <Button size="sm" onClick={onAddDevice}>
+        <Button type="button" size="sm" onClick={onAddDevice}>
           <Plus className="h-4 w-4 mr-2" />
           Add Device
         </Button>
