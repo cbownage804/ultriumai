@@ -116,6 +116,7 @@ const AITicketRoutingPage = lazy(() => import('@/pages/vanguard/AITicketRoutingP
 const EscalationEnginePage = lazy(() => import('@/pages/vanguard/EscalationEnginePage'));
 const CSATSurveyPage = lazy(() => import('@/pages/vanguard/CSATSurveyPage'));
 const ScheduledReportsPage = lazy(() => import('@/pages/vanguard/ScheduledReportsPage'));
+const CortexSettingsPage = lazy(() => import('@/pages/vanguard/CortexSettingsPage'));
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -217,6 +218,7 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-cortex-analytics" path="cortex-analytics" element={<LazyProtectedPage component={CortexAnalyticsPage} />} />,
   <Route key="vanguard-cortex-screen-to-docs" path="cortex-screen-to-docs" element={<LazyProtectedPage component={CortexScreenToDocsPage} />} />,
   <Route key="vanguard-cortex-ai-tools" path="cortex-ai-tools" element={<LazyProtectedPage component={CortexAIToolsPage} />} />,
+  <Route key="vanguard-cortex-settings" path="cortex-settings" element={<LazyProtectedPage component={CortexSettingsPage} />} />,
   // Response module routes
   <Route key="vanguard-sla" path="sla" element={<LazyProtectedPage component={ResponseSLAPage} />} />,
   <Route key="vanguard-workflows" path="workflows" element={<LazyProtectedPage component={ResponseWorkflowsPage} />} />,
