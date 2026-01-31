@@ -16,8 +16,20 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const { messages, stream = false } = await req.json();
-    console.log('Vanguard General Chat - Processing request', { messageCount: messages?.length });
+    const body = await req.json();
+    // Support both 'messages' array and single 'message' string input
+    let messages = body.messages;
+    if (!messages && body.message) {
+      messages = [{ role: 'user', content: body.message }];
+    }
+    if (body.conversationHistory && Array.isArray(body.conversationHistory)) {
+      messages = [...body.conversationHistory, ...(messages || [])];
+    }
+    if (!messages || !Array.isArray(messages)) {
+      messages = [];
+    }
+    const stream = body.stream ?? false;
+    console.log('Vanguard General Chat - Processing request', { messageCount: messages.length });
 
     const systemPrompt = `You are Vanguard AI, a brilliant and versatile AI assistant - think of yourself as ChatGPT, but even friendlier and more helpful.
 

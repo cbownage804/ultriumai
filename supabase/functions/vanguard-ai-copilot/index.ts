@@ -198,8 +198,17 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { messages, context, stream = false, agentId, userId, useTools = true, isFirstMessage = false } = await req.json();
-    console.log('Vanguard AI Copilot - Processing request', { agentId, userId, hasContext: !!context, useTools, isFirstMessage });
+    const body = await req.json();
+    // Support both 'messages' array and single 'message' string input
+    let messages = body.messages;
+    if (!messages && body.message) {
+      messages = [{ role: 'user', content: body.message }];
+    }
+    if (!messages || !Array.isArray(messages)) {
+      messages = [];
+    }
+    const { context, stream = false, agentId, userId, useTools = true, isFirstMessage = false } = body;
+    console.log('Vanguard AI Copilot - Processing request', { agentId, userId, hasContext: !!context, useTools, isFirstMessage, messageCount: messages.length });
 
     // Fetch real security data for context
     let securitySummary = '';
