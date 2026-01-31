@@ -23614,6 +23614,131 @@ export type Database = {
           },
         ]
       }
+      vanguard_calendar_configs: {
+        Row: {
+          access_token_encrypted: string | null
+          calendar_name: string
+          created_at: string
+          id: string
+          last_sync_at: string | null
+          provider: string
+          refresh_token_encrypted: string | null
+          sync_appointments: boolean | null
+          sync_direction: string | null
+          sync_enabled: boolean | null
+          sync_error: string | null
+          sync_on_call: boolean | null
+          sync_ticket_deadlines: boolean | null
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          calendar_name: string
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          provider: string
+          refresh_token_encrypted?: string | null
+          sync_appointments?: boolean | null
+          sync_direction?: string | null
+          sync_enabled?: boolean | null
+          sync_error?: string | null
+          sync_on_call?: boolean | null
+          sync_ticket_deadlines?: boolean | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          calendar_name?: string
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          provider?: string
+          refresh_token_encrypted?: string | null
+          sync_appointments?: boolean | null
+          sync_direction?: string | null
+          sync_enabled?: boolean | null
+          sync_error?: string | null
+          sync_on_call?: boolean | null
+          sync_ticket_deadlines?: boolean | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_calendar_events: {
+        Row: {
+          all_day: boolean | null
+          attendees: Json | null
+          calendar_config_id: string | null
+          created_at: string
+          description: string | null
+          end_time: string
+          event_type: string | null
+          external_event_id: string | null
+          id: string
+          location: string | null
+          related_client_id: string | null
+          related_ticket_id: string | null
+          start_time: string
+          sync_status: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          all_day?: boolean | null
+          attendees?: Json | null
+          calendar_config_id?: string | null
+          created_at?: string
+          description?: string | null
+          end_time: string
+          event_type?: string | null
+          external_event_id?: string | null
+          id?: string
+          location?: string | null
+          related_client_id?: string | null
+          related_ticket_id?: string | null
+          start_time: string
+          sync_status?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          all_day?: boolean | null
+          attendees?: Json | null
+          calendar_config_id?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string
+          event_type?: string | null
+          external_event_id?: string | null
+          id?: string
+          location?: string | null
+          related_client_id?: string | null
+          related_ticket_id?: string | null
+          start_time?: string
+          sync_status?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_calendar_events_calendar_config_id_fkey"
+            columns: ["calendar_config_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_calendar_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vanguard_client_costs: {
         Row: {
           client_id: string | null
@@ -24487,6 +24612,56 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_escalation_events: {
+        Row: {
+          created_at: string
+          escalated_from_tier: number
+          escalated_from_user: string | null
+          escalated_to_tier: number
+          escalated_to_user: string | null
+          escalation_reason: string | null
+          escalation_type: string | null
+          id: string
+          ticket_id: string | null
+          time_in_previous_tier_minutes: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          escalated_from_tier: number
+          escalated_from_user?: string | null
+          escalated_to_tier: number
+          escalated_to_user?: string | null
+          escalation_reason?: string | null
+          escalation_type?: string | null
+          id?: string
+          ticket_id?: string | null
+          time_in_previous_tier_minutes?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          escalated_from_tier?: number
+          escalated_from_user?: string | null
+          escalated_to_tier?: number
+          escalated_to_user?: string | null
+          escalation_reason?: string | null
+          escalation_type?: string | null
+          id?: string
+          ticket_id?: string | null
+          time_in_previous_tier_minutes?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_escalation_events_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_service_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vanguard_escalation_rules: {
         Row: {
           created_at: string
@@ -24636,6 +24811,62 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vanguard_generated_reports: {
+        Row: {
+          created_at: string
+          generated_by: string | null
+          id: string
+          organization_id: string | null
+          pdf_url: string | null
+          period_end: string
+          period_start: string
+          report_data: Json | null
+          report_name: string
+          report_type: string
+          sent_to: Json | null
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generated_by?: string | null
+          id?: string
+          organization_id?: string | null
+          pdf_url?: string | null
+          period_end: string
+          period_start: string
+          report_data?: Json | null
+          report_name: string
+          report_type: string
+          sent_to?: Json | null
+          template_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generated_by?: string | null
+          id?: string
+          organization_id?: string | null
+          pdf_url?: string | null
+          period_end?: string
+          period_start?: string
+          report_data?: Json | null
+          report_name?: string
+          report_type?: string
+          sent_to?: Json | null
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_generated_reports_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_report_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vanguard_honeypot_events: {
         Row: {
@@ -25556,6 +25787,92 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_org_sla_policies: {
+        Row: {
+          auto_escalate_at_percent: number | null
+          business_days: number[] | null
+          business_end_hour: number | null
+          business_hours_only: boolean | null
+          business_start_hour: number | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          notify_manager_at_percent: number | null
+          organization_id: string | null
+          p1_resolution_hours: number | null
+          p1_response_minutes: number | null
+          p2_resolution_hours: number | null
+          p2_response_minutes: number | null
+          p3_resolution_hours: number | null
+          p3_response_minutes: number | null
+          p4_resolution_hours: number | null
+          p4_response_minutes: number | null
+          policy_name: string
+          timezone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_escalate_at_percent?: number | null
+          business_days?: number[] | null
+          business_end_hour?: number | null
+          business_hours_only?: boolean | null
+          business_start_hour?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          notify_manager_at_percent?: number | null
+          organization_id?: string | null
+          p1_resolution_hours?: number | null
+          p1_response_minutes?: number | null
+          p2_resolution_hours?: number | null
+          p2_response_minutes?: number | null
+          p3_resolution_hours?: number | null
+          p3_response_minutes?: number | null
+          p4_resolution_hours?: number | null
+          p4_response_minutes?: number | null
+          policy_name: string
+          timezone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_escalate_at_percent?: number | null
+          business_days?: number[] | null
+          business_end_hour?: number | null
+          business_hours_only?: boolean | null
+          business_start_hour?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          notify_manager_at_percent?: number | null
+          organization_id?: string | null
+          p1_resolution_hours?: number | null
+          p1_response_minutes?: number | null
+          p2_resolution_hours?: number | null
+          p2_response_minutes?: number | null
+          p3_resolution_hours?: number | null
+          p3_response_minutes?: number | null
+          p4_resolution_hours?: number | null
+          p4_response_minutes?: number | null
+          policy_name?: string
+          timezone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_org_sla_policies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vanguard_patch_policies: {
         Row: {
           auto_approve_critical: boolean | null
@@ -26120,6 +26437,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_report_templates: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          custom_css: string | null
+          footer_text: string | null
+          id: string
+          include_sections: Json | null
+          is_scheduled: boolean | null
+          last_generated_at: string | null
+          logo_url: string | null
+          primary_color: string | null
+          recipients: Json | null
+          report_type: string | null
+          schedule_day: number | null
+          schedule_frequency: string | null
+          secondary_color: string | null
+          template_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          custom_css?: string | null
+          footer_text?: string | null
+          id?: string
+          include_sections?: Json | null
+          is_scheduled?: boolean | null
+          last_generated_at?: string | null
+          logo_url?: string | null
+          primary_color?: string | null
+          recipients?: Json | null
+          report_type?: string | null
+          schedule_day?: number | null
+          schedule_frequency?: string | null
+          secondary_color?: string | null
+          template_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          custom_css?: string | null
+          footer_text?: string | null
+          id?: string
+          include_sections?: Json | null
+          is_scheduled?: boolean | null
+          last_generated_at?: string | null
+          logo_url?: string | null
+          primary_color?: string | null
+          recipients?: Json | null
+          report_type?: string | null
+          schedule_day?: number | null
+          schedule_frequency?: string | null
+          secondary_color?: string | null
+          template_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       vanguard_routing_rules: {
         Row: {

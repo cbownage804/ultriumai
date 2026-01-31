@@ -14,3 +14,8 @@ export { AutoEscalationRules } from './AutoEscalationRules';
 export { ShiftHandoffManager } from './ShiftHandoffManager';
 export { SkillBasedRouting } from './SkillBasedRouting';
 export { InternalITPerformance } from './InternalITPerformance';
+// Phase 15 - Advanced Features
+export { OrgSLAPolicies } from './OrgSLAPolicies';
+export { CalendarIntegrations } from './CalendarIntegrations';
+export { EscalationAnalytics } from './EscalationAnalytics';
+export { WhiteLabelReports } from './WhiteLabelReports';
