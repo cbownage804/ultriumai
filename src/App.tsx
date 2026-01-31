@@ -121,6 +121,7 @@ const Features = lazy(() => import('@/pages/Features'));
 const Blog = lazy(() => import('@/pages/Blog'));
 const Documentation = lazy(() => import('@/pages/Documentation'));
 const CreditsPurchase = lazy(() => import('@/pages/CreditsPurchase'));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 
 // Lazy-loaded - Demo pages
 const SafeScanDemoPage = lazy(() => import('@/pages/demos/SafeScanDemoPage'));
@@ -609,6 +610,13 @@ function AppRouter() {
           <ProtectedRoute>
             <SuspenseWrapper variant="form">
               <Profile />
+            </SuspenseWrapper>
+          </ProtectedRoute>
+        } />
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <SuspenseWrapper variant="form">
+              <SettingsPage />
             </SuspenseWrapper>
           </ProtectedRoute>
         } />

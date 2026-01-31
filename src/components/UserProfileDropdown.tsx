@@ -204,6 +204,15 @@ const UserProfileDropdown = () => {
                 <Button 
                   variant="ghost" 
                   size="sm" 
+                  className="w-full justify-start hover:bg-muted/50"
+                  onClick={() => navigate('/settings')}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
                   className="w-full justify-start hover:bg-muted/50 hover:text-destructive"
                   onClick={handleSignOut}
                 >
