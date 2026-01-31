@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  WiX 4 MSI Installer for Vanguard Agent
-  Build: dotnet tool install --global wix
-         wix build VanguardAgent.wxs -o VanguardAgent.msi
--->
+<!-- WiX 4 MSI Installer for Vanguard Agent -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Package Name="Ultrium Vanguard Agent"
            Manufacturer="Ultrium AI"
