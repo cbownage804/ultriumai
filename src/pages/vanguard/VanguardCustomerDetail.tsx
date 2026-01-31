@@ -32,6 +32,7 @@ import { toast } from 'sonner';
 import { getVanguardBasePath } from '@/utils/subdomain';
 import { Map, Monitor, Users } from 'lucide-react';
 import { CustomerTicketsTab } from '@/components/vanguard/CustomerTicketsTab';
+import { CustomerAgentDownload } from '@/components/vanguard/CustomerAgentDownload';
 
 // Mock customer data
 const mockCustomer = {
@@ -397,7 +398,14 @@ export default function VanguardCustomerDetail() {
           </TabsContent>
 
           {/* Devices Tab */}
-          <TabsContent value="devices" className="mt-0">
+          <TabsContent value="devices" className="mt-0 space-y-6">
+            {/* Agent Download Section */}
+            <CustomerAgentDownload 
+              customerId={customerId || ''} 
+              customerName={customer.name} 
+            />
+            
+            {/* Devices List */}
             <Card className="bg-black/40 border-cyan-500/20">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-white">Devices ({mockDevices.length})</CardTitle>
