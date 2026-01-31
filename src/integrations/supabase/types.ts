@@ -23582,6 +23582,51 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_survey_tokens: {
+        Row: {
+          client_email: string | null
+          client_name: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          is_used: boolean | null
+          technician_name: string | null
+          template_id: string | null
+          ticket_id: string | null
+          ticket_title: string | null
+          token: string
+          user_id: string
+        }
+        Insert: {
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          is_used?: boolean | null
+          technician_name?: string | null
+          template_id?: string | null
+          ticket_id?: string | null
+          ticket_title?: string | null
+          token: string
+          user_id: string
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_used?: boolean | null
+          technician_name?: string | null
+          template_id?: string | null
+          ticket_id?: string | null
+          ticket_title?: string | null
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_technician_utilization: {
         Row: {
           billable_hours: number | null
