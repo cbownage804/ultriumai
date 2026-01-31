@@ -9,6 +9,7 @@ import {
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface ClientMRR {
   id: string;
@@ -20,10 +21,31 @@ interface ClientMRR {
   renewalDate: string;
 }
 
+interface StripeSubscription {
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  subscriptionId: string;
+  productName: string;
+  amount: number;
+  interval: string;
+  currentPeriodEnd: string;
+  status: string;
+}
+
+interface MRRData {
+  current: number;
+  previous: number;
+  change: number;
+  changePercent: string;
+}
+
 export function MRRCalculator() {
   const { user } = useAuth();
   const [clients, setClients] = useState<ClientMRR[]>([]);
   const [mrrHistory, setMrrHistory] = useState<any[]>([]);
+  const [mrrData, setMrrData] = useState<MRRData | null>(null);
+  const [stripeSubscriptions, setStripeSubscriptions] = useState<StripeSubscription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -33,49 +55,48 @@ export function MRRCalculator() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Load clients from msp_clients
-      const { data: clientsData, error: clientsError } = await (supabase as any)
-        .from('msp_clients')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('company_name', { ascending: true });
+      // Fetch real billing data from Stripe via edge function
+      const { data: billingData, error: billingError } = await supabase.functions.invoke('get-msp-billing-data');
+      
+      if (billingError) {
+        console.error('Billing data error:', billingError);
+        toast.error('Failed to fetch billing data from Stripe');
+      }
 
-      if (clientsError) throw clientsError;
-
-      // Load billing schedules for MRR data
-      const { data: schedulesData } = await supabase
-        .from('billing_schedules')
-        .select('*')
-        .eq('user_id', user?.id);
-
-      // Map clients with their billing data
-      const mappedClients: ClientMRR[] = (clientsData || []).map((client: any) => {
-        const schedule = schedulesData?.find((s: any) => s.client_id === client.id);
-        const serviceItems = schedule?.service_items as any[] || [];
-        const monthlyTotal = serviceItems.reduce((sum: number, item: any) => {
-          return sum + (item.rate || item.amount || 0);
-        }, 0);
+      if (billingData) {
+        setMrrData(billingData.mrr);
+        setStripeSubscriptions(billingData.subscriptions || []);
         
-        return {
-          id: client.id,
-          clientName: client.company_name,
-          currentMRR: monthlyTotal || Math.floor(Math.random() * 3000) + 1000, // Fallback for demo
-          previousMRR: monthlyTotal ? monthlyTotal * 0.95 : Math.floor(Math.random() * 2800) + 900,
-          contractValue: (monthlyTotal || 2000) * 12,
-          churnRisk: client.health_score && client.health_score < 50 ? 'high' : 
-                     client.health_score && client.health_score < 75 ? 'medium' : 'low',
-          renewalDate: client.contract_end || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        };
-      });
-      setClients(mappedClients);
+        // Map Stripe subscriptions to client MRR format
+        const clientMap = new Map<string, ClientMRR>();
+        for (const sub of billingData.subscriptions || []) {
+          const monthlyAmount = sub.interval === 'year' ? sub.amount / 12 : sub.amount;
+          const existing = clientMap.get(sub.customerId);
+          if (existing) {
+            existing.currentMRR += monthlyAmount / 100;
+            existing.contractValue += (monthlyAmount / 100) * 12;
+          } else {
+            clientMap.set(sub.customerId, {
+              id: sub.customerId,
+              clientName: sub.customerName,
+              currentMRR: monthlyAmount / 100,
+              previousMRR: (monthlyAmount / 100) * 0.95,
+              contractValue: (monthlyAmount / 100) * 12,
+              churnRisk: 'low',
+              renewalDate: sub.currentPeriodEnd.split('T')[0]
+            });
+          }
+        }
+        setClients(Array.from(clientMap.values()));
+      }
 
-      // Generate MRR history from aggregated data
+      // Generate MRR history (use real data if available)
       const now = new Date();
       const history = [];
+      const baseMrr = billingData?.mrr?.current || 0;
       for (let i = 5; i >= 0; i--) {
         const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthName = date.toLocaleString('default', { month: 'short' });
-        const baseMrr = mappedClients.reduce((sum, c) => sum + c.currentMRR, 0);
         history.push({
           month: monthName,
           mrr: Math.round(baseMrr * (0.85 + (5 - i) * 0.03)),
@@ -87,15 +108,17 @@ export function MRRCalculator() {
 
     } catch (err) {
       console.error('Failed to load MRR data:', err);
+      toast.error('Failed to load billing data');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const totalMRR = clients.reduce((sum, c) => sum + c.currentMRR, 0);
-  const previousMRR = clients.reduce((sum, c) => sum + c.previousMRR, 0);
-  const mrrChange = totalMRR - previousMRR;
-  const mrrChangePercent = previousMRR > 0 ? ((mrrChange / previousMRR) * 100).toFixed(1) : '0';
+  // Use real Stripe data if available, otherwise calculate from clients
+  const totalMRR = mrrData?.current || clients.reduce((sum, c) => sum + c.currentMRR, 0);
+  const previousMRR = mrrData?.previous || clients.reduce((sum, c) => sum + c.previousMRR, 0);
+  const mrrChange = mrrData?.change || (totalMRR - previousMRR);
+  const mrrChangePercent = mrrData?.changePercent || (previousMRR > 0 ? ((mrrChange / previousMRR) * 100).toFixed(1) : '0');
   const totalACV = clients.reduce((sum, c) => sum + c.contractValue, 0);
 
   const expansionMRR = clients

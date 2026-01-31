@@ -86,30 +86,58 @@ export function AutomatedInvoicing() {
   const handleGenerateInvoices = async () => {
     setIsGenerating(true);
     try {
-      // Get all active clients
+      // Get all active clients with their email
       const { data: clients } = await (supabase as any)
         .from('msp_clients')
-        .select('id, company_name')
+        .select('id, company_name, primary_contact_email')
         .eq('user_id', user?.id)
         .eq('status', 'active');
 
-      if (clients && clients.length > 0) {
-        // Create invoices for each client
-        const newInvoices = clients.map((client: any) => ({
-          business_customer_id: null,
-          amount_due: Math.floor(Math.random() * 3000) + 1000,
-          status: 'draft',
-          issued_at: new Date().toISOString(),
-          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          line_items: [],
-          notes: `Auto-generated invoice for ${client.company_name}`
-        }));
+      if (!clients || clients.length === 0) {
+        toast.info('No active clients to invoice');
+        setIsGenerating(false);
+        return;
+      }
 
-        await (supabase as any).from('business_invoices').insert(newInvoices);
-        toast.success(`${clients.length} invoices generated`);
+      // Get unbilled time entries for each client
+      const { data: timeEntries } = await supabase
+        .from('vanguard_time_entries')
+        .select('*')
+        .eq('user_id', user?.id)
+        .eq('is_billable', true)
+        .is('invoice_id', null);
+
+      let invoicesCreated = 0;
+      
+      for (const client of clients) {
+        const clientTimeEntries = (timeEntries || []).filter((e: any) => e.client_id === client.id);
+        
+        if (clientTimeEntries.length === 0) continue;
+        
+        // Generate real Stripe invoice via edge function
+        const { data, error } = await supabase.functions.invoke('generate-msp-invoice', {
+          body: {
+            clientId: client.id,
+            clientName: client.company_name,
+            clientEmail: client.primary_contact_email || `billing@${client.company_name.toLowerCase().replace(/\s+/g, '')}.com`,
+            timeEntryIds: clientTimeEntries.map((e: any) => e.id),
+            dueInDays: 30
+          }
+        });
+
+        if (error) {
+          console.error(`Failed to create invoice for ${client.company_name}:`, error);
+          toast.error(`Failed to invoice ${client.company_name}`);
+        } else if (data?.success) {
+          invoicesCreated++;
+        }
+      }
+
+      if (invoicesCreated > 0) {
+        toast.success(`${invoicesCreated} invoice${invoicesCreated > 1 ? 's' : ''} created in Stripe`);
         loadInvoices();
       } else {
-        toast.info('No active clients to invoice');
+        toast.info('No billable time entries to invoice');
       }
     } catch (err) {
       console.error('Failed to generate invoices:', err);
