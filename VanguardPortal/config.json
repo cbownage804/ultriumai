@@ -1,0 +1,9 @@
+{
+  "portal_key": "",
+  "api_endpoint": "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/portal-api",
+  "company_name": "",
+  "support_email": "",
+  "support_phone": "",
+  "auto_start": true,
+  "check_updates": true
+}
