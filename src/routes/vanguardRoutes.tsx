@@ -102,6 +102,7 @@ const CortexKBGeneratorPage = lazy(() => import('@/pages/vanguard/CortexKBGenera
 const CortexRouterPage = lazy(() => import('@/pages/vanguard/CortexRouterPage'));
 const CortexAnalyticsPage = lazy(() => import('@/pages/vanguard/CortexAnalyticsPage'));
 const CortexScreenToDocsPage = lazy(() => import('@/pages/vanguard/CortexScreenToDocsPage'));
+const CortexAIToolsPage = lazy(() => import('@/pages/vanguard/CortexAIToolsPage'));
 const VanguardSentinel = lazy(() => import('@/pages/vanguard/VanguardSentinel'));
 const VanguardAICommandCenter = lazy(() => import('@/pages/vanguard/VanguardAICommandCenter'));
 const HorizonScriptsPage = lazy(() => import('@/pages/vanguard/HorizonScriptsPage'));
@@ -206,6 +207,7 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-cortex-router" path="cortex-router" element={<LazyProtectedPage component={CortexRouterPage} />} />,
   <Route key="vanguard-cortex-analytics" path="cortex-analytics" element={<LazyProtectedPage component={CortexAnalyticsPage} />} />,
   <Route key="vanguard-cortex-screen-to-docs" path="cortex-screen-to-docs" element={<LazyProtectedPage component={CortexScreenToDocsPage} />} />,
+  <Route key="vanguard-cortex-ai-tools" path="cortex-ai-tools" element={<LazyProtectedPage component={CortexAIToolsPage} />} />,
   // Response module routes
   <Route key="vanguard-sla" path="sla" element={<LazyProtectedPage component={ResponseSLAPage} />} />,
   <Route key="vanguard-workflows" path="workflows" element={<LazyProtectedPage component={ResponseWorkflowsPage} />} />,
