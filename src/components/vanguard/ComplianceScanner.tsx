@@ -149,82 +149,23 @@ export function ComplianceScanner() {
 
     setIsScanning(true);
     try {
-      // Create scan jobs for each framework
-      for (const framework of selectedFrameworks) {
-        const { data: job, error: jobError } = await supabase
-          .from('compliance_scan_jobs')
-          .insert({
-            user_id: user?.id,
-            agent_id: selectedAgentId,
-            framework_type: framework,
-            scan_status: 'pending',
-            total_checks: benchmarks.filter(b => b.framework_type === framework).length
-          })
-          .select()
-          .single();
-
-        if (jobError) throw jobError;
-
-        // Simulate running checks (in production, this would dispatch to the agent)
-        const frameworkBenchmarks = benchmarks.filter(b => b.framework_type === framework);
-        
-        // Update job to running
-        await supabase
-          .from('compliance_scan_jobs')
-          .update({ scan_status: 'running', started_at: new Date().toISOString() })
-          .eq('id', job.id);
-
-        // Simulate check results
-        let passed = 0, failed = 0, warnings = 0;
-        
-        for (const benchmark of frameworkBenchmarks) {
-          // Simulate random results for demo
-          const statuses = ['pass', 'pass', 'pass', 'fail', 'warning'];
-          const status = statuses[Math.floor(Math.random() * statuses.length)];
-          
-          if (status === 'pass') passed++;
-          else if (status === 'fail') failed++;
-          else warnings++;
-
-          await supabase
-            .from('compliance_check_results')
-            .insert({
-              job_id: job.id,
-              user_id: user?.id,
-              agent_id: selectedAgentId,
-              check_id: benchmark.check_id,
-              check_name: benchmark.check_name,
-              category: benchmark.category,
-              framework_type: benchmark.framework_type,
-              status,
-              severity: benchmark.severity,
-              actual_value: status === 'pass' ? 'Compliant' : 'Non-compliant',
-              expected_value: 'Compliant'
-            });
+      // Call edge function to start real compliance scan
+      const { data, error } = await supabase.functions.invoke('run-compliance-scan', {
+        body: {
+          agentId: selectedAgentId,
+          frameworks: selectedFrameworks
         }
+      });
 
-        // Update job with results
-        const score = frameworkBenchmarks.length > 0 
-          ? Math.round((passed / frameworkBenchmarks.length) * 100) 
-          : 0;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-        await supabase
-          .from('compliance_scan_jobs')
-          .update({
-            scan_status: 'completed',
-            completed_at: new Date().toISOString(),
-            passed_checks: passed,
-            failed_checks: failed,
-            warning_checks: warnings,
-            compliance_score: score
-          })
-          .eq('id', job.id);
-      }
-
-      toast.success("Compliance scan completed");
+      toast.success(`Started ${selectedFrameworks.length} compliance scan(s)`);
       setShowScanDialog(false);
       setSelectedFrameworks([]);
-      loadData();
+      
+      // Reload data after a delay to see new jobs
+      setTimeout(() => loadData(), 2000);
     } catch (err: any) {
       toast.error("Scan failed", { description: err.message });
     } finally {
