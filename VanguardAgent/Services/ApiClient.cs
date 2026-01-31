@@ -234,6 +234,19 @@ public class DeviceInfo
 
     [JsonProperty("serial_number")]
     public string SerialNumber { get; set; } = "";
+
+    // Remote Access - Auto-detected
+    [JsonProperty("rustdesk_id")]
+    public string? RustDeskId { get; set; }
+
+    [JsonProperty("rustdesk_relay_server")]
+    public string? RustDeskRelayServer { get; set; }
+
+    [JsonProperty("anydesk_id")]
+    public string? AnyDeskId { get; set; }
+
+    [JsonProperty("teamviewer_id")]
+    public string? TeamViewerId { get; set; }
 }
 
 public class HeartbeatPayload
