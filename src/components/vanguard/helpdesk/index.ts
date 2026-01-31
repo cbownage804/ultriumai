@@ -25,3 +25,4 @@ export { CannedResponsesLibrary } from './CannedResponsesLibrary';
 export { QueueManagementBoard } from './QueueManagementBoard';
 export { WhiteLabelPortalConfig } from './WhiteLabelPortalConfig';
 export { BusinessHoursCalendar } from './BusinessHoursCalendar';
+export { TechnicianProfileSettings } from './TechnicianProfileSettings';
