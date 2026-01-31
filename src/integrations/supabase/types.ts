@@ -1080,6 +1080,366 @@ export type Database = {
           },
         ]
       }
+      atlas_configurations: {
+        Row: {
+          configuration_data: Json | null
+          configuration_type: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          organization_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          configuration_data?: Json | null
+          configuration_type: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: string | null
+          organization_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          configuration_data?: Json | null
+          configuration_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          organization_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atlas_configurations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "atlas_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      atlas_documents: {
+        Row: {
+          category: string | null
+          content: string | null
+          created_at: string
+          id: string
+          is_pinned: boolean | null
+          organization_id: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_pinned?: boolean | null
+          organization_id?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_pinned?: boolean | null
+          organization_id?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atlas_documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "atlas_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      atlas_expirations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          is_resolved: boolean | null
+          item_id: string | null
+          item_name: string
+          item_type: string
+          notes: string | null
+          notification_days: number[] | null
+          organization_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          is_resolved?: boolean | null
+          item_id?: string | null
+          item_name: string
+          item_type: string
+          notes?: string | null
+          notification_days?: number[] | null
+          organization_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_resolved?: boolean | null
+          item_id?: string | null
+          item_name?: string
+          item_type?: string
+          notes?: string | null
+          notification_days?: number[] | null
+          organization_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atlas_expirations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "atlas_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      atlas_organizations: {
+        Row: {
+          address: string | null
+          created_at: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          notes: string | null
+          primary_contact_email: string | null
+          primary_contact_name: string | null
+          primary_contact_phone: string | null
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          notes?: string | null
+          primary_contact_email?: string | null
+          primary_contact_name?: string | null
+          primary_contact_phone?: string | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          notes?: string | null
+          primary_contact_email?: string | null
+          primary_contact_name?: string | null
+          primary_contact_phone?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      atlas_passwords: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          last_rotated_at: string | null
+          name: string
+          notes: string | null
+          organization_id: string | null
+          otp_secret: string | null
+          password_encrypted: string | null
+          updated_at: string
+          url: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          last_rotated_at?: string | null
+          name: string
+          notes?: string | null
+          organization_id?: string | null
+          otp_secret?: string | null
+          password_encrypted?: string | null
+          updated_at?: string
+          url?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          last_rotated_at?: string | null
+          name?: string
+          notes?: string | null
+          organization_id?: string | null
+          otp_secret?: string | null
+          password_encrypted?: string | null
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atlas_passwords_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "atlas_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      atlas_runbooks: {
+        Row: {
+          category: string | null
+          content: string | null
+          created_at: string
+          difficulty_level: string | null
+          estimated_time_minutes: number | null
+          id: string
+          is_published: boolean | null
+          organization_id: string | null
+          steps: Json | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          difficulty_level?: string | null
+          estimated_time_minutes?: number | null
+          id?: string
+          is_published?: boolean | null
+          organization_id?: string | null
+          steps?: Json | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          difficulty_level?: string | null
+          estimated_time_minutes?: number | null
+          id?: string
+          is_published?: boolean | null
+          organization_id?: string | null
+          steps?: Json | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atlas_runbooks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "atlas_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      atlas_ssl_certificates: {
+        Row: {
+          auto_renew: boolean | null
+          certificate_type: string | null
+          created_at: string
+          domain: string
+          id: string
+          issuer: string | null
+          notes: string | null
+          organization_id: string | null
+          updated_at: string
+          user_id: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          auto_renew?: boolean | null
+          certificate_type?: string | null
+          created_at?: string
+          domain: string
+          id?: string
+          issuer?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          updated_at?: string
+          user_id: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          auto_renew?: boolean | null
+          certificate_type?: string | null
+          created_at?: string
+          domain?: string
+          id?: string
+          issuer?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          updated_at?: string
+          user_id?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atlas_ssl_certificates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "atlas_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
