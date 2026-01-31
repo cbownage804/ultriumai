@@ -2,6 +2,7 @@ export { SLAManagementDashboard } from './SLAManagementDashboard';
 export { SLAEnforcementDashboard } from './SLAEnforcementDashboard';
 export { EmailIntegrationHub } from './EmailIntegrationHub';
 export { EmailRoutingConfig } from './EmailRoutingConfig';
+export { EmailQueueMapping } from './EmailQueueMapping';
 export { CSATSurveyManager } from './CSATSurveyManager';
 export { TimeTrackingBilling } from './TimeTrackingBilling';
 export { TicketWorkflowEngine } from './TicketWorkflowEngine';

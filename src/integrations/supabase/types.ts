@@ -6323,6 +6323,53 @@ export type Database = {
           },
         ]
       }
+      email_queue_mappings: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          email_address: string
+          email_config_id: string | null
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          queue_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          email_address: string
+          email_config_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          queue_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          email_address?: string
+          email_config_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          queue_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_queue_mappings_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_queues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_routing_settings: {
         Row: {
           created_at: string | null
