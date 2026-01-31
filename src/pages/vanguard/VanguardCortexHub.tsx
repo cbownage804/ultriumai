@@ -17,12 +17,48 @@ import {
   Mail,
   Shield,
   HardDrive,
-  Mic
+  Mic,
+  Bot,
+  Activity,
+  Terminal,
+  Heart
 } from 'lucide-react';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 import { getVanguardBasePath } from '@/utils/subdomain';
 
 const cortexFeatures = [
+  {
+    title: 'AI Technician Copilot',
+    description: 'Real-time assistant for troubleshooting with KB suggestions',
+    icon: Bot,
+    path: '/cortex-ai-tools',
+    badge: 'NEW',
+    stat: 'Smart troubleshooting'
+  },
+  {
+    title: 'AI Anomaly Detection',
+    description: 'Detect unusual patterns in metrics, security events & traffic',
+    icon: Activity,
+    path: '/cortex-ai-tools',
+    badge: 'NEW',
+    stat: 'Pattern detection'
+  },
+  {
+    title: 'AI Script Generator',
+    description: 'Generate PowerShell/Bash/Python scripts from descriptions',
+    icon: Terminal,
+    path: '/cortex-ai-tools',
+    badge: 'NEW',
+    stat: 'Code automation'
+  },
+  {
+    title: 'AI Sentiment Analyzer',
+    description: 'Analyze customer sentiment and escalation risk',
+    icon: Heart,
+    path: '/cortex-ai-tools',
+    badge: 'NEW',
+    stat: 'Customer insights'
+  },
   {
     title: 'AI Ticket Summarizer',
     description: 'AI-powered ticket thread summarization for quick context',
@@ -68,31 +104,31 @@ const cortexFeatures = [
     description: 'Record your screen and AI will generate KB documentation',
     icon: Video,
     path: '/cortex-screen-to-docs',
-    badge: 'NEW',
+    badge: 'AI',
     stat: 'Auto-generate guides'
   },
   {
     title: 'AI Email Parser',
-    description: 'Extract ticket details from emails using AI vision & text analysis',
+    description: 'Extract ticket details from emails using AI analysis',
     icon: Mail,
     path: '/cortex-ai-tools',
-    badge: 'NEW',
+    badge: 'AI',
     stat: 'Auto-extract tickets'
   },
   {
     title: 'Security Report Generator',
-    description: 'Generate executive summaries and compliance reports from scans',
+    description: 'Generate executive summaries and compliance reports',
     icon: Shield,
     path: '/cortex-ai-tools',
-    badge: 'NEW',
+    badge: 'AI',
     stat: 'SOC2/ISO/HIPAA'
   },
   {
     title: 'Asset Discovery Analyzer',
-    description: 'Vision-analyze screenshots & diagrams to populate inventory',
+    description: 'Vision-analyze screenshots & diagrams to find assets',
     icon: HardDrive,
     path: '/cortex-ai-tools',
-    badge: 'NEW',
+    badge: 'AI',
     stat: 'Auto-discover assets'
   },
   {
@@ -100,7 +136,7 @@ const cortexFeatures = [
     description: 'Transcribe voice memos into structured tickets or KB articles',
     icon: Mic,
     path: '/cortex-ai-tools',
-    badge: 'NEW',
+    badge: 'AI',
     stat: 'Voice → Docs'
   },
 ];
