@@ -80,6 +80,27 @@ const VanguardAIAnalytics = lazy(() => import('@/pages/vanguard/VanguardAIAnalyt
 // New module pages
 const VanguardCortexHub = lazy(() => import('@/pages/vanguard/VanguardCortexHub'));
 const VanguardMSPBilling = lazy(() => import('@/pages/vanguard/VanguardMSPBilling'));
+
+// Response module pages
+const ResponseSLAPage = lazy(() => import('@/pages/vanguard/ResponseSLAPage'));
+const ResponseWorkflowsPage = lazy(() => import('@/pages/vanguard/ResponseWorkflowsPage'));
+const ResponseEmailPage = lazy(() => import('@/pages/vanguard/ResponseEmailPage'));
+const ResponseTimeBillingPage = lazy(() => import('@/pages/vanguard/ResponseTimeBillingPage'));
+const ResponseCSATPage = lazy(() => import('@/pages/vanguard/ResponseCSATPage'));
+
+// Ledger module pages
+const LedgerHelpdeskReportsPage = lazy(() => import('@/pages/vanguard/LedgerHelpdeskReportsPage'));
+const LedgerSecurityPage = lazy(() => import('@/pages/vanguard/LedgerSecurityPage'));
+const LedgerScheduledPage = lazy(() => import('@/pages/vanguard/LedgerScheduledPage'));
+const LedgerCompliancePage = lazy(() => import('@/pages/vanguard/LedgerCompliancePage'));
+const LedgerAttackPathsPage = lazy(() => import('@/pages/vanguard/LedgerAttackPathsPage'));
+
+// Cortex module pages
+const CortexSummarizerPage = lazy(() => import('@/pages/vanguard/CortexSummarizerPage'));
+const CortexPatternsPage = lazy(() => import('@/pages/vanguard/CortexPatternsPage'));
+const CortexKBGeneratorPage = lazy(() => import('@/pages/vanguard/CortexKBGeneratorPage'));
+const CortexRouterPage = lazy(() => import('@/pages/vanguard/CortexRouterPage'));
+const CortexAnalyticsPage = lazy(() => import('@/pages/vanguard/CortexAnalyticsPage'));
 const VanguardSentinel = lazy(() => import('@/pages/vanguard/VanguardSentinel'));
 const VanguardAICommandCenter = lazy(() => import('@/pages/vanguard/VanguardAICommandCenter'));
 const HorizonScriptsPage = lazy(() => import('@/pages/vanguard/HorizonScriptsPage'));
@@ -178,6 +199,23 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-ai-command" path="ai-command" element={<LazyProtectedPage component={VanguardAICommandCenter} />} />,
   // Cortex AI Hub
   <Route key="vanguard-cortex" path="cortex" element={<LazyProtectedPage component={VanguardCortexHub} />} />,
+  <Route key="vanguard-cortex-summarizer" path="cortex-summarizer" element={<LazyProtectedPage component={CortexSummarizerPage} />} />,
+  <Route key="vanguard-cortex-patterns" path="cortex-patterns" element={<LazyProtectedPage component={CortexPatternsPage} />} />,
+  <Route key="vanguard-cortex-kb" path="cortex-kb" element={<LazyProtectedPage component={CortexKBGeneratorPage} />} />,
+  <Route key="vanguard-cortex-router" path="cortex-router" element={<LazyProtectedPage component={CortexRouterPage} />} />,
+  <Route key="vanguard-cortex-analytics" path="cortex-analytics" element={<LazyProtectedPage component={CortexAnalyticsPage} />} />,
+  // Response module routes
+  <Route key="vanguard-sla" path="sla" element={<LazyProtectedPage component={ResponseSLAPage} />} />,
+  <Route key="vanguard-workflows" path="workflows" element={<LazyProtectedPage component={ResponseWorkflowsPage} />} />,
+  <Route key="vanguard-email-integration" path="email-integration" element={<LazyProtectedPage component={ResponseEmailPage} />} />,
+  <Route key="vanguard-time-billing" path="time-billing" element={<LazyProtectedPage component={ResponseTimeBillingPage} />} />,
+  <Route key="vanguard-csat" path="csat" element={<LazyProtectedPage component={ResponseCSATPage} />} />,
+  // Ledger module routes
+  <Route key="vanguard-helpdesk-reports" path="helpdesk-reports" element={<LazyProtectedPage component={LedgerHelpdeskReportsPage} />} />,
+  <Route key="vanguard-security-reports" path="security-reports" element={<LazyProtectedPage component={LedgerSecurityPage} />} />,
+  <Route key="vanguard-scheduled-scans" path="scheduled-scans" element={<LazyProtectedPage component={LedgerScheduledPage} />} />,
+  <Route key="vanguard-compliance-reports" path="compliance-reports" element={<LazyProtectedPage component={LedgerCompliancePage} />} />,
+  <Route key="vanguard-attack-paths" path="attack-paths" element={<LazyProtectedPage component={LedgerAttackPathsPage} />} />,
   // MSP Billing Dashboard
   <Route key="vanguard-msp-billing" path="msp-billing" element={<LazyProtectedPage component={VanguardMSPBilling} />} />,
   // Sentinel M365 Security Monitoring
