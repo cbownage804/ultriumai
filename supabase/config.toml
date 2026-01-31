@@ -196,3 +196,16 @@ verify_jwt = false
 
 [functions.studio-assistant]
 verify_jwt = false
+
+# Cortex AI Tools
+[functions.ai-email-parser]
+verify_jwt = true
+
+[functions.ai-security-report]
+verify_jwt = true
+
+[functions.ai-asset-analyzer]
+verify_jwt = true
+
+[functions.ai-voice-to-ticket]
+verify_jwt = true

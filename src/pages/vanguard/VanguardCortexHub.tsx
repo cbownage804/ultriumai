@@ -13,7 +13,11 @@ import {
   ArrowRight,
   Brain,
   Zap,
-  Video
+  Video,
+  Mail,
+  Shield,
+  HardDrive,
+  Mic
 } from 'lucide-react';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 import { getVanguardBasePath } from '@/utils/subdomain';
@@ -66,6 +70,38 @@ const cortexFeatures = [
     path: '/cortex-screen-to-docs',
     badge: 'NEW',
     stat: 'Auto-generate guides'
+  },
+  {
+    title: 'AI Email Parser',
+    description: 'Extract ticket details from emails using AI vision & text analysis',
+    icon: Mail,
+    path: '/cortex-ai-tools',
+    badge: 'NEW',
+    stat: 'Auto-extract tickets'
+  },
+  {
+    title: 'Security Report Generator',
+    description: 'Generate executive summaries and compliance reports from scans',
+    icon: Shield,
+    path: '/cortex-ai-tools',
+    badge: 'NEW',
+    stat: 'SOC2/ISO/HIPAA'
+  },
+  {
+    title: 'Asset Discovery Analyzer',
+    description: 'Vision-analyze screenshots & diagrams to populate inventory',
+    icon: HardDrive,
+    path: '/cortex-ai-tools',
+    badge: 'NEW',
+    stat: 'Auto-discover assets'
+  },
+  {
+    title: 'Voice to Tickets',
+    description: 'Transcribe voice memos into structured tickets or KB articles',
+    icon: Mic,
+    path: '/cortex-ai-tools',
+    badge: 'NEW',
+    stat: 'Voice → Docs'
   },
 ];
 
