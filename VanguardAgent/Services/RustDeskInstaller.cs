@@ -1,6 +1,7 @@
 // =============================================================================
 // RustDesk Auto-Installer Service
 // Automatically installs and configures RustDesk for built-in remote access
+// Supports dual-relay failover for high availability
 // =============================================================================
 
 using System.Diagnostics;
@@ -15,10 +16,9 @@ public class RustDeskInstaller
     private readonly ConfigService _configService;
     private readonly HttpClient _httpClient;
     
-    // Vanguard-hosted relay server configuration
-    // These will be fetched from the API or config
-    private string _relayServer = "";
-    private string _publicKey = "";
+    // Vanguard-hosted relay server configuration (supports dual-relay)
+    private List<RelayServerConfig> _relayServers = new();
+    private bool _failoverEnabled = false;
     
     private const string RUSTDESK_VERSION = "1.2.6";
     private const string RUSTDESK_DOWNLOAD_URL = $"https://github.com/rustdesk/rustdesk/releases/download/{RUSTDESK_VERSION}/rustdesk-{RUSTDESK_VERSION}-x86_64.exe";
@@ -76,7 +76,7 @@ public class RustDeskInstaller
     /// </summary>
     public bool IsConfiguredForVanguard()
     {
-        if (string.IsNullOrEmpty(_relayServer))
+        if (_relayServers.Count == 0)
             return false;
 
         try
@@ -89,7 +89,8 @@ public class RustDeskInstaller
             if (File.Exists(configPath))
             {
                 var content = File.ReadAllText(configPath);
-                return content.Contains(_relayServer, StringComparison.OrdinalIgnoreCase);
+                // Check if any of our relay servers are configured
+                return _relayServers.Any(r => content.Contains(r.Server, StringComparison.OrdinalIgnoreCase));
             }
         }
         catch { }
@@ -98,7 +99,7 @@ public class RustDeskInstaller
     }
 
     /// <summary>
-    /// Fetch relay server configuration from Vanguard API
+    /// Fetch relay server configuration from Vanguard API (supports dual-relay)
     /// </summary>
     public async Task<bool> FetchRelayConfigAsync(string apiBaseUrl)
     {
@@ -108,17 +109,36 @@ public class RustDeskInstaller
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();
-                var config = JsonSerializer.Deserialize<RelayConfig>(json, new JsonSerializerOptions 
+                var config = JsonSerializer.Deserialize<RelayConfigResponse>(json, new JsonSerializerOptions 
                 { 
                     PropertyNameCaseInsensitive = true 
                 });
                 
                 if (config != null)
                 {
-                    _relayServer = config.RelayServer ?? "";
-                    _publicKey = config.PublicKey ?? "";
-                    Console.WriteLine($"[RustDesk] Relay config loaded: {_relayServer}");
-                    return true;
+                    _relayServers.Clear();
+                    
+                    // Check for new dual-relay format
+                    if (config.RelayServers != null && config.RelayServers.Count > 0)
+                    {
+                        _relayServers = config.RelayServers.OrderBy(r => r.Priority).ToList();
+                        _failoverEnabled = config.FailoverEnabled;
+                        Console.WriteLine($"[RustDesk] Dual-relay config loaded: {_relayServers.Count} servers, failover: {_failoverEnabled}");
+                    }
+                    // Fall back to legacy single-server format
+                    else if (!string.IsNullOrEmpty(config.RelayServer))
+                    {
+                        _relayServers.Add(new RelayServerConfig
+                        {
+                            Server = config.RelayServer,
+                            PublicKey = config.PublicKey ?? "",
+                            Priority = 1,
+                            Region = "primary"
+                        });
+                        Console.WriteLine($"[RustDesk] Legacy relay config loaded: {config.RelayServer}");
+                    }
+                    
+                    return _relayServers.Count > 0;
                 }
             }
         }
@@ -133,10 +153,29 @@ public class RustDeskInstaller
     /// <summary>
     /// Set relay configuration manually (for offline scenarios)
     /// </summary>
-    public void SetRelayConfig(string relayServer, string publicKey)
+    public void SetRelayConfig(string relayServer, string publicKey, string? secondaryServer = null, string? secondaryKey = null)
     {
-        _relayServer = relayServer;
-        _publicKey = publicKey;
+        _relayServers.Clear();
+        
+        _relayServers.Add(new RelayServerConfig
+        {
+            Server = relayServer,
+            PublicKey = publicKey,
+            Priority = 1,
+            Region = "primary"
+        });
+        
+        if (!string.IsNullOrEmpty(secondaryServer))
+        {
+            _relayServers.Add(new RelayServerConfig
+            {
+                Server = secondaryServer,
+                PublicKey = secondaryKey ?? publicKey,
+                Priority = 2,
+                Region = "secondary"
+            });
+            _failoverEnabled = true;
+        }
     }
 
     /// <summary>
@@ -213,19 +252,21 @@ public class RustDeskInstaller
     }
 
     /// <summary>
-    /// Configure RustDesk to use Vanguard relay server
+    /// Configure RustDesk to use Vanguard relay server(s)
     /// </summary>
     public async Task<bool> ConfigureForVanguardAsync()
     {
-        if (string.IsNullOrEmpty(_relayServer))
+        if (_relayServers.Count == 0)
         {
-            Console.WriteLine("[RustDesk] No relay server configured, skipping configuration");
+            Console.WriteLine("[RustDesk] No relay servers configured, skipping configuration");
             return false;
         }
 
         try
         {
-            Console.WriteLine($"[RustDesk] Configuring for Vanguard relay: {_relayServer}");
+            var primaryRelay = _relayServers.First();
+            Console.WriteLine($"[RustDesk] Configuring for Vanguard relay: {primaryRelay.Server}" + 
+                (_failoverEnabled ? $" (failover to {_relayServers[1].Server})" : ""));
             
             // Create config directory
             var configDir = Path.Combine(
@@ -258,34 +299,49 @@ public class RustDeskInstaller
     }
 
     /// <summary>
-    /// Generate RustDesk TOML configuration
+    /// Generate RustDesk TOML configuration with dual-relay support
     /// </summary>
     private string GenerateConfig()
     {
+        var primaryRelay = _relayServers.First();
+        
+        // Build comma-separated relay server list for failover
+        var relayServerList = string.Join(",", _relayServers.Select(r => r.Server));
+        
         var config = $@"
-rendezvous_server = '{_relayServer}'
+rendezvous_server = '{primaryRelay.Server}'
 nat_type = 1
 serial = 0
 
 [options]
-custom-rendezvous-server = '{_relayServer}'
-relay-server = '{_relayServer}'
+custom-rendezvous-server = '{relayServerList}'
+relay-server = '{relayServerList}'
 api-server = ''
 direct-server = ''
 ";
 
-        // Add public key if provided
-        if (!string.IsNullOrEmpty(_publicKey))
+        // Add public key from primary server
+        if (!string.IsNullOrEmpty(primaryRelay.PublicKey))
         {
-            config += $"key = '{_publicKey}'\n";
+            config += $"key = '{primaryRelay.PublicKey}'\n";
         }
 
-        // Enable unattended access
+        // Enable unattended access and failover settings
         config += @"
 allow-auto-disconnect = 'N'
 enable-lan-discovery = 'N'
 allow-remote-config-modification = 'N'
 ";
+
+        // Add failover-specific settings
+        if (_failoverEnabled && _relayServers.Count > 1)
+        {
+            config += $@"
+# Dual-relay failover configuration
+# Primary: {_relayServers[0].Server} ({_relayServers[0].Region})
+# Secondary: {_relayServers[1].Server} ({_relayServers[1].Region})
+";
+        }
 
         return config.Trim();
     }
@@ -367,12 +423,27 @@ allow-remote-config-modification = 'N'
     }
 
     /// <summary>
+    /// Get relay server status for diagnostics
+    /// </summary>
+    public (int ServerCount, bool FailoverEnabled, string PrimaryServer) GetRelayStatus()
+    {
+        return (
+            _relayServers.Count,
+            _failoverEnabled,
+            _relayServers.FirstOrDefault()?.Server ?? "Not configured"
+        );
+    }
+
+    /// <summary>
     /// Full installation and configuration workflow
     /// </summary>
     public async Task<(bool Success, string? RustDeskId)> EnsureInstalledAndConfiguredAsync(string apiBaseUrl)
     {
         // Fetch relay configuration
         await FetchRelayConfigAsync(apiBaseUrl);
+        
+        var status = GetRelayStatus();
+        Console.WriteLine($"[RustDesk] Relay status: {status.ServerCount} server(s), failover: {status.FailoverEnabled}");
         
         // Check if already installed
         if (!IsRustDeskInstalled())
@@ -389,7 +460,7 @@ allow-remote-config-modification = 'N'
             Console.WriteLine("[RustDesk] Already installed");
             
             // Ensure it's configured for Vanguard
-            if (!IsConfiguredForVanguard() && !string.IsNullOrEmpty(_relayServer))
+            if (!IsConfiguredForVanguard() && _relayServers.Count > 0)
             {
                 Console.WriteLine("[RustDesk] Not configured for Vanguard, applying configuration...");
                 await ConfigureForVanguardAsync();
@@ -407,11 +478,27 @@ allow-remote-config-modification = 'N'
 }
 
 /// <summary>
-/// Relay server configuration from Vanguard API
+/// Individual relay server configuration
 /// </summary>
-public class RelayConfig
+public class RelayServerConfig
 {
+    public string Server { get; set; } = "";
+    public string PublicKey { get; set; } = "";
+    public int Priority { get; set; } = 1;
+    public string Region { get; set; } = "primary";
+}
+
+/// <summary>
+/// Relay server configuration response from Vanguard API
+/// </summary>
+public class RelayConfigResponse
+{
+    // Legacy single-server format
     public string? RelayServer { get; set; }
     public string? PublicKey { get; set; }
     public string? ApiServer { get; set; }
+    
+    // New dual-relay format
+    public List<RelayServerConfig>? RelayServers { get; set; }
+    public bool FailoverEnabled { get; set; }
 }

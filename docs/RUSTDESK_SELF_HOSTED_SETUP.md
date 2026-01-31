@@ -1,6 +1,6 @@
 # RustDesk Self-Hosted Setup Guide
 
-Complete guide for deploying a self-hosted RustDesk infrastructure for Vanguard RMM.
+Complete guide for deploying a self-hosted RustDesk infrastructure for Vanguard RMM with **dual-relay failover** for high availability.
 
 ## Why Self-Host RustDesk?
 
@@ -12,76 +12,74 @@ Complete guide for deploying a self-hosted RustDesk infrastructure for Vanguard 
 | **Branding** | RustDesk branding | Custom branded clients possible |
 | **Compliance** | May not meet requirements | HIPAA/SOC2/GDPR compliant deployments |
 | **Cost** | Free tier limited | One-time server cost, unlimited connections |
+| **Uptime** | Dependent on RustDesk | **Dual-relay failover for 99.99% uptime** |
 
-## Architecture Overview
+## Architecture Overview (Dual-Relay)
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Your Infrastructure                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  ┌─────────────────┐     ┌─────────────────┐                    │
-│  │  hbbs Server    │     │  hbbr Server    │                    │
-│  │  (ID/Rendezvous)│◄───►│  (Relay)        │                    │
-│  │  Port: 21115-16 │     │  Port: 21117    │                    │
-│  └────────┬────────┘     └────────┬────────┘                    │
-│           │                       │                              │
-│           └───────────┬───────────┘                              │
-│                       │                                          │
-│              ┌────────▼────────┐                                 │
-│              │  Load Balancer  │ (Optional for HA)               │
-│              │  yourrelay.com  │                                 │
-│              └────────┬────────┘                                 │
-│                       │                                          │
-└───────────────────────┼─────────────────────────────────────────┘
-                        │
-        ┌───────────────┼───────────────┐
-        │               │               │
-   ┌────▼────┐    ┌────▼────┐    ┌────▼────┐
-   │ Client  │    │ Client  │    │ Client  │
-   │ Endpoint│    │ Endpoint│    │ Endpoint│
-   └─────────┘    └─────────┘    └─────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       High Availability Architecture                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌───────────────────────────┐      ┌───────────────────────────┐           │
+│  │   PRIMARY RELAY (US-East) │      │  SECONDARY RELAY (US-West) │           │
+│  │   relay1.yourdomain.com   │      │  relay2.yourdomain.com     │           │
+│  ├───────────────────────────┤      ├────────────────────────────┤           │
+│  │  hbbs (ID/Rendezvous)     │      │  hbbs (ID/Rendezvous)      │           │
+│  │  Port: 21115-21116        │      │  Port: 21115-21116         │           │
+│  ├───────────────────────────┤      ├────────────────────────────┤           │
+│  │  hbbr (Relay)             │      │  hbbr (Relay)              │           │
+│  │  Port: 21117              │      │  Port: 21117               │           │
+│  └────────────┬──────────────┘      └─────────────┬──────────────┘           │
+│               │                                    │                          │
+│               └────────────┬───────────────────────┘                          │
+│                            │                                                  │
+│                   ┌────────▼────────┐                                         │
+│                   │  Vanguard API   │                                         │
+│                   │  (Supabase)     │                                         │
+│                   │  Serves config  │                                         │
+│                   └────────┬────────┘                                         │
+│                            │                                                  │
+└────────────────────────────┼──────────────────────────────────────────────────┘
+                             │
+         ┌───────────────────┼───────────────────┐
+         │                   │                   │
+    ┌────▼────┐        ┌────▼────┐        ┌────▼────┐
+    │ Endpoint │        │ Endpoint │        │ Endpoint │
+    │ (Auto-   │        │ (Auto-   │        │ (Auto-   │
+    │ failover)│        │ failover)│        │ failover)│
+    └──────────┘        └──────────┘        └──────────┘
 ```
 
 ## Server Requirements
 
-### Minimum (Up to 100 concurrent connections)
+### Per Relay Server (Minimum)
 - 1 vCPU
 - 1GB RAM
 - 10GB SSD
 - Ubuntu 22.04 LTS or Debian 12
 
-### Recommended (100-500 concurrent connections)
-- 2 vCPU
-- 2GB RAM
-- 20GB SSD
-- Low latency network (cloud provider near your clients)
+### Recommended Providers
 
-### Enterprise (500+ concurrent connections)
-- 4+ vCPU
-- 4GB+ RAM
-- Consider multiple relay servers geographically distributed
+| Provider | Price | SLA | Best For |
+|----------|-------|-----|----------|
+| **Hetzner** | $4.50/mo | 99.9% | Best value |
+| **DigitalOcean** | $6/mo | 99.99% | Easiest setup |
+| **Vultr** | $6/mo | 100% | Good global coverage |
+| **Linode** | $5/mo | 99.99% | Reliable |
 
-## Firewall Ports
+**For dual-relay:** ~$10-12/mo total for both servers.
 
-| Port | Protocol | Service | Required |
-|------|----------|---------|----------|
-| 21114 | TCP | API (Pro only, or 443 with SSL proxy) | Pro only |
-| 21115 | TCP | NAT type test | Yes |
-| 21116 | TCP/UDP | ID registration + Heartbeat (hbbs) | Yes |
-| 21117 | TCP | Relay (hbbr) | Yes |
-| 21118 | TCP | WebSocket for hbbs (web client) | Optional |
-| 21119 | TCP | WebSocket for hbbr (web client) | Optional |
+## Quick Start: Dual-Relay Setup
 
-> **Minimum Required**: Ports 21115-21117 (TCP) + 21116 (UDP) for core functionality.  
-> **WebSocket**: Ports 21118-21119 are only needed for the browser-based RustDesk Web Client.  
-> **Pro API**: Port 21114 (or 443 with reverse proxy) for RustDesk Pro's web console.
+### Step 1: Deploy Primary Relay (US-East)
 
-## Installation Options
-
-### Option 1: Docker (Recommended)
+SSH into your first VPS and run:
 
 ```bash
+#!/bin/bash
+# Vanguard RustDesk Primary Relay Setup
+
 # Create directory
 mkdir -p /opt/rustdesk-server && cd /opt/rustdesk-server
 
@@ -112,268 +110,234 @@ services:
 EOF
 
 # Start services
-docker-compose up -d
+docker compose up -d
 
-# Get your public key (needed for clients)
+# Wait for key generation
+sleep 5
+
+# Display public key
+echo ""
+echo "=========================================="
+echo "PRIMARY RELAY SETUP COMPLETE"
+echo "=========================================="
+echo ""
+echo "Server Address: $(curl -s ifconfig.me)"
+echo ""
+echo "Public Key (save this!):"
 cat /opt/rustdesk-server/data/id_ed25519.pub
+echo ""
+echo "=========================================="
 ```
 
-### Option 2: Binary Installation
+### Step 2: Deploy Secondary Relay (US-West)
+
+SSH into your second VPS and run the **same script**. Save both public keys.
+
+> **Note:** If both servers use the same key pair, copy `/opt/rustdesk-server/data/id_ed25519` and `id_ed25519.pub` from primary to secondary before starting Docker.
+
+### Step 3: Configure Supabase Secrets
+
+Add these secrets to your Supabase project at [Edge Functions Secrets](https://supabase.com/dashboard/project/nsyobmjpdpvesjwdphlh/settings/functions):
+
+| Secret Name | Value | Example |
+|-------------|-------|---------|
+| `RUSTDESK_RELAY_SERVER` | Primary server hostname/IP | `relay1.yourdomain.com` |
+| `RUSTDESK_PUBLIC_KEY` | Primary server public key | `abc123...` |
+| `RUSTDESK_RELAY_REGION` | Primary region label | `US-East` |
+| `RUSTDESK_RELAY_SERVER_2` | Secondary server hostname/IP | `relay2.yourdomain.com` |
+| `RUSTDESK_PUBLIC_KEY_2` | Secondary public key (or same as primary) | `abc123...` |
+| `RUSTDESK_RELAY_REGION_2` | Secondary region label | `US-West` |
+
+### Step 4: Verify Configuration
+
+Test the relay config endpoint:
 
 ```bash
-# Download latest release
-wget https://github.com/rustdesk/rustdesk-server/releases/download/1.1.10-3/rustdesk-server-linux-amd64.zip
-unzip rustdesk-server-linux-amd64.zip
-
-# Create systemd services
-sudo cat > /etc/systemd/system/rustdesk-hbbs.service << 'EOF'
-[Unit]
-Description=RustDesk ID/Rendezvous Server
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/opt/rustdesk/hbbs
-WorkingDirectory=/opt/rustdesk
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo cat > /etc/systemd/system/rustdesk-hbbr.service << 'EOF'
-[Unit]
-Description=RustDesk Relay Server
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/opt/rustdesk/hbbr
-WorkingDirectory=/opt/rustdesk
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Enable and start
-sudo systemctl daemon-reload
-sudo systemctl enable --now rustdesk-hbbs rustdesk-hbbr
+curl https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-relay-config
 ```
 
-### Option 3: RustDesk Pro (Commercial License)
-
-For enterprise features:
-- Web console for server management
-- User management and access control
-- Connection logs and audit trails
-- LDAP/AD integration
-- API access
-
-Visit: https://rustdesk.com/pricing.html
-
-## Client Configuration
-
-### Vanguard Agent Auto-Configuration
-
-The Vanguard agent automatically detects RustDesk and reports the ID. To pre-configure RustDesk on endpoints:
-
-#### PowerShell Silent Install with Custom Server
-
-```powershell
-# Variables
-$RelayServer = "yourrelay.yourdomain.com"
-$PublicKey = "YOUR_PUBLIC_KEY_FROM_id_ed25519.pub"
-
-# Download RustDesk
-$installerUrl = "https://github.com/rustdesk/rustdesk/releases/download/1.2.6/rustdesk-1.2.6-x86_64.exe"
-$installerPath = "$env:TEMP\rustdesk-installer.exe"
-Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath
-
-# Silent install
-Start-Process -FilePath $installerPath -ArgumentList "--silent-install" -Wait
-
-# Configure custom server
-$configPath = "$env:APPDATA\RustDesk\config\RustDesk.toml"
-New-Item -Path (Split-Path $configPath) -ItemType Directory -Force
-
-@"
-rendezvous_server = '$RelayServer'
-nat_type = 1
-serial = 0
-
-[options]
-custom-rendezvous-server = '$RelayServer'
-relay-server = '$RelayServer'
-key = '$PublicKey'
-"@ | Out-File -FilePath $configPath -Encoding UTF8
-
-# Restart RustDesk service
-Restart-Service RustDesk -ErrorAction SilentlyContinue
+Expected response:
+```json
+{
+  "relay_server": "relay1.yourdomain.com",
+  "public_key": "abc123...",
+  "relay_servers": [
+    {"server": "relay1.yourdomain.com", "priority": 1, "region": "US-East"},
+    {"server": "relay2.yourdomain.com", "priority": 2, "region": "US-West"}
+  ],
+  "failover_enabled": true,
+  "auto_install": true,
+  "rustdesk_version": "1.2.6"
+}
 ```
 
-### Mass Deployment via Group Policy
-
-1. Create MSI transform with your server settings
-2. Deploy via GPO Software Installation
-3. Or use Vanguard's script deployment feature
-
-## Integration with Vanguard
-
-### How It Works
-
-1. **Agent Detection**: Vanguard agent auto-detects RustDesk ID on registration
-2. **Dashboard Display**: IDs appear in device details → Remote Access tab
-3. **One-Click Connect**: Click "Connect" to launch RustDesk with device ID
-4. **Session Logging**: All remote sessions are logged in `remote_sessions` table
-
-### API for Custom Integrations
-
-```typescript
-// Example: Get RustDesk ID for a device
-const { data: agent } = await supabase
-  .from('vanguard_agents')
-  .select('rustdesk_id, hostname')
-  .eq('id', deviceId)
-  .single();
-
-// Launch RustDesk connection
-window.open(`rustdesk://${agent.rustdesk_id}`);
-```
-
-## Security Best Practices
-
-### 1. Enable Encryption
-RustDesk uses end-to-end encryption by default. Verify by checking the key exchange.
-
-### 2. Restrict Access
-```bash
-# On your relay server, configure allowed IPs if needed
-iptables -A INPUT -p tcp --dport 21117 -s YOUR_OFFICE_IP -j ACCEPT
-iptables -A INPUT -p tcp --dport 21117 -j DROP
-```
-
-### 3. Set Permanent Passwords (Optional)
-For unattended access, set a permanent password on endpoints:
-```powershell
-# Set permanent password via config
-$password = "SecurePassword123!"
-# RustDesk hashes passwords, configure via UI or rustdesk --password
-```
-
-### 4. Use Pro License for Audit Logs
-RustDesk Pro provides connection logs, user management, and compliance features.
-
-## Comparison: RustDesk vs Alternatives
-
-| Feature | RustDesk (Self-Host) | TeamViewer | ConnectWise ScreenConnect | AnyDesk |
-|---------|---------------------|------------|---------------------------|---------|
-| **Self-Hosted** | ✅ Full | ❌ No | ✅ Yes | ❌ No |
-| **Open Source** | ✅ Yes | ❌ No | ❌ No | ❌ No |
-| **Cost (100 devices)** | ~$20/mo server | $500+/mo | $300+/mo | $300+/mo |
-| **File Transfer** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| **Unattended Access** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| **Mobile Apps** | ✅ iOS/Android | ✅ iOS/Android | ✅ iOS/Android | ✅ iOS/Android |
-| **Multi-Monitor** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| **Session Recording** | ⚠️ Pro only | ✅ Yes | ✅ Yes | ⚠️ Extra |
-| **LDAP/AD Integration** | ⚠️ Pro only | ✅ Enterprise | ✅ Yes | ⚠️ Extra |
-
-## Recommended Path
-
-### For Vanguard Built-in Remote Access
-
-**You only need to deploy the relay server once** — all Vanguard endpoints will automatically connect.
-
-#### Step 1: Deploy RustDesk Server (10 minutes)
-
-```bash
-# On a Linux VPS (Ubuntu 22.04 recommended)
-mkdir -p /opt/rustdesk-server && cd /opt/rustdesk-server
-
-# Create docker-compose.yml (see Installation Options above)
-# Then start:
-docker-compose up -d
-
-# Get your public key
-cat /opt/rustdesk-server/data/id_ed25519.pub
-```
-
-#### Step 2: Configure Vanguard Secrets
-
-Add these secrets to your Supabase project:
-
-| Secret Name | Value |
-|-------------|-------|
-| `RUSTDESK_RELAY_SERVER` | Your server hostname/IP (e.g., `relay.yourdomain.com`) |
-| `RUSTDESK_PUBLIC_KEY` | Contents of `id_ed25519.pub` |
-
-#### Step 3: Deploy Edge Function
-
-```bash
-supabase functions deploy vanguard-relay-config
-```
-
-#### Step 4: Test
+### Step 5: Test Endpoint
 
 1. Enroll a new device with the Vanguard agent
-2. Agent will auto-install RustDesk and configure it
-3. RustDesk ID will appear in device details
+2. Agent auto-installs RustDesk and configures dual-relay
+3. Check device details → Remote Access tab
 4. Click "Connect" for one-click remote access
 
-### For Evaluation (Free)
-1. Deploy self-hosted RustDesk using Docker
-2. Use with Vanguard agent's auto-detection
-3. Test on 10-20 endpoints
+## Firewall Configuration
 
-### For Production (RustDesk Pro)
-1. Purchase RustDesk Pro license (~$99-299/year depending on features)
-2. Get access to:
-   - Web console
-   - User management
-   - Connection logs
-   - API access
-   - Priority support
+Open these ports on **both** relay servers:
 
-### Why RustDesk Pro Over Free?
+| Port | Protocol | Service | Required |
+|------|----------|---------|----------|
+| 21115 | TCP | NAT type test | Yes |
+| 21116 | TCP/UDP | ID registration + Heartbeat | Yes |
+| 21117 | TCP | Relay traffic | Yes |
+| 21118 | TCP | WebSocket (web client) | Optional |
+| 21119 | TCP | WebSocket relay | Optional |
 
-| You Need | Free | Pro |
-|----------|------|-----|
-| Basic remote access | ✅ | ✅ |
-| Self-hosted relay | ✅ | ✅ |
-| Web-based management console | ❌ | ✅ |
-| User/group permissions | ❌ | ✅ |
-| Connection audit logs | ❌ | ✅ |
-| Address book sync | ❌ | ✅ |
-| API access | ❌ | ✅ |
-| LDAP/SSO integration | ❌ | ✅ |
+### UFW Example
+
+```bash
+sudo ufw allow 21115:21119/tcp
+sudo ufw allow 21116/udp
+sudo ufw reload
+```
+
+## How Failover Works
+
+1. **Agent Configuration**: Vanguard agent configures RustDesk with both servers as comma-separated list
+2. **Connection Attempt**: RustDesk tries primary server first
+3. **Automatic Failover**: If primary is unreachable, client automatically tries secondary
+4. **Transparent to Users**: Technicians see single "Connect" button — failover is invisible
+
+### Failover Scenarios
+
+| Scenario | Behavior |
+|----------|----------|
+| Primary healthy | All connections use primary |
+| Primary down | New connections use secondary (~2s delay) |
+| Primary recovers | New connections return to primary |
+| Both down | Connection fails (rare with proper hosting) |
+
+## Monitoring
+
+### UptimeRobot (Free)
+
+Set up monitors for both relays:
+
+1. Go to [UptimeRobot](https://uptimerobot.com)
+2. Add TCP monitor for `relay1.yourdomain.com:21116`
+3. Add TCP monitor for `relay2.yourdomain.com:21116`
+4. Configure email/SMS alerts
+
+### Docker Health Checks
+
+```bash
+# Check primary
+docker exec hbbs echo "healthy" || echo "unhealthy"
+docker exec hbbr echo "healthy" || echo "unhealthy"
+```
+
+### Log Monitoring
+
+```bash
+# View logs
+docker logs -f hbbs
+docker logs -f hbbr
+```
+
+## Scaling Beyond Dual-Relay
+
+For 1000+ endpoints or global presence:
+
+### Geographic Distribution
+
+| Region | Server | Latency Target |
+|--------|--------|----------------|
+| US-East | relay-use.yourdomain.com | <30ms for East Coast |
+| US-West | relay-usw.yourdomain.com | <30ms for West Coast |
+| EU | relay-eu.yourdomain.com | <30ms for Europe |
+
+### Load Balancing (Optional)
+
+For even higher availability, use a load balancer:
+
+```bash
+# Example: HAProxy in front of multiple relays
+# This provides automatic health checking and failover
+```
+
+## RustDesk Pro Integration
+
+If you purchase RustDesk Pro ($19.90/mo for 100 devices):
+
+### Additional Features
+- Web console for all devices
+- User/group management
+- Connection audit logs
+- Address book sync
+- SSO/LDAP integration
+
+### Pro Setup
+
+1. Purchase license at [rustdesk.com/pricing](https://rustdesk.com/pricing)
+2. Add `RUSTDESK_API_SERVER` secret with your Pro API endpoint
+3. Access web console at your Pro server URL
 
 ## Troubleshooting
 
-### Connection Times Out
-```bash
-# Check if ports are open
-nc -zv your-server.com 21116
-nc -zv your-server.com 21117
+### Connection Timeout
 
-# Check server logs
-docker logs hbbs
-docker logs hbbr
+```bash
+# Test port connectivity
+nc -zv relay1.yourdomain.com 21116
+nc -zv relay1.yourdomain.com 21117
+
+# Check if Docker is running
+docker ps | grep -E "hbbs|hbbr"
 ```
 
-### Client Can't Connect
-1. Verify public key matches on client and server
-2. Check firewall rules
-3. Ensure rendezvous server is reachable
+### Agent Not Connecting
 
-### NAT Issues
-RustDesk handles most NAT scenarios. If direct connection fails:
-- Relay server kicks in automatically
-- Check that port 21117 is accessible
+1. Check agent logs: `%ProgramData%\VanguardAgent\Logs\`
+2. Verify RustDesk config: `%APPDATA%\RustDesk\config\RustDesk.toml`
+3. Ensure both relay servers are listed in `custom-rendezvous-server`
 
-## Support Resources
+### Keys Not Matching
 
-- RustDesk Documentation: https://rustdesk.com/docs/
-- GitHub Issues: https://github.com/rustdesk/rustdesk/issues
-- Discord Community: https://discord.gg/nDceKgxnkV
+If agents can't authenticate:
+
+```bash
+# On relay server
+cat /opt/rustdesk-server/data/id_ed25519.pub
+
+# Compare with Supabase secret RUSTDESK_PUBLIC_KEY
+```
+
+## Cost Summary
+
+### Dual-Relay Setup (Recommended)
+
+| Item | Monthly Cost |
+|------|--------------|
+| Hetzner VPS (Primary) | $4.50 |
+| Hetzner VPS (Secondary) | $4.50 |
+| RustDesk Pro (100 devices) | $19.90 |
+| **Total** | **$28.90/mo** |
+
+### Scaling Costs
+
+| Devices | RustDesk Pro | VPS (2x) | Total |
+|---------|--------------|----------|-------|
+| 100 | $19.90 | $9 | $29/mo |
+| 500 | $60 | $12 | $72/mo |
+| 1000 | $120 | $20 | $140/mo |
+
+Compare to alternatives:
+- TeamViewer (10 techs): ~$500/mo
+- ConnectWise Control: ~$300/mo
+- AnyDesk: ~$300/mo
+
+## Next Steps
+
+1. ✅ Deploy dual-relay servers
+2. ✅ Configure Supabase secrets
+3. ✅ Test with one endpoint
+4. ⬜ Set up monitoring
+5. ⬜ Roll out to all endpoints
+6. ⬜ Consider RustDesk Pro for audit logs
