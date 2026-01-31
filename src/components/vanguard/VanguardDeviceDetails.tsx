@@ -35,6 +35,7 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart } from 'recharts';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { getVanguardBasePath } from '@/utils/subdomain';
 import { cn } from '@/lib/utils';
 
 // Import new components
@@ -47,6 +48,7 @@ import { ProfileManager } from './profiles/ProfileManager';
 export function VanguardDeviceDetails() {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
   const { agent, metrics, commands, isLoading, sendCommand, refetch, updateAgentConfig } = useVanguardAgent(deviceId);
   
   const [question, setQuestion] = useState('');
@@ -162,7 +164,7 @@ export function VanguardDeviceDetails() {
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => navigate('/vanguard/devices')}
+          onClick={() => navigate(`${basePath}/devices`)}
           className="hover:bg-cyan-500/20 hover:text-cyan-400"
         >
           <ArrowLeft className="h-5 w-5" />

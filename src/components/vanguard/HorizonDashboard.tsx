@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { getVanguardBasePath } from '@/utils/subdomain';
 import { ModuleLogo } from './ModuleLogo';
 
 interface StatCardProps {
@@ -79,6 +80,7 @@ function StatCard({ title, value, subtitle, icon, variant = 'default', onClick }
 export function HorizonDashboard() {
   const { stats, devices, isLoading, refetch } = useHorizonStats();
   const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
 
   // Calculate health score
   const healthScore = Math.round(
@@ -117,7 +119,7 @@ export function HorizonDashboard() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button size="sm" onClick={() => navigate('/vanguard/app/setup')}>
+          <Button size="sm" onClick={() => navigate(`${basePath}/setup`)}>
             <Download className="h-4 w-4 mr-2" />
             Deploy Agent
           </Button>
@@ -191,7 +193,7 @@ export function HorizonDashboard() {
           subtitle={`${stats.onlineDevices} online`}
           icon={<Server className="h-5 w-5" />}
           variant="info"
-          onClick={() => navigate('/vanguard/app/devices')}
+          onClick={() => navigate(`${basePath}/devices`)}
         />
         <StatCard
           title="Offline"
@@ -199,7 +201,7 @@ export function HorizonDashboard() {
           subtitle="Requires attention"
           icon={<WifiOff className="h-5 w-5" />}
           variant={stats.offlineDevices > 0 ? 'warning' : 'default'}
-          onClick={() => navigate('/vanguard/app/devices')}
+          onClick={() => navigate(`${basePath}/devices`)}
         />
         <StatCard
           title="Critical"
@@ -213,7 +215,7 @@ export function HorizonDashboard() {
           subtitle={`${stats.criticalPatches} critical`}
           icon={<Package className="h-5 w-5" />}
           variant={stats.criticalPatches > 0 ? 'danger' : 'default'}
-          onClick={() => navigate('/vanguard/app/patches')}
+          onClick={() => navigate(`${basePath}/patches`)}
         />
         <StatCard
           title="Open Tickets"
@@ -221,14 +223,14 @@ export function HorizonDashboard() {
           subtitle={`${stats.urgentTickets} urgent`}
           icon={<Ticket className="h-5 w-5" />}
           variant={stats.urgentTickets > 0 ? 'warning' : 'default'}
-          onClick={() => navigate('/vanguard/app/tickets')}
+          onClick={() => navigate(`${basePath}/tickets`)}
         />
         <StatCard
           title="Clients"
           value={stats.activeClients}
           subtitle={`of ${stats.totalClients} total`}
           icon={<Users className="h-5 w-5" />}
-          onClick={() => navigate('/vanguard/app/customers')}
+          onClick={() => navigate(`${basePath}/customers`)}
         />
       </div>
 
@@ -375,7 +377,7 @@ export function HorizonDashboard() {
               <Server className="h-5 w-5 text-cyan-500" />
               Recent Device Activity
             </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/vanguard/app/devices')}>
+            <Button variant="ghost" size="sm" onClick={() => navigate(`${basePath}/devices`)}>
               View All
             </Button>
           </div>
@@ -389,7 +391,7 @@ export function HorizonDashboard() {
               >
                 <div 
                   className="flex items-center gap-3 flex-1 cursor-pointer"
-                  onClick={() => navigate(`/vanguard/app/devices/${device.id}`)}
+                  onClick={() => navigate(`${basePath}/devices/${device.id}`)}
                 >
                   <div className={cn(
                     'w-2 h-2 rounded-full',
@@ -442,7 +444,7 @@ export function HorizonDashboard() {
                 <Button 
                   variant="link" 
                   className="mt-2"
-                  onClick={() => navigate('/vanguard/app/setup')}
+                  onClick={() => navigate(`${basePath}/setup`)}
                 >
                   Deploy your first agent
                 </Button>
@@ -462,19 +464,19 @@ export function HorizonDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/vanguard/app/devices')}>
+            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate(`${basePath}/devices`)}>
               <Server className="h-5 w-5" />
               <span>Manage Devices</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/vanguard/app/setup')}>
+            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate(`${basePath}/setup`)}>
               <Download className="h-5 w-5" />
               <span>Deploy Agent</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/vanguard/app/tickets')}>
+            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate(`${basePath}/tickets`)}>
               <Ticket className="h-5 w-5" />
               <span>Open Ticket</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/vanguard/app/alerts')}>
+            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate(`${basePath}/alerts`)}>
               <AlertTriangle className="h-5 w-5" />
               <span>View Alerts</span>
             </Button>

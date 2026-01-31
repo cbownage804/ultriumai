@@ -206,6 +206,7 @@ export function ManagedDevicesList({ agents, isLoading }: ManagedDevicesListProp
               Deploy the Vanguard Agent to start managing your endpoints.
             </p>
             <Button 
+              type="button"
               onClick={() => navigate(`${basePath}/setup`)}
               className="bg-gradient-to-r from-cyan-500 to-blue-500 text-black"
             >
