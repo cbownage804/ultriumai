@@ -41,7 +41,7 @@ interface PortalSettings {
   portal_app_enabled: boolean;
 }
 
-const PORTAL_EXE_URL = "https://github.com/your-org/vanguard-portal/releases/latest/download/VanguardPortal-win-x64.exe";
+const PORTAL_EXE_URL = "https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/vanguard-agents/VanguardPortal-win-x64.exe";
 
 export default function VanguardPortalDownload() {
   const { user } = useAuth();

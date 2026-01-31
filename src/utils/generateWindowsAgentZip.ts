@@ -11,8 +11,8 @@ interface WindowsAgentZipOptions {
 }
 
 // GitHub Release URL for pre-built EXE
-// Fetches latest release from your connected GitHub repo
-const GITHUB_RELEASE_BASE_URL = 'https://github.com/cbownage804/ultriumai/releases/latest/download';
+// UltriumAI-hosted agent downloads (Supabase Storage)
+const SUPABASE_STORAGE_BASE_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/vanguard-agents';
 const EXE_FILENAME = 'VanguardAgent-win-x64.exe';
 
 // Fallback: if GitHub release not available, we'll create a stub
@@ -25,9 +25,9 @@ async function fetchPreBuiltExe(onProgress?: (progress: number, message: string)
   }
 
   try {
-    onProgress?.(10, 'Fetching pre-built agent from GitHub...');
+    onProgress?.(10, 'Fetching pre-built agent from UltriumAI...');
     
-    const response = await fetch(`${GITHUB_RELEASE_BASE_URL}/${EXE_FILENAME}`, {
+    const response = await fetch(`${SUPABASE_STORAGE_BASE_URL}/${EXE_FILENAME}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/octet-stream',
@@ -35,7 +35,7 @@ async function fetchPreBuiltExe(onProgress?: (progress: number, message: string)
     });
 
     if (!response.ok) {
-      console.warn('GitHub Release not available, using config-only bundle');
+      console.warn('UltriumAI Storage not available, using config-only bundle');
       return null;
     }
 
