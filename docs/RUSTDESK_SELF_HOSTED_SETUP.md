@@ -66,11 +66,16 @@ Complete guide for deploying a self-hosted RustDesk infrastructure for Vanguard 
 
 | Port | Protocol | Service | Required |
 |------|----------|---------|----------|
+| 21114 | TCP | API (Pro only, or 443 with SSL proxy) | Pro only |
 | 21115 | TCP | NAT type test | Yes |
-| 21116 | TCP/UDP | ID registration + Heartbeat | Yes |
-| 21117 | TCP | Relay | Yes |
-| 21118 | TCP | Web client support | Optional |
-| 21119 | TCP | Web client support | Optional |
+| 21116 | TCP/UDP | ID registration + Heartbeat (hbbs) | Yes |
+| 21117 | TCP | Relay (hbbr) | Yes |
+| 21118 | TCP | WebSocket for hbbs (web client) | Optional |
+| 21119 | TCP | WebSocket for hbbr (web client) | Optional |
+
+> **Minimum Required**: Ports 21115-21117 (TCP) + 21116 (UDP) for core functionality.  
+> **WebSocket**: Ports 21118-21119 are only needed for the browser-based RustDesk Web Client.  
+> **Pro API**: Port 21114 (or 443 with reverse proxy) for RustDesk Pro's web console.
 
 ## Installation Options
 
