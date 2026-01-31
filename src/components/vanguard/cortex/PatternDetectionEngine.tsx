@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   GitBranch, AlertTriangle, Lightbulb,
-  FileText, ArrowUpRight, Clock, Zap, BarChart3, RefreshCw
+  FileText, ArrowUpRight, Clock, Zap, BarChart3, RefreshCw, Loader2, Sparkles
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Line } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,6 +40,7 @@ export function PatternDetectionEngine() {
   const [selectedPattern, setSelectedPattern] = useState<DetectedPattern | null>(null);
   const [trendData, setTrendData] = useState<TrendDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     if (user) loadAllData();
@@ -49,6 +50,35 @@ export function PatternDetectionEngine() {
     setIsLoading(true);
     await Promise.all([loadPatterns(), loadTrendData()]);
     setIsLoading(false);
+  };
+
+  const runPatternAnalysis = async () => {
+    try {
+      setIsAnalyzing(true);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('analyze-ticket-patterns', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success('Pattern analysis complete', {
+        description: `Analyzed ${data.tickets_analyzed} tickets, found ${data.patterns_found} patterns`
+      });
+
+      // Reload patterns
+      await loadPatterns();
+    } catch (err: any) {
+      console.error('Pattern analysis failed:', err);
+      toast.error('Analysis failed', { description: err.message });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const loadPatterns = async () => {
@@ -174,6 +204,20 @@ export function PatternDetectionEngine() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={runPatternAnalysis} 
+            disabled={isAnalyzing}
+            className="border-purple-500/40 hover:border-purple-500/60"
+          >
+            {isAnalyzing ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4 mr-1 text-purple-400" />
+            )}
+            {isAnalyzing ? 'Analyzing...' : 'Run Analysis'}
+          </Button>
           <Button variant="outline" size="sm" onClick={loadAllData} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh

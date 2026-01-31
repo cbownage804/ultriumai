@@ -35,8 +35,40 @@ export const NetworkTopologyMap = () => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
+  // Auto-refresh interval
   useEffect(() => {
     if (user) loadNetworkData();
+  }, [user]);
+
+  // Real-time subscription for discovered devices
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('network-devices-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'network_devices' },
+        () => {
+          loadNetworkData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'vanguard_discovered_devices' },
+        () => {
+          loadNetworkData();
+        }
+      )
+      .subscribe();
+
+    // Auto-refresh every 60 seconds
+    const refreshInterval = setInterval(loadNetworkData, 60000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(refreshInterval);
+    };
   }, [user]);
 
   useEffect(() => {
