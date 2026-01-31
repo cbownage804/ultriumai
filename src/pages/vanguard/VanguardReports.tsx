@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { VanguardTabs, VanguardTabContent, VanguardTab } from '@/components/vanguard/shared';
 import { 
   Calendar, 
   FileText, 
@@ -13,6 +13,14 @@ import { AttackPathVisualization } from '@/components/vanguard/AttackPathVisuali
 import { VanguardAnalyticsDashboard } from '@/components/vanguard/VanguardAnalyticsDashboard';
 import { HelpdeskReports } from '@/components/vanguard/reports/HelpdeskReports';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
+
+const reportTabs: VanguardTab[] = [
+  { id: 'helpdesk', label: 'Helpdesk', icon: Ticket },
+  { id: 'analytics', label: 'Security', icon: TrendingUp },
+  { id: 'scheduled', label: 'Scheduled', icon: Calendar },
+  { id: 'generate', label: 'Compliance', icon: FileText },
+  { id: 'attack-path', label: 'Attack Paths', icon: GitBranch },
+];
 
 export default function VanguardReports() {
   const [activeTab, setActiveTab] = useState('helpdesk');
@@ -29,65 +37,32 @@ export default function VanguardReports() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto bg-black/60 border border-cyan-500/30 p-1">
-          <TabsTrigger 
-            value="helpdesk" 
-            className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:via-blue-500/15 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border-cyan-500/40 text-slate-400"
-          >
-            <Ticket className="h-4 w-4" />
-            <span className="hidden sm:inline">Helpdesk</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="analytics" 
-            className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:via-blue-500/15 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border-cyan-500/40 text-slate-400"
-          >
-            <TrendingUp className="h-4 w-4" />
-            <span className="hidden sm:inline">Security</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="scheduled" 
-            className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:via-blue-500/15 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border-cyan-500/40 text-slate-400"
-          >
-            <Calendar className="h-4 w-4" />
-            <span className="hidden sm:inline">Scheduled</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="generate" 
-            className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:via-blue-500/15 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border-cyan-500/40 text-slate-400"
-          >
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">Compliance</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="attack-path" 
-            className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:via-blue-500/15 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border-cyan-500/40 text-slate-400"
-          >
-            <GitBranch className="h-4 w-4" />
-            <span className="hidden sm:inline">Attack Paths</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="helpdesk">
+      <VanguardTabs
+        tabs={reportTabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        colorTheme="cyan"
+      >
+        <VanguardTabContent value="helpdesk" className="mt-6">
           <HelpdeskReports />
-        </TabsContent>
+        </VanguardTabContent>
 
-        <TabsContent value="analytics">
+        <VanguardTabContent value="analytics" className="mt-6">
           <VanguardAnalyticsDashboard />
-        </TabsContent>
+        </VanguardTabContent>
 
-        <TabsContent value="scheduled">
+        <VanguardTabContent value="scheduled" className="mt-6">
           <ScheduledScansManager />
-        </TabsContent>
+        </VanguardTabContent>
 
-        <TabsContent value="generate">
+        <VanguardTabContent value="generate" className="mt-6">
           <ComplianceReportGenerator />
-        </TabsContent>
+        </VanguardTabContent>
 
-        <TabsContent value="attack-path">
+        <VanguardTabContent value="attack-path" className="mt-6">
           <AttackPathVisualization />
-        </TabsContent>
-      </Tabs>
+        </VanguardTabContent>
+      </VanguardTabs>
     </div>
   );
 }

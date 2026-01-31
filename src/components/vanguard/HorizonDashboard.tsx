@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { VanguardTabs, VanguardTabContent, VanguardTab } from './shared';
 import { useHorizonStats } from '@/hooks/useHorizonStats';
 import { DeviceQuickActions } from './horizon/DeviceQuickActions';
 import { AutomationProfileSelector } from './horizon/AutomationProfileSelector';
@@ -57,7 +57,40 @@ import {
   Key,
   Workflow,
   Timer,
+  LayoutDashboard,
+  Gauge,
+  Box,
+  ClipboardCheck,
+  ScrollText,
+  Network,
+  Bell,
+  Play,
+  AppWindow,
+  FileBarChart,
+  TriangleAlert,
 } from 'lucide-react';
+
+// Tab configuration for Horizon
+const horizonTabs: VanguardTab[] = [
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'performance', label: 'Performance', icon: Gauge },
+  { id: 'assets', label: 'Assets', icon: Box },
+  { id: 'compliance', label: 'Compliance', icon: ClipboardCheck },
+  { id: 'patches', label: 'Patches', icon: Package },
+  { id: 'scripts', label: 'Scripts', icon: FileCode },
+  { id: 'policies', label: 'Policies', icon: ScrollText },
+  { id: 'remote', label: 'Remote', icon: MonitorPlay },
+  { id: 'backups', label: 'Backups', icon: Cloud },
+  { id: 'licenses', label: 'Licenses', icon: Key },
+  { id: 'runbooks', label: 'Runbooks', icon: Workflow },
+  { id: 'sla', label: 'SLA', icon: Timer },
+  { id: 'alerting', label: 'Alerting', icon: Bell },
+  { id: 'automation', label: 'Automation', icon: Play },
+  { id: 'network', label: 'Network', icon: Network },
+  { id: 'software', label: 'Software', icon: AppWindow },
+  { id: 'reports', label: 'Reports', icon: FileBarChart },
+  { id: 'attention', label: 'Attention', icon: TriangleAlert },
+];
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ModuleLogo } from './ModuleLogo';
@@ -274,30 +307,15 @@ export function HorizonDashboard() {
       </div>
 
       {/* Tabs for different views */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-background/50 border flex-wrap h-auto p-1">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="assets">Assets</TabsTrigger>
-          <TabsTrigger value="compliance">Compliance</TabsTrigger>
-          <TabsTrigger value="patches">Patches</TabsTrigger>
-          <TabsTrigger value="scripts">Scripts</TabsTrigger>
-          <TabsTrigger value="policies">Policies</TabsTrigger>
-          <TabsTrigger value="remote">Remote</TabsTrigger>
-          <TabsTrigger value="backups">Backups</TabsTrigger>
-          <TabsTrigger value="licenses">Licenses</TabsTrigger>
-          <TabsTrigger value="runbooks">Runbooks</TabsTrigger>
-          <TabsTrigger value="sla">SLA</TabsTrigger>
-          <TabsTrigger value="alerting">Alerting</TabsTrigger>
-          <TabsTrigger value="automation">Automation</TabsTrigger>
-          <TabsTrigger value="network">Network</TabsTrigger>
-          <TabsTrigger value="software">Software</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-          <TabsTrigger value="attention">Attention</TabsTrigger>
-        </TabsList>
+      <VanguardTabs
+        tabs={horizonTabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        colorTheme="cyan"
+      >
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6 mt-6">
+        <VanguardTabContent value="overview" className="space-y-6 mt-6">
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Device Status */}
             <Card>
@@ -516,10 +534,10 @@ export function HorizonDashboard() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Performance Tab */}
-        <TabsContent value="performance" className="space-y-6 mt-6">
+        <VanguardTabContent value="performance" className="space-y-6 mt-6">
           <div className="grid gap-6 md:grid-cols-3">
             <Card>
               <CardHeader className="pb-2">
@@ -628,50 +646,50 @@ export function HorizonDashboard() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Patches Tab */}
-        <TabsContent value="patches" className="space-y-6 mt-6">
+        <VanguardTabContent value="patches" className="space-y-6 mt-6">
           <PatchManagementPanel />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Scripts Tab */}
-        <TabsContent value="scripts" className="space-y-6 mt-6">
+        <VanguardTabContent value="scripts" className="space-y-6 mt-6">
           <FleetScriptLibrary />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Policies Tab */}
-        <TabsContent value="policies" className="space-y-6 mt-6">
+        <VanguardTabContent value="policies" className="space-y-6 mt-6">
           <FleetConfigPolicies />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Remote Access Tab */}
-        <TabsContent value="remote" className="space-y-6 mt-6">
+        <VanguardTabContent value="remote" className="space-y-6 mt-6">
           <FleetRemoteAccess />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Backups Tab */}
-        <TabsContent value="backups" className="space-y-6 mt-6">
+        <VanguardTabContent value="backups" className="space-y-6 mt-6">
           <BackupIntegrationHub />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Licenses Tab */}
-        <TabsContent value="licenses" className="space-y-6 mt-6">
+        <VanguardTabContent value="licenses" className="space-y-6 mt-6">
           <LicenseManagementPanel />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Runbooks Tab */}
-        <TabsContent value="runbooks" className="space-y-6 mt-6">
+        <VanguardTabContent value="runbooks" className="space-y-6 mt-6">
           <RunbookAutomation />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* SLA Tab */}
-        <TabsContent value="sla" className="space-y-6 mt-6">
+        <VanguardTabContent value="sla" className="space-y-6 mt-6">
           <SLAUptimeMonitoring />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Alerting Tab */}
-        <TabsContent value="alerting" className="space-y-6 mt-6">
+        <VanguardTabContent value="alerting" className="space-y-6 mt-6">
           <div className="grid gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader>
@@ -733,10 +751,10 @@ export function HorizonDashboard() {
 
           {/* Alert Threshold Manager */}
           <AlertThresholdManager />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Automation Tab */}
-        <TabsContent value="automation" className="space-y-6 mt-6">
+        <VanguardTabContent value="automation" className="space-y-6 mt-6">
           {/* Fleet Performance Grid */}
           <FleetPerformanceGrid />
 
@@ -745,35 +763,35 @@ export function HorizonDashboard() {
 
           {/* Maintenance Windows */}
           <MaintenanceWindowManager />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Network Tab */}
-        <TabsContent value="network" className="space-y-6 mt-6">
+        <VanguardTabContent value="network" className="space-y-6 mt-6">
           <NetworkTopologyView />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Software Tab */}
-        <TabsContent value="software" className="space-y-6 mt-6">
+        <VanguardTabContent value="software" className="space-y-6 mt-6">
           <SoftwareAuditPanel />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Reports Tab */}
-        <TabsContent value="reports" className="space-y-6 mt-6">
+        <VanguardTabContent value="reports" className="space-y-6 mt-6">
           <RMMReportingDashboard />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Assets Tab */}
-        <TabsContent value="assets" className="space-y-6 mt-6">
+        <VanguardTabContent value="assets" className="space-y-6 mt-6">
           <AssetLifecycleManager />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Compliance Tab */}
-        <TabsContent value="compliance" className="space-y-6 mt-6">
+        <VanguardTabContent value="compliance" className="space-y-6 mt-6">
           <EndpointComplianceDashboard />
-        </TabsContent>
+        </VanguardTabContent>
 
         {/* Needs Attention Tab */}
-        <TabsContent value="attention" className="space-y-6 mt-6">
+        <VanguardTabContent value="attention" className="space-y-6 mt-6">
           {criticalDevices.length === 0 && offlineDevices.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
@@ -861,8 +879,8 @@ export function HorizonDashboard() {
               )}
             </>
           )}
-        </TabsContent>
-      </Tabs>
+        </VanguardTabContent>
+      </VanguardTabs>
 
       {/* Quick Actions */}
       <Card>

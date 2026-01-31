@@ -1,9 +1,17 @@
 import { RealTimeMonitor } from "@/components/rmm/RealTimeMonitor";
 import { AlertCenter } from "@/components/rmm/AlertCenter";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Monitor, AlertTriangle } from "lucide-react";
+import { VanguardTabs, VanguardTabContent, VanguardTab } from "@/components/vanguard/shared";
+import { useState } from "react";
+
+const monitoringTabs: VanguardTab[] = [
+  { id: 'monitor', label: 'Real-Time Monitor', icon: Monitor },
+  { id: 'alerts', label: 'Alert Center', icon: AlertTriangle },
+];
 
 export default function MonitoringPage() {
+  const [activeTab, setActiveTab] = useState('monitor');
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="container mx-auto p-6">
@@ -16,26 +24,20 @@ export default function MonitoringPage() {
           </p>
         </div>
         
-        <Tabs defaultValue="monitor" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 bg-muted/50">
-            <TabsTrigger value="monitor" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-              <Monitor className="h-4 w-4 mr-2" />
-              Real-Time Monitor
-            </TabsTrigger>
-            <TabsTrigger value="alerts" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              Alert Center
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="monitor" className="space-y-6">
+        <VanguardTabs
+          tabs={monitoringTabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          colorTheme="cyan"
+        >
+          <VanguardTabContent value="monitor" className="space-y-6 mt-6">
             <RealTimeMonitor />
-          </TabsContent>
+          </VanguardTabContent>
 
-          <TabsContent value="alerts" className="space-y-6">
+          <VanguardTabContent value="alerts" className="space-y-6 mt-6">
             <AlertCenter />
-          </TabsContent>
-        </Tabs>
+          </VanguardTabContent>
+        </VanguardTabs>
       </div>
     </div>
   );

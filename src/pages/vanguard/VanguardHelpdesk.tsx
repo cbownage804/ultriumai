@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react';
 import { HelpdeskDashboard } from '@/components/dashboards/HelpdeskDashboard';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { VanguardTabs, VanguardTabContent, VanguardTab } from '@/components/vanguard/shared';
 import { SLAManagementDashboard, EmailIntegrationHub, CSATSurveyManager, TimeTrackingBilling, TicketWorkflowEngine } from '@/components/vanguard/helpdesk';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
+import { Ticket, Clock, Workflow, Mail, DollarSign, Star } from 'lucide-react';
+
+const helpdeskTabs: VanguardTab[] = [
+  { id: 'tickets', label: 'Tickets', icon: Ticket },
+  { id: 'sla', label: 'SLA Management', icon: Clock },
+  { id: 'workflows', label: 'Workflows', icon: Workflow },
+  { id: 'email', label: 'Email Integration', icon: Mail },
+  { id: 'time', label: 'Time & Billing', icon: DollarSign },
+  { id: 'csat', label: 'CSAT Surveys', icon: Star },
+];
 
 export default function VanguardHelpdesk() {
   const [activeTab, setActiveTab] = useState('tickets');
@@ -23,35 +33,31 @@ export default function VanguardHelpdesk() {
         </div>
       </div>
       
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-black/60 border border-cyan-500/30 flex-wrap h-auto p-1">
-          <TabsTrigger value="tickets" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:text-purple-400">Tickets</TabsTrigger>
-          <TabsTrigger value="sla" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:text-purple-400">SLA Management</TabsTrigger>
-          <TabsTrigger value="workflows" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:text-purple-400">Workflows</TabsTrigger>
-          <TabsTrigger value="email" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:text-purple-400">Email Integration</TabsTrigger>
-          <TabsTrigger value="time" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:text-purple-400">Time & Billing</TabsTrigger>
-          <TabsTrigger value="csat" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:text-purple-400">CSAT Surveys</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="tickets" className="mt-6">
+      <VanguardTabs
+        tabs={helpdeskTabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        colorTheme="purple"
+      >
+        <VanguardTabContent value="tickets" className="mt-6">
           <HelpdeskDashboard />
-        </TabsContent>
-        <TabsContent value="sla">
+        </VanguardTabContent>
+        <VanguardTabContent value="sla" className="mt-6">
           <SLAManagementDashboard />
-        </TabsContent>
-        <TabsContent value="workflows">
+        </VanguardTabContent>
+        <VanguardTabContent value="workflows" className="mt-6">
           <TicketWorkflowEngine />
-        </TabsContent>
-        <TabsContent value="email">
+        </VanguardTabContent>
+        <VanguardTabContent value="email" className="mt-6">
           <EmailIntegrationHub />
-        </TabsContent>
-        <TabsContent value="time">
+        </VanguardTabContent>
+        <VanguardTabContent value="time" className="mt-6">
           <TimeTrackingBilling />
-        </TabsContent>
-        <TabsContent value="csat">
+        </VanguardTabContent>
+        <VanguardTabContent value="csat" className="mt-6">
           <CSATSurveyManager />
-        </TabsContent>
-      </Tabs>
+        </VanguardTabContent>
+      </VanguardTabs>
     </div>
   );
 }
