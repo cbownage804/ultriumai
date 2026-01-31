@@ -2141,6 +2141,57 @@ export type Database = {
           },
         ]
       }
+      calendar_integrations: {
+        Row: {
+          access_token_encrypted: string | null
+          calendar_id: string | null
+          created_at: string | null
+          id: string
+          last_sync_at: string | null
+          provider: string
+          refresh_token_encrypted: string | null
+          sync_appointments: boolean | null
+          sync_enabled: boolean | null
+          sync_error: string | null
+          sync_tasks: boolean | null
+          token_expires_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          calendar_id?: string | null
+          created_at?: string | null
+          id?: string
+          last_sync_at?: string | null
+          provider: string
+          refresh_token_encrypted?: string | null
+          sync_appointments?: boolean | null
+          sync_enabled?: boolean | null
+          sync_error?: string | null
+          sync_tasks?: boolean | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          calendar_id?: string | null
+          created_at?: string | null
+          id?: string
+          last_sync_at?: string | null
+          provider?: string
+          refresh_token_encrypted?: string | null
+          sync_appointments?: boolean | null
+          sync_enabled?: boolean | null
+          sync_error?: string | null
+          sync_tasks?: boolean | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       canned_responses: {
         Row: {
           category: string | null
@@ -2926,6 +2977,94 @@ export type Database = {
           },
         ]
       }
+      comanaged_announcement_reads: {
+        Row: {
+          announcement_id: string
+          id: string
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          announcement_id: string
+          id?: string
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          announcement_id?: string
+          id?: string
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_announcement_reads_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_announcements: {
+        Row: {
+          announcement_type: string | null
+          content: string
+          created_at: string | null
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_pinned: boolean | null
+          is_published: boolean | null
+          organization_id: string | null
+          priority: string | null
+          starts_at: string | null
+          target_audience: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          announcement_type?: string | null
+          content: string
+          created_at?: string | null
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          is_published?: boolean | null
+          organization_id?: string | null
+          priority?: string | null
+          starts_at?: string | null
+          target_audience?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          announcement_type?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          is_published?: boolean | null
+          organization_id?: string | null
+          priority?: string | null
+          starts_at?: string | null
+          target_audience?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_announcements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comanaged_branding: {
         Row: {
           accent_color: string | null
@@ -3002,6 +3141,100 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: true
             referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_chat_channels: {
+        Row: {
+          channel_name: string
+          channel_type: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_private: boolean | null
+          organization_id: string
+          ticket_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          channel_name: string
+          channel_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_private?: boolean | null
+          organization_id: string
+          ticket_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          channel_name?: string
+          channel_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_private?: boolean | null
+          organization_id?: string
+          ticket_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_chat_channels_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_chat_messages: {
+        Row: {
+          attachments: Json | null
+          channel_id: string
+          created_at: string | null
+          edited_at: string | null
+          id: string
+          is_pinned: boolean | null
+          message_content: string
+          read_by: Json | null
+          sender_id: string
+          sender_type: string
+          visibility: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          channel_id: string
+          created_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          message_content: string
+          read_by?: Json | null
+          sender_id: string
+          sender_type: string
+          visibility?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          channel_id?: string
+          created_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          message_content?: string
+          read_by?: Json | null
+          sender_id?: string
+          sender_type?: string
+          visibility?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_chat_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_chat_channels"
             referencedColumns: ["id"]
           },
         ]
@@ -3106,6 +3339,36 @@ export type Database = {
           },
         ]
       }
+      comanaged_editing_presence: {
+        Row: {
+          cursor_position: Json | null
+          id: string
+          last_seen_at: string | null
+          resource_id: string
+          resource_type: string
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          cursor_position?: Json | null
+          id?: string
+          last_seen_at?: string | null
+          resource_id: string
+          resource_type: string
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          cursor_position?: Json | null
+          id?: string
+          last_seen_at?: string | null
+          resource_id?: string
+          resource_type?: string
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       comanaged_escalation_requests: {
         Row: {
           additional_notes: string | null
@@ -3168,6 +3431,74 @@ export type Database = {
             columns: ["requested_by_id"]
             isOneToOne: false
             referencedRelation: "comanaged_internal_technicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_escalation_rules: {
+        Row: {
+          auto_assign_to: string | null
+          conditions: Json
+          created_at: string | null
+          created_by: string
+          description: string | null
+          escalate_after_minutes: number | null
+          escalate_to: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          last_triggered_at: string | null
+          notify_parties: Json | null
+          organization_id: string | null
+          priority_bump: boolean | null
+          rule_name: string
+          trigger_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          auto_assign_to?: string | null
+          conditions?: Json
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          escalate_after_minutes?: number | null
+          escalate_to?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          notify_parties?: Json | null
+          organization_id?: string | null
+          priority_bump?: boolean | null
+          rule_name: string
+          trigger_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          auto_assign_to?: string | null
+          conditions?: Json
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          escalate_after_minutes?: number | null
+          escalate_to?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          notify_parties?: Json | null
+          organization_id?: string | null
+          priority_bump?: boolean | null
+          rule_name?: string
+          trigger_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_escalation_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -3405,6 +3736,152 @@ export type Database = {
           },
         ]
       }
+      comanaged_oncall_members: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          notification_methods: Json | null
+          rotation_order: number
+          schedule_id: string
+          technician_id: string
+          technician_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          notification_methods?: Json | null
+          rotation_order: number
+          schedule_id: string
+          technician_id: string
+          technician_type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          notification_methods?: Json | null
+          rotation_order?: number
+          schedule_id?: string
+          technician_id?: string
+          technician_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_oncall_members_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_oncall_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_oncall_overrides: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: string
+          original_member_id: string | null
+          override_end: string
+          override_start: string
+          reason: string | null
+          schedule_id: string
+          substitute_member_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: string
+          original_member_id?: string | null
+          override_end: string
+          override_start: string
+          reason?: string | null
+          schedule_id: string
+          substitute_member_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          original_member_id?: string | null
+          override_end?: string
+          override_start?: string
+          reason?: string | null
+          schedule_id?: string
+          substitute_member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_oncall_overrides_original_member_id_fkey"
+            columns: ["original_member_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_oncall_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comanaged_oncall_overrides_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_oncall_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comanaged_oncall_overrides_substitute_member_id_fkey"
+            columns: ["substitute_member_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_oncall_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_oncall_schedules: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          escalation_timeout_minutes: number | null
+          id: string
+          is_active: boolean | null
+          organization_id: string | null
+          rotation_type: string | null
+          schedule_name: string
+          timezone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          escalation_timeout_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          rotation_type?: string | null
+          schedule_name: string
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          escalation_timeout_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          rotation_type?: string | null
+          schedule_name?: string
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_oncall_schedules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comanaged_organizations: {
         Row: {
           created_at: string | null
@@ -3434,6 +3911,68 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      comanaged_performance_metrics: {
+        Row: {
+          avg_resolution_minutes: number | null
+          billable_minutes: number | null
+          created_at: string | null
+          csat_responses: number | null
+          csat_score: number | null
+          escalations_created: number | null
+          escalations_received: number | null
+          first_response_met: number | null
+          first_response_missed: number | null
+          id: string
+          metric_date: string
+          organization_id: string
+          technician_id: string
+          technician_type: string
+          tickets_resolved: number | null
+        }
+        Insert: {
+          avg_resolution_minutes?: number | null
+          billable_minutes?: number | null
+          created_at?: string | null
+          csat_responses?: number | null
+          csat_score?: number | null
+          escalations_created?: number | null
+          escalations_received?: number | null
+          first_response_met?: number | null
+          first_response_missed?: number | null
+          id?: string
+          metric_date: string
+          organization_id: string
+          technician_id: string
+          technician_type: string
+          tickets_resolved?: number | null
+        }
+        Update: {
+          avg_resolution_minutes?: number | null
+          billable_minutes?: number | null
+          created_at?: string | null
+          csat_responses?: number | null
+          csat_score?: number | null
+          escalations_created?: number | null
+          escalations_received?: number | null
+          first_response_met?: number | null
+          first_response_missed?: number | null
+          id?: string
+          metric_date?: string
+          organization_id?: string
+          technician_id?: string
+          technician_type?: string
+          tickets_resolved?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_performance_metrics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       comanaged_queue_members: {
         Row: {
@@ -3559,6 +4098,100 @@ export type Database = {
           },
         ]
       }
+      comanaged_shift_handoffs: {
+        Row: {
+          acknowledged_at: string | null
+          created_at: string | null
+          handoff_time: string | null
+          id: string
+          incoming_tech_id: string
+          notes: string | null
+          open_tickets: Json | null
+          organization_id: string | null
+          outgoing_tech_id: string
+          pending_escalations: Json | null
+          priority_items: Json | null
+          summary: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          created_at?: string | null
+          handoff_time?: string | null
+          id?: string
+          incoming_tech_id: string
+          notes?: string | null
+          open_tickets?: Json | null
+          organization_id?: string | null
+          outgoing_tech_id: string
+          pending_escalations?: Json | null
+          priority_items?: Json | null
+          summary: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          created_at?: string | null
+          handoff_time?: string | null
+          id?: string
+          incoming_tech_id?: string
+          notes?: string | null
+          open_tickets?: Json | null
+          organization_id?: string | null
+          outgoing_tech_id?: string
+          pending_escalations?: Json | null
+          priority_items?: Json | null
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_shift_handoffs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_skill_routing: {
+        Row: {
+          created_at: string | null
+          fallback_to_msp: boolean | null
+          id: string
+          organization_id: string | null
+          priority_weight: number | null
+          required_certifications: Json | null
+          skill_category: string | null
+          skill_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          fallback_to_msp?: boolean | null
+          id?: string
+          organization_id?: string | null
+          priority_weight?: number | null
+          required_certifications?: Json | null
+          skill_category?: string | null
+          skill_name: string
+        }
+        Update: {
+          created_at?: string | null
+          fallback_to_msp?: boolean | null
+          id?: string
+          organization_id?: string | null
+          priority_weight?: number | null
+          required_certifications?: Json | null
+          skill_category?: string | null
+          skill_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_skill_routing_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comanaged_sla_policies: {
         Row: {
           business_hours_only: boolean | null
@@ -3668,6 +4301,47 @@ export type Database = {
           },
         ]
       }
+      comanaged_technician_skills: {
+        Row: {
+          certified_at: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          proficiency_level: string | null
+          skill_id: string
+          technician_id: string
+          technician_type: string
+        }
+        Insert: {
+          certified_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          proficiency_level?: string | null
+          skill_id: string
+          technician_id: string
+          technician_type: string
+        }
+        Update: {
+          certified_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          proficiency_level?: string | null
+          skill_id?: string
+          technician_id?: string
+          technician_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_technician_skills_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_skill_routing"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comanaged_ticket_context: {
         Row: {
           assigned_internal_team_id: string | null
@@ -3772,6 +4446,56 @@ export type Database = {
             columns: ["submitted_by_user_id"]
             isOneToOne: false
             referencedRelation: "comanaged_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_ticket_notes: {
+        Row: {
+          author_id: string
+          author_type: string
+          created_at: string | null
+          id: string
+          mentioned_users: Json | null
+          note_content: string
+          note_type: string | null
+          organization_id: string | null
+          ticket_id: string
+          updated_at: string | null
+          visibility: string | null
+        }
+        Insert: {
+          author_id: string
+          author_type: string
+          created_at?: string | null
+          id?: string
+          mentioned_users?: Json | null
+          note_content: string
+          note_type?: string | null
+          organization_id?: string | null
+          ticket_id: string
+          updated_at?: string | null
+          visibility?: string | null
+        }
+        Update: {
+          author_id?: string
+          author_type?: string
+          created_at?: string | null
+          id?: string
+          mentioned_users?: Json | null
+          note_content?: string
+          note_type?: string | null
+          organization_id?: string | null
+          ticket_id?: string
+          updated_at?: string | null
+          visibility?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_ticket_notes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
             referencedColumns: ["id"]
           },
         ]
