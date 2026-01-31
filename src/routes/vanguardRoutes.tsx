@@ -118,6 +118,11 @@ const CSATSurveyPage = lazy(() => import('@/pages/vanguard/CSATSurveyPage'));
 const ScheduledReportsPage = lazy(() => import('@/pages/vanguard/ScheduledReportsPage'));
 const CortexSettingsPage = lazy(() => import('@/pages/vanguard/CortexSettingsPage'));
 
+// New feature pages
+const IntegrationsPage = lazy(() => import('@/pages/vanguard/IntegrationsPage'));
+const ThemeEditorPage = lazy(() => import('@/pages/vanguard/ThemeEditorPage'));
+const MobileInstallPage = lazy(() => import('@/pages/vanguard/MobileInstallPage'));
+
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
   <div className="min-h-[60vh] flex items-center justify-center">
@@ -243,6 +248,10 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-escalation" path="escalation" element={<LazyProtectedPage component={EscalationEnginePage} />} />,
   <Route key="vanguard-csat-surveys" path="csat-surveys" element={<LazyProtectedPage component={CSATSurveyPage} />} />,
   <Route key="vanguard-scheduled-reports" path="report-scheduler" element={<LazyProtectedPage component={ScheduledReportsPage} />} />,
+  // New feature routes
+  <Route key="vanguard-integrations" path="integrations" element={<LazyProtectedPage component={IntegrationsPage} />} />,
+  <Route key="vanguard-theme-editor" path="theme-editor" element={<LazyProtectedPage component={ThemeEditorPage} />} />,
+  <Route key="vanguard-mobile-install" path="mobile-install" element={<LazyProtectedPage component={MobileInstallPage} />} />,
   // Recon Product routes (public - no auth required for purchasing)
   <Route key="vanguard-recon" path="recon" element={<LazyPage component={ReconProductPage} />} />,
   <Route key="vanguard-recon-checkout" path="recon/checkout" element={<LazyPage component={ReconCheckoutPage} />} />,
