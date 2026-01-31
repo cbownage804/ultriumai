@@ -97,19 +97,20 @@ After a thorough analysis of the Vanguard codebase, I've identified the current 
 
 ---
 
-## Phase 5: Billing & Time Tracking (PARTIALLY COMPLETE)
+## ✅ Phase 5: Billing & Time Tracking (COMPLETED)
 
 ### ✅ 5.1 Time Tracking - FUNCTIONAL
 - Start/stop timer
 - Billable/non-billable tracking
 - Time entry history
 
-### 5.2 MSP Billing Dashboard - UI ONLY
-**Required Work:**
-- Stripe integration for actual invoicing
-- Real MRR calculations from subscription data
-
----
+### ✅ 5.2 MSP Billing Dashboard - COMPLETED
+- Created `generate-msp-invoice` edge function for real Stripe invoice creation
+- Created `get-msp-billing-data` edge function to fetch real MRR from Stripe subscriptions
+- Updated `MRRCalculator` to display real Stripe subscription MRR
+- Updated `AutomatedInvoicing` to generate actual Stripe invoices from billable time entries
+- Invoices are created in Stripe with proper line items and customer linking
+- Time entries marked as invoiced after invoice generation
 
 ## Technical Debt Notes
 
