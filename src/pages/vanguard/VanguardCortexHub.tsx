@@ -21,7 +21,11 @@ import {
   Bot,
   Activity,
   Terminal,
-  Heart
+  Heart,
+  MessageSquareText,
+  Clock,
+  Search,
+  Users
 } from 'lucide-react';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 import { getVanguardBasePath } from '@/utils/subdomain';
@@ -36,11 +40,43 @@ const cortexFeatures = [
     stat: 'Smart troubleshooting'
   },
   {
+    title: 'AI Response Draft Generator',
+    description: 'Auto-generate professional ticket responses',
+    icon: MessageSquareText,
+    path: '/cortex-ai-tools',
+    badge: 'NEW',
+    stat: 'Instant drafts'
+  },
+  {
+    title: 'AI SLA Predictor',
+    description: 'Predict SLA breaches before they happen',
+    icon: Clock,
+    path: '/cortex-ai-tools',
+    badge: 'NEW',
+    stat: 'Proactive alerts'
+  },
+  {
+    title: 'AI Root Cause Analyzer',
+    description: 'Identify root causes of recurring issues',
+    icon: Search,
+    path: '/cortex-ai-tools',
+    badge: 'NEW',
+    stat: 'Pattern analysis'
+  },
+  {
+    title: 'AI Customer Health Score',
+    description: 'Calculate customer health & churn risk',
+    icon: Users,
+    path: '/cortex-ai-tools',
+    badge: 'NEW',
+    stat: 'Churn prevention'
+  },
+  {
     title: 'AI Anomaly Detection',
     description: 'Detect unusual patterns in metrics, security events & traffic',
     icon: Activity,
     path: '/cortex-ai-tools',
-    badge: 'NEW',
+    badge: 'AI',
     stat: 'Pattern detection'
   },
   {
@@ -48,7 +84,7 @@ const cortexFeatures = [
     description: 'Generate PowerShell/Bash/Python scripts from descriptions',
     icon: Terminal,
     path: '/cortex-ai-tools',
-    badge: 'NEW',
+    badge: 'AI',
     stat: 'Code automation'
   },
   {
@@ -56,7 +92,7 @@ const cortexFeatures = [
     description: 'Analyze customer sentiment and escalation risk',
     icon: Heart,
     path: '/cortex-ai-tools',
-    badge: 'NEW',
+    badge: 'AI',
     stat: 'Customer insights'
   },
   {
