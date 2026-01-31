@@ -3435,6 +3435,130 @@ export type Database = {
         }
         Relationships: []
       }
+      comanaged_queue_members: {
+        Row: {
+          can_assign: boolean | null
+          can_close: boolean | null
+          created_at: string | null
+          id: string
+          queue_id: string
+          receive_notifications: boolean | null
+          role: string | null
+          technician_id: string
+        }
+        Insert: {
+          can_assign?: boolean | null
+          can_close?: boolean | null
+          created_at?: string | null
+          id?: string
+          queue_id: string
+          receive_notifications?: boolean | null
+          role?: string | null
+          technician_id: string
+        }
+        Update: {
+          can_assign?: boolean | null
+          can_close?: boolean | null
+          created_at?: string | null
+          id?: string
+          queue_id?: string
+          receive_notifications?: boolean | null
+          role?: string | null
+          technician_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_queue_members_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_ticket_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comanaged_queue_members_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_internal_technicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_queue_routing_rules: {
+        Row: {
+          conditions: Json
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          queue_id: string
+          rule_name: string
+        }
+        Insert: {
+          conditions?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          queue_id: string
+          rule_name: string
+        }
+        Update: {
+          conditions?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          queue_id?: string
+          rule_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_queue_routing_rules_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_ticket_queues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_queue_tickets: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          notes: string | null
+          previous_queue_id: string | null
+          queue_id: string
+          ticket_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          notes?: string | null
+          previous_queue_id?: string | null
+          queue_id: string
+          ticket_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          notes?: string | null
+          previous_queue_id?: string | null
+          queue_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_queue_tickets_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_ticket_queues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comanaged_sla_policies: {
         Row: {
           business_hours_only: boolean | null
@@ -3648,6 +3772,68 @@ export type Database = {
             columns: ["submitted_by_user_id"]
             isOneToOne: false
             referencedRelation: "comanaged_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_ticket_queues: {
+        Row: {
+          auto_assign_rules: Json | null
+          color: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          notification_settings: Json | null
+          organization_id: string
+          queue_name: string
+          sla_policy_id: string | null
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_assign_rules?: Json | null
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          notification_settings?: Json | null
+          organization_id: string
+          queue_name: string
+          sla_policy_id?: string | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_assign_rules?: Json | null
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          notification_settings?: Json | null
+          organization_id?: string
+          queue_name?: string
+          sla_policy_id?: string | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_ticket_queues_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
             referencedColumns: ["id"]
           },
         ]

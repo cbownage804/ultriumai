@@ -6,3 +6,4 @@ export { CoManagedTechAccess } from './CoManagedTechAccess';
 export { CustomerSchedulingPortal } from './CustomerSchedulingPortal';
 export { InternalTechManager } from './InternalTechManager';
 export { EscalationQueue } from './EscalationQueue';
+export { InternalQueueManager } from './InternalQueueManager';
