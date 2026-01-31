@@ -10,7 +10,12 @@ import {
   ArrowRight,
   Activity,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  Mic,
+  Bell,
+  Calendar,
+  Zap,
+  Webhook
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -196,6 +201,41 @@ export default function VanguardHome() {
     }
   ];
 
+  const phase16Features = [
+    {
+      title: 'AI Voice Assistant',
+      description: 'Hands-free ticket management with voice commands',
+      icon: Mic,
+      path: `${basePath}/helpdesk?tab=voice`,
+      color: 'from-violet-500 to-purple-600',
+      isNew: true
+    },
+    {
+      title: 'Push Notifications',
+      description: 'Real-time alerts for SLA breaches and escalations',
+      icon: Bell,
+      path: `${basePath}/helpdesk?tab=notifications`,
+      color: 'from-amber-500 to-orange-500',
+      isNew: true
+    },
+    {
+      title: 'Client Portal',
+      description: 'Appointment booking and real-time ticket chat',
+      icon: Calendar,
+      path: `${basePath}/helpdesk?tab=portal`,
+      color: 'from-cyan-500 to-blue-500',
+      isNew: true
+    },
+    {
+      title: 'Advanced Automations',
+      description: 'Scheduled tasks, webhooks, and workflow triggers',
+      icon: Zap,
+      path: `${basePath}/helpdesk?tab=automations`,
+      color: 'from-emerald-500 to-green-600',
+      isNew: true
+    }
+  ];
+
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
       {/* Hero Section */}
@@ -286,6 +326,39 @@ export default function VanguardHome() {
                   <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </CardTitle>
                 <CardDescription className="text-xs line-clamp-2">{module.description}</CardDescription>
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* New Features - Phase 16 */}
+      <div>
+        <div className="flex items-center gap-2 mb-3 md:mb-4">
+          <h2 className="text-lg md:text-xl font-semibold">New Features</h2>
+          <span className="px-2 py-0.5 text-xs font-medium bg-primary/20 text-primary rounded-full">Phase 16</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          {phase16Features.map((feature, index) => (
+            <Card 
+              key={index} 
+              className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
+              onClick={() => navigate(feature.path)}
+            >
+              {feature.isNew && (
+                <div className="absolute top-2 right-2">
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-green-500 text-white rounded-full animate-pulse">NEW</span>
+                </div>
+              )}
+              <CardHeader className="pb-2 md:pb-3 p-3 md:p-4">
+                <div className={`inline-flex p-2 rounded-lg bg-gradient-to-br ${feature.color} w-fit mb-2`}>
+                  <feature.icon className="h-4 w-4 md:h-5 md:w-5 text-white" />
+                </div>
+                <CardTitle className="text-sm md:text-base flex items-center justify-between">
+                  <span className="line-clamp-1">{feature.title}</span>
+                  <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </CardTitle>
+                <CardDescription className="text-xs line-clamp-2">{feature.description}</CardDescription>
               </CardHeader>
             </Card>
           ))}
