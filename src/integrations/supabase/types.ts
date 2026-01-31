@@ -2926,6 +2926,464 @@ export type Database = {
           },
         ]
       }
+      comanaged_branding: {
+        Row: {
+          accent_color: string | null
+          created_at: string | null
+          custom_css: string | null
+          custom_domain: string | null
+          email_from_name: string | null
+          email_signature_html: string | null
+          favicon_url: string | null
+          id: string
+          logo_url: string | null
+          organization_id: string
+          physical_address_display: string | null
+          portal_footer_text: string | null
+          portal_title: string | null
+          portal_welcome_message: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          support_email_display: string | null
+          support_email_reply_to: string | null
+          support_hours_display: string | null
+          support_phone_display: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          accent_color?: string | null
+          created_at?: string | null
+          custom_css?: string | null
+          custom_domain?: string | null
+          email_from_name?: string | null
+          email_signature_html?: string | null
+          favicon_url?: string | null
+          id?: string
+          logo_url?: string | null
+          organization_id: string
+          physical_address_display?: string | null
+          portal_footer_text?: string | null
+          portal_title?: string | null
+          portal_welcome_message?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          support_email_display?: string | null
+          support_email_reply_to?: string | null
+          support_hours_display?: string | null
+          support_phone_display?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          accent_color?: string | null
+          created_at?: string | null
+          custom_css?: string | null
+          custom_domain?: string | null
+          email_from_name?: string | null
+          email_signature_html?: string | null
+          favicon_url?: string | null
+          id?: string
+          logo_url?: string | null
+          organization_id?: string
+          physical_address_display?: string | null
+          portal_footer_text?: string | null
+          portal_title?: string | null
+          portal_welcome_message?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          support_email_display?: string | null
+          support_email_reply_to?: string | null
+          support_hours_display?: string | null
+          support_phone_display?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_branding_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_communications: {
+        Row: {
+          actual_sender_id: string | null
+          actual_sender_name: string | null
+          actual_sender_type: string
+          attachments: Json | null
+          channel: string | null
+          created_at: string | null
+          displayed_sender_avatar: string | null
+          displayed_sender_name: string
+          displayed_sender_title: string | null
+          id: string
+          is_internal_note: boolean | null
+          is_msp_private: boolean | null
+          message_content: string
+          message_html: string | null
+          organization_id: string
+          ticket_id: string
+        }
+        Insert: {
+          actual_sender_id?: string | null
+          actual_sender_name?: string | null
+          actual_sender_type: string
+          attachments?: Json | null
+          channel?: string | null
+          created_at?: string | null
+          displayed_sender_avatar?: string | null
+          displayed_sender_name: string
+          displayed_sender_title?: string | null
+          id?: string
+          is_internal_note?: boolean | null
+          is_msp_private?: boolean | null
+          message_content: string
+          message_html?: string | null
+          organization_id: string
+          ticket_id: string
+        }
+        Update: {
+          actual_sender_id?: string | null
+          actual_sender_name?: string | null
+          actual_sender_type?: string
+          attachments?: Json | null
+          channel?: string | null
+          created_at?: string | null
+          displayed_sender_avatar?: string | null
+          displayed_sender_name?: string
+          displayed_sender_title?: string | null
+          id?: string
+          is_internal_note?: boolean | null
+          is_msp_private?: boolean | null
+          message_content?: string
+          message_html?: string | null
+          organization_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_communications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_departments: {
+        Row: {
+          created_at: string | null
+          department_head_email: string | null
+          department_name: string
+          id: string
+          organization_id: string
+          ticket_routing_priority: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          department_head_email?: string | null
+          department_name: string
+          id?: string
+          organization_id: string
+          ticket_routing_priority?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          department_head_email?: string | null
+          department_name?: string
+          id?: string
+          organization_id?: string
+          ticket_routing_priority?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_departments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_organizations: {
+        Row: {
+          created_at: string | null
+          id: string
+          internal_it_name: string
+          is_active: boolean | null
+          organization_name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          internal_it_name: string
+          is_active?: boolean | null
+          organization_name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          internal_it_name?: string
+          is_active?: boolean | null
+          organization_name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      comanaged_sla_policies: {
+        Row: {
+          business_hours_only: boolean | null
+          created_at: string | null
+          escalation_path: Json | null
+          first_response_minutes: number
+          id: string
+          organization_id: string
+          policy_name: string
+          priority: string
+          resolution_minutes: number
+        }
+        Insert: {
+          business_hours_only?: boolean | null
+          created_at?: string | null
+          escalation_path?: Json | null
+          first_response_minutes: number
+          id?: string
+          organization_id: string
+          policy_name: string
+          priority: string
+          resolution_minutes: number
+        }
+        Update: {
+          business_hours_only?: boolean | null
+          created_at?: string | null
+          escalation_path?: Json | null
+          first_response_minutes?: number
+          id?: string
+          organization_id?: string
+          policy_name?: string
+          priority?: string
+          resolution_minutes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_sla_policies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_technician_access: {
+        Row: {
+          can_access_billing: boolean | null
+          can_close_tickets: boolean | null
+          can_create_tickets: boolean | null
+          can_escalate: boolean | null
+          can_respond_as_internal: boolean | null
+          can_view_internal_notes: boolean | null
+          created_at: string | null
+          display_name_override: string | null
+          display_title_override: string | null
+          id: string
+          organization_id: string
+          technician_id: string
+          user_id: string
+          visibility_mode:
+            | Database["public"]["Enums"]["tech_visibility_mode"]
+            | null
+        }
+        Insert: {
+          can_access_billing?: boolean | null
+          can_close_tickets?: boolean | null
+          can_create_tickets?: boolean | null
+          can_escalate?: boolean | null
+          can_respond_as_internal?: boolean | null
+          can_view_internal_notes?: boolean | null
+          created_at?: string | null
+          display_name_override?: string | null
+          display_title_override?: string | null
+          id?: string
+          organization_id: string
+          technician_id: string
+          user_id: string
+          visibility_mode?:
+            | Database["public"]["Enums"]["tech_visibility_mode"]
+            | null
+        }
+        Update: {
+          can_access_billing?: boolean | null
+          can_close_tickets?: boolean | null
+          can_create_tickets?: boolean | null
+          can_escalate?: boolean | null
+          can_respond_as_internal?: boolean | null
+          can_view_internal_notes?: boolean | null
+          created_at?: string | null
+          display_name_override?: string | null
+          display_title_override?: string | null
+          id?: string
+          organization_id?: string
+          technician_id?: string
+          user_id?: string
+          visibility_mode?:
+            | Database["public"]["Enums"]["tech_visibility_mode"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_technician_access_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_ticket_context: {
+        Row: {
+          created_at: string | null
+          department_id: string | null
+          escalated_at: string | null
+          escalated_by: string | null
+          escalated_to_msp: boolean | null
+          escalation_reason: string | null
+          id: string
+          internal_it_notes: string | null
+          last_response_appeared_from: string | null
+          msp_private_notes: string | null
+          organization_id: string
+          source_channel: string | null
+          submitted_by_user_id: string | null
+          ticket_id: string
+          updated_at: string | null
+          visible_to_internal_it: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          department_id?: string | null
+          escalated_at?: string | null
+          escalated_by?: string | null
+          escalated_to_msp?: boolean | null
+          escalation_reason?: string | null
+          id?: string
+          internal_it_notes?: string | null
+          last_response_appeared_from?: string | null
+          msp_private_notes?: string | null
+          organization_id: string
+          source_channel?: string | null
+          submitted_by_user_id?: string | null
+          ticket_id: string
+          updated_at?: string | null
+          visible_to_internal_it?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          department_id?: string | null
+          escalated_at?: string | null
+          escalated_by?: string | null
+          escalated_to_msp?: boolean | null
+          escalation_reason?: string | null
+          id?: string
+          internal_it_notes?: string | null
+          last_response_appeared_from?: string | null
+          msp_private_notes?: string | null
+          organization_id?: string
+          source_channel?: string | null
+          submitted_by_user_id?: string | null
+          ticket_id?: string
+          updated_at?: string | null
+          visible_to_internal_it?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_ticket_context_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comanaged_ticket_context_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comanaged_ticket_context_submitted_by_user_id_fkey"
+            columns: ["submitted_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_users: {
+        Row: {
+          created_at: string | null
+          department_id: string | null
+          email: string
+          full_name: string
+          id: string
+          is_vip: boolean | null
+          job_title: string | null
+          last_login_at: string | null
+          organization_id: string
+          phone: string | null
+          portal_access_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department_id?: string | null
+          email: string
+          full_name: string
+          id?: string
+          is_vip?: boolean | null
+          job_title?: string | null
+          last_login_at?: string | null
+          organization_id: string
+          phone?: string | null
+          portal_access_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department_id?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          is_vip?: boolean | null
+          job_title?: string | null
+          last_login_at?: string | null
+          organization_id?: string
+          phone?: string | null
+          portal_access_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_users_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comanaged_users_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           author_client_id: string | null
@@ -4321,6 +4779,117 @@ export type Database = {
           validation_rules?: Json | null
         }
         Relationships: []
+      }
+      customer_appointments: {
+        Row: {
+          actual_end: string | null
+          actual_start: string | null
+          appointment_type: string
+          completion_notes: string | null
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          customer_user_id: string | null
+          description: string | null
+          google_event_id: string | null
+          ical_uid: string | null
+          id: string
+          location_address: string | null
+          location_notes: string | null
+          organization_id: string | null
+          outlook_event_id: string | null
+          reminder_24h_sent: boolean | null
+          reminder_sent: boolean | null
+          scheduled_end: string
+          scheduled_start: string
+          status: string | null
+          technician_id: string | null
+          technician_name: string | null
+          ticket_id: string | null
+          timezone: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          actual_end?: string | null
+          actual_start?: string | null
+          appointment_type: string
+          completion_notes?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          customer_user_id?: string | null
+          description?: string | null
+          google_event_id?: string | null
+          ical_uid?: string | null
+          id?: string
+          location_address?: string | null
+          location_notes?: string | null
+          organization_id?: string | null
+          outlook_event_id?: string | null
+          reminder_24h_sent?: boolean | null
+          reminder_sent?: boolean | null
+          scheduled_end: string
+          scheduled_start: string
+          status?: string | null
+          technician_id?: string | null
+          technician_name?: string | null
+          ticket_id?: string | null
+          timezone?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          actual_end?: string | null
+          actual_start?: string | null
+          appointment_type?: string
+          completion_notes?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          customer_user_id?: string | null
+          description?: string | null
+          google_event_id?: string | null
+          ical_uid?: string | null
+          id?: string
+          location_address?: string | null
+          location_notes?: string | null
+          organization_id?: string | null
+          outlook_event_id?: string | null
+          reminder_24h_sent?: boolean | null
+          reminder_sent?: boolean | null
+          scheduled_end?: string
+          scheduled_start?: string
+          status?: string | null
+          technician_id?: string | null
+          technician_name?: string | null
+          ticket_id?: string | null
+          timezone?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_appointments_customer_user_id_fkey"
+            columns: ["customer_user_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_appointments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customer_portal_config: {
         Row: {
@@ -19516,6 +20085,84 @@ export type Database = {
         }
         Relationships: []
       }
+      technician_availability: {
+        Row: {
+          appointment_types: string[] | null
+          buffer_minutes: number | null
+          created_at: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean | null
+          max_daily_appointments: number | null
+          start_time: string
+          technician_id: string
+          user_id: string
+        }
+        Insert: {
+          appointment_types?: string[] | null
+          buffer_minutes?: number | null
+          created_at?: string | null
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_available?: boolean | null
+          max_daily_appointments?: number | null
+          start_time: string
+          technician_id: string
+          user_id: string
+        }
+        Update: {
+          appointment_types?: string[] | null
+          buffer_minutes?: number | null
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean | null
+          max_daily_appointments?: number | null
+          start_time?: string
+          technician_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      technician_blocked_times: {
+        Row: {
+          blocked_end: string
+          blocked_start: string
+          created_at: string | null
+          id: string
+          is_recurring: boolean | null
+          reason: string | null
+          recurrence_rule: string | null
+          technician_id: string
+          user_id: string
+        }
+        Insert: {
+          blocked_end: string
+          blocked_start: string
+          created_at?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          reason?: string | null
+          recurrence_rule?: string | null
+          technician_id: string
+          user_id: string
+        }
+        Update: {
+          blocked_end?: string
+          blocked_start?: string
+          created_at?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          reason?: string | null
+          recurrence_rule?: string | null
+          technician_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       threat_intel_cache: {
         Row: {
           categories: string[] | null
@@ -26375,6 +27022,7 @@ export type Database = {
       device_status: "online" | "offline" | "stale" | "unknown"
       helpdesk_role: "msp_admin" | "msp_staff" | "client_admin" | "client_staff"
       safedoc_role: "admin" | "editor" | "viewer" | "none"
+      tech_visibility_mode: "shadow" | "branded" | "hybrid"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -26515,6 +27163,7 @@ export const Constants = {
       device_status: ["online", "offline", "stale", "unknown"],
       helpdesk_role: ["msp_admin", "msp_staff", "client_admin", "client_staff"],
       safedoc_role: ["admin", "editor", "viewer", "none"],
+      tech_visibility_mode: ["shadow", "branded", "hybrid"],
     },
   },
 } as const
