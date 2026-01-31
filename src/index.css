@@ -570,6 +570,37 @@
     --safedesk-soft: 187 85% 15%;
     --safedesk-dark: 187 85% 43%;
     --safedesk-muted: 187 30% 65%;
+
+    /* ===========================================
+       VANGUARD PREMIUM DARK GLASS THEME
+       =========================================== */
+    
+    /* Core Vanguard Colors - Cyan/Teal Accent */
+    --vanguard-bg: 180 20% 2%;
+    --vanguard-surface: 180 15% 4%;
+    --vanguard-surface-elevated: 180 12% 6%;
+    --vanguard-accent: 187 85% 53%;
+    --vanguard-accent-glow: 187 85% 63%;
+    --vanguard-accent-soft: 187 85% 10%;
+    --vanguard-purple: 262 83% 58%;
+    --vanguard-purple-glow: 262 83% 68%;
+    
+    /* Vanguard Gradients */
+    --vanguard-gradient-primary: linear-gradient(135deg, hsl(187 85% 53%), hsl(220 85% 55%), hsl(262 83% 58%));
+    --vanguard-gradient-surface: linear-gradient(180deg, hsl(180 12% 6%), hsl(180 15% 4%));
+    --vanguard-gradient-glow: linear-gradient(135deg, hsl(187 85% 53% / 0.15), hsl(262 83% 58% / 0.1));
+    --vanguard-gradient-border: linear-gradient(135deg, hsl(187 85% 53% / 0.5), hsl(262 83% 58% / 0.3));
+    
+    /* Vanguard Shadows */
+    --vanguard-shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.5), 0 0 0 1px hsl(187 85% 53% / 0.05);
+    --vanguard-shadow-md: 0 4px 16px -4px hsl(0 0% 0% / 0.6), 0 0 0 1px hsl(187 85% 53% / 0.1);
+    --vanguard-shadow-lg: 0 8px 32px -8px hsl(0 0% 0% / 0.7), 0 0 20px hsl(187 85% 53% / 0.1);
+    --vanguard-shadow-glow: 0 0 30px hsl(187 85% 53% / 0.25), 0 0 60px hsl(262 83% 58% / 0.15);
+    
+    /* Vanguard Text */
+    --vanguard-text-primary: 0 0% 98%;
+    --vanguard-text-secondary: 0 0% 70%;
+    --vanguard-text-muted: 0 0% 50%;
   }
 }
 
