@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { sessionId, title, duration, userId } = await req.json();
+    const { sessionId, title, duration, userId, frames, frameCount } = await req.json();
 
     if (!sessionId || !userId) {
       throw new Error('Session ID and User ID are required');
@@ -24,7 +24,6 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Format duration for display
     const formatDuration = (seconds: number): string => {
       const mins = Math.floor(seconds / 60);
       const secs = seconds % 60;
@@ -33,8 +32,108 @@ serve(async (req) => {
 
     let generatedArticle;
 
-    // If Lovable AI is available, use it to generate better documentation
-    if (lovableApiKey) {
+    // Use AI Vision to analyze frames if available
+    if (lovableApiKey && frames && frames.length > 0) {
+      try {
+        console.log(`Analyzing ${frames.length} frames with AI vision...`);
+
+        // Build vision messages with frames
+        const imageContents = frames.slice(0, 10).map((frame: string, index: number) => ({
+          type: "image_url",
+          image_url: {
+            url: `data:image/jpeg;base64,${frame}`
+          }
+        }));
+
+        const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${lovableApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-3-flash-preview',
+            messages: [
+              {
+                role: 'system',
+                content: `You are an expert technical documentation writer. Analyze these screen recording frames and generate a detailed knowledge base article.
+
+Your task:
+1. Examine each frame carefully to understand what actions are being performed
+2. Identify the application/website being used
+3. Detect UI elements, buttons clicked, forms filled, navigation patterns
+4. Create clear, actionable step-by-step documentation
+
+Output a JSON object with this exact structure:
+{
+  "title": "How to: [specific action based on what you see]",
+  "summary": "Clear overview of what this guide covers based on the screen content",
+  "steps": [
+    {
+      "stepNumber": 1,
+      "title": "Specific action title",
+      "description": "Detailed description of what the user did in this frame, including specific UI elements, button names, menu items clicked, form fields filled",
+      "timestamp": "0:00"
+    }
+  ],
+  "category": "One of: How-To Guides, Troubleshooting, Configuration, Security Procedures, Onboarding, Best Practices",
+  "tags": ["relevant", "tags", "based on content"],
+  "tips": ["Helpful tips based on what you observed"]
+}
+
+Be specific! Mention exact button names, menu items, form fields, and application features you can see in the frames.`
+              },
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: "text",
+                    text: `Analyze these ${frames.length} screen recording frames from a ${formatDuration(duration)} recording titled "${title}". 
+                    
+The frames are captured every 5 seconds. Create a detailed step-by-step knowledge base article based on what you observe happening in each frame. Be specific about:
+- What application/website is being used
+- What buttons are clicked
+- What forms are filled out
+- What navigation occurs
+- What the user accomplishes
+
+Here are the frames to analyze:`
+                  },
+                  ...imageContents
+                ]
+              }
+            ],
+            max_tokens: 4000
+          })
+        });
+
+        if (aiResponse.ok) {
+          const aiData = await aiResponse.json();
+          const content = aiData.choices?.[0]?.message?.content;
+          
+          if (content) {
+            // Extract JSON from response
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              try {
+                generatedArticle = JSON.parse(jsonMatch[0]);
+                console.log('Successfully generated article with AI vision analysis');
+              } catch (parseError) {
+                console.error('Failed to parse AI response as JSON:', parseError);
+              }
+            }
+          }
+        } else {
+          const errorText = await aiResponse.text();
+          console.error('AI vision API error:', aiResponse.status, errorText);
+        }
+      } catch (aiError) {
+        console.error('AI vision generation error:', aiError);
+      }
+    }
+
+    // Fallback to metadata-based generation if vision fails
+    if (!generatedArticle && lovableApiKey) {
       try {
         const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
@@ -47,7 +146,7 @@ serve(async (req) => {
             messages: [
               {
                 role: 'system',
-                content: `You are a technical documentation expert. Generate professional knowledge base articles from screen recording metadata. Create clear, actionable step-by-step guides that IT professionals can follow.
+                content: `You are a technical documentation expert. Generate a professional knowledge base article from screen recording metadata. Create clear, actionable step-by-step guides.
 
 Output JSON format:
 {
@@ -63,11 +162,12 @@ Output JSON format:
               },
               {
                 role: 'user',
-                content: `Generate a knowledge base article for a screen recording with:
+                content: `Generate a knowledge base article for a screen recording:
 - Title: "${title}"
 - Duration: ${formatDuration(duration)}
+- Frames captured: ${frameCount || 'unknown'}
 
-Based on the title and duration, infer what the recording might cover and create appropriate documentation steps. Space the timestamps evenly across the duration.`
+Based on the title and duration, create appropriate documentation steps. Space timestamps evenly across the duration.`
               }
             ],
             tools: [
@@ -116,12 +216,11 @@ Based on the title and duration, infer what the recording might cover and create
           }
         }
       } catch (aiError) {
-        console.error('AI generation error:', aiError);
-        // Fall back to template-based generation
+        console.error('AI fallback generation error:', aiError);
       }
     }
 
-    // Fallback: Generate template-based article if AI fails or isn't available
+    // Final fallback: template-based generation
     if (!generatedArticle) {
       const stepCount = Math.max(3, Math.min(8, Math.floor(duration / 30)));
       const timePerStep = duration / stepCount;
@@ -144,7 +243,6 @@ Based on the title and duration, infer what the recording might cover and create
         });
       }
 
-      // Infer category from title
       let category = 'How-To Guides';
       const lowerTitle = title.toLowerCase();
       if (lowerTitle.includes('troubleshoot') || lowerTitle.includes('fix') || lowerTitle.includes('error')) {
@@ -157,7 +255,6 @@ Based on the title and duration, infer what the recording might cover and create
         category = 'Onboarding';
       }
 
-      // Generate tags from title
       const words = title.toLowerCase().split(/\s+/)
         .filter(w => w.length > 3 && !['that', 'this', 'with', 'from', 'have'].includes(w))
         .slice(0, 3);
@@ -177,7 +274,7 @@ Based on the title and duration, infer what the recording might cover and create
       };
     }
 
-    // Store the session record
+    // Store the draft article
     await supabase.from('vanguard_kb_drafts').insert({
       user_id: userId,
       title: generatedArticle.title,
@@ -185,14 +282,15 @@ Based on the title and duration, infer what the recording might cover and create
       category: generatedArticle.category,
       tags: generatedArticle.tags,
       status: 'draft',
-      generated_from: `Screen recording: ${title} (${formatDuration(duration)})`
+      generated_from: `Screen recording: ${title} (${formatDuration(duration)}, ${frameCount || 0} frames analyzed)`
     });
 
     return new Response(
       JSON.stringify({
         success: true,
         sessionId,
-        article: generatedArticle
+        article: generatedArticle,
+        framesAnalyzed: frames?.length || 0
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
