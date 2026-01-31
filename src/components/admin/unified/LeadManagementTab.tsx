@@ -52,15 +52,23 @@ interface Lead {
   last_name: string | null;
   email: string;
   phone: string | null;
-  company_name: string | null;
-  company_size: string | null;
-  product_interest: string | null;
+  company: string | null;
+  business_type: string | null;
+  service_provider_type: string | null;
+  business_size: string | null;
+  industry: string | null;
+  project_type: string | null;
+  product_type: string | null;
+  white_labeled: string | null;
   message: string | null;
-  lead_source: string;
+  product_interests: string[] | null;
+  source: string;
   status: string;
+  notes: string | null;
   created_at: string;
   updated_at: string;
-  metadata: Record<string, unknown> | null;
+  converted_at: string | null;
+  converted_to_client_id: string | null;
 }
 
 const statusColors: Record<string, string> = {
@@ -85,14 +93,17 @@ const sourceLabels: Record<string, string> = {
   homepage_newsletter: 'Homepage Newsletter',
   website: 'Website',
   contact_form: 'Contact Form',
+  signup: 'User Signup',
 };
 
-const productLabels: Record<string, string> = {
-  safesuite: 'SafeSuite',
-  ai_studio: 'AI Studio',
-  vanguard: 'Vanguard',
-  enterprise: 'Enterprise',
-  general: 'General',
+const productTypeLabels: Record<string, string> = {
+  custom: 'Custom Solution',
+  prebuilt: 'Prebuilt Solution',
+};
+
+const businessTypeLabels: Record<string, string> = {
+  business: 'Business',
+  'service-provider': 'Service Provider',
 };
 
 export const LeadManagementTab = () => {
@@ -105,7 +116,7 @@ export const LeadManagementTab = () => {
   const { data: leads, isLoading, refetch } = useQuery({
     queryKey: ['admin-leads', statusFilter, sourceFilter],
     queryFn: async () => {
-      let query = (supabase as any).from('lead_captures')
+      let query = supabase.from('leads')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -113,7 +124,7 @@ export const LeadManagementTab = () => {
         query = query.eq('status', statusFilter);
       }
       if (sourceFilter !== 'all') {
-        query = query.eq('lead_source', sourceFilter);
+        query = query.eq('source', sourceFilter);
       }
 
       const { data, error } = await query;
@@ -124,8 +135,8 @@ export const LeadManagementTab = () => {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await (supabase as any)
-        .from('lead_captures')
+      const { error } = await supabase
+        .from('leads')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', id);
       if (error) throw error;
@@ -146,7 +157,7 @@ export const LeadManagementTab = () => {
       lead.email.toLowerCase().includes(search) ||
       lead.first_name?.toLowerCase().includes(search) ||
       lead.last_name?.toLowerCase().includes(search) ||
-      lead.company_name?.toLowerCase().includes(search)
+      lead.company?.toLowerCase().includes(search)
     );
   });
 
@@ -161,16 +172,16 @@ export const LeadManagementTab = () => {
     if (!filteredLeads?.length) return;
     
     const csv = [
-      ['Name', 'Email', 'Phone', 'Company', 'Size', 'Product', 'Source', 'Status', 'Date', 'Message'].join(','),
+      ['Name', 'Email', 'Phone', 'Company', 'Business Type', 'Industry', 'Source', 'Status', 'Date', 'Message'].join(','),
       ...filteredLeads.map((lead) =>
         [
           `"${lead.first_name || ''} ${lead.last_name || ''}"`,
           lead.email,
           lead.phone || '',
-          `"${lead.company_name || ''}"`,
-          lead.company_size || '',
-          lead.product_interest || '',
-          lead.lead_source,
+          `"${lead.company || ''}"`,
+          lead.business_type || '',
+          lead.industry || '',
+          lead.source,
           lead.status,
           format(new Date(lead.created_at), 'yyyy-MM-dd'),
           `"${(lead.message || '').replace(/"/g, '""')}"`,
@@ -352,21 +363,23 @@ export const LeadManagementTab = () => {
                         <div className="flex items-center gap-2">
                           <Building2 className="h-4 w-4 text-muted-foreground" />
                           <div>
-                            <p className="text-sm">{lead.company_name || '—'}</p>
-                            {lead.company_size && (
-                              <p className="text-xs text-muted-foreground">{lead.company_size}</p>
+                            <p className="text-sm">{lead.company || '—'}</p>
+                            {lead.business_type && (
+                              <p className="text-xs text-muted-foreground">
+                                {businessTypeLabels[lead.business_type] || lead.business_type}
+                              </p>
                             )}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {productLabels[lead.product_interest || ''] || lead.product_interest || '—'}
+                          {lead.industry || lead.product_type || '—'}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <span className="text-sm">
-                          {sourceLabels[lead.lead_source] || lead.lead_source}
+                          {sourceLabels[lead.source] || lead.source}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -456,12 +469,12 @@ export const LeadManagementTab = () => {
                     </a>
                   </div>
                 )}
-                {selectedLead.company_name && (
+                {selectedLead.company && (
                   <div className="flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      {selectedLead.company_name}
-                      {selectedLead.company_size && ` (${selectedLead.company_size})`}
+                      {selectedLead.company}
+                      {selectedLead.business_type && ` (${businessTypeLabels[selectedLead.business_type] || selectedLead.business_type})`}
                     </span>
                   </div>
                 )}
@@ -469,14 +482,14 @@ export const LeadManagementTab = () => {
 
               <div className="grid grid-cols-2 gap-4 pt-2 border-t">
                 <div>
-                  <p className="text-sm text-muted-foreground">Product Interest</p>
+                  <p className="text-sm text-muted-foreground">Industry / Interest</p>
                   <Badge variant="outline">
-                    {productLabels[selectedLead.product_interest || ''] || selectedLead.product_interest || '—'}
+                    {selectedLead.industry || selectedLead.project_type || '—'}
                   </Badge>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Source</p>
-                  <p className="text-sm">{sourceLabels[selectedLead.lead_source] || selectedLead.lead_source}</p>
+                  <p className="text-sm">{sourceLabels[selectedLead.source] || selectedLead.source}</p>
                 </div>
               </div>
 
@@ -487,6 +500,20 @@ export const LeadManagementTab = () => {
                     Message
                   </p>
                   <p className="text-sm bg-muted/50 p-3 rounded-lg">{selectedLead.message}</p>
+                </div>
+              )}
+
+              {/* Product Interests */}
+              {selectedLead.product_interests && selectedLead.product_interests.length > 0 && (
+                <div className="pt-2 border-t">
+                  <p className="text-sm text-muted-foreground mb-2">Product Interests</p>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedLead.product_interests.map((interest) => (
+                      <Badge key={interest} variant="secondary" className="text-xs">
+                        {interest}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -506,6 +533,24 @@ export const LeadManagementTab = () => {
                   </Button>
                 )}
               </div>
+
+              {/* Convert to Customer - only show if not already converted */}
+              {selectedLead.status !== 'converted' && (
+                <div className="pt-2 border-t">
+                  <Button 
+                    variant="default" 
+                    className="w-full bg-emerald-600 hover:bg-emerald-700"
+                    onClick={() => {
+                      updateStatusMutation.mutate({ id: selectedLead.id, status: 'converted' });
+                      setSelectedLead(null);
+                      toast.success('Lead marked as converted! Create their customer account in Vanguard.');
+                    }}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Mark as Converted
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

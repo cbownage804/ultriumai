@@ -9319,6 +9319,87 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          assigned_to: string | null
+          business_size: string | null
+          business_type: string | null
+          company: string | null
+          converted_at: string | null
+          converted_to_client_id: string | null
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          industry: string | null
+          last_name: string | null
+          message: string | null
+          notes: string | null
+          phone: string | null
+          product_interests: string[] | null
+          product_type: string | null
+          project_type: string | null
+          service_provider_type: string | null
+          source: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          white_labeled: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          business_size?: string | null
+          business_type?: string | null
+          company?: string | null
+          converted_at?: string | null
+          converted_to_client_id?: string | null
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id?: string
+          industry?: string | null
+          last_name?: string | null
+          message?: string | null
+          notes?: string | null
+          phone?: string | null
+          product_interests?: string[] | null
+          product_type?: string | null
+          project_type?: string | null
+          service_provider_type?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          white_labeled?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          business_size?: string | null
+          business_type?: string | null
+          company?: string | null
+          converted_at?: string | null
+          converted_to_client_id?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          industry?: string | null
+          last_name?: string | null
+          message?: string | null
+          notes?: string | null
+          phone?: string | null
+          product_interests?: string[] | null
+          product_type?: string | null
+          project_type?: string | null
+          service_provider_type?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          white_labeled?: string | null
+        }
+        Relationships: []
+      }
       live_chat_conversations: {
         Row: {
           assigned_technician_id: string | null
