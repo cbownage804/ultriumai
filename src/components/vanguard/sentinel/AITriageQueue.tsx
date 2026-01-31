@@ -59,13 +59,15 @@ export function AITriageQueue() {
     setProcessing(true);
     try {
       const { data, error } = await supabase.functions.invoke('sentinel-ai-triage', {
-        body: { action: 'process_queue' }
+        body: { autoTriage: true }
       });
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success(`Processed ${data.processed || 0} events`);
+      toast.success(`Analyzed ${data.analyzed || 0} events`, {
+        description: `Escalated: ${data.summary?.escalated || 0}, Auto-resolved: ${data.summary?.dismissed || 0}`
+      });
       fetchAnalyses();
     } catch (error) {
       console.error('Error processing queue:', error);
