@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Copy, Check, Terminal, Server, Plus, Loader2, Download, Package, Monitor, Cpu, Building2 } from 'lucide-react';
+import { Copy, Check, Terminal, Server, Plus, Loader2, Download, Package, Monitor, Cpu, Building2, Apple, Link2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,6 +18,17 @@ import { generateWindowsAgentZip } from '@/utils/generateWindowsAgentZip';
 const API_ENDPOINT = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api';
 const VANGUARD_SECRET = 'vgd_sk_7Kx9mPqR3nTwYz2JfL8sHcN6bVdXaE4uGtM1oWpQ5iA';
 
+// GitHub release URLs for agent downloads
+const GITHUB_RELEASES_BASE = 'https://github.com/UltriumAI/vanguard-agent/releases/latest/download';
+const AGENT_DOWNLOAD_URLS = {
+  windows: `${GITHUB_RELEASES_BASE}/VanguardAgent-Setup.exe`,
+  windowsMsi: `${GITHUB_RELEASES_BASE}/VanguardAgent.msi`,
+  macos: `${GITHUB_RELEASES_BASE}/VanguardAgent.dmg`,
+  linux: `${GITHUB_RELEASES_BASE}/vanguard-agent-linux.tar.gz`,
+};
+
+type SelectedOS = 'windows' | 'macos' | 'linux';
+
 interface MSPClient {
   id: string;
   company_name: string;
@@ -27,6 +38,9 @@ export default function VanguardSetup() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [copied, setCopied] = useState<string | null>(null);
+  
+  // OS selection state
+  const [selectedOS, setSelectedOS] = useState<SelectedOS>('windows');
   
   // Client selection state
   const [clients, setClients] = useState<MSPClient[]>([]);
@@ -439,28 +453,192 @@ if __name__ == '__main__':
     document.title = 'Setup Vanguard Device | Ultrium Vanguard';
   }, []);
 
+  // Get download URL for selected OS
+  const getDownloadUrl = () => {
+    switch (selectedOS) {
+      case 'windows':
+        return AGENT_DOWNLOAD_URLS.windows;
+      case 'macos':
+        return AGENT_DOWNLOAD_URLS.macos;
+      case 'linux':
+        return AGENT_DOWNLOAD_URLS.linux;
+    }
+  };
+
+  // Get installation command for selected OS
+  const getInstallCommand = () => {
+    const userId = user?.id || 'YOUR_USER_ID';
+    const clientIdParam = selectedClientId ? ` CLIENTID="${selectedClientId}"` : '';
+    
+    switch (selectedOS) {
+      case 'windows':
+        return `# Silent install (run as Administrator)
+msiexec /i VanguardAgent.msi /qn USERID="${userId}" SECRETKEY="${VANGUARD_SECRET}"${clientIdParam}
+
+# Or interactive install
+.\\VanguardAgent-Setup.exe`;
+      case 'macos':
+        return `# Mount and install
+hdiutil attach VanguardAgent.dmg
+sudo installer -pkg /Volumes/VanguardAgent/VanguardAgent.pkg -target /
+
+# Configure the agent
+sudo defaults write /Library/Preferences/com.ultriumai.vanguard userid "${userId}"
+sudo defaults write /Library/Preferences/com.ultriumai.vanguard secretkey "${VANGUARD_SECRET}"${selectedClientId ? `
+sudo defaults write /Library/Preferences/com.ultriumai.vanguard clientid "${selectedClientId}"` : ''}
+
+# Start the service
+sudo launchctl load /Library/LaunchDaemons/com.ultriumai.vanguard.plist`;
+      case 'linux':
+        return `# Extract and install
+tar -xzf vanguard-agent-linux.tar.gz
+cd vanguard-agent
+sudo ./install.sh
+
+# Configure the agent
+sudo tee /etc/vanguard/config.yaml << EOF
+ultrium_api:
+  endpoint: "${API_ENDPOINT}"
+  secret_key: "${VANGUARD_SECRET}"
+  user_id: "${userId}"${selectedClientId ? `
+  client_id: "${selectedClientId}"` : ''}
+  heartbeat_interval: 30
+EOF
+
+# Start the service
+sudo systemctl enable vanguard-agent
+sudo systemctl start vanguard-agent`;
+    }
+  };
+
+  const handleCopyDownloadLink = () => {
+    const url = getDownloadUrl();
+    navigator.clipboard.writeText(url);
+    setCopied('download-link');
+    toast.success('Download link copied to clipboard');
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const handleCopyInstallCommand = () => {
+    const command = getInstallCommand();
+    navigator.clipboard.writeText(command);
+    setCopied('install-command');
+    toast.success('Install command copied to clipboard');
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const handleDirectDownload = () => {
+    const url = getDownloadUrl();
+    window.open(url, '_blank');
+    toast.success(`Downloading ${selectedOS} agent...`);
+  };
+
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Setup Vanguard Device</h1>
+        <h1 className="text-3xl font-bold mb-2">Add Device</h1>
         <p className="text-muted-foreground">
-          Deploy Vanguard agents on Windows, Linux, or Raspberry Pi devices
+          Deploy Vanguard agents on Windows, macOS, Linux, or servers
         </p>
       </div>
 
         <div className="space-y-6">
-          {/* Download Agent Bundles - Platform Selector */}
+          {/* Download Agent - Platform Selector */}
           <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5 text-primary" />
-                Download Agent Bundle
+                Download Agent
               </CardTitle>
               <CardDescription>
-                Choose your platform and download a pre-configured agent package
+                Select your operating system to get the correct agent installer
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* OS Selection Tabs */}
+              <div className="space-y-4">
+                <Label className="font-medium">Operating System</Label>
+                <Tabs value={selectedOS} onValueChange={(v) => setSelectedOS(v as SelectedOS)} className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="windows" className="flex items-center gap-2">
+                      <Monitor className="h-4 w-4" />
+                      Windows
+                    </TabsTrigger>
+                    <TabsTrigger value="macos" className="flex items-center gap-2">
+                      <Apple className="h-4 w-4" />
+                      macOS
+                    </TabsTrigger>
+                    <TabsTrigger value="linux" className="flex items-center gap-2">
+                      <Cpu className="h-4 w-4" />
+                      Linux
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="windows" className="mt-4">
+                    <div className="space-y-3 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Check className="h-3 w-3 text-green-500" />
+                        <span>Windows 10/11, Server 2019+</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Check className="h-3 w-3 text-green-500" />
+                        <span>Windows Service integration</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Check className="h-3 w-3 text-green-500" />
+                        <span>MSI package for silent RMM deployment</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <Badge variant="secondary">EXE</Badge>
+                      <Badge variant="secondary">MSI</Badge>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="macos" className="mt-4">
+                    <div className="space-y-3 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Check className="h-3 w-3 text-green-500" />
+                        <span>macOS 12 Monterey and later</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Check className="h-3 w-3 text-green-500" />
+                        <span>Native Swift implementation</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Check className="h-3 w-3 text-green-500" />
+                        <span>Apple Silicon and Intel support</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <Badge variant="secondary">DMG</Badge>
+                      <Badge variant="secondary">PKG</Badge>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="linux" className="mt-4">
+                    <div className="space-y-3 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Check className="h-3 w-3 text-green-500" />
+                        <span>Ubuntu 20.04+, Debian 11+, RHEL 8+</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Check className="h-3 w-3 text-green-500" />
+                        <span>Systemd service integration</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Check className="h-3 w-3 text-green-500" />
+                        <span>Network scanning & SNMP support</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <Badge variant="secondary">tar.gz</Badge>
+                      <Badge variant="secondary">Python</Badge>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+
               {/* Client Selector */}
               <div className="p-4 border rounded-lg bg-muted/30">
                 <div className="flex items-center justify-between mb-3">
@@ -484,19 +662,9 @@ if __name__ == '__main__':
                     Loading clients...
                   </div>
                 ) : clients.length === 0 ? (
-                  <div className="text-center py-4">
-                    <p className="text-sm text-muted-foreground mb-3">
-                      No clients found. Add clients to assign agents to specific organizations.
-                    </p>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => navigate('/msp')}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Your First Client
-                    </Button>
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    No clients configured. Agent will be added to your default organization.
+                  </p>
                 ) : (
                   <>
                     <Select value={selectedClientId} onValueChange={setSelectedClientId}>
@@ -516,111 +684,70 @@ if __name__ == '__main__':
                     </Select>
                     {selectedClient && (
                       <p className="text-xs text-muted-foreground mt-2">
-                        The downloaded agent will be pre-configured for <span className="font-medium text-foreground">{selectedClient.company_name}</span>. 
-                        Devices will automatically appear under this client in your dashboard.
+                        Devices will automatically appear under <span className="font-medium text-foreground">{selectedClient.company_name}</span>.
                       </p>
                     )}
                   </>
                 )}
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                {/* Windows Agent */}
-                <div className="border rounded-lg p-4 bg-background hover:border-primary/50 transition-colors">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-2 rounded-lg bg-blue-500/10">
-                      <Monitor className="h-6 w-6 text-blue-500" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Windows Agent</h3>
-                      <p className="text-xs text-muted-foreground">Windows 10/11, Server 2019+</p>
-                    </div>
-                    <Badge variant="secondary" className="ml-auto">EXE</Badge>
-                  </div>
-                  <div className="space-y-2 text-sm text-muted-foreground mb-4">
-                    <div className="flex items-center gap-2">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span>Windows Service integration</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span>PowerShell command execution</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span>Software inventory & services</span>
-                    </div>
-                  </div>
-                  {isDownloadingWindows ? (
-                    <div className="space-y-2">
-                      <Progress value={windowsDownloadProgress} className="h-2" />
-                      <p className="text-xs text-muted-foreground text-center">
-                        {windowsDownloadMessage}
-                      </p>
-                    </div>
-                  ) : (
+              {/* Download Actions */}
+              <div className="space-y-4">
+                {/* Download Link */}
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Download Link</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      value={getDownloadUrl()} 
+                      readOnly 
+                      className="font-mono text-xs flex-1" 
+                    />
                     <Button 
-                      onClick={handleDownloadWindowsZip}
-                      disabled={!user?.id}
-                      className="w-full"
-                      variant="outline"
+                      variant="outline" 
+                      size="icon"
+                      onClick={handleCopyDownloadLink}
+                      title="Copy link"
                     >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Windows Bundle
+                      {copied === 'download-link' ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Download Buttons */}
+                <div className="flex gap-3">
+                  <Button onClick={handleDirectDownload} className="flex-1">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download {selectedOS === 'windows' ? 'Windows' : selectedOS === 'macos' ? 'macOS' : 'Linux'} Agent
+                  </Button>
+                  {selectedOS === 'windows' && (
+                    <Button 
+                      variant="outline"
+                      onClick={() => window.open(AGENT_DOWNLOAD_URLS.windowsMsi, '_blank')}
+                    >
+                      <Package className="h-4 w-4 mr-2" />
+                      MSI Package
                     </Button>
                   )}
                 </div>
+              </div>
 
-                {/* Linux/Pi Agent */}
-                <div className="border rounded-lg p-4 bg-background hover:border-primary/50 transition-colors">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-2 rounded-lg bg-orange-500/10">
-                      <Cpu className="h-6 w-6 text-orange-500" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Linux / Raspberry Pi</h3>
-                      <p className="text-xs text-muted-foreground">Ubuntu, Debian, Raspberry Pi OS</p>
-                    </div>
-                    <Badge variant="secondary" className="ml-auto">Python</Badge>
-                  </div>
-                  <div className="space-y-2 text-sm text-muted-foreground mb-4">
-                    <div className="flex items-center gap-2">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span>Systemd service integration</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span>Network scanning (nmap)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span>Meraki & SNMP integration</span>
-                    </div>
-                  </div>
+              {/* Installation Command */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Installation Command</Label>
                   <Button 
-                    onClick={handleDownloadZip} 
-                    disabled={isDownloading || !user?.id}
-                    className="w-full"
-                    variant="outline"
+                    variant="ghost" 
+                    size="sm"
+                    onClick={handleCopyInstallCommand}
                   >
-                    {isDownloading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Linux Bundle
-                      </>
-                    )}
+                    {copied === 'install-command' ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                    Copy
                   </Button>
                 </div>
+                <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-xs font-mono whitespace-pre-wrap">
+                  {getInstallCommand()}
+                </pre>
               </div>
-              
-              <p className="text-xs text-muted-foreground mt-4 text-center">
-                All bundles include your credentials pre-configured. Just download, extract, and run the installer.
-              </p>
             </CardContent>
           </Card>
 
@@ -629,10 +756,10 @@ if __name__ == '__main__':
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Plus className="h-5 w-5" />
-                Quick Add Device
+                Manual Registration
               </CardTitle>
               <CardDescription>
-                Manually register your Pi device for testing (no agent required)
+                Register a device manually for testing (agent not required)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -642,7 +769,7 @@ if __name__ == '__main__':
                     <Label htmlFor="deviceName">Device Name *</Label>
                     <Input
                       id="deviceName"
-                      placeholder="e.g., Office-Pi-01"
+                      placeholder="e.g., WORKSTATION-01"
                       value={deviceName}
                       onChange={(e) => setDeviceName(e.target.value)}
                       required
