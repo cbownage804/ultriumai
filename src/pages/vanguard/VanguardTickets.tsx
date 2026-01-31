@@ -372,7 +372,7 @@ export default function VanguardTickets() {
           <Button 
             variant="outline" 
             className="border-cyan-500/20 text-white/80"
-            onClick={() => navigate('/vanguard/setup')}
+            onClick={() => navigate(`${basePath}/setup`)}
           >
             <Download className="h-4 w-4 mr-2" />
             Install agent

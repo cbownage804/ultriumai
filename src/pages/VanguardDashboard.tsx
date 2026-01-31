@@ -12,6 +12,7 @@ import { useMSP } from "@/hooks/useMSP";
 import { useVanguardAgents } from "@/hooks/useVanguardAgents";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { getVanguardBasePath } from "@/utils/subdomain";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays, startOfDay, isAfter, isSameDay } from "date-fns";
 import { ProductTour, useProductTour } from '@/components/onboarding';
@@ -32,6 +33,7 @@ import { TicketActivityWidget } from "@/components/vanguard/dashboard/TicketActi
 
 const VanguardDashboard = () => {
   const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
   const [searchParams] = useSearchParams();
   const { clients } = useMSP();
   const { agents, refetch: refreshAgents } = useVanguardAgents();
@@ -279,7 +281,7 @@ const VanguardDashboard = () => {
           <Button 
             size="sm" 
             className="gap-2 bg-black/60 hover:bg-gradient-to-r hover:from-cyan-500/20 hover:via-blue-500/15 hover:to-purple-500/20 text-cyan-400 border border-transparent bg-clip-padding relative before:absolute before:inset-0 before:rounded-md before:p-[1px] before:bg-gradient-to-r before:from-cyan-400 before:via-blue-500 before:to-purple-600 before:-z-10 before:content-[''] shadow-lg shadow-purple-500/20"
-            onClick={() => navigate('/vanguard/setup')}
+            onClick={() => navigate(`${basePath}/setup`)}
           >
             <Download className="h-4 w-4" />
             Install agent
