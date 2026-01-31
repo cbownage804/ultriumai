@@ -3106,6 +3106,305 @@ export type Database = {
           },
         ]
       }
+      comanaged_escalation_requests: {
+        Row: {
+          additional_notes: string | null
+          created_at: string | null
+          escalation_reason: string
+          id: string
+          organization_id: string
+          priority: string | null
+          requested_by_id: string | null
+          requested_by_name: string | null
+          responded_at: string | null
+          responded_by_msp_tech: string | null
+          response_notes: string | null
+          status: string | null
+          ticket_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          additional_notes?: string | null
+          created_at?: string | null
+          escalation_reason: string
+          id?: string
+          organization_id: string
+          priority?: string | null
+          requested_by_id?: string | null
+          requested_by_name?: string | null
+          responded_at?: string | null
+          responded_by_msp_tech?: string | null
+          response_notes?: string | null
+          status?: string | null
+          ticket_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          additional_notes?: string | null
+          created_at?: string | null
+          escalation_reason?: string
+          id?: string
+          organization_id?: string
+          priority?: string | null
+          requested_by_id?: string | null
+          requested_by_name?: string | null
+          responded_at?: string | null
+          responded_by_msp_tech?: string | null
+          response_notes?: string | null
+          status?: string | null
+          ticket_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_escalation_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comanaged_escalation_requests_requested_by_id_fkey"
+            columns: ["requested_by_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_internal_technicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_internal_activity_log: {
+        Row: {
+          action_details: Json | null
+          action_type: string
+          created_at: string | null
+          id: string
+          organization_id: string
+          technician_id: string | null
+          ticket_id: string
+        }
+        Insert: {
+          action_details?: Json | null
+          action_type: string
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          technician_id?: string | null
+          ticket_id: string
+        }
+        Update: {
+          action_details?: Json | null
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          technician_id?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_internal_activity_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comanaged_internal_activity_log_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_internal_technicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_internal_team_members: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_lead: boolean | null
+          team_id: string
+          technician_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_lead?: boolean | null
+          team_id: string
+          technician_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_lead?: boolean | null
+          team_id?: string
+          technician_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_internal_team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_internal_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comanaged_internal_team_members_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_internal_technicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_internal_teams: {
+        Row: {
+          auto_assign_enabled: boolean | null
+          created_at: string | null
+          description: string | null
+          id: string
+          organization_id: string
+          team_lead_id: string | null
+          team_name: string
+        }
+        Insert: {
+          auto_assign_enabled?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          organization_id: string
+          team_lead_id?: string | null
+          team_name: string
+        }
+        Update: {
+          auto_assign_enabled?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          organization_id?: string
+          team_lead_id?: string | null
+          team_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_internal_teams_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comanaged_internal_teams_team_lead_id_fkey"
+            columns: ["team_lead_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_internal_technicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comanaged_internal_technicians: {
+        Row: {
+          auth_user_id: string | null
+          avatar_url: string | null
+          can_access_knowledge_base: boolean | null
+          can_assign_tickets: boolean | null
+          can_close_tickets: boolean | null
+          can_create_tickets: boolean | null
+          can_escalate_to_msp: boolean | null
+          can_manage_knowledge_base: boolean | null
+          can_manage_users: boolean | null
+          can_view_all_tickets: boolean | null
+          can_view_reports: boolean | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          invite_accepted_at: string | null
+          invite_sent_at: string | null
+          is_active: boolean | null
+          job_title: string | null
+          last_login_at: string | null
+          notification_preferences: Json | null
+          organization_id: string
+          password_hash: string | null
+          phone: string | null
+          role: string | null
+          signature: string | null
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auth_user_id?: string | null
+          avatar_url?: string | null
+          can_access_knowledge_base?: boolean | null
+          can_assign_tickets?: boolean | null
+          can_close_tickets?: boolean | null
+          can_create_tickets?: boolean | null
+          can_escalate_to_msp?: boolean | null
+          can_manage_knowledge_base?: boolean | null
+          can_manage_users?: boolean | null
+          can_view_all_tickets?: boolean | null
+          can_view_reports?: boolean | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id?: string
+          invite_accepted_at?: string | null
+          invite_sent_at?: string | null
+          is_active?: boolean | null
+          job_title?: string | null
+          last_login_at?: string | null
+          notification_preferences?: Json | null
+          organization_id: string
+          password_hash?: string | null
+          phone?: string | null
+          role?: string | null
+          signature?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auth_user_id?: string | null
+          avatar_url?: string | null
+          can_access_knowledge_base?: boolean | null
+          can_assign_tickets?: boolean | null
+          can_close_tickets?: boolean | null
+          can_create_tickets?: boolean | null
+          can_escalate_to_msp?: boolean | null
+          can_manage_knowledge_base?: boolean | null
+          can_manage_users?: boolean | null
+          can_view_all_tickets?: boolean | null
+          can_view_reports?: boolean | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          invite_accepted_at?: string | null
+          invite_sent_at?: string | null
+          is_active?: boolean | null
+          job_title?: string | null
+          last_login_at?: string | null
+          notification_preferences?: Json | null
+          organization_id?: string
+          password_hash?: string | null
+          phone?: string | null
+          role?: string | null
+          signature?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_internal_technicians_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comanaged_organizations: {
         Row: {
           created_at: string | null
@@ -3247,14 +3546,19 @@ export type Database = {
       }
       comanaged_ticket_context: {
         Row: {
+          assigned_internal_team_id: string | null
+          assigned_internal_tech_id: string | null
           created_at: string | null
           department_id: string | null
           escalated_at: string | null
           escalated_by: string | null
           escalated_to_msp: boolean | null
           escalation_reason: string | null
+          handled_by: string | null
           id: string
           internal_it_notes: string | null
+          internal_priority: string | null
+          internal_status: string | null
           last_response_appeared_from: string | null
           msp_private_notes: string | null
           organization_id: string
@@ -3265,14 +3569,19 @@ export type Database = {
           visible_to_internal_it: boolean | null
         }
         Insert: {
+          assigned_internal_team_id?: string | null
+          assigned_internal_tech_id?: string | null
           created_at?: string | null
           department_id?: string | null
           escalated_at?: string | null
           escalated_by?: string | null
           escalated_to_msp?: boolean | null
           escalation_reason?: string | null
+          handled_by?: string | null
           id?: string
           internal_it_notes?: string | null
+          internal_priority?: string | null
+          internal_status?: string | null
           last_response_appeared_from?: string | null
           msp_private_notes?: string | null
           organization_id: string
@@ -3283,14 +3592,19 @@ export type Database = {
           visible_to_internal_it?: boolean | null
         }
         Update: {
+          assigned_internal_team_id?: string | null
+          assigned_internal_tech_id?: string | null
           created_at?: string | null
           department_id?: string | null
           escalated_at?: string | null
           escalated_by?: string | null
           escalated_to_msp?: boolean | null
           escalation_reason?: string | null
+          handled_by?: string | null
           id?: string
           internal_it_notes?: string | null
+          internal_priority?: string | null
+          internal_status?: string | null
           last_response_appeared_from?: string | null
           msp_private_notes?: string | null
           organization_id?: string
@@ -3301,6 +3615,20 @@ export type Database = {
           visible_to_internal_it?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "comanaged_ticket_context_assigned_internal_team_id_fkey"
+            columns: ["assigned_internal_team_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_internal_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comanaged_ticket_context_assigned_internal_tech_id_fkey"
+            columns: ["assigned_internal_tech_id"]
+            isOneToOne: false
+            referencedRelation: "comanaged_internal_technicians"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "comanaged_ticket_context_department_id_fkey"
             columns: ["department_id"]
