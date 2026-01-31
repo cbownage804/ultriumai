@@ -23040,6 +23040,96 @@ export type Database = {
           },
         ]
       }
+      vanguard_ai_performance_reviews: {
+        Row: {
+          ai_summary: string | null
+          avg_resolution_time_hours: number | null
+          created_at: string
+          csat_average: number | null
+          escalation_rate: number | null
+          first_response_avg_minutes: number | null
+          id: string
+          improvement_areas: Json | null
+          performance_score: number | null
+          recommendations: Json | null
+          reopen_rate: number | null
+          review_period_end: string
+          review_period_start: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shared_with_technician: boolean | null
+          sla_compliance_rate: number | null
+          status: string | null
+          strengths: Json | null
+          technician_acknowledged_at: string | null
+          technician_id: string
+          technician_name: string
+          tickets_assigned: number | null
+          tickets_resolved: number | null
+          trend_vs_previous: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          avg_resolution_time_hours?: number | null
+          created_at?: string
+          csat_average?: number | null
+          escalation_rate?: number | null
+          first_response_avg_minutes?: number | null
+          id?: string
+          improvement_areas?: Json | null
+          performance_score?: number | null
+          recommendations?: Json | null
+          reopen_rate?: number | null
+          review_period_end: string
+          review_period_start: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shared_with_technician?: boolean | null
+          sla_compliance_rate?: number | null
+          status?: string | null
+          strengths?: Json | null
+          technician_acknowledged_at?: string | null
+          technician_id: string
+          technician_name: string
+          tickets_assigned?: number | null
+          tickets_resolved?: number | null
+          trend_vs_previous?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_summary?: string | null
+          avg_resolution_time_hours?: number | null
+          created_at?: string
+          csat_average?: number | null
+          escalation_rate?: number | null
+          first_response_avg_minutes?: number | null
+          id?: string
+          improvement_areas?: Json | null
+          performance_score?: number | null
+          recommendations?: Json | null
+          reopen_rate?: number | null
+          review_period_end?: string
+          review_period_start?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shared_with_technician?: boolean | null
+          sla_compliance_rate?: number | null
+          status?: string | null
+          strengths?: Json | null
+          technician_acknowledged_at?: string | null
+          technician_id?: string
+          technician_name?: string
+          tickets_assigned?: number | null
+          tickets_resolved?: number | null
+          trend_vs_previous?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_alert_escalations: {
         Row: {
           channel_id: string | null
@@ -24768,6 +24858,47 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_internal_ticket_notes: {
+        Row: {
+          created_at: string
+          id: string
+          is_pinned: boolean | null
+          note_content: string
+          note_type: string | null
+          ticket_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_pinned?: boolean | null
+          note_content: string
+          note_type?: string | null
+          ticket_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_pinned?: boolean | null
+          note_content?: string
+          note_type?: string | null
+          ticket_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_internal_ticket_notes_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_service_tickets"
             referencedColumns: ["id"]
           },
         ]
@@ -27083,6 +27214,45 @@ export type Database = {
           ticket_id?: string | null
           ticket_title?: string | null
           token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_technician_metrics_snapshots: {
+        Row: {
+          avg_resolution_hours: number | null
+          created_at: string
+          csat_score: number | null
+          id: string
+          sla_compliance: number | null
+          snapshot_date: string
+          technician_id: string
+          tickets_assigned: number | null
+          tickets_resolved: number | null
+          user_id: string
+        }
+        Insert: {
+          avg_resolution_hours?: number | null
+          created_at?: string
+          csat_score?: number | null
+          id?: string
+          sla_compliance?: number | null
+          snapshot_date: string
+          technician_id: string
+          tickets_assigned?: number | null
+          tickets_resolved?: number | null
+          user_id: string
+        }
+        Update: {
+          avg_resolution_hours?: number | null
+          created_at?: string
+          csat_score?: number | null
+          id?: string
+          sla_compliance?: number | null
+          snapshot_date?: string
+          technician_id?: string
+          tickets_assigned?: number | null
+          tickets_resolved?: number | null
           user_id?: string
         }
         Relationships: []
