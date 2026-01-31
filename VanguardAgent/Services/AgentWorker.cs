@@ -14,12 +14,14 @@ public class AgentWorker : BackgroundService
     private readonly ApiClient _api;
     private readonly TelemetryCollector _telemetry;
     private readonly CommandExecutor _commandExecutor;
+    private readonly RustDeskInstaller _rustDeskInstaller;
 
     private DateTime _lastHeartbeat = DateTime.MinValue;
     private DateTime _lastTelemetry = DateTime.MinValue;
     private DateTime _lastSecurityTelemetry = DateTime.MinValue;
     private DateTime _lastCommandPoll = DateTime.MinValue;
     private bool _isRegistered = false;
+    private bool _rustDeskSetupComplete = false;
 
     // Security telemetry interval (5 minutes by default)
     private const int SecurityTelemetryIntervalSeconds = 300;
@@ -36,6 +38,7 @@ public class AgentWorker : BackgroundService
         _api = api;
         _telemetry = telemetry;
         _commandExecutor = commandExecutor;
+        _rustDeskInstaller = new RustDeskInstaller(configService);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -44,6 +47,9 @@ public class AgentWorker : BackgroundService
 
         // Ensure device is registered
         await EnsureRegisteredAsync();
+
+        // Setup RustDesk for remote access (non-blocking)
+        _ = Task.Run(async () => await EnsureRustDeskAsync(), stoppingToken);
 
         _logger.LogInformation("Agent registered. Starting monitoring loop.");
 
@@ -124,6 +130,45 @@ public class AgentWorker : BackgroundService
         else
         {
             _logger.LogWarning("Device registration failed. Will retry on next startup.");
+        }
+    }
+
+    /// <summary>
+    /// Ensure RustDesk is installed and configured for remote access
+    /// </summary>
+    private async Task EnsureRustDeskAsync()
+    {
+        if (_rustDeskSetupComplete) return;
+
+        try
+        {
+            _logger.LogInformation("Checking RustDesk installation...");
+            
+            var apiBaseUrl = _configService.Config.ApiEndpoint?.Replace("/vanguard-agent-api", "") ?? "";
+            
+            var (success, rustDeskId) = await _rustDeskInstaller.EnsureInstalledAndConfiguredAsync(apiBaseUrl);
+            
+            if (success)
+            {
+                _logger.LogInformation("RustDesk setup complete. ID: {RustDeskId}", rustDeskId ?? "pending");
+                
+                // Update device info with RustDesk ID if we got one
+                if (!string.IsNullOrEmpty(rustDeskId))
+                {
+                    await _api.UpdateDeviceRustDeskIdAsync(rustDeskId);
+                }
+            }
+            else
+            {
+                _logger.LogWarning("RustDesk setup failed or relay not configured");
+            }
+            
+            _rustDeskSetupComplete = true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting up RustDesk");
+            _rustDeskSetupComplete = true; // Don't retry immediately
         }
     }
 
