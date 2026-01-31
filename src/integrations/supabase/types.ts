@@ -4638,6 +4638,257 @@ export type Database = {
         }
         Relationships: []
       }
+      email_contact_mappings: {
+        Row: {
+          auto_created: boolean | null
+          client_id: string | null
+          contact_id: string | null
+          created_at: string | null
+          email_address: string
+          email_config_id: string | null
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_created?: boolean | null
+          client_id?: string | null
+          contact_id?: string | null
+          created_at?: string | null
+          email_address: string
+          email_config_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_created?: boolean | null
+          client_id?: string | null
+          contact_id?: string | null
+          created_at?: string | null
+          email_address?: string
+          email_config_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_contact_mappings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_contact_mappings_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "client_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_contact_mappings_email_config_id_fkey"
+            columns: ["email_config_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_email_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_device_mappings: {
+        Row: {
+          agent_id: string | null
+          client_id: string | null
+          created_at: string | null
+          device_identifier: string
+          email_config_id: string | null
+          id: string
+          identifier_type: string | null
+          is_active: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          device_identifier: string
+          email_config_id?: string | null
+          id?: string
+          identifier_type?: string | null
+          is_active?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          device_identifier?: string
+          email_config_id?: string | null
+          id?: string
+          identifier_type?: string | null
+          is_active?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_device_mappings_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_device_mappings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_device_mappings_email_config_id_fkey"
+            columns: ["email_config_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_email_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_domain_mappings: {
+        Row: {
+          client_id: string | null
+          created_at: string | null
+          domain: string
+          email_config_id: string | null
+          id: string
+          is_active: boolean | null
+          match_type: string | null
+          priority: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string | null
+          domain: string
+          email_config_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          match_type?: string | null
+          priority?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string | null
+          domain?: string
+          email_config_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          match_type?: string | null
+          priority?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_domain_mappings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_domain_mappings_email_config_id_fkey"
+            columns: ["email_config_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_email_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_routing_settings: {
+        Row: {
+          created_at: string | null
+          default_client_id: string | null
+          device_info_patterns: string[] | null
+          email_config_id: string | null
+          enable_auto_learning: boolean | null
+          enable_contact_matching: boolean | null
+          enable_device_matching: boolean | null
+          enable_domain_matching: boolean | null
+          enable_thread_tracking: boolean | null
+          id: string
+          notify_email: string | null
+          notify_on_unknown_sender: boolean | null
+          parse_device_info: boolean | null
+          thread_subject_patterns: string[] | null
+          unknown_sender_action: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          default_client_id?: string | null
+          device_info_patterns?: string[] | null
+          email_config_id?: string | null
+          enable_auto_learning?: boolean | null
+          enable_contact_matching?: boolean | null
+          enable_device_matching?: boolean | null
+          enable_domain_matching?: boolean | null
+          enable_thread_tracking?: boolean | null
+          id?: string
+          notify_email?: string | null
+          notify_on_unknown_sender?: boolean | null
+          parse_device_info?: boolean | null
+          thread_subject_patterns?: string[] | null
+          unknown_sender_action?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          default_client_id?: string | null
+          device_info_patterns?: string[] | null
+          email_config_id?: string | null
+          enable_auto_learning?: boolean | null
+          enable_contact_matching?: boolean | null
+          enable_device_matching?: boolean | null
+          enable_domain_matching?: boolean | null
+          enable_thread_tracking?: boolean | null
+          id?: string
+          notify_email?: string | null
+          notify_on_unknown_sender?: boolean | null
+          parse_device_info?: boolean | null
+          thread_subject_patterns?: string[] | null
+          unknown_sender_action?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_routing_settings_default_client_id_fkey"
+            columns: ["default_client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_routing_settings_email_config_id_fkey"
+            columns: ["email_config_id"]
+            isOneToOne: true
+            referencedRelation: "vanguard_email_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_scans: {
         Row: {
           completed_at: string | null
@@ -21209,43 +21460,76 @@ export type Database = {
       vanguard_inbound_emails: {
         Row: {
           body: string | null
+          cc_addresses: string[] | null
           config_id: string | null
           created_at: string
+          extracted_device_info: Json | null
           from_address: string
           has_attachments: boolean | null
           id: string
+          in_reply_to: string | null
+          match_confidence: number | null
+          match_method: string | null
+          matched_client_id: string | null
+          matched_contact_id: string | null
+          matched_device_id: string | null
+          message_id: string | null
           raw_headers: Json | null
           received_at: string | null
+          sender_name: string | null
           status: string | null
           subject: string
+          thread_id: string | null
           ticket_id: string | null
           user_id: string
         }
         Insert: {
           body?: string | null
+          cc_addresses?: string[] | null
           config_id?: string | null
           created_at?: string
+          extracted_device_info?: Json | null
           from_address: string
           has_attachments?: boolean | null
           id?: string
+          in_reply_to?: string | null
+          match_confidence?: number | null
+          match_method?: string | null
+          matched_client_id?: string | null
+          matched_contact_id?: string | null
+          matched_device_id?: string | null
+          message_id?: string | null
           raw_headers?: Json | null
           received_at?: string | null
+          sender_name?: string | null
           status?: string | null
           subject: string
+          thread_id?: string | null
           ticket_id?: string | null
           user_id: string
         }
         Update: {
           body?: string | null
+          cc_addresses?: string[] | null
           config_id?: string | null
           created_at?: string
+          extracted_device_info?: Json | null
           from_address?: string
           has_attachments?: boolean | null
           id?: string
+          in_reply_to?: string | null
+          match_confidence?: number | null
+          match_method?: string | null
+          matched_client_id?: string | null
+          matched_contact_id?: string | null
+          matched_device_id?: string | null
+          message_id?: string | null
           raw_headers?: Json | null
           received_at?: string | null
+          sender_name?: string | null
           status?: string | null
           subject?: string
+          thread_id?: string | null
           ticket_id?: string | null
           user_id?: string
         }
@@ -21255,6 +21539,27 @@ export type Database = {
             columns: ["config_id"]
             isOneToOne: false
             referencedRelation: "vanguard_email_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vanguard_inbound_emails_matched_client_id_fkey"
+            columns: ["matched_client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vanguard_inbound_emails_matched_contact_id_fkey"
+            columns: ["matched_contact_id"]
+            isOneToOne: false
+            referencedRelation: "client_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vanguard_inbound_emails_matched_device_id_fkey"
+            columns: ["matched_device_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
             referencedColumns: ["id"]
           },
         ]

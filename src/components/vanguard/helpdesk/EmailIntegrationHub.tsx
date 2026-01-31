@@ -29,13 +29,16 @@ import {
   Search,
   Link2,
   Zap,
-  Loader2
+  Loader2,
+  Route,
+  Building2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { EmailRoutingConfig } from './EmailRoutingConfig';
 
 interface EmailConfig {
   id: string;
@@ -62,11 +65,16 @@ interface EmailTemplate {
 interface InboundEmail {
   id: string;
   from: string;
+  senderName?: string;
   subject: string;
   receivedAt: string;
   status: 'pending' | 'converted' | 'ignored';
   ticketId?: string;
   hasAttachments: boolean;
+  matchedClientId?: string;
+  matchedClientName?: string;
+  matchMethod?: string;
+  matchConfidence?: number;
 }
 
 export function EmailIntegrationHub() {
@@ -78,6 +86,7 @@ export function EmailIntegrationHub() {
   const [activeTab, setActiveTab] = useState('inbox');
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [selectedConfigId, setSelectedConfigId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const [newConfig, setNewConfig] = useState({
@@ -147,10 +156,10 @@ export function EmailIntegrationHub() {
         setTemplates(mapped);
       }
 
-      // Load inbound emails
+      // Load inbound emails with matched client info
       const { data: emailsData, error: emailsError } = await (supabase as any)
         .from('vanguard_inbound_emails')
-        .select('*')
+        .select('*, msp_clients(company_name)')
         .eq('user_id', user?.id)
         .order('received_at', { ascending: false })
         .limit(50);
@@ -159,11 +168,16 @@ export function EmailIntegrationHub() {
         const mapped: InboundEmail[] = emailsData.map((e: any) => ({
           id: e.id,
           from: e.from_address,
+          senderName: e.sender_name,
           subject: e.subject,
           receivedAt: e.received_at,
           status: e.status as InboundEmail['status'],
           ticketId: e.ticket_id,
           hasAttachments: e.has_attachments,
+          matchedClientId: e.matched_client_id,
+          matchedClientName: e.msp_clients?.company_name,
+          matchMethod: e.match_method,
+          matchConfidence: e.match_confidence,
         }));
         setInboundEmails(mapped);
       }
@@ -375,6 +389,10 @@ export function EmailIntegrationHub() {
                   <Badge variant="secondary" className="ml-2">{pendingCount}</Badge>
                 )}
               </TabsTrigger>
+              <TabsTrigger value="routing" className="flex items-center gap-2">
+                <Route className="h-4 w-4" />
+                Client Routing
+              </TabsTrigger>
               <TabsTrigger value="templates">Templates</TabsTrigger>
               <TabsTrigger value="config">Configuration</TabsTrigger>
             </TabsList>
@@ -411,6 +429,7 @@ export function EmailIntegrationHub() {
                     <TableRow>
                       <TableHead>From</TableHead>
                       <TableHead>Subject</TableHead>
+                      <TableHead>Matched Client</TableHead>
                       <TableHead>Received</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
@@ -419,7 +438,14 @@ export function EmailIntegrationHub() {
                   <TableBody>
                     {inboundEmails.map(email => (
                       <TableRow key={email.id}>
-                        <TableCell className="font-medium">{email.from}</TableCell>
+                        <TableCell>
+                          <div className="space-y-0.5">
+                            <p className="font-medium">{email.senderName || email.from}</p>
+                            {email.senderName && (
+                              <p className="text-xs text-muted-foreground">{email.from}</p>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {email.hasAttachments && <Paperclip className="h-4 w-4 text-muted-foreground" />}
@@ -428,6 +454,23 @@ export function EmailIntegrationHub() {
                             )}>{email.subject}</span>
                           </div>
                         </TableCell>
+                        <TableCell>
+                          {email.matchedClientName ? (
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                              <div>
+                                <p className="text-sm">{email.matchedClientName}</p>
+                                <p className="text-xs text-muted-foreground capitalize">
+                                  via {email.matchMethod?.replace('_', ' ')} ({Math.round((email.matchConfidence || 0) * 100)}%)
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <Badge variant="outline" className="text-yellow-500 border-yellow-500/30">
+                              Unmatched
+                            </Badge>
+                          )}
+                        </TableCell>
                         <TableCell>{format(new Date(email.receivedAt), 'MMM dd, HH:mm')}</TableCell>
                         <TableCell>
                           <Badge variant={
@@ -435,7 +478,7 @@ export function EmailIntegrationHub() {
                             email.status === 'pending' ? 'secondary' : 'outline'
                           }>
                             {email.status}
-                            {email.ticketId && ` → ${email.ticketId}`}
+                            {email.ticketId && ` → Ticket`}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -460,6 +503,11 @@ export function EmailIntegrationHub() {
                   </TableBody>
                 </Table>
               )}
+            </TabsContent>
+
+            {/* Routing Tab */}
+            <TabsContent value="routing" className="mt-4">
+              <EmailRoutingConfig configId={selectedConfigId || configs[0]?.id} />
             </TabsContent>
 
             {/* Templates Tab */}
