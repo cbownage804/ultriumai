@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { VanguardTabs, VanguardTabContent, VanguardTab } from '@/components/vanguard/shared';
 import { Badge } from '@/components/ui/badge';
 import { FileText, GitBranch, Route, BarChart3 } from 'lucide-react';
 import { 
@@ -11,20 +11,20 @@ import {
 } from '@/components/vanguard/cortex';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 
+const cortexTabs: VanguardTab[] = [
+  { id: 'summarizer', label: 'AI Summarizer', icon: FileText },
+  { id: 'patterns', label: 'Pattern Detection', icon: GitBranch },
+  { id: 'kb-generator', label: 'KB Generator', icon: FileText },
+  { id: 'router', label: 'Smart Router', icon: Route },
+  { id: 'analytics', label: 'AI Analytics', icon: BarChart3 },
+];
+
 export default function VanguardCortexHub() {
   const [activeTab, setActiveTab] = useState('summarizer');
 
   useEffect(() => {
     document.title = 'Cortex AI Hub | Ultrium Vanguard';
   }, []);
-
-  const tabConfig = [
-    { value: 'summarizer', label: 'AI Summarizer', icon: FileText },
-    { value: 'patterns', label: 'Pattern Detection', icon: GitBranch },
-    { value: 'kb-generator', label: 'KB Generator', icon: FileText },
-    { value: 'router', label: 'Smart Router', icon: Route },
-    { value: 'analytics', label: 'AI Analytics', icon: BarChart3 }
-  ];
 
   return (
     <div className="p-6 space-y-6">
@@ -48,40 +48,32 @@ export default function VanguardCortexHub() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 h-auto bg-black/60 border border-cyan-500/30 p-1">
-          {tabConfig.map((tab) => (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:via-cyan-500/15 data-[state=active]:to-blue-500/20 data-[state=active]:text-purple-400 text-slate-400"
-            >
-              <tab.icon className="h-4 w-4" />
-              <span className="hidden sm:inline text-xs lg:text-sm">{tab.label}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <TabsContent value="summarizer" className="mt-6">
+      <VanguardTabs
+        tabs={cortexTabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        colorTheme="purple"
+      >
+        <VanguardTabContent value="summarizer" className="mt-6">
           <AITicketSummarizer />
-        </TabsContent>
+        </VanguardTabContent>
 
-        <TabsContent value="patterns" className="mt-6">
+        <VanguardTabContent value="patterns" className="mt-6">
           <PatternDetectionEngine />
-        </TabsContent>
+        </VanguardTabContent>
 
-        <TabsContent value="kb-generator" className="mt-6">
+        <VanguardTabContent value="kb-generator" className="mt-6">
           <KBArticleGenerator />
-        </TabsContent>
+        </VanguardTabContent>
 
-        <TabsContent value="router" className="mt-6">
+        <VanguardTabContent value="router" className="mt-6">
           <SmartTicketRouter />
-        </TabsContent>
+        </VanguardTabContent>
 
-        <TabsContent value="analytics" className="mt-6">
+        <VanguardTabContent value="analytics" className="mt-6">
           <CortexAnalyticsDashboard />
-        </TabsContent>
-      </Tabs>
+        </VanguardTabContent>
+      </VanguardTabs>
     </div>
   );
 }
