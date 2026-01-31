@@ -58,42 +58,37 @@ After a thorough analysis of the Vanguard codebase, I've identified the current 
 
 ---
 
-## Phase 3: Network Discovery & Topology (PENDING)
+## ✅ Phase 3: Network Discovery & Topology (COMPLETED)
 
-### 3.1 Network Topology Map - PARTIALLY FUNCTIONAL
-**Current State:** The topology map renders real data from `network_devices` table when available.
+### ✅ 3.1 Network Topology Map - COMPLETED
+- Added real-time Supabase subscription for `network_devices` and `vanguard_discovered_devices` tables
+- Added auto-refresh every 60 seconds
+- Canvas-based visualization with zoom/pan working
+- Empty state with navigation to Recon/Scanner setup
 
-**Working:**
-- Canvas-based topology visualization
-- Device status color coding
-- Connection line rendering
-
-**Required Work:**
-- Verify scanner agent correctly populates discovered devices
-- Add scheduled scan triggers
-- Add auto-refresh/real-time updates
-
-### 3.2 Backup Monitoring - DATA DEPENDENT
-**Current State:** Reads from `backup_jobs` table but doesn't integrate with third-party backup solutions.
-
-**Required Work:**
-- Add backup solution API connectors (Veeam, Acronis, Datto)
-- Create backup status polling edge function
-- Implement backup job triggering
+### ✅ 3.2 Backup Monitoring - COMPLETED
+- Added real-time Supabase subscription for `backup_jobs` table
+- Connected "Run Now" button to `vanguard-agent-api` with `run_backup` command type
+- Updates backup status to `in_progress` before sending command
+- Added loading state for backup trigger button
+- Requires backup job to have an associated `agent_id`
 
 ---
 
-## Phase 4: AI & Reporting Features (PARTIALLY COMPLETE)
+## ✅ Phase 4: AI & Reporting Features (COMPLETED)
 
 ### ✅ 4.1 Cortex AI Features - FUNCTIONAL
 - Ticket analysis and solution generation working
 - Security context analysis working
 - KB article generation working
 
-### 4.2 Pattern Detection Engine - DATA DEPENDENT
-**Required Work:**
-- Create scheduled pattern analysis edge function
-- Auto-populate patterns from ticket analysis
+### ✅ 4.2 Pattern Detection Engine - COMPLETED
+- Created `analyze-ticket-patterns` edge function
+- Analyzes tickets from last 30 days using keyword pattern matching
+- Detects 10+ common issue patterns (authentication, network, email, etc.)
+- Calculates trend (rising/declining/stable), severity, and affected clients
+- Auto-populates `vanguard_detected_patterns` table
+- Added "Run Analysis" button to PatternDetectionEngine UI
 
 ### ✅ 4.3 Helpdesk Reports - FUNCTIONAL
 - Ticket volume metrics

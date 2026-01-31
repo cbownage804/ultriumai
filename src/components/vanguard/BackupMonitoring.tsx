@@ -3,13 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { HardDrive, CheckCircle, AlertTriangle, Clock, Server, Database, RefreshCw, Calendar } from 'lucide-react';
+import { HardDrive, CheckCircle, AlertTriangle, Clock, Server, Database, RefreshCw, Calendar, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 interface BackupJob {
   id: string;
+  agent_id: string | null;
   device_name: string;
   backup_type: string;
   status: string;
@@ -23,6 +24,7 @@ interface BackupJob {
 export const BackupMonitoring = () => {
   const { user } = useAuth();
   const [backups, setBackups] = useState<BackupJob[]>([]);
+  const [triggeringBackup, setTriggeringBackup] = useState<string | null>(null);
   const [stats, setStats] = useState({
     total: 0,
     successful: 0,
@@ -35,6 +37,26 @@ export const BackupMonitoring = () => {
     if (user) loadBackups();
   }, [user]);
 
+  // Real-time subscription for backup status changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('backup-jobs-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'backup_jobs' },
+        () => {
+          loadBackups();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const loadBackups = async () => {
     const { data } = await supabase
       .from('backup_jobs')
@@ -42,8 +64,9 @@ export const BackupMonitoring = () => {
       .order('created_at', { ascending: false });
     
     if (data && data.length > 0) {
-      const mappedBackups = data.map(b => ({
+      const mappedBackups: BackupJob[] = data.map(b => ({
         id: b.id,
+        agent_id: b.agent_id,
         device_name: b.backup_name,
         backup_type: b.backup_type,
         status: b.status,
@@ -62,18 +85,62 @@ export const BackupMonitoring = () => {
         totalSize: `${(data.reduce((sum, b) => sum + (b.size_bytes || 0), 0) / 1099511627776).toFixed(2)} TB`
       });
     } else {
-      // No backups - show empty state
       setBackups([]);
       setStats({ total: 0, successful: 0, failed: 0, inProgress: 0, totalSize: '0 GB' });
     }
   };
 
-  const triggerBackup = async (backupId: string) => {
-    toast.success('Backup job started');
+  const triggerBackup = async (backupId: string, agentId: string | null) => {
+    if (!agentId) {
+      toast.error('No agent associated with this backup job');
+      return;
+    }
+
+    try {
+      setTriggeringBackup(backupId);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      // Update backup status to in_progress
+      await supabase
+        .from('backup_jobs')
+        .update({ status: 'in_progress', started_at: new Date().toISOString() })
+        .eq('id', backupId);
+
+      // Send run_backup command to agent
+      const { error } = await supabase.functions.invoke('vanguard-agent-api?action=send_command', {
+        body: {
+          agent_id: agentId,
+          command_type: 'run_backup',
+          payload: {
+            backup_id: backupId,
+          }
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success('Backup job started', {
+        description: 'Command sent to agent'
+      });
+
+      // Refresh backups to show in_progress status
+      await loadBackups();
+    } catch (err: any) {
+      console.error('Failed to trigger backup:', err);
+      toast.error('Failed to start backup', { description: err.message });
+    } finally {
+      setTriggeringBackup(null);
+    }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case 'completed':
       case 'success':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'failed':
@@ -87,6 +154,7 @@ export const BackupMonitoring = () => {
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
+      completed: 'bg-green-500',
       success: 'bg-green-500',
       failed: 'bg-red-500',
       in_progress: 'bg-blue-500',
@@ -208,10 +276,17 @@ export const BackupMonitoring = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => triggerBackup(backup.id)}
-                    disabled={backup.status === 'in_progress'}
+                    onClick={() => triggerBackup(backup.id, backup.agent_id)}
+                    disabled={backup.status === 'in_progress' || triggeringBackup === backup.id || !backup.agent_id}
                   >
-                    Run Now
+                    {triggeringBackup === backup.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        Starting...
+                      </>
+                    ) : (
+                      'Run Now'
+                    )}
                   </Button>
                 </div>
               </div>
