@@ -16,9 +16,9 @@ public class BehavioralMonitor : IDisposable
     private readonly ConfigService _configService;
     private readonly ApiClient _apiClient;
     private ManagementEventWatcher? _processCreateWatcher;
-    #pragma warning disable CS0414 // Field is assigned but never used - reserved for future delete event monitoring
+    #pragma warning disable CS0169 // Field is never used (reserved for future delete event monitoring)
     private ManagementEventWatcher? _processDeleteWatcher;
-    #pragma warning restore CS0414
+    #pragma warning restore CS0169
     private bool _isRunning = false;
     private readonly object _lock = new();
 

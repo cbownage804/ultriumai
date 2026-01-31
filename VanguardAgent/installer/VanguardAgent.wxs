@@ -72,9 +72,7 @@
                   Return="ignore" />
 
     <InstallExecuteSequence>
-      <Custom Action="UpdateConfig" Before="StartServices">
-        USERID AND SECRETKEY
-      </Custom>
+      <Custom Action="UpdateConfig" Before="StartServices" Condition="USERID AND SECRETKEY" />
     </InstallExecuteSequence>
 
   </Package>
