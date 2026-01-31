@@ -14864,6 +14864,7 @@ export type Database = {
           primary_contact_name: string
           state: string
           updated_at: string | null
+          user_id: string | null
           zip_code: string
         }
         Insert: {
@@ -14880,6 +14881,7 @@ export type Database = {
           primary_contact_name: string
           state: string
           updated_at?: string | null
+          user_id?: string | null
           zip_code: string
         }
         Update: {
@@ -14896,6 +14898,7 @@ export type Database = {
           primary_contact_name?: string
           state?: string
           updated_at?: string | null
+          user_id?: string | null
           zip_code?: string
         }
         Relationships: []
