@@ -1,6 +1,6 @@
 /**
- * Windows Devices List Component
- * Standard RMM endpoint management
+ * Managed Devices List Component
+ * Cross-platform RMM endpoint management (Windows, macOS, Linux, Servers)
  */
 
 import { useState, useMemo } from 'react';
@@ -59,12 +59,12 @@ interface SavedView {
   filters: Record<string, string>;
 }
 
-interface WindowsDevicesListProps {
+interface ManagedDevicesListProps {
   agents: VanguardAgent[];
   isLoading: boolean;
 }
 
-export function WindowsDevicesList({ agents, isLoading }: WindowsDevicesListProps) {
+export function ManagedDevicesList({ agents, isLoading }: ManagedDevicesListProps) {
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -199,23 +199,23 @@ export function WindowsDevicesList({ agents, isLoading }: WindowsDevicesListProp
         <Card className="bg-black/40 border-cyan-500/20">
           <CardContent className="p-12 text-center">
             <Monitor className="h-12 w-12 mx-auto mb-4 text-white/40" />
-            <h3 className="text-lg font-semibold mb-2 text-white">No Windows Devices</h3>
+            <h3 className="text-lg font-semibold mb-2 text-white">No Managed Devices</h3>
             <p className="text-white/60 mb-4">
-              Deploy the Vanguard Agent to start managing Windows endpoints.
+              Deploy the Vanguard Agent to start managing your endpoints.
             </p>
             <Button 
               onClick={() => navigate('/vanguard/setup')}
               className="bg-gradient-to-r from-cyan-500 to-blue-500 text-black"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Windows Device
+              Add Device
             </Button>
           </CardContent>
         </Card>
       ) : viewMode === 'grid' ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredAgents.map(agent => (
-            <WindowsDeviceCard 
+            <DeviceCard 
               key={agent.id} 
               agent={agent} 
               isSelected={selectedDevices.includes(agent.id)}
@@ -307,7 +307,7 @@ export function WindowsDevicesList({ agents, isLoading }: WindowsDevicesListProp
   );
 }
 
-function WindowsDeviceCard({
+function DeviceCard({
   agent,
   isSelected,
   onSelect,
