@@ -11896,6 +11896,45 @@ export type Database = {
           },
         ]
       }
+      notification_logs: {
+        Row: {
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          notification_type: string
+          recipient: string
+          status: string | null
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          notification_type: string
+          recipient: string
+          status?: string | null
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          notification_type?: string
+          recipient?: string
+          status?: string | null
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           created_at: string
@@ -28861,6 +28900,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      webhook_configs: {
+        Row: {
+          created_at: string
+          events: string[] | null
+          failure_count: number | null
+          id: string
+          is_active: boolean | null
+          last_triggered_at: string | null
+          name: string
+          success_count: number | null
+          updated_at: string
+          url: string
+          user_id: string
+          webhook_type: string
+        }
+        Insert: {
+          created_at?: string
+          events?: string[] | null
+          failure_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          name: string
+          success_count?: number | null
+          updated_at?: string
+          url: string
+          user_id: string
+          webhook_type?: string
+        }
+        Update: {
+          created_at?: string
+          events?: string[] | null
+          failure_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          name?: string
+          success_count?: number | null
+          updated_at?: string
+          url?: string
+          user_id?: string
+          webhook_type?: string
+        }
+        Relationships: []
       }
       whitelabel_change_requests: {
         Row: {
