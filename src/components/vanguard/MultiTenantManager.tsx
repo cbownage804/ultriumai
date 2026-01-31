@@ -8,12 +8,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
-import { Building2, Users, Shield, AlertTriangle, Search, Plus, Settings, BarChart3, ChevronRight, UserPlus, GitBranch, Palette } from 'lucide-react';
+import { Building2, Users, Shield, AlertTriangle, Search, Plus, Settings, BarChart3, ChevronRight, UserPlus, GitBranch, Palette, Key } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { WhiteLabelSettings } from './settings/WhiteLabelSettings';
 import { OrgHierarchyTree } from './settings/OrgHierarchyTree';
+import { SSOSettings } from './settings/SSOSettings';
 
 interface Tenant {
   id: string;
@@ -320,6 +321,10 @@ export const MultiTenantManager = () => {
                 <Palette className="h-4 w-4 mr-2" />
                 White Label
               </TabsTrigger>
+              <TabsTrigger value="sso" className="data-[state=active]:bg-cyan-500/20">
+                <Key className="h-4 w-4 mr-2" />
+                SSO
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="list" className="pt-4">
@@ -441,6 +446,10 @@ export const MultiTenantManager = () => {
 
             <TabsContent value="whitelabel" className="pt-4">
               <WhiteLabelSettings organizations={tenants} />
+            </TabsContent>
+
+            <TabsContent value="sso" className="pt-4">
+              <SSOSettings organizations={tenants} />
             </TabsContent>
           </Tabs>
         </CardContent>
