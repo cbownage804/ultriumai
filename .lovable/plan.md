@@ -125,14 +125,41 @@ The Vanguard platform is a comprehensive MSP suite with RMM, Security, Helpdesk,
 
 ---
 
-## Phase 13: AI Screen Recording to Documentation
+## Phase 13: Advanced Helpdesk & AI Features
 
 ### ✅ Screen Recording to Documentation
 - MediaRecorder API for browser-based screen capture
-- AI-powered analysis via `screen-recording-analyzer` edge function
-- Automatic step extraction with timestamps
-- KB article generation with category inference
-- Direct publish to client_portal_kb
+- AI-powered analysis and step extraction
+- KB article generation with timestamps
+
+### ✅ Technician Skill Matrix
+- Skills tracking with proficiency levels (1-5)
+- Certifications management
+- Category-based filtering
+
+### ✅ Parent/Child Tickets
+- Ticket relationship management (parent/child, merged, related, duplicate)
+- Visual relationship tracking
+
+### ✅ Custom Ticket Forms
+- Dynamic form builder with field types
+- Category-specific forms
+- Required field validation
+
+### ✅ Canned Responses Library
+- Quick reply templates with shortcuts
+- Variable substitution ({{customer_name}}, etc.)
+- Usage tracking
+
+### ✅ Queue Management Board
+- Kanban-style drag-drop interface
+- Custom queue creation
+- Priority-based sorting
+
+### ✅ White-Label Portal
+- Custom branding (logo, colors, CSS)
+- Custom domain support
+- Live preview
 
 ---
 

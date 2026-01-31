@@ -17,3 +17,10 @@ export { VisualWorkflowBuilder } from './VisualWorkflowBuilder';
 export { AdvancedReportingDashboard } from './AdvancedReportingDashboard';
 export { AssetTicketLinker } from './AssetTicketLinker';
 export { RemoteSessionLauncher } from './RemoteSessionLauncher';
+// Phase 13 additions
+export { TechnicianSkillsMatrix } from './TechnicianSkillsMatrix';
+export { ParentChildTickets } from './ParentChildTickets';
+export { CustomTicketForms } from './CustomTicketForms';
+export { CannedResponsesLibrary } from './CannedResponsesLibrary';
+export { QueueManagementBoard } from './QueueManagementBoard';
+export { WhiteLabelPortalConfig } from './WhiteLabelPortalConfig';
