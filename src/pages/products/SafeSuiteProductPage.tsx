@@ -61,20 +61,20 @@ const SafeSuiteProductPage = () => {
     },
     {
       logo: safeassistLogo,
-      title: "SafeAssist™ — AI Security Assistant",
-      description: "Get plain-language security guidance and threat analysis powered by AI. Your personal security advisor available 24/7.",
-      highlights: ["Security guidance", "Threat explanations", "Best practices", "Incident help"]
+      title: "SafeAssist™ — AI Security Advisor",
+      description: "Your 24/7 AI-powered security assistant. Get real-time threat guidance, phishing identification, incident response help, and best practice recommendations — all in plain language.",
+      highlights: ["Phishing detection", "Incident response", "Real-time guidance", "Team security training"]
     }
   ];
 
   const benefits = [
+    "AI-powered security advisor included — get expert guidance anytime",
     "No enterprise complexity — just simple, effective security",
     "Modern design that anyone can understand and use",
     "Affordable pricing for individuals and small teams",
     "All-in-one bundle — no need to buy separate tools",
     "Works seamlessly across all your devices",
     "Privacy-first approach — your data stays yours",
-    "No long-term contracts or hidden fees",
     "Free tier available to get started immediately"
   ];
 
