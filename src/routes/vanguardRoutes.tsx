@@ -277,10 +277,10 @@ export const getVanguardProtectedRoutes = () => [
 
 // Export public routes (landing, auth - outside VanguardLayout)
 export const getVanguardPublicRoutes = () => [
-  <Route key="vanguard-landing" index element={<LazyPage component={VanguardProductPage} />} />,
-  <Route key="vanguard-auth" path="auth" element={<LazyPage component={VanguardAuthPage} />} />,
-  <Route key="vanguard-suite" path="suite" element={<LazyPage component={VanguardSuite} />} />,
-  <Route key="vanguard-trust" path="trust" element={<LazyPage component={VanguardTrustCenter} />} />,
+  <Route key="vanguard-landing" path="/" element={<LazyPage component={VanguardProductPage} />} />,
+  <Route key="vanguard-auth" path="/auth" element={<LazyPage component={VanguardAuthPage} />} />,
+  <Route key="vanguard-suite" path="/suite" element={<LazyPage component={VanguardSuite} />} />,
+  <Route key="vanguard-trust" path="/trust" element={<LazyPage component={VanguardTrustCenter} />} />,
 ];
 
 // Legacy export for backwards compatibility
