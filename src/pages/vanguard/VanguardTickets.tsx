@@ -36,6 +36,7 @@ import { getVanguardBasePath } from '@/utils/subdomain';
 import { useVanguardTickets } from '@/hooks/useVanguardTickets';
 import { useMSP } from '@/hooks/useMSP';
 import { formatDistanceToNow } from 'date-fns';
+import { VanguardBreadcrumbs } from '@/components/vanguard/VanguardBreadcrumbs';
 
 interface TicketActivity {
   id: string;
@@ -325,6 +326,9 @@ export default function VanguardTickets() {
 
   return (
     <div className="p-6 space-y-4">
+      {/* Breadcrumbs */}
+      <VanguardBreadcrumbs />
+      
       {/* Top Bar - Atera Style */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
