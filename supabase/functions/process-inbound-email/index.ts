@@ -151,6 +151,9 @@ const handler = async (req: Request): Promise<Response> => {
       match_confidence: 0
     };
 
+    // Track if this is a reply to an existing ticket
+    let existingTicketId: string | null = null;
+
     // STEP 1: Check for thread/conversation match (existing ticket reply)
     if (payload.in_reply_to || payload.references) {
       const threadId = generateThreadId(payload.subject);
@@ -173,6 +176,13 @@ const handler = async (req: Request): Promise<Response> => {
           match_method: 'thread',
           match_confidence: 0.95
         };
+        
+        // If there's an existing ticket, we'll add this as a reply/comment
+        if (existingEmail.ticket_id) {
+          existingTicketId = existingEmail.ticket_id;
+          logStep("Found existing ticket for thread reply", { ticketId: existingTicketId });
+        }
+        
         logStep("Matched via thread", { threadId, clientId: existingEmail.matched_client_id });
       }
     }
@@ -392,9 +402,50 @@ const handler = async (req: Request): Promise<Response> => {
 
     logStep("Created inbound email record", { id: inboundEmail.id, matchResult });
 
-    // Auto-create ticket if configured and we have enough confidence
+    // Handle ticket creation or reply
     let ticketId = null;
-    if (emailConfig.auto_create_tickets && matchResult.match_confidence >= 0.5) {
+    let isReply = false;
+
+    // If this is a reply to an existing ticket, add as a comment instead of creating new ticket
+    if (existingTicketId) {
+      ticketId = existingTicketId;
+      isReply = true;
+
+      // Add the email as a comment on the existing ticket
+      const { error: commentError } = await supabase
+        .from('ticket_comments')
+        .insert({
+          ticket_id: existingTicketId,
+          user_id: userId,
+          content: `**Email Reply from ${senderName || senderEmail}:**\n\n${payload.body_text || payload.body_html || '(No content)'}`,
+          is_internal: false, // Customer-facing reply
+          visibility_level: 'public'
+        });
+
+      if (commentError) {
+        logStep("Failed to add comment to ticket", { error: commentError.message });
+      } else {
+        logStep("Added email reply as comment to existing ticket", { ticketId: existingTicketId });
+      }
+
+      // Update the inbound email with the ticket reference
+      await supabase
+        .from('vanguard_inbound_emails')
+        .update({ ticket_id: existingTicketId, status: 'converted' })
+        .eq('id', inboundEmail.id);
+
+      // Optionally reopen the ticket if it was closed
+      await supabase
+        .from('tickets')
+        .update({ 
+          status: 'open',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingTicketId)
+        .in('status', ['closed', 'resolved']);
+
+    } else if (emailConfig.auto_create_tickets && matchResult.match_confidence >= 0.5) {
+      // Auto-create new ticket if configured and we have enough confidence
       const { data: ticket, error: ticketError } = await supabase
         .from('tickets')
         .insert({
@@ -423,8 +474,8 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send auto-reply if configured
-    if (emailConfig.auto_reply_enabled && emailConfig.auto_reply_template) {
+    // Send auto-reply if configured (only for new tickets, not replies)
+    if (!isReply && emailConfig.auto_reply_enabled && emailConfig.auto_reply_template) {
       // Queue auto-reply (you could call your send-email function here)
       logStep("Auto-reply would be sent", { template: emailConfig.auto_reply_template });
     }
@@ -433,6 +484,7 @@ const handler = async (req: Request): Promise<Response> => {
       success: true,
       email_id: inboundEmail.id,
       ticket_id: ticketId,
+      is_reply: isReply,
       match_result: matchResult,
       thread_id: threadId
     }), {
