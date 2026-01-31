@@ -1559,6 +1559,102 @@ export type Database = {
           },
         ]
       }
+      azure_ad_config: {
+        Row: {
+          client_id: string
+          client_secret_encrypted: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          redirect_uri: string | null
+          scopes: string[] | null
+          sync_groups: boolean | null
+          sync_users: boolean | null
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          client_secret_encrypted?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          redirect_uri?: string | null
+          scopes?: string[] | null
+          sync_groups?: boolean | null
+          sync_users?: boolean | null
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          client_secret_encrypted?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          redirect_uri?: string | null
+          scopes?: string[] | null
+          sync_groups?: boolean | null
+          sync_users?: boolean | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      azure_ad_users: {
+        Row: {
+          azure_object_id: string
+          created_at: string
+          department: string | null
+          display_name: string | null
+          email: string | null
+          groups: Json | null
+          id: string
+          is_synced: boolean | null
+          job_title: string | null
+          last_synced_at: string | null
+          office_location: string | null
+          phone: string | null
+          user_id: string
+        }
+        Insert: {
+          azure_object_id: string
+          created_at?: string
+          department?: string | null
+          display_name?: string | null
+          email?: string | null
+          groups?: Json | null
+          id?: string
+          is_synced?: boolean | null
+          job_title?: string | null
+          last_synced_at?: string | null
+          office_location?: string | null
+          phone?: string | null
+          user_id: string
+        }
+        Update: {
+          azure_object_id?: string
+          created_at?: string
+          department?: string | null
+          display_name?: string | null
+          email?: string | null
+          groups?: Json | null
+          id?: string
+          is_synced?: boolean | null
+          job_title?: string | null
+          last_synced_at?: string | null
+          office_location?: string | null
+          phone?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       backup_jobs: {
         Row: {
           agent_id: string | null
@@ -4226,6 +4322,57 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_portal_config: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          custom_domain: string | null
+          enable_device_view: boolean | null
+          enable_kb_access: boolean | null
+          enable_ticket_submission: boolean | null
+          id: string
+          logo_url: string | null
+          portal_name: string
+          primary_color: string | null
+          secondary_color: string | null
+          updated_at: string
+          user_id: string
+          welcome_message: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          custom_domain?: string | null
+          enable_device_view?: boolean | null
+          enable_kb_access?: boolean | null
+          enable_ticket_submission?: boolean | null
+          id?: string
+          logo_url?: string | null
+          portal_name?: string
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+          user_id: string
+          welcome_message?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          custom_domain?: string | null
+          enable_device_view?: boolean | null
+          enable_kb_access?: boolean | null
+          enable_ticket_submission?: boolean | null
+          id?: string
+          logo_url?: string | null
+          portal_name?: string
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+          user_id?: string
+          welcome_message?: string | null
+        }
+        Relationships: []
+      }
       daily_analytics: {
         Row: {
           average_response_time_ms: number | null
@@ -6064,6 +6211,51 @@ export type Database = {
           title?: string
           updated_at?: string | null
           view_count?: number | null
+        }
+        Relationships: []
+      }
+      helpdesk_reports: {
+        Row: {
+          chart_config: Json | null
+          columns: Json | null
+          created_at: string
+          filters: Json | null
+          id: string
+          is_scheduled: boolean | null
+          last_generated_at: string | null
+          report_name: string
+          report_type: string
+          schedule_config: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chart_config?: Json | null
+          columns?: Json | null
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          is_scheduled?: boolean | null
+          last_generated_at?: string | null
+          report_name: string
+          report_type: string
+          schedule_config?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chart_config?: Json | null
+          columns?: Json | null
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          is_scheduled?: boolean | null
+          last_generated_at?: string | null
+          report_name?: string
+          report_type?: string
+          schedule_config?: Json | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -11300,6 +11492,57 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_users: {
+        Row: {
+          can_view_all_tickets: boolean | null
+          client_id: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          is_primary_contact: boolean | null
+          last_login_at: string | null
+          phone: string | null
+          portal_password_hash: string | null
+          reset_token: string | null
+          reset_token_expires: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          can_view_all_tickets?: boolean | null
+          client_id?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          is_primary_contact?: boolean | null
+          last_login_at?: string | null
+          phone?: string | null
+          portal_password_hash?: string | null
+          reset_token?: string | null
+          reset_token_expires?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          can_view_all_tickets?: boolean | null
+          client_id?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_primary_contact?: boolean | null
+          last_login_at?: string | null
+          phone?: string | null
+          portal_password_hash?: string | null
+          reset_token?: string | null
+          reset_token_expires?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       predictive_models: {
         Row: {
           accuracy_score: number | null
@@ -11924,6 +12167,87 @@ export type Database = {
           },
         ]
       }
+      remote_session_history: {
+        Row: {
+          agent_id: string | null
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          notes: string | null
+          provider_id: string | null
+          recording_url: string | null
+          session_id: string | null
+          started_at: string
+          technician_id: string | null
+          ticket_id: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          provider_id?: string | null
+          recording_url?: string | null
+          session_id?: string | null
+          started_at?: string
+          technician_id?: string | null
+          ticket_id?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          provider_id?: string | null
+          recording_url?: string | null
+          session_id?: string | null
+          started_at?: string
+          technician_id?: string | null
+          ticket_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      remote_session_providers: {
+        Row: {
+          api_endpoint: string | null
+          api_key_encrypted: string | null
+          created_at: string
+          id: string
+          is_default: boolean | null
+          provider_name: string
+          settings: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_endpoint?: string | null
+          api_key_encrypted?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          provider_name: string
+          settings?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_endpoint?: string | null
+          api_key_encrypted?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          provider_name?: string
+          settings?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       remote_sessions: {
         Row: {
           client_ip: string | null
@@ -11976,6 +12300,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      report_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          period_end: string | null
+          period_start: string | null
+          report_id: string | null
+          snapshot_data: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          report_id?: string | null
+          snapshot_data: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          report_id?: string | null
+          snapshot_data?: Json
+          user_id?: string
+        }
+        Relationships: []
       }
       response_workflows: {
         Row: {
@@ -19024,6 +19378,39 @@ export type Database = {
         }
         Relationships: []
       }
+      teams_notification_config: {
+        Row: {
+          channel_name: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          notification_types: string[] | null
+          updated_at: string
+          user_id: string
+          webhook_url: string
+        }
+        Insert: {
+          channel_name?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          notification_types?: string[] | null
+          updated_at?: string
+          user_id: string
+          webhook_url: string
+        }
+        Update: {
+          channel_name?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          notification_types?: string[] | null
+          updated_at?: string
+          user_id?: string
+          webhook_url?: string
+        }
+        Relationships: []
+      }
       threat_intel_cache: {
         Row: {
           categories: string[] | null
@@ -19354,6 +19741,42 @@ export type Database = {
           response_reason?: string | null
           status?: string | null
           ticket_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ticket_assets: {
+        Row: {
+          agent_id: string | null
+          asset_id: string | null
+          asset_type: string
+          id: string
+          linked_at: string
+          linked_by: string | null
+          notes: string | null
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          asset_id?: string | null
+          asset_type: string
+          id?: string
+          linked_at?: string
+          linked_by?: string | null
+          notes?: string | null
+          ticket_id: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          asset_id?: string | null
+          asset_type?: string
+          id?: string
+          linked_at?: string
+          linked_by?: string | null
+          notes?: string | null
+          ticket_id?: string
           user_id?: string
         }
         Relationships: []
@@ -25338,9 +25761,11 @@ export type Database = {
           is_active: boolean | null
           last_executed_at: string | null
           name: string
+          priority_order: number | null
           trigger_event: string
           updated_at: string
           user_id: string
+          visual_config: Json | null
         }
         Insert: {
           actions?: Json
@@ -25352,9 +25777,11 @@ export type Database = {
           is_active?: boolean | null
           last_executed_at?: string | null
           name: string
+          priority_order?: number | null
           trigger_event: string
           updated_at?: string
           user_id: string
+          visual_config?: Json | null
         }
         Update: {
           actions?: Json
@@ -25366,9 +25793,11 @@ export type Database = {
           is_active?: boolean | null
           last_executed_at?: string | null
           name?: string
+          priority_order?: number | null
           trigger_event?: string
           updated_at?: string
           user_id?: string
+          visual_config?: Json | null
         }
         Relationships: []
       }

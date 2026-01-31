@@ -96,11 +96,39 @@ The Vanguard platform is a comprehensive MSP suite with RMM, Security, Helpdesk,
 
 ---
 
-## Phase 12: Advanced AI Features (NEW)
+## Phase 12: Advanced Helpdesk & Integrations (NEW)
+
+### ✅ Customer Self-Service Portal
+- Branded portal for ticket submission, KB browsing, device health
+- Real-time ticket status tracking with priority badges
+
+### ✅ Visual Workflow Builder  
+- Drag-drop automation rules for ticket routing
+- Trigger types: ticket_created, ticket_updated, sla_breach, time_elapsed
+- Actions: assign, set_priority, send_email, add_tag, notify, escalate
+
+### ✅ Advanced Reporting Dashboard
+- Recharts-powered analytics for SLA compliance, ticket volume, trends
+- Technician performance metrics and response time distribution
+
+### ✅ Asset-Ticket Linking
+- Link devices/assets to tickets for full context
+- Search and filter available assets by type
+
+### ✅ Remote Session Integration (RustDesk/ScreenConnect)
+- Multi-provider support (RustDesk, ScreenConnect, TeamViewer, AnyDesk)
+- Session history tracking with duration
+
+### ✅ Microsoft 365/Azure AD Integration
+- Azure AD tenant configuration with user/group sync
+- Teams webhook notifications for ticket events
+
+---
+
+## Phase 13: AI Screen Recording to Documentation
 
 ### ✅ Screen Recording to Documentation
 - MediaRecorder API for browser-based screen capture
-- Pause/resume functionality with duration tracking
 - AI-powered analysis via `screen-recording-analyzer` edge function
 - Automatic step extraction with timestamps
 - KB article generation with category inference

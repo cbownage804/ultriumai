@@ -13,3 +13,7 @@ export { DispatchBoard } from './DispatchBoard';
 export { OnCallScheduleEditor } from './OnCallScheduleEditor';
 export { LiveChatWidget } from './LiveChatWidget';
 export { TechnicianChatConsole } from './TechnicianChatConsole';
+export { VisualWorkflowBuilder } from './VisualWorkflowBuilder';
+export { AdvancedReportingDashboard } from './AdvancedReportingDashboard';
+export { AssetTicketLinker } from './AssetTicketLinker';
+export { RemoteSessionLauncher } from './RemoteSessionLauncher';
