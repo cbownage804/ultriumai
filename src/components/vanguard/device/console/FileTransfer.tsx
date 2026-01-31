@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +59,10 @@ export function FileTransfer({ agentId, sendCommand }: FileTransferProps) {
   const [transfers, setTransfers] = useState<TransferJob[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
 
+  useEffect(() => {
+    loadDirectory(currentPath);
+  }, [agentId]);
+
   const loadDirectory = async (path: string) => {
     setIsLoading(true);
     try {
@@ -69,9 +73,13 @@ export function FileTransfer({ agentId, sendCommand }: FileTransferProps) {
           modified: new Date(f.modified)
         })));
         setCurrentPath(path);
+      } else {
+        // Empty directory
+        setFiles([]);
+        setCurrentPath(path);
       }
     } catch (err) {
-      // No data - show empty state
+      console.error('Failed to load directory:', err);
       setFiles([]);
     } finally {
       setIsLoading(false);
@@ -87,51 +95,57 @@ export function FileTransfer({ agentId, sendCommand }: FileTransferProps) {
     }
   };
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newTransfers: TransferJob[] = acceptedFiles.map(file => ({
+  const uploadFile = async (file: File) => {
+    const transfer: TransferJob = {
       id: crypto.randomUUID(),
       name: file.name,
-      direction: 'upload' as const,
+      direction: 'upload',
       progress: 0,
-      status: 'pending' as const,
+      status: 'pending',
       size: file.size,
-    }));
+    };
     
-    setTransfers(prev => [...prev, ...newTransfers]);
+    setTransfers(prev => [...prev, transfer]);
     
-    // Simulate upload progress
-    newTransfers.forEach(transfer => {
-      simulateTransfer(transfer.id);
-    });
-    
-    toast.success(`Uploading ${acceptedFiles.length} file(s)`);
-  }, []);
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = (reader.result as string).split(',')[1];
+        
+        setTransfers(prev => prev.map(t => 
+          t.id === transfer.id ? { ...t, status: 'transferring', progress: 30 } : t
+        ));
+        
+        await sendCommand('upload_file', {
+          path: currentPath,
+          file_name: file.name,
+          file_data: base64,
+        });
+        
+        setTransfers(prev => prev.map(t => 
+          t.id === transfer.id ? { ...t, status: 'completed', progress: 100 } : t
+        ));
+        
+        toast.success(`Uploaded ${file.name}`);
+        setTimeout(() => loadDirectory(currentPath), 1000);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setTransfers(prev => prev.map(t => 
+        t.id === transfer.id ? { ...t, status: 'failed' } : t
+      ));
+      toast.error(`Failed to upload ${file.name}`);
+    }
+  };
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    acceptedFiles.forEach(file => uploadFile(file));
+  }, [currentPath]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
-  const simulateTransfer = (id: string) => {
-    setTransfers(prev => prev.map(t => 
-      t.id === id ? { ...t, status: 'transferring' } : t
-    ));
-    
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 20;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
-        setTransfers(prev => prev.map(t => 
-          t.id === id ? { ...t, progress: 100, status: 'completed' } : t
-        ));
-      } else {
-        setTransfers(prev => prev.map(t => 
-          t.id === id ? { ...t, progress } : t
-        ));
-      }
-    }, 500);
-  };
-
-  const handleDownload = (file: RemoteFile) => {
+  const handleDownload = async (file: RemoteFile) => {
     const transfer: TransferJob = {
       id: crypto.randomUUID(),
       name: file.name,
@@ -142,8 +156,51 @@ export function FileTransfer({ agentId, sendCommand }: FileTransferProps) {
     };
     
     setTransfers(prev => [...prev, transfer]);
-    simulateTransfer(transfer.id);
-    toast.success(`Downloading ${file.name}`);
+    
+    try {
+      setTransfers(prev => prev.map(t => 
+        t.id === transfer.id ? { ...t, status: 'transferring', progress: 30 } : t
+      ));
+      
+      const result = await sendCommand('download_file', { 
+        path: `${currentPath}${currentPath.endsWith('\\') ? '' : '\\'}${file.name}` 
+      });
+      
+      if (result?.file_data) {
+        // Create download link from base64 data
+        const blob = new Blob([Uint8Array.from(atob(result.file_data), c => c.charCodeAt(0))]);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      
+      setTransfers(prev => prev.map(t => 
+        t.id === transfer.id ? { ...t, status: 'completed', progress: 100 } : t
+      ));
+      toast.success(`Downloaded ${file.name}`);
+    } catch (err) {
+      setTransfers(prev => prev.map(t => 
+        t.id === transfer.id ? { ...t, status: 'failed' } : t
+      ));
+      toast.error(`Failed to download ${file.name}`);
+    }
+  };
+
+  const handleDelete = async (file: RemoteFile) => {
+    if (!confirm(`Delete ${file.name}?`)) return;
+    
+    try {
+      await sendCommand('delete_file', { 
+        path: `${currentPath}${currentPath.endsWith('\\') ? '' : '\\'}${file.name}` 
+      });
+      toast.success(`Deleted ${file.name}`);
+      loadDirectory(currentPath);
+    } catch (err) {
+      toast.error(`Failed to delete ${file.name}`);
+    }
   };
 
   const formatSize = (bytes: number) => {

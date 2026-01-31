@@ -33,19 +33,37 @@ export function TerminalConsole({ agentId, sendCommand, deviceName }: TerminalCo
   const [shell, setShell] = useState<'cmd' | 'powershell' | 'bash'>('powershell');
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [sessionId] = useState(() => crypto.randomUUID());
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Load command history from localStorage
   useEffect(() => {
-    // Initial system message
+    const stored = localStorage.getItem(`terminal-history-${agentId}`);
+    if (stored) {
+      try {
+        setCommandHistory(JSON.parse(stored));
+      } catch (e) {
+        console.error('Failed to parse command history');
+      }
+    }
+  }, [agentId]);
+
+  useEffect(() => {
+    // Initial system message with session info
     setHistory([
       {
         type: 'system',
-        content: `Connected to ${deviceName || 'device'}. Type commands to execute remotely.`,
+        content: `Connected to ${deviceName || 'device'}. Session: ${sessionId.slice(0, 8)}`,
+        timestamp: new Date(),
+      },
+      {
+        type: 'system',
+        content: `Shell: ${shell}. Type 'help' for available commands. Use ↑↓ to navigate history.`,
         timestamp: new Date(),
       },
     ]);
-  }, [deviceName]);
+  }, [deviceName, sessionId]);
 
   useEffect(() => {
     // Auto-scroll to bottom
@@ -54,18 +72,55 @@ export function TerminalConsole({ agentId, sendCommand, deviceName }: TerminalCo
     }
   }, [history]);
 
+  // Save command history to localStorage
+  const saveCommandHistory = (cmds: string[]) => {
+    const last50 = cmds.slice(-50); // Keep last 50 commands
+    localStorage.setItem(`terminal-history-${agentId}`, JSON.stringify(last50));
+    setCommandHistory(last50);
+  };
+
   const executeCommand = async () => {
     if (!command.trim()) return;
     
     const cmd = command.trim();
     setCommand('');
-    setCommandHistory(prev => [...prev, cmd]);
+    saveCommandHistory([...commandHistory, cmd]);
     setHistoryIndex(-1);
     
-    // Add command to history
+    // Handle built-in commands
+    if (cmd.toLowerCase() === 'help') {
+      setHistory(prev => [...prev, 
+        { type: 'command', content: `${getPrompt()} help`, timestamp: new Date() },
+        { type: 'system', content: 'Available commands:', timestamp: new Date() },
+        { type: 'output', content: '  clear    - Clear terminal screen', timestamp: new Date() },
+        { type: 'output', content: '  history  - Show command history', timestamp: new Date() },
+        { type: 'output', content: '  exit     - End session (disconnect)', timestamp: new Date() },
+        { type: 'output', content: '  Any other command is sent to the remote device', timestamp: new Date() },
+      ]);
+      return;
+    }
+
+    if (cmd.toLowerCase() === 'clear') {
+      clearTerminal();
+      return;
+    }
+
+    if (cmd.toLowerCase() === 'history') {
+      setHistory(prev => [...prev,
+        { type: 'command', content: `${getPrompt()} history`, timestamp: new Date() },
+        ...commandHistory.map((c, i) => ({
+          type: 'output' as const,
+          content: `  ${i + 1}. ${c}`,
+          timestamp: new Date(),
+        })),
+      ]);
+      return;
+    }
+
+    // Add command to history display
     setHistory(prev => [...prev, {
       type: 'command',
-      content: `${shell === 'powershell' ? 'PS>' : shell === 'cmd' ? 'C:\\>' : '$'} ${cmd}`,
+      content: `${getPrompt()} ${cmd}`,
       timestamp: new Date(),
     }]);
     
@@ -73,17 +128,29 @@ export function TerminalConsole({ agentId, sendCommand, deviceName }: TerminalCo
     try {
       const result = await sendCommand('run_script', { 
         script: cmd, 
-        shell: shell === 'bash' ? 'bash' : shell === 'powershell' ? 'powershell' : 'cmd'
+        shell: shell === 'bash' ? 'bash' : shell === 'powershell' ? 'powershell' : 'cmd',
+        session_id: sessionId,
       });
       
-      // Simulated response for demo
-      const output = result?.output || `Command "${cmd}" queued for execution. Check command history for results.`;
+      const output = result?.output || result?.stdout || 
+        `Command queued. ID: ${result?.command_id || 'pending'}`;
+      const stderr = result?.stderr;
       
-      setHistory(prev => [...prev, {
-        type: 'output',
-        content: output,
-        timestamp: new Date(),
-      }]);
+      if (output) {
+        setHistory(prev => [...prev, {
+          type: 'output',
+          content: output,
+          timestamp: new Date(),
+        }]);
+      }
+      
+      if (stderr) {
+        setHistory(prev => [...prev, {
+          type: 'error',
+          content: stderr,
+          timestamp: new Date(),
+        }]);
+      }
     } catch (err: any) {
       setHistory(prev => [...prev, {
         type: 'error',
@@ -94,6 +161,10 @@ export function TerminalConsole({ agentId, sendCommand, deviceName }: TerminalCo
       setIsExecuting(false);
       inputRef.current?.focus();
     }
+  };
+
+  const getPrompt = () => {
+    return shell === 'powershell' ? 'PS>' : shell === 'cmd' ? 'C:\\>' : '$';
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
