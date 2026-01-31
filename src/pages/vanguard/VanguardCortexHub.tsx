@@ -12,7 +12,8 @@ import {
   Sparkles,
   ArrowRight,
   Brain,
-  Zap
+  Zap,
+  Video
 } from 'lucide-react';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 import { getVanguardBasePath } from '@/utils/subdomain';
@@ -57,6 +58,14 @@ const cortexFeatures = [
     path: '/cortex-analytics',
     badge: null,
     stat: '$12.4k saved this month'
+  },
+  {
+    title: 'Screen Recording to Docs',
+    description: 'Record your screen and AI will generate KB documentation',
+    icon: Video,
+    path: '/cortex-screen-to-docs',
+    badge: 'NEW',
+    stat: 'Auto-generate guides'
   },
 ];
 

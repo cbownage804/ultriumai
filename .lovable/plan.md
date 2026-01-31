@@ -96,7 +96,19 @@ The Vanguard platform is a comprehensive MSP suite with RMM, Security, Helpdesk,
 
 ---
 
-## Edge Functions Deployed (17 Total)
+## Phase 12: Advanced AI Features (NEW)
+
+### ✅ Screen Recording to Documentation
+- MediaRecorder API for browser-based screen capture
+- Pause/resume functionality with duration tracking
+- AI-powered analysis via `screen-recording-analyzer` edge function
+- Automatic step extraction with timestamps
+- KB article generation with category inference
+- Direct publish to client_portal_kb
+
+---
+
+## Edge Functions Deployed (18 Total)
 
 | Function | Purpose |
 |----------|---------|
@@ -116,6 +128,7 @@ The Vanguard platform is a comprehensive MSP suite with RMM, Security, Helpdesk,
 | `report-builder` | Custom report generation |
 | `mobile-api` | iOS/Android companion API |
 | `sso-integration` | SAML/OAuth/OIDC SSO |
+| `screen-recording-analyzer` | AI screen-to-docs generation |
 
 ---
 
@@ -147,5 +160,6 @@ All planned enhancements have been implemented:
 3. ✅ Advanced Report Builder
 4. ✅ Mobile API Endpoints
 5. ✅ SSO Integration (SAML/OAuth/OIDC)
+6. ✅ AI Screen Recording to Docs
 
 The Vanguard platform is now feature-complete and production-ready.
