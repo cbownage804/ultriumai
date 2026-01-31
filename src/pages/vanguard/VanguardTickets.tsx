@@ -33,8 +33,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { getVanguardBasePath } from '@/utils/subdomain';
-import { useVanguardTickets } from '@/hooks/useVanguardTickets';
+import { useVanguardTickets, useIsAdmin } from '@/hooks/useVanguardTickets';
 import { useMSP } from '@/hooks/useMSP';
+import { Switch } from '@/components/ui/switch';
 import { formatDistanceToNow } from 'date-fns';
 import { VanguardBreadcrumbs } from '@/components/vanguard/VanguardBreadcrumbs';
 
@@ -149,6 +150,8 @@ export default function VanguardTickets() {
   const navigate = useNavigate();
   const basePath = getVanguardBasePath();
   const { clients } = useMSP();
+  const { isAdmin } = useIsAdmin();
+  const [adminMode, setAdminMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('tickets');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -377,8 +380,36 @@ export default function VanguardTickets() {
         </div>
       </div>
 
-      {/* Page Title */}
-      <h1 className="text-2xl font-bold text-white">Tickets</h1>
+      {/* Page Title with Admin Mode Toggle */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold text-white">Tickets</h1>
+          {isAdmin && (
+            <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+              <Shield className="h-3 w-3 mr-1" />
+              Admin
+            </Badge>
+          )}
+        </div>
+        
+        {/* Admin Mode Toggle - Only visible to admins */}
+        {isAdmin && (
+          <div className="flex items-center gap-3 px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-purple-400" />
+              <span className="text-sm text-purple-400 font-medium">Support Mode</span>
+            </div>
+            <Switch 
+              checked={adminMode}
+              onCheckedChange={setAdminMode}
+              className="data-[state=checked]:bg-purple-500"
+            />
+            <span className="text-xs text-white/60">
+              {adminMode ? 'All customer tickets' : 'My tickets only'}
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Tabs - Atera Style */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

@@ -1,8 +1,9 @@
 /**
  * Hook for fetching real Vanguard tickets from the database
+ * Supports admin mode for @ultriumai.com users to see all tickets
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -20,6 +21,13 @@ export interface VanguardTicket {
   client_name?: string;
   contact_name?: string;
   category?: string;
+  owner_email?: string;
+  user_id?: string;
+}
+
+interface UseVanguardTicketsOptions {
+  clientId?: string;
+  adminMode?: boolean;
 }
 
 interface UseVanguardTicketsResult {
@@ -27,10 +35,45 @@ interface UseVanguardTicketsResult {
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
+  isAdmin: boolean;
 }
 
-export function useVanguardTickets(clientId?: string): UseVanguardTicketsResult {
+// Check if user is an admin (@ultriumai.com email)
+export function useIsAdmin() {
   const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        setIsChecking(false);
+        return;
+      }
+
+      // Check if user email ends with @ultriumai.com
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', user.id)
+        .single();
+
+      const email = profile?.email || user.email || '';
+      setIsAdmin(email.toLowerCase().endsWith('@ultriumai.com'));
+      setIsChecking(false);
+    };
+
+    checkAdmin();
+  }, [user]);
+
+  return { isAdmin, isChecking };
+}
+
+export function useVanguardTickets(options: UseVanguardTicketsOptions = {}): UseVanguardTicketsResult {
+  const { clientId, adminMode = false } = options;
+  const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [tickets, setTickets] = useState<VanguardTicket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -58,10 +101,15 @@ export function useVanguardTickets(clientId?: string): UseVanguardTicketsResult 
             updated_at,
             due_date,
             assigned_to,
-            client_id
+            client_id,
+            user_id
           `)
-          .eq('user_id', user.id)
           .order('created_at', { ascending: false });
+
+        // Only filter by user_id if NOT in admin mode or user is not admin
+        if (!adminMode || !isAdmin) {
+          query = query.eq('user_id', user.id);
+        }
 
         if (clientId) {
           query = query.eq('client_id', clientId);
@@ -71,11 +119,14 @@ export function useVanguardTickets(clientId?: string): UseVanguardTicketsResult 
 
         if (fetchError) throw fetchError;
 
-        // Fetch client names if we have tickets
+        // Fetch client names and owner emails if we have tickets
         if (data && data.length > 0) {
           const clientIds = [...new Set(data.filter(t => t.client_id).map(t => t.client_id))];
+          const userIds = [...new Set(data.filter(t => t.user_id).map(t => t.user_id))];
           
           let clientsMap: Record<string, string> = {};
+          let usersMap: Record<string, string> = {};
+
           if (clientIds.length > 0) {
             const { data: clients } = await supabase
               .from('msp_clients')
@@ -90,9 +141,25 @@ export function useVanguardTickets(clientId?: string): UseVanguardTicketsResult 
             }
           }
 
+          // Fetch owner emails for admin view
+          if (adminMode && isAdmin && userIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, email')
+              .in('id', userIds);
+            
+            if (profiles) {
+              usersMap = profiles.reduce((acc, p) => {
+                acc[p.id] = p.email || 'Unknown';
+                return acc;
+              }, {} as Record<string, string>);
+            }
+          }
+
           const ticketsWithClients = data.map(ticket => ({
             ...ticket,
             client_name: ticket.client_id ? clientsMap[ticket.client_id] || 'Unknown' : undefined,
+            owner_email: ticket.user_id ? usersMap[ticket.user_id] : undefined,
             status: ticket.status as VanguardTicket['status'],
             priority: (ticket.priority || 'medium') as VanguardTicket['priority'],
           }));
@@ -110,15 +177,16 @@ export function useVanguardTickets(clientId?: string): UseVanguardTicketsResult 
     };
 
     fetchTickets();
-  }, [user, clientId, refetchTrigger]);
+  }, [user, clientId, refetchTrigger, adminMode, isAdmin]);
 
-  const refetch = () => setRefetchTrigger(prev => prev + 1);
+  const refetch = useCallback(() => setRefetchTrigger(prev => prev + 1), []);
 
-  return { tickets, isLoading, error, refetch };
+  return { tickets, isLoading, error, refetch, isAdmin };
 }
 
 export function useVanguardTicketDetail(ticketId: string | undefined) {
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [ticket, setTicket] = useState<VanguardTicket | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -133,12 +201,17 @@ export function useVanguardTicketDetail(ticketId: string | undefined) {
       try {
         setIsLoading(true);
 
-        const { data, error: fetchError } = await supabase
+        // Admins can view any ticket, regular users only their own
+        let query = supabase
           .from('tickets')
           .select('*')
-          .eq('id', ticketId)
-          .eq('user_id', user.id)
-          .single();
+          .eq('id', ticketId);
+
+        if (!isAdmin) {
+          query = query.eq('user_id', user.id);
+        }
+
+        const { data, error: fetchError } = await query.single();
 
         if (fetchError) throw fetchError;
 
@@ -170,7 +243,7 @@ export function useVanguardTicketDetail(ticketId: string | undefined) {
     };
 
     fetchTicket();
-  }, [user, ticketId]);
+  }, [user, ticketId, isAdmin]);
 
   return { ticket, isLoading, error };
 }
