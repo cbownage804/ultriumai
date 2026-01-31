@@ -74,6 +74,10 @@ export function VanguardNavigation() {
         { title: 'RMM Dashboard', path: `${basePath}/rmm`, icon: Monitor },
         { title: 'Devices', path: `${basePath}/devices`, icon: Monitor },
         { title: 'Patches', path: `${basePath}/patches`, icon: Package },
+        { title: 'Assets', path: `${basePath}/assets`, icon: Package },
+        { title: 'Scripts', path: `${basePath}/scripts`, icon: FileText },
+        { title: 'Backups', path: `${basePath}/backups`, icon: Package },
+        { title: 'Automation', path: `${basePath}/automation`, icon: Settings },
       ]
     },
     {
