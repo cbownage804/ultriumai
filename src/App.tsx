@@ -293,7 +293,10 @@ function AppRouter() {
           <Route path="/app" element={<VanguardLayout />}>
             {getVanguardProtectedRoutes()}
           </Route>
-          <Route path="*" element={<Navigate to="/app" replace />} />
+          {/* Dashboard shortcut - redirect to app */}
+          <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
+          {/* Catch-all: redirect to landing page, not app (let users see marketing first) */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <CookieConsent />
       </EnhancedErrorBoundary>
