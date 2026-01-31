@@ -8,7 +8,7 @@ import UnifiedAuthRedirect from '@/components/auth/UnifiedAuthRedirect';
 // SafeSuite imports
 import SafeSuiteLayout from '@/layouts/SafeSuiteLayout';
 import UnifiedAdminCenter from '@/pages/admin/UnifiedAdminCenter';
-import SafeSuiteLanding from '@/pages/safesuite/SafeSuiteLanding';
+import SafeSuiteProductPage from '@/pages/products/SafeSuiteProductPage';
 import SafeSuiteDashboard from '@/pages/safesuite/SafeSuiteDashboard';
 import SafeSuiteBilling from '@/pages/safesuite/SafeSuiteBilling';
 import SafeSuiteSettings from '@/pages/safesuite/SafeSuiteSettings';
@@ -54,8 +54,8 @@ import SafePassSecurityPage from '@/pages/safesuite/SafePassSecurityPage';
 export const SafeSuiteSubdomainRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<SafeSuiteLanding />} />
-      <Route path="/features" element={<SafeSuiteLanding />} />
+      <Route path="/" element={<SafeSuiteProductPage />} />
+      <Route path="/features" element={<SafeSuiteProductPage />} />
       <Route path="/products/safepass" element={<SafePassProduct />} />
       <Route path="/products/safepass/security" element={<SafePassSecurityPage />} />
       <Route path="/products/safescan" element={<SafeScanProduct />} />
