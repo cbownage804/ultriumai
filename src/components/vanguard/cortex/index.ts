@@ -3,3 +3,4 @@ export { PatternDetectionEngine } from './PatternDetectionEngine';
 export { KBArticleGenerator } from './KBArticleGenerator';
 export { SmartTicketRouter } from './SmartTicketRouter';
 export { CortexAnalyticsDashboard } from './CortexAnalyticsDashboard';
+export { ScreenRecordingKBGenerator } from './ScreenRecordingKBGenerator';
