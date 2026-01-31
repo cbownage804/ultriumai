@@ -27,3 +27,6 @@ export { QueueManagementBoard } from './QueueManagementBoard';
 export { WhiteLabelPortalConfig } from './WhiteLabelPortalConfig';
 export { BusinessHoursCalendar } from './BusinessHoursCalendar';
 export { TechnicianProfileSettings } from './TechnicianProfileSettings';
+// Phase 15 - AI & Asset Features
+export { KBSuggestionsPanel } from './KBSuggestionsPanel';
+export { TicketAssetLinker } from './TicketAssetLinker';

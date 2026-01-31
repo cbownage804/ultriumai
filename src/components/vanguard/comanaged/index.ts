@@ -19,3 +19,4 @@ export { OrgSLAPolicies } from './OrgSLAPolicies';
 export { CalendarIntegrations } from './CalendarIntegrations';
 export { EscalationAnalytics } from './EscalationAnalytics';
 export { WhiteLabelReports } from './WhiteLabelReports';
+export { ContractManagement } from './ContractManagement';
