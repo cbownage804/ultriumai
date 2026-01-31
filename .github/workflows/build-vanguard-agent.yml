@@ -19,6 +19,9 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: write
+
 env:
   DOTNET_VERSION: '8.0.x'
 
