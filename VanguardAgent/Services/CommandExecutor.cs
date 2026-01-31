@@ -1411,7 +1411,11 @@ public partial class CommandExecutor
 
             var metadataJson = await File.ReadAllTextAsync(metadataPath);
             var metadata = JsonConvert.DeserializeObject<dynamic>(metadataJson);
-            var originalPath = (string)metadata.original_path;
+            var originalPath = (string?)metadata?.original_path;
+            if (string.IsNullOrEmpty(originalPath))
+            {
+                return new CommandResult { Success = false, ExitCode = -1, Stderr = "Original path not found in metadata" };
+            }
 
             // Ensure original directory exists
             var originalDir = Path.GetDirectoryName(originalPath);

@@ -20,7 +20,9 @@ public class AgentWorker : BackgroundService
     private DateTime _lastTelemetry = DateTime.MinValue;
     private DateTime _lastSecurityTelemetry = DateTime.MinValue;
     private DateTime _lastCommandPoll = DateTime.MinValue;
+    #pragma warning disable CS0414 // Field is assigned but never used - tracks registration state for future use
     private bool _isRegistered = false;
+    #pragma warning restore CS0414
     private bool _rustDeskSetupComplete = false;
 
     // Security telemetry interval (5 minutes by default)
