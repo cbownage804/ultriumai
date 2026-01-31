@@ -11492,6 +11492,66 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_branding: {
+        Row: {
+          accent_color: string | null
+          company_name: string
+          created_at: string
+          custom_css: string | null
+          custom_domain: string | null
+          favicon_url: string | null
+          footer_text: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          support_email: string | null
+          support_phone: string | null
+          updated_at: string
+          user_id: string
+          welcome_message: string | null
+        }
+        Insert: {
+          accent_color?: string | null
+          company_name: string
+          created_at?: string
+          custom_css?: string | null
+          custom_domain?: string | null
+          favicon_url?: string | null
+          footer_text?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          support_email?: string | null
+          support_phone?: string | null
+          updated_at?: string
+          user_id: string
+          welcome_message?: string | null
+        }
+        Update: {
+          accent_color?: string | null
+          company_name?: string
+          created_at?: string
+          custom_css?: string | null
+          custom_domain?: string | null
+          favicon_url?: string | null
+          footer_text?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          support_email?: string | null
+          support_phone?: string | null
+          updated_at?: string
+          user_id?: string
+          welcome_message?: string | null
+        }
+        Relationships: []
+      }
       portal_users: {
         Row: {
           can_view_all_tickets: boolean | null
@@ -17892,6 +17952,51 @@ export type Database = {
         }
         Relationships: []
       }
+      screen_recording_sessions: {
+        Row: {
+          ai_analysis: Json | null
+          created_at: string
+          description: string | null
+          duration_seconds: number | null
+          generated_steps: Json | null
+          id: string
+          kb_article_id: string | null
+          recording_url: string | null
+          status: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          generated_steps?: Json | null
+          id?: string
+          kb_article_id?: string | null
+          recording_url?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_analysis?: Json | null
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          generated_steps?: Json | null
+          id?: string
+          kb_article_id?: string | null
+          recording_url?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       script_executions: {
         Row: {
           completed_at: string | null
@@ -20036,6 +20141,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ticket_queues: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          filter_criteria: Json | null
+          id: string
+          is_active: boolean | null
+          position: number | null
+          queue_name: string
+          sort_order: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          filter_criteria?: Json | null
+          id?: string
+          is_active?: boolean | null
+          position?: number | null
+          queue_name: string
+          sort_order?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          filter_criteria?: Json | null
+          id?: string
+          is_active?: boolean | null
+          position?: number | null
+          queue_name?: string
+          sort_order?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ticket_relationships: {
+        Row: {
+          child_ticket_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          parent_ticket_id: string
+          relationship_type: string | null
+          user_id: string
+        }
+        Insert: {
+          child_ticket_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          parent_ticket_id: string
+          relationship_type?: string | null
+          user_id: string
+        }
+        Update: {
+          child_ticket_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          parent_ticket_id?: string
+          relationship_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       ticket_templates: {
         Row: {
