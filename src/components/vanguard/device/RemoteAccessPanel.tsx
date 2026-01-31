@@ -20,11 +20,16 @@ import {
   Settings,
   Copy,
   Check,
-  Wifi,
-  WifiOff,
   Loader2,
+  Zap,
+  Shield,
 } from "lucide-react";
 import { toast } from "sonner";
+import { 
+  REMOTE_ACCESS_PROVIDERS, 
+  isRemoteAccessConfigured,
+  getRustDeskConnectionUrl 
+} from "@/config/vanguardRemoteAccess";
 
 interface RemoteAccessPanelProps {
   agentId: string;
@@ -71,24 +76,13 @@ export function RemoteAccessPanel({
     setIsConnecting(provider);
     
     try {
-      let url = "";
-      switch (provider) {
-        case "rustdesk":
-          url = `rustdesk://${id}`;
-          break;
-        case "splashtop":
-          url = `splashtop://${id}`;
-          break;
-        case "anydesk":
-          url = `anydesk:${id}`;
-          break;
-        case "teamviewer":
-          url = `teamviewer10://control?device=${id}`;
-          break;
-      }
+      const providerConfig = REMOTE_ACCESS_PROVIDERS[provider as keyof typeof REMOTE_ACCESS_PROVIDERS];
+      const url = providerConfig 
+        ? `${providerConfig.protocol}${id}`
+        : `rustdesk://${id}`;
       
       window.open(url, "_blank");
-      toast.success(`Opening ${provider}...`, {
+      toast.success(`Opening ${providerConfig?.name || provider}...`, {
         description: `Connecting to ${deviceName}`,
       });
     } catch (err) {
@@ -113,42 +107,28 @@ export function RemoteAccessPanel({
     }
   };
 
+  // Build provider list with device IDs
   const providers = [
     {
-      id: "rustdesk",
-      name: "RustDesk",
-      color: "bg-orange-500",
+      ...REMOTE_ACCESS_PROVIDERS.rustdesk,
       deviceId: rustdeskId,
-      description: "Open-source remote desktop",
-      icon: "🦀",
     },
     {
-      id: "splashtop",
-      name: "Splashtop",
-      color: "bg-blue-500",
-      deviceId: splashtopId,
-      description: "Business remote access",
-      icon: "💧",
-    },
-    {
-      id: "anydesk",
-      name: "AnyDesk",
-      color: "bg-red-500",
+      ...REMOTE_ACCESS_PROVIDERS.anydesk,
       deviceId: anydeskId,
-      description: "Fast remote desktop",
-      icon: "🔴",
     },
     {
-      id: "teamviewer",
-      name: "TeamViewer",
-      color: "bg-cyan-500",
+      ...REMOTE_ACCESS_PROVIDERS.teamviewer,
       deviceId: teamviewerId,
-      description: "Enterprise remote support",
-      icon: "🔵",
+    },
+    {
+      ...REMOTE_ACCESS_PROVIDERS.splashtop,
+      deviceId: splashtopId,
     },
   ];
 
   const configuredProviders = providers.filter((p) => p.deviceId);
+  const hasRustDesk = Boolean(rustdeskId);
   const hasAnyProvider = configuredProviders.length > 0;
 
   return (
@@ -158,6 +138,12 @@ export function RemoteAccessPanel({
           <CardTitle className="flex items-center gap-2">
             <Monitor className="h-5 w-5" />
             Remote Access
+            {hasRustDesk && (
+              <Badge variant="outline" className="ml-2 bg-green-500/10 text-green-600 border-green-500/30">
+                <Zap className="h-3 w-3 mr-1" />
+                Built-in
+              </Badge>
+            )}
           </CardTitle>
           <CardDescription>
             Connect to {deviceName} via remote desktop
@@ -174,11 +160,36 @@ export function RemoteAccessPanel({
             <DialogHeader>
               <DialogTitle>Configure Remote Access</DialogTitle>
               <DialogDescription>
-                Enter the device IDs for each remote access provider
+                RustDesk is auto-configured by the Vanguard agent. Other providers can be manually configured.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              {providers.map((provider) => (
+              {/* RustDesk - Auto-configured notice */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <span>🦀</span>
+                  RustDesk ID
+                  <Badge variant="secondary" className="text-xs">Auto-detected</Badge>
+                </Label>
+                <Input
+                  placeholder="Auto-detected from agent..."
+                  value={formData.rustdeskId}
+                  onChange={(e) => setFormData({ ...formData, rustdeskId: e.target.value })}
+                  className={formData.rustdeskId ? "bg-green-500/5 border-green-500/30" : ""}
+                />
+                {!formData.rustdeskId && (
+                  <p className="text-xs text-muted-foreground">
+                    The agent will auto-install and report the RustDesk ID
+                  </p>
+                )}
+              </div>
+
+              {/* Other providers */}
+              {[
+                REMOTE_ACCESS_PROVIDERS.anydesk,
+                REMOTE_ACCESS_PROVIDERS.teamviewer,
+                REMOTE_ACCESS_PROVIDERS.splashtop,
+              ].map((provider) => (
                 <div key={provider.id} className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <span>{provider.icon}</span>
@@ -210,16 +221,29 @@ export function RemoteAccessPanel({
         {!hasAnyProvider ? (
           <div className="text-center py-8 text-muted-foreground">
             <Monitor className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p className="text-sm">No remote access configured</p>
-            <p className="text-xs mt-1">Click Configure to add provider IDs</p>
+            <p className="text-sm">Waiting for RustDesk ID...</p>
+            <p className="text-xs mt-1">
+              The agent will auto-install RustDesk and report the ID
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-4"
+              onClick={() => setEditDialogOpen(true)}
+            >
+              Configure Manually
+            </Button>
           </div>
         ) : (
-          <Tabs defaultValue={configuredProviders[0]?.id} className="w-full">
+          <Tabs defaultValue={hasRustDesk ? "rustdesk" : configuredProviders[0]?.id} className="w-full">
             <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${configuredProviders.length}, 1fr)` }}>
               {configuredProviders.map((provider) => (
                 <TabsTrigger key={provider.id} value={provider.id} className="text-xs">
                   <span className="mr-1">{provider.icon}</span>
                   {provider.name}
+                  {provider.isBuiltIn && (
+                    <Zap className="h-3 w-3 ml-1 text-green-500" />
+                  )}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -231,7 +255,15 @@ export function RemoteAccessPanel({
                     <div className="flex items-center gap-3">
                       <div className={`w-3 h-3 rounded-full ${provider.color}`} />
                       <div>
-                        <p className="font-medium text-sm">{provider.name}</p>
+                        <p className="font-medium text-sm flex items-center gap-2">
+                          {provider.name}
+                          {provider.isBuiltIn && (
+                            <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600">
+                              <Shield className="h-3 w-3 mr-1" />
+                              Vanguard-hosted
+                            </Badge>
+                          )}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {provider.description}
                         </p>
@@ -266,6 +298,19 @@ export function RemoteAccessPanel({
                       )}
                     </Button>
                   </div>
+
+                  {/* Extra info for built-in RustDesk */}
+                  {provider.isBuiltIn && (
+                    <div className="p-3 bg-green-500/5 border border-green-500/20 rounded-lg">
+                      <div className="flex items-center gap-2 text-sm text-green-700">
+                        <Shield className="h-4 w-4" />
+                        <span className="font-medium">Vanguard Built-in Remote Access</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        All sessions route through your private relay server. No third-party dependencies.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             ))}

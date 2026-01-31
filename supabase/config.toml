@@ -261,3 +261,7 @@ verify_jwt = true
 
 [functions.process-inbound-email]
 verify_jwt = false
+
+# Vanguard Remote Access
+[functions.vanguard-relay-config]
+verify_jwt = false

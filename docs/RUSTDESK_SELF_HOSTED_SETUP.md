@@ -282,6 +282,46 @@ RustDesk Pro provides connection logs, user management, and compliance features.
 
 ## Recommended Path
 
+### For Vanguard Built-in Remote Access
+
+**You only need to deploy the relay server once** — all Vanguard endpoints will automatically connect.
+
+#### Step 1: Deploy RustDesk Server (10 minutes)
+
+```bash
+# On a Linux VPS (Ubuntu 22.04 recommended)
+mkdir -p /opt/rustdesk-server && cd /opt/rustdesk-server
+
+# Create docker-compose.yml (see Installation Options above)
+# Then start:
+docker-compose up -d
+
+# Get your public key
+cat /opt/rustdesk-server/data/id_ed25519.pub
+```
+
+#### Step 2: Configure Vanguard Secrets
+
+Add these secrets to your Supabase project:
+
+| Secret Name | Value |
+|-------------|-------|
+| `RUSTDESK_RELAY_SERVER` | Your server hostname/IP (e.g., `relay.yourdomain.com`) |
+| `RUSTDESK_PUBLIC_KEY` | Contents of `id_ed25519.pub` |
+
+#### Step 3: Deploy Edge Function
+
+```bash
+supabase functions deploy vanguard-relay-config
+```
+
+#### Step 4: Test
+
+1. Enroll a new device with the Vanguard agent
+2. Agent will auto-install RustDesk and configure it
+3. RustDesk ID will appear in device details
+4. Click "Connect" for one-click remote access
+
 ### For Evaluation (Free)
 1. Deploy self-hosted RustDesk using Docker
 2. Use with Vanguard agent's auto-detection

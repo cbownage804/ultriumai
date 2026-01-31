@@ -177,6 +177,29 @@ public class ApiClient
             return false;
         }
     }
+
+    /// <summary>
+    /// Update the device's RustDesk ID
+    /// </summary>
+    public async Task<bool> UpdateDeviceRustDeskIdAsync(string rustDeskId)
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new
+            {
+                action = "update_rustdesk_id",
+                rustdesk_id = rustDeskId
+            };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint, content);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }
 
 // API Models
