@@ -25721,6 +25721,93 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_notification_log: {
+        Row: {
+          body: string | null
+          created_at: string | null
+          data: Json | null
+          error_message: string | null
+          id: string
+          notification_type: string
+          read_at: string | null
+          sent_at: string | null
+          status: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string | null
+          data?: Json | null
+          error_message?: string | null
+          id?: string
+          notification_type: string
+          read_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string | null
+          data?: Json | null
+          error_message?: string | null
+          id?: string
+          notification_type?: string
+          read_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_notification_preferences: {
+        Row: {
+          assignment_enabled: boolean | null
+          created_at: string | null
+          escalation_enabled: boolean | null
+          id: string
+          quiet_days: string[] | null
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          security_alert_enabled: boolean | null
+          sla_breach_enabled: boolean | null
+          ticket_update_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assignment_enabled?: boolean | null
+          created_at?: string | null
+          escalation_enabled?: boolean | null
+          id?: string
+          quiet_days?: string[] | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          security_alert_enabled?: boolean | null
+          sla_breach_enabled?: boolean | null
+          ticket_update_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assignment_enabled?: boolean | null
+          created_at?: string | null
+          escalation_enabled?: boolean | null
+          id?: string
+          quiet_days?: string[] | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          security_alert_enabled?: boolean | null
+          sla_breach_enabled?: boolean | null
+          ticket_update_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_notification_triggers: {
         Row: {
           created_at: string | null
@@ -26012,6 +26099,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_portal_appointments: {
+        Row: {
+          appointment_type: string
+          created_at: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          duration_minutes: number | null
+          id: string
+          meeting_link: string | null
+          notes: string | null
+          org_id: string | null
+          reminder_sent: boolean | null
+          scheduled_at: string
+          status: string | null
+          technician_id: string | null
+          ticket_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          appointment_type: string
+          created_at?: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          duration_minutes?: number | null
+          id?: string
+          meeting_link?: string | null
+          notes?: string | null
+          org_id?: string | null
+          reminder_sent?: boolean | null
+          scheduled_at: string
+          status?: string | null
+          technician_id?: string | null
+          ticket_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          appointment_type?: string
+          created_at?: string | null
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          duration_minutes?: number | null
+          id?: string
+          meeting_link?: string | null
+          notes?: string | null
+          org_id?: string | null
+          reminder_sent?: boolean | null
+          scheduled_at?: string
+          status?: string | null
+          technician_id?: string | null
+          ticket_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       vanguard_portal_downloads: {
         Row: {
@@ -26328,6 +26475,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_push_tokens: {
+        Row: {
+          created_at: string | null
+          device_name: string | null
+          device_token: string
+          id: string
+          is_active: boolean | null
+          last_used_at: string | null
+          platform: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_name?: string | null
+          device_token: string
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          platform?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          device_name?: string | null
+          device_token?: string
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          platform?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       vanguard_rate_cards: {
         Row: {
@@ -26696,6 +26879,60 @@ export type Database = {
           recipients?: string[] | null
           report_type?: string
           schedule_cron?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_scheduled_tasks: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_error: string | null
+          last_run_at: string | null
+          last_status: string | null
+          next_run_at: string | null
+          run_count: number | null
+          schedule_cron: string
+          schedule_timezone: string | null
+          task_name: string
+          task_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_error?: string | null
+          last_run_at?: string | null
+          last_status?: string | null
+          next_run_at?: string | null
+          run_count?: number | null
+          schedule_cron: string
+          schedule_timezone?: string | null
+          task_name: string
+          task_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_error?: string | null
+          last_run_at?: string | null
+          last_status?: string | null
+          next_run_at?: string | null
+          run_count?: number | null
+          schedule_cron?: string
+          schedule_timezone?: string | null
+          task_name?: string
+          task_type?: string
           updated_at?: string | null
           user_id?: string
         }
@@ -27799,6 +28036,45 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_ticket_chat_messages: {
+        Row: {
+          attachments: Json | null
+          created_at: string | null
+          id: string
+          is_internal: boolean | null
+          message: string
+          read_at: string | null
+          sender_id: string | null
+          sender_name: string | null
+          sender_type: string
+          ticket_id: string
+        }
+        Insert: {
+          attachments?: Json | null
+          created_at?: string | null
+          id?: string
+          is_internal?: boolean | null
+          message: string
+          read_at?: string | null
+          sender_id?: string | null
+          sender_name?: string | null
+          sender_type: string
+          ticket_id: string
+        }
+        Update: {
+          attachments?: Json | null
+          created_at?: string | null
+          id?: string
+          is_internal?: boolean | null
+          message?: string
+          read_at?: string | null
+          sender_id?: string | null
+          sender_name?: string | null
+          sender_type?: string
+          ticket_id?: string
+        }
+        Relationships: []
+      }
       vanguard_ticket_sla_tracking: {
         Row: {
           created_at: string
@@ -28096,6 +28372,84 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_voice_commands: {
+        Row: {
+          action_taken: Json | null
+          command_text: string
+          created_at: string | null
+          entities: Json | null
+          id: string
+          intent: string | null
+          processing_time_ms: number | null
+          response_text: string | null
+          success: boolean | null
+          user_id: string
+        }
+        Insert: {
+          action_taken?: Json | null
+          command_text: string
+          created_at?: string | null
+          entities?: Json | null
+          id?: string
+          intent?: string | null
+          processing_time_ms?: number | null
+          response_text?: string | null
+          success?: boolean | null
+          user_id: string
+        }
+        Update: {
+          action_taken?: Json | null
+          command_text?: string
+          created_at?: string | null
+          entities?: Json | null
+          id?: string
+          intent?: string | null
+          processing_time_ms?: number | null
+          response_text?: string | null
+          success?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_voice_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          language: string | null
+          speech_rate: number | null
+          tts_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+          voice_enabled: boolean | null
+          voice_id: string | null
+          wake_word: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          speech_rate?: number | null
+          tts_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          voice_enabled?: boolean | null
+          voice_id?: string | null
+          wake_word?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          speech_rate?: number | null
+          tts_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          voice_enabled?: boolean | null
+          voice_id?: string | null
+          wake_word?: string | null
+        }
+        Relationships: []
+      }
       vanguard_vuln_suppression_rules: {
         Row: {
           created_at: string
@@ -28132,6 +28486,110 @@ export type Database = {
           suppression_type?: string
           user_id?: string
           vuln_count?: number | null
+        }
+        Relationships: []
+      }
+      vanguard_webhook_logs: {
+        Row: {
+          created_at: string | null
+          duration_ms: number | null
+          error_message: string | null
+          event_type: string
+          id: string
+          payload: Json
+          response_body: string | null
+          response_status: number | null
+          retry_attempt: number | null
+          success: boolean | null
+          webhook_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          payload: Json
+          response_body?: string | null
+          response_status?: number | null
+          retry_attempt?: number | null
+          success?: boolean | null
+          webhook_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          response_body?: string | null
+          response_status?: number | null
+          retry_attempt?: number | null
+          success?: boolean | null
+          webhook_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_webhook_logs_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_webhooks: {
+        Row: {
+          created_at: string | null
+          endpoint_url: string
+          events: string[]
+          failure_count: number | null
+          headers: Json | null
+          id: string
+          is_active: boolean | null
+          last_triggered_at: string | null
+          retry_count: number | null
+          secret_key: string | null
+          success_count: number | null
+          timeout_seconds: number | null
+          updated_at: string | null
+          user_id: string
+          webhook_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          endpoint_url: string
+          events: string[]
+          failure_count?: number | null
+          headers?: Json | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          retry_count?: number | null
+          secret_key?: string | null
+          success_count?: number | null
+          timeout_seconds?: number | null
+          updated_at?: string | null
+          user_id: string
+          webhook_name: string
+        }
+        Update: {
+          created_at?: string | null
+          endpoint_url?: string
+          events?: string[]
+          failure_count?: number | null
+          headers?: Json | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          retry_count?: number | null
+          secret_key?: string | null
+          success_count?: number | null
+          timeout_seconds?: number | null
+          updated_at?: string | null
+          user_id?: string
+          webhook_name?: string
         }
         Relationships: []
       }
@@ -28219,6 +28677,51 @@ export type Database = {
           updated_at?: string
           user_id?: string
           workflow_name?: string
+        }
+        Relationships: []
+      }
+      vanguard_workflow_triggers: {
+        Row: {
+          action_config: Json
+          action_type: string
+          created_at: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          last_executed_at: string | null
+          trigger_config: Json
+          trigger_name: string
+          trigger_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          action_config: Json
+          action_type: string
+          created_at?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          trigger_config: Json
+          trigger_name: string
+          trigger_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          action_config?: Json
+          action_type?: string
+          created_at?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          trigger_config?: Json
+          trigger_name?: string
+          trigger_type?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }

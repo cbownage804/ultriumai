@@ -30,3 +30,8 @@ export { TechnicianProfileSettings } from './TechnicianProfileSettings';
 // Phase 15 - AI & Asset Features
 export { KBSuggestionsPanel } from './KBSuggestionsPanel';
 export { TicketAssetLinker } from './TicketAssetLinker';
+// Phase 16 - Advanced Features
+export { AIVoiceAssistant } from './AIVoiceAssistant';
+export { PushNotificationManager } from './PushNotificationManager';
+export { ClientPortalEnhanced } from './ClientPortalEnhanced';
+export { AdvancedAutomationsEngine } from './AdvancedAutomationsEngine';
