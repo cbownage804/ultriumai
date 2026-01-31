@@ -3,9 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, AlertTriangle, MapPin, Clock, TrendingUp, Shield, Activity, UserX } from 'lucide-react';
+import { Users, AlertTriangle, MapPin, Clock, TrendingUp, Shield, Activity, UserX, RefreshCw, Loader2, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface UserActivity {
   id: string;
@@ -22,6 +23,7 @@ export const UserBehaviorAnalytics = () => {
   const { user } = useAuth();
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [anomalies, setAnomalies] = useState<any[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeToday: 0,
@@ -68,6 +70,42 @@ export const UserBehaviorAnalytics = () => {
         anomaliesDetected: anomalyList.length,
         highRiskUsers: activities.filter(a => a.risk_score > 70).length
       });
+    }
+  };
+
+  const runAnalysis = async () => {
+    setIsAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('uba-analysis', {
+        body: { action: 'analyze', days_back: 30 }
+      });
+
+      if (error) throw error;
+      
+      toast.success(`Analysis complete`, {
+        description: `${data.anomalies_detected} anomalies detected across ${data.unique_users} users`
+      });
+      
+      // Refresh data
+      loadData();
+    } catch (err: any) {
+      toast.error('Analysis failed', { description: err.message });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const acknowledgeAnomaly = async (anomalyId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('uba-analysis', {
+        body: { action: 'acknowledge_anomaly', anomaly_id: anomalyId }
+      });
+
+      if (error) throw error;
+      setAnomalies(prev => prev.filter(a => a.id !== anomalyId));
+      toast.success('Anomaly acknowledged');
+    } catch (err: any) {
+      toast.error('Failed to acknowledge', { description: err.message });
     }
   };
 
@@ -170,10 +208,24 @@ export const UserBehaviorAnalytics = () => {
                 <AlertTriangle className="h-5 w-5 text-orange-500" />
                 Detected Anomalies
               </CardTitle>
-              <CardDescription>
-                Unusual behavior patterns requiring investigation
-              </CardDescription>
+              <div className="flex items-center gap-2">
+                <Button 
+                  size="sm" 
+                  onClick={runAnalysis}
+                  disabled={isAnalyzing}
+                >
+                  {isAnalyzing ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  Run Analysis
+                </Button>
+              </div>
             </CardHeader>
+            <CardDescription className="px-6 -mt-2">
+              Unusual behavior patterns requiring investigation
+            </CardDescription>
             <CardContent>
               {anomalies.length === 0 ? (
                 <div className="flex items-center gap-2 p-4 bg-green-500/10 rounded-lg">
@@ -202,7 +254,17 @@ export const UserBehaviorAnalytics = () => {
                             </span>
                           </div>
                         </div>
-                        <Button size="sm" variant="outline">Investigate</Button>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => acknowledgeAnomaly(anomaly.id)}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Acknowledge
+                          </Button>
+                          <Button size="sm" variant="outline">Investigate</Button>
+                        </div>
                       </div>
                     </div>
                   ))}

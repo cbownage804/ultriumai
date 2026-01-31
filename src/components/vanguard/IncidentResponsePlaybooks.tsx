@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { BookOpen, Play, Plus, Edit, Trash2, CheckCircle, AlertTriangle, Clock, Zap, Shield } from 'lucide-react';
+import { BookOpen, Play, Plus, Edit, Trash2, CheckCircle, AlertTriangle, Clock, Zap, Shield, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -33,47 +33,84 @@ interface Playbook {
 export const IncidentResponsePlaybooks = () => {
   const { user } = useAuth();
   const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
+  const [isExecuting, setIsExecuting] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (user) loadPlaybooks();
   }, [user]);
 
   const loadPlaybooks = async () => {
-    const { data } = await supabase
-      .from('incident_playbooks')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (data && data.length > 0) {
-      const mapped = data.map(p => ({
-        id: p.id,
-        name: p.name,
-        description: p.description || '',
-        threatType: p.threat_type,
-        severity: p.severity,
-        steps: Array.isArray(p.steps) ? (p.steps as any[]).map((s: any, idx: number) => ({
-          id: `s${idx}`,
-          action: s.action || s.title || `Step ${idx + 1}`,
-          description: s.description || '',
-          automated: s.automated || false,
-          timeout: s.timeout
-        })) : [],
-        lastUsed: p.last_executed_at,
-        usageCount: p.times_executed || 0
-      }));
-      setPlaybooks(mapped);
-    } else {
-      // No playbooks configured - show empty state
-      setPlaybooks([]);
+    setIsLoading(true);
+    try {
+      const { data } = await supabase
+        .from('incident_playbooks')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (data && data.length > 0) {
+        const mapped = data.map(p => ({
+          id: p.id,
+          name: p.name,
+          description: p.description || '',
+          threatType: p.threat_type,
+          severity: p.severity,
+          steps: Array.isArray(p.steps) ? (p.steps as any[]).map((s: any, idx: number) => ({
+            id: `s${idx}`,
+            action: s.action || s.title || `Step ${idx + 1}`,
+            description: s.description || '',
+            automated: s.automated || false,
+            timeout: s.timeout
+          })) : [],
+          lastUsed: p.last_executed_at,
+          usageCount: p.times_executed || 0
+        }));
+        setPlaybooks(mapped);
+      } else {
+        setPlaybooks([]);
+      }
+    } catch (err) {
+      console.error('Failed to load playbooks:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const executePlaybook = async (playbookId: string) => {
+    setIsExecuting(playbookId);
+    try {
+      const { data, error } = await supabase.functions.invoke('execute-playbook', {
+        body: { action: 'execute', playbook_id: playbookId }
+      });
 
-  const executePlaybook = (playbookId: string) => {
-    const playbook = playbooks.find(p => p.id === playbookId);
-    if (playbook) {
-      toast.success(`Executing playbook: ${playbook.name}`);
-      // Would trigger actual playbook execution via agent commands
+      if (error) throw error;
+      
+      toast.success(`Playbook executing: ${data.playbook_name}`, {
+        description: `${data.commands_queued} commands queued to ${data.target_agents} agents`
+      });
+      
+      // Refresh to update usage count
+      loadPlaybooks();
+    } catch (err: any) {
+      toast.error('Failed to execute playbook', { description: err.message });
+    } finally {
+      setIsExecuting(null);
+    }
+  };
+
+  const deletePlaybook = async (playbookId: string) => {
+    if (!confirm('Delete this playbook?')) return;
+    
+    try {
+      const { error } = await supabase.functions.invoke('execute-playbook', {
+        body: { action: 'delete', playbook_id: playbookId }
+      });
+
+      if (error) throw error;
+      toast.success('Playbook deleted');
+      loadPlaybooks();
+    } catch (err: any) {
+      toast.error('Failed to delete playbook', { description: err.message });
     }
   };
 
@@ -140,13 +177,28 @@ export const IncidentResponsePlaybooks = () => {
                 <AccordionContent className="pt-4">
                   <div className="space-y-4">
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={() => executePlaybook(playbook.id)}>
-                        <Play className="h-4 w-4 mr-2" />
+                      <Button 
+                        size="sm" 
+                        onClick={() => executePlaybook(playbook.id)}
+                        disabled={isExecuting === playbook.id}
+                      >
+                        {isExecuting === playbook.id ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Play className="h-4 w-4 mr-2" />
+                        )}
                         Execute Playbook
                       </Button>
                       <Button size="sm" variant="outline">
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => deletePlaybook(playbook.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
 

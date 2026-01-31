@@ -54,6 +54,7 @@ export function FileIntegrityMonitor() {
   const [baselines, setBaselines] = useState<FIMBaseline[]>([]);
   const [events, setEvents] = useState<FIMEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isScanning, setIsScanning] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string>("");
   const [showAddPath, setShowAddPath] = useState(false);
   const [newPath, setNewPath] = useState("");
@@ -62,6 +63,23 @@ export function FileIntegrityMonitor() {
     if (user) {
       loadBaselines();
       loadEvents();
+      
+      // Set up real-time subscription for FIM events
+      const channel = supabase
+        .channel('fim-events')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'fim_events',
+        }, (payload) => {
+          setEvents(prev => [payload.new as FIMEvent, ...prev]);
+          toast.warning(`File change detected: ${(payload.new as FIMEvent).file_path}`);
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user, selectedAgentId]);
 
@@ -98,6 +116,27 @@ export function FileIntegrityMonitor() {
     }
   };
 
+  const triggerScan = async () => {
+    if (!selectedAgentId) {
+      toast.error("Select an agent to scan");
+      return;
+    }
+
+    setIsScanning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fim-operations', {
+        body: { action: 'scan', agent_id: selectedAgentId }
+      });
+
+      if (error) throw error;
+      toast.success(`Scan queued: ${data.paths_count} paths on ${data.agent}`);
+    } catch (err: any) {
+      toast.error("Failed to trigger scan", { description: err.message });
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
   const addMonitoredPath = async () => {
     if (!newPath || !selectedAgentId) {
       toast.error("Select an agent and enter a path");
@@ -105,17 +144,13 @@ export function FileIntegrityMonitor() {
     }
 
     try {
-      const { error } = await supabase
-        .from('fim_baselines')
-        .insert({
-          user_id: user?.id,
+      const { data, error } = await supabase.functions.invoke('fim-operations', {
+        body: { 
+          action: 'add_path', 
           agent_id: selectedAgentId,
-          file_path: newPath,
-          file_hash: 'pending',
-          file_size: 0,
-          permissions: 'pending',
-          status: 'normal'
-        });
+          path: newPath 
+        }
+      });
 
       if (error) throw error;
       
@@ -125,6 +160,49 @@ export function FileIntegrityMonitor() {
       loadBaselines();
     } catch (err: any) {
       toast.error("Failed to add path", { description: err.message });
+    }
+  };
+
+  const removePath = async (baselineId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('fim-operations', {
+        body: { action: 'remove_path', baseline_id: baselineId }
+      });
+
+      if (error) throw error;
+      toast.success("Path removed");
+      loadBaselines();
+    } catch (err: any) {
+      toast.error("Failed to remove path", { description: err.message });
+    }
+  };
+
+  const rebaseline = async (baselineId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('fim-operations', {
+        body: { action: 'rebaseline', baseline_id: baselineId }
+      });
+
+      if (error) throw error;
+      toast.success("Rebaseline queued");
+    } catch (err: any) {
+      toast.error("Failed to rebaseline", { description: err.message });
+    }
+  };
+
+  const acknowledgeEvent = async (eventId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('fim-operations', {
+        body: { action: 'acknowledge_event', event_id: eventId }
+      });
+
+      if (error) throw error;
+      setEvents(prev => prev.map(e => 
+        e.id === eventId ? { ...e, is_acknowledged: true } : e
+      ));
+      toast.success("Event acknowledged");
+    } catch (err: any) {
+      toast.error("Failed to acknowledge", { description: err.message });
     }
   };
 
@@ -184,6 +262,14 @@ export function FileIntegrityMonitor() {
               ))}
             </SelectContent>
           </Select>
+          <Button disabled={!selectedAgentId || isScanning} onClick={triggerScan}>
+            {isScanning ? (
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            Scan Now
+          </Button>
           <Dialog open={showAddPath} onOpenChange={setShowAddPath}>
             <DialogTrigger asChild>
               <Button>
@@ -309,10 +395,10 @@ export function FileIntegrityMonitor() {
                   <p className="text-muted-foreground">No file changes detected. Your systems are stable!</p>
                 </div>
               ) : (
-                <ScrollArea className="h-[400px]">
+              <ScrollArea className="h-[400px]">
                   <div className="space-y-3">
                     {events.map(event => (
-                      <div key={event.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div key={event.id} className={`flex items-center justify-between p-3 rounded-lg ${event.is_acknowledged ? 'bg-muted/30' : 'bg-muted/50'}`}>
                         <div className="flex items-center gap-3">
                           {getEventIcon(event.change_type)}
                           <div>
@@ -325,9 +411,18 @@ export function FileIntegrityMonitor() {
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="flex items-center gap-2">
                           <Badge className={getSeverityColor(event.severity)}>{event.severity}</Badge>
-                          <p className="text-xs text-muted-foreground mt-1">
+                          {!event.is_acknowledged && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => acknowledgeEvent(event.id)}
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <p className="text-xs text-muted-foreground">
                             {new Date(event.created_at).toLocaleString()}
                           </p>
                         </div>
@@ -370,10 +465,19 @@ export function FileIntegrityMonitor() {
                           <Badge variant={baseline.is_monitored ? 'outline' : 'destructive'}>
                             {baseline.is_monitored ? 'monitored' : 'disabled'}
                           </Badge>
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => rebaseline(baseline.id)}
+                            title="Rebaseline (capture current state)"
+                          >
                             <RefreshCw className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => removePath(baseline.id)}
+                          >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
