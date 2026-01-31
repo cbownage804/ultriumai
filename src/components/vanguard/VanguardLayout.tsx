@@ -6,6 +6,7 @@ import { VanguardAccessGate } from './VanguardAccessGate';
 import { RealtimeNotificationCenter } from './RealtimeNotificationCenter';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { LanguageProvider } from '@/contexts/LanguageContext';
+import { FloatingHelpButton } from '@/components/help/FloatingHelpButton';
 
 export function VanguardLayout() {
   return (
@@ -34,6 +35,9 @@ export function VanguardLayout() {
               <Outlet />
             </main>
           </div>
+
+          {/* Floating Help Button */}
+          <FloatingHelpButton />
 
           <Toaster />
         </div>
