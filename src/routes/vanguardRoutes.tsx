@@ -128,6 +128,7 @@ const KnowledgeBasePage = lazy(() => import('@/pages/vanguard/KnowledgeBasePage'
 const DispatchBoardPage = lazy(() => import('@/pages/vanguard/DispatchBoardPage'));
 const OnCallSchedulePage = lazy(() => import('@/pages/vanguard/OnCallSchedulePage'));
 const LiveChatConsolePage = lazy(() => import('@/pages/vanguard/LiveChatConsolePage'));
+const VanguardSettingsPage = lazy(() => import('@/pages/vanguard/VanguardSettingsPage'));
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -265,6 +266,8 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-live-chat" path="live-chat" element={<LazyProtectedPage component={LiveChatConsolePage} />} />,
   // Notification Hub
   <Route key="vanguard-notifications" path="notifications" element={<LazyProtectedPage component={NotificationHub} />} />,
+  // Settings
+  <Route key="vanguard-settings" path="settings" element={<LazyProtectedPage component={VanguardSettingsPage} />} />,
   // Recon Product routes (public - no auth required for purchasing)
   <Route key="vanguard-recon" path="recon" element={<LazyPage component={ReconProductPage} />} />,
   <Route key="vanguard-recon-checkout" path="recon/checkout" element={<LazyPage component={ReconCheckoutPage} />} />,
