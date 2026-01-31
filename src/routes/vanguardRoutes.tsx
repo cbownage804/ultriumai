@@ -50,6 +50,7 @@ const BackupMonitoring = lazy(() => import('@/components/vanguard/BackupMonitori
 const NetworkTopologyMap = lazy(() => import('@/components/vanguard/NetworkTopologyMap').then(m => ({ default: m.NetworkTopologyMap })));
 const AssetInventory = lazy(() => import('@/components/vanguard/AssetInventory').then(m => ({ default: m.AssetInventory })));
 const ExecutiveDashboard = lazy(() => import('@/components/vanguard/ExecutiveDashboard').then(m => ({ default: m.ExecutiveDashboard })));
+const NotificationHub = lazy(() => import('@/components/vanguard/notifications/NotificationHub').then(m => ({ default: m.NotificationHub })));
 const AnalyticsHub = lazy(() => import('@/components/vanguard/analytics/AnalyticsHub').then(m => ({ default: m.AnalyticsHub })));
 const ComplianceScorecard = lazy(() => import('@/components/vanguard/ComplianceScorecard').then(m => ({ default: m.ComplianceScorecard })));
 const CustomReportBuilder = lazy(() => import('@/components/vanguard/CustomReportBuilder').then(m => ({ default: m.CustomReportBuilder })));
@@ -262,6 +263,8 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-dispatch" path="dispatch" element={<LazyProtectedPage component={DispatchBoardPage} />} />,
   <Route key="vanguard-oncall" path="oncall" element={<LazyProtectedPage component={OnCallSchedulePage} />} />,
   <Route key="vanguard-live-chat" path="live-chat" element={<LazyProtectedPage component={LiveChatConsolePage} />} />,
+  // Notification Hub
+  <Route key="vanguard-notifications" path="notifications" element={<LazyProtectedPage component={NotificationHub} />} />,
   // Recon Product routes (public - no auth required for purchasing)
   <Route key="vanguard-recon" path="recon" element={<LazyPage component={ReconProductPage} />} />,
   <Route key="vanguard-recon-checkout" path="recon/checkout" element={<LazyPage component={ReconCheckoutPage} />} />,
