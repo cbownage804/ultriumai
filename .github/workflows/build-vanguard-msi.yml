@@ -13,6 +13,9 @@ on:
         default: 'true'
         type: boolean
 
+permissions:
+  contents: write
+
 jobs:
   build-agent-msi:
     runs-on: windows-latest
