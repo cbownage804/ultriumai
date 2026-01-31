@@ -122,6 +122,10 @@ const CortexSettingsPage = lazy(() => import('@/pages/vanguard/CortexSettingsPag
 const IntegrationsPage = lazy(() => import('@/pages/vanguard/IntegrationsPage'));
 const ThemeEditorPage = lazy(() => import('@/pages/vanguard/ThemeEditorPage'));
 const MobileInstallPage = lazy(() => import('@/pages/vanguard/MobileInstallPage'));
+const KnowledgeBasePage = lazy(() => import('@/pages/vanguard/KnowledgeBasePage'));
+const DispatchBoardPage = lazy(() => import('@/pages/vanguard/DispatchBoardPage'));
+const OnCallSchedulePage = lazy(() => import('@/pages/vanguard/OnCallSchedulePage'));
+const LiveChatConsolePage = lazy(() => import('@/pages/vanguard/LiveChatConsolePage'));
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -252,6 +256,10 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-integrations" path="integrations" element={<LazyProtectedPage component={IntegrationsPage} />} />,
   <Route key="vanguard-theme-editor" path="theme-editor" element={<LazyProtectedPage component={ThemeEditorPage} />} />,
   <Route key="vanguard-mobile-install" path="mobile-install" element={<LazyProtectedPage component={MobileInstallPage} />} />,
+  <Route key="vanguard-kb-manager" path="kb-manager" element={<LazyProtectedPage component={KnowledgeBasePage} />} />,
+  <Route key="vanguard-dispatch" path="dispatch" element={<LazyProtectedPage component={DispatchBoardPage} />} />,
+  <Route key="vanguard-oncall" path="oncall" element={<LazyProtectedPage component={OnCallSchedulePage} />} />,
+  <Route key="vanguard-live-chat" path="live-chat" element={<LazyProtectedPage component={LiveChatConsolePage} />} />,
   // Recon Product routes (public - no auth required for purchasing)
   <Route key="vanguard-recon" path="recon" element={<LazyPage component={ReconProductPage} />} />,
   <Route key="vanguard-recon-checkout" path="recon/checkout" element={<LazyPage component={ReconCheckoutPage} />} />,
