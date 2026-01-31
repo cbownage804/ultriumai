@@ -148,28 +148,31 @@ const VanguardProductPage = () => {
     {
       moduleId: "cortex",
       name: "Vanguard Cortex",
-      tagline: "AI-Assisted Operations & Decision Support",
-      description: "Vanguard Cortex is the intelligence layer that ties everything together. It uses AI to assist technicians and operators by summarizing data, answering questions, and accelerating decision-making.",
+      tagline: "AI Command Center — 20+ Specialized Intelligence Tools",
+      description: "Vanguard Cortex is the AI intelligence layer with over 20 specialized tools for ticket analysis, predictive analytics, and automated documentation. Powered by Google Gemini and GPT-5, it delivers instant insights across security and operations.",
       color: "text-pink-400",
       bgColor: "bg-pink-500/10",
       borderColor: "border-pink-500/30",
       capabilities: [
-        "AI-powered operational insights",
-        "Context-aware assistance across modules",
-        "Knowledge synthesis from Atlas and Ledger",
-        "Faster troubleshooting and analysis"
+        "AI Ticket Analyzer with sentiment & priority detection",
+        "Smart routing with confidence scoring",
+        "AI Screen-to-Docs for automated documentation",
+        "SLA predictor with resolution estimates",
+        "Knowledge base auto-generation from patterns",
+        "Customer-facing chatbots with live escalation"
       ],
       bestFor: "Teams that want to reduce manual effort and operate more intelligently at scale."
     }
   ];
 
   const differentiators = [
-    "AI-driven insights across security and operations — not just dashboards",
+    "Cortex AI with 20+ specialized tools — not just a chatbot wrapper",
+    "Powered by Google Gemini 3 and GPT-5 for enterprise-grade intelligence",
+    "AI-driven pentesting with automated compliance mapping (SOC2, HIPAA, ISO27001)",
     "Unified platform eliminates tool sprawl and integration headaches",
     "Built for MSPs with multi-tenant architecture and client billing visibility",
-    "Real-time threat detection with automated response capabilities",
-    "Integrated compliance tooling with automated evidence collection",
-    "Predictable pricing model designed for service providers",
+    "Real-time threat detection with AI-powered automated response",
+    "Predictive SLA analysis and resolution time estimates",
     "SOC-style security operations without the SOC-level investment",
     "Veteran-owned with a commitment to protecting American businesses"
   ];

@@ -37,7 +37,12 @@ const AIStudioProductPage = () => {
     {
       icon: Bot,
       title: "Custom AI Assistants",
-      description: "Create purpose-built assistants trained on your documentation, workflows, and brand voice. Deploy for customer support, internal Q&A, or lead qualification."
+      description: "Create purpose-built assistants powered by Google Gemini 3 and GPT-5. Train on your documentation, workflows, and brand voice for customer support, Q&A, or lead qualification."
+    },
+    {
+      icon: Zap,
+      title: "22+ Action Templates",
+      description: "Pre-built integrations for SafeSuite security, Slack/Teams notifications, calendar automation, web search, and structured data extraction. Connect AI to your business systems instantly."
     },
     {
       icon: Shield,
@@ -46,8 +51,8 @@ const AIStudioProductPage = () => {
     },
     {
       icon: BarChart3,
-      title: "Predictable AI Capacity",
-      description: "Monthly capacity allocation with full transparency. Know your costs upfront with no per-message surprises or unpredictable overages."
+      title: "Capacity Analytics Dashboard",
+      description: "Track daily trends, per-assistant consumption, burn-rate projections, and days remaining. Credit-based system (1 credit = 1,000 tokens) with transparent pricing."
     },
     {
       icon: Palette,
@@ -90,8 +95,9 @@ const AIStudioProductPage = () => {
   ];
 
   const differentiators = [
-    "Not a consumer chatbot — built for business governance and accountability",
-    "Predictable capacity model with no per-message surprises or hidden fees",
+    "Powered by Google Gemini 3 Pro and GPT-5 — enterprise-grade AI models",
+    "22+ pre-built action templates for security, productivity, and automation",
+    "Predictable capacity model with usage analytics and burn-rate projections",
     "Multi-tenant architecture designed for MSPs, agencies, and enterprise teams",
     "Full administrative oversight with granular usage tracking and audit trails",
     "Deploy in days, not months — minimal IT involvement required",
