@@ -82,10 +82,16 @@ public class ApiClient
             var payload = new
             {
                 action = "heartbeat",
-                data = heartbeat
+                device_id = Config.DeviceId,
+                cpu_percent = heartbeat.CpuPercent,
+                memory_percent = heartbeat.MemoryPercent,
+                disk_percent = heartbeat.DiskPercent,
+                uptime_seconds = heartbeat.UptimeSeconds,
+                timestamp = heartbeat.Timestamp,
+                agent_version = "1.1.0"
             };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
-            var response = await _http.PostAsync(Config.ApiEndpoint, content);
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=heartbeat", content);
             return response.IsSuccessStatusCode;
         }
         catch
@@ -101,11 +107,15 @@ public class ApiClient
             SetHeaders();
             var payload = new
             {
-                action = "telemetry",
-                data = telemetry
+                device_id = Config.DeviceId,
+                processes = telemetry.Processes,
+                services = telemetry.Services,
+                network_adapters = telemetry.NetworkAdapters,
+                installed_software = telemetry.InstalledSoftware,
+                timestamp = telemetry.Timestamp
             };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
-            var response = await _http.PostAsync(Config.ApiEndpoint, content);
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=telemetry", content);
             return response.IsSuccessStatusCode;
         }
         catch
@@ -121,11 +131,14 @@ public class ApiClient
             SetHeaders();
             var payload = new
             {
-                action = "security_telemetry",
-                data = securityData
+                device_id = Config.DeviceId,
+                defender_status = securityData.DefenderStatus,
+                recent_threats = securityData.RecentThreats,
+                firewall_enabled = securityData.FirewallEnabled,
+                timestamp = DateTime.UtcNow.ToString("O")
             };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
-            var response = await _http.PostAsync(Config.ApiEndpoint, content);
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=security_telemetry", content);
             return response.IsSuccessStatusCode;
         }
         catch
@@ -139,9 +152,9 @@ public class ApiClient
         try
         {
             SetHeaders();
-            var payload = new { action = "poll_commands" };
+            var payload = new { device_id = Config.DeviceId };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
-            var response = await _http.PostAsync(Config.ApiEndpoint, content);
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=get_commands", content);
 
             if (response.IsSuccessStatusCode)
             {
