@@ -10,8 +10,8 @@ interface WindowsAgentZipOptions {
   onProgress?: (progress: number, message: string) => void;
 }
 
-// UltriumAI-hosted agent downloads
-const ULTRIUMAI_STORAGE_BASE_URL = 'https://ultriumai.com/downloads/vanguard';
+// Supabase Storage bucket for agent downloads
+const STORAGE_BASE_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/vanguard-agents';
 const EXE_FILENAME = 'VanguardAgent-win-x64.exe';
 
 // Fallback: if GitHub release not available, we'll create a stub
@@ -24,9 +24,9 @@ async function fetchPreBuiltExe(onProgress?: (progress: number, message: string)
   }
 
   try {
-    onProgress?.(10, 'Fetching pre-built agent from UltriumAI...');
+    onProgress?.(10, 'Fetching pre-built agent...');
     
-    const response = await fetch(`${ULTRIUMAI_STORAGE_BASE_URL}/${EXE_FILENAME}`, {
+    const response = await fetch(`${STORAGE_BASE_URL}/${EXE_FILENAME}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/octet-stream',
@@ -34,7 +34,7 @@ async function fetchPreBuiltExe(onProgress?: (progress: number, message: string)
     });
 
     if (!response.ok) {
-      console.warn('UltriumAI Storage not available, using config-only bundle');
+      console.warn('Agent EXE not found in storage bucket, using config-only bundle');
       return null;
     }
 
