@@ -293,9 +293,43 @@ export function AddCustomerDialog({ open, onOpenChange, onCustomerCreated }: Add
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id;
 
-      // For demo: use a placeholder msp_id if not available
-      // In production, this would come from the logged-in MSP context
-      const mspId = userId || '00000000-0000-0000-0000-000000000000';
+      if (!userId) {
+        toast.error('You must be logged in to create a customer');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Get the user's MSP from the msps table
+      const { data: mspData, error: mspError } = await supabase
+        .from('msps')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (mspError) {
+        console.error('Error fetching MSP:', mspError);
+        throw new Error('Failed to fetch your MSP profile');
+      }
+
+      // If no MSP exists for this user, create one
+      let mspId = mspData?.id;
+      if (!mspId) {
+        const { data: newMsp, error: createMspError } = await supabase
+          .from('msps')
+          .insert({ 
+            user_id: userId, 
+            company_name: 'My MSP',
+            contact_email: user?.email || 'admin@msp.com'
+          })
+          .select('id')
+          .single();
+        
+        if (createMspError) {
+          console.error('Error creating MSP:', createMspError);
+          throw new Error('Failed to create MSP profile. Please contact support.');
+        }
+        mspId = newMsp.id;
+      }
 
       // Create the customer in msp_clients
       const { data: newClient, error: clientError } = await supabase
