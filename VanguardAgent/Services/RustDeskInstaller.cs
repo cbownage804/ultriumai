@@ -567,9 +567,16 @@ allow-remote-config-modification = 'N'
 /// </summary>
 public class RelayServerConfig
 {
+    [System.Text.Json.Serialization.JsonPropertyName("server")]
     public string Server { get; set; } = "";
+    
+    [System.Text.Json.Serialization.JsonPropertyName("public_key")]
     public string PublicKey { get; set; } = "";
+    
+    [System.Text.Json.Serialization.JsonPropertyName("priority")]
     public int Priority { get; set; } = 1;
+    
+    [System.Text.Json.Serialization.JsonPropertyName("region")]
     public string Region { get; set; } = "primary";
 }
 
@@ -579,11 +586,19 @@ public class RelayServerConfig
 public class RelayConfigResponse
 {
     // Legacy single-server format
+    [System.Text.Json.Serialization.JsonPropertyName("relay_server")]
     public string? RelayServer { get; set; }
+    
+    [System.Text.Json.Serialization.JsonPropertyName("public_key")]
     public string? PublicKey { get; set; }
+    
+    [System.Text.Json.Serialization.JsonPropertyName("api_server")]
     public string? ApiServer { get; set; }
     
     // New dual-relay format
+    [System.Text.Json.Serialization.JsonPropertyName("relay_servers")]
     public List<RelayServerConfig>? RelayServers { get; set; }
+    
+    [System.Text.Json.Serialization.JsonPropertyName("failover_enabled")]
     public bool FailoverEnabled { get; set; }
 }
