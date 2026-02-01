@@ -18,13 +18,13 @@ import { generateWindowsAgentZip } from '@/utils/generateWindowsAgentZip';
 const API_ENDPOINT = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api';
 const VANGUARD_SECRET = 'vgd_sk_7Kx9mPqR3nTwYz2JfL8sHcN6bVdXaE4uGtM1oWpQ5iA';
 
-// UltriumAI-hosted agent download URLs (Supabase Storage)
-const SUPABASE_STORAGE_BASE = 'https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/vanguard-agents';
+// UltriumAI-hosted agent download URLs
+const ULTRIUMAI_STORAGE_BASE = 'https://ultriumai.com/downloads/vanguard';
 const AGENT_DOWNLOAD_URLS = {
-  windows: `${SUPABASE_STORAGE_BASE}/VanguardAgent-Setup.exe`,
-  windowsMsi: `${SUPABASE_STORAGE_BASE}/VanguardAgent.msi`,
-  macos: `${SUPABASE_STORAGE_BASE}/VanguardAgent.dmg`,
-  linux: `${SUPABASE_STORAGE_BASE}/vanguard-agent-linux.tar.gz`,
+  windows: `${ULTRIUMAI_STORAGE_BASE}/VanguardAgent-Setup.exe`,
+  windowsMsi: `${ULTRIUMAI_STORAGE_BASE}/VanguardAgent.msi`,
+  macos: `${ULTRIUMAI_STORAGE_BASE}/VanguardAgent.dmg`,
+  linux: `${ULTRIUMAI_STORAGE_BASE}/vanguard-agent-linux.tar.gz`,
 };
 
 type SelectedOS = 'windows' | 'macos' | 'linux';
