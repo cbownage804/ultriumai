@@ -105,10 +105,27 @@ public class RustDeskInstaller
     {
         try
         {
-            var response = await _httpClient.GetAsync($"{apiBaseUrl}/functions/v1/vanguard-relay-config");
+            // Build the relay config URL - handle both base URL formats
+            // If apiBaseUrl already contains /functions/v1, just append the function name
+            // Otherwise, append the full path
+            string relayConfigUrl;
+            if (apiBaseUrl.Contains("/functions/v1"))
+            {
+                relayConfigUrl = $"{apiBaseUrl.TrimEnd('/')}/vanguard-relay-config";
+            }
+            else
+            {
+                relayConfigUrl = $"{apiBaseUrl.TrimEnd('/')}/functions/v1/vanguard-relay-config";
+            }
+            
+            Console.WriteLine($"[RustDesk] Fetching relay config from: {relayConfigUrl}");
+            
+            var response = await _httpClient.GetAsync(relayConfigUrl);
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"[RustDesk] Relay config response: {json.Substring(0, Math.Min(200, json.Length))}...");
+                
                 var config = JsonSerializer.Deserialize<RelayConfigResponse>(json, new JsonSerializerOptions 
                 { 
                     PropertyNameCaseInsensitive = true 
@@ -140,6 +157,10 @@ public class RustDeskInstaller
                     
                     return _relayServers.Count > 0;
                 }
+            }
+            else
+            {
+                Console.WriteLine($"[RustDesk] Relay config request failed: HTTP {(int)response.StatusCode}");
             }
         }
         catch (Exception ex)
@@ -185,7 +206,11 @@ public class RustDeskInstaller
     {
         Console.WriteLine("[RustDesk] Starting installation...");
         
-        var tempPath = Path.Combine(Path.GetTempPath(), $"rustdesk-{RUSTDESK_VERSION}.exe");
+        // Use a unique temp path with timestamp to avoid file lock conflicts
+        var uniqueId = DateTime.Now.Ticks.ToString();
+        var tempDir = Path.Combine(Path.GetTempPath(), $"vanguard-rustdesk-{uniqueId}");
+        Directory.CreateDirectory(tempDir);
+        var tempPath = Path.Combine(tempDir, $"rustdesk-{RUSTDESK_VERSION}.exe");
         
         try
         {
@@ -195,13 +220,26 @@ public class RustDeskInstaller
             using var response = await _httpClient.GetAsync(RUSTDESK_DOWNLOAD_URL, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
             
-            await using var contentStream = await response.Content.ReadAsStreamAsync();
-            await using var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None);
-            await contentStream.CopyToAsync(fileStream);
+            // Download to unique path to avoid conflicts
+            await using (var contentStream = await response.Content.ReadAsStreamAsync())
+            await using (var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                await contentStream.CopyToAsync(fileStream);
+            }
             
             Console.WriteLine($"[RustDesk] Downloaded to {tempPath}");
             
-            // Run silent install
+            // Wait a moment to ensure file handle is fully released
+            await Task.Delay(500);
+            
+            // Verify file exists and is accessible
+            if (!File.Exists(tempPath))
+            {
+                Console.WriteLine("[RustDesk] Downloaded file not found");
+                return false;
+            }
+            
+            // Run silent install from unique directory to avoid lock conflicts
             Console.WriteLine("[RustDesk] Running silent installation...");
             
             var process = new Process
@@ -210,10 +248,10 @@ public class RustDeskInstaller
                 {
                     FileName = tempPath,
                     Arguments = "--silent-install",
-                    UseShellExecute = false,
+                    UseShellExecute = true, // Use shell execute to avoid working directory issues
+                    WorkingDirectory = tempDir,
                     CreateNoWindow = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
+                    Verb = "runas", // Request elevation if needed
                 }
             };
             
@@ -234,8 +272,7 @@ public class RustDeskInstaller
             }
             else
             {
-                var error = await process.StandardError.ReadToEndAsync();
-                Console.WriteLine($"[RustDesk] Installation failed with exit code {process.ExitCode}: {error}");
+                Console.WriteLine($"[RustDesk] Installation failed with exit code {process.ExitCode}");
                 return false;
             }
         }
@@ -246,8 +283,17 @@ public class RustDeskInstaller
         }
         finally
         {
-            // Cleanup
-            try { File.Delete(tempPath); } catch { }
+            // Cleanup with retry logic for locked files
+            await Task.Delay(1000);
+            try 
+            { 
+                if (File.Exists(tempPath)) File.Delete(tempPath);
+                if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
+            } 
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[RustDesk] Cleanup skipped (file may be in use): {ex.Message}");
+            }
         }
     }
 
