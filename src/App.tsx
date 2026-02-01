@@ -877,16 +877,22 @@ function AppRouter() {
 }
 
 // Create a QueryClient instance
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1,
+// Create QueryClient inside a function to avoid module-level initialization issues
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        retry: 1,
+      },
     },
-  },
-});
+  });
+}
 
 export default function App() {
+  // Use useState to ensure QueryClient is only created once per component lifecycle
+  const [queryClient] = useState(() => createQueryClient());
+
   // Ensure page starts at top on initial load
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
