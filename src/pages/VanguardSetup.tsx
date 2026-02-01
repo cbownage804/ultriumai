@@ -649,7 +649,7 @@ sudo systemctl start vanguard-agent`;
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => navigate('/msp')}
+                    onClick={() => navigate('/vanguard/app/customers')}
                     className="text-xs"
                   >
                     <Plus className="h-3 w-3 mr-1" />
