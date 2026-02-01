@@ -77,64 +77,9 @@ export const WindowsDefenderAgent = () => {
     try {
       setLoading(true);
       
-      // For now, use mock data since we need to set up the database tables first
-      const mockEndpoints: DefenderEndpoint[] = [
-        {
-          id: '1',
-          hostname: 'WKS-001',
-          os_version: 'Windows 11 Pro',
-          defender_version: '4.18.24010.12',
-          status: 'protected',
-          last_scan: '2024-01-15T10:30:00Z',
-          threat_count: 2,
-          real_time_protection: true,
-          tamper_protection: true,
-          network_protection: true,
-          controlled_folder_access: false,
-          exclusions_count: 3,
-          last_seen: '2024-01-15T11:45:00Z'
-        },
-        {
-          id: '2',
-          hostname: 'SRV-DC01',
-          os_version: 'Windows Server 2022',
-          defender_version: '4.18.24010.12',
-          status: 'at_risk',
-          last_scan: '2024-01-14T08:15:00Z',
-          threat_count: 0,
-          real_time_protection: false,
-          tamper_protection: true,
-          network_protection: true,
-          controlled_folder_access: true,
-          exclusions_count: 8,
-          last_seen: '2024-01-15T11:40:00Z'
-        }
-      ];
-
-      const mockThreats: DefenderThreat[] = [
-        {
-          id: '1',
-          threat_name: 'Trojan:Win32/Wacatac.B!ml',
-          severity: 'severe',
-          status: 'quarantined',
-          detected_at: '2024-01-15T09:15:00Z',
-          file_path: 'C:\\Users\\User\\Downloads\\suspicious.exe',
-          process_name: 'suspicious.exe',
-          endpoint_hostname: 'WKS-001'
-        },
-        {
-          id: '2',
-          threat_name: 'PUA:Win32/Presenoker',
-          severity: 'medium',
-          status: 'removed',
-          detected_at: '2024-01-15T08:30:00Z',
-          file_path: 'C:\\Temp\\adware.dll',
-          endpoint_hostname: 'WKS-001'
-        }
-      ];
-
-      setEndpoints(mockEndpoints);
-      setThreats(mockThreats);
+      // Empty initial state - data loaded from agents in production
+      setEndpoints([]);
+      setThreats([]);
     } catch (error) {
       console.error('Error loading Defender data:', error);
       toast({

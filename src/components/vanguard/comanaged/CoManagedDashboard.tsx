@@ -43,32 +43,8 @@ interface CoManagedOrg {
 }
 
 export function CoManagedDashboard() {
-  const [organizations, setOrganizations] = useState<CoManagedOrg[]>([
-    {
-      id: "1",
-      organization_name: "Acme Corporation",
-      internal_it_name: "Acme IT Department",
-      is_active: true,
-      stats: { total_users: 245, active_tickets: 12, avg_resolution_hours: 4.2 },
-      branding: { primary_color: "#0066cc" }
-    },
-    {
-      id: "2",
-      organization_name: "TechStart Inc",
-      internal_it_name: "TechStart Help Desk",
-      is_active: true,
-      stats: { total_users: 89, active_tickets: 5, avg_resolution_hours: 3.1 },
-      branding: { primary_color: "#10b981" }
-    },
-    {
-      id: "3",
-      organization_name: "Global Finance Ltd",
-      internal_it_name: "GF Technology Services",
-      is_active: true,
-      stats: { total_users: 512, active_tickets: 28, avg_resolution_hours: 2.8 },
-      branding: { primary_color: "#8b5cf6" }
-    }
-  ]);
+  // Empty initial state - data loaded from database
+  const [organizations, setOrganizations] = useState<CoManagedOrg[]>([]);
 
   const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
   const [showNewOrgDialog, setShowNewOrgDialog] = useState(false);

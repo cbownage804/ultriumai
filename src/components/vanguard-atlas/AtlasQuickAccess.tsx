@@ -86,97 +86,12 @@ export function SafeDocQuickAccess({
   const [revealedPasswords, setRevealedPasswords] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
-  // Demo data - would be fetched from SafeDoc tables in production
+  // Empty initial state - data loaded from database
   const [data, setData] = useState<SafeDocData>({
-    passwords: [
-      {
-        id: '1',
-        name: 'Domain Admin',
-        username: 'admin@domain.local',
-        password: 'SecureP@ss123!',
-        category: 'Active Directory',
-        lastUpdated: new Date().toISOString()
-      },
-      {
-        id: '2',
-        name: 'Firewall Admin',
-        username: 'admin',
-        password: 'Fw!Admin456',
-        url: 'https://192.168.1.1',
-        category: 'Network',
-        lastUpdated: new Date().toISOString()
-      },
-      {
-        id: '3',
-        name: 'Microsoft 365 Admin',
-        username: 'admin@contoso.onmicrosoft.com',
-        password: 'M365!Secure789',
-        url: 'https://admin.microsoft.com',
-        category: 'Cloud Services',
-        lastUpdated: new Date().toISOString()
-      }
-    ],
-    configurations: [
-      {
-        id: '1',
-        name: 'Main Server',
-        deviceType: 'Windows Server 2022',
-        ipAddress: '192.168.1.10',
-        configuration: {
-          'Hostname': 'SRV-DC01',
-          'RAM': '32GB',
-          'Storage': '2TB SSD',
-          'Role': 'Domain Controller'
-        },
-        lastUpdated: new Date().toISOString()
-      },
-      {
-        id: '2',
-        name: 'Edge Firewall',
-        deviceType: 'FortiGate 60F',
-        ipAddress: '192.168.1.1',
-        configuration: {
-          'WAN IP': '203.0.113.50',
-          'VPN': 'Site-to-Site Active',
-          'Firmware': '7.2.4'
-        },
-        lastUpdated: new Date().toISOString()
-      }
-    ],
-    contacts: [
-      {
-        id: '1',
-        name: 'John Smith',
-        email: 'john.smith@company.com',
-        phone: '+1 555-0123',
-        role: 'IT Manager',
-        isPrimary: true
-      },
-      {
-        id: '2',
-        name: 'Sarah Johnson',
-        email: 'sarah.johnson@company.com',
-        phone: '+1 555-0456',
-        role: 'Office Manager',
-        isPrimary: false
-      }
-    ],
-    documents: [
-      {
-        id: '1',
-        title: 'Network Diagram',
-        category: 'Infrastructure',
-        content: 'Main office network topology with VLANs...',
-        lastUpdated: new Date().toISOString()
-      },
-      {
-        id: '2',
-        title: 'Backup Procedure',
-        category: 'Runbook',
-        content: 'Daily backup verification steps...',
-        lastUpdated: new Date().toISOString()
-      }
-    ]
+    passwords: [],
+    configurations: [],
+    contacts: [],
+    documents: []
   });
 
   const copyToClipboard = async (text: string, id: string, fieldName: string) => {
