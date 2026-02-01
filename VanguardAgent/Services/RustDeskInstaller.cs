@@ -239,24 +239,45 @@ public class RustDeskInstaller
                 return false;
             }
             
-            // Run silent install from unique directory to avoid lock conflicts
+            // Copy installer to a local temp path to avoid network share issues
+            var localTempPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Temp", $"vanguard-rustdesk-{uniqueId}");
+            Directory.CreateDirectory(localTempPath);
+            var localInstallerPath = Path.Combine(localTempPath, $"rustdesk-{RUSTDESK_VERSION}.exe");
+            
+            // Copy from download location to local path (avoids network share file locking)
+            File.Copy(tempPath, localInstallerPath, true);
+            Console.WriteLine($"[RustDesk] Copied installer to local path: {localInstallerPath}");
+            
+            // Wait for file handle to be fully released
+            await Task.Delay(1000);
+            
+            // Run silent install from local directory to avoid network share lock conflicts
             Console.WriteLine("[RustDesk] Running silent installation...");
             
             var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = tempPath,
+                    FileName = localInstallerPath,
                     Arguments = "--silent-install",
-                    UseShellExecute = true, // Use shell execute to avoid working directory issues
-                    WorkingDirectory = tempDir,
+                    UseShellExecute = false, // Don't use shell to avoid working directory inheritance
+                    WorkingDirectory = localTempPath, // Use local temp path, not network share
                     CreateNoWindow = true,
-                    Verb = "runas", // Request elevation if needed
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
                 }
             };
             
             process.Start();
+            
+            // Read output asynchronously to prevent deadlocks
+            var stdout = await process.StandardOutput.ReadToEndAsync();
+            var stderr = await process.StandardError.ReadToEndAsync();
+            
             await process.WaitForExitAsync();
+            
+            if (!string.IsNullOrEmpty(stdout)) Console.WriteLine($"[RustDesk] stdout: {stdout}");
+            if (!string.IsNullOrEmpty(stderr)) Console.WriteLine($"[RustDesk] stderr: {stderr}");
             
             if (process.ExitCode == 0)
             {
@@ -268,11 +289,18 @@ public class RustDeskInstaller
                 // Configure for Vanguard relay
                 await ConfigureForVanguardAsync();
                 
+                // Cleanup local temp directory
+                try { Directory.Delete(localTempPath, true); } catch { }
+                
                 return true;
             }
             else
             {
                 Console.WriteLine($"[RustDesk] Installation failed with exit code {process.ExitCode}");
+                
+                // Cleanup local temp directory
+                try { Directory.Delete(localTempPath, true); } catch { }
+                
                 return false;
             }
         }
