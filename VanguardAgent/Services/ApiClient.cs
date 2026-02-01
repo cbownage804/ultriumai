@@ -134,7 +134,7 @@ public class ApiClient
                 device_id = Config.DeviceId,
                 defender_status = securityData.DefenderStatus,
                 recent_threats = securityData.RecentThreats,
-                firewall_enabled = securityData.FirewallEnabled,
+                quarantined_items = securityData.QuarantinedItems,
                 timestamp = DateTime.UtcNow.ToString("O")
             };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
