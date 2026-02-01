@@ -206,101 +206,82 @@ public class RustDeskInstaller
     {
         Console.WriteLine("[RustDesk] Starting installation...");
         
-        // Use a unique temp path with timestamp to avoid file lock conflicts
-        var uniqueId = DateTime.Now.Ticks.ToString();
-        var tempDir = Path.Combine(Path.GetTempPath(), $"vanguard-rustdesk-{uniqueId}");
-        Directory.CreateDirectory(tempDir);
-        var tempPath = Path.Combine(tempDir, $"rustdesk-{RUSTDESK_VERSION}.exe");
+        // Use a GUID-based temp path to guarantee uniqueness
+        var uniqueId = Guid.NewGuid().ToString("N");
+        var localTempPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), 
+            "VanguardAgent", 
+            "Downloads",
+            uniqueId
+        );
+        Directory.CreateDirectory(localTempPath);
+        var installerPath = Path.Combine(localTempPath, $"rustdesk-{RUSTDESK_VERSION}.exe");
         
         try
         {
-            // Download installer
+            // Download installer directly to local AppData (not network shares, not system temp)
             Console.WriteLine($"[RustDesk] Downloading from {RUSTDESK_DOWNLOAD_URL}...");
             
             using var response = await _httpClient.GetAsync(RUSTDESK_DOWNLOAD_URL, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
             
-            // Download to unique path to avoid conflicts
+            // Download to unique local path
             await using (var contentStream = await response.Content.ReadAsStreamAsync())
-            await using (var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            await using (var fileStream = new FileStream(installerPath, FileMode.Create, FileAccess.Write, FileShare.None))
             {
                 await contentStream.CopyToAsync(fileStream);
             }
             
-            Console.WriteLine($"[RustDesk] Downloaded to {tempPath}");
+            Console.WriteLine($"[RustDesk] Downloaded to {installerPath}");
             
-            // Wait a moment to ensure file handle is fully released
-            await Task.Delay(500);
+            // Wait for file system to fully release the file handle
+            await Task.Delay(2000);
             
-            // Verify file exists and is accessible
-            if (!File.Exists(tempPath))
+            // Verify file exists and get size
+            var fileInfo = new FileInfo(installerPath);
+            if (!fileInfo.Exists || fileInfo.Length == 0)
             {
-                Console.WriteLine("[RustDesk] Downloaded file not found");
+                Console.WriteLine("[RustDesk] Downloaded file not found or empty");
                 return false;
             }
+            Console.WriteLine($"[RustDesk] File size: {fileInfo.Length} bytes");
             
-            // Copy installer to a local temp path to avoid network share issues
-            var localTempPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Temp", $"vanguard-rustdesk-{uniqueId}");
-            Directory.CreateDirectory(localTempPath);
-            var localInstallerPath = Path.Combine(localTempPath, $"rustdesk-{RUSTDESK_VERSION}.exe");
+            // Wait for Windows Defender to finish scanning (common cause of file locks)
+            await WaitForFileUnlockAsync(installerPath, maxWaitSeconds: 30);
             
-            // Copy from download location to local path (avoids network share file locking)
-            File.Copy(tempPath, localInstallerPath, true);
-            Console.WriteLine($"[RustDesk] Copied installer to local path: {localInstallerPath}");
-            
-            // Wait for file handle to be fully released
-            await Task.Delay(1000);
-            
-            // Run silent install from local directory to avoid network share lock conflicts
+            // Run silent install using ShellExecute to create completely separate process
             Console.WriteLine("[RustDesk] Running silent installation...");
             
             var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = localInstallerPath,
+                    FileName = installerPath,
                     Arguments = "--silent-install",
-                    UseShellExecute = false, // Don't use shell to avoid working directory inheritance
-                    WorkingDirectory = localTempPath, // Use local temp path, not network share
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
+                    UseShellExecute = true, // Use shell to avoid file handle inheritance
+                    WorkingDirectory = localTempPath,
+                    Verb = "runas", // Request elevation if needed
                 }
             };
             
             process.Start();
-            
-            // Read output asynchronously to prevent deadlocks
-            var stdout = await process.StandardOutput.ReadToEndAsync();
-            var stderr = await process.StandardError.ReadToEndAsync();
-            
             await process.WaitForExitAsync();
-            
-            if (!string.IsNullOrEmpty(stdout)) Console.WriteLine($"[RustDesk] stdout: {stdout}");
-            if (!string.IsNullOrEmpty(stderr)) Console.WriteLine($"[RustDesk] stderr: {stderr}");
             
             if (process.ExitCode == 0)
             {
                 Console.WriteLine("[RustDesk] Installation completed successfully");
                 
-                // Wait for installation to complete
-                await Task.Delay(3000);
+                // Wait for installation to fully complete
+                await Task.Delay(5000);
                 
                 // Configure for Vanguard relay
                 await ConfigureForVanguardAsync();
-                
-                // Cleanup local temp directory
-                try { Directory.Delete(localTempPath, true); } catch { }
                 
                 return true;
             }
             else
             {
                 Console.WriteLine($"[RustDesk] Installation failed with exit code {process.ExitCode}");
-                
-                // Cleanup local temp directory
-                try { Directory.Delete(localTempPath, true); } catch { }
-                
                 return false;
             }
         }
@@ -311,18 +292,48 @@ public class RustDeskInstaller
         }
         finally
         {
-            // Cleanup with retry logic for locked files
-            await Task.Delay(1000);
-            try 
-            { 
-                if (File.Exists(tempPath)) File.Delete(tempPath);
-                if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
-            } 
-            catch (Exception ex)
+            // Cleanup with delay - don't block on cleanup failures
+            _ = Task.Run(async () =>
             {
-                Console.WriteLine($"[RustDesk] Cleanup skipped (file may be in use): {ex.Message}");
+                await Task.Delay(10000); // Wait 10s before cleanup
+                try 
+                { 
+                    if (Directory.Exists(localTempPath)) 
+                        Directory.Delete(localTempPath, true);
+                } 
+                catch { /* Ignore cleanup failures */ }
+            });
+        }
+    }
+    
+    /// <summary>
+    /// Wait for a file to become unlocked (not in use by another process)
+    /// </summary>
+    private async Task WaitForFileUnlockAsync(string filePath, int maxWaitSeconds = 30)
+    {
+        var waited = 0;
+        while (waited < maxWaitSeconds)
+        {
+            try
+            {
+                // Try to open the file with exclusive access
+                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.None);
+                fs.Close();
+                Console.WriteLine($"[RustDesk] File is unlocked after {waited}s");
+                return;
+            }
+            catch (IOException)
+            {
+                // File is still locked, wait and retry
+                await Task.Delay(1000);
+                waited++;
+                if (waited % 5 == 0)
+                {
+                    Console.WriteLine($"[RustDesk] Waiting for file unlock... ({waited}s)");
+                }
             }
         }
+        Console.WriteLine($"[RustDesk] File may still be locked after {maxWaitSeconds}s, proceeding anyway");
     }
 
     /// <summary>
