@@ -57,7 +57,7 @@ const getHealthStatus = (alerts: number): 'healthy' | 'warning' | 'critical' => 
 export default function VanguardCustomers() {
   const navigate = useNavigate();
   const basePath = getVanguardBasePath();
-  const { clients, isLoading: mspLoading } = useMSP();
+  const { clients, isLoading: mspLoading, loadClients, loadMSP } = useMSP();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerDisplay | null>(null);
@@ -97,8 +97,10 @@ export default function VanguardCustomers() {
     customer.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleCustomerCreated = () => {
-    // Component will re-render when clients update
+  const handleCustomerCreated = async () => {
+    // Refresh MSP and clients to show the new customer
+    await loadMSP();
+    await loadClients();
     toast.success('Customer added successfully');
   };
 
