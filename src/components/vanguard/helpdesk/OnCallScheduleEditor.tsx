@@ -54,44 +54,15 @@ interface OnCallOverride {
   reason: string;
 }
 
-const mockMembers: OnCallMember[] = [
-  { id: 'mem-1', name: 'John Smith', initials: 'JS', email: 'john@example.com', phone: '555-0101', color: '#06b6d4' },
-  { id: 'mem-2', name: 'Sarah Wilson', initials: 'SW', email: 'sarah@example.com', phone: '555-0102', color: '#8b5cf6' },
-  { id: 'mem-3', name: 'Mike Johnson', initials: 'MJ', email: 'mike@example.com', phone: '555-0103', color: '#f59e0b' },
-  { id: 'mem-4', name: 'Emily Davis', initials: 'ED', email: 'emily@example.com', phone: '555-0104', color: '#10b981' },
-  { id: 'mem-5', name: 'Alex Chen', initials: 'AC', email: 'alex@example.com', phone: '555-0105', color: '#ef4444' },
-];
-
-const mockRotations: OnCallRotation[] = [
-  {
-    id: 'rot-1',
-    name: 'Primary On-Call',
-    description: 'Main after-hours support rotation',
-    rotation_type: 'weekly',
-    members: ['mem-1', 'mem-2', 'mem-3'],
-    start_date: '2024-01-01',
-    current_index: 0,
-    is_active: true,
-    escalation_minutes: 15
-  },
-  {
-    id: 'rot-2',
-    name: 'Critical Escalation',
-    description: 'Backup for critical issues',
-    rotation_type: 'weekly',
-    members: ['mem-4', 'mem-5'],
-    start_date: '2024-01-01',
-    current_index: 0,
-    is_active: true,
-    escalation_minutes: 30
-  },
-];
+// Data loaded from database - empty initial state
+const initialMembers: OnCallMember[] = [];
+const initialRotations: OnCallRotation[] = [];
 
 export function OnCallScheduleEditor() {
   const [activeTab, setActiveTab] = useState('schedule');
   const [currentWeek, setCurrentWeek] = useState(new Date());
-  const [rotations, setRotations] = useState<OnCallRotation[]>(mockRotations);
-  const [members] = useState<OnCallMember[]>(mockMembers);
+  const [rotations, setRotations] = useState<OnCallRotation[]>(initialRotations);
+  const [members, setMembers] = useState<OnCallMember[]>(initialMembers);
   const [overrides, setOverrides] = useState<OnCallOverride[]>([]);
   const [showNewRotation, setShowNewRotation] = useState(false);
   const [showNewOverride, setShowNewOverride] = useState(false);

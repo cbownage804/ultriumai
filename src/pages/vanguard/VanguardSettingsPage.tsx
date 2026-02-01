@@ -59,12 +59,8 @@ export default function VanguardSettingsPage() {
     setIsSaving(false);
   };
 
-  // Mock organizations for white-label
-  const mockOrgs = [
-    { id: '1', name: 'Acme Corp' },
-    { id: '2', name: 'TechStart Inc' },
-    { id: '3', name: 'Enterprise Solutions' },
-  ];
+  // Organizations will be loaded from database in production
+  const organizations: { id: string; name: string }[] = [];
 
   return (
     <div className="p-6 space-y-6">
@@ -227,7 +223,7 @@ export default function VanguardSettingsPage() {
 
         <TabsContent value="whitelabel" className="mt-6">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <WhiteLabelSettings organizations={mockOrgs} />
+            <WhiteLabelSettings organizations={organizations} />
           </motion.div>
         </TabsContent>
 

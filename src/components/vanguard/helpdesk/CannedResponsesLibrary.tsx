@@ -23,19 +23,14 @@ interface CannedResponse {
   is_shared: boolean;
 }
 
-// Mock data for demonstration
-const MOCK_RESPONSES: CannedResponse[] = [
-  { id: '1', name: 'Password Reset Instructions', content: 'Hi {{customer_name}},\n\nTo reset your password, please follow these steps:\n1. Go to the login page\n2. Click "Forgot Password"\n3. Enter your email address\n\nBest regards,\n{{agent_name}}', category: 'technical', shortcut: 'passreset', use_count: 45, is_shared: true },
-  { id: '2', name: 'Greeting - General', content: 'Hi {{customer_name}},\n\nThank you for contacting our support team. I\'d be happy to help you with your request.', category: 'greeting', shortcut: 'hello', use_count: 120, is_shared: true },
-  { id: '3', name: 'Ticket Closure', content: 'Hi {{customer_name}},\n\nI\'m glad we were able to resolve your issue. If you have any further questions, please don\'t hesitate to reach out.\n\nBest regards,\n{{agent_name}}', category: 'closing', shortcut: 'close', use_count: 89, is_shared: true },
-  { id: '4', name: 'Escalation Notice', content: 'Hi {{customer_name}},\n\nI\'m escalating your ticket to our senior support team for further assistance. They will contact you within 24 hours.\n\nThank you for your patience.', category: 'escalation', shortcut: 'escalate', use_count: 23, is_shared: true },
-];
+// Empty initial state - data loaded from database
+const initialResponses: CannedResponse[] = [];
 
 export function CannedResponsesLibrary() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [responses, setResponses] = useState<CannedResponse[]>(MOCK_RESPONSES);
+  const [responses, setResponses] = useState<CannedResponse[]>(initialResponses);
   const [newResponse, setNewResponse] = useState({
     name: '',
     content: '',

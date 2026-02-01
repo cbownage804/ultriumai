@@ -53,70 +53,12 @@ interface TechnicianReview {
   status: 'draft' | 'reviewed' | 'shared' | 'acknowledged';
 }
 
-// Mock data for demonstration
-const mockReviews: TechnicianReview[] = [
-  {
-    id: '1',
-    technician_name: 'Alex Chen',
-    review_period: 'January 2026',
-    tickets_resolved: 145,
-    tickets_assigned: 152,
-    avg_resolution_hours: 4.2,
-    sla_compliance: 96.5,
-    csat_average: 4.7,
-    escalation_rate: 8.2,
-    reopen_rate: 2.1,
-    performance_score: 92,
-    trend: 'improving',
-    ai_summary: 'Alex has shown exceptional performance this period with a 15% improvement in resolution time. Strong technical skills in network troubleshooting and excellent customer communication.',
-    strengths: ['Fast first response time', 'High CSAT scores', 'Network expertise', 'Clear documentation'],
-    improvement_areas: ['Complex server issues', 'After-hours availability'],
-    recommendations: ['Consider for Tier 2 promotion', 'Assign as mentor for new hires', 'Provide server administration training'],
-    status: 'reviewed'
-  },
-  {
-    id: '2',
-    technician_name: 'Sarah Martinez',
-    review_period: 'January 2026',
-    tickets_resolved: 128,
-    tickets_assigned: 135,
-    avg_resolution_hours: 5.8,
-    sla_compliance: 89.3,
-    csat_average: 4.4,
-    escalation_rate: 12.5,
-    reopen_rate: 4.2,
-    performance_score: 78,
-    trend: 'stable',
-    ai_summary: 'Sarah maintains consistent performance with solid customer satisfaction. Some SLA misses related to complex escalations. Would benefit from additional training on enterprise systems.',
-    strengths: ['Customer empathy', 'Thorough troubleshooting', 'Team collaboration'],
-    improvement_areas: ['SLA compliance on P1 tickets', 'Enterprise system knowledge', 'Ticket reopen rate'],
-    recommendations: ['Schedule Microsoft 365 admin training', 'Pair with senior tech on enterprise tickets', 'Review P1 response protocols'],
-    status: 'draft'
-  },
-  {
-    id: '3',
-    technician_name: 'Mike Johnson',
-    review_period: 'January 2026',
-    tickets_resolved: 98,
-    tickets_assigned: 120,
-    avg_resolution_hours: 8.5,
-    sla_compliance: 72.4,
-    csat_average: 3.9,
-    escalation_rate: 22.1,
-    reopen_rate: 6.8,
-    performance_score: 58,
-    trend: 'declining',
-    ai_summary: 'Performance has declined over the past month. High escalation rate and increasing resolution times indicate potential knowledge gaps or workload issues. Recommend immediate 1:1 to discuss challenges.',
-    strengths: ['Willingness to learn', 'Punctuality', 'Documentation quality'],
-    improvement_areas: ['Resolution speed', 'Technical depth', 'Independent problem-solving', 'Customer communication'],
-    recommendations: ['Schedule performance improvement plan meeting', 'Reduce ticket load temporarily', 'Assign dedicated mentor', 'Review recent escalated tickets together'],
-    status: 'draft'
-  }
-];
+// Empty initial state - data loaded from database
+const initialReviews: TechnicianReview[] = [];
 
 export const TechnicianPerformanceReviews = () => {
   const { toast } = useToast();
-  const [reviews] = useState<TechnicianReview[]>(mockReviews);
+  const [reviews, setReviews] = useState<TechnicianReview[]>(initialReviews);
   const [selectedPeriod, setSelectedPeriod] = useState('january_2026');
   const [isGenerating, setIsGenerating] = useState(false);
 
