@@ -54,7 +54,7 @@ Copy-Item "$ProjectDir\README.md" "$OutputDir\README.md"
 
 Write-Host "[3/3] Creating installer package..." -ForegroundColor Yellow
 
-# Create a simple batch installer
+# Create a simple batch installer that copies files AND installs the service
 $installerContent = @'
 @echo off
 echo ============================================
@@ -75,18 +75,40 @@ set INSTALL_DIR=C:\Program Files\Vanguard
 echo Installing to %INSTALL_DIR%...
 mkdir "%INSTALL_DIR%" 2>nul
 
-copy /Y "VanguardAgent.exe" "%INSTALL_DIR%\" >nul
-copy /Y "config.json" "%INSTALL_DIR%\" >nul
+:: IMPORTANT: Copy the executable files FIRST before trying to install the service
+echo Copying agent files...
+copy /Y "%~dp0VanguardAgent.exe" "%INSTALL_DIR%\" >nul
+if %errorLevel% neq 0 (
+    echo ERROR: Failed to copy VanguardAgent.exe
+    pause
+    exit /b 1
+)
+copy /Y "%~dp0config.json" "%INSTALL_DIR%\" >nul
 
 echo.
-echo Installation complete!
+echo Installing Windows Service...
+:: Use sc.exe to create the service pointing to the installed EXE
+sc create VanguardAgent binPath= "%INSTALL_DIR%\VanguardAgent.exe" start= auto DisplayName= "Ultrium Vanguard Agent"
+if %errorLevel% neq 0 (
+    echo WARNING: Service may already exist or failed to create.
+)
+
+:: Set service description
+sc description VanguardAgent "Ultrium Vanguard RMM Agent - Monitors system health and executes remote commands"
+
 echo.
-echo Next steps:
-echo   1. Edit %INSTALL_DIR%\config.json with your credentials
-echo   2. Run: "%INSTALL_DIR%\VanguardAgent.exe" --register --user-id YOUR_ID --secret-key YOUR_KEY
-echo   3. Run: "%INSTALL_DIR%\VanguardAgent.exe" --install
-echo   4. Run: net start VanguardAgent
+echo Starting service...
+net start VanguardAgent
+if %errorLevel% neq 0 (
+    echo WARNING: Service failed to start. Check configuration.
+)
+
 echo.
+echo ============================================
+echo   Installation complete!
+echo ============================================
+echo.
+echo Configuration: %INSTALL_DIR%\config.json
 pause
 '@
 
