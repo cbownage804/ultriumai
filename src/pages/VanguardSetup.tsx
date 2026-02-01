@@ -691,44 +691,21 @@ sudo systemctl start vanguard-agent`;
                 )}
               </div>
 
-              {/* Download Actions */}
-              <div className="space-y-4">
-                {/* Download Link */}
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">Download Link</Label>
-                  <div className="flex gap-2">
-                    <Input 
-                      value={getDownloadUrl()} 
-                      readOnly 
-                      className="font-mono text-xs flex-1" 
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      onClick={handleCopyDownloadLink}
-                      title="Copy link"
-                    >
-                      {copied === 'download-link' ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Download Buttons */}
-                <div className="flex gap-3">
-                  <Button onClick={handleDirectDownload} className="flex-1">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download {selectedOS === 'windows' ? 'Windows' : selectedOS === 'macos' ? 'macOS' : 'Linux'} Agent
+              {/* Download Buttons */}
+              <div className="flex gap-3">
+                <Button onClick={handleDirectDownload} className="flex-1">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download {selectedOS === 'windows' ? 'Windows' : selectedOS === 'macos' ? 'macOS' : 'Linux'} Agent
+                </Button>
+                {selectedOS === 'windows' && (
+                  <Button 
+                    variant="outline"
+                    onClick={() => window.open(AGENT_DOWNLOAD_URLS.windowsMsi, '_blank')}
+                  >
+                    <Package className="h-4 w-4 mr-2" />
+                    MSI Package
                   </Button>
-                  {selectedOS === 'windows' && (
-                    <Button 
-                      variant="outline"
-                      onClick={() => window.open(AGENT_DOWNLOAD_URLS.windowsMsi, '_blank')}
-                    >
-                      <Package className="h-4 w-4 mr-2" />
-                      MSI Package
-                    </Button>
-                  )}
-                </div>
+                )}
               </div>
 
               {/* Installation Command */}
