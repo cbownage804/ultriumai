@@ -221,14 +221,14 @@ const Navigation = () => {
             {user && (
               <>
                 <button 
-                  onClick={() => handleNavigation(getDashboardPath())}
+                  onClick={() => navigate(getDashboardPath())}
                   className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200"
                 >
                   Dashboard
                 </button>
                 {isUltriumEmployee && (
                   <button 
-                    onClick={() => handleNavigation('/admin')}
+                    onClick={() => navigate('/admin')}
                     className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200"
                   >
                     Admin
@@ -325,11 +325,11 @@ const Navigation = () => {
 
               {user && (
                 <>
-                  <button onClick={() => handleNavigationWithMenuClose(getDashboardPath())} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
+                  <button onClick={() => { navigate(getDashboardPath()); setIsMenuOpen(false); }} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
                     Dashboard
                   </button>
                   {isUltriumEmployee && (
-                    <button onClick={() => handleNavigationWithMenuClose('/admin')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
+                    <button onClick={() => { navigate('/admin'); setIsMenuOpen(false); }} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
                       Admin
                     </button>
                   )}
