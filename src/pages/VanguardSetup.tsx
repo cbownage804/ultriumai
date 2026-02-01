@@ -21,7 +21,7 @@ const VANGUARD_SECRET = 'vgd_sk_7Kx9mPqR3nTwYz2JfL8sHcN6bVdXaE4uGtM1oWpQ5iA';
 // Supabase Storage bucket for agent downloads
 const STORAGE_BASE = 'https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/vanguard-agents';
 const AGENT_DOWNLOAD_URLS = {
-  windows: `${STORAGE_BASE}/VanguardAgent-Setup.exe`,
+  windows: `${STORAGE_BASE}/VanguardAgent-setup.exe`,
   windowsMsi: `${STORAGE_BASE}/VanguardAgent.msi`,
   macos: `${STORAGE_BASE}/VanguardAgent.dmg`,
   linux: `${STORAGE_BASE}/vanguard-agent-linux.tar.gz`,
