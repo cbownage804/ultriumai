@@ -48,20 +48,15 @@ export function CSATSurveySystem() {
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [feedback, setFeedback] = useState('');
 
-  const mockSurveyResponses = [
-    { rating: 5, comment: 'Excellent service, resolved quickly', technician: 'John Smith', ticket_id: 'TKT-1234' },
-    { rating: 4, comment: 'Good support but took a bit long', technician: 'Sarah Johnson', ticket_id: 'TKT-1235' },
-    { rating: 5, comment: 'Very professional and knowledgeable', technician: 'John Smith', ticket_id: 'TKT-1236' },
-    { rating: 3, comment: 'Issue resolved but communication could improve', technician: 'Mike Chen', ticket_id: 'TKT-1237' },
-    { rating: 2, comment: 'Had to follow up multiple times', technician: 'Emily Davis', ticket_id: 'TKT-1238' }
-  ];
+  // Survey responses loaded from database (empty until populated)
+  const [surveyResponses] = useState<Array<{ rating: number; comment: string; technician: string; ticket_id: string }>>([]);
 
   const analyzeCSAT = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('ai-csat-analyzer', {
         body: {
-          surveyResponses: mockSurveyResponses,
+          surveyResponses: surveyResponses,
           ticketData: {
             total_tickets: 245,
             resolved_tickets: 220,
@@ -246,7 +241,11 @@ export function CSATSurveySystem() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {mockSurveyResponses.map((response, idx) => (
+                {surveyResponses.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No survey responses yet
+                  </div>
+                ) : surveyResponses.map((response, idx) => (
                   <div key={idx} className="flex items-start gap-4 p-4 border rounded-lg">
                     <div className="flex items-center gap-1">
                       {[...Array(5)].map((_, i) => (

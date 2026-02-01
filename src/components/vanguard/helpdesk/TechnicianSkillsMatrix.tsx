@@ -26,20 +26,14 @@ interface TechnicianSkill {
   certifications: string[];
 }
 
-// Mock data for demonstration
-const MOCK_SKILLS: TechnicianSkill[] = [
-  { id: '1', technician_name: 'John Smith', skill_name: 'Active Directory', skill_category: 'security', proficiency_level: 5, certifications: ['MCSA', 'MCSE'] },
-  { id: '2', technician_name: 'John Smith', skill_name: 'Network Troubleshooting', skill_category: 'networking', proficiency_level: 4, certifications: ['CCNA'] },
-  { id: '3', technician_name: 'Sarah Johnson', skill_name: 'Azure Administration', skill_category: 'cloud', proficiency_level: 4, certifications: ['AZ-104'] },
-  { id: '4', technician_name: 'Sarah Johnson', skill_name: 'PowerShell', skill_category: 'scripting', proficiency_level: 5, certifications: [] },
-  { id: '5', technician_name: 'Mike Davis', skill_name: 'Hardware Repair', skill_category: 'hardware', proficiency_level: 3, certifications: ['CompTIA A+'] },
-];
+// Empty initial state - data loaded from database
+const initialSkills: TechnicianSkill[] = [];
 
 export function TechnicianSkillsMatrix() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [skills, setSkills] = useState<TechnicianSkill[]>(MOCK_SKILLS);
+  const [skills, setSkills] = useState<TechnicianSkill[]>(initialSkills);
   const [newSkill, setNewSkill] = useState({
     technician_name: '',
     skill_name: '',

@@ -45,13 +45,8 @@ export function AITicketRouter() {
     category: 'general'
   });
 
-  // Mock technicians data
-  const mockTechnicians = [
-    { id: '1', name: 'John Smith', skills: ['networking', 'security', 'windows'], current_tickets: 5, availability: 0.8 },
-    { id: '2', name: 'Sarah Johnson', skills: ['cloud', 'azure', 'office365'], current_tickets: 3, availability: 0.9 },
-    { id: '3', name: 'Mike Chen', skills: ['hardware', 'printers', 'networking'], current_tickets: 7, availability: 0.6 },
-    { id: '4', name: 'Emily Davis', skills: ['software', 'windows', 'mac'], current_tickets: 4, availability: 0.85 }
-  ];
+  // Technicians loaded from database (empty until populated)
+  const [technicians] = useState<Array<{ id: string; name: string; skills: string[]; current_tickets: number; availability: number }>>([]);
 
   const analyzeRouting = async () => {
     if (!ticketData.subject || !ticketData.description) {
@@ -68,7 +63,7 @@ export function AITicketRouter() {
       const { data, error } = await supabase.functions.invoke('ai-ticket-router', {
         body: {
           ticket: ticketData,
-          technicians: mockTechnicians,
+          technicians: technicians,
           workloadData: {
             average_resolution_time: '4.5 hours',
             current_queue_depth: 23,
