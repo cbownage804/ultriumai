@@ -897,7 +897,7 @@ export default function VanguardTicketDetail() {
                     variant="ghost" 
                     size="sm" 
                     className="w-full justify-center text-cyan-400 text-xs mt-1"
-                    onClick={() => toast.info('Opening Atlas for ' + ticket.customer)}
+                    onClick={() => navigate(`${basePath}/atlas?org=${encodeURIComponent(ticket.customer)}`)}
                   >
                     <ExternalLink className="h-3 w-3 mr-1" />
                     Open Vanguard Atlas
@@ -926,7 +926,7 @@ export default function VanguardTicketDetail() {
                     <div 
                       key={t.id} 
                       className="p-2 rounded bg-slate-800/30 border border-cyan-500/10 hover:bg-slate-800/50 cursor-pointer"
-                      onClick={() => toast.info(`Opening ticket ${t.id}`)}
+                      onClick={() => navigate(`${basePath}/tickets/${t.id}`)}
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-cyan-400 text-xs font-mono">{t.id}</span>
