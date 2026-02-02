@@ -294,11 +294,11 @@ export const ClientLogin = () => {
         <div className="text-center">
           <Button 
             variant="outline" 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/hub')}
             className="text-sm"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Main Site
+            Back to Hub
           </Button>
         </div>
       </div>

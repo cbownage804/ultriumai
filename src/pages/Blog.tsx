@@ -58,9 +58,9 @@ const Blog = () => {
       <header className="border-b bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30 safe-area-inset-top">
         <div className="container mx-auto px-4 py-3 md:py-4">
           <div className="flex items-center justify-between">
-            <Link to="/" className="text-xl md:text-2xl font-bold">UltriumAI Blog</Link>
+            <Link to="/hub" className="text-xl md:text-2xl font-bold">UltriumAI Blog</Link>
             <Button asChild variant="outline" size="sm" className="touch-target h-10 md:h-9 text-sm">
-              <Link to="/">← Back to Home</Link>
+              <Link to="/hub">← Back to Hub</Link>
             </Button>
           </div>
         </div>

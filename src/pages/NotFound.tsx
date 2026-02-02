@@ -82,9 +82,9 @@ const NotFound = () => {
               asChild
               className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white border-0"
             >
-              <Link to="/">
+              <Link to="/hub">
                 <Home className="h-4 w-4 mr-2" />
-                Return Home
+                Return to Hub
               </Link>
             </Button>
             

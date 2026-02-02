@@ -27,11 +27,11 @@ const AIVoiceAssistantPage = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/hub')}
                 className="hover-scale"
               >
                 <Home className="h-4 w-4 mr-2" />
-                Dashboard
+                Back to Hub
               </Button>
             </div>
 

@@ -103,8 +103,8 @@ const HelpdeskFeedback = () => {
           )}
 
           <div className="flex justify-center pt-4">
-            <Button onClick={() => navigate('/')}>
-              Return Home
+            <Button onClick={() => navigate('/hub')}>
+              Return to Hub
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>

@@ -85,9 +85,9 @@ const PaymentCancel = () => {
             Go to Dashboard
           </Button>
           
-          <Button variant="ghost" onClick={() => navigate('/')}>
+          <Button variant="ghost" onClick={() => navigate('/hub')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
+            Back to Hub
           </Button>
         </div>
 
