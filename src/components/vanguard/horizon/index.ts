@@ -57,3 +57,21 @@ export { PSASyncIntegration } from './PSASyncIntegration';
 export { DocumentationPlatformIntegration } from './DocumentationPlatformIntegration';
 export { BackupMonitoringIntegration } from './BackupMonitoringIntegration';
 export { NetworkDiscoveryScanner } from './NetworkDiscoveryScanner';
+
+// Remote Access
+export { FileTransferManager } from './FileTransferManager';
+export { WakeOnLanManager } from './WakeOnLanManager';
+
+// Security/EDR
+export { ThreatHuntingDashboard } from './ThreatHuntingDashboard';
+export { VulnerabilityScanner } from './VulnerabilityScanner';
+export { SecurityBaselineEnforcement } from './SecurityBaselineEnforcement';
+export { IncidentResponsePlaybooks } from './IncidentResponsePlaybooks';
+
+// Access Control
+export { MultiTenantManager } from './MultiTenantManager';
+export { RoleBasedAccessControl } from './RoleBasedAccessControl';
+export { TechnicianActivityLogs } from './TechnicianActivityLogs';
+
+// Reporting/BI
+export { ExecutiveDashboard } from './ExecutiveDashboard';
