@@ -9,6 +9,7 @@ import { AutomationProfileSelector } from './horizon/AutomationProfileSelector';
 import { DeviceTypeBreakdown } from './horizon/DeviceTypeBreakdown';
 import { ResourceTrendingChart } from './horizon/ResourceTrendingChart';
 import { BulkActionsPanel } from './horizon/BulkActionsPanel';
+import { HorizonOperationsCenter } from './horizon/HorizonOperationsCenter';
 import { 
   Server, 
   Activity, 
@@ -453,6 +454,9 @@ export function HorizonDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Operations Center - All Modules */}
+      <HorizonOperationsCenter />
 
       {/* Quick Actions */}
       <Card>
