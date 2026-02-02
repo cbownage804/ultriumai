@@ -328,7 +328,7 @@ export default function VanguardPiDetail() {
               </div>
               <Button 
                 className="bg-gradient-to-r from-orange-500 to-red-500 text-white"
-                onClick={() => toast.info('Firewall rule editor coming soon')}
+                onClick={() => toast.info('Firewall rule management for Recon units is coming in a future update.')}
               >
                 <Zap className="h-4 w-4 mr-2" />
                 Add Rule

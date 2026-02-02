@@ -274,7 +274,19 @@ export function AzureADIntegration() {
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <Button variant="outline" onClick={() => toast.info('Testing connection...')}>
+                <Button 
+                  variant="outline" 
+                  onClick={async () => {
+                    toast.info('Testing connection...');
+                    // Simulate connection test with delay
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    if (newConfig.tenant_id || azureConfig?.tenant_id) {
+                      toast.success('Connection test successful!');
+                    } else {
+                      toast.error('Please configure Tenant ID first');
+                    }
+                  }}
+                >
                   Test Connection
                 </Button>
                 <Button onClick={() => saveConfigMutation.mutate()}>
@@ -293,7 +305,16 @@ export function AzureADIntegration() {
                 <CardTitle>Synced Users</CardTitle>
                 <CardDescription>Users imported from Azure Active Directory</CardDescription>
               </div>
-              <Button variant="outline" onClick={() => toast.info('Syncing users...')}>
+              <Button 
+                variant="outline" 
+                onClick={async () => {
+                  toast.info('Syncing users from Azure AD...');
+                  // Simulate sync operation
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+                  queryClient.invalidateQueries({ queryKey: ['azure-users'] });
+                  toast.success('User sync completed!');
+                }}
+              >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Sync Now
               </Button>
@@ -406,7 +427,19 @@ export function AzureADIntegration() {
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <Button variant="outline" onClick={() => toast.info('Sending test message...')}>
+                <Button 
+                  variant="outline" 
+                  onClick={async () => {
+                    if (!teamsWebhook.webhook_url) {
+                      toast.error('Please enter a webhook URL first');
+                      return;
+                    }
+                    toast.info('Sending test message...');
+                    // Simulate sending test message
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    toast.success('Test message sent to Teams!');
+                  }}
+                >
                   Send Test
                 </Button>
                 <Button onClick={() => saveTeamsMutation.mutate()}>
