@@ -12,10 +12,21 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   ChevronDown,
   ArrowLeft,
@@ -37,7 +48,7 @@ import {
   Copy,
 } from "lucide-react";
 // Vanguard Atlas (formerly SafeDoc) - no logo import needed, using Shield icon
-import { useVanguardAgent } from "@/hooks/useVanguardAgents";
+import { useVanguardAgent, useVanguardAgents } from "@/hooks/useVanguardAgents";
 import { useMSP } from "@/hooks/useMSP";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -103,6 +114,7 @@ export default function VanguardDeviceDetailPage() {
     deleteMonitoredDevice,
   } = useVanguardAgent(deviceId);
   const { clients } = useMSP();
+  const { deleteAgent } = useVanguardAgents();
   
   // UI State
   const [activeTab, setActiveTab] = useState("overview");
@@ -110,6 +122,8 @@ export default function VanguardDeviceDetailPage() {
   const [alertsPaused, setAlertsPaused] = useState(false);
   const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(DEFAULT_WIDGET_ORDER);
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [draggedWidget, setDraggedWidget] = useState<WidgetId | null>(null);
   
   // Dialog State
@@ -183,6 +197,21 @@ export default function VanguardDeviceDetailPage() {
       toast.success("Shutdown command sent");
     } catch (err) {
       toast.error("Failed to send shutdown command");
+    }
+  };
+
+  const handleDeleteAgent = async () => {
+    if (!deviceId) return;
+    
+    try {
+      setIsDeleting(true);
+      await deleteAgent(deviceId);
+      navigate('/vanguard/rmm');
+    } catch (err: any) {
+      console.error('Error deleting agent:', err);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
@@ -390,7 +419,7 @@ export default function VanguardDeviceDetailPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/vanguard/devices')}
+              onClick={() => navigate('/vanguard/rmm')}
               className="text-white/60 hover:text-white hover:bg-cyan-500/10"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -461,7 +490,10 @@ export default function VanguardDeviceDetailPage() {
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Reset page layout
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-400 hover:bg-red-500/10">
+                <DropdownMenuItem 
+                  onClick={() => setShowDeleteDialog(true)} 
+                  className="text-red-400 hover:bg-red-500/10"
+                >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete Agent
                 </DropdownMenuItem>
@@ -630,6 +662,44 @@ export default function VanguardDeviceDetailPage() {
           await addMonitoredDevice(device);
         }}
       />
+
+      {/* Delete Agent Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="bg-black/95 border-red-500/30">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Delete this device?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              This will permanently remove <span className="font-semibold text-white">{agent?.name}</span> from your account. 
+              You will need to redeploy the agent to use it again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              className="border-cyan-500/30 text-white hover:bg-cyan-500/10"
+              disabled={isDeleting}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteAgent}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Agent
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
