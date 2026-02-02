@@ -10,11 +10,13 @@ interface WindowsAgentZipOptions {
   onProgress?: (progress: number, message: string) => void;
 }
 
-// Supabase Storage bucket for agent downloads
+// Primary: Supabase Storage bucket for agent downloads
 const STORAGE_BASE_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/vanguard-agents';
+// Fallback: GitHub Releases (public)
+const GITHUB_RELEASE_URL = 'https://github.com/ultriuminc/ultriumai-app/releases/latest/download';
 const EXE_FILENAME = 'VanguardAgent-win-x64.exe';
 
-// Fallback: if GitHub release not available, we'll create a stub
+// Cache to avoid re-downloading
 let cachedExeBlob: Blob | null = null;
 
 async function fetchPreBuiltExe(onProgress?: (progress: number, message: string) => void): Promise<Blob | null> {
@@ -23,30 +25,41 @@ async function fetchPreBuiltExe(onProgress?: (progress: number, message: string)
     return cachedExeBlob;
   }
 
-  try {
-    onProgress?.(10, 'Fetching pre-built agent...');
-    
-    const response = await fetch(`${STORAGE_BASE_URL}/${EXE_FILENAME}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/octet-stream',
-      },
-    });
+  const sources = [
+    { name: 'Supabase Storage', url: `${STORAGE_BASE_URL}/${EXE_FILENAME}` },
+    { name: 'GitHub Release', url: `${GITHUB_RELEASE_URL}/${EXE_FILENAME}` },
+  ];
 
-    if (!response.ok) {
-      console.warn('Agent EXE not found in storage bucket, using config-only bundle');
-      return null;
+  for (const source of sources) {
+    try {
+      onProgress?.(10, `Fetching from ${source.name}...`);
+      
+      const response = await fetch(source.url, {
+        method: 'GET',
+        headers: { 'Accept': 'application/octet-stream' },
+      });
+
+      if (response.ok) {
+        onProgress?.(50, 'Downloading executable...');
+        cachedExeBlob = await response.blob();
+        
+        // Verify it's a valid EXE (should be > 1MB for a .NET self-contained app)
+        if (cachedExeBlob.size > 1024 * 1024) {
+          onProgress?.(80, 'Download complete');
+          console.log(`Agent EXE fetched from ${source.name} (${(cachedExeBlob.size / 1024 / 1024).toFixed(1)} MB)`);
+          return cachedExeBlob;
+        } else {
+          console.warn(`${source.name}: Downloaded file too small, likely not valid EXE`);
+          cachedExeBlob = null;
+        }
+      }
+    } catch (error) {
+      console.warn(`Failed to fetch from ${source.name}:`, error);
     }
-
-    onProgress?.(50, 'Downloading executable...');
-    cachedExeBlob = await response.blob();
-    onProgress?.(80, 'Download complete');
-    
-    return cachedExeBlob;
-  } catch (error) {
-    console.warn('Failed to fetch EXE from GitHub:', error);
-    return null;
   }
+
+  console.warn('Agent EXE not found in any source, using config-only bundle');
+  return null;
 }
 
 // C# Program.cs content (for build reference only)
