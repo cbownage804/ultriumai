@@ -23,6 +23,9 @@ public class AgentConfig
     [JsonProperty("api_endpoint")]
     public string ApiEndpoint { get; set; } = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api";
 
+    [JsonProperty("client_id")]
+    public string? ClientId { get; set; }
+
     [JsonProperty("heartbeat_interval")]
     public int HeartbeatInterval { get; set; } = 60;
 
