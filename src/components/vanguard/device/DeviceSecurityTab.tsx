@@ -1,12 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Shield, ShieldCheck, ShieldAlert, ShieldX, Lock, Eye, EyeOff, Copy, Monitor, Flame, Bug, AlertTriangle } from "lucide-react";
-import { useState } from "react";
+import { Shield, ShieldCheck, ShieldAlert, ShieldX, Lock, Eye, EyeOff, Copy, Monitor, Flame, Bug, AlertTriangle, HardDrive, Clock, CheckCircle, XCircle } from "lucide-react";
+import { useState, useMemo } from "react";
 import { VanguardAgent } from "@/hooks/useVanguardAgents";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
 // Helper to format dates
 function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '—';
@@ -30,11 +29,33 @@ export function DeviceSecurityTab({ agent }: DeviceSecurityTabProps) {
   // Extract OS and security info from agent config
   const osInfo = agent.config?.os || {};
   const securityInfo = agent.config?.security || {};
+  const bitlockerStatus = (agent.config as any)?.bitlocker || [];
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast.success(`${label} copied to clipboard`);
   };
+
+  // Uptime calculation
+  const uptime = useMemo(() => {
+    const bootTime = (agent.config as any)?.hardware?.boot_time || (agent.config as any)?.boot_time;
+    if (!bootTime) return null;
+    
+    const bootDate = new Date(bootTime);
+    const now = new Date();
+    const diffMs = now.getTime() - bootDate.getTime();
+    
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return { days, hours, minutes, bootTime: bootDate.toLocaleString() };
+  }, [agent.config]);
+
+  // Check if any drive has BitLocker enabled
+  const hasBitLockerEnabled = bitlockerStatus.some((drive: any) => 
+    drive.protection_status === 'On' || drive.protection_status === 'Enabled'
+  );
 
   // Calculate security score
   const securityChecks = [
@@ -42,6 +63,7 @@ export function DeviceSecurityTab({ agent }: DeviceSecurityTabProps) {
     securityInfo.firewall_status?.toLowerCase() === 'enabled',
     securityInfo.antispyware_status?.toLowerCase() === 'enabled',
     osInfo.tls_compatible,
+    hasBitLockerEnabled,
   ];
   const securityScore = Math.round((securityChecks.filter(Boolean).length / securityChecks.length) * 100);
 
@@ -254,6 +276,101 @@ export function DeviceSecurityTab({ agent }: DeviceSecurityTabProps) {
               </div>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* BitLocker / Encryption Status */}
+      <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-cyan-500/20 backdrop-blur-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-cyan-400 flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            Drive Encryption (BitLocker)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {bitlockerStatus.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {bitlockerStatus.map((drive: any, index: number) => {
+                const isProtected = drive.protection_status === 'On' || drive.protection_status === 'Enabled';
+                return (
+                  <div 
+                    key={index}
+                    className={cn(
+                      "p-3 rounded-lg border flex items-center gap-3",
+                      isProtected 
+                        ? "bg-green-500/10 border-green-500/20" 
+                        : "bg-red-500/10 border-red-500/20"
+                    )}
+                  >
+                    <div className={cn(
+                      "p-2 rounded-lg",
+                      isProtected ? "bg-green-500/20" : "bg-red-500/20"
+                    )}>
+                      <HardDrive className={cn("h-5 w-5", isProtected ? "text-green-400" : "text-red-400")} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-200">{drive.drive_letter || drive.mount_point || `Drive ${index + 1}`}</p>
+                      <p className="text-xs text-slate-400">{drive.volume_type || 'Volume'}</p>
+                    </div>
+                    <Badge className={cn(
+                      isProtected 
+                        ? "bg-green-500/20 text-green-400 border-green-500/30" 
+                        : "bg-red-500/20 text-red-400 border-red-500/30"
+                    )}>
+                      {isProtected ? (
+                        <>
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Protected
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Not Protected
+                        </>
+                      )}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <Lock className="h-10 w-10 text-slate-600 mx-auto mb-2" />
+              <p className="text-sm text-slate-400">BitLocker status not available</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Encryption data will be collected during next telemetry sync
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* System Uptime */}
+      <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-cyan-500/20 backdrop-blur-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-cyan-400 flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            System Uptime
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {uptime ? (
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-cyan-500/10 rounded-lg">
+                  <Clock className="h-6 w-6 text-cyan-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">
+                    {uptime.days}d {uptime.hours}h {uptime.minutes}m
+                  </p>
+                  <p className="text-xs text-slate-500">Since {uptime.bootTime}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400">Uptime data not available</p>
+          )}
         </CardContent>
       </Card>
     </div>

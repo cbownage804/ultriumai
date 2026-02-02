@@ -48,6 +48,11 @@ import {
   RotateCcw,
   Copy,
   Package,
+  Download,
+  Play,
+  Network,
+  Users,
+  Activity,
 } from "lucide-react";
 // Vanguard Atlas (formerly SafeDoc) - no logo import needed, using Shield icon
 import { useVanguardAgent, useVanguardAgents } from "@/hooks/useVanguardAgents";
@@ -65,6 +70,11 @@ import { DeviceCustomFieldsTab } from "@/components/vanguard/device/DeviceCustom
 import { DevicePasswordsTab } from "@/components/vanguard/device/DevicePasswordsTab";
 import { DeviceAttachmentsTab } from "@/components/vanguard/device/DeviceAttachmentsTab";
 import { DeviceMonitoredTab } from "@/components/vanguard/device/DeviceMonitoredTab";
+import { DeviceUpdatesTab } from "@/components/vanguard/device/DeviceUpdatesTab";
+import { DeviceStartupTab } from "@/components/vanguard/device/DeviceStartupTab";
+import { DeviceNetworkConnectionsTab } from "@/components/vanguard/device/DeviceNetworkConnectionsTab";
+import { DeviceUsersTab } from "@/components/vanguard/device/DeviceUsersTab";
+import { DevicePerformanceTab } from "@/components/vanguard/device/DevicePerformanceTab";
 
 // Widget Components
 import { DeviceAlertStatusWidget } from "@/components/vanguard/device/widgets/DeviceAlertStatusWidget";
@@ -564,6 +574,10 @@ export default function VanguardDeviceDetailPage() {
                   <Monitor className="h-4 w-4" />
                   Overview
                 </TabsTrigger>
+                <TabsTrigger value="performance" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+                  <Activity className="h-4 w-4" />
+                  Performance
+                </TabsTrigger>
                 <TabsTrigger value="hardware" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                   <Monitor className="h-4 w-4" />
                   Hardware
@@ -576,9 +590,25 @@ export default function VanguardDeviceDetailPage() {
                   <Package className="h-4 w-4" />
                   Software
                 </TabsTrigger>
+                <TabsTrigger value="updates" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+                  <Download className="h-4 w-4" />
+                  Updates
+                </TabsTrigger>
                 <TabsTrigger value="security" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                   <Shield className="h-4 w-4" />
                   OS & Security
+                </TabsTrigger>
+                <TabsTrigger value="startup" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+                  <Play className="h-4 w-4" />
+                  Startup
+                </TabsTrigger>
+                <TabsTrigger value="network" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+                  <Network className="h-4 w-4" />
+                  Connections
+                </TabsTrigger>
+                <TabsTrigger value="users" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+                  <Users className="h-4 w-4" />
+                  Users
                 </TabsTrigger>
                 <TabsTrigger value="custom" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                   <FileText className="h-4 w-4" />
@@ -608,6 +638,10 @@ export default function VanguardDeviceDetailPage() {
                 />
               </TabsContent>
 
+              <TabsContent value="performance" className="mt-4">
+                <DevicePerformanceTab agent={agent} metrics={metrics} />
+              </TabsContent>
+
               <TabsContent value="hardware" className="mt-4">
                 <DeviceHardwareTab agent={agent} />
               </TabsContent>
@@ -620,8 +654,24 @@ export default function VanguardDeviceDetailPage() {
                 <DeviceSoftwareTab agent={agent} />
               </TabsContent>
 
+              <TabsContent value="updates" className="mt-4">
+                <DeviceUpdatesTab agent={agent} />
+              </TabsContent>
+
               <TabsContent value="security" className="mt-4">
                 <DeviceSecurityTab agent={agent} />
+              </TabsContent>
+
+              <TabsContent value="startup" className="mt-4">
+                <DeviceStartupTab agent={agent} />
+              </TabsContent>
+
+              <TabsContent value="network" className="mt-4">
+                <DeviceNetworkConnectionsTab agent={agent} />
+              </TabsContent>
+
+              <TabsContent value="users" className="mt-4">
+                <DeviceUsersTab agent={agent} />
               </TabsContent>
 
               <TabsContent value="custom" className="mt-4">

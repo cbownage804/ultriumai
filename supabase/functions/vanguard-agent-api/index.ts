@@ -421,9 +421,25 @@ async function handleHeartbeat(supabase: any, body: any, req?: Request) {
   );
 }
 
-// Handle full telemetry data (hardware, disks, network adapters, software)
+// Handle full telemetry data (hardware, disks, network adapters, software, updates, users, connections, etc.)
 async function handleTelemetry(supabase: any, body: any) {
-  const { device_id, processes, services, network_adapters, installed_software, disks, timestamp } = body;
+  const { 
+    device_id, 
+    processes, 
+    services, 
+    network_adapters, 
+    installed_software, 
+    disks,
+    // New telemetry fields
+    pending_updates,
+    startup_programs,
+    network_connections,
+    local_users,
+    bitlocker_status,
+    boot_time,
+    uptime_seconds,
+    timestamp 
+  } = body;
   
   if (!device_id) {
     return new Response(
@@ -447,8 +463,6 @@ async function handleTelemetry(supabase: any, body: any) {
   }
   
   // Normalize disk data from C# agent format to UI format
-  // C# sends: { Drive, Label, Type, FileSystem, TotalGb, UsedGb, FreeGb, PercentUsed, Status }
-  // UI expects: { drive, media_type, model, total_size, used_size, free_size, usage_percent, status, health_status }
   const normalizedDisks = (disks || []).map((disk: any) => ({
     drive: disk.Drive || disk.drive || 'Unknown',
     media_type: disk.Type || disk.type || disk.media_type || 'Fixed',
@@ -460,7 +474,6 @@ async function handleTelemetry(supabase: any, body: any) {
     usage_percent: Math.round(disk.PercentUsed || disk.percent_used || 0),
     status: disk.Status || disk.status || 'Healthy',
     health_status: disk.Status || disk.status || 'Healthy',
-    // Keep raw values for calculations
     total_gb: disk.TotalGb || disk.total_gb || 0,
     used_gb: disk.UsedGb || disk.used_gb || 0,
     free_gb: disk.FreeGb || disk.free_gb || 0,
@@ -482,6 +495,66 @@ async function handleTelemetry(supabase: any, body: any) {
     install_date: sw.InstallDate || sw.install_date || null,
   }));
   
+  // Normalize pending updates
+  const normalizedUpdates = (pending_updates || []).map((update: any) => ({
+    title: update.Title || update.title,
+    kb_number: update.KBNumber || update.kb_number || update.KBArticleIDs?.[0],
+    severity: update.Severity || update.severity || update.MsrcSeverity || 'Unknown',
+    category: update.Category || update.category || update.Categories?.[0],
+    size_mb: update.SizeMB || update.size_mb || (update.MaxDownloadSize ? update.MaxDownloadSize / 1024 / 1024 : null),
+    is_downloaded: update.IsDownloaded || update.is_downloaded || false,
+    is_mandatory: update.IsMandatory || update.is_mandatory || false,
+    release_date: update.ReleaseDate || update.release_date || update.LastDeploymentChangeTime,
+  }));
+  
+  // Normalize startup programs
+  const normalizedStartup = (startup_programs || []).map((program: any) => ({
+    name: program.Name || program.name,
+    command: program.Command || program.command || program.CommandLine,
+    location: program.Location || program.location,
+    enabled: program.Enabled ?? program.enabled ?? true,
+    publisher: program.Publisher || program.publisher,
+    startup_type: program.StartupType || program.startup_type || 'Registry',
+    impact: program.Impact || program.impact || 'Not measured',
+  }));
+  
+  // Normalize network connections
+  const normalizedConnections = (network_connections || []).map((conn: any) => ({
+    local_address: conn.LocalAddress || conn.local_address,
+    local_port: conn.LocalPort || conn.local_port,
+    remote_address: conn.RemoteAddress || conn.remote_address,
+    remote_port: conn.RemotePort || conn.remote_port,
+    state: conn.State || conn.state,
+    protocol: conn.Protocol || conn.protocol || 'TCP',
+    process_name: conn.ProcessName || conn.process_name || conn.OwningProcess,
+    process_id: conn.ProcessId || conn.process_id || conn.OwningProcessId,
+  }));
+  
+  // Normalize local users
+  const normalizedUsers = (local_users || []).map((user: any) => ({
+    name: user.Name || user.name,
+    full_name: user.FullName || user.full_name,
+    description: user.Description || user.description,
+    enabled: user.Enabled ?? user.enabled ?? true,
+    is_admin: user.IsAdmin || user.is_admin || user.LocalAdmin || false,
+    is_local: user.IsLocal ?? user.is_local ?? true,
+    last_logon: user.LastLogon || user.last_logon,
+    password_last_set: user.PasswordLastSet || user.password_last_set,
+    password_expires: user.PasswordExpires || user.password_expires,
+    sid: user.SID || user.sid,
+    groups: user.Groups || user.groups || [],
+  }));
+  
+  // Normalize BitLocker status
+  const normalizedBitlocker = (bitlocker_status || []).map((drive: any) => ({
+    drive_letter: drive.DriveLetter || drive.drive_letter || drive.MountPoint,
+    protection_status: drive.ProtectionStatus || drive.protection_status,
+    volume_type: drive.VolumeType || drive.volume_type || 'OperatingSystem',
+    encryption_method: drive.EncryptionMethod || drive.encryption_method,
+    encryption_percentage: drive.EncryptionPercentage || drive.encryption_percentage,
+    lock_status: drive.LockStatus || drive.lock_status,
+  }));
+  
   // Store telemetry data in custom_metrics
   const telemetryData: Record<string, any> = {
     processes_count: processes?.length || 0,
@@ -490,16 +563,40 @@ async function handleTelemetry(supabase: any, body: any) {
     installed_software: normalizedSoftware,
     installed_software_count: normalizedSoftware.length,
     disks: normalizedDisks,
+    pending_updates: normalizedUpdates,
+    pending_updates_count: normalizedUpdates.length,
+    startup_programs: normalizedStartup,
+    network_connections: normalizedConnections,
+    local_users: normalizedUsers,
+    bitlocker: normalizedBitlocker,
     last_telemetry_at: new Date().toISOString()
+  };
+  
+  // Build hardware config with boot time
+  const existingHardware = (agent.config?.hardware) || {};
+  const updatedHardware = {
+    ...existingHardware,
+    boot_time: boot_time || existingHardware.boot_time,
+    uptime_seconds: uptime_seconds,
   };
   
   // Also update agent.config with latest telemetry for quick access
   const updatedConfig = {
     ...(agent.config || {}),
+    hardware: updatedHardware,
     disks: normalizedDisks,
     installed_software: normalizedSoftware,
     network_adapters: normalizedAdapters,
+    pending_updates: normalizedUpdates,
+    startup_programs: normalizedStartup,
+    network_connections: normalizedConnections,
+    local_users: normalizedUsers,
+    bitlocker: normalizedBitlocker,
     last_telemetry_at: new Date().toISOString(),
+    last_update_check: normalizedUpdates.length > 0 ? new Date().toISOString() : (agent.config?.last_update_check),
+    last_startup_check: normalizedStartup.length > 0 ? new Date().toISOString() : (agent.config?.last_startup_check),
+    last_connections_check: normalizedConnections.length > 0 ? new Date().toISOString() : (agent.config?.last_connections_check),
+    last_users_check: normalizedUsers.length > 0 ? new Date().toISOString() : (agent.config?.last_users_check),
   };
   
   // Update agent with telemetry in config
@@ -519,7 +616,7 @@ async function handleTelemetry(supabase: any, body: any) {
       custom_metrics: telemetryData
     });
   
-  console.log(`[vanguard-agent-api] Telemetry from ${device_id}: ${processes?.length || 0} processes, ${services?.length || 0} services, ${normalizedDisks.length} disks, ${normalizedSoftware.length} software`);
+  console.log(`[vanguard-agent-api] Telemetry from ${device_id}: ${normalizedDisks.length} disks, ${normalizedSoftware.length} software, ${normalizedUpdates.length} updates, ${normalizedConnections.length} connections, ${normalizedUsers.length} users`);
   
   return new Response(
     JSON.stringify({ status: 'ok' }),

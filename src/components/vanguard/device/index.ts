@@ -2,11 +2,17 @@
 export { DeviceOverviewTab } from './DeviceOverviewTab';
 export { DeviceHardwareTab } from './DeviceHardwareTab';
 export { DeviceDisksTab } from './DeviceDisksTab';
+export { DeviceSoftwareTab } from './DeviceSoftwareTab';
 export { DeviceSecurityTab } from './DeviceSecurityTab';
 export { DeviceCustomFieldsTab } from './DeviceCustomFieldsTab';
 export { DevicePasswordsTab } from './DevicePasswordsTab';
 export { DeviceAttachmentsTab } from './DeviceAttachmentsTab';
 export { DeviceMonitoredTab } from './DeviceMonitoredTab';
+export { DeviceUpdatesTab } from './DeviceUpdatesTab';
+export { DeviceStartupTab } from './DeviceStartupTab';
+export { DeviceNetworkConnectionsTab } from './DeviceNetworkConnectionsTab';
+export { DeviceUsersTab } from './DeviceUsersTab';
+export { DevicePerformanceTab } from './DevicePerformanceTab';
 
 // Toolbar & Utilities
 export { DevicesToolbar } from './DevicesToolbar';
