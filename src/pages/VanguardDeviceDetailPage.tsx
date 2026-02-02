@@ -164,15 +164,27 @@ export default function VanguardDeviceDetailPage() {
   };
 
   const handleManagePatches = () => {
-    toast.info("Opening patch management...");
+    if (!deviceId) return;
+    navigate(`${basePath}/patches?deviceId=${encodeURIComponent(deviceId)}`);
+  };
+
+  const handleRunScript = () => {
+    if (!deviceId) return;
+    navigate(`${basePath}/scripts?deviceId=${encodeURIComponent(deviceId)}`);
+  };
+
+  const handleDeploySoftware = () => {
+    if (!deviceId) return;
+    navigate(`${basePath}/apps?deviceId=${encodeURIComponent(deviceId)}`);
   };
 
   const handleReboot = async () => {
     try {
-      await sendCommand('reboot');
-      toast.success("Reboot command sent to device");
+      // Standardized command type used throughout Vanguard command queue
+      await sendCommand('restart', { delay_seconds: 30, message: 'System will restart in 30 seconds' });
+      toast.success("Restart command sent to device");
     } catch (err) {
-      toast.error("Failed to send reboot command");
+      toast.error("Failed to send restart command");
     }
   };
 
@@ -469,10 +481,18 @@ export default function VanguardDeviceDetailPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-black/95 border-cyan-500/30">
-                <DropdownMenuItem className="text-white hover:bg-cyan-500/10">Run Script</DropdownMenuItem>
-                <DropdownMenuItem className="text-white hover:bg-cyan-500/10">Deploy Software</DropdownMenuItem>
-                <DropdownMenuItem className="text-white hover:bg-cyan-500/10">Patch Management</DropdownMenuItem>
-                <DropdownMenuItem className="text-white hover:bg-cyan-500/10">Restart Device</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleRunScript} className="text-white hover:bg-cyan-500/10">
+                  Run Script
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDeploySoftware} className="text-white hover:bg-cyan-500/10">
+                  Deploy Software
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleManagePatches} className="text-white hover:bg-cyan-500/10">
+                  Patch Management
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleReboot} className="text-white hover:bg-cyan-500/10">
+                  Restart Device
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             
