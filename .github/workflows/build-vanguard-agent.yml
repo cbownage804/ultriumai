@@ -103,6 +103,11 @@ jobs:
           # Copy additional files for ZIP
           Copy-Item VanguardAgent/config.json ./dist/win-x64/
           Copy-Item VanguardAgent/README.md ./dist/win-x64/
+
+           # Copy installer scripts for ZIP
+           Copy-Item VanguardAgent/installer/install.bat ./dist/win-x64/install.bat
+           Copy-Item VanguardAgent/installer/uninstall.bat ./dist/win-x64/uninstall.bat
+           Copy-Item VanguardAgent/installer/installer.bat ./dist/win-x64/installer.bat
           
           Compress-Archive -Path ./dist/win-x64/* -DestinationPath ./release/VanguardAgent-win-x64.zip -Force
       
