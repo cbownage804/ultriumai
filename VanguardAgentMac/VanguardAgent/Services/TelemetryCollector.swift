@@ -19,8 +19,95 @@ class TelemetryCollector {
             "disk": collectDisk(),
             "network": collectNetwork(),
             "processes": collectTopProcesses(),
-            "system": collectSystemInfo()
+            "system": collectSystemInfo(),
+            "security": collectSecurityStatus(),
+            "backup": collectTimeMachineStatus()
         ]
+    }
+    
+    // MARK: - Security Status (Gatekeeper/XProtect)
+    
+    private func collectSecurityStatus() -> [String: Any] {
+        var status: [String: Any] = [:]
+        
+        // Check Gatekeeper status
+        let gkTask = Process()
+        gkTask.launchPath = "/usr/sbin/spctl"
+        gkTask.arguments = ["--status"]
+        let gkPipe = Pipe()
+        gkTask.standardOutput = gkPipe
+        gkTask.standardError = gkPipe
+        
+        do {
+            try gkTask.run()
+            gkTask.waitUntilExit()
+            let data = gkPipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+            status["gatekeeper_enabled"] = output.contains("enabled")
+        } catch {
+            status["gatekeeper_enabled"] = false
+        }
+        
+        // Check FileVault status
+        let fvTask = Process()
+        fvTask.launchPath = "/usr/bin/fdesetup"
+        fvTask.arguments = ["status"]
+        let fvPipe = Pipe()
+        fvTask.standardOutput = fvPipe
+        
+        do {
+            try fvTask.run()
+            fvTask.waitUntilExit()
+            let data = fvPipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+            status["filevault_enabled"] = output.contains("On")
+        } catch {
+            status["filevault_enabled"] = false
+        }
+        
+        // Check SIP status
+        let sipTask = Process()
+        sipTask.launchPath = "/usr/bin/csrutil"
+        sipTask.arguments = ["status"]
+        let sipPipe = Pipe()
+        sipTask.standardOutput = sipPipe
+        
+        do {
+            try sipTask.run()
+            sipTask.waitUntilExit()
+            let data = sipPipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+            status["sip_enabled"] = output.contains("enabled")
+        } catch {
+            status["sip_enabled"] = false
+        }
+        
+        return status
+    }
+    
+    // MARK: - Time Machine Backup Status
+    
+    private func collectTimeMachineStatus() -> [String: Any] {
+        let task = Process()
+        task.launchPath = "/usr/bin/tmutil"
+        task.arguments = ["latestbackup"]
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = pipe
+        
+        do {
+            try task.run()
+            task.waitUntilExit()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            
+            return [
+                "enabled": !output.isEmpty && !output.contains("No backups"),
+                "latest_backup": output.isEmpty ? nil : output
+            ]
+        } catch {
+            return ["enabled": false, "latest_backup": nil]
+        }
     }
     
     // MARK: - CPU

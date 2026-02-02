@@ -39,3 +39,21 @@ export { HardwareInventoryReports } from './HardwareInventoryReports';
 export { SoftwareLicenseAudit } from './SoftwareLicenseAudit';
 export { ComplianceScorecards } from './ComplianceScorecards';
 export { ChangeAuditTrail } from './ChangeAuditTrail';
+
+// Alerting & Notifications
+export { AlertNotificationManager } from './AlertNotificationManager';
+export { AlertEscalationRules } from './AlertEscalationRules';
+export { OnCallScheduleManager } from './OnCallScheduleManager';
+export { AlertSuppressionWindows } from './AlertSuppressionWindows';
+
+// Patch Management
+export { AutomatedPatchScheduling } from './AutomatedPatchScheduling';
+export { PatchComplianceDashboard } from './PatchComplianceDashboard';
+export { PatchRollbackSupport } from './PatchRollbackSupport';
+export { ThirdPartyAppPatching } from './ThirdPartyAppPatching';
+
+// Integrations
+export { PSASyncIntegration } from './PSASyncIntegration';
+export { DocumentationPlatformIntegration } from './DocumentationPlatformIntegration';
+export { BackupMonitoringIntegration } from './BackupMonitoringIntegration';
+export { NetworkDiscoveryScanner } from './NetworkDiscoveryScanner';
