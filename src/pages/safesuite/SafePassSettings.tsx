@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSafePassAI } from '@/hooks/useSafePassAI';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,13 +20,26 @@ import {
   Fingerprint,
   Lock,
   RefreshCw,
-  Loader2
+  Loader2,
+  Sparkles,
+  Brain,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SafePassSettings() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [clearingPatterns, setClearingPatterns] = useState(false);
+  
+  // SafePassAI settings
+  const { 
+    isEnabled: aiEnabled, 
+    learnPatterns, 
+    toggleEnabled: setAiEnabled, 
+    toggleLearnPatterns: setLearnPatterns,
+    clearPatterns
+  } = useSafePassAI();
   
   // SafePass-specific settings
   const [settings, setSettings] = useState({
@@ -48,6 +62,13 @@ export default function SafePassSettings() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     toast.success('SafePass settings saved');
     setLoading(false);
+  };
+
+  const handleClearPatterns = async () => {
+    setClearingPatterns(true);
+    await clearPatterns();
+    toast.success('Learning patterns cleared');
+    setClearingPatterns(false);
   };
 
   return (
@@ -112,6 +133,85 @@ export default function SafePassSettings() {
                   setSettings(prev => ({ ...prev, biometricUnlock: checked }))
                 }
               />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* SafePassAI Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-amber-500" />
+            SafePassAI
+          </CardTitle>
+          <CardDescription>
+            Intelligent credential suggestions and smart search
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Enable SafePassAI
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Get intelligent credential suggestions based on context
+                </p>
+              </div>
+              <Switch
+                variant="safepass"
+                checked={aiEnabled}
+                onCheckedChange={setAiEnabled}
+              />
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base flex items-center gap-2">
+                  <Brain className="h-4 w-4" />
+                  Learn from Usage
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Remember your preferences to improve suggestions
+                </p>
+              </div>
+              <Switch
+                variant="safepass"
+                checked={learnPatterns}
+                onCheckedChange={setLearnPatterns}
+                disabled={!aiEnabled}
+              />
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base flex items-center gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  Clear Learned Patterns
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Reset all learned preferences and usage data
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearPatterns}
+                disabled={clearingPatterns || !aiEnabled}
+                className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+              >
+                {clearingPatterns ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Clearing...
+                  </>
+                ) : (
+                  'Clear Data'
+                )}
+              </Button>
             </div>
           </div>
         </CardContent>

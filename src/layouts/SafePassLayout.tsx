@@ -24,6 +24,7 @@ import {
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';
+import { AccountSwitcher } from '@/components/safepass/AccountSwitcher';
 
 const navItems = [
   { path: '/safepass/dashboard', label: 'Vault', icon: Lock },
@@ -87,7 +88,10 @@ export function SafePassLayout() {
           </nav>
 
           {/* Right Side */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Account Switcher */}
+            <AccountSwitcher />
+            
             {/* Notifications */}
             <Button variant="ghost" size="icon" className="relative text-gray-400 hover:text-amber-400 hover:bg-amber-500/10">
               <Bell className="h-5 w-5" />
