@@ -34,16 +34,6 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Alias react packages to node_modules directories (not specific files)
-      // to prevent duplicate React instances causing "dispatcher is null"
-      "react": path.resolve(__dirname, "node_modules/react"),
-      // Also alias React subpath entrypoints used by the automatic JSX runtime
-      // so they resolve to the SAME React install.
-      "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime.js"),
-      "react/jsx-dev-runtime": path.resolve(__dirname, "node_modules/react/jsx-dev-runtime.js"),
-      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
-      // And alias react-dom subpath entrypoints as well.
-      "react-dom/client": path.resolve(__dirname, "node_modules/react-dom/client.js"),
     },
     // Fixes "Invalid hook call" / "dispatcher is null" by ensuring the app and all deps
     // share a single React instance.
