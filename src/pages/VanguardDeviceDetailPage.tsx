@@ -47,6 +47,7 @@ import {
   GripVertical,
   RotateCcw,
   Copy,
+  Package,
 } from "lucide-react";
 // Vanguard Atlas (formerly SafeDoc) - no logo import needed, using Shield icon
 import { useVanguardAgent, useVanguardAgents } from "@/hooks/useVanguardAgents";
@@ -58,6 +59,7 @@ import { toast } from "sonner";
 import { DeviceOverviewTab } from "@/components/vanguard/device/DeviceOverviewTab";
 import { DeviceHardwareTab } from "@/components/vanguard/device/DeviceHardwareTab";
 import { DeviceDisksTab } from "@/components/vanguard/device/DeviceDisksTab";
+import { DeviceSoftwareTab } from "@/components/vanguard/device/DeviceSoftwareTab";
 import { DeviceSecurityTab } from "@/components/vanguard/device/DeviceSecurityTab";
 import { DeviceCustomFieldsTab } from "@/components/vanguard/device/DeviceCustomFieldsTab";
 import { DevicePasswordsTab } from "@/components/vanguard/device/DevicePasswordsTab";
@@ -570,6 +572,10 @@ export default function VanguardDeviceDetailPage() {
                   <HardDrive className="h-4 w-4" />
                   Disks
                 </TabsTrigger>
+                <TabsTrigger value="software" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+                  <Package className="h-4 w-4" />
+                  Software
+                </TabsTrigger>
                 <TabsTrigger value="security" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                   <Shield className="h-4 w-4" />
                   OS & Security
@@ -610,12 +616,16 @@ export default function VanguardDeviceDetailPage() {
                 <DeviceDisksTab agent={agent} />
               </TabsContent>
 
+              <TabsContent value="software" className="mt-4">
+                <DeviceSoftwareTab agent={agent} />
+              </TabsContent>
+
               <TabsContent value="security" className="mt-4">
                 <DeviceSecurityTab agent={agent} />
               </TabsContent>
 
               <TabsContent value="custom" className="mt-4">
-                <DeviceCustomFieldsTab 
+                <DeviceCustomFieldsTab
                   agent={agent} 
                   onAddField={() => setShowCustomFieldDialog(true)}
                   onDeleteField={deleteCustomField}

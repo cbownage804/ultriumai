@@ -240,15 +240,26 @@ export function useVanguardAgent(agentId: string | undefined) {
       security.updated_at = ss.updated_at ?? null;
     }
 
-    // Disks tab expects config.disks, but telemetry currently lands in metrics.custom_metrics.disks
-    const telemetryDisks = telemetryData.disks;
-    if (Array.isArray(telemetryDisks) && telemetryDisks.length > 0) {
-      (normalized.config as any).disks = telemetryDisks;
+    // Disks tab expects config.disks - prefer data stored directly in config, fall back to metrics
+    if (!(normalized.config as any).disks || (normalized.config as any).disks.length === 0) {
+      const telemetryDisks = telemetryData.disks;
+      if (Array.isArray(telemetryDisks) && telemetryDisks.length > 0) {
+        (normalized.config as any).disks = telemetryDisks;
+      }
+    }
+
+    // Software tab expects config.installed_software - prefer data stored directly in config
+    if (!(normalized.config as any).installed_software || (normalized.config as any).installed_software.length === 0) {
+      const telemetrySoftware = telemetryData.installed_software;
+      if (Array.isArray(telemetrySoftware) && telemetrySoftware.length > 0) {
+        (normalized.config as any).installed_software = telemetrySoftware;
+      }
     }
 
     // Store last_telemetry timestamp for debugging
-    if (telemetryData.last_telemetry_at) {
-      (normalized.config as any).last_telemetry_at = telemetryData.last_telemetry_at;
+    const configLastTelemetry = (normalized.config as any).last_telemetry_at || telemetryData.last_telemetry_at;
+    if (configLastTelemetry) {
+      (normalized.config as any).last_telemetry_at = configLastTelemetry;
     }
 
     return normalized;

@@ -7,6 +7,18 @@ import { VanguardAgent } from "@/hooks/useVanguardAgents";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+// Helper to format dates
+function formatDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return '—';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '—';
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch {
+    return '—';
+  }
+}
+
 interface DeviceSecurityTabProps {
   agent: VanguardAgent;
 }
@@ -103,6 +115,54 @@ export function DeviceSecurityTab({ agent }: DeviceSecurityTabProps) {
                 status={securityInfo.firewall_status}
               />
             </div>
+            
+            {/* Additional Security Details */}
+            {(securityInfo.signature_version || securityInfo.last_quick_scan || securityInfo.last_full_scan) && (
+              <div className="mt-4 pt-4 border-t border-cyan-500/10 grid grid-cols-2 md:grid-cols-4 gap-3">
+                {securityInfo.signature_version && (
+                  <div className="p-2 bg-slate-900/50 rounded-lg">
+                    <p className="text-xs text-slate-500">Signature Version</p>
+                    <p className="text-sm text-slate-300 font-mono truncate">{securityInfo.signature_version}</p>
+                  </div>
+                )}
+                {securityInfo.signature_last_updated && (
+                  <div className="p-2 bg-slate-900/50 rounded-lg">
+                    <p className="text-xs text-slate-500">Signatures Updated</p>
+                    <p className="text-sm text-slate-300">{formatDate(securityInfo.signature_last_updated)}</p>
+                  </div>
+                )}
+                {securityInfo.last_quick_scan && (
+                  <div className="p-2 bg-slate-900/50 rounded-lg">
+                    <p className="text-xs text-slate-500">Last Quick Scan</p>
+                    <p className="text-sm text-slate-300">{formatDate(securityInfo.last_quick_scan)}</p>
+                  </div>
+                )}
+                {securityInfo.last_full_scan && (
+                  <div className="p-2 bg-slate-900/50 rounded-lg">
+                    <p className="text-xs text-slate-500">Last Full Scan</p>
+                    <p className="text-sm text-slate-300">{formatDate(securityInfo.last_full_scan)}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Threat Summary */}
+            {(securityInfo.recent_threats_count > 0 || securityInfo.quarantined_count > 0) && (
+              <div className="mt-4 pt-4 border-t border-cyan-500/10 flex gap-4">
+                {securityInfo.recent_threats_count > 0 && (
+                  <Badge className="bg-red-500/20 text-red-400 border-red-500/30 gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    {securityInfo.recent_threats_count} Recent Threat{securityInfo.recent_threats_count > 1 ? 's' : ''}
+                  </Badge>
+                )}
+                {securityInfo.quarantined_count > 0 && (
+                  <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 gap-1">
+                    <Shield className="h-3 w-3" />
+                    {securityInfo.quarantined_count} Quarantined
+                  </Badge>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -211,35 +271,44 @@ function SecurityStatusCard({
   name: string; 
   status?: string;
 }) {
-  const isEnabled = status?.toLowerCase() === 'enabled' || status?.toLowerCase() === 'on' || status?.toLowerCase() === 'active';
+  const normalizedStatus = status?.toLowerCase();
+  const isEnabled = normalizedStatus === 'enabled' || normalizedStatus === 'on' || normalizedStatus === 'active';
+  const isUnknown = !status || normalizedStatus === 'unknown';
+  
+  const bgClass = isUnknown 
+    ? "bg-slate-500/10 border-slate-500/20" 
+    : isEnabled 
+      ? "bg-green-500/10 border-green-500/20" 
+      : "bg-red-500/10 border-red-500/20";
+  
+  const iconBgClass = isUnknown
+    ? "bg-slate-500/20"
+    : isEnabled ? "bg-green-500/20" : "bg-red-500/20";
+  
+  const iconClass = isUnknown
+    ? "text-slate-400"
+    : isEnabled ? "text-green-400" : "text-red-400";
+  
+  const badgeClass = isUnknown
+    ? "bg-slate-500/20 text-slate-400 border-slate-500/30"
+    : isEnabled 
+      ? "bg-green-500/20 text-green-400 border-green-500/30" 
+      : "bg-red-500/20 text-red-400 border-red-500/30";
+  
+  const statusText = isUnknown ? "Unknown" : isEnabled ? "Active" : "Disabled";
   
   return (
-    <div className={cn(
-      "p-4 rounded-lg border",
-      isEnabled 
-        ? "bg-green-500/10 border-green-500/20" 
-        : "bg-red-500/10 border-red-500/20"
-    )}>
+    <div className={cn("p-4 rounded-lg border", bgClass)}>
       <div className="flex items-center gap-3">
-        <div className={cn(
-          "p-2 rounded-lg",
-          isEnabled ? "bg-green-500/20" : "bg-red-500/20"
-        )}>
-          <Icon className={cn(
-            "h-5 w-5",
-            isEnabled ? "text-green-400" : "text-red-400"
-          )} />
+        <div className={cn("p-2 rounded-lg", iconBgClass)}>
+          <Icon className={cn("h-5 w-5", iconClass)} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs text-slate-400">{label}</p>
           <p className="text-sm font-medium text-slate-200 truncate">{name}</p>
         </div>
-        <Badge className={cn(
-          isEnabled 
-            ? "bg-green-500/20 text-green-400 border-green-500/30" 
-            : "bg-red-500/20 text-red-400 border-red-500/30"
-        )}>
-          {isEnabled ? "Active" : "Disabled"}
+        <Badge className={badgeClass}>
+          {statusText}
         </Badge>
       </div>
     </div>

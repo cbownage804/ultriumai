@@ -435,7 +435,7 @@ async function handleTelemetry(supabase: any, body: any) {
   // Get agent
   const { data: agent, error: agentError } = await supabase
     .from('vanguard_agents')
-    .select('id, user_id')
+    .select('id, user_id, config')
     .eq('device_id', device_id)
     .single();
   
@@ -446,20 +446,67 @@ async function handleTelemetry(supabase: any, body: any) {
     );
   }
   
-  // Store telemetry data in custom_metrics for now
+  // Normalize disk data from C# agent format to UI format
+  // C# sends: { Drive, Label, Type, FileSystem, TotalGb, UsedGb, FreeGb, PercentUsed, Status }
+  // UI expects: { drive, media_type, model, total_size, used_size, free_size, usage_percent, status, health_status }
+  const normalizedDisks = (disks || []).map((disk: any) => ({
+    drive: disk.Drive || disk.drive || 'Unknown',
+    media_type: disk.Type || disk.type || disk.media_type || 'Fixed',
+    model: disk.Label || disk.label || disk.model || 'Local Disk',
+    file_system: disk.FileSystem || disk.file_system || 'NTFS',
+    total_size: formatSize(disk.TotalGb || disk.total_gb),
+    used_size: formatSize(disk.UsedGb || disk.used_gb),
+    free_size: formatSize(disk.FreeGb || disk.free_gb),
+    usage_percent: Math.round(disk.PercentUsed || disk.percent_used || 0),
+    status: disk.Status || disk.status || 'Healthy',
+    health_status: disk.Status || disk.status || 'Healthy',
+    // Keep raw values for calculations
+    total_gb: disk.TotalGb || disk.total_gb || 0,
+    used_gb: disk.UsedGb || disk.used_gb || 0,
+    free_gb: disk.FreeGb || disk.free_gb || 0,
+  }));
+  
+  // Normalize network adapters
+  const normalizedAdapters = (network_adapters || []).map((adapter: any) => ({
+    name: adapter.Name || adapter.name,
+    ip_address: adapter.IpAddress || adapter.ip_address,
+    mac_address: adapter.MacAddress || adapter.mac_address,
+    status: adapter.Status || adapter.status || 'Down',
+  }));
+  
+  // Normalize installed software
+  const normalizedSoftware = (installed_software || []).map((sw: any) => ({
+    name: sw.Name || sw.name,
+    version: sw.Version || sw.version || '',
+    publisher: sw.Publisher || sw.publisher || '',
+    install_date: sw.InstallDate || sw.install_date || null,
+  }));
+  
+  // Store telemetry data in custom_metrics
   const telemetryData: Record<string, any> = {
     processes_count: processes?.length || 0,
     services_count: services?.length || 0,
-    network_adapters: network_adapters || [],
-    installed_software_count: installed_software?.length || 0,
-    disks: disks || [],
+    network_adapters: normalizedAdapters,
+    installed_software: normalizedSoftware,
+    installed_software_count: normalizedSoftware.length,
+    disks: normalizedDisks,
     last_telemetry_at: new Date().toISOString()
   };
   
-  // Update agent with telemetry metadata
+  // Also update agent.config with latest telemetry for quick access
+  const updatedConfig = {
+    ...(agent.config || {}),
+    disks: normalizedDisks,
+    installed_software: normalizedSoftware,
+    network_adapters: normalizedAdapters,
+    last_telemetry_at: new Date().toISOString(),
+  };
+  
+  // Update agent with telemetry in config
   await supabase
     .from('vanguard_agents')
     .update({
+      config: updatedConfig,
       updated_at: new Date().toISOString()
     })
     .eq('id', agent.id);
@@ -472,12 +519,19 @@ async function handleTelemetry(supabase: any, body: any) {
       custom_metrics: telemetryData
     });
   
-  console.log(`[vanguard-agent-api] Telemetry from ${device_id}: ${processes?.length || 0} processes, ${services?.length || 0} services, ${disks?.length || 0} disks`);
+  console.log(`[vanguard-agent-api] Telemetry from ${device_id}: ${processes?.length || 0} processes, ${services?.length || 0} services, ${normalizedDisks.length} disks, ${normalizedSoftware.length} software`);
   
   return new Response(
     JSON.stringify({ status: 'ok' }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
+}
+
+// Helper to format GB to human-readable size
+function formatSize(gb: number | undefined): string {
+  if (!gb || isNaN(gb)) return '0 GB';
+  if (gb >= 1000) return `${(gb / 1000).toFixed(1)} TB`;
+  return `${gb.toFixed(1)} GB`;
 }
 
 // Handle RustDesk ID update from agent
