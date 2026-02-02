@@ -15,9 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { getVanguardBasePath } from '@/utils/subdomain';
 import { generateVanguardZip, downloadBlob } from '@/utils/generateVanguardZip';
 import { generateWindowsAgentZip } from '@/utils/generateWindowsAgentZip';
-
-const API_ENDPOINT = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api';
-const VANGUARD_SECRET = 'vgd_sk_7Kx9mPqR3nTwYz2JfL8sHcN6bVdXaE4uGtM1oWpQ5iA';
+import { getAgentConfig } from '@/hooks/useVanguardAgentConfig';
 
 // Supabase Storage bucket for agent downloads
 const STORAGE_BASE = 'https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/vanguard-agents';
@@ -36,10 +34,14 @@ interface MSPClient {
 }
 
 export default function VanguardSetup() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const navigate = useNavigate();
   const basePath = getVanguardBasePath();
   const [copied, setCopied] = useState<string | null>(null);
+  
+  // Dynamic agent config from server
+  const [agentConfig, setAgentConfig] = useState<{ secretKey: string; apiEndpoint: string } | null>(null);
+  const [loadingConfig, setLoadingConfig] = useState(true);
   
   // OS selection state
   const [selectedOS, setSelectedOS] = useState<SelectedOS>('windows');
@@ -59,6 +61,28 @@ export default function VanguardSetup() {
   const [windowsDownloadProgress, setWindowsDownloadProgress] = useState(0);
   const [windowsDownloadMessage, setWindowsDownloadMessage] = useState('');
 
+  // Fetch agent config on mount
+  useEffect(() => {
+    const fetchConfig = async () => {
+      if (!session?.access_token) {
+        setLoadingConfig(false);
+        return;
+      }
+      
+      try {
+        const config = await getAgentConfig();
+        if (config) {
+          setAgentConfig({ secretKey: config.secretKey, apiEndpoint: config.apiEndpoint });
+        }
+      } catch (error) {
+        console.error('Failed to fetch agent config:', error);
+      } finally {
+        setLoadingConfig(false);
+      }
+    };
+    
+    fetchConfig();
+  }, [session?.access_token]);
   // Fetch MSP clients on mount
   useEffect(() => {
     const fetchClients = async () => {
@@ -137,8 +161,8 @@ export default function VanguardSetup() {
 # Place this file at /etc/vanguard/config.yaml on your Pi/Ubuntu server
 
 ultrium_api:
-  endpoint: "${API_ENDPOINT}"
-  secret_key: "${VANGUARD_SECRET}"
+  endpoint: "${agentConfig?.apiEndpoint || 'Loading...'}"
+  secret_key: "${agentConfig?.secretKey || 'Loading...'}"
   user_id: "${user?.id || 'YOUR_USER_ID'}"
   heartbeat_interval: 30  # seconds
 
@@ -391,12 +415,17 @@ if __name__ == '__main__':
       return;
     }
 
+    if (!agentConfig) {
+      toast.error('Agent configuration not loaded. Please try again.');
+      return;
+    }
+
     setIsDownloading(true);
     try {
       const blob = await generateVanguardZip({
         userId: user.id,
-        apiEndpoint: API_ENDPOINT,
-        secretKey: VANGUARD_SECRET,
+        apiEndpoint: agentConfig.apiEndpoint,
+        secretKey: agentConfig.secretKey,
         deviceName: 'Vanguard-Agent',
         deviceLocation: 'Default Location',
       });
@@ -417,6 +446,11 @@ if __name__ == '__main__':
       return;
     }
 
+    if (!agentConfig) {
+      toast.error('Agent configuration not loaded. Please try again.');
+      return;
+    }
+
     setIsDownloadingWindows(true);
     setWindowsDownloadProgress(0);
     setWindowsDownloadMessage('Initializing...');
@@ -424,8 +458,8 @@ if __name__ == '__main__':
     try {
       const blob = await generateWindowsAgentZip({
         userId: user.id,
-        apiEndpoint: API_ENDPOINT,
-        secretKey: VANGUARD_SECRET,
+        apiEndpoint: agentConfig.apiEndpoint,
+        secretKey: agentConfig.secretKey,
         deviceName: 'Vanguard-Windows',
         clientId: selectedClientId || undefined,
         clientName: selectedClient?.company_name,
@@ -471,11 +505,13 @@ if __name__ == '__main__':
   const getInstallCommand = () => {
     const userId = user?.id || 'YOUR_USER_ID';
     const clientIdParam = selectedClientId ? ` CLIENTID="${selectedClientId}"` : '';
+    const secretKey = agentConfig?.secretKey || 'YOUR_SECRET_KEY';
+    const apiEndpoint = agentConfig?.apiEndpoint || 'YOUR_API_ENDPOINT';
     
     switch (selectedOS) {
       case 'windows':
         return `# Silent install (run as Administrator)
-msiexec /i VanguardAgent.msi /qn USERID="${userId}" SECRETKEY="${VANGUARD_SECRET}"${clientIdParam}
+msiexec /i VanguardAgent.msi /qn USERID="${userId}" SECRETKEY="${secretKey}"${clientIdParam}
 
 # Or interactive install
 .\\VanguardAgent-Setup.exe`;
@@ -486,7 +522,7 @@ sudo installer -pkg /Volumes/VanguardAgent/VanguardAgent.pkg -target /
 
 # Configure the agent
 sudo defaults write /Library/Preferences/com.ultriumai.vanguard userid "${userId}"
-sudo defaults write /Library/Preferences/com.ultriumai.vanguard secretkey "${VANGUARD_SECRET}"${selectedClientId ? `
+sudo defaults write /Library/Preferences/com.ultriumai.vanguard secretkey "${secretKey}"${selectedClientId ? `
 sudo defaults write /Library/Preferences/com.ultriumai.vanguard clientid "${selectedClientId}"` : ''}
 
 # Start the service
@@ -500,8 +536,8 @@ sudo ./install.sh
 # Configure the agent
 sudo tee /etc/vanguard/config.yaml << EOF
 ultrium_api:
-  endpoint: "${API_ENDPOINT}"
-  secret_key: "${VANGUARD_SECRET}"
+  endpoint: "${apiEndpoint}"
+  secret_key: "${secretKey}"
   user_id: "${userId}"${selectedClientId ? `
   client_id: "${selectedClientId}"` : ''}
   heartbeat_interval: 30
@@ -805,11 +841,12 @@ sudo systemctl start vanguard-agent`;
               <div>
                 <Label>API Endpoint</Label>
                 <div className="flex gap-2 mt-1">
-                  <Input value={API_ENDPOINT} readOnly className="font-mono text-sm" />
+                  <Input value={agentConfig?.apiEndpoint || 'Loading...'} readOnly className="font-mono text-sm" />
                   <Button 
                     variant="outline" 
                     size="icon"
-                    onClick={() => copyToClipboard(API_ENDPOINT, 'Endpoint')}
+                    onClick={() => copyToClipboard(agentConfig?.apiEndpoint || '', 'Endpoint')}
+                    disabled={!agentConfig}
                   >
                     {copied === 'Endpoint' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
@@ -818,11 +855,12 @@ sudo systemctl start vanguard-agent`;
               <div>
                 <Label>Secret Key</Label>
                 <div className="flex gap-2 mt-1">
-                  <Input value={VANGUARD_SECRET} readOnly className="font-mono text-sm" />
+                  <Input value={agentConfig?.secretKey || 'Loading...'} readOnly className="font-mono text-sm" />
                   <Button 
                     variant="outline" 
                     size="icon"
-                    onClick={() => copyToClipboard(VANGUARD_SECRET, 'Secret')}
+                    onClick={() => copyToClipboard(agentConfig?.secretKey || '', 'Secret')}
+                    disabled={!agentConfig}
                   >
                     {copied === 'Secret' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>

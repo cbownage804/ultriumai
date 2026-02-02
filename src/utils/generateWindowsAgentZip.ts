@@ -10,6 +10,9 @@ interface WindowsAgentZipOptions {
   onProgress?: (progress: number, message: string) => void;
 }
 
+// Re-export for convenience - callers should use getAgentConfig() to get these values
+export type { WindowsAgentZipOptions };
+
 // Primary: Supabase Storage bucket for agent downloads
 const STORAGE_BASE_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/vanguard-agents';
 // Fallback: GitHub Releases (public)
