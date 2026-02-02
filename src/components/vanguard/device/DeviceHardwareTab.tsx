@@ -13,9 +13,22 @@ interface DeviceHardwareTabProps {
 export function DeviceHardwareTab({ agent }: DeviceHardwareTabProps) {
   const [showMore, setShowMore] = useState(false);
   
-  // Extract hardware info from agent config
+  // Extract hardware info from agent config - handle both legacy and new format
   const hardware = agent.config?.hardware || {};
-  const isLaptop = hardware.is_laptop || false;
+  const isLaptop = hardware.is_laptop || hardware.form_factor === 'Laptop' || false;
+
+  // Map new agent fields to display names
+  const vendor = hardware.vendor || hardware.manufacturer || "—";
+  const model = hardware.model || "—";
+  const serialNumber = hardware.serial_number || "—";
+  const processor = hardware.processor || hardware.cpu_info || "—";
+  const memory = hardware.memory || (hardware.total_memory_gb ? `${hardware.total_memory_gb} GB` : "—");
+  const macAddress = hardware.mac_address || "—";
+  const osName = hardware.os_name || agent.firmware_version || "—";
+  const osVersion = hardware.os_version || "—";
+  const deviceType = hardware.device_type || "—";
+  const formFactor = hardware.form_factor || "—";
+  const isVirtualMachine = hardware.is_virtual_machine ?? false;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -28,25 +41,30 @@ export function DeviceHardwareTab({ agent }: DeviceHardwareTabProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <InfoRow label="Vendor" value={hardware.vendor || "—"} />
-          <InfoRow label="Model" value={hardware.model || "—"} />
-          <InfoRow label="Serial number" value={hardware.serial_number || "—"} />
-          <InfoRow label="Motherboard" value={hardware.motherboard || "—"} />
+          <InfoRow label="Vendor" value={vendor} />
+          <InfoRow label="Model" value={model} />
+          <InfoRow label="Serial number" value={serialNumber} />
+          <InfoRow label="Device Type" value={deviceType} />
+          <InfoRow label="Form Factor" value={formFactor} />
+          {isVirtualMachine && (
+            <InfoRow label="Virtual Machine" value="Yes" />
+          )}
         </CardContent>
       </Card>
 
-      {/* BIOS Information */}
+      {/* Operating System */}
       <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-cyan-500/20 backdrop-blur-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-cyan-400 flex items-center gap-2">
             <CircuitBoard className="h-4 w-4" />
-            BIOS Information
+            Operating System
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <InfoRow label="OS Name" value={osName} />
+          <InfoRow label="OS Version" value={osVersion} />
           <InfoRow label="BIOS manufacturer" value={hardware.bios_manufacturer || "—"} />
           <InfoRow label="BIOS version" value={hardware.bios_version || "—"} />
-          <InfoRow label="BIOS version date" value={hardware.bios_date || "—"} />
         </CardContent>
       </Card>
 
@@ -59,9 +77,9 @@ export function DeviceHardwareTab({ agent }: DeviceHardwareTabProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <InfoRow label="Processor" value={hardware.processor || "—"} />
+          <InfoRow label="Processor" value={processor} />
           <InfoRow label="Cores / Threads" value={hardware.cores ? `${hardware.cores} / ${hardware.threads || hardware.cores * 2}` : "—"} />
-          <InfoRow label="Memory" value={hardware.memory || "—"} />
+          <InfoRow label="Memory" value={memory} />
           <InfoRow label="Video card" value={hardware.video_card || "—"} />
           <InfoRow label="Sound" value={hardware.sound_card || "—"} />
         </CardContent>
@@ -91,6 +109,11 @@ export function DeviceHardwareTab({ agent }: DeviceHardwareTabProps) {
                   <span className="text-sm text-slate-200 font-mono">{mac.address}</span>
                 </div>
               ))
+            ) : macAddress !== "—" ? (
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-slate-400">Primary MAC</span>
+                <span className="text-sm text-slate-200 font-mono">{macAddress}</span>
+              </div>
             ) : (
               <InfoRow label="MAC addresses" value="Not available" />
             )}

@@ -34,7 +34,7 @@ serve(async (req) => {
     console.log(`[vanguard-agent-api] Action: ${action}, Device: ${body.device_id || 'N/A'}`);
 
     // Agent-side actions (require X-VANGUARD-KEY)
-    if (['register', 'heartbeat', 'scan_results', 'get_commands', 'command_response', 'security_telemetry', 'discovery_results', 'get_scanner_config'].includes(action)) {
+    if (['register', 'heartbeat', 'scan_results', 'get_commands', 'command_response', 'security_telemetry', 'discovery_results', 'get_scanner_config', 'telemetry', 'update_rustdesk_id'].includes(action)) {
       if (agentKey !== VANGUARD_SECRET) {
         console.error('[vanguard-agent-api] Invalid agent key');
         return new Response(
@@ -48,6 +48,8 @@ serve(async (req) => {
           return await handleRegister(supabase, body);
         case 'heartbeat':
           return await handleHeartbeat(supabase, body, req);
+        case 'telemetry':
+          return await handleTelemetry(supabase, body);
         case 'scan_results':
           return await handleScanResults(supabase, body);
         case 'get_commands':
@@ -60,6 +62,8 @@ serve(async (req) => {
           return await handleDiscoveryResults(supabase, body);
         case 'get_scanner_config':
           return await getScannerConfig(supabase, body);
+        case 'update_rustdesk_id':
+          return await handleUpdateRustDeskId(supabase, body);
       }
     }
     
@@ -165,6 +169,34 @@ async function handleRegister(supabase: any, body: any) {
     }
   }
   
+  // Build hardware info object for config storage
+  const hardwareInfo: Record<string, any> = {
+    hostname: body.hostname || systemInfo.hostname,
+    os_name: systemInfo.os_name,
+    os_version: systemInfo.os_version,
+    cpu_info: systemInfo.cpu_info,
+    total_memory_gb: systemInfo.total_memory_gb,
+    mac_address: systemInfo.mac_address,
+    manufacturer: systemInfo.manufacturer,
+    model: systemInfo.model,
+    serial_number: systemInfo.serial_number,
+    device_type: systemInfo.device_type,
+    form_factor: systemInfo.form_factor,
+    is_virtual_machine: systemInfo.is_virtual_machine,
+    rustdesk_id: body.rustdesk_id,
+    anydesk_id: systemInfo.anydesk_id,
+    teamviewer_id: systemInfo.teamviewer_id,
+  };
+  
+  // Detect agent type from OS name
+  let agentType = 'windows';
+  const osName = (systemInfo.os_name || '').toLowerCase();
+  if (osName.includes('linux') || osName.includes('ubuntu') || osName.includes('debian')) {
+    agentType = 'linux';
+  } else if (osName.includes('darwin') || osName.includes('mac')) {
+    agentType = 'mac';
+  }
+  
   // Build the agent record with all available fields
   const agentData: Record<string, any> = {
     device_id,
@@ -174,11 +206,16 @@ async function handleRegister(supabase: any, body: any) {
     vpn_ip: body.vpn_ip,
     api_endpoint: body.api_endpoint,
     agent_version: body.agent_version || body.version,
-    firmware_version: body.firmware_version || systemInfo.os_version,
+    firmware_version: systemInfo.os_version || body.firmware_version,
     hailo_board_name: body.hailo_board_name || body.hailo?.board_name,
+    agent_type: agentType,
     status: 'online',
     last_heartbeat: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    config: {
+      hardware: hardwareInfo,
+      thresholds: { cpu: 90, memory: 90, disk: 90 }
+    }
   };
 
   // Include client_id if provided (for MSP client association)
@@ -207,9 +244,9 @@ async function handleRegister(supabase: any, body: any) {
     );
   }
   
-  console.log(`[vanguard-agent-api] Agent registered: ${device_id}, IP: ${ip_address}, Version: ${agentData.agent_version}`);
+  console.log(`[vanguard-agent-api] Agent registered: ${device_id}, IP: ${ip_address}, Version: ${agentData.agent_version}, Type: ${agentType}`);
   return new Response(
-    JSON.stringify({ status: 'ok', agent_id: data.id }),
+    JSON.stringify({ status: 'ok', agent_id: data.id, device_id: device_id }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
 }
@@ -374,6 +411,111 @@ async function handleHeartbeat(supabase: any, body: any, req?: Request) {
   
   return new Response(
     JSON.stringify({ status: 'ok', received: { cpu_percent, memory_percent, disk_percent } }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+// Handle full telemetry data (hardware, disks, network adapters, software)
+async function handleTelemetry(supabase: any, body: any) {
+  const { device_id, processes, services, network_adapters, installed_software, disks, timestamp } = body;
+  
+  if (!device_id) {
+    return new Response(
+      JSON.stringify({ error: 'device_id is required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Get agent
+  const { data: agent, error: agentError } = await supabase
+    .from('vanguard_agents')
+    .select('id, user_id')
+    .eq('device_id', device_id)
+    .single();
+  
+  if (agentError || !agent) {
+    return new Response(
+      JSON.stringify({ error: 'Agent not found. Please register first.' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Store telemetry data in custom_metrics for now
+  const telemetryData: Record<string, any> = {
+    processes_count: processes?.length || 0,
+    services_count: services?.length || 0,
+    network_adapters: network_adapters || [],
+    installed_software_count: installed_software?.length || 0,
+    disks: disks || [],
+    last_telemetry_at: new Date().toISOString()
+  };
+  
+  // Update agent with telemetry metadata
+  await supabase
+    .from('vanguard_agents')
+    .update({
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', agent.id);
+  
+  // Store in vanguard_agent_metrics with custom_metrics
+  await supabase
+    .from('vanguard_agent_metrics')
+    .insert({
+      agent_id: agent.id,
+      custom_metrics: telemetryData
+    });
+  
+  console.log(`[vanguard-agent-api] Telemetry from ${device_id}: ${processes?.length || 0} processes, ${services?.length || 0} services, ${disks?.length || 0} disks`);
+  
+  return new Response(
+    JSON.stringify({ status: 'ok' }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+// Handle RustDesk ID update from agent
+async function handleUpdateRustDeskId(supabase: any, body: any) {
+  const { device_id, rustdesk_id } = body;
+  
+  // Get device_id from header if not in body
+  const actualDeviceId = device_id || body.device_id;
+  
+  if (!actualDeviceId) {
+    return new Response(
+      JSON.stringify({ error: 'device_id is required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  if (!rustdesk_id) {
+    return new Response(
+      JSON.stringify({ error: 'rustdesk_id is required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Update agent with RustDesk ID
+  const { error } = await supabase
+    .from('vanguard_agents')
+    .update({
+      rustdesk_id: rustdesk_id,
+      updated_at: new Date().toISOString()
+    })
+    .eq('device_id', actualDeviceId);
+  
+  if (error) {
+    console.error('[vanguard-agent-api] Error updating RustDesk ID:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  console.log(`[vanguard-agent-api] Updated RustDesk ID for ${actualDeviceId}: ${rustdesk_id}`);
+  
+  return new Response(
+    JSON.stringify({ status: 'ok' }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
 }
