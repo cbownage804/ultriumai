@@ -75,3 +75,9 @@ export { TechnicianActivityLogs } from './TechnicianActivityLogs';
 
 // Reporting/BI
 export { ExecutiveDashboard } from './ExecutiveDashboard';
+export { ScheduledReportDelivery } from './ScheduledReportDelivery';
+export { WhiteLabelReports } from './WhiteLabelReports';
+export { SLATrackingDashboard } from './SLATrackingDashboard';
+
+// Operations Center (unified interface)
+export { HorizonOperationsCenter } from './HorizonOperationsCenter';
