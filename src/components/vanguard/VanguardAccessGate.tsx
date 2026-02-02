@@ -69,8 +69,8 @@ export function VanguardAccessGate({ children }: VanguardAccessGateProps) {
                 </Link>
               </Button>
               <Button variant="ghost" className="w-full text-white/60 hover:text-white hover:bg-white/5" asChild>
-                <Link to="/">
-                  Return to Homepage
+                <Link to="/hub">
+                  Return to Product Hub
                 </Link>
               </Button>
             </div>

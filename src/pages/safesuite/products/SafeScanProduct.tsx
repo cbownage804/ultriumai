@@ -46,13 +46,13 @@ export default function SafeScanProduct() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-red-500/10 safe-area-inset-top">
         <div className="container mx-auto px-4 h-16 sm:h-20 flex items-center justify-between">
-          <Link to="/" className="flex items-center">
+          <Link to="/safesuite" className="flex items-center">
             <div className="h-10 sm:h-14 rounded-xl bg-black flex items-center justify-center overflow-hidden border border-red-500/20 px-3 sm:px-4 shadow-lg shadow-red-500/10">
               <img src={safescanLogo} alt="SafeScan" className="h-7 sm:h-10 w-auto object-contain" />
             </div>
           </Link>
           <div className="flex items-center gap-2 sm:gap-4">
-            <Link to="/">
+            <Link to="/safesuite">
               <Button variant="ghost" className="text-gray-400 hover:text-white text-sm sm:text-base px-2 sm:px-4">
                 <span className="hidden sm:inline">← Back to SafeSuite</span>
                 <span className="sm:hidden">← Back</span>

@@ -98,8 +98,8 @@ const PaymentSuccess = () => {
         <Card className="max-w-md w-full mx-4">
           <CardContent className="pt-6 text-center">
             <p className="text-muted-foreground">Invalid payment session.</p>
-            <Button className="mt-4" onClick={() => navigate('/')}>
-              Return Home
+            <Button className="mt-4" onClick={() => navigate('/hub')}>
+              Return to Hub
             </Button>
           </CardContent>
         </Card>
@@ -208,9 +208,9 @@ const PaymentSuccess = () => {
             </Button>
           )}
           
-          <Button variant="ghost" onClick={() => navigate('/')}>
+          <Button variant="ghost" onClick={() => navigate('/hub')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
+            Back to Hub
           </Button>
         </div>
 
