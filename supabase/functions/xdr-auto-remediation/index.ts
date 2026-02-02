@@ -136,7 +136,7 @@ async function processThreatDetection(
   // Validate agent ownership
   const { data: agent } = await supabase
     .from('vanguard_agents')
-    .select('id, hostname, user_id, status')
+    .select('id, name, user_id, status')
     .eq('id', threat.agent_id)
     .single();
 
@@ -227,7 +227,7 @@ async function processThreatDetection(
         type: threat.threat_type,
         severity: threat.severity,
         confidence: threat.confidence,
-        affected_agent: agent.hostname
+        affected_agent: agent.name
       },
       response: {
         ai_analysis: responseActions.analysis,
@@ -506,13 +506,13 @@ async function executeRemediationAction(action: any, threat: ThreatDetection, ag
       .eq('id', containmentAction.id);
   }
 
-  console.log(`XDR Auto-Remediation: Sent ${action.action_type} to ${agent.hostname}`);
+  console.log(`XDR Auto-Remediation: Sent ${action.action_type} to ${agent.name}`);
 
   return {
     success: true,
     command_id: agentCommand.id,
     containment_action_id: containmentAction?.id,
-    agent_hostname: agent.hostname
+    agent_hostname: agent.name
   };
 }
 
@@ -652,7 +652,7 @@ async function verifyRemediation(payload: { command_id: string; agent_id: string
 async function getRemediationStatus(payload: { user_id?: string; agent_id?: string }, supabase: any) {
   let query = supabase
     .from('containment_actions')
-    .select('*, vanguard_agents(hostname)')
+    .select('*, vanguard_agents(name)')
     .order('created_at', { ascending: false })
     .limit(50);
 
