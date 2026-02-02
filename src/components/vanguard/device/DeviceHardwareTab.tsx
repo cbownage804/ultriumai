@@ -95,7 +95,30 @@ export function DeviceHardwareTab({ agent }: DeviceHardwareTabProps) {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-2">
-            {hardware.mac_addresses?.length > 0 ? (
+            {/* First try network_adapters from telemetry, then mac_addresses, then single mac */}
+            {agent.config?.network_adapters?.length > 0 ? (
+              agent.config.network_adapters
+                .filter((adapter: any) => adapter.status === 'Up' || adapter.mac_address)
+                .slice(0, 5) // Limit to 5 adapters
+                .map((adapter: any, idx: number) => (
+                  <div key={idx} className="flex items-center justify-between py-2 border-b border-cyan-500/10 last:border-0">
+                    <span className="text-sm text-slate-400 flex items-center gap-2">
+                      {adapter.name || `Adapter ${idx + 1}`}
+                      {adapter.status === 'Up' && !(adapter.ip_address || '').startsWith('169.254.') && (
+                        <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-xs">
+                          Active
+                        </Badge>
+                      )}
+                    </span>
+                    <div className="text-right">
+                      <span className="text-sm text-slate-200 font-mono block">{adapter.mac_address || "—"}</span>
+                      {adapter.ip_address && !adapter.ip_address.startsWith('169.254.') && (
+                        <span className="text-xs text-cyan-400">{adapter.ip_address}</span>
+                      )}
+                    </div>
+                  </div>
+                ))
+            ) : hardware.mac_addresses?.length > 0 ? (
               hardware.mac_addresses.map((mac: { address: string; name?: string; primary?: boolean }, idx: number) => (
                 <div key={idx} className="flex items-center justify-between py-2 border-b border-cyan-500/10 last:border-0">
                   <span className="text-sm text-slate-400 flex items-center gap-2">

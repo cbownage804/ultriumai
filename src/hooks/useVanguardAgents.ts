@@ -153,8 +153,17 @@ export function useVanguardAgent(agentId: string | undefined) {
   const normalizeAgentForUI = useCallback((raw: VanguardAgent, metricsList: VanguardMetric[]) => {
     const normalized: VanguardAgent = {
       ...raw,
-      config: raw.config || {},
+      config: { ...(raw.config || {}) },
     };
+
+    // Find the most recent telemetry record with useful data
+    const telemetryRecords = [...(metricsList || [])].reverse();
+    const lastTelemetry = telemetryRecords.find(m => 
+      (m.custom_metrics as any)?.last_telemetry_at || 
+      (m.custom_metrics as any)?.disks ||
+      (m.custom_metrics as any)?.network_adapters
+    );
+    const telemetryData = (lastTelemetry?.custom_metrics as any) || {};
 
     // OS badge + OS & Security tab currently rely on agent.os_info and config.os
     const hw = (normalized.config as any)?.hardware || {};
@@ -167,6 +176,38 @@ export function useVanguardAgent(agentId: string | undefined) {
     }
     const os = (normalized.config as any).os;
     if (!os.version && hw?.os_version) os.version = hw.os_version;
+
+    // Extract private IP from network_adapters in telemetry
+    // Look for the first active adapter with a non-link-local IP (not 169.254.x.x)
+    if (!normalized.vpn_ip && Array.isArray(telemetryData.network_adapters)) {
+      const activeAdapter = telemetryData.network_adapters.find((adapter: any) => {
+        const ip = adapter.ip_address || adapter.ipAddress;
+        return adapter.status === 'Up' && ip && !ip.startsWith('169.254.');
+      });
+      if (activeAdapter) {
+        normalized.vpn_ip = activeAdapter.ip_address || activeAdapter.ipAddress;
+      }
+    }
+
+    // Store network adapters in config for hardware tab
+    if (Array.isArray(telemetryData.network_adapters) && telemetryData.network_adapters.length > 0) {
+      (normalized.config as any).network_adapters = telemetryData.network_adapters;
+      
+      // Build mac_addresses array for hardware tab
+      const macAddresses = telemetryData.network_adapters
+        .filter((a: any) => a.mac_address || a.macAddress)
+        .map((a: any, idx: number) => ({
+          address: a.mac_address || a.macAddress,
+          name: a.name || `Adapter ${idx + 1}`,
+          primary: a.status === 'Up' && !(a.ip_address || '').startsWith('169.254.')
+        }));
+      if (macAddresses.length > 0) {
+        (normalized.config as any).hardware = {
+          ...(normalized.config as any).hardware,
+          mac_addresses: macAddresses
+        };
+      }
+    }
 
     // Security tab relies on config.security, but Defender telemetry is stored in security_status
     const ss: any = (normalized as any).security_status;
@@ -200,13 +241,14 @@ export function useVanguardAgent(agentId: string | undefined) {
     }
 
     // Disks tab expects config.disks, but telemetry currently lands in metrics.custom_metrics.disks
-    const lastTelemetry = [...(metricsList || [])]
-      .reverse()
-      .find(m => (m.custom_metrics as any)?.last_telemetry_at || (m.custom_metrics as any)?.disks);
-
-    const telemetryDisks = (lastTelemetry?.custom_metrics as any)?.disks;
-    if (Array.isArray(telemetryDisks) && !(normalized.config as any).disks) {
+    const telemetryDisks = telemetryData.disks;
+    if (Array.isArray(telemetryDisks) && telemetryDisks.length > 0) {
       (normalized.config as any).disks = telemetryDisks;
+    }
+
+    // Store last_telemetry timestamp for debugging
+    if (telemetryData.last_telemetry_at) {
+      (normalized.config as any).last_telemetry_at = telemetryData.last_telemetry_at;
     }
 
     return normalized;
