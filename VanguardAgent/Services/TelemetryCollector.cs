@@ -91,13 +91,15 @@ public class TelemetryCollector
         }
         catch { }
 
-        // Get CPU info
+        // Get CPU info with cores and threads
         try
         {
-            using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_Processor");
+            using var searcher = new ManagementObjectSearcher("SELECT Name, NumberOfCores, NumberOfLogicalProcessors FROM Win32_Processor");
             foreach (var obj in searcher.Get())
             {
                 info.CpuInfo = obj["Name"]?.ToString() ?? "";
+                info.CpuCores = Convert.ToInt32(obj["NumberOfCores"] ?? 0);
+                info.CpuThreads = Convert.ToInt32(obj["NumberOfLogicalProcessors"] ?? 0);
                 break;
             }
         }
@@ -121,12 +123,42 @@ public class TelemetryCollector
         // Get serial number and BIOS info
         try
         {
-            using var searcher = new ManagementObjectSearcher("SELECT SerialNumber FROM Win32_BIOS");
+            using var searcher = new ManagementObjectSearcher("SELECT SerialNumber, Manufacturer, SMBIOSBIOSVersion FROM Win32_BIOS");
             foreach (var obj in searcher.Get())
             {
                 info.SerialNumber = obj["SerialNumber"]?.ToString() ?? "";
+                info.BiosManufacturer = obj["Manufacturer"]?.ToString() ?? "";
+                info.BiosVersion = obj["SMBIOSBIOSVersion"]?.ToString() ?? "";
                 break;
             }
+        }
+        catch { }
+
+        // Get video card info
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_VideoController");
+            var videoCards = new List<string>();
+            foreach (var obj in searcher.Get())
+            {
+                var name = obj["Name"]?.ToString();
+                if (!string.IsNullOrEmpty(name)) videoCards.Add(name);
+            }
+            info.VideoCard = videoCards.Count > 0 ? string.Join(", ", videoCards) : "";
+        }
+        catch { }
+
+        // Get sound card info
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_SoundDevice");
+            var soundCards = new List<string>();
+            foreach (var obj in searcher.Get())
+            {
+                var name = obj["Name"]?.ToString();
+                if (!string.IsNullOrEmpty(name)) soundCards.Add(name);
+            }
+            info.SoundCard = soundCards.Count > 0 ? soundCards[0] : ""; // Just first one to avoid clutter
         }
         catch { }
 
@@ -533,7 +565,48 @@ public class TelemetryCollector
             telemetry.InstalledSoftware = CollectInstalledSoftware();
         }
 
+        // Always collect disk information
+        telemetry.Disks = CollectDisks();
+
         return telemetry;
+    }
+
+    private List<DiskInfo> CollectDisks()
+    {
+        var disks = new List<DiskInfo>();
+
+        try
+        {
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                try
+                {
+                    if (!drive.IsReady) continue;
+                    
+                    var totalGb = Math.Round(drive.TotalSize / 1024.0 / 1024.0 / 1024.0, 2);
+                    var freeGb = Math.Round(drive.AvailableFreeSpace / 1024.0 / 1024.0 / 1024.0, 2);
+                    var usedGb = Math.Round(totalGb - freeGb, 2);
+                    var percentUsed = totalGb > 0 ? Math.Round(usedGb / totalGb * 100, 1) : 0;
+
+                    disks.Add(new DiskInfo
+                    {
+                        Drive = drive.Name.TrimEnd('\\'),
+                        Label = drive.VolumeLabel ?? "",
+                        Type = drive.DriveType.ToString(),
+                        FileSystem = drive.DriveFormat ?? "",
+                        TotalGb = totalGb,
+                        UsedGb = usedGb,
+                        FreeGb = freeGb,
+                        PercentUsed = percentUsed,
+                        Status = "Healthy"
+                    });
+                }
+                catch { }
+            }
+        }
+        catch { }
+
+        return disks;
     }
 
     private List<ProcessInfo> CollectProcesses()

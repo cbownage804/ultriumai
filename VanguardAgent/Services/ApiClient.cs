@@ -87,6 +87,8 @@ public class ApiClient
                     os_name = deviceInfo.OsName,
                     os_version = deviceInfo.OsVersion,
                     cpu_info = deviceInfo.CpuInfo,
+                    cpu_cores = deviceInfo.CpuCores,
+                    cpu_threads = deviceInfo.CpuThreads,
                     total_memory_gb = deviceInfo.TotalMemoryGb,
                     mac_address = deviceInfo.MacAddress,
                     manufacturer = deviceInfo.Manufacturer,
@@ -94,7 +96,11 @@ public class ApiClient
                     serial_number = deviceInfo.SerialNumber,
                     device_type = deviceInfo.DeviceType,
                     form_factor = deviceInfo.FormFactor,
-                    is_virtual_machine = deviceInfo.IsVirtualMachine
+                    is_virtual_machine = deviceInfo.IsVirtualMachine,
+                    bios_manufacturer = deviceInfo.BiosManufacturer,
+                    bios_version = deviceInfo.BiosVersion,
+                    video_card = deviceInfo.VideoCard,
+                    sound_card = deviceInfo.SoundCard
                 },
                 rustdesk_id = deviceInfo.RustDeskId
             };
@@ -171,6 +177,7 @@ public class ApiClient
                 services = telemetry.Services,
                 network_adapters = telemetry.NetworkAdapters,
                 installed_software = telemetry.InstalledSoftware,
+                disks = telemetry.Disks,
                 timestamp = telemetry.Timestamp
             };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
@@ -331,6 +338,12 @@ public class DeviceInfo
     [JsonProperty("cpu_info")]
     public string CpuInfo { get; set; } = "";
 
+    [JsonProperty("cpu_cores")]
+    public int CpuCores { get; set; }
+
+    [JsonProperty("cpu_threads")]
+    public int CpuThreads { get; set; }
+
     [JsonProperty("total_memory_gb")]
     public double TotalMemoryGb { get; set; }
 
@@ -356,6 +369,21 @@ public class DeviceInfo
 
     [JsonProperty("serial_number")]
     public string SerialNumber { get; set; } = "";
+
+    // BIOS Information
+    [JsonProperty("bios_manufacturer")]
+    public string BiosManufacturer { get; set; } = "";
+
+    [JsonProperty("bios_version")]
+    public string BiosVersion { get; set; } = "";
+
+    // Video Card
+    [JsonProperty("video_card")]
+    public string VideoCard { get; set; } = "";
+
+    // Sound Card
+    [JsonProperty("sound_card")]
+    public string SoundCard { get; set; } = "";
 
     // Remote Access - Auto-detected
     [JsonProperty("rustdesk_id")]
@@ -403,8 +431,41 @@ public class TelemetryPayload
     [JsonProperty("installed_software")]
     public List<SoftwareInfo>? InstalledSoftware { get; set; }
 
+    [JsonProperty("disks")]
+    public List<DiskInfo>? Disks { get; set; }
+
     [JsonProperty("timestamp")]
     public string Timestamp { get; set; } = DateTime.UtcNow.ToString("O");
+}
+
+public class DiskInfo
+{
+    [JsonProperty("drive")]
+    public string Drive { get; set; } = "";
+
+    [JsonProperty("label")]
+    public string Label { get; set; } = "";
+
+    [JsonProperty("type")]
+    public string Type { get; set; } = "";
+
+    [JsonProperty("filesystem")]
+    public string FileSystem { get; set; } = "";
+
+    [JsonProperty("total_gb")]
+    public double TotalGb { get; set; }
+
+    [JsonProperty("used_gb")]
+    public double UsedGb { get; set; }
+
+    [JsonProperty("free_gb")]
+    public double FreeGb { get; set; }
+
+    [JsonProperty("percent_used")]
+    public double PercentUsed { get; set; }
+
+    [JsonProperty("status")]
+    public string Status { get; set; } = "Healthy";
 }
 
 public class ProcessInfo
