@@ -9,9 +9,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Upload, Download, FileIcon, Folder, ArrowUp, ArrowDown,
-  Trash2, RefreshCw, Search, HardDrive, Clock, CheckCircle2, XCircle
+  Trash2, RefreshCw, Search, HardDrive, Clock, CheckCircle2, XCircle, Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useFileTransfers } from '@/hooks/useHorizon';
 
 interface FileTransfer {
   id: string;
@@ -44,6 +45,7 @@ export const FileTransferManager: React.FC<FileTransferManagerProps> = ({
   deviceName = 'Selected Device' 
 }) => {
   const { toast } = useToast();
+  const { transfers: dbTransfers, isLoading, initiateTransfer } = useFileTransfers();
   const [currentPath, setCurrentPath] = useState('C:\\');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);

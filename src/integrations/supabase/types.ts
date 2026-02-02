@@ -8354,6 +8354,872 @@ export type Database = {
           },
         ]
       }
+      horizon_activity_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown
+          resource_id: string | null
+          resource_name: string | null
+          resource_type: string
+          tenant_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          resource_id?: string | null
+          resource_name?: string | null
+          resource_type: string
+          tenant_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          resource_id?: string | null
+          resource_name?: string | null
+          resource_type?: string
+          tenant_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horizon_activity_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "horizon_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horizon_baseline_results: {
+        Row: {
+          agent_id: string
+          baseline_id: string
+          check_results: Json | null
+          compliance_score: number | null
+          created_at: string
+          failed_checks: number | null
+          id: string
+          passed_checks: number | null
+          scanned_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          baseline_id: string
+          check_results?: Json | null
+          compliance_score?: number | null
+          created_at?: string
+          failed_checks?: number | null
+          id?: string
+          passed_checks?: number | null
+          scanned_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          baseline_id?: string
+          check_results?: Json | null
+          compliance_score?: number | null
+          created_at?: string
+          failed_checks?: number | null
+          id?: string
+          passed_checks?: number | null
+          scanned_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horizon_baseline_results_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "horizon_baseline_results_baseline_id_fkey"
+            columns: ["baseline_id"]
+            isOneToOne: false
+            referencedRelation: "horizon_security_baselines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horizon_file_transfers: {
+        Row: {
+          agent_id: string
+          checksum: string | null
+          completed_at: string | null
+          created_at: string
+          direction: string
+          error_message: string | null
+          file_name: string
+          file_path: string
+          file_size_bytes: number | null
+          id: string
+          mime_type: string | null
+          progress_percent: number | null
+          started_at: string | null
+          status: string
+          storage_url: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          checksum?: string | null
+          completed_at?: string | null
+          created_at?: string
+          direction: string
+          error_message?: string | null
+          file_name: string
+          file_path: string
+          file_size_bytes?: number | null
+          id?: string
+          mime_type?: string | null
+          progress_percent?: number | null
+          started_at?: string | null
+          status?: string
+          storage_url?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          checksum?: string | null
+          completed_at?: string | null
+          created_at?: string
+          direction?: string
+          error_message?: string | null
+          file_name?: string
+          file_path?: string
+          file_size_bytes?: number | null
+          id?: string
+          mime_type?: string | null
+          progress_percent?: number | null
+          started_at?: string | null
+          status?: string
+          storage_url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horizon_file_transfers_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horizon_integration_syncs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          entity_type: string
+          error_log: Json | null
+          id: string
+          integration_type: string
+          records_created: number | null
+          records_failed: number | null
+          records_processed: number | null
+          records_updated: number | null
+          started_at: string | null
+          status: string
+          sync_direction: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          entity_type: string
+          error_log?: Json | null
+          id?: string
+          integration_type: string
+          records_created?: number | null
+          records_failed?: number | null
+          records_processed?: number | null
+          records_updated?: number | null
+          started_at?: string | null
+          status?: string
+          sync_direction: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          entity_type?: string
+          error_log?: Json | null
+          id?: string
+          integration_type?: string
+          records_created?: number | null
+          records_failed?: number | null
+          records_processed?: number | null
+          records_updated?: number | null
+          started_at?: string | null
+          status?: string
+          sync_direction?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      horizon_playbook_executions: {
+        Row: {
+          agent_id: string | null
+          completed_at: string | null
+          created_at: string
+          execution_log: Json | null
+          id: string
+          playbook_id: string
+          started_at: string
+          status: string
+          steps_completed: number | null
+          trigger_source: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          execution_log?: Json | null
+          id?: string
+          playbook_id: string
+          started_at?: string
+          status?: string
+          steps_completed?: number | null
+          trigger_source?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          execution_log?: Json | null
+          id?: string
+          playbook_id?: string
+          started_at?: string
+          status?: string
+          steps_completed?: number | null
+          trigger_source?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horizon_playbook_executions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "horizon_playbook_executions_playbook_id_fkey"
+            columns: ["playbook_id"]
+            isOneToOne: false
+            referencedRelation: "horizon_playbooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horizon_playbooks: {
+        Row: {
+          created_at: string
+          description: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          last_executed_at: string | null
+          playbook_name: string
+          steps: Json
+          trigger_conditions: Json | null
+          trigger_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          playbook_name: string
+          steps?: Json
+          trigger_conditions?: Json | null
+          trigger_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          playbook_name?: string
+          steps?: Json
+          trigger_conditions?: Json | null
+          trigger_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      horizon_report_history: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          file_size_bytes: number | null
+          file_url: string | null
+          generation_time_ms: number | null
+          id: string
+          report_name: string
+          report_type: string
+          scheduled_report_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          file_size_bytes?: number | null
+          file_url?: string | null
+          generation_time_ms?: number | null
+          id?: string
+          report_name: string
+          report_type: string
+          scheduled_report_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          file_size_bytes?: number | null
+          file_url?: string | null
+          generation_time_ms?: number | null
+          id?: string
+          report_name?: string
+          report_type?: string
+          scheduled_report_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horizon_report_history_scheduled_report_id_fkey"
+            columns: ["scheduled_report_id"]
+            isOneToOne: false
+            referencedRelation: "horizon_scheduled_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horizon_roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_system_role: boolean | null
+          permissions: Json
+          role_name: string
+          tenant_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system_role?: boolean | null
+          permissions?: Json
+          role_name: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system_role?: boolean | null
+          permissions?: Json
+          role_name?: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horizon_roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "horizon_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horizon_scheduled_reports: {
+        Row: {
+          created_at: string
+          filters: Json | null
+          format: string
+          id: string
+          is_active: boolean | null
+          last_sent_at: string | null
+          next_send_at: string | null
+          recipients: Json
+          report_name: string
+          report_type: string
+          schedule_cron: string
+          tenant_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filters?: Json | null
+          format?: string
+          id?: string
+          is_active?: boolean | null
+          last_sent_at?: string | null
+          next_send_at?: string | null
+          recipients?: Json
+          report_name: string
+          report_type: string
+          schedule_cron: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          filters?: Json | null
+          format?: string
+          id?: string
+          is_active?: boolean | null
+          last_sent_at?: string | null
+          next_send_at?: string | null
+          recipients?: Json
+          report_name?: string
+          report_type?: string
+          schedule_cron?: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horizon_scheduled_reports_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "horizon_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horizon_security_baselines: {
+        Row: {
+          baseline_name: string
+          baseline_type: string
+          created_at: string
+          framework_version: string | null
+          id: string
+          is_active: boolean | null
+          policy_config: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          baseline_name: string
+          baseline_type?: string
+          created_at?: string
+          framework_version?: string | null
+          id?: string
+          is_active?: boolean | null
+          policy_config?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          baseline_name?: string
+          baseline_type?: string
+          created_at?: string
+          framework_version?: string | null
+          id?: string
+          is_active?: boolean | null
+          policy_config?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      horizon_sla_metrics: {
+        Row: {
+          avg_resolution_time_minutes: number | null
+          avg_response_time_minutes: number | null
+          client_id: string | null
+          created_at: string
+          id: string
+          incidents_count: number | null
+          metric_date: string
+          tenant_id: string | null
+          tickets_within_resolution_sla: number | null
+          tickets_within_response_sla: number | null
+          total_tickets: number | null
+          uptime_percent: number | null
+          user_id: string
+        }
+        Insert: {
+          avg_resolution_time_minutes?: number | null
+          avg_response_time_minutes?: number | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          incidents_count?: number | null
+          metric_date: string
+          tenant_id?: string | null
+          tickets_within_resolution_sla?: number | null
+          tickets_within_response_sla?: number | null
+          total_tickets?: number | null
+          uptime_percent?: number | null
+          user_id: string
+        }
+        Update: {
+          avg_resolution_time_minutes?: number | null
+          avg_response_time_minutes?: number | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          incidents_count?: number | null
+          metric_date?: string
+          tenant_id?: string | null
+          tickets_within_resolution_sla?: number | null
+          tickets_within_response_sla?: number | null
+          total_tickets?: number | null
+          uptime_percent?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horizon_sla_metrics_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "horizon_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horizon_tenant_members: {
+        Row: {
+          created_at: string
+          id: string
+          invited_at: string | null
+          invited_by: string | null
+          joined_at: string | null
+          role_id: string | null
+          status: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          joined_at?: string | null
+          role_id?: string | null
+          status?: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          joined_at?: string | null
+          role_id?: string | null
+          status?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horizon_tenant_members_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "horizon_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horizon_tenants: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          owner_user_id: string
+          primary_color: string | null
+          settings: Json | null
+          tenant_name: string
+          tenant_slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          owner_user_id: string
+          primary_color?: string | null
+          settings?: Json | null
+          tenant_name: string
+          tenant_slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          owner_user_id?: string
+          primary_color?: string | null
+          settings?: Json | null
+          tenant_name?: string
+          tenant_slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      horizon_threat_hunts: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          findings: Json | null
+          hunt_name: string
+          hunt_type: string
+          id: string
+          query_parameters: Json
+          results_count: number | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          findings?: Json | null
+          hunt_name: string
+          hunt_type?: string
+          id?: string
+          query_parameters?: Json
+          results_count?: number | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          findings?: Json | null
+          hunt_name?: string
+          hunt_type?: string
+          id?: string
+          query_parameters?: Json
+          results_count?: number | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      horizon_vulnerability_scans: {
+        Row: {
+          agent_id: string | null
+          completed_at: string | null
+          created_at: string
+          critical_count: number | null
+          high_count: number | null
+          id: string
+          low_count: number | null
+          medium_count: number | null
+          scan_duration_ms: number | null
+          scan_type: string
+          started_at: string | null
+          status: string
+          total_vulnerabilities: number | null
+          user_id: string
+          vulnerabilities: Json | null
+        }
+        Insert: {
+          agent_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          critical_count?: number | null
+          high_count?: number | null
+          id?: string
+          low_count?: number | null
+          medium_count?: number | null
+          scan_duration_ms?: number | null
+          scan_type?: string
+          started_at?: string | null
+          status?: string
+          total_vulnerabilities?: number | null
+          user_id: string
+          vulnerabilities?: Json | null
+        }
+        Update: {
+          agent_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          critical_count?: number | null
+          high_count?: number | null
+          id?: string
+          low_count?: number | null
+          medium_count?: number | null
+          scan_duration_ms?: number | null
+          scan_type?: string
+          started_at?: string | null
+          status?: string
+          total_vulnerabilities?: number | null
+          user_id?: string
+          vulnerabilities?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horizon_vulnerability_scans_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horizon_white_label: {
+        Row: {
+          accent_color: string | null
+          company_name: string | null
+          created_at: string
+          custom_css: string | null
+          email_footer: string | null
+          favicon_url: string | null
+          font_family: string | null
+          id: string
+          logo_url: string | null
+          primary_color: string | null
+          report_footer: string | null
+          secondary_color: string | null
+          tenant_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accent_color?: string | null
+          company_name?: string | null
+          created_at?: string
+          custom_css?: string | null
+          email_footer?: string | null
+          favicon_url?: string | null
+          font_family?: string | null
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          report_footer?: string | null
+          secondary_color?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accent_color?: string | null
+          company_name?: string | null
+          created_at?: string
+          custom_css?: string | null
+          email_footer?: string | null
+          favicon_url?: string | null
+          font_family?: string | null
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          report_footer?: string | null
+          secondary_color?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horizon_white_label_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "horizon_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horizon_wol_requests: {
+        Row: {
+          agent_id: string | null
+          broadcast_address: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          response_time_ms: number | null
+          status: string
+          target_device_name: string | null
+          target_mac_address: string
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          broadcast_address?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          response_time_ms?: number | null
+          status?: string
+          target_device_name?: string | null
+          target_mac_address: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          broadcast_address?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          response_time_ms?: number | null
+          status?: string
+          target_device_name?: string | null
+          target_mac_address?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horizon_wol_requests_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incident_activities: {
         Row: {
           activity_type: string
