@@ -229,11 +229,14 @@ export default function VanguardDeviceDetailPage() {
     
     try {
       setIsDeleting(true);
+      // Navigate FIRST to prevent race condition with realtime subscription
+      // causing redirect to catch-all route
+      navigate(`${basePath}/devices`, { replace: true });
+      // Then delete the agent
       await deleteAgent(deviceId);
-      // Navigate back to Devices list
-      navigate(`${basePath}/devices`);
     } catch (err: any) {
       console.error('Error deleting agent:', err);
+      // On error, we're already on devices page, just show error
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
