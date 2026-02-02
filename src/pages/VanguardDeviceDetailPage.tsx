@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getVanguardBasePath } from "@/utils/subdomain";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -115,6 +116,7 @@ export default function VanguardDeviceDetailPage() {
   } = useVanguardAgent(deviceId);
   const { clients } = useMSP();
   const { deleteAgent } = useVanguardAgents();
+  const basePath = getVanguardBasePath();
   
   // UI State
   const [activeTab, setActiveTab] = useState("overview");
@@ -206,7 +208,8 @@ export default function VanguardDeviceDetailPage() {
     try {
       setIsDeleting(true);
       await deleteAgent(deviceId);
-      navigate('/vanguard/rmm');
+      // Navigate to RMM dashboard
+      navigate(`${basePath}/rmm`);
     } catch (err: any) {
       console.error('Error deleting agent:', err);
     } finally {
@@ -419,7 +422,7 @@ export default function VanguardDeviceDetailPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/vanguard/rmm')}
+              onClick={() => navigate(`${basePath}/rmm`)}
               className="text-white/60 hover:text-white hover:bg-cyan-500/10"
             >
               <ArrowLeft className="h-5 w-5" />
