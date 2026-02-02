@@ -1,148 +1,170 @@
-# Vanguard Platform - Production Status
 
-## Executive Summary
 
-The Vanguard platform is a comprehensive MSP suite with RMM, Security, Helpdesk, Billing, and AI modules. **All modules are now production-ready** with real Supabase integration, agent command pipelines, mobile API, and enterprise SSO support.
+# SafePass Multi-Account Switching & AI Autofill Plan
 
----
-
-## Module Status Overview
-
-| Module | Status | Production Readiness |
-|--------|--------|---------------------|
-| **Horizon (RMM)** | ✅ Production | 100% |
-| **Response (Helpdesk)** | ✅ Production | 100% |
-| **Cortex (AI)** | ✅ Production | 100% |
-| **Atlas (Documentation)** | ✅ Production | 100% |
-| **Sentinel (Security)** | ✅ Production | 100% |
-| **Recon (Network Discovery)** | ✅ Production | 100% |
-| **Ledger (Reports)** | ✅ Production | 100% |
-| **MSP Billing** | ✅ Production | 100% |
-| **Agent Console** | ✅ Production | 100% |
-| **Multi-Tenant Management** | ✅ Production | 100% |
-| **Mobile API** | ✅ Production | 100% |
-| **SSO Integration** | ✅ Production | 100% |
-| **Co-Managed IT** | ✅ Production | 100% |
-| **Advanced Automations** | ✅ Production | 100% |
+## Overview
+Implement two key features from Keeper's latest release to make SafePass more competitive:
+1. **Instant Account Switching** - Switch between multiple SafePass accounts without logging out
+2. **SafePassAI Autofill** - Intelligent form detection and credential filling (within the app context)
 
 ---
 
-## Completed Phases Summary
+## Feature 1: Instant Account Switching
 
-### Phases 1-11: Core Platform
-- Atlas Documentation, Email-to-Ticket, CSAT Surveys
-- Script Execution, Agent Commands, Patch Deployment
-- Network Discovery, Topology Visualization, Backup Monitoring
-- AI Ticket Processing, Pattern Detection, Cortex Analytics
-- Stripe Billing, MRR Calculation, Time Entry Integration
-- Sentinel AI Triage, Compliance Scanner, Executive Reports
-- File Transfer, Device Metadata, Terminal Console, Monitoring
-- FIM, Incident Playbooks, UBA, Threat Intelligence
-- Registry/Event/Service/Process/Software management
-- Multi-Tenant Organizations, White-Label, Report Builder
-- Mobile API, SAML/OAuth/OIDC SSO
+### What It Does
+Users can link multiple SafePass accounts (e.g., personal + work) and switch between them instantly from the header dropdown, without needing to sign out and sign back in.
 
-### Phase 12: Advanced Helpdesk & Integrations
-- Customer Self-Service Portal with branded ticket submission
-- Visual Workflow Builder with drag-drop automation rules
-- Advanced Reporting Dashboard with Recharts analytics
-- Asset-Ticket Linking for full context
-- Remote Session Integration (RustDesk, ScreenConnect, TeamViewer)
-- Microsoft 365/Azure AD Integration with Teams webhooks
+### User Experience
+- Click avatar in header to see all linked accounts
+- One-click to switch to another account
+- "Add Account" option to link additional accounts
+- Remove accounts from the quick-switch list
+- Each account maintains its own master password session
 
-### Phase 13: Advanced Helpdesk & AI Features
-- Screen Recording to Documentation with AI analysis
-- Technician Skill Matrix with proficiency tracking
-- Parent/Child Tickets with relationship management
-- Custom Ticket Forms with dynamic field builder
-- Canned Responses Library with variable substitution
-- Queue Management Board (Kanban-style)
-- White-Label Portal with custom branding
+### Implementation
 
-### Phase 14: Co-Managed IT Collaboration
-- Co-Managed Dashboard with org switching
-- Organization Setup and Branding Editor
-- User Manager with role-based access
-- Technician Access Controls (internal/external)
-- Customer Scheduling Portal with appointment booking
-- Internal Tech Manager with skill profiles
-- Escalation Queue with tier management
-- Internal Queue Manager for workload distribution
-- Co-Managed Chat for real-time collaboration
-- Announcement Manager for org-wide notifications
-- Auto-Escalation Rules with condition builder
-- Shift Handoff Manager for continuity
-- Skill-Based Routing engine
-- Internal IT Performance metrics
+#### 1.1 Database: Linked Accounts Table
+Create a new table to store linked account relationships:
 
-### Phase 15: Enterprise SLA & Reporting
-- Per-Org SLA Policies with P1-P4 targets
-- Calendar Integrations (Outlook, Google) with bidirectional sync
-- Escalation Analytics with tier-to-tier tracking
-- White-Label Reports with branded PDF generation
-- Contract Management with billing and renewals
-- KB Suggestions Panel with AI-powered article matching
-- Ticket-Asset Linker for device context
-- Dashboard Configurator with custom widgets
+```text
+Table: safepass_linked_accounts
+- id (uuid, primary key)
+- primary_user_id (uuid, FK to auth.users) -- the "host" account
+- linked_email (text) -- email of the linked account
+- linked_user_id (uuid, FK to auth.users) -- resolved user id
+- display_name (text) -- friendly name like "Work" or "Personal"
+- is_active (boolean)
+- last_accessed_at (timestamp)
+- created_at (timestamp)
+```
 
-### ✅ Phase 16: Advanced Features & AI Upgrades
-- **AI Voice Assistant** - Speech-to-text commands with intent detection, Lovable AI Gateway integration, command history
-- **Push Notification Manager** - Device registration, notification preferences, quiet hours, SLA/escalation/assignment alerts
-- **Client Portal Enhanced** - Appointment booking (consultation, support, training), real-time ticket chat with WebSocket
-- **Advanced Automations Engine** - Scheduled tasks (cron), webhook integrations, workflow triggers (event/time/condition-based)
-- **Lovable AI Gateway Integration** - Upgraded ai-voice-tts and ai-remote-assistant to use google/gemini-3-flash-preview
+#### 1.2 New Components
+
+| Component | Purpose |
+|-----------|---------|
+| `AccountSwitcher.tsx` | Dropdown showing linked accounts with switch/add/remove actions |
+| `AddAccountDialog.tsx` | Modal to authenticate and link a new account |
+| `useLinkedAccounts.ts` | Hook to manage linked accounts state and switching |
+
+#### 1.3 Account Switch Flow
+
+```text
+User clicks account in dropdown
+          |
+          v
+    Store current session to localStorage cache
+          |
+          v
+    Check if target account session exists in cache
+          |
+          v
+   [YES] Restore session from cache -> Reload vault
+          |
+   [NO] Prompt for master password of target account
+          |
+          v
+    Decrypt and load target account's vault
+```
+
+#### 1.4 Security Considerations
+- Each account's session is encrypted separately in localStorage
+- Master passwords are NEVER stored - only session tokens with TTL
+- Switching requires re-entering master password if session expired
+- Clear all cached sessions on explicit sign-out
 
 ---
 
-## Edge Functions Deployed (20 Total)
+## Feature 2: SafePassAI Autofill
 
-| Function | Purpose |
-|----------|---------|
-| `vanguard-agent-api` | Core agent communication |
-| `agent-console-operations` | Console tool commands |
-| `agent-file-operations` | File transfer operations |
-| `device-metadata` | Device password/field storage |
-| `monitor-device` | SNMP/TCP/HTTP monitoring |
-| `sentinel-ai-triage` | Security event analysis |
-| `run-compliance-scan` | Compliance scanning |
-| `generate-executive-report` | Report generation |
-| `fim-operations` | File integrity monitoring |
-| `execute-playbook` | Incident response |
-| `uba-analysis` | User behavior analytics |
-| `org-management` | Multi-tenant org hierarchy |
-| `white-label-config` | White-label customization |
-| `report-builder` | Custom report generation |
-| `mobile-api` | iOS/Android companion API |
-| `sso-integration` | SAML/OAuth/OIDC SSO |
-| `screen-recording-analyzer` | AI screen-to-docs generation |
-| `ai-voice-tts` | Voice commands & TTS (Lovable AI) |
-| `ai-remote-assistant` | AI-powered remote session helper |
+### What It Does
+Within SafePass, AI analyzes form fields and context to suggest the most relevant credentials, especially useful when:
+- Multiple credentials exist for the same domain
+- Detecting which "account type" is being logged into
+- Multi-step authentication flows
+
+### Implementation Approach
+Since SafePass is a web app (not a browser extension), this feature will focus on:
+- **Credential Suggestion Intelligence** - When user searches or views a login form URL, suggest the best matching entry
+- **Pattern Recognition** - Learn from user behavior which credentials they prefer for which contexts
+- **Smart Search** - Natural language search of the vault ("my work gmail", "banking login")
+
+#### 2.1 New Components
+
+| Component | Purpose |
+|-----------|---------|
+| `SafePassAISearch.tsx` | Smart search bar with AI-powered suggestions |
+| `AutofillSuggestions.tsx` | Context-aware credential recommendations |
+| `useSafePassAI.ts` | Hook for AI-powered matching logic |
+
+#### 2.2 Settings Addition
+Add to SafePassSettings.tsx:
+
+```text
+SafePassAI Section:
+- Toggle: Enable SafePassAI suggestions
+- Toggle: Learn from my usage patterns
+- Button: Clear learned patterns
+```
+
+#### 2.3 AI Matching Logic (Client-Side)
+Uses local pattern matching (no server AI calls needed):
+
+```text
+1. Fuzzy match on title, URL, tags
+2. Rank by last_used_at recency
+3. Rank by usage frequency (new field)
+4. Learn user preference patterns:
+   - "User selected Entry A over Entry B for domain X" -> boost A for X
+```
 
 ---
 
-## Database Tables (Phase 16)
+## Technical Summary
 
-New tables added for advanced features:
-- `vanguard_push_tokens` - Push notification device registration
-- `vanguard_notification_preferences` - User notification settings
-- `vanguard_notification_log` - Notification delivery history
-- `vanguard_portal_appointments` - Client appointment scheduling
-- `vanguard_ticket_chat_messages` - Real-time ticket chat
-- `vanguard_voice_commands` - Voice command history
-- `vanguard_voice_settings` - Voice assistant preferences
-- `vanguard_scheduled_tasks` - Cron-based automation
-- `vanguard_webhooks` - Webhook endpoint configuration
-- `vanguard_webhook_logs` - Webhook delivery logs
-- `vanguard_workflow_triggers` - Event/condition triggers
+### Files to Create
+| File | Purpose |
+|------|---------|
+| `src/components/safepass/AccountSwitcher.tsx` | Account switching dropdown |
+| `src/components/safepass/AddAccountDialog.tsx` | Dialog to link new account |
+| `src/components/safepass/SafePassAISearch.tsx` | AI-powered smart search |
+| `src/components/safepass/AutofillSuggestions.tsx` | Credential suggestions panel |
+| `src/hooks/useLinkedAccounts.ts` | Manage linked accounts |
+| `src/hooks/useSafePassAI.ts` | AI matching and learning logic |
+
+### Files to Modify
+| File | Changes |
+|------|---------|
+| `src/layouts/SafePassLayout.tsx` | Integrate AccountSwitcher in header |
+| `src/pages/safesuite/SafePassSettings.tsx` | Add SafePassAI settings section |
+| `src/components/safepass/PasswordVault.tsx` | Add smart search integration |
+
+### Database Changes
+| Table | Purpose |
+|-------|---------|
+| `safepass_linked_accounts` | Store multi-account relationships |
+| `safepass_entries` (add column) | `usage_count` for AI ranking |
+| `safepass_user_preferences` | Store learned patterns for AI |
 
 ---
 
-## Platform Complete ✅
+## Implementation Order
 
-All planned enhancements have been implemented. The Vanguard platform is feature-complete and production-ready with:
-- Full multi-tenant co-managed IT support
-- Enterprise-grade SLA and reporting
-- AI-powered voice and remote assistance
-- Advanced automation engine with webhooks
-- Real-time push notifications
-- Client self-service portal with chat
+1. **Phase 1: Multi-Account Switching**
+   - Create database table for linked accounts
+   - Build AccountSwitcher component
+   - Add to header layout
+   - Implement session caching and switching logic
+
+2. **Phase 2: SafePassAI Features**
+   - Add smart search to vault
+   - Implement local pattern matching
+   - Add settings toggles
+   - Track usage patterns for ranking
+
+---
+
+## Notes
+- The Keeper browser extension features (DOM parsing, autofill injection) require a browser extension, which is outside Lovable's scope
+- This implementation focuses on the web app experience with intelligent credential management
+- All AI processing is client-side to maintain zero-knowledge architecture
+
