@@ -80,68 +80,87 @@ const Index = () => {
       
       <Navigation />
       
-      {/* Hero Section */}
+      {/* Hero Section - Enhanced with Premium Effects */}
       <section className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center justify-center overflow-hidden pt-16 sm:pt-20">
-        {/* Background Image */}
+        {/* Background Image with Enhanced Overlays */}
         <div className="absolute inset-0">
           <img 
             src={heroMain} 
             alt="Cybersecurity command center"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover animate-[scale-in_1.5s_ease-out]"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/80 to-background" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-transparent to-background/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/75 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
+          {/* Animated gradient orbs */}
+          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl animate-pulse pointer-events-none" />
+          <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-3xl animate-pulse pointer-events-none" style={{ animationDelay: '1s' }} />
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="space-y-6 sm:space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 fade-slide-in">
-              <Brain className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">AI Development Agency</span>
+            {/* Badge with shimmer effect */}
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary/15 to-primary/5 rounded-full border border-primary/30 shadow-lg shadow-primary/10 backdrop-blur-sm animate-[fade-in_0.5s_ease-out]">
+              <Brain className="h-4 w-4 text-primary animate-pulse" />
+              <span className="text-sm font-semibold text-primary tracking-wide">AI Development Agency</span>
+              <span className="h-2 w-2 rounded-full bg-primary animate-ping" />
             </div>
             
-            <h1 className="text-fluid-hero font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight fade-slide-in stagger-1 px-2">
+            {/* Hero Title with Enhanced Gradient */}
+            <h1 className="text-fluid-hero font-bold bg-gradient-to-r from-foreground via-primary via-50% to-foreground bg-clip-text text-transparent leading-tight animate-[fade-in_0.7s_ease-out] px-2 drop-shadow-sm">
               We Build Custom AI Solutions for Business
             </h1>
             
-            <p className="text-fluid-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed fade-slide-in stagger-2 px-4">
-              From intelligent GPTs to enterprise security platforms—UltriumAI creates AI tools that work the way your business works. Built for Business. Secure by Design.
+            {/* Subtitle with better styling */}
+            <p className="text-fluid-lg text-muted-foreground/90 max-w-3xl mx-auto leading-relaxed animate-[fade-in_0.9s_ease-out] px-4">
+              From intelligent GPTs to enterprise security platforms—UltriumAI creates AI tools that work the way your business works. 
+              <span className="text-foreground font-medium"> Built for Business. Secure by Design.</span>
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center fade-slide-in stagger-3 px-4">
-              <Link to="/products/ai-studio" className="w-full sm:w-auto">
-                <Button size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-10 h-auto bg-black border-2 border-primary/50 hover:bg-black/80 hover:border-primary shadow-lg hover:shadow-xl transition-all duration-300 hover-lift flex flex-col items-center gap-3 sm:gap-4 w-full touch-target tap-scale">
-                  <div className="h-14 w-14 sm:h-28 sm:w-28 rounded-xl sm:rounded-2xl bg-black p-1 sm:p-2 flex items-center justify-center overflow-hidden">
+            {/* Product Cards with Enhanced Effects */}
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center animate-[fade-in_1.1s_ease-out] px-4">
+              <Link to="/products/ai-studio" className="w-full sm:w-auto group">
+                <Button size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-10 h-auto bg-gradient-to-br from-black via-gray-900 to-black border-2 border-primary/40 hover:border-primary shadow-xl hover:shadow-primary/30 transition-all duration-500 hover:-translate-y-2 flex flex-col items-center gap-3 sm:gap-4 w-full touch-target relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="h-14 w-14 sm:h-28 sm:w-28 rounded-xl sm:rounded-2xl bg-black p-1 sm:p-2 flex items-center justify-center overflow-hidden relative z-10 group-hover:scale-110 transition-transform duration-500">
                     <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain scale-125" />
                   </div>
-                  <span className="text-base sm:text-xl font-semibold">Explore AI Studio</span>
+                  <span className="text-base sm:text-xl font-semibold relative z-10">Explore AI Studio</span>
                 </Button>
               </Link>
-              <Link to="/products/vanguard" className="w-full sm:w-auto">
+              <Link to="/products/vanguard" className="w-full sm:w-auto group">
                 <Button 
                   variant="outline" 
                   size="lg" 
-                  className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-10 h-auto bg-black border-2 border-muted-foreground/30 hover:bg-black/80 hover:border-cyan-500/50 transition-all duration-300 hover-lift flex flex-col items-center gap-3 sm:gap-4 w-full touch-target tap-scale"
+                  className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-10 h-auto bg-gradient-to-br from-black via-gray-900 to-black border-2 border-cyan-500/30 hover:border-cyan-500 shadow-xl hover:shadow-cyan-500/30 transition-all duration-500 hover:-translate-y-2 flex flex-col items-center gap-3 sm:gap-4 w-full touch-target relative overflow-hidden"
                 >
-                  <div className="h-14 w-14 sm:h-28 sm:w-28 rounded-xl sm:rounded-2xl bg-black p-1 sm:p-2 flex items-center justify-center overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="h-14 w-14 sm:h-28 sm:w-28 rounded-xl sm:rounded-2xl bg-black p-1 sm:p-2 flex items-center justify-center overflow-hidden relative z-10 group-hover:scale-110 transition-transform duration-500">
                     <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
                   </div>
-                  <span className="text-base sm:text-xl font-semibold">Explore Vanguard</span>
+                  <span className="text-base sm:text-xl font-semibold relative z-10">Explore Vanguard</span>
                 </Button>
               </Link>
-              <Link to="/products/safesuite" className="w-full sm:w-auto">
+              <Link to="/products/safesuite" className="w-full sm:w-auto group">
                 <Button 
                   variant="outline" 
                   size="lg" 
-                  className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-10 h-auto bg-black border-2 border-emerald-500/50 hover:bg-black/80 hover:border-emerald-500 transition-all duration-300 hover-lift flex flex-col items-center gap-3 sm:gap-4 w-full touch-target tap-scale"
+                  className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-10 h-auto bg-gradient-to-br from-black via-gray-900 to-black border-2 border-emerald-500/30 hover:border-emerald-500 shadow-xl hover:shadow-emerald-500/30 transition-all duration-500 hover:-translate-y-2 flex flex-col items-center gap-3 sm:gap-4 w-full touch-target relative overflow-hidden"
                 >
-                  <div className="h-14 w-14 sm:h-28 sm:w-28 rounded-xl sm:rounded-2xl bg-black p-1 sm:p-2 flex items-center justify-center overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-t from-emerald-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="h-14 w-14 sm:h-28 sm:w-28 rounded-xl sm:rounded-2xl bg-black p-1 sm:p-2 flex items-center justify-center overflow-hidden relative z-10 group-hover:scale-110 transition-transform duration-500">
                     <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain scale-125" />
                   </div>
-                  <span className="text-base sm:text-xl font-semibold">Try SafeSuite</span>
+                  <span className="text-base sm:text-xl font-semibold relative z-10">Try SafeSuite</span>
                 </Button>
               </Link>
             </div>
+          </div>
+        </div>
+        
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce opacity-60">
+          <div className="w-6 h-10 border-2 border-foreground/30 rounded-full flex justify-center pt-2">
+            <div className="w-1.5 h-3 bg-foreground/40 rounded-full animate-pulse" />
           </div>
         </div>
       </section>
