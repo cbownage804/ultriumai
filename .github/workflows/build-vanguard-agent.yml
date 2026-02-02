@@ -213,6 +213,23 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true'
     
     steps:
+      - name: Validate secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "::error::SUPABASE_URL secret is not set. Please add it in GitHub Settings > Secrets > Actions."
+            echo "Value should be: https://nsyobmjpdpvesjwdphlh.supabase.co"
+            exit 1
+          fi
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY secret is not set. Please add it in GitHub Settings > Secrets > Actions."
+            echo "Get this from your Supabase Dashboard > Project Settings > API > service_role key"
+            exit 1
+          fi
+          echo "✓ All required secrets are configured"
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -224,12 +241,19 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          # Upload EXE to vanguard-agents bucket for portal downloads
-          curl -X POST \
+          echo "Uploading VanguardAgent-win-x64.exe to Supabase Storage..."
+          
+          HTTP_STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" -X POST \
             "${SUPABASE_URL}/storage/v1/object/vanguard-agents/VanguardAgent-win-x64.exe" \
             -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
             -H "Content-Type: application/octet-stream" \
             -H "x-upsert: true" \
-            --data-binary @./artifacts/VanguardAgent-win-x64.exe
+            --data-binary @./artifacts/VanguardAgent-win-x64.exe)
           
-          echo "Uploaded VanguardAgent-win-x64.exe to Supabase Storage"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✓ Successfully uploaded VanguardAgent-win-x64.exe (HTTP $HTTP_STATUS)"
+          else
+            echo "::error::Upload failed with HTTP $HTTP_STATUS"
+            cat /tmp/response.txt
+            exit 1
+          fi
