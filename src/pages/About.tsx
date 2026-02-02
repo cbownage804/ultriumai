@@ -61,35 +61,38 @@ const About = () => {
 
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-hidden">
       <Navigation />
       
-      {/* Hero Section - Fluid typography, mobile optimized */}
+      {/* Hero Section - Premium immersive design */}
       <section className="relative pt-24 md:pt-32 pb-16 md:pb-24 px-4 overflow-hidden safe-area-inset-top">
-        {/* Background Image */}
+        {/* Background Image with enhanced overlay */}
         <div className="absolute inset-0">
           <img 
             src={heroSecurity} 
             alt="Digital security shield"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover scale-105 animate-[pulse_20s_ease-in-out_infinite]"
             loading="eager"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
           <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
+          {/* Scan line effect */}
+          <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.1)_50%)] bg-[size:100%_4px] pointer-events-none opacity-20" />
         </div>
         
-        {/* Decorative blurs */}
-        <div className="absolute top-1/3 left-1/4 w-60 md:w-80 h-60 md:h-80 bg-primary/15 rounded-full blur-[80px] md:blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/3 w-48 md:w-64 h-48 md:h-64 bg-emerald-500/10 rounded-full blur-[60px] md:blur-[80px] pointer-events-none" />
+        {/* Animated decorative orbs */}
+        <div className="absolute top-1/3 left-1/4 w-60 md:w-80 h-60 md:h-80 bg-primary/15 rounded-full blur-[80px] md:blur-[100px] pointer-events-none animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/3 w-48 md:w-64 h-48 md:h-64 bg-emerald-500/10 rounded-full blur-[60px] md:blur-[80px] pointer-events-none animate-[pulse_4s_ease-in-out_infinite]" />
+        <div className="absolute top-1/2 right-1/4 w-32 md:w-48 h-32 md:h-48 bg-cyan-500/10 rounded-full blur-[50px] pointer-events-none animate-[pulse_5s_ease-in-out_infinite]" />
         
         <div className="relative z-10 container mx-auto text-center max-w-4xl">
-          <Badge className="mb-6 md:mb-8 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm animate-fade-in" variant="secondary">
-            <Flag className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1.5 md:mr-2" />
+          <Badge className="mb-6 md:mb-8 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm animate-fade-in bg-primary/10 border-primary/30 hover:bg-primary/20 transition-colors cursor-default group" variant="secondary">
+            <Flag className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1.5 md:mr-2 group-hover:animate-pulse" />
             Veteran-Owned Business
           </Badge>
           <h1 className="text-fluid-xl md:text-fluid-hero font-bold mb-6 md:mb-8 leading-tight animate-fade-in-up">
             AI Development & 
-            <span className="block bg-gradient-to-r from-primary via-primary to-violet-500 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-primary via-violet-500 to-cyan-500 bg-clip-text text-transparent bg-[size:200%_auto] animate-[gradient-shift_8s_ease_infinite]">
               Cybersecurity Agency
             </span>
           </h1>
@@ -100,12 +103,12 @@ const About = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center animate-fade-in-up stagger-2">
             <Link to="/hub">
-              <Button size="lg" className="w-full sm:w-auto px-6 md:px-8 py-5 md:py-6 text-base md:text-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 touch-target">
-                Explore Our Products <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
+              <Button size="lg" className="w-full sm:w-auto px-6 md:px-8 py-5 md:py-6 text-base md:text-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all touch-target group">
+                Explore Our Products <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
             <Link to="/contact">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto px-6 md:px-8 py-5 md:py-6 text-base md:text-lg border-border/50 hover:border-primary/50 hover:bg-primary/5 touch-target">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto px-6 md:px-8 py-5 md:py-6 text-base md:text-lg border-border/50 hover:border-primary/50 hover:bg-primary/5 hover:-translate-y-0.5 transition-all touch-target">
                 Get In Touch
               </Button>
             </Link>
@@ -237,9 +240,12 @@ const About = () => {
         </div>
       </section>
 
-      {/* Values */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto">
+      {/* Values - Premium card design */}
+      <section className="py-20 px-4 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent pointer-events-none" />
+        
+        <div className="container mx-auto relative z-10">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">How We Work</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -248,10 +254,12 @@ const About = () => {
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {values.map((value, index) => (
-              <Card key={index} className="text-center h-full">
+              <Card key={index} className="text-center h-full group hover:border-primary/30 hover:-translate-y-2 transition-all duration-300 bg-card/50 backdrop-blur-sm hover:shadow-xl hover:shadow-primary/10">
                 <CardHeader>
-                  <value.icon className="h-10 w-10 mx-auto mb-4 text-primary" />
-                  <CardTitle className="text-lg">{value.title}</CardTitle>
+                  <div className="mx-auto mb-4 p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 group-hover:from-primary/20 group-hover:to-primary/10 transition-colors">
+                    <value.icon className="h-10 w-10 text-primary group-hover:scale-110 transition-transform" />
+                  </div>
+                  <CardTitle className="text-lg group-hover:text-primary transition-colors">{value.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">{value.description}</p>

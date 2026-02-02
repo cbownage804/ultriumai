@@ -163,11 +163,17 @@ const Dashboard = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-muted/10">
+        {/* Subtle background decoration */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[150px] -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyan-500/5 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2" />
+        </div>
+        
         <AppSidebar />
-        <SidebarInset className="animate-fade-in">
-          {/* Header - mobile optimized with safe areas */}
-          <header className="flex h-14 md:h-16 shrink-0 items-center gap-2 border-b px-3 md:px-4 animate-slide-in-left backdrop-blur-xl bg-background/90 sticky top-0 z-30 safe-area-inset-top">
+        <SidebarInset className="animate-fade-in relative z-10">
+          {/* Header - mobile optimized with safe areas and premium styling */}
+          <header className="flex h-14 md:h-16 shrink-0 items-center gap-2 border-b border-border/50 px-3 md:px-4 animate-slide-in-left backdrop-blur-xl bg-background/80 sticky top-0 z-30 safe-area-inset-top">
             <SidebarTrigger className="-ml-1 hover-scale touch-target h-10 w-10 md:h-9 md:w-9" />
             <div className="flex-1 min-w-0">
               <h1 className="text-base md:text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent animate-glow truncate">{getPageTitle()}</h1>

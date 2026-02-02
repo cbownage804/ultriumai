@@ -252,7 +252,14 @@ export default function ProductHub() {
   const isAdmin = user.email?.endsWith('@ultriumai.com') && user.email_confirmed_at != null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/4 -left-32 w-64 h-64 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
+        <div className="absolute bottom-1/4 -right-32 w-80 h-80 bg-cyan-500/10 rounded-full blur-[120px] animate-[pulse_4s_ease-in-out_infinite]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[150px]" />
+      </div>
+      
       {/* Header */}
       <header className="border-b border-border/30 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
@@ -270,7 +277,7 @@ export default function ProductHub() {
             <Button variant="ghost" size="sm" onClick={() => navigate('/profile')} className="hover:bg-muted">
               Profile
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/pricing')} className="border-primary/30 hover:border-primary hover:bg-primary/5">
+            <Button variant="outline" size="sm" onClick={() => navigate('/pricing')} className="border-primary/30 hover:border-primary hover:bg-primary/5 transition-all">
               Upgrade
             </Button>
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="hover:text-destructive hover:bg-destructive/10">
@@ -282,17 +289,17 @@ export default function ProductHub() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-16">
+      <main className="container mx-auto px-6 py-16 relative z-10">
         {/* Welcome Section */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 mb-6">
-            <Sparkles className="h-4 w-4 text-primary" />
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 mb-6 animate-fade-in backdrop-blur-sm group hover:bg-primary/15 hover:border-primary/40 transition-all cursor-default">
+            <Sparkles className="h-4 w-4 text-primary group-hover:animate-pulse" />
             <span className="text-sm font-medium text-primary">Product Hub</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Welcome back, <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">{userName}</span>!
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in-up">
+            Welcome back, <span className="bg-gradient-to-r from-primary via-violet-500 to-cyan-500 bg-clip-text text-transparent bg-[size:200%_auto] animate-[gradient-shift_8s_ease_infinite]">{userName}</span>!
           </h1>
-          <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+          <p className="text-muted-foreground text-lg max-w-xl mx-auto animate-fade-in-up stagger-1">
             Access your UltriumAI products and services from one central hub. 
             Select a product below to get started.
           </p>
@@ -300,16 +307,20 @@ export default function ProductHub() {
 
         {/* Product Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {products.map((product) => (
-            <ProductCard key={product.product} {...product} />
+          {products.map((product, index) => (
+            <div key={product.product} className={`animate-fade-in-up stagger-${index + 1}`}>
+              <ProductCard {...product} />
+            </div>
           ))}
         </div>
 
         {/* Quick Stats or Tips */}
-        <div className="mt-16 text-center">
-          <p className="text-sm text-muted-foreground">
-            Need help choosing? <a href="/pricing" className="text-primary hover:underline">Compare plans</a> or <a href="/contact" className="text-primary hover:underline">talk to sales</a>.
-          </p>
+        <div className="mt-16 text-center animate-fade-in stagger-4">
+          <div className="inline-flex items-center gap-4 px-6 py-3 rounded-full bg-muted/50 backdrop-blur-sm border border-border/50">
+            <p className="text-sm text-muted-foreground">
+              Need help choosing? <a href="/pricing" className="text-primary hover:underline font-medium">Compare plans</a> or <a href="/contact" className="text-primary hover:underline font-medium">talk to sales</a>.
+            </p>
+          </div>
         </div>
       </main>
     </div>
