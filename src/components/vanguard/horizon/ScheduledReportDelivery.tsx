@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +21,9 @@ import {
   Pause,
   Send,
   Download,
+  Loader2,
 } from "lucide-react";
+import { useScheduledReports } from "@/hooks/useHorizon";
 
 interface ScheduledReport {
   id: string;
@@ -42,65 +44,23 @@ interface ScheduledReport {
 
 export function ScheduledReportDelivery() {
   const { toast } = useToast();
+  const { reports: dbReports, isLoading, createReport, toggleReport, refetch } = useScheduledReports();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [schedules, setSchedules] = useState<ScheduledReport[]>([
-    {
-      id: "1",
-      name: "Weekly Executive Summary",
-      type: "executive",
-      format: "pdf",
-      schedule: "weekly",
-      dayOfWeek: 1,
-      time: "08:00",
-      recipients: ["management@company.com", "cto@company.com"],
-      isActive: true,
-      lastSent: "2024-01-22T08:00:00Z",
-      nextRun: "2024-01-29T08:00:00Z",
-      includeCharts: true,
-    },
-    {
-      id: "2",
-      name: "Monthly Compliance Report",
-      type: "compliance",
-      format: "pdf",
-      schedule: "monthly",
-      dayOfMonth: 1,
-      time: "09:00",
-      recipients: ["compliance@company.com"],
-      isActive: true,
-      lastSent: "2024-01-01T09:00:00Z",
-      nextRun: "2024-02-01T09:00:00Z",
-      includeCharts: true,
-    },
-    {
-      id: "3",
-      name: "Daily Security Digest",
-      type: "security",
-      format: "pdf",
-      schedule: "daily",
-      time: "07:00",
-      recipients: ["security@company.com", "soc@company.com"],
-      isActive: true,
-      lastSent: "2024-01-25T07:00:00Z",
-      nextRun: "2024-01-26T07:00:00Z",
-      includeCharts: false,
-    },
-    {
-      id: "4",
-      name: "Quarterly SLA Review",
-      type: "sla",
-      format: "xlsx",
-      schedule: "quarterly",
-      dayOfMonth: 1,
-      time: "10:00",
-      recipients: ["clients@company.com"],
-      isActive: false,
-      lastSent: "2024-01-01T10:00:00Z",
-      nextRun: "2024-04-01T10:00:00Z",
-      includeCharts: true,
-      clientFilter: "all",
-    },
-  ]);
+  
+  // Map DB reports to UI format
+  const schedules: ScheduledReport[] = dbReports.map(r => ({
+    id: r.id,
+    name: r.report_name,
+    type: r.report_type as ScheduledReport['type'],
+    format: (r.format === 'excel' ? 'xlsx' : r.format) as ScheduledReport['format'],
+    schedule: 'weekly' as const,
+    time: '08:00',
+    recipients: r.recipients,
+    isActive: r.is_active,
+    lastSent: r.last_sent_at || undefined,
+    nextRun: r.next_send_at || undefined,
+    includeCharts: true,
+  }));
 
   const [newSchedule, setNewSchedule] = useState<Partial<ScheduledReport>>({
     type: "executive",
@@ -122,21 +82,17 @@ export function ScheduledReportDelivery() {
     { value: "custom", label: "Custom Report" },
   ];
 
-  const handleToggleSchedule = (id: string) => {
-    setSchedules((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, isActive: !s.isActive } : s))
-    );
-    toast({
-      title: "Schedule Updated",
-      description: "Report schedule status changed",
-    });
+  const handleToggleSchedule = async (id: string) => {
+    const schedule = schedules.find(s => s.id === id);
+    if (schedule) {
+      await toggleReport(id, !schedule.isActive);
+    }
   };
 
   const handleDeleteSchedule = (id: string) => {
-    setSchedules((prev) => prev.filter((s) => s.id !== id));
     toast({
-      title: "Schedule Deleted",
-      description: "Report schedule has been removed",
+      title: "Delete not implemented",
+      description: "Report schedule deletion coming soon",
     });
   };
 
@@ -157,7 +113,7 @@ export function ScheduledReportDelivery() {
     }
   };
 
-  const handleCreateSchedule = () => {
+  const handleCreateSchedule = async () => {
     if (!newSchedule.name) {
       toast({
         title: "Error",
@@ -167,35 +123,31 @@ export function ScheduledReportDelivery() {
       return;
     }
 
-    const schedule: ScheduledReport = {
-      id: crypto.randomUUID(),
-      name: newSchedule.name || "",
-      type: newSchedule.type as ScheduledReport["type"],
-      format: newSchedule.format as ScheduledReport["format"],
-      schedule: newSchedule.schedule as ScheduledReport["schedule"],
-      time: newSchedule.time || "08:00",
-      recipients: newSchedule.recipients || [],
-      isActive: true,
-      includeCharts: newSchedule.includeCharts || false,
-      nextRun: new Date().toISOString(),
-    };
-
-    setSchedules((prev) => [...prev, schedule]);
-    setIsCreateOpen(false);
-    setNewSchedule({
-      type: "executive",
-      format: "pdf",
-      schedule: "weekly",
-      time: "08:00",
-      recipients: [],
-      isActive: true,
-      includeCharts: true,
-    });
-
-    toast({
-      title: "Schedule Created",
-      description: `${schedule.name} has been scheduled`,
-    });
+    try {
+      await createReport({
+        report_name: newSchedule.name,
+        report_type: newSchedule.type || 'executive',
+        recipients: newSchedule.recipients || [],
+        format: (newSchedule.format || 'pdf') as 'pdf' | 'csv' | 'excel',
+        schedule_cron: '0 8 * * 1', // Weekly on Monday
+      });
+      setIsCreateOpen(false);
+      setNewSchedule({
+        type: "executive",
+        format: "pdf",
+        schedule: "weekly",
+        time: "08:00",
+        recipients: [],
+        isActive: true,
+        includeCharts: true,
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to create schedule",
+        variant: "destructive",
+      });
+    }
   };
 
   const getTypeColor = (type: string) => {

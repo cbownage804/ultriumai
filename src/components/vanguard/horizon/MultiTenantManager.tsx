@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { 
   Building2, Users, Settings, Plus, Edit2, Trash2, 
-  Key, Shield, Eye, Search, Lock, Unlock, Globe
+  Key, Shield, Eye, Search, Lock, Unlock, Globe, Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -27,18 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface Tenant {
-  id: string;
-  name: string;
-  domain: string;
-  status: 'active' | 'suspended' | 'trial';
-  userCount: number;
-  deviceCount: number;
-  createdAt: string;
-  plan: 'starter' | 'professional' | 'enterprise';
-  features: string[];
-}
+import { useHorizonTenants } from '@/hooks/useHorizon';
 
 interface TenantUser {
   id: string;
@@ -52,64 +41,36 @@ interface TenantUser {
 
 export const MultiTenantManager: React.FC = () => {
   const { toast } = useToast();
+  const { tenants, roles, isLoading, createTenant, createRole, refetch } = useHorizonTenants();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [newTenantName, setNewTenantName] = useState('');
+  const [newTenantSlug, setNewTenantSlug] = useState('');
+  const [newAdminEmail, setNewAdminEmail] = useState('');
 
-  const [tenants] = useState<Tenant[]>([
-    {
-      id: '1',
-      name: 'Acme Corporation',
-      domain: 'acme.vanguard.local',
-      status: 'active',
-      userCount: 45,
-      deviceCount: 156,
-      createdAt: '2024-01-15',
-      plan: 'enterprise',
-      features: ['Advanced RMM', 'XDR', 'Compliance']
-    },
-    {
-      id: '2',
-      name: 'TechStart Inc',
-      domain: 'techstart.vanguard.local',
-      status: 'active',
-      userCount: 12,
-      deviceCount: 38,
-      createdAt: '2024-02-20',
-      plan: 'professional',
-      features: ['RMM', 'Basic Security']
-    },
-    {
-      id: '3',
-      name: 'Global Dynamics',
-      domain: 'globaldyn.vanguard.local',
-      status: 'trial',
-      userCount: 5,
-      deviceCount: 10,
-      createdAt: '2024-03-01',
-      plan: 'starter',
-      features: ['Basic RMM']
-    },
-    {
-      id: '4',
-      name: 'SecureHealth Ltd',
-      domain: 'securehealth.vanguard.local',
-      status: 'suspended',
-      userCount: 28,
-      deviceCount: 0,
-      createdAt: '2023-11-10',
-      plan: 'enterprise',
-      features: ['Advanced RMM', 'XDR', 'HIPAA Compliance']
-    }
-  ]);
-
+  // Mock tenant users until we have a dedicated table
   const [tenantUsers] = useState<TenantUser[]>([
     { id: '1', tenantId: '1', email: 'admin@acme.com', name: 'John Smith', role: 'Tenant Admin', lastActive: new Date().toISOString(), status: 'active' },
     { id: '2', tenantId: '1', email: 'tech@acme.com', name: 'Jane Doe', role: 'Technician', lastActive: new Date(Date.now() - 3600000).toISOString(), status: 'active' },
-    { id: '3', tenantId: '1', email: 'viewer@acme.com', name: 'Bob Wilson', role: 'Viewer', status: 'invited' }
   ]);
 
-  const getStatusBadge = (status: Tenant['status']) => {
+  // Map from DB tenants to UI format
+  const displayTenants = tenants.map(t => ({
+    id: t.id,
+    name: t.tenant_name,
+    domain: `${t.tenant_slug}.vanguard.local`,
+    status: t.is_active ? 'active' as const : 'suspended' as const,
+    userCount: 0, // Would come from a join
+    deviceCount: 0,
+    createdAt: new Date(t.created_at).toLocaleDateString(),
+    plan: 'professional' as const,
+    features: Object.keys(t.settings || {}),
+  }));
+
+
+  type DisplayTenant = typeof displayTenants[number];
+
+  const getStatusBadge = (status: DisplayTenant['status']) => {
     const config: Record<string, string> = {
       active: 'bg-green-500/10 text-green-500',
       suspended: 'bg-red-500/10 text-red-500',
@@ -118,7 +79,7 @@ export const MultiTenantManager: React.FC = () => {
     return <Badge className={config[status]}>{status}</Badge>;
   };
 
-  const getPlanBadge = (plan: Tenant['plan']) => {
+  const getPlanBadge = (plan: DisplayTenant['plan']) => {
     const config: Record<string, string> = {
       starter: 'bg-blue-500/10 text-blue-500',
       professional: 'bg-purple-500/10 text-purple-500',
@@ -127,15 +88,18 @@ export const MultiTenantManager: React.FC = () => {
     return <Badge className={config[plan]}>{plan}</Badge>;
   };
 
-  const handleCreateTenant = () => {
-    toast({
-      title: "Tenant Created",
-      description: "New tenant organization has been provisioned."
-    });
-    setShowCreateDialog(false);
+  const handleCreateTenantSubmit = async () => {
+    try {
+      await createTenant({ tenant_name: newTenantName, tenant_slug: newTenantSlug });
+      setShowCreateDialog(false);
+      setNewTenantName('');
+      setNewTenantSlug('');
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to create tenant", variant: "destructive" });
+    }
   };
 
-  const handleSuspendTenant = (tenant: Tenant) => {
+  const handleSuspendTenant = (tenant: DisplayTenant) => {
     toast({
       title: "Tenant Suspended",
       description: `${tenant.name} has been suspended.`,
@@ -143,7 +107,7 @@ export const MultiTenantManager: React.FC = () => {
     });
   };
 
-  const filteredTenants = tenants.filter(t => 
+  const filteredTenants = displayTenants.filter(t => 
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.domain.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -199,7 +163,7 @@ export const MultiTenantManager: React.FC = () => {
                 <Label>Admin Email</Label>
                 <Input type="email" placeholder="admin@company.com" />
               </div>
-              <Button onClick={handleCreateTenant} className="w-full">Create Tenant</Button>
+              <Button onClick={handleCreateTenantSubmit} className="w-full">Create Tenant</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -212,7 +176,7 @@ export const MultiTenantManager: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Tenants</p>
-                <p className="text-2xl font-bold">{tenants.length}</p>
+                <p className="text-2xl font-bold">{displayTenants.length}</p>
               </div>
               <Building2 className="h-8 w-8 text-muted-foreground" />
             </div>
@@ -224,7 +188,7 @@ export const MultiTenantManager: React.FC = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Active</p>
                 <p className="text-2xl font-bold text-green-500">
-                  {tenants.filter(t => t.status === 'active').length}
+                  {displayTenants.filter(t => t.status === 'active').length}
                 </p>
               </div>
               <Unlock className="h-8 w-8 text-green-500" />
@@ -237,7 +201,7 @@ export const MultiTenantManager: React.FC = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Total Users</p>
                 <p className="text-2xl font-bold">
-                  {tenants.reduce((acc, t) => acc + t.userCount, 0)}
+                  {displayTenants.reduce((acc, t) => acc + t.userCount, 0)}
                 </p>
               </div>
               <Users className="h-8 w-8 text-muted-foreground" />
@@ -250,7 +214,7 @@ export const MultiTenantManager: React.FC = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Total Devices</p>
                 <p className="text-2xl font-bold">
-                  {tenants.reduce((acc, t) => acc + t.deviceCount, 0)}
+                  {displayTenants.reduce((acc, t) => acc + t.deviceCount, 0)}
                 </p>
               </div>
               <Globe className="h-8 w-8 text-muted-foreground" />
@@ -289,7 +253,6 @@ export const MultiTenantManager: React.FC = () => {
                     <div 
                       key={tenant.id} 
                       className="border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => setSelectedTenant(tenant)}
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-3">
@@ -375,7 +338,7 @@ export const MultiTenantManager: React.FC = () => {
                     <SelectValue placeholder="Select tenant" />
                   </SelectTrigger>
                   <SelectContent>
-                    {tenants.map((tenant) => (
+                    {displayTenants.map((tenant) => (
                       <SelectItem key={tenant.id} value={tenant.id}>
                         {tenant.name}
                       </SelectItem>

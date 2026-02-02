@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { 
   Power, Wifi, Clock, CheckCircle2, XCircle, Search,
-  Plus, Trash2, Send, History, Settings, Zap
+  Plus, Trash2, Send, History, Settings, Zap, Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useWakeOnLan } from '@/hooks/useHorizon';
 
 interface WoLDevice {
   id: string;
@@ -50,6 +51,7 @@ interface WoLHistory {
 
 export const WakeOnLanManager: React.FC = () => {
   const { toast } = useToast();
+  const { requests, isLoading, sendWakePacket, refetch } = useWakeOnLan();
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newDevice, setNewDevice] = useState({
@@ -60,73 +62,25 @@ export const WakeOnLanManager: React.FC = () => {
     port: 9
   });
 
-  const [devices, setDevices] = useState<WoLDevice[]>([
-    {
-      id: '1',
-      hostname: 'WORKSTATION-01',
-      macAddress: 'AA:BB:CC:DD:EE:01',
-      ipAddress: '192.168.1.101',
-      lastOnline: new Date(Date.now() - 3600000).toISOString(),
-      status: 'offline'
-    },
-    {
-      id: '2',
-      hostname: 'SERVER-PROD-01',
-      macAddress: 'AA:BB:CC:DD:EE:02',
-      ipAddress: '192.168.1.10',
-      lastOnline: new Date().toISOString(),
-      status: 'online'
-    },
-    {
-      id: '3',
-      hostname: 'DEV-MACHINE-03',
-      macAddress: 'AA:BB:CC:DD:EE:03',
-      ipAddress: '192.168.1.150',
-      lastOnline: new Date(Date.now() - 7200000).toISOString(),
-      status: 'offline'
-    },
-    {
-      id: '4',
-      hostname: 'BACKUP-SERVER',
-      macAddress: 'AA:BB:CC:DD:EE:04',
-      ipAddress: '192.168.1.20',
-      lastOnline: new Date(Date.now() - 120000).toISOString(),
-      status: 'waking'
-    }
-  ]);
+  // Map WoL requests to device list for history
+  const history: WoLHistory[] = requests.map(r => ({
+    id: r.id,
+    deviceId: r.agent_id || '',
+    hostname: r.target_device_name || 'Unknown',
+    macAddress: r.target_mac_address,
+    sentAt: r.created_at,
+    success: r.status === 'confirmed' || r.status === 'sent',
+    responseTime: r.response_time_ms || undefined
+  }));
 
-  const [history] = useState<WoLHistory[]>([
-    {
-      id: '1',
-      deviceId: '1',
-      hostname: 'WORKSTATION-01',
-      macAddress: 'AA:BB:CC:DD:EE:01',
-      sentAt: new Date(Date.now() - 300000).toISOString(),
-      success: true,
-      responseTime: 45
-    },
-    {
-      id: '2',
-      deviceId: '3',
-      hostname: 'DEV-MACHINE-03',
-      macAddress: 'AA:BB:CC:DD:EE:03',
-      sentAt: new Date(Date.now() - 600000).toISOString(),
-      success: false
-    },
-    {
-      id: '3',
-      deviceId: '4',
-      hostname: 'BACKUP-SERVER',
-      macAddress: 'AA:BB:CC:DD:EE:04',
-      sentAt: new Date(Date.now() - 120000).toISOString(),
-      success: true,
-      responseTime: 32
-    }
+  // Local device state (would come from agents table in production)
+  const [devices, setDevices] = useState<WoLDevice[]>([
+    { id: '1', hostname: 'WORKSTATION-01', macAddress: 'AA:BB:CC:DD:EE:01', ipAddress: '192.168.1.101', lastOnline: new Date(Date.now() - 3600000).toISOString(), status: 'offline' },
+    { id: '2', hostname: 'SERVER-PROD-01', macAddress: 'AA:BB:CC:DD:EE:02', ipAddress: '192.168.1.10', lastOnline: new Date().toISOString(), status: 'online' },
   ]);
 
   const [schedules] = useState([
     { id: '1', deviceId: '2', hostname: 'SERVER-PROD-01', time: '06:00', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], enabled: true },
-    { id: '2', deviceId: '4', hostname: 'BACKUP-SERVER', time: '02:00', days: ['Sun'], enabled: true }
   ]);
 
   const handleWake = (device: WoLDevice) => {

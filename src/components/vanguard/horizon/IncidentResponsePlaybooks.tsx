@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { 
   BookOpen, Play, Pause, CheckCircle2, XCircle, Clock,
   Plus, Edit2, Trash2, Copy, AlertTriangle, Zap, 
-  ArrowRight, Settings, History, Target
+  ArrowRight, Settings, History, Target, Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -29,6 +29,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { usePlaybooks } from '@/hooks/useHorizon';
 
 interface PlaybookStep {
   id: string;
@@ -38,21 +39,6 @@ interface PlaybookStep {
   parameters: Record<string, string>;
   condition?: string;
   onFailure: 'stop' | 'continue' | 'rollback';
-}
-
-interface Playbook {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  severity: 'critical' | 'high' | 'medium' | 'low';
-  triggerType: 'manual' | 'automatic' | 'scheduled';
-  triggerCondition?: string;
-  steps: PlaybookStep[];
-  isActive: boolean;
-  executionCount: number;
-  lastExecuted?: string;
-  averageRunTime?: number;
 }
 
 interface PlaybookExecution {
@@ -71,131 +57,44 @@ interface PlaybookExecution {
 
 export const IncidentResponsePlaybooks: React.FC = () => {
   const { toast } = useToast();
+  const { playbooks: dbPlaybooks, isLoading, createPlaybook, executePlaybook, refetch } = usePlaybooks();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null);
+  const [newPlaybookName, setNewPlaybookName] = useState('');
+  const [newPlaybookDescription, setNewPlaybookDescription] = useState('');
+  const [newPlaybookCategory, setNewPlaybookCategory] = useState('');
+  const [newPlaybookTrigger, setNewPlaybookTrigger] = useState<'manual' | 'automatic' | 'scheduled'>('manual');
+  const [newPlaybookSeverity, setNewPlaybookSeverity] = useState<'critical' | 'high' | 'medium' | 'low'>('medium');
 
-  const [playbooks] = useState<Playbook[]>([
-    {
-      id: '1',
-      name: 'Ransomware Response',
-      description: 'Automated response to ransomware detection including isolation and evidence collection',
-      category: 'Malware',
-      severity: 'critical',
-      triggerType: 'automatic',
-      triggerCondition: 'threat_type == "ransomware"',
-      steps: [
-        { id: '1', order: 1, name: 'Network Isolation', action: 'isolate_network', parameters: {}, onFailure: 'stop' },
-        { id: '2', order: 2, name: 'Kill Malicious Process', action: 'kill_process', parameters: { pattern: '*crypto*' }, onFailure: 'continue' },
-        { id: '3', order: 3, name: 'Collect Evidence', action: 'forensic_snapshot', parameters: {}, onFailure: 'continue' },
-        { id: '4', order: 4, name: 'Notify SOC', action: 'send_alert', parameters: { channel: 'slack', severity: 'critical' }, onFailure: 'continue' }
-      ],
-      isActive: true,
-      executionCount: 3,
-      lastExecuted: new Date(Date.now() - 86400000).toISOString(),
-      averageRunTime: 45
-    },
-    {
-      id: '2',
-      name: 'Credential Theft Response',
-      description: 'Response to detected credential dumping or theft attempts',
-      category: 'Credential Access',
-      severity: 'high',
-      triggerType: 'automatic',
-      triggerCondition: 'mitre_attack contains "T1003"',
-      steps: [
-        { id: '1', order: 1, name: 'Terminate Suspicious Process', action: 'kill_process', parameters: {}, onFailure: 'continue' },
-        { id: '2', order: 2, name: 'Force Password Reset', action: 'reset_password', parameters: {}, onFailure: 'stop' },
-        { id: '3', order: 3, name: 'Revoke Active Sessions', action: 'revoke_sessions', parameters: {}, onFailure: 'continue' },
-        { id: '4', order: 4, name: 'Enable MFA', action: 'enable_mfa', parameters: {}, onFailure: 'continue' }
-      ],
-      isActive: true,
-      executionCount: 8,
-      lastExecuted: new Date(Date.now() - 172800000).toISOString(),
-      averageRunTime: 30
-    },
-    {
-      id: '3',
-      name: 'Suspicious PowerShell Activity',
-      description: 'Response to encoded or obfuscated PowerShell execution',
-      category: 'Execution',
-      severity: 'medium',
-      triggerType: 'automatic',
-      triggerCondition: 'process_command contains "-EncodedCommand"',
-      steps: [
-        { id: '1', order: 1, name: 'Capture Process Details', action: 'log_process', parameters: {}, onFailure: 'continue' },
-        { id: '2', order: 2, name: 'Decode Command', action: 'decode_base64', parameters: {}, onFailure: 'continue' },
-        { id: '3', order: 3, name: 'Analyze with AI', action: 'ai_analysis', parameters: { model: 'threat_classifier' }, onFailure: 'continue' },
-        { id: '4', order: 4, name: 'Block if Malicious', action: 'conditional_block', parameters: {}, onFailure: 'stop' }
-      ],
-      isActive: true,
-      executionCount: 24,
-      averageRunTime: 15
-    },
-    {
-      id: '4',
-      name: 'Data Exfiltration Prevention',
-      description: 'Detect and prevent large data transfers to external destinations',
-      category: 'Exfiltration',
-      severity: 'high',
-      triggerType: 'automatic',
-      triggerCondition: 'bytes_out > 100MB AND destination_external',
-      steps: [
-        { id: '1', order: 1, name: 'Block Connection', action: 'block_connection', parameters: {}, onFailure: 'stop' },
-        { id: '2', order: 2, name: 'Capture Network Traffic', action: 'pcap_capture', parameters: { duration: '60s' }, onFailure: 'continue' },
-        { id: '3', order: 3, name: 'Alert Data Owner', action: 'notify_user', parameters: {}, onFailure: 'continue' }
-      ],
-      isActive: false,
-      executionCount: 2
-    }
-  ]);
+  // Map DB playbooks to UI format
+  const playbooks = dbPlaybooks.map(p => ({
+    id: p.id,
+    name: p.playbook_name,
+    description: p.description || '',
+    category: 'Security',
+    severity: 'high' as const,
+    triggerType: p.trigger_type as 'manual' | 'automatic' | 'scheduled',
+    triggerCondition: JSON.stringify(p.trigger_conditions),
+    steps: (p.steps as PlaybookStep[]) || [],
+    isActive: p.is_active,
+    executionCount: p.execution_count,
+    lastExecuted: p.last_executed_at,
+    averageRunTime: 30
+  }));
 
-  const [executions] = useState<PlaybookExecution[]>([
-    {
-      id: '1',
-      playbookId: '1',
-      playbookName: 'Ransomware Response',
-      status: 'completed',
-      triggeredBy: 'Automatic - Threat Detection',
-      startedAt: new Date(Date.now() - 86400000).toISOString(),
-      completedAt: new Date(Date.now() - 86400000 + 45000).toISOString(),
-      stepsCompleted: 4,
-      totalSteps: 4,
-      affectedDevices: ['WORKSTATION-05']
-    },
-    {
-      id: '2',
-      playbookId: '2',
-      playbookName: 'Credential Theft Response',
-      status: 'running',
-      triggeredBy: 'Automatic - MITRE T1003',
-      startedAt: new Date(Date.now() - 60000).toISOString(),
-      stepsCompleted: 2,
-      totalSteps: 4,
-      affectedDevices: ['SERVER-DC-01']
-    },
-    {
-      id: '3',
-      playbookId: '3',
-      playbookName: 'Suspicious PowerShell Activity',
-      status: 'failed',
-      triggeredBy: 'Automatic - Process Monitor',
-      startedAt: new Date(Date.now() - 3600000).toISOString(),
-      completedAt: new Date(Date.now() - 3600000 + 12000).toISOString(),
-      stepsCompleted: 2,
-      totalSteps: 4,
-      affectedDevices: ['DEV-MACHINE-03'],
-      error: 'AI analysis service timeout'
-    }
-  ]);
+  // Sample executions (would come from DB)
+  const executions: PlaybookExecution[] = [];
 
-  const handleRunPlaybook = (playbook: Playbook) => {
+  type PlaybookUI = typeof playbooks[number];
+
+  const handleRunPlaybook = (playbook: PlaybookUI) => {
+    executePlaybook(playbook.id);
     toast({
       title: "Playbook Started",
       description: `Executing "${playbook.name}" on selected devices...`
     });
   };
 
-  const handleTogglePlaybook = (playbook: Playbook) => {
+  const handleTogglePlaybook = (playbook: PlaybookUI) => {
     toast({
       title: playbook.isActive ? "Playbook Disabled" : "Playbook Enabled",
       description: `"${playbook.name}" has been ${playbook.isActive ? 'disabled' : 'enabled'}.`
