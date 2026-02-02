@@ -22,9 +22,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { generateWindowsAgentZip } from '@/utils/generateWindowsAgentZip';
 import { downloadBlob } from '@/utils/generateVanguardZip';
-
-const API_ENDPOINT = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api';
-const VANGUARD_SECRET = 'vgd_sk_7Kx9mPqR3nTwYz2JfL8sHcN6bVdXaE4uGtM1oWpQ5iA';
+import { getAgentConfig } from '@/hooks/useVanguardAgentConfig';
 
 interface CustomerAgentDownloadProps {
   customerId: string;
@@ -53,10 +51,18 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
     setDownloadMessage('Initializing...');
 
     try {
+      // Fetch config dynamically from server
+      setDownloadMessage('Fetching agent configuration...');
+      const agentConfig = await getAgentConfig();
+      
+      if (!agentConfig) {
+        throw new Error('Failed to fetch agent configuration. Please try again.');
+      }
+
       const blob = await generateWindowsAgentZip({
-        userId: user.id,
-        apiEndpoint: API_ENDPOINT,
-        secretKey: VANGUARD_SECRET,
+        userId: agentConfig.userId,
+        apiEndpoint: agentConfig.apiEndpoint,
+        secretKey: agentConfig.secretKey,
         deviceName: `${customerName.replace(/[^a-zA-Z0-9]/g, '-')}-Device`,
         clientId: customerId,
         clientName: customerName,

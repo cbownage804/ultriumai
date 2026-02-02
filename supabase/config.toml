@@ -265,3 +265,7 @@ verify_jwt = false
 # Vanguard Remote Access
 [functions.vanguard-relay-config]
 verify_jwt = false
+
+# Vanguard Agent Configuration (authenticated - returns secret for downloads)
+[functions.vanguard-agent-config]
+verify_jwt = false
