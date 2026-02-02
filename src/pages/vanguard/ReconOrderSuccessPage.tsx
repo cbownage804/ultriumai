@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { getVanguardBasePath } from '@/utils/subdomain';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 const ReconOrderSuccessPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
   const [orderDetails, setOrderDetails] = useState<{
     hardwareTier: string;
     subscriptionTier: string;
@@ -155,14 +157,14 @@ const ReconOrderSuccessPage = () => {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button
             variant="outline"
-            onClick={() => navigate('/vanguard/devices')}
+            onClick={() => navigate(`${basePath}/devices`)}
             className="gap-2"
           >
             View My Devices
             <ArrowRight className="h-4 w-4" />
           </Button>
           <Button
-            onClick={() => navigate('/vanguard')}
+            onClick={() => navigate(basePath)}
             className="gap-2 bg-gradient-to-r from-cyan-600 to-blue-600"
           >
             Go to Dashboard

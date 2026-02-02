@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getVanguardBasePath } from '@/utils/subdomain';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,7 @@ import { toast } from 'sonner';
 export function VanguardUserMenu() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleSignOut = async () => {
@@ -24,7 +26,7 @@ export function VanguardUserMenu() {
       setIsLoggingOut(true);
       await signOut();
       toast.success('Signed out successfully');
-      navigate('/vanguard/auth');
+      navigate(`${basePath}/auth`);
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Failed to sign out');
@@ -82,7 +84,7 @@ export function VanguardUserMenu() {
         <DropdownMenuSeparator className="bg-cyan-500/20" />
         
         <DropdownMenuItem 
-          onClick={() => navigate('/vanguard/admin')}
+          onClick={() => navigate(`${basePath}/admin`)}
           className="text-slate-300 hover:text-white hover:bg-cyan-500/10 cursor-pointer"
         >
           <User className="mr-2 h-4 w-4 text-cyan-400" />
@@ -90,7 +92,7 @@ export function VanguardUserMenu() {
         </DropdownMenuItem>
         
         <DropdownMenuItem 
-          onClick={() => navigate('/vanguard/admin')}
+          onClick={() => navigate(`${basePath}/admin`)}
           className="text-slate-300 hover:text-white hover:bg-cyan-500/10 cursor-pointer"
         >
           <Settings className="mr-2 h-4 w-4 text-cyan-400" />
@@ -98,7 +100,7 @@ export function VanguardUserMenu() {
         </DropdownMenuItem>
         
         <DropdownMenuItem 
-          onClick={() => navigate('/vanguard/msp-billing')}
+          onClick={() => navigate(`${basePath}/msp-billing`)}
           className="text-slate-300 hover:text-white hover:bg-cyan-500/10 cursor-pointer"
         >
           <CreditCard className="mr-2 h-4 w-4 text-cyan-400" />
@@ -106,7 +108,7 @@ export function VanguardUserMenu() {
         </DropdownMenuItem>
         
         <DropdownMenuItem 
-          onClick={() => navigate('/vanguard/knowledge')}
+          onClick={() => navigate(`${basePath}/knowledge`)}
           className="text-slate-300 hover:text-white hover:bg-cyan-500/10 cursor-pointer"
         >
           <HelpCircle className="mr-2 h-4 w-4 text-cyan-400" />
@@ -116,7 +118,7 @@ export function VanguardUserMenu() {
         <DropdownMenuSeparator className="bg-cyan-500/20" />
         
         <DropdownMenuItem 
-          onClick={() => navigate('/vanguard/admin')}
+          onClick={() => navigate(`${basePath}/admin`)}
           className="text-slate-300 hover:text-white hover:bg-purple-500/10 cursor-pointer"
         >
           <Shield className="mr-2 h-4 w-4 text-purple-400" />

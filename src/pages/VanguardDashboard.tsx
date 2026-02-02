@@ -244,19 +244,19 @@ const VanguardDashboard = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="bg-black border-cyan-500/30">
               <DropdownMenuItem 
-                onClick={() => navigate('/vanguard/tickets/new')}
+                onClick={() => navigate(`${basePath}/tickets/new`)}
                 className="text-slate-200 focus:bg-cyan-500/20 focus:text-cyan-400"
               >
                 New Ticket
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => navigate('/vanguard/customers/new')}
+                onClick={() => navigate(`${basePath}/customers/new`)}
                 className="text-slate-200 focus:bg-cyan-500/20 focus:text-cyan-400"
               >
                 New Customer
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => navigate('/vanguard/devices/new')}
+                onClick={() => navigate(`${basePath}/devices/new`)}
                 className="text-slate-200 focus:bg-cyan-500/20 focus:text-cyan-400"
               >
                 New Device

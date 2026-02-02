@@ -10,6 +10,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { getVanguardBasePath } from '@/utils/subdomain';
 import { motion } from 'framer-motion';
 
 interface NetworkNode {
@@ -26,6 +27,7 @@ interface NetworkNode {
 export const NetworkTopologyMap = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [nodes, setNodes] = useState<NetworkNode[]>([]);
   const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null);
@@ -303,7 +305,7 @@ export const NetworkTopologyMap = () => {
       >
         {/* Deploy Recon Unit */}
         <Card className="bg-black/60 border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/5 transition-all cursor-pointer group"
-              onClick={() => navigate('/vanguard/recon')}>
+              onClick={() => navigate(`${basePath}/recon`)}>
           <CardContent className="p-5">
             <div className="flex items-start gap-4">
               <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30">
@@ -327,7 +329,7 @@ export const NetworkTopologyMap = () => {
 
         {/* Configure Agent Scanner */}
         <Card className="bg-black/60 border-purple-500/30 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all cursor-pointer group"
-              onClick={() => navigate('/vanguard/devices')}>
+              onClick={() => navigate(`${basePath}/devices`)}>
           <CardContent className="p-5">
             <div className="flex items-start gap-4">
               <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30">

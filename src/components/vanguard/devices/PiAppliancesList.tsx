@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { getVanguardBasePath } from '@/utils/subdomain';
 import { VanguardAgent } from '@/hooks/useVanguardAgents';
 
 const statusColors: Record<string, string> = {
@@ -44,6 +45,7 @@ interface PiAppliancesListProps {
 
 export function PiAppliancesList({ agents, isLoading }: PiAppliancesListProps) {
   const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredAgents = useMemo(() => {
@@ -155,7 +157,7 @@ export function PiAppliancesList({ agents, isLoading }: PiAppliancesListProps) {
           />
         </div>
         <Button 
-          onClick={() => navigate('/vanguard/setup?type=pi')}
+          onClick={() => navigate(`${basePath}/setup?type=pi`)}
           className="bg-gradient-to-r from-purple-500 to-pink-500 text-white"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -173,7 +175,7 @@ export function PiAppliancesList({ agents, isLoading }: PiAppliancesListProps) {
               Deploy a Recon Unit to enable advanced threat detection and network scanning.
             </p>
             <Button 
-              onClick={() => navigate('/vanguard/setup?type=pi')}
+              onClick={() => navigate(`${basePath}/setup?type=pi`)}
               className="bg-gradient-to-r from-purple-500 to-pink-500 text-white"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -187,7 +189,7 @@ export function PiAppliancesList({ agents, isLoading }: PiAppliancesListProps) {
             <PiApplianceCard 
               key={agent.id} 
               agent={agent}
-              onClick={() => navigate(`/vanguard/pi/${agent.id}`)}
+              onClick={() => navigate(`${basePath}/pi/${agent.id}`)}
             />
           ))}
         </div>
