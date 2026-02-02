@@ -208,8 +208,8 @@ export default function VanguardDeviceDetailPage() {
     try {
       setIsDeleting(true);
       await deleteAgent(deviceId);
-      // Navigate to RMM dashboard
-      navigate(`${basePath}/rmm`);
+      // Navigate back to Devices list
+      navigate(`${basePath}/devices`);
     } catch (err: any) {
       console.error('Error deleting agent:', err);
     } finally {
@@ -231,7 +231,11 @@ export default function VanguardDeviceDetailPage() {
       <div className="min-h-screen bg-[#050a0a] p-6">
         <div className="text-center py-12">
           <p className="text-white/60">Device not found</p>
-          <Button variant="outline" className="mt-4 border-cyan-500/30 text-white hover:bg-cyan-500/10" onClick={() => navigate('/vanguard/devices')}>
+          <Button
+            variant="outline"
+            className="mt-4 border-cyan-500/30 text-white hover:bg-cyan-500/10"
+            onClick={() => navigate(`${basePath}/devices`)}
+          >
             Back to Devices
           </Button>
         </div>
@@ -422,7 +426,7 @@ export default function VanguardDeviceDetailPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(`${basePath}/rmm`)}
+              onClick={() => navigate(`${basePath}/devices`)}
               className="text-white/60 hover:text-white hover:bg-cyan-500/10"
             >
               <ArrowLeft className="h-5 w-5" />
