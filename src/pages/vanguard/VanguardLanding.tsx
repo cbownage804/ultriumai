@@ -172,15 +172,25 @@ export default function VanguardLanding() {
           <img 
             src={heroVanguard} 
             alt="Cybersecurity Command Center" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f]/90 via-[#0a0a0f]/70 to-[#0a0a0f]" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f]/70 via-transparent to-[#0a0a0f]/70" />
+          {/* Scan line effect for cyberpunk feel */}
+          <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,255,255,0.02)_50%)] bg-[size:100%_4px] pointer-events-none" />
         </div>
         {/* Animated Overlay Effects - responsive sizing */}
-        <div className="absolute top-10 right-4 md:top-20 md:right-20 w-48 h-48 md:w-96 md:h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 md:w-64 md:h-64 bg-purple-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] lg:w-[800px] lg:h-[800px] bg-gradient-to-r from-cyan-500/5 to-purple-600/5 rounded-full blur-3xl" />
+        <div className="absolute top-10 right-4 md:top-20 md:right-20 w-48 h-48 md:w-96 md:h-96 bg-cyan-500/15 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 md:w-64 md:h-64 bg-purple-600/15 rounded-full blur-3xl animate-[pulse_4s_ease-in-out_infinite]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] lg:w-[800px] lg:h-[800px] bg-gradient-to-r from-cyan-500/8 to-purple-600/8 rounded-full blur-3xl" />
+        
+        {/* Floating particles */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-[10%] w-2 h-2 bg-cyan-400/50 rounded-full animate-float" />
+          <div className="absolute top-40 right-[15%] w-1.5 h-1.5 bg-purple-400/50 rounded-full animate-float delay-1000" />
+          <div className="absolute bottom-32 left-[25%] w-1 h-1 bg-cyan-400/60 rounded-full animate-float delay-2000" />
+          <div className="absolute top-60 right-[30%] w-2 h-2 bg-purple-400/40 rounded-full animate-float delay-500" />
+        </div>
         
         <div className="container mx-auto px-6 py-24 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
@@ -189,32 +199,32 @@ export default function VanguardLanding() {
               v4.0 Enterprise Plus - The Future of Cybersecurity
             </Badge>
             
-            {/* Large Logo */}
+            {/* Large Logo with enhanced glow */}
             <div className="flex justify-center mb-8">
-              <div className="px-6 py-4 sm:px-12 sm:py-6 bg-black rounded-2xl shadow-2xl shadow-cyan-500/20 animate-fade-in">
-                <img src={vanguardLogo} alt="Vanguard" className="h-16 sm:h-20 md:h-28 w-auto" />
+              <div className="px-6 py-4 sm:px-12 sm:py-6 bg-black rounded-2xl shadow-2xl shadow-cyan-500/30 animate-fade-in group hover:shadow-cyan-500/50 transition-shadow duration-500">
+                <img src={vanguardLogo} alt="Vanguard" className="h-16 sm:h-20 md:h-28 w-auto group-hover:scale-105 transition-transform duration-300" />
               </div>
             </div>
             
-            <p className="text-xl md:text-2xl text-white/60 mb-8 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              The world's first <strong className="text-cyan-400">AI-powered unified cybersecurity platform</strong> that combines SOC operations, 
+            <p className="text-xl md:text-2xl text-white/60 mb-8 max-w-3xl mx-auto animate-fade-in stagger-1">
+              The world's first <strong className="text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text">AI-powered unified cybersecurity platform</strong> that combines SOC operations, 
               threat detection, penetration testing, compliance, and identity management into one revolutionary solution.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 animate-fade-in stagger-2">
               <Button 
                 size="lg" 
                 onClick={() => navigate('/auth')} 
-                className="text-lg px-8 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0"
+                className="text-lg px-8 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0 shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 hover:-translate-y-0.5 transition-all duration-300 group"
               >
-                <Shield className="h-5 w-5 mr-2" />
+                <Shield className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" />
                 Launch Vanguard Platform
               </Button>
               <Button 
                 size="lg" 
                 variant="outline" 
                 asChild 
-                className="text-lg px-8 border-white/20 text-white hover:bg-white/10"
+                className="text-lg px-8 border-white/20 text-white hover:bg-white/10 hover:border-cyan-500/50 transition-all duration-300"
               >
                 <a href="https://ultriumai.com/demos">
                   <Play className="h-5 w-5 mr-2" />

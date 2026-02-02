@@ -80,19 +80,24 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a] to-[#0f0f12]">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a] to-[#0f0f12] overflow-hidden">
       <Navigation />
       
-      {/* Hero Section - Fluid typography, mobile optimized */}
+      {/* Hero Section - Premium glassmorphism design */}
       <section className="pt-24 md:pt-32 pb-12 md:pb-20 px-4 relative overflow-hidden safe-area-inset-top">
+        {/* Animated gradient orbs */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-cyan-500/5" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-primary/8 rounded-full blur-[100px] md:blur-[120px]" />
-        <div className="absolute bottom-0 right-0 w-[200px] h-[200px] md:w-[300px] md:h-[300px] bg-cyan-500/5 rounded-full blur-[60px] md:blur-[80px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-primary/10 rounded-full blur-[100px] md:blur-[120px] animate-pulse" />
+        <div className="absolute bottom-0 right-0 w-[200px] h-[200px] md:w-[300px] md:h-[300px] bg-cyan-500/10 rounded-full blur-[60px] md:blur-[80px] animate-[pulse_4s_ease-in-out_infinite]" />
+        <div className="absolute top-1/4 left-0 w-[150px] h-[150px] md:w-[200px] md:h-[200px] bg-emerald-500/5 rounded-full blur-[50px] animate-[pulse_5s_ease-in-out_infinite]" />
+        
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
         
         <div className="container mx-auto text-center max-w-3xl relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-white/5 rounded-full border border-white/10 mb-6 md:mb-8 animate-fade-in">
-            <MessageSquare className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
-            <span className="text-xs md:text-sm font-medium text-white/70">We're here to help</span>
+          <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-white/5 rounded-full border border-white/10 mb-6 md:mb-8 animate-fade-in backdrop-blur-sm group hover:border-primary/40 hover:bg-white/10 transition-all cursor-default">
+            <MessageSquare className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary group-hover:scale-110 transition-transform" />
+            <span className="text-xs md:text-sm font-medium text-white/70 group-hover:text-white transition-colors">We're here to help</span>
           </div>
           <h1 className="text-fluid-xl md:text-fluid-hero font-bold mb-4 md:mb-6 bg-gradient-to-r from-white via-white to-white/50 bg-clip-text text-transparent animate-fade-in-up">
             Let's Talk
@@ -110,17 +115,20 @@ const Contact = () => {
             
             {/* Contact Form - Takes 3 columns */}
             <div className="lg:col-span-3 order-2 lg:order-1">
-              <Card className="bg-gradient-to-br from-[#141414] to-[#1a1a1f] border-white/10 shadow-2xl shadow-black/20">
-                <CardContent className="p-5 md:p-8 lg:p-10">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="h-9 w-9 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+              <Card className="bg-gradient-to-br from-[#141414] to-[#1a1a1f] border-white/10 shadow-2xl shadow-black/20 hover:border-primary/20 transition-all duration-500 group/card">
+                <CardContent className="p-5 md:p-8 lg:p-10 relative overflow-hidden">
+                  {/* Subtle gradient glow on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-cyan-500/5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                  
+                  <div className="flex items-center gap-3 mb-2 relative z-10">
+                    <div className="h-9 w-9 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/25 group-hover/card:shadow-primary/40 transition-shadow">
                       <Send className="h-4 w-4 md:h-5 md:w-5 text-white" />
                     </div>
                     <h2 className="text-xl md:text-2xl font-bold text-white">Send a Message</h2>
                   </div>
-                  <p className="text-sm md:text-base text-white/50 mb-6 md:mb-10 ml-12 md:ml-13">We typically respond within 24 hours</p>
+                  <p className="text-sm md:text-base text-white/50 mb-6 md:mb-10 ml-12 md:ml-13 relative z-10">We typically respond within 24 hours</p>
                   
-                  <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+                  <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6 relative z-10">
                     <div className="grid md:grid-cols-2 gap-3 md:gap-4">
                       <div className="space-y-1.5 md:space-y-2">
                         <Label htmlFor="name" className="text-sm text-white/80">Full Name *</Label>

@@ -13,25 +13,34 @@ import vanguardLogo from '@/assets/vanguard-logo.png';
 
 const Pricing = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a] to-[#0f0f12] safe-area-inset-bottom">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a] to-[#0f0f12] safe-area-inset-bottom overflow-hidden">
       <Navigation />
       
-      {/* Hero Section */}
+      {/* Hero Section - Premium with animated orbs */}
       <section className="pt-24 sm:pt-32 pb-12 sm:pb-20 relative overflow-hidden">
+        {/* Animated background orbs */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-emerald-500/5" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] md:w-[700px] md:h-[700px] lg:w-[900px] lg:h-[900px] bg-primary/5 rounded-full blur-[80px] sm:blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[200px] h-[200px] sm:w-[300px] sm:h-[300px] bg-emerald-500/5 rounded-full blur-[60px] sm:blur-[80px]" />
-        <div className="absolute top-1/4 right-0 w-[150px] h-[150px] sm:w-[250px] sm:h-[250px] bg-cyan-500/5 rounded-full blur-[40px] sm:blur-[60px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] md:w-[700px] md:h-[700px] lg:w-[900px] lg:h-[900px] bg-primary/8 rounded-full blur-[80px] sm:blur-[120px] animate-pulse" />
+        <div className="absolute bottom-0 left-0 w-[200px] h-[200px] sm:w-[300px] sm:h-[300px] bg-emerald-500/10 rounded-full blur-[60px] sm:blur-[80px] animate-[pulse_4s_ease-in-out_infinite]" />
+        <div className="absolute top-1/4 right-0 w-[150px] h-[150px] sm:w-[250px] sm:h-[250px] bg-cyan-500/10 rounded-full blur-[40px] sm:blur-[60px] animate-[pulse_5s_ease-in-out_infinite]" />
+        
+        {/* Floating particles effect */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-[10%] w-2 h-2 bg-primary/30 rounded-full animate-float" />
+          <div className="absolute top-40 right-[15%] w-1.5 h-1.5 bg-emerald-400/40 rounded-full animate-float delay-1000" />
+          <div className="absolute bottom-32 left-[20%] w-1 h-1 bg-cyan-400/50 rounded-full animate-float delay-2000" />
+          <div className="absolute top-60 right-[25%] w-2.5 h-2.5 bg-primary/20 rounded-full animate-float delay-500" />
+        </div>
         
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-6 sm:mb-8">
-            <Zap className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-white/70">Simple, Transparent Pricing</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-6 sm:mb-8 backdrop-blur-sm animate-fade-in group hover:border-primary/30 transition-colors">
+            <Zap className="h-4 w-4 text-primary animate-pulse" />
+            <span className="text-sm font-medium text-white/70 group-hover:text-white/90 transition-colors">Simple, Transparent Pricing</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-6 sm:mb-8 bg-gradient-to-r from-white via-white to-white/50 bg-clip-text text-transparent px-2">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-6 sm:mb-8 bg-gradient-to-r from-white via-white to-white/50 bg-clip-text text-transparent px-2 animate-fade-in-up">
             Choose Your Plan
           </h1>
-          <p className="text-base sm:text-lg lg:text-xl text-white/50 max-w-2xl mx-auto leading-relaxed px-4">
+          <p className="text-base sm:text-lg lg:text-xl text-white/50 max-w-2xl mx-auto leading-relaxed px-4 animate-fade-in-up stagger-1">
             From personal security tools to enterprise AI platforms—find the perfect fit for your needs.
           </p>
         </div>
