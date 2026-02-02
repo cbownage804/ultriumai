@@ -70,45 +70,60 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/70 backdrop-blur-xl border-b border-border/30 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleNavigationWithMenuClose('/')}>
-            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto transition-transform duration-300 hover:scale-110" />
-            <span className="text-lg font-bold text-foreground">UltriumAI</span>
+          {/* Logo with enhanced hover */}
+          <div 
+            className="flex items-center gap-2.5 cursor-pointer group" 
+            onClick={() => handleNavigationWithMenuClose('/')}
+          >
+            <img 
+              src={ultraiumAiLogo} 
+              alt="UltriumAI" 
+              className="h-9 w-auto transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" 
+            />
+            <span className="text-lg font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent group-hover:from-primary group-hover:to-foreground transition-all duration-300">
+              UltriumAI
+            </span>
           </div>
           
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* Desktop Navigation - Enhanced Product Cards */}
+          <div className="hidden md:flex items-center gap-5">
+            {/* AI Studio Button */}
             <button 
               onClick={() => handleNavigation('/ai-studio')}
-              className="transition-transform duration-200 hover:scale-105"
+              className="relative group transition-all duration-300 hover:scale-105"
               title="AI Studio™"
             >
-              <div className="h-16 w-16 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-primary/20 p-1">
+              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-black to-gray-900 flex items-center justify-center overflow-hidden shadow-lg group-hover:shadow-primary/40 p-1 border border-primary/20 group-hover:border-primary/50 transition-all duration-300">
                 <img src={aiStudioLogo} alt="AI Studio" className="h-full w-full object-contain scale-150" />
               </div>
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-primary rounded-full group-hover:w-3/4 transition-all duration-300" />
             </button>
             
+            {/* Vanguard Button */}
             <button 
               onClick={() => handleNavigation('/vanguard')}
-              className="transition-transform duration-200 hover:scale-105"
+              className="relative group transition-all duration-300 hover:scale-105"
               title="Vanguard™"
             >
-              <div className="h-16 w-16 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-cyan-500/20">
+              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-black to-gray-900 flex items-center justify-center overflow-hidden shadow-lg group-hover:shadow-cyan-500/40 border border-cyan-500/20 group-hover:border-cyan-500/50 transition-all duration-300">
                 <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
               </div>
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-cyan-500 rounded-full group-hover:w-3/4 transition-all duration-300" />
             </button>
             
+            {/* SafeSuite Button */}
             <button 
               onClick={() => handleNavigation('/safesuite')}
-              className="transition-transform duration-200 hover:scale-105"
+              className="relative group transition-all duration-300 hover:scale-105"
               title="SafeSuite™"
             >
-              <div className="h-16 w-16 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-emerald-500/20 p-1">
+              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-black to-gray-900 flex items-center justify-center overflow-hidden shadow-lg group-hover:shadow-emerald-500/40 p-1 border border-emerald-500/20 group-hover:border-emerald-500/50 transition-all duration-300">
                 <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain scale-150" />
               </div>
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-emerald-500 rounded-full group-hover:w-3/4 transition-all duration-300" />
             </button>
             
             <DropdownMenu>
@@ -197,25 +212,29 @@ const Navigation = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             
+            {/* Enhanced Text Nav Links */}
             <button 
               onClick={() => handleNavigation('/pricing')}
-              className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200"
+              className="relative text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 group"
             >
               Pricing
+              <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-primary rounded-full group-hover:w-full transition-all duration-300" />
             </button>
             
             <button 
               onClick={() => handleNavigation('/docs')}
-              className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200"
+              className="relative text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 group"
             >
               Docs
+              <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-primary rounded-full group-hover:w-full transition-all duration-300" />
             </button>
             
             <button 
               onClick={() => handleNavigation('/contact')}
-              className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200"
+              className="relative text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 group"
             >
               Contact
+              <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-primary rounded-full group-hover:w-full transition-all duration-300" />
             </button>
 
             {user && (
@@ -250,9 +269,13 @@ const Navigation = () => {
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <ThemeToggle />
-                <Button onClick={() => handleNavigation('/auth')} size="sm">
+                <Button 
+                  onClick={() => handleNavigation('/auth')} 
+                  size="sm"
+                  className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-primary/30 transition-all duration-300 hover:scale-105"
+                >
                   Sign In
                 </Button>
               </div>

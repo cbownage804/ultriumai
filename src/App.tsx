@@ -438,27 +438,10 @@ function AppRouter() {
             </SuspenseWrapper>
           </SubscriptionProtectedRoute>
         } />
-        <Route path="/docs" element={
-          <ProtectedRoute>
-            <SuspenseWrapper variant="detail">
-              <Docs />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
-        <Route path="/docs/safesuite" element={
-          <ProtectedRoute>
-            <SuspenseWrapper variant="detail">
-              <SafeSuiteKnowledgeBase />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
-        <Route path="/docs/ai-studio" element={
-          <ProtectedRoute>
-            <SuspenseWrapper variant="detail">
-              <AIStudioKnowledgeBase />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
+        {/* Public Documentation - accessible without auth */}
+        <Route path="/docs" element={<SuspenseWrapper variant="detail"><Docs /></SuspenseWrapper>} />
+        <Route path="/docs/safesuite" element={<SuspenseWrapper variant="detail"><SafeSuiteKnowledgeBase /></SuspenseWrapper>} />
+        <Route path="/docs/ai-studio" element={<SuspenseWrapper variant="detail"><AIStudioKnowledgeBase /></SuspenseWrapper>} />
         <Route path="/demos/safescan" element={<SuspenseWrapper><SafeScanDemoPage /></SuspenseWrapper>} />
         <Route path="/demos/safepass" element={<SuspenseWrapper><SafePassDemoPage /></SuspenseWrapper>} />
         <Route path="/demos/ai-studio" element={<SuspenseWrapper><AIStudioDemoPage /></SuspenseWrapper>} />
