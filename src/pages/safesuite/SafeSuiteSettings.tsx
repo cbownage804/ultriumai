@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
 import { useSecurity } from '@/hooks/useSecurity';
 import { useSafeSuiteSettings } from '@/hooks/useSafeSuiteSettings';
+import { supabase } from '@/integrations/supabase/client';
 import QRCode from 'qrcode';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,14 +55,14 @@ export default function SafeSuiteSettings() {
     toast.info('Preparing your data export...');
     
     try {
-      const { data: { session } } = await (await import('@/integrations/supabase/client')).supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         toast.error('Please sign in to export your data');
         return;
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/safesuite-data-export`,
+        `https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safesuite-data-export`,
         {
           method: 'POST',
           headers: {
