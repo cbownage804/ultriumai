@@ -53,18 +53,66 @@ public class ApiClient
         try
         {
             SetHeaders();
+            
+            // Generate a device_id if not already set
+            var deviceId = Config.DeviceId;
+            if (string.IsNullOrEmpty(deviceId))
+            {
+                deviceId = $"vanguard-{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+            }
+            
+            // Build flat payload as expected by backend
             var payload = new
             {
-                action = "register",
-                device = deviceInfo
+                device_id = deviceId,
+                user_id = Config.UserId,
+                client_id = Config.ClientId,
+                hostname = deviceInfo.Hostname,
+                name = Config.DeviceName ?? deviceInfo.Hostname,
+                ip_address = deviceInfo.IpAddress,
+                agent_version = deviceInfo.AgentVersion,
+                system_info = new
+                {
+                    os_name = deviceInfo.OsName,
+                    os_version = deviceInfo.OsVersion,
+                    cpu_info = deviceInfo.CpuInfo,
+                    total_memory_gb = deviceInfo.TotalMemoryGb,
+                    mac_address = deviceInfo.MacAddress,
+                    manufacturer = deviceInfo.Manufacturer,
+                    model = deviceInfo.Model,
+                    serial_number = deviceInfo.SerialNumber,
+                    device_type = deviceInfo.DeviceType,
+                    form_factor = deviceInfo.FormFactor,
+                    is_virtual_machine = deviceInfo.IsVirtualMachine
+                },
+                rustdesk_id = deviceInfo.RustDeskId
             };
+            
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
-            var response = await _http.PostAsync(Config.ApiEndpoint, content);
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=register", content);
 
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<RegistrationResponse>(json);
+                var result = JsonConvert.DeserializeObject<RegistrationResponse>(json);
+                
+                // Save the device_id to config if registration succeeded
+                if (result != null && !string.IsNullOrEmpty(result.AgentId))
+                {
+                    _configService.SetDeviceId(deviceId);
+                }
+                else if (result != null)
+                {
+                    // Backend returns agent_id, but we use device_id for future requests
+                    _configService.SetDeviceId(deviceId);
+                }
+                
+                return result;
+            }
+            else
+            {
+                var errorJson = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Registration failed with status {response.StatusCode}: {errorJson}");
             }
         }
         catch (Exception ex)
@@ -236,11 +284,20 @@ public class ApiClient
 // API Models
 public class RegistrationResponse
 {
+    [JsonProperty("status")]
+    public string? Status { get; set; }
+
+    [JsonProperty("agent_id")]
+    public string? AgentId { get; set; }
+
     [JsonProperty("device_id")]
     public string? DeviceId { get; set; }
 
     [JsonProperty("success")]
     public bool Success { get; set; }
+
+    [JsonProperty("error")]
+    public string? Error { get; set; }
 }
 
 public class DeviceInfo
