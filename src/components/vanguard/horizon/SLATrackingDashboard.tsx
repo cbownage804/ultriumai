@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,10 @@ import {
   Calendar,
   Users,
   Ticket,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
+import { useSLAMetrics } from "@/hooks/useHorizon";
 
 interface SLAMetric {
   id: string;
@@ -47,8 +50,30 @@ interface ClientSLA {
 }
 
 export function SLATrackingDashboard() {
+  const { metrics: dbMetrics, isLoading, refetch } = useSLAMetrics();
   const [timeRange, setTimeRange] = useState("month");
   const [selectedClient, setSelectedClient] = useState("all");
+
+  // Calculate aggregate metrics from DB data
+  const aggregateMetrics = useMemo(() => {
+    if (dbMetrics.length === 0) return null;
+    
+    const totalTickets = dbMetrics.reduce((sum, m) => sum + m.total_tickets, 0);
+    const ticketsWithinResponseSLA = dbMetrics.reduce((sum, m) => sum + m.tickets_within_response_sla, 0);
+    const ticketsWithinResolutionSLA = dbMetrics.reduce((sum, m) => sum + m.tickets_within_resolution_sla, 0);
+    const avgResponseTime = dbMetrics.reduce((sum, m) => sum + (m.avg_response_time_minutes || 0), 0) / dbMetrics.length;
+    const avgResolutionTime = dbMetrics.reduce((sum, m) => sum + (m.avg_resolution_time_minutes || 0), 0) / dbMetrics.length;
+    const avgUptime = dbMetrics.reduce((sum, m) => sum + (m.uptime_percent || 0), 0) / dbMetrics.length;
+
+    return {
+      totalTickets,
+      responseCompliance: totalTickets > 0 ? (ticketsWithinResponseSLA / totalTickets * 100) : 0,
+      resolutionCompliance: totalTickets > 0 ? (ticketsWithinResolutionSLA / totalTickets * 100) : 0,
+      avgResponseTime,
+      avgResolutionTime,
+      avgUptime
+    };
+  }, [dbMetrics]);
 
   const overallMetrics: SLAMetric[] = [
     {

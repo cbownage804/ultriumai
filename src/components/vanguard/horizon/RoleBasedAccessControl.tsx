@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Shield, Users, Plus, Edit2, Trash2, Key, Lock,
-  Eye, EyeOff, Settings, Search, Copy, Check
+  Eye, EyeOff, Settings, Search, Copy, Check, Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -28,16 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface Role {
-  id: string;
-  name: string;
-  description: string;
-  isSystem: boolean;
-  userCount: number;
-  permissions: Permission[];
-  createdAt: string;
-}
+import { useRBAC } from '@/hooks/useHorizon';
 
 interface Permission {
   id: string;
@@ -60,66 +51,33 @@ interface UserRole {
 
 export const RoleBasedAccessControl: React.FC = () => {
   const { toast } = useToast();
+  const { roles: dbRoles, isLoading, createRole, updateRole, deleteRole, refetch } = useRBAC();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
+  const [newRoleName, setNewRoleName] = useState('');
+  const [newRoleDescription, setNewRoleDescription] = useState('');
 
-  const [roles] = useState<Role[]>([
-    {
-      id: '1',
-      name: 'Super Admin',
-      description: 'Full access to all features and tenants',
-      isSystem: true,
-      userCount: 2,
-      permissions: [],
-      createdAt: '2024-01-01'
-    },
-    {
-      id: '2',
-      name: 'Tenant Admin',
-      description: 'Full access within assigned tenant',
-      isSystem: true,
-      userCount: 8,
-      permissions: [],
-      createdAt: '2024-01-01'
-    },
-    {
-      id: '3',
-      name: 'Senior Technician',
-      description: 'Advanced RMM and security capabilities',
-      isSystem: false,
-      userCount: 15,
-      permissions: [],
-      createdAt: '2024-02-15'
-    },
-    {
-      id: '4',
-      name: 'Technician',
-      description: 'Standard device management and ticketing',
-      isSystem: true,
-      userCount: 34,
-      permissions: [],
-      createdAt: '2024-01-01'
-    },
-    {
-      id: '5',
-      name: 'Viewer',
-      description: 'Read-only access to dashboards and reports',
-      isSystem: true,
-      userCount: 12,
-      permissions: [],
-      createdAt: '2024-01-01'
-    },
-    {
-      id: '6',
-      name: 'Security Analyst',
-      description: 'Access to security tools and threat hunting',
-      isSystem: false,
-      userCount: 5,
-      permissions: [],
-      createdAt: '2024-03-01'
-    }
-  ]);
+  // Map DB roles to UI format
+  const roles = dbRoles.map(r => ({
+    id: r.id,
+    name: r.role_name,
+    description: r.description || '',
+    isSystem: r.is_system_role,
+    userCount: 0, // Would come from a join
+    permissions: (r.permissions || []).map((p, i) => ({
+      id: `${r.id}-${i}`,
+      name: p,
+      description: '',
+      category: 'General',
+      enabled: true
+    })) as Permission[],
+    createdAt: r.created_at
+  }));
+
+  const selectedRole = roles.find(r => r.id === selectedRoleId) || null;
+
+  type RoleUI = typeof roles[number];
 
   const [permissionCategories] = useState([
     {
@@ -168,15 +126,22 @@ export const RoleBasedAccessControl: React.FC = () => {
     { id: '5', userId: 'u5', userName: 'Charlie Davis', email: 'charlie@company.com', role: 'Security Analyst', lastActive: new Date(Date.now() - 86400000).toISOString() }
   ]);
 
-  const handleCreateRole = () => {
-    toast({
-      title: "Role Created",
-      description: "New role has been created successfully."
-    });
-    setShowCreateDialog(false);
+  const handleCreateRoleSubmit = async () => {
+    try {
+      await createRole({ role_name: newRoleName, description: newRoleDescription });
+      setShowCreateDialog(false);
+      setNewRoleName('');
+      setNewRoleDescription('');
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to create role",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDeleteRole = (role: Role) => {
+  const handleDeleteRoleClick = async (role: RoleUI) => {
     if (role.isSystem) {
       toast({
         title: "Cannot Delete",
@@ -185,10 +150,16 @@ export const RoleBasedAccessControl: React.FC = () => {
       });
       return;
     }
-    toast({
-      title: "Role Deleted",
-      description: `${role.name} has been deleted.`
-    });
+    
+    try {
+      await deleteRole(role.id);
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to delete role",
+        variant: "destructive"
+      });
+    }
   };
 
   const filteredRoles = roles.filter(r => 
@@ -240,7 +211,7 @@ export const RoleBasedAccessControl: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleCreateRole} className="w-full">
+              <Button onClick={handleCreateRoleSubmit} className="w-full">
                 Create & Configure Permissions
               </Button>
             </div>
@@ -326,7 +297,7 @@ export const RoleBasedAccessControl: React.FC = () => {
                     <div 
                       key={role.id} 
                       className="border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => setSelectedRole(role)}
+                      onClick={() => setSelectedRoleId(role.id)}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-3">
@@ -353,7 +324,7 @@ export const RoleBasedAccessControl: React.FC = () => {
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={(e) => { e.stopPropagation(); handleDeleteRole(role); }}
+                            onClick={(e) => { e.stopPropagation(); handleDeleteRoleClick(role); }}
                             disabled={role.isSystem}
                           >
                             <Trash2 className={`h-4 w-4 ${role.isSystem ? 'text-muted-foreground' : 'text-destructive'}`} />
