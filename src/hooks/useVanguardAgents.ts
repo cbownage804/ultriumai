@@ -110,8 +110,14 @@ export function useVanguardAgents() {
       )
       .subscribe();
 
+    // Poll every 60 seconds as a fallback for missed real-time events
+    const pollInterval = setInterval(() => {
+      fetchAgents();
+    }, 60000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
     };
   }, [fetchAgents]);
 
