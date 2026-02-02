@@ -18,6 +18,8 @@ export interface VanguardAgent {
   status: 'online' | 'offline' | 'warning' | 'critical';
   last_heartbeat: string | null;
   config: Record<string, any>;
+  // Populated by vanguard-agent-api security_telemetry
+  security_status?: Record<string, any> | null;
   client_id: string | null;
   os_info?: string;
   cpu_usage?: number;
@@ -148,13 +150,75 @@ export function useVanguardAgent(agentId: string | undefined) {
   const [commands, setCommands] = useState<VanguardCommand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const normalizeAgentForUI = useCallback((raw: VanguardAgent, metricsList: VanguardMetric[]) => {
+    const normalized: VanguardAgent = {
+      ...raw,
+      config: raw.config || {},
+    };
+
+    // OS badge + OS & Security tab currently rely on agent.os_info and config.os
+    const hw = (normalized.config as any)?.hardware || {};
+    if (!normalized.os_info && hw?.os_name) {
+      normalized.os_info = hw.os_name;
+    }
+
+    if (!(normalized.config as any).os) {
+      (normalized.config as any).os = {};
+    }
+    const os = (normalized.config as any).os;
+    if (!os.version && hw?.os_version) os.version = hw.os_version;
+
+    // Security tab relies on config.security, but Defender telemetry is stored in security_status
+    const ss: any = (normalized as any).security_status;
+    if (ss && !(normalized.config as any).security) {
+      (normalized.config as any).security = {};
+    }
+    if (ss) {
+      const security = (normalized.config as any).security;
+      // If Defender is enabled, treat AV + antispyware as enabled.
+      const defenderEnabled = Boolean(ss.defender_enabled);
+      const rtProtection = Boolean(ss.real_time_protection);
+
+      security.antivirus_name ??= 'Windows Defender';
+      security.antispyware_name ??= 'Windows Defender';
+      security.firewall_name ??= 'Windows Firewall';
+      security.antivirus_status = defenderEnabled ? 'enabled' : 'disabled';
+      security.antispyware_status = defenderEnabled ? 'enabled' : 'disabled';
+
+      // We don't currently collect firewall state in security_telemetry; show unknown rather than wrong.
+      security.firewall_status ??= 'unknown';
+
+      // Useful extra fields for future UI (non-breaking)
+      security.defender_real_time_protection = rtProtection;
+      security.signature_version = ss.signature_version ?? null;
+      security.signature_last_updated = ss.signature_last_updated ?? null;
+      security.last_quick_scan = ss.last_quick_scan ?? null;
+      security.last_full_scan = ss.last_full_scan ?? null;
+      security.recent_threats_count = ss.recent_threats_count ?? 0;
+      security.quarantined_count = ss.quarantined_count ?? 0;
+      security.updated_at = ss.updated_at ?? null;
+    }
+
+    // Disks tab expects config.disks, but telemetry currently lands in metrics.custom_metrics.disks
+    const lastTelemetry = [...(metricsList || [])]
+      .reverse()
+      .find(m => (m.custom_metrics as any)?.last_telemetry_at || (m.custom_metrics as any)?.disks);
+
+    const telemetryDisks = (lastTelemetry?.custom_metrics as any)?.disks;
+    if (Array.isArray(telemetryDisks) && !(normalized.config as any).disks) {
+      (normalized.config as any).disks = telemetryDisks;
+    }
+
+    return normalized;
+  }, []);
+
   const fetchAgent = useCallback(async () => {
     if (!user || !agentId) return;
 
     try {
       setIsLoading(true);
       
-      // Fetch agent details
+       // Fetch agent details
        const { data: agentData, error: agentError } = await supabase
          .from('vanguard_agents')
          .select('*')
@@ -163,7 +227,6 @@ export function useVanguardAgent(agentId: string | undefined) {
          .single();
 
       if (agentError) throw agentError;
-      setAgent(agentData as VanguardAgent);
 
       // Fetch recent metrics (last 24 hours)
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -174,7 +237,11 @@ export function useVanguardAgent(agentId: string | undefined) {
         .gte('recorded_at', since)
         .order('recorded_at', { ascending: true });
 
-      setMetrics((metricsData as VanguardMetric[]) || []);
+       const metricsList = (metricsData as VanguardMetric[]) || [];
+       setMetrics(metricsList);
+
+       const normalized = normalizeAgentForUI(agentData as VanguardAgent, metricsList);
+       setAgent(normalized);
 
       // Fetch recent commands
       const { data: commandsData } = await supabase
@@ -190,10 +257,23 @@ export function useVanguardAgent(agentId: string | undefined) {
     } finally {
       setIsLoading(false);
     }
-  }, [user, agentId]);
+  }, [user, agentId, normalizeAgentForUI]);
 
   useEffect(() => {
     fetchAgent();
+
+    // Real-time subscription for agent row updates (security status, config updates, etc.)
+    const agentChannel = supabase
+      .channel(`vanguard_agent_${agentId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'vanguard_agents', filter: `id=eq.${agentId}` },
+        () => {
+          // Re-fetch so we can normalize + keep tabs in sync with telemetry writes.
+          fetchAgent();
+        }
+      )
+      .subscribe();
 
     // Real-time subscription for metrics
     const metricsChannel = supabase
@@ -220,6 +300,7 @@ export function useVanguardAgent(agentId: string | undefined) {
       .subscribe();
 
     return () => {
+      supabase.removeChannel(agentChannel);
       supabase.removeChannel(metricsChannel);
       supabase.removeChannel(commandsChannel);
     };
