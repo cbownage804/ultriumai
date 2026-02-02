@@ -18128,6 +18128,7 @@ export type Database = {
           title: string
           updated_at: string
           url: string | null
+          usage_count: number
           user_id: string
           vault_id: string
         }
@@ -18154,6 +18155,7 @@ export type Database = {
           title: string
           updated_at?: string
           url?: string | null
+          usage_count?: number
           user_id: string
           vault_id: string
         }
@@ -18180,6 +18182,7 @@ export type Database = {
           title?: string
           updated_at?: string
           url?: string | null
+          usage_count?: number
           user_id?: string
           vault_id?: string
         }
@@ -18322,6 +18325,39 @@ export type Database = {
           name?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      safepass_linked_accounts: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          is_active: boolean
+          last_accessed_at: string | null
+          linked_email: string
+          linked_user_id: string | null
+          primary_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          last_accessed_at?: string | null
+          linked_email: string
+          linked_user_id?: string | null
+          primary_user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          last_accessed_at?: string | null
+          linked_email?: string
+          linked_user_id?: string | null
+          primary_user_id?: string
         }
         Relationships: []
       }
@@ -18894,6 +18930,42 @@ export type Database = {
           password_id?: string | null
           success?: boolean | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      safepass_user_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          last_used_at: string | null
+          preference_key: string
+          preference_type: string
+          preference_value: Json
+          updated_at: string
+          usage_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          preference_key: string
+          preference_type: string
+          preference_value?: Json
+          updated_at?: string
+          usage_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          preference_key?: string
+          preference_type?: string
+          preference_value?: Json
+          updated_at?: string
+          usage_count?: number
+          user_id?: string
         }
         Relationships: []
       }
@@ -29445,6 +29517,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_safepass_entry_usage: {
+        Args: { entry_id: string }
+        Returns: undefined
       }
       is_admin_user: { Args: never; Returns: boolean }
       is_current_user_admin: { Args: never; Returns: boolean }
