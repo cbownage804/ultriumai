@@ -352,7 +352,9 @@ export const AgentDeployment: React.FC = () => {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <a
-              href="#"
+              href="https://docs.ultriumai.com/vanguard/agent-installation"
+              target="_blank"
+              rel="noopener noreferrer"
               className="p-4 border rounded-lg hover:bg-muted transition-colors flex items-start gap-3"
             >
               <Terminal className="h-5 w-5 text-primary mt-0.5" />
@@ -365,7 +367,9 @@ export const AgentDeployment: React.FC = () => {
               <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
             </a>
             <a
-              href="#"
+              href="https://docs.ultriumai.com/vanguard/compliance-frameworks"
+              target="_blank"
+              rel="noopener noreferrer"
               className="p-4 border rounded-lg hover:bg-muted transition-colors flex items-start gap-3"
             >
               <Shield className="h-5 w-5 text-primary mt-0.5" />
@@ -378,7 +382,9 @@ export const AgentDeployment: React.FC = () => {
               <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
             </a>
             <a
-              href="#"
+              href="https://docs.ultriumai.com/vanguard/rustdesk-setup"
+              target="_blank"
+              rel="noopener noreferrer"
               className="p-4 border rounded-lg hover:bg-muted transition-colors flex items-start gap-3"
             >
               <Monitor className="h-5 w-5 text-primary mt-0.5" />

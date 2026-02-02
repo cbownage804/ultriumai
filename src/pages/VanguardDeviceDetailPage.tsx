@@ -189,11 +189,21 @@ export default function VanguardDeviceDetailPage() {
   };
 
   const handleManageProfiles = () => {
-    toast.info("Opening profile management...");
+    navigate(`${basePath}/profiles?deviceId=${encodeURIComponent(deviceId || '')}`);
   };
 
   const handleScheduleAction = () => {
-    toast.info("Opening shutdown scheduler...");
+    // Scroll to the shutdown actions widget and show a prompt
+    toast.info("Use the 'Schedule action...' option in the Scheduled shutdown actions widget on the right panel");
+  };
+
+  const handleCortex = () => {
+    navigate(`${basePath}/cortex`);
+  };
+
+  const handleCreateTicket = () => {
+    // Pre-fill ticket with device info
+    navigate(`${basePath}/tickets?action=create&deviceId=${encodeURIComponent(deviceId || '')}&deviceName=${encodeURIComponent(agent?.name || '')}`);
   };
 
   const handleLogout = async () => {
@@ -496,12 +506,20 @@ export default function VanguardDeviceDetailPage() {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <Button variant="outline" className="gap-2 border-cyan-500/30 text-white hover:bg-cyan-500/10">
+            <Button 
+              variant="outline" 
+              className="gap-2 border-cyan-500/30 text-white hover:bg-cyan-500/10"
+              onClick={handleCortex}
+            >
               <Sparkles className="h-4 w-4" />
               Vanguard Cortex
             </Button>
             
-            <Button variant="outline" className="gap-2 border-cyan-500/30 text-white hover:bg-cyan-500/10">
+            <Button 
+              variant="outline" 
+              className="gap-2 border-cyan-500/30 text-white hover:bg-cyan-500/10"
+              onClick={handleCreateTicket}
+            >
               <Ticket className="h-4 w-4" />
               Create ticket
             </Button>

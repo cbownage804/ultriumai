@@ -84,7 +84,12 @@ export function GPTConfigSecurity({ formData, onChange, themeColor }: GPTConfigS
           <p className="text-sm text-muted-foreground">
             UltriumGPT is SOC 2 Type II certified and fully GDPR compliant. Your data and your users' data are safe with us.
           </p>
-          <a href="#" className="text-sm text-primary hover:underline">
+          <a 
+            href="https://ultriumai.com/trust-center" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-sm text-primary hover:underline"
+          >
             More details available at our Trust Center.
           </a>
         </CardContent>

@@ -278,6 +278,7 @@ export function PSARMMIntegrations() {
   const [allIntegrations, setAllIntegrations] = useState(integrations);
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
 
   const handleConnect = (id: string) => {
     const integration = allIntegrations.find(i => i.id === id);
@@ -368,7 +369,7 @@ export function PSARMMIntegrations() {
       </div>
 
       {/* Integration Tabs */}
-      <Tabs defaultValue="all" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="bg-slate-800/50">
           <TabsTrigger value="all">All Integrations</TabsTrigger>
           <TabsTrigger value="psa">PSA Tools</TabsTrigger>
@@ -435,7 +436,7 @@ export function PSARMMIntegrations() {
                 <Network className="h-12 w-12 text-slate-600 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-slate-300 mb-2">No Connected Integrations</h3>
                 <p className="text-slate-400 mb-4">Connect your PSA and RMM tools to sync data automatically.</p>
-                <Button onClick={() => {}}>
+                <Button onClick={() => setActiveTab('available')}>
                   <Link className="h-4 w-4 mr-2" />
                   Browse Integrations
                 </Button>
