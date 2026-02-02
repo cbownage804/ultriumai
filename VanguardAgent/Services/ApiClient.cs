@@ -62,13 +62,24 @@ public class ApiClient
             }
             
             // Build flat payload as expected by backend
+            // Always use actual hostname for device name (Config.DeviceName may be a placeholder)
+            var deviceName = deviceInfo.Hostname;
+            if (!string.IsNullOrEmpty(Config.DeviceName) && 
+                Config.DeviceName != Environment.MachineName &&
+                !Config.DeviceName.Contains("Ultrium") &&
+                !Config.DeviceName.Contains("Device"))
+            {
+                // Only use config name if it was explicitly customized
+                deviceName = Config.DeviceName;
+            }
+            
             var payload = new
             {
                 device_id = deviceId,
                 user_id = Config.UserId,
                 client_id = Config.ClientId,
                 hostname = deviceInfo.Hostname,
-                name = Config.DeviceName ?? deviceInfo.Hostname,
+                name = deviceName,
                 ip_address = deviceInfo.IpAddress,
                 agent_version = deviceInfo.AgentVersion,
                 system_info = new
@@ -249,11 +260,11 @@ public class ApiClient
             SetHeaders();
             var payload = new
             {
-                action = "update_rustdesk_id",
+                device_id = Config.DeviceId,
                 rustdesk_id = rustDeskId
             };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
-            var response = await _http.PostAsync(Config.ApiEndpoint, content);
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=update_rustdesk_id", content);
             return response.IsSuccessStatusCode;
         }
         catch

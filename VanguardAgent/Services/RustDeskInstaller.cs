@@ -552,13 +552,39 @@ allow-remote-config-modification = 'N'
             }
         }
 
-        // Wait for RustDesk to generate ID
-        await Task.Delay(2000);
-        
-        var rustDeskId = GetRustDeskId();
+        // Wait for RustDesk to generate ID with retry logic
+        var rustDeskId = await WaitForRustDeskIdAsync(maxWaitSeconds: 30);
         Console.WriteLine($"[RustDesk] Current ID: {rustDeskId ?? "Not yet generated"}");
         
         return (true, rustDeskId);
+    }
+    
+    /// <summary>
+    /// Wait for RustDesk to generate its ID (may take time after fresh install)
+    /// </summary>
+    public async Task<string?> WaitForRustDeskIdAsync(int maxWaitSeconds = 30)
+    {
+        var waited = 0;
+        while (waited < maxWaitSeconds)
+        {
+            var id = GetRustDeskId();
+            if (!string.IsNullOrEmpty(id))
+            {
+                Console.WriteLine($"[RustDesk] ID found after {waited}s: {id}");
+                return id;
+            }
+            
+            await Task.Delay(2000);
+            waited += 2;
+            
+            if (waited % 10 == 0)
+            {
+                Console.WriteLine($"[RustDesk] Waiting for ID generation... ({waited}s)");
+            }
+        }
+        
+        Console.WriteLine($"[RustDesk] ID not generated after {maxWaitSeconds}s");
+        return null;
     }
 }
 

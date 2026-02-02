@@ -159,6 +159,26 @@ public class AgentWorker : BackgroundService
                 {
                     await _api.UpdateDeviceRustDeskIdAsync(rustDeskId);
                 }
+                else
+                {
+                    // Schedule a delayed retry to get the ID
+                    _ = Task.Run(async () =>
+                    {
+                        // Wait 60 seconds for RustDesk to fully initialize
+                        await Task.Delay(60000);
+                        
+                        var delayedId = await _rustDeskInstaller.WaitForRustDeskIdAsync(30);
+                        if (!string.IsNullOrEmpty(delayedId))
+                        {
+                            _logger.LogInformation("RustDesk ID obtained after delay: {RustDeskId}", delayedId);
+                            await _api.UpdateDeviceRustDeskIdAsync(delayedId);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("RustDesk ID still not available after retry");
+                        }
+                    });
+                }
             }
             else
             {
