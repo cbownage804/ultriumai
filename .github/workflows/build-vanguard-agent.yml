@@ -174,10 +174,15 @@ jobs:
             | Windows ARM64 | `VanguardAgent-win-arm64.exe` | ARM64 executable |
             | Windows x64 | `VanguardAgent-win-x64.zip` | Complete package with installer |
             
-            ### Installation
+            ### Installation (Recommended: Portal Download)
+            
+            **For production use**, download pre-configured agents from the [Vanguard Dashboard](https://ultriumai.com/vanguard/app/customers) 
+            which automatically includes your credentials.
+            
+            ### Manual Installation (Advanced)
             
             1. Download `VanguardAgent-win-x64.zip` and extract
-            2. Edit `config.json` with your credentials from the [Ultrium Dashboard](https://ultriumai.com/vanguard)
+            2. Edit `config.json` with your credentials from the [Ultrium Dashboard](https://ultriumai.com/vanguard/app/settings)
             3. Run `install.bat` as Administrator
             4. The service will start automatically
             
@@ -200,3 +205,31 @@ jobs:
             ```
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-to-storage:
+    name: Upload to Supabase Storage
+    needs: [build-windows, release]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true'
+    
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: vanguard-agent-windows
+          path: ./artifacts
+      
+      - name: Upload to Supabase Storage
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          # Upload EXE to vanguard-agents bucket for portal downloads
+          curl -X POST \
+            "${SUPABASE_URL}/storage/v1/object/vanguard-agents/VanguardAgent-win-x64.exe" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/octet-stream" \
+            -H "x-upsert: true" \
+            --data-binary @./artifacts/VanguardAgent-win-x64.exe
+          
+          echo "Uploaded VanguardAgent-win-x64.exe to Supabase Storage"
