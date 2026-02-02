@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useSafePass, PasswordEntry as SafePassEntry } from '@/hooks/useSafePass';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
+import { encryptData } from '@/utils/crypto';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -332,7 +333,6 @@ export const PasswordVault = () => {
 
         // If password changed, need to re-encrypt
         if (newEntry.password !== editingEntry.password && masterPassword) {
-          const { encryptData } = await import('@/utils/crypto');
           const dataToEncrypt = JSON.stringify({
             username: sanitizeInput(newEntry.username),
             password: newEntry.password,

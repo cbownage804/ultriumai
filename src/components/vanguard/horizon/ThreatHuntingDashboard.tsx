@@ -10,9 +10,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
   Search, Target, AlertTriangle, Shield, Activity, 
   FileSearch, Clock, Play, Pause, Eye, Download,
-  Crosshair, Skull, Bug, Network
+  Crosshair, Skull, Bug, Network, Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useThreatHunts } from '@/hooks/useHorizon';
 import {
   Select,
   SelectContent,
@@ -55,6 +56,7 @@ interface HuntResult {
 
 export const ThreatHuntingDashboard: React.FC = () => {
   const { toast } = useToast();
+  const { hunts, isLoading, createHunt, startHunt } = useThreatHunts();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndicatorType, setSelectedIndicatorType] = useState<string>('all');
   const [isHunting, setIsHunting] = useState(false);
