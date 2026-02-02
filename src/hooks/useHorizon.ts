@@ -864,3 +864,154 @@ export function useSLAMetrics() {
 
   return { metrics, isLoading, refetch: fetchMetrics };
 }
+
+// =====================================================
+// RBAC HOOK (Role-Based Access Control)
+// =====================================================
+
+export function useRBAC() {
+  const { user } = useAuth();
+  const [roles, setRoles] = useState<HorizonRole[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchRoles = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('horizon_roles')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('role_name');
+      
+      if (error) throw error;
+      setRoles(data as HorizonRole[] || []);
+    } catch (err) {
+      console.error('Error fetching roles:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  const createRole = useCallback(async (role: Partial<HorizonRole>) => {
+    if (!user) throw new Error('Not authenticated');
+    const { data, error } = await supabase
+      .from('horizon_roles')
+      .insert([{
+        role_name: role.role_name || 'New Role',
+        description: role.description || '',
+        permissions: role.permissions || [],
+        is_system_role: false,
+        user_id: user.id
+      }] as any)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    toast.success('Role created');
+    await fetchRoles();
+    return data;
+  }, [user, fetchRoles]);
+
+  const updateRole = useCallback(async (roleId: string, updates: Partial<HorizonRole>) => {
+    const { error } = await supabase
+      .from('horizon_roles')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', roleId);
+    
+    if (error) throw error;
+    toast.success('Role updated');
+    await fetchRoles();
+  }, [fetchRoles]);
+
+  const deleteRole = useCallback(async (roleId: string) => {
+    const { error } = await supabase
+      .from('horizon_roles')
+      .delete()
+      .eq('id', roleId);
+    
+    if (error) throw error;
+    toast.success('Role deleted');
+    await fetchRoles();
+  }, [fetchRoles]);
+
+  useEffect(() => {
+    fetchRoles();
+  }, [fetchRoles]);
+
+  return { roles, isLoading, createRole, updateRole, deleteRole, refetch: fetchRoles };
+}
+
+// =====================================================
+// PATCH MANAGEMENT HOOK
+// =====================================================
+
+export interface VanguardPatch {
+  id: string;
+  user_id: string;
+  agent_id: string | null;
+  kb_number: string;
+  title: string;
+  description: string | null;
+  severity: 'critical' | 'important' | 'moderate' | 'low';
+  category: 'security' | 'feature' | 'driver' | 'definition' | 'other';
+  size_mb: number;
+  release_date: string;
+  status: 'available' | 'approved' | 'declined' | 'installed' | 'failed' | 'pending_reboot';
+  affected_devices: number;
+  installed_devices: number;
+  cve_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export function usePatches() {
+  const { user } = useAuth();
+  const [patches, setPatches] = useState<VanguardPatch[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchPatches = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('vanguard_patches')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('release_date', { ascending: false });
+      
+      if (error) throw error;
+      setPatches(data as VanguardPatch[] || []);
+    } catch (err) {
+      console.error('Error fetching patches:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  const approvePatches = useCallback(async (patchIds: string[]) => {
+    const { error } = await supabase
+      .from('vanguard_patches')
+      .update({ status: 'approved', updated_at: new Date().toISOString() })
+      .in('id', patchIds);
+    
+    if (error) throw error;
+    toast.success(`${patchIds.length} patch(es) approved`);
+    await fetchPatches();
+  }, [fetchPatches]);
+
+  const declinePatches = useCallback(async (patchIds: string[]) => {
+    const { error } = await supabase
+      .from('vanguard_patches')
+      .update({ status: 'declined', updated_at: new Date().toISOString() })
+      .in('id', patchIds);
+    
+    if (error) throw error;
+    toast.success(`${patchIds.length} patch(es) declined`);
+    await fetchPatches();
+  }, [fetchPatches]);
+
+  useEffect(() => {
+    fetchPatches();
+  }, [fetchPatches]);
+
+  return { patches, isLoading, approvePatches, declinePatches, refetch: fetchPatches };
+}
