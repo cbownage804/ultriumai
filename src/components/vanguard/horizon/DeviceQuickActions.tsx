@@ -33,6 +33,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { getVanguardBasePath } from '@/utils/subdomain';
 
 interface DeviceQuickActionsProps {
   deviceId: string;
@@ -43,6 +45,8 @@ interface DeviceQuickActionsProps {
 type ActionType = 'restart' | 'shutdown' | 'scan' | 'script' | 'remote' | 'command';
 
 export function DeviceQuickActions({ deviceId, deviceName, onActionComplete }: DeviceQuickActionsProps) {
+  const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
   const [isExecuting, setIsExecuting] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -125,10 +129,10 @@ export function DeviceQuickActions({ deviceId, deviceName, onActionComplete }: D
         });
         break;
       case 'script':
-        toast.info('Opening script library...', { description: 'Select a script to run on this device.' });
+        navigate(`${basePath}/scripts?deviceId=${encodeURIComponent(deviceId)}`);
         break;
       case 'remote':
-        toast.info('Initiating remote connection...', { description: 'Opening remote access panel.' });
+        navigate(`${basePath}/rmm/remote?deviceId=${encodeURIComponent(deviceId)}`);
         break;
     }
   };

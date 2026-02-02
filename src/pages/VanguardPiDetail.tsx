@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { getVanguardBasePath } from '@/utils/subdomain';
 import { useVanguardAgent } from '@/hooks/useVanguardAgents';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +43,7 @@ import { toast } from 'sonner';
 export default function VanguardPiDetail() {
   const { agentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
   const { agent, metrics, isLoading, sendCommand, refetch } = useVanguardAgent(agentId);
   const { discoveredDevices, fetchDiscoveredDevices } = useVanguardScanner();
   const [activeTab, setActiveTab] = useState('overview');
@@ -71,7 +73,7 @@ export default function VanguardPiDetail() {
             <p className="text-white/60 mb-4">
               This unit may have been removed or you don't have access.
             </p>
-            <Button onClick={() => navigate('/vanguard/devices')} variant="outline">
+            <Button onClick={() => navigate(`${basePath}/devices`)} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Devices
             </Button>
@@ -96,7 +98,7 @@ export default function VanguardPiDetail() {
         <div className="flex items-center gap-4">
           <Button 
             variant="ghost" 
-            onClick={() => navigate('/vanguard/devices')}
+            onClick={() => navigate(`${basePath}/devices`)}
             className="text-white/60 hover:text-white"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

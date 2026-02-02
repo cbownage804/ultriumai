@@ -425,7 +425,7 @@ export default function VanguardDeviceDetailPage() {
                   variant="outline" 
                   size="sm" 
                   className="w-full text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/10 mt-2"
-                  onClick={() => navigate('/vanguard/atlas')}
+                  onClick={() => navigate(`${basePath}/atlas`)}
                 >
                   <ExternalLink className="h-3 w-3 mr-1" />
                   Open Vanguard Atlas

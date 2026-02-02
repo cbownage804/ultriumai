@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { getVanguardBasePath } from '@/utils/subdomain';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 const ReconCheckoutPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
@@ -137,7 +139,7 @@ const ReconCheckoutPage = () => {
             <Button
               variant="ghost"
               className="text-gray-400 hover:text-white gap-2 mb-4"
-              onClick={() => navigate('/vanguard/recon')}
+              onClick={() => navigate(`${basePath}/recon`)}
             >
               <ChevronLeft className="h-4 w-4" />
               Back to Product

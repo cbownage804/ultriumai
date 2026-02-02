@@ -6,6 +6,7 @@ import { Edit, Building2, Folder, User, Mail, Globe, Clock, Server, MapPin, Netw
 import { format, formatDistanceToNow } from "date-fns";
 import { VanguardAgent } from "@/hooks/useVanguardAgents";
 import { Link } from "react-router-dom";
+import { getVanguardBasePath } from "@/utils/subdomain";
 import { cn } from "@/lib/utils";
 
 interface DeviceOverviewTabProps {
@@ -23,6 +24,7 @@ export function DeviceOverviewTab({
   availabilityMonitoring,
   onAvailabilityChange,
 }: DeviceOverviewTabProps) {
+  const basePath = getVanguardBasePath();
   // Extract additional device info from config
   const deviceConfig = agent.config || {};
   const domain = deviceConfig.domain || "—";
@@ -105,7 +107,7 @@ export function DeviceOverviewTab({
             </span>
             {clientId ? (
               <Link 
-                to={`/vanguard/customers/${clientId}`} 
+                to={`${basePath}/customers/${clientId}`} 
                 className="text-sm text-cyan-400 hover:text-cyan-300 hover:underline transition-colors"
               >
                 {clientName}
@@ -121,7 +123,7 @@ export function DeviceOverviewTab({
             </span>
             {clientId ? (
               <Link 
-                to={`/vanguard/customers/${clientId}`} 
+                to={`${basePath}/customers/${clientId}`} 
                 className="text-sm text-cyan-400 hover:text-cyan-300 hover:underline transition-colors"
               >
                 {customerName}

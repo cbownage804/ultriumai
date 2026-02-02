@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { getVanguardBasePath } from '@/utils/subdomain';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,6 +62,7 @@ const capabilities = [
 ];
 
 const ReconProductPage = () => {
+  const basePath = getVanguardBasePath();
   const [selectedHardware, setSelectedHardware] = useState<'lite' | 'pro'>('pro');
   const [selectedSubscription, setSelectedSubscription] = useState<'essential' | 'professional' | 'enterprise'>('professional');
 
@@ -294,7 +296,7 @@ const ReconProductPage = () => {
                 className="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 gap-2"
                 asChild
               >
-                <Link to={`/vanguard/recon/checkout?hardware=${selectedHardware}&subscription=${selectedSubscription}`}>
+                <Link to={`${basePath}/recon/checkout?hardware=${selectedHardware}&subscription=${selectedSubscription}`}>
                   <Zap className="h-4 w-4" />
                   Order Now
                   <ArrowRight className="h-4 w-4" />

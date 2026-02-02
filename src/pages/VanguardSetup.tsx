@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { getVanguardBasePath } from '@/utils/subdomain';
 import { generateVanguardZip, downloadBlob } from '@/utils/generateVanguardZip';
 import { generateWindowsAgentZip } from '@/utils/generateWindowsAgentZip';
 
@@ -37,6 +38,7 @@ interface MSPClient {
 export default function VanguardSetup() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const basePath = getVanguardBasePath();
   const [copied, setCopied] = useState<string | null>(null);
   
   // OS selection state
@@ -122,7 +124,7 @@ export default function VanguardSetup() {
       setDeviceName('');
       setDeviceLocation('');
       setDeviceIp('');
-      navigate('/vanguard/devices');
+      navigate(`${basePath}/devices`);
     } catch (error: any) {
       console.error('Registration error:', error);
       toast.error(error.message || 'Failed to register device');
@@ -649,7 +651,7 @@ sudo systemctl start vanguard-agent`;
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => navigate('/vanguard/app/customers')}
+                    onClick={() => navigate(`${basePath}/customers`)}
                     className="text-xs"
                   >
                     <Plus className="h-3 w-3 mr-1" />
