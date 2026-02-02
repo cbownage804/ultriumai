@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Activity, Search, Filter, Download, Clock, User,
   Monitor, Terminal, FileEdit, Shield, Settings,
-  Eye, AlertTriangle, RefreshCw
+  Eye, AlertTriangle, RefreshCw, Loader2
 } from 'lucide-react';
 import {
   Select,
@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useActivityLogs } from '@/hooks/useHorizon';
 
 interface ActivityLog {
   id: string;
@@ -38,143 +39,34 @@ interface ActivityLog {
 }
 
 export const TechnicianActivityLogs: React.FC = () => {
+  const { logs: dbLogs, isLoading, logActivity, refetch } = useActivityLogs();
   const [searchQuery, setSearchQuery] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [technicianFilter, setTechnicianFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState<string>('24h');
 
-  const [activityLogs] = useState<ActivityLog[]>([
-    {
-      id: '1',
-      timestamp: new Date(Date.now() - 300000).toISOString(),
-      userId: 'u1',
-      userName: 'John Smith',
-      userEmail: 'john@company.com',
-      action: 'Remote Desktop Session Started',
-      actionType: 'execute',
-      resourceType: 'Device',
-      resourceId: 'd1',
-      resourceName: 'WORKSTATION-05',
-      details: 'Initiated RDP session to WORKSTATION-05',
-      ipAddress: '192.168.1.100',
-      userAgent: 'Chrome/120.0.0.0',
-      severity: 'info'
-    },
-    {
-      id: '2',
-      timestamp: new Date(Date.now() - 600000).toISOString(),
-      userId: 'u2',
-      userName: 'Jane Doe',
-      userEmail: 'jane@acme.com',
-      action: 'Script Executed',
-      actionType: 'execute',
-      resourceType: 'Script',
-      resourceId: 's1',
-      resourceName: 'Clear-TempFiles.ps1',
-      details: 'Executed cleanup script on 15 devices',
-      ipAddress: '10.0.0.50',
-      userAgent: 'Firefox/121.0',
-      tenantId: '1',
-      tenantName: 'Acme Corp',
-      severity: 'warning'
-    },
-    {
-      id: '3',
-      timestamp: new Date(Date.now() - 1200000).toISOString(),
-      userId: 'u3',
-      userName: 'Bob Wilson',
-      userEmail: 'bob@company.com',
-      action: 'Device Deleted',
-      actionType: 'delete',
-      resourceType: 'Device',
-      resourceId: 'd5',
-      resourceName: 'OLD-SERVER-02',
-      details: 'Removed decommissioned server from inventory',
-      ipAddress: '192.168.1.105',
-      userAgent: 'Chrome/120.0.0.0',
-      severity: 'critical'
-    },
-    {
-      id: '4',
-      timestamp: new Date(Date.now() - 1800000).toISOString(),
-      userId: 'u1',
-      userName: 'John Smith',
-      userEmail: 'john@company.com',
-      action: 'Ticket Closed',
-      actionType: 'update',
-      resourceType: 'Ticket',
-      resourceId: 't123',
-      resourceName: 'TKT-2024-0123',
-      details: 'Resolved ticket: Printer not working',
-      ipAddress: '192.168.1.100',
-      userAgent: 'Chrome/120.0.0.0',
-      severity: 'info'
-    },
-    {
-      id: '5',
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
-      userId: 'u4',
-      userName: 'Alice Brown',
-      userEmail: 'alice@techstart.com',
-      action: 'Login Success',
-      actionType: 'login',
-      resourceType: 'Authentication',
-      details: 'Successful login from new location',
-      ipAddress: '203.45.67.89',
-      userAgent: 'Safari/17.0',
-      tenantId: '2',
-      tenantName: 'TechStart Inc',
-      severity: 'info'
-    },
-    {
-      id: '6',
-      timestamp: new Date(Date.now() - 5400000).toISOString(),
-      userId: 'u5',
-      userName: 'Charlie Davis',
-      userEmail: 'charlie@company.com',
-      action: 'Threat Hunt Executed',
-      actionType: 'execute',
-      resourceType: 'Security',
-      resourceName: 'Encoded PowerShell Hunt',
-      details: 'Ran IOC search across 156 devices, found 3 matches',
-      ipAddress: '192.168.1.110',
-      userAgent: 'Chrome/120.0.0.0',
-      severity: 'warning'
-    },
-    {
-      id: '7',
-      timestamp: new Date(Date.now() - 7200000).toISOString(),
-      userId: 'u2',
-      userName: 'Jane Doe',
-      userEmail: 'jane@acme.com',
-      action: 'User Role Changed',
-      actionType: 'update',
-      resourceType: 'User',
-      resourceId: 'u10',
-      resourceName: 'mike@acme.com',
-      details: 'Changed role from Viewer to Technician',
-      ipAddress: '10.0.0.50',
-      userAgent: 'Firefox/121.0',
-      tenantId: '1',
-      tenantName: 'Acme Corp',
-      severity: 'critical'
-    },
-    {
-      id: '8',
-      timestamp: new Date(Date.now() - 10800000).toISOString(),
-      userId: 'u1',
-      userName: 'John Smith',
-      userEmail: 'john@company.com',
-      action: 'Patch Deployed',
-      actionType: 'execute',
-      resourceType: 'Patch',
-      resourceName: 'KB5034441',
-      details: 'Deployed Windows security update to 45 devices',
-      ipAddress: '192.168.1.100',
-      userAgent: 'Chrome/120.0.0.0',
-      severity: 'info'
-    }
-  ]);
+  // Map DB logs to UI format
+  const activityLogs: ActivityLog[] = dbLogs.map(log => ({
+    id: log.id,
+    timestamp: log.created_at,
+    userId: log.user_id,
+    userName: 'Technician', // Would come from a join
+    userEmail: '',
+    action: log.action_type,
+    actionType: (log.action_type.toLowerCase().includes('delete') ? 'delete' :
+                 log.action_type.toLowerCase().includes('create') ? 'create' :
+                 log.action_type.toLowerCase().includes('update') ? 'update' :
+                 log.action_type.toLowerCase().includes('execute') ? 'execute' :
+                 log.action_type.toLowerCase().includes('login') ? 'login' : 'view') as ActivityLog['actionType'],
+    resourceType: log.resource_type,
+    resourceId: log.resource_id || undefined,
+    resourceName: log.resource_name || undefined,
+    details: JSON.stringify(log.details || {}),
+    ipAddress: log.ip_address || '',
+    userAgent: '',
+    tenantId: log.tenant_id || undefined,
+    severity: 'info' as const
+  }));
 
   const technicians = [...new Set(activityLogs.map(l => l.userName))];
 

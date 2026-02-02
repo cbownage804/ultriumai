@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { 
   Shield, CheckCircle2, XCircle, AlertTriangle, Settings,
   Play, Download, Clock, RefreshCw, FileText, Lock, Wifi,
-  HardDrive, Users, Key, Monitor
+  HardDrive, Users, Key, Monitor, Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSecurityBaselines } from '@/hooks/useHorizon';
 
 interface SecurityCheck {
   id: string;
@@ -33,62 +34,23 @@ interface SecurityCheck {
   affectedDevices?: number;
 }
 
-interface SecurityBaseline {
-  id: string;
-  name: string;
-  description: string;
-  framework: string;
-  checkCount: number;
-  passRate: number;
-  lastApplied?: string;
-  isActive: boolean;
-}
-
 export const SecurityBaselineEnforcement: React.FC = () => {
   const { toast } = useToast();
+  const { baselines: dbBaselines, isLoading, createBaseline, toggleBaseline, refetch } = useSecurityBaselines();
   const [selectedFramework, setSelectedFramework] = useState<string>('cis_windows');
   const [isScanning, setIsScanning] = useState(false);
 
-  const [baselines] = useState<SecurityBaseline[]>([
-    {
-      id: '1',
-      name: 'CIS Windows 11 Enterprise L1',
-      description: 'CIS Benchmark for Windows 11 Enterprise - Level 1',
-      framework: 'CIS',
-      checkCount: 284,
-      passRate: 78,
-      lastApplied: new Date(Date.now() - 86400000).toISOString(),
-      isActive: true
-    },
-    {
-      id: '2',
-      name: 'CIS Windows Server 2022 L1',
-      description: 'CIS Benchmark for Windows Server 2022 - Level 1',
-      framework: 'CIS',
-      checkCount: 312,
-      passRate: 85,
-      lastApplied: new Date(Date.now() - 172800000).toISOString(),
-      isActive: true
-    },
-    {
-      id: '3',
-      name: 'NIST SP 800-171',
-      description: 'Protecting Controlled Unclassified Information',
-      framework: 'NIST',
-      checkCount: 110,
-      passRate: 92,
-      isActive: false
-    },
-    {
-      id: '4',
-      name: 'CIS macOS 14 Sonoma L1',
-      description: 'CIS Benchmark for macOS Sonoma - Level 1',
-      framework: 'CIS',
-      checkCount: 156,
-      passRate: 71,
-      isActive: true
-    }
-  ]);
+  // Map DB baselines to UI format
+  const baselines = dbBaselines.map(b => ({
+    id: b.id,
+    name: b.baseline_name,
+    description: `${b.baseline_type.toUpperCase()} Security Baseline`,
+    framework: b.baseline_type.toUpperCase(),
+    checkCount: Object.keys(b.policy_config || {}).length || 100,
+    passRate: 85,
+    lastApplied: b.updated_at,
+    isActive: b.is_active
+  }));
 
   const [securityChecks] = useState<SecurityCheck[]>([
     {
@@ -196,7 +158,9 @@ export const SecurityBaselineEnforcement: React.FC = () => {
     }, 3000);
   };
 
-  const handleEnforceBaseline = (baseline: SecurityBaseline) => {
+  type BaselineUI = typeof baselines[number];
+
+  const handleEnforceBaseline = (baseline: BaselineUI) => {
     toast({
       title: "Enforcing Baseline",
       description: `Applying ${baseline.name} to all applicable devices...`
