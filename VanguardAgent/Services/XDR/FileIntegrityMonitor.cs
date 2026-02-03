@@ -48,7 +48,7 @@ public class FileIntegrityMonitor : IDisposable
     };
 
     // Event for AV Engine integration
-    public event EventHandler<FileIntegrityEventArgs>? OnFileChanged;
+    public event EventHandler<FileIntegrityEventArgs>? FileChanged;
 
     public FileIntegrityMonitor(ConfigService configService, ApiClient apiClient)
     {
@@ -191,8 +191,8 @@ public class FileIntegrityMonitor : IDisposable
                 EnableRaisingEvents = true
             };
 
-            watcher.Created += OnFileChanged;
-            watcher.Changed += OnFileChanged;
+            watcher.Created += HandleFileChanged;
+            watcher.Changed += HandleFileChanged;
             watcher.Deleted += OnFileDeleted;
             watcher.Renamed += OnFileRenamed;
 
@@ -205,7 +205,7 @@ public class FileIntegrityMonitor : IDisposable
         }
     }
 
-    private async void OnFileChanged(object sender, FileSystemEventArgs e)
+    private async void HandleFileChanged(object sender, FileSystemEventArgs e)
     {
         if (!ShouldMonitorFile(e.FullPath)) return;
 
@@ -367,7 +367,7 @@ public class FileIntegrityMonitor : IDisposable
             Console.WriteLine($"[XDR FIM] {fimEvent.Severity.ToUpper()}: {fimEvent.ChangeType} - {fimEvent.Path}");
 
             // Raise event for AV Engine
-            OnFileChanged?.Invoke(this, new FileIntegrityEventArgs
+            FileChanged?.Invoke(this, new FileIntegrityEventArgs
             {
                 FilePath = fimEvent.Path,
                 FileName = Path.GetFileName(fimEvent.Path),

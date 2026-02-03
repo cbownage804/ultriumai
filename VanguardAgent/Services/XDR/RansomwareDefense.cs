@@ -18,7 +18,7 @@ public class RansomwareDefense : IDisposable
     private readonly ApiClient _apiClient;
     private readonly List<FileSystemWatcher> _honeypotWatchers = new();
     private readonly Dictionary<string, EncryptionMetrics> _encryptionMetrics = new();
-    private Timer? _metricsTimer;
+    private System.Threading.Timer? _metricsTimer;
     private bool _isRunning;
     private readonly object _lock = new();
 
@@ -91,7 +91,7 @@ public class RansomwareDefense : IDisposable
             SetupUserFolderWatchers();
 
             // Metrics timer - check for rapid encryption every 5 seconds
-            _metricsTimer = new Timer(CheckEncryptionMetrics, null, 
+            _metricsTimer = new System.Threading.Timer(CheckEncryptionMetrics, null, 
                 TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
 
             Console.WriteLine("[XDR Ransomware] Defense active");

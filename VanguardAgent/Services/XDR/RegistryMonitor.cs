@@ -12,7 +12,7 @@ public class RegistryMonitor : IDisposable
     private readonly ConfigService _configService;
     private readonly ApiClient _apiClient;
     private readonly Dictionary<string, string> _baseline = new();
-    private Timer? _scanTimer;
+    private System.Threading.Timer? _scanTimer;
     private bool _isRunning;
     private readonly object _lock = new();
 
@@ -88,7 +88,7 @@ public class RegistryMonitor : IDisposable
             CreateBaseline();
 
             // Periodic scan every 30 seconds
-            _scanTimer = new Timer(ScanForChanges, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+            _scanTimer = new System.Threading.Timer(ScanForChanges, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
 
             Console.WriteLine("[XDR Registry] Registry monitoring started");
         }
