@@ -3,11 +3,18 @@
  * Provides offline support and caching for PWA functionality
  */
 
-const CACHE_NAME = 'ultriumai-v1';
+// IMPORTANT:
+// Never cache the SPA shell ("/") or JS/CSS bundles with cache-first.
+// Doing so can serve a mixture of old/new chunks after a deploy, causing
+// runtime crashes like "Invalid hook call" / "dispatcher is null".
+const CACHE_NAME = 'ultriumai-v2';
+
+// Only cache truly static assets that rarely change.
 const STATIC_ASSETS = [
-  '/',
   '/manifest.json',
-  '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png'
+  '/favicon.ico',
+  '/vanguard-favicon.png',
+  '/vanguard-icon.png',
 ];
 
 // Install event - cache static assets
@@ -26,7 +33,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME)
+          .filter((name) => name.startsWith('ultriumai-') && name !== CACHE_NAME)
           .map((name) => caches.delete(name))
       );
     })
@@ -47,13 +54,29 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Always network-first for navigations/documents so deploys update immediately
+  if (request.mode === 'navigate' || request.destination === 'document') {
+    event.respondWith(networkFirstWithCache(request));
+    return;
+  }
+
+  // Always network-first for JS/CSS/worker to prevent stale bundles
+  if (
+    request.destination === 'script' ||
+    request.destination === 'style' ||
+    request.destination === 'worker'
+  ) {
+    event.respondWith(networkFirstWithCache(request));
+    return;
+  }
+
   // Network-first for API calls
   if (url.pathname.startsWith('/api') || url.hostname.includes('supabase')) {
     event.respondWith(networkFirst(request));
     return;
   }
 
-  // Cache-first for static assets
+  // Cache-first for safe static assets (images/fonts/etc)
   event.respondWith(cacheFirst(request));
 });
 
@@ -89,5 +112,21 @@ async function networkFirst(request) {
       status: 503,
       headers: { 'Content-Type': 'application/json' }
     });
+  }
+}
+
+// Network-first with cache population for same-origin static resources
+async function networkFirstWithCache(request) {
+  try {
+    const response = await fetch(request);
+    if (response && response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    return new Response('Offline', { status: 503 });
   }
 }
