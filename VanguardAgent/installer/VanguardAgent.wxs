@@ -37,7 +37,8 @@
                           Type="ownProcess"
                           Start="auto"
                           ErrorControl="normal"
-                          Account="LocalSystem" />
+                          Account="LocalSystem"
+                          Arguments="--service" />
           <ServiceControl Id="StartVanguardService"
                           Name="VanguardAgent"
                           Start="install"

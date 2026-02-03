@@ -41,13 +41,14 @@ echo.
 echo Installing Windows Service...
 
 :: If the service already exists, update it instead of failing.
+:: IMPORTANT: Must pass --service flag so agent runs in headless service mode
 sc query VanguardAgent >nul 2>&1
 if %errorLevel% equ 0 (
     echo Service already exists - updating configuration...
     sc stop VanguardAgent >nul 2>&1
-    sc config VanguardAgent binPath= "\"%INSTALL_DIR%\VanguardAgent.exe\"" start= auto DisplayName= "\"Ultrium Vanguard Agent\"" >nul
+    sc config VanguardAgent binPath= "\"%INSTALL_DIR%\VanguardAgent.exe\" --service" start= auto DisplayName= "\"Ultrium Vanguard Agent\"" >nul
 ) else (
-    sc create VanguardAgent binPath= "\"%INSTALL_DIR%\VanguardAgent.exe\"" start= auto DisplayName= "\"Ultrium Vanguard Agent\"" >nul
+    sc create VanguardAgent binPath= "\"%INSTALL_DIR%\VanguardAgent.exe\" --service" start= auto DisplayName= "\"Ultrium Vanguard Agent\"" >nul
 )
 
 if %errorLevel% neq 0 (
