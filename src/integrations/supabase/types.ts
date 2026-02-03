@@ -116,6 +116,57 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_provisioning_tokens: {
+        Row: {
+          client_id: string | null
+          client_name: string | null
+          created_at: string
+          device_name_prefix: string | null
+          enable_tray: boolean | null
+          expires_at: string
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          redeemed_at: string | null
+          redeemed_by_device_id: string | null
+          token: string
+          use_count: number | null
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          device_name_prefix?: string | null
+          enable_tray?: boolean | null
+          expires_at?: string
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          redeemed_at?: string | null
+          redeemed_by_device_id?: string | null
+          token: string
+          use_count?: number | null
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          device_name_prefix?: string | null
+          enable_tray?: boolean | null
+          expires_at?: string
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          redeemed_at?: string | null
+          redeemed_by_device_id?: string | null
+          token?: string
+          use_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       agentless_check_results: {
         Row: {
           actual_value: string | null

@@ -1,6 +1,7 @@
 /**
  * Customer Agent Download Component
  * Pre-configured agent download for a specific customer context
+ * Uses provisioning tokens for true 1-click MSI deployment
  */
 
 import { useState } from 'react';
@@ -19,14 +20,15 @@ import {
   Package,
   FileCode,
   Copy,
-  Check
+  Check,
+  Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { generateWindowsAgentZip } from '@/utils/generateWindowsAgentZip';
 import { downloadBlob } from '@/utils/generateVanguardZip';
 import { getAgentConfig } from '@/hooks/useVanguardAgentConfig';
-import { generateMsiInstallerBlob, generateMsiOneLiner } from '@/utils/generateWindowsMsiInstaller';
+import { generateOneClickInstaller, generateMsiOneLiner } from '@/utils/generateWindowsMsiInstaller';
 
 interface CustomerAgentDownloadProps {
   customerId: string;
@@ -39,9 +41,9 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadMessage, setDownloadMessage] = useState('');
   const [copied, setCopied] = useState(false);
-  const [oneLiner, setOneLiner] = useState<string | null>(null);
+  const [tokenInfo, setTokenInfo] = useState<{ token: string; expiresAt: string } | null>(null);
 
-  const handleDownloadAgent = async (platform: 'windows' | 'linux', format: 'zip' | 'msi' = 'zip') => {
+  const handleDownloadAgent = async (platform: 'windows' | 'linux', format: 'msi' | 'zip' = 'msi') => {
     if (!user?.id) {
       toast.error('Please log in to download the agent');
       return;
@@ -57,45 +59,48 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
     setDownloadMessage('Initializing...');
 
     try {
-      // Fetch config dynamically from server
-      setDownloadMessage('Fetching agent configuration...');
-      const agentConfig = await getAgentConfig();
-      
-      if (!agentConfig) {
-        throw new Error('Failed to fetch agent configuration. Please try again.');
-      }
-
       if (format === 'msi') {
-        // Generate PowerShell installer script
-        setDownloadMessage('Generating MSI installer script...');
-        setDownloadProgress(50);
+        // Generate 1-click MSI installer with provisioning token
+        setDownloadMessage('Creating provisioning token...');
+        setDownloadProgress(20);
         
-        const blob = generateMsiInstallerBlob({
-          userId: agentConfig.userId,
-          secretKey: agentConfig.secretKey,
+        const result = await generateOneClickInstaller({
           clientId: customerId,
           clientName: customerName,
           enableTray: true,
+          maxUses: 1,
+          expiresInDays: 7,
         });
+        
+        if (!result) {
+          throw new Error('Failed to create provisioning token. Please try again.');
+        }
+        
+        setDownloadProgress(80);
+        setDownloadMessage('Generating installer...');
         
         const filename = `Install-VanguardAgent-${customerName.replace(/[^a-zA-Z0-9]/g, '-')}.ps1`;
-        downloadBlob(blob, filename);
+        downloadBlob(result.blob, filename);
         
-        // Also generate the one-liner for display
-        const liner = generateMsiOneLiner({
-          userId: agentConfig.userId,
-          secretKey: agentConfig.secretKey,
-          clientId: customerId,
-          enableTray: true,
+        // Store token info for display
+        setTokenInfo({
+          token: result.token,
+          expiresAt: result.expiresAt,
         });
-        setOneLiner(liner);
         
         setDownloadProgress(100);
-        toast.success(`MSI installer downloaded for ${customerName}`, {
-          description: 'Run the PowerShell script as Administrator to install.',
+        toast.success(`1-Click installer downloaded for ${customerName}`, {
+          description: 'Run the PowerShell script as Administrator. Token valid for 7 days.',
         });
       } else {
-        // Generate ZIP package
+        // Generate ZIP package (legacy method with embedded credentials)
+        setDownloadMessage('Fetching agent configuration...');
+        const agentConfig = await getAgentConfig();
+        
+        if (!agentConfig) {
+          throw new Error('Failed to fetch agent configuration. Please try again.');
+        }
+
         const blob = await generateWindowsAgentZip({
           userId: agentConfig.userId,
           apiEndpoint: agentConfig.apiEndpoint,
@@ -118,7 +123,7 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
       }
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Failed to generate download');
+      toast.error(error instanceof Error ? error.message : 'Failed to generate download');
     } finally {
       setIsDownloading(false);
       setDownloadProgress(0);
@@ -127,12 +132,23 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
   };
 
   const copyOneLiner = () => {
-    if (oneLiner) {
-      navigator.clipboard.writeText(oneLiner);
+    if (tokenInfo?.token) {
+      const liner = generateMsiOneLiner(tokenInfo.token);
+      navigator.clipboard.writeText(liner);
       setCopied(true);
       toast.success('Copied to clipboard');
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const formatExpiryDate = (isoDate: string) => {
+    const date = new Date(isoDate);
+    return date.toLocaleDateString(undefined, { 
+      month: 'short', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   };
 
   return (
@@ -172,7 +188,7 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
           </div>
           <div className="flex items-center gap-2 text-sm text-white/80">
             <CheckCircle className="h-4 w-4 text-green-500" />
-            <span>Network isolation capability</span>
+            <span>1-click secure deployment</span>
           </div>
         </div>
 
@@ -192,7 +208,7 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
           <TabsList className="grid w-full grid-cols-2 bg-white/5">
             <TabsTrigger value="msi" className="data-[state=active]:bg-cyan-500/20">
               <Package className="h-4 w-4 mr-2" />
-              MSI Installer
+              1-Click MSI
             </TabsTrigger>
             <TabsTrigger value="zip" className="data-[state=active]:bg-cyan-500/20">
               <FileCode className="h-4 w-4 mr-2" />
@@ -214,7 +230,7 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
                 )}
                 <div className="text-center">
                   <div className="font-semibold">Windows MSI</div>
-                  <div className="text-xs opacity-80">Enterprise Deployment</div>
+                  <div className="text-xs opacity-80">1-Click Install</div>
                 </div>
               </Button>
 
@@ -232,11 +248,22 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
               </Button>
             </div>
             
-            {/* One-liner display */}
-            {oneLiner && (
-              <div className="space-y-2">
+            {/* Token info display */}
+            {tokenInfo && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-green-400">Provisioning token created</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-white/60">
+                    <Clock className="h-3 w-3" />
+                    Expires: {formatExpiryDate(tokenInfo.expiresAt)}
+                  </div>
+                </div>
+                
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Quick Deploy Command:</span>
+                  <span className="text-sm text-white/60">Quick Deploy (1 use, expires in 7 days):</span>
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -247,8 +274,8 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
                     <span className="ml-1">{copied ? 'Copied' : 'Copy'}</span>
                   </Button>
                 </div>
-                <pre className="p-3 rounded-lg bg-black/50 border border-cyan-500/20 text-xs text-cyan-400 overflow-x-auto">
-                  {oneLiner}
+                <pre className="p-3 rounded-lg bg-black/50 border border-cyan-500/20 text-xs text-cyan-400 overflow-x-auto whitespace-pre-wrap">
+                  {generateMsiOneLiner(tokenInfo.token)}
                 </pre>
               </div>
             )}
@@ -257,9 +284,9 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
               <div className="flex items-start gap-2 text-sm">
                 <Package className="h-4 w-4 text-purple-400 mt-0.5 shrink-0" />
                 <div className="text-white/70">
-                  <span className="text-purple-400 font-medium">Enterprise-ready:</span>{' '}
-                  Downloads a PowerShell script that fetches the official MSI and installs with embedded credentials. 
-                  Compatible with Intune, SCCM, and GPO.
+                  <span className="text-purple-400 font-medium">True 1-click:</span>{' '}
+                  Downloads a PowerShell script with a secure provisioning token. 
+                  Agent auto-fetches credentials on first run — no secrets in the download file.
                 </div>
               </div>
             </div>
@@ -303,6 +330,7 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
                 <div className="text-white/70">
                   <span className="text-amber-400 font-medium">Manual deployment:</span>{' '}
                   Extract the ZIP and run <code className="px-1 py-0.5 rounded bg-black/30 text-cyan-400">install.bat</code> as Administrator.
+                  Credentials embedded in config.json.
                 </div>
               </div>
             </div>
