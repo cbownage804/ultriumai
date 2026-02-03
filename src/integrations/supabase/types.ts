@@ -30117,6 +30117,863 @@ export type Database = {
         }
         Relationships: []
       }
+      xdr_automation_policies: {
+        Row: {
+          auto_block_c2: boolean | null
+          auto_isolate_on_critical: boolean | null
+          auto_kill_malicious_processes: boolean | null
+          auto_protect_shadow_copies: boolean | null
+          auto_quarantine_files: boolean | null
+          automation_mode: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          notification_channels: Json | null
+          policy_name: string
+          policy_scope: string | null
+          require_approval_for: string[] | null
+          scope_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_block_c2?: boolean | null
+          auto_isolate_on_critical?: boolean | null
+          auto_kill_malicious_processes?: boolean | null
+          auto_protect_shadow_copies?: boolean | null
+          auto_quarantine_files?: boolean | null
+          automation_mode?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          notification_channels?: Json | null
+          policy_name: string
+          policy_scope?: string | null
+          require_approval_for?: string[] | null
+          scope_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_block_c2?: boolean | null
+          auto_isolate_on_critical?: boolean | null
+          auto_kill_malicious_processes?: boolean | null
+          auto_protect_shadow_copies?: boolean | null
+          auto_quarantine_files?: boolean | null
+          automation_mode?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          notification_channels?: Json | null
+          policy_name?: string
+          policy_scope?: string | null
+          require_approval_for?: string[] | null
+          scope_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      xdr_fim_baselines: {
+        Row: {
+          agent_id: string | null
+          baseline_created_at: string
+          created_at: string
+          file_hash: string
+          file_owner: string | null
+          file_path: string
+          file_permissions: string | null
+          file_size: number | null
+          id: string
+          is_critical: boolean | null
+          last_verified_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          baseline_created_at?: string
+          created_at?: string
+          file_hash: string
+          file_owner?: string | null
+          file_path: string
+          file_permissions?: string | null
+          file_size?: number | null
+          id?: string
+          is_critical?: boolean | null
+          last_verified_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          baseline_created_at?: string
+          created_at?: string
+          file_hash?: string
+          file_owner?: string | null
+          file_path?: string
+          file_permissions?: string | null
+          file_size?: number | null
+          id?: string
+          is_critical?: boolean | null
+          last_verified_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xdr_fim_baselines_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xdr_fim_changes: {
+        Row: {
+          agent_id: string | null
+          baseline_id: string | null
+          change_type: string
+          created_at: string
+          file_path: string
+          id: string
+          is_suspicious: boolean | null
+          new_hash: string | null
+          new_size: number | null
+          old_hash: string | null
+          old_size: number | null
+          process_id: number | null
+          process_name: string | null
+          threat_id: string | null
+          user_account: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          baseline_id?: string | null
+          change_type: string
+          created_at?: string
+          file_path: string
+          id?: string
+          is_suspicious?: boolean | null
+          new_hash?: string | null
+          new_size?: number | null
+          old_hash?: string | null
+          old_size?: number | null
+          process_id?: number | null
+          process_name?: string | null
+          threat_id?: string | null
+          user_account?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          baseline_id?: string | null
+          change_type?: string
+          created_at?: string
+          file_path?: string
+          id?: string
+          is_suspicious?: boolean | null
+          new_hash?: string | null
+          new_size?: number | null
+          old_hash?: string | null
+          old_size?: number | null
+          process_id?: number | null
+          process_name?: string | null
+          threat_id?: string | null
+          user_account?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xdr_fim_changes_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "xdr_fim_changes_baseline_id_fkey"
+            columns: ["baseline_id"]
+            isOneToOne: false
+            referencedRelation: "xdr_fim_baselines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "xdr_fim_changes_threat_id_fkey"
+            columns: ["threat_id"]
+            isOneToOne: false
+            referencedRelation: "xdr_threats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xdr_forensics: {
+        Row: {
+          agent_id: string | null
+          collected_at: string | null
+          collection_type: string
+          created_at: string
+          expires_at: string | null
+          file_hash: string | null
+          file_path: string | null
+          file_size_bytes: number | null
+          id: string
+          metadata: Json | null
+          status: string | null
+          storage_url: string | null
+          threat_id: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          collected_at?: string | null
+          collection_type: string
+          created_at?: string
+          expires_at?: string | null
+          file_hash?: string | null
+          file_path?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          metadata?: Json | null
+          status?: string | null
+          storage_url?: string | null
+          threat_id?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          collected_at?: string | null
+          collection_type?: string
+          created_at?: string
+          expires_at?: string | null
+          file_hash?: string | null
+          file_path?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          metadata?: Json | null
+          status?: string | null
+          storage_url?: string | null
+          threat_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xdr_forensics_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "xdr_forensics_threat_id_fkey"
+            columns: ["threat_id"]
+            isOneToOne: false
+            referencedRelation: "xdr_threats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xdr_iocs: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          description: string | null
+          expires_at: string | null
+          first_seen: string | null
+          id: string
+          ioc_type: string
+          ioc_value: string
+          is_active: boolean | null
+          last_matched_at: string | null
+          last_seen: string | null
+          matches_count: number | null
+          severity: string | null
+          source: string | null
+          tags: string[] | null
+          threat_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          first_seen?: string | null
+          id?: string
+          ioc_type: string
+          ioc_value: string
+          is_active?: boolean | null
+          last_matched_at?: string | null
+          last_seen?: string | null
+          matches_count?: number | null
+          severity?: string | null
+          source?: string | null
+          tags?: string[] | null
+          threat_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          first_seen?: string | null
+          id?: string
+          ioc_type?: string
+          ioc_value?: string
+          is_active?: boolean | null
+          last_matched_at?: string | null
+          last_seen?: string | null
+          matches_count?: number | null
+          severity?: string | null
+          source?: string | null
+          tags?: string[] | null
+          threat_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      xdr_network_events: {
+        Row: {
+          agent_id: string | null
+          asn: string | null
+          bytes_received: number | null
+          bytes_sent: number | null
+          connection_state: string | null
+          created_at: string
+          destination_domain: string | null
+          destination_ip: string | null
+          destination_port: number | null
+          dns_query: string | null
+          dns_response: string[] | null
+          event_type: string
+          geo_city: string | null
+          geo_country: string | null
+          id: string
+          ioc_id: string | null
+          is_blocked: boolean | null
+          is_suspicious: boolean | null
+          process_id: number | null
+          process_name: string | null
+          protocol: string | null
+          source_ip: string | null
+          source_port: number | null
+          threat_id: string | null
+          threat_intel_match: boolean | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          asn?: string | null
+          bytes_received?: number | null
+          bytes_sent?: number | null
+          connection_state?: string | null
+          created_at?: string
+          destination_domain?: string | null
+          destination_ip?: string | null
+          destination_port?: number | null
+          dns_query?: string | null
+          dns_response?: string[] | null
+          event_type: string
+          geo_city?: string | null
+          geo_country?: string | null
+          id?: string
+          ioc_id?: string | null
+          is_blocked?: boolean | null
+          is_suspicious?: boolean | null
+          process_id?: number | null
+          process_name?: string | null
+          protocol?: string | null
+          source_ip?: string | null
+          source_port?: number | null
+          threat_id?: string | null
+          threat_intel_match?: boolean | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          asn?: string | null
+          bytes_received?: number | null
+          bytes_sent?: number | null
+          connection_state?: string | null
+          created_at?: string
+          destination_domain?: string | null
+          destination_ip?: string | null
+          destination_port?: number | null
+          dns_query?: string | null
+          dns_response?: string[] | null
+          event_type?: string
+          geo_city?: string | null
+          geo_country?: string | null
+          id?: string
+          ioc_id?: string | null
+          is_blocked?: boolean | null
+          is_suspicious?: boolean | null
+          process_id?: number | null
+          process_name?: string | null
+          protocol?: string | null
+          source_ip?: string | null
+          source_port?: number | null
+          threat_id?: string | null
+          threat_intel_match?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xdr_network_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "xdr_network_events_ioc_id_fkey"
+            columns: ["ioc_id"]
+            isOneToOne: false
+            referencedRelation: "xdr_iocs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "xdr_network_events_threat_id_fkey"
+            columns: ["threat_id"]
+            isOneToOne: false
+            referencedRelation: "xdr_threats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xdr_ransomware_events: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          directories_affected: number | null
+          encryption_pattern: string | null
+          event_type: string
+          files_affected: number | null
+          files_recovered: number | null
+          honeypot_file: string | null
+          id: string
+          process_id: number | null
+          process_name: string | null
+          ransom_note_content: string | null
+          ransom_note_path: string | null
+          rollback_available: boolean | null
+          rollback_completed_at: string | null
+          rollback_initiated_at: string | null
+          severity: string | null
+          shadow_copies_protected: boolean | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          directories_affected?: number | null
+          encryption_pattern?: string | null
+          event_type: string
+          files_affected?: number | null
+          files_recovered?: number | null
+          honeypot_file?: string | null
+          id?: string
+          process_id?: number | null
+          process_name?: string | null
+          ransom_note_content?: string | null
+          ransom_note_path?: string | null
+          rollback_available?: boolean | null
+          rollback_completed_at?: string | null
+          rollback_initiated_at?: string | null
+          severity?: string | null
+          shadow_copies_protected?: boolean | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          directories_affected?: number | null
+          encryption_pattern?: string | null
+          event_type?: string
+          files_affected?: number | null
+          files_recovered?: number | null
+          honeypot_file?: string | null
+          id?: string
+          process_id?: number | null
+          process_name?: string | null
+          ransom_note_content?: string | null
+          ransom_note_path?: string | null
+          rollback_available?: boolean | null
+          rollback_completed_at?: string | null
+          rollback_initiated_at?: string | null
+          severity?: string | null
+          shadow_copies_protected?: boolean | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xdr_ransomware_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xdr_response_actions: {
+        Row: {
+          action_payload: Json | null
+          action_status: string | null
+          action_type: string
+          agent_id: string | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          error_message: string | null
+          executed_at: string | null
+          id: string
+          initiated_by: string | null
+          requires_approval: boolean | null
+          result: Json | null
+          threat_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action_payload?: Json | null
+          action_status?: string | null
+          action_type: string
+          agent_id?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          initiated_by?: string | null
+          requires_approval?: boolean | null
+          result?: Json | null
+          threat_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action_payload?: Json | null
+          action_status?: string | null
+          action_type?: string
+          agent_id?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          initiated_by?: string | null
+          requires_approval?: boolean | null
+          result?: Json | null
+          threat_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xdr_response_actions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "xdr_response_actions_threat_id_fkey"
+            columns: ["threat_id"]
+            isOneToOne: false
+            referencedRelation: "xdr_threats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xdr_threat_feeds: {
+        Row: {
+          api_key_encrypted: string | null
+          created_at: string
+          feed_name: string
+          feed_type: string
+          feed_url: string | null
+          id: string
+          ioc_count: number | null
+          is_active: boolean | null
+          last_sync_at: string | null
+          last_sync_status: string | null
+          provider: string | null
+          sync_interval_hours: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_key_encrypted?: string | null
+          created_at?: string
+          feed_name: string
+          feed_type: string
+          feed_url?: string | null
+          id?: string
+          ioc_count?: number | null
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          provider?: string | null
+          sync_interval_hours?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_key_encrypted?: string | null
+          created_at?: string
+          feed_name?: string
+          feed_type?: string
+          feed_url?: string | null
+          id?: string
+          ioc_count?: number | null
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          provider?: string | null
+          sync_interval_hours?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      xdr_threats: {
+        Row: {
+          agent_id: string | null
+          ai_analysis: string | null
+          ai_confidence: number | null
+          automation_mode: string | null
+          command_line: string | null
+          created_at: string
+          destination_ip: string | null
+          destination_port: number | null
+          detection_source: string | null
+          dns_query: string | null
+          file_hash: string | null
+          file_path: string | null
+          id: string
+          mitre_subtechnique: string | null
+          mitre_tactic: string | null
+          mitre_technique: string | null
+          parent_process: string | null
+          process_id: number | null
+          process_name: string | null
+          raw_event: Json | null
+          remediated_at: string | null
+          remediated_by: string | null
+          remediation_action: string | null
+          severity: string
+          source_ip: string | null
+          status: string
+          threat_id: string
+          threat_name: string
+          threat_type: string
+          updated_at: string
+          user_account: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          ai_analysis?: string | null
+          ai_confidence?: number | null
+          automation_mode?: string | null
+          command_line?: string | null
+          created_at?: string
+          destination_ip?: string | null
+          destination_port?: number | null
+          detection_source?: string | null
+          dns_query?: string | null
+          file_hash?: string | null
+          file_path?: string | null
+          id?: string
+          mitre_subtechnique?: string | null
+          mitre_tactic?: string | null
+          mitre_technique?: string | null
+          parent_process?: string | null
+          process_id?: number | null
+          process_name?: string | null
+          raw_event?: Json | null
+          remediated_at?: string | null
+          remediated_by?: string | null
+          remediation_action?: string | null
+          severity?: string
+          source_ip?: string | null
+          status?: string
+          threat_id: string
+          threat_name: string
+          threat_type: string
+          updated_at?: string
+          user_account?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          ai_analysis?: string | null
+          ai_confidence?: number | null
+          automation_mode?: string | null
+          command_line?: string | null
+          created_at?: string
+          destination_ip?: string | null
+          destination_port?: number | null
+          detection_source?: string | null
+          dns_query?: string | null
+          file_hash?: string | null
+          file_path?: string | null
+          id?: string
+          mitre_subtechnique?: string | null
+          mitre_tactic?: string | null
+          mitre_technique?: string | null
+          parent_process?: string | null
+          process_id?: number | null
+          process_name?: string | null
+          raw_event?: Json | null
+          remediated_at?: string | null
+          remediated_by?: string | null
+          remediation_action?: string | null
+          severity?: string
+          source_ip?: string | null
+          status?: string
+          threat_id?: string
+          threat_name?: string
+          threat_type?: string
+          updated_at?: string
+          user_account?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xdr_threats_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xdr_timeline_events: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          event_data: Json
+          event_source: string | null
+          event_time: string
+          event_type: string
+          id: string
+          incident_id: string | null
+          mitre_mapping: Json | null
+          process_tree: Json | null
+          sequence_number: number | null
+          severity: string | null
+          threat_id: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          event_data: Json
+          event_source?: string | null
+          event_time: string
+          event_type: string
+          id?: string
+          incident_id?: string | null
+          mitre_mapping?: Json | null
+          process_tree?: Json | null
+          sequence_number?: number | null
+          severity?: string | null
+          threat_id?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          event_data?: Json
+          event_source?: string | null
+          event_time?: string
+          event_type?: string
+          id?: string
+          incident_id?: string | null
+          mitre_mapping?: Json | null
+          process_tree?: Json | null
+          sequence_number?: number | null
+          severity?: string | null
+          threat_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xdr_timeline_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "xdr_timeline_events_threat_id_fkey"
+            columns: ["threat_id"]
+            isOneToOne: false
+            referencedRelation: "xdr_threats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xdr_yara_rules: {
+        Row: {
+          author: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          false_positives: number | null
+          id: string
+          is_active: boolean | null
+          last_matched_at: string | null
+          matches_count: number | null
+          rule_content: string
+          rule_name: string
+          severity: string | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          false_positives?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_matched_at?: string | null
+          matches_count?: number | null
+          rule_content: string
+          rule_name: string
+          severity?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          false_positives?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_matched_at?: string | null
+          matches_count?: number | null
+          rule_content?: string
+          rule_name?: string
+          severity?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       yara_matches: {
         Row: {
           agent_id: string | null
