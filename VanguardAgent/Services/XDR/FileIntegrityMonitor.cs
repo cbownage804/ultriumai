@@ -47,6 +47,9 @@ public class FileIntegrityMonitor : IDisposable
         ".hta", ".scr", ".pif", ".msi", ".msp", ".msc"
     };
 
+    // Event for AV Engine integration
+    public event EventHandler<FileIntegrityEventArgs>? OnFileChanged;
+
     public FileIntegrityMonitor(ConfigService configService, ApiClient apiClient)
     {
         _configService = configService;
@@ -57,11 +60,11 @@ public class FileIntegrityMonitor : IDisposable
         );
     }
 
-    public void Start()
+    public Task StartAsync()
     {
         lock (_lock)
         {
-            if (_isRunning) return;
+            if (_isRunning) return Task.CompletedTask;
             _isRunning = true;
         }
 
@@ -75,6 +78,7 @@ public class FileIntegrityMonitor : IDisposable
         {
             Console.WriteLine($"[XDR FIM] Failed to start: {ex.Message}");
         }
+        return Task.CompletedTask;
     }
 
     public void Stop()
@@ -362,6 +366,17 @@ public class FileIntegrityMonitor : IDisposable
         {
             Console.WriteLine($"[XDR FIM] {fimEvent.Severity.ToUpper()}: {fimEvent.ChangeType} - {fimEvent.Path}");
 
+            // Raise event for AV Engine
+            OnFileChanged?.Invoke(this, new FileIntegrityEventArgs
+            {
+                FilePath = fimEvent.Path,
+                FileName = Path.GetFileName(fimEvent.Path),
+                ChangeType = fimEvent.ChangeType,
+                OldHash = fimEvent.PreviousHash,
+                NewHash = fimEvent.NewHash,
+                IsSuspicious = fimEvent.Severity == "critical" || fimEvent.Severity == "high"
+            });
+
             await _apiClient.SendSecurityEventAsync(new
             {
                 action = "fim_alert",
@@ -451,4 +466,14 @@ public class FileIntegrityEvent
     public string Severity { get; set; } = "medium";
     public string? MitreTechnique { get; set; }
     public DateTime Timestamp { get; set; }
+}
+
+public class FileIntegrityEventArgs : EventArgs
+{
+    public string FilePath { get; set; } = "";
+    public string FileName { get; set; } = "";
+    public string ChangeType { get; set; } = "";
+    public string? OldHash { get; set; }
+    public string? NewHash { get; set; }
+    public bool IsSuspicious { get; set; }
 }

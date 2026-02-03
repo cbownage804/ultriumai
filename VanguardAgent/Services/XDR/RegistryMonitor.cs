@@ -59,10 +59,19 @@ public class RegistryMonitor : IDisposable
         new RegistryKeyInfo(RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Lsa", "T1547.002"),
     };
 
+    // Event for AV Engine integration
+    public event EventHandler<RegistryChangeEventArgs>? OnRegistryChanged;
+
     public RegistryMonitor(ConfigService configService, ApiClient apiClient)
     {
         _configService = configService;
         _apiClient = apiClient;
+    }
+
+    public Task StartAsync()
+    {
+        Start();
+        return Task.CompletedTask;
     }
 
     public void Start()
@@ -336,4 +345,15 @@ public class RegistryChangeEvent
     public string ChangeType { get; set; } = "";
     public string? MitreTechnique { get; set; }
     public string Severity { get; set; } = "medium";
+}
+
+public class RegistryChangeEventArgs : EventArgs
+{
+    public string KeyPath { get; set; } = "";
+    public string ValueName { get; set; } = "";
+    public string? OldValue { get; set; }
+    public string? NewValue { get; set; }
+    public string? ThreatType { get; set; }
+    public string? MitreId { get; set; }
+    public int ThreatLevel { get; set; }
 }
