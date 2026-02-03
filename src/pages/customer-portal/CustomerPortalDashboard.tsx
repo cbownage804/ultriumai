@@ -13,7 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Ticket, Plus, Shield, 
   Clock, AlertCircle, Loader2,
-  ChevronRight, BookOpen, Monitor, CreditCard
+  ChevronRight, BookOpen, Monitor, CreditCard,
+  Calendar, Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +27,9 @@ import { DashboardStats } from '@/components/customer-portal/DashboardStats';
 import { KnowledgeBase } from '@/components/customer-portal/KnowledgeBase';
 import { DeviceStatus } from '@/components/customer-portal/DeviceStatus';
 import { BillingPortal } from '@/components/customer-portal/BillingPortal';
+import { MaintenanceCalendar } from '@/components/customer-portal/MaintenanceCalendar';
+import { ProfileSettings } from '@/components/customer-portal/ProfileSettings';
+import { TicketExport } from '@/components/customer-portal/TicketExport';
 
 interface PortalTicket {
   id: string;
@@ -150,6 +154,14 @@ export default function CustomerPortalDashboard() {
                 Security Tools
               </TabsTrigger>
             )}
+            <TabsTrigger value="maintenance" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+              <Calendar className="h-4 w-4 mr-2" />
+              Maintenance
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </TabsTrigger>
             {isAdmin && (
               <TabsTrigger value="billing" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                 <CreditCard className="h-4 w-4 mr-2" />
@@ -239,18 +251,21 @@ export default function CustomerPortalDashboard() {
 
           {/* Tickets Tab */}
           <TabsContent value="tickets" className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
                 <h2 className="text-2xl font-bold text-white">Your Tickets</h2>
                 <p className="text-white/60">View and manage your support requests</p>
               </div>
-              <Button
-                onClick={() => navigate('/customer-portal/tickets/new')}
-                className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Ticket
-              </Button>
+              <div className="flex items-center gap-3">
+                <TicketExport tickets={tickets} />
+                <Button
+                  onClick={() => navigate('/customer-portal/tickets/new')}
+                  className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Ticket
+                </Button>
+              </div>
             </div>
 
             {isLoadingTickets ? (
@@ -338,6 +353,16 @@ export default function CustomerPortalDashboard() {
               <SafeSuiteWidget access={safeSuite} />
             </TabsContent>
           )}
+
+          {/* Maintenance Tab */}
+          <TabsContent value="maintenance">
+            <MaintenanceCalendar clientId={session.user.clientId} />
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings">
+            <ProfileSettings />
+          </TabsContent>
 
           {/* Billing Tab (Admin Only) */}
           {isAdmin && (

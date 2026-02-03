@@ -15,6 +15,7 @@ import { ArrowLeft, Send, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { usePortalSession } from '@/hooks/usePortalSession';
+import { PrioritySelector } from '@/components/customer-portal/PrioritySelector';
 
 export default function CustomerPortalNewTicket() {
   const navigate = useNavigate();
@@ -90,37 +91,25 @@ export default function CustomerPortalNewTicket() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="priority" className="text-white/80">Priority</Label>
-                    <Select value={priority} onValueChange={setPriority}>
-                      <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-white/10">
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="urgent">Urgent</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category" className="text-white/80">Category</Label>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-white/10">
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="technical">Technical Issue</SelectItem>
+                      <SelectItem value="billing">Billing</SelectItem>
+                      <SelectItem value="feature">Feature Request</SelectItem>
+                      <SelectItem value="security">Security</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="category" className="text-white/80">Category</Label>
-                    <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-white/10">
-                        <SelectItem value="general">General</SelectItem>
-                        <SelectItem value="technical">Technical Issue</SelectItem>
-                        <SelectItem value="billing">Billing</SelectItem>
-                        <SelectItem value="feature">Feature Request</SelectItem>
-                        <SelectItem value="security">Security</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label className="text-white/80">Priority</Label>
+                  <PrioritySelector value={priority} onChange={setPriority} />
                 </div>
 
                 <div className="space-y-2">
