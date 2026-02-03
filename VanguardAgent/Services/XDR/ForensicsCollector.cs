@@ -32,6 +32,25 @@ public class ForensicsCollector
             Directory.CreateDirectory(_evidenceDir);
     }
 
+    /// <summary>
+    /// Quick snapshot collection for critical threats
+    /// </summary>
+    public async Task CollectSnapshotAsync(string reason)
+    {
+        var incidentId = $"snapshot_{DateTime.UtcNow:yyyyMMdd_HHmmss}";
+        Console.WriteLine($"[XDR Forensics] Collecting snapshot: {reason}");
+        
+        try
+        {
+            // Collect a quick incident package
+            await CollectIncidentPackageAsync(incidentId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[XDR Forensics] Snapshot failed: {ex.Message}");
+        }
+    }
+
     public async Task<ForensicPackage> CollectIncidentPackageAsync(string incidentId)
     {
         var package = new ForensicPackage
