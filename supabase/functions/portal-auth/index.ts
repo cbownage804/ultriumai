@@ -28,6 +28,17 @@ interface RequestResetRequest {
   email: string;
 }
 
+interface UpdateProfileRequest {
+  portalUserId: string;
+  fullName?: string;
+  phone?: string;
+  preferences?: {
+    emailNotifications?: boolean;
+    ticketUpdates?: boolean;
+    maintenanceAlerts?: boolean;
+  };
+}
+
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[PORTAL-AUTH] ${step}${detailsStr}`);
@@ -66,6 +77,8 @@ serve(async (req) => {
         return await handleValidateSession(supabaseClient, body.sessionToken);
       case 'agent-login':
         return await handleAgentLogin(supabaseClient, body, clientIp, userAgent);
+      case 'update-profile':
+        return await handleUpdateProfile(supabaseClient, body as UpdateProfileRequest);
       default:
         throw new Error(`Unknown action: ${action}`);
     }
@@ -438,6 +451,69 @@ async function handleAgentLogin(
       refreshInterval: 3600, // 1 hour
     }
   }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status: 200,
+  });
+}
+
+async function handleUpdateProfile(
+  supabase: any,
+  { portalUserId, fullName, phone, preferences }: UpdateProfileRequest
+) {
+  logStep("Update profile", { portalUserId });
+
+  if (!portalUserId) {
+    return new Response(JSON.stringify({ error: "Portal user ID required" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 400,
+    });
+  }
+
+  // Build update object
+  const updates: Record<string, any> = {};
+  if (fullName !== undefined) updates.full_name = fullName;
+  if (phone !== undefined) updates.phone = phone;
+  if (preferences !== undefined) updates.notification_preferences = preferences;
+
+  if (Object.keys(updates).length === 0) {
+    return new Response(JSON.stringify({ success: true, message: "No changes" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+  }
+
+  const { error } = await supabase
+    .from('client_portal_users')
+    .update(updates)
+    .eq('id', portalUserId);
+
+  if (error) {
+    logStep("Profile update failed", { error: error.message });
+    return new Response(JSON.stringify({ error: "Failed to update profile" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
+  }
+
+  // Also update the linked client_contacts record if fullName changed
+  if (fullName) {
+    const { data: portalUser } = await supabase
+      .from('client_portal_users')
+      .select('contact_id')
+      .eq('id', portalUserId)
+      .single();
+
+    if (portalUser?.contact_id) {
+      await supabase
+        .from('client_contacts')
+        .update({ name: fullName })
+        .eq('id', portalUser.contact_id);
+    }
+  }
+
+  logStep("Profile updated successfully", { portalUserId });
+
+  return new Response(JSON.stringify({ success: true }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
     status: 200,
   });
