@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,17 +23,39 @@ import {
 import { toast } from 'sonner';
 import { getVanguardBasePath } from '@/utils/subdomain';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { formatDistanceToNowStrict } from 'date-fns';
 
-const initialAlerts = [
-  { id: '1', title: 'High CPU Usage Detected', device: 'SRV-PROD-01', customer: 'Acme Corp', severity: 'critical', category: 'performance', time: '2 min ago', status: 'active', description: 'CPU usage exceeded 95% for more than 5 minutes.' },
-  { id: '2', title: 'Suspicious Login Attempt', device: 'WKS-HR-05', customer: 'TechStart Inc', severity: 'high', category: 'security', time: '15 min ago', status: 'active', description: 'Multiple failed login attempts from unknown IP.' },
-  { id: '3', title: 'Disk Space Low (< 10%)', device: 'SRV-FILE-02', customer: 'GlobalTech', severity: 'warning', category: 'storage', time: '1 hour ago', status: 'active', description: 'Only 8% disk space remaining on C: drive.' },
-  { id: '4', title: 'Service Stopped: SQL Server', device: 'SRV-DB-01', customer: 'DataFlow LLC', severity: 'critical', category: 'service', time: '30 min ago', status: 'acknowledged', description: 'SQL Server service has stopped unexpectedly.' },
-  { id: '5', title: 'Network Latency Spike', device: 'ROUTER-MAIN', customer: 'Enterprise Corp', severity: 'warning', category: 'network', time: '2 hours ago', status: 'resolved', description: 'Network latency exceeded 200ms.' },
-  { id: '6', title: 'Antivirus Definitions Outdated', device: 'WKS-DEV-12', customer: 'StartupXYZ', severity: 'low', category: 'security', time: '3 hours ago', status: 'active', description: 'AV definitions are more than 7 days old.' },
-  { id: '7', title: 'Backup Failed', device: 'SRV-BACKUP', customer: 'Acme Corp', severity: 'high', category: 'backup', time: '4 hours ago', status: 'active', description: 'Nightly backup job failed with error code 1203.' },
-  { id: '8', title: 'Memory Pressure Warning', device: 'SRV-APP-03', customer: 'TechStart Inc', severity: 'warning', category: 'performance', time: '5 hours ago', status: 'acknowledged', description: 'Memory usage at 89%, approaching threshold.' },
-];
+type UiSeverity = 'critical' | 'high' | 'warning' | 'low';
+type UiStatus = 'active' | 'acknowledged' | 'resolved';
+
+interface UiAlert {
+  id: string;
+  title: string;
+  device: string;
+  customer: string;
+  severity: UiSeverity;
+  category: string;
+  time: string;
+  status: UiStatus;
+  description: string;
+}
+
+type RealtimeAlertRow = {
+  id: string;
+  user_id: string;
+  alert_type: string;
+  severity: string;
+  title: string;
+  description: string;
+  acknowledged_at: string | null;
+  acknowledged_by: string | null;
+  resolved_at: string | null;
+  resolution_notes: string | null;
+  metadata: any;
+  created_at: string;
+};
 
 const severityColors = {
   critical: 'bg-red-500/20 text-red-400 border-red-500/30',
@@ -60,10 +82,12 @@ const categoryIcons = {
 export default function VanguardAlerts() {
   const navigate = useNavigate();
   const basePath = getVanguardBasePath();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const [alerts, setAlerts] = useState(initialAlerts);
-  const [selectedAlert, setSelectedAlert] = useState<typeof initialAlerts[0] | null>(null);
+  const [alerts, setAlerts] = useState<UiAlert[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedAlert, setSelectedAlert] = useState<UiAlert | null>(null);
   const [showCreateTicketDialog, setShowCreateTicketDialog] = useState(false);
   const [ticketNote, setTicketNote] = useState('');
   const [isMuted, setIsMuted] = useState(false);
@@ -72,6 +96,107 @@ export default function VanguardAlerts() {
     document.title = 'Vanguard Pursuit | Ultrium Vanguard';
   }, []);
 
+  const normalizeSeverity = (sev: string | null | undefined): UiSeverity => {
+    const s = (sev || '').toLowerCase();
+    if (s === 'critical') return 'critical';
+    if (s === 'high') return 'high';
+    if (s === 'warning') return 'warning';
+    if (s === 'medium') return 'warning';
+    if (s === 'info') return 'low';
+    if (s === 'low') return 'low';
+    return 'warning';
+  };
+
+  const toUiAlert = (row: RealtimeAlertRow): UiAlert => {
+    const metadata = row.metadata || {};
+    const device =
+      metadata.device ||
+      metadata.hostname ||
+      metadata.agent_name ||
+      metadata.agentName ||
+      metadata.asset_name ||
+      '—';
+    const customer =
+      metadata.customer ||
+      metadata.client ||
+      metadata.client_name ||
+      metadata.organization ||
+      metadata.organization_name ||
+      '—';
+
+    const status: UiStatus = row.resolved_at
+      ? 'resolved'
+      : row.acknowledged_at
+        ? 'acknowledged'
+        : 'active';
+
+    return {
+      id: row.id,
+      title: row.title,
+      device: String(device),
+      customer: String(customer),
+      severity: normalizeSeverity(row.severity),
+      category: row.alert_type || 'security',
+      time: formatDistanceToNowStrict(new Date(row.created_at), { addSuffix: true }),
+      status,
+      description: row.description,
+    };
+  };
+
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
+
+    const load = async () => {
+      if (!user?.id) {
+        setAlerts([]);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('realtime_alerts')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(200);
+
+        if (error) throw error;
+        if (cancelled) return;
+
+        setAlerts(((data as RealtimeAlertRow[]) || []).map(toUiAlert));
+      } catch (err: any) {
+        console.error('Failed to load realtime_alerts:', err);
+        toast.error('Failed to load alerts', { description: err?.message });
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    load();
+
+    if (user?.id) {
+      channel = supabase
+        .channel(`realtime_alerts_changes_${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'realtime_alerts', filter: `user_id=eq.${user.id}` },
+          () => {
+            // keep it simple + consistent
+            load();
+          }
+        )
+        .subscribe();
+    }
+
+    return () => {
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   const stats = [
     { label: 'Critical', value: alerts.filter(a => a.severity === 'critical' && a.status !== 'resolved').length, color: 'text-red-400', bg: 'bg-red-500/20' },
     { label: 'High', value: alerts.filter(a => a.severity === 'high' && a.status !== 'resolved').length, color: 'text-orange-400', bg: 'bg-orange-500/20' },
@@ -79,36 +204,78 @@ export default function VanguardAlerts() {
     { label: 'Resolved Today', value: alerts.filter(a => a.status === 'resolved').length, color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
   ];
 
-  const filteredAlerts = alerts.filter(alert => {
-    const matchesSearch = alert.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          alert.device.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          alert.customer.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === 'all' || 
-                       (activeTab === 'active' && alert.status === 'active') ||
-                       (activeTab === 'acknowledged' && alert.status === 'acknowledged') ||
-                       (activeTab === 'resolved' && alert.status === 'resolved');
-    return matchesSearch && matchesTab;
-  });
+  const filteredAlerts = useMemo(() => {
+    return alerts.filter((alert) => {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        !q ||
+        alert.title.toLowerCase().includes(q) ||
+        alert.device.toLowerCase().includes(q) ||
+        alert.customer.toLowerCase().includes(q);
+      const matchesTab =
+        activeTab === 'all' ||
+        (activeTab === 'active' && alert.status === 'active') ||
+        (activeTab === 'acknowledged' && alert.status === 'acknowledged') ||
+        (activeTab === 'resolved' && alert.status === 'resolved');
+      return matchesSearch && matchesTab;
+    });
+  }, [alerts, activeTab, searchQuery]);
 
-  const handleAcknowledge = (alertId: string) => {
-    setAlerts(alerts.map(a => 
-      a.id === alertId ? { ...a, status: 'acknowledged' } : a
-    ));
-    toast.success('Alert acknowledged');
+  const handleAcknowledge = async (alertId: string) => {
+    if (!user?.id) return;
+    try {
+      const { error } = await supabase
+        .from('realtime_alerts')
+        .update({
+          acknowledged_at: new Date().toISOString(),
+          acknowledged_by: user.id,
+        })
+        .eq('id', alertId)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      toast.success('Alert acknowledged');
+    } catch (err: any) {
+      console.error('Failed to acknowledge alert:', err);
+      toast.error('Failed to acknowledge', { description: err?.message });
+    }
   };
 
-  const handleResolve = (alertId: string) => {
-    setAlerts(alerts.map(a => 
-      a.id === alertId ? { ...a, status: 'resolved' } : a
-    ));
-    toast.success('Alert resolved');
+  const handleResolve = async (alertId: string) => {
+    if (!user?.id) return;
+    try {
+      const { error } = await supabase
+        .from('realtime_alerts')
+        .update({
+          resolved_at: new Date().toISOString(),
+        })
+        .eq('id', alertId)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      toast.success('Alert resolved');
+    } catch (err: any) {
+      console.error('Failed to resolve alert:', err);
+      toast.error('Failed to resolve', { description: err?.message });
+    }
   };
 
-  const handleAcknowledgeAll = () => {
-    setAlerts(alerts.map(a => 
-      a.status === 'active' ? { ...a, status: 'acknowledged' } : a
-    ));
-    toast.success('All active alerts acknowledged');
+  const handleAcknowledgeAll = async () => {
+    if (!user?.id) return;
+    try {
+      const { error } = await supabase
+        .from('realtime_alerts')
+        .update({
+          acknowledged_at: new Date().toISOString(),
+          acknowledged_by: user.id,
+        })
+        .eq('user_id', user.id)
+        .is('resolved_at', null)
+        .is('acknowledged_at', null);
+      if (error) throw error;
+      toast.success('All active alerts acknowledged');
+    } catch (err: any) {
+      console.error('Failed to acknowledge all:', err);
+      toast.error('Failed to acknowledge all', { description: err?.message });
+    }
   };
 
   const handleMuteAll = () => {
@@ -116,11 +283,11 @@ export default function VanguardAlerts() {
     toast.success(isMuted ? 'Alert sounds unmuted' : 'All alert sounds muted');
   };
 
-  const handleViewDetails = (alert: typeof initialAlerts[0]) => {
+  const handleViewDetails = (alert: UiAlert) => {
     setSelectedAlert(alert);
   };
 
-  const handleCreateTicket = (alert: typeof initialAlerts[0]) => {
+  const handleCreateTicket = (alert: UiAlert) => {
     setSelectedAlert(alert);
     setShowCreateTicketDialog(true);
   };
@@ -135,14 +302,28 @@ export default function VanguardAlerts() {
     setSelectedAlert(null);
   };
 
-  const handleViewDevice = (alert: typeof initialAlerts[0]) => {
+  const handleViewDevice = (alert: UiAlert) => {
     toast.info(`Navigating to device: ${alert.device}`);
     navigate(`${basePath}/devices`);
   };
 
-  const handleSuppress = (alertId: string) => {
-    setAlerts(alerts.filter(a => a.id !== alertId));
-    toast.success('Alert suppressed');
+  const handleSuppress = async (alertId: string) => {
+    if (!user?.id) return;
+    try {
+      const { error } = await supabase
+        .from('realtime_alerts')
+        .update({
+          resolved_at: new Date().toISOString(),
+          resolution_notes: 'Suppressed from dashboard',
+        })
+        .eq('id', alertId)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      toast.success('Alert suppressed');
+    } catch (err: any) {
+      console.error('Failed to suppress alert:', err);
+      toast.error('Failed to suppress', { description: err?.message });
+    }
   };
 
   return (
@@ -233,6 +414,24 @@ export default function VanguardAlerts() {
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-4 space-y-3">
+          {isLoading && (
+            <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
+              <CardContent className="p-6 text-white/60 text-sm">Loading alerts…</CardContent>
+            </Card>
+          )}
+
+          {!isLoading && filteredAlerts.length === 0 && (
+            <Card className="bg-black/40 border-cyan-500/20 backdrop-blur-sm">
+              <CardContent className="p-8 text-center">
+                <Bell className="h-10 w-10 mx-auto mb-3 text-white/30" />
+                <div className="text-white/70 font-medium">No alerts yet</div>
+                <div className="text-white/50 text-sm mt-1">
+                  Alerts will appear here as your agents and integrations report telemetry.
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {filteredAlerts.map((alert, i) => {
             const CategoryIcon = categoryIcons[alert.category as keyof typeof categoryIcons] || AlertTriangle;
             return (
