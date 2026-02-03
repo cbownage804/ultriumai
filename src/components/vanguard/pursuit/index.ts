@@ -10,3 +10,5 @@ export { ForensicsPanel } from './ForensicsPanel';
 export { AutomationPoliciesPanel } from './AutomationPoliciesPanel';
 export { ResponseActionsPanel } from './ResponseActionsPanel';
 export { ThreatIntelligencePanel } from './ThreatIntelligencePanel';
+export { AttackChainVisualization } from './AttackChainVisualization';
+export { RealtimeAlertsIndicator } from './RealtimeAlertsIndicator';

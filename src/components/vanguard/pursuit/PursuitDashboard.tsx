@@ -14,7 +14,8 @@ import {
   Skull,
   Crosshair,
   Brain,
-  PlayCircle
+  PlayCircle,
+  GitBranch
 } from "lucide-react";
 import { useXDRStats } from "@/hooks/usePursuitXDR";
 import { ThreatDetectionPanel } from "./ThreatDetectionPanel";
@@ -27,6 +28,8 @@ import { ForensicsPanel } from "./ForensicsPanel";
 import { AutomationPoliciesPanel } from "./AutomationPoliciesPanel";
 import { ResponseActionsPanel } from "./ResponseActionsPanel";
 import { ThreatIntelligencePanel } from "./ThreatIntelligencePanel";
+import { AttackChainVisualization } from "./AttackChainVisualization";
+import { RealtimeAlertsIndicator } from "./RealtimeAlertsIndicator";
 
 export function PursuitDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -34,6 +37,15 @@ export function PursuitDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Header with realtime alerts */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <Shield className="h-6 w-6" />
+          Pursuit XDR
+        </h2>
+        <RealtimeAlertsIndicator />
+      </div>
+
       {/* Header Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card className="bg-destructive/10 border-destructive/30">
@@ -170,6 +182,10 @@ export function PursuitDashboard() {
             <Settings className="h-3.5 w-3.5" />
             Automation
           </TabsTrigger>
+          <TabsTrigger value="attack-chains" className="text-xs gap-1.5">
+            <GitBranch className="h-3.5 w-3.5" />
+            Attack Chains
+          </TabsTrigger>
         </TabsList>
 
         <div className="mt-4">
@@ -202,6 +218,9 @@ export function PursuitDashboard() {
           </TabsContent>
           <TabsContent value="automation">
             <AutomationPoliciesPanel />
+          </TabsContent>
+          <TabsContent value="attack-chains">
+            <AttackChainVisualization />
           </TabsContent>
         </div>
       </Tabs>
