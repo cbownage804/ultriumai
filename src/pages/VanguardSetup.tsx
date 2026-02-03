@@ -81,18 +81,33 @@ export default function VanguardSetup() {
     fetchConfig();
   }, [session?.access_token]);
 
-  // Fetch MSP clients on mount - filter by msp_id (not user_id) and only active clients
+  // Fetch MSP clients on mount - first get MSP record, then fetch clients by msp_id
   useEffect(() => {
     const fetchClients = async () => {
       if (!user?.id) return;
       
       try {
-        // Query msp_clients where msp_id matches the current user and is_active is true
-        const sb: any = supabase;
-        const { data, error } = await sb
+        // First, get the MSP record for this user
+        const { data: mspData, error: mspError } = await supabase
+          .from('msps')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (mspError) throw mspError;
+        
+        if (!mspData) {
+          // No MSP record found for this user
+          setClients([]);
+          setLoadingClients(false);
+          return;
+        }
+        
+        // Query msp_clients where msp_id matches the MSP's id and is_active is true
+        const { data, error } = await supabase
           .from('msp_clients')
           .select('id, company_name')
-          .eq('msp_id', user.id)
+          .eq('msp_id', mspData.id)
           .eq('is_active', true)
           .order('company_name');
         
