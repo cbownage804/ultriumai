@@ -3,13 +3,19 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Package Name="Ultrium Vanguard Agent"
            Manufacturer="Ultrium AI"
-           Version="1.1.0"
+           Version="1.2.0"
            UpgradeCode="A1B2C3D4-E5F6-7890-ABCD-EF1234567890"
            Scope="perMachine">
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of Vanguard Agent is already installed." />
 
     <Media Id="1" Cabinet="vanguard.cab" EmbedCab="yes" />
+
+    <!-- Icon for Add/Remove Programs -->
+    <Icon Id="VanguardIcon" SourceFile="$(var.PublishDir)\vanguard.ico" />
+    <Property Id="ARPPRODUCTICON" Value="VanguardIcon" />
+    <Property Id="ARPHELPLINK" Value="https://ultriumai.com/vanguard" />
+    <Property Id="ARPURLINFOABOUT" Value="https://ultriumai.com" />
 
     <!-- Installation directory -->
     <StandardDirectory Id="ProgramFiles64Folder">
