@@ -35,6 +35,9 @@ public class AgentConfig
     [JsonProperty("telemetry_interval")]
     public int TelemetryInterval { get; set; } = 300;
 
+    [JsonProperty("portal_session_token")]
+    public string? PortalSessionToken { get; set; }
+
     [JsonProperty("features")]
     public FeatureConfig Features { get; set; } = new();
 }
@@ -104,6 +107,23 @@ public class ConfigService
     public void SetDeviceId(string deviceId)
     {
         _config.DeviceId = deviceId;
+        SaveConfig();
+    }
+
+    public void SetPortalSessionToken(string token)
+    {
+        _config.PortalSessionToken = token;
+        SaveConfig();
+    }
+
+    public string? GetPortalSessionToken()
+    {
+        return _config.PortalSessionToken;
+    }
+
+    public void ClearPortalSession()
+    {
+        _config.PortalSessionToken = null;
         SaveConfig();
     }
 }

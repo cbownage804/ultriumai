@@ -1,10 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-portal-session",
 };
 
 interface LoginRequest {
@@ -63,6 +64,8 @@ serve(async (req) => {
         return await handleResetPassword(supabaseClient, body as ResetPasswordRequest);
       case 'validate-session':
         return await handleValidateSession(supabaseClient, body.sessionToken);
+      case 'agent-login':
+        return await handleAgentLogin(supabaseClient, body, clientIp, userAgent);
       default:
         throw new Error(`Unknown action: ${action}`);
     }
@@ -265,7 +268,7 @@ async function handleRequestReset(supabase: any, { email }: RequestResetRequest)
 
   const { data: portalUser } = await supabase
     .from('client_portal_users')
-    .select('id, full_name')
+    .select('id, full_name, email')
     .eq('email', email.toLowerCase())
     .eq('is_active', true)
     .single();
@@ -297,15 +300,31 @@ async function handleRequestReset(supabase: any, { email }: RequestResetRequest)
       expires_at: expiresAt.toISOString()
     });
 
-  // Send reset email (would use Resend in production)
-  // For now, just log it
+  // Send reset email using Resend
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  if (resendApiKey) {
+    try {
+      const resend = new Resend(resendApiKey);
+      const resetUrl = `https://ultriumai.com/customer-portal/reset-password?token=${resetToken}`;
+      
+      await resend.emails.send({
+        from: 'Ultrium Support <hello@send.ultriumai.com>',
+        to: [portalUser.email],
+        subject: 'Reset Your Password',
+        html: generateResetEmail(portalUser.full_name, resetUrl, expiresAt)
+      });
+      
+      logStep("Reset email sent", { portalUserId: portalUser.id });
+    } catch (emailError) {
+      console.error('Failed to send reset email:', emailError);
+    }
+  }
+
   logStep("Reset token generated", { portalUserId: portalUser.id });
 
   return new Response(JSON.stringify({ 
     success: true, 
-    message: "If an account exists with that email, a reset link will be sent.",
-    // In development, return token for testing
-    ...(Deno.env.get("ENVIRONMENT") === "development" ? { resetToken } : {})
+    message: "If an account exists with that email, a reset link will be sent."
   }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
     status: 200,
@@ -389,4 +408,83 @@ async function hashToken(token: string): Promise<string> {
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Agent login - for Windows/Mac tray app
+async function handleAgentLogin(
+  supabase: any,
+  body: { email: string; password: string; deviceInfo?: any },
+  clientIp: string | null,
+  userAgent: string | null
+) {
+  logStep("Agent login attempt", { email: body.email });
+  
+  // Use the same login logic
+  const loginResult = await handleLogin(supabase, { email: body.email, password: body.password }, clientIp, userAgent);
+  const loginData = await loginResult.json();
+  
+  if (loginResult.status !== 200) {
+    return new Response(JSON.stringify(loginData), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: loginResult.status,
+    });
+  }
+  
+  // Return additional data for agent
+  return new Response(JSON.stringify({
+    ...loginData,
+    agentConfig: {
+      portalUrl: "https://ultriumai.com/customer-portal",
+      refreshInterval: 3600, // 1 hour
+    }
+  }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status: 200,
+  });
+}
+
+function generateResetEmail(name: string, resetUrl: string, expiresAt: Date): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Reset Your Password</title>
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+      <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #0891b2; margin-bottom: 10px;">Reset Your Password</h1>
+        </div>
+
+        <p style="font-size: 16px;">Hi <strong>${name}</strong>,</p>
+        
+        <p>We received a request to reset your password. Click the button below to set a new password:</p>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" style="background: linear-gradient(135deg, #0891b2, #9333ea); color: white; padding: 14px 35px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px;">
+            Reset Password →
+          </a>
+        </div>
+
+        <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin-top: 25px;">
+          <p style="margin: 0; font-size: 14px; color: #856404;">
+            ⏰ This link expires on ${expiresAt.toLocaleDateString()} at ${expiresAt.toLocaleTimeString()}.
+          </p>
+        </div>
+
+        <p style="color: #666; font-size: 14px; margin-top: 25px;">
+          If you didn't request this password reset, you can safely ignore this email.
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+
+        <div style="text-align: center; color: #999; font-size: 13px;">
+          <p>Ultrium Vanguard • Secure Customer Portal</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 }
