@@ -14,8 +14,8 @@ public class NetworkMonitor : IDisposable
 {
     private readonly ConfigService _configService;
     private readonly ApiClient _apiClient;
-    private Timer? _scanTimer;
-    private Timer? _dnsTimer;
+    private System.Threading.Timer? _scanTimer;
+    private System.Threading.Timer? _dnsTimer;
     private readonly HashSet<string> _knownConnections = new();
     private readonly HashSet<string> _blockedDomains = new();
     private readonly HashSet<string> _blockedIPs = new();
@@ -75,10 +75,10 @@ public class NetworkMonitor : IDisposable
             BaselineConnections();
 
             // Monitor connections every 15 seconds
-            _scanTimer = new Timer(ScanConnections, null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+            _scanTimer = new System.Threading.Timer(ScanConnections, null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
 
             // Monitor DNS cache every 30 seconds
-            _dnsTimer = new Timer(ScanDnsCache, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+            _dnsTimer = new System.Threading.Timer(ScanDnsCache, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
 
             Console.WriteLine("[XDR Network] Network monitoring started");
         }

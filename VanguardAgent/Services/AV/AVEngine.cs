@@ -139,7 +139,7 @@ public class AVEngine : IDisposable
         };
 
         // FIM alerts
-        FIMMonitor.OnFileChanged += (s, e) =>
+        FIMMonitor.FileChanged += (s, e) =>
         {
             if (e.IsSuspicious)
             {
