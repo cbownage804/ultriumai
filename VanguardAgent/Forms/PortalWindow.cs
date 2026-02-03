@@ -1,11 +1,12 @@
 using System;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.WinForms;
 using Microsoft.Web.WebView2.Core;
-using VanguardPortal.Models;
+using VanguardAgent.Models;
 
-namespace VanguardPortal.Forms;
+namespace VanguardAgent.Forms;
 
 public class PortalWindow : Form
 {
@@ -18,34 +19,31 @@ public class PortalWindow : Form
     {
         _config = config;
         
-        // Window setup
+        // Window setup - frameless popup style
         Text = _config.PortalName;
         Size = new Size(450, 700);
         StartPosition = FormStartPosition.Manual;
         FormBorderStyle = FormBorderStyle.None;
         ShowInTaskbar = false;
         TopMost = true;
-        BackColor = Color.FromArgb(15, 23, 42); // Slate-900
+        BackColor = Color.FromArgb(15, 23, 42); // Dark slate
         
-        // Position near system tray
         PositionNearTray();
         
-        // Create WebView2
+        // WebView2 for portal content
         _webView = new WebView2
         {
             Dock = DockStyle.Fill,
             DefaultBackgroundColor = Color.FromArgb(15, 23, 42)
         };
-        
         Controls.Add(_webView);
         
-        // Add title bar
+        // Custom title bar
         CreateTitleBar();
         
-        // Initialize WebView2
         InitializeWebView();
         
-        // Handle deactivation - hide when clicking outside
+        // Hide when clicking outside
         Deactivate += (s, e) => 
         {
             if (Visible) Hide();
@@ -55,8 +53,6 @@ public class PortalWindow : Form
     private void PositionNearTray()
     {
         var workingArea = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1920, 1080);
-        
-        // Position in bottom-right corner above taskbar
         Left = workingArea.Right - Width - 10;
         Top = workingArea.Bottom - Height - 10;
     }
@@ -66,20 +62,20 @@ public class PortalWindow : Form
         var titleBar = new Panel
         {
             Dock = DockStyle.Top,
-            Height = 40,
-            BackColor = Color.FromArgb(15, 23, 42)
+            Height = 44,
+            BackColor = Color.FromArgb(8, 145, 178) // Cyan-600
         };
         
-        // Title label
+        // Vanguard logo/branding
         var titleLabel = new Label
         {
-            Text = _config.PortalName,
+            Text = $"  ⬡ {_config.PortalName}",
             ForeColor = Color.White,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold),
+            Font = new Font("Segoe UI", 11, FontStyle.Bold),
             AutoSize = false,
             TextAlign = ContentAlignment.MiddleLeft,
-            Location = new Point(12, 0),
-            Size = new Size(Width - 80, 40)
+            Location = new Point(0, 0),
+            Size = new Size(Width - 50, 44)
         };
         
         // Close button
@@ -89,40 +85,32 @@ public class PortalWindow : Form
             FlatStyle = FlatStyle.Flat,
             ForeColor = Color.White,
             BackColor = Color.Transparent,
-            Font = new Font("Segoe UI", 14),
-            Size = new Size(40, 40),
-            Location = new Point(Width - 50, 0),
+            Font = new Font("Segoe UI", 16),
+            Size = new Size(44, 44),
+            Location = new Point(Width - 54, 0),
             Cursor = Cursors.Hand
         };
         closeBtn.FlatAppearance.BorderSize = 0;
-        closeBtn.FlatAppearance.MouseOverBackColor = Color.FromArgb(239, 68, 68);
+        closeBtn.FlatAppearance.MouseOverBackColor = Color.FromArgb(220, 38, 38); // Red
         closeBtn.Click += (s, e) => Hide();
         
-        // Drag to move
+        // Drag to move window
         bool dragging = false;
         Point dragStart = Point.Empty;
         
-        titleBar.MouseDown += (s, e) => { dragging = true; dragStart = e.Location; };
-        titleBar.MouseMove += (s, e) => 
+        void StartDrag(object? s, MouseEventArgs e) { dragging = true; dragStart = e.Location; }
+        void Drag(object? s, MouseEventArgs e)
         {
-            if (dragging)
-            {
-                Left += e.X - dragStart.X;
-                Top += e.Y - dragStart.Y;
-            }
-        };
-        titleBar.MouseUp += (s, e) => dragging = false;
+            if (dragging) { Left += e.X - dragStart.X; Top += e.Y - dragStart.Y; }
+        }
+        void EndDrag(object? s, MouseEventArgs e) => dragging = false;
         
-        titleLabel.MouseDown += (s, e) => { dragging = true; dragStart = e.Location; };
-        titleLabel.MouseMove += (s, e) => 
-        {
-            if (dragging)
-            {
-                Left += e.X - dragStart.X;
-                Top += e.Y - dragStart.Y;
-            }
-        };
-        titleLabel.MouseUp += (s, e) => dragging = false;
+        titleBar.MouseDown += StartDrag;
+        titleBar.MouseMove += Drag;
+        titleBar.MouseUp += EndDrag;
+        titleLabel.MouseDown += StartDrag;
+        titleLabel.MouseMove += Drag;
+        titleLabel.MouseUp += EndDrag;
         
         titleBar.Controls.Add(titleLabel);
         titleBar.Controls.Add(closeBtn);
@@ -137,24 +125,24 @@ public class PortalWindow : Form
         {
             var userDataFolder = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "VanguardPortal",
+                "VanguardAgent",
                 "WebView2"
             );
             
             var env = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
             await _webView.EnsureCoreWebView2Async(env);
             
-            // Configure WebView2
+            // Security settings
             _webView.CoreWebView2.Settings.IsStatusBarEnabled = false;
             _webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+            _webView.CoreWebView2.Settings.IsZoomControlEnabled = false;
             
-            // Navigate to portal with key
+            // Navigate to customer portal
             var url = $"{_config.PortalUrl}?portal_key={_config.PortalKey}&embedded=true";
             _webView.CoreWebView2.Navigate(url);
             
             _isInitialized = true;
             
-            // Process pending navigation
             if (_pendingNavigation != null)
             {
                 NavigateTo(_pendingNavigation);
@@ -163,12 +151,36 @@ public class PortalWindow : Form
         }
         catch (Exception ex)
         {
-            MessageBox.Show(
-                $"Failed to initialize web view: {ex.Message}\n\nPlease ensure WebView2 Runtime is installed.",
-                "Error",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error
-            );
+            // Show fallback if WebView2 not available
+            var errorLabel = new Label
+            {
+                Text = $"Please install Microsoft WebView2 Runtime\n\n{ex.Message}",
+                ForeColor = Color.White,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI", 10)
+            };
+            
+            var linkLabel = new LinkLabel
+            {
+                Text = "Download WebView2 Runtime",
+                LinkColor = Color.FromArgb(34, 211, 238), // Cyan
+                Dock = DockStyle.Bottom,
+                Height = 40,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Segoe UI", 10)
+            };
+            linkLabel.Click += (s, e) =>
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "https://developer.microsoft.com/en-us/microsoft-edge/webview2/",
+                    UseShellExecute = true
+                });
+            };
+            
+            Controls.Add(errorLabel);
+            Controls.Add(linkLabel);
         }
     }
 
@@ -194,7 +206,6 @@ public class PortalWindow : Form
     {
         get
         {
-            // Add drop shadow
             var cp = base.CreateParams;
             cp.ClassStyle |= 0x00020000; // CS_DROPSHADOW
             return cp;

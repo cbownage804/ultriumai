@@ -8,6 +8,10 @@
   "heartbeat_interval": 60,
   "command_poll_interval": 30,
   "telemetry_interval": 300,
+  "portal_key": "",
+  "portal_name": "Customer Portal",
+  "portal_url": "https://ultriumai.com/customer-portal",
+  "show_portal": true,
   "features": {
     "collect_processes": true,
     "collect_services": true,

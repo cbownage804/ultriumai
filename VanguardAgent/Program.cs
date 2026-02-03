@@ -1,21 +1,25 @@
 // =============================================================================
-// Ultrium Vanguard Agent - Entry Point
+// Ultrium Vanguard Agent - Combined RMM + Customer Portal
 // =============================================================================
-// Enterprise RMM agent for Windows systems
-// Runs as Windows Service or console application
+// Enterprise RMM agent with integrated customer self-service portal
+// Runs as: Windows Service (--service) OR Tray Application (default)
 // =============================================================================
 
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using VanguardAgent.Forms;
+using VanguardAgent.Models;
 using VanguardAgent.Services;
 
 namespace VanguardAgent;
 
 public class Program
 {
+    [STAThread]
     public static async Task Main(string[] args)
     {
-        // Check for command-line flags
+        // Command-line operations
         if (args.Contains("--install"))
         {
             await InstallService();
@@ -34,17 +38,71 @@ public class Program
             return;
         }
 
-        // Build and run the host
+        // Service mode (when run by Windows Service Control Manager)
+        if (args.Contains("--service") || !Environment.UserInteractive)
+        {
+            await RunAsService(args);
+            return;
+        }
+
+        // Default: Run as tray application with integrated RMM
+        RunAsTrayApp();
+    }
+
+    /// <summary>
+    /// Run as Windows Tray Application with RMM monitoring in background
+    /// </summary>
+    private static void RunAsTrayApp()
+    {
+        Application.SetHighDpiMode(HighDpiMode.SystemAware);
+        Application.EnableVisualStyles();
+        Application.SetCompatibleTextRenderingDefault(false);
+
+        // Load configuration
+        var config = LoadPortalConfig();
+
+        // Start RMM monitoring in background thread
+        Func<CancellationToken, Task> rmmRunner = async (ct) =>
+        {
+            try
+            {
+                var builder = Host.CreateApplicationBuilder();
+                builder.Services.AddSingleton<ConfigService>();
+                builder.Services.AddSingleton<ApiClient>();
+                builder.Services.AddSingleton<TelemetryCollector>();
+                builder.Services.AddSingleton<CommandExecutor>();
+                builder.Services.AddHostedService<AgentWorker>();
+
+                var host = builder.Build();
+                await host.RunAsync(ct);
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected on shutdown
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"RMM Service error: {ex.Message}");
+            }
+        };
+
+        // Run the tray application with RMM service
+        Application.Run(new PortalTrayContext(config, rmmRunner));
+    }
+
+    /// <summary>
+    /// Run as Windows Service (headless, no tray icon)
+    /// </summary>
+    private static async Task RunAsService(string[] args)
+    {
         var builder = Host.CreateApplicationBuilder(args);
 
-        // Register services
         builder.Services.AddSingleton<ConfigService>();
         builder.Services.AddSingleton<ApiClient>();
         builder.Services.AddSingleton<TelemetryCollector>();
         builder.Services.AddSingleton<CommandExecutor>();
         builder.Services.AddHostedService<AgentWorker>();
 
-        // Enable Windows Service
         builder.Services.AddWindowsService(options =>
         {
             options.ServiceName = "VanguardAgent";
@@ -52,6 +110,36 @@ public class Program
 
         var host = builder.Build();
         await host.RunAsync();
+    }
+
+    private static PortalConfig LoadPortalConfig()
+    {
+        try
+        {
+            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
+            if (File.Exists(configPath))
+            {
+                var json = File.ReadAllText(configPath);
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                return new PortalConfig
+                {
+                    PortalKey = root.TryGetProperty("portal_key", out var pk) ? pk.GetString() ?? "" : "",
+                    PortalName = root.TryGetProperty("portal_name", out var pn) ? pn.GetString() ?? "Customer Portal" : "Customer Portal",
+                    PortalUrl = root.TryGetProperty("portal_url", out var pu) ? pu.GetString() ?? "https://ultriumai.com/customer-portal" : "https://ultriumai.com/customer-portal",
+                    ApiEndpoint = root.TryGetProperty("api_endpoint", out var ae) ? ae.GetString() ?? "" : "",
+                    ClientId = root.TryGetProperty("client_id", out var ci) ? ci.GetString() : null,
+                    ShowPortal = root.TryGetProperty("show_portal", out var sp) && sp.GetBoolean()
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading config: {ex.Message}");
+        }
+
+        return new PortalConfig();
     }
 
     private static async Task InstallService()
@@ -62,7 +150,7 @@ public class Program
         var psi = new System.Diagnostics.ProcessStartInfo
         {
             FileName = "sc.exe",
-            Arguments = $"create VanguardAgent binPath= \"{exePath}\" start= auto DisplayName= \"Ultrium Vanguard Agent\"",
+            Arguments = $"create VanguardAgent binPath= \"\\\"{exePath}\\\" --service\" start= auto DisplayName= \"Ultrium Vanguard Agent\"",
             UseShellExecute = false,
             RedirectStandardOutput = true,
             CreateNoWindow = true
@@ -81,7 +169,7 @@ public class Program
                 var descPsi = new System.Diagnostics.ProcessStartInfo
                 {
                     FileName = "sc.exe",
-                    Arguments = "description VanguardAgent \"Ultrium Vanguard RMM Agent - Monitors system health and executes remote commands\"",
+                    Arguments = "description VanguardAgent \"Ultrium Vanguard RMM Agent - Enterprise monitoring and remote management\"",
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
@@ -89,7 +177,8 @@ public class Program
                 descProcess?.WaitForExit();
 
                 Console.WriteLine("Service installed successfully!");
-                Console.WriteLine("Run 'net start VanguardAgent' to start the service.");
+                Console.WriteLine("Note: For tray icon + portal, run VanguardAgent.exe directly (without --service)");
+                Console.WriteLine("For headless service: net start VanguardAgent");
             }
         }
     }
@@ -98,7 +187,6 @@ public class Program
     {
         Console.WriteLine("Stopping and removing Vanguard Agent service...");
         
-        // Stop service first
         var stopPsi = new System.Diagnostics.ProcessStartInfo
         {
             FileName = "net",
@@ -109,7 +197,6 @@ public class Program
         using var stopProcess = System.Diagnostics.Process.Start(stopPsi);
         stopProcess?.WaitForExit();
 
-        // Delete service
         var psi = new System.Diagnostics.ProcessStartInfo
         {
             FileName = "sc.exe",
@@ -134,10 +221,11 @@ public class Program
         Console.WriteLine("=== Vanguard Agent Registration ===");
         Console.WriteLine();
 
-        // Parse arguments
         string? userId = null;
         string? secretKey = null;
         string? deviceName = null;
+        string? portalKey = null;
+        string? portalName = null;
 
         for (int i = 0; i < args.Length - 1; i++)
         {
@@ -152,12 +240,18 @@ public class Program
                 case "--device-name":
                     deviceName = args[i + 1];
                     break;
+                case "--portal-key":
+                    portalKey = args[i + 1];
+                    break;
+                case "--portal-name":
+                    portalName = args[i + 1];
+                    break;
             }
         }
 
         if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(secretKey))
         {
-            Console.WriteLine("Usage: VanguardAgent.exe --register --user-id <UUID> --secret-key <KEY> [--device-name <NAME>]");
+            Console.WriteLine("Usage: VanguardAgent.exe --register --user-id <UUID> --secret-key <KEY> [--device-name <NAME>] [--portal-key <KEY>] [--portal-name <NAME>]");
             Console.WriteLine();
             Console.WriteLine("Get your credentials from: https://ultriumai.com/vanguard/settings");
             return;
@@ -165,7 +259,6 @@ public class Program
 
         deviceName ??= Environment.MachineName;
 
-        // Create config
         var config = new
         {
             user_id = userId,
@@ -174,16 +267,19 @@ public class Program
             api_endpoint = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api",
             heartbeat_interval = 60,
             command_poll_interval = 30,
-            telemetry_interval = 300
+            telemetry_interval = 300,
+            portal_key = portalKey ?? "",
+            portal_name = portalName ?? "Customer Portal",
+            portal_url = "https://ultriumai.com/customer-portal",
+            show_portal = !string.IsNullOrEmpty(portalKey)
         };
 
         var configPath = Path.Combine(AppContext.BaseDirectory, "config.json");
-        await File.WriteAllTextAsync(configPath, Newtonsoft.Json.JsonConvert.SerializeObject(config, Newtonsoft.Json.Formatting.Indented));
+        await File.WriteAllTextAsync(configPath, JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true }));
 
         Console.WriteLine($"Configuration saved to: {configPath}");
         Console.WriteLine();
 
-        // Test connection
         Console.WriteLine("Testing API connection...");
         var client = new ApiClient(new ConfigService());
         var success = await client.TestConnectionAsync();
@@ -192,9 +288,9 @@ public class Program
         {
             Console.WriteLine("✓ Connection successful!");
             Console.WriteLine();
-            Console.WriteLine("Next steps:");
-            Console.WriteLine("  1. Install as service: VanguardAgent.exe --install");
-            Console.WriteLine("  2. Start service: net start VanguardAgent");
+            Console.WriteLine("Deployment options:");
+            Console.WriteLine("  1. Tray App (recommended): Just run VanguardAgent.exe");
+            Console.WriteLine("  2. Service only: VanguardAgent.exe --install && net start VanguardAgent");
         }
         else
         {
