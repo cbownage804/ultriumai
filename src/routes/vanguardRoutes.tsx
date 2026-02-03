@@ -129,6 +129,7 @@ const DispatchBoardPage = lazy(() => import('@/pages/vanguard/DispatchBoardPage'
 const OnCallSchedulePage = lazy(() => import('@/pages/vanguard/OnCallSchedulePage'));
 const LiveChatConsolePage = lazy(() => import('@/pages/vanguard/LiveChatConsolePage'));
 const VanguardSettingsPage = lazy(() => import('@/pages/vanguard/VanguardSettingsPage'));
+const VanguardCoManagedPage = lazy(() => import('@/pages/vanguard/VanguardCoManagedPage'));
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -264,6 +265,8 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-dispatch" path="dispatch" element={<LazyProtectedPage component={DispatchBoardPage} />} />,
   <Route key="vanguard-oncall" path="oncall" element={<LazyProtectedPage component={OnCallSchedulePage} />} />,
   <Route key="vanguard-live-chat" path="live-chat" element={<LazyProtectedPage component={LiveChatConsolePage} />} />,
+  // Co-Managed IT Portal
+  <Route key="vanguard-comanaged" path="comanaged" element={<LazyProtectedPage component={VanguardCoManagedPage} />} />,
   // Notification Hub
   <Route key="vanguard-notifications" path="notifications" element={<LazyProtectedPage component={NotificationHub} />} />,
   // Settings
