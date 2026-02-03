@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Text;
 using Newtonsoft.Json;
 using VanguardAgent.Services.XDR;
+using AV = VanguardAgent.Services.AV;
 
 namespace VanguardAgent.Services;
 
@@ -447,7 +448,7 @@ public class ApiClient
     /// <summary>
     /// Log USB device event
     /// </summary>
-    public async Task<bool> LogUSBEventAsync(USBDevice device, string eventType, string? reason = null)
+    public async Task<bool> LogUSBEventAsync(AV.USBDevice device, string eventType, string? reason = null)
     {
         try
         {
@@ -618,47 +619,124 @@ public class ApiClient
         catch { }
         return null;
     }
+
+    /// <summary>
+    /// Report a threat from RealTimeScanner
+    /// </summary>
+    public async Task<bool> ReportThreatAsync(AV.ScanResult threat)
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new
+            {
+                device_id = Config.DeviceId,
+                file_path = threat.FilePath,
+                threat_name = threat.ThreatName,
+                detection_source = threat.DetectionSource,
+                confidence = threat.Confidence,
+                sha256 = threat.SHA256,
+                file_size = threat.FileSize,
+                yara_rule_id = threat.YaraRuleId
+            };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=report_threat", content);
+            return response.IsSuccessStatusCode;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>
+    /// Report script threat from ScriptAnalyzer
+    /// </summary>
+    public async Task<bool> ReportScriptThreatAsync(AV.ScriptAnalysisResult result)
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new
+            {
+                device_id = Config.DeviceId,
+                script_type = result.ScriptType.ToString(),
+                file_path = result.FilePath,
+                is_malicious = result.IsMalicious,
+                is_suspicious = result.IsSuspicious,
+                suspicion_score = result.SuspicionScore,
+                threat_level = result.ThreatLevel.ToString(),
+                matched_rules = result.MatchedRules?.Select(r => r.Id).ToList(),
+                extracted_iocs = result.ExtractedIOCs,
+                was_obfuscated = result.WasObfuscated
+            };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=script_threat", content);
+            return response.IsSuccessStatusCode;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>
+    /// Get YARA rules from cloud
+    /// </summary>
+    public async Task<YaraRulesResponse?> GetYaraRulesAsync()
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new { device_id = Config.DeviceId };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=get_yara_rules", content);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<YaraRulesResponse>(json);
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    /// <summary>
+    /// Get custom signatures from cloud
+    /// </summary>
+    public async Task<CustomSignaturesResponse?> GetCustomSignaturesAsync()
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new { device_id = Config.DeviceId };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=get_custom_signatures", content);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<CustomSignaturesResponse>(json);
+            }
+        }
+        catch { }
+        return null;
+    }
 }
 
-// Memory Signatures Response
+// Response Models
 public class MemorySignaturesResponse
 {
     [JsonProperty("signatures")] public List<VanguardAgent.Services.AV.MemorySignature>? Signatures { get; set; }
 }
 
-// USB Models
-public class USBDevice
+public class YaraRulesResponse
 {
-    public string DeviceId { get; set; } = "";
-    public string PnPDeviceId { get; set; } = "";
-    public string FriendlyName { get; set; } = "";
-    public string? Manufacturer { get; set; }
-    public string? Model { get; set; }
-    public string? SerialNumber { get; set; }
-    public string? VendorId { get; set; }
-    public string? ProductId { get; set; }
-    public long Size { get; set; }
-    public string? DriveLetter { get; set; }
-    public DateTime ConnectedAt { get; set; }
-    public DateTime? LastScanned { get; set; }
-    public int ThreatsFound { get; set; }
-    public bool IsBlocked { get; set; }
-    public string? BlockReason { get; set; }
-    public bool IsReadOnly { get; set; }
+    [JsonProperty("rules")] public List<AV.YaraRule>? Rules { get; set; }
 }
 
-public enum USBPolicy
+public class CustomSignaturesResponse
 {
-    AllowAll,
-    ScanAndAllow,
-    WhitelistOnly,
-    ReadOnly,
-    BlockAll
+    [JsonProperty("signatures")] public List<AV.CustomSignature>? Signatures { get; set; }
 }
 
+// USB Policy Response - uses AV.USBPolicy enum
 public class USBPolicyResponse
 {
-    [JsonProperty("policy")] public USBPolicy Policy { get; set; }
+    [JsonProperty("policy")] public AV.USBPolicy Policy { get; set; }
 }
 
 public class USBWhitelistResponse
