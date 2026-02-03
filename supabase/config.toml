@@ -269,3 +269,7 @@ verify_jwt = false
 # Vanguard Agent Configuration (authenticated - returns secret for downloads)
 [functions.vanguard-agent-config]
 verify_jwt = false
+
+# Script Generation
+[functions.generate-script]
+verify_jwt = false

@@ -236,6 +236,46 @@ export default function VanguardDeviceDetailPage() {
     }
   };
 
+  const handleRemoteConnect = (type: 'desktop' | 'terminal' | 'files') => {
+    const rustdeskId = agent?.config?.hardware?.rustdesk_id;
+    
+    if (!rustdeskId) {
+      toast.error("RustDesk ID not available", {
+        description: "The agent hasn't reported a RustDesk ID yet. Please wait for the next heartbeat."
+      });
+      return;
+    }
+    
+    // For Remote Desktop, use rustdesk:// protocol
+    if (type === 'desktop') {
+      const url = `rustdesk://${rustdeskId}`;
+      window.open(url, '_blank');
+      toast.success("Opening RustDesk...", {
+        description: `Connecting to ${agent?.name}`
+      });
+      return;
+    }
+    
+    // For Terminal and File Manager, these typically require the RustDesk GUI
+    // Open RustDesk and show instructions
+    if (type === 'terminal') {
+      const url = `rustdesk://${rustdeskId}`;
+      window.open(url, '_blank');
+      toast.success("Opening RustDesk for Terminal access...", {
+        description: "Use Ctrl+Shift+T in RustDesk to open terminal"
+      });
+      return;
+    }
+    
+    if (type === 'files') {
+      const url = `rustdesk://${rustdeskId}`;
+      window.open(url, '_blank');
+      toast.success("Opening RustDesk for File Transfer...", {
+        description: "Use the File Transfer tab in RustDesk"
+      });
+    }
+  };
+
   const handleDeleteAgent = async () => {
     if (!deviceId) return;
     
@@ -491,9 +531,24 @@ export default function VanguardDeviceDetailPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-black/95 border-cyan-500/30">
-                  <DropdownMenuItem className="text-white hover:bg-cyan-500/10">Remote Desktop</DropdownMenuItem>
-                  <DropdownMenuItem className="text-white hover:bg-cyan-500/10">Terminal</DropdownMenuItem>
-                  <DropdownMenuItem className="text-white hover:bg-cyan-500/10">File Manager</DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-white hover:bg-cyan-500/10"
+                    onClick={() => handleRemoteConnect('desktop')}
+                  >
+                    Remote Desktop
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-white hover:bg-cyan-500/10"
+                    onClick={() => handleRemoteConnect('terminal')}
+                  >
+                    Terminal
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-white hover:bg-cyan-500/10"
+                    onClick={() => handleRemoteConnect('files')}
+                  >
+                    File Manager
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
