@@ -49,8 +49,35 @@
         <Component Id="RegistryEntries" Guid="D4E5F6A7-B8C9-0123-DEF0-234567890123">
           <RegistryKey Root="HKLM" Key="SOFTWARE\Ultrium\Vanguard">
             <RegistryValue Type="string" Name="InstallPath" Value="[INSTALLFOLDER]" />
-            <RegistryValue Type="string" Name="Version" Value="1.1.0" />
+            <RegistryValue Type="string" Name="Version" Value="1.2.0" />
           </RegistryKey>
+        </Component>
+
+        <!-- Tray auto-start for workstations (controlled by ENABLETRAY property) -->
+        <Component Id="TrayAutoStart" Guid="E5F6A7B8-C9D0-1234-EF01-345678901234">
+          <Condition>ENABLETRAY = "1"</Condition>
+          <RegistryValue Root="HKLM" 
+                         Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Run" 
+                         Name="VanguardPortal" 
+                         Type="string" 
+                         Value="&quot;[INSTALLFOLDER]VanguardAgent.exe&quot;" 
+                         KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <!-- Start Menu shortcut (always installed for manual portal access) -->
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="VanguardMenuFolder" Name="Vanguard">
+        <Component Id="StartMenuShortcut" Guid="F6A7B8C9-D0E1-2345-F012-456789012345">
+          <Shortcut Id="VanguardPortalShortcut"
+                    Name="Vanguard Portal"
+                    Description="Open Vanguard Customer Portal"
+                    Target="[INSTALLFOLDER]VanguardAgent.exe"
+                    Icon="VanguardIcon"
+                    WorkingDirectory="INSTALLFOLDER" />
+          <RemoveFolder Id="RemoveVanguardMenuFolder" On="uninstall" />
+          <RegistryValue Root="HKCU" Key="SOFTWARE\Ultrium\Vanguard" Name="ShortcutInstalled" Type="integer" Value="1" KeyPath="yes" />
         </Component>
       </Directory>
     </StandardDirectory>
@@ -59,6 +86,8 @@
     <Feature Id="ProductFeature" Title="Vanguard Agent" Level="1">
       <ComponentRef Id="MainExecutable" />
       <ComponentRef Id="RegistryEntries" />
+      <ComponentRef Id="TrayAutoStart" />
+      <ComponentRef Id="StartMenuShortcut" />
     </Feature>
 
     <!-- Custom properties for silent install -->
@@ -66,6 +95,8 @@
     <Property Id="SECRETKEY" Secure="yes" />
     <Property Id="CLIENTID" Secure="yes" />
     <Property Id="DEVICENAME" Secure="yes" />
+    <!-- Set ENABLETRAY=1 for workstations, omit or set to 0 for servers -->
+    <Property Id="ENABLETRAY" Value="0" Secure="yes" />
 
     <!-- Custom action to update config.json with provided credentials -->
     <CustomAction Id="UpdateConfig"
