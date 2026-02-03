@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace VanguardPortal.Models;
+namespace VanguardAgent.Models;
 
 public class PortalConfig
 {
@@ -11,7 +11,7 @@ public class PortalConfig
     public string PortalName { get; set; } = "Customer Portal";
     
     [JsonPropertyName("portal_url")]
-    public string PortalUrl { get; set; } = string.Empty;
+    public string PortalUrl { get; set; } = "https://ultriumai.com/customer-portal";
     
     [JsonPropertyName("api_endpoint")]
     public string ApiEndpoint { get; set; } = string.Empty;
@@ -27,4 +27,7 @@ public class PortalConfig
     
     [JsonPropertyName("msp_user_id")]
     public string MspUserId { get; set; } = string.Empty;
+    
+    [JsonPropertyName("show_portal")]
+    public bool ShowPortal { get; set; } = true;
 }

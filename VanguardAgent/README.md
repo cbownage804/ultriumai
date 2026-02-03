@@ -1,63 +1,60 @@
-# Ultrium Vanguard Agent for Windows
+# Vanguard Agent
 
-Enterprise RMM agent for Windows systems. Runs as a Windows Service and provides real-time monitoring, telemetry collection, and remote command execution.
+Combined RMM Agent + Customer Portal for Windows systems.
 
 ## Features
 
-- **System Telemetry**: CPU, RAM, disk usage monitoring
-- **Process Monitoring**: Track running processes and resource usage
-- **Service Monitoring**: Monitor Windows services status
-- **Network Discovery**: Enumerate network adapters and connections
-- **Software Inventory**: Track installed applications
-- **Remote Commands**: Execute shell, PowerShell, service control, and more
-- **Automatic Registration**: Self-registers with Vanguard platform
+- **RMM Monitoring**: System telemetry, command execution, health tracking
+- **Tray Icon**: Always-visible "Vanguard" shield icon in system tray
+- **Customer Portal**: WebView2-based self-service portal popup
+- **Quick Actions**: New tickets, view tickets, system health checks
+- **SafeSuite Integration**: Access to SafePass, SafeScan, SafeWeb, SafeTrack
 
-## Quick Start
+## Deployment Modes
 
-### 1. Register the Agent
+### 1. Tray Application (Recommended)
+Runs with tray icon + portal popup. Best for end-user workstations.
 
 ```bash
-VanguardAgent.exe --register --user-id YOUR_USER_ID --secret-key YOUR_SECRET_KEY
+VanguardAgent.exe
+```
+
+### 2. Windows Service (Headless)
+Runs as background service without tray icon. For servers.
+
+```bash
+VanguardAgent.exe --install
+net start VanguardAgent
+```
+
+## Registration
+
+```bash
+VanguardAgent.exe --register ^
+  --user-id YOUR_USER_ID ^
+  --secret-key YOUR_SECRET_KEY ^
+  --portal-key YOUR_PORTAL_KEY ^
+  --portal-name "Your Company Support"
 ```
 
 Get your credentials from: https://ultriumai.com/vanguard/settings
 
-### 2. Install as Windows Service
-
-```bash
-VanguardAgent.exe --install
-```
-
-### 3. Start the Service
-
-```bash
-net start VanguardAgent
-```
-
-## Command Line Options
-
-| Flag | Description |
-|------|-------------|
-| `--register` | Register agent with Vanguard platform |
-| `--install` | Install as Windows Service |
-| `--uninstall` | Remove Windows Service |
-| `--user-id` | Your Vanguard user UUID |
-| `--secret-key` | Your agent secret key (vgd_sk_...) |
-| `--device-name` | Custom device name (optional) |
-
 ## Configuration
 
-Configuration is stored in `config.json` next to the executable:
+`config.json` controls both RMM and Portal:
 
 ```json
 {
-  "user_id": "your-uuid",
-  "secret_key": "vgd_sk_...",
-  "device_name": "WORKSTATION-01",
+  "user_id": "uuid",
+  "secret_key": "vgd_sk_xxx",
   "api_endpoint": "https://...",
   "heartbeat_interval": 60,
   "command_poll_interval": 30,
   "telemetry_interval": 300,
+  "portal_key": "pk_xxx",
+  "portal_name": "Customer Portal",
+  "portal_url": "https://ultriumai.com/customer-portal",
+  "show_portal": true,
   "features": {
     "collect_processes": true,
     "collect_services": true,
@@ -67,6 +64,20 @@ Configuration is stored in `config.json` next to the executable:
   }
 }
 ```
+
+## Command Line Options
+
+| Flag | Description |
+|------|-------------|
+| `--register` | Register agent with Vanguard platform |
+| `--install` | Install as Windows Service |
+| `--uninstall` | Remove Windows Service |
+| `--service` | Force service mode (no tray) |
+| `--user-id` | Your Vanguard user UUID |
+| `--secret-key` | Your agent secret key |
+| `--portal-key` | Customer portal key |
+| `--portal-name` | Custom portal name |
+| `--device-name` | Custom device name |
 
 ## Supported Remote Commands
 
@@ -81,72 +92,32 @@ Configuration is stored in `config.json` next to the executable:
 | `file_download` | Download a file from URL |
 | `reboot` | Schedule system reboot |
 
-## Building from Source
+## Building
 
-### Requirements
-
-- .NET 8.0 SDK
-- Windows 10/11 or Windows Server 2019+
-
-### Build
-
-```bash
-cd VanguardAgent
-dotnet build --configuration Release
-```
-
-### Publish Single-File EXE
-
-```bash
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-```
-
-Output: `bin/Release/net8.0-windows/win-x64/publish/VanguardAgent.exe`
-
-## Logs
-
-When running as a service, logs are written to Windows Event Log under "VanguardAgent".
-
-View logs:
 ```powershell
-Get-EventLog -LogName Application -Source VanguardAgent -Newest 50
+cd VanguardAgent
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+
+# Output: bin/Release/net8.0-windows/win-x64/publish/VanguardAgent.exe
 ```
 
-Or use:
-```bash
-sc query VanguardAgent
-```
+## Custom Icon
 
-## Security
+Place `vanguard.ico` alongside the executable for custom tray/taskbar icon.
 
-- Agent runs with SYSTEM privileges when installed as service
-- All API communication uses HTTPS
-- Secret key is stored locally in config.json (protect this file!)
-- Command execution can be disabled in configuration
+## Requirements
 
-## Troubleshooting
-
-### Agent won't start
-
-1. Check config.json has valid user_id and secret_key
-2. Verify network connectivity to API endpoint
-3. Check Windows Event Log for errors
-
-### Commands not executing
-
-1. Verify `execute_commands` is true in config
-2. Check the service has appropriate permissions
-3. Review command output in Vanguard dashboard
+- Windows 10/11 or Windows Server 2019+
+- .NET 8.0 Runtime (bundled in self-contained build)
+- WebView2 Runtime (for portal popup)
 
 ## Uninstall
 
 ```bash
 VanguardAgent.exe --uninstall
-del "C:\Program Files\Vanguard\*" /Q
 ```
 
 ## Support
 
 - Dashboard: https://ultriumai.com/vanguard
-- Documentation: https://docs.ultriumai.com/vanguard
 - Email: support@ultriumai.com
