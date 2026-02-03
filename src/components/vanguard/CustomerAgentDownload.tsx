@@ -79,8 +79,8 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
         setDownloadProgress(80);
         setDownloadMessage('Generating installer...');
         
-        const filename = `Install-VanguardAgent-${customerName.replace(/[^a-zA-Z0-9]/g, '-')}.ps1`;
-        downloadBlob(result.blob, filename);
+        // Use filename from result (now .cmd format)
+        downloadBlob(result.blob, result.filename);
         
         // Store token info for display
         setTokenInfo({
@@ -90,7 +90,7 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
         
         setDownloadProgress(100);
         toast.success(`1-Click installer downloaded for ${customerName}`, {
-          description: 'Run the PowerShell script as Administrator. Token valid for 7 days.',
+          description: 'Just double-click to install - handles everything automatically!',
         });
       } else {
         // Generate ZIP package (legacy method with embedded credentials)
@@ -284,9 +284,9 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
               <div className="flex items-start gap-2 text-sm">
                 <Package className="h-4 w-4 text-purple-400 mt-0.5 shrink-0" />
                 <div className="text-white/70">
-                  <span className="text-purple-400 font-medium">True 1-click:</span>{' '}
-                  Downloads a PowerShell script with a secure provisioning token. 
-                  Agent auto-fetches credentials on first run — no secrets in the download file.
+                  <span className="text-purple-400 font-medium">Just double-click!</span>{' '}
+                  The installer automatically elevates to admin, downloads the MSI, 
+                  and configures credentials. No manual steps required!
                 </div>
               </div>
             </div>

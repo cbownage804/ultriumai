@@ -164,12 +164,11 @@ export default function VanguardSetup() {
         expiresAt: result.expiresAt,
       });
       
-      // Download the PowerShell installer
-      const filename = `Install-VanguardAgent-${clientName.replace(/[^a-zA-Z0-9]/g, '-')}.ps1`;
-      downloadBlob(result.blob, filename);
+      // Download the CMD installer (just double-click to run!)
+      downloadBlob(result.blob, result.filename);
       
       toast.success('Installer downloaded!', {
-        description: 'Run the PowerShell script as Administrator. Token valid for 7 days.',
+        description: 'Just double-click to install. It handles everything automatically!',
       });
     } catch (error) {
       console.error('Download error:', error);
@@ -388,9 +387,9 @@ export default function VanguardSetup() {
                 <div className="flex items-start gap-2 text-sm">
                   <Package className="h-4 w-4 text-cyan-500 mt-0.5 shrink-0" />
                   <div className="text-muted-foreground">
-                    <span className="text-cyan-500 font-medium">How it works:</span>{' '}
-                    Run the downloaded PowerShell script as Administrator. It will automatically 
-                    download the MSI, configure credentials, and start the service.
+                    <span className="text-cyan-500 font-medium">Just double-click!</span>{' '}
+                    The installer automatically elevates to admin, downloads the MSI, 
+                    configures credentials, and starts the service.
                     {enableTray && ' Tray icon will appear after login.'}
                   </div>
                 </div>
