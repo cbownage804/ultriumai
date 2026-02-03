@@ -34,6 +34,9 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Force all React imports to use the same instance from node_modules
+      "react": path.resolve(__dirname, "node_modules/react"),
+      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
     },
     // Fixes "Invalid hook call" / "dispatcher is null" by ensuring the app and all deps
     // share a single React instance.
@@ -43,6 +46,7 @@ export default defineConfig(({ mode }) => ({
       "react-dom/client",
       "react/jsx-runtime",
       "react/jsx-dev-runtime",
+      "@elevenlabs/react",
     ],
   },
   build: {
