@@ -54,8 +54,7 @@
         </Component>
 
         <!-- Tray auto-start for workstations (controlled by ENABLETRAY property) -->
-        <Component Id="TrayAutoStart" Guid="E5F6A7B8-C9D0-1234-EF01-345678901234">
-          <Condition>ENABLETRAY = "1"</Condition>
+        <Component Id="TrayAutoStart" Guid="E5F6A7B8-C9D0-1234-EF01-345678901234" Condition="ENABLETRAY = 1">
           <RegistryValue Root="HKLM" 
                          Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Run" 
                          Name="VanguardPortal" 
