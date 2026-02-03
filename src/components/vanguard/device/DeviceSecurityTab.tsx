@@ -26,10 +26,29 @@ export function DeviceSecurityTab({ agent }: DeviceSecurityTabProps) {
   const [showWindowsKey, setShowWindowsKey] = useState(false);
   const [showOfficeKey, setShowOfficeKey] = useState(false);
   
-  // Extract OS and security info from agent config
+  // Extract OS and security info from agent config AND security_status (from Defender telemetry)
   const osInfo = agent.config?.os || {};
-  const securityInfo = agent.config?.security || {};
+  const configSecurity = agent.config?.security || {};
   const bitlockerStatus = (agent.config as any)?.bitlocker || [];
+  
+  // Get security_status from agent (populated by security_telemetry endpoint)
+  const securityStatus = (agent as any).security_status || {};
+  
+  // Merge security info: prefer live security_status over config
+  const securityInfo = {
+    antivirus_status: securityStatus.defender_enabled ? 'Enabled' : (configSecurity.antivirus_status || 'Disabled'),
+    antivirus_name: configSecurity.antivirus_name || 'Windows Defender',
+    antispyware_status: securityStatus.defender_enabled ? 'Enabled' : (configSecurity.antispyware_status || 'Disabled'),
+    antispyware_name: configSecurity.antispyware_name || 'Windows Defender',
+    firewall_status: securityStatus.real_time_protection ? 'Enabled' : (configSecurity.firewall_status || 'Disabled'),
+    firewall_name: configSecurity.firewall_name || 'Windows Firewall',
+    signature_version: securityStatus.signature_version || configSecurity.signature_version,
+    signature_last_updated: securityStatus.signature_last_updated || configSecurity.signature_last_updated,
+    last_quick_scan: securityStatus.last_quick_scan || configSecurity.last_quick_scan,
+    last_full_scan: securityStatus.last_full_scan || configSecurity.last_full_scan,
+    recent_threats_count: securityStatus.recent_threats_count || 0,
+    quarantined_count: securityStatus.quarantined_count || 0,
+  };
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -57,7 +76,7 @@ export function DeviceSecurityTab({ agent }: DeviceSecurityTabProps) {
     drive.protection_status === 'On' || drive.protection_status === 'Enabled'
   );
 
-  // Calculate security score
+  // Calculate security score based on actual Defender status
   const securityChecks = [
     securityInfo.antivirus_status?.toLowerCase() === 'enabled',
     securityInfo.firewall_status?.toLowerCase() === 'enabled',
