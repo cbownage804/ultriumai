@@ -173,85 +173,72 @@
     <div id="root"></div>
     
     <script>
-      // Emergency cache buster - runs before React loads
-      // If we detect a recent crash, clear all caches and service workers
+      // AGGRESSIVE CACHE BUSTER - runs IMMEDIATELY before anything else.
+      // Clears any stale Vite deps cache that can cause duplicate React instances.
       (function() {
-        const CRASH_KEY = 'ultrium_last_crash';
-        const lastCrash = localStorage.getItem(CRASH_KEY);
-        const now = Date.now();
+        var FORCE_CLEAN_KEY = 'ultrium_force_clean_v5';
+        var hostname = window.location.hostname;
+        var isPreview = hostname.includes('lovableproject.com') || hostname.startsWith('id-preview--');
         
-        // Clear crash marker if it's older than 5 minutes
-        if (lastCrash && (now - parseInt(lastCrash)) > 300000) {
-          localStorage.removeItem(CRASH_KEY);
+        // On preview origins, always do a one-time aggressive cleanup per session.
+        if (isPreview && !sessionStorage.getItem(FORCE_CLEAN_KEY)) {
+          sessionStorage.setItem(FORCE_CLEAN_KEY, '1');
+          
+          // Clear all caches
+          if ('caches' in window) {
+            caches.keys().then(function(names) {
+              names.forEach(function(n) { caches.delete(n); });
+            });
+          }
+          
+          // Unregister all service workers
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              regs.forEach(function(r) { r.unregister(); });
+            });
+          }
+          
+          // Force hard reload after cleanup
+          setTimeout(function() { window.location.reload(); }, 50);
+          return; // Stop execution to allow reload
         }
         
-        // Check for multiple crashes in short succession
+        // Error handler for dispatcher/hook errors - clears state and reloads
         window.addEventListener('error', function(e) {
           if (e.message && (e.message.includes('dispatcher') || e.message.includes('Invalid hook'))) {
-            localStorage.setItem(CRASH_KEY, Date.now().toString());
+            // Clear all storage to prevent loops
+            sessionStorage.clear();
+            localStorage.removeItem('ultrium_last_crash');
             
-            // Clear caches and reload
+            // Clear caches
             if ('caches' in window) {
               caches.keys().then(function(names) {
-                names.forEach(function(name) {
-                  caches.delete(name);
-                });
+                names.forEach(function(n) { caches.delete(n); });
               });
             }
             
             // Unregister service workers
             if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                registrations.forEach(function(registration) {
-                  registration.unregister();
-                });
+              navigator.serviceWorker.getRegistrations().then(function(regs) {
+                regs.forEach(function(r) { r.unregister(); });
               });
             }
             
-            // Reload after a brief delay
-            setTimeout(function() {
-              window.location.reload();
-            }, 100);
+            // Reload after cleanup
+            setTimeout(function() { window.location.reload(); }, 100);
           }
         });
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // Register service worker for PWA support with aggressive update strategy.
-      // IMPORTANT: Never enable SW on Lovable preview origins; it can cache Vite dev deps
-      // and cause mixed/duplicate React instances ("dispatcher is null").
+      // Register service worker for PWA support - ONLY on production domains.
       const hostname = window.location.hostname;
       const isLovablePreviewOrigin =
         hostname.includes('lovableproject.com') || hostname.startsWith('id-preview--');
 
-      if (isLovablePreviewOrigin) {
-        // Ensure previews aren't controlled by an old SW from prior sessions.
-        const PREVIEW_RESET_KEY = 'ultrium_preview_sw_reset';
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker
-            .getRegistrations()
-            .then((registrations) => registrations.forEach((r) => r.unregister()))
-            .catch(() => {});
-        }
-        if ('caches' in window) {
-          caches
-            .keys()
-            .then((names) => names.forEach((n) => caches.delete(n)))
-            .catch(() => {});
-        }
-
-        // If a SW was controlling this page, force a one-time reload after cleanup.
-        // This prevents the current load from being served with mixed cached chunks.
-        if (
-          'serviceWorker' in navigator &&
-          navigator.serviceWorker.controller &&
-          !sessionStorage.getItem(PREVIEW_RESET_KEY)
-        ) {
-          sessionStorage.setItem(PREVIEW_RESET_KEY, '1');
-          setTimeout(() => window.location.reload(), 100);
-        }
-      } else if ('serviceWorker' in navigator) {
+      // Skip SW registration entirely on preview origins - handled in cleanup script above.
+      if (!isLovablePreviewOrigin && 'serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker
             .register('/sw.js')
