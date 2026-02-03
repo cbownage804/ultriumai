@@ -20,14 +20,69 @@ public class RustDeskInstaller
     private List<RelayServerConfig> _relayServers = new();
     private bool _failoverEnabled = false;
     
+    // Unattended access password (received from server on first config fetch)
+    private string? _unattendedPassword = null;
+    
     private const string RUSTDESK_VERSION = "1.2.6";
     private const string RUSTDESK_DOWNLOAD_URL = $"https://github.com/rustdesk/rustdesk/releases/download/{RUSTDESK_VERSION}/rustdesk-{RUSTDESK_VERSION}-x86_64.exe";
+    
+    // Local password cache file path
+    private string PasswordCachePath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+        "VanguardAgent", "rustdesk_pwd.dat"
+    );
     
     public RustDeskInstaller(ConfigService configService)
     {
         _configService = configService;
         _httpClient = new HttpClient();
         _httpClient.Timeout = TimeSpan.FromMinutes(10);
+        
+        // Load cached password if exists
+        LoadCachedPassword();
+    }
+    
+    /// <summary>
+    /// Load previously cached unattended password
+    /// </summary>
+    private void LoadCachedPassword()
+    {
+        try
+        {
+            if (File.Exists(PasswordCachePath))
+            {
+                _unattendedPassword = File.ReadAllText(PasswordCachePath).Trim();
+                if (!string.IsNullOrEmpty(_unattendedPassword))
+                {
+                    Console.WriteLine("[RustDesk] Loaded cached unattended password");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RustDesk] Failed to load cached password: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Save unattended password to local cache
+    /// </summary>
+    private void SavePasswordCache(string password)
+    {
+        try
+        {
+            var dir = Path.GetDirectoryName(PasswordCachePath);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+            File.WriteAllText(PasswordCachePath, password);
+            Console.WriteLine("[RustDesk] Cached unattended password");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RustDesk] Failed to cache password: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -100,14 +155,13 @@ public class RustDeskInstaller
 
     /// <summary>
     /// Fetch relay server configuration from Vanguard API (supports dual-relay)
+    /// Also retrieves unattended access password on first request
     /// </summary>
     public async Task<bool> FetchRelayConfigAsync(string apiBaseUrl)
     {
         try
         {
             // Build the relay config URL - handle both base URL formats
-            // If apiBaseUrl already contains /functions/v1, just append the function name
-            // Otherwise, append the full path
             string relayConfigUrl;
             if (apiBaseUrl.Contains("/functions/v1"))
             {
@@ -120,7 +174,12 @@ public class RustDeskInstaller
             
             Console.WriteLine($"[RustDesk] Fetching relay config from: {relayConfigUrl}");
             
-            var response = await _httpClient.GetAsync(relayConfigUrl);
+            // Create request with device ID and auth headers for password generation
+            var request = new HttpRequestMessage(HttpMethod.Get, relayConfigUrl);
+            request.Headers.Add("X-Device-Id", _configService.DeviceId);
+            request.Headers.Add("X-Vanguard-Key", _configService.SecretKey);
+            
+            var response = await _httpClient.SendAsync(request);
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();
@@ -155,6 +214,14 @@ public class RustDeskInstaller
                         Console.WriteLine($"[RustDesk] Legacy relay config loaded: {config.RelayServer}");
                     }
                     
+                    // Store unattended password if provided (only on first request)
+                    if (!string.IsNullOrEmpty(config.UnattendedPassword))
+                    {
+                        _unattendedPassword = config.UnattendedPassword;
+                        SavePasswordCache(_unattendedPassword);
+                        Console.WriteLine("[RustDesk] Received unattended access password from server");
+                    }
+                    
                     return _relayServers.Count > 0;
                 }
             }
@@ -170,6 +237,11 @@ public class RustDeskInstaller
 
         return false;
     }
+    
+    /// <summary>
+    /// Get the current unattended password (if available)
+    /// </summary>
+    public string? GetUnattendedPassword() => _unattendedPassword;
 
     /// <summary>
     /// Set relay configuration manually (for offline scenarios)
@@ -384,7 +456,7 @@ public class RustDeskInstaller
     }
 
     /// <summary>
-    /// Generate RustDesk TOML configuration with dual-relay support
+    /// Generate RustDesk TOML configuration with dual-relay support and unattended access
     /// </summary>
     private string GenerateConfig()
     {
@@ -411,12 +483,22 @@ direct-server = ''
             config += $"key = '{primaryRelay.PublicKey}'\n";
         }
 
-        // Enable unattended access and failover settings
+        // Enable unattended access settings
         config += @"
 allow-auto-disconnect = 'N'
 enable-lan-discovery = 'N'
 allow-remote-config-modification = 'N'
+direct-access-port = ''
 ";
+
+        // Add permanent password for unattended access
+        if (!string.IsNullOrEmpty(_unattendedPassword))
+        {
+            // RustDesk uses 'permanent_password' in config
+            config += $"permanent-password = '{_unattendedPassword}'\n";
+            config += "allow-linux-headless = 'Y'\n";
+            Console.WriteLine("[RustDesk] Permanent password configured for unattended access");
+        }
 
         // Add failover-specific settings
         if (_failoverEnabled && _relayServers.Count > 1)
@@ -627,4 +709,8 @@ public class RelayConfigResponse
     
     [System.Text.Json.Serialization.JsonPropertyName("failover_enabled")]
     public bool FailoverEnabled { get; set; }
+    
+    // Unattended access password (only returned on first request)
+    [System.Text.Json.Serialization.JsonPropertyName("unattended_password")]
+    public string? UnattendedPassword { get; set; }
 }

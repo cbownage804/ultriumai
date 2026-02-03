@@ -68,7 +68,7 @@ serve(async (req) => {
     }
     
     // Dashboard-side actions (require JWT auth)
-    if (['ask', 'send_command', 'list_agents', 'get_metrics', 'delete_agent', 'set_scanner_role', 'list_scanners', 'list_discovered_devices'].includes(action)) {
+    if (['ask', 'send_command', 'list_agents', 'get_metrics', 'delete_agent', 'set_scanner_role', 'list_scanners', 'list_discovered_devices', 'get_rustdesk_password'].includes(action)) {
       if (!authHeader) {
         return new Response(
           JSON.stringify({ error: 'Authorization required' }),
@@ -104,6 +104,8 @@ serve(async (req) => {
           return await listScanners(supabase, user.id);
         case 'list_discovered_devices':
           return await listDiscoveredDevices(supabase, user.id, body);
+        case 'get_rustdesk_password':
+          return await getRustDeskPassword(supabase, user.id, body);
       }
     }
     
@@ -676,6 +678,72 @@ async function handleUpdateRustDeskId(supabase: any, body: any) {
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
 }
+
+// Decrypt RustDesk password for technician access
+function decryptPassword(encrypted: string, key: string): string {
+  try {
+    const keyBytes = new TextEncoder().encode(key);
+    const encryptedBytes = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
+    const decrypted = new Uint8Array(encryptedBytes.length);
+    
+    for (let i = 0; i < encryptedBytes.length; i++) {
+      decrypted[i] = encryptedBytes[i] ^ keyBytes[i % keyBytes.length];
+    }
+    
+    return new TextDecoder().decode(decrypted);
+  } catch {
+    return '';
+  }
+}
+
+// Get RustDesk password for technician (dashboard action)
+async function getRustDeskPassword(supabase: any, userId: string, body: any) {
+  const { agent_id } = body;
+  
+  if (!agent_id) {
+    return new Response(
+      JSON.stringify({ error: 'agent_id is required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Verify user owns this agent
+  const { data: agent, error } = await supabase
+    .from('vanguard_agents')
+    .select('id, rustdesk_id, rustdesk_password_encrypted')
+    .eq('id', agent_id)
+    .eq('user_id', userId)
+    .single();
+  
+  if (error || !agent) {
+    return new Response(
+      JSON.stringify({ error: 'Agent not found or access denied' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  if (!agent.rustdesk_password_encrypted) {
+    return new Response(
+      JSON.stringify({ error: 'No password configured for this agent', password: null }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Decrypt the password
+  const encryptionKey = Deno.env.get('VANGUARD_AGENT_SECRET') || 'default-key';
+  const password = decryptPassword(agent.rustdesk_password_encrypted, encryptionKey);
+  
+  console.log(`[vanguard-agent-api] Password retrieved for agent ${agent_id} by user ${userId}`);
+  
+  return new Response(
+    JSON.stringify({ 
+      password,
+      rustdesk_id: agent.rustdesk_id 
+    }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
 
 async function handleScanResults(supabase: any, body: any) {
   const { device_id, scan_type, findings, network_devices, vulnerabilities } = body;
