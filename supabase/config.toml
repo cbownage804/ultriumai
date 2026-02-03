@@ -286,3 +286,7 @@ verify_jwt = true
 
 [functions.xdr-response-executor]
 verify_jwt = false
+
+# Agent Provisioning (redeem action is unauthenticated, create requires auth validated in code)
+[functions.agent-provision]
+verify_jwt = false
