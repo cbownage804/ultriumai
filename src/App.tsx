@@ -205,6 +205,11 @@ const ClientTicketsPage = lazy(() => import('@/pages/client/ClientTicketsPage'))
 const ClientBillingPage = lazy(() => import('@/pages/client/ClientBillingPage'));
 const PublicGPTEmbed = lazy(() => import('@/pages/PublicGPTEmbed'));
 
+// Customer Portal (End-User Self-Service)
+const CustomerPortalLogin = lazy(() => import('@/pages/customer-portal/CustomerPortalLogin'));
+const CustomerPortalDashboard = lazy(() => import('@/pages/customer-portal/CustomerPortalDashboard'));
+const CustomerPortalNewTicket = lazy(() => import('@/pages/customer-portal/CustomerPortalNewTicket'));
+
 // Components that need to be loaded for layouts
 import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
 import { AuthProvider } from '@/hooks/useAuth';
@@ -407,6 +412,11 @@ function AppRouter() {
         <Route path="/client" element={<SuspenseWrapper><ClientPortalDashboard /></SuspenseWrapper>} />
         <Route path="/client/tickets" element={<SuspenseWrapper variant="list"><ClientTicketsPage /></SuspenseWrapper>} />
         <Route path="/client/billing" element={<SuspenseWrapper><ClientBillingPage /></SuspenseWrapper>} />
+        
+        {/* Customer Portal Routes (End-User Self-Service) */}
+        <Route path="/customer-portal/login" element={<SuspenseWrapper variant="form"><CustomerPortalLogin /></SuspenseWrapper>} />
+        <Route path="/customer-portal/dashboard" element={<SuspenseWrapper><CustomerPortalDashboard /></SuspenseWrapper>} />
+        <Route path="/customer-portal/tickets/new" element={<SuspenseWrapper variant="form"><CustomerPortalNewTicket /></SuspenseWrapper>} />
         
         {/* Helpdesk Feedback Route (Public - for email links) */}
         <Route path="/helpdesk/feedback" element={<SuspenseWrapper variant="form"><HelpdeskFeedback /></SuspenseWrapper>} />

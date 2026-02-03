@@ -2920,14 +2920,19 @@ export type Database = {
           contact_id: string | null
           created_at: string
           email: string
+          failed_login_attempts: number | null
           full_name: string
           id: string
           is_active: boolean
           last_login_at: string | null
+          locked_until: string | null
+          login_count: number | null
+          must_change_password: boolean | null
           password_hash: string | null
           reset_token: string | null
           reset_token_expires_at: string | null
           role: string
+          temporary_password: string | null
           updated_at: string
         }
         Insert: {
@@ -2935,14 +2940,19 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           email: string
+          failed_login_attempts?: number | null
           full_name: string
           id?: string
           is_active?: boolean
           last_login_at?: string | null
+          locked_until?: string | null
+          login_count?: number | null
+          must_change_password?: boolean | null
           password_hash?: string | null
           reset_token?: string | null
           reset_token_expires_at?: string | null
           role?: string
+          temporary_password?: string | null
           updated_at?: string
         }
         Update: {
@@ -2950,14 +2960,19 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           email?: string
+          failed_login_attempts?: number | null
           full_name?: string
           id?: string
           is_active?: boolean
           last_login_at?: string | null
+          locked_until?: string | null
+          login_count?: number | null
+          must_change_password?: boolean | null
           password_hash?: string | null
           reset_token?: string | null
           reset_token_expires_at?: string | null
           role?: string
+          temporary_password?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -14447,6 +14462,67 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_activity_logs: {
+        Row: {
+          activity_details: Json | null
+          activity_type: string
+          client_id: string | null
+          contact_id: string | null
+          created_at: string
+          id: string
+          ip_address: unknown
+          msp_user_id: string
+          portal_user_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          activity_details?: Json | null
+          activity_type: string
+          client_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          msp_user_id: string
+          portal_user_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          activity_details?: Json | null
+          activity_type?: string
+          client_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          msp_user_id?: string
+          portal_user_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_activity_logs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "client_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_activity_logs_portal_user_id_fkey"
+            columns: ["portal_user_id"]
+            isOneToOne: false
+            referencedRelation: "client_portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_activity_logs_portal_user_id_fkey"
+            columns: ["portal_user_id"]
+            isOneToOne: false
+            referencedRelation: "client_portal_users_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_branding: {
         Row: {
           accent_color: string | null
@@ -14506,6 +14582,121 @@ export type Database = {
           welcome_message?: string | null
         }
         Relationships: []
+      }
+      portal_invitations: {
+        Row: {
+          accepted_at: string | null
+          client_id: string
+          contact_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invitation_token: string
+          msp_user_id: string
+          portal_user_id: string | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+          welcome_message: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          client_id: string
+          contact_id: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          invitation_token: string
+          msp_user_id: string
+          portal_user_id?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          client_id?: string
+          contact_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invitation_token?: string
+          msp_user_id?: string
+          portal_user_id?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_invitations_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "client_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_invitations_portal_user_id_fkey"
+            columns: ["portal_user_id"]
+            isOneToOne: false
+            referencedRelation: "client_portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_invitations_portal_user_id_fkey"
+            columns: ["portal_user_id"]
+            isOneToOne: false
+            referencedRelation: "client_portal_users_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_password_reset_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          portal_user_id: string
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          portal_user_id: string
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          portal_user_id?: string
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_password_reset_tokens_portal_user_id_fkey"
+            columns: ["portal_user_id"]
+            isOneToOne: false
+            referencedRelation: "client_portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_password_reset_tokens_portal_user_id_fkey"
+            columns: ["portal_user_id"]
+            isOneToOne: false
+            referencedRelation: "client_portal_users_safe"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       portal_users: {
         Row: {
@@ -31426,6 +31617,16 @@ export type Database = {
         Returns: boolean
       }
       is_ultrium_employee: { Args: { _user_id: string }; Returns: boolean }
+      log_portal_activity: {
+        Args: {
+          p_activity_details?: Json
+          p_activity_type: string
+          p_ip_address?: unknown
+          p_portal_user_id: string
+          p_user_agent?: string
+        }
+        Returns: string
+      }
       owns_safepass_entry: {
         Args: { checking_user_id: string; entry_user_id: string }
         Returns: boolean
