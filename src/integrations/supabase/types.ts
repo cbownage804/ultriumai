@@ -30117,6 +30117,51 @@ export type Database = {
         }
         Relationships: []
       }
+      xdr_attack_chains: {
+        Row: {
+          chain_id: string
+          chain_name: string
+          chain_status: string
+          created_at: string
+          end_time: string | null
+          events: Json | null
+          id: string
+          mitre_tactics: string[] | null
+          notes: string | null
+          severity: string
+          start_time: string | null
+          user_id: string
+        }
+        Insert: {
+          chain_id: string
+          chain_name: string
+          chain_status?: string
+          created_at?: string
+          end_time?: string | null
+          events?: Json | null
+          id?: string
+          mitre_tactics?: string[] | null
+          notes?: string | null
+          severity?: string
+          start_time?: string | null
+          user_id: string
+        }
+        Update: {
+          chain_id?: string
+          chain_name?: string
+          chain_status?: string
+          created_at?: string
+          end_time?: string | null
+          events?: Json | null
+          id?: string
+          mitre_tactics?: string[] | null
+          notes?: string | null
+          severity?: string
+          start_time?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       xdr_automation_policies: {
         Row: {
           auto_block_c2: boolean | null

@@ -34,7 +34,7 @@ serve(async (req) => {
     console.log(`[vanguard-agent-api] Action: ${action}, Device: ${body.device_id || 'N/A'}`);
 
     // Agent-side actions (require X-VANGUARD-KEY)
-    if (['register', 'heartbeat', 'scan_results', 'get_commands', 'command_response', 'security_telemetry', 'discovery_results', 'get_scanner_config', 'telemetry', 'update_rustdesk_id'].includes(action)) {
+    if (['register', 'heartbeat', 'scan_results', 'get_commands', 'command_response', 'security_telemetry', 'discovery_results', 'get_scanner_config', 'telemetry', 'update_rustdesk_id', 'xdr_threat', 'xdr_yara_match', 'xdr_memory_scan', 'xdr_script_analysis', 'xdr_get_rules', 'xdr_poll_actions', 'xdr_action_result'].includes(action)) {
       if (agentKey !== VANGUARD_SECRET) {
         console.error('[vanguard-agent-api] Invalid agent key');
         return new Response(
@@ -64,6 +64,21 @@ serve(async (req) => {
           return await getScannerConfig(supabase, body);
         case 'update_rustdesk_id':
           return await handleUpdateRustDeskId(supabase, body);
+        // XDR/AV telemetry actions
+        case 'xdr_threat':
+          return await handleXdrThreat(supabase, body);
+        case 'xdr_yara_match':
+          return await handleXdrYaraMatch(supabase, body);
+        case 'xdr_memory_scan':
+          return await handleXdrMemoryScan(supabase, body);
+        case 'xdr_script_analysis':
+          return await handleXdrScriptAnalysis(supabase, body);
+        case 'xdr_get_rules':
+          return await handleXdrGetRules(supabase, body);
+        case 'xdr_poll_actions':
+          return await handleXdrPollActions(supabase, body);
+        case 'xdr_action_result':
+          return await handleXdrActionResult(supabase, body);
       }
     }
     
@@ -4664,4 +4679,473 @@ while ($true) {
       'Content-Disposition': 'attachment; filename="vanguard_agent.ps1"'
     } 
   });
+}
+
+// ============ XDR/AV TELEMETRY HANDLERS ============
+
+async function handleXdrThreat(supabase: any, body: any) {
+  const { device_id, threat_type, severity, title, description, source_component, file_path, file_hash, process_name, process_id, command_line, mitre_tactics, mitre_techniques, indicators, actions_taken } = body;
+  
+  if (!device_id || !threat_type || !title) {
+    return new Response(
+      JSON.stringify({ error: 'device_id, threat_type, and title required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  const { data: agent } = await supabase
+    .from('vanguard_agents')
+    .select('id, user_id, name, ip_address')
+    .eq('device_id', device_id)
+    .single();
+  
+  if (!agent) {
+    return new Response(
+      JSON.stringify({ error: 'Agent not found' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Check threat intel for IOC matches
+  let threatIntelMatches: any[] = [];
+  if (file_hash) {
+    const { data: hashMatch } = await supabase
+      .from('threat_intelligence')
+      .select('*')
+      .eq('indicator_type', 'hash')
+      .eq('indicator_value', file_hash)
+      .eq('is_active', true)
+      .maybeSingle();
+    
+    if (hashMatch) threatIntelMatches.push(hashMatch);
+  }
+  
+  // Elevate severity if threat intel match
+  let finalSeverity = severity || 'medium';
+  if (threatIntelMatches.length > 0 && finalSeverity !== 'critical') {
+    const maxConf = Math.max(...threatIntelMatches.map((t: any) => t.confidence || 0));
+    if (maxConf >= 90) finalSeverity = 'critical';
+  }
+  
+  // Insert XDR threat
+  const { data: threat, error } = await supabase
+    .from('xdr_threats')
+    .insert({
+      user_id: agent.user_id,
+      agent_id: agent.id,
+      threat_type,
+      severity: finalSeverity,
+      title,
+      description,
+      source_component: source_component || 'Vanguard Agent',
+      file_path,
+      file_hash,
+      process_name,
+      process_id,
+      command_line,
+      source_ip: agent.ip_address,
+      mitre_tactics: mitre_tactics || [],
+      mitre_techniques: mitre_techniques || [],
+      indicators: indicators || [],
+      actions_taken: actions_taken || [],
+      threat_intel_matches: threatIntelMatches,
+      status: 'new',
+      detection_time: new Date().toISOString()
+    })
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('[vanguard-agent-api] XDR threat insert error:', error);
+    return new Response(
+      JSON.stringify({ error: 'Failed to create threat' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Also create security event
+  await supabase.from('security_events').insert({
+    user_id: agent.user_id,
+    source_app: `Vanguard ${source_component || 'Agent'}`,
+    event_type: threat_type,
+    severity: finalSeverity,
+    title,
+    description,
+    affected_assets: [agent.name],
+    ip_address: agent.ip_address,
+    threat_indicators: (indicators || []).map((i: any) => `${i.type}:${i.value}`),
+    raw_data: { threat_id: threat.id }
+  });
+  
+  console.log(`[vanguard-agent-api] XDR threat created: ${threat.id} (${threat_type})`);
+  
+  return new Response(
+    JSON.stringify({ success: true, threat_id: threat.id, severity: finalSeverity }),
+    { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+async function handleXdrYaraMatch(supabase: any, body: any) {
+  const { device_id, rule_name, file_path, file_hash, file_size, matched_strings } = body;
+  
+  if (!device_id || !rule_name || !file_path) {
+    return new Response(
+      JSON.stringify({ error: 'device_id, rule_name, and file_path required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  const { data: agent } = await supabase
+    .from('vanguard_agents')
+    .select('id, user_id, name')
+    .eq('device_id', device_id)
+    .single();
+  
+  if (!agent) {
+    return new Response(
+      JSON.stringify({ error: 'Agent not found' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Find YARA rule
+  const { data: rule } = await supabase
+    .from('xdr_yara_rules')
+    .select('id, severity, mitre_tactics, mitre_techniques')
+    .eq('name', rule_name)
+    .eq('user_id', agent.user_id)
+    .maybeSingle();
+  
+  const severity = rule?.severity || 'high';
+  
+  // Create XDR threat for YARA match
+  const { data: threat } = await supabase
+    .from('xdr_threats')
+    .insert({
+      user_id: agent.user_id,
+      agent_id: agent.id,
+      threat_type: 'malware',
+      severity,
+      title: `YARA Match: ${rule_name}`,
+      description: `YARA rule "${rule_name}" matched file ${file_path}`,
+      source_component: 'YARA Scanner',
+      file_path,
+      file_hash,
+      file_name: file_path.split(/[/\\]/).pop(),
+      indicators: [
+        { type: 'hash', value: file_hash, confidence: 95 },
+        { type: 'yara_rule', value: rule_name, confidence: 100 }
+      ],
+      mitre_tactics: rule?.mitre_tactics || [],
+      mitre_techniques: rule?.mitre_techniques || [],
+      raw_data: { rule_name, matched_strings, file_size },
+      status: 'new',
+      detection_time: new Date().toISOString()
+    })
+    .select()
+    .single();
+  
+  // Update rule match count
+  if (rule) {
+    await supabase
+      .from('xdr_yara_rules')
+      .update({ 
+        match_count: (rule.match_count || 0) + 1,
+        last_match: new Date().toISOString()
+      })
+      .eq('id', rule.id);
+  }
+  
+  console.log(`[vanguard-agent-api] YARA match: ${rule_name} on ${file_path}`);
+  
+  return new Response(
+    JSON.stringify({ success: true, threat_id: threat?.id, severity }),
+    { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+async function handleXdrMemoryScan(supabase: any, body: any) {
+  const { device_id, process_name, process_id, detections } = body;
+  
+  if (!device_id || !detections || !Array.isArray(detections)) {
+    return new Response(
+      JSON.stringify({ error: 'device_id and detections array required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  const { data: agent } = await supabase
+    .from('vanguard_agents')
+    .select('id, user_id, name')
+    .eq('device_id', device_id)
+    .single();
+  
+  if (!agent) {
+    return new Response(
+      JSON.stringify({ error: 'Agent not found' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  const threatIds: string[] = [];
+  
+  for (const detection of detections) {
+    const { data: threat } = await supabase
+      .from('xdr_threats')
+      .insert({
+        user_id: agent.user_id,
+        agent_id: agent.id,
+        threat_type: 'memory',
+        severity: detection.severity || 'high',
+        title: detection.title || `Memory Threat in ${process_name}`,
+        description: detection.description || `Suspicious memory pattern detected in process ${process_name} (PID: ${process_id})`,
+        source_component: 'Memory Scanner',
+        process_name,
+        process_id,
+        mitre_tactics: detection.mitre_tactics || ['T1055'],
+        mitre_techniques: detection.mitre_techniques || ['Process Injection'],
+        raw_data: detection,
+        status: 'new',
+        detection_time: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (threat) threatIds.push(threat.id);
+  }
+  
+  console.log(`[vanguard-agent-api] Memory scan: ${detections.length} detections from ${device_id}`);
+  
+  return new Response(
+    JSON.stringify({ success: true, threat_ids: threatIds, count: threatIds.length }),
+    { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+async function handleXdrScriptAnalysis(supabase: any, body: any) {
+  const { device_id, script_type, script_hash, verdict, indicators, deobfuscated_commands } = body;
+  
+  if (!device_id || !script_type || !verdict) {
+    return new Response(
+      JSON.stringify({ error: 'device_id, script_type, and verdict required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  const { data: agent } = await supabase
+    .from('vanguard_agents')
+    .select('id, user_id, name')
+    .eq('device_id', device_id)
+    .single();
+  
+  if (!agent) {
+    return new Response(
+      JSON.stringify({ error: 'Agent not found' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  if (verdict === 'clean') {
+    return new Response(
+      JSON.stringify({ success: true, action: 'allow' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Create threat for malicious/suspicious scripts
+  const severity = verdict === 'malicious' ? 'critical' : 'high';
+  
+  const { data: threat } = await supabase
+    .from('xdr_threats')
+    .insert({
+      user_id: agent.user_id,
+      agent_id: agent.id,
+      threat_type: 'script',
+      severity,
+      title: `Malicious ${script_type} Script Detected`,
+      description: `Script analysis detected ${verdict} ${script_type} script with ${(indicators || []).length} indicators`,
+      source_component: 'Script Analyzer',
+      file_hash: script_hash,
+      indicators: indicators || [],
+      mitre_tactics: ['T1059'],
+      mitre_techniques: [`${script_type} Execution`],
+      raw_data: { script_type, deobfuscated_commands, indicators },
+      status: 'new',
+      detection_time: new Date().toISOString()
+    })
+    .select()
+    .single();
+  
+  console.log(`[vanguard-agent-api] Script analysis: ${verdict} ${script_type} script from ${device_id}`);
+  
+  return new Response(
+    JSON.stringify({ 
+      success: true, 
+      threat_id: threat?.id, 
+      action: verdict === 'malicious' ? 'block' : 'alert'
+    }),
+    { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+async function handleXdrGetRules(supabase: any, body: any) {
+  const { device_id, rule_type, last_sync } = body;
+  
+  if (!device_id) {
+    return new Response(
+      JSON.stringify({ error: 'device_id required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  const { data: agent } = await supabase
+    .from('vanguard_agents')
+    .select('id, user_id')
+    .eq('device_id', device_id)
+    .single();
+  
+  if (!agent) {
+    return new Response(
+      JSON.stringify({ error: 'Agent not found' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  const result: any = { sync_time: new Date().toISOString() };
+  
+  // Get YARA rules
+  if (!rule_type || rule_type === 'yara') {
+    let yaraQuery = supabase
+      .from('xdr_yara_rules')
+      .select('id, name, rule_content, category, severity')
+      .eq('user_id', agent.user_id)
+      .eq('is_enabled', true);
+    
+    if (last_sync) {
+      yaraQuery = yaraQuery.gte('updated_at', last_sync);
+    }
+    
+    const { data: yaraRules } = await yaraQuery;
+    result.yara_rules = (yaraRules || []).map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      content: r.rule_content,
+      category: r.category,
+      severity: r.severity
+    }));
+  }
+  
+  // Get IOCs for blocking
+  if (!rule_type || rule_type === 'iocs') {
+    const { data: iocs } = await supabase
+      .from('xdr_iocs')
+      .select('id, ioc_type, ioc_value, confidence')
+      .eq('user_id', agent.user_id)
+      .eq('is_active', true)
+      .gte('confidence', 80)
+      .limit(1000);
+    
+    result.iocs = iocs || [];
+  }
+  
+  // Get automation policies
+  if (!rule_type || rule_type === 'policies') {
+    const { data: policies } = await supabase
+      .from('xdr_automation_policies')
+      .select('id, name, automation_mode, trigger_conditions, response_actions')
+      .eq('user_id', agent.user_id)
+      .eq('is_enabled', true);
+    
+    result.policies = policies || [];
+  }
+  
+  console.log(`[vanguard-agent-api] XDR rules sync for ${device_id}: ${result.yara_rules?.length || 0} YARA, ${result.iocs?.length || 0} IOCs`);
+  
+  return new Response(
+    JSON.stringify(result),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+async function handleXdrPollActions(supabase: any, body: any) {
+  const { device_id } = body;
+  
+  if (!device_id) {
+    return new Response(
+      JSON.stringify({ error: 'device_id required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  const { data: agent } = await supabase
+    .from('vanguard_agents')
+    .select('id')
+    .eq('device_id', device_id)
+    .single();
+  
+  if (!agent) {
+    return new Response(
+      JSON.stringify({ error: 'Agent not found' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Get pending XDR response actions
+  const { data: actions } = await supabase
+    .from('xdr_response_actions')
+    .select('id, action_type, parameters, priority')
+    .eq('target_agent_id', agent.id)
+    .eq('status', 'queued')
+    .order('priority', { ascending: true })
+    .order('created_at', { ascending: true })
+    .limit(10);
+  
+  // Mark as executing
+  if (actions && actions.length > 0) {
+    await supabase
+      .from('xdr_response_actions')
+      .update({ status: 'executing', started_at: new Date().toISOString() })
+      .in('id', actions.map((a: any) => a.id));
+  }
+  
+  return new Response(
+    JSON.stringify({ actions: actions || [] }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+async function handleXdrActionResult(supabase: any, body: any) {
+  const { device_id, action_id, success, result, error_message } = body;
+  
+  if (!device_id || !action_id) {
+    return new Response(
+      JSON.stringify({ error: 'device_id and action_id required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  const { error } = await supabase
+    .from('xdr_response_actions')
+    .update({
+      status: success ? 'completed' : 'failed',
+      result: result || {},
+      error_message,
+      completed_at: new Date().toISOString()
+    })
+    .eq('id', action_id);
+  
+  if (error) {
+    console.error('[vanguard-agent-api] XDR action result error:', error);
+    return new Response(
+      JSON.stringify({ error: 'Failed to update action' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  console.log(`[vanguard-agent-api] XDR action ${action_id} completed: ${success ? 'success' : 'failed'}`);
+  
+  return new Response(
+    JSON.stringify({ success: true }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
 }
