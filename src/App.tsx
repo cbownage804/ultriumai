@@ -218,6 +218,7 @@ const CustomerPortalChangePassword = lazy(() => import('@/pages/customer-portal/
 // Components that need to be loaded for layouts
 import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
 import { AuthProvider } from '@/hooks/useAuth';
+import { PortalLayout } from '@/components/customer-portal/PortalLayout';
 import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
 import { Loader2 } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -422,11 +423,11 @@ function AppRouter() {
         <Route path="/customer-portal/login" element={<SuspenseWrapper variant="form"><CustomerPortalLogin /></SuspenseWrapper>} />
         <Route path="/customer-portal/forgot-password" element={<SuspenseWrapper variant="form"><CustomerPortalForgotPassword /></SuspenseWrapper>} />
         <Route path="/customer-portal/reset-password" element={<SuspenseWrapper variant="form"><CustomerPortalResetPassword /></SuspenseWrapper>} />
-        <Route path="/customer-portal/change-password" element={<SuspenseWrapper variant="form"><CustomerPortalChangePassword /></SuspenseWrapper>} />
-        <Route path="/customer-portal/dashboard" element={<SuspenseWrapper><CustomerPortalDashboard /></SuspenseWrapper>} />
-        <Route path="/customer-portal/tickets" element={<SuspenseWrapper variant="list"><CustomerPortalTickets /></SuspenseWrapper>} />
-        <Route path="/customer-portal/tickets/new" element={<SuspenseWrapper variant="form"><CustomerPortalNewTicket /></SuspenseWrapper>} />
-        <Route path="/customer-portal/tickets/:ticketId" element={<SuspenseWrapper variant="detail"><CustomerPortalTicketDetail /></SuspenseWrapper>} />
+        <Route path="/customer-portal/change-password" element={<SuspenseWrapper variant="form"><PortalLayout><CustomerPortalChangePassword /></PortalLayout></SuspenseWrapper>} />
+        <Route path="/customer-portal/dashboard" element={<SuspenseWrapper><PortalLayout><CustomerPortalDashboard /></PortalLayout></SuspenseWrapper>} />
+        <Route path="/customer-portal/tickets" element={<SuspenseWrapper variant="list"><PortalLayout><CustomerPortalTickets /></PortalLayout></SuspenseWrapper>} />
+        <Route path="/customer-portal/tickets/new" element={<SuspenseWrapper variant="form"><PortalLayout><CustomerPortalNewTicket /></PortalLayout></SuspenseWrapper>} />
+        <Route path="/customer-portal/tickets/:ticketId" element={<SuspenseWrapper variant="detail"><PortalLayout><CustomerPortalTicketDetail /></PortalLayout></SuspenseWrapper>} />
         
         {/* Helpdesk Feedback Route (Public - for email links) */}
         <Route path="/helpdesk/feedback" element={<SuspenseWrapper variant="form"><HelpdeskFeedback /></SuspenseWrapper>} />

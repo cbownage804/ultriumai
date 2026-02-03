@@ -1,18 +1,21 @@
 /**
  * Portal Header Component
- * Shared header for all customer portal pages
+ * Shared header for all customer portal pages with branding support
  */
 
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Shield, LogOut, User, LayoutDashboard, Ticket, Settings } from 'lucide-react';
+import { Shield, LogOut, LayoutDashboard, Ticket } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePortalSession } from '@/hooks/usePortalSession';
+import { usePortalBranding } from '@/contexts/PortalBrandingContext';
+import { ThemeToggle } from './ThemeToggle';
 
 export function PortalHeader() {
   const navigate = useNavigate();
   const { session, logout } = usePortalSession();
+  const branding = usePortalBranding();
 
   const handleLogout = () => {
     logout();
@@ -29,11 +32,24 @@ export function PortalHeader() {
           <div className="flex items-center gap-6">
             {/* Logo */}
             <Link to="/customer-portal/dashboard" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
-                <Shield className="h-5 w-5 text-white" />
-              </div>
+              {branding.companyLogo ? (
+                <img 
+                  src={branding.companyLogo} 
+                  alt={branding.companyName}
+                  className="h-10 w-auto max-w-[120px] object-contain"
+                />
+              ) : (
+                <div 
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${branding.primaryColor}, ${branding.secondaryColor})` 
+                  }}
+                >
+                  <Shield className="h-5 w-5 text-white" />
+                </div>
+              )}
               <div className="hidden sm:block">
-                <h1 className="text-lg font-semibold text-white">Customer Portal</h1>
+                <h1 className="text-lg font-semibold text-white">{branding.companyName}</h1>
               </div>
             </Link>
 
@@ -57,10 +73,18 @@ export function PortalHeader() {
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2">
               <span className="text-sm text-white/60">{session.user.fullName}</span>
-              <Badge variant="outline" className="border-cyan-500/30 text-cyan-400 text-xs">
+              <Badge 
+                variant="outline" 
+                className="text-xs"
+                style={{ 
+                  borderColor: `${branding.primaryColor}50`,
+                  color: branding.primaryColor
+                }}
+              >
                 {session.user.role}
               </Badge>
             </div>
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="sm"
@@ -72,6 +96,11 @@ export function PortalHeader() {
           </div>
         </div>
       </div>
+
+      {/* Footer branding */}
+      {!branding.hidePoweredBy && branding.footerText && (
+        <div className="hidden">{/* Footer shown in layout, not header */}</div>
+      )}
     </header>
   );
 }

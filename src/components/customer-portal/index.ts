@@ -10,3 +10,5 @@ export { DashboardStats } from './DashboardStats';
 export { TicketAttachments } from './TicketAttachments';
 export { SatisfactionRating } from './SatisfactionRating';
 export { DeviceStatus } from './DeviceStatus';
+export { ThemeToggle } from './ThemeToggle';
+export { BillingPortal } from './BillingPortal';
