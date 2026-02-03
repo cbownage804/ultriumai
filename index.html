@@ -171,18 +171,85 @@
 
   <body>
     <div id="root"></div>
+    
+    <script>
+      // Emergency cache buster - runs before React loads
+      // If we detect a recent crash, clear all caches and service workers
+      (function() {
+        const CRASH_KEY = 'ultrium_last_crash';
+        const lastCrash = localStorage.getItem(CRASH_KEY);
+        const now = Date.now();
+        
+        // Clear crash marker if it's older than 5 minutes
+        if (lastCrash && (now - parseInt(lastCrash)) > 300000) {
+          localStorage.removeItem(CRASH_KEY);
+        }
+        
+        // Check for multiple crashes in short succession
+        window.addEventListener('error', function(e) {
+          if (e.message && (e.message.includes('dispatcher') || e.message.includes('Invalid hook'))) {
+            localStorage.setItem(CRASH_KEY, now.toString());
+            
+            // Clear caches and reload
+            if ('caches' in window) {
+              caches.keys().then(function(names) {
+                names.forEach(function(name) {
+                  caches.delete(name);
+                });
+              });
+            }
+            
+            // Unregister service workers
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                registrations.forEach(function(registration) {
+                  registration.unregister();
+                });
+              });
+            }
+            
+            // Reload after a brief delay
+            setTimeout(function() {
+              window.location.reload(true);
+            }, 100);
+          }
+        });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // Register service worker for PWA support
+      // Register service worker for PWA support with aggressive update strategy
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then(registration => {
               console.log('SW registered:', registration.scope);
+              
+              // Check for updates immediately and periodically
+              registration.update();
+              setInterval(() => registration.update(), 60000);
+              
+              // Handle updates - force refresh when new SW is available
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      // New SW is installed, skip waiting and take over
+                      newWorker.postMessage({ type: 'SKIP_WAITING' });
+                    }
+                  });
+                }
+              });
             })
             .catch(error => {
               console.log('SW registration failed:', error);
             });
+        });
+        
+        // Reload page when new SW takes control
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          window.location.reload();
         });
       }
     </script>

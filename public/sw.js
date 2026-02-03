@@ -7,7 +7,7 @@
 // Never cache the SPA shell ("/") or JS/CSS bundles with cache-first.
 // Doing so can serve a mixture of old/new chunks after a deploy, causing
 // runtime crashes like "Invalid hook call" / "dispatcher is null".
-const CACHE_NAME = 'ultriumai-v2';
+const CACHE_NAME = 'ultriumai-v3';
 
 // Only cache truly static assets that rarely change.
 const STATIC_ASSETS = [
@@ -24,7 +24,15 @@ self.addEventListener('install', (event) => {
       return cache.addAll(STATIC_ASSETS);
     })
   );
+  // Take over immediately without waiting for old SW to finish
   self.skipWaiting();
+});
+
+// Message handler for skip waiting
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // Activate event - clean up old caches
