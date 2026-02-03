@@ -35,12 +35,17 @@ export function DeviceSecurityTab({ agent }: DeviceSecurityTabProps) {
   const securityStatus = (agent as any).security_status || {};
   
   // Merge security info: prefer live security_status over config
+  // firewall_enabled comes from agent telemetry, fallback to config or assume enabled if Defender is on
+  const firewallEnabled = securityStatus.firewall_enabled !== undefined 
+    ? securityStatus.firewall_enabled 
+    : (configSecurity.firewall_status?.toLowerCase() === 'enabled' || securityStatus.defender_enabled);
+  
   const securityInfo = {
     antivirus_status: securityStatus.defender_enabled ? 'Enabled' : (configSecurity.antivirus_status || 'Disabled'),
     antivirus_name: configSecurity.antivirus_name || 'Windows Defender',
     antispyware_status: securityStatus.defender_enabled ? 'Enabled' : (configSecurity.antispyware_status || 'Disabled'),
     antispyware_name: configSecurity.antispyware_name || 'Windows Defender',
-    firewall_status: securityStatus.real_time_protection ? 'Enabled' : (configSecurity.firewall_status || 'Disabled'),
+    firewall_status: firewallEnabled ? 'Enabled' : 'Disabled',
     firewall_name: configSecurity.firewall_name || 'Windows Firewall',
     signature_version: securityStatus.signature_version || configSecurity.signature_version,
     signature_last_updated: securityStatus.signature_last_updated || configSecurity.signature_last_updated,
