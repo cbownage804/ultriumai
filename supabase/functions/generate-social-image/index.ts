@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.53.0";
+import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -264,31 +265,75 @@ COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds pr
       throw new Error('No image generated');
     }
 
-    // Return logo info for client-side watermarking (avoids memory-heavy in-edge processing)
+    // Determine which logo to use for watermarking
     const watermarkProduct = detectedProduct || 'ultriumai';
     const logoFile = PRODUCT_LOGOS[watermarkProduct] || PRODUCT_LOGOS.ultriumai;
     console.log('Will use watermark:', watermarkProduct, 'logo file:', logoFile);
 
-    // Convert base64 to buffer for storage upload
+    // Convert base64 to buffer
     const mimeMatch = generatedImage.match(/^data:([^;]+);base64,/);
     const mime = mimeMatch?.[1] || 'image/png';
-    const ext = mime === 'image/jpeg' ? 'jpg' : mime.split('/')[1] || 'png';
     const base64Data = generatedImage.replace(/^data:[^;]+;base64,/, '');
-    const imageBuffer = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
-    const fileName = `ai-generated/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+    let imageBuffer = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+
+    // Apply watermark using imagescript (lightweight approach)
+    try {
+      console.log('Applying watermark...');
+      
+      // Decode the generated image
+      const img = await Image.decode(imageBuffer);
+      
+      // Resize to standard social media size (1080x1080) to reduce memory
+      const resized = img.resize(TARGET_WIDTH, TARGET_HEIGHT);
+      
+      // Fetch the logo from storage
+      const logoUrl = `${supabaseUrl}/storage/v1/object/public/logos/${logoFile}`;
+      console.log('Fetching logo from:', logoUrl);
+      
+      const logoResponse = await fetch(logoUrl);
+      if (logoResponse.ok) {
+        const logoBytes = new Uint8Array(await logoResponse.arrayBuffer());
+        const logo = await Image.decode(logoBytes);
+        
+        // Scale logo to appropriate size (about 15% of image width)
+        const logoWidth = Math.floor(TARGET_WIDTH * 0.15);
+        const logoHeight = Math.floor(logo.height * (logoWidth / logo.width));
+        const scaledLogo = logo.resize(logoWidth, logoHeight);
+        
+        // Position in bottom-right corner with padding
+        const padding = 30;
+        const x = TARGET_WIDTH - logoWidth - padding;
+        const y = TARGET_HEIGHT - logoHeight - padding;
+        
+        // Composite the logo onto the image
+        resized.composite(scaledLogo, x, y);
+        console.log('Watermark applied successfully');
+      } else {
+        console.warn('Could not fetch logo, proceeding without watermark:', logoResponse.status);
+      }
+      
+      // Encode as PNG
+      imageBuffer = await resized.encode(1);
+    } catch (watermarkError) {
+      console.warn('Watermarking failed, using original image:', watermarkError);
+      // Continue with original image if watermarking fails
+    }
+
+    const fileName = `ai-generated/${Date.now()}-${crypto.randomUUID()}.png`;
 
     const { error: uploadError } = await supabase.storage
       .from('social-media-images')
       .upload(fileName, imageBuffer, { 
-        contentType: mime,
+        contentType: 'image/png',
         upsert: false 
       });
 
     if (uploadError) {
       console.error('Storage upload error:', uploadError);
       // Fall back to returning base64 if storage upload fails
+      const base64Result = `data:image/png;base64,${btoa(String.fromCharCode(...imageBuffer))}`;
       return new Response(JSON.stringify({ 
-        imageUrl: generatedImage, 
+        imageUrl: base64Result, 
         isBase64: true,
         detectedProduct: detectedProduct || null,
         logoFile: logoFile
