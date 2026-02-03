@@ -1,6 +1,8 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Search, Bug, AlertTriangle, CheckCircle, TrendingUp, Network, Eye } from "lucide-react";
+import { PremiumCard, StatCard } from "./ui/PremiumCard";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface SecurityMetrics {
   totalScans: number;
@@ -15,197 +17,232 @@ interface VanguardOverviewProps {
   metrics: SecurityMetrics;
 }
 
+// Module card for the overview grid
+interface ModuleOverviewCardProps {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  accentColor: 'cyan' | 'purple' | 'green' | 'orange' | 'red' | 'yellow' | 'blue' | 'teal';
+  stats: Array<{
+    label: string;
+    value: string | number;
+    badge?: boolean;
+    badgeVariant?: 'default' | 'destructive' | 'outline';
+  }>;
+}
+
+const accentStyles = {
+  cyan: {
+    border: 'border-l-cyan-500',
+    iconBg: 'bg-cyan-500/20',
+    iconColor: 'text-cyan-400',
+    glow: 'shadow-cyan-500/10',
+  },
+  purple: {
+    border: 'border-l-purple-500',
+    iconBg: 'bg-purple-500/20',
+    iconColor: 'text-purple-400',
+    glow: 'shadow-purple-500/10',
+  },
+  green: {
+    border: 'border-l-green-500',
+    iconBg: 'bg-green-500/20',
+    iconColor: 'text-green-400',
+    glow: 'shadow-green-500/10',
+  },
+  orange: {
+    border: 'border-l-orange-500',
+    iconBg: 'bg-orange-500/20',
+    iconColor: 'text-orange-400',
+    glow: 'shadow-orange-500/10',
+  },
+  red: {
+    border: 'border-l-red-500',
+    iconBg: 'bg-red-500/20',
+    iconColor: 'text-red-400',
+    glow: 'shadow-red-500/10',
+  },
+  yellow: {
+    border: 'border-l-yellow-500',
+    iconBg: 'bg-yellow-500/20',
+    iconColor: 'text-yellow-400',
+    glow: 'shadow-yellow-500/10',
+  },
+  blue: {
+    border: 'border-l-blue-500',
+    iconBg: 'bg-blue-500/20',
+    iconColor: 'text-blue-400',
+    glow: 'shadow-blue-500/10',
+  },
+  teal: {
+    border: 'border-l-teal-500',
+    iconBg: 'bg-teal-500/20',
+    iconColor: 'text-teal-400',
+    glow: 'shadow-teal-500/10',
+  },
+};
+
+function ModuleOverviewCard({ icon: Icon, title, description, accentColor, stats }: ModuleOverviewCardProps) {
+  const styles = accentStyles[accentColor];
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className={cn(
+        "relative overflow-hidden rounded-xl bg-black/60 backdrop-blur-xl border border-white/10 p-4",
+        "border-l-4 transition-all duration-300 hover:shadow-lg",
+        styles.border,
+        styles.glow
+      )}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className={cn("p-2 rounded-lg", styles.iconBg)}>
+          <Icon className={cn("h-5 w-5", styles.iconColor)} />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-white">{title}</h3>
+          <p className="text-xs text-white/50">{description}</p>
+        </div>
+      </div>
+      
+      {/* Stats */}
+      <div className="space-y-2">
+        {stats.map((stat, index) => (
+          <div key={index} className="flex justify-between items-center">
+            <span className="text-xs text-white/60">{stat.label}</span>
+            {stat.badge ? (
+              <Badge 
+                variant={stat.badgeVariant || 'default'}
+                className={cn(
+                  "text-xs",
+                  stat.badgeVariant === 'destructive' && "bg-red-500/20 text-red-400 border-red-500/30",
+                  stat.badgeVariant === 'outline' && "bg-transparent border-white/20 text-white/60",
+                  !stat.badgeVariant && "bg-cyan-500/20 text-cyan-400 border-cyan-500/30"
+                )}
+              >
+                {stat.value}
+              </Badge>
+            ) : (
+              <span className="text-xs font-medium text-white/80">{stat.value}</span>
+            )}
+          </div>
+        ))}
+      </div>
+      
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-white/[0.02] pointer-events-none" />
+    </motion.div>
+  );
+}
+
 export const VanguardOverview = ({ metrics }: VanguardOverviewProps) => {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Core Security Metrics */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Network Agents</CardTitle>
-            <Shield className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{metrics.agentCount}</div>
-            <p className="text-xs text-muted-foreground">
-              {metrics.onlineAgentCount} online
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Critical Issues</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{metrics.criticalIssues}</div>
-            <p className="text-xs text-muted-foreground">
-              Require attention
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">High Priority</CardTitle>
-            <Bug className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{metrics.highPriorityIssues}</div>
-            <p className="text-xs text-muted-foreground">
-              High severity findings
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Findings</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalFindings}</div>
-            <p className="text-xs text-muted-foreground">
-              All severity levels
-            </p>
-          </CardContent>
-        </Card>
+      {/* Core Security Metrics - Premium Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Network Agents"
+          value={metrics.agentCount}
+          subtitle={`${metrics.onlineAgentCount} online`}
+          icon={Shield}
+          color="green"
+          trend={metrics.onlineAgentCount > 0 ? { value: Math.round((metrics.onlineAgentCount / Math.max(metrics.agentCount, 1)) * 100), direction: 'up' } : undefined}
+        />
+        
+        <StatCard
+          title="Critical Issues"
+          value={metrics.criticalIssues}
+          subtitle="Require attention"
+          icon={AlertTriangle}
+          color="red"
+        />
+        
+        <StatCard
+          title="High Priority"
+          value={metrics.highPriorityIssues}
+          subtitle="High severity findings"
+          icon={Bug}
+          color="orange"
+        />
+        
+        <StatCard
+          title="Total Findings"
+          value={metrics.totalFindings}
+          subtitle="All severity levels"
+          icon={TrendingUp}
+          color="cyan"
+        />
       </div>
 
-      {/* Security Modules Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="border-l-4 border-l-primary">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Search className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">Threat Detection</CardTitle>
-            </div>
-            <CardDescription>AI-powered vulnerability scanning & analysis</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Critical Issues</span>
-                <Badge variant="destructive">{metrics.criticalIssues}</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">High Priority</span>
-                <Badge className="bg-orange-500 text-white">{metrics.highPriorityIssues}</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Total Scans</span>
-                <span className="text-sm font-medium">{metrics.totalScans}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Security Modules Overview - Premium Module Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <ModuleOverviewCard
+          icon={Search}
+          title="Threat Detection"
+          description="AI-powered vulnerability scanning & analysis"
+          accentColor="cyan"
+          stats={[
+            { label: 'Critical Issues', value: metrics.criticalIssues, badge: true, badgeVariant: 'destructive' },
+            { label: 'High Priority', value: metrics.highPriorityIssues, badge: true },
+            { label: 'Total Scans', value: metrics.totalScans },
+          ]}
+        />
 
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Eye className="h-5 w-5 text-blue-500" />
-              <CardTitle className="text-lg">SOC Operations</CardTitle>
-            </div>
-            <CardDescription>24/7 security monitoring & incident response</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Active Alerts</span>
-                <Badge className="bg-blue-500 text-white">{metrics.criticalIssues + metrics.highPriorityIssues}</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Total Findings</span>
-                <span className="text-sm font-medium">{metrics.totalFindings}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Scans Completed</span>
-                <span className="text-sm font-medium">{metrics.totalScans}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <ModuleOverviewCard
+          icon={Eye}
+          title="SOC Operations"
+          description="24/7 security monitoring & incident response"
+          accentColor="blue"
+          stats={[
+            { label: 'Active Alerts', value: metrics.criticalIssues + metrics.highPriorityIssues, badge: true },
+            { label: 'Total Findings', value: metrics.totalFindings },
+            { label: 'Scans Completed', value: metrics.totalScans },
+          ]}
+        />
 
-        <Card className="border-l-4 border-l-purple-500">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Network className="h-5 w-5 text-purple-500" />
-              <CardTitle className="text-lg">Network Security</CardTitle>
-            </div>
-            <CardDescription>Internal network scanning & agent monitoring</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Network Agents</span>
-                <Badge className="bg-purple-500 text-white">{metrics.onlineAgentCount} Online</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Total Agents</span>
-                <span className="text-sm font-medium">{metrics.agentCount}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Vulnerabilities</span>
-                <span className="text-sm font-medium">{metrics.totalFindings}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <ModuleOverviewCard
+          icon={Network}
+          title="Network Security"
+          description="Internal network scanning & agent monitoring"
+          accentColor="purple"
+          stats={[
+            { label: 'Network Agents', value: `${metrics.onlineAgentCount} Online`, badge: true },
+            { label: 'Total Agents', value: metrics.agentCount },
+            { label: 'Vulnerabilities', value: metrics.totalFindings },
+          ]}
+        />
 
-        <Card className="border-l-4 border-l-yellow-500">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-yellow-500" />
-              <CardTitle className="text-lg">Compliance</CardTitle>
-            </div>
-            <CardDescription>Regulatory compliance & audit management</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Status</span>
-                <Badge variant="outline">Pending Setup</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Frameworks</span>
-                <span className="text-sm font-medium text-muted-foreground">Not configured</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Controls</span>
-                <span className="text-sm font-medium text-muted-foreground">—</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <ModuleOverviewCard
+          icon={CheckCircle}
+          title="Compliance"
+          description="Regulatory compliance & audit management"
+          accentColor="yellow"
+          stats={[
+            { label: 'Status', value: 'Pending Setup', badge: true, badgeVariant: 'outline' },
+            { label: 'Frameworks', value: 'Not configured' },
+            { label: 'Controls', value: '—' },
+          ]}
+        />
 
-        <Card className="border-l-4 border-l-teal-500">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-teal-500" />
-              <CardTitle className="text-lg">Analytics & Reports</CardTitle>
-            </div>
-            <CardDescription>Security intelligence & executive reporting</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Risk Score</span>
-                <Badge className={metrics.criticalIssues > 0 ? "bg-red-500 text-white" : metrics.highPriorityIssues > 0 ? "bg-orange-500 text-white" : "bg-green-500 text-white"}>
-                  {metrics.criticalIssues > 0 ? "High" : metrics.highPriorityIssues > 0 ? "Medium" : "Low"}
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Active Issues</span>
-                <span className="text-sm font-medium">{metrics.criticalIssues + metrics.highPriorityIssues}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Total Scans</span>
-                <span className="text-sm font-medium">{metrics.totalScans}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <ModuleOverviewCard
+          icon={TrendingUp}
+          title="Analytics & Reports"
+          description="Security intelligence & executive reporting"
+          accentColor="teal"
+          stats={[
+            { 
+              label: 'Risk Score', 
+              value: metrics.criticalIssues > 0 ? 'High' : metrics.highPriorityIssues > 0 ? 'Medium' : 'Low', 
+              badge: true,
+              badgeVariant: metrics.criticalIssues > 0 ? 'destructive' : undefined
+            },
+            { label: 'Active Issues', value: metrics.criticalIssues + metrics.highPriorityIssues },
+            { label: 'Total Scans', value: metrics.totalScans },
+          ]}
+        />
       </div>
     </div>
   );
