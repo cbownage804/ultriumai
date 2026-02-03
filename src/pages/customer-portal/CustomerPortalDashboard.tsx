@@ -12,14 +12,18 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Ticket, Plus, Shield, 
-  Clock, AlertCircle, CheckCircle2, Loader2,
-  ChevronRight
+  Clock, AlertCircle, Loader2,
+  ChevronRight, BookOpen, Monitor
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { usePortalSession } from '@/hooks/usePortalSession';
 import { PortalHeader } from '@/components/customer-portal/PortalHeader';
 import { SafeSuiteWidget } from '@/components/customer-portal/SafeSuiteWidget';
+import { AnnouncementBanner } from '@/components/customer-portal/AnnouncementBanner';
+import { DashboardStats } from '@/components/customer-portal/DashboardStats';
+import { KnowledgeBase } from '@/components/customer-portal/KnowledgeBase';
+import { DeviceStatus } from '@/components/customer-portal/DeviceStatus';
 
 interface PortalTicket {
   id: string;
@@ -33,10 +37,10 @@ interface PortalTicket {
 
 export default function CustomerPortalDashboard() {
   const navigate = useNavigate();
-  const { session, isLoading: sessionLoading, logout } = usePortalSession();
+  const { session, isLoading: sessionLoading } = usePortalSession();
   const [tickets, setTickets] = useState<PortalTicket[]>([]);
   const [isLoadingTickets, setIsLoadingTickets] = useState(true);
-  const [activeTab, setActiveTab] = useState('tickets');
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     if (!sessionLoading && !session) {
@@ -72,8 +76,6 @@ export default function CustomerPortalDashboard() {
     }
   };
 
-  // handleLogout is now in PortalHeader
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
@@ -108,17 +110,34 @@ export default function CustomerPortalDashboard() {
   const hasAnySafeSuite = safeSuite.safepass_enabled || safeSuite.safescan_enabled || 
                           safeSuite.safeweb_enabled || safeSuite.safetrack_enabled;
 
+  // Get recent tickets for overview
+  const recentTickets = tickets.slice(0, 5);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <PortalHeader />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Announcements */}
+        <AnnouncementBanner clientId={session.user.clientId} />
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-black/40 border border-white/10">
+          <TabsList className="bg-black/40 border border-white/10 flex-wrap h-auto gap-1 p-1">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+              Overview
+            </TabsTrigger>
             <TabsTrigger value="tickets" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
               <Ticket className="h-4 w-4 mr-2" />
-              Support Tickets
+              Tickets
+            </TabsTrigger>
+            <TabsTrigger value="kb" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Help Center
+            </TabsTrigger>
+            <TabsTrigger value="devices" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+              <Monitor className="h-4 w-4 mr-2" />
+              Devices
             </TabsTrigger>
             {hasAnySafeSuite && (
               <TabsTrigger value="tools" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
@@ -127,6 +146,85 @@ export default function CustomerPortalDashboard() {
               </TabsTrigger>
             )}
           </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* Stats */}
+            <DashboardStats />
+
+            {/* Recent Tickets */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-white">Recent Tickets</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setActiveTab('tickets')}
+                  className="text-cyan-400 hover:text-cyan-300"
+                >
+                  View All
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+
+              {isLoadingTickets ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
+                </div>
+              ) : recentTickets.length === 0 ? (
+                <Card className="bg-black/40 border-white/10">
+                  <CardContent className="py-8 text-center">
+                    <Ticket className="h-10 w-10 text-white/20 mx-auto mb-2" />
+                    <p className="text-white/60">No tickets yet</p>
+                    <Button
+                      onClick={() => navigate('/customer-portal/tickets/new')}
+                      className="mt-4 bg-gradient-to-r from-cyan-500 to-purple-600"
+                      size="sm"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Ticket
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-2">
+                  {recentTickets.map((ticket) => (
+                    <Card 
+                      key={ticket.id}
+                      className="bg-black/40 border-white/10 hover:border-cyan-500/30 transition-colors cursor-pointer group"
+                      onClick={() => navigate(`/customer-portal/tickets/${ticket.id}`)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 mb-1">
+                              <h3 className="font-medium text-white truncate group-hover:text-cyan-400 transition-colors">
+                                {ticket.subject}
+                              </h3>
+                              <Badge className={getStatusColor(ticket.status)}>
+                                {ticket.status.replace('_', ' ')}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-white/50">
+                              <span className="flex items-center gap-1">
+                                <AlertCircle className={`h-3 w-3 ${getPriorityColor(ticket.priority)}`} />
+                                {ticket.priority}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {new Date(ticket.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <ChevronRight className="h-5 w-5 text-white/30 group-hover:text-cyan-400 transition-colors" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
 
           {/* Tickets Tab */}
           <TabsContent value="tickets" className="space-y-6">
@@ -211,6 +309,16 @@ export default function CustomerPortalDashboard() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          {/* Knowledge Base Tab */}
+          <TabsContent value="kb">
+            <KnowledgeBase clientId={session.user.clientId} />
+          </TabsContent>
+
+          {/* Devices Tab */}
+          <TabsContent value="devices">
+            <DeviceStatus />
           </TabsContent>
 
           {/* Security Tools Tab */}

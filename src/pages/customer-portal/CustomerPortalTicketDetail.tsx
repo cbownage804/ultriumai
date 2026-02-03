@@ -20,6 +20,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { usePortalSession } from '@/hooks/usePortalSession';
 import { PortalHeader } from '@/components/customer-portal/PortalHeader';
+import { TicketAttachments } from '@/components/customer-portal/TicketAttachments';
+import { SatisfactionRating } from '@/components/customer-portal/SatisfactionRating';
 
 interface TicketComment {
   id: string;
@@ -335,20 +337,25 @@ export default function CustomerPortalTicketDetail() {
         )}
 
         {isResolved && (
-          <Card className="bg-green-500/5 border-green-500/20">
-            <CardContent className="p-4 text-center">
-              <CheckCircle className="h-6 w-6 text-green-400 mx-auto mb-2" />
-              <p className="text-green-400 font-medium">This ticket has been resolved</p>
-              <p className="text-white/50 text-sm mt-1">
-                Need more help? <button 
-                  onClick={() => navigate('/customer-portal/tickets/new')}
-                  className="text-cyan-400 hover:underline"
-                >
-                  Create a new ticket
-                </button>
-              </p>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            {/* Satisfaction Rating */}
+            <SatisfactionRating ticketId={ticketId!} />
+            
+            <Card className="bg-green-500/5 border-green-500/20">
+              <CardContent className="p-4 text-center">
+                <CheckCircle className="h-6 w-6 text-green-400 mx-auto mb-2" />
+                <p className="text-green-400 font-medium">This ticket has been resolved</p>
+                <p className="text-white/50 text-sm mt-1">
+                  Need more help? <button 
+                    onClick={() => navigate('/customer-portal/tickets/new')}
+                    className="text-cyan-400 hover:underline"
+                  >
+                    Create a new ticket
+                  </button>
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </main>
     </div>
