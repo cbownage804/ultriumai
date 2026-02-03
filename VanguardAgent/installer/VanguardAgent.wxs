@@ -26,10 +26,8 @@
                 KeyPath="yes" />
           <File Id="ConfigJson" 
                 Source="$(var.PublishDir)\config.json" />
-        </Component>
 
-        <!-- Windows Service installation -->
-        <Component Id="ServiceComponent" Guid="C3D4E5F6-A7B8-9012-CDEF-123456789012">
+          <!-- Windows Service installation (must be in the same component as the service EXE file) -->
           <ServiceInstall Id="VanguardAgentService"
                           Name="VanguardAgent"
                           DisplayName="Ultrium Vanguard Agent"
@@ -60,7 +58,6 @@
     <!-- Feature definition -->
     <Feature Id="ProductFeature" Title="Vanguard Agent" Level="1">
       <ComponentRef Id="MainExecutable" />
-      <ComponentRef Id="ServiceComponent" />
       <ComponentRef Id="RegistryEntries" />
     </Feature>
 
