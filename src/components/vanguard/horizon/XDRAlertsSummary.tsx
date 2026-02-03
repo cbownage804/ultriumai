@@ -128,7 +128,7 @@ export function XDRAlertsSummary() {
             variant="ghost" 
             size="sm" 
             className="text-xs"
-            onClick={() => navigate(`${basePath}/pursuit`)}
+            onClick={() => navigate(`${basePath}/alerts`)}
           >
             Open Pursuit
             <ExternalLink className="h-3 w-3 ml-1" />
@@ -166,7 +166,7 @@ export function XDRAlertsSummary() {
                 <div 
                   key={threat.id}
                   className="p-3 rounded-lg bg-background/50 border border-white/10 hover:bg-white/5 transition-colors cursor-pointer"
-                  onClick={() => navigate(`${basePath}/pursuit`)}
+                  onClick={() => navigate(`${basePath}/alerts`)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -220,7 +220,7 @@ export function XDRAlertsSummary() {
               size="sm" 
               variant="destructive" 
               className="flex-1"
-              onClick={() => navigate(`${basePath}/pursuit`)}
+              onClick={() => navigate(`${basePath}/alerts`)}
             >
               <Zap className="h-4 w-4 mr-2" />
               Investigate Threats
