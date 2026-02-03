@@ -273,3 +273,16 @@ verify_jwt = false
 # Script Generation
 [functions.generate-script]
 verify_jwt = false
+
+# XDR Edge Functions
+[functions.xdr-threat-ingestion]
+verify_jwt = false
+
+[functions.xdr-yara-processor]
+verify_jwt = false
+
+[functions.xdr-siem-correlator]
+verify_jwt = true
+
+[functions.xdr-response-executor]
+verify_jwt = false

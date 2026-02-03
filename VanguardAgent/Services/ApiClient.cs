@@ -289,7 +289,7 @@ public class ApiClient
         {
             SetHeaders();
             var content = new StringContent(JsonConvert.SerializeObject(threatData), Encoding.UTF8, "application/json");
-            var response = await _http.PostAsync(Config.ApiEndpoint, content);
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=xdr_threat", content);
             return response.IsSuccessStatusCode;
         }
         catch
@@ -297,6 +297,205 @@ public class ApiClient
             return false;
         }
     }
+
+    /// <summary>
+    /// Send YARA match to XDR engine
+    /// </summary>
+    public async Task<XdrThreatResponse?> SendYaraMatchAsync(string ruleName, string filePath, string fileHash, long fileSize, List<string>? matchedStrings = null)
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new
+            {
+                device_id = Config.DeviceId,
+                rule_name = ruleName,
+                file_path = filePath,
+                file_hash = fileHash,
+                file_size = fileSize,
+                matched_strings = matchedStrings ?? new List<string>()
+            };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=xdr_yara_match", content);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<XdrThreatResponse>(json);
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    /// <summary>
+    /// Send memory scan results to XDR engine
+    /// </summary>
+    public async Task<bool> SendMemoryScanAsync(string processName, int processId, List<object> detections)
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new
+            {
+                device_id = Config.DeviceId,
+                process_name = processName,
+                process_id = processId,
+                detections
+            };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=xdr_memory_scan", content);
+            return response.IsSuccessStatusCode;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>
+    /// Send script analysis results to XDR engine
+    /// </summary>
+    public async Task<XdrScriptResponse?> SendScriptAnalysisAsync(string scriptType, string scriptHash, string verdict, List<object>? indicators = null)
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new
+            {
+                device_id = Config.DeviceId,
+                script_type = scriptType,
+                script_hash = scriptHash,
+                verdict,
+                indicators = indicators ?? new List<object>()
+            };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=xdr_script_analysis", content);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<XdrScriptResponse>(json);
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    /// <summary>
+    /// Get XDR rules (YARA, IOCs, policies) from cloud
+    /// </summary>
+    public async Task<XdrRulesResponse?> GetXdrRulesAsync(string? ruleType = null, string? lastSync = null)
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new { device_id = Config.DeviceId, rule_type = ruleType, last_sync = lastSync };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=xdr_get_rules", content);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<XdrRulesResponse>(json);
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    /// <summary>
+    /// Poll for XDR response actions to execute
+    /// </summary>
+    public async Task<List<XdrAction>?> PollXdrActionsAsync()
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new { device_id = Config.DeviceId };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=xdr_poll_actions", content);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var result = JsonConvert.DeserializeObject<XdrActionsResponse>(json);
+                return result?.Actions;
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    /// <summary>
+    /// Report XDR action execution result
+    /// </summary>
+    public async Task<bool> ReportXdrActionResultAsync(string actionId, bool success, object? result = null, string? errorMessage = null)
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new
+            {
+                device_id = Config.DeviceId,
+                action_id = actionId,
+                success,
+                result,
+                error_message = errorMessage
+            };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=xdr_action_result", content);
+            return response.IsSuccessStatusCode;
+        }
+        catch { return false; }
+    }
+}
+
+// XDR Response Models
+public class XdrThreatResponse
+{
+    [JsonProperty("success")] public bool Success { get; set; }
+    [JsonProperty("threat_id")] public string? ThreatId { get; set; }
+    [JsonProperty("severity")] public string? Severity { get; set; }
+    [JsonProperty("action")] public string? Action { get; set; }
+}
+
+public class XdrScriptResponse
+{
+    [JsonProperty("success")] public bool Success { get; set; }
+    [JsonProperty("threat_id")] public string? ThreatId { get; set; }
+    [JsonProperty("action")] public string? Action { get; set; }
+}
+
+public class XdrRulesResponse
+{
+    [JsonProperty("yara_rules")] public List<YaraRuleInfo>? YaraRules { get; set; }
+    [JsonProperty("iocs")] public List<IocInfo>? Iocs { get; set; }
+    [JsonProperty("policies")] public List<object>? Policies { get; set; }
+    [JsonProperty("sync_time")] public string? SyncTime { get; set; }
+}
+
+public class YaraRuleInfo
+{
+    [JsonProperty("id")] public string? Id { get; set; }
+    [JsonProperty("name")] public string? Name { get; set; }
+    [JsonProperty("content")] public string? Content { get; set; }
+    [JsonProperty("category")] public string? Category { get; set; }
+    [JsonProperty("severity")] public string? Severity { get; set; }
+}
+
+public class IocInfo
+{
+    [JsonProperty("id")] public string? Id { get; set; }
+    [JsonProperty("ioc_type")] public string? IocType { get; set; }
+    [JsonProperty("ioc_value")] public string? IocValue { get; set; }
+    [JsonProperty("confidence")] public int Confidence { get; set; }
+}
+
+public class XdrActionsResponse
+{
+    [JsonProperty("actions")] public List<XdrAction>? Actions { get; set; }
+}
+
+public class XdrAction
+{
+    [JsonProperty("id")] public string? Id { get; set; }
+    [JsonProperty("action_type")] public string? ActionType { get; set; }
+    [JsonProperty("parameters")] public Dictionary<string, object>? Parameters { get; set; }
+    [JsonProperty("priority")] public string? Priority { get; set; }
 }
 
 // API Models
