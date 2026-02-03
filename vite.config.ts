@@ -50,13 +50,22 @@ export default defineConfig(({ mode }) => ({
     ],
   },
   build: {
-    // Optimize bundle size
+    // Optimize bundle size - but avoid chunking React separately to prevent multiple instances
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
-          supabase: ['@supabase/supabase-js'],
+        manualChunks: (id) => {
+          // Keep React together in one chunk to avoid multiple instances
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'react-vendor';
+          }
+          // Other large dependencies
+          if (id.includes('@radix-ui')) {
+            return 'ui';
+          }
+          if (id.includes('@supabase')) {
+            return 'supabase';
+          }
+          return undefined;
         },
       },
     },
