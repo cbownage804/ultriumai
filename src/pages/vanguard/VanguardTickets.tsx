@@ -22,7 +22,8 @@ import {
   HardDrive, Wifi, Calendar, Tag, AlertTriangle, ExternalLink,
   FileText, Image, Copy, ArrowUpRight, Timer, Target, Zap,
   Shield, RefreshCw, ChevronRight, ChevronDown, Trash2, 
-  UserPlus, GitMerge, Smile, Meh, Frown, Download, Loader2
+  UserPlus, GitMerge, Smile, Meh, Frown, Download, Loader2,
+  ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -164,6 +165,9 @@ export default function VanguardTickets() {
   const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
   const [viewType, setViewType] = useState('default');
   const [showFilters, setShowFilters] = useState(false);
+  const [sortField, setSortField] = useState<'created' | 'priority' | 'client' | 'status'>('created');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [clientSearch, setClientSearch] = useState('');
   const [newTicket, setNewTicket] = useState({
     title: '',
     description: '',
@@ -186,8 +190,16 @@ export default function VanguardTickets() {
     document.title = 'Tickets | Ultrium Vanguard';
   }, []);
 
+  // Filter by client search as well
+  const filteredClients = useMemo(() => {
+    if (!clientSearch) return clients;
+    return clients.filter(c => 
+      c.company_name.toLowerCase().includes(clientSearch.toLowerCase())
+    );
+  }, [clients, clientSearch]);
+
   const filteredTickets = useMemo(() => {
-    return tickets.filter(ticket => {
+    let result = tickets.filter(ticket => {
       const matchesSearch = ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             ticket.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             ticket.contact.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -197,7 +209,50 @@ export default function VanguardTickets() {
       const matchesAssignee = assigneeFilter === 'all' || ticket.assignee === assigneeFilter;
       return matchesSearch && matchesStatus && matchesPriority && matchesOrg && matchesAssignee;
     });
-  }, [tickets, searchQuery, statusFilter, priorityFilter, organizationFilter, assigneeFilter]);
+
+    // Sort tickets
+    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    const statusOrder = { open: 0, in_progress: 1, resolved: 2, closed: 3 };
+
+    result.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'created':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        case 'priority':
+          comparison = priorityOrder[a.priority] - priorityOrder[b.priority];
+          break;
+        case 'client':
+          comparison = a.customer.localeCompare(b.customer);
+          break;
+        case 'status':
+          comparison = statusOrder[a.status] - statusOrder[b.status];
+          break;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return result;
+  }, [tickets, searchQuery, statusFilter, priorityFilter, organizationFilter, assigneeFilter, sortField, sortOrder]);
+
+  const handleSort = (field: typeof sortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+  };
+
+  const getSortIcon = (field: typeof sortField) => {
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortOrder === 'asc' 
+      ? <ArrowUp className="h-3 w-3 ml-1 text-cyan-400" />
+      : <ArrowDown className="h-3 w-3 ml-1 text-cyan-400" />;
+  };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -480,6 +535,29 @@ export default function VanguardTickets() {
 
             <div className="flex items-center gap-2">
               <span className="text-white/40 text-sm">Displaying {filteredTickets.length} of {tickets.length} tickets</span>
+              
+              {/* Sort Dropdown */}
+              <Select value={`${sortField}-${sortOrder}`} onValueChange={(v) => {
+                const [field, order] = v.split('-') as [typeof sortField, 'asc' | 'desc'];
+                setSortField(field);
+                setSortOrder(order);
+              }}>
+                <SelectTrigger className="w-40 bg-slate-800/50 border-cyan-500/20 text-white">
+                  <ArrowUpDown className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-cyan-500/20">
+                  <SelectItem value="created-desc">Newest first</SelectItem>
+                  <SelectItem value="created-asc">Oldest first</SelectItem>
+                  <SelectItem value="priority-asc">Priority (High→Low)</SelectItem>
+                  <SelectItem value="priority-desc">Priority (Low→High)</SelectItem>
+                  <SelectItem value="client-asc">Client (A→Z)</SelectItem>
+                  <SelectItem value="client-desc">Client (Z→A)</SelectItem>
+                  <SelectItem value="status-asc">Status (Open→Closed)</SelectItem>
+                  <SelectItem value="status-desc">Status (Closed→Open)</SelectItem>
+                </SelectContent>
+              </Select>
+
               <Select value={viewType} onValueChange={setViewType}>
                 <SelectTrigger className="w-36 bg-slate-800/50 border-cyan-500/20 text-white">
                   <SelectValue placeholder="Default view" />
@@ -538,21 +616,35 @@ export default function VanguardTickets() {
                       </Button>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {/* Organization Filter */}
+                      {/* Organization Filter with Search */}
                       <div className="space-y-1.5">
-                        <Label className="text-xs text-slate-400">Organization</Label>
+                        <Label className="text-xs text-slate-400">Client / Organization</Label>
                         <Select value={organizationFilter} onValueChange={setOrganizationFilter}>
                           <SelectTrigger className="bg-slate-800/50 border-cyan-500/20 text-white">
                             <Building2 className="h-4 w-4 mr-2 text-cyan-400" />
-                            <SelectValue placeholder="All Organizations" />
+                            <SelectValue placeholder="All Clients" />
                           </SelectTrigger>
                           <SelectContent className="bg-slate-900 border-cyan-500/20">
-                            <SelectItem value="all">All Organizations</SelectItem>
-                            {clients.map(client => (
+                            <div className="p-2 border-b border-cyan-500/20">
+                              <div className="relative">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
+                                <Input
+                                  placeholder="Search clients..."
+                                  value={clientSearch}
+                                  onChange={(e) => setClientSearch(e.target.value)}
+                                  className="pl-8 h-8 bg-slate-800/80 border-cyan-500/30 text-white text-sm"
+                                />
+                              </div>
+                            </div>
+                            <SelectItem value="all">All Clients</SelectItem>
+                            {filteredClients.map(client => (
                               <SelectItem key={client.id} value={client.id}>
                                 {client.company_name}
                               </SelectItem>
                             ))}
+                            {filteredClients.length === 0 && clientSearch && (
+                              <div className="p-2 text-sm text-white/40 text-center">No clients found</div>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -721,21 +813,49 @@ export default function VanguardTickets() {
                           className="border-white/20"
                         />
                       </th>
-                      <th className="text-left p-3 text-white/60 font-medium text-sm">Details</th>
+                      <th 
+                        className="text-left p-3 text-white/60 font-medium text-sm cursor-pointer hover:text-white transition-colors"
+                        onClick={() => handleSort('created')}
+                      >
+                        <div className="flex items-center">
+                          Details
+                          {getSortIcon('created')}
+                        </div>
+                      </th>
+                      <th 
+                        className="text-left p-3 text-white/60 font-medium text-sm cursor-pointer hover:text-white transition-colors"
+                        onClick={() => handleSort('client')}
+                      >
+                        <div className="flex items-center">
+                          <Building2 className="h-3.5 w-3.5 mr-1.5 text-cyan-400" />
+                          Client
+                          {getSortIcon('client')}
+                        </div>
+                      </th>
                       <th className="text-left p-3 text-white/60 font-medium text-sm">SLA</th>
-                      <th className="text-left p-3 text-white/60 font-medium text-sm">Sentiment</th>
-                      <th className="text-left p-3 text-white/60 font-medium text-sm">Assigned Technician</th>
-                      <th className="text-left p-3 text-white/60 font-medium text-sm">Priority</th>
-                      <th className="text-left p-3 text-white/60 font-medium text-sm">Activity Status</th>
-                      <th className="text-left p-3 text-white/60 font-medium text-sm">Status</th>
+                      <th className="text-left p-3 text-white/60 font-medium text-sm">Assigned</th>
+                      <th 
+                        className="text-left p-3 text-white/60 font-medium text-sm cursor-pointer hover:text-white transition-colors"
+                        onClick={() => handleSort('priority')}
+                      >
+                        <div className="flex items-center">
+                          Priority
+                          {getSortIcon('priority')}
+                        </div>
+                      </th>
+                      <th 
+                        className="text-left p-3 text-white/60 font-medium text-sm cursor-pointer hover:text-white transition-colors"
+                        onClick={() => handleSort('status')}
+                      >
+                        <div className="flex items-center">
+                          Status
+                          {getSortIcon('status')}
+                        </div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredTickets.map((ticket) => {
-                      const sentiment = getSentimentIcon(ticket.urgency);
-                      const SentimentIcon = sentiment.icon;
-                      const activityStatus = getActivityStatus(ticket);
-                      
                       return (
                         <tr 
                           key={ticket.id} 
@@ -761,14 +881,16 @@ export default function VanguardTickets() {
                                   <span className="text-cyan-400 font-mono text-sm">#{ticket.id.split('-')[1]}</span>
                                   <span className="text-white font-medium">{ticket.title}</span>
                                 </div>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-cyan-400/70 text-sm">{ticket.customer}</span>
-                                  <span className="text-white/40 text-sm">{ticket.contact.name}</span>
-                                </div>
                                 <div className="text-white/40 text-xs mt-0.5">
-                                  Created {ticket.created} • Modified {ticket.created}
+                                  {ticket.contact.name} • Created {ticket.created}
                                 </div>
                               </div>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4 text-cyan-400/60" />
+                              <span className="text-cyan-400 font-medium text-sm">{ticket.customer}</span>
                             </div>
                           </td>
                           <td className="p-3">
@@ -784,38 +906,19 @@ export default function VanguardTickets() {
                             </Badge>
                           </td>
                           <td className="p-3">
-                            <SentimentIcon className={`h-5 w-5 ${sentiment.color}`} />
-                          </td>
-                          <td className="p-3">
                             <span className="text-white/80">{ticket.assignee}</span>
                           </td>
                           <td className="p-3">
-                            <span className={`capitalize ${
-                              ticket.priority === 'critical' ? 'text-red-400' :
-                              ticket.priority === 'high' ? 'text-orange-400' :
-                              ticket.priority === 'medium' ? 'text-yellow-400' :
-                              'text-slate-400'
-                            }`}>
+                            <Badge className={priorityColors[ticket.priority]}>
                               {ticket.priority}
-                            </span>
+                            </Badge>
                           </td>
                           <td className="p-3">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-2 h-2 rounded-full ${activityStatus.dot}`} />
-                              <span className={`text-sm ${activityStatus.color}`}>{activityStatus.label}</span>
-                            </div>
-                          </td>
-                          <td className="p-3">
-                            <span className={`capitalize font-medium ${
-                              ticket.status === 'open' ? 'text-cyan-400' :
-                              ticket.status === 'in_progress' ? 'text-blue-400' :
-                              ticket.status === 'resolved' ? 'text-emerald-400' :
-                              'text-slate-400'
-                            }`}>
+                            <Badge className={statusColors[ticket.status]}>
                               {ticket.status === 'open' ? 'Open' : 
                                ticket.status === 'in_progress' ? 'In Progress' :
                                ticket.status === 'resolved' ? 'Resolved' : 'Closed'}
-                            </span>
+                            </Badge>
                           </td>
                         </tr>
                       );
