@@ -1,6 +1,6 @@
 /**
- * Generate a PowerShell installer script that downloads and runs the MSI
- * with auto-provisioning token for true 1-click deployment.
+ * Generate a self-elevating CMD installer that works like Datto/Atera
+ * Just double-click and it handles everything automatically
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -63,190 +63,166 @@ export async function createProvisioningToken(options: MsiInstallerOptions): Pro
 }
 
 /**
- * Generate a PowerShell script with embedded provisioning token
- * The agent will call the provision endpoint to get full credentials on first run
+ * Generate a self-elevating CMD/BAT installer with embedded PowerShell
+ * This provides a true "double-click to install" experience like Datto/Atera
+ */
+export function generateCmdInstaller(provisioningToken: string, clientName?: string, enableTray?: boolean): string {
+  const escapedClientName = (clientName || 'Vanguard Device').replace(/"/g, '\\"');
+  const trayFlag = enableTray ? '1' : '0';
+  
+  // CMD wrapper that self-elevates and runs PowerShell inline
+  const script = `@echo off
+:: =============================================================================
+:: Ultrium Vanguard Agent - 1-Click Installer
+:: Pre-configured for: ${escapedClientName}
+:: Just double-click to install - no configuration needed!
+:: =============================================================================
+
+:: Check for admin rights and self-elevate if needed
+net session >nul 2>&1
+if %errorLevel% neq 0 (
+    echo Requesting administrator privileges...
+    powershell -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
+    exit /b
+)
+
+:: Run the installation via PowerShell
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+$ErrorActionPreference = 'Stop'; ^
+$ProgressPreference = 'SilentlyContinue'; ^
+^
+$token = '${provisioningToken}'; ^
+$msiUrl = '${MSI_DOWNLOAD_URL}'; ^
+$provisionUrl = '${PROVISION_ENDPOINT}'; ^
+$enableTray = '${trayFlag}'; ^
+^
+Write-Host ''; ^
+Write-Host '  VANGUARD AGENT INSTALLER' -ForegroundColor Cyan; ^
+Write-Host '  Enterprise RMM + XDR Agent' -ForegroundColor White; ^
+Write-Host '  Customer: ${escapedClientName}' -ForegroundColor Yellow; ^
+Write-Host ''; ^
+^
+Write-Host '[1/4] Fetching credentials...' -ForegroundColor Yellow; ^
+try { ^
+    $body = (@{ token = $token; device_id = $env:COMPUTERNAME } | ConvertTo-Json); ^
+    $creds = Invoke-RestMethod -Uri ($provisionUrl + '?action=redeem') -Method POST -Body $body -ContentType 'application/json'; ^
+    if (-not $creds.secret_key) { throw 'No credentials returned' }; ^
+    Write-Host '   OK' -ForegroundColor Green; ^
+} catch { ^
+    Write-Host ('   Failed: ' + $_.Exception.Message) -ForegroundColor Red; ^
+    Write-Host ''; ^
+    Write-Host 'Token may be expired. Download a new installer from your dashboard.' -ForegroundColor Yellow; ^
+    pause; ^
+    exit 1; ^
+}; ^
+^
+Write-Host '[2/4] Downloading MSI...' -ForegroundColor Yellow; ^
+$tempDir = Join-Path $env:TEMP ('VanguardInstall-' + (Get-Random)); ^
+New-Item -ItemType Directory -Path $tempDir -Force | Out-Null; ^
+$msiPath = Join-Path $tempDir 'VanguardAgent.msi'; ^
+try { ^
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; ^
+    (New-Object System.Net.WebClient).DownloadFile($msiUrl, $msiPath); ^
+    $size = [math]::Round((Get-Item $msiPath).Length / 1MB, 1); ^
+    Write-Host ('   Downloaded: ' + $size + ' MB') -ForegroundColor Green; ^
+} catch { ^
+    Write-Host ('   Failed: ' + $_.Exception.Message) -ForegroundColor Red; ^
+    pause; ^
+    exit 1; ^
+}; ^
+^
+Write-Host '[3/4] Installing...' -ForegroundColor Yellow; ^
+$msiArgs = '/i \"' + $msiPath + '\" /qn /norestart USERID=\"' + $creds.user_id + '\" SECRETKEY=\"' + $creds.secret_key + '\" ENABLETRAY=\"' + $enableTray + '\"'; ^
+if ($creds.client_id) { $msiArgs += ' CLIENTID=\"' + $creds.client_id + '\"' }; ^
+$proc = Start-Process msiexec.exe -ArgumentList $msiArgs -Wait -PassThru; ^
+if ($proc.ExitCode -eq 0 -or $proc.ExitCode -eq 3010) { ^
+    Write-Host '   OK' -ForegroundColor Green; ^
+} else { ^
+    Write-Host ('   Failed (exit code: ' + $proc.ExitCode + ')') -ForegroundColor Red; ^
+    pause; ^
+    exit 1; ^
+}; ^
+^
+Write-Host '[4/4] Verifying...' -ForegroundColor Yellow; ^
+Start-Sleep -Seconds 3; ^
+$svc = Get-Service -Name 'VanguardAgent' -ErrorAction SilentlyContinue; ^
+if ($svc -and $svc.Status -eq 'Running') { ^
+    Write-Host '   Service running!' -ForegroundColor Green; ^
+} elseif ($svc) { ^
+    Write-Host ('   Service installed (status: ' + $svc.Status + ')') -ForegroundColor Yellow; ^
+} else { ^
+    Write-Host '   Service not found' -ForegroundColor Red; ^
+}; ^
+^
+Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue; ^
+^
+Write-Host ''; ^
+Write-Host '============================================' -ForegroundColor Green; ^
+Write-Host '  Installation Complete!' -ForegroundColor Green; ^
+Write-Host '============================================' -ForegroundColor Green; ^
+Write-Host ''; ^
+Write-Host '  Dashboard: https://ultriumai.com/vanguard' -ForegroundColor Cyan; ^
+Write-Host ''; ^
+pause;
+`;
+
+  return script;
+}
+
+/**
+ * Generate installer as a downloadable blob (CMD format)
+ */
+export function generateMsiInstallerBlob(provisioningToken: string, clientName?: string, enableTray?: boolean): Blob {
+  const script = generateCmdInstaller(provisioningToken, clientName, enableTray);
+  return new Blob([script], { type: 'application/x-msdos-program' });
+}
+
+/**
+ * Legacy: Generate PowerShell script (for advanced users)
  */
 export function generateMsiInstallerScript(provisioningToken: string, clientName?: string): string {
   const escapedClientName = clientName || 'Vanguard Device';
   
   const lines = [
     '#Requires -RunAsAdministrator',
-    '# =============================================================================',
-    '# Ultrium Vanguard Agent - 1-Click Installer',
+    '# Ultrium Vanguard Agent - PowerShell Installer',
     `# Pre-configured for: ${escapedClientName}`,
-    '# =============================================================================',
     '',
     '$ErrorActionPreference = "Stop"',
-    '$ProgressPreference = "SilentlyContinue"',
+    `$token = "${provisioningToken}"`,
+    `$msiUrl = "${MSI_DOWNLOAD_URL}"`,
+    `$provisionUrl = "${PROVISION_ENDPOINT}"`,
     '',
-    '# Provisioning token (auto-generated, valid for 7 days)',
-    `$PROVISION_TOKEN = "${provisioningToken}"`,
-    `$MSI_URL = "${MSI_DOWNLOAD_URL}"`,
-    `$PROVISION_URL = "${PROVISION_ENDPOINT}"`,
+    'Write-Host "Fetching credentials..." -ForegroundColor Yellow',
+    '$body = @{ token = $token; device_id = $env:COMPUTERNAME } | ConvertTo-Json',
+    '$creds = Invoke-RestMethod -Uri "$provisionUrl?action=redeem" -Method POST -Body $body -ContentType "application/json"',
     '',
-    'function Write-Banner {',
-    '    Write-Host ""',
-    '    Write-Host "  VANGUARD AGENT INSTALLER" -ForegroundColor Cyan',
-    '    Write-Host "  Enterprise RMM + XDR Agent" -ForegroundColor White',
-    `    Write-Host "  Customer: ${escapedClientName}" -ForegroundColor Yellow`,
-    '    Write-Host ""',
-    '}',
+    'Write-Host "Downloading MSI..." -ForegroundColor Yellow',
+    '$msiPath = Join-Path $env:TEMP "VanguardAgent.msi"',
+    '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12',
+    '(New-Object System.Net.WebClient).DownloadFile($msiUrl, $msiPath)',
     '',
-    'function Get-Credentials {',
-    '    Write-Host "[1/4] Fetching provisioning credentials..." -ForegroundColor Yellow',
-    '    ',
-    '    try {',
-    '        $body = @{ token = $PROVISION_TOKEN; device_id = $env:COMPUTERNAME } | ConvertTo-Json',
-    '        $response = Invoke-RestMethod -Uri "$PROVISION_URL`?action=redeem" -Method POST -Body $body -ContentType "application/json"',
-    '        ',
-    '        if ($response.secret_key) {',
-    '            Write-Host "   Credentials received successfully" -ForegroundColor Green',
-    '            return $response',
-    '        }',
-    '    }',
-    '    catch {',
-    '        $errorMsg = $_.ErrorDetails.Message | ConvertFrom-Json -ErrorAction SilentlyContinue',
-    '        if ($errorMsg.error) {',
-    '            Write-Host "   Error: $($errorMsg.error)" -ForegroundColor Red',
-    '        } else {',
-    '            Write-Host "   Error: $_" -ForegroundColor Red',
-    '        }',
-    '    }',
-    '    return $null',
-    '}',
+    'Write-Host "Installing..." -ForegroundColor Yellow',
+    '$enableTray = if ($creds.enable_tray) { "1" } else { "0" }',
+    '$msiArgs = "/i `"$msiPath`" /qn /norestart USERID=`"$($creds.user_id)`" SECRETKEY=`"$($creds.secret_key)`" ENABLETRAY=`"$enableTray`""',
+    'if ($creds.client_id) { $msiArgs += " CLIENTID=`"$($creds.client_id)`"" }',
+    'Start-Process msiexec.exe -ArgumentList $msiArgs -Wait',
     '',
-    'function Download-Msi {',
-    '    param([string]$Destination)',
-    '    ',
-    '    Write-Host "[2/4] Downloading Vanguard Agent MSI..." -ForegroundColor Yellow',
-    '    ',
-    '    try {',
-    '        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12',
-    '        $webClient = New-Object System.Net.WebClient',
-    '        $webClient.DownloadFile($MSI_URL, $Destination)',
-    '        ',
-    '        if (Test-Path $Destination) {',
-    '            $size = (Get-Item $Destination).Length / 1MB',
-    '            Write-Host "   Downloaded: $([math]::Round($size, 1)) MB" -ForegroundColor Green',
-    '            return $true',
-    '        }',
-    '    }',
-    '    catch {',
-    '        Write-Host "   Download failed: $_" -ForegroundColor Red',
-    '    }',
-    '    return $false',
-    '}',
-    '',
-    'function Install-Agent {',
-    '    param([string]$MsiPath, $Creds)',
-    '    ',
-    '    Write-Host "[3/4] Installing Vanguard Agent..." -ForegroundColor Yellow',
-    '    ',
-    '    $enableTray = if ($Creds.enable_tray) { "1" } else { "0" }',
-    '    $msiArgs = "/i `"$MsiPath`" /qn /norestart USERID=`"$($Creds.user_id)`" SECRETKEY=`"$($Creds.secret_key)`" ENABLETRAY=`"$enableTray`""',
-    '    ',
-    '    if ($Creds.client_id) {',
-    '        $msiArgs += " CLIENTID=`"$($Creds.client_id)`""',
-    '    }',
-    '    ',
-    '    $process = Start-Process -FilePath "msiexec.exe" -ArgumentList $msiArgs -Wait -PassThru',
-    '    ',
-    '    if ($process.ExitCode -eq 0 -or $process.ExitCode -eq 3010) {',
-    '        Write-Host "   Installation successful!" -ForegroundColor Green',
-    '        return $true',
-    '    }',
-    '    else {',
-    '        Write-Host "   Installation failed (exit code: $($process.ExitCode))" -ForegroundColor Red',
-    '        return $false',
-    '    }',
-    '}',
-    '',
-    'function Verify-Installation {',
-    '    Write-Host "[4/4] Verifying installation..." -ForegroundColor Yellow',
-    '    Start-Sleep -Seconds 3',
-    '    ',
-    '    $service = Get-Service -Name "VanguardAgent" -ErrorAction SilentlyContinue',
-    '    if ($service -and $service.Status -eq "Running") {',
-    '        Write-Host "   Service running!" -ForegroundColor Green',
-    '        return $true',
-    '    }',
-    '    elseif ($service) {',
-    '        Write-Host "   Service installed (Status: $($service.Status))" -ForegroundColor Yellow',
-    '        return $true',
-    '    }',
-    '    Write-Host "   Service not found" -ForegroundColor Red',
-    '    return $false',
-    '}',
-    '',
-    '# =============================================================================',
-    '# Main',
-    '# =============================================================================',
-    '',
-    'Write-Banner',
-    '',
-    '# Get credentials from provisioning token',
-    '$creds = Get-Credentials',
-    'if (-not $creds) {',
-    '    Write-Host ""',
-    '    Write-Host "ERROR: Failed to provision agent. Token may be expired or already used." -ForegroundColor Red',
-    '    Write-Host "Please download a new installer from your Vanguard dashboard." -ForegroundColor Yellow',
-    '    exit 1',
-    '}',
-    '',
-    '# Download MSI',
-    '$tempDir = Join-Path $env:TEMP "VanguardInstall-$(Get-Random)"',
-    'New-Item -ItemType Directory -Path $tempDir -Force | Out-Null',
-    '$msiPath = Join-Path $tempDir "VanguardAgent.msi"',
-    '',
-    'try {',
-    '    if (-not (Download-Msi -Destination $msiPath)) {',
-    '        throw "MSI download failed"',
-    '    }',
-    '    ',
-    '    if (-not (Install-Agent -MsiPath $msiPath -Creds $creds)) {',
-    '        throw "Installation failed"',
-    '    }',
-    '    ',
-    '    $verified = Verify-Installation',
-    '    ',
-    '    Write-Host ""',
-    '    if ($verified) {',
-    '        Write-Host "============================================" -ForegroundColor Green',
-    '        Write-Host "  Installation Complete!" -ForegroundColor Green',
-    '        Write-Host "============================================" -ForegroundColor Green',
-    '        Write-Host ""',
-    '        Write-Host "  Dashboard: https://ultriumai.com/vanguard" -ForegroundColor Cyan',
-    '    }',
-    '}',
-    'catch {',
-    '    Write-Host ""',
-    '    Write-Host "ERROR: $_" -ForegroundColor Red',
-    '    exit 1',
-    '}',
-    'finally {',
-    '    if (Test-Path $tempDir) {',
-    '        Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue',
-    '    }',
-    '}',
+    'Write-Host "Done! Service should be running." -ForegroundColor Green',
   ];
-
+  
   return lines.join('\n');
-}
-
-/**
- * Generate installer script as a downloadable blob
- */
-export function generateMsiInstallerBlob(provisioningToken: string, clientName?: string): Blob {
-  const script = generateMsiInstallerScript(provisioningToken, clientName);
-  return new Blob([script], { type: 'application/octet-stream' });
 }
 
 /**
  * Generate a simple one-liner for copy-paste deployment
  */
 export function generateMsiOneLiner(provisioningToken: string): string {
-  return `# Run in elevated PowerShell (token valid for 7 days, single use):
-irm "https://ultriumai.com/install.ps1?token=${provisioningToken}" | iex`;
+  const provisionUrl = PROVISION_ENDPOINT;
+  const msiUrl = MSI_DOWNLOAD_URL;
+  
+  return `# Run in elevated PowerShell:
+$t="${provisioningToken}";$c=irm "${provisionUrl}?action=redeem" -Method POST -Body (@{token=$t;device_id=$env:COMPUTERNAME}|ConvertTo-Json) -ContentType "application/json";$m="$env:TEMP\\VanguardAgent.msi";(New-Object Net.WebClient).DownloadFile("${msiUrl}",$m);msiexec /i $m /qn USERID="$($c.user_id)" SECRETKEY="$($c.secret_key)" ENABLETRAY="$(if($c.enable_tray){'1'}else{'0'})"`;
 }
 
 /**
@@ -254,6 +230,7 @@ irm "https://ultriumai.com/install.ps1?token=${provisioningToken}" | iex`;
  */
 export async function generateOneClickInstaller(options: MsiInstallerOptions): Promise<{
   blob: Blob;
+  filename: string;
   token: string;
   expiresAt: string;
 } | null> {
@@ -264,11 +241,14 @@ export async function generateOneClickInstaller(options: MsiInstallerOptions): P
     return null;
   }
 
-  // Generate installer with embedded token
-  const blob = generateMsiInstallerBlob(tokenResponse.token, options.clientName);
+  // Generate CMD installer with embedded token
+  const blob = generateMsiInstallerBlob(tokenResponse.token, options.clientName, options.enableTray);
+  const safeName = (options.clientName || 'VanguardAgent').replace(/[^a-zA-Z0-9]/g, '-');
+  const filename = `Install-${safeName}.cmd`;
 
   return {
     blob,
+    filename,
     token: tokenResponse.token,
     expiresAt: tokenResponse.expires_at,
   };
