@@ -1,11 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { encode as encodeBase64 } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.53.0";
-import { Image } from "https://deno.land/x/imagescript@1.2.15/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  // Must include all headers sent by supabase-js in browsers.
   'Access-Control-Allow-Headers': [
     'authorization',
     'x-client-info',
@@ -22,125 +19,19 @@ const corsHeaders = {
 const TARGET_WIDTH = 1080;
 const TARGET_HEIGHT = 1080;
 
-// Stable origins for fetching public assets (logos) from the edge runtime.
-// NOTE: The in-editor preview often runs on a tokenized lovableproject.com origin that edge-runtime fetch
-// can't access. We prefer the stable id-preview host and fall back to the published domain.
-const STABLE_PREVIEW_ORIGIN = 'https://id-preview--51e5cd04-5f19-440a-a7ba-de30fc766877.lovable.app';
-const PUBLISHED_ORIGIN = 'https://ultriumai.lovable.app';
-
-function normalizeAssetOrigin(origin?: string | null): string {
-  if (!origin) return STABLE_PREVIEW_ORIGIN;
-  // If the origin is a tokenized lovableproject.com host, use the stable preview origin instead.
-  if (origin.includes('lovableproject.com')) return STABLE_PREVIEW_ORIGIN;
-  return origin;
-}
-
-// Product logo URLs (from public folder - available after deploy)
-const getProductLogoUrl = (product: string, origin?: string | null): string => {
-  const logoMap: Record<string, string> = {
-    safepass: 'safepass-logo.png',
-    safescan: 'safescan-logo.png',
-    safeweb: 'safeweb-logo.png',
-    safetrack: 'safetrack-logo.png',
-    safeassist: 'safeassist-logo-horizontal.png',
-    safesuite: 'safesuite-logo.png',
-    ultriumgpt: 'ultrium-gpt-logo.png',
-    aistudio: 'ultrium-gpt-logo.png',
-    ultriumai: 'ultriumai-logo.png', // Default fallback logo
-    vanguard: 'vanguard-logo.png',
-  };
-
-  const base = normalizeAssetOrigin(origin);
-  const file = logoMap[product] || 'ultriumai-logo.png';
-  return new URL(`/logos/${file}`, base).toString();
+// Product logo mapping for client-side watermarking
+const PRODUCT_LOGOS: Record<string, string> = {
+  safepass: 'safepass-logo.png',
+  safescan: 'safescan-logo.png',
+  safeweb: 'safeweb-logo.png',
+  safetrack: 'safetrack-logo.png',
+  safeassist: 'safeassist-logo-horizontal.png',
+  safesuite: 'safesuite-logo.png',
+  ultriumgpt: 'ultrium-gpt-logo.png',
+  aistudio: 'ultrium-gpt-logo.png',
+  ultriumai: 'ultriumai-logo.png',
+  vanguard: 'vanguard-logo.png',
 };
-
-function dataUrlToBytes(dataUrl: string): Uint8Array {
-  const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '');
-  return Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
-}
-
-function getDataUrlMime(dataUrl: string): string | null {
-  if (!dataUrl.startsWith('data:')) return null;
-  const semi = dataUrl.indexOf(';');
-  if (semi === -1) return null;
-  return dataUrl.slice(5, semi);
-}
-
-async function fetchLogoBytes(logoUrl: string, fallbackOrigin?: string): Promise<Uint8Array | null> {
-  const tryUrls: string[] = [];
-
-  // Always try the requested URL first.
-  tryUrls.push(logoUrl);
-
-  // Then try stable preview + published origins for the same pathname.
-  try {
-    const u = new URL(logoUrl);
-    const stablePreview = new URL(u.pathname, STABLE_PREVIEW_ORIGIN).toString();
-    const published = new URL(u.pathname, PUBLISHED_ORIGIN).toString();
-    if (!tryUrls.includes(stablePreview)) tryUrls.push(stablePreview);
-    if (!tryUrls.includes(published)) tryUrls.push(published);
-
-    // And finally, if a caller supplies a custom fallback origin, try that too.
-    if (fallbackOrigin) {
-      const fallback = new URL(u.pathname, fallbackOrigin).toString();
-      if (!tryUrls.includes(fallback)) tryUrls.push(fallback);
-    }
-  } catch {
-    // ignore malformed URL
-  }
-
-  for (const url of tryUrls) {
-    try {
-      const res = await fetch(url);
-      if (res.ok) {
-        console.log('Logo fetch OK:', url);
-        return new Uint8Array(await res.arrayBuffer());
-      }
-      console.warn('Logo fetch failed:', res.status, url);
-    } catch (e) {
-      console.warn('Logo fetch error:', url, e);
-    }
-  }
-
-  console.warn('Logo fetch failed for all candidates. First URL:', logoUrl);
-  return null;
-}
-
-async function ensurePng1200x629AndWatermark(params: {
-  imageDataUrl: string;
-  logoUrl?: string | null;
-  logoFallbackOrigin?: string;
-}): Promise<string> {
-  const baseBytes = dataUrlToBytes(params.imageDataUrl);
-  let img = await Image.decode(baseBytes);
-
-  // Full-bleed: always cover-crop to exact social dimensions.
-  img = img.cover(TARGET_WIDTH, TARGET_HEIGHT);
-
-  if (params.logoUrl) {
-    const fallbackOrigin = params.logoFallbackOrigin || PUBLISHED_ORIGIN;
-    const logoBytes = await fetchLogoBytes(params.logoUrl, fallbackOrigin);
-    if (logoBytes) {
-      let logo = await Image.decode(logoBytes);
-
-      // Size: slightly larger so it's always visible on feed previews.
-      const targetLogoWidth = Math.max(140, Math.round(TARGET_WIDTH * 0.22));
-      logo = logo.resize(targetLogoWidth, Image.RESIZE_AUTO);
-
-      // Slight transparency to feel like a watermark.
-      logo.opacity(0.92);
-
-      const padding = Math.round(TARGET_WIDTH * 0.02); // ~24px
-      const x = Math.max(0, TARGET_WIDTH - logo.width - padding);
-      const y = Math.max(0, TARGET_HEIGHT - logo.height - padding);
-      img.composite(logo, x, y);
-    }
-  }
-
-  const pngBytes = await img.encode(1);
-  return `data:image/png;base64,${encodeBase64(pngBytes)}`;
-}
 
 // Keywords to detect product mentions
 const PRODUCT_KEYWORDS: Record<string, string[]> = {
@@ -373,25 +264,14 @@ COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds pr
       throw new Error('No image generated');
     }
 
-    // Deterministic post-processing (resize + watermark).
-    // IMPORTANT: If post-processing fails (e.g., unsupported image type),
-    // we still return the generated image so the workflow keeps working.
-    try {
-      const origin = req.headers.get('origin');
-      const watermarkProduct = detectedProduct || 'ultriumai';
-      const logoUrl = getProductLogoUrl(watermarkProduct, origin);
-      console.log('Applying watermark:', watermarkProduct, 'logoUrl:', logoUrl);
-      generatedImage = await ensurePng1200x629AndWatermark({
-        imageDataUrl: generatedImage,
-        logoUrl,
-        logoFallbackOrigin: PUBLISHED_ORIGIN,
-      });
-    } catch (e) {
-      console.warn('Post-processing failed; returning original generated image:', e);
-    }
+    // Return logo info for client-side watermarking (avoids memory-heavy in-edge processing)
+    const watermarkProduct = detectedProduct || 'ultriumai';
+    const logoFile = PRODUCT_LOGOS[watermarkProduct] || PRODUCT_LOGOS.ultriumai;
+    console.log('Will use watermark:', watermarkProduct, 'logo file:', logoFile);
 
-    // Convert base64 to buffer
-    const mime = getDataUrlMime(generatedImage) || 'image/png';
+    // Convert base64 to buffer for storage upload
+    const mimeMatch = generatedImage.match(/^data:([^;]+);base64,/);
+    const mime = mimeMatch?.[1] || 'image/png';
     const ext = mime === 'image/jpeg' ? 'jpg' : mime.split('/')[1] || 'png';
     const base64Data = generatedImage.replace(/^data:[^;]+;base64,/, '');
     const imageBuffer = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
@@ -410,7 +290,8 @@ COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds pr
       return new Response(JSON.stringify({ 
         imageUrl: generatedImage, 
         isBase64: true,
-        detectedProduct: detectedProduct || null
+        detectedProduct: detectedProduct || null,
+        logoFile: logoFile
       }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
@@ -425,7 +306,8 @@ COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds pr
     return new Response(JSON.stringify({ 
       imageUrl: publicUrlData.publicUrl, 
       isBase64: false,
-      detectedProduct: detectedProduct || null
+      detectedProduct: detectedProduct || null,
+      logoFile: logoFile
     }), { 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });
