@@ -22,6 +22,9 @@ public class RansomwareDefense : IDisposable
     private bool _isRunning;
     private readonly object _lock = new();
 
+    // Event for ransomware detection
+    public event EventHandler<RansomwareEventArgs>? OnRansomwareDetected;
+
     // Honeypot file names (placed in user folders)
     private static readonly string[] HoneypotNames = new[]
     {
@@ -448,6 +451,13 @@ public class RansomwareDefense : IDisposable
         {
             Console.WriteLine($"[XDR Ransomware] EMERGENCY RESPONSE: {reason}");
 
+            // Raise event for AVEngine
+            OnRansomwareDetected?.Invoke(this, new RansomwareEventArgs
+            {
+                Description = reason,
+                FilesAffected = _recentFileChanges
+            });
+
             // Attempt to create emergency shadow copy
             try
             {
@@ -486,6 +496,24 @@ public class RansomwareDefense : IDisposable
         catch (Exception ex)
         {
             Console.WriteLine($"[XDR Ransomware] Emergency response failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Terminate a process by ID
+    /// </summary>
+    public async Task TerminateProcessAsync(int processId)
+    {
+        try
+        {
+            using var process = Process.GetProcessById(processId);
+            process.Kill(true);
+            Console.WriteLine($"[XDR Ransomware] Terminated process {processId}");
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[XDR Ransomware] Failed to terminate process {processId}: {ex.Message}");
         }
     }
 
@@ -578,4 +606,12 @@ public class EncryptionMetrics
 {
     public int FileChanges { get; set; }
     public DateTime WindowStart { get; set; }
+}
+
+public class RansomwareEventArgs : EventArgs
+{
+    public string Description { get; set; } = "";
+    public int? ProcessId { get; set; }
+    public string? ProcessName { get; set; }
+    public int FilesAffected { get; set; }
 }

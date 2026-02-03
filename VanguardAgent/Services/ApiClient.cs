@@ -442,6 +442,233 @@ public class ApiClient
         }
         catch { return false; }
     }
+
+    /// <summary>
+    /// Log USB device event
+    /// </summary>
+    public async Task<bool> LogUSBEventAsync(USBDevice device, string eventType, string? reason = null)
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new
+            {
+                device_id = Config.DeviceId,
+                usb_device = new
+                {
+                    device_id = device.DeviceId,
+                    friendly_name = device.FriendlyName,
+                    vendor_id = device.VendorId,
+                    product_id = device.ProductId,
+                    serial_number = device.SerialNumber,
+                    drive_letter = device.DriveLetter
+                },
+                event_type = eventType,
+                reason
+            };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=usb_event", content);
+            return response.IsSuccessStatusCode;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>
+    /// Get USB policy from cloud
+    /// </summary>
+    public async Task<USBPolicyResponse?> GetUSBPolicyAsync()
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new { device_id = Config.DeviceId };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=get_usb_policy", content);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<USBPolicyResponse>(json);
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    /// <summary>
+    /// Get USB whitelist from cloud
+    /// </summary>
+    public async Task<USBWhitelistResponse?> GetUSBWhitelistAsync()
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new { device_id = Config.DeviceId };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=get_usb_whitelist", content);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<USBWhitelistResponse>(json);
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    /// <summary>
+    /// Lookup file hash against threat intelligence
+    /// </summary>
+    public async Task<HashLookupResponse?> LookupHashAsync(string hash)
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new { device_id = Config.DeviceId, hash };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=lookup_hash", content);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<HashLookupResponse>(json);
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    /// <summary>
+    /// Get threat feeds from cloud
+    /// </summary>
+    public async Task<ThreatFeedResponse?> GetThreatFeedsAsync()
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new { device_id = Config.DeviceId };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=get_threat_feeds", content);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<ThreatFeedResponse>(json);
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    /// <summary>
+    /// Report a critical threat
+    /// </summary>
+    public async Task<bool> ReportCriticalThreatAsync(object threat)
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new
+            {
+                device_id = Config.DeviceId,
+                threat
+            };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=critical_threat", content);
+            return response.IsSuccessStatusCode;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>
+    /// Report a unified threat from AV engine
+    /// </summary>
+    public async Task<bool> ReportUnifiedThreatAsync(object threat)
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new
+            {
+                device_id = Config.DeviceId,
+                threat
+            };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=unified_threat", content);
+            return response.IsSuccessStatusCode;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>
+    /// Get memory signatures from cloud
+    /// </summary>
+    public async Task<MemorySignaturesResponse?> GetMemorySignaturesAsync()
+    {
+        try
+        {
+            SetHeaders();
+            var payload = new { device_id = Config.DeviceId };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=get_memory_signatures", content);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<MemorySignaturesResponse>(json);
+            }
+        }
+        catch { }
+        return null;
+    }
+}
+
+// Memory Signatures Response
+public class MemorySignaturesResponse
+{
+    [JsonProperty("signatures")] public List<VanguardAgent.Services.AV.MemorySignature>? Signatures { get; set; }
+}
+
+// USB Models
+public class USBDevice
+{
+    public string DeviceId { get; set; } = "";
+    public string PnPDeviceId { get; set; } = "";
+    public string FriendlyName { get; set; } = "";
+    public string? Manufacturer { get; set; }
+    public string? Model { get; set; }
+    public string? SerialNumber { get; set; }
+    public string? VendorId { get; set; }
+    public string? ProductId { get; set; }
+    public long Size { get; set; }
+    public string? DriveLetter { get; set; }
+    public DateTime ConnectedAt { get; set; }
+    public DateTime? LastScanned { get; set; }
+    public int ThreatsFound { get; set; }
+    public bool IsBlocked { get; set; }
+    public string? BlockReason { get; set; }
+    public bool IsReadOnly { get; set; }
+}
+
+public enum USBPolicy
+{
+    AllowAll,
+    ScanAndAllow,
+    WhitelistOnly,
+    ReadOnly,
+    BlockAll
+}
+
+public class USBPolicyResponse
+{
+    [JsonProperty("policy")] public USBPolicy Policy { get; set; }
+}
+
+public class USBWhitelistResponse
+{
+    [JsonProperty("devices")] public List<WhitelistedDevice>? Devices { get; set; }
+}
+
+public class WhitelistedDevice
+{
+    [JsonProperty("device_id")] public string DeviceId { get; set; } = "";
+    [JsonProperty("name")] public string? Name { get; set; }
 }
 
 // XDR Response Models

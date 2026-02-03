@@ -14,6 +14,7 @@ public class NetworkMonitor : IDisposable
 {
     private readonly ConfigService _configService;
     private readonly ApiClient _apiClient;
+    private readonly ThreatIntelligenceService? _threatIntel;
     private System.Threading.Timer? _scanTimer;
     private System.Threading.Timer? _dnsTimer;
     private readonly HashSet<string> _knownConnections = new();
@@ -21,6 +22,9 @@ public class NetworkMonitor : IDisposable
     private readonly HashSet<string> _blockedIPs = new();
     private bool _isRunning;
     private readonly object _lock = new();
+
+    // Event for suspicious connections
+    public event EventHandler<NetworkAlertEventArgs>? OnSuspiciousConnection;
 
     // Suspicious ports commonly used by malware/C2
     private static readonly int[] SuspiciousPorts = new[]
@@ -58,6 +62,13 @@ public class NetworkMonitor : IDisposable
         _apiClient = apiClient;
     }
 
+    public NetworkMonitor(ConfigService configService, ApiClient apiClient, ThreatIntelligenceService threatIntel)
+    {
+        _configService = configService;
+        _apiClient = apiClient;
+        _threatIntel = threatIntel;
+    }
+
     public void Start()
     {
         lock (_lock)
@@ -85,6 +96,45 @@ public class NetworkMonitor : IDisposable
         catch (Exception ex)
         {
             Console.WriteLine($"[XDR Network] Failed to start: {ex.Message}");
+        }
+    }
+
+    public Task StartAsync()
+    {
+        Start();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Block an IP address via Windows Firewall
+    /// </summary>
+    public async Task BlockIPAsync(string ipAddress)
+    {
+        try
+        {
+            _blockedIPs.Add(ipAddress);
+            
+            // Add firewall rule to block the IP
+            var psi = new ProcessStartInfo
+            {
+                FileName = "netsh",
+                Arguments = $"advfirewall firewall add rule name=\"Vanguard Block {ipAddress}\" dir=out action=block remoteip={ipAddress}",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+
+            using var process = Process.Start(psi);
+            if (process != null)
+            {
+                await process.WaitForExitAsync();
+            }
+
+            Console.WriteLine($"[XDR Network] Blocked IP: {ipAddress}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[XDR Network] Failed to block IP {ipAddress}: {ex.Message}");
         }
     }
 
@@ -450,6 +500,18 @@ public class NetworkMonitor : IDisposable
         {
             Console.WriteLine($"[XDR Network] {analysis.Severity.ToUpper()}: Suspicious connection {conn.ProcessName} -> {conn.RemoteAddress}:{conn.RemotePort}");
 
+            // Raise event for AVEngine
+            OnSuspiciousConnection?.Invoke(this, new NetworkAlertEventArgs
+            {
+                Severity = analysis.Severity,
+                ThreatType = analysis.Indicators.FirstOrDefault(),
+                ProcessId = conn.ProcessId,
+                ProcessName = conn.ProcessName,
+                RemoteAddress = conn.RemoteAddress,
+                RemotePort = conn.RemotePort,
+                MitreId = analysis.MitreTechnique
+            });
+
             await _apiClient.SendSecurityEventAsync(new
             {
                 action = "network_alert",
@@ -582,4 +644,15 @@ public class DnsAnalysis
     public bool IsSuspicious { get; set; }
     public string Reason { get; set; } = "";
     public string? MitreTechnique { get; set; }
+}
+
+public class NetworkAlertEventArgs : EventArgs
+{
+    public string Severity { get; set; } = "medium";
+    public string? ThreatType { get; set; }
+    public int ProcessId { get; set; }
+    public string ProcessName { get; set; } = "";
+    public string RemoteAddress { get; set; } = "";
+    public int RemotePort { get; set; }
+    public string? MitreId { get; set; }
 }

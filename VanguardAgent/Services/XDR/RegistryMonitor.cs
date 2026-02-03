@@ -289,6 +289,24 @@ public class RegistryMonitor : IDisposable
         {
             Console.WriteLine($"[XDR Registry] {regEvent.Severity.ToUpper()}: {regEvent.ChangeType} - {regEvent.Path}\\{regEvent.ValueName}");
 
+            // Raise event for AVEngine
+            OnRegistryChanged?.Invoke(this, new RegistryChangeEventArgs
+            {
+                KeyPath = $"{regEvent.Hive}\\{regEvent.Path}",
+                ValueName = regEvent.ValueName,
+                OldValue = regEvent.OldValue,
+                NewValue = regEvent.NewValue,
+                ThreatType = $"Registry {regEvent.ChangeType}",
+                MitreId = regEvent.MitreTechnique,
+                ThreatLevel = regEvent.Severity switch
+                {
+                    "critical" => 100,
+                    "high" => 75,
+                    "medium" => 50,
+                    _ => 25
+                }
+            });
+
             await _apiClient.SendSecurityEventAsync(new
             {
                 action = "registry_alert",
