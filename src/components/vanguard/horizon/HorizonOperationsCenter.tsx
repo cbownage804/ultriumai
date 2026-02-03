@@ -297,30 +297,41 @@ export function HorizonOperationsCenter() {
   return (
     <div className="space-y-4">
       {/* Section Tabs */}
-      <Card className="border-cyan-500/20 bg-gradient-to-r from-cyan-500/5 to-purple-500/5">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Shield className="h-5 w-5 text-cyan-500" />
-            Operations Center
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="relative overflow-hidden rounded-xl bg-black/60 backdrop-blur-xl border border-cyan-500/20 p-4">
+        {/* Subtle gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-cyan-500/5 pointer-events-none" />
+        
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-lg bg-cyan-500/20">
+              <Shield className="h-5 w-5 text-cyan-400" />
+            </div>
+            <h2 className="text-lg font-semibold text-white">Operations Center</h2>
+          </div>
+          
           <ScrollArea className="w-full whitespace-nowrap">
             <div className="flex gap-2 pb-2">
               {sections.map((section) => (
                 <button
                   key={section.id}
                   onClick={() => handleSectionChange(section.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                     activeSection === section.id
-                      ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
-                      : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+                      ? "bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-purple-500/20 text-cyan-400 border border-cyan-500/30 shadow-lg shadow-cyan-500/10"
+                      : "bg-black/40 hover:bg-white/5 text-white/60 hover:text-white/80 border border-white/10"
                   }`}
                 >
                   {section.icon}
-                  {section.label}
+                  <span>{section.label}</span>
                   {section.badge && (
-                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                    <Badge 
+                      variant="secondary" 
+                      className={`ml-1 h-5 px-1.5 text-xs ${
+                        activeSection === section.id 
+                          ? "bg-cyan-500/20 text-cyan-400 border-cyan-500/30" 
+                          : "bg-white/10 text-white/60"
+                      }`}
+                    >
                       {section.badge}
                     </Badge>
                   )}
@@ -329,19 +340,19 @@ export function HorizonOperationsCenter() {
             </div>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Module Tabs */}
       {currentSection && (
         <Tabs value={activeModule} onValueChange={setActiveModule} className="w-full">
           <ScrollArea className="w-full whitespace-nowrap">
-            <TabsList className="inline-flex w-auto min-w-full bg-muted/50">
+            <TabsList className="inline-flex w-auto min-w-full bg-black/40 backdrop-blur-xl border border-white/10 p-1 rounded-lg">
               {currentSection.modules.map((module) => (
                 <TabsTrigger
                   key={module.id}
                   value={module.id}
-                  className="text-xs gap-1.5 data-[state=active]:bg-background"
+                  className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30 transition-all duration-200"
                 >
                   {module.icon}
                   {module.label}

@@ -47,166 +47,155 @@ export function PursuitDashboard() {
     <div className="space-y-6">
       {/* Header with realtime alerts */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Shield className="h-6 w-6" />
-          Pursuit XDR
-        </h2>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-purple-500/20 border border-purple-500/30">
+            <Shield className="h-6 w-6 text-purple-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-white via-purple-100 to-cyan-200 bg-clip-text text-transparent">
+              Pursuit XDR
+            </h2>
+            <p className="text-sm text-white/50">Extended detection and response</p>
+          </div>
+        </div>
         <RealtimeAlertsIndicator />
       </div>
 
-      {/* Header Stats */}
+      {/* Header Stats - Premium Dark Glass Theme */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card className="bg-destructive/10 border-destructive/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-              Critical
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {isLoading ? "..." : stats?.criticalThreats || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">Active threats</p>
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden rounded-xl bg-red-500/10 border border-red-500/30 p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="h-4 w-4 text-red-400" />
+            <span className="text-xs font-medium text-white/70 uppercase tracking-wider">Critical</span>
+          </div>
+          <div className="text-2xl font-bold text-red-400">
+            {isLoading ? "..." : stats?.criticalThreats || 0}
+          </div>
+          <p className="text-xs text-white/50 mt-1">Active threats</p>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-red-500/5 blur-2xl" />
+        </div>
 
-        <Card className="bg-orange-500/10 border-orange-500/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Shield className="h-4 w-4 text-orange-500" />
-              High
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-500">
-              {isLoading ? "..." : stats?.highThreats || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">High severity</p>
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden rounded-xl bg-orange-500/10 border border-orange-500/30 p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-2 mb-2">
+            <Shield className="h-4 w-4 text-orange-400" />
+            <span className="text-xs font-medium text-white/70 uppercase tracking-wider">High</span>
+          </div>
+          <div className="text-2xl font-bold text-orange-400">
+            {isLoading ? "..." : stats?.highThreats || 0}
+          </div>
+          <p className="text-xs text-white/50 mt-1">High severity</p>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-orange-500/5 blur-2xl" />
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Activity className="h-4 w-4 text-primary" />
-              Active
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "..." : stats?.activeThreats || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">Under investigation</p>
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden rounded-xl bg-cyan-500/10 border border-cyan-500/30 p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-2 mb-2">
+            <Activity className="h-4 w-4 text-cyan-400" />
+            <span className="text-xs font-medium text-white/70 uppercase tracking-wider">Active</span>
+          </div>
+          <div className="text-2xl font-bold text-cyan-400">
+            {isLoading ? "..." : stats?.activeThreats || 0}
+          </div>
+          <p className="text-xs text-white/50 mt-1">Under investigation</p>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-cyan-500/5 blur-2xl" />
+        </div>
 
-        <Card className="bg-purple-500/10 border-purple-500/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Skull className="h-4 w-4 text-purple-500" />
-              Ransomware
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-500">
-              {isLoading ? "..." : stats?.ransomwareEvents || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">Events detected</p>
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden rounded-xl bg-purple-500/10 border border-purple-500/30 p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-2 mb-2">
+            <Skull className="h-4 w-4 text-purple-400" />
+            <span className="text-xs font-medium text-white/70 uppercase tracking-wider">Ransomware</span>
+          </div>
+          <div className="text-2xl font-bold text-purple-400">
+            {isLoading ? "..." : stats?.ransomwareEvents || 0}
+          </div>
+          <p className="text-xs text-white/50 mt-1">Events detected</p>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-purple-500/5 blur-2xl" />
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <PlayCircle className="h-4 w-4 text-yellow-500" />
-              Pending
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-500">
-              {isLoading ? "..." : stats?.pendingActions || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">Awaiting approval</p>
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden rounded-xl bg-yellow-500/10 border border-yellow-500/30 p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-2 mb-2">
+            <PlayCircle className="h-4 w-4 text-yellow-400" />
+            <span className="text-xs font-medium text-white/70 uppercase tracking-wider">Pending</span>
+          </div>
+          <div className="text-2xl font-bold text-yellow-400">
+            {isLoading ? "..." : stats?.pendingActions || 0}
+          </div>
+          <p className="text-xs text-white/50 mt-1">Awaiting approval</p>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-yellow-500/5 blur-2xl" />
+        </div>
 
-        <Card className="bg-primary/10 border-primary/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Target className="h-4 w-4 text-primary" />
-              Total
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">
-              {isLoading ? "..." : stats?.totalThreats || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">All time threats</p>
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden rounded-xl bg-blue-500/10 border border-blue-500/30 p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-2 mb-2">
+            <Target className="h-4 w-4 text-blue-400" />
+            <span className="text-xs font-medium text-white/70 uppercase tracking-wider">Total</span>
+          </div>
+          <div className="text-2xl font-bold text-blue-400">
+            {isLoading ? "..." : stats?.totalThreats || 0}
+          </div>
+          <p className="text-xs text-white/50 mt-1">All time threats</p>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/5 blur-2xl" />
+        </div>
       </div>
 
-      {/* Main Tabs */}
+      {/* Main Tabs - Dark Glass Theme */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
-          <TabsTrigger value="overview" className="text-xs gap-1.5">
+        <TabsList className="flex flex-wrap h-auto gap-1 bg-black/40 backdrop-blur-xl border border-white/10 p-1.5 rounded-xl">
+          <TabsTrigger value="overview" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <Shield className="h-3.5 w-3.5" />
             Threat Detection
           </TabsTrigger>
-          <TabsTrigger value="hunting" className="text-xs gap-1.5">
+          <TabsTrigger value="hunting" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <Crosshair className="h-3.5 w-3.5" />
             Threat Hunting
           </TabsTrigger>
-          <TabsTrigger value="iocs" className="text-xs gap-1.5">
+          <TabsTrigger value="iocs" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <Target className="h-3.5 w-3.5" />
             IOC Management
           </TabsTrigger>
-          <TabsTrigger value="yara" className="text-xs gap-1.5">
+          <TabsTrigger value="yara" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <FileCode className="h-3.5 w-3.5" />
             YARA Rules
           </TabsTrigger>
-          <TabsTrigger value="intel" className="text-xs gap-1.5">
+          <TabsTrigger value="intel" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <Brain className="h-3.5 w-3.5" />
             Threat Intel
           </TabsTrigger>
-          <TabsTrigger value="lookup" className="text-xs gap-1.5">
+          <TabsTrigger value="lookup" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <Search className="h-3.5 w-3.5" />
             IOC Lookup
           </TabsTrigger>
-          <TabsTrigger value="network" className="text-xs gap-1.5">
+          <TabsTrigger value="network" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <Network className="h-3.5 w-3.5" />
             Network Security
           </TabsTrigger>
-          <TabsTrigger value="ransomware" className="text-xs gap-1.5">
+          <TabsTrigger value="ransomware" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <Skull className="h-3.5 w-3.5" />
             Ransomware Defense
           </TabsTrigger>
-          <TabsTrigger value="forensics" className="text-xs gap-1.5">
+          <TabsTrigger value="forensics" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <HardDrive className="h-3.5 w-3.5" />
             Forensics
           </TabsTrigger>
-          <TabsTrigger value="quarantine" className="text-xs gap-1.5">
+          <TabsTrigger value="quarantine" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <Archive className="h-3.5 w-3.5" />
             Quarantine
           </TabsTrigger>
-          <TabsTrigger value="response" className="text-xs gap-1.5">
+          <TabsTrigger value="response" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <PlayCircle className="h-3.5 w-3.5" />
             Response Actions
           </TabsTrigger>
-          <TabsTrigger value="automation" className="text-xs gap-1.5">
+          <TabsTrigger value="automation" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <Settings className="h-3.5 w-3.5" />
             Automation
           </TabsTrigger>
-          <TabsTrigger value="attack-chains" className="text-xs gap-1.5">
+          <TabsTrigger value="attack-chains" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <GitBranch className="h-3.5 w-3.5" />
             Attack Chains
           </TabsTrigger>
-          <TabsTrigger value="reports" className="text-xs gap-1.5">
+          <TabsTrigger value="reports" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <FileText className="h-3.5 w-3.5" />
             Reports
           </TabsTrigger>
-          <TabsTrigger value="testing" className="text-xs gap-1.5">
+          <TabsTrigger value="testing" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <TestTube className="h-3.5 w-3.5" />
             Agent Testing
           </TabsTrigger>
