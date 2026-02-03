@@ -34,11 +34,11 @@ export const ClientSelector = ({
       </SelectTrigger>
       <SelectContent>
         {isLoading ? (
-          <SelectItem value="" disabled>
+          <SelectItem value="__loading__" disabled>
             Loading clients...
           </SelectItem>
         ) : activeClients.length === 0 ? (
-          <SelectItem value="" disabled>
+          <SelectItem value="__empty__" disabled>
             No active clients found
           </SelectItem>
         ) : (

@@ -418,16 +418,16 @@ const AdvancedSearch = () => {
                   <div className="space-y-2">
                     <Label>Content Type</Label>
                     <Select
-                      value={filters.type.join(',')}
+                      value={filters.type.join(',') || "__all__"}
                       onValueChange={(value) => 
-                        setFilters(prev => ({ ...prev, type: value ? value.split(',') : [] }))
+                        setFilters(prev => ({ ...prev, type: value === "__all__" ? [] : value.split(',') }))
                       }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="All types" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Types</SelectItem>
+                        <SelectItem value="__all__">All Types</SelectItem>
                         <SelectItem value="ticket">Tickets</SelectItem>
                         <SelectItem value="client">Clients</SelectItem>
                         <SelectItem value="document">Documents</SelectItem>
@@ -463,16 +463,16 @@ const AdvancedSearch = () => {
                   <div className="space-y-2">
                     <Label>Status</Label>
                     <Select
-                      value={filters.status.join(',')}
+                      value={filters.status.join(',') || "__all__"}
                       onValueChange={(value) => 
-                        setFilters(prev => ({ ...prev, status: value ? value.split(',') : [] }))
+                        setFilters(prev => ({ ...prev, status: value === "__all__" ? [] : value.split(',') }))
                       }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="All statuses" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Statuses</SelectItem>
+                        <SelectItem value="__all__">All Statuses</SelectItem>
                         <SelectItem value="open">Open</SelectItem>
                         <SelectItem value="active">Active</SelectItem>
                         <SelectItem value="resolved">Resolved</SelectItem>
@@ -484,16 +484,16 @@ const AdvancedSearch = () => {
                   <div className="space-y-2">
                     <Label>Priority</Label>
                     <Select
-                      value={filters.priority.join(',')}
+                      value={filters.priority.join(',') || "__all__"}
                       onValueChange={(value) => 
-                        setFilters(prev => ({ ...prev, priority: value ? value.split(',') : [] }))
+                        setFilters(prev => ({ ...prev, priority: value === "__all__" ? [] : value.split(',') }))
                       }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="All priorities" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Priorities</SelectItem>
+                        <SelectItem value="__all__">All Priorities</SelectItem>
                         <SelectItem value="low">Low</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
                         <SelectItem value="high">High</SelectItem>
@@ -505,16 +505,16 @@ const AdvancedSearch = () => {
                   <div className="space-y-2">
                     <Label>Category</Label>
                     <Select
-                      value={filters.category.join(',')}
+                      value={filters.category.join(',') || "__all__"}
                       onValueChange={(value) => 
-                        setFilters(prev => ({ ...prev, category: value ? value.split(',') : [] }))
+                        setFilters(prev => ({ ...prev, category: value === "__all__" ? [] : value.split(',') }))
                       }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="All categories" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Categories</SelectItem>
+                        <SelectItem value="__all__">All Categories</SelectItem>
                         <SelectItem value="security">Security</SelectItem>
                         <SelectItem value="maintenance">Maintenance</SelectItem>
                         <SelectItem value="support">Support</SelectItem>

@@ -279,12 +279,12 @@ export const MultiTenantManager = () => {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-white/80">Parent Organization (optional)</Label>
-                    <Select value={newOrg.parentId} onValueChange={(v) => setNewOrg(prev => ({ ...prev, parentId: v }))}>
+                    <Select value={newOrg.parentId || "__none__"} onValueChange={(v) => setNewOrg(prev => ({ ...prev, parentId: v === "__none__" ? "" : v }))}>
                       <SelectTrigger className="bg-black/40 border-cyan-500/20 text-white">
                         <SelectValue placeholder="Select parent (optional)" />
                       </SelectTrigger>
                       <SelectContent className="bg-black/95 border-cyan-500/30">
-                        <SelectItem value="" className="text-white/80">No parent (root)</SelectItem>
+                        <SelectItem value="__none__" className="text-white/80">No parent (root)</SelectItem>
                         {tenants.map(t => (
                           <SelectItem key={t.id} value={t.id} className="text-white/80">
                             {'  '.repeat(t.level || 0)}{t.name}

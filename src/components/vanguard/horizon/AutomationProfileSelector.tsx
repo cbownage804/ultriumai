@@ -199,12 +199,12 @@ export function AutomationProfileSelector({
                 <Gauge className="h-4 w-4 text-yellow-500" />
                 Threshold Profile
               </Label>
-              <Select value={selectedThreshold} onValueChange={setSelectedThreshold}>
+              <Select value={selectedThreshold || "__none__"} onValueChange={(v) => setSelectedThreshold(v === "__none__" ? "" : v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a threshold profile..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No profile</SelectItem>
+                  <SelectItem value="__none__">No profile</SelectItem>
                   {thresholdProfiles.map(profile => (
                     <SelectItem key={profile.id} value={profile.id}>
                       {profile.name}
@@ -254,12 +254,12 @@ export function AutomationProfileSelector({
                 <Clock className="h-4 w-4 text-blue-500" />
                 Automation Profile
               </Label>
-              <Select value={selectedAutomation} onValueChange={setSelectedAutomation}>
+              <Select value={selectedAutomation || "__none__"} onValueChange={(v) => setSelectedAutomation(v === "__none__" ? "" : v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select an automation profile..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No profile</SelectItem>
+                  <SelectItem value="__none__">No profile</SelectItem>
                   {automationProfiles.map(profile => (
                     <SelectItem key={profile.id} value={profile.id}>
                       {profile.name}

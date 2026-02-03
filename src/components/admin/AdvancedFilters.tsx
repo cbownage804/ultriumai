@@ -229,14 +229,14 @@ export const AdvancedFilters = ({ onFiltersChange, entityType, currentFilters }:
             <div className="space-y-2">
               <Label>Status</Label>
               <Select
-                value={localFilters.status || ''}
-                onValueChange={(value) => handleFilterChange('status', value || undefined)}
+                value={localFilters.status || '__all__'}
+                onValueChange={(value) => handleFilterChange('status', value === '__all__' ? undefined : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All statuses</SelectItem>
+                  <SelectItem value="__all__">All statuses</SelectItem>
                   {getStatusOptions().map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
@@ -251,14 +251,14 @@ export const AdvancedFilters = ({ onFiltersChange, entityType, currentFilters }:
               <div className="space-y-2">
                 <Label>Account Type</Label>
                 <Select
-                  value={localFilters.accountType || ''}
-                  onValueChange={(value) => handleFilterChange('accountType', value || undefined)}
+                  value={localFilters.accountType || '__all__'}
+                  onValueChange={(value) => handleFilterChange('accountType', value === '__all__' ? undefined : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All types</SelectItem>
+                    <SelectItem value="__all__">All types</SelectItem>
                     <SelectItem value="business">Business</SelectItem>
                     <SelectItem value="msp">MSP</SelectItem>
                     <SelectItem value="mssp">MSSP</SelectItem>
@@ -272,14 +272,14 @@ export const AdvancedFilters = ({ onFiltersChange, entityType, currentFilters }:
               <div className="space-y-2">
                 <Label>Subscription Tier</Label>
                 <Select
-                  value={localFilters.subscriptionTier || ''}
-                  onValueChange={(value) => handleFilterChange('subscriptionTier', value || undefined)}
+                  value={localFilters.subscriptionTier || '__all__'}
+                  onValueChange={(value) => handleFilterChange('subscriptionTier', value === '__all__' ? undefined : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All tiers" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All tiers</SelectItem>
+                    <SelectItem value="__all__">All tiers</SelectItem>
                     <SelectItem value="free">Free</SelectItem>
                     <SelectItem value="basic">Basic</SelectItem>
                     <SelectItem value="premium">Premium</SelectItem>
