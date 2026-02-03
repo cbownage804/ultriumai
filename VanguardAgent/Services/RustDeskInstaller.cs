@@ -176,8 +176,8 @@ public class RustDeskInstaller
             
             // Create request with device ID and auth headers for password generation
             var request = new HttpRequestMessage(HttpMethod.Get, relayConfigUrl);
-            request.Headers.Add("X-Device-Id", _configService.DeviceId);
-            request.Headers.Add("X-Vanguard-Key", _configService.SecretKey);
+            request.Headers.Add("X-Device-Id", _configService.Config.DeviceId ?? "");
+            request.Headers.Add("X-Vanguard-Key", _configService.Config.SecretKey);
             
             var response = await _httpClient.SendAsync(request);
             if (response.IsSuccessStatusCode)
