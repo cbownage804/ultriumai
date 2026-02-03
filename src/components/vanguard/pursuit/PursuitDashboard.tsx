@@ -15,7 +15,11 @@ import {
   Crosshair,
   Brain,
   PlayCircle,
-  GitBranch
+  GitBranch,
+  Search,
+  FileText,
+  Archive,
+  TestTube
 } from "lucide-react";
 import { useXDRStats } from "@/hooks/usePursuitXDR";
 import { ThreatDetectionPanel } from "./ThreatDetectionPanel";
@@ -30,6 +34,10 @@ import { ResponseActionsPanel } from "./ResponseActionsPanel";
 import { ThreatIntelligencePanel } from "./ThreatIntelligencePanel";
 import { AttackChainVisualization } from "./AttackChainVisualization";
 import { RealtimeAlertsIndicator } from "./RealtimeAlertsIndicator";
+import { ThreatIntelLookup } from "./ThreatIntelLookup";
+import { ThreatReportsExport } from "./ThreatReportsExport";
+import { QuarantineManager } from "./QuarantineManager";
+import { AgentTestingPanel } from "./AgentTestingPanel";
 
 export function PursuitDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -162,6 +170,10 @@ export function PursuitDashboard() {
             <Brain className="h-3.5 w-3.5" />
             Threat Intel
           </TabsTrigger>
+          <TabsTrigger value="lookup" className="text-xs gap-1.5">
+            <Search className="h-3.5 w-3.5" />
+            IOC Lookup
+          </TabsTrigger>
           <TabsTrigger value="network" className="text-xs gap-1.5">
             <Network className="h-3.5 w-3.5" />
             Network Security
@@ -174,6 +186,10 @@ export function PursuitDashboard() {
             <HardDrive className="h-3.5 w-3.5" />
             Forensics
           </TabsTrigger>
+          <TabsTrigger value="quarantine" className="text-xs gap-1.5">
+            <Archive className="h-3.5 w-3.5" />
+            Quarantine
+          </TabsTrigger>
           <TabsTrigger value="response" className="text-xs gap-1.5">
             <PlayCircle className="h-3.5 w-3.5" />
             Response Actions
@@ -185,6 +201,14 @@ export function PursuitDashboard() {
           <TabsTrigger value="attack-chains" className="text-xs gap-1.5">
             <GitBranch className="h-3.5 w-3.5" />
             Attack Chains
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="text-xs gap-1.5">
+            <FileText className="h-3.5 w-3.5" />
+            Reports
+          </TabsTrigger>
+          <TabsTrigger value="testing" className="text-xs gap-1.5">
+            <TestTube className="h-3.5 w-3.5" />
+            Agent Testing
           </TabsTrigger>
         </TabsList>
 
@@ -204,6 +228,9 @@ export function PursuitDashboard() {
           <TabsContent value="intel">
             <ThreatIntelligencePanel />
           </TabsContent>
+          <TabsContent value="lookup">
+            <ThreatIntelLookup />
+          </TabsContent>
           <TabsContent value="network">
             <NetworkSecurityPanel />
           </TabsContent>
@@ -213,6 +240,9 @@ export function PursuitDashboard() {
           <TabsContent value="forensics">
             <ForensicsPanel />
           </TabsContent>
+          <TabsContent value="quarantine">
+            <QuarantineManager />
+          </TabsContent>
           <TabsContent value="response">
             <ResponseActionsPanel />
           </TabsContent>
@@ -221,6 +251,12 @@ export function PursuitDashboard() {
           </TabsContent>
           <TabsContent value="attack-chains">
             <AttackChainVisualization />
+          </TabsContent>
+          <TabsContent value="reports">
+            <ThreatReportsExport />
+          </TabsContent>
+          <TabsContent value="testing">
+            <AgentTestingPanel />
           </TabsContent>
         </div>
       </Tabs>
