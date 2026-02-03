@@ -23513,6 +23513,55 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_satisfaction_ratings: {
+        Row: {
+          created_at: string
+          feedback: string | null
+          id: string
+          portal_user_id: string | null
+          rating: number
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          portal_user_id?: string | null
+          rating: number
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          portal_user_id?: string | null
+          rating?: number
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_satisfaction_ratings_portal_user_id_fkey"
+            columns: ["portal_user_id"]
+            isOneToOne: false
+            referencedRelation: "client_portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_satisfaction_ratings_portal_user_id_fkey"
+            columns: ["portal_user_id"]
+            isOneToOne: false
+            referencedRelation: "client_portal_users_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_satisfaction_ratings_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: true
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_templates: {
         Row: {
           category: string
