@@ -251,12 +251,12 @@ export function FileIntegrityMonitor() {
           <p className="text-muted-foreground">Track changes to critical system files</p>
         </div>
         <div className="flex items-center gap-3">
-          <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
+          <Select value={selectedAgentId || "__all__"} onValueChange={(v) => setSelectedAgentId(v === "__all__" ? "" : v)}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="All agents" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All agents</SelectItem>
+              <SelectItem value="__all__">All agents</SelectItem>
               {agents.map(agent => (
                 <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>
               ))}

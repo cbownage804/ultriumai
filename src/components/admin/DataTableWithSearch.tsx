@@ -258,16 +258,16 @@ export const DataTableWithSearch: React.FC<DataTableProps> = ({
                       <label className="text-sm font-medium">{column.label}</label>
                       {column.filterType === 'select' && column.filterOptions ? (
                         <Select
-                          value={filters.find(f => f.column === column.key)?.value || ''}
+                          value={filters.find(f => f.column === column.key)?.value || '__all__'}
                           onValueChange={(value) => 
-                            value ? addFilter(column.key, value, 'equals') : removeFilter(column.key)
+                            value !== '__all__' ? addFilter(column.key, value, 'equals') : removeFilter(column.key)
                           }
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="All" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">All</SelectItem>
+                            <SelectItem value="__all__">All</SelectItem>
                             {column.filterOptions.map(option => (
                               <SelectItem key={option} value={option}>
                                 {option}

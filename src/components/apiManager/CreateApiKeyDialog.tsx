@@ -157,14 +157,14 @@ export const CreateApiKeyDialog = ({ open, onOpenChange }: CreateApiKeyDialogPro
             <div>
               <Label htmlFor="gpt">GPT (Optional)</Label>
               <Select 
-                value={formData.gpt_id} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, gpt_id: value }))}
+                value={formData.gpt_id || "__all__"} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, gpt_id: value === "__all__" ? "" : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a specific GPT or leave blank for all" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All GPTs</SelectItem>
+                  <SelectItem value="__all__">All GPTs</SelectItem>
                   {gpts.map((gpt) => (
                     <SelectItem key={gpt.id} value={gpt.id}>
                       {gpt.name}

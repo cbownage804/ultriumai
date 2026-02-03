@@ -286,12 +286,12 @@ sudo systemctl start vanguard-agent`;
                   No active clients. Agent will be added to your default organization.
                 </p>
               ) : (
-                <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                <Select value={selectedClientId || "__none__"} onValueChange={(v) => setSelectedClientId(v === "__none__" ? "" : v)}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a client (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">
+                    <SelectItem value="__none__">
                       <span className="text-muted-foreground">No client — personal use</span>
                     </SelectItem>
                     {clients.map((client) => (
