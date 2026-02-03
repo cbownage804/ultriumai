@@ -1060,7 +1060,7 @@ async function handleAsk(supabase: any, userId: string, body: any) {
 // ============ SECURITY TELEMETRY HANDLER (Windows Defender) ============
 
 async function handleSecurityTelemetry(supabase: any, body: any) {
-  const { device_id, data } = body;
+  const { device_id } = body;
   
   if (!device_id) {
     return new Response(
@@ -1083,7 +1083,9 @@ async function handleSecurityTelemetry(supabase: any, body: any) {
     );
   }
   
-  const securityData = data || {};
+  // Support both nested (data.defender_status) and flat (defender_status) payload formats
+  // Agent sends: { device_id, defender_status, recent_threats, quarantined_items }
+  const securityData = body.data || body;
   const defenderStatus = securityData.defender_status || {};
   const recentThreats = securityData.recent_threats || [];
   const quarantinedItems = securityData.quarantined_items || [];
