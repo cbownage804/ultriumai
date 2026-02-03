@@ -9,9 +9,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { FileCode, Plus, Search, Play, Pause, Download, Upload } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FileCode, Plus, Search, Play, Download, Upload, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { useXDRYaraRules, useCreateYaraRule } from "@/hooks/usePursuitXDR";
 import { formatDistanceToNow } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const sampleYaraRule = `rule Ransomware_Generic {
     meta:
@@ -29,10 +32,18 @@ const sampleYaraRule = `rule Ransomware_Generic {
         2 of them
 }`;
 
+interface ValidationResult {
+  valid: boolean;
+  errors: { line?: number; message: string }[];
+  warnings: { line?: number; message: string }[];
+}
+
 export function YaraRulesPanel() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [newRule, setNewRule] = useState({
     rule_name: "",
     rule_content: sampleYaraRule,
@@ -50,11 +61,42 @@ export function YaraRulesPanel() {
     return rule.rule_name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  const handleCreateRule = () => {
+  const validateRule = async () => {
+    setIsValidating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('xdr-yara-validator', {
+        body: { rule_content: newRule.rule_content, rule_name: newRule.rule_name }
+      });
+      if (error) throw error;
+      setValidationResult(data);
+      if (data.valid) {
+        toast.success('YARA rule syntax is valid');
+      } else {
+        toast.error(`Found ${data.errors.length} error(s)`);
+      }
+    } catch (err: any) {
+      toast.error(`Validation failed: ${err.message}`);
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const handleCreateRule = async () => {
     if (!newRule.rule_name || !newRule.rule_content) return;
+    
+    // Validate before creating
+    if (!validationResult?.valid) {
+      await validateRule();
+      if (!validationResult?.valid) {
+        toast.error('Please fix validation errors before saving');
+        return;
+      }
+    }
+    
     createRule.mutate(newRule as any, {
       onSuccess: () => {
         setIsAddDialogOpen(false);
+        setValidationResult(null);
         setNewRule({
           rule_name: "",
           rule_content: sampleYaraRule,
@@ -147,19 +189,63 @@ export function YaraRulesPanel() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>YARA Rule Content</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>YARA Rule Content</Label>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={validateRule}
+                        disabled={isValidating}
+                      >
+                        {isValidating ? 'Validating...' : 'Validate Syntax'}
+                      </Button>
+                    </div>
                     <Textarea
                       value={newRule.rule_content}
-                      onChange={(e) => setNewRule({ ...newRule, rule_content: e.target.value })}
-                      rows={15}
+                      onChange={(e) => {
+                        setNewRule({ ...newRule, rule_content: e.target.value });
+                        setValidationResult(null);
+                      }}
+                      rows={12}
                       className="font-mono text-sm"
                     />
+                    {validationResult && (
+                      <div className="space-y-2">
+                        {validationResult.valid ? (
+                          <Alert className="border-green-500/30 bg-green-500/10">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <AlertDescription className="text-green-400">
+                              Syntax valid - ready to deploy
+                            </AlertDescription>
+                          </Alert>
+                        ) : (
+                          <Alert className="border-red-500/30 bg-red-500/10">
+                            <XCircle className="h-4 w-4 text-red-500" />
+                            <AlertDescription className="text-red-400">
+                              {validationResult.errors.map((e, i) => (
+                                <div key={i}>{e.line ? `Line ${e.line}: ` : ''}{e.message}</div>
+                              ))}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                        {validationResult.warnings.length > 0 && (
+                          <Alert className="border-yellow-500/30 bg-yellow-500/10">
+                            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                            <AlertDescription className="text-yellow-400">
+                              {validationResult.warnings.map((w, i) => (
+                                <div key={i}>{w.message}</div>
+                              ))}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                       Cancel
                     </Button>
-                    <Button onClick={handleCreateRule}>
+                    <Button onClick={handleCreateRule} disabled={validationResult?.valid === false}>
                       Create Rule
                     </Button>
                   </div>

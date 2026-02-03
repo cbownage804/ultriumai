@@ -81,3 +81,6 @@ export { SLATrackingDashboard } from './SLATrackingDashboard';
 
 // Operations Center (unified interface)
 export { HorizonOperationsCenter } from './HorizonOperationsCenter';
+
+// XDR Integration
+export { XDRAlertsSummary } from './XDRAlertsSummary';
