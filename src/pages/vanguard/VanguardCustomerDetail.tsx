@@ -32,6 +32,7 @@ import { Map, Monitor, Users } from 'lucide-react';
 import { CustomerTicketsTab } from '@/components/vanguard/CustomerTicketsTab';
 import { CustomerAgentDownload } from '@/components/vanguard/CustomerAgentDownload';
 import { useVanguardCustomer } from '@/hooks/useVanguardCustomer';
+import { PortalContactManager, CompanySafeSuiteSettings } from '@/components/vanguard/portal';
 
 export default function VanguardCustomerDetail() {
   const navigate = useNavigate();
@@ -155,6 +156,10 @@ export default function VanguardCustomerDetail() {
             </TabsTrigger>
             <TabsTrigger value="alerts" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 hover:text-white">
               Alerts
+            </TabsTrigger>
+            <TabsTrigger value="portal" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 flex items-center gap-1 hover:text-white">
+              <Globe className="h-4 w-4 text-purple-400" />
+              Portal Access
             </TabsTrigger>
             <TabsTrigger value="atlas" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 flex items-center gap-1 hover:text-white">
               <Map className="h-4 w-4 text-cyan-400" />
@@ -376,6 +381,20 @@ export default function VanguardCustomerDetail() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Portal Access Tab */}
+          <TabsContent value="portal" className="mt-0">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PortalContactManager 
+                clientId={customerId || ''} 
+                companyName={customer.company_name}
+              />
+              <CompanySafeSuiteSettings 
+                clientId={customerId || ''} 
+                companyName={customer.company_name}
+              />
+            </div>
           </TabsContent>
 
           {/* Vanguard Atlas Tab */}
