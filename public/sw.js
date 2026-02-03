@@ -7,7 +7,7 @@
 // Never cache the SPA shell ("/") or JS/CSS bundles with cache-first.
 // Doing so can serve a mixture of old/new chunks after a deploy, causing
 // runtime crashes like "Invalid hook call" / "dispatcher is null".
-const CACHE_NAME = 'ultriumai-v3';
+const CACHE_NAME = 'ultriumai-v4';
 
 // Only cache truly static assets that rarely change.
 const STATIC_ASSETS = [
@@ -63,18 +63,20 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Always network-first for navigations/documents so deploys update immediately
+  // (and do NOT cache the HTML shell to avoid serving stale markup after deploys)
   if (request.mode === 'navigate' || request.destination === 'document') {
-    event.respondWith(networkFirstWithCache(request));
+    event.respondWith(networkFirst(request));
     return;
   }
 
-  // Always network-first for JS/CSS/worker to prevent stale bundles
+  // Always network-only for JS/CSS/worker to prevent stale bundles.
+  // Caching these can serve mixed old/new chunks after deploys, causing React hook crashes.
   if (
     request.destination === 'script' ||
     request.destination === 'style' ||
     request.destination === 'worker'
   ) {
-    event.respondWith(networkFirstWithCache(request));
+    event.respondWith(networkOnly(request));
     return;
   }
 
@@ -87,6 +89,15 @@ self.addEventListener('fetch', (event) => {
   // Cache-first for safe static assets (images/fonts/etc)
   event.respondWith(cacheFirst(request));
 });
+
+// Network-only strategy (no cache writes, no cache reads)
+async function networkOnly(request) {
+  try {
+    return await fetch(request);
+  } catch (error) {
+    return new Response('Offline', { status: 503 });
+  }
+}
 
 // Cache-first strategy
 async function cacheFirst(request) {
@@ -123,18 +134,3 @@ async function networkFirst(request) {
   }
 }
 
-// Network-first with cache population for same-origin static resources
-async function networkFirstWithCache(request) {
-  try {
-    const response = await fetch(request);
-    if (response && response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch (error) {
-    const cached = await caches.match(request);
-    if (cached) return cached;
-    return new Response('Offline', { status: 503 });
-  }
-}
