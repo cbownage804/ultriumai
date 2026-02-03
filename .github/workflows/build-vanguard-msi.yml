@@ -1,12 +1,12 @@
-name: Build Vanguard MSI Installers
+name: Build Vanguard MSI Installer
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version number (e.g., 1.1.0)'
+        description: 'Version number (e.g., 1.2.0)'
         required: true
-        default: '1.1.0'
+        default: '1.2.0'
       create_release:
         description: 'Create GitHub release'
         required: false
@@ -42,6 +42,10 @@ jobs:
             -p:Version=${{ github.event.inputs.version }} `
             -o ./publish/agent
 
+      - name: Copy Icon to Publish
+        run: |
+          Copy-Item "VanguardAgent/vanguard.ico" -Destination "./publish/agent/vanguard.ico"
+
       - name: Build Agent MSI
         run: |
           wix build VanguardAgent/installer/VanguardAgent.wxs `
@@ -54,45 +58,8 @@ jobs:
           name: VanguardAgent-MSI
           path: ./msi/VanguardAgent-*.msi
 
-  build-portal-msi:
-    runs-on: windows-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-
-      - name: Install WiX Toolset
-        run: dotnet tool install --global wix
-
-      - name: Publish Portal
-        run: |
-          dotnet publish VanguardPortal/VanguardPortal.csproj `
-            -c Release `
-            -r win-x64 `
-            -p:PublishSingleFile=true `
-            -p:SelfContained=true `
-            -p:Version=${{ github.event.inputs.version }} `
-            -o ./publish/portal
-
-      - name: Build Portal MSI
-        run: |
-          wix build VanguardPortal/installer/VanguardPortal.wxs `
-            -d PublishDir=./publish/portal `
-            -o ./msi/VanguardPortal-${{ github.event.inputs.version }}.msi
-
-      - name: Upload Portal MSI
-        uses: actions/upload-artifact@v4
-        with:
-          name: VanguardPortal-MSI
-          path: ./msi/VanguardPortal-*.msi
-
   release:
-    needs: [build-agent-msi, build-portal-msi]
+    needs: [build-agent-msi]
     runs-on: ubuntu-latest
     if: github.event.inputs.create_release == 'true'
     
@@ -105,35 +72,39 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: msi-v${{ github.event.inputs.version }}
-          name: Vanguard MSI Installers v${{ github.event.inputs.version }}
+          tag_name: v${{ github.event.inputs.version }}
+          name: Vanguard Agent v${{ github.event.inputs.version }}
           body: |
-            ## MSI Installers v${{ github.event.inputs.version }}
+            ## Vanguard Agent v${{ github.event.inputs.version }}
             
-            Enterprise deployment packages for Vanguard Agent and Portal.
+            Combined RMM Agent + Customer Portal for Windows systems.
             
-            ### Silent Installation Examples
+            ### Features
+            - RMM Monitoring: System telemetry, command execution, health tracking
+            - Tray Icon: Always-visible Vanguard shield icon in system tray
+            - Customer Portal: WebView2-based self-service portal popup
+            - Quick Actions: New tickets, view tickets, system health checks
+            - SafeSuite Integration: Access to SafePass, SafeScan, SafeWeb, SafeTrack
             
-            **Agent (with credentials):**
+            ### Silent Installation
+            
             ```powershell
             msiexec /i VanguardAgent-${{ github.event.inputs.version }}.msi /qn USERID="your-uuid" SECRETKEY="vgd_sk_xxx"
             ```
             
-            **Portal (with config):**
-            ```powershell
-            msiexec /i VanguardPortal-${{ github.event.inputs.version }}.msi /qn PORTALKEY="your-portal-key"
-            ```
-            
-            ### Group Policy Deployment
-            These MSI packages are compatible with:
+            ### Enterprise Deployment
+            Compatible with:
             - Microsoft Intune
             - SCCM/MECM
             - Group Policy Software Installation
             - PDQ Deploy
             - Any MSI-compatible RMM
+            
+            ### Requirements
+            - Windows 10/11 or Windows Server 2019+
+            - WebView2 Runtime (for portal popup)
           files: |
             artifacts/VanguardAgent-MSI/*.msi
-            artifacts/VanguardPortal-MSI/*.msi
           draft: false
           prerelease: false
         env:
