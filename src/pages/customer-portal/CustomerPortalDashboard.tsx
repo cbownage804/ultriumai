@@ -6,18 +6,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Ticket, Plus, Shield, Key, Globe, Search as SearchIcon, 
-  LogOut, User, Clock, AlertCircle, CheckCircle2, Loader2,
-  ExternalLink, ChevronRight
+  Ticket, Plus, Shield, 
+  Clock, AlertCircle, CheckCircle2, Loader2,
+  ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { usePortalSession } from '@/hooks/usePortalSession';
+import { PortalHeader } from '@/components/customer-portal/PortalHeader';
+import { SafeSuiteWidget } from '@/components/customer-portal/SafeSuiteWidget';
 
 interface PortalTicket {
   id: string;
@@ -70,11 +72,7 @@ export default function CustomerPortalDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    toast.success('Logged out successfully');
-    navigate('/customer-portal/login');
-  };
+  // handleLogout is now in PortalHeader
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -112,37 +110,7 @@ export default function CustomerPortalDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Header */}
-      <header className="bg-black/40 backdrop-blur-sm border-b border-white/10 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
-                <Shield className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-white">Customer Portal</h1>
-                <p className="text-xs text-white/50">Welcome back, {session.user.fullName}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Badge variant="outline" className="border-cyan-500/30 text-cyan-400">
-                <User className="h-3 w-3 mr-1" />
-                {session.user.role}
-              </Badge>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="text-white/60 hover:text-white hover:bg-white/10"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <PortalHeader />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -248,84 +216,11 @@ export default function CustomerPortalDashboard() {
           {/* Security Tools Tab */}
           {hasAnySafeSuite && (
             <TabsContent value="tools" className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold text-white">Security Tools</h2>
-                <p className="text-white/60">Access your SafeSuite security applications</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {safeSuite.safepass_enabled && (
-                  <ToolCard
-                    title="SafePass"
-                    description="Secure password manager"
-                    icon={Key}
-                    color="from-cyan-500 to-blue-600"
-                    onClick={() => window.open('/safepass', '_blank')}
-                  />
-                )}
-                {safeSuite.safescan_enabled && (
-                  <ToolCard
-                    title="SafeScan"
-                    description="Security vulnerability scanner"
-                    icon={SearchIcon}
-                    color="from-purple-500 to-pink-600"
-                    onClick={() => window.open('/safescan', '_blank')}
-                  />
-                )}
-                {safeSuite.safeweb_enabled && (
-                  <ToolCard
-                    title="SafeWeb"
-                    description="Website security monitor"
-                    icon={Globe}
-                    color="from-green-500 to-teal-600"
-                    onClick={() => window.open('/safeweb', '_blank')}
-                  />
-                )}
-                {safeSuite.safetrack_enabled && (
-                  <ToolCard
-                    title="SafeTrack"
-                    description="Asset warranty tracker"
-                    icon={CheckCircle2}
-                    color="from-amber-500 to-orange-600"
-                    onClick={() => window.open('/safetrack', '_blank')}
-                  />
-                )}
-              </div>
+              <SafeSuiteWidget access={safeSuite} />
             </TabsContent>
           )}
         </Tabs>
       </main>
     </div>
-  );
-}
-
-interface ToolCardProps {
-  title: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  onClick: () => void;
-}
-
-function ToolCard({ title, description, icon: Icon, color, onClick }: ToolCardProps) {
-  return (
-    <Card 
-      className="bg-black/40 border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer group"
-      onClick={onClick}
-    >
-      <CardContent className="p-6">
-        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-          <Icon className="h-6 w-6 text-white" />
-        </div>
-        <h3 className="font-semibold text-white mb-1 group-hover:text-cyan-400 transition-colors">
-          {title}
-        </h3>
-        <p className="text-sm text-white/60">{description}</p>
-        <div className="flex items-center gap-1 mt-3 text-cyan-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-          <span>Open</span>
-          <ExternalLink className="h-3 w-3" />
-        </div>
-      </CardContent>
-    </Card>
   );
 }

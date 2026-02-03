@@ -209,6 +209,11 @@ const PublicGPTEmbed = lazy(() => import('@/pages/PublicGPTEmbed'));
 const CustomerPortalLogin = lazy(() => import('@/pages/customer-portal/CustomerPortalLogin'));
 const CustomerPortalDashboard = lazy(() => import('@/pages/customer-portal/CustomerPortalDashboard'));
 const CustomerPortalNewTicket = lazy(() => import('@/pages/customer-portal/CustomerPortalNewTicket'));
+const CustomerPortalTickets = lazy(() => import('@/pages/customer-portal/CustomerPortalTickets'));
+const CustomerPortalTicketDetail = lazy(() => import('@/pages/customer-portal/CustomerPortalTicketDetail'));
+const CustomerPortalForgotPassword = lazy(() => import('@/pages/customer-portal/CustomerPortalForgotPassword'));
+const CustomerPortalResetPassword = lazy(() => import('@/pages/customer-portal/CustomerPortalResetPassword'));
+const CustomerPortalChangePassword = lazy(() => import('@/pages/customer-portal/CustomerPortalChangePassword'));
 
 // Components that need to be loaded for layouts
 import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
@@ -415,8 +420,13 @@ function AppRouter() {
         
         {/* Customer Portal Routes (End-User Self-Service) */}
         <Route path="/customer-portal/login" element={<SuspenseWrapper variant="form"><CustomerPortalLogin /></SuspenseWrapper>} />
+        <Route path="/customer-portal/forgot-password" element={<SuspenseWrapper variant="form"><CustomerPortalForgotPassword /></SuspenseWrapper>} />
+        <Route path="/customer-portal/reset-password" element={<SuspenseWrapper variant="form"><CustomerPortalResetPassword /></SuspenseWrapper>} />
+        <Route path="/customer-portal/change-password" element={<SuspenseWrapper variant="form"><CustomerPortalChangePassword /></SuspenseWrapper>} />
         <Route path="/customer-portal/dashboard" element={<SuspenseWrapper><CustomerPortalDashboard /></SuspenseWrapper>} />
+        <Route path="/customer-portal/tickets" element={<SuspenseWrapper variant="list"><CustomerPortalTickets /></SuspenseWrapper>} />
         <Route path="/customer-portal/tickets/new" element={<SuspenseWrapper variant="form"><CustomerPortalNewTicket /></SuspenseWrapper>} />
+        <Route path="/customer-portal/tickets/:ticketId" element={<SuspenseWrapper variant="detail"><CustomerPortalTicketDetail /></SuspenseWrapper>} />
         
         {/* Helpdesk Feedback Route (Public - for email links) */}
         <Route path="/helpdesk/feedback" element={<SuspenseWrapper variant="form"><HelpdeskFeedback /></SuspenseWrapper>} />
