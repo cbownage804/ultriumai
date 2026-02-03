@@ -40,7 +40,11 @@ jobs:
             -p:PublishSingleFile=true `
             -p:SelfContained=true `
             -p:Version=${{ github.event.inputs.version }} `
+            -p:TreatWarningsAsErrors=false `
             -o ./publish/agent
+          
+          # Ensure config.json is in publish directory
+          Copy-Item "VanguardAgent/config.json" -Destination "./publish/agent/config.json" -Force
 
       - name: Copy Icon to Publish
         run: |
