@@ -248,15 +248,23 @@ async function processThreatDetection(
 }
 
 /**
- * AI-powered response action determination
+ * AI-powered response action determination with Lovable AI Gateway
  */
 async function determineResponseActions(threat: ThreatDetection, config: AutoRemediationConfig) {
   const actions: any[] = [];
   let analysis = '';
+  let aiInsights: any = null;
 
-  // Determine actions based on threat type and indicators
+  // Run AI analysis in parallel with rule-based detection for speed
+  const aiAnalysisPromise = getAIThreatAnalysis(threat).catch(err => {
+    console.error('AI analysis failed, using rule-based fallback:', err.message);
+    return null;
+  });
+
+  // FAST PATH: Rule-based action determination (executes immediately)
+  // This ensures response time is not delayed by AI
+  
   if (threat.affected_process) {
-    // Malicious process detected - recommend termination
     actions.push({
       action_type: 'process_kill',
       priority: 1,
@@ -269,7 +277,6 @@ async function determineResponseActions(threat: ThreatDetection, config: AutoRem
       rollback: 'Process can be restarted if false positive'
     });
 
-    // If process has a file path, quarantine the executable
     if (threat.affected_process.path) {
       actions.push({
         action_type: 'file_quarantine',
@@ -287,7 +294,6 @@ async function determineResponseActions(threat: ThreatDetection, config: AutoRem
   }
 
   if (threat.affected_network) {
-    // Suspicious network connection - block the IP
     actions.push({
       action_type: 'firewall_block',
       priority: 1,
@@ -305,7 +311,6 @@ async function determineResponseActions(threat: ThreatDetection, config: AutoRem
   }
 
   if (threat.affected_file) {
-    // Malicious file detected - quarantine
     actions.push({
       action_type: 'file_quarantine',
       priority: 1,
@@ -321,31 +326,99 @@ async function determineResponseActions(threat: ThreatDetection, config: AutoRem
     analysis += `Detected malicious file at ${threat.affected_file.path}. `;
   }
 
-  // For critical threats, recommend network isolation
+  // For critical threats, recommend network isolation (Vanguard access preserved)
   if (threat.severity === 'critical' && threat.confidence >= 90) {
     actions.push({
       action_type: 'network_isolate',
-      priority: 10, // Highest priority but executed last
+      priority: 10,
       risk_level: 'high',
       target: {
-        allow_vanguard_only: true
+        allow_vanguard_only: true,
+        preserve_management: true,
+        vanguard_endpoints: ['api.ultriumai.com', 'nsyobmjpdpvesjwdphlh.supabase.co']
       },
       description: 'Isolate endpoint from network (Vanguard management access preserved)',
       rollback: 'Network connectivity can be restored via Vanguard console'
     });
 
-    analysis += 'Critical threat level - recommending network isolation. ';
+    analysis += 'Critical threat level - recommending network isolation with Vanguard-only access. ';
   }
 
   // MITRE ATT&CK based analysis
   if (threat.mitre_tactics?.includes('T1547') || threat.mitre_tactics?.includes('T1053')) {
-    // Persistence mechanism detected
     analysis += 'Persistence mechanism detected - check for scheduled tasks and registry run keys. ';
   }
 
   if (threat.mitre_tactics?.includes('T1055')) {
-    // Process injection
     analysis += 'Process injection technique identified - memory forensics recommended. ';
+  }
+
+  // ENHANCED PATH: Wait for AI insights (with timeout to not block response)
+  try {
+    aiInsights = await Promise.race([
+      aiAnalysisPromise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('AI timeout')), 3000))
+    ]);
+  } catch {
+    // AI timed out or failed - continue with rule-based analysis
+    console.log('AI analysis timed out, proceeding with rule-based response');
+  }
+
+  // Enhance response with AI insights if available
+  if (aiInsights) {
+    // AI can adjust confidence based on threat context
+    const adjustedConfidence = aiInsights.adjusted_confidence ?? threat.confidence;
+    
+    // AI may recommend additional actions
+    if (aiInsights.additional_actions) {
+      for (const aiAction of aiInsights.additional_actions) {
+        // Only add if not already in actions
+        if (!actions.find(a => a.action_type === aiAction.action_type)) {
+          actions.push({
+            ...aiAction,
+            ai_recommended: true
+          });
+        }
+      }
+    }
+
+    // AI may recommend escalation to isolation
+    if (aiInsights.recommend_isolation && !actions.find(a => a.action_type === 'network_isolate')) {
+      actions.push({
+        action_type: 'network_isolate',
+        priority: 10,
+        risk_level: 'high',
+        target: {
+          allow_vanguard_only: true,
+          preserve_management: true
+        },
+        description: 'AI recommends network isolation based on threat pattern analysis',
+        rollback: 'Network connectivity can be restored via Vanguard console',
+        ai_recommended: true,
+        ai_reasoning: aiInsights.isolation_reasoning
+      });
+    }
+
+    analysis = aiInsights.analysis || analysis;
+
+    return {
+      analysis,
+      actions: actions.sort((a, b) => a.priority - b.priority),
+      confidence_score: adjustedConfidence,
+      severity: aiInsights.adjusted_severity || threat.severity,
+      mitre_mapping: {
+        tactics: threat.mitre_tactics || [],
+        techniques: threat.mitre_techniques || []
+      },
+      ai_enhanced: true,
+      ai_insights: {
+        threat_family: aiInsights.threat_family,
+        attack_stage: aiInsights.attack_stage,
+        lateral_movement_risk: aiInsights.lateral_movement_risk,
+        data_exfil_risk: aiInsights.data_exfil_risk,
+        recommended_investigation: aiInsights.recommended_investigation
+      }
+    };
   }
 
   return {
@@ -356,8 +429,129 @@ async function determineResponseActions(threat: ThreatDetection, config: AutoRem
     mitre_mapping: {
       tactics: threat.mitre_tactics || [],
       techniques: threat.mitre_techniques || []
-    }
+    },
+    ai_enhanced: false
   };
+}
+
+/**
+ * Get AI-powered threat analysis from Lovable AI Gateway
+ */
+async function getAIThreatAnalysis(threat: ThreatDetection) {
+  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+  if (!LOVABLE_API_KEY) {
+    console.log('LOVABLE_API_KEY not configured, skipping AI analysis');
+    return null;
+  }
+
+  const threatContext = `
+Analyze this security threat and provide response recommendations:
+
+THREAT DETAILS:
+- Type: ${threat.threat_type}
+- Severity: ${threat.severity}
+- Confidence: ${threat.confidence}%
+- MITRE Techniques: ${threat.mitre_techniques?.join(', ') || 'Unknown'}
+
+AFFECTED RESOURCES:
+${threat.affected_process ? `- Process: ${threat.affected_process.name} (PID: ${threat.affected_process.pid})
+  Path: ${threat.affected_process.path || 'Unknown'}
+  Command: ${threat.affected_process.command_line?.substring(0, 200) || 'Unknown'}` : ''}
+${threat.affected_file ? `- File: ${threat.affected_file.path}
+  Hash: ${threat.affected_file.hash || 'Unknown'}` : ''}
+${threat.affected_network ? `- Network: ${threat.affected_network.remote_ip}:${threat.affected_network.remote_port}` : ''}
+
+RAW INDICATORS:
+${JSON.stringify(threat.raw_indicators || {}, null, 2)}
+`;
+
+  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-3-flash-preview',
+      messages: [
+        {
+          role: 'system',
+          content: `You are an expert XDR threat analyst. Analyze security threats and provide actionable response recommendations.
+Be concise and focus on:
+1. Threat classification and severity assessment
+2. Attack stage identification (initial access, execution, persistence, lateral movement, exfiltration)
+3. Recommended containment actions
+4. Whether network isolation is warranted
+5. Lateral movement and data exfiltration risk assessment`
+        },
+        { role: 'user', content: threatContext }
+      ],
+      tools: [{
+        type: 'function',
+        function: {
+          name: 'analyze_threat',
+          description: 'Provide structured threat analysis',
+          parameters: {
+            type: 'object',
+            properties: {
+              analysis: { type: 'string', description: 'Concise threat analysis (2-3 sentences)' },
+              threat_family: { type: 'string', description: 'Malware family or attack type if identifiable' },
+              attack_stage: { 
+                type: 'string', 
+                enum: ['initial_access', 'execution', 'persistence', 'privilege_escalation', 'defense_evasion', 'credential_access', 'discovery', 'lateral_movement', 'collection', 'exfiltration', 'command_and_control', 'impact'],
+                description: 'Current stage in the attack kill chain'
+              },
+              adjusted_severity: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
+              adjusted_confidence: { type: 'number', description: 'Adjusted confidence 0-100' },
+              recommend_isolation: { type: 'boolean', description: 'Whether to recommend full network isolation' },
+              isolation_reasoning: { type: 'string', description: 'Why isolation is or is not recommended' },
+              lateral_movement_risk: { type: 'string', enum: ['none', 'low', 'medium', 'high'] },
+              data_exfil_risk: { type: 'string', enum: ['none', 'low', 'medium', 'high'] },
+              additional_actions: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    action_type: { type: 'string', enum: ['process_kill', 'file_quarantine', 'firewall_block', 'service_disable', 'registry_restore', 'memory_dump'] },
+                    priority: { type: 'number' },
+                    risk_level: { type: 'string', enum: ['low', 'medium', 'high'] },
+                    description: { type: 'string' }
+                  }
+                }
+              },
+              recommended_investigation: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Follow-up investigation steps'
+              }
+            },
+            required: ['analysis', 'attack_stage', 'adjusted_severity', 'recommend_isolation', 'lateral_movement_risk', 'data_exfil_risk']
+          }
+        }
+      }],
+      tool_choice: { type: 'function', function: { name: 'analyze_threat' } }
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('AI Gateway error:', response.status, errorText);
+    return null;
+  }
+
+  const data = await response.json();
+  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+  
+  if (toolCall?.function?.arguments) {
+    try {
+      return JSON.parse(toolCall.function.arguments);
+    } catch {
+      console.error('Failed to parse AI response');
+      return null;
+    }
+  }
+
+  return null;
 }
 
 /**
