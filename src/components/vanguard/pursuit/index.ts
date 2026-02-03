@@ -14,3 +14,5 @@ export { AttackChainVisualization } from './AttackChainVisualization';
 export { RealtimeAlertsIndicator } from './RealtimeAlertsIndicator';
 export { QuarantineManager } from './QuarantineManager';
 export { AgentTestingPanel } from './AgentTestingPanel';
+export { ThreatIntelLookup } from './ThreatIntelLookup';
+export { ThreatReportsExport } from './ThreatReportsExport';
