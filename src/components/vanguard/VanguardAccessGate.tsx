@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Loader2, Shield, Lock, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 interface VanguardAccessGateProps {
   children: ReactNode;
@@ -17,6 +17,7 @@ interface VanguardAccessGateProps {
  */
 export function VanguardAccessGate({ children }: VanguardAccessGateProps) {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -63,7 +64,7 @@ export function VanguardAccessGate({ children }: VanguardAccessGateProps) {
                 className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600" 
                 asChild
               >
-                <Link to="/vanguard/auth">
+                <Link to="/vanguard/auth" state={{ from: location }}>
                   <Lock className="mr-2 h-4 w-4" />
                   Sign In to Vanguard
                 </Link>

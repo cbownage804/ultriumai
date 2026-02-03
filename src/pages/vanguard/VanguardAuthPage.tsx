@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Lock, Shield, Mail, Phone, ArrowRight, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import vanguardLogo from '@/assets/vanguard-logo.png';
+import { isVanguardDomain } from '@/utils/subdomain';
 
 const VanguardAuthPage = () => {
   const [activeTab, setActiveTab] = useState('signin');
@@ -27,9 +28,34 @@ const VanguardAuthPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
-  const from = location.state?.from?.pathname || '/app';
+  const from = useMemo(() => {
+    const hostname = window.location.hostname;
+    const isVanguardSubdomain = isVanguardDomain();
+    const defaultFrom = isVanguardSubdomain ? '/app' : '/vanguard/app';
+
+    const stateFrom = location.state?.from?.pathname as string | undefined;
+    const paramFrom = searchParams.get('path') || undefined;
+
+    // Prefer explicit state, then query param, then sensible default.
+    const candidate = (stateFrom || paramFrom || defaultFrom).trim();
+
+    // Prevent accidental loops back into auth pages.
+    if (!candidate || candidate.startsWith('/auth') || candidate.startsWith('/vanguard/auth')) {
+      return defaultFrom;
+    }
+
+    // On non-UltriumAI hosts (Lovable preview/published), avoid returning to bare `/app`.
+    // `/app` only exists on the Vanguard subdomain route tree.
+    const isUltriumHost = hostname === 'ultriumai.com' || hostname === 'www.ultriumai.com' || hostname.endsWith('.ultriumai.com');
+    if (!isVanguardSubdomain && !isUltriumHost && candidate === '/app') {
+      return defaultFrom;
+    }
+
+    return candidate;
+  }, [location.state, searchParams]);
 
   useEffect(() => {
     document.title = 'Sign In | Ultrium Vanguard';
@@ -43,8 +69,13 @@ const VanguardAuthPage = () => {
 
   // Redirect to unified auth on main domain
   const handleGoToUnifiedLogin = () => {
-    const mainDomain = 'https://ultriumai.com';
-    const authUrl = `${mainDomain}/auth?return=vanguard&path=${encodeURIComponent(from)}`;
+    const hostname = window.location.hostname;
+
+    // In Ultrium production, always centralize auth on the main domain.
+    const isUltriumProdHost = hostname === 'ultriumai.com' || hostname === 'www.ultriumai.com' || hostname.endsWith('.ultriumai.com');
+    const unifiedOrigin = isUltriumProdHost ? 'https://ultriumai.com' : window.location.origin;
+
+    const authUrl = `${unifiedOrigin}/auth?return=vanguard&path=${encodeURIComponent(from)}`;
     window.location.href = authUrl;
   };
 
