@@ -2338,6 +2338,7 @@ export type Database = {
       }
       client_contacts: {
         Row: {
+          can_view_all_company_tickets: boolean | null
           client_id: string
           communication_preferences: Json | null
           contact_name: string
@@ -2347,11 +2348,14 @@ export type Database = {
           is_active: boolean | null
           is_primary: boolean | null
           phone: string | null
+          portal_enabled: boolean | null
+          portal_role: string | null
           role: string | null
           timezone: string | null
           updated_at: string | null
         }
         Insert: {
+          can_view_all_company_tickets?: boolean | null
           client_id: string
           communication_preferences?: Json | null
           contact_name: string
@@ -2361,11 +2365,14 @@ export type Database = {
           is_active?: boolean | null
           is_primary?: boolean | null
           phone?: string | null
+          portal_enabled?: boolean | null
+          portal_role?: string | null
           role?: string | null
           timezone?: string | null
           updated_at?: string | null
         }
         Update: {
+          can_view_all_company_tickets?: boolean | null
           client_id?: string
           communication_preferences?: Json | null
           contact_name?: string
@@ -2375,6 +2382,8 @@ export type Database = {
           is_active?: boolean | null
           is_primary?: boolean | null
           phone?: string | null
+          portal_enabled?: boolean | null
+          portal_role?: string | null
           role?: string | null
           timezone?: string | null
           updated_at?: string | null
@@ -2908,6 +2917,7 @@ export type Database = {
       client_portal_users: {
         Row: {
           client_id: string
+          contact_id: string | null
           created_at: string
           email: string
           full_name: string
@@ -2922,6 +2932,7 @@ export type Database = {
         }
         Insert: {
           client_id: string
+          contact_id?: string | null
           created_at?: string
           email: string
           full_name: string
@@ -2936,6 +2947,7 @@ export type Database = {
         }
         Update: {
           client_id?: string
+          contact_id?: string | null
           created_at?: string
           email?: string
           full_name?: string
@@ -2948,7 +2960,15 @@ export type Database = {
           role?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "client_portal_users_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "client_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       client_users: {
         Row: {
@@ -4771,6 +4791,50 @@ export type Database = {
           upvote_count?: number | null
         }
         Relationships: []
+      }
+      company_safesuite_settings: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          id: string
+          safepass_enabled: boolean | null
+          safescan_enabled: boolean | null
+          safetrack_enabled: boolean | null
+          safeweb_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          id?: string
+          safepass_enabled?: boolean | null
+          safescan_enabled?: boolean | null
+          safetrack_enabled?: boolean | null
+          safeweb_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          safepass_enabled?: boolean | null
+          safescan_enabled?: boolean | null
+          safetrack_enabled?: boolean | null
+          safeweb_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_safesuite_settings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "rmm_customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       compliance_alerts: {
         Row: {
@@ -31364,6 +31428,10 @@ export type Database = {
       is_ultrium_employee: { Args: { _user_id: string }; Returns: boolean }
       owns_safepass_entry: {
         Args: { checking_user_id: string; entry_user_id: string }
+        Returns: boolean
+      }
+      portal_user_can_view_ticket: {
+        Args: { p_portal_user_id: string; p_ticket_id: string }
         Returns: boolean
       }
       send_notification: {
