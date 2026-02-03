@@ -13,17 +13,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Ticket, Plus, Shield, 
   Clock, AlertCircle, Loader2,
-  ChevronRight, BookOpen, Monitor
+  ChevronRight, BookOpen, Monitor, CreditCard
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { usePortalSession } from '@/hooks/usePortalSession';
+import { useRealtimeTickets } from '@/hooks/useRealtimeTickets';
 import { PortalHeader } from '@/components/customer-portal/PortalHeader';
 import { SafeSuiteWidget } from '@/components/customer-portal/SafeSuiteWidget';
 import { AnnouncementBanner } from '@/components/customer-portal/AnnouncementBanner';
 import { DashboardStats } from '@/components/customer-portal/DashboardStats';
 import { KnowledgeBase } from '@/components/customer-portal/KnowledgeBase';
 import { DeviceStatus } from '@/components/customer-portal/DeviceStatus';
+import { BillingPortal } from '@/components/customer-portal/BillingPortal';
 
 interface PortalTicket {
   id: string;
@@ -38,9 +40,12 @@ interface PortalTicket {
 export default function CustomerPortalDashboard() {
   const navigate = useNavigate();
   const { session, isLoading: sessionLoading } = usePortalSession();
+  const { updates: realtimeUpdates } = useRealtimeTickets();
   const [tickets, setTickets] = useState<PortalTicket[]>([]);
   const [isLoadingTickets, setIsLoadingTickets] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  
+  const isAdmin = session?.user?.role === 'admin' || session?.user?.role === 'Admin';
 
   useEffect(() => {
     if (!sessionLoading && !session) {
@@ -52,7 +57,7 @@ export default function CustomerPortalDashboard() {
     if (session) {
       fetchTickets();
     }
-  }, [session]);
+  }, [session, realtimeUpdates]); // Refetch when real-time updates come in
 
   const fetchTickets = async () => {
     if (!session) return;
@@ -143,6 +148,12 @@ export default function CustomerPortalDashboard() {
               <TabsTrigger value="tools" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                 <Shield className="h-4 w-4 mr-2" />
                 Security Tools
+              </TabsTrigger>
+            )}
+            {isAdmin && (
+              <TabsTrigger value="billing" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+                <CreditCard className="h-4 w-4 mr-2" />
+                Billing
               </TabsTrigger>
             )}
           </TabsList>
@@ -325,6 +336,13 @@ export default function CustomerPortalDashboard() {
           {hasAnySafeSuite && (
             <TabsContent value="tools" className="space-y-6">
               <SafeSuiteWidget access={safeSuite} />
+            </TabsContent>
+          )}
+
+          {/* Billing Tab (Admin Only) */}
+          {isAdmin && (
+            <TabsContent value="billing">
+              <BillingPortal />
             </TabsContent>
           )}
         </Tabs>
