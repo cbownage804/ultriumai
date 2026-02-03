@@ -53,6 +53,8 @@ import {
   History,
   RefreshCw,
   Server,
+  Sparkles,
+  Wand2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -107,61 +109,6 @@ const scriptCategories = [
   "Custom",
 ];
 
-const builtinScripts: Script[] = [
-  {
-    id: "builtin-1",
-    name: "Clear Temp Files",
-    description: "Clears Windows temporary files and browser caches",
-    category: "Cleanup",
-    type: "powershell",
-    content: `# Clear Windows Temp Files
-$TempFolders = @("$env:TEMP", "$env:WINDIR\\Temp")
-foreach ($folder in $TempFolders) {
-    Get-ChildItem -Path $folder -Recurse -Force | Remove-Item -Force -Recurse
-}`,
-    author: "System",
-    is_favorite: true,
-    is_builtin: true,
-    execution_count: 156,
-    last_executed: "2024-01-15T10:30:00Z",
-    last_result: "success",
-    tags: ["cleanup", "disk", "temp"],
-  },
-  {
-    id: "builtin-2",
-    name: "Windows Update Status",
-    description: "Checks for pending Windows updates",
-    category: "Monitoring",
-    type: "powershell",
-    content: `$Session = New-Object -ComObject Microsoft.Update.Session
-$Searcher = $Session.CreateUpdateSearcher()
-$Updates = $Searcher.Search("IsInstalled=0")
-Write-Host "Pending: $($Updates.Updates.Count)"`,
-    author: "System",
-    is_favorite: false,
-    is_builtin: true,
-    execution_count: 89,
-    tags: ["updates", "monitoring"],
-  },
-  {
-    id: "builtin-3",
-    name: "System Health Check",
-    description: "Comprehensive system health check",
-    category: "Monitoring",
-    type: "powershell",
-    content: `# System Health Check
-$cpu = Get-Counter '\\Processor(_Total)\\% Processor Time'
-$os = Get-CimInstance Win32_OperatingSystem
-$disk = Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3"
-@{CPU=$cpu; Memory=$os; Disk=$disk} | ConvertTo-Json`,
-    author: "System",
-    is_favorite: true,
-    is_builtin: true,
-    execution_count: 412,
-    tags: ["health", "monitoring", "diagnostics"],
-  },
-];
-
 export function FleetScriptLibrary() {
   const { user } = useAuth();
   const [scripts, setScripts] = useState<Script[]>([]);
@@ -179,6 +126,8 @@ export function FleetScriptLibrary() {
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
 
   const [newScript, setNewScript] = useState({
     name: "",
@@ -189,7 +138,8 @@ export function FleetScriptLibrary() {
     tags: "",
   });
 
-  const onlineAgents = agents.filter(a => a.status === 'online');
+  // Include both online AND warning status devices (warning = slightly stale but reachable)
+  const selectableAgents = agents.filter(a => a.status === 'online' || a.status === 'warning');
 
   useEffect(() => {
     if (user) loadData();
@@ -209,16 +159,17 @@ export function FleetScriptLibrary() {
         setAgents(agentsData as Agent[]);
       }
 
-      // Load user scripts from database
-      const { data: userScripts, error: scriptsError } = await supabase
+      // Load ALL scripts from database (including builtins)
+      const { data: allScripts, error: scriptsError } = await supabase
         .from('vanguard_fleet_scripts')
         .select('*')
-        .eq('user_id', user?.id)
+        .or(`user_id.eq.${user?.id},is_builtin.eq.true`)
+        .order('is_builtin', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (scriptsError) throw scriptsError;
 
-      const mappedScripts: Script[] = (userScripts || []).map((s: any) => ({
+      const mappedScripts: Script[] = (allScripts || []).map((s: any) => ({
         id: s.id,
         name: s.name,
         description: s.description || '',
@@ -227,15 +178,14 @@ export function FleetScriptLibrary() {
         content: s.content,
         author: s.author || 'User',
         is_favorite: s.is_favorite || false,
-        is_builtin: false,
+        is_builtin: s.is_builtin || false,
         execution_count: s.execution_count || 0,
         last_executed: s.last_executed,
         last_result: s.last_result as Script['last_result'],
         tags: s.tags || [],
       }));
 
-      // Combine with builtins
-      setScripts([...builtinScripts, ...mappedScripts]);
+      setScripts(mappedScripts);
 
       // Load executions
       const { data: execData, error: execError } = await supabase
@@ -268,10 +218,10 @@ export function FleetScriptLibrary() {
   };
 
   const handleSelectAllAgents = () => {
-    if (selectedAgents.length === onlineAgents.length) {
+    if (selectedAgents.length === selectableAgents.length) {
       setSelectedAgents([]);
     } else {
-      setSelectedAgents(onlineAgents.map(a => a.id));
+      setSelectedAgents(selectableAgents.map(a => a.id));
     }
   };
 
@@ -295,11 +245,10 @@ export function FleetScriptLibrary() {
 
   const toggleFavorite = async (scriptId: string) => {
     const script = scripts.find(s => s.id === scriptId);
-    if (!script || script.is_builtin) {
-      setScripts(scripts.map((s) => (s.id === scriptId ? { ...s, is_favorite: !s.is_favorite } : s)));
-      return;
-    }
+    if (!script) return;
 
+    // For builtin scripts owned by others, we'd need a user_favorites table
+    // For now, just update if user owns or it's builtin in their scope
     try {
       const { error } = await supabase
         .from('vanguard_fleet_scripts')
@@ -310,6 +259,62 @@ export function FleetScriptLibrary() {
       setScripts(scripts.map((s) => (s.id === scriptId ? { ...s, is_favorite: !s.is_favorite } : s)));
     } catch (err) {
       console.error('Failed to toggle favorite:', err);
+      // Optimistic update for UI even if DB fails
+      setScripts(scripts.map((s) => (s.id === scriptId ? { ...s, is_favorite: !s.is_favorite } : s)));
+    }
+  };
+
+  const generateScriptWithAI = async () => {
+    if (!aiPrompt.trim()) {
+      toast.error('Please describe what the script should do');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-script`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            prompt: aiPrompt,
+            script_type: newScript.type,
+            category: newScript.category,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate script');
+      }
+
+      const data = await response.json();
+      
+      setNewScript(prev => ({
+        ...prev,
+        name: data.name || prev.name || 'AI Generated Script',
+        description: data.description || aiPrompt,
+        content: data.content || '',
+        tags: data.tags?.join(', ') || '',
+      }));
+
+      toast.success('Script generated!', {
+        description: 'Review and edit as needed before saving'
+      });
+      setAiPrompt('');
+    } catch (err: any) {
+      console.error('Failed to generate script:', err);
+      toast.error('Failed to generate script', { description: err.message });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -331,6 +336,7 @@ export function FleetScriptLibrary() {
           script_type: newScript.type,
           content: newScript.content,
           author: 'User',
+          is_builtin: false,
           tags: newScript.tags.split(",").map((t) => t.trim()).filter(Boolean),
         })
         .select()
@@ -352,7 +358,7 @@ export function FleetScriptLibrary() {
         tags: data.tags || [],
       };
       
-      setScripts([...builtinScripts, script, ...scripts.filter(s => !s.is_builtin)]);
+      setScripts([script, ...scripts]);
       setShowCreateDialog(false);
       setNewScript({ name: "", description: "", category: "Custom", type: "powershell", content: "", tags: "" });
       toast.success('Script created');
@@ -518,6 +524,9 @@ export function FleetScriptLibrary() {
       </span>
     );
   };
+
+  // Check if device is selectable (online or warning status)
+  const isDeviceSelectable = (status: string) => status === 'online' || status === 'warning';
 
   if (isLoading) {
     return (
@@ -754,11 +763,43 @@ export function FleetScriptLibrary() {
 
       {/* Create Script Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create New Script</DialogTitle>
-            <DialogDescription>Add a custom script to your library</DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-cyan-500" />
+              Create New Script
+            </DialogTitle>
+            <DialogDescription>Add a custom script to your library or generate one with AI</DialogDescription>
           </DialogHeader>
+          
+          {/* AI Generation Section */}
+          <div className="p-4 rounded-lg bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 border border-cyan-500/20">
+            <div className="flex items-center gap-2 mb-3">
+              <Wand2 className="h-4 w-4 text-cyan-400" />
+              <Label className="text-sm font-medium">Generate with AI</Label>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder="Describe what the script should do... (e.g., 'Clear browser cache and temp files')"
+                className="flex-1"
+              />
+              <Button 
+                onClick={generateScriptWithAI} 
+                disabled={isGenerating || !aiPrompt.trim()}
+                variant="outline"
+                className="border-cyan-500/30 hover:bg-cyan-500/10"
+              >
+                {isGenerating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -857,7 +898,7 @@ export function FleetScriptLibrary() {
               <div className="flex items-center justify-between">
                 <Label>Target Devices ({selectedAgents.length} selected)</Label>
                 <Button variant="ghost" size="sm" onClick={handleSelectAllAgents}>
-                  {selectedAgents.length === onlineAgents.length ? 'Deselect All' : 'Select All Online'}
+                  {selectedAgents.length === selectableAgents.length ? 'Deselect All' : 'Select All Online'}
                 </Button>
               </div>
               <ScrollArea className="h-[180px] border rounded-lg p-2">
@@ -877,15 +918,18 @@ export function FleetScriptLibrary() {
                         <Checkbox
                           checked={selectedAgents.includes(agent.id)}
                           onCheckedChange={() => toggleAgentSelection(agent.id)}
-                          disabled={agent.status !== 'online'}
+                          disabled={!isDeviceSelectable(agent.status)}
                         />
                         <Server className="h-4 w-4 text-muted-foreground" />
-                        <span className={agent.status !== 'online' ? 'text-muted-foreground' : ''}>
+                        <span className={!isDeviceSelectable(agent.status) ? 'text-muted-foreground' : ''}>
                           {agent.name || agent.device_id}
                         </span>
                         <Badge
-                          variant={agent.status === 'online' ? 'default' : 'secondary'}
-                          className="ml-auto text-xs"
+                          variant={agent.status === 'online' ? 'default' : agent.status === 'warning' ? 'secondary' : 'outline'}
+                          className={cn(
+                            "ml-auto text-xs",
+                            agent.status === 'warning' && "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                          )}
                         >
                           {agent.status}
                         </Badge>
