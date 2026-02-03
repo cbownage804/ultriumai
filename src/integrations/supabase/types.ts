@@ -21039,6 +21039,54 @@ export type Database = {
           },
         ]
       }
+      scheduled_maintenance: {
+        Row: {
+          affected_services: string[] | null
+          client_id: string | null
+          created_at: string
+          description: string | null
+          end_time: string
+          id: string
+          maintenance_type: string
+          notify_customers: boolean | null
+          start_time: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affected_services?: string[] | null
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          end_time: string
+          id?: string
+          maintenance_type?: string
+          notify_customers?: boolean | null
+          start_time: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affected_services?: string[] | null
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string
+          id?: string
+          maintenance_type?: string
+          notify_customers?: boolean | null
+          start_time?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       scheduled_scan_results: {
         Row: {
           created_at: string
