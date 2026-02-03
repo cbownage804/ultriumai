@@ -15,9 +15,7 @@ public class MemoryScanner
     private readonly ApiClient _apiClient;
     private readonly List<MemorySignature> _signatures = new();
     private readonly HashSet<int> _whitelistedPids = new();
-    #pragma warning disable CS0414 // Field is assigned but never used
-    private bool _isRunning;
-    #pragma warning restore CS0414
+    // Removed unused _isRunning field - scanner lifecycle managed by AVEngine
 
     // Memory scanning statistics
     private long _processesScanned;
