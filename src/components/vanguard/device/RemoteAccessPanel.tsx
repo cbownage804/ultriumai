@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,8 +23,12 @@ import {
   Loader2,
   Zap,
   Shield,
+  Eye,
+  EyeOff,
+  Key,
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   REMOTE_ACCESS_PROVIDERS, 
   isRemoteAccessConfigured,
@@ -64,12 +68,53 @@ export function RemoteAccessPanel({
     teamviewerId: teamviewerId || "",
   });
   const [copied, setCopied] = useState<string | null>(null);
+  const [rustdeskPassword, setRustdeskPassword] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loadingPassword, setLoadingPassword] = useState(false);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setCopied(label);
     toast.success(`${label} copied to clipboard`);
     setTimeout(() => setCopied(null), 2000);
+  };
+
+  const fetchRustDeskPassword = async () => {
+    if (!agentId) return;
+    
+    setLoadingPassword(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please log in to view password");
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://nsyobmjpdpvesjwdphlh.supabase.co'}/functions/v1/vanguard-agent-api?action=get_rustdesk_password`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ agent_id: agentId }),
+        }
+      );
+
+      const data = await response.json();
+      if (data.password) {
+        setRustdeskPassword(data.password);
+        setShowPassword(true);
+      } else {
+        toast.info("No unattended password configured yet");
+      }
+    } catch (err) {
+      console.error('Failed to fetch password:', err);
+      toast.error("Failed to retrieve password");
+    } finally {
+      setLoadingPassword(false);
+    }
   };
 
   const handleConnect = async (provider: string, id: string) => {
@@ -273,6 +318,58 @@ export function RemoteAccessPanel({
                       {provider.deviceId}
                     </Badge>
                   </div>
+
+                  {/* RustDesk Password Section */}
+                  {provider.isBuiltIn && (
+                    <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Key className="h-4 w-4 text-blue-500" />
+                          <span className="font-medium">Unattended Password</span>
+                        </div>
+                        {rustdeskPassword ? (
+                          <div className="flex items-center gap-2">
+                            <code className="px-2 py-1 bg-slate-800 rounded text-sm font-mono">
+                              {showPassword ? rustdeskPassword : '••••••••••••'}
+                            </code>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => copyToClipboard(rustdeskPassword, "Password")}
+                            >
+                              {copied === "Password" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={fetchRustDeskPassword}
+                            disabled={loadingPassword}
+                          >
+                            {loadingPassword ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Eye className="h-4 w-4 mr-2" />
+                                Show Password
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Use this password for unattended remote access
+                      </p>
+                    </div>
+                  )}
 
                   <div className="flex gap-2">
                     <Button
