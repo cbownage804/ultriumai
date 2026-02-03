@@ -5,6 +5,7 @@
 using System.Net.Http.Json;
 using System.Text;
 using Newtonsoft.Json;
+using VanguardAgent.Services.XDR;
 
 namespace VanguardAgent.Services;
 
