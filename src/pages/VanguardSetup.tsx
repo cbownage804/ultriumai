@@ -5,9 +5,10 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { 
   Copy, Check, Loader2, Download, Package, Monitor, Building2, Apple, Terminal,
-  ChevronDown
+  ChevronDown, CheckCircle, Clock, AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -15,20 +16,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { getVanguardBasePath } from '@/utils/subdomain';
 import { getAgentConfig } from '@/hooks/useVanguardAgentConfig';
+import { generateOneClickInstaller, generateMsiOneLiner } from '@/utils/generateWindowsMsiInstaller';
+import { downloadBlob } from '@/utils/generateVanguardZip';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-
-// Supabase Storage bucket for agent downloads
-const STORAGE_BASE = 'https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/vanguard-agents';
-const AGENT_DOWNLOAD_URLS = {
-  windows: `${STORAGE_BASE}/VanguardAgent-setup.exe`,
-  windowsMsi: `${STORAGE_BASE}/VanguardAgent.msi`,
-  macos: `${STORAGE_BASE}/VanguardAgent.dmg`,
-  linux: `${STORAGE_BASE}/vanguard-agent-linux.tar.gz`,
-};
 
 type SelectedOS = 'windows' | 'macos' | 'linux';
 
@@ -54,6 +48,13 @@ export default function VanguardSetup() {
   const [clients, setClients] = useState<MSPClient[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [loadingClients, setLoadingClients] = useState(true);
+  
+  // Download state
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [tokenInfo, setTokenInfo] = useState<{ token: string; expiresAt: string } | null>(null);
+  
+  // Tray option
+  const [enableTray, setEnableTray] = useState(true);
   
   // Advanced section open state
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -81,13 +82,12 @@ export default function VanguardSetup() {
     fetchConfig();
   }, [session?.access_token]);
 
-  // Fetch MSP clients on mount - first get MSP record, then fetch clients by msp_id
+  // Fetch MSP clients on mount
   useEffect(() => {
     const fetchClients = async () => {
       if (!user?.id) return;
       
       try {
-        // First, get the MSP record for this user
         const { data: mspData, error: mspError } = await supabase
           .from('msps')
           .select('id')
@@ -97,13 +97,11 @@ export default function VanguardSetup() {
         if (mspError) throw mspError;
         
         if (!mspData) {
-          // No MSP record found for this user
           setClients([]);
           setLoadingClients(false);
           return;
         }
         
-        // Query msp_clients where msp_id matches the MSP's id and is_active is true
         const { data, error } = await supabase
           .from('msp_clients')
           .select('id, company_name')
@@ -136,62 +134,74 @@ export default function VanguardSetup() {
     document.title = 'Install Agent | Ultrium Vanguard';
   }, []);
 
-  // Get download URL for selected OS
-  const getDownloadUrl = () => {
-    switch (selectedOS) {
-      case 'windows':
-        return AGENT_DOWNLOAD_URLS.windows;
-      case 'macos':
-        return AGENT_DOWNLOAD_URLS.macos;
-      case 'linux':
-        return AGENT_DOWNLOAD_URLS.linux;
+  // Handle Windows download with provisioning token
+  const handleWindowsDownload = async () => {
+    if (!user?.id) {
+      toast.error('Please log in to download the agent');
+      return;
+    }
+
+    setIsDownloading(true);
+
+    try {
+      const clientName = selectedClient?.company_name || 'My Organization';
+      
+      const result = await generateOneClickInstaller({
+        clientId: selectedClientId || undefined,
+        clientName,
+        enableTray,
+        maxUses: 10, // Allow multiple installs from one download
+        expiresInDays: 7,
+      });
+      
+      if (!result) {
+        throw new Error('Failed to create provisioning token. Please try again.');
+      }
+      
+      // Store token info for display
+      setTokenInfo({
+        token: result.token,
+        expiresAt: result.expiresAt,
+      });
+      
+      // Download the PowerShell installer
+      const filename = `Install-VanguardAgent-${clientName.replace(/[^a-zA-Z0-9]/g, '-')}.ps1`;
+      downloadBlob(result.blob, filename);
+      
+      toast.success('Installer downloaded!', {
+        description: 'Run the PowerShell script as Administrator. Token valid for 7 days.',
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to generate installer');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
-  // Get installation command for selected OS
-  const getInstallCommand = () => {
-    const userId = user?.id || 'YOUR_USER_ID';
-    const clientIdParam = selectedClientId ? ` CLIENTID="${selectedClientId}"` : '';
-    const secretKey = agentConfig?.secretKey || 'YOUR_SECRET_KEY';
-    
-    switch (selectedOS) {
-      case 'windows':
-        return `# Silent install (run as Administrator)
-msiexec /i VanguardAgent.msi /qn USERID="${userId}" SECRETKEY="${secretKey}"${clientIdParam}
+  // Handle other OS downloads (placeholder)
+  const handleOtherOSDownload = () => {
+    toast.info(`${selectedOS === 'macos' ? 'macOS' : 'Linux'} agent coming soon!`);
+  };
 
-# Or interactive install
-.\\VanguardAgent-Setup.exe`;
-      case 'macos':
-        return `# Mount and install
-hdiutil attach VanguardAgent.dmg
-sudo installer -pkg /Volumes/VanguardAgent/VanguardAgent.pkg -target /
-
-# Start the service
-sudo launchctl load /Library/LaunchDaemons/com.ultriumai.vanguard.plist`;
-      case 'linux':
-        return `# Extract and install
-tar -xzf vanguard-agent-linux.tar.gz
-cd vanguard-agent
-sudo ./install.sh
-
-# Start the service
-sudo systemctl enable vanguard-agent
-sudo systemctl start vanguard-agent`;
+  const copyOneLiner = () => {
+    if (tokenInfo?.token) {
+      const liner = generateMsiOneLiner(tokenInfo.token);
+      navigator.clipboard.writeText(liner);
+      setCopied('oneliner');
+      toast.success('Copied to clipboard');
+      setTimeout(() => setCopied(null), 2000);
     }
   };
 
-  const handleCopyInstallCommand = () => {
-    const command = getInstallCommand();
-    navigator.clipboard.writeText(command);
-    setCopied('install-command');
-    toast.success('Install command copied to clipboard');
-    setTimeout(() => setCopied(null), 2000);
-  };
-
-  const handleDirectDownload = () => {
-    const url = getDownloadUrl();
-    window.open(url, '_blank');
-    toast.success(`Downloading ${selectedOS} agent...`);
+  const formatExpiryDate = (isoDate: string) => {
+    const date = new Date(isoDate);
+    return date.toLocaleDateString(undefined, { 
+      month: 'short', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   };
 
   const osLabels = {
@@ -204,14 +214,14 @@ sudo systemctl start vanguard-agent`;
     <div className="container mx-auto p-6 max-w-2xl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-1">Install Agent</h1>
+        <h1 className="text-2xl font-bold mb-1">Deploy Vanguard Agent</h1>
         <p className="text-muted-foreground text-sm">
-          Deploy Vanguard agents on Windows, macOS, or Linux
+          1-click deployment for Windows, macOS, or Linux endpoints
         </p>
       </div>
 
       <div className="space-y-4">
-        {/* Main Card - Streamlined */}
+        {/* Main Card */}
         <Card className="border-primary/20">
           <CardContent className="pt-6 space-y-5">
             {/* OS Selection */}
@@ -237,7 +247,7 @@ sudo systemctl start vanguard-agent`;
                   <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                     <Badge variant="outline" className="text-xs">Windows 10/11</Badge>
                     <Badge variant="outline" className="text-xs">Server 2019+</Badge>
-                    <Badge variant="outline" className="text-xs">EXE / MSI</Badge>
+                    <Badge variant="outline" className="text-xs">MSI Installer</Badge>
                   </div>
                 </TabsContent>
 
@@ -245,7 +255,7 @@ sudo systemctl start vanguard-agent`;
                   <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                     <Badge variant="outline" className="text-xs">macOS 12+</Badge>
                     <Badge variant="outline" className="text-xs">Apple Silicon</Badge>
-                    <Badge variant="outline" className="text-xs">Intel</Badge>
+                    <Badge variant="outline" className="text-xs">Coming Soon</Badge>
                   </div>
                 </TabsContent>
 
@@ -253,13 +263,13 @@ sudo systemctl start vanguard-agent`;
                   <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                     <Badge variant="outline" className="text-xs">Ubuntu 20.04+</Badge>
                     <Badge variant="outline" className="text-xs">Debian 11+</Badge>
-                    <Badge variant="outline" className="text-xs">RHEL 8+</Badge>
+                    <Badge variant="outline" className="text-xs">Coming Soon</Badge>
                   </div>
                 </TabsContent>
               </Tabs>
             </div>
 
-            {/* Client Selector - Compact */}
+            {/* Client Selector */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium flex items-center gap-2">
@@ -304,50 +314,92 @@ sudo systemctl start vanguard-agent`;
               )}
             </div>
 
-            {/* Download Buttons */}
-            <div className="flex gap-2 pt-2">
-              <Button onClick={handleDirectDownload} className="flex-1" size="lg">
+            {/* Tray Option (Windows only) */}
+            {selectedOS === 'windows' && (
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-medium">Enable Tray Icon</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Shows system tray icon for quick access to customer portal
+                  </p>
+                </div>
+                <Switch checked={enableTray} onCheckedChange={setEnableTray} />
+              </div>
+            )}
+
+            {/* Download Button */}
+            <Button 
+              onClick={selectedOS === 'windows' ? handleWindowsDownload : handleOtherOSDownload} 
+              className="w-full" 
+              size="lg"
+              disabled={isDownloading || selectedOS !== 'windows'}
+            >
+              {isDownloading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
                 <Download className="h-4 w-4 mr-2" />
-                Download {osLabels[selectedOS]} Agent
-              </Button>
-              {selectedOS === 'windows' && (
-                <Button 
-                  variant="outline"
-                  size="lg"
-                  onClick={() => window.open(AGENT_DOWNLOAD_URLS.windowsMsi, '_blank')}
-                >
-                  <Package className="h-4 w-4 mr-2" />
-                  MSI
-                </Button>
               )}
-            </div>
+              {isDownloading ? 'Generating Installer...' : `Download ${osLabels[selectedOS]} Installer`}
+            </Button>
+            
+            {selectedOS !== 'windows' && (
+              <p className="text-center text-xs text-muted-foreground">
+                <AlertTriangle className="h-3 w-3 inline mr-1" />
+                {osLabels[selectedOS]} agent is coming soon
+              </p>
+            )}
           </CardContent>
         </Card>
 
-        {/* Installation Command - Collapsible */}
-        <Card>
-          <CardHeader className="py-4">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">Installation Command</CardTitle>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handleCopyInstallCommand}
-                className="h-8"
-              >
-                {copied === 'install-command' ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
-                Copy
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <pre className="bg-muted p-3 rounded-lg overflow-x-auto text-xs font-mono whitespace-pre-wrap">
-              {getInstallCommand()}
-            </pre>
-          </CardContent>
-        </Card>
+        {/* Token Info (after download) */}
+        {tokenInfo && selectedOS === 'windows' && (
+          <Card className="border-green-500/30 bg-green-500/5">
+            <CardContent className="pt-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <span className="font-medium">Installer Ready</span>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  Expires: {formatExpiryDate(tokenInfo.expiresAt)}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm">Quick Deploy Command</Label>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={copyOneLiner}
+                    className="h-7 text-xs"
+                  >
+                    {copied === 'oneliner' ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+                    Copy
+                  </Button>
+                </div>
+                <pre className="p-3 rounded-lg bg-background border text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+                  {generateMsiOneLiner(tokenInfo.token)}
+                </pre>
+              </div>
+              
+              <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                <div className="flex items-start gap-2 text-sm">
+                  <Package className="h-4 w-4 text-cyan-500 mt-0.5 shrink-0" />
+                  <div className="text-muted-foreground">
+                    <span className="text-cyan-500 font-medium">How it works:</span>{' '}
+                    Run the downloaded PowerShell script as Administrator. It will automatically 
+                    download the MSI, configure credentials, and start the service.
+                    {enableTray && ' Tray icon will appear after login.'}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Advanced Options - Collapsible */}
+        {/* Advanced Options */}
         <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
           <Card>
             <CollapsibleTrigger asChild>
@@ -360,7 +412,6 @@ sudo systemctl start vanguard-agent`;
             </CollapsibleTrigger>
             <CollapsibleContent>
               <CardContent className="pt-0 space-y-4">
-                {/* API Credentials */}
                 <div className="space-y-3">
                   <div>
                     <Label className="text-xs text-muted-foreground">API Endpoint</Label>
