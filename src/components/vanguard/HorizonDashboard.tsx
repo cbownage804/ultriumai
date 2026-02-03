@@ -10,6 +10,7 @@ import { DeviceTypeBreakdown } from './horizon/DeviceTypeBreakdown';
 import { ResourceTrendingChart } from './horizon/ResourceTrendingChart';
 import { BulkActionsPanel } from './horizon/BulkActionsPanel';
 import { HorizonOperationsCenter } from './horizon/HorizonOperationsCenter';
+import { XDRAlertsSummary } from './horizon/XDRAlertsSummary';
 import { 
   Server, 
   Activity, 
@@ -361,8 +362,11 @@ export function HorizonDashboard() {
         </Card>
       </div>
 
-      {/* Device Type Breakdown */}
-      <DeviceTypeBreakdown devices={devices} />
+      {/* XDR Alerts Integration */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <XDRAlertsSummary />
+        <DeviceTypeBreakdown devices={devices} />
+      </div>
 
       {/* Resource Trending */}
       <ResourceTrendingChart />
