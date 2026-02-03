@@ -498,6 +498,18 @@ public class AVEngine : IDisposable
         };
     }
 
+    private UnifiedSeverity MapSeverity(string severity)
+    {
+        return severity?.ToLower() switch
+        {
+            "critical" => UnifiedSeverity.Critical,
+            "high" => UnifiedSeverity.High,
+            "medium" => UnifiedSeverity.Medium,
+            "low" => UnifiedSeverity.Low,
+            _ => UnifiedSeverity.Medium
+        };
+    }
+
     public void Dispose()
     {
         Stop();
