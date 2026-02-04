@@ -157,7 +157,16 @@ public class AgentWorker : BackgroundService
                 // Update device info with RustDesk ID if we got one
                 if (!string.IsNullOrEmpty(rustDeskId))
                 {
-                    await _api.UpdateDeviceRustDeskIdAsync(rustDeskId);
+                    var reported = await _api.UpdateDeviceRustDeskIdAsync(rustDeskId);
+                    if (reported)
+                    {
+                        _logger.LogInformation("RustDesk ID reported to server successfully");
+                        _rustDeskSetupComplete = true;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Failed to report RustDesk ID to server, will retry");
+                    }
                 }
                 else
                 {
@@ -171,7 +180,11 @@ public class AgentWorker : BackgroundService
                         if (!string.IsNullOrEmpty(delayedId))
                         {
                             _logger.LogInformation("RustDesk ID obtained after delay: {RustDeskId}", delayedId);
-                            await _api.UpdateDeviceRustDeskIdAsync(delayedId);
+                            var reported = await _api.UpdateDeviceRustDeskIdAsync(delayedId);
+                            if (reported)
+                            {
+                                _rustDeskSetupComplete = true;
+                            }
                         }
                         else
                         {
@@ -183,14 +196,13 @@ public class AgentWorker : BackgroundService
             else
             {
                 _logger.LogWarning("RustDesk setup failed or relay not configured");
+                // Don't mark complete - allow retry on next startup
             }
-            
-            _rustDeskSetupComplete = true;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error setting up RustDesk");
-            _rustDeskSetupComplete = true; // Don't retry immediately
+            // Don't mark complete - allow retry on next startup
         }
     }
 
@@ -278,7 +290,18 @@ public class AgentWorker : BackgroundService
             {
                 _logger.LogInformation("Executing command: {Type} - {Id}", command.CommandType, command.Id);
 
-                var result = await _commandExecutor.ExecuteAsync(command);
+                CommandResult result;
+                
+                // Handle sync_rustdesk specially since it needs RustDeskInstaller and ApiClient
+                if (command.CommandType.Equals("sync_rustdesk", StringComparison.OrdinalIgnoreCase))
+                {
+                    result = await ExecuteSyncRustDeskAsync();
+                }
+                else
+                {
+                    result = await _commandExecutor.ExecuteAsync(command);
+                }
+                
                 await _api.ReportCommandResultAsync(command.Id, result);
 
                 if (result.Success)
@@ -294,6 +317,87 @@ public class AgentWorker : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error polling/executing commands");
+        }
+    }
+
+    /// <summary>
+    /// Handle sync_rustdesk command - reinstall/reconfigure RustDesk and report ID
+    /// </summary>
+    private async Task<CommandResult> ExecuteSyncRustDeskAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Executing sync_rustdesk command...");
+            
+            // Reset completion flag to force retry
+            _rustDeskSetupComplete = false;
+            
+            var apiBaseUrl = _configService.Config.ApiEndpoint?.Replace("/vanguard-agent-api", "") ?? "";
+            var (success, rustDeskId) = await _rustDeskInstaller.EnsureInstalledAndConfiguredAsync(apiBaseUrl);
+            
+            if (success && !string.IsNullOrEmpty(rustDeskId))
+            {
+                var reported = await _api.UpdateDeviceRustDeskIdAsync(rustDeskId);
+                if (reported)
+                {
+                    _rustDeskSetupComplete = true;
+                    return new CommandResult
+                    {
+                        Success = true,
+                        ExitCode = 0,
+                        Stdout = $"RustDesk ID synced successfully: {rustDeskId}"
+                    };
+                }
+                else
+                {
+                    return new CommandResult
+                    {
+                        Success = false,
+                        ExitCode = 1,
+                        Stderr = "RustDesk installed but failed to report ID to server"
+                    };
+                }
+            }
+            else if (success)
+            {
+                // Installed but ID not yet available - schedule delayed retry
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(60000);
+                    var delayedId = await _rustDeskInstaller.WaitForRustDeskIdAsync(30);
+                    if (!string.IsNullOrEmpty(delayedId))
+                    {
+                        await _api.UpdateDeviceRustDeskIdAsync(delayedId);
+                        _rustDeskSetupComplete = true;
+                    }
+                });
+                
+                return new CommandResult
+                {
+                    Success = true,
+                    ExitCode = 0,
+                    Stdout = "RustDesk installed, ID will be reported shortly after initialization"
+                };
+            }
+            else
+            {
+                return new CommandResult
+                {
+                    Success = false,
+                    ExitCode = 1,
+                    Stderr = "Failed to install or configure RustDesk"
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing sync_rustdesk command");
+            return new CommandResult
+            {
+                Success = false,
+                ExitCode = 1,
+                Stderr = $"Exception: {ex.Message}"
+            };
         }
     }
 }
