@@ -214,6 +214,7 @@ const CustomerPortalTicketDetail = lazy(() => import('@/pages/customer-portal/Cu
 const CustomerPortalForgotPassword = lazy(() => import('@/pages/customer-portal/CustomerPortalForgotPassword'));
 const CustomerPortalResetPassword = lazy(() => import('@/pages/customer-portal/CustomerPortalResetPassword'));
 const CustomerPortalChangePassword = lazy(() => import('@/pages/customer-portal/CustomerPortalChangePassword'));
+const PortalAcceptInvite = lazy(() => import('@/pages/portal/AcceptInvite'));
 
 // Components that need to be loaded for layouts
 import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
@@ -428,6 +429,9 @@ function AppRouter() {
         <Route path="/customer-portal/tickets" element={<SuspenseWrapper variant="list"><PortalLayout><CustomerPortalTickets /></PortalLayout></SuspenseWrapper>} />
         <Route path="/customer-portal/tickets/new" element={<SuspenseWrapper variant="form"><PortalLayout><CustomerPortalNewTicket /></PortalLayout></SuspenseWrapper>} />
         <Route path="/customer-portal/tickets/:ticketId" element={<SuspenseWrapper variant="detail"><PortalLayout><CustomerPortalTicketDetail /></PortalLayout></SuspenseWrapper>} />
+        
+        {/* Portal Invitation Acceptance (Public) */}
+        <Route path="/portal/accept-invite" element={<SuspenseWrapper variant="form"><PortalAcceptInvite /></SuspenseWrapper>} />
         
         {/* Helpdesk Feedback Route (Public - for email links) */}
         <Route path="/helpdesk/feedback" element={<SuspenseWrapper variant="form"><HelpdeskFeedback /></SuspenseWrapper>} />

@@ -306,3 +306,7 @@ verify_jwt = false
 
 [functions.portal-bulk-import]
 verify_jwt = false
+
+# Portal user invitations (validates auth in code)
+[functions.portal-user-invite]
+verify_jwt = false
