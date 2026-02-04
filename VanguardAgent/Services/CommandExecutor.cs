@@ -541,22 +541,88 @@ public partial class CommandExecutor
 
     private async Task<CommandResult> UninstallSoftware(RemoteCommand command)
     {
-        var packageName = command.Command;
-        var manager = command.Parameters?.GetValueOrDefault("manager")?.ToString()?.ToLower() ?? "chocolatey";
+        var softwareName = command.Parameters?.GetValueOrDefault("software_name")?.ToString() 
+                           ?? command.Command;
+        var uninstallString = command.Parameters?.GetValueOrDefault("uninstall_string")?.ToString();
+        var manager = command.Parameters?.GetValueOrDefault("manager")?.ToString()?.ToLower();
 
         try
         {
             string fileName, arguments;
 
-            if (manager == "winget")
+            // If we have an uninstall string from the registry, use it directly
+            if (!string.IsNullOrEmpty(uninstallString))
+            {
+                // Parse the uninstall string - it may be a full command or exe with args
+                // Handle common formats like: "C:\Program Files\App\uninstall.exe" /S
+                // Or: msiexec.exe /X{GUID}
+                
+                if (uninstallString.StartsWith("msiexec", StringComparison.OrdinalIgnoreCase))
+                {
+                    fileName = "msiexec.exe";
+                    arguments = uninstallString.Substring(uninstallString.IndexOf(' ') + 1).Trim();
+                    // Add quiet/silent flags if not present
+                    if (!arguments.Contains("/q", StringComparison.OrdinalIgnoreCase))
+                    {
+                        arguments += " /qn";
+                    }
+                }
+                else if (uninstallString.StartsWith("\""))
+                {
+                    // Quoted path: "C:\Path\uninstall.exe" args
+                    var endQuote = uninstallString.IndexOf('"', 1);
+                    if (endQuote > 1)
+                    {
+                        fileName = uninstallString.Substring(1, endQuote - 1);
+                        arguments = uninstallString.Substring(endQuote + 1).Trim();
+                    }
+                    else
+                    {
+                        fileName = "cmd.exe";
+                        arguments = $"/c {uninstallString}";
+                    }
+                }
+                else
+                {
+                    // Direct command or path
+                    var spaceIndex = uninstallString.IndexOf(' ');
+                    if (spaceIndex > 0)
+                    {
+                        fileName = uninstallString.Substring(0, spaceIndex);
+                        arguments = uninstallString.Substring(spaceIndex + 1);
+                    }
+                    else
+                    {
+                        fileName = uninstallString;
+                        arguments = "";
+                    }
+                }
+            }
+            else if (manager == "winget")
             {
                 fileName = "winget";
-                arguments = $"uninstall --silent {packageName}";
+                arguments = $"uninstall --silent --name \"{softwareName}\"";
             }
-            else // chocolatey
+            else if (manager == "chocolatey" || manager == "choco")
             {
                 fileName = "choco";
-                arguments = $"uninstall {packageName} -y --no-progress";
+                arguments = $"uninstall \"{softwareName}\" -y --no-progress";
+            }
+            else
+            {
+                // Try to find the uninstall string from registry
+                var foundUninstall = FindUninstallString(softwareName);
+                if (!string.IsNullOrEmpty(foundUninstall))
+                {
+                    // Recursive call with the found uninstall string
+                    command.Parameters ??= new Dictionary<string, object>();
+                    command.Parameters["uninstall_string"] = foundUninstall;
+                    return await UninstallSoftware(command);
+                }
+                
+                // Fallback to winget
+                fileName = "winget";
+                arguments = $"uninstall --silent --name \"{softwareName}\"";
             }
 
             var psi = new ProcessStartInfo
@@ -572,7 +638,7 @@ public partial class CommandExecutor
             using var process = Process.Start(psi);
             if (process == null)
             {
-                return new CommandResult { Success = false, ExitCode = -1, Stderr = $"Failed to start {manager}" };
+                return new CommandResult { Success = false, ExitCode = -1, Stderr = $"Failed to start uninstall process" };
             }
 
             var stdout = await process.StandardOutput.ReadToEndAsync();
@@ -591,6 +657,48 @@ public partial class CommandExecutor
         {
             return new CommandResult { Success = false, ExitCode = -1, Stderr = ex.Message };
         }
+    }
+
+    private string? FindUninstallString(string softwareName)
+    {
+        var uninstallKeys = new[]
+        {
+            @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+            @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+        };
+
+        try
+        {
+            foreach (var keyPath in uninstallKeys)
+            {
+                using var key = Registry.LocalMachine.OpenSubKey(keyPath);
+                if (key == null) continue;
+
+                foreach (var subKeyName in key.GetSubKeyNames())
+                {
+                    try
+                    {
+                        using var subKey = key.OpenSubKey(subKeyName);
+                        var displayName = subKey?.GetValue("DisplayName")?.ToString();
+                        
+                        if (!string.IsNullOrEmpty(displayName) && 
+                            displayName.Contains(softwareName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            var uninstallString = subKey?.GetValue("QuietUninstallString")?.ToString()
+                                                  ?? subKey?.GetValue("UninstallString")?.ToString();
+                            if (!string.IsNullOrEmpty(uninstallString))
+                            {
+                                return uninstallString;
+                            }
+                        }
+                    }
+                    catch { }
+                }
+            }
+        }
+        catch { }
+
+        return null;
     }
 
     // ==========================================================================
