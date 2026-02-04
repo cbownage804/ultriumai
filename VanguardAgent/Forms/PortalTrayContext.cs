@@ -180,14 +180,17 @@ public class PortalTrayContext : ApplicationContext
         else
         {
             // NOT LOGGED IN: Show login option
-            var loginItem = new ToolStripMenuItem("Login to Portal", null, OnShowLogin);
+            var loginItem = new ToolStripMenuItem("Login to Portal");
             loginItem.Font = new Font(menu.Font, FontStyle.Bold);
+            loginItem.Click += (s, e) => ShowLoginForm();
             menu.Items.Add(loginItem);
             
             menu.Items.Add(new ToolStripSeparator());
             
             // Basic system info available without login
-            menu.Items.Add(new ToolStripMenuItem("View System Info", null, OnViewSystemInfo));
+            var sysInfoItem = new ToolStripMenuItem("View System Info");
+            sysInfoItem.Click += OnViewSystemInfo;
+            menu.Items.Add(sysInfoItem);
         }
         
         menu.Items.Add(new ToolStripSeparator());
