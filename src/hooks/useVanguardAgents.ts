@@ -29,6 +29,8 @@ export interface VanguardAgent {
   updated_at: string;
   // Agent type differentiation
   agent_type: 'windows' | 'pi_appliance';
+  // Availability monitoring
+  availability_monitoring_enabled?: boolean;
   // Pi appliance specific fields
   is_network_scanner?: boolean;
   scanner_subnets?: string[];
@@ -552,6 +554,28 @@ export function useVanguardAgent(agentId: string | undefined) {
     return response.data;
   };
 
+  const toggleAvailabilityMonitoring = useCallback(async (enabled: boolean) => {
+    if (!agentId || !user) throw new Error('Not authenticated');
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('No session');
+
+    const response = await supabase.functions.invoke('availability-monitor', {
+      body: { action: 'toggle', device_id: agentId, enabled },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`
+      }
+    });
+
+    if (response.error) throw response.error;
+    
+    // Update local state
+    setAgent(prev => prev ? { ...prev, availability_monitoring_enabled: enabled } : null);
+    toast.success(enabled ? 'Availability monitoring enabled' : 'Availability monitoring disabled');
+    
+    return response.data;
+  }, [agentId, user]);
+
   return { 
     agent, 
     metrics, 
@@ -575,5 +599,7 @@ export function useVanguardAgent(agentId: string | undefined) {
     // Monitored device CRUD
     addMonitoredDevice,
     deleteMonitoredDevice,
+    // Availability monitoring
+    toggleAvailabilityMonitoring,
   };
 }

@@ -125,6 +125,7 @@ export default function VanguardDeviceDetailPage() {
     deleteAttachment,
     addMonitoredDevice,
     deleteMonitoredDevice,
+    toggleAvailabilityMonitoring,
   } = useVanguardAgent(deviceId);
   const { clients } = useMSP();
   const { deleteAgent } = useVanguardAgents();
@@ -132,7 +133,6 @@ export default function VanguardDeviceDetailPage() {
   
   // UI State
   const [activeTab, setActiveTab] = useState("overview");
-  const [availabilityMonitoring, setAvailabilityMonitoring] = useState(true);
   const [alertsPaused, setAlertsPaused] = useState(false);
   const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(DEFAULT_WIDGET_ORDER);
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -688,8 +688,8 @@ export default function VanguardDeviceDetailPage() {
                   agent={agent}
                   clientName={clientName}
                   clientId={agent.client_id}
-                  availabilityMonitoring={availabilityMonitoring}
-                  onAvailabilityChange={setAvailabilityMonitoring}
+                  availabilityMonitoring={agent.availability_monitoring_enabled ?? false}
+                  onAvailabilityChange={toggleAvailabilityMonitoring}
                 />
               </TabsContent>
 
