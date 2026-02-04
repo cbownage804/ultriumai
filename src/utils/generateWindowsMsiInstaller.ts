@@ -5,6 +5,39 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
+/**
+ * PowerShell's -EncodedCommand expects Base64 of UTF-16LE ("Unicode"), not UTF-8.
+ * Also, embedding a large Base64 payload directly on the command line can hit
+ * Windows CMD's ~8191 character limit. We therefore:
+ * 1) Encode as UTF-16LE Base64
+ * 2) Write the Base64 into a temp file from the .cmd (multi-line, no per-line limit)
+ * 3) Decode + execute inside PowerShell
+ */
+function toPowerShellEncodedCommandBase64(script: string): string {
+  const bytes = new Uint8Array(script.length * 2);
+  for (let i = 0; i < script.length; i++) {
+    const code = script.charCodeAt(i);
+    bytes[i * 2] = code & 0xff;
+    bytes[i * 2 + 1] = code >> 8;
+  }
+
+  // Convert bytes to a binary string in chunks to avoid call stack limits.
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binary);
+}
+
+function chunkString(str: string, size: number): string[] {
+  const chunks: string[] = [];
+  for (let i = 0; i < str.length; i += size) chunks.push(str.slice(i, i + size));
+  return chunks;
+}
+
 interface MsiInstallerOptions {
   clientId?: string;
   clientName?: string;
@@ -170,7 +203,9 @@ export function generateCmdInstaller(provisioningToken: string, clientName?: str
   
   // Convert to Base64 encoded PowerShell command for reliability
   const psScript = psLines.join('\r\n');
-  const base64Script = btoa(unescape(encodeURIComponent(psScript)));
+  const base64Script = toPowerShellEncodedCommandBase64(psScript);
+  // Keep each echo line comfortably under cmd.exe's per-line limit
+  const base64Chunks = chunkString(base64Script, 700);
   
   // CMD wrapper that self-elevates and runs Base64-encoded PowerShell
   const cmdScript = `@echo off
@@ -190,8 +225,24 @@ if %errorLevel% neq 0 (
     exit /b
 )
 
-:: Run the installation via Base64-encoded PowerShell script
-powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand ${base64Script}
+:: Write Base64 payload to a temp file (avoids command-length limits)
+set "B64FILE=%TEMP%\\VanguardInstall-%RANDOM%.b64"
+> "%B64FILE%" (
+${base64Chunks.map((c) => `  echo ${c}`).join('\r\n')}
+)
+
+:: Decode + execute inside PowerShell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$b64=Get-Content -Raw '%B64FILE%'; $bytes=[Convert]::FromBase64String($b64); $script=[Text.Encoding]::Unicode.GetString($bytes); try { iex $script } catch { Write-Host $_ -ForegroundColor Red; exit 1 }"
+set "PS_EXIT=%errorlevel%"
+del "%B64FILE%" >nul 2>&1
+
+:: If PowerShell failed before it could prompt, keep the window open.
+if not "%PS_EXIT%"=="0" (
+    echo.
+    echo Installer failed (exit code: %PS_EXIT%).
+    pause
+    exit /b %PS_EXIT%
+)
 `;
 
   return cmdScript;
