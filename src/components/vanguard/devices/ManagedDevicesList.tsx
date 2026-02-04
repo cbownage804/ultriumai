@@ -63,9 +63,10 @@ interface SavedView {
 interface ManagedDevicesListProps {
   agents: VanguardAgent[];
   isLoading: boolean;
+  onRefresh: () => void;
 }
 
-export function ManagedDevicesList({ agents, isLoading }: ManagedDevicesListProps) {
+export function ManagedDevicesList({ agents, isLoading, onRefresh }: ManagedDevicesListProps) {
   const navigate = useNavigate();
   const basePath = getVanguardBasePath();
 
@@ -193,7 +194,7 @@ export function ManagedDevicesList({ agents, isLoading }: ManagedDevicesListProp
         savedViews={savedViews}
         onSaveView={handleSaveView}
         onLoadView={handleLoadView}
-        onRefresh={() => {}}
+        onRefresh={onRefresh}
         onAddDevice={() => navigate(`${basePath}/setup`)}
       />
 
