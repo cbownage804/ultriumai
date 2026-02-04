@@ -53,8 +53,8 @@ export default function VanguardSetup() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [tokenInfo, setTokenInfo] = useState<{ token: string; expiresAt: string } | null>(null);
   
-  // Tray option
-  const [enableTray, setEnableTray] = useState(true);
+  // Tray is always enabled
+  const enableTray = true;
   
   // Advanced section open state
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -313,18 +313,6 @@ export default function VanguardSetup() {
               )}
             </div>
 
-            {/* Tray Option (Windows only) */}
-            {selectedOS === 'windows' && (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-medium">Enable Tray Icon</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Shows system tray icon for quick access to customer portal
-                  </p>
-                </div>
-                <Switch checked={enableTray} onCheckedChange={setEnableTray} />
-              </div>
-            )}
 
             {/* Download Button */}
             <Button 
