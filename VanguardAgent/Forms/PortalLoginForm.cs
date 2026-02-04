@@ -167,7 +167,16 @@ public class PortalLoginForm : Form
             }
             else
             {
-                ShowError(result.ErrorMessage ?? "Login failed");
+                // Check for MSP admin error
+                var errorMsg = result.ErrorMessage ?? "Login failed";
+                if (errorMsg.Contains("MSP_ADMIN") || errorMsg.Contains("MSP administrator"))
+                {
+                    ShowMspAdminMessage();
+                }
+                else
+                {
+                    ShowError(errorMsg);
+                }
             }
         }
         catch (Exception ex)
@@ -186,5 +195,27 @@ public class PortalLoginForm : Form
     {
         _errorLabel.Text = message;
         _errorLabel.Visible = true;
+    }
+
+    private void ShowMspAdminMessage()
+    {
+        var result = MessageBox.Show(
+            "This is an MSP administrator account.\n\n" +
+            "The Customer Portal is for your end-user clients. " +
+            "As an MSP admin, please use the Vanguard dashboard instead.\n\n" +
+            "Would you like to open the dashboard now?",
+            "Administrator Account Detected",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Information
+        );
+
+        if (result == DialogResult.Yes)
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "https://ultriumai.com/vanguard",
+                UseShellExecute = true
+            });
+        }
     }
 }

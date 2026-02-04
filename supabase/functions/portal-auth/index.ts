@@ -431,8 +431,24 @@ async function handleAgentLogin(
   userAgent: string | null
 ) {
   logStep("Agent login attempt", { email: body.email });
+  const email = body.email?.toLowerCase().trim();
   
-  // Use the same login logic
+  // First, check if this is an MSP admin account (exists in auth.users)
+  const { data: authUser } = await supabase.auth.admin.getUserByEmail(email);
+  
+  if (authUser?.user) {
+    // This is an MSP admin - they should use the main dashboard
+    logStep("MSP admin attempted portal login", { email });
+    return new Response(JSON.stringify({ 
+      error: "MSP_ADMIN_ACCOUNT",
+      message: "This is an MSP administrator account. Please use the Vanguard dashboard at ultriumai.com/vanguard to manage your clients. The Customer Portal is for end-user clients only."
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 403,
+    });
+  }
+  
+  // Not an admin, proceed with portal login
   const loginResult = await handleLogin(supabase, { email: body.email, password: body.password }, clientIp, userAgent);
   const loginData = await loginResult.json();
   
