@@ -176,6 +176,9 @@ async function handleRegister(supabase: any, body: any) {
   // Parse registration data - handle both flat and nested formats
   const systemInfo = body.system_info || body.metrics?.system || {};
   
+  // Extract hostname for duplicate detection
+  const hostname = body.hostname || body.name || systemInfo.hostname || `Vanguard-${device_id.slice(0, 8)}`;
+  
   // Extract IP address from various sources
   let ip_address = body.ip_address || systemInfo.ip_address;
   if (!ip_address && systemInfo.net_io) {
@@ -186,9 +189,54 @@ async function handleRegister(supabase: any, body: any) {
     }
   }
   
+  // Check for existing agent with same hostname and user_id (duplicate detection)
+  // This handles reinstalls where device_id changes but hostname stays the same
+  const { data: existingAgents, error: searchError } = await supabase
+    .from('vanguard_agents')
+    .select('id, device_id, last_heartbeat, status')
+    .eq('user_id', user_id)
+    .eq('name', hostname);
+  
+  if (!searchError && existingAgents && existingAgents.length > 0) {
+    console.log(`[vanguard-agent-api] Found ${existingAgents.length} existing agent(s) with hostname: ${hostname}`);
+    
+    // Delete stale duplicates - keep only the one we're about to update/create
+    const staleAgentIds = existingAgents
+      .filter((a: any) => a.device_id !== device_id)
+      .map((a: any) => a.id);
+    
+    if (staleAgentIds.length > 0) {
+      console.log(`[vanguard-agent-api] Cleaning up ${staleAgentIds.length} stale duplicate(s) for hostname: ${hostname}`);
+      
+      // Delete stale metrics first (foreign key constraint)
+      await supabase
+        .from('vanguard_agent_metrics')
+        .delete()
+        .in('agent_id', staleAgentIds);
+      
+      // Delete stale commands
+      await supabase
+        .from('vanguard_agent_commands')
+        .delete()
+        .in('agent_id', staleAgentIds);
+      
+      // Delete stale agents
+      const { error: deleteError } = await supabase
+        .from('vanguard_agents')
+        .delete()
+        .in('id', staleAgentIds);
+      
+      if (deleteError) {
+        console.error(`[vanguard-agent-api] Error cleaning duplicates:`, deleteError);
+      } else {
+        console.log(`[vanguard-agent-api] Successfully cleaned ${staleAgentIds.length} duplicate agent(s)`);
+      }
+    }
+  }
+  
   // Build hardware info object for config storage
   const hardwareInfo: Record<string, any> = {
-    hostname: body.hostname || systemInfo.hostname,
+    hostname: hostname,
     os_name: systemInfo.os_name,
     os_version: systemInfo.os_version,
     cpu_info: systemInfo.cpu_info,
@@ -224,7 +272,7 @@ async function handleRegister(supabase: any, body: any) {
   const agentData: Record<string, any> = {
     device_id,
     user_id,
-    name: body.name || body.hostname || systemInfo.hostname || `Vanguard-${device_id.slice(0, 8)}`,
+    name: hostname,
     location: body.location,
     vpn_ip: body.vpn_ip,
     api_endpoint: body.api_endpoint,
@@ -267,7 +315,7 @@ async function handleRegister(supabase: any, body: any) {
     );
   }
   
-  console.log(`[vanguard-agent-api] Agent registered: ${device_id}, IP: ${ip_address}, Version: ${agentData.agent_version}, Type: ${agentType}`);
+  console.log(`[vanguard-agent-api] Agent registered: ${device_id}, Hostname: ${hostname}, IP: ${ip_address}, Version: ${agentData.agent_version}, Type: ${agentType}`);
   return new Response(
     JSON.stringify({ status: 'ok', agent_id: data.id, device_id: device_id }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
