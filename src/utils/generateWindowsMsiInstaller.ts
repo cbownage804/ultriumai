@@ -67,16 +67,103 @@ export async function createProvisioningToken(options: MsiInstallerOptions): Pro
  * This provides a true "double-click to install" experience like Datto/Atera
  */
 export function generateCmdInstaller(provisioningToken: string, clientName?: string, enableTray?: boolean): string {
-  const escapedClientName = (clientName || 'Vanguard Device').replace(/"/g, '\\"');
+  const escapedClientName = (clientName || 'Vanguard Device').replace(/'/g, "''").replace(/&/g, '^&');
   const trayFlag = enableTray ? '1' : '0';
   
-  // CMD wrapper that self-elevates and runs PowerShell inline
-  const script = `@echo off
+  // Build the PowerShell script as an array of lines
+  const psLines = [
+    '$ErrorActionPreference = "Stop"',
+    '$ProgressPreference = "SilentlyContinue"',
+    '',
+    `$token = "${provisioningToken}"`,
+    `$msiUrl = "${MSI_DOWNLOAD_URL}"`,
+    `$provisionUrl = "${PROVISION_ENDPOINT}"`,
+    `$enableTray = "${trayFlag}"`,
+    '',
+    'Write-Host ""',
+    'Write-Host "  VANGUARD AGENT INSTALLER" -ForegroundColor Cyan',
+    'Write-Host "  Enterprise RMM + XDR Agent" -ForegroundColor White',
+    `Write-Host "  Customer: ${escapedClientName}" -ForegroundColor Yellow`,
+    'Write-Host ""',
+    '',
+    'Write-Host "[1/4] Fetching credentials..." -ForegroundColor Yellow',
+    'try {',
+    '    $body = @{ token = $token; device_id = $env:COMPUTERNAME } | ConvertTo-Json',
+    '    $creds = Invoke-RestMethod -Uri "$provisionUrl`?action=redeem" -Method POST -Body $body -ContentType "application/json"',
+    '    if (-not $creds.secret_key) { throw "No credentials returned" }',
+    '    Write-Host "   OK" -ForegroundColor Green',
+    '} catch {',
+    '    Write-Host "   Failed: $($_.Exception.Message)" -ForegroundColor Red',
+    '    Write-Host ""',
+    '    Write-Host "Token may be expired. Download a new installer from your dashboard." -ForegroundColor Yellow',
+    '    Read-Host "Press Enter to exit"',
+    '    exit 1',
+    '}',
+    '',
+    'Write-Host "[2/4] Downloading MSI..." -ForegroundColor Yellow',
+    '$tempDir = Join-Path $env:TEMP ("VanguardInstall-" + (Get-Random))',
+    'New-Item -ItemType Directory -Path $tempDir -Force | Out-Null',
+    '$msiPath = Join-Path $tempDir "VanguardAgent.msi"',
+    'try {',
+    '    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12',
+    '    $wc = New-Object System.Net.WebClient',
+    '    $wc.DownloadFile($msiUrl, $msiPath)',
+    '    $size = [math]::Round((Get-Item $msiPath).Length / 1MB, 1)',
+    '    Write-Host "   Downloaded: $size MB" -ForegroundColor Green',
+    '} catch {',
+    '    Write-Host "   Failed: $($_.Exception.Message)" -ForegroundColor Red',
+    '    Read-Host "Press Enter to exit"',
+    '    exit 1',
+    '}',
+    '',
+    'Write-Host "[3/4] Installing..." -ForegroundColor Yellow',
+    '$msiArgs = "/i `"$msiPath`" /qn /norestart USERID=`"$($creds.user_id)`" SECRETKEY=`"$($creds.secret_key)`" ENABLETRAY=`"$enableTray`""',
+    'if ($creds.client_id) { $msiArgs += " CLIENTID=`"$($creds.client_id)`"" }',
+    '$proc = Start-Process msiexec.exe -ArgumentList $msiArgs -Wait -PassThru',
+    'if ($proc.ExitCode -eq 0 -or $proc.ExitCode -eq 3010) {',
+    '    Write-Host "   OK" -ForegroundColor Green',
+    '} else {',
+    '    Write-Host "   Failed (exit code: $($proc.ExitCode))" -ForegroundColor Red',
+    '    Read-Host "Press Enter to exit"',
+    '    exit 1',
+    '}',
+    '',
+    'Write-Host "[4/4] Verifying..." -ForegroundColor Yellow',
+    'Start-Sleep -Seconds 3',
+    '$svc = Get-Service -Name "VanguardAgent" -ErrorAction SilentlyContinue',
+    'if ($svc -and $svc.Status -eq "Running") {',
+    '    Write-Host "   Service running!" -ForegroundColor Green',
+    '} elseif ($svc) {',
+    '    Write-Host "   Service installed (status: $($svc.Status))" -ForegroundColor Yellow',
+    '} else {',
+    '    Write-Host "   Service not found" -ForegroundColor Red',
+    '}',
+    '',
+    'Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue',
+    '',
+    'Write-Host ""',
+    'Write-Host "============================================" -ForegroundColor Green',
+    'Write-Host "  Installation Complete!" -ForegroundColor Green',
+    'Write-Host "============================================" -ForegroundColor Green',
+    'Write-Host ""',
+    'Write-Host "  Dashboard: https://ultriumai.com/vanguard" -ForegroundColor Cyan',
+    'Write-Host ""',
+    'Read-Host "Press Enter to close"',
+  ];
+  
+  // Convert to Base64 encoded PowerShell command for reliability
+  const psScript = psLines.join('\r\n');
+  const base64Script = btoa(unescape(encodeURIComponent(psScript)));
+  
+  // CMD wrapper that self-elevates and runs Base64-encoded PowerShell
+  const cmdScript = `@echo off
 :: =============================================================================
 :: Ultrium Vanguard Agent - 1-Click Installer
 :: Pre-configured for: ${escapedClientName}
 :: Just double-click to install - no configuration needed!
 :: =============================================================================
+
+title Ultrium Vanguard Agent Installer
 
 :: Check for admin rights and self-elevate if needed
 net session >nul 2>&1
@@ -86,87 +173,11 @@ if %errorLevel% neq 0 (
     exit /b
 )
 
-:: Run the installation via PowerShell
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-$ErrorActionPreference = 'Stop'; ^
-$ProgressPreference = 'SilentlyContinue'; ^
-^
-$token = '${provisioningToken}'; ^
-$msiUrl = '${MSI_DOWNLOAD_URL}'; ^
-$provisionUrl = '${PROVISION_ENDPOINT}'; ^
-$enableTray = '${trayFlag}'; ^
-^
-Write-Host ''; ^
-Write-Host '  VANGUARD AGENT INSTALLER' -ForegroundColor Cyan; ^
-Write-Host '  Enterprise RMM + XDR Agent' -ForegroundColor White; ^
-Write-Host '  Customer: ${escapedClientName}' -ForegroundColor Yellow; ^
-Write-Host ''; ^
-^
-Write-Host '[1/4] Fetching credentials...' -ForegroundColor Yellow; ^
-try { ^
-    $body = (@{ token = $token; device_id = $env:COMPUTERNAME } | ConvertTo-Json); ^
-    $creds = Invoke-RestMethod -Uri ($provisionUrl + '?action=redeem') -Method POST -Body $body -ContentType 'application/json'; ^
-    if (-not $creds.secret_key) { throw 'No credentials returned' }; ^
-    Write-Host '   OK' -ForegroundColor Green; ^
-} catch { ^
-    Write-Host ('   Failed: ' + $_.Exception.Message) -ForegroundColor Red; ^
-    Write-Host ''; ^
-    Write-Host 'Token may be expired. Download a new installer from your dashboard.' -ForegroundColor Yellow; ^
-    pause; ^
-    exit 1; ^
-}; ^
-^
-Write-Host '[2/4] Downloading MSI...' -ForegroundColor Yellow; ^
-$tempDir = Join-Path $env:TEMP ('VanguardInstall-' + (Get-Random)); ^
-New-Item -ItemType Directory -Path $tempDir -Force | Out-Null; ^
-$msiPath = Join-Path $tempDir 'VanguardAgent.msi'; ^
-try { ^
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; ^
-    (New-Object System.Net.WebClient).DownloadFile($msiUrl, $msiPath); ^
-    $size = [math]::Round((Get-Item $msiPath).Length / 1MB, 1); ^
-    Write-Host ('   Downloaded: ' + $size + ' MB') -ForegroundColor Green; ^
-} catch { ^
-    Write-Host ('   Failed: ' + $_.Exception.Message) -ForegroundColor Red; ^
-    pause; ^
-    exit 1; ^
-}; ^
-^
-Write-Host '[3/4] Installing...' -ForegroundColor Yellow; ^
-$msiArgs = '/i \"' + $msiPath + '\" /qn /norestart USERID=\"' + $creds.user_id + '\" SECRETKEY=\"' + $creds.secret_key + '\" ENABLETRAY=\"' + $enableTray + '\"'; ^
-if ($creds.client_id) { $msiArgs += ' CLIENTID=\"' + $creds.client_id + '\"' }; ^
-$proc = Start-Process msiexec.exe -ArgumentList $msiArgs -Wait -PassThru; ^
-if ($proc.ExitCode -eq 0 -or $proc.ExitCode -eq 3010) { ^
-    Write-Host '   OK' -ForegroundColor Green; ^
-} else { ^
-    Write-Host ('   Failed (exit code: ' + $proc.ExitCode + ')') -ForegroundColor Red; ^
-    pause; ^
-    exit 1; ^
-}; ^
-^
-Write-Host '[4/4] Verifying...' -ForegroundColor Yellow; ^
-Start-Sleep -Seconds 3; ^
-$svc = Get-Service -Name 'VanguardAgent' -ErrorAction SilentlyContinue; ^
-if ($svc -and $svc.Status -eq 'Running') { ^
-    Write-Host '   Service running!' -ForegroundColor Green; ^
-} elseif ($svc) { ^
-    Write-Host ('   Service installed (status: ' + $svc.Status + ')') -ForegroundColor Yellow; ^
-} else { ^
-    Write-Host '   Service not found' -ForegroundColor Red; ^
-}; ^
-^
-Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue; ^
-^
-Write-Host ''; ^
-Write-Host '============================================' -ForegroundColor Green; ^
-Write-Host '  Installation Complete!' -ForegroundColor Green; ^
-Write-Host '============================================' -ForegroundColor Green; ^
-Write-Host ''; ^
-Write-Host '  Dashboard: https://ultriumai.com/vanguard' -ForegroundColor Cyan; ^
-Write-Host ''; ^
-pause;
+:: Run the installation via Base64-encoded PowerShell script
+powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand ${base64Script}
 `;
 
-  return script;
+  return cmdScript;
 }
 
 /**
