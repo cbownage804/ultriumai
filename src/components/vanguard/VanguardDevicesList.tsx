@@ -417,21 +417,22 @@ function DeviceCard({
       onClick={onClick}
     >
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <Checkbox 
               checked={isSelected}
               onCheckedChange={(e) => {
                 onSelect();
               }}
               onClick={e => e.stopPropagation()}
+              className="flex-shrink-0"
             />
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Server className="h-5 w-5" />
-              {agent.name}
+            <CardTitle className="text-lg flex items-center gap-2 min-w-0">
+              <Server className="h-5 w-5 flex-shrink-0" />
+              <span className="truncate">{agent.name}</span>
             </CardTitle>
           </div>
-          <Badge variant={statusBadgeVariants[agent.status]}>
+          <Badge variant={statusBadgeVariants[agent.status]} className="flex-shrink-0">
             <StatusIcon className="h-3 w-3 mr-1" />
             {agent.status}
           </Badge>
