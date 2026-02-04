@@ -41,9 +41,10 @@ const statusColors: Record<string, string> = {
 interface PiAppliancesListProps {
   agents: VanguardAgent[];
   isLoading: boolean;
+  onRefresh: () => void;
 }
 
-export function PiAppliancesList({ agents, isLoading }: PiAppliancesListProps) {
+export function PiAppliancesList({ agents, isLoading, onRefresh }: PiAppliancesListProps) {
   const navigate = useNavigate();
   const basePath = getVanguardBasePath();
   const [searchQuery, setSearchQuery] = useState('');

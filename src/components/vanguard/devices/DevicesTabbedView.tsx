@@ -16,7 +16,7 @@ const deviceTabs: VanguardTab[] = [
 ];
 
 export function DevicesTabbedView() {
-  const { agents, isLoading } = useVanguardAgents();
+  const { agents, isLoading, refetch } = useVanguardAgents();
   const [activeTab, setActiveTab] = useState('managed');
 
   const managedAgents = agents.filter(a => a.agent_type !== 'pi_appliance');
@@ -38,11 +38,11 @@ export function DevicesTabbedView() {
         colorTheme="cyan"
       >
         <VanguardTabContent value="managed" className="mt-4">
-          <ManagedDevicesList agents={managedAgents} isLoading={isLoading} />
+          <ManagedDevicesList agents={managedAgents} isLoading={isLoading} onRefresh={refetch} />
         </VanguardTabContent>
 
         <VanguardTabContent value="pi" className="mt-4">
-          <PiAppliancesList agents={piAppliances} isLoading={isLoading} />
+          <PiAppliancesList agents={piAppliances} isLoading={isLoading} onRefresh={refetch} />
         </VanguardTabContent>
       </VanguardTabs>
     </div>
