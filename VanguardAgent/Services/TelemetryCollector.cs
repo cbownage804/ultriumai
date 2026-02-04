@@ -740,6 +740,7 @@ public class TelemetryCollector
                         });
                     }
                     catch { }
+                }
             }
         }
         catch { }
