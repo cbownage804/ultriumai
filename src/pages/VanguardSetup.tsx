@@ -326,7 +326,7 @@ export default function VanguardSetup() {
               ) : (
                 <Download className="h-4 w-4 mr-2" />
               )}
-              {isDownloading ? 'Generating Installer...' : `Download ${osLabels[selectedOS]} Installer`}
+              {isDownloading ? 'Generating Installer...' : `Download ${osLabels[selectedOS]} Agent`}
             </Button>
             
             {selectedOS !== 'windows' && (
@@ -345,7 +345,7 @@ export default function VanguardSetup() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="font-medium">Installer Ready</span>
+                  <span className="font-medium">1-Click Installer Ready</span>
                 </div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
@@ -375,9 +375,9 @@ export default function VanguardSetup() {
                 <div className="flex items-start gap-2 text-sm">
                   <Package className="h-4 w-4 text-cyan-500 mt-0.5 shrink-0" />
                   <div className="text-muted-foreground">
-                    <span className="text-cyan-500 font-medium">Just double-click!</span>{' '}
-                    The installer automatically elevates to admin, downloads the MSI, 
-                    configures credentials, and starts the service. The system tray icon 
+                    <span className="text-cyan-500 font-medium">Just double-click the .cmd file!</span>{' '}
+                    It automatically requests admin access, downloads the agent package, 
+                    configures credentials, and starts the service. A system tray icon 
                     provides quick access to the customer portal.
                   </div>
                 </div>
