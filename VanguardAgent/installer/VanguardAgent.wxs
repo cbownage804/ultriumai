@@ -26,6 +26,8 @@
                 KeyPath="yes" />
           <File Id="ConfigJson" 
                 Source="$(var.PublishDir)\config.json" />
+          <File Id="VanguardIco" 
+                Source="$(var.PublishDir)\vanguard.ico" />
 
           <!-- Windows Service installation (must be in the same component as the service EXE file) -->
           <ServiceInstall Id="VanguardAgentService"
