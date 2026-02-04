@@ -237,11 +237,13 @@ export default function VanguardDeviceDetailPage() {
   };
 
   const handleRemoteConnect = (type: 'desktop' | 'terminal' | 'files') => {
+    console.log('[RemoteConnect] handleRemoteConnect called with type:', type);
     // Check for RustDesk ID - first from direct column, then fallback to config locations
     const rustdeskId = agent?.rustdesk_id || 
                        agent?.config?.hardware?.rustdesk_id || 
                        agent?.config?.remote_access?.rustdesk_id ||
                        agent?.config?.rustdesk_id;
+    console.log('[RemoteConnect] rustdeskId resolved:', rustdeskId);
     
     if (!rustdeskId) {
       toast.error("RustDesk ID not available", {
