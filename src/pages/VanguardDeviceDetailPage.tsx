@@ -237,11 +237,14 @@ export default function VanguardDeviceDetailPage() {
   };
 
   const handleRemoteConnect = (type: 'desktop' | 'terminal' | 'files') => {
-    const rustdeskId = agent?.config?.hardware?.rustdesk_id;
+    // Check multiple locations for RustDesk ID - agent may report it in different places
+    const rustdeskId = agent?.config?.hardware?.rustdesk_id || 
+                       agent?.config?.remote_access?.rustdesk_id ||
+                       agent?.config?.rustdesk_id;
     
     if (!rustdeskId) {
       toast.error("RustDesk ID not available", {
-        description: "The agent hasn't reported a RustDesk ID yet. Please wait for the next heartbeat."
+        description: "The agent hasn't reported a RustDesk ID yet. Ensure RustDesk is installed on the device."
       });
       return;
     }
