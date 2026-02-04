@@ -45,6 +45,8 @@ interface UseVanguardCustomerResult {
   contacts: CustomerContact[];
   devices: CustomerDevice[];
   ticketCount: number;
+  endpointCount: number;
+  alertCount: number;
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -56,6 +58,8 @@ export function useVanguardCustomer(customerId: string | undefined): UseVanguard
   const [contacts, setContacts] = useState<CustomerContact[]>([]);
   const [devices, setDevices] = useState<CustomerDevice[]>([]);
   const [ticketCount, setTicketCount] = useState(0);
+  const [endpointCount, setEndpointCount] = useState(0);
+  const [alertCount, setAlertCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
@@ -112,14 +116,13 @@ export function useVanguardCustomer(customerId: string | undefined): UseVanguard
         }
 
         // Fetch devices linked to this customer using vanguard_agents table
-        const { data: agentsData } = await supabase
+        const { data: agentsData, count: agentCount } = await supabase
           .from('vanguard_agents')
-          .select('id, name, agent_type, status, ip_address')
-          .eq('client_id', customerId)
-          .limit(10);
+          .select('id, name, agent_type, status, ip_address', { count: 'exact' })
+          .eq('client_id', customerId);
 
         if (agentsData) {
-          setDevices(agentsData.map(a => ({
+          setDevices(agentsData.slice(0, 10).map(a => ({
             id: a.id,
             hostname: a.name,
             device_type: a.agent_type,
@@ -127,15 +130,31 @@ export function useVanguardCustomer(customerId: string | undefined): UseVanguard
             ip_address: a.ip_address ? String(a.ip_address) : null,
           })));
         }
+        setEndpointCount(agentCount || 0);
 
-        // Count tickets for this customer
-        const { count } = await supabase
+        // Count tickets for this customer (all tickets, not filtered by user_id for MSP view)
+        const { count: ticketCountResult } = await supabase
           .from('tickets')
           .select('id', { count: 'exact', head: true })
-          .eq('client_id', customerId)
-          .eq('user_id', user.id);
+          .eq('client_id', customerId);
 
-        setTicketCount(count || 0);
+        setTicketCount(ticketCountResult || 0);
+
+        // Count active alerts - try multiple sources
+        let alertTotal = 0;
+        
+        // Count from security_alerts table if it exists
+        try {
+          const { count: alertsCount } = await supabase
+            .from('automated_alerts')
+            .select('id', { count: 'exact', head: true })
+            .eq('is_active', true);
+          alertTotal = alertsCount || 0;
+        } catch {
+          // Fallback to 0 if table doesn't exist
+        }
+
+        setAlertCount(alertTotal);
 
       } catch (err) {
         console.error('Error fetching customer:', err);
@@ -150,5 +169,5 @@ export function useVanguardCustomer(customerId: string | undefined): UseVanguard
 
   const refetch = () => setRefetchTrigger(prev => prev + 1);
 
-  return { customer, contacts, devices, ticketCount, isLoading, error, refetch };
+  return { customer, contacts, devices, ticketCount, endpointCount, alertCount, isLoading, error, refetch };
 }
