@@ -50,8 +50,18 @@ public class AgentWorker : BackgroundService
         // Ensure device is registered
         await EnsureRegisteredAsync();
 
-        // Setup RustDesk for remote access (non-blocking)
-        _ = Task.Run(async () => await EnsureRustDeskAsync(), stoppingToken);
+        // Setup RustDesk for remote access (non-blocking with proper error handling)
+        _ = Task.Run(async () => 
+        {
+            try 
+            {
+                await EnsureRustDeskAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "RustDesk setup failed with exception");
+            }
+        }, stoppingToken);
 
         _logger.LogInformation("Agent registered. Starting monitoring loop.");
 

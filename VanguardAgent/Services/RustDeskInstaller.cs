@@ -278,24 +278,41 @@ public class RustDeskInstaller
     {
         Console.WriteLine("[RustDesk] Starting installation...");
         
-        // Use a GUID-based temp path to guarantee uniqueness
+        // When running as Windows Service, we already have SYSTEM privileges
+        // Use ProgramData instead of user's LocalApplicationData for service context
         var uniqueId = Guid.NewGuid().ToString("N");
         var localTempPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), 
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), 
             "VanguardAgent", 
             "Downloads",
             uniqueId
         );
-        Directory.CreateDirectory(localTempPath);
+        
+        try
+        {
+            Directory.CreateDirectory(localTempPath);
+            Console.WriteLine($"[RustDesk] Download directory: {localTempPath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RustDesk] Failed to create download directory: {ex.Message}");
+            return false;
+        }
+        
         var installerPath = Path.Combine(localTempPath, $"rustdesk-{RUSTDESK_VERSION}.exe");
         
         try
         {
-            // Download installer directly to local AppData (not network shares, not system temp)
+            // Download installer to ProgramData (accessible by SYSTEM account)
             Console.WriteLine($"[RustDesk] Downloading from {RUSTDESK_DOWNLOAD_URL}...");
             
             using var response = await _httpClient.GetAsync(RUSTDESK_DOWNLOAD_URL, HttpCompletionOption.ResponseHeadersRead);
-            response.EnsureSuccessStatusCode();
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"[RustDesk] Download failed: HTTP {(int)response.StatusCode}");
+                return false;
+            }
             
             // Download to unique local path
             await using (var contentStream = await response.Content.ReadAsStreamAsync())
@@ -321,7 +338,8 @@ public class RustDeskInstaller
             // Wait for Windows Defender to finish scanning (common cause of file locks)
             await WaitForFileUnlockAsync(installerPath, maxWaitSeconds: 30);
             
-            // Run silent install using ShellExecute to create completely separate process
+            // Run silent install - when running as SYSTEM service, we already have admin rights
+            // Use CreateNoWindow and don't use ShellExecute (services can't interact with desktop)
             Console.WriteLine("[RustDesk] Running silent installation...");
             
             var process = new Process
@@ -330,14 +348,26 @@ public class RustDeskInstaller
                 {
                     FileName = installerPath,
                     Arguments = "--silent-install",
-                    UseShellExecute = true, // Use shell to avoid file handle inheritance
+                    UseShellExecute = false, // Must be false for services (no desktop interaction)
+                    CreateNoWindow = true,
                     WorkingDirectory = localTempPath,
-                    Verb = "runas", // Request elevation if needed
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
                 }
             };
             
             process.Start();
+            
+            // Capture output for debugging
+            var stdout = await process.StandardOutput.ReadToEndAsync();
+            var stderr = await process.StandardError.ReadToEndAsync();
+            
             await process.WaitForExitAsync();
+            
+            if (!string.IsNullOrEmpty(stdout))
+                Console.WriteLine($"[RustDesk] Installer output: {stdout}");
+            if (!string.IsNullOrEmpty(stderr))
+                Console.WriteLine($"[RustDesk] Installer errors: {stderr}");
             
             if (process.ExitCode == 0)
             {
@@ -360,6 +390,7 @@ public class RustDeskInstaller
         catch (Exception ex)
         {
             Console.WriteLine($"[RustDesk] Installation error: {ex.Message}");
+            Console.WriteLine($"[RustDesk] Stack trace: {ex.StackTrace}");
             return false;
         }
         finally
@@ -367,11 +398,12 @@ public class RustDeskInstaller
             // Cleanup with delay - don't block on cleanup failures
             _ = Task.Run(async () =>
             {
-                await Task.Delay(10000); // Wait 10s before cleanup
+                await Task.Delay(30000); // Wait 30s before cleanup
                 try 
                 { 
                     if (Directory.Exists(localTempPath)) 
                         Directory.Delete(localTempPath, true);
+                    Console.WriteLine("[RustDesk] Cleaned up temp files");
                 } 
                 catch { /* Ignore cleanup failures */ }
             });
