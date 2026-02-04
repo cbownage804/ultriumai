@@ -117,7 +117,8 @@ export function generateCmdInstaller(provisioningToken: string, clientName?: str
     '}',
     '',
     'Write-Host "[3/4] Installing..." -ForegroundColor Yellow',
-    '$msiArgs = "/i `"$msiPath`" /qn /norestart USERID=`"$($creds.user_id)`" SECRETKEY=`"$($creds.secret_key)`" ENABLETRAY=`"$enableTray`""',
+    '# Note: ENABLETRAY must be passed without quotes for WiX condition to work',
+    '$msiArgs = "/i `"$msiPath`" /qn /norestart USERID=`"$($creds.user_id)`" SECRETKEY=`"$($creds.secret_key)`" ENABLETRAY=$enableTray"',
     'if ($creds.client_id) { $msiArgs += " CLIENTID=`"$($creds.client_id)`"" }',
     '$proc = Start-Process msiexec.exe -ArgumentList $msiArgs -Wait -PassThru',
     'if ($proc.ExitCode -eq 0 -or $proc.ExitCode -eq 3010) {',
@@ -139,6 +140,19 @@ export function generateCmdInstaller(provisioningToken: string, clientName?: str
     '    Write-Host "   Service not found" -ForegroundColor Red',
     '}',
     '',
+    '# Launch tray app if enabled',
+    'if ($enableTray -eq "1") {',
+    '    Write-Host ""',
+    '    Write-Host "Starting Vanguard Portal tray app..." -ForegroundColor Yellow',
+    '    $exePath = Join-Path $env:ProgramFiles "Vanguard\\VanguardAgent.exe"',
+    '    if (Test-Path $exePath) {',
+    '        Start-Process -FilePath $exePath -WindowStyle Hidden',
+    '        Write-Host "   Tray app launched! Check your system tray." -ForegroundColor Green',
+    '    } else {',
+    '        Write-Host "   Could not find executable at: $exePath" -ForegroundColor Yellow',
+    '    }',
+    '}',
+    '',
     'Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue',
     '',
     'Write-Host ""',
@@ -147,6 +161,9 @@ export function generateCmdInstaller(provisioningToken: string, clientName?: str
     'Write-Host "============================================" -ForegroundColor Green',
     'Write-Host ""',
     'Write-Host "  Dashboard: https://ultriumai.com/vanguard" -ForegroundColor Cyan',
+    'if ($enableTray -eq "1") {',
+    '    Write-Host "  Tray: Look for Vanguard icon in system tray" -ForegroundColor Cyan',
+    '}',
     'Write-Host ""',
     'Read-Host "Press Enter to close"',
   ];
@@ -215,7 +232,8 @@ export function generateMsiInstallerScript(provisioningToken: string, clientName
     '',
     'Write-Host "Installing..." -ForegroundColor Yellow',
     '$enableTray = if ($creds.enable_tray) { "1" } else { "0" }',
-    '$msiArgs = "/i `"$msiPath`" /qn /norestart USERID=`"$($creds.user_id)`" SECRETKEY=`"$($creds.secret_key)`" ENABLETRAY=`"$enableTray`""',
+    '# Note: ENABLETRAY must be passed without quotes for WiX condition to work',
+    '$msiArgs = "/i `"$msiPath`" /qn /norestart USERID=`"$($creds.user_id)`" SECRETKEY=`"$($creds.secret_key)`" ENABLETRAY=$enableTray"',
     'if ($creds.client_id) { $msiArgs += " CLIENTID=`"$($creds.client_id)`"" }',
     'Start-Process msiexec.exe -ArgumentList $msiArgs -Wait',
     '',
@@ -232,8 +250,9 @@ export function generateMsiOneLiner(provisioningToken: string): string {
   const provisionUrl = PROVISION_ENDPOINT;
   const msiUrl = MSI_DOWNLOAD_URL;
   
+  // Note: ENABLETRAY passed without quotes for WiX condition compatibility
   return `# Run in elevated PowerShell:
-$t="${provisioningToken}";$c=irm "${provisionUrl}?action=redeem" -Method POST -Body (@{token=$t;device_id=$env:COMPUTERNAME}|ConvertTo-Json) -ContentType "application/json";$m="$env:TEMP\\VanguardAgent.msi";(New-Object Net.WebClient).DownloadFile("${msiUrl}",$m);msiexec /i $m /qn USERID="$($c.user_id)" SECRETKEY="$($c.secret_key)" ENABLETRAY="$(if($c.enable_tray){'1'}else{'0'})"`;
+$t="${provisioningToken}";$c=irm "${provisionUrl}?action=redeem" -Method POST -Body (@{token=$t;device_id=$env:COMPUTERNAME}|ConvertTo-Json) -ContentType "application/json";$m="$env:TEMP\\VanguardAgent.msi";(New-Object Net.WebClient).DownloadFile("${msiUrl}",$m);$et=if($c.enable_tray){"1"}else{"0"};msiexec /i $m /qn USERID="$($c.user_id)" SECRETKEY="$($c.secret_key)" ENABLETRAY=$et`;
 }
 
 /**
