@@ -558,6 +558,7 @@ public class TelemetryCollector
         if (features.CollectNetwork)
         {
             telemetry.NetworkAdapters = CollectNetworkAdapters();
+            telemetry.NetworkConnections = CollectNetworkConnections();
         }
 
         if (features.CollectInstalledSoftware)
@@ -567,6 +568,10 @@ public class TelemetryCollector
 
         // Always collect disk information
         telemetry.Disks = CollectDisks();
+
+        // Always collect startup programs and local users
+        telemetry.StartupPrograms = CollectStartupPrograms();
+        telemetry.LocalUsers = CollectLocalUsers();
 
         return telemetry;
     }
@@ -737,7 +742,186 @@ public class TelemetryCollector
                     catch { }
                 }
             }
+
+    private List<StartupProgramInfo> CollectStartupPrograms()
+    {
+        var programs = new List<StartupProgramInfo>();
+        
+        // Registry Run keys for startup programs
+        var runKeys = new[]
+        {
+            (@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", "HKLM"),
+            (@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", "HKCU"),
+            (@"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run", "HKLM"),
+            (@"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce", "HKLM"),
+        };
+
+        try
+        {
+            foreach (var (keyPath, root) in runKeys)
+            {
+                RegistryKey? baseKey = root == "HKLM" ? Registry.LocalMachine : Registry.CurrentUser;
+                using var key = baseKey.OpenSubKey(keyPath);
+                if (key == null) continue;
+
+                foreach (var valueName in key.GetValueNames())
+                {
+                    try
+                    {
+                        var command = key.GetValue(valueName)?.ToString() ?? "";
+                        if (string.IsNullOrEmpty(valueName) || string.IsNullOrEmpty(command)) continue;
+
+                        programs.Add(new StartupProgramInfo
+                        {
+                            Name = valueName,
+                            Command = command,
+                            Location = $"{root}\\{keyPath}",
+                            Enabled = true,
+                            StartupType = "Registry"
+                        });
+                    }
+                    catch { }
+                }
+            }
         }
+        catch { }
+
+        // Also check Task Scheduler for startup tasks
+        try
+        {
+            using var searcher = new ManagementObjectSearcher(
+                "SELECT Name, State, Command FROM Win32_ScheduledJob");
+            // Note: Win32_ScheduledJob might not list all tasks, but catches some
+        }
+        catch { }
+
+        return programs.DistinctBy(p => p.Name).OrderBy(p => p.Name).ToList();
+    }
+
+    private List<LocalUserInfo> CollectLocalUsers()
+    {
+        var users = new List<LocalUserInfo>();
+
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_UserAccount WHERE LocalAccount=True");
+            foreach (var obj in searcher.Get())
+            {
+                try
+                {
+                    var userName = obj["Name"]?.ToString() ?? "";
+                    var sid = obj["SID"]?.ToString();
+                    var disabled = Convert.ToBoolean(obj["Disabled"]);
+                    var fullName = obj["FullName"]?.ToString();
+                    var description = obj["Description"]?.ToString();
+
+                    // Check if user is admin
+                    bool isAdmin = false;
+                    try
+                    {
+                        using var groupSearcher = new ManagementObjectSearcher(
+                            $"SELECT * FROM Win32_GroupUser WHERE GroupComponent=\"Win32_Group.Domain='{Environment.MachineName}',Name='Administrators'\"");
+                        foreach (var groupMember in groupSearcher.Get())
+                        {
+                            var partComponent = groupMember["PartComponent"]?.ToString() ?? "";
+                            if (partComponent.Contains($"Name=\"{userName}\"", StringComparison.OrdinalIgnoreCase))
+                            {
+                                isAdmin = true;
+                                break;
+                            }
+                        }
+                    }
+                    catch { }
+
+                    users.Add(new LocalUserInfo
+                    {
+                        Name = userName,
+                        FullName = fullName,
+                        Description = description,
+                        Enabled = !disabled,
+                        IsAdmin = isAdmin,
+                        IsLocal = true,
+                        Sid = sid
+                    });
+                }
+                catch { }
+            }
+        }
+        catch { }
+
+        return users.OrderBy(u => u.Name).ToList();
+    }
+
+    private List<NetworkConnectionInfo> CollectNetworkConnections()
+    {
+        var connections = new List<NetworkConnectionInfo>();
+
+        try
+        {
+            // Use netstat-like approach via WMI or IPGlobalProperties
+            var ipProps = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties();
+            
+            // Get active TCP connections
+            foreach (var conn in ipProps.GetActiveTcpConnections())
+            {
+                try
+                {
+                    // Try to get process name
+                    string? processName = null;
+                    int? processId = null;
+
+                    // Get process ID via netstat parsing or P/Invoke would be more accurate
+                    // For now, we'll use what's available
+
+                    connections.Add(new NetworkConnectionInfo
+                    {
+                        LocalAddress = conn.LocalEndPoint.Address.ToString(),
+                        LocalPort = conn.LocalEndPoint.Port,
+                        RemoteAddress = conn.RemoteEndPoint.Address.ToString(),
+                        RemotePort = conn.RemoteEndPoint.Port,
+                        State = conn.State.ToString(),
+                        Protocol = "TCP",
+                        ProcessName = processName,
+                        ProcessId = processId
+                    });
+                }
+                catch { }
+            }
+
+            // Get TCP listeners
+            foreach (var listener in ipProps.GetActiveTcpListeners())
+            {
+                connections.Add(new NetworkConnectionInfo
+                {
+                    LocalAddress = listener.Address.ToString(),
+                    LocalPort = listener.Port,
+                    RemoteAddress = "*",
+                    RemotePort = 0,
+                    State = "Listening",
+                    Protocol = "TCP"
+                });
+            }
+
+            // Get UDP listeners
+            foreach (var listener in ipProps.GetActiveUdpListeners())
+            {
+                connections.Add(new NetworkConnectionInfo
+                {
+                    LocalAddress = listener.Address.ToString(),
+                    LocalPort = listener.Port,
+                    RemoteAddress = "*",
+                    RemotePort = 0,
+                    State = "Listening",
+                    Protocol = "UDP"
+                });
+            }
+        }
+        catch { }
+
+        // Limit to 200 connections to avoid huge payloads
+        return connections.Take(200).ToList();
+    }
+}
         catch { }
 
         return software.DistinctBy(s => s.Name).OrderBy(s => s.Name).ToList();

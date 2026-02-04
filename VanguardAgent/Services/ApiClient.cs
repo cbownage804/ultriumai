@@ -939,6 +939,15 @@ public class TelemetryPayload
     [JsonProperty("disks")]
     public List<DiskInfo>? Disks { get; set; }
 
+    [JsonProperty("startup_programs")]
+    public List<StartupProgramInfo>? StartupPrograms { get; set; }
+
+    [JsonProperty("local_users")]
+    public List<LocalUserInfo>? LocalUsers { get; set; }
+
+    [JsonProperty("network_connections")]
+    public List<NetworkConnectionInfo>? NetworkConnections { get; set; }
+
     [JsonProperty("timestamp")]
     public string Timestamp { get; set; } = DateTime.UtcNow.ToString("O");
 }
@@ -1018,19 +1027,82 @@ public class NetworkAdapterInfo
     public string Status { get; set; } = "";
 }
 
-public class SoftwareInfo
+public class StartupProgramInfo
 {
     [JsonProperty("name")]
     public string Name { get; set; } = "";
 
-    [JsonProperty("version")]
-    public string Version { get; set; } = "";
+    [JsonProperty("command")]
+    public string Command { get; set; } = "";
+
+    [JsonProperty("location")]
+    public string Location { get; set; } = "";
+
+    [JsonProperty("enabled")]
+    public bool Enabled { get; set; } = true;
 
     [JsonProperty("publisher")]
-    public string Publisher { get; set; } = "";
+    public string? Publisher { get; set; }
 
-    [JsonProperty("install_date")]
-    public string? InstallDate { get; set; }
+    [JsonProperty("startup_type")]
+    public string StartupType { get; set; } = "Registry";
+}
+
+public class LocalUserInfo
+{
+    [JsonProperty("name")]
+    public string Name { get; set; } = "";
+
+    [JsonProperty("full_name")]
+    public string? FullName { get; set; }
+
+    [JsonProperty("description")]
+    public string? Description { get; set; }
+
+    [JsonProperty("enabled")]
+    public bool Enabled { get; set; } = true;
+
+    [JsonProperty("is_admin")]
+    public bool IsAdmin { get; set; }
+
+    [JsonProperty("is_local")]
+    public bool IsLocal { get; set; } = true;
+
+    [JsonProperty("last_logon")]
+    public string? LastLogon { get; set; }
+
+    [JsonProperty("sid")]
+    public string? Sid { get; set; }
+
+    [JsonProperty("groups")]
+    public List<string>? Groups { get; set; }
+}
+
+public class NetworkConnectionInfo
+{
+    [JsonProperty("local_address")]
+    public string LocalAddress { get; set; } = "";
+
+    [JsonProperty("local_port")]
+    public int LocalPort { get; set; }
+
+    [JsonProperty("remote_address")]
+    public string RemoteAddress { get; set; } = "";
+
+    [JsonProperty("remote_port")]
+    public int RemotePort { get; set; }
+
+    [JsonProperty("state")]
+    public string State { get; set; } = "";
+
+    [JsonProperty("protocol")]
+    public string Protocol { get; set; } = "TCP";
+
+    [JsonProperty("process_name")]
+    public string? ProcessName { get; set; }
+
+    [JsonProperty("process_id")]
+    public int? ProcessId { get; set; }
 }
 
 public class CommandPollResponse

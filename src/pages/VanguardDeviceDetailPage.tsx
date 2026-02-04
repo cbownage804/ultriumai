@@ -706,7 +706,7 @@ export default function VanguardDeviceDetailPage() {
               </TabsContent>
 
               <TabsContent value="software" className="mt-4">
-                <DeviceSoftwareTab agent={agent} />
+                <DeviceSoftwareTab agent={agent} sendCommand={sendCommand} />
               </TabsContent>
 
               <TabsContent value="updates" className="mt-4">
