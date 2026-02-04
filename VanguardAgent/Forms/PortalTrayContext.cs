@@ -75,13 +75,15 @@ public class PortalTrayContext : ApplicationContext
 
     private Icon LoadIcon()
     {
-        // Try loading vanguard.ico from app directory
+        // Try loading vanguard.ico from app directory with full size (256x256 for Windows toasts)
         var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "vanguard.ico");
         if (File.Exists(iconPath))
         {
             try
             {
-                _customIcon = new Icon(iconPath);
+                // Load the icon at largest available size for proper toast display
+                // Windows 10/11 toasts display the NotifyIcon's icon - need 256x256 for crisp display
+                _customIcon = new Icon(iconPath, new Size(256, 256));
                 return _customIcon;
             }
             catch { }
