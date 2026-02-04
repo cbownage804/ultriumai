@@ -38,6 +38,19 @@ public class AgentConfig
     [JsonProperty("portal_session_token")]
     public string? PortalSessionToken { get; set; }
 
+    // White-label portal branding
+    [JsonProperty("portal_key")]
+    public string? PortalKey { get; set; }
+
+    [JsonProperty("portal_name")]
+    public string PortalName { get; set; } = "Vanguard";
+
+    [JsonProperty("portal_url")]
+    public string? PortalUrl { get; set; }
+
+    [JsonProperty("show_portal")]
+    public bool ShowPortal { get; set; } = true;
+
     [JsonProperty("features")]
     public FeatureConfig Features { get; set; } = new();
 }

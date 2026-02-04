@@ -250,7 +250,9 @@ public class PortalTrayContext : ApplicationContext
     {
         if (_loginForm == null || _loginForm.IsDisposed)
         {
-            _loginForm = new PortalLoginForm(_authService, OnLoginSuccess);
+            // Pass the white-label portal name from config (defaults to "Vanguard")
+            var portalName = _configService.Config.PortalName;
+            _loginForm = new PortalLoginForm(_authService, OnLoginSuccess, portalName);
         }
         
         _loginForm.Show();

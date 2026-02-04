@@ -6,12 +6,13 @@ using VanguardAgent.Services;
 namespace VanguardAgent.Forms;
 
 /// <summary>
-/// Portal login form for the agent tray
+/// Portal login form for the agent tray - supports white-label branding
 /// </summary>
 public class PortalLoginForm : Form
 {
     private readonly PortalAuthService _authService;
     private readonly Action<PortalSession> _onLoginSuccess;
+    private readonly string _portalName;
     
     private TextBox _emailInput = null!;
     private TextBox _passwordInput = null!;
@@ -20,52 +21,65 @@ public class PortalLoginForm : Form
     private Label _statusLabel = null!;
     private bool _isLoading = false;
 
-    public PortalLoginForm(PortalAuthService authService, Action<PortalSession> onLoginSuccess)
+    public PortalLoginForm(PortalAuthService authService, Action<PortalSession> onLoginSuccess, string? portalName = null)
     {
         _authService = authService;
         _onLoginSuccess = onLoginSuccess;
+        _portalName = string.IsNullOrWhiteSpace(portalName) ? "Vanguard" : portalName;
         
         InitializeComponent();
     }
 
     private void InitializeComponent()
     {
-        Text = "Portal Login";
-        Size = new Size(350, 300);
+        // Larger form with better spacing
+        Text = $"{_portalName} Portal";
+        Size = new Size(420, 380);
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
         BackColor = Color.FromArgb(15, 23, 42);
         
-        // Title
+        // Title - use portal name for white-label
         var titleLabel = new Label
         {
-            Text = "Customer Portal Login",
+            Text = _portalName,
             ForeColor = Color.White,
-            Font = new Font("Segoe UI", 14, FontStyle.Bold),
+            Font = new Font("Segoe UI", 20, FontStyle.Bold),
             AutoSize = true,
-            Location = new Point(30, 25)
+            Location = new Point(40, 30)
         };
         Controls.Add(titleLabel);
+
+        // Subtitle
+        var subtitleLabel = new Label
+        {
+            Text = "Customer Portal",
+            ForeColor = Color.FromArgb(140, 140, 140),
+            Font = new Font("Segoe UI", 11),
+            AutoSize = true,
+            Location = new Point(40, 65)
+        };
+        Controls.Add(subtitleLabel);
 
         // Email label
         var emailLabel = new Label
         {
             Text = "Email",
             ForeColor = Color.FromArgb(180, 180, 180),
-            Font = new Font("Segoe UI", 9),
-            Location = new Point(30, 70),
+            Font = new Font("Segoe UI", 10),
+            Location = new Point(40, 110),
             AutoSize = true
         };
         Controls.Add(emailLabel);
 
-        // Email input
+        // Email input - larger and easier to use
         _emailInput = new TextBox
         {
-            Location = new Point(30, 90),
-            Size = new Size(270, 30),
-            Font = new Font("Segoe UI", 10),
+            Location = new Point(40, 135),
+            Size = new Size(320, 36),
+            Font = new Font("Segoe UI", 12),
             BackColor = Color.FromArgb(30, 41, 59),
             ForeColor = Color.White,
             BorderStyle = BorderStyle.FixedSingle
@@ -77,18 +91,18 @@ public class PortalLoginForm : Form
         {
             Text = "Password",
             ForeColor = Color.FromArgb(180, 180, 180),
-            Font = new Font("Segoe UI", 9),
-            Location = new Point(30, 125),
+            Font = new Font("Segoe UI", 10),
+            Location = new Point(40, 180),
             AutoSize = true
         };
         Controls.Add(passwordLabel);
 
-        // Password input
+        // Password input - larger
         _passwordInput = new TextBox
         {
-            Location = new Point(30, 145),
-            Size = new Size(270, 30),
-            Font = new Font("Segoe UI", 10),
+            Location = new Point(40, 205),
+            Size = new Size(320, 36),
+            Font = new Font("Segoe UI", 12),
             BackColor = Color.FromArgb(30, 41, 59),
             ForeColor = Color.White,
             BorderStyle = BorderStyle.FixedSingle,
@@ -103,22 +117,22 @@ public class PortalLoginForm : Form
             Text = "",
             ForeColor = Color.FromArgb(248, 113, 113),
             Font = new Font("Segoe UI", 9),
-            Location = new Point(30, 180),
-            Size = new Size(270, 20),
+            Location = new Point(40, 250),
+            Size = new Size(320, 20),
             Visible = false
         };
         Controls.Add(_errorLabel);
 
-        // Login button
+        // Login button - larger and more prominent
         _loginButton = new Button
         {
             Text = "Sign In",
-            Location = new Point(30, 205),
-            Size = new Size(270, 38),
+            Location = new Point(40, 280),
+            Size = new Size(320, 44),
             FlatStyle = FlatStyle.Flat,
             BackColor = Color.FromArgb(8, 145, 178),
             ForeColor = Color.White,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold),
+            Font = new Font("Segoe UI", 11, FontStyle.Bold),
             Cursor = Cursors.Hand
         };
         _loginButton.FlatAppearance.BorderSize = 0;
@@ -130,9 +144,9 @@ public class PortalLoginForm : Form
         {
             Text = "Enter your portal credentials",
             ForeColor = Color.FromArgb(140, 140, 140),
-            Font = new Font("Segoe UI", 8),
-            Location = new Point(30, 250),
-            Size = new Size(270, 20),
+            Font = new Font("Segoe UI", 9),
+            Location = new Point(40, 335),
+            Size = new Size(320, 20),
             TextAlign = ContentAlignment.MiddleCenter
         };
         Controls.Add(_statusLabel);
