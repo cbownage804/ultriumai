@@ -24598,6 +24598,7 @@ export type Database = {
           location: string | null
           ml_model_version: string | null
           name: string
+          rustdesk_id: string | null
           rustdesk_password_encrypted: string | null
           scan_interval_seconds: number | null
           scanner_subnets: string[] | null
@@ -24631,6 +24632,7 @@ export type Database = {
           location?: string | null
           ml_model_version?: string | null
           name: string
+          rustdesk_id?: string | null
           rustdesk_password_encrypted?: string | null
           scan_interval_seconds?: number | null
           scanner_subnets?: string[] | null
@@ -24664,6 +24666,7 @@ export type Database = {
           location?: string | null
           ml_model_version?: string | null
           name?: string
+          rustdesk_id?: string | null
           rustdesk_password_encrypted?: string | null
           scan_interval_seconds?: number | null
           scanner_subnets?: string[] | null

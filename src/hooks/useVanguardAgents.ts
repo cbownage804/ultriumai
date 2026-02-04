@@ -31,6 +31,9 @@ export interface VanguardAgent {
   agent_type: 'windows' | 'pi_appliance';
   // Availability monitoring
   availability_monitoring_enabled?: boolean;
+  // Remote access
+  rustdesk_id?: string | null;
+  rustdesk_password_encrypted?: string | null;
   // Pi appliance specific fields
   is_network_scanner?: boolean;
   scanner_subnets?: string[];

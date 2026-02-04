@@ -237,8 +237,9 @@ export default function VanguardDeviceDetailPage() {
   };
 
   const handleRemoteConnect = (type: 'desktop' | 'terminal' | 'files') => {
-    // Check multiple locations for RustDesk ID - agent may report it in different places
-    const rustdeskId = agent?.config?.hardware?.rustdesk_id || 
+    // Check for RustDesk ID - first from direct column, then fallback to config locations
+    const rustdeskId = agent?.rustdesk_id || 
+                       agent?.config?.hardware?.rustdesk_id || 
                        agent?.config?.remote_access?.rustdesk_id ||
                        agent?.config?.rustdesk_id;
     
