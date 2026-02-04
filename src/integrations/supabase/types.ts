@@ -6507,6 +6507,63 @@ export type Database = {
         }
         Relationships: []
       }
+      device_availability_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          device_id: string
+          device_name: string
+          id: string
+          last_heartbeat_at: string | null
+          notification_sent: boolean | null
+          resolved_at: string | null
+          ticket_id: string | null
+          triggered_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_type?: string
+          created_at?: string
+          device_id: string
+          device_name: string
+          id?: string
+          last_heartbeat_at?: string | null
+          notification_sent?: boolean | null
+          resolved_at?: string | null
+          ticket_id?: string | null
+          triggered_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          device_id?: string
+          device_name?: string
+          id?: string
+          last_heartbeat_at?: string | null
+          notification_sent?: boolean | null
+          resolved_at?: string | null
+          ticket_id?: string | null
+          triggered_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_availability_alerts_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_availability_alerts_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_checkins: {
         Row: {
           created_at: string
@@ -24523,6 +24580,7 @@ export type Database = {
           agent_type: string | null
           agent_version: string | null
           api_endpoint: string | null
+          availability_monitoring_enabled: boolean | null
           client_id: string | null
           config: Json | null
           created_at: string
@@ -24555,6 +24613,7 @@ export type Database = {
           agent_type?: string | null
           agent_version?: string | null
           api_endpoint?: string | null
+          availability_monitoring_enabled?: boolean | null
           client_id?: string | null
           config?: Json | null
           created_at?: string
@@ -24587,6 +24646,7 @@ export type Database = {
           agent_type?: string | null
           agent_version?: string | null
           api_endpoint?: string | null
+          availability_monitoring_enabled?: boolean | null
           client_id?: string | null
           config?: Json | null
           created_at?: string
