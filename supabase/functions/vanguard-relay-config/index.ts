@@ -99,7 +99,7 @@ serve(async (req) => {
         const { data: agent } = await supabase
           .from('vanguard_agents')
           .select('rustdesk_password_encrypted')
-          .eq('id', deviceId)
+          .eq('device_id', deviceId)
           .single();
         
         if (agent?.rustdesk_password_encrypted) {
@@ -115,7 +115,7 @@ serve(async (req) => {
           const { error } = await supabase
             .from('vanguard_agents')
             .update({ rustdesk_password_encrypted: encryptedPassword })
-            .eq('id', deviceId);
+            .eq('device_id', deviceId);
           
           if (error) {
             console.error(`[Relay Config] Failed to store password for ${deviceId}:`, error);
