@@ -249,34 +249,56 @@ export default function VanguardDeviceDetailPage() {
       });
       return;
     }
+
+    const url = `rustdesk://${rustdeskId}`;
+
+    // Best-effort: copy ID so the click always results in something the tech can use.
+    // (Clipboard can fail in some browsers/iframes; that's ok.)
+    try {
+      void navigator.clipboard?.writeText(String(rustdeskId));
+    } catch {
+      // ignore
+    }
+
+    const tryLaunch = () => {
+      try {
+        const opened = window.open(url, "_blank", "noopener,noreferrer");
+        if (!opened) {
+          window.location.assign(url);
+        }
+      } catch {
+        try {
+          window.location.assign(url);
+        } catch {
+          // ignore
+        }
+      }
+    };
     
     // For Remote Desktop, use rustdesk:// protocol
     if (type === 'desktop') {
-      const url = `rustdesk://${rustdeskId}`;
-      window.open(url, '_blank');
       toast.success("Opening RustDesk...", {
-        description: `Connecting to ${agent?.name}`
+        description: `ID ${rustdeskId} (copied). If nothing opens, your browser/iframe blocked the protocol—open RustDesk and enter the ID.`
       });
+      tryLaunch();
       return;
     }
     
     // For Terminal and File Manager, these typically require the RustDesk GUI
     // Open RustDesk and show instructions
     if (type === 'terminal') {
-      const url = `rustdesk://${rustdeskId}`;
-      window.open(url, '_blank');
       toast.success("Opening RustDesk for Terminal access...", {
-        description: "Use Ctrl+Shift+T in RustDesk to open terminal"
+        description: `ID ${rustdeskId} (copied). Use Ctrl+Shift+T in RustDesk to open terminal.`
       });
+      tryLaunch();
       return;
     }
     
     if (type === 'files') {
-      const url = `rustdesk://${rustdeskId}`;
-      window.open(url, '_blank');
       toast.success("Opening RustDesk for File Transfer...", {
-        description: "Use the File Transfer tab in RustDesk"
+        description: `ID ${rustdeskId} (copied). Use the File Transfer tab in RustDesk.`
       });
+      tryLaunch();
     }
   };
 
@@ -536,20 +558,20 @@ export default function VanguardDeviceDetailPage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-black/95 border-cyan-500/30">
                   <DropdownMenuItem 
-                    className="text-white hover:bg-cyan-500/10"
-                    onClick={() => handleRemoteConnect('desktop')}
+                    className="text-white hover:bg-cyan-500/10 cursor-pointer"
+                    onSelect={() => handleRemoteConnect('desktop')}
                   >
                     Remote Desktop
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    className="text-white hover:bg-cyan-500/10"
-                    onClick={() => handleRemoteConnect('terminal')}
+                    className="text-white hover:bg-cyan-500/10 cursor-pointer"
+                    onSelect={() => handleRemoteConnect('terminal')}
                   >
                     Terminal
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    className="text-white hover:bg-cyan-500/10"
-                    onClick={() => handleRemoteConnect('files')}
+                    className="text-white hover:bg-cyan-500/10 cursor-pointer"
+                    onSelect={() => handleRemoteConnect('files')}
                   >
                     File Manager
                   </DropdownMenuItem>
