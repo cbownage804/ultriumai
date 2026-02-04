@@ -559,23 +559,32 @@ export default function VanguardDeviceDetailPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-black/95 border-cyan-500/30">
-                  <DropdownMenuItem 
-                    className="text-white hover:bg-cyan-500/10 cursor-pointer"
-                    onSelect={() => handleRemoteConnect('desktop')}
-                  >
-                    Remote Desktop
+                  <DropdownMenuItem asChild>
+                    <button
+                      type="button"
+                      className="w-full text-left text-white hover:bg-cyan-500/10 cursor-pointer px-2 py-1.5"
+                      onClick={() => handleRemoteConnect('desktop')}
+                    >
+                      Remote Desktop
+                    </button>
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="text-white hover:bg-cyan-500/10 cursor-pointer"
-                    onSelect={() => handleRemoteConnect('terminal')}
-                  >
-                    Terminal
+                  <DropdownMenuItem asChild>
+                    <button
+                      type="button"
+                      className="w-full text-left text-white hover:bg-cyan-500/10 cursor-pointer px-2 py-1.5"
+                      onClick={() => handleRemoteConnect('terminal')}
+                    >
+                      Terminal
+                    </button>
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="text-white hover:bg-cyan-500/10 cursor-pointer"
-                    onSelect={() => handleRemoteConnect('files')}
-                  >
-                    File Manager
+                  <DropdownMenuItem asChild>
+                    <button
+                      type="button"
+                      className="w-full text-left text-white hover:bg-cyan-500/10 cursor-pointer px-2 py-1.5"
+                      onClick={() => handleRemoteConnect('files')}
+                    >
+                      File Manager
+                    </button>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
