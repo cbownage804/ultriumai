@@ -740,8 +740,12 @@ public class TelemetryCollector
                         });
                     }
                     catch { }
-                }
             }
+        }
+        catch { }
+
+        return software.DistinctBy(s => s.Name).OrderBy(s => s.Name).ToList();
+    }
 
     private List<StartupProgramInfo> CollectStartupPrograms()
     {
@@ -946,11 +950,6 @@ public class TelemetryCollector
 
         // Limit to 200 connections to avoid huge payloads
         return connections.Take(200).ToList();
-    }
-}
-        catch { }
-
-        return software.DistinctBy(s => s.Name).OrderBy(s => s.Name).ToList();
     }
 }
 
