@@ -72,6 +72,23 @@ export interface VanguardCommand {
   completed_at: string | null;
 }
 
+// Calculate device status based on last heartbeat
+// Threshold: 5 minutes = online, 5-15 min = warning, >15 min = offline
+const calculateStatus = (lastHeartbeat: string | null, dbStatus: string): 'online' | 'offline' | 'warning' | 'critical' => {
+  if (!lastHeartbeat) return 'offline';
+  
+  const now = Date.now();
+  const heartbeatTime = new Date(lastHeartbeat).getTime();
+  const ageMinutes = (now - heartbeatTime) / (1000 * 60);
+  
+  // If database says critical (resource threshold exceeded), keep it
+  if (dbStatus === 'critical' && ageMinutes < 5) return 'critical';
+  
+  if (ageMinutes < 5) return 'online';
+  if (ageMinutes < 15) return 'warning';
+  return 'offline';
+};
+
 export function useVanguardAgents() {
   const { user } = useAuth();
   const [agents, setAgents] = useState<VanguardAgent[]>([]);
@@ -90,7 +107,14 @@ export function useVanguardAgents() {
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
-      setAgents((data as VanguardAgent[]) || []);
+      
+      // Calculate accurate status based on heartbeat age
+      const agentsWithStatus = (data || []).map((agent: any) => ({
+        ...agent,
+        status: calculateStatus(agent.last_heartbeat, agent.status)
+      })) as VanguardAgent[];
+      
+      setAgents(agentsWithStatus);
       setError(null);
     } catch (err: any) {
       console.error('Error fetching vanguard agents:', err);
@@ -304,7 +328,13 @@ export function useVanguardAgent(agentId: string | undefined) {
        const metricsList = (metricsData as VanguardMetric[]) || [];
        setMetrics(metricsList);
 
-       const normalized = normalizeAgentForUI(agentData as VanguardAgent, metricsList);
+       // Calculate accurate status based on heartbeat age
+       const agentWithStatus = {
+         ...agentData,
+         status: calculateStatus(agentData.last_heartbeat, agentData.status)
+       } as VanguardAgent;
+       
+       const normalized = normalizeAgentForUI(agentWithStatus, metricsList);
        setAgent(normalized);
 
       // Fetch recent commands
