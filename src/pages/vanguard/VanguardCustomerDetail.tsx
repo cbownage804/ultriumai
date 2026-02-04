@@ -33,6 +33,7 @@ import { CustomerTicketsTab } from '@/components/vanguard/CustomerTicketsTab';
 import { CustomerAgentDownload } from '@/components/vanguard/CustomerAgentDownload';
 import { useVanguardCustomer } from '@/hooks/useVanguardCustomer';
 import { PortalContactManager, CompanySafeSuiteSettings } from '@/components/vanguard/portal';
+import { PortalUserManagement } from '@/components/vanguard/PortalUserManagement';
 
 export default function VanguardCustomerDetail() {
   const navigate = useNavigate();
@@ -268,20 +269,22 @@ export default function VanguardCustomerDetail() {
             </div>
           </TabsContent>
 
-          {/* Users Tab */}
-          <TabsContent value="users" className="mt-0">
+          {/* Users Tab - Portal User Management */}
+          <TabsContent value="users" className="mt-0 space-y-6">
+            <PortalUserManagement 
+              clientId={customerId || ''} 
+              clientName={customer.company_name}
+            />
+            
+            {/* Company Contacts (legacy view) */}
             <Card className="bg-black/40 border-cyan-500/20">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-white">Users ({contacts.length})</CardTitle>
-                <Button size="sm" className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add User
-                </Button>
+                <CardTitle className="text-white">Contacts ({contacts.length})</CardTitle>
               </CardHeader>
               <CardContent>
                 {contacts.length === 0 ? (
-                  <div className="text-center py-12 text-white/60">
-                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <div className="text-center py-8 text-white/60">
+                    <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
                     <p>No contacts added yet</p>
                   </div>
                 ) : (

@@ -2923,10 +2923,16 @@ export type Database = {
           failed_login_attempts: number | null
           full_name: string
           id: string
+          invited_at: string | null
+          invited_by: string | null
           is_active: boolean
           last_login_at: string | null
           locked_until: string | null
           login_count: number | null
+          mfa_backup_codes: string[] | null
+          mfa_enabled: boolean | null
+          mfa_secret: string | null
+          mfa_verified_at: string | null
           must_change_password: boolean | null
           password_hash: string | null
           reset_token: string | null
@@ -2943,10 +2949,16 @@ export type Database = {
           failed_login_attempts?: number | null
           full_name: string
           id?: string
+          invited_at?: string | null
+          invited_by?: string | null
           is_active?: boolean
           last_login_at?: string | null
           locked_until?: string | null
           login_count?: number | null
+          mfa_backup_codes?: string[] | null
+          mfa_enabled?: boolean | null
+          mfa_secret?: string | null
+          mfa_verified_at?: string | null
           must_change_password?: boolean | null
           password_hash?: string | null
           reset_token?: string | null
@@ -2963,10 +2975,16 @@ export type Database = {
           failed_login_attempts?: number | null
           full_name?: string
           id?: string
+          invited_at?: string | null
+          invited_by?: string | null
           is_active?: boolean
           last_login_at?: string | null
           locked_until?: string | null
           login_count?: number | null
+          mfa_backup_codes?: string[] | null
+          mfa_enabled?: boolean | null
+          mfa_secret?: string | null
+          mfa_verified_at?: string | null
           must_change_password?: boolean | null
           password_hash?: string | null
           reset_token?: string | null
@@ -14704,6 +14722,134 @@ export type Database = {
             foreignKeyName: "portal_password_reset_tokens_portal_user_id_fkey"
             columns: ["portal_user_id"]
             isOneToOne: false
+            referencedRelation: "client_portal_users_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_user_invitations: {
+        Row: {
+          accepted_at: string | null
+          client_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          full_name: string
+          id: string
+          invite_token: string
+          invited_at: string
+          invited_by: string
+          permissions: Json | null
+          role: Database["public"]["Enums"]["portal_user_role"]
+          status: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          client_id: string
+          created_at?: string
+          email: string
+          expires_at: string
+          full_name: string
+          id?: string
+          invite_token: string
+          invited_at?: string
+          invited_by: string
+          permissions?: Json | null
+          role?: Database["public"]["Enums"]["portal_user_role"]
+          status?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          client_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          full_name?: string
+          id?: string
+          invite_token?: string
+          invited_at?: string
+          invited_by?: string
+          permissions?: Json | null
+          role?: Database["public"]["Enums"]["portal_user_role"]
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_user_invitations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_user_permissions: {
+        Row: {
+          can_access_safepass: boolean | null
+          can_access_safescan: boolean | null
+          can_access_safetrack: boolean | null
+          can_access_safeweb: boolean | null
+          can_create_tickets: boolean | null
+          can_manage_users: boolean | null
+          can_view_all_tickets: boolean | null
+          can_view_billing: boolean | null
+          can_view_devices: boolean | null
+          can_view_reports: boolean | null
+          can_view_tickets: boolean | null
+          created_at: string
+          custom_permissions: Json | null
+          id: string
+          portal_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          can_access_safepass?: boolean | null
+          can_access_safescan?: boolean | null
+          can_access_safetrack?: boolean | null
+          can_access_safeweb?: boolean | null
+          can_create_tickets?: boolean | null
+          can_manage_users?: boolean | null
+          can_view_all_tickets?: boolean | null
+          can_view_billing?: boolean | null
+          can_view_devices?: boolean | null
+          can_view_reports?: boolean | null
+          can_view_tickets?: boolean | null
+          created_at?: string
+          custom_permissions?: Json | null
+          id?: string
+          portal_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          can_access_safepass?: boolean | null
+          can_access_safescan?: boolean | null
+          can_access_safetrack?: boolean | null
+          can_access_safeweb?: boolean | null
+          can_create_tickets?: boolean | null
+          can_manage_users?: boolean | null
+          can_view_all_tickets?: boolean | null
+          can_view_billing?: boolean | null
+          can_view_devices?: boolean | null
+          can_view_reports?: boolean | null
+          can_view_tickets?: boolean | null
+          created_at?: string
+          custom_permissions?: Json | null
+          id?: string
+          portal_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_user_permissions_portal_user_id_fkey"
+            columns: ["portal_user_id"]
+            isOneToOne: true
+            referencedRelation: "client_portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_user_permissions_portal_user_id_fkey"
+            columns: ["portal_user_id"]
+            isOneToOne: true
             referencedRelation: "client_portal_users_safe"
             referencedColumns: ["id"]
           },
@@ -31676,6 +31822,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string[]
       }
+      get_default_permissions_for_role: {
+        Args: { p_role: Database["public"]["Enums"]["portal_user_role"] }
+        Returns: Json
+      }
       get_device_alert_counts: {
         Args: { p_device_id: string }
         Returns: {
@@ -31821,6 +31971,7 @@ export type Database = {
       command_status: "queued" | "running" | "done" | "error" | "expired"
       device_status: "online" | "offline" | "stale" | "unknown"
       helpdesk_role: "msp_admin" | "msp_staff" | "client_admin" | "client_staff"
+      portal_user_role: "admin" | "manager" | "user" | "readonly"
       safedoc_role: "admin" | "editor" | "viewer" | "none"
       tech_visibility_mode: "shadow" | "branded" | "hybrid"
     }
@@ -31962,6 +32113,7 @@ export const Constants = {
       command_status: ["queued", "running", "done", "error", "expired"],
       device_status: ["online", "offline", "stale", "unknown"],
       helpdesk_role: ["msp_admin", "msp_staff", "client_admin", "client_staff"],
+      portal_user_role: ["admin", "manager", "user", "readonly"],
       safedoc_role: ["admin", "editor", "viewer", "none"],
       tech_visibility_mode: ["shadow", "branded", "hybrid"],
     },
