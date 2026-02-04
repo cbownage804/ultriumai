@@ -42,7 +42,7 @@ export default function VanguardCustomerDetail() {
   const [activeTab, setActiveTab] = useState('overview');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
-  const { customer, contacts, devices, ticketCount, isLoading, error } = useVanguardCustomer(customerId);
+  const { customer, contacts, devices, ticketCount, endpointCount, alertCount, isLoading, error } = useVanguardCustomer(customerId);
 
   useEffect(() => {
     if (customer) {
@@ -229,11 +229,11 @@ export default function VanguardCustomerDetail() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <Label className="text-white/60">Endpoints</Label>
-                    <span className="text-2xl font-bold text-cyan-400">{customer.endpoints || 0}</span>
+                    <span className="text-2xl font-bold text-cyan-400">{endpointCount}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <Label className="text-white/60">Active Alerts</Label>
-                    <span className="text-2xl font-bold text-amber-400">{customer.alerts || 0}</span>
+                    <span className="text-2xl font-bold text-amber-400">{alertCount}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <Label className="text-white/60">Tickets</Label>
