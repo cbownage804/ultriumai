@@ -377,8 +377,8 @@ export default function VanguardSetup() {
                   <div className="text-muted-foreground">
                     <span className="text-cyan-500 font-medium">Just double-click!</span>{' '}
                     The installer automatically elevates to admin, downloads the MSI, 
-                    configures credentials, and starts the service.
-                    {enableTray && ' Tray icon will appear after login.'}
+                    configures credentials, and starts the service. The system tray icon 
+                    provides quick access to the customer portal.
                   </div>
                 </div>
               </div>
