@@ -814,24 +814,49 @@ public class TelemetryCollector
                     var disabled = Convert.ToBoolean(obj["Disabled"]);
                     var fullName = obj["FullName"]?.ToString();
                     var description = obj["Description"]?.ToString();
+                    var domain = obj["Domain"]?.ToString() ?? Environment.MachineName;
 
-                    // Check if user is admin
+                    // Collect all group memberships for this user
+                    var groups = new List<string>();
                     bool isAdmin = false;
                     try
                     {
+                        // Query all groups this user belongs to
                         using var groupSearcher = new ManagementObjectSearcher(
-                            $"SELECT * FROM Win32_GroupUser WHERE GroupComponent=\"Win32_Group.Domain='{Environment.MachineName}',Name='Administrators'\"");
-                        foreach (var groupMember in groupSearcher.Get())
+                            $"ASSOCIATORS OF {{Win32_UserAccount.Domain='{domain}',Name='{userName}'}} WHERE AssocClass=Win32_GroupUser ResultRole=GroupComponent");
+                        foreach (var group in groupSearcher.Get())
                         {
-                            var partComponent = groupMember["PartComponent"]?.ToString() ?? "";
-                            if (partComponent.Contains($"Name=\"{userName}\"", StringComparison.OrdinalIgnoreCase))
+                            var groupName = group["Name"]?.ToString() ?? "";
+                            if (!string.IsNullOrEmpty(groupName))
                             {
-                                isAdmin = true;
-                                break;
+                                groups.Add(groupName);
+                                if (groupName.Equals("Administrators", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    isAdmin = true;
+                                }
                             }
                         }
                     }
-                    catch { }
+                    catch 
+                    {
+                        // Fallback: check directly if user is in Administrators group
+                        try
+                        {
+                            using var adminSearcher = new ManagementObjectSearcher(
+                                $"SELECT * FROM Win32_GroupUser WHERE GroupComponent=\"Win32_Group.Domain='{Environment.MachineName}',Name='Administrators'\"");
+                            foreach (var groupMember in adminSearcher.Get())
+                            {
+                                var partComponent = groupMember["PartComponent"]?.ToString() ?? "";
+                                if (partComponent.Contains($"Name=\"{userName}\"", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    isAdmin = true;
+                                    groups.Add("Administrators");
+                                    break;
+                                }
+                            }
+                        }
+                        catch { }
+                    }
 
                     users.Add(new LocalUserInfo
                     {
@@ -841,7 +866,8 @@ public class TelemetryCollector
                         Enabled = !disabled,
                         IsAdmin = isAdmin,
                         IsLocal = true,
-                        Sid = sid
+                        Sid = sid,
+                        Groups = groups.Count > 0 ? groups : null
                     });
                 }
                 catch { }
