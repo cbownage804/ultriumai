@@ -1027,6 +1027,21 @@ public class NetworkAdapterInfo
     public string Status { get; set; } = "";
 }
 
+public class SoftwareInfo
+{
+    [JsonProperty("name")]
+    public string Name { get; set; } = "";
+
+    [JsonProperty("version")]
+    public string Version { get; set; } = "";
+
+    [JsonProperty("publisher")]
+    public string Publisher { get; set; } = "";
+
+    [JsonProperty("install_date")]
+    public string? InstallDate { get; set; }
+}
+
 public class StartupProgramInfo
 {
     [JsonProperty("name")]
