@@ -1,7 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useEffect, Suspense, lazy, useState } from 'react';
 import { ThemeProvider } from 'next-themes';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster as ShadcnToaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster } from '@/components/ui/sonner';
 import { NotificationProvider } from '@/hooks/useNotifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
@@ -910,7 +911,8 @@ export default function App() {
               <VoiceAssistantProvider>
                 <Router>
                   <AppRouter />
-                  <Toaster />
+                  <ShadcnToaster />
+                  <SonnerToaster />
                 </Router>
               </VoiceAssistantProvider>
             </NotificationProvider>
