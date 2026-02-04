@@ -3970,6 +3970,7 @@ export type Database = {
       }
       comanaged_organizations: {
         Row: {
+          client_id: string | null
           created_at: string | null
           id: string
           internal_it_name: string
@@ -3979,6 +3980,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          client_id?: string | null
           created_at?: string | null
           id?: string
           internal_it_name: string
@@ -3988,6 +3990,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          client_id?: string | null
           created_at?: string | null
           id?: string
           internal_it_name?: string
@@ -3996,7 +3999,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "comanaged_organizations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       comanaged_performance_metrics: {
         Row: {
@@ -16025,6 +16036,7 @@ export type Database = {
         Row: {
           address: string
           city: string
+          client_id: string | null
           company_name: string
           created_at: string | null
           id: string
@@ -16042,6 +16054,7 @@ export type Database = {
         Insert: {
           address: string
           city: string
+          client_id?: string | null
           company_name: string
           created_at?: string | null
           id?: string
@@ -16059,6 +16072,7 @@ export type Database = {
         Update: {
           address?: string
           city?: string
+          client_id?: string | null
           company_name?: string
           created_at?: string | null
           id?: string
@@ -16073,7 +16087,15 @@ export type Database = {
           user_id?: string | null
           zip_code?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "rmm_customers_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rmm_devices: {
         Row: {
@@ -31646,6 +31668,14 @@ export type Database = {
       generate_next_invoice_number: { Args: never; Returns: string }
       generate_ticket_number: { Args: never; Returns: string }
       get_ai_studio_plan_credits: { Args: { plan: string }; Returns: number }
+      get_comanaged_client_ids: {
+        Args: { _user_id: string }
+        Returns: string[]
+      }
+      get_comanaged_customer_ids: {
+        Args: { _user_id: string }
+        Returns: string[]
+      }
       get_device_alert_counts: {
         Args: { p_device_id: string }
         Returns: {
