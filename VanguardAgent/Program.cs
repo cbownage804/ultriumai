@@ -223,9 +223,12 @@ public class Program
 
         string? userId = null;
         string? secretKey = null;
+        string? clientId = null;
         string? deviceName = null;
         string? portalKey = null;
         string? portalName = null;
+        string? portalUrl = null;
+        bool showPortal = true;
 
         for (int i = 0; i < args.Length - 1; i++)
         {
@@ -237,6 +240,9 @@ public class Program
                 case "--secret-key":
                     secretKey = args[i + 1];
                     break;
+                case "--client-id":
+                    clientId = args[i + 1];
+                    break;
                 case "--device-name":
                     deviceName = args[i + 1];
                     break;
@@ -246,12 +252,26 @@ public class Program
                 case "--portal-name":
                     portalName = args[i + 1];
                     break;
+                case "--portal-url":
+                    portalUrl = args[i + 1];
+                    break;
+                case "--show-portal":
+                    showPortal = args[i + 1] == "1" || args[i + 1].ToLower() == "true";
+                    break;
             }
         }
 
         if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(secretKey))
         {
-            Console.WriteLine("Usage: VanguardAgent.exe --register --user-id <UUID> --secret-key <KEY> [--device-name <NAME>] [--portal-key <KEY>] [--portal-name <NAME>]");
+            Console.WriteLine("Usage: VanguardAgent.exe --register --user-id <UUID> --secret-key <KEY> [options]");
+            Console.WriteLine();
+            Console.WriteLine("Options:");
+            Console.WriteLine("  --client-id <ID>      Client ID for multi-tenant");
+            Console.WriteLine("  --device-name <NAME>  Device name (default: hostname)");
+            Console.WriteLine("  --portal-key <KEY>    Portal branding key");
+            Console.WriteLine("  --portal-name <NAME>  Portal display name");
+            Console.WriteLine("  --portal-url <URL>    Portal URL");
+            Console.WriteLine("  --show-portal <1|0>   Enable portal (default: 1)");
             Console.WriteLine();
             Console.WriteLine("Get your credentials from: https://ultriumai.com/vanguard/settings");
             return;
@@ -263,6 +283,7 @@ public class Program
         {
             user_id = userId,
             secret_key = secretKey,
+            client_id = clientId,
             device_name = deviceName,
             api_endpoint = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api",
             heartbeat_interval = 60,
@@ -270,8 +291,8 @@ public class Program
             telemetry_interval = 300,
             portal_key = portalKey ?? "",
             portal_name = portalName ?? "Customer Portal",
-            portal_url = "https://ultriumai.com/customer-portal",
-            show_portal = !string.IsNullOrEmpty(portalKey)
+            portal_url = portalUrl ?? "https://ultriumai.com/customer-portal",
+            show_portal = showPortal
         };
 
         var configPath = Path.Combine(AppContext.BaseDirectory, "config.json");
