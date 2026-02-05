@@ -672,26 +672,82 @@ public class RustDeskInstaller
 
             var dir = Path.GetDirectoryName(installedExe) ?? Environment.CurrentDirectory;
 
-            // Install/repair the RustDesk Windows service so it can run headlessly
-            Console.WriteLine("[RustDesk] Ensuring RustDesk service is installed...");
+            // Step 1: Check if service already exists
+            var (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 10);
+            Console.WriteLine($"[RustDesk] sc query RustDesk exit={scExit}, output={scOut?.Trim()}");
+
+            bool serviceExists = scExit == 0 && scOut.Contains("RustDesk");
+            bool serviceRunning = serviceExists && scOut.Contains("RUNNING");
+
+            if (serviceRunning)
+            {
+                Console.WriteLine("[RustDesk] Service already running");
+                return;
+            }
+
+            // Step 2: Try --install-service (RustDesk's built-in method)
+            Console.WriteLine("[RustDesk] Installing RustDesk service...");
             var (exit, stdout, stderr) = await RunProcessAsync(
                 fileName: installedExe,
-                arguments: "--install-service -wait",
+                arguments: "--install-service",
                 workingDirectory: dir,
                 timeoutSeconds: 120
             );
+            Console.WriteLine($"[RustDesk] --install-service exit={exit} stdout={stdout?.Trim()} stderr={stderr?.Trim()}");
 
-            if (!string.IsNullOrEmpty(stdout)) Console.WriteLine($"[RustDesk] --install-service output: {stdout}");
-            if (!string.IsNullOrEmpty(stderr)) Console.WriteLine($"[RustDesk] --install-service errors: {stderr}");
+            // Wait for service to register
+            await Task.Delay(3000);
 
-            Console.WriteLine($"[RustDesk] --install-service exit code: {exit}");
+            // Step 3: Verify service exists now
+            (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 10);
+            serviceExists = scExit == 0 && scOut.Contains("RustDesk");
 
-            // Start/restart service to ensure ID generation begins
-            await RestartRustDeskServiceAsync();
+            if (!serviceExists)
+            {
+                // Fallback: create the service manually via sc.exe
+                Console.WriteLine("[RustDesk] Service not found after --install-service, creating manually via sc.exe...");
+                var binPath = $"\"{installedExe}\" --service";
+                var (createExit, createOut, createErr) = await RunProcessAsync(
+                    "sc.exe",
+                    $"create RustDesk binPath= {binPath} start= auto DisplayName= \"RustDesk Service\"",
+                    Environment.SystemDirectory,
+                    30
+                );
+                Console.WriteLine($"[RustDesk] sc create exit={createExit} out={createOut?.Trim()} err={createErr?.Trim()}");
+            }
+
+            // Step 4: Start the service
+            Console.WriteLine("[RustDesk] Starting RustDesk service...");
+            var (startExit, startOut, startErr) = await RunProcessAsync(
+                "sc.exe", "start RustDesk", Environment.SystemDirectory, 30);
+            Console.WriteLine($"[RustDesk] sc start exit={startExit} out={startOut?.Trim()} err={startErr?.Trim()}");
+
+            // Step 5: Verify it's actually running
+            await Task.Delay(5000);
+            (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 10);
+            serviceRunning = scExit == 0 && scOut.Contains("RUNNING");
+            Console.WriteLine($"[RustDesk] Service running after start: {serviceRunning}");
+
+            if (!serviceRunning)
+            {
+                // Last resort: just run rustdesk.exe directly to generate ID
+                Console.WriteLine("[RustDesk] Service failed to start, launching rustdesk.exe directly to generate ID...");
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var (rdExit, rdOut, rdErr) = await RunProcessAsync(
+                            installedExe, "", dir, 30);
+                        Console.WriteLine($"[RustDesk] Direct launch exit={rdExit}");
+                    }
+                    catch { }
+                });
+                await Task.Delay(10000); // Give it time to initialize and generate ID
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[RustDesk] Service install skipped: {ex.Message}");
+            Console.WriteLine($"[RustDesk] Service install error: {ex.Message}\n{ex.StackTrace}");
         }
     }
     /// <summary>
@@ -851,40 +907,29 @@ direct-access-port = ''
     {
         try
         {
-            // Try to restart the service
-            var process = new Process
+            Console.WriteLine("[RustDesk] Restarting RustDesk service...");
+            
+            // Use sc.exe which is more reliable than net commands
+            var (stopExit, _, _) = await RunProcessAsync("sc.exe", "stop RustDesk", Environment.SystemDirectory, 15);
+            Console.WriteLine($"[RustDesk] sc stop exit={stopExit}");
+            
+            await Task.Delay(2000);
+            
+            var (startExit, startOut, startErr) = await RunProcessAsync("sc.exe", "start RustDesk", Environment.SystemDirectory, 15);
+            Console.WriteLine($"[RustDesk] sc start exit={startExit} out={startOut?.Trim()} err={startErr?.Trim()}");
+            
+            if (startExit == 0)
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "net",
-                    Arguments = "stop RustDesk",
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                }
-            };
-            process.Start();
-            await process.WaitForExitAsync();
-            
-            await Task.Delay(1000);
-            
-            process = new Process
+                Console.WriteLine("[RustDesk] Service restarted successfully");
+            }
+            else
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "net",
-                    Arguments = "start RustDesk",
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                }
-            };
-            process.Start();
-            await process.WaitForExitAsync();
-            
-            Console.WriteLine("[RustDesk] Service restarted");
+                Console.WriteLine("[RustDesk] Service restart may have failed");
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[RustDesk] Service restart skipped: {ex.Message}");
+            Console.WriteLine($"[RustDesk] Service restart error: {ex.Message}");
         }
     }
 
@@ -1067,7 +1112,7 @@ direct-access-port = ''
     /// </summary>
     public async Task<(bool Success, string? RustDeskId)> EnsureInstalledAndConfiguredAsync(string apiBaseUrl)
     {
-        // Fetch relay configuration
+        // Fetch relay configuration (optional - RustDesk works with public relays too)
         await FetchRelayConfigAsync(apiBaseUrl);
         
         var status = GetRelayStatus();
@@ -1080,6 +1125,12 @@ direct-access-port = ''
             var installed = await InstallRustDeskAsync();
             if (!installed)
             {
+                // Log diagnostic info
+                Console.WriteLine("[RustDesk] INSTALLATION FAILED - Diagnostics:");
+                var (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 5);
+                Console.WriteLine($"[RustDesk]   sc query: exit={scExit} output={scOut?.Trim()}");
+                var (whereExit, whereOut, _) = await RunProcessAsync("where.exe", "rustdesk", Environment.SystemDirectory, 5);
+                Console.WriteLine($"[RustDesk]   where rustdesk: exit={whereExit} output={whereOut?.Trim()}");
                 return (false, null);
             }
         }
@@ -1087,7 +1138,10 @@ direct-access-port = ''
         {
             Console.WriteLine("[RustDesk] Already installed");
             
-            // Ensure it's configured for Vanguard
+            // Always ensure service is running
+            await EnsureRustDeskServiceInstalledAsync();
+            
+            // Ensure it's configured for Vanguard relay (if relay is set up)
             if (!IsConfiguredForVanguard() && _relayServers.Count > 0)
             {
                 Console.WriteLine("[RustDesk] Not configured for Vanguard, applying configuration...");
@@ -1095,9 +1149,35 @@ direct-access-port = ''
             }
         }
 
-        // Wait for RustDesk to generate ID with retry logic
-        var rustDeskId = await WaitForRustDeskIdAsync(maxWaitSeconds: 30);
-        Console.WriteLine($"[RustDesk] Current ID: {rustDeskId ?? "Not yet generated"}");
+        // Wait for RustDesk to generate ID - use longer timeout for fresh installs
+        var rustDeskId = await WaitForRustDeskIdAsync(maxWaitSeconds: 90);
+        Console.WriteLine($"[RustDesk] Current ID: {rustDeskId ?? "NOT GENERATED"}");
+        
+        if (string.IsNullOrEmpty(rustDeskId))
+        {
+            // Extra diagnostics when ID fails
+            Console.WriteLine("[RustDesk] ID RETRIEVAL FAILED - Diagnostics:");
+            var (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 5);
+            Console.WriteLine($"[RustDesk]   Service: {scOut?.Trim()}");
+            
+            var exePath = FindRustDeskExePath();
+            Console.WriteLine($"[RustDesk]   Exe path: {exePath ?? "NOT FOUND"}");
+            
+            // List config directories to see what exists
+            var configDirs = new[] {
+                @"C:\ProgramData\RustDesk\config",
+                @"C:\Program Files\RustDesk",
+                @"C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config",
+            };
+            foreach (var d in configDirs)
+            {
+                if (Directory.Exists(d))
+                {
+                    var files = Directory.GetFiles(d);
+                    Console.WriteLine($"[RustDesk]   {d}: [{string.Join(", ", files.Select(Path.GetFileName))}]");
+                }
+            }
+        }
         
         return (true, rustDeskId);
     }
@@ -1105,7 +1185,7 @@ direct-access-port = ''
     /// <summary>
     /// Wait for RustDesk to generate its ID (may take time after fresh install)
     /// </summary>
-    public async Task<string?> WaitForRustDeskIdAsync(int maxWaitSeconds = 30)
+    public async Task<string?> WaitForRustDeskIdAsync(int maxWaitSeconds = 60)
     {
         var waited = 0;
         while (waited < maxWaitSeconds)
@@ -1117,12 +1197,22 @@ direct-access-port = ''
                 return id;
             }
             
-            await Task.Delay(2000);
-            waited += 2;
+            await Task.Delay(3000);
+            waited += 3;
             
-            if (waited % 10 == 0)
+            if (waited % 15 == 0)
             {
                 Console.WriteLine($"[RustDesk] Waiting for ID generation... ({waited}s)");
+                // Re-check service status periodically
+                var (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 5);
+                Console.WriteLine($"[RustDesk] Service status: {scOut?.Trim()}");
+                
+                // If service stopped, try starting it again
+                if (scExit == 0 && scOut.Contains("STOPPED"))
+                {
+                    Console.WriteLine("[RustDesk] Service stopped, restarting...");
+                    await RunProcessAsync("sc.exe", "start RustDesk", Environment.SystemDirectory, 10);
+                }
             }
         }
         
