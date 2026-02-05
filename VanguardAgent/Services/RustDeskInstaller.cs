@@ -302,10 +302,125 @@ public class RustDeskInstaller
 
     /// <summary>
     /// Download and install RustDesk silently
+    /// Priority: 1) Winget 2) Chocolatey 3) MSI 4) EXE
     /// </summary>
     public async Task<bool> InstallRustDeskAsync()
     {
         Console.WriteLine("[RustDesk] Starting installation...");
+
+        // Method 1: Try winget first (most reliable on modern Windows)
+        if (await TryInstallViaWingetAsync())
+        {
+            return true;
+        }
+
+        // Method 2: Try Chocolatey
+        if (await TryInstallViaChocolateyAsync())
+        {
+            return true;
+        }
+
+        // Method 3: Direct MSI/EXE download as fallback
+        return await TryInstallViaDirectDownloadAsync();
+    }
+
+    private async Task<bool> TryInstallViaWingetAsync()
+    {
+        try
+        {
+            Console.WriteLine("[RustDesk] Trying winget installation...");
+            
+            // Check if winget is available
+            var (checkExit, checkOut, _) = await RunProcessAsync(
+                "where.exe", "winget", Environment.SystemDirectory, 10);
+            
+            if (checkExit != 0)
+            {
+                Console.WriteLine("[RustDesk] winget not available on this system");
+                return false;
+            }
+
+            // Run winget install
+            var (exit, stdout, stderr) = await RunProcessAsync(
+                "winget", "install --id RustDesk.RustDesk --accept-package-agreements --accept-source-agreements --silent",
+                Environment.SystemDirectory, 600);
+
+            Console.WriteLine($"[RustDesk] winget exit: {exit}");
+            if (!string.IsNullOrEmpty(stdout)) Console.WriteLine($"[RustDesk] winget output: {stdout.Substring(0, Math.Min(500, stdout.Length))}");
+            if (!string.IsNullOrEmpty(stderr)) Console.WriteLine($"[RustDesk] winget errors: {stderr}");
+
+            if (exit == 0)
+            {
+                await Task.Delay(5000);
+                if (IsRustDeskInstalled())
+                {
+                    Console.WriteLine("[RustDesk] winget installation successful");
+                    await EnsureRustDeskServiceInstalledAsync();
+                    await ConfigureForVanguardAsync();
+                    return true;
+                }
+            }
+            
+            Console.WriteLine("[RustDesk] winget installation failed or RustDesk not detected after install");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RustDesk] winget error: {ex.Message}");
+        }
+        
+        return false;
+    }
+
+    private async Task<bool> TryInstallViaChocolateyAsync()
+    {
+        try
+        {
+            Console.WriteLine("[RustDesk] Trying Chocolatey installation...");
+            
+            // Check if choco is available
+            var (checkExit, _, _) = await RunProcessAsync(
+                "where.exe", "choco", Environment.SystemDirectory, 10);
+            
+            if (checkExit != 0)
+            {
+                Console.WriteLine("[RustDesk] Chocolatey not available on this system");
+                return false;
+            }
+
+            // Run choco install
+            var (exit, stdout, stderr) = await RunProcessAsync(
+                "choco", "install rustdesk -y --no-progress",
+                Environment.SystemDirectory, 600);
+
+            Console.WriteLine($"[RustDesk] choco exit: {exit}");
+            if (!string.IsNullOrEmpty(stdout)) Console.WriteLine($"[RustDesk] choco output: {stdout.Substring(0, Math.Min(500, stdout.Length))}");
+            if (!string.IsNullOrEmpty(stderr)) Console.WriteLine($"[RustDesk] choco errors: {stderr}");
+
+            if (exit == 0)
+            {
+                await Task.Delay(5000);
+                if (IsRustDeskInstalled())
+                {
+                    Console.WriteLine("[RustDesk] Chocolatey installation successful");
+                    await EnsureRustDeskServiceInstalledAsync();
+                    await ConfigureForVanguardAsync();
+                    return true;
+                }
+            }
+            
+            Console.WriteLine("[RustDesk] Chocolatey installation failed or RustDesk not detected after install");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RustDesk] Chocolatey error: {ex.Message}");
+        }
+        
+        return false;
+    }
+
+    private async Task<bool> TryInstallViaDirectDownloadAsync()
+    {
+        Console.WriteLine("[RustDesk] Trying direct download installation...");
 
         // When running as Windows Service, we already have SYSTEM privileges
         // Use ProgramData instead of user's LocalApplicationData for service context
@@ -359,25 +474,47 @@ public class RustDeskInstaller
                     Console.WriteLine($"[RustDesk] MSI install completed (exit {exitCode})");
                     await Task.Delay(5000);
 
-                    if (!IsRustDeskInstalled())
-                    {
-                        Console.WriteLine("[RustDesk] MSI install reported success but RustDesk not detected; will try EXE fallback");
-                    }
-                    else
+                    if (IsRustDeskInstalled())
                     {
                         await EnsureRustDeskServiceInstalledAsync();
                         await ConfigureForVanguardAsync();
                         return true;
                     }
+                    else
+                    {
+                        Console.WriteLine("[RustDesk] MSI install reported success but RustDesk not detected; checking log...");
+                        // Try to read the MSI log for diagnostics
+                        try
+                        {
+                            if (File.Exists(msiLogPath))
+                            {
+                                var logContent = await File.ReadAllTextAsync(msiLogPath);
+                                var lastLines = string.Join("\n", logContent.Split('\n').TakeLast(30));
+                                Console.WriteLine($"[RustDesk] MSI log (last 30 lines):\n{lastLines}");
+                            }
+                        }
+                        catch { }
+                    }
                 }
                 else
                 {
-                    Console.WriteLine($"[RustDesk] MSI install failed with exit code {exitCode}; will try EXE fallback");
+                    Console.WriteLine($"[RustDesk] MSI install failed with exit code {exitCode}");
+                    // Try to read the MSI log for diagnostics
+                    try
+                    {
+                        if (File.Exists(msiLogPath))
+                        {
+                            var logContent = await File.ReadAllTextAsync(msiLogPath);
+                            var lastLines = string.Join("\n", logContent.Split('\n').TakeLast(30));
+                            Console.WriteLine($"[RustDesk] MSI log (last 30 lines):\n{lastLines}");
+                        }
+                    }
+                    catch { }
                 }
             }
             else
             {
-                Console.WriteLine("[RustDesk] MSI download failed; will try EXE fallback");
+                Console.WriteLine("[RustDesk] MSI download failed");
             }
 
             // 2) Fallback to EXE installer
@@ -385,6 +522,7 @@ public class RustDeskInstaller
             var exeDownloaded = await DownloadFileAsync(RUSTDESK_EXE_DOWNLOAD_URL, exePath);
             if (!exeDownloaded)
             {
+                Console.WriteLine("[RustDesk] EXE download also failed - check network/firewall");
                 return false;
             }
 
@@ -410,10 +548,10 @@ public class RustDeskInstaller
             Console.WriteLine("[RustDesk] EXE install completed successfully");
             await Task.Delay(5000);
 
-            // Critical: verify it actually installed (some EXE flags can be no-ops under SYSTEM)
+            // Critical: verify it actually installed
             if (!IsRustDeskInstalled())
             {
-                Console.WriteLine("[RustDesk] EXE installer exited successfully but RustDesk was not detected; treating as failure so we can retry");
+                Console.WriteLine("[RustDesk] EXE installer exited successfully but RustDesk was not detected");
                 return false;
             }
 

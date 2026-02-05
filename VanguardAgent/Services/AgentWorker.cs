@@ -255,11 +255,27 @@ public class AgentWorker : BackgroundService
         try
         {
             var heartbeat = _telemetry.CollectHeartbeat();
-            var success = await _api.SendHeartbeatAsync(heartbeat);
+            
+            // Include RustDesk status in heartbeat for dashboard visibility
+            string? rustdeskId = null;
+            string? rustdeskStatus = "not_installed";
+            
+            if (_rustDeskInstaller.IsRustDeskInstalled())
+            {
+                rustdeskId = _rustDeskInstaller.GetRustDeskId();
+                rustdeskStatus = string.IsNullOrEmpty(rustdeskId) ? "installed_no_id" : "ready";
+            }
+            else if (Interlocked.CompareExchange(ref _rustDeskSetupRunning, 0, 0) == 1)
+            {
+                rustdeskStatus = "installing";
+            }
+            
+            var success = await _api.SendHeartbeatAsync(heartbeat, rustdeskId, rustdeskStatus);
 
             if (success)
             {
-                _logger.LogDebug("Heartbeat sent: CPU={Cpu}%, RAM={Ram}%", heartbeat.CpuPercent, heartbeat.MemoryPercent);
+                _logger.LogDebug("Heartbeat sent: CPU={Cpu}%, RAM={Ram}%, RustDesk={Status}", 
+                    heartbeat.CpuPercent, heartbeat.MemoryPercent, rustdeskStatus);
             }
             else
             {

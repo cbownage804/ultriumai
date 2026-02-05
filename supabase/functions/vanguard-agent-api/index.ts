@@ -419,6 +419,19 @@ async function handleHeartbeat(supabase: any, body: any, req?: Request) {
   const agentVersion = body.agent_version || metrics.agent_version;
   if (agentVersion) updateData.agent_version = agentVersion;
   
+  // Update RustDesk ID if provided in heartbeat (allows incremental updates)
+  const rustdeskId = body.rustdesk_id;
+  if (rustdeskId) {
+    updateData.rustdesk_id = rustdeskId;
+    console.log(`[vanguard-agent-api] Heartbeat includes RustDesk ID: ${rustdeskId}`);
+  }
+  
+  // Log RustDesk status for debugging
+  const rustdeskStatus = body.rustdesk_status;
+  if (rustdeskStatus) {
+    console.log(`[vanguard-agent-api] RustDesk status for ${device_id}: ${rustdeskStatus}`);
+  }
+  
   // Update firmware version (OS version) if provided
   const firmwareVersion = system.os_version || body.firmware_version;
   if (firmwareVersion) updateData.firmware_version = firmwareVersion;
