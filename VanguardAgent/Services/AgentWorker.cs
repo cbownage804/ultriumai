@@ -20,6 +20,7 @@ public class AgentWorker : BackgroundService
     private DateTime _lastTelemetry = DateTime.MinValue;
     private DateTime _lastSecurityTelemetry = DateTime.MinValue;
     private DateTime _lastCommandPoll = DateTime.MinValue;
+    private DateTime _lastRustDeskRetry = DateTime.MinValue;
     #pragma warning disable CS0414 // Field is assigned but never used - tracks registration state for future use
     private bool _isRegistered = false;
     #pragma warning restore CS0414
@@ -27,6 +28,9 @@ public class AgentWorker : BackgroundService
 
     // Security telemetry interval (5 minutes by default)
     private const int SecurityTelemetryIntervalSeconds = 300;
+    
+    // RustDesk retry interval (60 seconds as per Datto-style behavior)
+    private const int RustDeskRetryIntervalSeconds = 60;
 
     public AgentWorker(
         ILogger<AgentWorker> logger,
@@ -98,6 +102,23 @@ public class AgentWorker : BackgroundService
                 {
                     await SendSecurityTelemetryAsync();
                     _lastSecurityTelemetry = now;
+                }
+
+                // RustDesk auto-retry every 60 seconds until successful (Datto-style)
+                if (!_rustDeskSetupComplete && (now - _lastRustDeskRetry).TotalSeconds >= RustDeskRetryIntervalSeconds)
+                {
+                    _lastRustDeskRetry = now;
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await EnsureRustDeskAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "RustDesk retry failed, will retry in {Interval}s", RustDeskRetryIntervalSeconds);
+                        }
+                    }, stoppingToken);
                 }
 
                 // Sleep for a bit before next loop
