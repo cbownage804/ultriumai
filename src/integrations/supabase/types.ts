@@ -1328,6 +1328,7 @@ export type Database = {
       }
       atlas_passwords: {
         Row: {
+          agent_id: string | null
           category: string | null
           created_at: string
           id: string
@@ -1343,6 +1344,7 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          agent_id?: string | null
           category?: string | null
           created_at?: string
           id?: string
@@ -1358,6 +1360,7 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          agent_id?: string | null
           category?: string | null
           created_at?: string
           id?: string
@@ -1373,6 +1376,13 @@ export type Database = {
           username?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "atlas_passwords_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "atlas_passwords_organization_id_fkey"
             columns: ["organization_id"]

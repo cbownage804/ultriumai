@@ -1,23 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
-import { Plus, Eye, EyeOff, Copy, Trash2, Key, Lock, Shield } from "lucide-react";
+import { Plus, Eye, EyeOff, Copy, Trash2, Key, Lock, Shield, ExternalLink, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { VanguardAgent } from "@/hooks/useVanguardAgents";
-import { formatDistanceToNow } from "date-fns";
-
-interface Password {
-  id: string;
-  name: string;
-  username?: string;
-  password: string;
-  notes?: string;
-  created_at: string;
-}
+import { useDeviceAtlasPasswords, DevicePassword } from "@/hooks/useDeviceAtlasPasswords";
+import { useNavigate } from "react-router-dom";
 
 interface DevicePasswordsTabProps {
   agent: VanguardAgent;
@@ -26,10 +17,14 @@ interface DevicePasswordsTabProps {
 }
 
 export function DevicePasswordsTab({ agent, onAddPassword, onDeletePassword }: DevicePasswordsTabProps) {
+  const navigate = useNavigate();
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
   
-  // Extract passwords from agent config
-  const passwords: Password[] = agent.config?.passwords || [];
+  // Use Atlas passwords linked to this device
+  const { passwords, isLoading, deletePassword: atlasDeletePassword } = useDeviceAtlasPasswords(
+    agent.id,
+    agent.client_id
+  );
 
   const toggleVisibility = (id: string) => {
     const newVisible = new Set(visiblePasswords);
@@ -47,12 +42,22 @@ export function DevicePasswordsTab({ agent, onAddPassword, onDeletePassword }: D
   };
 
   const handleDelete = async (id: string) => {
-    if (onDeletePassword) {
-      await onDeletePassword(id);
-    } else {
-      toast.success("Password deleted");
-    }
+    await atlasDeletePassword(id);
   };
+
+  const goToAtlas = () => {
+    navigate('/atlas/passwords');
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-cyan-500/20 backdrop-blur-sm">
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border-cyan-500/20 backdrop-blur-sm">
@@ -63,17 +68,28 @@ export function DevicePasswordsTab({ agent, onAddPassword, onDeletePassword }: D
             Stored Passwords
           </CardTitle>
           <p className="text-xs text-slate-500 mt-1">
-            Securely stored credentials for this device
+            Credentials synced with Vanguard Atlas
           </p>
         </div>
-        <Button 
-          size="sm" 
-          onClick={onAddPassword} 
-          className="gap-1 bg-cyan-600 hover:bg-cyan-700 text-white"
-        >
-          <Plus className="h-4 w-4" />
-          New password
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={goToAtlas} 
+            className="gap-1 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Open in Atlas
+          </Button>
+          <Button 
+            size="sm" 
+            onClick={onAddPassword} 
+            className="gap-1 bg-cyan-600 hover:bg-cyan-700 text-white"
+          >
+            <Plus className="h-4 w-4" />
+            New password
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {passwords.length === 0 ? (
@@ -117,7 +133,7 @@ export function DevicePasswordsTab({ agent, onAddPassword, onDeletePassword }: D
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {passwords.map((pwd) => (
+                {passwords.map((pwd: DevicePassword) => (
                     <TableRow key={pwd.id} className="border-cyan-500/10 hover:bg-cyan-500/5">
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -133,7 +149,7 @@ export function DevicePasswordsTab({ agent, onAddPassword, onDeletePassword }: D
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-sm text-slate-300 min-w-[100px]">
-                            {visiblePasswords.has(pwd.id) ? pwd.password : "••••••••••"}
+                            {visiblePasswords.has(pwd.id) ? (pwd.password_encrypted || '') : "••••••••••"}
                           </span>
                           <Button
                             variant="ghost"
@@ -151,7 +167,7 @@ export function DevicePasswordsTab({ agent, onAddPassword, onDeletePassword }: D
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 hover:bg-cyan-500/20 hover:text-cyan-400"
-                            onClick={() => copyPassword(pwd.password)}
+                            onClick={() => copyPassword(pwd.password_encrypted || '')}
                           >
                             <Copy className="h-3 w-3" />
                           </Button>
