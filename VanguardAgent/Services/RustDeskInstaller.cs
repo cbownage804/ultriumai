@@ -457,23 +457,38 @@ public class RustDeskInstaller
             Console.WriteLine($"[RustDesk] Configuring for Vanguard relay: {primaryRelay.Server}" + 
                 (_failoverEnabled ? $" (failover to {_relayServers[1].Server})" : ""));
             
-            // Create config directory
-            var configDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "RustDesk", "config"
-            );
-            Directory.CreateDirectory(configDir);
-            
-            // Generate RustDesk.toml configuration
-            var configPath = Path.Combine(configDir, "RustDesk.toml");
             var config = GenerateConfig();
             
-            await File.WriteAllTextAsync(configPath, config);
-            Console.WriteLine($"[RustDesk] Configuration written to {configPath}");
+            // Write to multiple config locations to ensure RustDesk finds it
+            var configDirs = new[]
+            {
+                // ProgramData - most reliable for service-based installs
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RustDesk", "config"),
+                // User AppData - for per-user installs
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RustDesk", "config"),
+                // Program Files install location
+                @"C:\Program Files\RustDesk\config",
+            };
             
-            // Also write to RustDesk2.toml for newer versions
-            var config2Path = Path.Combine(configDir, "RustDesk2.toml");
-            await File.WriteAllTextAsync(config2Path, config);
+            foreach (var configDir in configDirs)
+            {
+                try
+                {
+                    Directory.CreateDirectory(configDir);
+                    
+                    var configPath = Path.Combine(configDir, "RustDesk.toml");
+                    await File.WriteAllTextAsync(configPath, config);
+                    Console.WriteLine($"[RustDesk] Configuration written to {configPath}");
+                    
+                    // Also write to RustDesk2.toml for newer versions
+                    var config2Path = Path.Combine(configDir, "RustDesk2.toml");
+                    await File.WriteAllTextAsync(config2Path, config);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[RustDesk] Skipped {configDir}: {ex.Message}");
+                }
+            }
             
             // Restart RustDesk service if running
             await RestartRustDeskServiceAsync();
@@ -590,34 +605,121 @@ direct-access-port = ''
     }
 
     /// <summary>
-    /// Get the current RustDesk ID
+    /// Get the current RustDesk ID - checks multiple locations since path varies based on install method
     /// </summary>
     public string? GetRustDeskId()
     {
+        // Method 1: Check Windows Registry (most reliable)
         try
         {
-            var configPaths = new[]
+            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\RustDesk");
+            if (key != null)
+            {
+                var id = key.GetValue("id")?.ToString();
+                if (!string.IsNullOrEmpty(id) && id.Length >= 9)
+                {
+                    Console.WriteLine($"[RustDesk] Found ID in registry: {id}");
+                    return id;
+                }
+            }
+        }
+        catch { }
+
+        // Method 2: Check ProgramData location (common for service installs)
+        try
+        {
+            var programDataPaths = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RustDesk", "config", "RustDesk.toml"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RustDesk", "config", "RustDesk2.toml"),
+                @"C:\ProgramData\RustDesk\config\RustDesk.toml",
+                @"C:\ProgramData\RustDesk\config\RustDesk2.toml",
+            };
+
+            foreach (var path in programDataPaths)
+            {
+                var id = ExtractIdFromConfig(path);
+                if (!string.IsNullOrEmpty(id)) return id;
+            }
+        }
+        catch { }
+
+        // Method 3: Check user AppData locations (per-user installs)
+        try
+        {
+            var userPaths = new[]
             {
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RustDesk", "config", "RustDesk.toml"),
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RustDesk", "config", "RustDesk2.toml"),
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RustDesk", "config", "RustDesk.toml"),
             };
 
-            foreach (var path in configPaths)
+            foreach (var path in userPaths)
             {
-                if (File.Exists(path))
-                {
-                    var content = File.ReadAllText(path);
-                    var match = System.Text.RegularExpressions.Regex.Match(content, @"id\s*=\s*""?(\d{9,})""?");
-                    if (match.Success)
-                    {
-                        return match.Groups[1].Value;
-                    }
-                }
+                var id = ExtractIdFromConfig(path);
+                if (!string.IsNullOrEmpty(id)) return id;
             }
         }
         catch { }
 
+        // Method 4: Check SYSTEM account's AppData (when running as service)
+        try
+        {
+            var systemPaths = new[]
+            {
+                @"C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk\config\RustDesk.toml",
+                @"C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk\config\RustDesk2.toml",
+            };
+
+            foreach (var path in systemPaths)
+            {
+                var id = ExtractIdFromConfig(path);
+                if (!string.IsNullOrEmpty(id)) return id;
+            }
+        }
+        catch { }
+
+        // Method 5: Check installation folder
+        try
+        {
+            var installPaths = new[]
+            {
+                @"C:\Program Files\RustDesk\config\RustDesk.toml",
+                @"C:\Program Files\RustDesk\config\RustDesk2.toml",
+            };
+
+            foreach (var path in installPaths)
+            {
+                var id = ExtractIdFromConfig(path);
+                if (!string.IsNullOrEmpty(id)) return id;
+            }
+        }
+        catch { }
+
+        Console.WriteLine("[RustDesk] ID not found in any location");
+        return null;
+    }
+    
+    /// <summary>
+    /// Extract RustDesk ID from a config file
+    /// </summary>
+    private string? ExtractIdFromConfig(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+            {
+                var content = File.ReadAllText(path);
+                // Match patterns: id = 123456789 or id = "123456789" or id = '123456789'
+                var match = System.Text.RegularExpressions.Regex.Match(content, @"^id\s*=\s*['""]?(\d{9,})['""]?", System.Text.RegularExpressions.RegexOptions.Multiline);
+                if (match.Success)
+                {
+                    Console.WriteLine($"[RustDesk] Found ID in {path}: {match.Groups[1].Value}");
+                    return match.Groups[1].Value;
+                }
+            }
+        }
+        catch { }
         return null;
     }
 
