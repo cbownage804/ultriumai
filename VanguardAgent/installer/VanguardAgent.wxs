@@ -96,13 +96,16 @@
     <Property Id="SECRETKEY" Secure="yes" />
     <Property Id="CLIENTID" Secure="yes" />
     <Property Id="DEVICENAME" Secure="yes" />
+    <Property Id="PORTALKEY" Secure="yes" />
+    <Property Id="PORTALNAME" Secure="yes" />
+    <Property Id="PORTALURL" Secure="yes" />
     <!-- Set ENABLETRAY=1 for workstations, omit or set to 0 for servers -->
-    <Property Id="ENABLETRAY" Value="0" Secure="yes" />
+    <Property Id="ENABLETRAY" Value="1" Secure="yes" />
 
     <!-- Custom action to update config.json with provided credentials -->
     <CustomAction Id="UpdateConfig"
                   Directory="INSTALLFOLDER"
-                  ExeCommand="[INSTALLFOLDER]VanguardAgent.exe --register --user-id [USERID] --secret-key [SECRETKEY]"
+                  ExeCommand="[INSTALLFOLDER]VanguardAgent.exe --register --user-id [USERID] --secret-key [SECRETKEY] --client-id [CLIENTID] --portal-key [PORTALKEY] --portal-name &quot;[PORTALNAME]&quot; --portal-url [PORTALURL] --show-portal 1"
                   Execute="deferred"
                   Impersonate="no"
                   Return="ignore" />

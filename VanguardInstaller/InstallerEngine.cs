@@ -199,6 +199,11 @@ namespace VanguardInstaller
                     msiArgs += $" CLIENTID=\"{creds.ClientId}\"";
                 }
                 
+                // Portal configuration - always enable for customer portal access
+                msiArgs += $" PORTALKEY=\"{creds.ClientId ?? ""}\"";
+                msiArgs += $" PORTALNAME=\"{_config.ClientName} Portal\"";
+                msiArgs += " PORTALURL=\"https://ultriumai.com/customer-portal\"";
+                
                 var installResult = await RunProcess("msiexec.exe", msiArgs);
                 
                 if (installResult != 0 && installResult != 3010) // 3010 = reboot required, still success
