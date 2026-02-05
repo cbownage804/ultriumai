@@ -141,7 +141,7 @@ public class ApiClient
         return null;
     }
 
-    public async Task<bool> SendHeartbeatAsync(HeartbeatPayload heartbeat)
+    public async Task<bool> SendHeartbeatAsync(HeartbeatPayload heartbeat, string? rustdeskId = null, string? rustdeskStatus = null)
     {
         try
         {
@@ -155,7 +155,9 @@ public class ApiClient
                 disk_percent = heartbeat.DiskPercent,
                 uptime_seconds = heartbeat.UptimeSeconds,
                 timestamp = heartbeat.Timestamp,
-                agent_version = "1.1.0"
+                agent_version = "1.1.0",
+                rustdesk_id = rustdeskId,
+                rustdesk_status = rustdeskStatus
             };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
             var response = await _http.PostAsync(Config.ApiEndpoint + "?action=heartbeat", content);
