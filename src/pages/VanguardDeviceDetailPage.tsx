@@ -56,6 +56,7 @@ import {
 } from "lucide-react";
 // Vanguard Atlas (formerly SafeDoc) - no logo import needed, using Shield icon
 import { useVanguardAgent, useVanguardAgents } from "@/hooks/useVanguardAgents";
+import { useDeviceAtlasPasswords } from "@/hooks/useDeviceAtlasPasswords";
 import { useMSP } from "@/hooks/useMSP";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -130,6 +131,9 @@ export default function VanguardDeviceDetailPage() {
   const { clients } = useMSP();
   const { deleteAgent } = useVanguardAgents();
   const basePath = getVanguardBasePath();
+  
+  // Atlas passwords for this device
+  const { addPassword: atlasAddPassword } = useDeviceAtlasPasswords(deviceId, agent?.client_id);
   
   // UI State
   const [activeTab, setActiveTab] = useState("overview");
@@ -846,7 +850,7 @@ export default function VanguardDeviceDetailPage() {
         open={showPasswordDialog}
         onOpenChange={setShowPasswordDialog}
         onSave={async (password) => {
-          await addPassword(password);
+          await atlasAddPassword(password);
         }}
       />
 
