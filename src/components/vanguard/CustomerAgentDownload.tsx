@@ -90,7 +90,7 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
         
         setDownloadProgress(100);
         toast.success(`1-Click installer downloaded for ${customerName}`, {
-          description: 'Just double-click the .cmd file to install!',
+          description: 'Just run the EXE as Administrator to install!',
         });
       } else {
         // Generate ZIP package (legacy method with embedded credentials)
@@ -284,7 +284,7 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
               <div className="flex items-start gap-2 text-sm">
                 <Package className="h-4 w-4 text-purple-400 mt-0.5 shrink-0" />
                 <div className="text-white/70">
-                  <span className="text-purple-400 font-medium">Just double-click the .cmd file!</span>{' '}
+                  <span className="text-purple-400 font-medium">Just run the EXE!</span>{' '}
                   It automatically requests admin access, downloads the agent package, configures credentials, and starts the service.
                   A system tray icon provides quick access to the customer portal.
                 </div>
