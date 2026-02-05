@@ -934,11 +934,94 @@ direct-access-port = ''
     }
 
     /// <summary>
-    /// Get the current RustDesk ID - checks multiple locations since path varies based on install method
+    /// Get the current RustDesk ID - exhaustive multi-strategy retrieval
     /// </summary>
     public string? GetRustDeskId()
     {
-        // Method 0: Ask RustDesk directly (best signal when installed)
+        // Strategy 1: Windows Registry (fastest, most reliable when service has run)
+        try
+        {
+            foreach (var regPath in new[] { @"SOFTWARE\RustDesk", @"SOFTWARE\WOW6432Node\RustDesk" })
+            {
+                using var key = Registry.LocalMachine.OpenSubKey(regPath);
+                var id = key?.GetValue("id")?.ToString();
+                if (!string.IsNullOrEmpty(id) && id.Length >= 9)
+                {
+                    Console.WriteLine($"[RustDesk] Found ID in registry ({regPath}): {id}");
+                    return id;
+                }
+            }
+        }
+        catch { }
+
+        // Strategy 2: Check ALL known config file locations (including service profiles)
+        var configPaths = new List<string>
+        {
+            // ProgramData (machine-wide, most common for MSI installs)
+            @"C:\ProgramData\RustDesk\config\RustDesk.toml",
+            @"C:\ProgramData\RustDesk\config\RustDesk2.toml",
+            
+            // Program Files install dir
+            @"C:\Program Files\RustDesk\RustDesk.toml",
+            @"C:\Program Files\RustDesk\RustDesk2.toml",
+            
+            // LocalService profile (RustDesk service often runs as LocalService)
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk.toml",
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk2.toml",
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Local\RustDesk\config\RustDesk.toml",
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Local\RustDesk\config\RustDesk2.toml",
+            
+            // NetworkService profile
+            @"C:\Windows\ServiceProfiles\NetworkService\AppData\Roaming\RustDesk\config\RustDesk.toml",
+            @"C:\Windows\ServiceProfiles\NetworkService\AppData\Roaming\RustDesk\config\RustDesk2.toml",
+            
+            // SYSTEM profile (our agent runs as SYSTEM)
+            @"C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk\config\RustDesk.toml",
+            @"C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk\config\RustDesk2.toml",
+            @"C:\Windows\System32\config\systemprofile\AppData\Local\RustDesk\config\RustDesk.toml",
+            @"C:\Windows\System32\config\systemprofile\AppData\Local\RustDesk\config\RustDesk2.toml",
+        };
+        
+        // Add environment-resolved paths (may overlap but deduplication is cheap)
+        try
+        {
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var commonAppData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+            
+            configPaths.Add(Path.Combine(appData, "RustDesk", "config", "RustDesk.toml"));
+            configPaths.Add(Path.Combine(appData, "RustDesk", "config", "RustDesk2.toml"));
+            configPaths.Add(Path.Combine(localAppData, "RustDesk", "config", "RustDesk.toml"));
+            configPaths.Add(Path.Combine(localAppData, "RustDesk", "config", "RustDesk2.toml"));
+            configPaths.Add(Path.Combine(commonAppData, "RustDesk", "config", "RustDesk.toml"));
+            configPaths.Add(Path.Combine(commonAppData, "RustDesk", "config", "RustDesk2.toml"));
+        }
+        catch { }
+
+        // Also enumerate user profiles to find per-user installs
+        try
+        {
+            var usersDir = @"C:\Users";
+            if (Directory.Exists(usersDir))
+            {
+                foreach (var userDir in Directory.GetDirectories(usersDir))
+                {
+                    configPaths.Add(Path.Combine(userDir, "AppData", "Roaming", "RustDesk", "config", "RustDesk.toml"));
+                    configPaths.Add(Path.Combine(userDir, "AppData", "Roaming", "RustDesk", "config", "RustDesk2.toml"));
+                    configPaths.Add(Path.Combine(userDir, "AppData", "Local", "RustDesk", "config", "RustDesk.toml"));
+                    configPaths.Add(Path.Combine(userDir, "AppData", "Local", "RustDesk", "config", "RustDesk2.toml"));
+                }
+            }
+        }
+        catch { }
+
+        foreach (var path in configPaths.Distinct())
+        {
+            var id = ExtractIdFromConfig(path);
+            if (!string.IsNullOrEmpty(id)) return id;
+        }
+
+        // Strategy 3: Ask RustDesk via --get-id (last resort - can hang in SYSTEM context)
         try
         {
             var exePath = FindRustDeskExePath();
@@ -957,14 +1040,18 @@ direct-access-port = ''
                         WorkingDirectory = dir,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
+                        // Prevent GUI initialization in headless context
+                        EnvironmentVariables = { ["DISPLAY"] = "" },
                     }
                 };
 
                 p.Start();
 
-                if (p.WaitForExit(10000))
+                // Use short timeout - --get-id can hang trying to init GUI in SYSTEM context
+                if (p.WaitForExit(5000))
                 {
                     var output = (p.StandardOutput.ReadToEnd() + "\n" + p.StandardError.ReadToEnd()).Trim();
+                    Console.WriteLine($"[RustDesk] --get-id raw output: '{output}'");
                     var match = System.Text.RegularExpressions.Regex.Match(output, @"(\d{9,})");
                     if (match.Success)
                     {
@@ -975,101 +1062,159 @@ direct-access-port = ''
                 }
                 else
                 {
-                    try { p.Kill(); } catch { }
+                    Console.WriteLine("[RustDesk] --get-id timed out (SYSTEM context GUI hang), killing process");
+                    try { p.Kill(true); } catch { }
                 }
             }
         }
-        catch { }
-
-        // Method 1: Check Windows Registry (most reliable)
-        try
+        catch (Exception ex)
         {
-            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\RustDesk");
-            if (key != null)
-            {
-                var id = key.GetValue("id")?.ToString();
-                if (!string.IsNullOrEmpty(id) && id.Length >= 9)
-                {
-                    Console.WriteLine($"[RustDesk] Found ID in registry: {id}");
-                    return id;
-                }
-            }
+            Console.WriteLine($"[RustDesk] --get-id failed: {ex.Message}");
         }
-        catch { }
 
-        // Method 2: Check ProgramData location (common for service installs)
-        try
-        {
-            var programDataPaths = new[]
-            {
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RustDesk", "config", "RustDesk.toml"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RustDesk", "config", "RustDesk2.toml"),
-                @"C:\ProgramData\RustDesk\config\RustDesk.toml",
-                @"C:\ProgramData\RustDesk\config\RustDesk2.toml",
-            };
-
-            foreach (var path in programDataPaths)
-            {
-                var id = ExtractIdFromConfig(path);
-                if (!string.IsNullOrEmpty(id)) return id;
-            }
-        }
-        catch { }
-
-        // Method 3: Check user AppData locations (per-user installs)
-        try
-        {
-            var userPaths = new[]
-            {
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RustDesk", "config", "RustDesk.toml"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RustDesk", "config", "RustDesk2.toml"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RustDesk", "config", "RustDesk.toml"),
-            };
-
-            foreach (var path in userPaths)
-            {
-                var id = ExtractIdFromConfig(path);
-                if (!string.IsNullOrEmpty(id)) return id;
-            }
-        }
-        catch { }
-
-        // Method 4: Check SYSTEM account's AppData (when running as service)
-        try
-        {
-            var systemPaths = new[]
-            {
-                @"C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk\config\RustDesk.toml",
-                @"C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk\config\RustDesk2.toml",
-            };
-
-            foreach (var path in systemPaths)
-            {
-                var id = ExtractIdFromConfig(path);
-                if (!string.IsNullOrEmpty(id)) return id;
-            }
-        }
-        catch { }
-
-        // Method 5: Check installation folder
-        try
-        {
-            var installPaths = new[]
-            {
-                @"C:\Program Files\RustDesk\config\RustDesk.toml",
-                @"C:\Program Files\RustDesk\config\RustDesk2.toml",
-            };
-
-            foreach (var path in installPaths)
-            {
-                var id = ExtractIdFromConfig(path);
-                if (!string.IsNullOrEmpty(id)) return id;
-            }
-        }
-        catch { }
-
-        Console.WriteLine("[RustDesk] ID not found in any location");
+        Console.WriteLine("[RustDesk] ID not found in any location (registry, config files, --get-id)");
         return null;
+    }
+    
+    /// <summary>
+    /// Collect comprehensive RustDesk diagnostics for remote troubleshooting
+    /// </summary>
+    public string CollectDiagnostics()
+    {
+        var diag = new System.Text.StringBuilder();
+        diag.AppendLine("=== RustDesk Diagnostics ===");
+        diag.AppendLine($"Timestamp: {DateTime.UtcNow:O}");
+        diag.AppendLine();
+        
+        // 1. Binary detection
+        var exePath = FindRustDeskExePath();
+        diag.AppendLine($"Binary found: {(exePath != null ? exePath : "NOT FOUND")}");
+        if (exePath != null)
+        {
+            try { diag.AppendLine($"Binary size: {new FileInfo(exePath).Length} bytes"); } catch { }
+            try
+            {
+                var fvi = FileVersionInfo.GetVersionInfo(exePath);
+                diag.AppendLine($"Binary version: {fvi.FileVersion}");
+            }
+            catch { }
+        }
+        diag.AppendLine();
+        
+        // 2. Service status
+        try
+        {
+            using var p = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "sc.exe", Arguments = "query RustDesk",
+                    UseShellExecute = false, CreateNoWindow = true,
+                    RedirectStandardOutput = true, RedirectStandardError = true,
+                    WorkingDirectory = Environment.SystemDirectory
+                }
+            };
+            p.Start();
+            var scOut = p.StandardOutput.ReadToEnd();
+            p.WaitForExit(5000);
+            diag.AppendLine($"Service status:\n{scOut.Trim()}");
+        }
+        catch (Exception ex) { diag.AppendLine($"Service query failed: {ex.Message}"); }
+        diag.AppendLine();
+        
+        // 3. Registry
+        diag.AppendLine("Registry entries:");
+        foreach (var regPath in new[] { @"SOFTWARE\RustDesk", @"SOFTWARE\WOW6432Node\RustDesk" })
+        {
+            try
+            {
+                using var key = Registry.LocalMachine.OpenSubKey(regPath);
+                if (key != null)
+                {
+                    foreach (var name in key.GetValueNames())
+                    {
+                        diag.AppendLine($"  HKLM\\{regPath}\\{name} = {key.GetValue(name)}");
+                    }
+                }
+                else
+                {
+                    diag.AppendLine($"  HKLM\\{regPath}: not found");
+                }
+            }
+            catch { }
+        }
+        diag.AppendLine();
+        
+        // 4. Config files
+        diag.AppendLine("Config file scan:");
+        var searchDirs = new[]
+        {
+            @"C:\ProgramData\RustDesk",
+            @"C:\Program Files\RustDesk",
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk",
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Local\RustDesk",
+            @"C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk",
+            @"C:\Windows\System32\config\systemprofile\AppData\Local\RustDesk",
+        };
+        
+        // Also add user profile dirs
+        try
+        {
+            foreach (var userDir in Directory.GetDirectories(@"C:\Users"))
+            {
+                var rdDir = Path.Combine(userDir, "AppData", "Roaming", "RustDesk");
+                if (Directory.Exists(rdDir))
+                {
+                    searchDirs = searchDirs.Append(rdDir).ToArray();
+                }
+            }
+        }
+        catch { }
+        
+        foreach (var dir in searchDirs)
+        {
+            if (Directory.Exists(dir))
+            {
+                diag.AppendLine($"  [{dir}]");
+                try
+                {
+                    foreach (var file in Directory.GetFiles(dir, "*", SearchOption.AllDirectories))
+                    {
+                        var fi = new FileInfo(file);
+                        diag.AppendLine($"    {fi.Name} ({fi.Length}b, modified {fi.LastWriteTimeUtc:u})");
+                        
+                        // Show content of TOML files (they're small)
+                        if (fi.Extension.Equals(".toml", StringComparison.OrdinalIgnoreCase) && fi.Length < 10240)
+                        {
+                            try
+                            {
+                                var content = File.ReadAllText(file);
+                                foreach (var line in content.Split('\n').Take(20))
+                                {
+                                    diag.AppendLine($"      | {line.TrimEnd()}");
+                                }
+                                if (content.Split('\n').Length > 20)
+                                    diag.AppendLine($"      | ... ({content.Split('\n').Length} lines total)");
+                            }
+                            catch { }
+                        }
+                    }
+                }
+                catch (Exception ex) { diag.AppendLine($"    (access error: {ex.Message})"); }
+            }
+        }
+        diag.AppendLine();
+        
+        // 5. Current ID retrieval attempt
+        var currentId = GetRustDeskId();
+        diag.AppendLine($"Current ID: {currentId ?? "NULL"}");
+        
+        // 6. Relay config
+        var relayStatus = GetRelayStatus();
+        diag.AppendLine($"Relay servers: {relayStatus.ServerCount}, Failover: {relayStatus.FailoverEnabled}, Primary: {relayStatus.PrimaryServer}");
+        diag.AppendLine($"Unattended password cached: {(_unattendedPassword != null ? "YES" : "NO")}");
+        
+        return diag.ToString();
     }
     
     /// <summary>
