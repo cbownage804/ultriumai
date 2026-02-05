@@ -19,13 +19,16 @@ public class RustDeskInstaller
     // Vanguard-hosted relay server configuration (supports dual-relay)
     private List<RelayServerConfig> _relayServers = new();
     private bool _failoverEnabled = false;
-    
+
     // Unattended access password (received from server on first config fetch)
     private string? _unattendedPassword = null;
-    
+
     private const string RUSTDESK_VERSION = "1.2.6";
-    private const string RUSTDESK_DOWNLOAD_URL = $"https://github.com/rustdesk/rustdesk/releases/download/{RUSTDESK_VERSION}/rustdesk-{RUSTDESK_VERSION}-x86_64.exe";
-    
+
+    // Prefer MSI for reliable machine-wide installs; EXE as fallback
+    private const string RUSTDESK_MSI_DOWNLOAD_URL = $"https://github.com/rustdesk/rustdesk/releases/download/{RUSTDESK_VERSION}/rustdesk-{RUSTDESK_VERSION}-x86_64.msi";
+    private const string RUSTDESK_EXE_DOWNLOAD_URL = $"https://github.com/rustdesk/rustdesk/releases/download/{RUSTDESK_VERSION}/rustdesk-{RUSTDESK_VERSION}-x86_64.exe";
+
     // Local password cache file path
     private string PasswordCachePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
@@ -86,42 +89,68 @@ public class RustDeskInstaller
     }
 
     /// <summary>
-    /// Check if RustDesk is installed and properly configured
+    /// Get the installed RustDesk executable path (checks multiple locations)
     /// </summary>
-    public bool IsRustDeskInstalled()
+    private string? FindRustDeskExePath()
     {
-        // Check common installation paths
         var installPaths = new[]
         {
+            // Machine-wide installs
             @"C:\Program Files\RustDesk\rustdesk.exe",
             @"C:\Program Files (x86)\RustDesk\rustdesk.exe",
+
+            // Per-user installs
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RustDesk", "rustdesk.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "RustDesk", "rustdesk.exe"),
+
+            // ProgramData (sometimes used by services)
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RustDesk", "rustdesk.exe"),
+            @"C:\ProgramData\RustDesk\rustdesk.exe",
+
+            // Service/System profiles (when installed/ran under SYSTEM or LocalService)
+            @"C:\Windows\System32\config\systemprofile\AppData\Local\RustDesk\rustdesk.exe",
+            @"C:\Windows\System32\config\systemprofile\AppData\Local\Programs\RustDesk\rustdesk.exe",
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Local\Programs\RustDesk\rustdesk.exe",
         };
 
         foreach (var path in installPaths)
         {
             if (File.Exists(path))
             {
-                Console.WriteLine($"[RustDesk] Found installation at: {path}");
-                return true;
+                return path;
             }
         }
 
-        // Check registry for installation
+        // Best-effort registry hint (MSI installs can be GUID-based; this is a fallback only)
         try
         {
             using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\RustDesk");
-            if (key != null)
+            var installLocation = key?.GetValue("InstallLocation")?.ToString();
+            if (!string.IsNullOrEmpty(installLocation))
             {
-                var installLocation = key.GetValue("InstallLocation")?.ToString();
-                if (!string.IsNullOrEmpty(installLocation))
+                var candidate = Path.Combine(installLocation, "rustdesk.exe");
+                if (File.Exists(candidate))
                 {
-                    Console.WriteLine($"[RustDesk] Found via registry at: {installLocation}");
-                    return true;
+                    return candidate;
                 }
             }
         }
         catch { }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Check if RustDesk is installed and properly configured
+    /// </summary>
+    public bool IsRustDeskInstalled()
+    {
+        var exePath = FindRustDeskExePath();
+        if (!string.IsNullOrEmpty(exePath))
+        {
+            Console.WriteLine($"[RustDesk] Found installation at: {exePath}");
+            return true;
+        }
 
         return false;
     }
@@ -277,17 +306,17 @@ public class RustDeskInstaller
     public async Task<bool> InstallRustDeskAsync()
     {
         Console.WriteLine("[RustDesk] Starting installation...");
-        
+
         // When running as Windows Service, we already have SYSTEM privileges
         // Use ProgramData instead of user's LocalApplicationData for service context
         var uniqueId = Guid.NewGuid().ToString("N");
         var localTempPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), 
-            "VanguardAgent", 
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            "VanguardAgent",
             "Downloads",
             uniqueId
         );
-        
+
         try
         {
             Directory.CreateDirectory(localTempPath);
@@ -298,94 +327,91 @@ public class RustDeskInstaller
             Console.WriteLine($"[RustDesk] Failed to create download directory: {ex.Message}");
             return false;
         }
-        
-        var installerPath = Path.Combine(localTempPath, $"rustdesk-{RUSTDESK_VERSION}.exe");
-        
+
+        var msiPath = Path.Combine(localTempPath, $"rustdesk-{RUSTDESK_VERSION}-x86_64.msi");
+        var exePath = Path.Combine(localTempPath, $"rustdesk-{RUSTDESK_VERSION}-x86_64.exe");
+
         try
         {
-            // Download installer to ProgramData (accessible by SYSTEM account)
-            Console.WriteLine($"[RustDesk] Downloading from {RUSTDESK_DOWNLOAD_URL}...");
-            
-            using var response = await _httpClient.GetAsync(RUSTDESK_DOWNLOAD_URL, HttpCompletionOption.ResponseHeadersRead);
-            
-            if (!response.IsSuccessStatusCode)
+            // 1) Prefer MSI for reliable machine-wide installs
+            Console.WriteLine($"[RustDesk] Attempting MSI install from {RUSTDESK_MSI_DOWNLOAD_URL}...");
+            var msiDownloaded = await DownloadFileAsync(RUSTDESK_MSI_DOWNLOAD_URL, msiPath);
+
+            if (msiDownloaded)
             {
-                Console.WriteLine($"[RustDesk] Download failed: HTTP {(int)response.StatusCode}");
-                return false;
-            }
-            
-            // Download to unique local path
-            await using (var contentStream = await response.Content.ReadAsStreamAsync())
-            await using (var fileStream = new FileStream(installerPath, FileMode.Create, FileAccess.Write, FileShare.None))
-            {
-                await contentStream.CopyToAsync(fileStream);
-            }
-            
-            Console.WriteLine($"[RustDesk] Downloaded to {installerPath}");
-            
-            // Wait for file system to fully release the file handle
-            await Task.Delay(2000);
-            
-            // Verify file exists and get size
-            var fileInfo = new FileInfo(installerPath);
-            if (!fileInfo.Exists || fileInfo.Length == 0)
-            {
-                Console.WriteLine("[RustDesk] Downloaded file not found or empty");
-                return false;
-            }
-            Console.WriteLine($"[RustDesk] File size: {fileInfo.Length} bytes");
-            
-            // Wait for Windows Defender to finish scanning (common cause of file locks)
-            await WaitForFileUnlockAsync(installerPath, maxWaitSeconds: 30);
-            
-            // Run silent install - when running as SYSTEM service, we already have admin rights
-            // Use CreateNoWindow and don't use ShellExecute (services can't interact with desktop)
-            Console.WriteLine("[RustDesk] Running silent installation...");
-            
-            var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
+                await WaitForFileUnlockAsync(msiPath, maxWaitSeconds: 30);
+
+                Console.WriteLine("[RustDesk] Running msiexec silent install...");
+                var (exitCode, stdout, stderr) = await RunProcessAsync(
+                    fileName: "msiexec.exe",
+                    arguments: $"/i \"{msiPath}\" /qn /norestart",
+                    workingDirectory: localTempPath,
+                    timeoutSeconds: 900
+                );
+
+                if (!string.IsNullOrEmpty(stdout)) Console.WriteLine($"[RustDesk] MSI output: {stdout}");
+                if (!string.IsNullOrEmpty(stderr)) Console.WriteLine($"[RustDesk] MSI errors: {stderr}");
+
+                // 0 = success, 3010 = success but reboot required
+                if (exitCode == 0 || exitCode == 3010)
                 {
-                    FileName = installerPath,
-                    Arguments = "--silent-install",
-                    UseShellExecute = false, // Must be false for services (no desktop interaction)
-                    CreateNoWindow = true,
-                    WorkingDirectory = localTempPath,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
+                    Console.WriteLine($"[RustDesk] MSI install completed (exit {exitCode})");
+                    await Task.Delay(5000);
+
+                    if (!IsRustDeskInstalled())
+                    {
+                        Console.WriteLine("[RustDesk] MSI install reported success but RustDesk not detected; will try EXE fallback");
+                    }
+                    else
+                    {
+                        await EnsureRustDeskServiceInstalledAsync();
+                        await ConfigureForVanguardAsync();
+                        return true;
+                    }
                 }
-            };
-            
-            process.Start();
-            
-            // Capture output for debugging
-            var stdout = await process.StandardOutput.ReadToEndAsync();
-            var stderr = await process.StandardError.ReadToEndAsync();
-            
-            await process.WaitForExitAsync();
-            
-            if (!string.IsNullOrEmpty(stdout))
-                Console.WriteLine($"[RustDesk] Installer output: {stdout}");
-            if (!string.IsNullOrEmpty(stderr))
-                Console.WriteLine($"[RustDesk] Installer errors: {stderr}");
-            
-            if (process.ExitCode == 0)
-            {
-                Console.WriteLine("[RustDesk] Installation completed successfully");
-                
-                // Wait for installation to fully complete
-                await Task.Delay(5000);
-                
-                // Configure for Vanguard relay
-                await ConfigureForVanguardAsync();
-                
-                return true;
+                else
+                {
+                    Console.WriteLine($"[RustDesk] MSI install failed with exit code {exitCode}; will try EXE fallback");
+                }
             }
             else
             {
-                Console.WriteLine($"[RustDesk] Installation failed with exit code {process.ExitCode}");
+                Console.WriteLine("[RustDesk] MSI download failed; will try EXE fallback");
+            }
+
+            // 2) Fallback to EXE installer
+            Console.WriteLine($"[RustDesk] Downloading EXE from {RUSTDESK_EXE_DOWNLOAD_URL}...");
+            var exeDownloaded = await DownloadFileAsync(RUSTDESK_EXE_DOWNLOAD_URL, exePath);
+            if (!exeDownloaded)
+            {
                 return false;
             }
+
+            await WaitForFileUnlockAsync(exePath, maxWaitSeconds: 30);
+
+            Console.WriteLine("[RustDesk] Running EXE silent install...");
+            var (exeExit, exeStdout, exeStderr) = await RunProcessAsync(
+                fileName: exePath,
+                arguments: "--silent-install",
+                workingDirectory: localTempPath,
+                timeoutSeconds: 900
+            );
+
+            if (!string.IsNullOrEmpty(exeStdout)) Console.WriteLine($"[RustDesk] EXE output: {exeStdout}");
+            if (!string.IsNullOrEmpty(exeStderr)) Console.WriteLine($"[RustDesk] EXE errors: {exeStderr}");
+
+            if (exeExit != 0)
+            {
+                Console.WriteLine($"[RustDesk] EXE install failed with exit code {exeExit}");
+                return false;
+            }
+
+            Console.WriteLine("[RustDesk] EXE install completed successfully");
+            await Task.Delay(5000);
+
+            await EnsureRustDeskServiceInstalledAsync();
+            await ConfigureForVanguardAsync();
+            return true;
         }
         catch (Exception ex)
         {
@@ -399,17 +425,129 @@ public class RustDeskInstaller
             _ = Task.Run(async () =>
             {
                 await Task.Delay(30000); // Wait 30s before cleanup
-                try 
-                { 
-                    if (Directory.Exists(localTempPath)) 
+                try
+                {
+                    if (Directory.Exists(localTempPath))
                         Directory.Delete(localTempPath, true);
                     Console.WriteLine("[RustDesk] Cleaned up temp files");
-                } 
+                }
                 catch { /* Ignore cleanup failures */ }
             });
         }
     }
-    
+
+    private async Task<bool> DownloadFileAsync(string url, string destinationPath)
+    {
+        try
+        {
+            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"[RustDesk] Download failed: {url} HTTP {(int)response.StatusCode}");
+                return false;
+            }
+
+            await using var contentStream = await response.Content.ReadAsStreamAsync();
+            await using var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            await contentStream.CopyToAsync(fileStream);
+
+            var fileInfo = new FileInfo(destinationPath);
+            if (!fileInfo.Exists || fileInfo.Length == 0)
+            {
+                Console.WriteLine($"[RustDesk] Downloaded file missing/empty: {destinationPath}");
+                return false;
+            }
+
+            Console.WriteLine($"[RustDesk] Downloaded to {destinationPath} ({fileInfo.Length} bytes)");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RustDesk] Download error for {url}: {ex.Message}");
+            return false;
+        }
+    }
+
+    private async Task<(int ExitCode, string StdOut, string StdErr)> RunProcessAsync(
+        string fileName,
+        string arguments,
+        string workingDirectory,
+        int timeoutSeconds)
+    {
+        using var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = fileName,
+                Arguments = arguments,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = workingDirectory,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            }
+        };
+
+        process.Start();
+
+        var stdoutTask = process.StandardOutput.ReadToEndAsync();
+        var stderrTask = process.StandardError.ReadToEndAsync();
+
+        var waitTask = process.WaitForExitAsync();
+        var completed = await Task.WhenAny(waitTask, Task.Delay(TimeSpan.FromSeconds(timeoutSeconds)));
+
+        if (completed != waitTask)
+        {
+            try { process.Kill(); } catch { }
+            Console.WriteLine($"[RustDesk] Process timed out: {fileName} {arguments}");
+        }
+        else
+        {
+            await waitTask;
+        }
+
+        var stdout = await stdoutTask;
+        var stderr = await stderrTask;
+
+        return (process.HasExited ? process.ExitCode : -1, stdout, stderr);
+    }
+
+    private async Task EnsureRustDeskServiceInstalledAsync()
+    {
+        try
+        {
+            var installedExe = FindRustDeskExePath();
+            if (string.IsNullOrEmpty(installedExe))
+            {
+                Console.WriteLine("[RustDesk] Cannot install service: rustdesk.exe not found");
+                return;
+            }
+
+            var dir = Path.GetDirectoryName(installedExe) ?? Environment.CurrentDirectory;
+
+            // Install/repair the RustDesk Windows service so it can run headlessly
+            Console.WriteLine("[RustDesk] Ensuring RustDesk service is installed...");
+            var (exit, stdout, stderr) = await RunProcessAsync(
+                fileName: installedExe,
+                arguments: "--install-service -wait",
+                workingDirectory: dir,
+                timeoutSeconds: 120
+            );
+
+            if (!string.IsNullOrEmpty(stdout)) Console.WriteLine($"[RustDesk] --install-service output: {stdout}");
+            if (!string.IsNullOrEmpty(stderr)) Console.WriteLine($"[RustDesk] --install-service errors: {stderr}");
+
+            Console.WriteLine($"[RustDesk] --install-service exit code: {exit}");
+
+            // Start/restart service to ensure ID generation begins
+            await RestartRustDeskServiceAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RustDesk] Service install skipped: {ex.Message}");
+        }
+    }
     /// <summary>
     /// Wait for a file to become unlocked (not in use by another process)
     /// </summary>
@@ -609,6 +747,49 @@ direct-access-port = ''
     /// </summary>
     public string? GetRustDeskId()
     {
+        // Method 0: Ask RustDesk directly (best signal when installed)
+        try
+        {
+            var exePath = FindRustDeskExePath();
+            if (!string.IsNullOrEmpty(exePath))
+            {
+                var dir = Path.GetDirectoryName(exePath) ?? Environment.CurrentDirectory;
+
+                using var p = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = exePath,
+                        Arguments = "--get-id",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        WorkingDirectory = dir,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                    }
+                };
+
+                p.Start();
+
+                if (p.WaitForExit(10000))
+                {
+                    var output = (p.StandardOutput.ReadToEnd() + "\n" + p.StandardError.ReadToEnd()).Trim();
+                    var match = System.Text.RegularExpressions.Regex.Match(output, @"(\d{9,})");
+                    if (match.Success)
+                    {
+                        var id = match.Groups[1].Value;
+                        Console.WriteLine($"[RustDesk] Found ID via --get-id: {id}");
+                        return id;
+                    }
+                }
+                else
+                {
+                    try { p.Kill(); } catch { }
+                }
+            }
+        }
+        catch { }
+
         // Method 1: Check Windows Registry (most reliable)
         try
         {
