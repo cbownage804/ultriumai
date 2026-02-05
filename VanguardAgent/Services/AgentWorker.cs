@@ -2,6 +2,7 @@
 // Vanguard Agent Worker Service
 // =============================================================================
 
+using System.Threading;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -25,6 +26,7 @@ public class AgentWorker : BackgroundService
     private bool _isRegistered = false;
     #pragma warning restore CS0414
     private bool _rustDeskSetupComplete = false;
+    private int _rustDeskSetupRunning = 0;
 
     // Security telemetry interval (5 minutes by default)
     private const int SecurityTelemetryIntervalSeconds = 300;
@@ -173,6 +175,13 @@ public class AgentWorker : BackgroundService
     {
         if (_rustDeskSetupComplete) return;
 
+        // Prevent overlapping installs/config attempts (msiexec will fail if we spam it)
+        if (Interlocked.Exchange(ref _rustDeskSetupRunning, 1) == 1)
+        {
+            _logger.LogDebug("RustDesk setup already running, skipping this tick");
+            return;
+        }
+
         try
         {
             _logger.LogInformation("Checking RustDesk installation...");
@@ -227,13 +236,17 @@ public class AgentWorker : BackgroundService
             else
             {
                 _logger.LogWarning("RustDesk setup failed or relay not configured");
-                // Don't mark complete - allow retry on next startup
+                // Don't mark complete - allow retry
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error setting up RustDesk");
-            // Don't mark complete - allow retry on next startup
+            // Don't mark complete - allow retry
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _rustDeskSetupRunning, 0);
         }
     }
 
