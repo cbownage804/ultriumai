@@ -59,6 +59,7 @@ import { useVanguardAgent, useVanguardAgents } from "@/hooks/useVanguardAgents";
 import { useDeviceAtlasPasswords } from "@/hooks/useDeviceAtlasPasswords";
 import { useMSP } from "@/hooks/useMSP";
 import { cn } from "@/lib/utils";
+import { calculateDeviceSecurityScore } from "@/utils/calculateDeviceSecurityScore";
 import { toast } from "sonner";
 
 // Tab Components
@@ -389,6 +390,7 @@ export default function VanguardDeviceDetailPage() {
 
     switch (widgetId) {
       case 'alert-status':
+        const securityResult = calculateDeviceSecurityScore(agent);
         return (
           <div key={widgetId} {...commonProps}>
             <DeviceAlertStatusWidget
@@ -396,6 +398,9 @@ export default function VanguardDeviceDetailPage() {
               criticalCount={0}
               isPaused={alertsPaused}
               onPauseToggle={setAlertsPaused}
+              status={agent.status}
+              lastHeartbeat={agent.last_heartbeat}
+              securityScore={securityResult.score}
             />
           </div>
         );
