@@ -320,7 +320,8 @@ $t="${provisioningToken}";$c=irm "${provisionUrl}?action=redeem" -Method POST -B
 }
 
 /**
- * Full flow: Create token + generate EXE installer package
+ * Full flow: Create token + generate CMD installer
+ * Returns a .cmd file that self-elevates and runs the PowerShell installer
  */
 export async function generateOneClickInstaller(options: MsiInstallerOptions): Promise<{
   blob: Blob;
@@ -337,27 +338,7 @@ export async function generateOneClickInstaller(options: MsiInstallerOptions): P
 
   const safeName = (options.clientName || 'VanguardAgent').replace(/[^a-zA-Z0-9]/g, '-');
   
-  // Try to generate EXE package first (professional)
-  try {
-    const exeBlob = await generateExeInstallerPackage(
-      tokenResponse.token,
-      options.clientName,
-      options.enableTray
-    );
-    
-    if (exeBlob) {
-      return {
-        blob: exeBlob,
-        filename: `Install-${safeName}.zip`,
-        token: tokenResponse.token,
-        expiresAt: tokenResponse.expires_at,
-      };
-    }
-  } catch (err) {
-    console.warn('[generateOneClickInstaller] EXE package failed, falling back to CMD:', err);
-  }
-  
-  // Fallback to CMD installer if EXE download fails
+  // Generate CMD installer (simple, reliable, works everywhere)
   const blob = generateMsiInstallerBlob(tokenResponse.token, options.clientName, options.enableTray);
 
   return {
@@ -366,68 +347,4 @@ export async function generateOneClickInstaller(options: MsiInstallerOptions): P
     token: tokenResponse.token,
     expiresAt: tokenResponse.expires_at,
   };
-}
-
-/**
- * Generate a professional EXE installer package
- * Downloads the stub EXE and bundles it with a config file in a ZIP
- */
-export async function generateExeInstallerPackage(
-  provisioningToken: string,
-  clientName?: string,
-  enableTray?: boolean
-): Promise<Blob | null> {
-  try {
-    // Download the installer EXE stub
-    const response = await fetch(INSTALLER_EXE_URL);
-    if (!response.ok) {
-      throw new Error(`Failed to download installer: ${response.status}`);
-    }
-    
-    const exeBytes = await response.arrayBuffer();
-    
-    // Create the config file
-    const config = {
-      token: provisioningToken,
-      client_name: clientName || 'Vanguard Device',
-      enable_tray: enableTray ?? true,
-      msi_url: MSI_DOWNLOAD_URL,
-      provision_url: PROVISION_ENDPOINT,
-    };
-    
-    const configJson = JSON.stringify(config, null, 2);
-    
-    // Bundle into a ZIP
-    const zip = new JSZip();
-    const safeName = (clientName || 'VanguardAgent').replace(/[^a-zA-Z0-9 ]/g, '');
-    zip.file(`Install ${safeName}.exe`, exeBytes);
-    zip.file('installer_config.json', configJson);
-    
-    // Add a README
-    const readme = `Ultrium Vanguard Agent Installer
-================================
-
-Pre-configured for: ${clientName || 'Vanguard Device'}
-
-INSTALLATION:
-1. Extract both files to the same folder
-2. Right-click "Install ${safeName}.exe" and select "Run as administrator"
-3. Follow the on-screen instructions
-
-The installer will:
-- Download the latest agent
-- Configure it for your organization
-- Install and start the Windows service
-- Launch the system tray application (if enabled)
-
-SUPPORT:
-Dashboard: https://ultriumai.com/vanguard
-`;
-    zip.file('README.txt', readme);
-    
-    return await zip.generateAsync({ type: 'blob' });
-  } catch (err) {
-    console.error('[generateExeInstallerPackage] Error:', err);
-    return null;
-  }
 }
