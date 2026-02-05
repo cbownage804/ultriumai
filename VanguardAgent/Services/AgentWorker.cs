@@ -264,6 +264,17 @@ public class AgentWorker : BackgroundService
             {
                 rustdeskId = _rustDeskInstaller.GetRustDeskId();
                 rustdeskStatus = string.IsNullOrEmpty(rustdeskId) ? "installed_no_id" : "ready";
+                
+                // If we got an ID and haven't reported it yet, do so now
+                if (!string.IsNullOrEmpty(rustdeskId) && !_rustDeskSetupComplete)
+                {
+                    var reported = await _api.UpdateDeviceRustDeskIdAsync(rustdeskId);
+                    if (reported)
+                    {
+                        _logger.LogInformation("RustDesk ID auto-discovered and reported: {Id}", rustdeskId);
+                        _rustDeskSetupComplete = true;
+                    }
+                }
             }
             else if (Interlocked.CompareExchange(ref _rustDeskSetupRunning, 0, 0) == 1)
             {
@@ -274,8 +285,8 @@ public class AgentWorker : BackgroundService
 
             if (success)
             {
-                _logger.LogDebug("Heartbeat sent: CPU={Cpu}%, RAM={Ram}%, RustDesk={Status}", 
-                    heartbeat.CpuPercent, heartbeat.MemoryPercent, rustdeskStatus);
+                _logger.LogDebug("Heartbeat sent: CPU={Cpu}%, RAM={Ram}%, RustDesk={Status}/{Id}", 
+                    heartbeat.CpuPercent, heartbeat.MemoryPercent, rustdeskStatus, rustdeskId ?? "none");
             }
             else
             {
@@ -356,6 +367,15 @@ public class AgentWorker : BackgroundService
                 if (command.CommandType.Equals("sync_rustdesk", StringComparison.OrdinalIgnoreCase))
                 {
                     result = await ExecuteSyncRustDeskAsync();
+                }
+                else if (command.CommandType.Equals("diagnose_rustdesk", StringComparison.OrdinalIgnoreCase))
+                {
+                    result = new CommandResult
+                    {
+                        Success = true,
+                        ExitCode = 0,
+                        Stdout = _rustDeskInstaller.CollectDiagnostics()
+                    };
                 }
                 else
                 {

@@ -253,6 +253,17 @@ export default function VanguardDeviceDetailPage() {
     }
   };
 
+  const handleDiagnoseRustDesk = async () => {
+    try {
+      await sendCommand('diagnose_rustdesk');
+      toast.success("RustDesk diagnostics requested", {
+        description: "Check the Commands tab in ~30 seconds for full diagnostic output."
+      });
+    } catch (err) {
+      toast.error("Failed to send diagnose command");
+    }
+  };
+
   const handleRemoteConnect = (type: 'desktop' | 'terminal' | 'files') => {
     console.log('[RemoteConnect] handleRemoteConnect called with type:', type);
     // Check for RustDesk ID - first from direct column, then fallback to config locations
@@ -651,6 +662,9 @@ export default function VanguardDeviceDetailPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSyncRustDesk} className="text-white hover:bg-cyan-500/10">
                   Sync RustDesk ID
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDiagnoseRustDesk} className="text-white hover:bg-cyan-500/10">
+                  Diagnose RustDesk
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
