@@ -375,14 +375,21 @@ export function RemoteAccessPanel({
                     <Button
                       className="flex-1"
                       onClick={() => handleConnect(provider.id, provider.deviceId!)}
-                      disabled={isConnecting === provider.id}
+                      disabled={isConnecting === provider.id || !provider.deviceId}
                     >
                       {isConnecting === provider.id ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : !provider.deviceId ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Waiting for ID...
+                        </>
                       ) : (
-                        <ExternalLink className="h-4 w-4 mr-2" />
+                        <>
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Connect
+                        </>
                       )}
-                      Connect
                     </Button>
                     <Button
                       variant="outline"
