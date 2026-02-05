@@ -362,50 +362,128 @@ namespace VanguardInstaller
         {
             try
             {
-                // Find the VanguardAgent.exe path from the install location
-                var installPath = @"C:\Program Files\Vanguard\VanguardAgent.exe";
-                
-                // Try to get exact path from registry
-                try
+                string? ResolveExePathFromService()
                 {
-                    using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Ultrium\Vanguard");
-                    if (key != null)
+                    try
                     {
-                        var regPath = key.GetValue("InstallPath")?.ToString();
-                        if (!string.IsNullOrEmpty(regPath))
+                        var psi = new ProcessStartInfo
                         {
-                            installPath = Path.Combine(regPath, "VanguardAgent.exe");
-                        }
+                            FileName = "sc.exe",
+                            Arguments = "qc VanguardAgent",
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
+                            RedirectStandardOutput = true
+                        };
+
+                        using var process = Process.Start(psi);
+                        if (process == null) return null;
+
+                        var output = process.StandardOutput.ReadToEnd();
+                        process.WaitForExit(2000);
+
+                        // Example line:
+                        // BINARY_PATH_NAME   : "C:\\Program Files (x86)\\Vanguard\\VanguardAgent.exe" --service
+                        var idx = output.IndexOf("BINARY_PATH_NAME", StringComparison.OrdinalIgnoreCase);
+                        if (idx < 0) return null;
+
+                        var endLine = output.IndexOf('\n', idx);
+                        var line = endLine > idx ? output.Substring(idx, endLine - idx) : output.Substring(idx);
+
+                        var colon = line.IndexOf(':');
+                        if (colon < 0) return null;
+
+                        var value = line.Substring(colon + 1).Trim();
+
+                        // Strip args; keep through .exe
+                        var exeIdx = value.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
+                        if (exeIdx < 0) return null;
+
+                        var candidate = value.Substring(0, exeIdx + 4).Trim().Trim('"');
+                        return File.Exists(candidate) ? candidate : null;
+                    }
+                    catch
+                    {
+                        return null;
                     }
                 }
-                catch { }
-                
-                if (!File.Exists(installPath))
+
+                string? ResolveExePathFromRegistry(Microsoft.Win32.RegistryView view)
                 {
-                    OnProgress?.Invoke("Tray app will start after reboot");
+                    try
+                    {
+                        using var baseKey = Microsoft.Win32.RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, view);
+                        using var key = baseKey.OpenSubKey(@"SOFTWARE\Ultrium\Vanguard");
+                        var regPath = key?.GetValue("InstallPath")?.ToString();
+                        if (string.IsNullOrWhiteSpace(regPath)) return null;
+
+                        var candidate = Path.Combine(regPath, "VanguardAgent.exe");
+                        return File.Exists(candidate) ? candidate : null;
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                }
+
+                string? ResolveTrayExePath()
+                {
+                    // 1) Prefer the service configuration (most reliable)
+                    var fromService = ResolveExePathFromService();
+                    if (!string.IsNullOrEmpty(fromService)) return fromService;
+
+                    // 2) Registry (both 64-bit and 32-bit views)
+                    var fromReg64 = ResolveExePathFromRegistry(Microsoft.Win32.RegistryView.Registry64);
+                    if (!string.IsNullOrEmpty(fromReg64)) return fromReg64;
+
+                    var fromReg32 = ResolveExePathFromRegistry(Microsoft.Win32.RegistryView.Registry32);
+                    if (!string.IsNullOrEmpty(fromReg32)) return fromReg32;
+
+                    // 3) Common fallback install locations
+                    var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+                    var pf86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+
+                    var candidates = new[]
+                    {
+                        Path.Combine(pf, "Vanguard", "VanguardAgent.exe"),
+                        Path.Combine(pf86, "Vanguard", "VanguardAgent.exe"),
+                        @"C:\Program Files\Vanguard\VanguardAgent.exe",
+                        @"C:\Program Files (x86)\Vanguard\VanguardAgent.exe",
+                    };
+
+                    foreach (var c in candidates)
+                    {
+                        if (!string.IsNullOrWhiteSpace(c) && File.Exists(c)) return c;
+                    }
+
+                    return null;
+                }
+
+                var exePath = ResolveTrayExePath();
+
+                if (string.IsNullOrEmpty(exePath))
+                {
+                    OnProgress?.Invoke("Tray app not found; it will start after reboot/login");
                     return;
                 }
-                
-                // Use explorer.exe to launch as the interactive user (not as admin)
-                // This works even when the installer is running elevated
-                var psi = new ProcessStartInfo
+
+                OnProgress?.Invoke($"Launching tray: {exePath}");
+
+                // Launch directly. (Explorer trick is unreliable when running elevated.)
+                var startInfo = new ProcessStartInfo
                 {
-                    FileName = "explorer.exe",
-                    Arguments = $"\"{installPath}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
+                    FileName = exePath,
+                    WorkingDirectory = Path.GetDirectoryName(exePath) ?? AppContext.BaseDirectory,
+                    UseShellExecute = true
                 };
-                
-                using var process = Process.Start(psi);
-                if (process != null)
-                {
-                    await Task.Delay(500);
-                    OnProgress?.Invoke("Tray application started");
-                }
+
+                Process.Start(startInfo);
+                await Task.Delay(500);
+
+                OnProgress?.Invoke("Tray application started");
             }
             catch (Exception ex)
             {
-                // If we can't launch, it will start on next login via registry auto-start
+                // If we can't launch, it will start on next login via MSI/startup mechanism
                 OnProgress?.Invoke($"Tray will start on next login: {ex.Message}");
             }
         }
