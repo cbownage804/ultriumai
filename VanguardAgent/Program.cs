@@ -126,7 +126,7 @@ public class Program
                 return new PortalConfig
                 {
                     PortalKey = root.TryGetProperty("portal_key", out var pk) ? pk.GetString() ?? "" : "",
-                    PortalName = root.TryGetProperty("portal_name", out var pn) ? pn.GetString() ?? "Customer Portal" : "Customer Portal",
+                    PortalName = root.TryGetProperty("portal_name", out var pn) ? pn.GetString() ?? "Vanguard" : "Vanguard",
                     PortalUrl = root.TryGetProperty("portal_url", out var pu) ? pu.GetString() ?? "https://ultriumai.com/customer-portal" : "https://ultriumai.com/customer-portal",
                     ApiEndpoint = root.TryGetProperty("api_endpoint", out var ae) ? ae.GetString() ?? "" : "",
                     ClientId = root.TryGetProperty("client_id", out var ci) ? ci.GetString() : null,
@@ -290,7 +290,7 @@ public class Program
             command_poll_interval = 30,
             telemetry_interval = 300,
             portal_key = portalKey ?? "",
-            portal_name = portalName ?? "Customer Portal",
+            portal_name = portalName ?? "Vanguard",
             portal_url = portalUrl ?? "https://ultriumai.com/customer-portal",
             show_portal = showPortal
         };
