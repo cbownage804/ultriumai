@@ -362,47 +362,52 @@ namespace VanguardInstaller
         {
             try
             {
-                // Get service binary path
+                // Find the VanguardAgent.exe path from the install location
+                var installPath = @"C:\Program Files\Vanguard\VanguardAgent.exe";
+                
+                // Try to get exact path from registry
+                try
+                {
+                    using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Ultrium\Vanguard");
+                    if (key != null)
+                    {
+                        var regPath = key.GetValue("InstallPath")?.ToString();
+                        if (!string.IsNullOrEmpty(regPath))
+                        {
+                            installPath = Path.Combine(regPath, "VanguardAgent.exe");
+                        }
+                    }
+                }
+                catch { }
+                
+                if (!File.Exists(installPath))
+                {
+                    OnProgress?.Invoke("Tray app will start after reboot");
+                    return;
+                }
+                
+                // Use explorer.exe to launch as the interactive user (not as admin)
+                // This works even when the installer is running elevated
                 var psi = new ProcessStartInfo
                 {
-                    FileName = "wmic",
-                    Arguments = "service where \"name='VanguardAgent'\" get PathName /format:list",
+                    FileName = "explorer.exe",
+                    Arguments = $"\"{installPath}\"",
                     UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = true
+                    CreateNoWindow = true
                 };
                 
                 using var process = Process.Start(psi);
-                if (process == null) return;
-                
-                var output = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync();
-                
-                // Parse the path
-                var lines = output.Split('\n');
-                foreach (var line in lines)
+                if (process != null)
                 {
-                    if (line.StartsWith("PathName="))
-                    {
-                        var path = line.Substring(9).Trim().Trim('"');
-                        // Remove service arguments if any
-                        var spaceIndex = path.IndexOf(" --");
-                        if (spaceIndex > 0) path = path.Substring(0, spaceIndex);
-                        
-                        if (File.Exists(path))
-                        {
-                            Process.Start(new ProcessStartInfo
-                            {
-                                FileName = path,
-                                UseShellExecute = true,
-                                WindowStyle = ProcessWindowStyle.Hidden
-                            });
-                        }
-                        break;
-                    }
+                    await Task.Delay(500);
+                    OnProgress?.Invoke("Tray application started");
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // If we can't launch, it will start on next login via registry auto-start
+                OnProgress?.Invoke($"Tray will start on next login: {ex.Message}");
+            }
         }
     }
 }
