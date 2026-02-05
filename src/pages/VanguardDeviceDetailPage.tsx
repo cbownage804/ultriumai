@@ -44,6 +44,7 @@ import {
   Paperclip,
   Server,
   RefreshCw,
+  Loader2,
   GripVertical,
   RotateCcw,
   Copy,
@@ -370,6 +371,13 @@ export default function VanguardDeviceDetailPage() {
   const clientName = clients.find(c => c.id === agent.client_id)?.company_name || "Unknown";
   const latestMetrics = metrics[metrics.length - 1];
 
+  // Datto-style gating: only enable Connect when we have a confirmed RustDesk ID
+  const rustdeskId = agent?.rustdesk_id ||
+    agent?.config?.hardware?.rustdesk_id ||
+    agent?.config?.remote_access?.rustdesk_id ||
+    agent?.config?.rustdesk_id;
+  const rustdeskReady = Boolean(rustdeskId && String(rustdeskId).trim());
+
   // Mock data for widgets (in real app, these would come from the agent or API)
   const mockAlerts = agent.config?.alerts || [];
   const mockActivities = agent.config?.activities || [];
@@ -570,44 +578,55 @@ export default function VanguardDeviceDetailPage() {
           
           <div className="flex items-center gap-2">
             {isOnline && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 hover:opacity-90 text-white gap-2">
-                    <ExternalLink className="h-4 w-4" />
-                    Connect
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-black/95 border-cyan-500/30">
-                  <DropdownMenuItem asChild>
-                    <button
-                      type="button"
-                      className="w-full text-left text-white hover:bg-cyan-500/10 cursor-pointer px-2 py-1.5"
-                      onClick={() => handleRemoteConnect('desktop')}
-                    >
-                      Remote Desktop
-                    </button>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <button
-                      type="button"
-                      className="w-full text-left text-white hover:bg-cyan-500/10 cursor-pointer px-2 py-1.5"
-                      onClick={() => handleRemoteConnect('terminal')}
-                    >
-                      Terminal
-                    </button>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <button
-                      type="button"
-                      className="w-full text-left text-white hover:bg-cyan-500/10 cursor-pointer px-2 py-1.5"
-                      onClick={() => handleRemoteConnect('files')}
-                    >
-                      File Manager
-                    </button>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              rustdeskReady ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 hover:opacity-90 text-white gap-2">
+                      <ExternalLink className="h-4 w-4" />
+                      Connect
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-black/95 border-cyan-500/30">
+                    <DropdownMenuItem asChild>
+                      <button
+                        type="button"
+                        className="w-full text-left text-white hover:bg-cyan-500/10 cursor-pointer px-2 py-1.5"
+                        onClick={() => handleRemoteConnect('desktop')}
+                      >
+                        Remote Desktop
+                      </button>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <button
+                        type="button"
+                        className="w-full text-left text-white hover:bg-cyan-500/10 cursor-pointer px-2 py-1.5"
+                        onClick={() => handleRemoteConnect('terminal')}
+                      >
+                        Terminal
+                      </button>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <button
+                        type="button"
+                        className="w-full text-left text-white hover:bg-cyan-500/10 cursor-pointer px-2 py-1.5"
+                        onClick={() => handleRemoteConnect('files')}
+                      >
+                        File Manager
+                      </button>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button
+                  variant="outline"
+                  disabled
+                  className="gap-2 border-cyan-500/30 text-white/60 hover:bg-transparent"
+                >
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Waiting for ID...
+                </Button>
+              )
             )}
             
             <DropdownMenu>

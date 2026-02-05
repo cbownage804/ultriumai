@@ -330,6 +330,7 @@ public class RustDeskInstaller
 
         var msiPath = Path.Combine(localTempPath, $"rustdesk-{RUSTDESK_VERSION}-x86_64.msi");
         var exePath = Path.Combine(localTempPath, $"rustdesk-{RUSTDESK_VERSION}-x86_64.exe");
+        var msiLogPath = Path.Combine(localTempPath, "rustdesk-msi-install.log");
 
         try
         {
@@ -341,10 +342,10 @@ public class RustDeskInstaller
             {
                 await WaitForFileUnlockAsync(msiPath, maxWaitSeconds: 30);
 
-                Console.WriteLine("[RustDesk] Running msiexec silent install...");
+                Console.WriteLine($"[RustDesk] Running msiexec silent install (log: {msiLogPath})...");
                 var (exitCode, stdout, stderr) = await RunProcessAsync(
                     fileName: "msiexec.exe",
-                    arguments: $"/i \"{msiPath}\" /qn /norestart",
+                    arguments: $"/i \"{msiPath}\" /qn /norestart /l*v \"{msiLogPath}\"",
                     workingDirectory: localTempPath,
                     timeoutSeconds: 900
                 );
@@ -408,6 +409,13 @@ public class RustDeskInstaller
 
             Console.WriteLine("[RustDesk] EXE install completed successfully");
             await Task.Delay(5000);
+
+            // Critical: verify it actually installed (some EXE flags can be no-ops under SYSTEM)
+            if (!IsRustDeskInstalled())
+            {
+                Console.WriteLine("[RustDesk] EXE installer exited successfully but RustDesk was not detected; treating as failure so we can retry");
+                return false;
+            }
 
             await EnsureRustDeskServiceInstalledAsync();
             await ConfigureForVanguardAsync();
