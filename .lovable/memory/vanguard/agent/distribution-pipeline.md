@@ -1,18 +1,20 @@
 # Memory: vanguard/agent/distribution-pipeline
 Updated: now
 
-Vanguard agents are distributed via a professional EXE installer package that provides a polished GUI experience. The deployment workflow generates a ZIP containing:
-1. `VanguardInstaller.exe` - A compiled C# WinForms application with admin manifest
-2. `installer_config.json` - Pre-configured with provisioning token and client settings
-3. `README.txt` - Installation instructions
+Vanguard agents are distributed via a single self-contained EXE installer. The frontend downloads a stub EXE from Supabase Storage and appends the provisioning config (JSON) after a marker (`---VANGUARD_CONFIG_START---`). The C# installer reads its own tail to extract the embedded config.
 
-## Build Pipeline
+## How It Works
 
-The `VanguardInstaller` project (`VanguardInstaller/VanguardInstaller.csproj`) is built by GitHub Actions alongside the main agent. The stub EXE is uploaded to Supabase Storage (`vanguard-agents/VanguardInstaller.exe`).
+1. User clicks "Download" in the dashboard
+2. Frontend fetches `VanguardInstaller.exe` stub from storage
+3. Frontend appends `---VANGUARD_CONFIG_START---` + JSON config to the EXE bytes
+4. User receives a single `Install-CustomerName.exe` file
+5. EXE reads its own tail to find the config, then runs the installation
 
 ## Installer Features
 
-- **Professional GUI**: Dark-themed WinForms installer with progress bar and status updates
+- **Self-contained EXE**: No ZIP extraction, no config files needed
+- **Professional GUI**: Dark-themed WinForms installer with progress bar
 - **Auto-elevate UAC**: Uses `app.manifest` to require administrator at launch
 - **Token redemption**: Fetches credentials from `agent-provision` edge function
 - **MSI download**: Downloads `VanguardAgent.msi` from Supabase Storage
@@ -22,12 +24,9 @@ The `VanguardInstaller` project (`VanguardInstaller/VanguardInstaller.csproj`) i
 
 ## Fallback Behavior
 
-If the EXE download fails, the system falls back to generating a `.cmd` wrapper with Base64-encoded PowerShell (UTF-16LE) for environments where the EXE isn't available.
+If the EXE download fails, the system falls back to generating a `.cmd` wrapper with Base64-encoded PowerShell (UTF-16LE).
 
 ## Key Files
 
-- `VanguardInstaller/VanguardInstaller.csproj` - Project configuration
-- `VanguardInstaller/InstallerEngine.cs` - Core installation logic
-- `VanguardInstaller/InstallerForm.cs` - WinForms GUI
-- `VanguardInstaller/app.manifest` - UAC elevation requirement
-- `src/utils/generateWindowsMsiInstaller.ts` - Frontend ZIP generation
+- `VanguardInstaller/InstallerEngine.cs` - Reads config from EXE tail via `ReadAppendedConfig()`
+- `src/utils/generateWindowsMsiInstaller.ts` - Appends config to EXE via `generateSelfContainedExe()`

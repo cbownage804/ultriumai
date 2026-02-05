@@ -320,8 +320,8 @@ $t="${provisioningToken}";$c=irm "${provisionUrl}?action=redeem" -Method POST -B
 }
 
 /**
- * Full flow: Create token + generate CMD installer
- * Returns a .cmd file that self-elevates and runs the PowerShell installer
+ * Full flow: Create token + generate single-file EXE installer
+ * The EXE has config appended to its tail, so it's truly self-contained
  */
 export async function generateOneClickInstaller(options: MsiInstallerOptions): Promise<{
   blob: Blob;
@@ -338,7 +338,27 @@ export async function generateOneClickInstaller(options: MsiInstallerOptions): P
 
   const safeName = (options.clientName || 'VanguardAgent').replace(/[^a-zA-Z0-9]/g, '-');
   
-  // Generate CMD installer (simple, reliable, works everywhere)
+  // Try to generate self-contained EXE (professional)
+  try {
+    const exeBlob = await generateSelfContainedExe(
+      tokenResponse.token,
+      options.clientName,
+      options.enableTray
+    );
+    
+    if (exeBlob) {
+      return {
+        blob: exeBlob,
+        filename: `Install-${safeName}.exe`,
+        token: tokenResponse.token,
+        expiresAt: tokenResponse.expires_at,
+      };
+    }
+  } catch (err) {
+    console.warn('[generateOneClickInstaller] EXE generation failed, falling back to CMD:', err);
+  }
+  
+  // Fallback to CMD installer if EXE download fails
   const blob = generateMsiInstallerBlob(tokenResponse.token, options.clientName, options.enableTray);
 
   return {
@@ -347,4 +367,43 @@ export async function generateOneClickInstaller(options: MsiInstallerOptions): P
     token: tokenResponse.token,
     expiresAt: tokenResponse.expires_at,
   };
+}
+
+/**
+ * Generate a self-contained EXE installer by appending config to the stub EXE
+ * The C# installer reads config from its own tail after a marker
+ */
+async function generateSelfContainedExe(
+  provisioningToken: string,
+  clientName?: string,
+  enableTray?: boolean
+): Promise<Blob | null> {
+  // Download the installer EXE stub
+  const response = await fetch(INSTALLER_EXE_URL);
+  if (!response.ok) {
+    throw new Error(`Failed to download installer: ${response.status}`);
+  }
+  
+  const exeBytes = new Uint8Array(await response.arrayBuffer());
+  
+  // Create the config JSON
+  const config = {
+    token: provisioningToken,
+    client_name: clientName || 'Vanguard Device',
+    enable_tray: enableTray ?? true,
+    msi_url: MSI_DOWNLOAD_URL,
+    provision_url: PROVISION_ENDPOINT,
+  };
+  
+  // Marker + JSON to append
+  const marker = '---VANGUARD_CONFIG_START---';
+  const configPayload = marker + JSON.stringify(config);
+  const configBytes = new TextEncoder().encode(configPayload);
+  
+  // Combine EXE + config
+  const combined = new Uint8Array(exeBytes.length + configBytes.length);
+  combined.set(exeBytes, 0);
+  combined.set(configBytes, exeBytes.length);
+  
+  return new Blob([combined], { type: 'application/x-msdownload' });
 }

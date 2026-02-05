@@ -60,29 +60,31 @@ namespace VanguardInstaller
             _http.Timeout = TimeSpan.FromMinutes(5);
         }
         
+        private const string CONFIG_MARKER = "---VANGUARD_CONFIG_START---";
+        
         public bool LoadEmbeddedConfig()
         {
             try
             {
-                // Look for config.json next to the exe
-                var exePath = AppContext.BaseDirectory;
-                var configPath = Path.Combine(exePath, "installer_config.json");
+                // First, try to read config appended to the EXE itself
+                var exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
+                if (!string.IsNullOrEmpty(exePath) && File.Exists(exePath))
+                {
+                    var config = ReadAppendedConfig(exePath);
+                    if (config != null)
+                    {
+                        _config = config;
+                        return true;
+                    }
+                }
+                
+                // Fallback: Look for config.json next to the exe
+                var exeDir = AppContext.BaseDirectory;
+                var configPath = Path.Combine(exeDir, "installer_config.json");
                 
                 if (File.Exists(configPath))
                 {
                     var json = File.ReadAllText(configPath);
-                    _config = JsonConvert.DeserializeObject<InstallerConfig>(json);
-                    return _config != null && !string.IsNullOrEmpty(_config.Token);
-                }
-                
-                // Also check for embedded resource (for single-file distribution)
-                var assembly = typeof(InstallerEngine).Assembly;
-                var resourceName = "VanguardInstaller.installer_config.json";
-                using var stream = assembly.GetManifestResourceStream(resourceName);
-                if (stream != null)
-                {
-                    using var reader = new StreamReader(stream);
-                    var json = reader.ReadToEnd();
                     _config = JsonConvert.DeserializeObject<InstallerConfig>(json);
                     return _config != null && !string.IsNullOrEmpty(_config.Token);
                 }
@@ -92,6 +94,46 @@ namespace VanguardInstaller
             catch
             {
                 return false;
+            }
+        }
+        
+        /// <summary>
+        /// Reads JSON config appended after a marker at the end of the EXE
+        /// This allows creating a single self-contained installer with embedded config
+        /// </summary>
+        private InstallerConfig? ReadAppendedConfig(string exePath)
+        {
+            try
+            {
+                // Read the last 10KB of the file (config should be small)
+                const int tailSize = 10 * 1024;
+                var fileBytes = File.ReadAllBytes(exePath);
+                
+                var searchStart = Math.Max(0, fileBytes.Length - tailSize);
+                var searchBytes = new byte[fileBytes.Length - searchStart];
+                Array.Copy(fileBytes, searchStart, searchBytes, 0, searchBytes.Length);
+                
+                var tail = Encoding.UTF8.GetString(searchBytes);
+                var markerIndex = tail.IndexOf(CONFIG_MARKER, StringComparison.Ordinal);
+                
+                if (markerIndex >= 0)
+                {
+                    var jsonStart = markerIndex + CONFIG_MARKER.Length;
+                    var json = tail.Substring(jsonStart).Trim();
+                    
+                    // Parse the JSON
+                    var config = JsonConvert.DeserializeObject<InstallerConfig>(json);
+                    if (config != null && !string.IsNullOrEmpty(config.Token))
+                    {
+                        return config;
+                    }
+                }
+                
+                return null;
+            }
+            catch
+            {
+                return null;
             }
         }
         
