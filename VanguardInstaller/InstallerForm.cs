@@ -16,6 +16,7 @@ namespace VanguardInstaller
         private Button _installButton = null!;
         private Button _closeButton = null!;
         private Panel _headerPanel = null!;
+        private PictureBox _logoPictureBox = null!;
         private bool _isInstalling;
         private bool _isComplete;
         
@@ -71,6 +72,37 @@ namespace VanguardInstaller
             _headerPanel.Controls.Add(_titleLabel);
             _headerPanel.Controls.Add(_subtitleLabel);
             
+            // Logo on the right side of header
+            _logoPictureBox = new PictureBox
+            {
+                Size = new Size(50, 50),
+                Location = new Point(430, 15),
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BackColor = Color.Transparent
+            };
+            
+            // Try to load the application icon as the logo
+            try
+            {
+                _logoPictureBox.Image = Icon.ExtractAssociatedIcon(Application.ExecutablePath)?.ToBitmap();
+            }
+            catch
+            {
+                // If icon extraction fails, create a simple "U" logo
+                var bmp = new Bitmap(50, 50);
+                using (var g = Graphics.FromImage(bmp))
+                {
+                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    g.Clear(Color.FromArgb(0, 122, 204));
+                    using var font = new Font("Segoe UI", 24, FontStyle.Bold);
+                    using var brush = new SolidBrush(Color.White);
+                    var size = g.MeasureString("U", font);
+                    g.DrawString("U", font, brush, (50 - size.Width) / 2, (50 - size.Height) / 2);
+                }
+                _logoPictureBox.Image = bmp;
+            }
+            
+            _headerPanel.Controls.Add(_logoPictureBox);
             // Client name label
             _clientLabel = new Label
             {
