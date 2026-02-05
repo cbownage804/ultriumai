@@ -52,7 +52,7 @@ Get your credentials from: https://ultriumai.com/vanguard/settings
   "command_poll_interval": 30,
   "telemetry_interval": 300,
   "portal_key": "pk_xxx",
-  "portal_name": "Customer Portal",
+  "portal_name": "Vanguard",
   "portal_url": "https://ultriumai.com/customer-portal",
   "show_portal": true,
   "features": {

@@ -8,7 +8,7 @@ public class PortalConfig
     public string PortalKey { get; set; } = string.Empty;
     
     [JsonPropertyName("portal_name")]
-    public string PortalName { get; set; } = "Customer Portal";
+    public string PortalName { get; set; } = "Vanguard";
     
     [JsonPropertyName("portal_url")]
     public string PortalUrl { get; set; } = "https://ultriumai.com/customer-portal";
