@@ -89,8 +89,8 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
         });
         
         setDownloadProgress(100);
-        toast.success(`1-Click installer downloaded for ${customerName}`, {
-          description: 'Just double-click to install - handles everything automatically!',
+        toast.success(`Professional installer downloaded for ${customerName}`, {
+          description: 'Extract the ZIP and run the EXE as Administrator!',
         });
       } else {
         // Generate ZIP package (legacy method with embedded credentials)
@@ -284,9 +284,9 @@ export function CustomerAgentDownload({ customerId, customerName }: CustomerAgen
               <div className="flex items-start gap-2 text-sm">
                 <Package className="h-4 w-4 text-purple-400 mt-0.5 shrink-0" />
                 <div className="text-white/70">
-                  <span className="text-purple-400 font-medium">Just double-click!</span>{' '}
-                  The installer automatically elevates to admin, downloads the MSI, 
-                  and configures credentials. No manual steps required!
+                  <span className="text-purple-400 font-medium">Professional EXE installer!</span>{' '}
+                  Extract the ZIP and run the EXE as Administrator. 
+                  Features a polished GUI with progress tracking.
                 </div>
               </div>
             </div>

@@ -1,42 +1,10 @@
 /**
- * Generate a self-elevating CMD installer that works like Datto/Atera
- * Just double-click and it handles everything automatically
+ * Generate a professional EXE installer package for Vanguard Agent
+ * Downloads the stub EXE and bundles it with a config file
  */
 
+import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
-
-/**
- * PowerShell's -EncodedCommand expects Base64 of UTF-16LE ("Unicode"), not UTF-8.
- * Also, embedding a large Base64 payload directly on the command line can hit
- * Windows CMD's ~8191 character limit. We therefore:
- * 1) Encode as UTF-16LE Base64
- * 2) Write the Base64 into a temp file from the .cmd (multi-line, no per-line limit)
- * 3) Decode + execute inside PowerShell
- */
-function toPowerShellEncodedCommandBase64(script: string): string {
-  const bytes = new Uint8Array(script.length * 2);
-  for (let i = 0; i < script.length; i++) {
-    const code = script.charCodeAt(i);
-    bytes[i * 2] = code & 0xff;
-    bytes[i * 2 + 1] = code >> 8;
-  }
-
-  // Convert bytes to a binary string in chunks to avoid call stack limits.
-  let binary = '';
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
-
-  return btoa(binary);
-}
-
-function chunkString(str: string, size: number): string[] {
-  const chunks: string[] = [];
-  for (let i = 0; i < str.length; i += size) chunks.push(str.slice(i, i + size));
-  return chunks;
-}
 
 interface MsiInstallerOptions {
   clientId?: string;
@@ -52,9 +20,37 @@ interface ProvisioningTokenResponse {
   max_uses: number;
 }
 
-// MSI download URL from Supabase Storage
+// Download URLs from Supabase Storage
 const MSI_DOWNLOAD_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/vanguard-agents/VanguardAgent.msi';
+const INSTALLER_EXE_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/vanguard-agents/VanguardInstaller.exe';
 const PROVISION_ENDPOINT = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/agent-provision';
+
+/**
+ * PowerShell's -EncodedCommand expects Base64 of UTF-16LE ("Unicode"), not UTF-8.
+ */
+function toPowerShellEncodedCommandBase64(script: string): string {
+  const bytes = new Uint8Array(script.length * 2);
+  for (let i = 0; i < script.length; i++) {
+    const code = script.charCodeAt(i);
+    bytes[i * 2] = code & 0xff;
+    bytes[i * 2 + 1] = code >> 8;
+  }
+
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binary);
+}
+
+function chunkString(str: string, size: number): string[] {
+  const chunks: string[] = [];
+  for (let i = 0; i < str.length; i += size) chunks.push(str.slice(i, i + size));
+  return chunks;
+}
 
 /**
  * Create a provisioning token via the edge function
@@ -324,7 +320,7 @@ $t="${provisioningToken}";$c=irm "${provisionUrl}?action=redeem" -Method POST -B
 }
 
 /**
- * Full flow: Create token + generate installer
+ * Full flow: Create token + generate EXE installer package
  */
 export async function generateOneClickInstaller(options: MsiInstallerOptions): Promise<{
   blob: Blob;
@@ -339,15 +335,99 @@ export async function generateOneClickInstaller(options: MsiInstallerOptions): P
     return null;
   }
 
-  // Generate CMD installer with embedded token
-  const blob = generateMsiInstallerBlob(tokenResponse.token, options.clientName, options.enableTray);
   const safeName = (options.clientName || 'VanguardAgent').replace(/[^a-zA-Z0-9]/g, '-');
-  const filename = `Install-${safeName}.cmd`;
+  
+  // Try to generate EXE package first (professional)
+  try {
+    const exeBlob = await generateExeInstallerPackage(
+      tokenResponse.token,
+      options.clientName,
+      options.enableTray
+    );
+    
+    if (exeBlob) {
+      return {
+        blob: exeBlob,
+        filename: `Install-${safeName}.zip`,
+        token: tokenResponse.token,
+        expiresAt: tokenResponse.expires_at,
+      };
+    }
+  } catch (err) {
+    console.warn('[generateOneClickInstaller] EXE package failed, falling back to CMD:', err);
+  }
+  
+  // Fallback to CMD installer if EXE download fails
+  const blob = generateMsiInstallerBlob(tokenResponse.token, options.clientName, options.enableTray);
 
   return {
     blob,
-    filename,
+    filename: `Install-${safeName}.cmd`,
     token: tokenResponse.token,
     expiresAt: tokenResponse.expires_at,
   };
+}
+
+/**
+ * Generate a professional EXE installer package
+ * Downloads the stub EXE and bundles it with a config file in a ZIP
+ */
+export async function generateExeInstallerPackage(
+  provisioningToken: string,
+  clientName?: string,
+  enableTray?: boolean
+): Promise<Blob | null> {
+  try {
+    // Download the installer EXE stub
+    const response = await fetch(INSTALLER_EXE_URL);
+    if (!response.ok) {
+      throw new Error(`Failed to download installer: ${response.status}`);
+    }
+    
+    const exeBytes = await response.arrayBuffer();
+    
+    // Create the config file
+    const config = {
+      token: provisioningToken,
+      client_name: clientName || 'Vanguard Device',
+      enable_tray: enableTray ?? true,
+      msi_url: MSI_DOWNLOAD_URL,
+      provision_url: PROVISION_ENDPOINT,
+    };
+    
+    const configJson = JSON.stringify(config, null, 2);
+    
+    // Bundle into a ZIP
+    const zip = new JSZip();
+    const safeName = (clientName || 'VanguardAgent').replace(/[^a-zA-Z0-9 ]/g, '');
+    zip.file(`Install ${safeName}.exe`, exeBytes);
+    zip.file('installer_config.json', configJson);
+    
+    // Add a README
+    const readme = `Ultrium Vanguard Agent Installer
+================================
+
+Pre-configured for: ${clientName || 'Vanguard Device'}
+
+INSTALLATION:
+1. Extract both files to the same folder
+2. Right-click "Install ${safeName}.exe" and select "Run as administrator"
+3. Follow the on-screen instructions
+
+The installer will:
+- Download the latest agent
+- Configure it for your organization
+- Install and start the Windows service
+- Launch the system tray application (if enabled)
+
+SUPPORT:
+Dashboard: https://ultriumai.com/vanguard
+`;
+    zip.file('README.txt', readme);
+    
+    return await zip.generateAsync({ type: 'blob' });
+  } catch (err) {
+    console.error('[generateExeInstallerPackage] Error:', err);
+    return null;
+  }
 }

@@ -48,11 +48,10 @@ jobs:
     needs: prepare-source
     
     steps:
-      - name: Download VanguardAgent source
-        uses: actions/download-artifact@v4
+      - name: Checkout full repository
+        uses: actions/checkout@v4
         with:
-          name: vanguard-agent-source
-          path: VanguardAgent
+          fetch-depth: 1
       
       - name: Setup .NET ${{ env.DOTNET_VERSION }}
         uses: actions/setup-dotnet@v4
@@ -60,9 +59,11 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       
       - name: Restore dependencies
-        run: dotnet restore VanguardAgent/VanguardAgent.csproj
+        run: |
+          dotnet restore VanguardAgent/VanguardAgent.csproj
+          dotnet restore VanguardInstaller/VanguardInstaller.csproj
       
-      - name: Build & Publish (win-x64)
+      - name: Build & Publish Agent (win-x64)
         run: |
           dotnet publish VanguardAgent/VanguardAgent.csproj `
             -c Release `
@@ -74,7 +75,7 @@ jobs:
             -p:DebugSymbols=false `
             -o ./dist/win-x64
       
-      - name: Build & Publish (win-arm64)
+      - name: Build & Publish Agent (win-arm64)
         run: |
           dotnet publish VanguardAgent/VanguardAgent.csproj `
             -c Release `
@@ -86,28 +87,36 @@ jobs:
             -p:DebugSymbols=false `
             -o ./dist/win-arm64
       
+      - name: Build & Publish Installer EXE (win-x64)
+        run: |
+          dotnet publish VanguardInstaller/VanguardInstaller.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            -o ./dist/installer-x64
+      
       - name: Prepare release packages
         run: |
-          # Create win-x64 package
+          # Create release directory
           New-Item -ItemType Directory -Path ./release -Force
-          Copy-Item ./dist/win-x64/VanguardAgent.exe ./release/VanguardAgent-win-x64.exe
           
-          # Create win-arm64 package  
+          # Copy agent executables
+          Copy-Item ./dist/win-x64/VanguardAgent.exe ./release/VanguardAgent-win-x64.exe
           Copy-Item ./dist/win-arm64/VanguardAgent.exe ./release/VanguardAgent-win-arm64.exe
           
-          # Create ZIP with installer scripts
-          $zipContent = @(
-            './dist/win-x64/VanguardAgent.exe'
-          )
+          # Copy installer stub EXE (this gets downloaded and configured dynamically)
+          Copy-Item ./dist/installer-x64/VanguardInstaller.exe ./release/VanguardInstaller.exe
           
-          # Copy additional files for ZIP
+          # Create ZIP with installer scripts
           Copy-Item VanguardAgent/config.json ./dist/win-x64/
           Copy-Item VanguardAgent/README.md ./dist/win-x64/
-
-           # Copy installer scripts for ZIP
-           Copy-Item VanguardAgent/installer/install.bat ./dist/win-x64/install.bat
-           Copy-Item VanguardAgent/installer/uninstall.bat ./dist/win-x64/uninstall.bat
-           Copy-Item VanguardAgent/installer/installer.bat ./dist/win-x64/installer.bat
+          Copy-Item VanguardAgent/installer/install.bat ./dist/win-x64/install.bat
+          Copy-Item VanguardAgent/installer/uninstall.bat ./dist/win-x64/uninstall.bat
+          Copy-Item VanguardAgent/installer/installer.bat ./dist/win-x64/installer.bat
           
           Compress-Archive -Path ./dist/win-x64/* -DestinationPath ./release/VanguardAgent-win-x64.zip -Force
       
@@ -252,6 +261,23 @@ jobs:
           
           if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
             echo "✓ Successfully uploaded VanguardAgent-win-x64.exe (HTTP $HTTP_STATUS)"
+          else
+            echo "::error::Upload failed with HTTP $HTTP_STATUS"
+            cat /tmp/response.txt
+            exit 1
+          fi
+          
+          echo "Uploading VanguardInstaller.exe to Supabase Storage..."
+          
+          HTTP_STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" -X POST \
+            "${SUPABASE_URL}/storage/v1/object/vanguard-agents/VanguardInstaller.exe" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/octet-stream" \
+            -H "x-upsert: true" \
+            --data-binary @./artifacts/VanguardInstaller.exe)
+          
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✓ Successfully uploaded VanguardInstaller.exe (HTTP $HTTP_STATUS)"
           else
             echo "::error::Upload failed with HTTP $HTTP_STATUS"
             cat /tmp/response.txt
