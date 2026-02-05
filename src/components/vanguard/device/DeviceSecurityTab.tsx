@@ -6,6 +6,7 @@ import { useState, useMemo } from "react";
 import { VanguardAgent } from "@/hooks/useVanguardAgents";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { calculateDeviceSecurityScore } from "@/utils/calculateDeviceSecurityScore";
 // Helper to format dates
 function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '—';
@@ -81,15 +82,8 @@ export function DeviceSecurityTab({ agent }: DeviceSecurityTabProps) {
     drive.protection_status === 'On' || drive.protection_status === 'Enabled'
   );
 
-  // Calculate security score based on actual Defender status
-  const securityChecks = [
-    securityInfo.antivirus_status?.toLowerCase() === 'enabled',
-    securityInfo.firewall_status?.toLowerCase() === 'enabled',
-    securityInfo.antispyware_status?.toLowerCase() === 'enabled',
-    osInfo.tls_compatible,
-    hasBitLockerEnabled,
-  ];
-  const securityScore = Math.round((securityChecks.filter(Boolean).length / securityChecks.length) * 100);
+  // Use shared security score calculation
+  const { score: securityScore, label: securityLabel } = calculateDeviceSecurityScore(agent);
 
   return (
     <div className="space-y-4">
@@ -127,7 +121,7 @@ export function DeviceSecurityTab({ agent }: DeviceSecurityTabProps) {
               securityScore >= 50 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" : 
               "bg-red-500/20 text-red-400 border-red-500/30"
             )}>
-              {securityScore >= 75 ? "Protected" : securityScore >= 50 ? "At Risk" : "Critical"}
+              {securityLabel}
             </Badge>
           </CardContent>
         </Card>
