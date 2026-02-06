@@ -9,26 +9,32 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Settings, Brain, Zap, Shield, Bell, Clock, 
-  DollarSign, Users, Gauge, Save, RefreshCw,
-  Bot, MessageSquare, Route, Search, Activity,
-  Terminal, Heart, FileText, Mail, HardDrive, Mic
+  DollarSign, Gauge, Save, RefreshCw, ChevronDown,
+  MessageSquare, Power, ToggleLeft, ToggleRight
 } from 'lucide-react';
+import { useCortexFeatures, type CortexModule } from '@/hooks/useCortexFeatures';
 
-interface AIToolConfig {
-  id: string;
-  name: string;
-  icon: React.ElementType;
-  enabled: boolean;
-  autoExecute: boolean;
-  confidenceThreshold: number;
-  notifications: boolean;
-}
+const MODULE_ICONS: Record<string, string> = {
+  helpdesk: '🎫', atlas: '📚', pursuit: '🛡️', rmm: '⚙️', sentinel: '🔶', general: '🤖',
+};
+
+const MODULE_COLORS: Record<string, { border: string; bg: string; text: string; badge: string }> = {
+  indigo: { border: 'border-indigo-500/30', bg: 'bg-indigo-500/5', text: 'text-indigo-400', badge: 'bg-indigo-500/20 text-indigo-400' },
+  cyan: { border: 'border-cyan-500/30', bg: 'bg-cyan-500/5', text: 'text-cyan-400', badge: 'bg-cyan-500/20 text-cyan-400' },
+  red: { border: 'border-red-500/30', bg: 'bg-red-500/5', text: 'text-red-400', badge: 'bg-red-500/20 text-red-400' },
+  emerald: { border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', text: 'text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-400' },
+  amber: { border: 'border-amber-500/30', bg: 'bg-amber-500/5', text: 'text-amber-400', badge: 'bg-amber-500/20 text-amber-400' },
+  purple: { border: 'border-purple-500/30', bg: 'bg-purple-500/5', text: 'text-purple-400', badge: 'bg-purple-500/20 text-purple-400' },
+};
 
 export function CortexSettingsHub() {
   const { toast } = useToast();
+  const { modules, toggleFeature, updateFeature, toggleAllInModule, enabledCount, totalCount } = useCortexFeatures();
   const [saving, setSaving] = useState(false);
+  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
 
   const [globalSettings, setGlobalSettings] = useState({
     aiEnabled: true,
@@ -39,57 +45,137 @@ export function CortexSettingsHub() {
     loggingEnabled: true,
     costTrackingEnabled: true,
     monthlyBudget: 500,
-    notifyOnBudgetThreshold: 80
+    notifyOnBudgetThreshold: 80,
   });
-
-  const [toolConfigs, setToolConfigs] = useState<AIToolConfig[]>([
-    { id: 'ticket-router', name: 'AI Ticket Router', icon: Route, enabled: true, autoExecute: true, confidenceThreshold: 85, notifications: true },
-    { id: 'escalation', name: 'Escalation Engine', icon: Zap, enabled: true, autoExecute: false, confidenceThreshold: 90, notifications: true },
-    { id: 'summarizer', name: 'Ticket Summarizer', icon: FileText, enabled: true, autoExecute: true, confidenceThreshold: 80, notifications: false },
-    { id: 'sentiment', name: 'Sentiment Analyzer', icon: Heart, enabled: true, autoExecute: true, confidenceThreshold: 75, notifications: true },
-    { id: 'response-draft', name: 'Response Draft', icon: MessageSquare, enabled: true, autoExecute: false, confidenceThreshold: 85, notifications: false },
-    { id: 'sla-predictor', name: 'SLA Predictor', icon: Clock, enabled: true, autoExecute: true, confidenceThreshold: 80, notifications: true },
-    { id: 'root-cause', name: 'Root Cause Analyzer', icon: Search, enabled: true, autoExecute: false, confidenceThreshold: 85, notifications: true },
-    { id: 'customer-health', name: 'Customer Health', icon: Users, enabled: true, autoExecute: true, confidenceThreshold: 75, notifications: true },
-    { id: 'anomaly', name: 'Anomaly Detection', icon: Activity, enabled: true, autoExecute: true, confidenceThreshold: 90, notifications: true },
-    { id: 'script-gen', name: 'Script Generator', icon: Terminal, enabled: true, autoExecute: false, confidenceThreshold: 80, notifications: false },
-    { id: 'email-parser', name: 'Email Parser', icon: Mail, enabled: true, autoExecute: true, confidenceThreshold: 85, notifications: false },
-    { id: 'asset-analyzer', name: 'Asset Analyzer', icon: HardDrive, enabled: true, autoExecute: false, confidenceThreshold: 80, notifications: false },
-    { id: 'voice-to-ticket', name: 'Voice to Ticket', icon: Mic, enabled: true, autoExecute: true, confidenceThreshold: 75, notifications: false },
-    { id: 'kb-generator', name: 'KB Generator', icon: Bot, enabled: true, autoExecute: false, confidenceThreshold: 85, notifications: true }
-  ]);
 
   const [systemPrompts, setSystemPrompts] = useState({
     ticketRouter: 'You are an intelligent ticket routing system. Analyze tickets and recommend optimal technician assignment based on skills, workload, and expertise.',
     responseDraft: 'You are a professional support assistant. Generate clear, empathetic, and solution-focused responses for customer tickets.',
     summarizer: 'You are a ticket summarization expert. Extract key points, actions taken, and current status from ticket threads.',
-    general: 'You are Cortex AI, an intelligent MSP assistant specializing in IT support, security, and operations.'
+    general: 'You are Cortex AI, an intelligent MSP assistant specializing in IT support, security, and operations.',
   });
 
-  const toggleTool = (toolId: string) => {
-    setToolConfigs(prev => prev.map(tool => 
-      tool.id === toolId ? { ...tool, enabled: !tool.enabled } : tool
-    ));
-  };
+  const autoCount = modules.reduce((s, m) => s + m.features.filter(f => f.enabled && f.autoExecute).length, 0);
 
-  const updateToolConfig = (toolId: string, field: keyof AIToolConfig, value: any) => {
-    setToolConfigs(prev => prev.map(tool =>
-      tool.id === toolId ? { ...tool, [field]: value } : tool
-    ));
+  const toggleModule = (modId: string) => {
+    setExpandedModules(prev => ({ ...prev, [modId]: !prev[modId] }));
   };
 
   const saveSettings = async () => {
     setSaving(true);
     await new Promise(r => setTimeout(r, 1000));
     setSaving(false);
-    toast({
-      title: "Settings Saved",
-      description: "Cortex AI configuration has been updated"
-    });
+    toast({ title: 'Settings Saved', description: 'Cortex AI configuration has been updated' });
   };
 
-  const enabledCount = toolConfigs.filter(t => t.enabled).length;
-  const autoCount = toolConfigs.filter(t => t.enabled && t.autoExecute).length;
+  const renderModuleCard = (mod: CortexModule) => {
+    const colors = MODULE_COLORS[mod.color] || MODULE_COLORS.purple;
+    const enabledInModule = mod.features.filter(f => f.enabled).length;
+    const allEnabled = enabledInModule === mod.features.length;
+    const isOpen = expandedModules[mod.id] ?? false;
+
+    return (
+      <Card key={mod.id} className={`${colors.border} ${colors.bg} transition-all`}>
+        <Collapsible open={isOpen} onOpenChange={() => toggleModule(mod.id)}>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-white/[0.02] transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{MODULE_ICONS[mod.id] || '🤖'}</span>
+                  <div>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      {mod.name}
+                      <Badge className={colors.badge}>
+                        {enabledInModule}/{mod.features.length} active
+                      </Badge>
+                    </CardTitle>
+                    <CardDescription className="text-xs">{mod.description}</CardDescription>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                    onClick={(e) => { e.stopPropagation(); toggleAllInModule(mod.id, !allEnabled); }}
+                  >
+                    {allEnabled ? <ToggleRight className="h-4 w-4 mr-1" /> : <ToggleLeft className="h-4 w-4 mr-1" />}
+                    {allEnabled ? 'Disable All' : 'Enable All'}
+                  </Button>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                </div>
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+
+          <CollapsibleContent>
+            <CardContent className="pt-0 space-y-2">
+              {mod.features.map(feature => (
+                <div
+                  key={feature.id}
+                  className={`p-3 border rounded-lg transition-all ${
+                    feature.enabled ? `${colors.border} bg-white/[0.02]` : 'border-border/30 opacity-50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0 mr-4">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm">{feature.name}</p>
+                        {feature.enabled && feature.autoExecute && (
+                          <Badge variant="outline" className="text-[10px] px-1.5">Auto</Badge>
+                        )}
+                        {feature.enabled && feature.notifications && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5">
+                            <Bell className="h-2 w-2 mr-0.5" />Alerts
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">{feature.description}</p>
+                    </div>
+
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                      {feature.enabled && (
+                        <>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-muted-foreground">Auto</span>
+                            <Switch
+                              checked={feature.autoExecute}
+                              onCheckedChange={(v) => updateFeature(feature.id, { autoExecute: v })}
+                              className="scale-75"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-muted-foreground">Notify</span>
+                            <Switch
+                              checked={feature.notifications}
+                              onCheckedChange={(v) => updateFeature(feature.id, { notifications: v })}
+                              className="scale-75"
+                            />
+                          </div>
+                          <div className="w-16">
+                            <Slider
+                              value={[feature.confidenceThreshold]}
+                              onValueChange={([v]) => updateFeature(feature.id, { confidenceThreshold: v })}
+                              min={50} max={100} step={5}
+                            />
+                            <span className="text-[9px] text-muted-foreground block text-center">{feature.confidenceThreshold}%</span>
+                          </div>
+                        </>
+                      )}
+                      <Switch
+                        checked={feature.enabled}
+                        onCheckedChange={() => toggleFeature(feature.id)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -141,123 +227,46 @@ export function CortexSettingsHub() {
                 <Gauge className="h-6 w-6 text-blue-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-blue-400">2,847</p>
-                <p className="text-sm text-muted-foreground">Requests Today</p>
+                <p className="text-2xl font-bold text-blue-400">{totalCount}</p>
+                <p className="text-sm text-muted-foreground">Total Features</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="tools" className="space-y-4">
+      <Tabs defaultValue="modules" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="tools">AI Tools</TabsTrigger>
+          <TabsTrigger value="modules">Features by Module</TabsTrigger>
           <TabsTrigger value="global">Global Settings</TabsTrigger>
           <TabsTrigger value="prompts">System Prompts</TabsTrigger>
           <TabsTrigger value="usage">Usage & Limits</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="tools" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Brain className="h-5 w-5 text-purple-400" />
-                    AI Tool Configuration
-                  </CardTitle>
-                  <CardDescription>
-                    Enable/disable tools and configure auto-execution settings
-                  </CardDescription>
-                </div>
-                <Button onClick={saveSettings} disabled={saving}>
-                  {saving ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                  Save Changes
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {toolConfigs.map((tool) => (
-                  <div
-                    key={tool.id}
-                    className={`p-4 border rounded-lg transition-all ${
-                      tool.enabled ? 'border-purple-500/30 bg-purple-500/5' : 'opacity-60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-                          tool.enabled ? 'bg-purple-500/20' : 'bg-muted'
-                        }`}>
-                          <tool.icon className={`h-5 w-5 ${tool.enabled ? 'text-purple-400' : 'text-muted-foreground'}`} />
-                        </div>
-                        <div>
-                          <p className="font-medium">{tool.name}</p>
-                          <div className="flex items-center gap-3 mt-1">
-                            {tool.enabled && (
-                              <>
-                                <Badge variant="outline" className="text-xs">
-                                  {tool.confidenceThreshold}% threshold
-                                </Badge>
-                                {tool.autoExecute && (
-                                  <Badge className="bg-cyan-500/20 text-cyan-400 text-xs">
-                                    Auto-Execute
-                                  </Badge>
-                                )}
-                                {tool.notifications && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    <Bell className="h-2 w-2 mr-1" />
-                                    Alerts
-                                  </Badge>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-6">
-                        {tool.enabled && (
-                          <>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">Auto</span>
-                              <Switch
-                                checked={tool.autoExecute}
-                                onCheckedChange={(v) => updateToolConfig(tool.id, 'autoExecute', v)}
-                              />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">Notify</span>
-                              <Switch
-                                checked={tool.notifications}
-                                onCheckedChange={(v) => updateToolConfig(tool.id, 'notifications', v)}
-                              />
-                            </div>
-                            <div className="w-24">
-                              <Slider
-                                value={[tool.confidenceThreshold]}
-                                onValueChange={([v]) => updateToolConfig(tool.id, 'confidenceThreshold', v)}
-                                min={50}
-                                max={100}
-                                step={5}
-                              />
-                            </div>
-                          </>
-                        )}
-                        <Switch
-                          checked={tool.enabled}
-                          onCheckedChange={() => toggleTool(tool.id)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Features by Module Tab */}
+        <TabsContent value="modules" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Brain className="h-5 w-5 text-purple-400" />
+                AI Features by Module
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Activate or deactivate AI features organized by their parent module
+              </p>
+            </div>
+            <Button onClick={saveSettings} disabled={saving}>
+              {saving ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+              Save Changes
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            {modules.map(mod => renderModuleCard(mod))}
+          </div>
         </TabsContent>
 
+        {/* Global Settings Tab */}
         <TabsContent value="global" className="space-y-4">
           <Card>
             <CardHeader>
@@ -277,17 +286,11 @@ export function CortexSettingsHub() {
                   onCheckedChange={(v) => setGlobalSettings({ ...globalSettings, aiEnabled: v })}
                 />
               </div>
-
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Default Model</label>
-                  <Select
-                    value={globalSettings.defaultModel}
-                    onValueChange={(v) => setGlobalSettings({ ...globalSettings, defaultModel: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                  <Select value={globalSettings.defaultModel} onValueChange={(v) => setGlobalSettings({ ...globalSettings, defaultModel: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="google/gemini-3-flash-preview">Gemini 3 Flash (Fast)</SelectItem>
                       <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash (Balanced)</SelectItem>
@@ -299,40 +302,26 @@ export function CortexSettingsHub() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Max Tokens</label>
-                  <Input
-                    type="number"
-                    value={globalSettings.maxTokens}
-                    onChange={(e) => setGlobalSettings({ ...globalSettings, maxTokens: parseInt(e.target.value) })}
-                  />
+                  <Input type="number" value={globalSettings.maxTokens} onChange={(e) => setGlobalSettings({ ...globalSettings, maxTokens: parseInt(e.target.value) })} />
                 </div>
               </div>
-
               <div className="space-y-2">
                 <label className="text-sm font-medium">Temperature: {globalSettings.temperature}</label>
-                <Slider
-                  value={[globalSettings.temperature * 100]}
-                  onValueChange={([v]) => setGlobalSettings({ ...globalSettings, temperature: v / 100 })}
-                  min={0}
-                  max={100}
-                  step={5}
-                />
+                <Slider value={[globalSettings.temperature * 100]} onValueChange={([v]) => setGlobalSettings({ ...globalSettings, temperature: v / 100 })} min={0} max={100} step={5} />
                 <p className="text-xs text-muted-foreground">Lower = more focused, Higher = more creative</p>
               </div>
-
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Request Logging</p>
                   <p className="text-sm text-muted-foreground">Log all AI requests for debugging</p>
                 </div>
-                <Switch
-                  checked={globalSettings.loggingEnabled}
-                  onCheckedChange={(v) => setGlobalSettings({ ...globalSettings, loggingEnabled: v })}
-                />
+                <Switch checked={globalSettings.loggingEnabled} onCheckedChange={(v) => setGlobalSettings({ ...globalSettings, loggingEnabled: v })} />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* System Prompts Tab */}
         <TabsContent value="prompts" className="space-y-4">
           <Card>
             <CardHeader>
@@ -340,43 +329,15 @@ export function CortexSettingsHub() {
                 <MessageSquare className="h-5 w-5" />
                 System Prompts
               </CardTitle>
-              <CardDescription>
-                Customize the AI behavior for different tools
-              </CardDescription>
+              <CardDescription>Customize the AI behavior for different tools</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">General Assistant Prompt</label>
-                <Textarea
-                  value={systemPrompts.general}
-                  onChange={(e) => setSystemPrompts({ ...systemPrompts, general: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Ticket Router Prompt</label>
-                <Textarea
-                  value={systemPrompts.ticketRouter}
-                  onChange={(e) => setSystemPrompts({ ...systemPrompts, ticketRouter: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Response Draft Prompt</label>
-                <Textarea
-                  value={systemPrompts.responseDraft}
-                  onChange={(e) => setSystemPrompts({ ...systemPrompts, responseDraft: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Summarizer Prompt</label>
-                <Textarea
-                  value={systemPrompts.summarizer}
-                  onChange={(e) => setSystemPrompts({ ...systemPrompts, summarizer: e.target.value })}
-                  rows={3}
-                />
-              </div>
+              {Object.entries(systemPrompts).map(([key, value]) => (
+                <div key={key} className="space-y-2">
+                  <label className="text-sm font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()} Prompt</label>
+                  <Textarea value={value} onChange={(e) => setSystemPrompts({ ...systemPrompts, [key]: e.target.value })} rows={3} />
+                </div>
+              ))}
               <Button onClick={saveSettings} disabled={saving}>
                 {saving ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                 Save Prompts
@@ -385,6 +346,7 @@ export function CortexSettingsHub() {
           </Card>
         </TabsContent>
 
+        {/* Usage & Limits Tab */}
         <TabsContent value="usage" className="space-y-4">
           <Card>
             <CardHeader>
@@ -397,62 +359,28 @@ export function CortexSettingsHub() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Cost Tracking</p>
-                  <p className="text-sm text-muted-foreground">Track AI usage costs</p>
+                  <p className="text-sm text-muted-foreground">Track AI usage costs across all modules</p>
                 </div>
-                <Switch
-                  checked={globalSettings.costTrackingEnabled}
-                  onCheckedChange={(v) => setGlobalSettings({ ...globalSettings, costTrackingEnabled: v })}
-                />
+                <Switch checked={globalSettings.costTrackingEnabled} onCheckedChange={(v) => setGlobalSettings({ ...globalSettings, costTrackingEnabled: v })} />
               </div>
-
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Monthly Budget ($)</label>
-                  <Input
-                    type="number"
-                    value={globalSettings.monthlyBudget}
-                    onChange={(e) => setGlobalSettings({ ...globalSettings, monthlyBudget: parseInt(e.target.value) })}
-                  />
+                  <Input type="number" value={globalSettings.monthlyBudget} onChange={(e) => setGlobalSettings({ ...globalSettings, monthlyBudget: parseInt(e.target.value) })} />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Alert at % of Budget</label>
-                  <Input
-                    type="number"
-                    value={globalSettings.notifyOnBudgetThreshold}
-                    onChange={(e) => setGlobalSettings({ ...globalSettings, notifyOnBudgetThreshold: parseInt(e.target.value) })}
-                  />
+                  <Input type="number" value={globalSettings.notifyOnBudgetThreshold} onChange={(e) => setGlobalSettings({ ...globalSettings, notifyOnBudgetThreshold: parseInt(e.target.value) })} />
                 </div>
               </div>
-
               <div className="space-y-2">
-                <label className="text-sm font-medium">Rate Limit (requests/minute)</label>
-                <Slider
-                  value={[globalSettings.rateLimitPerMinute]}
-                  onValueChange={([v]) => setGlobalSettings({ ...globalSettings, rateLimitPerMinute: v })}
-                  min={10}
-                  max={120}
-                  step={10}
-                />
-                <p className="text-xs text-muted-foreground">{globalSettings.rateLimitPerMinute} requests per minute</p>
+                <label className="text-sm font-medium">Rate Limit (requests/min): {globalSettings.rateLimitPerMinute}</label>
+                <Slider value={[globalSettings.rateLimitPerMinute]} onValueChange={([v]) => setGlobalSettings({ ...globalSettings, rateLimitPerMinute: v })} min={10} max={200} step={10} />
               </div>
-
-              <div className="p-4 bg-muted rounded-lg">
-                <h4 className="font-medium mb-3">Current Month Usage</h4>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-2xl font-bold text-purple-400">45,231</p>
-                    <p className="text-xs text-muted-foreground">Total Requests</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-cyan-400">2.1M</p>
-                    <p className="text-xs text-muted-foreground">Tokens Used</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-green-400">$127.45</p>
-                    <p className="text-xs text-muted-foreground">Estimated Cost</p>
-                  </div>
-                </div>
-              </div>
+              <Button onClick={saveSettings} disabled={saving}>
+                {saving ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                Save Limits
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
