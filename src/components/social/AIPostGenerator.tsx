@@ -9,7 +9,7 @@ import { useSocialPosts } from '@/hooks/useSocialPosts';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-import { Users, Home, Smartphone, CreditCard, Mail, Wifi } from 'lucide-react';
+import { Users, Home, Smartphone, CreditCard, Mail, Wifi, Monitor, Target, Eye, Brain, ClipboardCheck, BookOpen, Siren, ToggleLeft } from 'lucide-react';
 
 const CONTENT_TYPE_GROUPS = [
   {
@@ -54,6 +54,19 @@ const CONTENT_TYPE_GROUPS = [
     ]
   },
   {
+    label: 'Vanguard Modules',
+    types: [
+      { id: 'horizon_promo', label: 'Horizon RMM', description: 'Endpoint management & patch automation', icon: Monitor, color: 'text-cyan-400' },
+      { id: 'pursuit_promo', label: 'Pursuit XDR', description: 'Advanced threat detection & response', icon: Target, color: 'text-red-400' },
+      { id: 'response_promo', label: 'Response PSA', description: 'Helpdesk & service management', icon: Cpu, color: 'text-purple-400' },
+      { id: 'sentinel_promo', label: 'Sentinel SaaS', description: 'SaaS security monitoring', icon: Eye, color: 'text-orange-400' },
+      { id: 'recon_promo', label: 'Recon Pentest', description: 'Vulnerability assessment & pentesting', icon: Search, color: 'text-blue-400' },
+      { id: 'cortex_promo', label: 'Cortex AI', description: 'AI-powered IT intelligence', icon: Brain, color: 'text-violet-400' },
+      { id: 'comply_promo', label: 'Comply', description: 'Compliance lifecycle management', icon: ClipboardCheck, color: 'text-teal-400' },
+      { id: 'atlas_promo', label: 'Atlas Docs', description: 'IT documentation & knowledge base', icon: BookOpen, color: 'text-amber-400' },
+    ]
+  },
+  {
     label: 'General',
     types: [
       { id: 'security_tip', label: 'Security Tip', description: 'Quick actionable security advice', icon: Lightbulb, color: 'text-yellow-400' },
@@ -82,6 +95,7 @@ export function AIPostGenerator({ onUseContent }: AIPostGeneratorProps) {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [tone, setTone] = useState('professional');
   const [additionalContext, setAdditionalContext] = useState('');
+  const [mspMarketingMode, setMspMarketingMode] = useState(false);
 
   const platformTypes = [...new Set(bundleAccounts?.map(a => a.platform) || [])];
 
@@ -97,11 +111,14 @@ export function AIPostGenerator({ onUseContent }: AIPostGeneratorProps) {
         : additionalContext || 'Professional cybersecurity content';
 
       // Generate text first, then image with text context for product detection
+      const mspContext = mspMarketingMode 
+        ? '\n\nMSP MARKETING MODE: Frame this as a value-add for MSP clients. Use business-impact language ("increase MRR", "reduce churn", "upsell opportunity"). Include ROI statistics and competitive positioning.' 
+        : '';
       const textResult = await generatePost.mutateAsync({
         topic,
         tone,
         platforms: platformTypes,
-        additionalContext,
+        additionalContext: (additionalContext || '') + mspContext,
         contentType: selectedType,
       });
 
@@ -204,10 +221,30 @@ export function AIPostGenerator({ onUseContent }: AIPostGeneratorProps) {
           />
         </div>
 
+        {/* MSP Marketing Mode Toggle */}
+        <div className="flex items-center justify-between bg-muted/30 rounded-lg px-3 py-2.5">
+          <div className="flex items-center gap-2 text-sm">
+            <Building2 className="h-4 w-4 text-amber-400 shrink-0" />
+            <span className="text-muted-foreground">MSP Marketing Mode</span>
+          </div>
+          <button
+            onClick={() => setMspMarketingMode(!mspMarketingMode)}
+            className={cn(
+              "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
+              mspMarketingMode ? "bg-amber-500" : "bg-muted"
+            )}
+          >
+            <span className={cn(
+              "inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform",
+              mspMarketingMode ? "translate-x-4.5" : "translate-x-0.5"
+            )} />
+          </button>
+        </div>
+
         {/* Watermark Notice */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg px-3 py-2">
           <Download className="h-4 w-4 shrink-0" />
-          <span>Generated images include UltriumAI watermark automatically</span>
+          <span>Generated images include UltriumAI watermark automatically{mspMarketingMode ? ' (Vanguard Suite logo)' : ''}</span>
         </div>
 
         {/* Generate Button */}

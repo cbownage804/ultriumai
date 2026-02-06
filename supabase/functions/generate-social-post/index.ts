@@ -93,6 +93,16 @@ Link: https://ultriumai.com/products/safesuite`,
   vanguard_promo: `Promote Vanguard, the enterprise RMM and security platform. Highlight: endpoint management, XDR threat detection, remote monitoring, compliance automation, AI-powered threat response. Position as the MSP-grade security operations platform.`,
   ai_studio: `Promote AI Studio, the Business AI Control Plane. Highlight: custom GPT creation, knowledge base training, white-label deployment, enterprise governance, predictable AI capacity. Position for MSPs and internal teams who need controlled AI.`,
   
+  // Vanguard Module promos
+  horizon_promo: `Promote Vanguard Horizon, the RMM module. Highlight: real-time endpoint monitoring, automated patch management (Windows, Mac, Linux), software deployment, remote management tools. Position as the operational backbone that keeps every device healthy and compliant. Link: https://ultriumai.com/vanguard`,
+  pursuit_promo: `Promote Vanguard Pursuit, the XDR module. Highlight: advanced threat detection, MITRE ATT&CK mapping, automated remediation, cross-client SOC correlation, threat hunting. Position as the SOC team's force multiplier - AI-powered threat detection that catches what others miss. Link: https://ultriumai.com/vanguard`,
+  response_promo: `Promote Vanguard Response, the PSA/service desk module. Highlight: intelligent ticket routing, SLA management, co-managed IT workflows, time & billing, CSAT surveys. Position as the service management hub that turns chaos into organized, profitable operations. Link: https://ultriumai.com/vanguard`,
+  sentinel_promo: `Promote Vanguard Sentinel, the SaaS security module. Highlight: M365 security monitoring, Google Workspace protection, AI-powered alert triage, multi-tenant management. Position as cloud identity's watchdog - protecting the SaaS apps your clients depend on. Link: https://ultriumai.com/vanguard`,
+  recon_promo: `Promote Vanguard Recon, the pentest and vulnerability module. Highlight: vulnerability scanning, penetration testing workflows, network discovery, compliance scanning. Position as the offensive security tool that finds weaknesses before attackers do. Link: https://ultriumai.com/vanguard`,
+  cortex_promo: `Promote Vanguard Cortex, the AI operations module. Highlight: AI ticket summarization, pattern detection, knowledge base generation, smart ticket routing, predictive analytics. Position as the AI brain that makes every technician 10x more effective. Link: https://ultriumai.com/vanguard`,
+  comply_promo: `Promote Vanguard Comply, the compliance module. Highlight: SOC 2, HIPAA, ISO 27001 automation, evidence collection, control monitoring, audit-ready reporting. Position as compliance on autopilot - turning months of audit prep into days. Link: https://ultriumai.com/vanguard`,
+  atlas_promo: `Promote Vanguard Atlas, the documentation module. Highlight: knowledge base, runbooks, password vault, flexible assets, configuration tracking. Position as the single source of truth for IT operations - documentation done right. Link: https://ultriumai.com/vanguard`,
+  
   // General
   security_tip: `Provide quick, actionable security advice. Keep it practical and accessible. End with a soft nudge toward SafeSuite.`,
   awareness_campaign: `Create cybersecurity awareness content. Educate without being preachy. Make security approachable.`,
