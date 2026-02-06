@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { 
   Crown, Users, DollarSign, Building2, ArrowRight, Check, 
   TrendingUp, Package, Shield, Sparkles, Upload, Loader2 
@@ -13,6 +14,8 @@ import { RESELLER_TIERS, MODULE_ADDONS, ADDON_BUNDLES, calculateResellerMargin, 
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 import { uploadModuleLogos } from '@/utils/uploadModuleLogos';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function VanguardPartnerProgram() {
   useEffect(() => {
@@ -22,8 +25,12 @@ export default function VanguardPartnerProgram() {
   const [seats, setSeats] = useState(25);
   const [resalePrice, setResalePrice] = useState(12);
   const [uploadingLogos, setUploadingLogos] = useState(false);
+  const [showApplyDialog, setShowApplyDialog] = useState(false);
+  const [applyForm, setApplyForm] = useState({ companyName: '', contactName: '', email: '', phone: '', website: '' });
+  const [applying, setApplying] = useState(false);
   const { toast } = useToast();
-  const selectedAddon = MODULE_ADDONS[0]; // Pursuit XDR as default example
+  const { user } = useAuth();
+  const selectedAddon = MODULE_ADDONS[0];
   const wholesalePrice = selectedAddon.monthlyPricePerUser;
 
   // Determine tier based on seats
@@ -46,6 +53,40 @@ export default function VanguardPartnerProgram() {
     }
   };
 
+  const handleApplyPartner = async () => {
+    if (!user) {
+      toast({ title: 'Sign in required', description: 'Please sign in to apply.', variant: 'destructive' });
+      return;
+    }
+    if (!applyForm.companyName || !applyForm.contactName || !applyForm.email) {
+      toast({ title: 'Missing fields', description: 'Company name, contact name, and email are required.', variant: 'destructive' });
+      return;
+    }
+    setApplying(true);
+    try {
+      const startingTier = seats >= 50 ? 'platinum' : seats >= 25 ? 'gold' : 'silver';
+      const tierConfig = RESELLER_TIERS.find(t => t.id === startingTier)!;
+      const { error } = await supabase.from('reseller_partners').insert({
+        user_id: user.id,
+        company_name: applyForm.companyName,
+        contact_name: applyForm.contactName,
+        contact_email: applyForm.email,
+        phone: applyForm.phone || null,
+        website: applyForm.website || null,
+        tier: startingTier,
+        status: 'pending',
+        discount_percent: tierConfig.discountPercent,
+      });
+      if (error) throw error;
+      toast({ title: 'Application Submitted!', description: 'We\'ll review your application and get back to you within 48 hours.' });
+      setShowApplyDialog(false);
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setApplying(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Hero */}
@@ -62,7 +103,7 @@ export default function VanguardPartnerProgram() {
             Volume discounts up to 35% off wholesale.
           </p>
           <div className="flex gap-3 justify-center">
-            <Button size="lg" className="bg-gradient-to-r from-amber-500 to-violet-600 hover:opacity-90">
+            <Button size="lg" className="bg-gradient-to-r from-amber-500 to-violet-600 hover:opacity-90" onClick={() => setShowApplyDialog(true)}>
               Apply to Partner Program <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <Button 
@@ -265,6 +306,52 @@ export default function VanguardPartnerProgram() {
           </div>
         </div>
       </section>
+
+      {/* Apply Dialog */}
+      <Dialog open={showApplyDialog} onOpenChange={setShowApplyDialog}>
+        <DialogContent className="bg-[#0a0a0f] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>Apply to MSP Partner Program</DialogTitle>
+            <DialogDescription className="text-white/60">
+              Tell us about your MSP. We'll review and get back within 48 hours.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-white/70">Company Name *</Label>
+              <Input className="bg-white/10 border-white/20 text-white" value={applyForm.companyName} onChange={(e) => setApplyForm(f => ({ ...f, companyName: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-white/70">Contact Name *</Label>
+              <Input className="bg-white/10 border-white/20 text-white" value={applyForm.contactName} onChange={(e) => setApplyForm(f => ({ ...f, contactName: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-white/70">Email *</Label>
+              <Input type="email" className="bg-white/10 border-white/20 text-white" value={applyForm.email} onChange={(e) => setApplyForm(f => ({ ...f, email: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-white/70">Phone</Label>
+                <Input className="bg-white/10 border-white/20 text-white" value={applyForm.phone} onChange={(e) => setApplyForm(f => ({ ...f, phone: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-white/70">Website</Label>
+                <Input className="bg-white/10 border-white/20 text-white" value={applyForm.website} onChange={(e) => setApplyForm(f => ({ ...f, website: e.target.value }))} />
+              </div>
+            </div>
+            <p className="text-xs text-white/40">
+              Based on {seats} seats, you'll start as a <span className="text-cyan-400">{currentTier.name}</span> with {currentTier.discountPercent}% wholesale discount.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="border-white/20 text-white" onClick={() => setShowApplyDialog(false)}>Cancel</Button>
+            <Button className="bg-gradient-to-r from-amber-500 to-violet-600" onClick={handleApplyPartner} disabled={applying}>
+              {applying ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Submit Application
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
