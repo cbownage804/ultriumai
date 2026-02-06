@@ -26,7 +26,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
-  Users
+  Users,
+  ClipboardCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -157,6 +158,16 @@ export function VanguardNavigation() {
         { title: 'Scheduled Scans', path: `${basePath}/scheduled-scans`, icon: Activity },
         { title: 'Compliance', path: `${basePath}/compliance-reports`, icon: FileText },
         { title: 'Attack Paths', path: `${basePath}/attack-paths`, icon: Target },
+      ]
+    },
+    {
+      header: 'VANGUARD COMPLY',
+      description: 'Compliance & audit readiness',
+      tooltip: 'Automated compliance monitoring, evidence collection, and audit-ready reporting across SOC 2, HIPAA, ISO 27001, and more.',
+      module: 'comply',
+      dashboardPath: `${basePath}/comply`,
+      items: [
+        { title: 'Comply Dashboard', path: `${basePath}/comply`, icon: ClipboardCheck },
       ]
     },
     {
