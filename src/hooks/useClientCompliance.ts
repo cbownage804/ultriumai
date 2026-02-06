@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { getTemplatesForFramework } from '@/data/complianceControlTemplates';
 
 export interface ClientComplianceProfile {
   id: string;
@@ -123,6 +124,21 @@ export function useClientCompliance(clientId?: string) {
         is_enabled: true,
         compliance_score: 0,
       }, { onConflict: 'client_id,framework_type' });
+
+      // Auto-seed control templates as policies
+      const templates = getTemplatesForFramework(frameworkType);
+      if (templates.length > 0) {
+        const policyRows = templates.map(t => ({
+          user_id: user.id,
+          client_id: cId,
+          policy_name: t.policy_name,
+          framework_type: frameworkType,
+          description: t.description,
+          status: 'not_started',
+        }));
+        await (supabase as any).from('client_compliance_policies').insert(policyRows);
+      }
+
       if (clientId) await loadClientDetail(clientId);
       else await loadAllClients();
     } catch (err) {
