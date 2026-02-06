@@ -307,8 +307,11 @@ export function VanguardNavigation() {
   // Additional standalone items
   const additionalItems: NavItem[] = [
     { title: 'Partner Program', path: `${basePath}/partner-program`, icon: Crown, badge: 'NEW' },
+    { title: 'White-Label', path: `${basePath}/whitelabel`, icon: Wand2 },
+    { title: 'Client Provisioning', path: `${basePath}/client-provisioning`, icon: Upload },
+    { title: 'Reseller Billing', path: `${basePath}/reseller-billing`, icon: CreditCard },
+    { title: 'Marketing Kit', path: `${basePath}/marketing-kit`, icon: FileText },
     { title: 'MSP Billing', path: `${basePath}/msp-billing`, icon: CreditCard },
-    { title: 'Cortex Hub', path: `${basePath}/cortex`, icon: Sparkles, badge: 'NEW' },
     { title: 'Integrations', path: `${basePath}/integrations`, icon: Network, badge: 'NEW' },
     { title: 'Theme Editor', path: `${basePath}/theme-editor`, icon: Wand2 },
     { title: 'Customer Portal', path: `${basePath}/portal`, icon: Globe },
