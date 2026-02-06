@@ -350,8 +350,8 @@ export function WhiteLabelThemeEditor() {
 
               <div className="flex items-center justify-between pt-4">
                 <div>
-                  <Label>Hide "Powered by Ultrium" Badge</Label>
-                  <p className="text-xs text-slate-400">Remove the Ultrium branding from footer</p>
+                  <Label>Hide "Powered by Vanguard" Badge</Label>
+                  <p className="text-xs text-slate-400">Remove the Vanguard branding from footer</p>
                 </div>
                 <Switch 
                   checked={theme.hidePoweredBy}

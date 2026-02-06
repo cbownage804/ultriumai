@@ -3,7 +3,7 @@
 
 export const VANGUARD_AGENT_PY = `#!/usr/bin/env python3
 """
-Ultrium Vanguard Agent
+Vanguard Agent
 ======================
 A production-ready agent for the Vanguard security operations platform.
 Sends system metrics, polls for commands, runs network scans, collects Meraki data,
@@ -471,7 +471,7 @@ async def main_async(args: argparse.Namespace) -> None:
     config = load_config(args.config)
     setup_logging(config)
     log.info("=" * 60)
-    log.info("Ultrium Vanguard Agent Starting")
+    log.info("Vanguard Agent Starting")
     log.info(f"Device ID: {config['agent']['device_id']}")
     log.info(f"Endpoint: {config['api']['endpoint']}")
     log.info(f"nmap available: {check_nmap_installed()}")
@@ -506,7 +506,7 @@ def signal_handler(signum, frame):
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Ultrium Vanguard Agent")
+    parser = argparse.ArgumentParser(description="Vanguard Agent")
     parser.add_argument("--config", "-c", default="config.yaml", help="Path to configuration file")
     parser.add_argument("--register", "-r", action="store_true", help="Register agent and exit")
     parser.add_argument("--test", "-t", action="store_true", help="Test connection and exit")
@@ -524,7 +524,7 @@ if __name__ == "__main__":
 `;
 
 export const VANGUARD_CONFIG_TEMPLATE = `# =============================================================================
-# Ultrium Vanguard Agent Configuration
+# Vanguard Agent Configuration
 # =============================================================================
 # This configuration file is pre-populated with your credentials.
 # Review and customize the settings below for your environment.
@@ -596,7 +596,7 @@ sub_agents:
 
 export const VANGUARD_INSTALL_SH = `#!/bin/bash
 # =============================================================================
-# Ultrium Vanguard Agent Installation Script
+# Vanguard Agent Installation Script
 # =============================================================================
 # This script installs the Vanguard agent on Ubuntu/Debian systems.
 #
@@ -620,7 +620,7 @@ NC='\\033[0m' # No Color
 
 echo -e "\${GREEN}"
 echo "=============================================="
-echo "   Ultrium Vanguard Agent Installer v2.0"
+echo "   Vanguard Agent Installer v2.0"
 echo "=============================================="
 echo -e "\${NC}"
 
@@ -675,8 +675,8 @@ fi
 echo -e "\${YELLOW}Step 6: Installing systemd service...\${NC}"
 cat > /etc/systemd/system/\${SERVICE_NAME}.service << 'EOF'
 [Unit]
-Description=Ultrium Vanguard Agent
-Documentation=https://ultriumai.com/vanguard
+Description=Vanguard Agent
+Documentation=https://vanguard.app/docs
 After=network-online.target
 Wants=network-online.target
 
@@ -730,7 +730,7 @@ echo ""
 echo -e "\${GREEN}Done!\${NC}"
 `;
 
-export const VANGUARD_README = `# Ultrium Vanguard Agent
+export const VANGUARD_README = `# Vanguard Agent
 
 This bundle contains everything you need to deploy the Vanguard agent on your Raspberry Pi or Ubuntu server.
 
@@ -811,5 +811,5 @@ sudo /opt/vanguard/.venv/bin/python /opt/vanguard/vanguard_agent.py --scan
 
 ## Support
 
-Visit the Ultrium dashboard for device management and monitoring.
+Visit the Vanguard dashboard for device management and monitoring.
 `;

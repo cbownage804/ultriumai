@@ -258,7 +258,7 @@ export function LiveResponseTerminal() {
               className="bg-black rounded-lg p-4 font-mono text-sm h-[400px] overflow-auto"
             >
               <div className="text-green-400 mb-2">
-                Ultrium Vanguard Live Response v1.0
+                Vanguard Live Response v1.0
               </div>
               <div className="text-gray-400 mb-4">
                 Connected to {selectedAgent?.name} at {new Date(session.started_at).toLocaleTimeString()}

@@ -66,7 +66,7 @@ async function fetchPreBuiltExe(onProgress?: (progress: number, message: string)
 }
 
 // C# Program.cs content (for build reference only)
-const PROGRAM_CS = `// Ultrium Vanguard Agent - Entry Point
+const PROGRAM_CS = `// Vanguard Agent - Entry Point
 // Build: dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
 
 using Microsoft.Extensions.DependencyInjection;
@@ -82,7 +82,7 @@ if (args.Contains("--install"))
     var psi = new System.Diagnostics.ProcessStartInfo
     {
         FileName = "sc.exe",
-        Arguments = $"create VanguardAgent binPath= \\"{exePath}\\" start= auto DisplayName= \\"Ultrium Vanguard Agent\\"",
+        Arguments = $"create VanguardAgent binPath= \\"{exePath}\\" start= auto DisplayName= \\"Vanguard Agent\\"",
         UseShellExecute = false,
         CreateNoWindow = true
     };
@@ -119,7 +119,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "  Ultrium Vanguard Agent Installer" -ForegroundColor Cyan
+Write-Host "  Vanguard Agent Installer" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -160,7 +160,7 @@ Write-Host "Logs: Event Viewer > Windows Logs > Application" -ForegroundColor Wh
 // Batch file for quick install
 const INSTALL_BAT = `@echo off
 echo ============================================
-echo   Ultrium Vanguard Agent Installer
+echo   Vanguard Agent Installer
 echo ============================================
 echo.
 
@@ -196,7 +196,7 @@ pause
 // Uninstall batch file
 const UNINSTALL_BAT = `@echo off
 echo ============================================
-echo   Ultrium Vanguard Agent Uninstaller
+echo   Vanguard Agent Uninstaller
 echo ============================================
 echo.
 

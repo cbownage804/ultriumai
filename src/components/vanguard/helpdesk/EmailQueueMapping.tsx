@@ -247,7 +247,7 @@ export function EmailQueueMapping() {
                     type="email"
                     value={newMapping.email_address}
                     onChange={(e) => setNewMapping({ ...newMapping, email_address: e.target.value })}
-                    placeholder="help@ultriumai.com"
+                    placeholder="help@yourmsp.com"
                   />
                   <p className="text-xs text-muted-foreground">
                     Emails sent to this address will route to the selected queue

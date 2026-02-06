@@ -209,7 +209,7 @@ function handleLegacyClientCodeRequest(clientCode: string): Response {
       ClientName: 'Acme Corporation',
       ApiUrl: 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1',
       StorageUrl: 'https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/rmm-agents',
-      MSIPath: 'acme01/UltriumRMMAgent.msi',
+      MSIPath: 'acme01/VanguardAgent.msi',
       ContactEmail: 'admin@acme.com',
       Settings: {
         CheckinInterval: 300,
@@ -224,7 +224,7 @@ function handleLegacyClientCodeRequest(clientCode: string): Response {
       ClientName: 'Tech Solutions LLC',
       ApiUrl: 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1',
       StorageUrl: 'https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/rmm-agents',
-      MSIPath: 'tech02/UltriumRMMAgent.msi',
+      MSIPath: 'tech02/VanguardAgent.msi',
       ContactEmail: 'it@techsolutions.com',
       Settings: {
         CheckinInterval: 600,
@@ -239,7 +239,7 @@ function handleLegacyClientCodeRequest(clientCode: string): Response {
       ClientName: 'Global Services Inc',
       ApiUrl: 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1',
       StorageUrl: 'https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/rmm-agents',
-      MSIPath: 'global03/UltriumRMMAgent.msi',
+      MSIPath: 'global03/VanguardAgent.msi',
       ContactEmail: 'support@globalservices.com',
       Settings: {
         CheckinInterval: 180,
