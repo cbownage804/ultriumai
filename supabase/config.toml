@@ -310,3 +310,7 @@ verify_jwt = false
 # Portal user invitations (validates auth in code)
 [functions.portal-user-invite]
 verify_jwt = false
+
+# Recon Pentest Orchestrator (validates auth in code)
+[functions.recon-scan-orchestrator]
+verify_jwt = false
