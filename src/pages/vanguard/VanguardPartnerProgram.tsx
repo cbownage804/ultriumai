@@ -7,10 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { 
   Crown, Users, DollarSign, Building2, ArrowRight, Check, 
-  TrendingUp, Package, Shield, Sparkles 
+  TrendingUp, Package, Shield, Sparkles, Upload, Loader2 
 } from 'lucide-react';
 import { RESELLER_TIERS, MODULE_ADDONS, ADDON_BUNDLES, calculateResellerMargin, getBundleSavings } from '@/config/vanguardAddons';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
+import { uploadModuleLogos } from '@/utils/uploadModuleLogos';
+import { useToast } from '@/hooks/use-toast';
 
 export default function VanguardPartnerProgram() {
   useEffect(() => {
@@ -19,6 +21,8 @@ export default function VanguardPartnerProgram() {
 
   const [seats, setSeats] = useState(25);
   const [resalePrice, setResalePrice] = useState(12);
+  const [uploadingLogos, setUploadingLogos] = useState(false);
+  const { toast } = useToast();
   const selectedAddon = MODULE_ADDONS[0]; // Pursuit XDR as default example
   const wholesalePrice = selectedAddon.monthlyPricePerUser;
 
@@ -26,6 +30,21 @@ export default function VanguardPartnerProgram() {
   const currentTier = [...RESELLER_TIERS].reverse().find(t => seats >= t.minSeats) || RESELLER_TIERS[0];
   const discountedWholesale = wholesalePrice * (1 - currentTier.discountPercent / 100);
   const margin = calculateResellerMargin(discountedWholesale, resalePrice, seats);
+
+  const handleUploadLogos = async () => {
+    setUploadingLogos(true);
+    try {
+      const { results } = await uploadModuleLogos();
+      toast({
+        title: 'Logo Upload Complete',
+        description: results.join('\n'),
+      });
+    } catch (err: any) {
+      toast({ title: 'Upload Failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setUploadingLogos(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -42,9 +61,21 @@ export default function VanguardPartnerProgram() {
             White-label our security modules and sell to your clients at your markup. 
             Volume discounts up to 35% off wholesale.
           </p>
-          <Button size="lg" className="bg-gradient-to-r from-amber-500 to-violet-600 hover:opacity-90">
-            Apply to Partner Program <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="flex gap-3 justify-center">
+            <Button size="lg" className="bg-gradient-to-r from-amber-500 to-violet-600 hover:opacity-90">
+              Apply to Partner Program <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-white/20 text-white hover:bg-white/10"
+              onClick={handleUploadLogos}
+              disabled={uploadingLogos}
+            >
+              {uploadingLogos ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+              Sync Module Logos
+            </Button>
+          </div>
         </div>
       </div>
 
