@@ -300,6 +300,122 @@ export type Database = {
           },
         ]
       }
+      ai_agent_runs: {
+        Row: {
+          agent_id: string
+          created_at: string
+          credits_used: number | null
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          input_data: Json | null
+          output_data: Json | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          credits_used?: number | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          credits_used?: number | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_runs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agents: {
+        Row: {
+          conditions: Json | null
+          created_at: string
+          credit_budget: number | null
+          credits_used: number | null
+          description: string | null
+          id: string
+          is_enabled: boolean | null
+          is_template: boolean | null
+          last_run_at: string | null
+          model: string
+          name: string
+          output_mapping: Json | null
+          run_count: number | null
+          system_prompt: string | null
+          target_table: string
+          template_id: string | null
+          trigger_config: Json | null
+          trigger_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conditions?: Json | null
+          created_at?: string
+          credit_budget?: number | null
+          credits_used?: number | null
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          is_template?: boolean | null
+          last_run_at?: string | null
+          model?: string
+          name: string
+          output_mapping?: Json | null
+          run_count?: number | null
+          system_prompt?: string | null
+          target_table: string
+          template_id?: string | null
+          trigger_config?: Json | null
+          trigger_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conditions?: Json | null
+          created_at?: string
+          credit_budget?: number | null
+          credits_used?: number | null
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          is_template?: boolean | null
+          last_run_at?: string | null
+          model?: string
+          name?: string
+          output_mapping?: Json | null
+          run_count?: number | null
+          system_prompt?: string | null
+          target_table?: string
+          template_id?: string | null
+          trigger_config?: Json | null
+          trigger_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_analysis_results: {
         Row: {
           ai_analysis: string | null
@@ -8537,6 +8653,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "gpt_conversations_gpt_id_fkey"
+            columns: ["gpt_id"]
+            isOneToOne: false
+            referencedRelation: "custom_gpts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gpt_data_sources: {
+        Row: {
+          allowed_columns: string[] | null
+          created_at: string
+          description: string | null
+          gpt_id: string
+          id: string
+          is_enabled: boolean | null
+          table_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allowed_columns?: string[] | null
+          created_at?: string
+          description?: string | null
+          gpt_id: string
+          id?: string
+          is_enabled?: boolean | null
+          table_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allowed_columns?: string[] | null
+          created_at?: string
+          description?: string | null
+          gpt_id?: string
+          id?: string
+          is_enabled?: boolean | null
+          table_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gpt_data_sources_gpt_id_fkey"
             columns: ["gpt_id"]
             isOneToOne: false
             referencedRelation: "custom_gpts"

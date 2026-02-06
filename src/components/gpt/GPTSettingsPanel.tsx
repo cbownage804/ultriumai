@@ -22,6 +22,7 @@ import { GPTConfiguration } from "./GPTConfiguration";
 import { GPTKnowledgeBase } from "./GPTKnowledgeBase";
 import { GPTActionsPanel } from "./GPTActionsPanel";
 import { GPTDeployPanel } from "./GPTDeployPanel";
+import { GPTDataSources } from "./GPTDataSources";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -41,7 +42,8 @@ interface GPTSettingsPanelProps {
 // Branding tab removed - all branding options now in Configuration > General and Advanced tabs
 const tabs = [
   { id: "configuration", label: "Configuration", icon: Sliders, description: "Settings & branding" },
-  { id: "knowledge", label: "Knowledge", icon: BookOpen, description: "Data sources" },
+  { id: "knowledge", label: "Knowledge", icon: BookOpen, description: "Training data" },
+  { id: "datasources", label: "Data Sources", icon: Bot, description: "Ask AI" },
   { id: "actions", label: "Actions", icon: Zap, description: "Automations" },
   { id: "analytics", label: "Analytics", icon: BarChart3, description: "Performance" },
   { id: "sharing", label: "Team", icon: Users, description: "Collaboration" },
@@ -68,6 +70,8 @@ export function GPTSettingsPanel({ gpt, onBack }: GPTSettingsPanelProps) {
         return <GPTConfiguration gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
       case "knowledge":
         return <GPTKnowledgeBase gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
+      case "datasources":
+        return <GPTDataSources gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
       case "actions":
         return <GPTActionsPanel gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
       case "analytics":
