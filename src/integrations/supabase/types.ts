@@ -5389,6 +5389,66 @@ export type Database = {
         }
         Relationships: []
       }
+      compliance_evidence_vault: {
+        Row: {
+          client_id: string
+          created_at: string
+          description: string | null
+          evidence_name: string
+          evidence_type: string
+          expires_at: string | null
+          file_size_bytes: number | null
+          file_url: string | null
+          framework_type: string
+          id: string
+          policy_id: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          status: string
+          updated_at: string
+          uploaded_by: string | null
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          description?: string | null
+          evidence_name: string
+          evidence_type?: string
+          expires_at?: string | null
+          file_size_bytes?: number | null
+          file_url?: string | null
+          framework_type: string
+          id?: string
+          policy_id?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          evidence_name?: string
+          evidence_type?: string
+          expires_at?: string | null
+          file_size_bytes?: number | null
+          file_url?: string | null
+          framework_type?: string
+          id?: string
+          policy_id?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       compliance_frameworks: {
         Row: {
           automated_checks: Json | null
@@ -5622,6 +5682,132 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      compliance_training: {
+        Row: {
+          assigned_date: string
+          certificate_url: string | null
+          client_id: string | null
+          completed_date: string | null
+          created_at: string
+          department: string | null
+          due_date: string | null
+          employee_email: string | null
+          employee_name: string
+          framework_type: string | null
+          id: string
+          notes: string | null
+          score: number | null
+          status: string
+          training_name: string
+          training_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_date?: string
+          certificate_url?: string | null
+          client_id?: string | null
+          completed_date?: string | null
+          created_at?: string
+          department?: string | null
+          due_date?: string | null
+          employee_email?: string | null
+          employee_name: string
+          framework_type?: string | null
+          id?: string
+          notes?: string | null
+          score?: number | null
+          status?: string
+          training_name: string
+          training_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_date?: string
+          certificate_url?: string | null
+          client_id?: string | null
+          completed_date?: string | null
+          created_at?: string
+          department?: string | null
+          due_date?: string | null
+          employee_email?: string | null
+          employee_name?: string
+          framework_type?: string | null
+          id?: string
+          notes?: string | null
+          score?: number | null
+          status?: string
+          training_name?: string
+          training_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      compliance_vendors: {
+        Row: {
+          client_id: string | null
+          compliance_status: string
+          contact_email: string | null
+          contact_name: string | null
+          contract_expiry: string | null
+          created_at: string
+          data_access_level: string | null
+          frameworks: string[] | null
+          id: string
+          last_assessment_date: string | null
+          next_review_date: string | null
+          notes: string | null
+          risk_level: string
+          soc2_report_url: string | null
+          updated_at: string
+          user_id: string
+          vendor_category: string | null
+          vendor_name: string
+        }
+        Insert: {
+          client_id?: string | null
+          compliance_status?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contract_expiry?: string | null
+          created_at?: string
+          data_access_level?: string | null
+          frameworks?: string[] | null
+          id?: string
+          last_assessment_date?: string | null
+          next_review_date?: string | null
+          notes?: string | null
+          risk_level?: string
+          soc2_report_url?: string | null
+          updated_at?: string
+          user_id: string
+          vendor_category?: string | null
+          vendor_name: string
+        }
+        Update: {
+          client_id?: string | null
+          compliance_status?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contract_expiry?: string | null
+          created_at?: string
+          data_access_level?: string | null
+          frameworks?: string[] | null
+          id?: string
+          last_assessment_date?: string | null
+          next_review_date?: string | null
+          notes?: string | null
+          risk_level?: string
+          soc2_report_url?: string | null
+          updated_at?: string
+          user_id?: string
+          vendor_category?: string | null
+          vendor_name?: string
+        }
+        Relationships: []
       }
       contact_form_rate_limits: {
         Row: {

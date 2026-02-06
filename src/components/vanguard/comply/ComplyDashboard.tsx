@@ -1,24 +1,30 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Users, Shield, FileText, ClipboardCheck, Target, Database } from 'lucide-react';
+import { BarChart3, Users, Shield, FileText, ClipboardCheck, Target, Database, Archive, Building2, GraduationCap } from 'lucide-react';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 import { ComplyOverview } from './ComplyOverview';
 import { ComplyClientsView } from './ComplyClientsView';
 import { ComplyGapAnalysis } from './ComplyGapAnalysis';
 import { ComplyEvidenceCollection } from './ComplyEvidenceCollection';
+import { ComplyEvidenceVault } from './ComplyEvidenceVault';
+import { ComplyVendorRisk } from './ComplyVendorRisk';
+import { ComplyTrainingTracker } from './ComplyTrainingTracker';
 import { ComplianceScanner } from '@/components/vanguard/ComplianceScanner';
 import { ComplianceReportGenerator } from '@/components/vanguard/ComplianceReportGenerator';
 import { ComplianceScorecard } from '@/components/vanguard/ComplianceScorecard';
-import { ModuleIntroBanner, ModuleGettingStarted } from '@/components/vanguard/shared/ModuleInstructions';
+import { ModuleIntroBanner } from '@/components/vanguard/shared/ModuleInstructions';
 
 export function ComplyDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
 
   const tabConfig = [
     { value: 'overview', label: 'Overview', icon: BarChart3 },
-    { value: 'clients', label: 'Client Compliance', icon: Users },
+    { value: 'clients', label: 'Clients', icon: Users },
     { value: 'gap', label: 'Gap Analysis', icon: Target },
     { value: 'evidence', label: 'Evidence', icon: Database },
+    { value: 'vault', label: 'Vault', icon: Archive },
+    { value: 'vendors', label: 'Vendors', icon: Building2 },
+    { value: 'training', label: 'Training', icon: GraduationCap },
     { value: 'scanner', label: 'Scanner', icon: Shield },
     { value: 'scorecard', label: 'Scorecard', icon: ClipboardCheck },
     { value: 'reports', label: 'Reports', icon: FileText },
@@ -26,7 +32,6 @@ export function ComplyDashboard() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-xl bg-teal-500/20 border border-teal-500/30">
           <ModuleLogo module="comply" size="lg" glow />
@@ -39,16 +44,14 @@ export function ComplyDashboard() {
         </div>
       </div>
 
-      {/* Intro Banner */}
       <ModuleIntroBanner
         title="Welcome to Vanguard Comply"
-        description="Track compliance across SOC 2, HIPAA, PCI-DSS, ISO 27001, GDPR, GLBA, WISP, and more. Auto-seeded controls, multi-source evidence collection, gap analysis, and audit-ready reports."
-        features={['13 Frameworks', 'Auto-Seeded Controls', 'Multi-Source Evidence', 'Gap Analysis', 'Audit Readiness']}
+        description="Full Vanta-parity compliance platform: 13 frameworks, auto-seeded controls, multi-source evidence, gap analysis, evidence vault, vendor risk management, employee training, and audit-ready reports."
+        features={['13 Frameworks', 'Auto-Seeded Controls', 'Evidence Vault', 'Vendor Risk', 'Training Tracker', 'Gap Analysis']}
         accentColor="teal"
         storageKey="comply-intro"
       />
 
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList data-tour="comply-overview" className="bg-black/40 border border-white/10 flex flex-wrap h-auto">
           {tabConfig.map(tab => {
@@ -62,33 +65,16 @@ export function ComplyDashboard() {
           })}
         </TabsList>
 
-        <TabsContent value="overview" data-tour="comply-clients" className="mt-6">
-          <ComplyOverview />
-        </TabsContent>
-
-        <TabsContent value="clients" className="mt-6">
-          <ComplyClientsView />
-        </TabsContent>
-
-        <TabsContent value="gap" className="mt-6">
-          <ComplyGapAnalysis />
-        </TabsContent>
-
-        <TabsContent value="evidence" className="mt-6">
-          <ComplyEvidenceCollection />
-        </TabsContent>
-
-        <TabsContent value="scanner" className="mt-6">
-          <ComplianceScanner />
-        </TabsContent>
-
-        <TabsContent value="scorecard" className="mt-6">
-          <ComplianceScorecard />
-        </TabsContent>
-
-        <TabsContent value="reports" className="mt-6">
-          <ComplianceReportGenerator />
-        </TabsContent>
+        <TabsContent value="overview" data-tour="comply-clients" className="mt-6"><ComplyOverview /></TabsContent>
+        <TabsContent value="clients" className="mt-6"><ComplyClientsView /></TabsContent>
+        <TabsContent value="gap" className="mt-6"><ComplyGapAnalysis /></TabsContent>
+        <TabsContent value="evidence" className="mt-6"><ComplyEvidenceCollection /></TabsContent>
+        <TabsContent value="vault" className="mt-6"><ComplyEvidenceVault /></TabsContent>
+        <TabsContent value="vendors" className="mt-6"><ComplyVendorRisk /></TabsContent>
+        <TabsContent value="training" className="mt-6"><ComplyTrainingTracker /></TabsContent>
+        <TabsContent value="scanner" className="mt-6"><ComplianceScanner /></TabsContent>
+        <TabsContent value="scorecard" className="mt-6"><ComplianceScorecard /></TabsContent>
+        <TabsContent value="reports" className="mt-6"><ComplianceReportGenerator /></TabsContent>
       </Tabs>
     </div>
   );
