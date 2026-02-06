@@ -260,6 +260,11 @@ export const getVanguardProtectedRoutes = () => [
   // MSP Billing Dashboard
   <Route key="vanguard-msp-billing" path="msp-billing" element={<LazyProtectedPage component={VanguardMSPBilling} />} />,
   <Route key="vanguard-partner-program" path="partner-program" element={<LazyProtectedPage component={VanguardPartnerProgram} />} />,
+  // Reseller Program routes
+  <Route key="vanguard-whitelabel" path="whitelabel" element={<LazyProtectedPage component={WhiteLabelSettings} />} />,
+  <Route key="vanguard-reseller-billing" path="reseller-billing" element={<LazyProtectedPage component={ResellerBillingPortal} />} />,
+  <Route key="vanguard-marketing-kit" path="marketing-kit" element={<LazyProtectedPage component={MarketingKitGenerator} />} />,
+  <Route key="vanguard-client-provisioning" path="client-provisioning" element={<LazyProtectedPage component={ClientProvisioning} />} />,
   // Sentinel M365 Security Monitoring
   <Route key="vanguard-sentinel" path="sentinel" element={<LazyProtectedPage component={VanguardSentinel} />} />,
   <Route key="vanguard-sentinel-module" path="sentinel/:moduleId" element={<LazyProtectedPage component={VanguardSentinel} />} />,
