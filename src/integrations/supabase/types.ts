@@ -15298,6 +15298,81 @@ export type Database = {
           },
         ]
       }
+      recon_discovered_services: {
+        Row: {
+          banner: string | null
+          created_at: string
+          engagement_id: string | null
+          host_ip: string
+          hostname: string | null
+          id: string
+          metadata: Json | null
+          os_guess: string | null
+          port: number
+          product: string | null
+          protocol: string | null
+          scan_job_id: string | null
+          service_name: string | null
+          service_version: string | null
+          ssl_info: Json | null
+          state: string | null
+          user_id: string
+        }
+        Insert: {
+          banner?: string | null
+          created_at?: string
+          engagement_id?: string | null
+          host_ip: string
+          hostname?: string | null
+          id?: string
+          metadata?: Json | null
+          os_guess?: string | null
+          port: number
+          product?: string | null
+          protocol?: string | null
+          scan_job_id?: string | null
+          service_name?: string | null
+          service_version?: string | null
+          ssl_info?: Json | null
+          state?: string | null
+          user_id: string
+        }
+        Update: {
+          banner?: string | null
+          created_at?: string
+          engagement_id?: string | null
+          host_ip?: string
+          hostname?: string | null
+          id?: string
+          metadata?: Json | null
+          os_guess?: string | null
+          port?: number
+          product?: string | null
+          protocol?: string | null
+          scan_job_id?: string | null
+          service_name?: string | null
+          service_version?: string | null
+          ssl_info?: Json | null
+          state?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recon_discovered_services_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "recon_pentest_engagements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recon_discovered_services_scan_job_id_fkey"
+            columns: ["scan_job_id"]
+            isOneToOne: false
+            referencedRelation: "recon_scan_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recon_inventory: {
         Row: {
           activated_at: string | null
@@ -15462,6 +15537,369 @@ export type Database = {
           },
         ]
       }
+      recon_pentest_engagements: {
+        Row: {
+          assigned_recon_unit_id: string | null
+          client_id: string | null
+          created_at: string
+          critical_count: number | null
+          description: string | null
+          end_date: string | null
+          engagement_name: string
+          engagement_type: string
+          findings_count: number | null
+          high_count: number | null
+          id: string
+          info_count: number | null
+          low_count: number | null
+          medium_count: number | null
+          metadata: Json | null
+          overall_risk_score: number | null
+          rules_of_engagement: string | null
+          scope_exclusions: Json | null
+          scope_targets: Json | null
+          start_date: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_recon_unit_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          critical_count?: number | null
+          description?: string | null
+          end_date?: string | null
+          engagement_name: string
+          engagement_type?: string
+          findings_count?: number | null
+          high_count?: number | null
+          id?: string
+          info_count?: number | null
+          low_count?: number | null
+          medium_count?: number | null
+          metadata?: Json | null
+          overall_risk_score?: number | null
+          rules_of_engagement?: string | null
+          scope_exclusions?: Json | null
+          scope_targets?: Json | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_recon_unit_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          critical_count?: number | null
+          description?: string | null
+          end_date?: string | null
+          engagement_name?: string
+          engagement_type?: string
+          findings_count?: number | null
+          high_count?: number | null
+          id?: string
+          info_count?: number | null
+          low_count?: number | null
+          medium_count?: number | null
+          metadata?: Json | null
+          overall_risk_score?: number | null
+          rules_of_engagement?: string | null
+          scope_exclusions?: Json | null
+          scope_targets?: Json | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recon_pentest_engagements_assigned_recon_unit_id_fkey"
+            columns: ["assigned_recon_unit_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recon_remediation_tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          engagement_id: string | null
+          finding_id: string
+          id: string
+          notes: string | null
+          priority: string | null
+          status: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          verification_scan_id: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          engagement_id?: string | null
+          finding_id: string
+          id?: string
+          notes?: string | null
+          priority?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          verification_scan_id?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          engagement_id?: string | null
+          finding_id?: string
+          id?: string
+          notes?: string | null
+          priority?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          verification_scan_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recon_remediation_tasks_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "recon_pentest_engagements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recon_remediation_tasks_finding_id_fkey"
+            columns: ["finding_id"]
+            isOneToOne: false
+            referencedRelation: "recon_vulnerability_findings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recon_remediation_tasks_verification_scan_id_fkey"
+            columns: ["verification_scan_id"]
+            isOneToOne: false
+            referencedRelation: "recon_scan_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recon_report_templates: {
+        Row: {
+          branding: Json | null
+          created_at: string
+          id: string
+          is_default: boolean | null
+          report_type: string
+          sections: Json | null
+          template_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          branding?: Json | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          report_type: string
+          sections?: Json | null
+          template_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          branding?: Json | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          report_type?: string
+          sections?: Json | null
+          template_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recon_scan_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          duration_seconds: number | null
+          engagement_id: string | null
+          error_message: string | null
+          hosts_scanned: number | null
+          hosts_total: number | null
+          id: string
+          port_range: string | null
+          progress_percent: number | null
+          raw_output: Json | null
+          recon_unit_id: string | null
+          scan_config: Json | null
+          scan_name: string
+          scan_profile: string | null
+          scan_type: string
+          services_found: number | null
+          started_at: string | null
+          status: string
+          targets: Json
+          updated_at: string
+          user_id: string
+          vulns_found: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          engagement_id?: string | null
+          error_message?: string | null
+          hosts_scanned?: number | null
+          hosts_total?: number | null
+          id?: string
+          port_range?: string | null
+          progress_percent?: number | null
+          raw_output?: Json | null
+          recon_unit_id?: string | null
+          scan_config?: Json | null
+          scan_name: string
+          scan_profile?: string | null
+          scan_type: string
+          services_found?: number | null
+          started_at?: string | null
+          status?: string
+          targets?: Json
+          updated_at?: string
+          user_id: string
+          vulns_found?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          engagement_id?: string | null
+          error_message?: string | null
+          hosts_scanned?: number | null
+          hosts_total?: number | null
+          id?: string
+          port_range?: string | null
+          progress_percent?: number | null
+          raw_output?: Json | null
+          recon_unit_id?: string | null
+          scan_config?: Json | null
+          scan_name?: string
+          scan_profile?: string | null
+          scan_type?: string
+          services_found?: number | null
+          started_at?: string | null
+          status?: string
+          targets?: Json
+          updated_at?: string
+          user_id?: string
+          vulns_found?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recon_scan_jobs_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "recon_pentest_engagements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recon_scan_jobs_recon_unit_id_fkey"
+            columns: ["recon_unit_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recon_scan_schedules: {
+        Row: {
+          auto_create_tickets: boolean | null
+          created_at: string
+          frequency: string
+          id: string
+          is_active: boolean | null
+          last_job_id: string | null
+          last_run_at: string | null
+          next_run_at: string | null
+          notification_emails: string[] | null
+          recon_unit_id: string | null
+          scan_config: Json | null
+          scan_type: string
+          schedule_name: string
+          targets: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_create_tickets?: boolean | null
+          created_at?: string
+          frequency: string
+          id?: string
+          is_active?: boolean | null
+          last_job_id?: string | null
+          last_run_at?: string | null
+          next_run_at?: string | null
+          notification_emails?: string[] | null
+          recon_unit_id?: string | null
+          scan_config?: Json | null
+          scan_type: string
+          schedule_name: string
+          targets?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_create_tickets?: boolean | null
+          created_at?: string
+          frequency?: string
+          id?: string
+          is_active?: boolean | null
+          last_job_id?: string | null
+          last_run_at?: string | null
+          next_run_at?: string | null
+          notification_emails?: string[] | null
+          recon_unit_id?: string | null
+          scan_config?: Json | null
+          scan_type?: string
+          schedule_name?: string
+          targets?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recon_scan_schedules_last_job_id_fkey"
+            columns: ["last_job_id"]
+            isOneToOne: false
+            referencedRelation: "recon_scan_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recon_scan_schedules_recon_unit_id_fkey"
+            columns: ["recon_unit_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recon_subscriptions: {
         Row: {
           billing_cycle: string | null
@@ -15533,6 +15971,117 @@ export type Database = {
             columns: ["recon_unit_id"]
             isOneToOne: false
             referencedRelation: "recon_inventory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recon_vulnerability_findings: {
+        Row: {
+          affected_host: string
+          affected_port: number | null
+          affected_protocol: string | null
+          affected_service: string | null
+          attack_vector: string | null
+          compliance_frameworks: string[] | null
+          created_at: string
+          cve_ids: string[] | null
+          cvss_score: number | null
+          cvss_vector: string | null
+          cwe_id: string | null
+          description: string | null
+          engagement_id: string | null
+          evidence: Json | null
+          exploitability: string | null
+          id: string
+          metadata: Json | null
+          proof_of_concept: string | null
+          reference_links: Json | null
+          remediated_at: string | null
+          remediation: string | null
+          remediation_effort: string | null
+          scan_job_id: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          affected_host: string
+          affected_port?: number | null
+          affected_protocol?: string | null
+          affected_service?: string | null
+          attack_vector?: string | null
+          compliance_frameworks?: string[] | null
+          created_at?: string
+          cve_ids?: string[] | null
+          cvss_score?: number | null
+          cvss_vector?: string | null
+          cwe_id?: string | null
+          description?: string | null
+          engagement_id?: string | null
+          evidence?: Json | null
+          exploitability?: string | null
+          id?: string
+          metadata?: Json | null
+          proof_of_concept?: string | null
+          reference_links?: Json | null
+          remediated_at?: string | null
+          remediation?: string | null
+          remediation_effort?: string | null
+          scan_job_id?: string | null
+          severity: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          affected_host?: string
+          affected_port?: number | null
+          affected_protocol?: string | null
+          affected_service?: string | null
+          attack_vector?: string | null
+          compliance_frameworks?: string[] | null
+          created_at?: string
+          cve_ids?: string[] | null
+          cvss_score?: number | null
+          cvss_vector?: string | null
+          cwe_id?: string | null
+          description?: string | null
+          engagement_id?: string | null
+          evidence?: Json | null
+          exploitability?: string | null
+          id?: string
+          metadata?: Json | null
+          proof_of_concept?: string | null
+          reference_links?: Json | null
+          remediated_at?: string | null
+          remediation?: string | null
+          remediation_effort?: string | null
+          scan_job_id?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recon_vulnerability_findings_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "recon_pentest_engagements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recon_vulnerability_findings_scan_job_id_fkey"
+            columns: ["scan_job_id"]
+            isOneToOne: false
+            referencedRelation: "recon_scan_jobs"
             referencedColumns: ["id"]
           },
         ]
