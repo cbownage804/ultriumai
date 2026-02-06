@@ -6,12 +6,15 @@ import { Switch } from "@/components/ui/switch";
 import { 
   Shield, Lock, Search, Bot, Network, Wrench, MessageSquare, 
   Check, ArrowRight, Zap, Building2, Users, Crown, Package,
-  Globe, Database, Key, Loader2
+  Globe, Database, Key, Loader2, Layers, Target, Eye, Brain, 
+  ClipboardCheck, BookOpen, BarChart3, Siren
 } from "lucide-react";
 import { Link as RouterLink } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { MODULE_ADDONS, ADDON_BUNDLES, getBundleSavings } from '@/config/vanguardAddons';
+import { ModuleLogo, type ModuleName } from '@/components/vanguard/ModuleLogo';
 
 interface ProductModule {
   id: string;
@@ -172,6 +175,15 @@ const pricingTiers: PricingTier[] = [
   },
 ];
 
+const moduleIconMap: Record<string, React.ComponentType<any>> = {
+  pursuit: Target,
+  sentinel: Eye,
+  recon: Search,
+  cortex: Brain,
+  comply: ClipboardCheck,
+  atlas: BookOpen,
+};
+
 const VanguardSuite = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -182,21 +194,21 @@ const VanguardSuite = () => {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const currentTier = pricingTiers.find(t => t.id === selectedTier)!;
-  const discount = billingCycle === 'annual' ? 0.8 : 1; // 20% off annual
+  const discount = billingCycle === 'annual' ? 0.8 : 1;
   
   const userMonthly = currentTier.userPrice * userCount * discount;
   const addonsMonthly = selectedAddons.reduce((sum, addonId) => {
-    const addon = products.find(p => p.id === addonId);
-    return sum + (addon?.monthlyPrice || 0) * userCount * discount;
+    const addon = MODULE_ADDONS.find(a => a.id === addonId);
+    return sum + (addon?.monthlyPricePerUser || 0) * userCount * discount;
   }, 0);
   
   const totalMonthly = userMonthly + addonsMonthly;
 
-  const toggleAddon = (productId: string) => {
+  const toggleAddon = (addonId: string) => {
     setSelectedAddons(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
+      prev.includes(addonId) 
+        ? prev.filter(id => id !== addonId)
+        : [...prev, addonId]
     );
   };
 
@@ -306,6 +318,102 @@ const VanguardSuite = () => {
         </div>
       </section>
 
+      {/* Vanguard Module Add-Ons */}
+      <section className="py-16 border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-gradient-to-r from-amber-500/20 to-violet-500/20 border-amber-500/30 text-amber-400">
+              <Layers className="h-3 w-3 mr-1" /> Module Add-Ons
+            </Badge>
+            <h2 className="text-3xl font-bold mb-4">Supercharge Your Stack</h2>
+            <p className="text-white/60">Add specialized security and operations modules à la carte</p>
+          </div>
+
+          {/* Module Add-On Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+            {MODULE_ADDONS.map((addon) => {
+              const isSelected = selectedAddons.includes(addon.id);
+              return (
+                <Card 
+                  key={addon.id} 
+                  className={`bg-white/5 border-white/10 cursor-pointer transition-all ${
+                    isSelected ? 'border-cyan-500 ring-1 ring-cyan-500/20' : 'hover:border-white/20'
+                  }`}
+                  onClick={() => toggleAddon(addon.id)}
+                >
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ModuleLogo module={addon.module} size="sm" />
+                        <CardTitle className="text-white text-sm">{addon.name}</CardTitle>
+                      </div>
+                      <Badge variant="outline" className="text-xs border-white/20 text-white/60">
+                        ${addon.monthlyPricePerUser}/user/mo
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-white/50 text-xs mb-3">{addon.description}</p>
+                    <div className="space-y-1">
+                      {addon.features.slice(0, 3).map((f, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs text-white/40">
+                          <Check className="h-3 w-3 text-cyan-400/60" />
+                          {f}
+                        </div>
+                      ))}
+                    </div>
+                    {addon.includedIn.length > 0 && (
+                      <p className="text-[10px] text-white/30 mt-2">
+                        Included in: {addon.includedIn.map(t => t.replace('msp-', '').replace('it-', '')).join(', ')}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Strategic Bundles */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {ADDON_BUNDLES.map((bundle) => (
+              <Card key={bundle.id} className="bg-gradient-to-br from-cyan-500/5 to-purple-600/5 border-white/10 hover:border-cyan-500/30 transition-all">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <Package className="h-5 w-5 text-cyan-400" />
+                      {bundle.name}
+                    </CardTitle>
+                    <Badge className="bg-green-500/20 text-green-400 border-0">
+                      Save ${getBundleSavings(bundle)}/user/mo
+                    </Badge>
+                  </div>
+                  <CardDescription className="text-white/50">{bundle.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-baseline gap-2 mb-3">
+                    <span className="text-3xl font-bold text-white">${bundle.monthlyPricePerUser}</span>
+                    <span className="text-white/50 text-sm">/user/mo</span>
+                    <span className="text-white/30 text-sm line-through ml-2">${bundle.alaCartePricePerUser}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {bundle.addonIds.map(id => {
+                      const addon = MODULE_ADDONS.find(a => a.id === id);
+                      if (!addon) return null;
+                      return (
+                        <Badge key={id} variant="outline" className="border-white/20 text-white/60 text-xs">
+                          <ModuleLogo module={addon.module} size="xs" className="mr-1" />
+                          {addon.name}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Section */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4">
@@ -313,7 +421,6 @@ const VanguardSuite = () => {
             <h2 className="text-3xl font-bold mb-4">Choose Your Plan</h2>
             <p className="text-white/60 mb-6">All plans include Vanguard AI SOC, unified dashboard, and 24/7 monitoring</p>
             
-            {/* Billing Toggle */}
             <div className="flex items-center justify-center gap-4">
               <span className={billingCycle === 'monthly' ? 'text-white' : 'text-white/50'}>Monthly</span>
               <Switch 
@@ -385,7 +492,7 @@ const VanguardSuite = () => {
                 Quick Quote Calculator
               </CardTitle>
               <CardDescription className="text-white/60">
-                Customize your {currentTier.name} plan
+                Customize your {currentTier.name} plan with module add-ons
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -406,23 +513,25 @@ const VanguardSuite = () => {
                   </div>
                 </div>
 
-                {/* Add-ons */}
-                {availableAddons.length > 0 && (
-                  <div>
-                    <label className="text-sm text-white/70 block mb-2">Available Add-ons</label>
-                    <div className="space-y-2">
-                      {availableAddons.slice(0, 3).map(addon => (
-                        <div key={addon.id} className="flex items-center justify-between">
-                          <span className="text-sm text-white/60">{addon.name}</span>
-                          <Switch 
-                            checked={selectedAddons.includes(addon.id)}
-                            onCheckedChange={() => toggleAddon(addon.id)}
-                          />
-                        </div>
-                      ))}
-                    </div>
+                {/* Module Add-ons */}
+                <div>
+                  <label className="text-sm text-white/70 block mb-2">Module Add-Ons</label>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {MODULE_ADDONS.map(addon => (
+                      <div key={addon.id} className="flex items-center justify-between">
+                        <span className="text-sm text-white/60 flex items-center gap-1.5">
+                          <ModuleLogo module={addon.module} size="xs" />
+                          {addon.name}
+                          <span className="text-white/30 text-xs">${addon.monthlyPricePerUser}/u</span>
+                        </span>
+                        <Switch 
+                          checked={selectedAddons.includes(addon.id)}
+                          onCheckedChange={() => toggleAddon(addon.id)}
+                        />
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
 
                 {/* Total */}
                 <div className="bg-white/5 rounded-lg p-4">
@@ -457,6 +566,17 @@ const VanguardSuite = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* MSP Partner CTA */}
+          <div className="mt-8 text-center">
+            <RouterLink to="/vanguard/partner-program">
+              <Button variant="outline" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
+                <Crown className="h-4 w-4 mr-2" />
+                Reseller? Join our MSP Partner Program for volume discounts up to 35%
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </RouterLink>
+          </div>
         </div>
       </section>
 
