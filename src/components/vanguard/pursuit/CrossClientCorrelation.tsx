@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Network, Shield, AlertTriangle, Target, Globe, Activity, 
-  Search, RefreshCw, TrendingUp, Users, Zap, Eye
+  Search, RefreshCw, TrendingUp, Users, Zap, Eye, Siren
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -44,6 +44,24 @@ export function CrossClientCorrelation() {
   const [search, setSearch] = useState('');
   const [timeRange, setTimeRange] = useState('7d');
   const [activeTab, setActiveTab] = useState('campaigns');
+
+  // Fetch real campaigns from xdr_cross_client_campaigns
+  const { data: realCampaigns, isLoading: campaignsLoading, refetch: refetchCampaigns } = useQuery({
+    queryKey: ['xdr-campaigns', timeRange],
+    queryFn: async () => {
+      const daysAgo = timeRange === '24h' ? 1 : timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
+      const since = new Date(Date.now() - daysAgo * 86400000).toISOString();
+      
+      const { data, error } = await supabase
+        .from('xdr_cross_client_campaigns')
+        .select('*')
+        .gte('created_at', since)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   // Fetch threats across all clients
   const { data: threats, isLoading: threatsLoading, refetch } = useQuery({
@@ -220,12 +238,15 @@ export function CrossClientCorrelation() {
   // Stats
   const stats = useMemo(() => ({
     totalThreats: (threats?.length || 0) + (incidents?.length || 0),
-    activeCampaigns: correlatedCampaigns.filter(c => c.status === 'active').length,
+    activeCampaigns: (realCampaigns?.filter(c => c.status === 'active').length || 0) + correlatedCampaigns.filter(c => c.status === 'active').length,
     sharedIOCs: crossClientIOCs.length,
-    criticalCampaigns: correlatedCampaigns.filter(c => c.severity === 'critical').length,
-    clientsAtRisk: new Set(correlatedCampaigns.flatMap(c => c.affectedClients)).size,
+    criticalCampaigns: (realCampaigns?.filter(c => c.severity === 'critical').length || 0) + correlatedCampaigns.filter(c => c.severity === 'critical').length,
+    clientsAtRisk: new Set([
+      ...correlatedCampaigns.flatMap(c => c.affectedClients),
+      ...(realCampaigns?.flatMap(c => c.affected_user_ids || []) || [])
+    ]).size,
     mdrAlertCount: mdrAlerts?.length || 0,
-  }), [threats, incidents, correlatedCampaigns, crossClientIOCs, mdrAlerts]);
+  }), [threats, incidents, correlatedCampaigns, crossClientIOCs, mdrAlerts, realCampaigns]);
 
   const filteredCampaigns = correlatedCampaigns.filter(c =>
     !search || c.name.toLowerCase().includes(search.toLowerCase())
@@ -246,6 +267,19 @@ export function CrossClientCorrelation() {
 
   return (
     <div className="space-y-6">
+      {/* Active Campaign Alert Banner */}
+      {(realCampaigns?.filter(c => c.status === 'active').length || 0) > 0 && (
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30 animate-pulse">
+          <Siren className="h-5 w-5 text-red-400 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-red-400">
+              {realCampaigns!.filter(c => c.status === 'active').length} Active Cross-Client Campaign{realCampaigns!.filter(c => c.status === 'active').length > 1 ? 's' : ''} Detected
+            </p>
+            <p className="text-xs text-red-300/70">Auto-correlated from live threat ingestion — coordinated attack activity across multiple managed clients</p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -333,7 +367,78 @@ export function CrossClientCorrelation() {
 
         {/* Campaigns Tab */}
         <TabsContent value="campaigns" className="space-y-3">
-          {threatsLoading ? (
+          {/* Real auto-detected campaigns from backend */}
+          {realCampaigns?.map(campaign => (
+            <Card key={campaign.id} className="bg-slate-900/60 border-red-500/20 hover:border-red-500/40 transition-colors ring-1 ring-red-500/10">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-red-500/20">
+                      <Siren className="h-5 w-5 text-red-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white flex items-center gap-2">
+                        {campaign.campaign_name}
+                        <Badge className="bg-red-500/30 text-red-300 border-red-500/50 text-[10px]">AUTO-DETECTED</Badge>
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        First seen: {new Date(campaign.first_seen).toLocaleDateString()} • 
+                        Last activity: {new Date(campaign.last_seen).toLocaleDateString()} •
+                        {(campaign.affected_user_ids as string[])?.length || 0} organizations affected
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className={severityColor(campaign.severity)}>{campaign.severity?.toUpperCase()}</Badge>
+                    <Badge variant="outline" className={cn(
+                      campaign.status === 'active' ? 'border-red-500/50 text-red-400' : 'border-slate-500/50 text-slate-400'
+                    )}>{campaign.status}</Badge>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Shared Indicators</p>
+                    <div className="flex flex-wrap gap-1">
+                      {((campaign.shared_indicators as any[]) || []).slice(0, 4).map((si: any, i: number) => (
+                        <Badge key={i} variant="outline" className="text-xs border-purple-500/30 text-purple-400 font-mono">
+                          {si.type}: {String(si.value).substring(0, 20)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Related Threats</p>
+                    <span className="text-sm text-white">{(campaign.related_threat_ids as string[])?.length || 0} correlated events</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">Confidence</p>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 h-2 bg-slate-700 rounded-full overflow-hidden">
+                          <div className={cn("h-full rounded-full", campaign.confidence >= 80 ? 'bg-red-400' : 'bg-orange-400')}
+                            style={{ width: `${campaign.confidence}%` }} />
+                        </div>
+                        <span className="text-xs text-slate-400">{campaign.confidence}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {(campaign.mitre_tactics as string[])?.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-slate-700/50">
+                    <p className="text-xs text-slate-500 mb-1">MITRE ATT&CK</p>
+                    <div className="flex flex-wrap gap-1">
+                      {(campaign.mitre_tactics as string[]).map(t => (
+                        <Badge key={t} variant="outline" className="text-xs border-blue-500/30 text-blue-400 font-mono">{t}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+
+          {/* Client-side correlated campaigns */}
+          {(campaignsLoading || threatsLoading) ? (
             <Card className="bg-slate-900/60 border-cyan-500/10 p-8 text-center">
               <RefreshCw className="h-6 w-6 text-cyan-400 animate-spin mx-auto mb-2" />
               <p className="text-slate-400">Correlating threats across clients...</p>

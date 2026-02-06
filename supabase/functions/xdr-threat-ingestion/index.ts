@@ -235,7 +235,6 @@ Deno.serve(async (req) => {
         .contains('trigger_conditions', { severity: ['critical'] })
 
       if (policies && policies.length > 0) {
-        // Queue auto-remediation action
         await supabase
           .from('xdr_response_actions')
           .insert({
@@ -256,13 +255,144 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Cross-client threat correlation — detect campaigns
+    let campaignDetected = false
+    try {
+      // Find matching threats from OTHER users in last 72 hours
+      const correlationWindow = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
+      const { data: similarThreats } = await supabase
+        .from('xdr_threats')
+        .select('id, user_id, threat_type, file_hash, destination_ip, severity, title, detection_time')
+        .eq('threat_type', payload.threat_type)
+        .neq('user_id', userId)
+        .gte('detection_time', correlationWindow)
+
+      // Also check for shared IOCs (file hash or dest IP)
+      let iocMatches: any[] = []
+      if (payload.file_hash) {
+        const { data } = await supabase
+          .from('xdr_threats')
+          .select('id, user_id, threat_type, file_hash, severity, title, detection_time')
+          .eq('file_hash', payload.file_hash)
+          .neq('user_id', userId)
+          .gte('detection_time', correlationWindow)
+        if (data?.length) iocMatches.push(...data)
+      }
+      if (payload.destination_ip) {
+        const { data } = await supabase
+          .from('xdr_threats')
+          .select('id, user_id, threat_type, destination_ip, severity, title, detection_time')
+          .eq('destination_ip', payload.destination_ip)
+          .neq('user_id', userId)
+          .gte('detection_time', correlationWindow)
+        if (data?.length) iocMatches.push(...data)
+      }
+
+      // Deduplicate
+      const allCorrelated = [...(similarThreats || []), ...iocMatches]
+      const uniqueMap = new Map(allCorrelated.map(t => [t.id, t]))
+      const uniqueCorrelated = Array.from(uniqueMap.values())
+
+      // If threats match across 2+ distinct users, create/update a campaign
+      const affectedUserIds = new Set(uniqueCorrelated.map(t => t.user_id))
+      affectedUserIds.add(userId)
+
+      if (affectedUserIds.size >= 2) {
+        campaignDetected = true
+        const sharedIndicators: any[] = []
+        if (payload.file_hash) sharedIndicators.push({ type: 'hash', value: payload.file_hash })
+        if (payload.destination_ip) sharedIndicators.push({ type: 'ip', value: payload.destination_ip })
+        payload.indicators?.forEach(i => sharedIndicators.push({ type: i.type, value: i.value }))
+
+        const relatedIds = uniqueCorrelated.map(t => t.id)
+        relatedIds.push(threat.id)
+        const campaignSeverity = finalSeverity === 'critical' || uniqueCorrelated.some(t => t.severity === 'critical') ? 'critical' : 'high'
+
+        // Check for existing active campaign with same type
+        const { data: existingCampaign } = await supabase
+          .from('xdr_cross_client_campaigns')
+          .select('id, affected_user_ids, related_threat_ids, shared_indicators')
+          .eq('campaign_type', payload.threat_type)
+          .eq('status', 'active')
+          .gte('created_at', correlationWindow)
+          .maybeSingle()
+
+        if (existingCampaign) {
+          // Update existing campaign with new data
+          const updatedUserIds = Array.from(new Set([...(existingCampaign.affected_user_ids || []), ...Array.from(affectedUserIds)]))
+          const updatedThreatIds = Array.from(new Set([...(existingCampaign.related_threat_ids || []), ...relatedIds]))
+          const existingIndicators = (existingCampaign.shared_indicators as any[]) || []
+          const mergedIndicators = [...existingIndicators, ...sharedIndicators.filter(si => 
+            !existingIndicators.some((ei: any) => ei.type === si.type && ei.value === si.value)
+          )]
+
+          await supabase
+            .from('xdr_cross_client_campaigns')
+            .update({
+              affected_user_ids: updatedUserIds,
+              related_threat_ids: updatedThreatIds,
+              shared_indicators: mergedIndicators,
+              severity: campaignSeverity,
+              confidence: Math.min(98, 60 + updatedUserIds.length * 12),
+              last_seen: new Date().toISOString(),
+              mitre_tactics: payload.mitre_tactics || [],
+              mitre_techniques: payload.mitre_techniques || [],
+            })
+            .eq('id', existingCampaign.id)
+          
+          console.log(`[xdr-threat-ingestion] Updated campaign ${existingCampaign.id} — now ${updatedUserIds.length} clients affected`)
+        } else {
+          // Create new campaign
+          await supabase
+            .from('xdr_cross_client_campaigns')
+            .insert({
+              user_id: userId,
+              campaign_name: `${payload.threat_type} Campaign — ${affectedUserIds.size} Clients`,
+              campaign_type: payload.threat_type,
+              severity: campaignSeverity,
+              status: 'active',
+              confidence: Math.min(95, 60 + affectedUserIds.size * 12),
+              affected_user_ids: Array.from(affectedUserIds),
+              shared_indicators: sharedIndicators,
+              triggering_threat_id: threat.id,
+              related_threat_ids: relatedIds,
+              mitre_tactics: payload.mitre_tactics || [],
+              mitre_techniques: payload.mitre_techniques || [],
+              first_seen: new Date().toISOString(),
+              last_seen: new Date().toISOString(),
+            })
+
+          console.log(`[xdr-threat-ingestion] NEW CAMPAIGN DETECTED: ${payload.threat_type} across ${affectedUserIds.size} clients`)
+        }
+
+        // Create high-priority security event for the campaign
+        await supabase
+          .from('security_events')
+          .insert({
+            user_id: userId,
+            source_app: 'Vanguard XDR Cross-Client Correlation',
+            event_type: 'cross_client_campaign',
+            severity: campaignSeverity,
+            title: `Cross-Client Campaign: ${payload.threat_type} detected across ${affectedUserIds.size} organizations`,
+            description: `Coordinated ${payload.threat_type} activity detected across ${affectedUserIds.size} managed clients. Shared indicators: ${sharedIndicators.map(s => `${s.type}:${s.value}`).join(', ')}`,
+            affected_assets: [agent.name],
+            ip_address: agent.ip_address,
+            threat_indicators: sharedIndicators.map(s => `${s.type}:${s.value}`),
+            raw_data: { campaign: true, affected_clients: affectedUserIds.size, threat_id: threat.id }
+          })
+      }
+    } catch (corrError) {
+      console.error('[xdr-threat-ingestion] Cross-client correlation error (non-fatal):', corrError)
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         threat_id: threat.id,
         severity: finalSeverity,
         threat_intel_matches: threatIntelMatches.length,
-        remediation_triggered: remediationTriggered
+        remediation_triggered: remediationTriggered,
+        campaign_detected: campaignDetected
       }),
       { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
