@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { ComplianceReportGenerator } from '@/components/vanguard/ComplianceReportGenerator';
+import { ComplyReports } from '@/components/vanguard/reports/ComplyReports';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 import { ModuleIntroBanner } from '@/components/vanguard/shared/ModuleInstructions';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function LedgerCompliancePage() {
   useEffect(() => {
@@ -18,7 +20,7 @@ export default function LedgerCompliancePage() {
           <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-cyan-100 to-purple-200 bg-clip-text text-transparent">
             Compliance Reports
           </h1>
-          <p className="text-muted-foreground">Generate compliance and audit reports</p>
+          <p className="text-muted-foreground">Framework compliance analytics and report generation</p>
         </div>
       </div>
 
@@ -30,9 +32,20 @@ export default function LedgerCompliancePage() {
         storageKey="ledger-compliance-intro"
       />
 
-      <div data-tour="ledger-reports">
-        <ComplianceReportGenerator />
-      </div>
+      <Tabs defaultValue="comply" className="w-full">
+        <TabsList className="bg-slate-800/50">
+          <TabsTrigger value="comply">Comply Analytics</TabsTrigger>
+          <TabsTrigger value="generator">Report Generator</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="comply" className="mt-4">
+          <ComplyReports />
+        </TabsContent>
+
+        <TabsContent value="generator" className="mt-4" data-tour="ledger-reports">
+          <ComplianceReportGenerator />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
