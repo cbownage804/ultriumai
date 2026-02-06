@@ -8,6 +8,7 @@ import reconLogo from '@/assets/vanguard/module-recon.png';
 import atlasLogo from '@/assets/vanguard/module-atlas.png';
 import ledgerLogo from '@/assets/vanguard/module-ledger.png';
 import cortexLogo from '@/assets/vanguard/module-cortex.png';
+import sentinelLogo from '@/assets/vanguard/module-sentinel.png';
 
 // Import all module backgrounds
 import horizonBg from '@/assets/vanguard/bg-horizon.jpg';
@@ -17,8 +18,9 @@ import reconBg from '@/assets/vanguard/bg-recon.jpg';
 import atlasBg from '@/assets/vanguard/bg-atlas.jpg';
 import ledgerBg from '@/assets/vanguard/bg-ledger.jpg';
 import cortexBg from '@/assets/vanguard/bg-cortex.jpg';
+import sentinelBg from '@/assets/vanguard/bg-sentinel.jpg';
 
-export type ModuleName = 'horizon' | 'pursuit' | 'response' | 'recon' | 'atlas' | 'ledger' | 'cortex';
+export type ModuleName = 'horizon' | 'pursuit' | 'response' | 'recon' | 'atlas' | 'ledger' | 'cortex' | 'sentinel';
 
 const moduleLogos: Record<ModuleName, string> = {
   horizon: horizonLogo,
@@ -28,6 +30,7 @@ const moduleLogos: Record<ModuleName, string> = {
   atlas: atlasLogo,
   ledger: ledgerLogo,
   cortex: cortexLogo,
+  sentinel: sentinelLogo,
 };
 
 const moduleBackgrounds: Record<ModuleName, string> = {
@@ -38,6 +41,7 @@ const moduleBackgrounds: Record<ModuleName, string> = {
   atlas: atlasBg,
   ledger: ledgerBg,
   cortex: cortexBg,
+  sentinel: sentinelBg,
 };
 
 // Module color schemes for consistent styling
@@ -76,6 +80,11 @@ export const moduleColors: Record<ModuleName, { primary: string; glow: string; g
     primary: 'violet-500',
     glow: 'rgba(139,92,246,0.5)',
     gradient: 'from-violet-500 to-purple-500',
+  },
+  sentinel: {
+    primary: 'orange-500',
+    glow: 'rgba(249,115,22,0.5)',
+    gradient: 'from-orange-500 to-amber-500',
   },
 };
 
@@ -122,7 +131,7 @@ export function getModuleBackground(module: ModuleName): string {
 }
 
 // Export logos for direct use if needed
-export { horizonLogo, pursuitLogo, responseLogo, reconLogo, atlasLogo, ledgerLogo, cortexLogo };
+export { horizonLogo, pursuitLogo, responseLogo, reconLogo, atlasLogo, ledgerLogo, cortexLogo, sentinelLogo };
 
 // Export backgrounds for direct use
-export { horizonBg, pursuitBg, responseBg, reconBg, atlasBg, ledgerBg, cortexBg };
+export { horizonBg, pursuitBg, responseBg, reconBg, atlasBg, ledgerBg, cortexBg, sentinelBg };
