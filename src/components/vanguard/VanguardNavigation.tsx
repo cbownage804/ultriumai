@@ -47,6 +47,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import vanguardLogo from '@/assets/vanguard-logo.png';
 import { ModuleLogo, ModuleName } from './ModuleLogo';
 import { CollapsibleNavGroup, NavSubGroup } from './CollapsibleNavGroup';
+import { SitesNavSection } from './SitesNavSection';
 
 interface NavItem {
   title: string;
@@ -88,86 +89,36 @@ export function VanguardNavigation() {
       dashboardPath: `${basePath}/rmm`,
       items: [
         { title: 'RMM Dashboard', path: `${basePath}/rmm`, icon: Monitor },
-        { title: 'Sites', path: `${basePath}/customers`, icon: Building2 },
       ],
+      // Sites section is rendered separately via SitesNavSection
       subGroups: [
         {
-          label: 'Manage',
+          label: 'Devices',
           icon: Monitor,
           items: [
-            { title: 'Devices', path: `${basePath}/devices`, icon: Monitor },
+            { title: 'All Devices', path: `${basePath}/devices`, icon: Monitor },
+          ],
+        },
+        {
+          label: 'Global Tools',
+          icon: Settings,
+          items: [
             { title: 'Patches', path: `${basePath}/patches`, icon: Package },
             { title: 'Assets', path: `${basePath}/assets`, icon: Package },
             { title: 'Scripts', path: `${basePath}/scripts`, icon: FileText },
-            { title: 'Backups', path: `${basePath}/backups`, icon: Package },
             { title: 'Automation', path: `${basePath}/automation`, icon: Settings },
           ],
         },
         {
-          label: 'Alerting',
-          icon: Bell,
+          label: 'Setup',
+          icon: Settings,
           items: [
-            { title: 'Notifications', path: `${basePath}/rmm/notifications`, icon: Bell },
-            { title: 'Escalation Rules', path: `${basePath}/rmm/escalation-rules`, icon: ClipboardList },
-            { title: 'On-Call Schedule', path: `${basePath}/rmm/oncall-schedule`, icon: Calendar },
-            { title: 'Suppression Windows', path: `${basePath}/rmm/suppression-windows`, icon: Clock },
-          ],
-        },
-        {
-          label: 'Patching',
-          icon: Package,
-          items: [
-            { title: 'Scheduling', path: `${basePath}/rmm/patch-scheduling`, icon: Calendar },
-            { title: 'Compliance', path: `${basePath}/rmm/patch-compliance`, icon: ShieldCheck },
-            { title: 'Rollback', path: `${basePath}/rmm/patch-rollback`, icon: Clock },
-            { title: 'Third-Party', path: `${basePath}/rmm/thirdparty-patching`, icon: Package },
-          ],
-        },
-        {
-          label: 'Security / EDR',
-          icon: Shield,
-          items: [
-            { title: 'Threat Hunting', path: `${basePath}/rmm/threat-hunting`, icon: Search },
-            { title: 'Vuln Scanner', path: `${basePath}/rmm/vuln-scanner`, icon: Bug },
-            { title: 'Baselines', path: `${basePath}/rmm/security-baselines`, icon: ShieldCheck },
-            { title: 'Playbooks', path: `${basePath}/rmm/incident-playbooks`, icon: BookOpen },
-          ],
-        },
-        {
-          label: 'Integrations',
-          icon: Link2,
-          items: [
-            { title: 'PSA Sync', path: `${basePath}/rmm/psa-sync`, icon: Link2 },
-            { title: 'Documentation', path: `${basePath}/rmm/doc-integration`, icon: FileText },
-            { title: 'Backup Monitor', path: `${basePath}/rmm/backup-monitoring`, icon: Shield },
-            { title: 'Discovery', path: `${basePath}/rmm/network-discovery`, icon: Search },
-          ],
-        },
-        {
-          label: 'Remote Access',
-          icon: Upload,
-          items: [
-            { title: 'File Transfer', path: `${basePath}/rmm/file-transfer`, icon: Upload },
-            { title: 'Wake-on-LAN', path: `${basePath}/rmm/wake-on-lan`, icon: Power },
-          ],
-        },
-        {
-          label: 'Access Control',
-          icon: Key,
-          items: [
-            { title: 'Multi-Tenant', path: `${basePath}/rmm/multi-tenant`, icon: Users },
-            { title: 'RBAC', path: `${basePath}/rmm/rbac`, icon: Key },
-            { title: 'Activity Logs', path: `${basePath}/rmm/activity-logs`, icon: ClipboardList },
-          ],
-        },
-        {
-          label: 'Reporting',
-          icon: BarChart3,
-          items: [
-            { title: 'Executive', path: `${basePath}/rmm/executive-dashboard`, icon: BarChart3 },
-            { title: 'Scheduled', path: `${basePath}/rmm/scheduled-reports`, icon: Calendar },
-            { title: 'White-Label', path: `${basePath}/rmm/white-label`, icon: FileText },
-            { title: 'SLA Tracking', path: `${basePath}/rmm/sla-tracking`, icon: Clock },
+            { title: 'Alerting', path: `${basePath}/rmm/notifications`, icon: Bell },
+            { title: 'Patch Policy', path: `${basePath}/rmm/patch-scheduling`, icon: Calendar },
+            { title: 'Security', path: `${basePath}/rmm/security-baselines`, icon: ShieldCheck },
+            { title: 'Integrations', path: `${basePath}/rmm/psa-sync`, icon: Link2 },
+            { title: 'Access Control', path: `${basePath}/rmm/rbac`, icon: Key },
+            { title: 'Reports', path: `${basePath}/rmm/executive-dashboard`, icon: BarChart3 },
           ],
         },
       ],
@@ -432,7 +383,12 @@ export function VanguardNavigation() {
                   subGroups={group.subGroups}
                   isCollapsed={isCollapsed}
                   onMobileClose={() => setIsMobileOpen(false)}
-                />
+                >
+                  {/* Inject Sites section inside Horizon */}
+                  {group.module === 'horizon' && !isCollapsed && (
+                    <SitesNavSection onMobileClose={() => setIsMobileOpen(false)} />
+                  )}
+                </CollapsibleNavGroup>
               ))}
 
               {/* Divider */}

@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -53,7 +53,8 @@ export default function VanguardCustomerDetail() {
   const navigate = useNavigate();
   const { customerId } = useParams();
   const basePath = getVanguardBasePath();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   
   const { customer, contacts, devices, ticketCount, endpointCount, alertCount, isLoading, error } = useVanguardCustomer(customerId);
 
@@ -62,6 +63,12 @@ export default function VanguardCustomerDetail() {
       document.title = `${customer.company_name} | Customers | Ultrium Vanguard`;
     }
   }, [customer?.company_name]);
+
+  // Sync tab with URL search param
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) setActiveTab(tab);
+  }, [searchParams]);
 
   // Inject live badges
   const tabsWithBadges = tabs.map(t => ({

@@ -29,6 +29,7 @@ interface CollapsibleNavGroupProps {
   subGroups?: NavSubGroup[];
   isCollapsed: boolean;
   onMobileClose: () => void;
+  children?: React.ReactNode;
 }
 
 const STORAGE_KEY = 'vanguard-nav-collapsed-groups';
@@ -44,6 +45,7 @@ export function CollapsibleNavGroup({
   subGroups,
   isCollapsed,
   onMobileClose,
+  children,
 }: CollapsibleNavGroupProps) {
   const location = useLocation();
   
@@ -189,6 +191,9 @@ export function CollapsibleNavGroup({
         <div className="py-1">
           {/* Direct items */}
           {items.map(renderNavItem)}
+          
+          {/* Injected children (e.g. SitesNavSection) */}
+          {children}
           
           {/* Nested sub-groups */}
           {subGroups?.map((sg) => (
