@@ -176,18 +176,9 @@ export function VanguardNavigation() {
           icon: Shield,
           items: [
             { title: 'Threat Hunting', path: `${basePath}/pursuit/threat-hunting`, icon: Crosshair },
+            { title: 'Attack Chains', path: `${basePath}/pursuit/attack-chains`, icon: Network },
             { title: 'IOC Management', path: `${basePath}/pursuit/ioc`, icon: Target },
             { title: 'YARA Rules', path: `${basePath}/pursuit/yara`, icon: FileText },
-            { title: 'Attack Chains', path: `${basePath}/pursuit/attack-chains`, icon: Network },
-          ],
-        },
-        {
-          label: 'Protection',
-          icon: ShieldCheck,
-          items: [
-            { title: 'Ransomware Defense', path: `${basePath}/pursuit/ransomware`, icon: Shield },
-            { title: 'Quarantine', path: `${basePath}/pursuit/quarantine`, icon: Bug },
-            { title: 'Network Security', path: `${basePath}/pursuit/network`, icon: Network },
           ],
         },
         {
@@ -200,11 +191,20 @@ export function VanguardNavigation() {
           ],
         },
         {
+          label: 'Protection',
+          icon: ShieldCheck,
+          items: [
+            { title: 'Ransomware Defense', path: `${basePath}/pursuit/ransomware`, icon: Shield },
+            { title: 'Network Security', path: `${basePath}/pursuit/network`, icon: Network },
+            { title: 'Quarantine', path: `${basePath}/pursuit/quarantine`, icon: Bug },
+          ],
+        },
+        {
           label: 'Configuration',
           icon: Settings,
           items: [
-            { title: 'Automation Policies', path: `${basePath}/pursuit/automation`, icon: Settings },
             { title: 'Response Actions', path: `${basePath}/pursuit/response-actions`, icon: Power },
+            { title: 'Automation Policies', path: `${basePath}/pursuit/automation`, icon: Settings },
             { title: 'Agent Testing', path: `${basePath}/pursuit/agent-testing`, icon: Bug },
           ],
         },
