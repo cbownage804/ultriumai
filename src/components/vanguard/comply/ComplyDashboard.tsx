@@ -7,6 +7,7 @@ import { ComplyClientsView } from './ComplyClientsView';
 import { ComplianceScanner } from '@/components/vanguard/ComplianceScanner';
 import { ComplianceReportGenerator } from '@/components/vanguard/ComplianceReportGenerator';
 import { ComplianceScorecard } from '@/components/vanguard/ComplianceScorecard';
+import { ModuleIntroBanner, ModuleGettingStarted } from '@/components/vanguard/shared/ModuleInstructions';
 
 export function ComplyDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -33,6 +34,15 @@ export function ComplyDashboard() {
           <p className="text-muted-foreground">Compliance & audit readiness center</p>
         </div>
       </div>
+
+      {/* Intro Banner */}
+      <ModuleIntroBanner
+        title="Welcome to Vanguard Comply"
+        description="Track compliance across SOC 2, HIPAA, PCI-DSS, ISO 27001, and more. Manage per-client compliance policies, run automated scans, and generate audit-ready reports."
+        features={['Multi-Framework Support', 'Per-Client Tracking', 'Evidence Collection', 'Automated Scanning', 'PDF Reports']}
+        accentColor="teal"
+        storageKey="comply-intro"
+      />
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

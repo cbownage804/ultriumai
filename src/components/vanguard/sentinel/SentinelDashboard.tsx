@@ -17,6 +17,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { ModuleLogo } from '../ModuleLogo';
+import { ModuleIntroBanner, ModuleGettingStarted } from '../shared/ModuleInstructions';
 
 interface TrendData {
   name: string;
@@ -193,6 +194,28 @@ export function SentinelDashboard() {
           </Badge>
         </div>
       </div>
+
+      {/* Intro Banner */}
+      <ModuleIntroBanner
+        title="Welcome to Vanguard Sentinel"
+        description="Monitor Microsoft 365 and Google Workspace for suspicious logins, admin changes, data exfiltration, and more. AI-powered triage automatically classifies and prioritizes alerts."
+        features={['M365 Security Monitoring', 'Google Workspace Auditing', 'AI Alert Triage', 'Custom Alert Rules', 'Risky Sign-in Detection']}
+        accentColor="orange"
+        storageKey="sentinel-intro"
+      />
+
+      {stats.tenantsMonitored === 0 && (
+        <ModuleGettingStarted
+          moduleName="Sentinel"
+          accentColor="orange"
+          steps={[
+            { title: 'Connect your first M365 tenant', description: 'Go to the M365 Tenants tab and add your Azure AD credentials to begin monitoring.', completed: false },
+            { title: 'Or connect Google Workspace', description: 'Set up a Google Cloud service account with domain-wide delegation for GWS monitoring.', completed: false },
+            { title: 'Configure alert rules', description: 'Define severity thresholds and notification channels for security events.', completed: false },
+            { title: 'Review AI triage settings', description: 'Cortex AI will automatically classify and prioritize incoming alerts.', completed: false },
+          ]}
+        />
+      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

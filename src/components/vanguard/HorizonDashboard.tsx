@@ -28,6 +28,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { getVanguardBasePath } from '@/utils/subdomain';
 import { ModuleLogo } from './ModuleLogo';
+import { ModuleIntroBanner, ModuleGettingStarted } from './shared/ModuleInstructions';
 
 interface StatCardProps {
   title: string;
@@ -127,6 +128,28 @@ export function HorizonDashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Intro Banner */}
+      <ModuleIntroBanner
+        title="Welcome to Vanguard Horizon"
+        description="Your RMM command center for remote monitoring, patch management, automation, and endpoint protection. Deploy agents to your endpoints to begin monitoring."
+        features={['Remote Monitoring', 'Patch Management', 'Automated Scripts', 'Backup Monitoring', 'Asset Tracking']}
+        accentColor="cyan"
+        storageKey="horizon-intro"
+      />
+
+      {stats.totalDevices === 0 && (
+        <ModuleGettingStarted
+          moduleName="Horizon"
+          accentColor="cyan"
+          steps={[
+            { title: 'Deploy your first agent', description: 'Download and install the Vanguard agent on a device to start monitoring.', completed: false, action: { label: 'Deploy Agent', onClick: () => navigate(`${basePath}/setup`) } },
+            { title: 'Add a customer', description: 'Create a customer record in the Customers section to organize devices.', completed: false, action: { label: 'Go to Customers', onClick: () => navigate(`${basePath}/customers`) } },
+            { title: 'Configure alerting', description: 'Set up alert rules to get notified about device issues.', completed: false },
+            { title: 'Set up patch policies', description: 'Define automatic patching schedules for your managed devices.', completed: false },
+          ]}
+        />
+      )}
 
       {/* Health Score Banner */}
       <Card className="bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 border-cyan-500/20">
