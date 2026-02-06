@@ -325,3 +325,10 @@ verify_jwt = true
 
 [functions.ai-agent-execute]
 verify_jwt = true
+
+# AI Studio - App Blocks & Workflows
+[functions.ai-generate-block]
+verify_jwt = true
+
+[functions.ai-workflow-execute]
+verify_jwt = true
