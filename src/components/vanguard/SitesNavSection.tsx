@@ -31,6 +31,9 @@ export function SitesNavSection({ onMobileClose }: { onMobileClose: () => void }
   const [isOpen, setIsOpen] = useState(() => {
     return location.pathname.includes('/customers');
   });
+  const [showSitesList, setShowSitesList] = useState(() => {
+    return location.pathname.includes('/customers');
+  });
   const [expandedSite, setExpandedSite] = useState<string | null>(() => {
     try {
       return localStorage.getItem(SITE_NAV_KEY);
@@ -54,7 +57,7 @@ export function SitesNavSection({ onMobileClose }: { onMobileClose: () => void }
   useEffect(() => {
     if (location.pathname.includes('/customers')) {
       setIsOpen(true);
-      // Extract customerId from path
+      setShowSitesList(true);
       const match = location.pathname.match(/\/customers\/([^/]+)/);
       if (match) {
         setExpandedSite(match[1]);
@@ -104,67 +107,83 @@ export function SitesNavSection({ onMobileClose }: { onMobileClose: () => void }
 
       {isOpen && (
         <div className="ml-7 border-l border-cyan-500/10">
-          {/* All Sites link */}
-          <NavLink
-            to={`${basePath}/customers`}
-            end
-            onClick={onMobileClose}
+          {/* All Sites - collapsible to reveal individual sites */}
+          <button
+            onClick={() => setShowSitesList(!showSitesList)}
             className={cn(
-              'flex items-center gap-2.5 px-4 py-1.5 text-[13px] transition-all duration-200',
-              'hover:bg-cyan-500/10 text-slate-400 hover:text-cyan-300',
-              isActive(`${basePath}/customers`) && !location.pathname.match(/\/customers\/[^/]+/) && 'bg-cyan-500/15 text-cyan-400 border-l-2 border-cyan-400 -ml-[1px]'
+              'flex items-center gap-2.5 w-full px-4 py-1.5 text-[13px] transition-all duration-200',
+              'hover:bg-cyan-500/10 hover:text-cyan-300',
+              isActive(`${basePath}/customers`) && !location.pathname.match(/\/customers\/[^/]+/)
+                ? 'bg-cyan-500/15 text-cyan-400 border-l-2 border-cyan-400 -ml-[1px]'
+                : 'text-slate-400'
             )}
           >
+            {showSitesList ? (
+              <ChevronDown className="h-3 w-3 shrink-0" />
+            ) : (
+              <ChevronRight className="h-3 w-3 shrink-0" />
+            )}
             <Building2 className="h-3.5 w-3.5 shrink-0" />
-            <span>All Sites</span>
-          </NavLink>
+            <NavLink
+              to={`${basePath}/customers`}
+              end
+              onClick={(e) => { e.stopPropagation(); onMobileClose(); }}
+              className="flex-1 text-left"
+            >
+              All Sites
+            </NavLink>
+          </button>
 
-          {/* Individual sites */}
-          {sites.map((site) => {
-            const isSiteExpanded = expandedSite === site.id;
-            const isSiteActive = location.pathname.includes(`/customers/${site.id}`);
+          {/* Individual sites - shown when All Sites is expanded */}
+          {showSitesList && (
+            <div className="ml-4 border-l border-cyan-500/10">
+              {sites.map((site) => {
+                const isSiteExpanded = expandedSite === site.id;
+                const isSiteActive = location.pathname.includes(`/customers/${site.id}`);
 
-            return (
-              <div key={site.id}>
-                <button
-                  onClick={() => toggleSite(site.id)}
-                  className={cn(
-                    'flex items-center gap-2 w-full px-4 py-1.5 text-[13px] transition-all duration-200',
-                    'hover:bg-cyan-500/10 hover:text-cyan-300',
-                    isSiteActive ? 'text-cyan-400' : 'text-slate-400'
-                  )}
-                >
-                  {isSiteExpanded ? (
-                    <ChevronDown className="h-3 w-3 shrink-0" />
-                  ) : (
-                    <ChevronRight className="h-3 w-3 shrink-0" />
-                  )}
-                  <span className="truncate flex-1 text-left">{site.company_name}</span>
-                </button>
+                return (
+                  <div key={site.id}>
+                    <button
+                      onClick={() => toggleSite(site.id)}
+                      className={cn(
+                        'flex items-center gap-2 w-full px-4 py-1.5 text-[13px] transition-all duration-200',
+                        'hover:bg-cyan-500/10 hover:text-cyan-300',
+                        isSiteActive ? 'text-cyan-400' : 'text-slate-400'
+                      )}
+                    >
+                      {isSiteExpanded ? (
+                        <ChevronDown className="h-3 w-3 shrink-0" />
+                      ) : (
+                        <ChevronRight className="h-3 w-3 shrink-0" />
+                      )}
+                      <span className="truncate flex-1 text-left">{site.company_name}</span>
+                    </button>
 
-                {isSiteExpanded && (
-                  <div className="ml-4 border-l border-cyan-500/10">
-                    {siteSubItems(site.id).map((sub) => (
-                      <NavLink
-                        key={sub.id}
-                        to={sub.path}
-                        onClick={onMobileClose}
-                        className={cn(
-                          'flex items-center gap-2 px-4 py-1 text-[12px] transition-all duration-200',
-                          'hover:bg-cyan-500/10 text-slate-500 hover:text-cyan-300',
-                          isSiteActive && location.search.includes(`tab=${sub.id}`) && 'text-cyan-400',
-                          sub.id === 'overview' && isSiteActive && !location.search.includes('tab=') && 'text-cyan-400'
-                        )}
-                      >
-                        <sub.icon className="h-3 w-3 shrink-0" />
-                        <span>{sub.label}</span>
-                      </NavLink>
-                    ))}
+                    {isSiteExpanded && (
+                      <div className="ml-4 border-l border-cyan-500/10">
+                        {siteSubItems(site.id).map((sub) => (
+                          <NavLink
+                            key={sub.id}
+                            to={sub.path}
+                            onClick={onMobileClose}
+                            className={cn(
+                              'flex items-center gap-2 px-4 py-1 text-[12px] transition-all duration-200',
+                              'hover:bg-cyan-500/10 text-slate-500 hover:text-cyan-300',
+                              isSiteActive && location.search.includes(`tab=${sub.id}`) && 'text-cyan-400',
+                              sub.id === 'overview' && isSiteActive && !location.search.includes('tab=') && 'text-cyan-400'
+                            )}
+                          >
+                            <sub.icon className="h-3 w-3 shrink-0" />
+                            <span>{sub.label}</span>
+                          </NavLink>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
