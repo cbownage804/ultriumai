@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Users, Shield, FileText, ClipboardCheck } from 'lucide-react';
+import { BarChart3, Users, Shield, FileText, ClipboardCheck, Target, Database } from 'lucide-react';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 import { ComplyOverview } from './ComplyOverview';
 import { ComplyClientsView } from './ComplyClientsView';
+import { ComplyGapAnalysis } from './ComplyGapAnalysis';
+import { ComplyEvidenceCollection } from './ComplyEvidenceCollection';
 import { ComplianceScanner } from '@/components/vanguard/ComplianceScanner';
 import { ComplianceReportGenerator } from '@/components/vanguard/ComplianceReportGenerator';
 import { ComplianceScorecard } from '@/components/vanguard/ComplianceScorecard';
@@ -15,6 +17,8 @@ export function ComplyDashboard() {
   const tabConfig = [
     { value: 'overview', label: 'Overview', icon: BarChart3 },
     { value: 'clients', label: 'Client Compliance', icon: Users },
+    { value: 'gap', label: 'Gap Analysis', icon: Target },
+    { value: 'evidence', label: 'Evidence', icon: Database },
     { value: 'scanner', label: 'Scanner', icon: Shield },
     { value: 'scorecard', label: 'Scorecard', icon: ClipboardCheck },
     { value: 'reports', label: 'Reports', icon: FileText },
@@ -38,8 +42,8 @@ export function ComplyDashboard() {
       {/* Intro Banner */}
       <ModuleIntroBanner
         title="Welcome to Vanguard Comply"
-        description="Track compliance across SOC 2, HIPAA, PCI-DSS, ISO 27001, and more. Manage per-client compliance policies, run automated scans, and generate audit-ready reports."
-        features={['Multi-Framework Support', 'Per-Client Tracking', 'Evidence Collection', 'Automated Scanning', 'PDF Reports']}
+        description="Track compliance across SOC 2, HIPAA, PCI-DSS, ISO 27001, GDPR, GLBA, WISP, and more. Auto-seeded controls, multi-source evidence collection, gap analysis, and audit-ready reports."
+        features={['13 Frameworks', 'Auto-Seeded Controls', 'Multi-Source Evidence', 'Gap Analysis', 'Audit Readiness']}
         accentColor="teal"
         storageKey="comply-intro"
       />
@@ -64,6 +68,14 @@ export function ComplyDashboard() {
 
         <TabsContent value="clients" className="mt-6">
           <ComplyClientsView />
+        </TabsContent>
+
+        <TabsContent value="gap" className="mt-6">
+          <ComplyGapAnalysis />
+        </TabsContent>
+
+        <TabsContent value="evidence" className="mt-6">
+          <ComplyEvidenceCollection />
         </TabsContent>
 
         <TabsContent value="scanner" className="mt-6">
