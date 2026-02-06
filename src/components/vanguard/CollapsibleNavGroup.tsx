@@ -259,29 +259,30 @@ function NestedSubGroup({
   };
 
   return (
-    <div className="mt-0.5">
+    <div className="mt-1">
       <button
         onClick={handleToggle}
         className={cn(
-          "flex items-center gap-2 w-full px-4 py-1.5 ml-2 text-[11px] font-semibold tracking-wider uppercase transition-colors",
-          hasActiveChild ? "text-cyan-400/80" : "text-slate-500 hover:text-slate-300"
+          "flex items-center gap-2.5 w-full px-5 py-2 text-[11px] font-semibold tracking-wider uppercase transition-all duration-200 rounded-sm mx-1",
+          "hover:bg-cyan-500/8 hover:text-slate-300",
+          hasActiveChild ? "text-cyan-400/90" : "text-slate-500"
         )}
       >
-        <subGroup.icon className="h-3 w-3 shrink-0" />
+        <subGroup.icon className="h-3.5 w-3.5 shrink-0" />
         <span className="flex-1 text-left">{subGroup.label}</span>
-        {isOpen ? <ChevronDown className="h-2.5 w-2.5" /> : <ChevronRight className="h-2.5 w-2.5" />}
+        {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
       </button>
       {isOpen && (
-        <div className="ml-3">
+        <div className="ml-2 border-l border-cyan-500/10 ml-7">
           {subGroup.items.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               onClick={onMobileClose}
               className={cn(
-                "flex items-center gap-2.5 px-4 py-1.5 text-[13px] transition-all duration-200 ml-2",
-                "hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-purple-500/10 text-slate-400 hover:text-cyan-300",
-                isActive(item.path) && "bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-purple-500/20 text-cyan-400 border-l-2 border-cyan-400"
+                "flex items-center gap-2.5 px-4 py-1.5 text-[13px] transition-all duration-200",
+                "hover:bg-cyan-500/10 text-slate-400 hover:text-cyan-300",
+                isActive(item.path) && "bg-cyan-500/15 text-cyan-400 border-l-2 border-cyan-400 -ml-[1px]"
               )}
             >
               <item.icon className={cn(

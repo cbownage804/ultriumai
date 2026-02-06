@@ -88,14 +88,21 @@ export function VanguardNavigation() {
       dashboardPath: `${basePath}/rmm`,
       items: [
         { title: 'RMM Dashboard', path: `${basePath}/rmm`, icon: Monitor },
-        { title: 'Devices', path: `${basePath}/devices`, icon: Monitor },
-        { title: 'Patches', path: `${basePath}/patches`, icon: Package },
-        { title: 'Assets', path: `${basePath}/assets`, icon: Package },
-        { title: 'Scripts', path: `${basePath}/scripts`, icon: FileText },
-        { title: 'Backups', path: `${basePath}/backups`, icon: Package },
-        { title: 'Automation', path: `${basePath}/automation`, icon: Settings },
+        { title: 'Sites', path: `${basePath}/customers`, icon: Building2 },
       ],
       subGroups: [
+        {
+          label: 'Manage',
+          icon: Monitor,
+          items: [
+            { title: 'Devices', path: `${basePath}/devices`, icon: Monitor },
+            { title: 'Patches', path: `${basePath}/patches`, icon: Package },
+            { title: 'Assets', path: `${basePath}/assets`, icon: Package },
+            { title: 'Scripts', path: `${basePath}/scripts`, icon: FileText },
+            { title: 'Backups', path: `${basePath}/backups`, icon: Package },
+            { title: 'Automation', path: `${basePath}/automation`, icon: Settings },
+          ],
+        },
         {
           label: 'Alerting',
           icon: Bell,
@@ -110,10 +117,10 @@ export function VanguardNavigation() {
           label: 'Patching',
           icon: Package,
           items: [
-            { title: 'Automated Scheduling', path: `${basePath}/rmm/patch-scheduling`, icon: Calendar },
+            { title: 'Scheduling', path: `${basePath}/rmm/patch-scheduling`, icon: Calendar },
             { title: 'Compliance', path: `${basePath}/rmm/patch-compliance`, icon: ShieldCheck },
-            { title: 'Rollback Support', path: `${basePath}/rmm/patch-rollback`, icon: Clock },
-            { title: 'Third-Party Apps', path: `${basePath}/rmm/thirdparty-patching`, icon: Package },
+            { title: 'Rollback', path: `${basePath}/rmm/patch-rollback`, icon: Clock },
+            { title: 'Third-Party', path: `${basePath}/rmm/thirdparty-patching`, icon: Package },
           ],
         },
         {
@@ -121,9 +128,9 @@ export function VanguardNavigation() {
           icon: Shield,
           items: [
             { title: 'Threat Hunting', path: `${basePath}/rmm/threat-hunting`, icon: Search },
-            { title: 'Vulnerability Scanner', path: `${basePath}/rmm/vuln-scanner`, icon: Bug },
-            { title: 'Security Baselines', path: `${basePath}/rmm/security-baselines`, icon: ShieldCheck },
-            { title: 'Incident Playbooks', path: `${basePath}/rmm/incident-playbooks`, icon: BookOpen },
+            { title: 'Vuln Scanner', path: `${basePath}/rmm/vuln-scanner`, icon: Bug },
+            { title: 'Baselines', path: `${basePath}/rmm/security-baselines`, icon: ShieldCheck },
+            { title: 'Playbooks', path: `${basePath}/rmm/incident-playbooks`, icon: BookOpen },
           ],
         },
         {
@@ -132,8 +139,8 @@ export function VanguardNavigation() {
           items: [
             { title: 'PSA Sync', path: `${basePath}/rmm/psa-sync`, icon: Link2 },
             { title: 'Documentation', path: `${basePath}/rmm/doc-integration`, icon: FileText },
-            { title: 'Backup Monitoring', path: `${basePath}/rmm/backup-monitoring`, icon: Shield },
-            { title: 'Network Discovery', path: `${basePath}/rmm/network-discovery`, icon: Search },
+            { title: 'Backup Monitor', path: `${basePath}/rmm/backup-monitoring`, icon: Shield },
+            { title: 'Discovery', path: `${basePath}/rmm/network-discovery`, icon: Search },
           ],
         },
         {
@@ -149,7 +156,7 @@ export function VanguardNavigation() {
           icon: Key,
           items: [
             { title: 'Multi-Tenant', path: `${basePath}/rmm/multi-tenant`, icon: Users },
-            { title: 'Role-Based Access', path: `${basePath}/rmm/rbac`, icon: Key },
+            { title: 'RBAC', path: `${basePath}/rmm/rbac`, icon: Key },
             { title: 'Activity Logs', path: `${basePath}/rmm/activity-logs`, icon: ClipboardList },
           ],
         },
@@ -157,8 +164,8 @@ export function VanguardNavigation() {
           label: 'Reporting',
           icon: BarChart3,
           items: [
-            { title: 'Executive Dashboard', path: `${basePath}/rmm/executive-dashboard`, icon: BarChart3 },
-            { title: 'Scheduled Reports', path: `${basePath}/rmm/scheduled-reports`, icon: Calendar },
+            { title: 'Executive', path: `${basePath}/rmm/executive-dashboard`, icon: BarChart3 },
+            { title: 'Scheduled', path: `${basePath}/rmm/scheduled-reports`, icon: Calendar },
             { title: 'White-Label', path: `${basePath}/rmm/white-label`, icon: FileText },
             { title: 'SLA Tracking', path: `${basePath}/rmm/sla-tracking`, icon: Clock },
           ],
@@ -196,7 +203,6 @@ export function VanguardNavigation() {
       items: [
         { title: 'Helpdesk', path: `${basePath}/helpdesk`, icon: Ticket },
         { title: 'Tickets', path: `${basePath}/tickets`, icon: Ticket },
-        { title: 'Sites', path: `${basePath}/customers`, icon: Building2 },
         { title: 'Co-Managed IT', path: `${basePath}/comanaged`, icon: Users, badge: 'NEW' },
         { title: 'SLA Management', path: `${basePath}/sla`, icon: Activity },
         { title: 'Workflows', path: `${basePath}/workflows`, icon: Settings },
