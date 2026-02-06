@@ -62,12 +62,19 @@ interface ComplianceBenchmark {
 }
 
 const FRAMEWORKS = [
+  { id: 'soc2', name: 'SOC 2', icon: BarChart3, color: 'bg-cyan-500' },
+  { id: 'hipaa', name: 'HIPAA', icon: FileText, color: 'bg-red-500' },
+  { id: 'pci_dss', name: 'PCI DSS', icon: FileCheck, color: 'bg-green-500' },
+  { id: 'iso_27001', name: 'ISO 27001', icon: Shield, color: 'bg-indigo-500' },
+  { id: 'nist_800_53', name: 'NIST 800-53', icon: Shield, color: 'bg-purple-500' },
+  { id: 'gdpr', name: 'GDPR', icon: Shield, color: 'bg-blue-600' },
+  { id: 'ccpa', name: 'CCPA / CPRA', icon: Shield, color: 'bg-sky-500' },
+  { id: 'cmmc', name: 'CMMC 2.0', icon: Shield, color: 'bg-amber-600' },
+  { id: 'fedramp', name: 'FedRAMP', icon: Shield, color: 'bg-emerald-600' },
+  { id: 'glba', name: 'GLBA', icon: FileCheck, color: 'bg-teal-600' },
+  { id: 'wisp', name: 'WISP', icon: FileText, color: 'bg-rose-600' },
   { id: 'cis_linux', name: 'CIS Linux Benchmark', icon: Server, color: 'bg-orange-500' },
   { id: 'cis_windows', name: 'CIS Windows Benchmark', icon: Laptop, color: 'bg-blue-500' },
-  { id: 'nist_800_53', name: 'NIST 800-53', icon: Shield, color: 'bg-purple-500' },
-  { id: 'pci_dss', name: 'PCI DSS', icon: FileCheck, color: 'bg-green-500' },
-  { id: 'hipaa', name: 'HIPAA', icon: FileText, color: 'bg-red-500' },
-  { id: 'soc2', name: 'SOC 2', icon: BarChart3, color: 'bg-cyan-500' },
 ];
 
 export function ComplianceScanner() {
