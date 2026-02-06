@@ -25157,6 +25157,7 @@ export type Database = {
           location: string | null
           ml_model_version: string | null
           name: string
+          office_location_id: string | null
           rustdesk_id: string | null
           rustdesk_password_encrypted: string | null
           scan_interval_seconds: number | null
@@ -25191,6 +25192,7 @@ export type Database = {
           location?: string | null
           ml_model_version?: string | null
           name: string
+          office_location_id?: string | null
           rustdesk_id?: string | null
           rustdesk_password_encrypted?: string | null
           scan_interval_seconds?: number | null
@@ -25225,6 +25227,7 @@ export type Database = {
           location?: string | null
           ml_model_version?: string | null
           name?: string
+          office_location_id?: string | null
           rustdesk_id?: string | null
           rustdesk_password_encrypted?: string | null
           scan_interval_seconds?: number | null
@@ -25243,6 +25246,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vanguard_agents_office_location_id_fkey"
+            columns: ["office_location_id"]
+            isOneToOne: false
+            referencedRelation: "office_locations"
             referencedColumns: ["id"]
           },
         ]

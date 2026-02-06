@@ -44,6 +44,7 @@ export interface VanguardAgent {
   threat_detections?: Record<string, any>[];
   ml_model_version?: string | null;
   inference_stats?: Record<string, any>;
+  office_location_id?: string | null;
 }
 
 export interface VanguardMetric {
