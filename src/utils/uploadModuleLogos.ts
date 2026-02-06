@@ -1,15 +1,15 @@
 import { supabase } from '@/integrations/supabase/client';
 
-// Import all module logos
-import horizonLogo from '@/assets/vanguard/module-horizon.png';
-import pursuitLogo from '@/assets/vanguard/module-pursuit.png';
-import responseLogo from '@/assets/vanguard/module-response.png';
-import reconLogo from '@/assets/vanguard/module-recon.png';
-import atlasLogo from '@/assets/vanguard/module-atlas.png';
-import ledgerLogo from '@/assets/vanguard/module-ledger.png';
-import cortexLogo from '@/assets/vanguard/module-cortex.png';
-import sentinelLogo from '@/assets/vanguard/module-sentinel.png';
-import complyLogo from '@/assets/vanguard/module-comply.png';
+// Import watermark-optimized logos for storage upload
+import horizonLogo from '@/assets/watermarks/vanguard-horizon-logo.png';
+import pursuitLogo from '@/assets/watermarks/vanguard-pursuit-logo.png';
+import responseLogo from '@/assets/watermarks/vanguard-response-logo.png';
+import reconLogo from '@/assets/watermarks/vanguard-recon-logo.png';
+import atlasLogo from '@/assets/watermarks/vanguard-atlas-logo.png';
+import ledgerLogo from '@/assets/watermarks/vanguard-ledger-logo.png';
+import cortexLogo from '@/assets/watermarks/vanguard-cortex-logo.png';
+import sentinelLogo from '@/assets/watermarks/vanguard-sentinel-logo.png';
+import complyLogo from '@/assets/watermarks/vanguard-comply-logo.png';
 
 const MODULE_LOGO_MAP: Record<string, string> = {
   'vanguard-horizon-logo.png': horizonLogo,
@@ -26,7 +26,6 @@ const MODULE_LOGO_MAP: Record<string, string> = {
 export async function uploadModuleLogos(): Promise<{ results: string[] }> {
   const results: string[] = [];
 
-  // Check existing files
   const { data: existingFiles } = await supabase.storage
     .from('social-media-images')
     .list('logos');
