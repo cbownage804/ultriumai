@@ -40,6 +40,7 @@ import {
   ShieldCheck,
   Link2,
   Brain,
+  Crown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -305,6 +306,7 @@ export function VanguardNavigation() {
 
   // Additional standalone items
   const additionalItems: NavItem[] = [
+    { title: 'Partner Program', path: `${basePath}/partner-program`, icon: Crown, badge: 'NEW' },
     { title: 'MSP Billing', path: `${basePath}/msp-billing`, icon: CreditCard },
     { title: 'Cortex Hub', path: `${basePath}/cortex`, icon: Sparkles, badge: 'NEW' },
     { title: 'Integrations', path: `${basePath}/integrations`, icon: Network, badge: 'NEW' },

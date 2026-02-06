@@ -32,6 +32,15 @@ const PRODUCT_LOGOS: Record<string, string> = {
   aistudio: 'ultrium-gpt-logo.png',
   ultriumai: 'ultriumai-logo.png',
   vanguard: 'vanguard-logo.png',
+  // Vanguard Modules
+  horizon: 'vanguard-horizon-logo.png',
+  pursuit: 'vanguard-pursuit-logo.png',
+  response: 'vanguard-response-logo.png',
+  sentinel: 'vanguard-sentinel-logo.png',
+  recon: 'vanguard-recon-logo.png',
+  cortex: 'vanguard-cortex-logo.png',
+  comply: 'vanguard-comply-logo.png',
+  atlas: 'vanguard-atlas-logo.png',
 };
 
 // Keywords to detect product mentions
@@ -45,6 +54,15 @@ const PRODUCT_KEYWORDS: Record<string, string[]> = {
   ultriumgpt: ['ultriumgpt', 'custom gpt', 'ai builder', 'custom ai'],
   aistudio: ['ai studio', 'aistudio', 'gpt builder', 'ai control plane', 'business ai', 'white-label ai', 'msp ai', 'ai capacity', 'custom assistants'],
   vanguard: ['vanguard', 'rmm', 'endpoint management', 'remote monitoring'],
+  // Vanguard Modules
+  horizon: ['horizon', 'horizon rmm', 'patch automation', 'endpoint monitoring'],
+  pursuit: ['pursuit', 'pursuit xdr', 'threat detection', 'xdr', 'threat hunting'],
+  response: ['response', 'response psa', 'helpdesk', 'service desk', 'ticketing'],
+  sentinel: ['sentinel', 'sentinel saas', 'saas security', 'm365 security', 'microsoft 365 monitoring'],
+  recon: ['recon', 'pentest', 'penetration testing', 'vulnerability assessment'],
+  cortex: ['cortex', 'cortex ai', 'ai intelligence', 'ai operations'],
+  comply: ['comply', 'compliance management', 'audit readiness', 'soc 2', 'hipaa compliance'],
+  atlas: ['atlas', 'atlas docs', 'it documentation', 'knowledge base', 'runbooks'],
   // SafeSuite umbrella brand - explicit mentions only
   safesuite: ['safesuite', 'safe suite', 'security suite', 'all-in-one security', 'complete security toolkit'],
 };
@@ -61,6 +79,15 @@ const CONTENT_TYPE_TO_PRODUCT: Record<string, string> = {
   safeassist_promo: 'safeassist',
   vanguard_promo: 'vanguard',
   ai_studio: 'aistudio',
+  // Vanguard Modules
+  horizon_promo: 'horizon',
+  pursuit_promo: 'pursuit',
+  response_promo: 'response',
+  sentinel_promo: 'sentinel',
+  recon_promo: 'recon',
+  cortex_promo: 'cortex',
+  comply_promo: 'comply',
+  atlas_promo: 'atlas',
 };
 
 // Content-type specific visual styles for better image matching
@@ -93,6 +120,16 @@ const VISUAL_STYLES: Record<string, string> = {
   safetrack_promo: 'IT asset management imagery with emerald green accents, inventory dashboards, device tracking maps, asset lifecycle visualizations, organized equipment grids. Organized and efficient aesthetic with dark backgrounds and green accents. Orderly, efficient, complete.',
   safeassist_promo: 'AI security advisor imagery with emerald green accents. Show a friendly AI assistant helping employees with security - conversation interfaces, protective guidance, security education. Modern robot or AI face with welcoming expression surrounded by security icons. Dark backgrounds with emerald/teal glows. Helpful, intelligent, accessible, protective.',
   vanguard_promo: 'Enterprise RMM imagery with cyan accents, endpoint management dashboards, network monitoring visualizations, remote access connections, security agent deployment. Command center aesthetic with dark backgrounds and cyan highlights. Powerful, comprehensive, enterprise-grade.',
+  
+  // Vanguard Module Promos
+  horizon_promo: 'Cyan command center aesthetic. Endpoint monitoring dashboards with real-time device health grids, patch deployment progress bars, automated remediation flows. Dark backgrounds with electric cyan glows and holographic HUD elements. Operational, precise, always-on.',
+  pursuit_promo: 'Red/crimson threat hunting visuals. SOC analyst war room with threat maps, MITRE ATT&CK chain visualizations, real-time alert streams, XDR correlation graphs. Dark backgrounds with intense red and orange warning accents. Aggressive, vigilant, tactical.',
+  response_promo: 'Purple service management aesthetic. Helpdesk workflow visualizations, SLA countdown timers, ticket routing diagrams, co-managed IT handoff flows. Dark backgrounds with rich purple and magenta glows. Responsive, organized, efficient.',
+  sentinel_promo: 'Orange/amber SaaS monitoring dashboards. M365 security alerts, Google Workspace threat maps, cloud identity protection shields, multi-tenant security overviews. Dark backgrounds with warm amber and orange accents. Watchful, proactive, cloud-native.',
+  recon_promo: 'Indigo penetration testing imagery. Network topology maps with vulnerability heat spots, pentest workflow diagrams, exploit chain visualizations, Recon hardware devices. Dark backgrounds with deep indigo and electric blue accents. Precise, methodical, revealing.',
+  cortex_promo: 'Violet AI intelligence aesthetic. Neural network patterns, AI-powered analytics dashboards, pattern detection visualizations, smart routing flow diagrams. Dark backgrounds with violet and purple AI-themed glows. Intelligent, predictive, transformative.',
+  comply_promo: 'Teal/mint compliance aesthetic. Framework compliance dashboards (SOC 2, HIPAA, ISO), evidence collection workflows, audit readiness scorecards, control monitoring grids. Dark backgrounds with teal and emerald accents. Trustworthy, thorough, audit-ready.',
+  atlas_promo: 'Amber/gold documentation aesthetic. Organized knowledge base interfaces, runbook step-by-step flows, password vault security, IT documentation libraries. Dark backgrounds with warm amber and gold accents. Comprehensive, organized, essential.',
   
   // General
   security_tip: 'Clean, helpful visual with lock icons, checkmarks, protective shields, or secure connections. Bright, approachable colors like blues and greens.',
@@ -138,8 +175,8 @@ function detectProduct(text: string, contentType?: string): string | null {
     return detectedProducts[0];
   }
   
-  // Check for non-SafeSuite products (AI Studio, Vanguard)
-  for (const product of ['aistudio', 'ultriumgpt', 'vanguard']) {
+  // Check for non-SafeSuite products (AI Studio, Vanguard, Vanguard Modules)
+  for (const product of ['aistudio', 'ultriumgpt', 'vanguard', 'horizon', 'pursuit', 'response', 'sentinel', 'recon', 'cortex', 'comply', 'atlas']) {
     for (const keyword of PRODUCT_KEYWORDS[product]) {
       if (lowerText.includes(keyword)) {
         return product;
