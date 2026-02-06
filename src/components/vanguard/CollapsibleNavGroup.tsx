@@ -264,35 +264,41 @@ function NestedSubGroup({
   };
 
   return (
-    <div className="mt-1">
+    <div className="mt-2">
       <button
         onClick={handleToggle}
         className={cn(
-          "flex items-center gap-2.5 w-full px-5 py-2 text-[11px] font-semibold tracking-wider uppercase transition-all duration-200 rounded-sm mx-1",
-          "hover:bg-cyan-500/8 hover:text-slate-300",
-          hasActiveChild ? "text-cyan-400/90" : "text-slate-500"
+          "flex items-center gap-2.5 w-full px-5 py-1.5 text-[10px] font-bold tracking-[0.15em] uppercase transition-all duration-200 mx-1 group",
+          "hover:text-slate-200",
+          hasActiveChild ? "text-cyan-400" : "text-slate-500 hover:text-slate-300"
         )}
       >
-        <subGroup.icon className="h-3.5 w-3.5 shrink-0" />
+        <subGroup.icon className={cn(
+          "h-3.5 w-3.5 shrink-0 transition-colors",
+          hasActiveChild ? "text-cyan-400" : "text-slate-500 group-hover:text-slate-300"
+        )} />
         <span className="flex-1 text-left">{subGroup.label}</span>
-        {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        <ChevronDown className={cn(
+          "h-3 w-3 transition-transform duration-200",
+          !isOpen && "-rotate-90"
+        )} />
       </button>
       {isOpen && (
-        <div className="ml-2 border-l border-cyan-500/10 ml-7">
+        <div className="ml-[1.65rem] border-l border-white/[0.06] py-0.5">
           {subGroup.items.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               onClick={onMobileClose}
               className={cn(
-                "flex items-center gap-2.5 px-4 py-1.5 text-[13px] transition-all duration-200",
-                "hover:bg-cyan-500/10 text-slate-400 hover:text-cyan-300",
-                isActive(item.path) && "bg-cyan-500/15 text-cyan-400 border-l-2 border-cyan-400 -ml-[1px]"
+                "flex items-center gap-2.5 px-4 py-[5px] text-[13px] transition-all duration-150",
+                "text-slate-400/80 hover:text-white hover:bg-white/[0.04]",
+                isActive(item.path) && "text-cyan-400 bg-cyan-500/[0.08] border-l-2 border-cyan-400 -ml-[1px] shadow-[inset_0_0_12px_rgba(6,182,212,0.06)]"
               )}
             >
               <item.icon className={cn(
-                "h-3.5 w-3.5 shrink-0",
-                isActive(item.path) && "text-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)]"
+                "h-3.5 w-3.5 shrink-0 transition-colors",
+                isActive(item.path) ? "text-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.4)]" : "text-slate-500"
               )} />
               <span>{item.title}</span>
             </NavLink>
