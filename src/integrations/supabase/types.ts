@@ -27135,6 +27135,125 @@ export type Database = {
           },
         ]
       }
+      vanguard_gws_security_events: {
+        Row: {
+          affected_user_email: string | null
+          affected_user_name: string | null
+          ai_confidence: number | null
+          ai_triage_status: string | null
+          created_at: string
+          description: string | null
+          event_category: string
+          event_details: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          location_info: Json | null
+          raw_event_data: Json | null
+          resolved_at: string | null
+          severity: string
+          status: string
+          tenant_id: string | null
+          user_id: string
+        }
+        Insert: {
+          affected_user_email?: string | null
+          affected_user_name?: string | null
+          ai_confidence?: number | null
+          ai_triage_status?: string | null
+          created_at?: string
+          description?: string | null
+          event_category?: string
+          event_details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          location_info?: Json | null
+          raw_event_data?: Json | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          tenant_id?: string | null
+          user_id: string
+        }
+        Update: {
+          affected_user_email?: string | null
+          affected_user_name?: string | null
+          ai_confidence?: number | null
+          ai_triage_status?: string | null
+          created_at?: string
+          description?: string | null
+          event_category?: string
+          event_details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          location_info?: Json | null
+          raw_event_data?: Json | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          tenant_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_gws_security_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_gws_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_gws_tenants: {
+        Row: {
+          admin_email: string | null
+          created_at: string
+          credentials_encrypted: string | null
+          customer_id: string | null
+          domain: string
+          id: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          monitoring_config: Json | null
+          service_account_email: string | null
+          tenant_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_email?: string | null
+          created_at?: string
+          credentials_encrypted?: string | null
+          customer_id?: string | null
+          domain: string
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          monitoring_config?: Json | null
+          service_account_email?: string | null
+          tenant_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_email?: string | null
+          created_at?: string
+          credentials_encrypted?: string | null
+          customer_id?: string | null
+          domain?: string
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          monitoring_config?: Json | null
+          service_account_email?: string | null
+          tenant_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_honeypot_events: {
         Row: {
           agent_id: string
@@ -27619,11 +27738,13 @@ export type Database = {
           affected_user_id: string | null
           affected_user_name: string | null
           ai_analysis_id: string | null
+          ai_confidence: number | null
           client_id: string | null
           created_at: string
           description: string | null
           detected_at: string | null
           device_info: Json | null
+          event_category: string | null
           event_details: Json | null
           event_id: string | null
           event_timestamp: string
@@ -27651,11 +27772,13 @@ export type Database = {
           affected_user_id?: string | null
           affected_user_name?: string | null
           ai_analysis_id?: string | null
+          ai_confidence?: number | null
           client_id?: string | null
           created_at?: string
           description?: string | null
           detected_at?: string | null
           device_info?: Json | null
+          event_category?: string | null
           event_details?: Json | null
           event_id?: string | null
           event_timestamp: string
@@ -27683,11 +27806,13 @@ export type Database = {
           affected_user_id?: string | null
           affected_user_name?: string | null
           ai_analysis_id?: string | null
+          ai_confidence?: number | null
           client_id?: string | null
           created_at?: string
           description?: string | null
           detected_at?: string | null
           device_info?: Json | null
+          event_category?: string | null
           event_details?: Json | null
           event_id?: string | null
           event_timestamp?: string
@@ -29098,6 +29223,51 @@ export type Database = {
           total_runs?: number | null
           trigger_config?: Json | null
           trigger_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_saas_alert_policies: {
+        Row: {
+          auto_ticket: boolean | null
+          auto_triage: boolean | null
+          created_at: string
+          event_categories: string[] | null
+          id: string
+          is_active: boolean | null
+          notification_channels: Json | null
+          platform: string
+          policy_name: string
+          severity_threshold: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_ticket?: boolean | null
+          auto_triage?: boolean | null
+          created_at?: string
+          event_categories?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          notification_channels?: Json | null
+          platform?: string
+          policy_name: string
+          severity_threshold?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_ticket?: boolean | null
+          auto_triage?: boolean | null
+          created_at?: string
+          event_categories?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          notification_channels?: Json | null
+          platform?: string
+          policy_name?: string
+          severity_threshold?: string | null
           updated_at?: string
           user_id?: string
         }
