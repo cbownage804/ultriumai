@@ -83,6 +83,10 @@ const VanguardAIAnalytics = lazy(() => import('@/pages/vanguard/VanguardAIAnalyt
 const VanguardCortexHub = lazy(() => import('@/pages/vanguard/VanguardCortexHub'));
 const VanguardMSPBilling = lazy(() => import('@/pages/vanguard/VanguardMSPBilling'));
 const VanguardPartnerProgram = lazy(() => import('@/pages/vanguard/VanguardPartnerProgram'));
+const WhiteLabelSettings = lazy(() => import('@/pages/vanguard/WhiteLabelSettings'));
+const ResellerBillingPortal = lazy(() => import('@/pages/vanguard/ResellerBillingPortal'));
+const MarketingKitGenerator = lazy(() => import('@/pages/vanguard/MarketingKitGenerator'));
+const ClientProvisioning = lazy(() => import('@/pages/vanguard/ClientProvisioning'));
 
 // Response module pages
 const ResponseSLAPage = lazy(() => import('@/pages/vanguard/ResponseSLAPage'));

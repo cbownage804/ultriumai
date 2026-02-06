@@ -17091,6 +17091,313 @@ export type Database = {
         }
         Relationships: []
       }
+      reseller_billing_records: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_url: string | null
+          margin_amount: number
+          modules: string[]
+          partner_id: string
+          period_end: string
+          period_start: string
+          resale_amount: number
+          seat_count: number
+          status: string
+          stripe_invoice_id: string | null
+          tenant_id: string | null
+          wholesale_amount: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_url?: string | null
+          margin_amount?: number
+          modules?: string[]
+          partner_id: string
+          period_end: string
+          period_start: string
+          resale_amount?: number
+          seat_count?: number
+          status?: string
+          stripe_invoice_id?: string | null
+          tenant_id?: string | null
+          wholesale_amount?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_url?: string | null
+          margin_amount?: number
+          modules?: string[]
+          partner_id?: string
+          period_end?: string
+          period_start?: string
+          resale_amount?: number
+          seat_count?: number
+          status?: string
+          stripe_invoice_id?: string | null
+          tenant_id?: string | null
+          wholesale_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_billing_records_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reseller_billing_records_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_client_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reseller_client_tenants: {
+        Row: {
+          client_domain: string | null
+          client_email: string
+          client_name: string
+          created_at: string
+          enabled_modules: string[]
+          id: string
+          monthly_price_per_seat: number
+          msp_client_id: string | null
+          notes: string | null
+          partner_id: string
+          provisioned_at: string
+          resale_price_per_seat: number
+          seat_count: number
+          status: string
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_domain?: string | null
+          client_email: string
+          client_name: string
+          created_at?: string
+          enabled_modules?: string[]
+          id?: string
+          monthly_price_per_seat?: number
+          msp_client_id?: string | null
+          notes?: string | null
+          partner_id: string
+          provisioned_at?: string
+          resale_price_per_seat?: number
+          seat_count?: number
+          status?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_domain?: string | null
+          client_email?: string
+          client_name?: string
+          created_at?: string
+          enabled_modules?: string[]
+          id?: string
+          monthly_price_per_seat?: number
+          msp_client_id?: string | null
+          notes?: string | null
+          partner_id?: string
+          provisioned_at?: string
+          resale_price_per_seat?: number
+          seat_count?: number
+          status?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_client_tenants_msp_client_id_fkey"
+            columns: ["msp_client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reseller_client_tenants_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reseller_marketing_assets: {
+        Row: {
+          asset_type: string
+          description: string | null
+          file_url: string | null
+          generated_at: string
+          id: string
+          is_co_branded: boolean
+          metadata: Json | null
+          partner_id: string
+          title: string
+        }
+        Insert: {
+          asset_type: string
+          description?: string | null
+          file_url?: string | null
+          generated_at?: string
+          id?: string
+          is_co_branded?: boolean
+          metadata?: Json | null
+          partner_id: string
+          title: string
+        }
+        Update: {
+          asset_type?: string
+          description?: string | null
+          file_url?: string | null
+          generated_at?: string
+          id?: string
+          is_co_branded?: boolean
+          metadata?: Json | null
+          partner_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_marketing_assets_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reseller_partners: {
+        Row: {
+          approved_at: string | null
+          company_name: string
+          contact_email: string
+          contact_name: string
+          created_at: string
+          discount_percent: number
+          id: string
+          logo_url: string | null
+          notes: string | null
+          phone: string | null
+          status: string
+          tier: string
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          company_name: string
+          contact_email: string
+          contact_name: string
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          logo_url?: string | null
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          tier?: string
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          company_name?: string
+          contact_email?: string
+          contact_name?: string
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          logo_url?: string | null
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          tier?: string
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      reseller_themes: {
+        Row: {
+          accent_color: string
+          background_color: string
+          company_name_override: string | null
+          created_at: string
+          custom_css: string | null
+          custom_domain: string | null
+          favicon_url: string | null
+          hide_ultrium_branding: boolean
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          partner_id: string
+          powered_by_text: string | null
+          primary_color: string
+          secondary_color: string
+          tagline: string | null
+          theme_name: string
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string
+          background_color?: string
+          company_name_override?: string | null
+          created_at?: string
+          custom_css?: string | null
+          custom_domain?: string | null
+          favicon_url?: string | null
+          hide_ultrium_branding?: boolean
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          partner_id: string
+          powered_by_text?: string | null
+          primary_color?: string
+          secondary_color?: string
+          tagline?: string | null
+          theme_name?: string
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string
+          background_color?: string
+          company_name_override?: string | null
+          created_at?: string
+          custom_css?: string | null
+          custom_domain?: string | null
+          favicon_url?: string | null
+          hide_ultrium_branding?: boolean
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          partner_id?: string
+          powered_by_text?: string | null
+          primary_color?: string
+          secondary_color?: string
+          tagline?: string | null
+          theme_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_themes_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       response_workflows: {
         Row: {
           actions: Json
