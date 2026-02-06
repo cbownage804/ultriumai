@@ -30,7 +30,15 @@ import {
   ClipboardCheck,
   Crosshair,
   AlertTriangle,
-  Calendar
+  Calendar,
+  Clock,
+  ClipboardList,
+  Key,
+  Upload,
+  Power,
+  Bug,
+  ShieldCheck,
+  Link2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -38,7 +46,7 @@ import { getVanguardBasePath } from '@/utils/subdomain';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import vanguardLogo from '@/assets/vanguard-logo.png';
 import { ModuleLogo, ModuleName } from './ModuleLogo';
-import { CollapsibleNavGroup } from './CollapsibleNavGroup';
+import { CollapsibleNavGroup, NavSubGroup } from './CollapsibleNavGroup';
 
 interface NavItem {
   title: string;
@@ -54,6 +62,7 @@ interface NavGroup {
   module: ModuleName;
   dashboardPath: string;
   items: NavItem[];
+  subGroups?: NavSubGroup[];
 }
 
 export function VanguardNavigation() {
@@ -85,7 +94,76 @@ export function VanguardNavigation() {
         { title: 'Scripts', path: `${basePath}/scripts`, icon: FileText },
         { title: 'Backups', path: `${basePath}/backups`, icon: Package },
         { title: 'Automation', path: `${basePath}/automation`, icon: Settings },
-      ]
+      ],
+      subGroups: [
+        {
+          label: 'Alerting',
+          icon: Bell,
+          items: [
+            { title: 'Notifications', path: `${basePath}/rmm/notifications`, icon: Bell },
+            { title: 'Escalation Rules', path: `${basePath}/rmm/escalation-rules`, icon: ClipboardList },
+            { title: 'On-Call Schedule', path: `${basePath}/rmm/oncall-schedule`, icon: Calendar },
+            { title: 'Suppression Windows', path: `${basePath}/rmm/suppression-windows`, icon: Clock },
+          ],
+        },
+        {
+          label: 'Patching',
+          icon: Package,
+          items: [
+            { title: 'Automated Scheduling', path: `${basePath}/rmm/patch-scheduling`, icon: Calendar },
+            { title: 'Compliance', path: `${basePath}/rmm/patch-compliance`, icon: ShieldCheck },
+            { title: 'Rollback Support', path: `${basePath}/rmm/patch-rollback`, icon: Clock },
+            { title: 'Third-Party Apps', path: `${basePath}/rmm/thirdparty-patching`, icon: Package },
+          ],
+        },
+        {
+          label: 'Security / EDR',
+          icon: Shield,
+          items: [
+            { title: 'Threat Hunting', path: `${basePath}/rmm/threat-hunting`, icon: Search },
+            { title: 'Vulnerability Scanner', path: `${basePath}/rmm/vuln-scanner`, icon: Bug },
+            { title: 'Security Baselines', path: `${basePath}/rmm/security-baselines`, icon: ShieldCheck },
+            { title: 'Incident Playbooks', path: `${basePath}/rmm/incident-playbooks`, icon: BookOpen },
+          ],
+        },
+        {
+          label: 'Integrations',
+          icon: Link2,
+          items: [
+            { title: 'PSA Sync', path: `${basePath}/rmm/psa-sync`, icon: Link2 },
+            { title: 'Documentation', path: `${basePath}/rmm/doc-integration`, icon: FileText },
+            { title: 'Backup Monitoring', path: `${basePath}/rmm/backup-monitoring`, icon: Shield },
+            { title: 'Network Discovery', path: `${basePath}/rmm/network-discovery`, icon: Search },
+          ],
+        },
+        {
+          label: 'Remote Access',
+          icon: Upload,
+          items: [
+            { title: 'File Transfer', path: `${basePath}/rmm/file-transfer`, icon: Upload },
+            { title: 'Wake-on-LAN', path: `${basePath}/rmm/wake-on-lan`, icon: Power },
+          ],
+        },
+        {
+          label: 'Access Control',
+          icon: Key,
+          items: [
+            { title: 'Multi-Tenant', path: `${basePath}/rmm/multi-tenant`, icon: Users },
+            { title: 'Role-Based Access', path: `${basePath}/rmm/rbac`, icon: Key },
+            { title: 'Activity Logs', path: `${basePath}/rmm/activity-logs`, icon: ClipboardList },
+          ],
+        },
+        {
+          label: 'Reporting',
+          icon: BarChart3,
+          items: [
+            { title: 'Executive Dashboard', path: `${basePath}/rmm/executive-dashboard`, icon: BarChart3 },
+            { title: 'Scheduled Reports', path: `${basePath}/rmm/scheduled-reports`, icon: Calendar },
+            { title: 'White-Label', path: `${basePath}/rmm/white-label`, icon: FileText },
+            { title: 'SLA Tracking', path: `${basePath}/rmm/sla-tracking`, icon: Clock },
+          ],
+        },
+      ],
     },
     {
       header: 'VANGUARD SENTINEL',
@@ -345,6 +423,7 @@ export function VanguardNavigation() {
                   module={group.module}
                   dashboardPath={group.dashboardPath}
                   items={group.items}
+                  subGroups={group.subGroups}
                   isCollapsed={isCollapsed}
                   onMobileClose={() => setIsMobileOpen(false)}
                 />

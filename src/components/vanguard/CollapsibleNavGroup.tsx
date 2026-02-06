@@ -13,6 +13,12 @@ interface NavItem {
   badge?: string | number;
 }
 
+export interface NavSubGroup {
+  label: string;
+  icon: React.ElementType;
+  items: NavItem[];
+}
+
 interface CollapsibleNavGroupProps {
   header: string;
   description: string;
@@ -20,11 +26,13 @@ interface CollapsibleNavGroupProps {
   module: ModuleName;
   dashboardPath: string;
   items: NavItem[];
+  subGroups?: NavSubGroup[];
   isCollapsed: boolean;
   onMobileClose: () => void;
 }
 
 const STORAGE_KEY = 'vanguard-nav-collapsed-groups';
+const SUB_GROUP_STORAGE_KEY = 'vanguard-nav-collapsed-subgroups';
 
 export function CollapsibleNavGroup({
   header,
@@ -33,13 +41,16 @@ export function CollapsibleNavGroup({
   module,
   dashboardPath,
   items,
+  subGroups,
   isCollapsed,
   onMobileClose,
 }: CollapsibleNavGroupProps) {
   const location = useLocation();
   
-  // Check if any item in this group is active
-  const isGroupActive = items.some(item => 
+  // Check if any item in this group (including sub-groups) is active
+  const allSubItems = subGroups?.flatMap(sg => sg.items) ?? [];
+  const allItems = [...items, ...allSubItems];
+  const isGroupActive = allItems.some(item => 
     location.pathname === item.path || location.pathname.startsWith(item.path + '/')
   );
 
@@ -49,15 +60,13 @@ export function CollapsibleNavGroup({
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const collapsed = JSON.parse(saved) as string[];
-        // If this group's header is in the collapsed list, it should be closed
-        // Unless it has an active item
         if (isGroupActive) return true;
         return !collapsed.includes(header);
       }
     } catch (e) {
       console.error('Failed to load nav state:', e);
     }
-    return true; // Default to open
+    return true;
   });
 
   // Auto-expand when a child becomes active
@@ -75,10 +84,8 @@ export function CollapsibleNavGroup({
       let collapsed: string[] = saved ? JSON.parse(saved) : [];
       
       if (open) {
-        // Remove from collapsed list
         collapsed = collapsed.filter(h => h !== header);
       } else {
-        // Add to collapsed list
         if (!collapsed.includes(header)) {
           collapsed.push(header);
         }
@@ -180,9 +187,112 @@ export function CollapsibleNavGroup({
       
       <CollapsibleContent className="animate-accordion-down">
         <div className="py-1">
+          {/* Direct items */}
           {items.map(renderNavItem)}
+          
+          {/* Nested sub-groups */}
+          {subGroups?.map((sg) => (
+            <NestedSubGroup
+              key={sg.label}
+              subGroup={sg}
+              parentHeader={header}
+              isActive={isActive}
+              onMobileClose={onMobileClose}
+            />
+          ))}
         </div>
       </CollapsibleContent>
     </Collapsible>
+  );
+}
+
+function NestedSubGroup({
+  subGroup,
+  parentHeader,
+  isActive,
+  onMobileClose,
+}: {
+  subGroup: NavSubGroup;
+  parentHeader: string;
+  isActive: (path: string) => boolean;
+  onMobileClose: () => void;
+}) {
+  const location = useLocation();
+  const hasActiveChild = subGroup.items.some(i => isActive(i.path));
+  const storageKey = `${parentHeader}::${subGroup.label}`;
+
+  const [isOpen, setIsOpen] = useState(() => {
+    try {
+      const saved = localStorage.getItem(SUB_GROUP_STORAGE_KEY);
+      if (saved) {
+        const collapsed = JSON.parse(saved) as string[];
+        if (hasActiveChild) return true;
+        return !collapsed.includes(storageKey);
+      }
+    } catch {
+      // ignore
+    }
+    return false; // sub-groups default to closed
+  });
+
+  useEffect(() => {
+    if (hasActiveChild && !isOpen) {
+      setIsOpen(true);
+    }
+  }, [hasActiveChild, location.pathname]);
+
+  const handleToggle = () => {
+    const next = !isOpen;
+    setIsOpen(next);
+    try {
+      const saved = localStorage.getItem(SUB_GROUP_STORAGE_KEY);
+      let collapsed: string[] = saved ? JSON.parse(saved) : [];
+      if (next) {
+        collapsed = collapsed.filter(k => k !== storageKey);
+      } else {
+        if (!collapsed.includes(storageKey)) collapsed.push(storageKey);
+      }
+      localStorage.setItem(SUB_GROUP_STORAGE_KEY, JSON.stringify(collapsed));
+    } catch {
+      // ignore
+    }
+  };
+
+  return (
+    <div className="mt-0.5">
+      <button
+        onClick={handleToggle}
+        className={cn(
+          "flex items-center gap-2 w-full px-4 py-1.5 ml-2 text-[11px] font-semibold tracking-wider uppercase transition-colors",
+          hasActiveChild ? "text-cyan-400/80" : "text-slate-500 hover:text-slate-300"
+        )}
+      >
+        <subGroup.icon className="h-3 w-3 shrink-0" />
+        <span className="flex-1 text-left">{subGroup.label}</span>
+        {isOpen ? <ChevronDown className="h-2.5 w-2.5" /> : <ChevronRight className="h-2.5 w-2.5" />}
+      </button>
+      {isOpen && (
+        <div className="ml-3">
+          {subGroup.items.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              onClick={onMobileClose}
+              className={cn(
+                "flex items-center gap-2.5 px-4 py-1.5 text-[13px] transition-all duration-200 ml-2",
+                "hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-purple-500/10 text-slate-400 hover:text-cyan-300",
+                isActive(item.path) && "bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-purple-500/20 text-cyan-400 border-l-2 border-cyan-400"
+              )}
+            >
+              <item.icon className={cn(
+                "h-3.5 w-3.5 shrink-0",
+                isActive(item.path) && "text-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.5)]"
+              )} />
+              <span>{item.title}</span>
+            </NavLink>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
