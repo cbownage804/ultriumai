@@ -8,11 +8,13 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { FloatingHelpButton } from '@/components/help/FloatingHelpButton';
 import { CortexFeaturesProvider } from '@/hooks/useCortexFeatures';
+import { VanguardSubscriptionProvider } from '@/contexts/VanguardSubscriptionContext';
 
 export function VanguardLayout() {
   return (
     <LanguageProvider>
     <CortexFeaturesProvider>
+    <VanguardSubscriptionProvider>
       <VanguardAccessGate>
         {/* Force dark theme for Vanguard - Pure Black with Cyan & Purple Accents */}
         <div className="dark min-h-screen bg-[#050a0a]">
@@ -38,6 +40,7 @@ export function VanguardLayout() {
           <Toaster />
         </div>
       </VanguardAccessGate>
+    </VanguardSubscriptionProvider>
     </CortexFeaturesProvider>
     </LanguageProvider>
   );

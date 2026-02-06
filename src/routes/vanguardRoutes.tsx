@@ -2,6 +2,7 @@ import { Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { VanguardFeatureGate } from '@/components/vanguard/VanguardFeatureGate';
 
 // Lazy load Vanguard pages for better performance
 const VanguardProductPage = lazy(() => import('@/pages/products/VanguardProductPage'));
@@ -164,6 +165,31 @@ const LazyPage = ({ component: Component }: { component: React.ComponentType }) 
   </Suspense>
 );
 
+// Gated page: requires subscription + optional addon
+const GatedPage = ({ 
+  component: Component, 
+  requiredAddon, 
+  featureName, 
+  featureDescription 
+}: { 
+  component: React.ComponentType; 
+  requiredAddon?: string; 
+  featureName: string; 
+  featureDescription?: string;
+}) => (
+  <ProtectedRoute>
+    <Suspense fallback={<PageLoader />}>
+      <VanguardFeatureGate 
+        requiredAddon={requiredAddon} 
+        featureName={featureName}
+        featureDescription={featureDescription}
+      >
+        <Component />
+      </VanguardFeatureGate>
+    </Suspense>
+  </ProtectedRoute>
+);
+
 // Export protected routes (for inside VanguardLayout)
 export const getVanguardProtectedRoutes = () => [
   // VanguardDashboard (Command Center) is now the default landing page
@@ -174,11 +200,11 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-device-detail" path="devices/:deviceId" element={<LazyProtectedPage component={VanguardDeviceDetailPage} />} />,
   <Route key="vanguard-pi-detail" path="pi/:agentId" element={<LazyProtectedPage component={VanguardPiDetail} />} />,
   <Route key="vanguard-setup" path="setup" element={<LazyProtectedPage component={VanguardSetup} />} />,
-  <Route key="vanguard-threats" path="threats" element={<LazyProtectedPage component={ThreatDetection} />} />,
-  <Route key="vanguard-soc" path="soc" element={<LazyProtectedPage component={VanguardSOC} />} />,
-  <Route key="vanguard-pursuit-module" path="pursuit/:moduleId" element={<LazyProtectedPage component={VanguardPursuitModule} />} />,
-  <Route key="vanguard-pentest" path="pentest" element={<LazyProtectedPage component={VanguardPentest} />} />,
-  <Route key="vanguard-vulnscan" path="vulnscan" element={<LazyProtectedPage component={VulnerabilityScanner} />} />,
+  <Route key="vanguard-threats" path="threats" element={<GatedPage component={ThreatDetection} requiredAddon="pursuit-xdr" featureName="Threat Detection" featureDescription="Advanced threat detection & response. Add the Pursuit XDR module." />} />,
+  <Route key="vanguard-soc" path="soc" element={<GatedPage component={VanguardSOC} requiredAddon="pursuit-xdr" featureName="SOC Dashboard" />} />,
+  <Route key="vanguard-pursuit-module" path="pursuit/:moduleId" element={<GatedPage component={VanguardPursuitModule} requiredAddon="pursuit-xdr" featureName="Pursuit XDR" featureDescription="Extended detection & response module." />} />,
+  <Route key="vanguard-pentest" path="pentest" element={<GatedPage component={VanguardPentest} requiredAddon="recon-pentest" featureName="Penetration Testing" />} />,
+  <Route key="vanguard-vulnscan" path="vulnscan" element={<GatedPage component={VulnerabilityScanner} requiredAddon="recon-pentest" featureName="Vulnerability Scanner" />} />,
   <Route key="vanguard-compliance" path="compliance" element={<LazyProtectedPage component={ComplianceAuditor} />} />,
   <Route key="vanguard-reports" path="reports" element={<LazyProtectedPage component={VanguardReports} />} />,
   <Route key="vanguard-remediation" path="remediation" element={<LazyProtectedPage component={RemediationAutomation} />} />,
@@ -228,23 +254,23 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-rmm-module" path="rmm/:moduleId" element={<LazyProtectedPage component={VanguardRMM} />} />,
   <Route key="vanguard-portal-settings" path="portal" element={<LazyProtectedPage component={VanguardPortalSettings} />} />,
   <Route key="vanguard-portal-download" path="portal/download" element={<LazyProtectedPage component={VanguardPortalDownload} />} />,
-  <Route key="vanguard-atlas" path="atlas" element={<LazyProtectedPage component={VanguardAtlas} />} />,
+  <Route key="vanguard-atlas" path="atlas" element={<GatedPage component={VanguardAtlas} requiredAddon="atlas-docs" featureName="Atlas Documentation" featureDescription="IT documentation, runbooks & knowledge base. Add the Atlas module." />} />,
   // AI Feature routes
   <Route key="vanguard-ai-dashboard" path="ai-dashboard" element={<LazyProtectedPage component={VanguardAIDashboard} />} />,
   <Route key="vanguard-ai-knowledge" path="ai-knowledge" element={<LazyProtectedPage component={VanguardAIKnowledge} />} />,
   <Route key="vanguard-ai-sessions" path="ai-sessions" element={<LazyProtectedPage component={VanguardAISessions} />} />,
   <Route key="vanguard-ai-analytics" path="ai-analytics" element={<LazyProtectedPage component={VanguardAIAnalytics} />} />,
   <Route key="vanguard-ai-command" path="ai-command" element={<LazyProtectedPage component={VanguardAICommandCenter} />} />,
-  // Cortex AI Hub
-  <Route key="vanguard-cortex" path="cortex" element={<LazyProtectedPage component={VanguardCortexHub} />} />,
-  <Route key="vanguard-cortex-summarizer" path="cortex-summarizer" element={<LazyProtectedPage component={CortexSummarizerPage} />} />,
-  <Route key="vanguard-cortex-patterns" path="cortex-patterns" element={<LazyProtectedPage component={CortexPatternsPage} />} />,
-  <Route key="vanguard-cortex-kb" path="cortex-kb" element={<LazyProtectedPage component={CortexKBGeneratorPage} />} />,
-  <Route key="vanguard-cortex-router" path="cortex-router" element={<LazyProtectedPage component={CortexRouterPage} />} />,
-  <Route key="vanguard-cortex-analytics" path="cortex-analytics" element={<LazyProtectedPage component={CortexAnalyticsPage} />} />,
-  <Route key="vanguard-cortex-screen-to-docs" path="cortex-screen-to-docs" element={<LazyProtectedPage component={CortexScreenToDocsPage} />} />,
-  <Route key="vanguard-cortex-ai-tools" path="cortex-ai-tools" element={<LazyProtectedPage component={CortexAIToolsPage} />} />,
-  <Route key="vanguard-cortex-settings" path="cortex-settings" element={<LazyProtectedPage component={CortexSettingsPage} />} />,
+  // Cortex AI Hub (requires cortex-ai addon)
+  <Route key="vanguard-cortex" path="cortex" element={<GatedPage component={VanguardCortexHub} requiredAddon="cortex-ai" featureName="Cortex AI Hub" featureDescription="AI-powered IT intelligence and automation. Add the Cortex AI module to your plan." />} />,
+  <Route key="vanguard-cortex-summarizer" path="cortex-summarizer" element={<GatedPage component={CortexSummarizerPage} requiredAddon="cortex-ai" featureName="Cortex Summarizer" />} />,
+  <Route key="vanguard-cortex-patterns" path="cortex-patterns" element={<GatedPage component={CortexPatternsPage} requiredAddon="cortex-ai" featureName="Cortex Patterns" />} />,
+  <Route key="vanguard-cortex-kb" path="cortex-kb" element={<GatedPage component={CortexKBGeneratorPage} requiredAddon="cortex-ai" featureName="Cortex KB Generator" />} />,
+  <Route key="vanguard-cortex-router" path="cortex-router" element={<GatedPage component={CortexRouterPage} requiredAddon="cortex-ai" featureName="Cortex Router" />} />,
+  <Route key="vanguard-cortex-analytics" path="cortex-analytics" element={<GatedPage component={CortexAnalyticsPage} requiredAddon="cortex-ai" featureName="Cortex Analytics" />} />,
+  <Route key="vanguard-cortex-screen-to-docs" path="cortex-screen-to-docs" element={<GatedPage component={CortexScreenToDocsPage} requiredAddon="cortex-ai" featureName="Screen to Docs" />} />,
+  <Route key="vanguard-cortex-ai-tools" path="cortex-ai-tools" element={<GatedPage component={CortexAIToolsPage} requiredAddon="cortex-ai" featureName="AI Tools" />} />,
+  <Route key="vanguard-cortex-settings" path="cortex-settings" element={<GatedPage component={CortexSettingsPage} requiredAddon="cortex-ai" featureName="Cortex Settings" />} />,
   // Response module routes
   <Route key="vanguard-sla" path="sla" element={<LazyProtectedPage component={ResponseSLAPage} />} />,
   <Route key="vanguard-workflows" path="workflows" element={<LazyProtectedPage component={ResponseWorkflowsPage} />} />,
@@ -265,15 +291,15 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-reseller-billing" path="reseller-billing" element={<LazyProtectedPage component={ResellerBillingPortal} />} />,
   <Route key="vanguard-marketing-kit" path="marketing-kit" element={<LazyProtectedPage component={MarketingKitGenerator} />} />,
   <Route key="vanguard-client-provisioning" path="client-provisioning" element={<LazyProtectedPage component={ClientProvisioning} />} />,
-  // Sentinel M365 Security Monitoring
-  <Route key="vanguard-sentinel" path="sentinel" element={<LazyProtectedPage component={VanguardSentinel} />} />,
-  <Route key="vanguard-sentinel-module" path="sentinel/:moduleId" element={<LazyProtectedPage component={VanguardSentinel} />} />,
-  // Comply - Compliance & Audit Readiness
-  <Route key="vanguard-comply" path="comply" element={<LazyProtectedPage component={VanguardComply} />} />,
-  // Recon Pentest & Vulnerability Scanner
-  <Route key="recon-pentest" path="pentest" element={<LazyProtectedPage component={ReconPentestPage} />} />,
-  <Route key="recon-findings" path="vuln-findings" element={<LazyProtectedPage component={ReconFindingsPage} />} />,
-  <Route key="recon-schedules" path="scan-schedules" element={<LazyProtectedPage component={ReconSchedulesPage} />} />,
+  // Sentinel M365 Security Monitoring (requires sentinel-saas addon)
+  <Route key="vanguard-sentinel" path="sentinel" element={<GatedPage component={VanguardSentinel} requiredAddon="sentinel-saas" featureName="Sentinel SaaS Security" featureDescription="M365 & Google Workspace security monitoring. Add the Sentinel module to your plan." />} />,
+  <Route key="vanguard-sentinel-module" path="sentinel/:moduleId" element={<GatedPage component={VanguardSentinel} requiredAddon="sentinel-saas" featureName="Sentinel SaaS Security" />} />,
+  // Comply - Compliance & Audit Readiness (requires comply addon)
+  <Route key="vanguard-comply" path="comply" element={<GatedPage component={VanguardComply} requiredAddon="comply" featureName="Comply" featureDescription="Compliance lifecycle management & audit readiness. Add the Comply module to your plan." />} />,
+  // Recon Pentest & Vulnerability Scanner (requires recon-pentest addon)
+  <Route key="recon-pentest" path="pentest" element={<GatedPage component={ReconPentestPage} requiredAddon="recon-pentest" featureName="Recon Pentest" featureDescription="Vulnerability assessment & penetration testing. Add the Recon module to your plan." />} />,
+  <Route key="recon-findings" path="vuln-findings" element={<GatedPage component={ReconFindingsPage} requiredAddon="recon-pentest" featureName="Vulnerability Findings" />} />,
+  <Route key="recon-schedules" path="scan-schedules" element={<GatedPage component={ReconSchedulesPage} requiredAddon="recon-pentest" featureName="Scan Schedules" />} />,
   // Advanced SLA, Analytics, Portal, and Automation routes
   <Route key="vanguard-sla-enforcement" path="sla-enforcement" element={<LazyProtectedPage component={ResponseSLAEnforcementPage} />} />,
   <Route key="vanguard-advanced-analytics" path="advanced-analytics" element={<LazyProtectedPage component={LedgerAdvancedAnalyticsPage} />} />,
