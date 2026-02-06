@@ -1,64 +1,122 @@
 
 
-# Merge Horizon Sub-Menus into the Main Black Sidebar
+# Strategic Module Add-Ons & MSP Reseller Program
 
-## Problem
-The Horizon RMM page currently renders its own second sidebar (`HorizonSidebar`) next to the main `VanguardNavigation` sidebar, creating an awkward double-sidebar layout. The user wants all Horizon sub-modules (Alerting, Patching, Security/EDR, Integrations, Remote Access, Access Control, Reporting) nested under the existing "VANGUARD HORIZON" group in the main black sidebar.
+## Part 1: Reselling to MSPs & IT Companies
 
-## Solution
+### Current State
+Your Vanguard pricing already targets MSPs with per-technician plans (Pro $109, Growth $159, Power $189), but the **resale opportunity** is about letting MSPs white-label and resell your modules to *their* clients. This is the real revenue multiplier.
 
-Move the Horizon sub-items into the main sidebar as nested expandable groups, and convert the RMM page to route-based navigation instead of local state.
+### Recommended Reseller Architecture
 
-## What Changes
+**MSP Partner Program (3 Tiers)**
 
-### 1. Expand VANGUARD HORIZON items in VanguardNavigation
+| Tier | Monthly Commitment | Discount | White-Label | Co-Branding |
+|------|-------------------|----------|-------------|-------------|
+| Silver Partner | 10+ seats | 15% off | No | UltriumAI badge |
+| Gold Partner | 25+ seats | 25% off | Partial | Your logo + "Powered by" |
+| Platinum Partner | 50+ seats | 35% off | Full | Complete white-label |
 
-Update the Horizon nav group in `VanguardNavigation.tsx` to include all the sub-module items as direct nav links, replacing the current short list (RMM Dashboard, Devices, Patches, Assets, Scripts, Backups, Automation):
+**Key Reseller Features to Build:**
+- **Bulk Licensing Dashboard** - MSPs purchase seat blocks at wholesale, assign to clients
+- **Margin Calculator** - Shows MSPs their profit at different markups (e.g., buy at $8/user, sell at $15/user)
+- **Client Provisioning API** - Auto-create isolated client tenants with selected modules
+- **Reseller Billing Portal** - MSPs manage their client subscriptions, see MRR, churn
+- **Marketing Kit Generator** - Co-branded collateral, proposals, and slide decks
+
+---
+
+## Part 2: Module Add-On Strategy
+
+### Proposed Add-On Pricing Matrix
+
+Each Vanguard module becomes a standalone purchasable add-on. The base plans include core modules, and everything else is upsellable:
+
+| Module | Category | Per-User/Mo | Included In |
+|--------|----------|-------------|-------------|
+| **Pursuit XDR** | Security | $8 | Power+ |
+| **Sentinel SaaS** | Security | $6 | Power+ |
+| **Recon Pentest** | Security | $12 | Enterprise only |
+| **Cortex AI** | AI | $5 | Growth+ |
+| **Comply** | Compliance | $7 | Power+ |
+| **Cross-Client SOC** | Intelligence | $10 | Enterprise only |
+| **Atlas Documentation** | Operations | $3 | Growth+ |
+| **Phishing Sim** | Security | $4 | Power+ |
+
+**Strategic Bundling:**
+- "Security Bundle" (Pursuit + Sentinel + Comply) = $18 vs $21 a la carte (save 15%)
+- "Complete SOC" (All security + Cross-Client) = $35 vs $43 (save 20%)
+
+---
+
+## Part 3: Social Media Integration with Module Logos
+
+### What Changes
+
+**1. Add Vanguard module logos to the watermark system**
+
+Update the `generate-social-image` edge function's `PRODUCT_LOGOS` and `PRODUCT_KEYWORDS` maps to include every Vanguard module:
 
 ```
-VANGUARD HORIZON
-  RMM Dashboard
-  Devices / Patches / Assets / Scripts / Backups / Automation  (existing)
-  --- Alerting ---
-    Notifications / Escalation / On-Call / Suppression
-  --- Patching ---
-    Scheduling / Compliance / Rollback / Third-Party
-  --- Security / EDR ---
-    Threats / Vulnerabilities / Baselines / Playbooks
-  --- Integrations ---
-    PSA / Documentation / Backup / Discovery
-  --- Remote Access ---
-    File Transfer / Wake-on-LAN
-  --- Access Control ---
-    Multi-Tenant / RBAC / Activity Logs
-  --- Reporting ---
-    Executive / Scheduled / White-Label / SLA
+horizon -> vanguard-horizon-logo.png
+pursuit -> vanguard-pursuit-logo.png  
+response -> vanguard-response-logo.png
+sentinel -> vanguard-sentinel-logo.png
+recon -> vanguard-recon-logo.png
+cortex -> vanguard-cortex-logo.png
+comply -> vanguard-comply-logo.png
+atlas -> vanguard-atlas-logo.png
 ```
 
-Each sub-category heading (Alerting, Patching, etc.) will be a collapsible sub-group within the Horizon section, matching the existing CollapsibleNavGroup pattern but as a nested level.
+**2. Add Vanguard module content types to the AI Post Generator**
 
-### 2. Create routes for each Horizon sub-module
+New "Vanguard Modules" group in `AIPostGenerator.tsx`:
 
-Add individual routes in `vanguardRoutes.tsx` for each sub-module (e.g., `/rmm/notifications`, `/rmm/escalation`, `/rmm/threats`, etc.) so the main sidebar can link to them directly.
+- Horizon RMM - "Endpoint management & patch automation"
+- Pursuit XDR - "Advanced threat detection & response"
+- Response PSA - "Helpdesk & service management"
+- Sentinel SaaS - "SaaS security monitoring"
+- Recon Pentest - "Vulnerability assessment & pentesting"
+- Cortex AI - "AI-powered IT intelligence"
+- Comply - "Compliance lifecycle management"
+- Atlas Docs - "IT documentation & knowledge base"
 
-### 3. Simplify VanguardRMM page
+Each content type maps to its module's color theme and visual style, and auto-watermarks the generated image with that module's logo.
 
-Remove the `HorizonSidebar` from `VanguardRMM.tsx`. Instead, use the route path to determine which module to render. The page will read the current route parameter and display the appropriate component, or default to the `HorizonDashboard`.
+**3. Add visual styles per module**
 
-### 4. Add nested group support to CollapsibleNavGroup
+Each module gets a custom visual prompt style matching its brand colors:
+- Horizon = Cyan command center aesthetic
+- Pursuit = Red/crimson threat hunting visuals
+- Sentinel = Orange/amber SaaS monitoring dashboards
+- Recon = Indigo penetration testing imagery
+- etc.
 
-Extend `CollapsibleNavGroup.tsx` to support a second level of collapsible sub-groups within a module, so Horizon's categories (Alerting, Patching, etc.) can expand/collapse independently under the Horizon header.
+**4. "MSP Marketing Mode" toggle in the AI Post Generator**
 
-## Technical Details
+A new toggle that switches the generator into reseller-focused content:
+- Generates posts positioning modules as value-adds for MSP clients
+- Uses business-impact language ("increase MRR", "reduce churn", "upsell opportunity")
+- Auto-includes ROI statistics and competitive positioning
+- Watermarks with the Vanguard Suite logo instead of individual modules
 
-**Files to modify:**
-- `src/components/vanguard/VanguardNavigation.tsx` -- Add all Horizon sub-items with sub-group labels
-- `src/components/vanguard/CollapsibleNavGroup.tsx` -- Add support for nested sub-groups (items can optionally be grouped under a sub-header with its own collapse toggle)
-- `src/pages/vanguard/VanguardRMM.tsx` -- Remove HorizonSidebar, use route params to select module
-- `src/routes/vanguardRoutes.tsx` -- Add child routes under `/rmm/:moduleId`
+---
 
-**Files no longer needed (can be kept but unused):**
-- `src/components/vanguard/horizon/HorizonSidebar.tsx` -- No longer rendered
+## Technical Implementation Plan
 
-**Navigation data structure change:**
-The `NavGroup` interface will gain an optional `subGroups` property allowing nested categorization within a single module section, keeping the sidebar to a single column.
+### Files to Create
+1. `src/config/vanguardAddons.ts` - Module add-on pricing, bundling logic, and reseller tiers
+2. `src/pages/vanguard/VanguardPartnerProgram.tsx` - Reseller dashboard with margin calculator, bulk licensing, and marketing kit access
+3. Module logo assets uploaded to `logos/` storage bucket (8 Vanguard module logos)
+
+### Files to Edit
+1. **`supabase/functions/generate-social-image/index.ts`** - Add Vanguard module entries to `PRODUCT_LOGOS`, `PRODUCT_KEYWORDS`, `CONTENT_TYPE_TO_PRODUCT`, and `VISUAL_STYLES`
+2. **`src/components/social/AIPostGenerator.tsx`** - Add "Vanguard Modules" content type group with all 8 modules, plus "MSP Marketing Mode" toggle
+3. **`src/config/vanguardPricing.ts`** - Expand `ADDONS` array from 2 items to include all modules with per-user pricing
+4. **`src/pages/vanguard/VanguardSuite.tsx`** - Update the product modules list and pricing tiers to reflect the new add-on structure
+5. **`src/components/vanguard/VanguardNavigation.tsx`** - Add "Partner Program" link under a new business/sales section
+
+### Edge Function Changes
+- **`generate-social-image`** - 8 new logo mappings, 8 new keyword sets, 8 new visual style prompts
+- **`generate-social-post`** - Add MSP marketing mode context to system prompt when toggled
+
