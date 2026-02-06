@@ -22,6 +22,9 @@ public class RansomwareDefense : IDisposable
     private bool _isRunning;
     private readonly object _lock = new();
 
+    // VSS Protection sub-service
+    private readonly VSSProtection _vssProtection;
+
     // Event for ransomware detection
     public event EventHandler<RansomwareEventArgs>? OnRansomwareDetected;
 
@@ -67,6 +70,7 @@ public class RansomwareDefense : IDisposable
     {
         _configService = configService;
         _apiClient = apiClient;
+        _vssProtection = new VSSProtection(configService, apiClient);
         _honeypotDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
             "VanguardAgent", "Honeypots"
@@ -83,7 +87,10 @@ public class RansomwareDefense : IDisposable
 
         try
         {
-            // Protect shadow copies
+            // Start VSS Protection (deletion blocking, snapshots, MBR, Safe Mode)
+            await _vssProtection.StartAsync();
+
+            // Protect shadow copies (legacy initial snapshot)
             await ProtectShadowCopiesAsync();
 
             // Deploy honeypot files
@@ -97,7 +104,7 @@ public class RansomwareDefense : IDisposable
             _metricsTimer = new System.Threading.Timer(CheckEncryptionMetrics, null, 
                 TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
 
-            Console.WriteLine("[XDR Ransomware] Defense active");
+            Console.WriteLine("[XDR Ransomware] Defense active (with VSS protection, MBR monitoring, Safe Mode detection)");
         }
         catch (Exception ex)
         {
@@ -114,6 +121,8 @@ public class RansomwareDefense : IDisposable
 
         _metricsTimer?.Dispose();
         _metricsTimer = null;
+
+        _vssProtection.Stop();
 
         foreach (var watcher in _honeypotWatchers)
         {
@@ -324,7 +333,8 @@ public class RansomwareDefense : IDisposable
             MitreTechnique = "T1486" // Data Encrypted for Impact
         });
 
-        // Initiate emergency response
+        // Notify user and initiate emergency response
+        _vssProtection.NotifyRansomwareAttack("A honeypot file was accessed, indicating active ransomware.");
         await InitiateEmergencyResponseAsync("Honeypot file accessed - possible ransomware");
     }
 
@@ -342,6 +352,7 @@ public class RansomwareDefense : IDisposable
             MitreTechnique = "T1486"
         });
 
+        _vssProtection.NotifyRansomwareAttack("Files are being renamed with encrypted extensions.");
         await InitiateEmergencyResponseAsync("Honeypot file renamed - active ransomware detected");
     }
 
@@ -434,6 +445,7 @@ public class RansomwareDefense : IDisposable
                         MitreTechnique = "T1486"
                     });
 
+                    _vssProtection.NotifyRansomwareAttack($"Mass file encryption detected at {changesPerSecond:F1} files/second.");
                     await InitiateEmergencyResponseAsync($"Rapid encryption detected: {changesPerSecond:F1} files/sec");
                 }
 
@@ -589,6 +601,7 @@ public class RansomwareDefense : IDisposable
     public void Dispose()
     {
         Stop();
+        _vssProtection.Dispose();
     }
 }
 
