@@ -152,7 +152,7 @@ export function HorizonDashboard() {
       )}
 
       {/* Health Score Banner */}
-      <Card className="bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 border-cyan-500/20">
+      <Card data-tour="health-stats" className="bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 border-cyan-500/20">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
@@ -211,7 +211,7 @@ export function HorizonDashboard() {
       </Card>
 
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div data-tour="device-grid" className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <StatCard
           title="Total Devices"
           value={stats.totalDevices}

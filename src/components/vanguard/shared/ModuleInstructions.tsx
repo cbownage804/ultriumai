@@ -7,6 +7,12 @@ import {
   ArrowRight, CheckCircle, Circle, Info 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // ─── Module Intro Banner ──────────────────────────────────────
 interface ModuleIntroBannerProps {
@@ -169,13 +175,41 @@ export function ModuleGettingStarted({ moduleName, steps, accentColor = 'cyan', 
 interface InlineHelpProps {
   text: string;
   className?: string;
+  /** If provided, shows the icon inline with this label, and text as hover tooltip */
+  label?: string;
 }
 
-export function InlineHelp({ text, className }: InlineHelpProps) {
+export function InlineHelp({ text, className, label }: InlineHelpProps) {
+  if (label) {
+    return (
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className={cn('inline-flex items-center gap-1 text-xs text-muted-foreground cursor-help', className)}>
+              {label}
+              <Info className="h-3 w-3" />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-[240px] text-xs">
+            {text}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+  
   return (
-    <span className={cn('inline-flex items-center gap-1 text-xs text-muted-foreground', className)}>
-      <Info className="h-3 w-3" />
-      {text}
-    </span>
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={cn('inline-flex items-center gap-1 text-xs text-muted-foreground cursor-help', className)}>
+            <Info className="h-3 w-3" />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[240px] text-xs">
+          {text}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
