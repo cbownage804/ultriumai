@@ -1131,6 +1131,121 @@ export type Database = {
           },
         ]
       }
+      atlas_activity_logs: {
+        Row: {
+          action: string
+          changes: Json | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          organization_id: string | null
+          resource_id: string
+          resource_name: string | null
+          resource_type: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          changes?: Json | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string | null
+          resource_id: string
+          resource_name?: string | null
+          resource_type: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          changes?: Json | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string | null
+          resource_id?: string
+          resource_name?: string | null
+          resource_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atlas_activity_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "atlas_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      atlas_checklists: {
+        Row: {
+          assigned_to: string | null
+          checklist_type: string | null
+          completed_at: string | null
+          completion_percentage: number | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          is_template: boolean | null
+          items: Json
+          name: string
+          organization_id: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          checklist_type?: string | null
+          completed_at?: string | null
+          completion_percentage?: number | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_template?: boolean | null
+          items?: Json
+          name: string
+          organization_id?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          checklist_type?: string | null
+          completed_at?: string | null
+          completion_percentage?: number | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_template?: boolean | null
+          items?: Json
+          name?: string
+          organization_id?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atlas_checklists_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "atlas_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       atlas_configurations: {
         Row: {
           configuration_data: Json | null
@@ -1171,6 +1286,71 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "atlas_configurations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "atlas_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      atlas_contacts: {
+        Row: {
+          contact_type: string | null
+          created_at: string
+          department: string | null
+          email: string | null
+          first_name: string
+          id: string
+          is_primary: boolean | null
+          last_name: string
+          location_id: string | null
+          mobile: string | null
+          notes: string | null
+          organization_id: string | null
+          phone: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contact_type?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          first_name: string
+          id?: string
+          is_primary?: boolean | null
+          last_name: string
+          location_id?: string | null
+          mobile?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contact_type?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          is_primary?: boolean | null
+          last_name?: string
+          location_id?: string | null
+          mobile?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atlas_contacts_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "atlas_organizations"
@@ -1271,6 +1451,99 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "atlas_expirations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "atlas_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      atlas_flexible_asset_types: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          fields: Json
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          fields?: Json
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          fields?: Json
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      atlas_flexible_assets: {
+        Row: {
+          archived: boolean | null
+          asset_type_id: string
+          created_at: string
+          field_values: Json
+          id: string
+          name: string
+          organization_id: string | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean | null
+          asset_type_id: string
+          created_at?: string
+          field_values?: Json
+          id?: string
+          name: string
+          organization_id?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archived?: boolean | null
+          asset_type_id?: string
+          created_at?: string
+          field_values?: Json
+          id?: string
+          name?: string
+          organization_id?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atlas_flexible_assets_asset_type_id_fkey"
+            columns: ["asset_type_id"]
+            isOneToOne: false
+            referencedRelation: "atlas_flexible_asset_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atlas_flexible_assets_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "atlas_organizations"
@@ -1391,6 +1664,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      atlas_related_items: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          relationship_type: string | null
+          source_id: string
+          source_type: string
+          target_id: string
+          target_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          relationship_type?: string | null
+          source_id: string
+          source_type: string
+          target_id: string
+          target_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          relationship_type?: string | null
+          source_id?: string
+          source_type?: string
+          target_id?: string
+          target_type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       atlas_runbooks: {
         Row: {
