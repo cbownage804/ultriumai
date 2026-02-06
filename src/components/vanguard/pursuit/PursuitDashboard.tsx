@@ -19,7 +19,10 @@ import {
   Search,
   FileText,
   Archive,
-  TestTube
+  TestTube,
+  RotateCcw,
+  Anchor,
+  UserX
 } from "lucide-react";
 import { useXDRStats } from "@/hooks/usePursuitXDR";
 import { ThreatDetectionPanel } from "./ThreatDetectionPanel";
@@ -28,6 +31,10 @@ import { IOCManagement } from "./IOCManagement";
 import { YaraRulesPanel } from "./YaraRulesPanel";
 import { NetworkSecurityPanel } from "./NetworkSecurityPanel";
 import { RansomwareDefensePanel } from "./RansomwareDefensePanel";
+import { RansomwareRollbackEngine } from "./RansomwareRollbackEngine";
+import { EDRTimelinePanel } from "./EDRTimelinePanel";
+import { PersistenceDetectionPanel } from "./PersistenceDetectionPanel";
+import { IdentityThreatDetection } from "./IdentityThreatDetection";
 import { ForensicsPanel } from "./ForensicsPanel";
 import { AutomationPoliciesPanel } from "./AutomationPoliciesPanel";
 import { ResponseActionsPanel } from "./ResponseActionsPanel";
@@ -169,7 +176,23 @@ export function PursuitDashboard() {
           </TabsTrigger>
           <TabsTrigger value="ransomware" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <Skull className="h-3.5 w-3.5" />
-            Ransomware Defense
+            Ransomware
+          </TabsTrigger>
+          <TabsTrigger value="rollback" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
+            <RotateCcw className="h-3.5 w-3.5" />
+            Rollback Engine
+          </TabsTrigger>
+          <TabsTrigger value="edr-timeline" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
+            <Activity className="h-3.5 w-3.5" />
+            EDR Timeline
+          </TabsTrigger>
+          <TabsTrigger value="persistence" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
+            <Anchor className="h-3.5 w-3.5" />
+            Persistence
+          </TabsTrigger>
+          <TabsTrigger value="identity" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
+            <UserX className="h-3.5 w-3.5" />
+            Identity Threats
           </TabsTrigger>
           <TabsTrigger value="forensics" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <HardDrive className="h-3.5 w-3.5" />
@@ -181,7 +204,7 @@ export function PursuitDashboard() {
           </TabsTrigger>
           <TabsTrigger value="response" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <PlayCircle className="h-3.5 w-3.5" />
-            Response Actions
+            Response
           </TabsTrigger>
           <TabsTrigger value="automation" className="text-xs gap-1.5 text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border data-[state=active]:border-cyan-500/30">
             <Settings className="h-3.5 w-3.5" />
@@ -202,51 +225,25 @@ export function PursuitDashboard() {
         </TabsList>
 
         <div className="mt-4">
-          <TabsContent value="overview">
-            <ThreatDetectionPanel />
-          </TabsContent>
-          <TabsContent value="hunting">
-            <ThreatHuntingPanel />
-          </TabsContent>
-          <TabsContent value="iocs">
-            <IOCManagement />
-          </TabsContent>
-          <TabsContent value="yara">
-            <YaraRulesPanel />
-          </TabsContent>
-          <TabsContent value="intel">
-            <ThreatIntelligencePanel />
-          </TabsContent>
-          <TabsContent value="lookup">
-            <ThreatIntelLookup />
-          </TabsContent>
-          <TabsContent value="network">
-            <NetworkSecurityPanel />
-          </TabsContent>
-          <TabsContent value="ransomware">
-            <RansomwareDefensePanel />
-          </TabsContent>
-          <TabsContent value="forensics">
-            <ForensicsPanel />
-          </TabsContent>
-          <TabsContent value="quarantine">
-            <QuarantineManager />
-          </TabsContent>
-          <TabsContent value="response">
-            <ResponseActionsPanel />
-          </TabsContent>
-          <TabsContent value="automation">
-            <AutomationPoliciesPanel />
-          </TabsContent>
-          <TabsContent value="attack-chains">
-            <AttackChainVisualization />
-          </TabsContent>
-          <TabsContent value="reports">
-            <ThreatReportsExport />
-          </TabsContent>
-          <TabsContent value="testing">
-            <AgentTestingPanel />
-          </TabsContent>
+          <TabsContent value="overview"><ThreatDetectionPanel /></TabsContent>
+          <TabsContent value="hunting"><ThreatHuntingPanel /></TabsContent>
+          <TabsContent value="iocs"><IOCManagement /></TabsContent>
+          <TabsContent value="yara"><YaraRulesPanel /></TabsContent>
+          <TabsContent value="intel"><ThreatIntelligencePanel /></TabsContent>
+          <TabsContent value="lookup"><ThreatIntelLookup /></TabsContent>
+          <TabsContent value="network"><NetworkSecurityPanel /></TabsContent>
+          <TabsContent value="ransomware"><RansomwareDefensePanel /></TabsContent>
+          <TabsContent value="rollback"><RansomwareRollbackEngine /></TabsContent>
+          <TabsContent value="edr-timeline"><EDRTimelinePanel /></TabsContent>
+          <TabsContent value="persistence"><PersistenceDetectionPanel /></TabsContent>
+          <TabsContent value="identity"><IdentityThreatDetection /></TabsContent>
+          <TabsContent value="forensics"><ForensicsPanel /></TabsContent>
+          <TabsContent value="quarantine"><QuarantineManager /></TabsContent>
+          <TabsContent value="response"><ResponseActionsPanel /></TabsContent>
+          <TabsContent value="automation"><AutomationPoliciesPanel /></TabsContent>
+          <TabsContent value="attack-chains"><AttackChainVisualization /></TabsContent>
+          <TabsContent value="reports"><ThreatReportsExport /></TabsContent>
+          <TabsContent value="testing"><AgentTestingPanel /></TabsContent>
         </div>
       </Tabs>
     </div>
