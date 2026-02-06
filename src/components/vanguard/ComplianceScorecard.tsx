@@ -73,7 +73,81 @@ export const ComplianceScorecard = () => {
         { id: '5', name: 'Respond - Planning', status: 'compliant', description: 'Incident response planning', evidence: 'IR playbooks documented' },
         { id: '6', name: 'Recover - Planning', status: 'compliant', description: 'Recovery planning', evidence: 'BCP/DR plans in place' },
       ]
-    }
+    },
+    {
+      id: 'gdpr',
+      name: 'GDPR',
+      score: 82,
+      controls: [
+        { id: '1', name: 'Lawful Basis for Processing', status: 'compliant', description: 'Ensure lawful basis for all data processing activities', evidence: 'Processing register maintained' },
+        { id: '2', name: 'Data Subject Rights', status: 'compliant', description: 'Honor right to access, erasure, portability', evidence: 'DSR workflow implemented' },
+        { id: '3', name: 'Data Protection Impact Assessment', status: 'partial', description: 'Conduct DPIAs for high-risk processing', evidence: 'DPIA template in use, 2 pending' },
+        { id: '4', name: 'Breach Notification', status: 'compliant', description: 'Notify supervisory authority within 72 hours', evidence: 'Incident response plan covers notification' },
+        { id: '5', name: 'Data Protection Officer', status: 'non-compliant', description: 'Appoint DPO where required', evidence: 'DPO appointment pending' },
+      ]
+    },
+    {
+      id: 'ccpa',
+      name: 'CCPA / CPRA',
+      score: 86,
+      controls: [
+        { id: '1', name: 'Right to Know', status: 'compliant', description: 'Disclose data collection practices', evidence: 'Privacy policy updated' },
+        { id: '2', name: 'Right to Delete', status: 'compliant', description: 'Honor consumer deletion requests', evidence: 'Deletion workflow operational' },
+        { id: '3', name: 'Right to Opt-Out', status: 'compliant', description: 'Do Not Sell My Personal Information', evidence: 'Opt-out mechanism on site' },
+        { id: '4', name: 'Data Minimization', status: 'partial', description: 'Limit data collection to necessary purposes', evidence: 'Audit in progress' },
+        { id: '5', name: 'Sensitive Personal Info', status: 'compliant', description: 'Limit use of sensitive personal information', evidence: 'Classification applied' },
+      ]
+    },
+    {
+      id: 'cmmc',
+      name: 'CMMC 2.0',
+      score: 78,
+      controls: [
+        { id: '1', name: 'Access Control (AC)', status: 'compliant', description: 'Limit system access to authorized users', evidence: 'ACLs and RBAC enforced' },
+        { id: '2', name: 'Audit & Accountability', status: 'compliant', description: 'Create and retain audit logs', evidence: 'SIEM with 1-year retention' },
+        { id: '3', name: 'Incident Response', status: 'partial', description: 'Establish operational IR capability', evidence: 'IR plan documented, tabletop exercise pending' },
+        { id: '4', name: 'Risk Assessment', status: 'partial', description: 'Periodically assess risk', evidence: 'Annual RA, quarterly needed' },
+        { id: '5', name: 'System & Comms Protection', status: 'non-compliant', description: 'Monitor and protect communications at boundaries', evidence: 'FIPS 140-2 encryption pending' },
+      ]
+    },
+    {
+      id: 'fedramp',
+      name: 'FedRAMP',
+      score: 74,
+      controls: [
+        { id: '1', name: 'Continuous Monitoring', status: 'compliant', description: 'Ongoing security assessment and authorization', evidence: 'ConMon plan active' },
+        { id: '2', name: 'Vulnerability Scanning', status: 'compliant', description: 'Monthly OS and web app scanning', evidence: 'Automated Nessus scans' },
+        { id: '3', name: 'Plan of Action & Milestones', status: 'partial', description: 'Track and remediate known vulnerabilities', evidence: 'POA&M tracker updated monthly' },
+        { id: '4', name: 'Boundary Protection', status: 'partial', description: 'Implement managed interfaces', evidence: 'WAF deployed, segmentation partial' },
+        { id: '5', name: 'Supply Chain Risk', status: 'non-compliant', description: 'Assess supply chain risks for third-party components', evidence: 'SBOM generation pending' },
+      ]
+    },
+    {
+      id: 'glba',
+      name: 'GLBA',
+      score: 88,
+      controls: [
+        { id: '1', name: 'Financial Privacy Rule', status: 'compliant', description: 'Provide privacy notices to customers', evidence: 'Annual privacy notices distributed' },
+        { id: '2', name: 'Safeguards Rule', status: 'compliant', description: 'Develop information security program', evidence: 'ISP documented and board-approved' },
+        { id: '3', name: 'Risk Assessment', status: 'compliant', description: 'Identify and assess risks to customer information', evidence: 'Annual risk assessment completed' },
+        { id: '4', name: 'Access Controls', status: 'compliant', description: 'Restrict access to customer financial data', evidence: 'Least-privilege access enforced' },
+        { id: '5', name: 'Incident Response', status: 'partial', description: 'Develop and maintain IR plan for financial data breaches', evidence: 'IR plan exists, testing needed' },
+        { id: '6', name: 'Vendor Management', status: 'partial', description: 'Oversee service providers handling customer data', evidence: 'Vendor assessment program in progress' },
+      ]
+    },
+    {
+      id: 'wisp',
+      name: 'WISP',
+      score: 84,
+      controls: [
+        { id: '1', name: 'Designate Security Coordinator', status: 'compliant', description: 'Appoint person responsible for the WISP', evidence: 'CISO designated as coordinator' },
+        { id: '2', name: 'Risk Identification', status: 'compliant', description: 'Identify internal and external risks to PII', evidence: 'Risk register maintained' },
+        { id: '3', name: 'Employee Training', status: 'partial', description: 'Security awareness training for all employees', evidence: 'Annual training, new hire onboarding needed' },
+        { id: '4', name: 'Physical Security', status: 'compliant', description: 'Restrict physical access to records containing PII', evidence: 'Badge access and clean desk policy' },
+        { id: '5', name: 'Disciplinary Measures', status: 'compliant', description: 'Enforce consequences for WISP violations', evidence: 'HR policy documented' },
+        { id: '6', name: 'Terminated Employee Procedures', status: 'partial', description: 'Revoke access for departed employees', evidence: 'Automated deprovisioning, manual gaps remain' },
+      ]
+    },
   ]);
 
   const getStatusIcon = (status: string) => {
@@ -106,7 +180,7 @@ export const ComplianceScorecard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
         {frameworks.map(framework => (
           <Card key={framework.id}>
             <CardHeader className="pb-2">

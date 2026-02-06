@@ -26,10 +26,10 @@ export function ReconFindingsTab() {
     try {
       // Map severity to compliance framework evidence
       const frameworkMapping: Record<string, string[]> = {
-        critical: ['soc2', 'pci_dss', 'iso_27001', 'hipaa'],
-        high: ['soc2', 'pci_dss', 'iso_27001'],
-        medium: ['soc2', 'iso_27001'],
-        low: ['soc2'],
+        critical: ['soc2', 'pci_dss', 'iso_27001', 'hipaa', 'nist_800_53', 'cmmc', 'fedramp', 'glba', 'gdpr'],
+        high: ['soc2', 'pci_dss', 'iso_27001', 'nist_800_53', 'glba', 'cmmc', 'gdpr'],
+        medium: ['soc2', 'iso_27001', 'nist_800_53', 'wisp', 'ccpa'],
+        low: ['soc2', 'wisp'],
       };
       const frameworks = frameworkMapping[finding.severity] || ['soc2'];
       

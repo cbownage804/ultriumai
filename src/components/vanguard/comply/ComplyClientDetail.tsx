@@ -23,6 +23,12 @@ const FRAMEWORKS = [
   { id: 'pci_dss', name: 'PCI-DSS' },
   { id: 'iso_27001', name: 'ISO 27001' },
   { id: 'nist_800_53', name: 'NIST 800-53' },
+  { id: 'gdpr', name: 'GDPR' },
+  { id: 'ccpa', name: 'CCPA / CPRA' },
+  { id: 'cmmc', name: 'CMMC 2.0' },
+  { id: 'fedramp', name: 'FedRAMP' },
+  { id: 'glba', name: 'GLBA' },
+  { id: 'wisp', name: 'WISP' },
   { id: 'cis_linux', name: 'CIS Linux' },
   { id: 'cis_windows', name: 'CIS Windows' },
 ];

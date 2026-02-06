@@ -10,7 +10,8 @@ import { ComplyClientDetail } from './ComplyClientDetail';
 
 const FRAMEWORK_LABELS: Record<string, string> = {
   soc2: 'SOC 2', hipaa: 'HIPAA', pci_dss: 'PCI-DSS', iso_27001: 'ISO 27001',
-  nist_800_53: 'NIST 800-53', cis_linux: 'CIS Linux', cis_windows: 'CIS Windows',
+  nist_800_53: 'NIST 800-53', gdpr: 'GDPR', ccpa: 'CCPA / CPRA', cmmc: 'CMMC 2.0',
+  fedramp: 'FedRAMP', glba: 'GLBA', wisp: 'WISP', cis_linux: 'CIS Linux', cis_windows: 'CIS Windows',
 };
 
 export function ComplyClientsView() {
