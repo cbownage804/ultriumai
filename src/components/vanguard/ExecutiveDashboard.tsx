@@ -34,6 +34,14 @@ interface ExecutiveMetrics {
   usersActive: number;
   breachesDetected: number;
   vulnerabilities: { critical: number; high: number; medium: number; low: number };
+  // Cross-module KPIs
+  openTickets: number;
+  ticketsResolved30d: number;
+  avgTicketResolutionHours: number;
+  monthlyRevenue: number;
+  activeClients: number;
+  sentinelAlerts: number;
+  reconFindings: number;
 }
 
 interface TrendData {
@@ -67,7 +75,14 @@ export const ExecutiveDashboard = () => {
     usersTotal: 0,
     usersActive: 0,
     breachesDetected: 0,
-    vulnerabilities: { critical: 0, high: 0, medium: 0, low: 0 }
+    vulnerabilities: { critical: 0, high: 0, medium: 0, low: 0 },
+    openTickets: 0,
+    ticketsResolved30d: 0,
+    avgTicketResolutionHours: 0,
+    monthlyRevenue: 0,
+    activeClients: 0,
+    sentinelAlerts: 0,
+    reconFindings: 0,
   });
   const [trendData, setTrendData] = useState<TrendData[]>([]);
   const [topThreats, setTopThreats] = useState<{ name: string; count: number; severity: string }[]>([]);
@@ -99,14 +114,22 @@ export const ExecutiveDashboard = () => {
       devices,
       breaches,
       complianceResults,
-      pentestReports
+      pentestReports,
+      tickets,
+      mspClients,
+      sentinelEvents,
+      reconFindings
     ] = await Promise.all([
       supabase.from('security_incidents').select('*'),
       supabase.from('security_events').select('*').gte('created_at', thirtyDaysAgo),
       supabase.from('rmm_devices').select('*'),
       supabase.from('dark_web_monitors').select('*'),
       supabase.from('compliance_check_results').select('*'),
-      supabase.from('pentest_reports').select('findings_summary, risk_score')
+      supabase.from('pentest_reports').select('findings_summary, risk_score'),
+      supabase.from('tickets').select('id, status, priority, created_at, resolved_at').eq('user_id', user!.id),
+      supabase.from('msp_clients').select('id, is_active'),
+      supabase.from('vanguard_m365_security_events').select('id, status').eq('user_id', user!.id).in('status', ['new', 'pending', 'needs_review']),
+      supabase.from('recon_vulnerability_findings').select('id, severity, status').eq('user_id', user!.id).in('status', ['open', 'confirmed']),
     ]);
 
     const openIncidents = incidents.data?.filter(i => i.status !== 'resolved') || [];
@@ -160,9 +183,23 @@ export const ExecutiveDashboard = () => {
       mttr = Math.round((totalHours / resolvedWithTimes.length) * 10) / 10;
     }
 
+    // Cross-module: ticket metrics
+    const allTickets = tickets.data || [];
+    const openTicketCount = allTickets.filter(t => t.status !== 'resolved' && t.status !== 'closed').length;
+    const resolvedTickets30d = allTickets.filter(t => 
+      t.status === 'resolved' && t.resolved_at && new Date(t.resolved_at).getTime() > new Date(thirtyDaysAgo).getTime()
+    );
+    let avgTicketHours = 0;
+    if (resolvedTickets30d.length > 0) {
+      const totalH = resolvedTickets30d.reduce((sum, t) => {
+        return sum + (new Date(t.resolved_at!).getTime() - new Date(t.created_at).getTime()) / 3600000;
+      }, 0);
+      avgTicketHours = Math.round((totalH / resolvedTickets30d.length) * 10) / 10;
+    }
+
     setMetrics({
       overallRiskScore: riskScore,
-      riskTrend: -5, // Would calculate from historical data
+      riskTrend: -5,
       securityPosture: posture,
       threatsBlocked: threats.data?.length || 0,
       threatsTrend: 12,
@@ -179,7 +216,14 @@ export const ExecutiveDashboard = () => {
       usersTotal: 0,
       usersActive: 0,
       breachesDetected: breaches.data?.length || 0,
-      vulnerabilities: vulnCounts
+      vulnerabilities: vulnCounts,
+      openTickets: openTicketCount,
+      ticketsResolved30d: resolvedTickets30d.length,
+      avgTicketResolutionHours: avgTicketHours,
+      monthlyRevenue: 0, // Would come from billing_usage_tracking
+      activeClients: mspClients.data?.filter(c => c.is_active).length || 0,
+      sentinelAlerts: sentinelEvents.data?.length || 0,
+      reconFindings: reconFindings.data?.length || 0,
     });
   };
 
@@ -447,6 +491,76 @@ export const ExecutiveDashboard = () => {
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-2">Average incident resolution</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Cross-Module KPIs */}
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-cyan-500" />
+              <div>
+                <p className="text-2xl font-bold">{metrics.openTickets}</p>
+                <p className="text-xs text-muted-foreground">Open Tickets</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <div>
+                <p className="text-2xl font-bold">{metrics.ticketsResolved30d}</p>
+                <p className="text-xs text-muted-foreground">Resolved (30d)</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Clock className="h-5 w-5 text-amber-500" />
+              <div>
+                <p className="text-2xl font-bold">{metrics.avgTicketResolutionHours}h</p>
+                <p className="text-xs text-muted-foreground">Avg Resolution</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Users className="h-5 w-5 text-blue-500" />
+              <div>
+                <p className="text-2xl font-bold">{metrics.activeClients}</p>
+                <p className="text-xs text-muted-foreground">Active Clients</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Eye className="h-5 w-5 text-orange-500" />
+              <div>
+                <p className="text-2xl font-bold">{metrics.sentinelAlerts}</p>
+                <p className="text-xs text-muted-foreground">Sentinel Alerts</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Target className="h-5 w-5 text-red-500" />
+              <div>
+                <p className="text-2xl font-bold">{metrics.reconFindings}</p>
+                <p className="text-xs text-muted-foreground">Open Vulns</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

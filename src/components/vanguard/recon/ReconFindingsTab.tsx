@@ -5,16 +5,63 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertTriangle, Search, Loader2, ExternalLink, Shield } from 'lucide-react';
+import { AlertTriangle, Search, Loader2, ExternalLink, Shield, FileCheck } from 'lucide-react';
 import { useReconFindings } from '@/hooks/useReconPentest';
 import { SeverityIndicator, FindingStatusBadge } from './ReconPentestDashboard';
-
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 export function ReconFindingsTab() {
+  const { user } = useAuth();
   const { loading, findings, updateFinding } = useReconFindings();
   const [severityFilter, setSeverityFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFinding, setSelectedFinding] = useState<any>(null);
+  const [pushingToComply, setPushingToComply] = useState(false);
+
+  const pushFindingToComply = async (finding: any) => {
+    if (!user) return;
+    setPushingToComply(true);
+    try {
+      // Map severity to compliance framework evidence
+      const frameworkMapping: Record<string, string[]> = {
+        critical: ['soc2', 'pci_dss', 'iso_27001', 'hipaa'],
+        high: ['soc2', 'pci_dss', 'iso_27001'],
+        medium: ['soc2', 'iso_27001'],
+        low: ['soc2'],
+      };
+      const frameworks = frameworkMapping[finding.severity] || ['soc2'];
+      
+      // Insert as compliance evidence/finding
+      const { error } = await supabase.from('compliance_check_results').insert({
+        user_id: user.id,
+        check_id: `recon-${finding.id}`,
+        check_name: `Recon: ${finding.title}`,
+        framework_type: frameworks[0],
+        category: 'vulnerability_management',
+        status: finding.status === 'remediated' ? 'pass' : 'fail',
+        severity: finding.severity,
+        check_description: finding.description || `Vulnerability found on ${finding.affected_host}`,
+        remediation_steps: finding.remediation || null,
+        evidence: {
+          source: 'recon',
+          finding_id: finding.id,
+          affected_host: finding.affected_host,
+          cvss_score: finding.cvss_score,
+          cve_ids: finding.cve_ids,
+          frameworks,
+        } as any,
+      });
+      if (error) throw error;
+      toast.success(`Finding pushed to Comply as ${finding.status === 'remediated' ? 'passing' : 'failing'} evidence`);
+    } catch (err) {
+      console.error('Failed to push to Comply:', err);
+      toast.error('Failed to push finding to Comply');
+    } finally {
+      setPushingToComply(false);
+    }
+  };
 
   const filtered = findings.filter(f => {
     if (severityFilter !== 'all' && f.severity !== severityFilter) return false;
@@ -32,7 +79,7 @@ export function ReconFindingsTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg font-semibold text-white">Vulnerability Findings</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-white/30" />
             <Input placeholder="Search findings..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
@@ -186,6 +233,25 @@ export function ReconFindingsTab() {
                       </Button>
                     ))}
                   </div>
+                </div>
+
+                {/* Push to Comply */}
+                <div className="pt-2 border-t border-white/10">
+                  <Button
+                    size="sm"
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+                    onClick={() => pushFindingToComply(selectedFinding)}
+                    disabled={pushingToComply}
+                  >
+                    {pushingToComply ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Pushing...</>
+                    ) : (
+                      <><FileCheck className="h-4 w-4 mr-2" />Push to Comply as Evidence</>
+                    )}
+                  </Button>
+                  <p className="text-[10px] text-white/30 mt-1 text-center">
+                    Maps this finding to compliance frameworks automatically
+                  </p>
                 </div>
               </div>
             </>
