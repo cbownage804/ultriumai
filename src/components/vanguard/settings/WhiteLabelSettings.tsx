@@ -80,12 +80,35 @@ export const WhiteLabelSettings = ({ organizations }: WhiteLabelSettingsProps) =
   const loadConfig = async (orgId: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('white-label-config', {
-        body: { action: 'get_config', org_id: orgId, user_id: user?.id }
-      });
+      // Load directly from horizon_white_label table
+      const { data, error } = await supabase
+        .from('horizon_white_label')
+        .select('*')
+        .eq('tenant_id', orgId)
+        .eq('user_id', user?.id ?? '')
+        .maybeSingle();
 
-      if (!error && data?.config) {
-        setConfig(data.config);
+      if (!error && data) {
+        setConfig({
+          branding: {
+            company_name: data.company_name || defaultConfig.branding.company_name,
+            logo_url: data.logo_url || undefined,
+            favicon_url: data.favicon_url || undefined,
+            primary_color: data.primary_color || defaultConfig.branding.primary_color,
+            secondary_color: data.secondary_color || defaultConfig.branding.secondary_color,
+            accent_color: data.accent_color || defaultConfig.branding.accent_color,
+          },
+          email: {
+            from_name: defaultConfig.email!.from_name,
+            from_email: defaultConfig.email!.from_email,
+            footer_text: data.email_footer || undefined,
+          },
+          portal: defaultConfig.portal,
+          features: {
+            hide_powered_by: false,
+            custom_css: data.custom_css || undefined,
+          },
+        });
       } else {
         setConfig(defaultConfig);
       }
@@ -98,21 +121,30 @@ export const WhiteLabelSettings = ({ organizations }: WhiteLabelSettingsProps) =
   };
 
   const saveConfig = async () => {
-    if (!selectedOrg) {
+    if (!selectedOrg || !user?.id) {
       toast.error('Select an organization first');
       return;
     }
 
     setIsSaving(true);
     try {
-      const { data, error } = await supabase.functions.invoke('white-label-config', {
-        body: { 
-          action: 'save_config', 
-          org_id: selectedOrg, 
-          user_id: user?.id,
-          config 
-        }
-      });
+      const payload = {
+        tenant_id: selectedOrg,
+        user_id: user.id,
+        company_name: config.branding.company_name,
+        logo_url: config.branding.logo_url || null,
+        favicon_url: config.branding.favicon_url || null,
+        primary_color: config.branding.primary_color,
+        secondary_color: config.branding.secondary_color,
+        accent_color: config.branding.accent_color,
+        email_footer: config.email?.footer_text || null,
+        custom_css: config.features?.custom_css || null,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('horizon_white_label')
+        .upsert(payload, { onConflict: 'tenant_id,user_id' });
 
       if (error) throw error;
       toast.success('White label configuration saved');
@@ -139,36 +171,28 @@ export const WhiteLabelSettings = ({ organizations }: WhiteLabelSettingsProps) =
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !selectedOrg || !user?.id) return;
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const base64 = (reader.result as string).split(',')[1];
-      const logoType = file.type.split('/')[1];
+    try {
+      const filePath = `whitelabel/${user.id}/${selectedOrg}/logo.${file.name.split('.').pop()}`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
 
-      try {
-        const { data, error } = await supabase.functions.invoke('white-label-config', {
-          body: { 
-            action: 'upload_logo', 
-            org_id: selectedOrg, 
-            user_id: user?.id,
-            logo_base64: base64,
-            logo_type: logoType
-          }
-        });
+      if (uploadError) throw uploadError;
 
-        if (!error && data?.logo_url) {
-          setConfig(prev => ({
-            ...prev,
-            branding: { ...prev.branding, logo_url: data.logo_url }
-          }));
-          toast.success('Logo uploaded');
-        }
-      } catch (err: any) {
-        toast.error('Failed to upload logo', { description: err.message });
-      }
-    };
-    reader.readAsDataURL(file);
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      setConfig(prev => ({
+        ...prev,
+        branding: { ...prev.branding, logo_url: publicUrl }
+      }));
+      toast.success('Logo uploaded');
+    } catch (err: any) {
+      toast.error('Failed to upload logo', { description: err.message });
+    }
   };
 
   const updateBranding = (key: keyof WhiteLabelConfig['branding'], value: string) => {
