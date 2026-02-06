@@ -106,6 +106,7 @@ const CortexAnalyticsPage = lazy(() => import('@/pages/vanguard/CortexAnalyticsP
 const CortexScreenToDocsPage = lazy(() => import('@/pages/vanguard/CortexScreenToDocsPage'));
 const CortexAIToolsPage = lazy(() => import('@/pages/vanguard/CortexAIToolsPage'));
 const VanguardSentinel = lazy(() => import('@/pages/vanguard/VanguardSentinel'));
+const VanguardComply = lazy(() => import('@/pages/vanguard/VanguardComply'));
 const VanguardAICommandCenter = lazy(() => import('@/pages/vanguard/VanguardAICommandCenter'));
 const HorizonScriptsPage = lazy(() => import('@/pages/vanguard/HorizonScriptsPage'));
 const HorizonAutomationPage = lazy(() => import('@/pages/vanguard/HorizonAutomationPage'));
@@ -249,6 +250,8 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-msp-billing" path="msp-billing" element={<LazyProtectedPage component={VanguardMSPBilling} />} />,
   // Sentinel M365 Security Monitoring
   <Route key="vanguard-sentinel" path="sentinel" element={<LazyProtectedPage component={VanguardSentinel} />} />,
+  // Comply - Compliance & Audit Readiness
+  <Route key="vanguard-comply" path="comply" element={<LazyProtectedPage component={VanguardComply} />} />,
   // Advanced SLA, Analytics, Portal, and Automation routes
   <Route key="vanguard-sla-enforcement" path="sla-enforcement" element={<LazyProtectedPage component={ResponseSLAEnforcementPage} />} />,
   <Route key="vanguard-advanced-analytics" path="advanced-analytics" element={<LazyProtectedPage component={LedgerAdvancedAnalyticsPage} />} />,
