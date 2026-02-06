@@ -15,6 +15,7 @@ import {
   Plus, Search, FolderOpen, AlertTriangle, CheckCircle2, Settings, ArrowLeft, ChevronRight
 } from 'lucide-react';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
+import { ModuleIntroBanner, ModuleGettingStarted } from '@/components/vanguard/shared/ModuleInstructions';
 import { useVanguardAtlas } from '@/hooks/useVanguardAtlas';
 import { useMSP } from '@/hooks/useMSP';
 import { AtlasDocuments } from '@/components/vanguard-atlas/AtlasDocuments';
@@ -61,7 +62,26 @@ export default function VanguardAtlas() {
           </div>
         </div>
 
-        {/* Organization Selection */}
+        {/* Intro Banner */}
+        <ModuleIntroBanner
+          title="Welcome to Vanguard Atlas"
+          description="Your IT documentation hub — like ITGlue, built into Vanguard. Store passwords, SSL certificates, configurations, runbooks, and more for each client organization."
+          features={['Password Vault', 'SSL Certificate Tracking', 'Runbook Library', 'Configuration DB', 'Expiration Alerts']}
+          accentColor="cyan"
+          storageKey="atlas-intro"
+        />
+
+        {clients.length === 0 && (
+          <ModuleGettingStarted
+            moduleName="Atlas"
+            accentColor="cyan"
+            steps={[
+              { title: 'Add your first customer', description: 'Create a client in the Customers section to organize their documentation.', completed: false },
+              { title: 'Create documentation', description: 'Add SOPs, passwords, and configurations for each organization.', completed: false },
+              { title: 'Track SSL certificates', description: 'Add SSL certs and get automatic expiration alerts.', completed: false },
+            ]}
+          />
+        )}
         <Card className="bg-card/50 border-cyan-500/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-cyan-400">

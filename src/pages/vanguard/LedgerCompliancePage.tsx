@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { ComplianceReportGenerator } from '@/components/vanguard/ComplianceReportGenerator';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
+import { ModuleIntroBanner } from '@/components/vanguard/shared/ModuleInstructions';
 
 export default function LedgerCompliancePage() {
   useEffect(() => {
@@ -20,6 +21,14 @@ export default function LedgerCompliancePage() {
           <p className="text-muted-foreground">Generate compliance and audit reports</p>
         </div>
       </div>
+
+      <ModuleIntroBanner
+        title="Compliance Reporting"
+        description="Generate PDF and CSV compliance reports from completed scan results. Select a completed scan, customize report options, and export audit-ready documentation."
+        features={['PDF Report Generation', 'CSV Export', 'Evidence Inclusion', 'Remediation Steps', 'Executive Summaries']}
+        accentColor="cyan"
+        storageKey="ledger-compliance-intro"
+      />
 
       <ComplianceReportGenerator />
     </div>

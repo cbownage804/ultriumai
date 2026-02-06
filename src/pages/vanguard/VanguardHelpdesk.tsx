@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { HelpdeskDashboard } from '@/components/dashboards/HelpdeskDashboard';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
+import { ModuleIntroBanner } from '@/components/vanguard/shared/ModuleInstructions';
 
 export default function VanguardHelpdesk() {
   useEffect(() => {
@@ -19,6 +20,14 @@ export default function VanguardHelpdesk() {
         </div>
       </div>
       
+      <ModuleIntroBanner
+        title="Welcome to Vanguard Response"
+        description="Your PSA-grade service desk with AI-powered ticket routing, SLA enforcement, time tracking, and customer satisfaction surveys. Manage tickets, workflows, and escalations from one place."
+        features={['AI Ticket Routing', 'SLA Enforcement', 'Time & Billing', 'Email Integration', 'CSAT Surveys', 'Workflow Automation']}
+        accentColor="purple"
+        storageKey="response-intro"
+      />
+
       <HelpdeskDashboard />
     </div>
   );

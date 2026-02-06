@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 import { getVanguardBasePath } from '@/utils/subdomain';
+import { ModuleIntroBanner } from '@/components/vanguard/shared/ModuleInstructions';
 
 // Tool categories for organization
 const toolCategories = {
@@ -122,6 +123,15 @@ export default function VanguardCortexHub() {
           </Badge>
         </div>
       </div>
+
+      {/* Intro Banner */}
+      <ModuleIntroBanner
+        title="Welcome to Vanguard Cortex"
+        description="Your AI command center. Cortex uses machine learning to automate ticket routing, summarize conversations, predict SLA breaches, detect anomalies, and generate knowledge base articles."
+        features={['Smart Ticket Routing', 'AI Summarization', 'Pattern Detection', 'KB Generation', 'Anomaly Detection', 'Screen-to-Docs']}
+        accentColor="purple"
+        storageKey="cortex-intro"
+      />
 
       {/* Quick Stats */}
       <Card className="bg-gradient-to-r from-purple-500/10 via-cyan-500/10 to-blue-500/10 border-purple-500/30">
