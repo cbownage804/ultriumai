@@ -155,14 +155,23 @@ export function useHorizonStats() {
         }
       }
 
-      // Fetch clients - simplified query
+      // Fetch clients via MSP resolution pattern
       let clients: Array<{ id: string; is_active: boolean }> = [];
       try {
-        const { data } = await (supabase as any)
-          .from('msp_clients')
-          .select('id, is_active')
-          .eq('user_id', user.id);
-        clients = data || [];
+        const { data: mspData } = await supabase
+          .from('msps')
+          .select('id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .single();
+        
+        if (mspData) {
+          const { data } = await supabase
+            .from('msp_clients')
+            .select('id, is_active')
+            .eq('msp_id', mspData.id);
+          clients = data || [];
+        }
       } catch { /* ignore */ }
 
       // Fetch patches
@@ -188,15 +197,18 @@ export function useHorizonStats() {
 
       const alerts = alertsData || [];
 
-      // Fetch tickets - simplified query
+      // Fetch tickets - use customer_id from msp_clients
       let tickets: Array<{ priority: string; status: string }> = [];
       try {
-        const { data } = await (supabase as any)
-          .from('helpdesk_tickets')
-          .select('priority, status')
-          .eq('user_id', user.id)
-          .in('status', ['open', 'in_progress']);
-        tickets = data || [];
+        if (clients.length > 0) {
+          const clientIds = clients.map(c => c.id);
+          const { data } = await supabase
+            .from('helpdesk_tickets')
+            .select('priority, status')
+            .in('customer_id', clientIds)
+            .in('status', ['open', 'in_progress']);
+          tickets = data || [];
+        }
       } catch { /* ignore */ }
 
       // Calculate security metrics based on config
