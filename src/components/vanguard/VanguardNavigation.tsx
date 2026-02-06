@@ -174,6 +174,9 @@ export function VanguardNavigation() {
       dashboardPath: `${basePath}/comply`,
       items: [
         { title: 'Comply Dashboard', path: `${basePath}/comply`, icon: ClipboardCheck },
+        { title: 'Client Compliance', path: `${basePath}/comply`, icon: Users },
+        { title: 'Compliance Scanner', path: `${basePath}/comply`, icon: Shield },
+        { title: 'Reports', path: `${basePath}/compliance-reports`, icon: FileText },
       ]
     },
     {

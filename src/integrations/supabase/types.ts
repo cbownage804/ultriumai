@@ -2346,6 +2346,122 @@ export type Database = {
         }
         Relationships: []
       }
+      client_compliance_policies: {
+        Row: {
+          assigned_to: string | null
+          client_id: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          evidence_notes: string | null
+          evidence_url: string | null
+          framework_type: string
+          id: string
+          policy_name: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          client_id: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          evidence_notes?: string | null
+          evidence_url?: string | null
+          framework_type: string
+          id?: string
+          policy_name: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          evidence_notes?: string | null
+          evidence_url?: string | null
+          framework_type?: string
+          id?: string
+          policy_name?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_compliance_policies_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_compliance_profiles: {
+        Row: {
+          client_id: string
+          compliance_score: number | null
+          created_at: string
+          framework_type: string
+          id: string
+          is_enabled: boolean | null
+          last_scan_at: string | null
+          last_scan_job_id: string | null
+          notes: string | null
+          target_score: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          compliance_score?: number | null
+          created_at?: string
+          framework_type: string
+          id?: string
+          is_enabled?: boolean | null
+          last_scan_at?: string | null
+          last_scan_job_id?: string | null
+          notes?: string | null
+          target_score?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          compliance_score?: number | null
+          created_at?: string
+          framework_type?: string
+          id?: string
+          is_enabled?: boolean | null
+          last_scan_at?: string | null
+          last_scan_job_id?: string | null
+          notes?: string | null
+          target_score?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_compliance_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_compliance_profiles_last_scan_job_id_fkey"
+            columns: ["last_scan_job_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_scan_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_contacts: {
         Row: {
           can_view_all_company_tickets: boolean | null
@@ -5315,6 +5431,7 @@ export type Database = {
       compliance_scan_jobs: {
         Row: {
           agent_id: string | null
+          client_id: string | null
           completed_at: string | null
           compliance_score: number | null
           created_at: string
@@ -5333,6 +5450,7 @@ export type Database = {
         }
         Insert: {
           agent_id?: string | null
+          client_id?: string | null
           completed_at?: string | null
           compliance_score?: number | null
           created_at?: string
@@ -5351,6 +5469,7 @@ export type Database = {
         }
         Update: {
           agent_id?: string | null
+          client_id?: string | null
           completed_at?: string | null
           compliance_score?: number | null
           created_at?: string
@@ -5373,6 +5492,13 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_scan_jobs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
             referencedColumns: ["id"]
           },
         ]
