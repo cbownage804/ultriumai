@@ -32373,6 +32373,78 @@ export type Database = {
         }
         Relationships: []
       }
+      xdr_cross_client_campaigns: {
+        Row: {
+          affected_client_names: string[]
+          affected_user_ids: string[]
+          campaign_name: string
+          campaign_type: string
+          confidence: number
+          created_at: string
+          first_seen: string
+          id: string
+          last_seen: string
+          mitre_tactics: string[]
+          mitre_techniques: string[]
+          notes: string | null
+          related_threat_ids: string[]
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          shared_indicators: Json
+          status: string
+          triggering_threat_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affected_client_names?: string[]
+          affected_user_ids?: string[]
+          campaign_name: string
+          campaign_type: string
+          confidence?: number
+          created_at?: string
+          first_seen?: string
+          id?: string
+          last_seen?: string
+          mitre_tactics?: string[]
+          mitre_techniques?: string[]
+          notes?: string | null
+          related_threat_ids?: string[]
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          shared_indicators?: Json
+          status?: string
+          triggering_threat_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affected_client_names?: string[]
+          affected_user_ids?: string[]
+          campaign_name?: string
+          campaign_type?: string
+          confidence?: number
+          created_at?: string
+          first_seen?: string
+          id?: string
+          last_seen?: string
+          mitre_tactics?: string[]
+          mitre_techniques?: string[]
+          notes?: string | null
+          related_threat_ids?: string[]
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          shared_indicators?: Json
+          status?: string
+          triggering_threat_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       xdr_fim_baselines: {
         Row: {
           agent_id: string | null
