@@ -7,17 +7,11 @@ import {
   TrendingUp, Activity, Eye, Clock,
   Zap, Target, BarChart3, Settings
 } from 'lucide-react';
-import { M365TenantManager } from './M365TenantManager';
-import { SecurityAlertsFeed } from './SecurityAlertsFeed';
-import { AlertRulesConfig } from './AlertRulesConfig';
-import { AITriageQueue } from './AITriageQueue';
-import { GWSTenantManager } from './GWSTenantManager';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { ModuleLogo } from '../ModuleLogo';
 import { ModuleIntroBanner, ModuleGettingStarted } from '../shared/ModuleInstructions';
-import { HorizonSidebar, type HorizonSidebarGroup } from '../horizon/HorizonSidebar';
 
 interface TrendData {
   name: string;
@@ -31,40 +25,8 @@ interface ThreatDistribution {
   color: string;
 }
 
-const sidebarGroups: HorizonSidebarGroup[] = [
-  {
-    id: 'monitoring',
-    label: 'Monitoring',
-    icon: Activity,
-    items: [
-      { id: 'overview', label: 'Overview', icon: BarChart3 },
-      { id: 'alerts', label: 'Security Alerts', icon: AlertTriangle },
-    ],
-    defaultOpen: true,
-  },
-  {
-    id: 'tenants',
-    label: 'Tenants',
-    icon: Building2,
-    items: [
-      { id: 'tenants', label: 'M365 Tenants', icon: Building2 },
-      { id: 'gws', label: 'Google Workspace', icon: Globe },
-    ],
-  },
-  {
-    id: 'intelligence',
-    label: 'Intelligence',
-    icon: Brain,
-    items: [
-      { id: 'ai-triage', label: 'AI Triage', icon: Brain },
-      { id: 'rules', label: 'Alert Rules', icon: Settings },
-    ],
-  },
-];
-
 export function SentinelDashboard() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
   const [alertTrendData, setAlertTrendData] = useState<TrendData[]>([]);
   const [threatDistribution, setThreatDistribution] = useState<ThreatDistribution[]>([]);
   const [stats, setStats] = useState({
@@ -187,25 +149,55 @@ export function SentinelDashboard() {
     return `${Math.floor(diffHours / 24)}d ago`;
   };
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'alerts':
-        return <SecurityAlertsFeed />;
-      case 'tenants':
-        return <M365TenantManager />;
-      case 'gws':
-        return <GWSTenantManager />;
-      case 'ai-triage':
-        return <AITriageQueue />;
-      case 'rules':
-        return <AlertRulesConfig />;
-      default:
-        return renderOverview();
-    }
-  };
-
-  const renderOverview = () => (
+  return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/30 via-amber-500/20 to-red-500/30 border border-orange-500/40 shadow-lg shadow-orange-500/20">
+            <ModuleLogo module="sentinel" size="lg" glow />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-orange-100 to-amber-200 bg-clip-text text-transparent">
+              Vanguard Sentinel
+            </h1>
+            <p className="text-slate-400 text-sm">Microsoft 365 & Google Workspace Security Monitoring</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge className="bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1">
+            <Activity className="h-3.5 w-3.5 mr-1.5 animate-pulse" />
+            Live Monitoring
+          </Badge>
+          <Badge className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 text-white px-3 py-1">
+            <Brain className="h-3.5 w-3.5 mr-1" />
+            Cortex AI Active
+          </Badge>
+        </div>
+      </div>
+
+      {/* Intro Banner */}
+      <ModuleIntroBanner
+        title="Welcome to Vanguard Sentinel"
+        description="Monitor Microsoft 365 and Google Workspace for suspicious logins, admin changes, data exfiltration, and more. AI-powered triage automatically classifies and prioritizes alerts."
+        features={['M365 Security Monitoring', 'Google Workspace Auditing', 'AI Alert Triage', 'Custom Alert Rules', 'Risky Sign-in Detection']}
+        accentColor="orange"
+        storageKey="sentinel-intro"
+      />
+
+      {stats.tenantsMonitored === 0 && (
+        <ModuleGettingStarted
+          moduleName="Sentinel"
+          accentColor="orange"
+          steps={[
+            { title: 'Connect your first M365 tenant', description: 'Go to the M365 Tenants tab and add your Azure AD credentials to begin monitoring.', completed: false },
+            { title: 'Or connect Google Workspace', description: 'Set up a Google Cloud service account with domain-wide delegation for GWS monitoring.', completed: false },
+            { title: 'Configure alert rules', description: 'Define severity thresholds and notification channels for security events.', completed: false },
+            { title: 'Review AI triage settings', description: 'Cortex AI will automatically classify and prioritize incoming alerts.', completed: false },
+          ]}
+        />
+      )}
+
       {/* Stats Grid */}
       <div data-tour="sentinel-stats" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="bg-black/60 border-cyan-500/30">
@@ -365,7 +357,7 @@ export function SentinelDashboard() {
               <Zap className="h-5 w-5 text-red-400" />
               Recent Critical Alerts
             </CardTitle>
-            <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300" onClick={() => setActiveTab('alerts')}>
+            <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300">
               View All <Eye className="h-4 w-4 ml-1" />
             </Button>
           </div>
@@ -402,70 +394,6 @@ export function SentinelDashboard() {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
-
-  return (
-    <div className="flex h-full">
-      {/* Vertical Sidebar */}
-      <HorizonSidebar
-        groups={sidebarGroups}
-        activeItem={activeTab}
-        onSelect={setActiveTab}
-      />
-
-      {/* Main Content */}
-      <div className="flex-1 min-w-0 p-6 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/30 via-amber-500/20 to-red-500/30 border border-orange-500/40 shadow-lg shadow-orange-500/20">
-              <ModuleLogo module="sentinel" size="lg" glow />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-orange-100 to-amber-200 bg-clip-text text-transparent">
-                Vanguard Sentinel
-              </h1>
-              <p className="text-slate-400 text-sm">Microsoft 365 & Google Workspace Security Monitoring</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge className="bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1">
-              <Activity className="h-3.5 w-3.5 mr-1.5 animate-pulse" />
-              Live Monitoring
-            </Badge>
-            <Badge className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 text-white px-3 py-1">
-              <Brain className="h-3.5 w-3.5 mr-1" />
-              Cortex AI Active
-            </Badge>
-          </div>
-        </div>
-
-        {/* Intro Banner */}
-        <ModuleIntroBanner
-          title="Welcome to Vanguard Sentinel"
-          description="Monitor Microsoft 365 and Google Workspace for suspicious logins, admin changes, data exfiltration, and more. AI-powered triage automatically classifies and prioritizes alerts."
-          features={['M365 Security Monitoring', 'Google Workspace Auditing', 'AI Alert Triage', 'Custom Alert Rules', 'Risky Sign-in Detection']}
-          accentColor="orange"
-          storageKey="sentinel-intro"
-        />
-
-        {stats.tenantsMonitored === 0 && (
-          <ModuleGettingStarted
-            moduleName="Sentinel"
-            accentColor="orange"
-            steps={[
-              { title: 'Connect your first M365 tenant', description: 'Go to the M365 Tenants tab and add your Azure AD credentials to begin monitoring.', completed: false },
-              { title: 'Or connect Google Workspace', description: 'Set up a Google Cloud service account with domain-wide delegation for GWS monitoring.', completed: false },
-              { title: 'Configure alert rules', description: 'Define severity thresholds and notification channels for security events.', completed: false },
-              { title: 'Review AI triage settings', description: 'Cortex AI will automatically classify and prioritize incoming alerts.', completed: false },
-            ]}
-          />
-        )}
-
-        {/* Content */}
-        {renderContent()}
-      </div>
     </div>
   );
 }
