@@ -27,7 +27,10 @@ import {
   ChevronRight,
   Search,
   Users,
-  ClipboardCheck
+  ClipboardCheck,
+  Crosshair,
+  AlertTriangle,
+  Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -126,11 +129,14 @@ export function VanguardNavigation() {
     },
     {
       header: 'VANGUARD RECON',
-      description: 'Asset discovery & mapping',
-      tooltip: 'Discovers and maps devices, networks, and infrastructure for full environment awareness.',
+      description: 'Pentesting, vuln scanning & discovery',
+      tooltip: 'Full pentesting workflows, vulnerability scanning, network discovery, and Recon Unit management.',
       module: 'recon',
-      dashboardPath: `${basePath}/network`,
+      dashboardPath: `${basePath}/pentest`,
       items: [
+        { title: 'Pentest Dashboard', path: `${basePath}/pentest`, icon: Crosshair },
+        { title: 'Vuln Findings', path: `${basePath}/vuln-findings`, icon: AlertTriangle },
+        { title: 'Scan Schedules', path: `${basePath}/scan-schedules`, icon: Calendar },
         { title: 'Network Discovery', path: `${basePath}/network`, icon: Network },
         { title: 'Recon Hardware', path: `${basePath}/recon`, icon: Package },
       ]
