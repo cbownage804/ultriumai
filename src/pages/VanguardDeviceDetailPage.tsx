@@ -54,6 +54,7 @@ import {
   Network,
   Users,
   Activity,
+  Terminal,
 } from "lucide-react";
 // Vanguard Atlas (formerly SafeDoc) - no logo import needed, using Shield icon
 import { useVanguardAgent, useVanguardAgents } from "@/hooks/useVanguardAgents";
@@ -78,6 +79,7 @@ import { DeviceStartupTab } from "@/components/vanguard/device/DeviceStartupTab"
 import { DeviceNetworkConnectionsTab } from "@/components/vanguard/device/DeviceNetworkConnectionsTab";
 import { DeviceUsersTab } from "@/components/vanguard/device/DeviceUsersTab";
 import { DevicePerformanceTab } from "@/components/vanguard/device/DevicePerformanceTab";
+import { DeviceCommandsTab } from "@/components/vanguard/device/DeviceCommandsTab";
 
 // Widget Components
 import { DeviceAlertStatusWidget } from "@/components/vanguard/device/widgets/DeviceAlertStatusWidget";
@@ -116,6 +118,7 @@ export default function VanguardDeviceDetailPage() {
   const { 
     agent, 
     metrics, 
+    commands,
     isLoading, 
     refetch,
     sendCommand,
@@ -770,6 +773,10 @@ export default function VanguardDeviceDetailPage() {
                   <Paperclip className="h-4 w-4" />
                   Attachments
                 </TabsTrigger>
+                <TabsTrigger value="commands" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+                  <Terminal className="h-4 w-4" />
+                  Commands
+                </TabsTrigger>
                 <TabsTrigger value="monitored" className="gap-2 text-white/60 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                   <Server className="h-4 w-4" />
                   Monitored devices
@@ -843,6 +850,15 @@ export default function VanguardDeviceDetailPage() {
                   agent={agent}
                   onUpload={() => setShowAttachmentDialog(true)}
                   onDeleteAttachment={deleteAttachment}
+                />
+              </TabsContent>
+
+              <TabsContent value="commands" className="mt-4">
+                <DeviceCommandsTab
+                  commands={commands}
+                  sendCommand={sendCommand}
+                  isOnline={!!isOnline}
+                  onRefresh={refetch}
                 />
               </TabsContent>
 
