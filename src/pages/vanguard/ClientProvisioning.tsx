@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { UserPlus, Loader2, Building2, Settings, Check } from 'lucide-react';
 import { useResellerPartner, useResellerTenants } from '@/hooks/useResellerData';
+import { supabase } from '@/integrations/supabase/client';
 import { MODULE_ADDONS } from '@/config/vanguardAddons';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 import { useToast } from '@/hooks/use-toast';
@@ -46,22 +47,26 @@ export default function ClientProvisioning() {
   const handleProvision = async () => {
     if (!partner) return;
     try {
-      await createTenant.mutateAsync({
-        partner_id: partner.id,
-        client_name: form.client_name,
-        client_email: form.client_email,
-        client_domain: form.client_domain || null,
-        seat_count: form.seat_count,
-        enabled_modules: form.enabled_modules,
-        monthly_price_per_seat: wholesalePerSeat,
-        resale_price_per_seat: form.resale_price_per_seat,
-        status: 'active',
-        trial_ends_at: null,
-        msp_client_id: null,
-        notes: null,
+      // Call edge function for full provisioning (creates tenant + billing + MSP client)
+      const { data, error } = await supabase.functions.invoke('provision-client-tenant', {
+        body: {
+          partner_id: partner.id,
+          client_name: form.client_name,
+          client_email: form.client_email,
+          client_domain: form.client_domain || null,
+          seat_count: form.seat_count,
+          enabled_modules: form.enabled_modules,
+          resale_price_per_seat: form.resale_price_per_seat,
+        },
       });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      
+      toast({ title: 'Client Provisioned', description: data.message || `${form.client_name} is now active.` });
       setOpen(false);
       setForm({ client_name: '', client_email: '', client_domain: '', seat_count: 10, resale_price_per_seat: 15, enabled_modules: [] });
+      // Refresh tenants list
+      window.location.reload();
     } catch (err: any) {
       toast({ title: 'Provisioning Failed', description: err.message, variant: 'destructive' });
     }
