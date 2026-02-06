@@ -169,7 +169,46 @@ export function VanguardNavigation() {
         { title: 'Alerts', path: `${basePath}/alerts`, icon: Bell },
         { title: 'Threats', path: `${basePath}/threats`, icon: Target },
         { title: 'SOC', path: `${basePath}/soc`, icon: Activity },
-      ]
+      ],
+      subGroups: [
+        {
+          label: 'Detection',
+          icon: Shield,
+          items: [
+            { title: 'Threat Hunting', path: `${basePath}/pursuit/threat-hunting`, icon: Crosshair },
+            { title: 'IOC Management', path: `${basePath}/pursuit/ioc`, icon: Target },
+            { title: 'YARA Rules', path: `${basePath}/pursuit/yara`, icon: FileText },
+            { title: 'Attack Chains', path: `${basePath}/pursuit/attack-chains`, icon: Network },
+          ],
+        },
+        {
+          label: 'Protection',
+          icon: ShieldCheck,
+          items: [
+            { title: 'Ransomware Defense', path: `${basePath}/pursuit/ransomware`, icon: Shield },
+            { title: 'Quarantine', path: `${basePath}/pursuit/quarantine`, icon: Bug },
+            { title: 'Network Security', path: `${basePath}/pursuit/network`, icon: Network },
+          ],
+        },
+        {
+          label: 'Intelligence',
+          icon: Brain,
+          items: [
+            { title: 'Threat Intel', path: `${basePath}/pursuit/intel`, icon: Globe },
+            { title: 'Forensics', path: `${basePath}/pursuit/forensics`, icon: Search },
+            { title: 'Reports', path: `${basePath}/pursuit/reports`, icon: BarChart3 },
+          ],
+        },
+        {
+          label: 'Configuration',
+          icon: Settings,
+          items: [
+            { title: 'Automation Policies', path: `${basePath}/pursuit/automation`, icon: Settings },
+            { title: 'Response Actions', path: `${basePath}/pursuit/response-actions`, icon: Power },
+            { title: 'Agent Testing', path: `${basePath}/pursuit/agent-testing`, icon: Bug },
+          ],
+        },
+      ],
     },
     {
       header: 'VANGUARD RESPONSE',
