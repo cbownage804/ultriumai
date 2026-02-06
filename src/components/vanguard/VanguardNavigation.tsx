@@ -39,6 +39,7 @@ import {
   Bug,
   ShieldCheck,
   Link2,
+  Brain,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -125,13 +126,38 @@ export function VanguardNavigation() {
     },
     {
       header: 'VANGUARD SENTINEL',
-      description: 'M365 security & SaaS monitoring',
+      description: 'M365 security & SaaS monit...',
       tooltip: 'Microsoft 365 security monitoring, SaaS alerts, and cloud identity protection.',
       module: 'sentinel',
       dashboardPath: `${basePath}/sentinel`,
       items: [
         { title: 'Sentinel Dashboard', path: `${basePath}/sentinel`, icon: Shield },
-      ]
+      ],
+      subGroups: [
+        {
+          label: 'Monitoring',
+          icon: Activity,
+          items: [
+            { title: 'Security Alerts', path: `${basePath}/sentinel/alerts`, icon: AlertTriangle },
+          ],
+        },
+        {
+          label: 'Tenants',
+          icon: Building2,
+          items: [
+            { title: 'M365 Tenants', path: `${basePath}/sentinel/tenants`, icon: Building2 },
+            { title: 'Google Workspace', path: `${basePath}/sentinel/gws`, icon: Globe },
+          ],
+        },
+        {
+          label: 'Intelligence',
+          icon: Brain,
+          items: [
+            { title: 'AI Triage', path: `${basePath}/sentinel/ai-triage`, icon: Brain },
+            { title: 'Alert Rules', path: `${basePath}/sentinel/rules`, icon: Settings },
+          ],
+        },
+      ],
     },
     {
       header: 'VANGUARD PURSUIT',
