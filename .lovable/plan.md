@@ -1,170 +1,164 @@
 
 
-# SafePass Multi-Account Switching & AI Autofill Plan
+# Add Softr-Style AI Capabilities to AI Studio
 
 ## Overview
-Implement two key features from Keeper's latest release to make SafePass more competitive:
-1. **Instant Account Switching** - Switch between multiple SafePass accounts without logging out
-2. **SafePassAI Autofill** - Intelligent form detection and credential filling (within the app context)
+
+Softr's standout AI features center around three core capabilities that differentiate it from basic chatbot builders:
+
+1. **Ask AI (Data-Aware Chat)** -- An AI chat interface that reads live app data and answers questions about it in real time
+2. **Database AI Agents** -- Autonomous agents that auto-fill, enrich, and transform database fields using AI (with web search)
+3. **Vibe Coding Blocks** -- AI-generated UI components with CRUD actions connected to live data sources
+
+These capabilities would transform AI Studio from a "custom GPT chatbot builder" into a **full-stack AI app builder** for MSPs and businesses.
 
 ---
 
-## Feature 1: Instant Account Switching
+## What Will Be Built
 
-### What It Does
-Users can link multiple SafePass accounts (e.g., personal + work) and switch between them instantly from the header dropdown, without needing to sign out and sign back in.
+### 1. Ask AI -- Data-Connected Chat Mode
 
-### User Experience
-- Click avatar in header to see all linked accounts
-- One-click to switch to another account
-- "Add Account" option to link additional accounts
-- Remove accounts from the quick-switch list
-- Each account maintains its own master password session
+A new GPT mode that allows custom GPTs to query the user's live Supabase data and answer questions about it.
 
-### Implementation
+- Toggle in GPT settings: "Enable Data Insights"
+- Connect a GPT to specific Supabase tables (tickets, agents, atlas_documents, etc.)
+- Users ask natural language questions ("How many open tickets do I have?" / "Which devices are offline?") and AI responds with real answers from their data
+- Respects user permissions -- only queries data belonging to the authenticated user
+- Suggested prompts shown based on connected data sources
 
-#### 1.1 Database: Linked Accounts Table
-Create a new table to store linked account relationships:
+**Where it lives:** New tab in GPT Settings called "Data Sources" + enhanced chat interface
 
-```text
-Table: safepass_linked_accounts
-- id (uuid, primary key)
-- primary_user_id (uuid, FK to auth.users) -- the "host" account
-- linked_email (text) -- email of the linked account
-- linked_user_id (uuid, FK to auth.users) -- resolved user id
-- display_name (text) -- friendly name like "Work" or "Personal"
-- is_active (boolean)
-- last_accessed_at (timestamp)
-- created_at (timestamp)
-```
+### 2. Database AI Agents
 
-#### 1.2 New Components
+Autonomous AI agents that can auto-fill, enrich, and transform database records without user interaction.
 
-| Component | Purpose |
-|-----------|---------|
-| `AccountSwitcher.tsx` | Dropdown showing linked accounts with switch/add/remove actions |
-| `AddAccountDialog.tsx` | Modal to authenticate and link a new account |
-| `useLinkedAccounts.ts` | Hook to manage linked accounts state and switching |
+- **Agent Builder UI**: Create agents that run on specific tables with trigger conditions
+- **Trigger Types**: On new record, on field update, on schedule, manual
+- **Agent Actions**: Auto-tag/categorize, summarize text fields, enrich with web search, draft responses, extract structured data
+- **Model Selection**: Choose between Gemini Flash (fast/cheap) and GPT-5 (accurate) per agent
+- **Conditions & Filters**: Only run when specific fields are empty, match a pattern, or meet criteria
+- **Credit Controls**: Per-agent credit budgets to prevent runaway costs
+- **Ready-Made Templates**: Lead enrichment, ticket auto-tagger, document summarizer, product cataloger
 
-#### 1.3 Account Switch Flow
+**Where it lives:** New top-level section in AI Studio: "AI Agents"
 
-```text
-User clicks account in dropdown
-          |
-          v
-    Store current session to localStorage cache
-          |
-          v
-    Check if target account session exists in cache
-          |
-          v
-   [YES] Restore session from cache -> Reload vault
-          |
-   [NO] Prompt for master password of target account
-          |
-          v
-    Decrypt and load target account's vault
-```
+### 3. AI App Blocks (Vibe Coding Blocks)
 
-#### 1.4 Security Considerations
-- Each account's session is encrypted separately in localStorage
-- Master passwords are NEVER stored - only session tokens with TTL
-- Switching requires re-entering master password if session expired
-- Clear all cached sessions on explicit sign-out
+Embeddable AI-generated UI components that users can describe in natural language and deploy.
+
+- Describe a component in plain text ("Create a dashboard showing my ticket stats by priority")
+- AI generates a React component preview
+- Connect to live data sources for dynamic rendering
+- Supports CRUD operations (create, update, delete records)
+- Embeddable via iframe or script tag (extends existing embed/deploy system)
+
+**Where it lives:** New section in GPT Deploy panel: "AI Blocks"
+
+### 4. AI Workflows (Softr-style Transform Data actions)
+
+Simple workflow chains that can be attached to GPTs.
+
+- Define input triggers (form submission, webhook, schedule)
+- Add transformation steps (AI summarize, AI classify, AI extract, AI translate)
+- Output to database fields, email, webhook, or Slack
+- Visual workflow builder with drag-and-drop steps
+
+**Where it lives:** New tab in GPT Settings: "Workflows"
 
 ---
 
-## Feature 2: SafePassAI Autofill
+## Technical Plan
 
-### What It Does
-Within SafePass, AI analyzes form fields and context to suggest the most relevant credentials, especially useful when:
-- Multiple credentials exist for the same domain
-- Detecting which "account type" is being logged into
-- Multi-step authentication flows
+### Phase 1: Ask AI -- Data-Connected Chat
 
-### Implementation Approach
-Since SafePass is a web app (not a browser extension), this feature will focus on:
-- **Credential Suggestion Intelligence** - When user searches or views a login form URL, suggest the best matching entry
-- **Pattern Recognition** - Learn from user behavior which credentials they prefer for which contexts
-- **Smart Search** - Natural language search of the vault ("my work gmail", "banking login")
+**New files:**
+- `src/components/gpt/GPTDataSources.tsx` -- UI to connect GPT to Supabase tables, select which tables/columns are queryable
+- `supabase/functions/ai-data-query/index.ts` -- Edge function that receives a natural language question, generates a safe SQL query via AI, executes it, then has AI narrate the results
+- Update `GPTSettingsPanel.tsx` to add "Data Sources" tab
+- Update `GPTChatInterface.tsx` to show data-insight badges and suggested data prompts
 
-#### 2.1 New Components
+**Database changes:**
+- New table `gpt_data_sources` (gpt_id, table_name, allowed_columns, is_enabled, created_at)
 
-| Component | Purpose |
-|-----------|---------|
-| `SafePassAISearch.tsx` | Smart search bar with AI-powered suggestions |
-| `AutofillSuggestions.tsx` | Context-aware credential recommendations |
-| `useSafePassAI.ts` | Hook for AI-powered matching logic |
+**How it works:**
+1. User connects tables to their GPT in settings
+2. When chatting, the system prompt includes the table schemas
+3. AI generates a read-only SQL query, which is validated and executed server-side
+4. Results are fed back to the AI to generate a natural language answer
 
-#### 2.2 Settings Addition
-Add to SafePassSettings.tsx:
+### Phase 2: Database AI Agents
 
-```text
-SafePassAI Section:
-- Toggle: Enable SafePassAI suggestions
-- Toggle: Learn from my usage patterns
-- Button: Clear learned patterns
-```
+**New files:**
+- `src/components/ai-studio/AIAgentsHub.tsx` -- Main agents dashboard listing all configured agents
+- `src/components/ai-studio/AIAgentBuilder.tsx` -- Create/edit agent with trigger, conditions, model, prompt, output mapping
+- `src/components/ai-studio/AIAgentTemplates.tsx` -- Pre-built agent templates
+- `src/components/ai-studio/AIAgentRunHistory.tsx` -- Execution logs with status, credits used, results
+- `supabase/functions/ai-agent-execute/index.ts` -- Edge function that executes an agent's logic (query data, run AI, write results back)
 
-#### 2.3 AI Matching Logic (Client-Side)
-Uses local pattern matching (no server AI calls needed):
+**Database changes:**
+- New table `ai_agents` (id, user_id, name, description, target_table, trigger_type, trigger_config, conditions, model, system_prompt, output_mapping, credit_budget, is_enabled, created_at)
+- New table `ai_agent_runs` (id, agent_id, status, input_data, output_data, credits_used, error, created_at)
 
-```text
-1. Fuzzy match on title, URL, tags
-2. Rank by last_used_at recency
-3. Rank by usage frequency (new field)
-4. Learn user preference patterns:
-   - "User selected Entry A over Entry B for domain X" -> boost A for X
-```
+**Template library (10+ pre-built agents):**
+- Ticket Auto-Tagger (tickets table)
+- Lead Enrichment (contacts)
+- Document Summarizer (atlas_documents)
+- Alert Classifier (realtime_alerts)
+- Password Audit (atlas_passwords -- flag weak/old)
+- Device Health Reporter (vanguard_agents)
+- Compliance Gap Finder (compliance_frameworks)
+- SLA Risk Predictor (tickets)
+- Knowledge Base Gap Detector (knowledge_sources)
+- Invoice Categorizer (billing data)
 
----
+### Phase 3: AI App Blocks
 
-## Technical Summary
+**New files:**
+- `src/components/gpt/GPTAppBlocks.tsx` -- Describe and generate embeddable UI blocks
+- `src/components/gpt/AppBlockPreview.tsx` -- Live preview of generated blocks
+- Extend `GPTDeployPanel.tsx` with block embed codes
 
-### Files to Create
-| File | Purpose |
-|------|---------|
-| `src/components/safepass/AccountSwitcher.tsx` | Account switching dropdown |
-| `src/components/safepass/AddAccountDialog.tsx` | Dialog to link new account |
-| `src/components/safepass/SafePassAISearch.tsx` | AI-powered smart search |
-| `src/components/safepass/AutofillSuggestions.tsx` | Credential suggestions panel |
-| `src/hooks/useLinkedAccounts.ts` | Manage linked accounts |
-| `src/hooks/useSafePassAI.ts` | AI matching and learning logic |
+### Phase 4: AI Workflows
 
-### Files to Modify
-| File | Changes |
-|------|---------|
-| `src/layouts/SafePassLayout.tsx` | Integrate AccountSwitcher in header |
-| `src/pages/safesuite/SafePassSettings.tsx` | Add SafePassAI settings section |
-| `src/components/safepass/PasswordVault.tsx` | Add smart search integration |
+**New files:**
+- `src/components/ai-studio/AIWorkflowBuilder.tsx` -- Visual workflow editor
+- `src/components/ai-studio/WorkflowStepConfig.tsx` -- Configure individual steps (AI transform, filter, output)
+- `supabase/functions/ai-workflow-execute/index.ts` -- Executes workflow chains
 
-### Database Changes
-| Table | Purpose |
-|-------|---------|
-| `safepass_linked_accounts` | Store multi-account relationships |
-| `safepass_entries` (add column) | `usage_count` for AI ranking |
-| `safepass_user_preferences` | Store learned patterns for AI |
+**Database changes:**
+- New table `ai_workflows` (id, user_id, gpt_id, name, steps, trigger_config, is_enabled, created_at)
+- New table `ai_workflow_runs` (id, workflow_id, status, step_results, credits_used, created_at)
 
 ---
 
-## Implementation Order
+## Route and Navigation Updates
 
-1. **Phase 1: Multi-Account Switching**
-   - Create database table for linked accounts
-   - Build AccountSwitcher component
-   - Add to header layout
-   - Implement session caching and switching logic
-
-2. **Phase 2: SafePassAI Features**
-   - Add smart search to vault
-   - Implement local pattern matching
-   - Add settings toggles
-   - Track usage patterns for ranking
+- `/ai-studio/agents` -- AI Agents Hub
+- `/ai-studio/agents/new` -- Agent Builder
+- `/ai-studio/agents/:id` -- Agent Detail / Edit
+- `/ai-studio/workflows` -- Workflow Hub
+- Update AI Studio sidebar/dashboard to include Agents and Workflows sections
 
 ---
 
-## Notes
-- The Keeper browser extension features (DOM parsing, autofill injection) require a browser extension, which is outside Lovable's scope
-- This implementation focuses on the web app experience with intelligent credential management
-- All AI processing is client-side to maintain zero-knowledge architecture
+## Credit Integration
+
+All new features integrate with the existing AI Capacity credit system:
+- Data queries: 1x multiplier (standard)
+- Agent executions: 1.5x multiplier (automated)
+- Workflow runs: 2x multiplier (multi-step)
+- App block generation: 2x multiplier (complex)
+
+---
+
+## Implementation Priority
+
+Given the scope, I recommend building in this order:
+
+1. **Ask AI (Data Sources)** -- Highest impact, builds on existing chat infrastructure
+2. **Database AI Agents** -- Core differentiator vs. competitors, template-driven
+3. **AI Workflows** -- Extends agents with chaining
+4. **AI App Blocks** -- Most complex, can come later
+
+Phases 1 and 2 will be implemented first, with Phases 3 and 4 following as a second pass.
 
