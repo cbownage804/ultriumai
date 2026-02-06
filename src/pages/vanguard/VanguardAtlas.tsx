@@ -17,6 +17,7 @@ import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 import { ModuleIntroBanner, ModuleGettingStarted } from '@/components/vanguard/shared/ModuleInstructions';
 import { useVanguardAtlas } from '@/hooks/useVanguardAtlas';
 import { useMSP } from '@/hooks/useMSP';
+import { useCortexFeatures } from '@/hooks/useCortexFeatures';
 import { AtlasSidebar, type AtlasSidebarGroup } from '@/components/vanguard-atlas/AtlasSidebar';
 import { AtlasDocuments } from '@/components/vanguard-atlas/AtlasDocuments';
 import { AtlasPasswords } from '@/components/vanguard-atlas/AtlasPasswords';
@@ -37,72 +38,82 @@ export default function VanguardAtlas() {
   const [selectedOrg, setSelectedOrg] = useState<string | undefined>();
   const { clients } = useMSP();
   const { stats, isLoading, refetch } = useVanguardAtlas(selectedOrg);
+  const { isFeatureEnabled } = useCortexFeatures();
 
   const selectedClient = clients.find(c => c.id === selectedOrg);
 
-  const sidebarGroups: AtlasSidebarGroup[] = useMemo(() => [
-    {
-      id: 'main',
-      label: 'Dashboard',
-      icon: Building2,
-      items: [{ id: 'overview', label: 'Overview', icon: Building2 }],
-      defaultOpen: true,
-    },
-    {
-      id: 'documentation',
-      label: 'Documentation',
-      icon: FileText,
-      items: [
-        { id: 'documents', label: 'Documents', icon: FileText, badge: stats.documents },
-        { id: 'runbooks', label: 'Runbooks', icon: BookOpen, badge: stats.runbooks },
-        { id: 'checklists', label: 'Checklists', icon: ListChecks },
-      ],
-      defaultOpen: true,
-    },
-    {
-      id: 'credentials',
-      label: 'Credentials',
-      icon: Key,
-      items: [
-        { id: 'passwords', label: 'Passwords', icon: Key, badge: stats.passwords },
-        { id: 'ssl', label: 'SSL Certificates', icon: Shield, badge: stats.sslCertificates },
-      ],
-    },
-    {
-      id: 'assets',
-      label: 'Assets',
-      icon: Server,
-      items: [
-        { id: 'configurations', label: 'Configurations', icon: Server, badge: stats.configurations },
-        { id: 'flexible_assets', label: 'Flexible Assets', icon: Box },
-        { id: 'contacts', label: 'Contacts', icon: Users },
-      ],
-    },
-    {
-      id: 'tracking',
-      label: 'Tracking',
-      icon: Clock,
-      items: [
-        { id: 'expirations', label: 'Expirations', icon: Clock, badge: stats.expiringItems },
-        { id: 'related_items', label: 'Related Items', icon: Link2 },
-      ],
-    },
-    {
-      id: 'ai',
-      label: 'AI Tools',
-      icon: Sparkles,
-      items: [
-        { id: 'ai_search', label: 'AI Search & Q&A', icon: Search },
-        { id: 'ai_doc_gen', label: 'AI Doc Generator', icon: Wand2 },
-      ],
-    },
-    {
+  const sidebarGroups: AtlasSidebarGroup[] = useMemo(() => {
+    const aiItems = [];
+    if (isFeatureEnabled('atlas-ai-search')) aiItems.push({ id: 'ai_search', label: 'AI Search & Q&A', icon: Search });
+    if (isFeatureEnabled('atlas-doc-generator')) aiItems.push({ id: 'ai_doc_gen', label: 'AI Doc Generator', icon: Wand2 });
+
+    const groups: AtlasSidebarGroup[] = [
+      {
+        id: 'main',
+        label: 'Dashboard',
+        icon: Building2,
+        items: [{ id: 'overview', label: 'Overview', icon: Building2 }],
+        defaultOpen: true,
+      },
+      {
+        id: 'documentation',
+        label: 'Documentation',
+        icon: FileText,
+        items: [
+          { id: 'documents', label: 'Documents', icon: FileText, badge: stats.documents },
+          { id: 'runbooks', label: 'Runbooks', icon: BookOpen, badge: stats.runbooks },
+          { id: 'checklists', label: 'Checklists', icon: ListChecks },
+        ],
+        defaultOpen: true,
+      },
+      {
+        id: 'credentials',
+        label: 'Credentials',
+        icon: Key,
+        items: [
+          { id: 'passwords', label: 'Passwords', icon: Key, badge: stats.passwords },
+          { id: 'ssl', label: 'SSL Certificates', icon: Shield, badge: stats.sslCertificates },
+        ],
+      },
+      {
+        id: 'assets',
+        label: 'Assets',
+        icon: Server,
+        items: [
+          { id: 'configurations', label: 'Configurations', icon: Server, badge: stats.configurations },
+          { id: 'flexible_assets', label: 'Flexible Assets', icon: Box },
+          { id: 'contacts', label: 'Contacts', icon: Users },
+        ],
+      },
+      {
+        id: 'tracking',
+        label: 'Tracking',
+        icon: Clock,
+        items: [
+          { id: 'expirations', label: 'Expirations', icon: Clock, badge: stats.expiringItems },
+          { id: 'related_items', label: 'Related Items', icon: Link2 },
+        ],
+      },
+    ];
+
+    if (aiItems.length > 0) {
+      groups.push({
+        id: 'ai',
+        label: 'AI Tools (Cortex)',
+        icon: Sparkles,
+        items: aiItems,
+      });
+    }
+
+    groups.push({
       id: 'audit',
       label: 'Audit',
       icon: History,
       items: [{ id: 'activity_log', label: 'Activity Log', icon: History }],
-    },
-  ], [stats]);
+    });
+
+    return groups;
+  }, [stats, isFeatureEnabled]);
 
   // Organization picker (no org selected)
   if (!selectedOrg) {
