@@ -14,6 +14,7 @@ import { AutomationPoliciesPanel } from '@/components/vanguard/pursuit/Automatio
 import { ResponseActionsPanel } from '@/components/vanguard/pursuit/ResponseActionsPanel';
 import { AgentTestingPanel } from '@/components/vanguard/pursuit/AgentTestingPanel';
 import { PursuitDashboard } from '@/components/vanguard/pursuit/PursuitDashboard';
+import { CrossClientCorrelation } from '@/components/vanguard/pursuit/CrossClientCorrelation';
 
 const moduleComponents: Record<string, React.ReactNode> = {
   'threat-hunting': <ThreatHuntingPanel />,
@@ -24,6 +25,7 @@ const moduleComponents: Record<string, React.ReactNode> = {
   'quarantine': <QuarantineManager />,
   'network': <NetworkSecurityPanel />,
   'intel': <ThreatIntelligencePanel />,
+  'cross-client': <CrossClientCorrelation />,
   'forensics': <ForensicsPanel />,
   'reports': <ThreatReportsExport />,
   'automation': <AutomationPoliciesPanel />,

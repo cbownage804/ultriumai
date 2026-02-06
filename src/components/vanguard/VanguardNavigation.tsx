@@ -186,6 +186,7 @@ export function VanguardNavigation() {
           icon: Brain,
           items: [
             { title: 'Threat Intel', path: `${basePath}/pursuit/intel`, icon: Globe },
+            { title: 'Cross-Client', path: `${basePath}/pursuit/cross-client`, icon: Network, badge: 'NEW' },
             { title: 'Forensics', path: `${basePath}/pursuit/forensics`, icon: Search },
             { title: 'Reports', path: `${basePath}/pursuit/reports`, icon: BarChart3 },
           ],
@@ -294,6 +295,12 @@ export function VanguardNavigation() {
         { title: 'AI Analytics', path: `${basePath}/cortex-analytics`, icon: BarChart3 },
       ]
     },
+  ];
+
+  // SafeSuite quick-launch items
+  const safeSuiteItems: NavItem[] = [
+    { title: 'Dark Web Monitor', path: '/safesuite/web', icon: Globe, badge: 'SafeWeb' },
+    { title: 'Password Vault', path: '/safesuite/pass', icon: Key, badge: 'SafePass' },
   ];
 
   // Additional standalone items
@@ -455,6 +462,16 @@ export function VanguardNavigation() {
                   )}
                 </CollapsibleNavGroup>
               ))}
+
+              {/* SafeSuite Quick Launch */}
+              {!isCollapsed && (
+                <div className="mt-3">
+                  <div className="px-4 py-1.5 text-[10px] font-bold tracking-wider text-violet-400/70 uppercase">
+                    SafeSuite Tools
+                  </div>
+                  {safeSuiteItems.map(renderNavItem)}
+                </div>
+              )}
 
               {/* Divider */}
               <div className="my-4 border-t border-cyan-500/10" />
