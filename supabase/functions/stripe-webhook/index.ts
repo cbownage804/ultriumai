@@ -26,12 +26,65 @@ const tierToAccessLevel = (tier: string): string => {
   }
 };
 
+// Vanguard product ID → tier mapping
+const VANGUARD_PLAN_PRODUCTS: Record<string, string> = {
+  'prod_Tvm1tGkEFFA8xx': 'it-professional',
+  'prod_Tvm1v7saOMFPLn': 'it-expert',
+  'prod_Tvm1N7n2bkJpMd': 'it-master',
+  'prod_Tvm1aJEZ4WXQJN': 'msp-pro',
+  'prod_Tvm1Wp6LRat7DV': 'msp-growth',
+  'prod_Tvm1sVN7zuCb2R': 'msp-power',
+};
+
+const VANGUARD_ADDON_PRODUCTS: Record<string, string> = {
+  'prod_Tvm15XS4URJYDf': 'pursuit-xdr',
+  'prod_Tvm14lHuxDHOyk': 'sentinel-saas',
+  'prod_Tvm1Bv6Y169hG6': 'recon-pentest',
+  'prod_Tvm1lPWrLHU5BG': 'cortex-ai',
+  'prod_Tvm1BCKLECzk9L': 'comply',
+  'prod_Tvm1pOuwM3afS1': 'cross-client-soc',
+  'prod_Tvm1IMy0GKTI7u': 'atlas-docs',
+  'prod_Tvm1psna1dlfHE': 'phishing-sim',
+  'prod_Tvm1CcIDVjRGaW': 'ai-copilot',
+  'prod_Tvm19bNlVCzSw2': 'network-discovery',
+};
+
+const ALL_VANGUARD_PRODUCT_IDS = new Set([
+  ...Object.keys(VANGUARD_PLAN_PRODUCTS),
+  ...Object.keys(VANGUARD_ADDON_PRODUCTS),
+]);
+
+// Check if a subscription contains any Vanguard products
+const isVanguardSubscription = (items: Stripe.SubscriptionItem[]): boolean => {
+  return items.some(item => ALL_VANGUARD_PRODUCT_IDS.has(item.price.product as string));
+};
+
+// Extract Vanguard tier + addons from subscription items
+const extractVanguardDetails = (items: Stripe.SubscriptionItem[]) => {
+  let tier = 'free';
+  let seatCount = 0;
+  const addons: string[] = [];
+
+  for (const item of items) {
+    const productId = item.price.product as string;
+    if (VANGUARD_PLAN_PRODUCTS[productId]) {
+      tier = VANGUARD_PLAN_PRODUCTS[productId];
+      seatCount = item.quantity || 1;
+    }
+    if (VANGUARD_ADDON_PRODUCTS[productId]) {
+      addons.push(VANGUARD_ADDON_PRODUCTS[productId]);
+    }
+  }
+
+  return { tier, seatCount, addons };
+};
+
 // Determine product from metadata or price
 const determineProduct = (metadata: Record<string, string> | null): string => {
   if (!metadata) return 'safesuite';
-  const product = metadata.product || metadata.plan_type;
-  if (product?.includes('vanguard')) return 'vanguard';
-  if (product?.includes('ai') || product?.includes('studio')) return 'ai_studio';
+  const product = metadata.product || metadata.plan_type || metadata.plan_id || '';
+  if (product.includes('vanguard') || product.startsWith('it-') || product.startsWith('msp-')) return 'vanguard';
+  if (product.includes('ai') || product.includes('studio')) return 'ai_studio';
   return 'safesuite';
 };
 
@@ -174,7 +227,46 @@ serve(async (req) => {
           break;
         }
 
-        // Determine subscription tier based on amount and plan type
+        // ── VANGUARD SUBSCRIPTION HANDLING ──
+        if (isVanguardSubscription(subscription.items.data)) {
+          const { tier: vTier, seatCount, addons } = extractVanguardDetails(subscription.items.data);
+          const vEnd = new Date(subscription.current_period_end * 1000).toISOString();
+
+          await supabaseClient.from('vanguard_subscriptions').upsert({
+            user_id: user.id,
+            stripe_customer_id: customer.id,
+            stripe_subscription_id: subscription.id,
+            tier: vTier,
+            seat_count: seatCount,
+            addons: addons,
+            status: subscription.status === 'active' ? 'active' : subscription.status,
+            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+            current_period_end: vEnd,
+            admin_override: false,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id' });
+
+          // Also update user_product_access for Vanguard
+          await supabaseClient.from('user_product_access').upsert({
+            user_id: user.id,
+            product: 'vanguard',
+            access_level: vTier,
+            granted_at: new Date().toISOString(),
+            expires_at: subscription.status === 'active' ? vEnd : null,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id,product' });
+
+          logStep("Vanguard subscription synced", {
+            email: customer.email,
+            tier: vTier,
+            seats: seatCount,
+            addons,
+            status: subscription.status,
+          });
+          break;
+        }
+
+        // ── SAFESUITE / OTHER SUBSCRIPTION HANDLING ──
         const priceId = subscription.items.data[0].price.id;
         const price = await stripe.prices.retrieve(priceId);
         const amount = price.unit_amount || 0;
@@ -183,7 +275,6 @@ serve(async (req) => {
         const metadata = subscription.metadata || {};
         const planType = metadata.plan_type;
         
-        // Check for SafeSuite-specific price IDs
         const safeSuitePrices: Record<string, string> = {
           'price_1SrTegH1u6E0bsJTKpGm5qxr': 'pro',
           'price_1SrTeiH1u6E0bsJTarTH7ajs': 'pro',
@@ -194,12 +285,10 @@ serve(async (req) => {
         if (safeSuitePrices[priceId]) {
           subscriptionTier = safeSuitePrices[priceId];
         } else if (planType) {
-          // Use plan type from metadata
           if (planType === "business" || planType === "enterprise") subscriptionTier = "business";
           else if (planType === "pro" || planType === "premium") subscriptionTier = "pro";
           else subscriptionTier = planType;
         } else {
-          // Fallback to amount-based determination
           if (amount >= 40000) subscriptionTier = "enterprise";
           else if (amount >= 8000) subscriptionTier = "premium";
           else if (amount >= 500) subscriptionTier = "pro";
@@ -209,7 +298,6 @@ serve(async (req) => {
         const product = determineProduct(metadata);
         const accessLevel = tierToAccessLevel(subscriptionTier);
         
-        // Update subscribers table (legacy)
         await supabaseClient.from("subscribers").upsert({
           email: customer.email,
           stripe_customer_id: customer.id,
@@ -219,7 +307,6 @@ serve(async (req) => {
           updated_at: new Date().toISOString(),
         }, { onConflict: 'email' });
         
-        // Update safesuite_subscriptions if it exists
         await supabaseClient.from("safesuite_subscriptions").upsert({
           user_id: user.id,
           tier: subscriptionTier,
@@ -228,11 +315,8 @@ serve(async (req) => {
           status: subscription.status,
           current_period_end: subscriptionEnd,
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' }).catch(() => {
-          // Table might not exist, that's okay
-        });
+        }, { onConflict: 'user_id' }).catch(() => {});
         
-        // SYNC: Update user_product_access table
         await supabaseClient.from("user_product_access").upsert({
           user_id: user.id,
           product: product,
@@ -258,11 +342,35 @@ serve(async (req) => {
         
         if (!customer.email) break;
         
-        // Get user by email
         const { data: users } = await supabaseClient.auth.admin.listUsers();
         const user = users.users.find(u => u.email === customer.email);
-        
-        // Update subscribers table
+
+        // ── VANGUARD CANCELLATION ──
+        if (isVanguardSubscription(subscription.items.data)) {
+          if (user) {
+            await supabaseClient.from('vanguard_subscriptions').upsert({
+              user_id: user.id,
+              tier: 'free',
+              seat_count: 0,
+              addons: [],
+              status: 'canceled',
+              admin_override: false,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'user_id' });
+
+            await supabaseClient.from('user_product_access').upsert({
+              user_id: user.id,
+              product: 'vanguard',
+              access_level: 'free',
+              expires_at: null,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,product' });
+          }
+          logStep("Vanguard subscription cancelled", { email: customer.email });
+          break;
+        }
+
+        // ── SAFESUITE / OTHER CANCELLATION ──
         await supabaseClient.from("subscribers").upsert({
           email: customer.email,
           stripe_customer_id: customer.id,
@@ -276,7 +384,6 @@ serve(async (req) => {
           const metadata = subscription.metadata || {};
           const product = determineProduct(metadata);
           
-          // Update safesuite_subscriptions
           await supabaseClient.from("safesuite_subscriptions").upsert({
             user_id: user.id,
             tier: 'free',
@@ -284,7 +391,6 @@ serve(async (req) => {
             updated_at: new Date().toISOString(),
           }, { onConflict: 'user_id' }).catch(() => {});
           
-          // SYNC: Downgrade user_product_access to free
           await supabaseClient.from("user_product_access").upsert({
             user_id: user.id,
             product: product,
