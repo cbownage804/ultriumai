@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
-  AlertTriangle, Building2, Brain, 
+  AlertTriangle, Building2, Brain, Globe,
   TrendingUp, Activity, Eye, Clock,
   Zap, Target, BarChart3, Settings
 } from 'lucide-react';
@@ -12,6 +12,7 @@ import { M365TenantManager } from './M365TenantManager';
 import { SecurityAlertsFeed } from './SecurityAlertsFeed';
 import { AlertRulesConfig } from './AlertRulesConfig';
 import { AITriageQueue } from './AITriageQueue';
+import { GWSTenantManager } from './GWSTenantManager';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -161,6 +162,7 @@ export function SentinelDashboard() {
     { value: 'overview', label: 'Overview', icon: BarChart3 },
     { value: 'alerts', label: 'Security Alerts', icon: AlertTriangle },
     { value: 'tenants', label: 'M365 Tenants', icon: Building2 },
+    { value: 'gws', label: 'Google Workspace', icon: Globe },
     { value: 'ai-triage', label: 'AI Triage', icon: Brain },
     { value: 'rules', label: 'Alert Rules', icon: Settings },
   ];
@@ -177,7 +179,7 @@ export function SentinelDashboard() {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent">
               Vanguard Sentinel
             </h1>
-            <p className="text-slate-400 text-sm">Microsoft 365 Security Monitoring & AI Triage</p>
+            <p className="text-slate-400 text-sm">Microsoft 365 & Google Workspace Security Monitoring</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -194,7 +196,7 @@ export function SentinelDashboard() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 h-auto bg-black/60 border border-cyan-500/30 p-1">
+        <TabsList className="grid w-full grid-cols-6 h-auto bg-black/60 border border-cyan-500/30 p-1">
           {tabConfig.map((tab) => (
             <TabsTrigger
               key={tab.value}
@@ -426,9 +428,14 @@ export function SentinelDashboard() {
           <SecurityAlertsFeed />
         </TabsContent>
 
-        {/* Tenants Tab */}
+        {/* M365 Tenants Tab */}
         <TabsContent value="tenants" className="mt-6">
           <M365TenantManager />
+        </TabsContent>
+
+        {/* Google Workspace Tab */}
+        <TabsContent value="gws" className="mt-6">
+          <GWSTenantManager />
         </TabsContent>
 
         {/* AI Triage Tab */}

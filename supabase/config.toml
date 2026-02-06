@@ -314,3 +314,7 @@ verify_jwt = false
 # Recon Pentest Orchestrator (validates auth in code)
 [functions.recon-scan-orchestrator]
 verify_jwt = false
+
+# Google Workspace Security Monitor (validates auth in code)
+[functions.gws-security-monitor]
+verify_jwt = false
