@@ -1,24 +1,22 @@
 /**
  * Vanguard Customer Detail Page
- * Uses real customer data from database via useVanguardCustomer hook
+ * Datto-style vertical sidebar navigation
  */
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
-  ArrowLeft, Building2, Phone, MapPin, Globe,
-  Package, AlertTriangle, Key, 
-  MoreHorizontal, Pencil, Plus, ExternalLink, Copy,
-  CheckCircle, Server, FileText, Loader2
+  ArrowLeft, Building2, Phone, Globe,
+  AlertTriangle, 
+  MoreHorizontal, Pencil, ExternalLink,
+  Monitor, Users, FileText, Loader2,
+  LayoutDashboard, Ticket, Bell, Map, ShieldCheck,
+  ChevronDown, ChevronRight
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,19 +26,32 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { getVanguardBasePath } from '@/utils/subdomain';
-import { Map, Monitor, Users } from 'lucide-react';
 import { CustomerTicketsTab } from '@/components/vanguard/CustomerTicketsTab';
 import { CustomerAgentDownload } from '@/components/vanguard/CustomerAgentDownload';
 import { useVanguardCustomer } from '@/hooks/useVanguardCustomer';
 import { PortalContactManager, CompanySafeSuiteSettings } from '@/components/vanguard/portal';
 import { PortalUserManagement } from '@/components/vanguard/PortalUserManagement';
+import { cn } from '@/lib/utils';
+import { LucideIcon } from 'lucide-react';
+
+interface SidebarItem {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  badge?: string | number;
+}
+
+interface SidebarGroup {
+  label: string;
+  items: SidebarItem[];
+  defaultOpen?: boolean;
+}
 
 export default function VanguardCustomerDetail() {
   const navigate = useNavigate();
   const { customerId } = useParams();
   const basePath = getVanguardBasePath();
   const [activeTab, setActiveTab] = useState('overview');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   
   const { customer, contacts, devices, ticketCount, endpointCount, alertCount, isLoading, error } = useVanguardCustomer(customerId);
 
@@ -50,12 +61,27 @@ export default function VanguardCustomerDetail() {
     }
   }, [customer?.company_name]);
 
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    toast.success('Copied to clipboard');
-    setTimeout(() => setCopiedId(null), 2000);
-  };
+  const sidebarGroups: SidebarGroup[] = [
+    {
+      label: customer?.company_name || 'Customer',
+      defaultOpen: true,
+      items: [
+        { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+        { id: 'users', label: 'Users', icon: Users },
+        { id: 'devices', label: 'Devices', icon: Monitor, badge: endpointCount },
+        { id: 'tickets', label: 'Tickets', icon: Ticket, badge: ticketCount },
+        { id: 'alerts', label: 'Alerts', icon: Bell, badge: alertCount },
+      ],
+    },
+    {
+      label: 'Management',
+      defaultOpen: true,
+      items: [
+        { id: 'portal', label: 'Portal Access', icon: Globe },
+        { id: 'atlas', label: 'Documentation', icon: FileText },
+      ],
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -85,44 +111,60 @@ export default function VanguardCustomerDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050a0a]">
-      {/* Header */}
-      <div className="bg-black/80 border-b border-cyan-500/20 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(`${basePath}/customers`)}
-              className="text-white/60 hover:text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            
-            {/* Customer Logo/Avatar */}
-            <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center">
-              <Building2 className="h-6 w-6 text-white" />
+    <div className="min-h-screen bg-[#050a0a] flex">
+      {/* Vertical Sidebar */}
+      <aside className="w-56 shrink-0 bg-[#0a1929]/80 border-r border-cyan-500/20 flex flex-col h-screen sticky top-0">
+        {/* Sidebar Header */}
+        <div className="p-3 border-b border-cyan-500/20">
+          <button
+            onClick={() => navigate(`${basePath}/customers`)}
+            className="flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors w-full mb-3"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Sites</span>
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center shrink-0">
+              <Building2 className="h-4 w-4 text-white" />
             </div>
-            
-            <div>
-              <h1 className="text-xl font-semibold text-white">{customer.company_name}</h1>
-              <div className="flex items-center gap-4 text-sm text-white/60">
-                {customer.phone && (
-                  <span className="flex items-center gap-1">
-                    <Phone className="h-3 w-3" />
-                    {customer.phone}
-                  </span>
-                )}
-                {customer.domain && (
-                  <span className="flex items-center gap-1">
-                    <Globe className="h-3 w-3" />
-                    {customer.domain}
-                  </span>
-                )}
-              </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-white truncate">{customer.company_name}</p>
+              <p className="text-xs text-white/40 truncate">{customer.domain || customer.contact_email}</p>
             </div>
           </div>
+        </div>
 
+        {/* Sidebar Navigation */}
+        <nav className="flex-1 overflow-y-auto py-2">
+          {sidebarGroups.map((group) => (
+            <SidebarGroupComponent
+              key={group.label}
+              group={group}
+              activeTab={activeTab}
+              onSelect={setActiveTab}
+            />
+          ))}
+        </nav>
+
+        {/* Sidebar Footer */}
+        <div className="p-3 border-t border-cyan-500/20">
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              'h-2 w-2 rounded-full',
+              customer.is_active ? 'bg-green-500' : 'bg-red-500'
+            )} />
+            <span className="text-xs text-white/50">{customer.is_active ? 'Active' : 'Inactive'}</span>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 min-w-0">
+        {/* Top Bar */}
+        <div className="bg-black/60 border-b border-cyan-500/20 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+          <div className="text-sm text-white/50">
+            Sites / <span className="text-cyan-400">{customer.company_name}</span> / <span className="text-white">{sidebarGroups.flatMap(g => g.items).find(i => i.id === activeTab)?.label}</span>
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="text-white/60 hover:text-white hover:bg-white/10">
@@ -137,83 +179,21 @@ export default function VanguardCustomerDetail() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="bg-black/60 border-b border-cyan-500/20">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-transparent h-auto p-0 border-0 ml-6">
-            <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 hover:text-white">
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="users" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 hover:text-white">
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="devices" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 hover:text-white">
-              Devices
-            </TabsTrigger>
-            <TabsTrigger value="tickets" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 hover:text-white">
-              Tickets
-            </TabsTrigger>
-            <TabsTrigger value="alerts" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 hover:text-white">
-              Alerts
-            </TabsTrigger>
-            <TabsTrigger value="portal" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 flex items-center gap-1 hover:text-white">
-              <Globe className="h-4 w-4 text-purple-400" />
-              Portal Access
-            </TabsTrigger>
-            <TabsTrigger value="atlas" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-500 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 text-white/60 px-4 py-3 flex items-center gap-1 hover:text-white">
-              <Map className="h-4 w-4 text-cyan-400" />
-              Vanguard Atlas
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
-      {/* Content */}
-      <div className="p-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="mt-0">
+        {/* Tab Content */}
+        <div className="p-6">
+          {activeTab === 'overview' && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Customer Info */}
               <div className="bg-black/40 rounded-lg border border-cyan-500/20 p-6">
                 <h3 className="font-medium text-white mb-4">Customer Information</h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <Label className="text-white/60">Company</Label>
-                    <span className="text-white">{customer.company_name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <Label className="text-white/60">Contact</Label>
-                    <span className="text-white">{customer.contact_name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <Label className="text-white/60">Email</Label>
-                    <span className="text-white">{customer.contact_email}</span>
-                  </div>
-                  {customer.phone && (
-                    <div className="flex justify-between">
-                      <Label className="text-white/60">Phone</Label>
-                      <span className="text-white">{customer.phone}</span>
-                    </div>
-                  )}
-                  {customer.domain && (
-                    <div className="flex justify-between">
-                      <Label className="text-white/60">Domain</Label>
-                      <span className="text-white">{customer.domain}</span>
-                    </div>
-                  )}
-                  {customer.business_size && (
-                    <div className="flex justify-between">
-                      <Label className="text-white/60">Business Size</Label>
-                      <span className="text-white capitalize">{customer.business_size}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <Label className="text-white/60">Monthly Rate</Label>
-                    <span className="text-white">${customer.monthly_rate}/mo</span>
-                  </div>
+                  <DetailRow label="Company" value={customer.company_name} />
+                  <DetailRow label="Contact" value={customer.contact_name} />
+                  <DetailRow label="Email" value={customer.contact_email} />
+                  {customer.phone && <DetailRow label="Phone" value={customer.phone} />}
+                  {customer.domain && <DetailRow label="Domain" value={customer.domain} />}
+                  {customer.business_size && <DetailRow label="Business Size" value={customer.business_size} />}
+                  <DetailRow label="Monthly Rate" value={`$${customer.monthly_rate}/mo`} />
                   <div className="flex justify-between">
                     <Label className="text-white/60">Status</Label>
                     <Badge className={customer.is_active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
@@ -223,7 +203,6 @@ export default function VanguardCustomerDetail() {
                 </div>
               </div>
 
-              {/* Stats */}
               <div className="bg-black/40 rounded-lg border border-cyan-500/20 p-6">
                 <h3 className="font-medium text-white mb-4">Statistics</h3>
                 <div className="space-y-4">
@@ -252,127 +231,117 @@ export default function VanguardCustomerDetail() {
                 </div>
               </div>
 
-              {/* Dates */}
               <div className="bg-black/40 rounded-lg border border-cyan-500/20 p-6">
                 <h3 className="font-medium text-white mb-4">Timeline</h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <Label className="text-white/60">Created</Label>
-                    <span className="text-white">{new Date(customer.created_at).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <Label className="text-white/60">Last Updated</Label>
-                    <span className="text-white">{new Date(customer.updated_at).toLocaleDateString()}</span>
-                  </div>
+                  <DetailRow label="Created" value={new Date(customer.created_at).toLocaleDateString()} />
+                  <DetailRow label="Last Updated" value={new Date(customer.updated_at).toLocaleDateString()} />
                 </div>
               </div>
             </div>
-          </TabsContent>
+          )}
 
-          {/* Users Tab - Portal User Management */}
-          <TabsContent value="users" className="mt-0 space-y-6">
-            <PortalUserManagement 
-              clientId={customerId || ''} 
-              clientName={customer.company_name}
-            />
-            
-            {/* Company Contacts (legacy view) */}
-            <Card className="bg-black/40 border-cyan-500/20">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-white">Contacts ({contacts.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {contacts.length === 0 ? (
-                  <div className="text-center py-8 text-white/60">
-                    <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                    <p>No contacts added yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {contacts.map((contact) => (
-                      <div key={contact.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-cyan-500/10">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-cyan-500/20 text-cyan-400">
-                              {contact.contact_name.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-white">{contact.contact_name}</span>
-                              {contact.is_primary && (
-                                <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">Primary</Badge>
+          {activeTab === 'users' && (
+            <div className="space-y-6">
+              <PortalUserManagement 
+                clientId={customerId || ''} 
+                clientName={customer.company_name}
+              />
+              <Card className="bg-black/40 border-cyan-500/20">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-white">Contacts ({contacts.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {contacts.length === 0 ? (
+                    <div className="text-center py-8 text-white/60">
+                      <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                      <p>No contacts added yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {contacts.map((contact) => (
+                        <div key={contact.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-cyan-500/10">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="bg-cyan-500/20 text-cyan-400">
+                                {contact.contact_name.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-white">{contact.contact_name}</span>
+                                {contact.is_primary && (
+                                  <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">Primary</Badge>
+                                )}
+                              </div>
+                              <span className="text-sm text-white/60">{contact.email}</span>
+                            </div>
+                          </div>
+                          {contact.role && (
+                            <Badge variant="outline" className="border-white/20 text-white/70">{contact.role}</Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {activeTab === 'devices' && (
+            <div className="space-y-6">
+              <CustomerAgentDownload 
+                customerId={customerId || ''} 
+                customerName={customer.company_name} 
+              />
+              <Card className="bg-black/40 border-cyan-500/20">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-white">Devices ({devices.length})</CardTitle>
+                  <Button size="sm" variant="outline" className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" onClick={() => navigate(`${basePath}/devices?customer=${customerId}`)}>
+                    View All Devices
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {devices.length === 0 ? (
+                    <div className="text-center py-12 text-white/60">
+                      <Monitor className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No devices registered yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {devices.map((device) => (
+                        <div key={device.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-cyan-500/10 cursor-pointer">
+                          <div className="flex items-center gap-3">
+                            <div className={`h-3 w-3 rounded-full ${device.status === 'online' ? 'bg-green-500' : 'bg-red-500'}`} />
+                            <Monitor className="h-5 w-5 text-white/40" />
+                            <div>
+                              <span className="font-medium text-white">{device.hostname}</span>
+                              {device.device_type && (
+                                <div className="text-sm text-white/60">{device.device_type}</div>
                               )}
                             </div>
-                            <span className="text-sm text-white/60">{contact.email}</span>
                           </div>
+                          {device.ip_address && (
+                            <code className="text-sm text-cyan-400">{device.ip_address}</code>
+                          )}
                         </div>
-                        {contact.role && (
-                          <Badge variant="outline" className="border-white/20 text-white/70">{contact.role}</Badge>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-          {/* Devices Tab */}
-          <TabsContent value="devices" className="mt-0 space-y-6">
-            <CustomerAgentDownload 
-              customerId={customerId || ''} 
-              customerName={customer.company_name} 
-            />
-            
-            <Card className="bg-black/40 border-cyan-500/20">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-white">Devices ({devices.length})</CardTitle>
-                <Button size="sm" variant="outline" className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" onClick={() => navigate(`${basePath}/devices?customer=${customerId}`)}>
-                  View All Devices
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {devices.length === 0 ? (
-                  <div className="text-center py-12 text-white/60">
-                    <Monitor className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No devices registered yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {devices.map((device) => (
-                      <div key={device.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-cyan-500/10 cursor-pointer">
-                        <div className="flex items-center gap-3">
-                          <div className={`h-3 w-3 rounded-full ${device.status === 'online' ? 'bg-green-500' : 'bg-red-500'}`} />
-                          <Monitor className="h-5 w-5 text-white/40" />
-                          <div>
-                            <span className="font-medium text-white">{device.hostname}</span>
-                            {device.device_type && (
-                              <div className="text-sm text-white/60">{device.device_type}</div>
-                            )}
-                          </div>
-                        </div>
-                        {device.ip_address && (
-                          <code className="text-sm text-cyan-400">{device.ip_address}</code>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Tickets Tab */}
-          <TabsContent value="tickets" className="mt-0">
+          {activeTab === 'tickets' && (
             <CustomerTicketsTab 
               customerId={customerId || ''} 
               customerName={customer.company_name}
             />
-          </TabsContent>
+          )}
 
-          {/* Alerts Tab */}
-          <TabsContent value="alerts" className="mt-0">
+          {activeTab === 'alerts' && (
             <Card className="bg-black/40 border-cyan-500/20">
               <CardHeader>
                 <CardTitle className="text-white">Active Alerts ({customer.alerts || 0})</CardTitle>
@@ -384,10 +353,9 @@ export default function VanguardCustomerDetail() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          {/* Portal Access Tab */}
-          <TabsContent value="portal" className="mt-0">
+          {activeTab === 'portal' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <PortalContactManager 
                 clientId={customerId || ''} 
@@ -398,10 +366,9 @@ export default function VanguardCustomerDetail() {
                 companyName={customer.company_name}
               />
             </div>
-          </TabsContent>
+          )}
 
-          {/* Vanguard Atlas Tab */}
-          <TabsContent value="atlas" className="mt-0">
+          {activeTab === 'atlas' && (
             <Card className="bg-black/40 border-cyan-500/20">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
@@ -424,9 +391,66 @@ export default function VanguardCustomerDetail() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
+    </div>
+  );
+}
+
+/* --- Sub-components --- */
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between">
+      <Label className="text-white/60">{label}</Label>
+      <span className="text-white">{value}</span>
+    </div>
+  );
+}
+
+function SidebarGroupComponent({ group, activeTab, onSelect }: { group: SidebarGroup; activeTab: string; onSelect: (id: string) => void }) {
+  const [open, setOpen] = useState(group.defaultOpen ?? true);
+
+  return (
+    <div className="mb-1">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/40 hover:text-white/60 transition-colors"
+      >
+        <span>{group.label}</span>
+        {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+      </button>
+      {open && (
+        <div className="space-y-0.5 px-1">
+          {group.items.map((item) => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onSelect(item.id)}
+                className={cn(
+                  'flex items-center gap-2.5 w-full px-3 py-2 text-sm rounded-md transition-colors',
+                  isActive
+                    ? 'bg-cyan-500/15 text-cyan-400 border-l-2 border-cyan-400'
+                    : 'text-white/60 hover:text-white hover:bg-white/5 border-l-2 border-transparent'
+                )}
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+                <span className="truncate">{item.label}</span>
+                {item.badge !== undefined && Number(item.badge) > 0 && (
+                  <span className={cn(
+                    'ml-auto text-xs px-1.5 py-0.5 rounded-full',
+                    isActive ? 'bg-cyan-500/20 text-cyan-300' : 'bg-white/10 text-white/50'
+                  )}>
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
