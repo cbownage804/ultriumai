@@ -7,11 +7,36 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Map real Stripe product IDs → Vanguard tier names
 const PRODUCT_TO_TIER: Record<string, string> = {
-  "prod_TrHsD4Lf3avsrU": "starter",
-  "prod_TrHshPxz3EaRf5": "professional",
-  "prod_TrHszdaeRbnVFP": "enterprise",
+  // IT Department Plans
+  'prod_Tvm1tGkEFFA8xx': 'it-professional',
+  'prod_Tvm1v7saOMFPLn': 'it-expert',
+  'prod_Tvm1N7n2bkJpMd': 'it-master',
+  // MSP Plans
+  'prod_Tvm1aJEZ4WXQJN': 'msp-pro',
+  'prod_Tvm1Wp6LRat7DV': 'msp-growth',
+  'prod_Tvm1sVN7zuCb2R': 'msp-power',
 };
+
+// Add-on product IDs
+const ADDON_PRODUCTS: Record<string, string> = {
+  'prod_Tvm15XS4URJYDf': 'pursuit-xdr',
+  'prod_Tvm14lHuxDHOyk': 'sentinel-saas',
+  'prod_Tvm1Bv6Y169hG6': 'recon-pentest',
+  'prod_Tvm1lPWrLHU5BG': 'cortex-ai',
+  'prod_Tvm1BCKLECzk9L': 'comply',
+  'prod_Tvm1pOuwM3afS1': 'cross-client-soc',
+  'prod_Tvm1IMy0GKTI7u': 'atlas-docs',
+  'prod_Tvm1psna1dlfHE': 'phishing-sim',
+  'prod_Tvm1CcIDVjRGaW': 'ai-copilot',
+  'prod_Tvm19bNlVCzSw2': 'network-discovery',
+};
+
+const ALL_VANGUARD_PRODUCTS = new Set([
+  ...Object.keys(PRODUCT_TO_TIER),
+  ...Object.keys(ADDON_PRODUCTS),
+]);
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -45,7 +70,7 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // First check for admin override in database
+    // Check for admin override in database first
     const { data: dbSub } = await supabaseClient
       .from('vanguard_subscriptions')
       .select('*')
@@ -58,6 +83,7 @@ serve(async (req) => {
         subscribed: true,
         tier: dbSub.tier,
         seat_count: dbSub.seat_count,
+        addons: dbSub.addons || [],
         subscription_end: dbSub.current_period_end,
         admin_override: true,
       }), {
@@ -66,16 +92,17 @@ serve(async (req) => {
       });
     }
 
-    // Check Stripe for active subscription
+    // Check Stripe for active subscriptions
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    
+
     if (customers.data.length === 0) {
       logStep("No Stripe customer found");
-      return new Response(JSON.stringify({ 
-        subscribed: false, 
+      return new Response(JSON.stringify({
+        subscribed: false,
         tier: 'free',
         seat_count: 0,
+        addons: [],
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -85,58 +112,80 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
+    // Get ALL active subscriptions (user may have base plan + add-ons in one subscription)
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
-      limit: 1,
+      limit: 10,
     });
 
-    if (subscriptions.data.length === 0) {
-      logStep("No active subscription found");
-      return new Response(JSON.stringify({ 
-        subscribed: false, 
+    // Find the Vanguard subscription (contains a base plan product)
+    let vanguardSub: Stripe.Subscription | null = null;
+    let tier = 'free';
+    let seatCount = 0;
+    const activeAddons: string[] = [];
+
+    for (const sub of subscriptions.data) {
+      for (const item of sub.items.data) {
+        const productId = item.price.product as string;
+
+        if (PRODUCT_TO_TIER[productId]) {
+          vanguardSub = sub;
+          tier = PRODUCT_TO_TIER[productId];
+          seatCount = item.quantity || 1;
+        }
+
+        if (ADDON_PRODUCTS[productId]) {
+          activeAddons.push(ADDON_PRODUCTS[productId]);
+        }
+      }
+    }
+
+    if (!vanguardSub) {
+      logStep("No active Vanguard subscription found");
+      return new Response(JSON.stringify({
+        subscribed: false,
         tier: 'free',
         seat_count: 0,
+        addons: [],
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
 
-    const subscription = subscriptions.data[0];
-    const productId = subscription.items.data[0].price.product as string;
-    const tier = PRODUCT_TO_TIER[productId] || 'unknown';
-    const seatCount = subscription.items.data[0].quantity || 1;
-    const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-    
-    logStep("Active subscription found", { 
-      subscriptionId: subscription.id, 
-      tier, 
+    const subscriptionEnd = new Date(vanguardSub.current_period_end * 1000).toISOString();
+    logStep("Active Vanguard subscription found", {
+      subscriptionId: vanguardSub.id,
+      tier,
       seats: seatCount,
-      endDate: subscriptionEnd 
+      addons: activeAddons,
+      endDate: subscriptionEnd,
     });
 
-    // Upsert to database for caching
+    // Cache to database
     await supabaseClient
       .from('vanguard_subscriptions')
       .upsert({
         user_id: user.id,
         stripe_customer_id: customerId,
-        stripe_subscription_id: subscription.id,
-        tier: tier,
+        stripe_subscription_id: vanguardSub.id,
+        tier,
         seat_count: seatCount,
         status: 'active',
-        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+        addons: activeAddons,
+        current_period_start: new Date(vanguardSub.current_period_start * 1000).toISOString(),
         current_period_end: subscriptionEnd,
         admin_override: false,
       }, { onConflict: 'user_id' });
 
     return new Response(JSON.stringify({
       subscribed: true,
-      tier: tier,
+      tier,
       seat_count: seatCount,
+      addons: activeAddons,
       subscription_end: subscriptionEnd,
-      stripe_subscription_id: subscription.id,
+      stripe_subscription_id: vanguardSub.id,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
