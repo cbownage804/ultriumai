@@ -105,7 +105,7 @@ export function VanguardNavigation() {
       items: [
         { title: 'Helpdesk', path: `${basePath}/helpdesk`, icon: Ticket },
         { title: 'Tickets', path: `${basePath}/tickets`, icon: Ticket },
-        { title: 'Customers', path: `${basePath}/customers`, icon: Building2 },
+        { title: 'Sites', path: `${basePath}/customers`, icon: Building2 },
         { title: 'Co-Managed IT', path: `${basePath}/comanaged`, icon: Users, badge: 'NEW' },
         { title: 'SLA Management', path: `${basePath}/sla`, icon: Activity },
         { title: 'Workflows', path: `${basePath}/workflows`, icon: Settings },
