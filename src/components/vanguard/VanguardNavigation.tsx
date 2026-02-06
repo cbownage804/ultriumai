@@ -84,6 +84,16 @@ export function VanguardNavigation() {
       ]
     },
     {
+      header: 'VANGUARD SENTINEL',
+      description: 'M365 security & SaaS monitoring',
+      tooltip: 'Microsoft 365 security monitoring, SaaS alerts, and cloud identity protection.',
+      module: 'sentinel',
+      dashboardPath: `${basePath}/sentinel`,
+      items: [
+        { title: 'Sentinel Dashboard', path: `${basePath}/sentinel`, icon: Shield },
+      ]
+    },
+    {
       header: 'VANGUARD PURSUIT',
       description: 'Threat detection & intelligence',
       tooltip: 'Actively detects, analyzes, and prioritizes security threats in real time.',
@@ -91,7 +101,6 @@ export function VanguardNavigation() {
       dashboardPath: `${basePath}/alerts`,
       items: [
         { title: 'Alerts', path: `${basePath}/alerts`, icon: Bell },
-        { title: 'Sentinel (M365)', path: `${basePath}/sentinel`, icon: Shield, badge: 'NEW' },
         { title: 'Threats', path: `${basePath}/threats`, icon: Target },
         { title: 'SOC', path: `${basePath}/soc`, icon: Activity },
       ]
