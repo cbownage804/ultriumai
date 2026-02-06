@@ -218,6 +218,7 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-getting-started" path="getting-started" element={<LazyProtectedPage component={VanguardGettingStarted} />} />,
   <Route key="vanguard-helpdesk" path="helpdesk" element={<LazyProtectedPage component={VanguardHelpdesk} />} />,
   <Route key="vanguard-rmm" path="rmm" element={<LazyProtectedPage component={VanguardRMM} />} />,
+  <Route key="vanguard-rmm-module" path="rmm/:moduleId" element={<LazyProtectedPage component={VanguardRMM} />} />,
   <Route key="vanguard-portal-settings" path="portal" element={<LazyProtectedPage component={VanguardPortalSettings} />} />,
   <Route key="vanguard-portal-download" path="portal/download" element={<LazyProtectedPage component={VanguardPortalDownload} />} />,
   <Route key="vanguard-atlas" path="atlas" element={<LazyProtectedPage component={VanguardAtlas} />} />,
