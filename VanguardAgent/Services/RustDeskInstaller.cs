@@ -944,8 +944,8 @@ direct-access-port = ''
             foreach (var regPath in new[] { @"SOFTWARE\RustDesk", @"SOFTWARE\WOW6432Node\RustDesk" })
             {
                 using var key = Registry.LocalMachine.OpenSubKey(regPath);
-                var id = key?.GetValue("id")?.ToString();
-                if (!string.IsNullOrEmpty(id) && id.Length >= 9)
+                var id = key?.GetValue("id")?.ToString()?.Replace(" ", "");
+                if (!string.IsNullOrEmpty(id) && id.Length >= 6)
                 {
                     Console.WriteLine($"[RustDesk] Found ID in registry ({regPath}): {id}");
                     return id;
@@ -1052,10 +1052,10 @@ direct-access-port = ''
                 {
                     var output = (p.StandardOutput.ReadToEnd() + "\n" + p.StandardError.ReadToEnd()).Trim();
                     Console.WriteLine($"[RustDesk] --get-id raw output: '{output}'");
-                    var match = System.Text.RegularExpressions.Regex.Match(output, @"(\d{9,})");
+                    var match = System.Text.RegularExpressions.Regex.Match(output, @"(\d[\d\s]{5,})");
                     if (match.Success)
                     {
-                        var id = match.Groups[1].Value;
+                        var id = match.Groups[1].Value.Replace(" ", "").Trim();
                         Console.WriteLine($"[RustDesk] Found ID via --get-id: {id}");
                         return id;
                     }
@@ -1228,7 +1228,18 @@ direct-access-port = ''
             {
                 var content = File.ReadAllText(path);
                 // Match patterns: id = 123456789 or id = "123456789" or id = '123456789'
-                var match = System.Text.RegularExpressions.Regex.Match(content, @"^id\s*=\s*['""]?(\d{9,})['""]?", System.Text.RegularExpressions.RegexOptions.Multiline);
+                var match = System.Text.RegularExpressions.Regex.Match(content, @"^id\s*=\s*['""]?([\d\s]{6,})['""]?", System.Text.RegularExpressions.RegexOptions.Multiline);
+                if (match.Success)
+                {
+                    var rawId = match.Groups[1].Value.Replace(" ", "").Trim();
+                    if (rawId.Length >= 6)
+                    {
+                        Console.WriteLine($"[RustDesk] Found ID in {path}: {rawId}");
+                        return rawId;
+                    }
+                }
+                // Also try 'enc_id' which newer RustDesk versions may use
+                match = System.Text.RegularExpressions.Regex.Match(content, @"^enc_id\s*=\s*['""]?(.+?)['""]?\s*$", System.Text.RegularExpressions.RegexOptions.Multiline);
                 if (match.Success)
                 {
                     Console.WriteLine($"[RustDesk] Found ID in {path}: {match.Groups[1].Value}");
