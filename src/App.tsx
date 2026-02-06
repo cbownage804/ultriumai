@@ -39,6 +39,7 @@ const GPTChat = lazy(() => import('@/pages/GPTChat'));
 const GPTSettings = lazy(() => import('@/pages/GPTSettings'));
 const AIAgentsPage = lazy(() => import('@/pages/AIAgentsPage'));
 const AIAgentBuilderPage = lazy(() => import('@/pages/AIAgentBuilderPage'));
+const AIWorkflowsPage = lazy(() => import('@/pages/AIWorkflowsPage'));
 const Profile = lazy(() => import('@/pages/Profile'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 
@@ -750,6 +751,13 @@ function AppRouter() {
           <ProtectedRoute>
             <SuspenseWrapper variant="form">
               <AIAgentBuilderPage />
+            </SuspenseWrapper>
+          </ProtectedRoute>
+        } />
+        <Route path="/ai-studio/workflows" element={
+          <ProtectedRoute>
+            <SuspenseWrapper>
+              <AIWorkflowsPage />
             </SuspenseWrapper>
           </ProtectedRoute>
         } />

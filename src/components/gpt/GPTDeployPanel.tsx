@@ -7,18 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Rocket, 
-  Code, 
-  Link, 
-  Copy, 
-  ExternalLink, 
-  CheckCircle,
-  Globe,
-  Smartphone,
-  Monitor,
-  QrCode
+  Rocket, Code, Link, Copy, ExternalLink, CheckCircle,
+  Globe, Smartphone, Monitor, QrCode, Blocks
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { GPTAppBlocks } from "./GPTAppBlocks";
 
 interface GPTDeployPanelProps {
   gptId: string;
@@ -97,7 +90,7 @@ export function GPTDeployPanel({ gptId, gptName, themeColor }: GPTDeployPanelPro
 
       {/* Deployment Options */}
       <Tabs defaultValue="link" className="space-y-4">
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
+        <TabsList className="grid grid-cols-4 w-full max-w-lg">
           <TabsTrigger value="link" className="flex items-center gap-2">
             <Link className="h-4 w-4" />
             Direct Link
@@ -109,6 +102,10 @@ export function GPTDeployPanel({ gptId, gptName, themeColor }: GPTDeployPanelPro
           <TabsTrigger value="widget" className="flex items-center gap-2">
             <Smartphone className="h-4 w-4" />
             Widget
+          </TabsTrigger>
+          <TabsTrigger value="blocks" className="flex items-center gap-2">
+            <Blocks className="h-4 w-4" />
+            AI Blocks
           </TabsTrigger>
         </TabsList>
 
@@ -260,6 +257,11 @@ export function GPTDeployPanel({ gptId, gptName, themeColor }: GPTDeployPanelPro
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* AI App Blocks Tab */}
+        <TabsContent value="blocks">
+          <GPTAppBlocks gptId={gptId} gptName={gptName} themeColor={themeColor} />
         </TabsContent>
       </Tabs>
 
