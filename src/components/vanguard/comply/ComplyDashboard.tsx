@@ -46,7 +46,7 @@ export function ComplyDashboard() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-black/40 border border-white/10">
+        <TabsList data-tour="comply-overview" className="bg-black/40 border border-white/10">
           {tabConfig.map(tab => {
             const Icon = tab.icon;
             return (
@@ -58,7 +58,7 @@ export function ComplyDashboard() {
           })}
         </TabsList>
 
-        <TabsContent value="overview" className="mt-6">
+        <TabsContent value="overview" data-tour="comply-clients" className="mt-6">
           <ComplyOverview />
         </TabsContent>
 

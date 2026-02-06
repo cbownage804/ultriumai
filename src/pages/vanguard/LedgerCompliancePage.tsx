@@ -30,7 +30,9 @@ export default function LedgerCompliancePage() {
         storageKey="ledger-compliance-intro"
       />
 
-      <ComplianceReportGenerator />
+      <div data-tour="ledger-reports">
+        <ComplianceReportGenerator />
+      </div>
     </div>
   );
 }

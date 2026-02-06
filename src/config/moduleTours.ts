@@ -395,6 +395,140 @@ export const SETTINGS_TOUR: TourStep[] = [
   },
 ];
 
+// ============================================
+// ADDITIONAL VANGUARD TOURS
+// ============================================
+
+export const VANGUARD_SENTINEL_TOUR: TourStep[] = [
+  {
+    id: 'welcome',
+    title: 'Vanguard Sentinel - Cloud Security 🛡️',
+    description: 'Monitor Microsoft 365 and Google Workspace tenants for suspicious activity, risky sign-ins, and admin changes.',
+    position: 'center',
+  },
+  {
+    id: 'stats',
+    title: 'Security Overview',
+    description: 'Key metrics at a glance: active alerts, critical threats, AI auto-resolved events, and mean time to resolution.',
+    target: '[data-tour="sentinel-stats"]',
+    position: 'bottom',
+  },
+  {
+    id: 'tenants',
+    title: 'Tenant Management',
+    description: 'Connect your M365 and Google Workspace tenants here. Each tenant is monitored independently for security events.',
+    target: '[data-tour="sentinel-tenants"]',
+    position: 'bottom',
+  },
+  {
+    id: 'ai-triage',
+    title: 'AI Triage',
+    description: 'Cortex AI automatically classifies, prioritizes, and can auto-dismiss low-risk alerts to reduce noise.',
+    target: '[data-tour="sentinel-ai-triage"]',
+    position: 'bottom',
+  },
+  {
+    id: 'complete',
+    title: 'Sentinel Ready! 🔒',
+    description: 'Connect a tenant to begin receiving security events. AI triage will start processing alerts automatically.',
+    position: 'center',
+  },
+];
+
+export const VANGUARD_RECON_TOUR: TourStep[] = [
+  {
+    id: 'welcome',
+    title: 'Vanguard Recon - Pentesting 🎯',
+    description: 'Run vulnerability scans, manage penetration testing engagements, and track remediation across your clients.',
+    position: 'center',
+  },
+  {
+    id: 'severity-cards',
+    title: 'Vulnerability Summary',
+    description: 'At-a-glance severity breakdown. Critical and high findings should be prioritized for remediation.',
+    target: '[data-tour="recon-severity"]',
+    position: 'bottom',
+  },
+  {
+    id: 'scanner',
+    title: 'Scanner',
+    description: 'Launch network, web app, or configuration scans against target hosts. Results appear in the Findings tab.',
+    target: '[data-tour="recon-scanner"]',
+    position: 'bottom',
+  },
+  {
+    id: 'engagements',
+    title: 'Engagements',
+    description: 'Create formal pentest engagements with defined scope, timelines, and deliverables for each client.',
+    target: '[data-tour="recon-engagements"]',
+    position: 'bottom',
+  },
+  {
+    id: 'complete',
+    title: 'Recon Deployed! 🔍',
+    description: 'Start by running a quick scan or creating a pentest engagement for a client.',
+    position: 'center',
+  },
+];
+
+export const VANGUARD_COMPLY_TOUR: TourStep[] = [
+  {
+    id: 'welcome',
+    title: 'Vanguard Comply - Compliance Center 📋',
+    description: 'Track compliance across SOC 2, HIPAA, PCI-DSS, ISO 27001, and more for every client.',
+    position: 'center',
+  },
+  {
+    id: 'overview',
+    title: 'Compliance Overview',
+    description: 'Aggregate scores, framework adoption, and at-risk clients all in one dashboard.',
+    target: '[data-tour="comply-overview"]',
+    position: 'bottom',
+  },
+  {
+    id: 'clients',
+    title: 'Client Compliance',
+    description: 'Drill into each client to enable frameworks, manage policies, and track their compliance journey.',
+    target: '[data-tour="comply-clients"]',
+    position: 'bottom',
+  },
+  {
+    id: 'scanner',
+    title: 'Compliance Scanner',
+    description: 'Run automated compliance checks against CIS benchmarks, NIST, and other frameworks.',
+    target: '[data-tour="comply-scanner"]',
+    position: 'bottom',
+  },
+  {
+    id: 'complete',
+    title: 'Comply Active! ✅',
+    description: 'Start by viewing the Client Compliance tab and enabling frameworks for your first client.',
+    position: 'center',
+  },
+];
+
+export const VANGUARD_LEDGER_TOUR: TourStep[] = [
+  {
+    id: 'welcome',
+    title: 'Vanguard Ledger - Billing & Finance 💰',
+    description: 'Manage invoicing, time tracking, billing schedules, and compliance reporting in one place.',
+    position: 'center',
+  },
+  {
+    id: 'reports',
+    title: 'Compliance Reports',
+    description: 'Generate audit-ready PDF and CSV reports from completed compliance scans with evidence and remediation steps.',
+    target: '[data-tour="ledger-reports"]',
+    position: 'bottom',
+  },
+  {
+    id: 'complete',
+    title: 'Ledger Ready! 📊',
+    description: 'Select a completed scan from the dropdown and generate your first compliance report.',
+    position: 'center',
+  },
+];
+
 // Export all module tours
 export const MODULE_TOURS = {
   // Vanguard
@@ -403,6 +537,10 @@ export const MODULE_TOURS = {
   'vanguard-pursuit': VANGUARD_PURSUIT_TOUR,
   'vanguard-atlas': VANGUARD_ATLAS_TOUR,
   'vanguard-cortex': VANGUARD_CORTEX_TOUR,
+  'vanguard-sentinel': VANGUARD_SENTINEL_TOUR,
+  'vanguard-recon': VANGUARD_RECON_TOUR,
+  'vanguard-comply': VANGUARD_COMPLY_TOUR,
+  'vanguard-ledger': VANGUARD_LEDGER_TOUR,
   
   // SafeSuite
   'safesuite-vault': SAFESUITE_VAULT_TOUR,

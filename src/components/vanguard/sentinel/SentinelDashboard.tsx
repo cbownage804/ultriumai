@@ -219,7 +219,7 @@ export function SentinelDashboard() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6 h-auto bg-black/60 border border-cyan-500/30 p-1">
+        <TabsList data-tour="sentinel-tenants" className="grid w-full grid-cols-6 h-auto bg-black/60 border border-cyan-500/30 p-1">
           {tabConfig.map((tab) => (
             <TabsTrigger
               key={tab.value}
@@ -235,7 +235,7 @@ export function SentinelDashboard() {
         {/* Overview Tab */}
         <TabsContent value="overview" className="mt-6 space-y-6">
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div data-tour="sentinel-stats" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <Card className="bg-black/60 border-cyan-500/30">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
