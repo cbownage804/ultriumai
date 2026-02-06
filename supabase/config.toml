@@ -318,3 +318,10 @@ verify_jwt = false
 # Google Workspace Security Monitor (validates auth in code)
 [functions.gws-security-monitor]
 verify_jwt = false
+
+# AI Studio - Data Query & Agent Execution
+[functions.ai-data-query]
+verify_jwt = true
+
+[functions.ai-agent-execute]
+verify_jwt = true
