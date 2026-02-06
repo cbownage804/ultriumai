@@ -206,7 +206,7 @@ export function generateCmdInstaller(provisioningToken: string, clientName?: str
     'Write-Host "  Installation Complete!" -ForegroundColor Green',
     'Write-Host "============================================" -ForegroundColor Green',
     'Write-Host ""',
-    'Write-Host "  Dashboard: https://ultriumai.com/vanguard" -ForegroundColor Cyan',
+    'Write-Host "  Dashboard: Your MSP portal" -ForegroundColor Cyan',
     'if ($enableTray -eq "1") {',
     '    Write-Host "  Tray: Look for Vanguard icon in system tray" -ForegroundColor Cyan',
     '}',
@@ -223,12 +223,12 @@ export function generateCmdInstaller(provisioningToken: string, clientName?: str
   // CMD wrapper that self-elevates and runs Base64-encoded PowerShell
   const cmdScript = `@echo off
 :: =============================================================================
-:: Ultrium Vanguard Agent - 1-Click Installer
+:: Vanguard Agent - 1-Click Installer
 :: Pre-configured for: ${escapedClientName}
 :: Just double-click to install - no configuration needed!
 :: =============================================================================
 
-title Ultrium Vanguard Agent Installer
+title Vanguard Agent Installer
 
 :: Check for admin rights and self-elevate if needed
 net session >nul 2>&1
@@ -277,7 +277,7 @@ export function generateMsiInstallerScript(provisioningToken: string, clientName
   
   const lines = [
     '#Requires -RunAsAdministrator',
-    '# Ultrium Vanguard Agent - PowerShell Installer',
+    '# Vanguard Agent - PowerShell Installer',
     `# Pre-configured for: ${escapedClientName}`,
     '',
     '$ErrorActionPreference = "Stop"',

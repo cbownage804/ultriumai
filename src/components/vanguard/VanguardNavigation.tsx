@@ -496,7 +496,7 @@ export function VanguardNavigation() {
             ) : (
               <div className="flex items-center gap-2 text-xs text-slate-500">
                 <Shield className="h-3.5 w-3.5 text-purple-400 drop-shadow-[0_0_4px_rgba(168,85,247,0.5)]" />
-                <span>Powered by <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent font-medium">Ultrium</span></span>
+                <span>Powered by <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent font-medium">Vanguard</span></span>
               </div>
             )}
           </div>

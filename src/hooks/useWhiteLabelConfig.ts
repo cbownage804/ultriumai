@@ -14,7 +14,7 @@ const defaultConfig: WhiteLabelConfig = {
   custom_domain: "",
   favicon_url: "",
   custom_css: "",
-  footer_text: "Powered by UltriumGPT",
+  footer_text: "Powered by Vanguard",
   hide_powered_by: false,
   custom_login_page: false,
   email_templates: {

@@ -85,7 +85,7 @@ export const AgentDeployment: React.FC = () => {
 
   const windowsOneLineInstall = `powershell -ExecutionPolicy Bypass -Command "& {iwr -useb '${SUPABASE_URL}/functions/v1/rmm-agent-ps?key=${deploymentKey || 'YOUR-KEY'}' | iex; .\\VanguardAgent.ps1 -Install}"`;
   
-  const linuxOneLineInstall = `curl -sSL https://raw.githubusercontent.com/ultrium/vanguard/main/install.sh | sudo bash -s -- --key "${deploymentKey || 'YOUR-KEY'}"`;
+  const linuxOneLineInstall = `curl -sSL https://raw.githubusercontent.com/vanguard-rmm/agent/main/install.sh | sudo bash -s -- --key "${deploymentKey || 'YOUR-KEY'}"`;
 
   return (
     <div className="space-y-6">
@@ -352,7 +352,7 @@ export const AgentDeployment: React.FC = () => {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <a
-              href="https://docs.ultriumai.com/vanguard/agent-installation"
+              href="https://docs.vanguard.app/agent-installation"
               target="_blank"
               rel="noopener noreferrer"
               className="p-4 border rounded-lg hover:bg-muted transition-colors flex items-start gap-3"
@@ -367,7 +367,7 @@ export const AgentDeployment: React.FC = () => {
               <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
             </a>
             <a
-              href="https://docs.ultriumai.com/vanguard/compliance-frameworks"
+              href="https://docs.vanguard.app/compliance-frameworks"
               target="_blank"
               rel="noopener noreferrer"
               className="p-4 border rounded-lg hover:bg-muted transition-colors flex items-start gap-3"
@@ -382,7 +382,7 @@ export const AgentDeployment: React.FC = () => {
               <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
             </a>
             <a
-              href="https://docs.ultriumai.com/vanguard/rustdesk-setup"
+              href="https://docs.vanguard.app/rustdesk-setup"
               target="_blank"
               rel="noopener noreferrer"
               className="p-4 border rounded-lg hover:bg-muted transition-colors flex items-start gap-3"
