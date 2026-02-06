@@ -14,6 +14,7 @@ export interface VanguardPlan {
   popular?: boolean;
   enterprise?: boolean;
   stripePriceId?: string;
+  stripeProductId?: string;
 }
 
 // IT Department Plans (Internal IT Teams)
@@ -42,7 +43,8 @@ export const IT_DEPARTMENT_PLANS: VanguardPlan[] = [
       'Patch management',
       'Splashtop remote access',
     ],
-    stripePriceId: 'price_it_professional',
+    stripePriceId: 'price_1SxuTIH1u6E0bsJTmXs4WsZF',
+    stripeProductId: 'prod_Tvm1tGkEFFA8xx',
   },
   {
     id: 'it-expert',
@@ -67,7 +69,8 @@ export const IT_DEPARTMENT_PLANS: VanguardPlan[] = [
       'AI ticket auto-tagging',
       'AnyDesk + Splashtop',
     ],
-    stripePriceId: 'price_it_expert',
+    stripePriceId: 'price_1SxuTKH1u6E0bsJTokP26ceC',
+    stripeProductId: 'prod_Tvm1v7saOMFPLn',
   },
   {
     id: 'it-master',
@@ -89,7 +92,8 @@ export const IT_DEPARTMENT_PLANS: VanguardPlan[] = [
       '12 months audit log',
       'Data recovery',
     ],
-    stripePriceId: 'price_it_master',
+    stripePriceId: 'price_1SxuTMH1u6E0bsJTBvbwyyMK',
+    stripeProductId: 'prod_Tvm1N7n2bkJpMd',
   },
   {
     id: 'it-enterprise',
@@ -149,7 +153,8 @@ export const MSP_PLANS: VanguardPlan[] = [
       'SLA tracking',
       'API Access',
     ],
-    stripePriceId: 'price_msp_pro',
+    stripePriceId: 'price_1SxuTOH1u6E0bsJTaXDSWla4',
+    stripeProductId: 'prod_Tvm1aJEZ4WXQJN',
   },
   {
     id: 'msp-growth',
@@ -176,7 +181,8 @@ export const MSP_PLANS: VanguardPlan[] = [
       'QuickBooks & Xero',
       'Unlimited remote sessions',
     ],
-    stripePriceId: 'price_msp_growth',
+    stripePriceId: 'price_1SxuTPH1u6E0bsJT5E9UzVhs',
+    stripeProductId: 'prod_Tvm1Wp6LRat7DV',
   },
   {
     id: 'msp-power',
@@ -198,7 +204,8 @@ export const MSP_PLANS: VanguardPlan[] = [
       '12 months audit log',
       'Data recovery',
     ],
-    stripePriceId: 'price_msp_power',
+    stripePriceId: 'price_1SxuTQH1u6E0bsJTsfAgrdLQ',
+    stripeProductId: 'prod_Tvm1sVN7zuCb2R',
   },
   {
     id: 'msp-superpower',
@@ -253,6 +260,8 @@ export const ADDONS = [
     name: 'AI Copilot',
     description: 'AI-powered assistance for faster ticket resolution and automation.',
     monthlyPrice: 50,
+    stripePriceId: 'price_1SxuTgH1u6E0bsJTKV8J0qSR',
+    stripeProductId: 'prod_Tvm1CcIDVjRGaW',
     features: [
       'AI ticket summarization',
       'Suggested responses',
@@ -265,6 +274,8 @@ export const ADDONS = [
     name: 'Network Discovery',
     description: 'Scan and monitor networks for devices and security issues.',
     monthlyPrice: 25,
+    stripePriceId: 'price_1SxuTiH1u6E0bsJTRwQiRkcm',
+    stripeProductId: 'prod_Tvm19bNlVCzSw2',
     features: [
       'Automatic device discovery',
       'Network mapping',
@@ -278,6 +289,8 @@ export const ADDONS = [
     description: 'Advanced threat detection & automated response.',
     monthlyPrice: 8,
     perUser: true,
+    stripePriceId: 'price_1SxuTUH1u6E0bsJTMPO2csv9',
+    stripeProductId: 'prod_Tvm15XS4URJYDf',
     features: ['XDR correlation', 'Auto-remediation', 'MITRE ATT&CK mapping', 'SOC dashboards'],
   },
   {
@@ -286,6 +299,8 @@ export const ADDONS = [
     description: 'M365 & Google Workspace security monitoring.',
     monthlyPrice: 6,
     perUser: true,
+    stripePriceId: 'price_1SxuTWH1u6E0bsJTK6myzbhu',
+    stripeProductId: 'prod_Tvm14lHuxDHOyk',
     features: ['M365 alerts', 'GWS monitoring', 'AI triage', 'Tenant management'],
   },
   {
@@ -294,6 +309,8 @@ export const ADDONS = [
     description: 'Vulnerability assessment & penetration testing.',
     monthlyPrice: 12,
     perUser: true,
+    stripePriceId: 'price_1SxuTXH1u6E0bsJTm68uN9GV',
+    stripeProductId: 'prod_Tvm1Bv6Y169hG6',
     features: ['Vuln scanning', 'Pentest workflows', 'Network discovery', 'Recon hardware'],
   },
   {
@@ -302,6 +319,8 @@ export const ADDONS = [
     description: 'AI-powered IT intelligence & automation.',
     monthlyPrice: 5,
     perUser: true,
+    stripePriceId: 'price_1SxuTZH1u6E0bsJT2NEiuN4K',
+    stripeProductId: 'prod_Tvm1lPWrLHU5BG',
     features: ['AI summarization', 'Pattern detection', 'KB generator', 'Smart routing'],
   },
   {
@@ -310,6 +329,8 @@ export const ADDONS = [
     description: 'Compliance lifecycle management & audit readiness.',
     monthlyPrice: 7,
     perUser: true,
+    stripePriceId: 'price_1SxuTaH1u6E0bsJT5NSVONG8',
+    stripeProductId: 'prod_Tvm1BCKLECzk9L',
     features: ['SOC 2 / HIPAA / ISO', 'Evidence collection', 'Control monitoring', 'Audit reports'],
   },
   {
@@ -318,6 +339,8 @@ export const ADDONS = [
     description: 'Detect coordinated campaigns across your MSP fleet.',
     monthlyPrice: 10,
     perUser: true,
+    stripePriceId: 'price_1SxuTcH1u6E0bsJTDDJsq086',
+    stripeProductId: 'prod_Tvm1pOuwM3afS1',
     features: ['Cross-client correlation', 'Campaign detection', 'Shared IOC analysis', 'Fleet visibility'],
   },
   {
@@ -326,6 +349,8 @@ export const ADDONS = [
     description: 'IT documentation, runbooks & knowledge base.',
     monthlyPrice: 3,
     perUser: true,
+    stripePriceId: 'price_1SxuTdH1u6E0bsJTScVKEytG',
+    stripeProductId: 'prod_Tvm1IMy0GKTI7u',
     features: ['Knowledge base', 'Runbooks & SOPs', 'Password vault', 'Flexible assets'],
   },
   {
@@ -334,6 +359,8 @@ export const ADDONS = [
     description: 'Employee phishing awareness training & testing.',
     monthlyPrice: 4,
     perUser: true,
+    stripePriceId: 'price_1SxuTfH1u6E0bsJTsRKTGLam',
+    stripeProductId: 'prod_Tvm1psna1dlfHE',
     features: ['Simulated campaigns', 'Risk scoring', 'Awareness training', 'Reporting'],
   },
 ];
