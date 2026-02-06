@@ -106,6 +106,7 @@ const CortexAnalyticsPage = lazy(() => import('@/pages/vanguard/CortexAnalyticsP
 const CortexScreenToDocsPage = lazy(() => import('@/pages/vanguard/CortexScreenToDocsPage'));
 const CortexAIToolsPage = lazy(() => import('@/pages/vanguard/CortexAIToolsPage'));
 const VanguardSentinel = lazy(() => import('@/pages/vanguard/VanguardSentinel'));
+const VanguardPursuitModule = lazy(() => import('@/pages/vanguard/VanguardPursuitModule'));
 const VanguardComply = lazy(() => import('@/pages/vanguard/VanguardComply'));
 const ReconPentestPage = lazy(() => import('@/pages/vanguard/ReconPentestPage'));
 const ReconFindingsPage = lazy(() => import('@/pages/vanguard/ReconFindingsPage'));
@@ -170,6 +171,7 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-setup" path="setup" element={<LazyProtectedPage component={VanguardSetup} />} />,
   <Route key="vanguard-threats" path="threats" element={<LazyProtectedPage component={ThreatDetection} />} />,
   <Route key="vanguard-soc" path="soc" element={<LazyProtectedPage component={VanguardSOC} />} />,
+  <Route key="vanguard-pursuit-module" path="pursuit/:moduleId" element={<LazyProtectedPage component={VanguardPursuitModule} />} />,
   <Route key="vanguard-pentest" path="pentest" element={<LazyProtectedPage component={VanguardPentest} />} />,
   <Route key="vanguard-vulnscan" path="vulnscan" element={<LazyProtectedPage component={VulnerabilityScanner} />} />,
   <Route key="vanguard-compliance" path="compliance" element={<LazyProtectedPage component={ComplianceAuditor} />} />,
