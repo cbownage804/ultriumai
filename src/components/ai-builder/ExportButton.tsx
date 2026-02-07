@@ -4,7 +4,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Download, FileArchive, Container, Rocket } from 'lucide-react';
 import { toast } from 'sonner';
-import { exportProject, type ExportMode, type ExportContext } from './exportProject';
+import { exportProject, type ExportMode, type ExportContext, type EdgeFunctionMeta } from './exportProject';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import type { SupabaseConfig, StripeConfig, ServiceKey, EnvVar } from './ProjectSettings';
 
@@ -16,17 +16,21 @@ interface ExportButtonProps {
   serviceKeys?: ServiceKey[];
   envVars?: EnvVar[];
   cdnPackages?: Array<{ name: string; version: string }>;
+  edgeFunctions?: EdgeFunctionMeta[];
+  storageBuckets?: string[];
+  authProviders?: string[];
 }
 
 export function ExportButton({
   projectName, files,
   supabaseConfig, stripeConfig, serviceKeys, envVars, cdnPackages,
+  edgeFunctions, storageBuckets, authProviders,
 }: ExportButtonProps) {
   const hasIntegrations = !!(supabaseConfig || stripeConfig || (serviceKeys && serviceKeys.length > 0));
 
   const handleExport = async (mode: ExportMode) => {
     try {
-      const ctx: ExportContext = { supabaseConfig, stripeConfig, serviceKeys, envVars, cdnPackages };
+      const ctx: ExportContext = { supabaseConfig, stripeConfig, serviceKeys, envVars, cdnPackages, edgeFunctions, storageBuckets, authProviders };
       await exportProject(projectName, files, mode, ctx);
       const messages: Record<ExportMode, string> = {
         raw: 'Project files downloaded!',
