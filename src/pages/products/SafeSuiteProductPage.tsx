@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, User, Building2, Check, Zap, Lock, Heart, Smartphone, Shield, Eye, RefreshCw, Play } from "lucide-react";
+import {
+  ArrowRight, User, Building2, Check, Zap, Lock, Heart, Smartphone, Shield,
+  Eye, RefreshCw, Play, AlertTriangle, Users, Briefcase, Home
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
 import safepassLogo from "@/assets/safepass-logo.png";
@@ -21,149 +24,128 @@ import { DarkWebDemo } from "@/components/demos/DarkWebDemo";
 import { SafeScanDemo } from "@/components/demos/SafeScanDemo";
 
 const SafeSuiteProductPage = () => {
-  const audiences = [
-    {
-      icon: User,
-      title: "Individuals & Families",
-      description: "Protect your personal accounts, passwords, and digital identity with simple, modern tools. No technical expertise required — just security that works."
-    },
+  const audiencePaths = [
     {
       icon: Building2,
-      title: "Small & Medium Businesses",
-      description: "Secure your team's credentials and monitor for threats without enterprise complexity or enterprise pricing. Right-sized security for growing organizations."
-    }
+      title: "SMB Teams",
+      outcome: "Protect your business credentials, monitor for breaches, and prove you take security seriously — without hiring a security team.",
+    },
+    {
+      icon: Briefcase,
+      title: "Freelancers",
+      outcome: "Manage client credentials safely and keep your own accounts locked down — one tool, no complexity.",
+    },
+    {
+      icon: Home,
+      title: "Families",
+      outcome: "Keep your family's passwords secure, monitor for identity theft, and teach good security habits — all from one dashboard.",
+    },
+    {
+      icon: User,
+      title: "Individuals",
+      outcome: "Take control of your digital life. Strong passwords, breach alerts, and AI security guidance — for free.",
+    },
   ];
 
-  const features = [
+  const outcomes = [
     {
       logo: safepassLogo,
-      title: "SafePass™ — Password Vault",
-      description: "Secure password storage with autofill, secure sharing, and breach monitoring. Never forget a password or reuse weak credentials again.",
-      highlights: ["Encrypted vault", "Browser extension", "Secure sharing", "Breach alerts"]
+      title: "SafePass™",
+      outcome: "Never lose, forget, or reuse a password again.",
+      description: "Encrypted vault with autofill, secure sharing, and breach monitoring. Every credential is stored with AES-256-GCM encryption — only you can decrypt it.",
     },
     {
       logo: safescanLogo,
-      title: "SafeScan™ — Threat Scanning",
-      description: "Scan your devices and networks for vulnerabilities, malware, and security misconfigurations. Know your risk before attackers do.",
-      highlights: ["Device scanning", "Network analysis", "Risk scoring", "Remediation guides"]
+      title: "SafeScan™",
+      outcome: "Know your risk before attackers do.",
+      description: "Scan emails, URLs, documents, and passwords for threats. Get a clear risk score and actionable guidance — not a wall of technical jargon.",
     },
     {
       logo: safewebLogo,
-      title: "SafeWeb™ — Dark Web Monitoring",
-      description: "24/7 monitoring of the dark web for leaked credentials, data breaches, and identity exposure. Get alerted before criminals can act.",
-      highlights: ["Credential monitoring", "Breach detection", "Identity alerts", "Exposure reports"]
+      title: "SafeWeb™",
+      outcome: "Find out if your data is already exposed.",
+      description: "24/7 dark web monitoring for leaked credentials and personal data. Get alerted the moment your information appears in a breach — before criminals can act.",
     },
     {
       logo: safetrackLogo,
-      title: "SafeTrack™ — Asset Management",
-      description: "Keep track of your devices, software licenses, and digital assets in one simple dashboard. Know what you own and its security status.",
-      highlights: ["Device inventory", "License tracking", "Warranty alerts", "Security status"]
+      title: "SafeTrack™",
+      outcome: "Know exactly what you own and its security status.",
+      description: "Simple asset tracking for devices, software licenses, and warranties. See what's up to date, what's expiring, and what needs attention.",
     },
     {
       logo: safeassistLogo,
-      title: "SafeAssist™ — AI Security Advisor",
-      description: "Your 24/7 AI-powered security assistant. Get real-time threat guidance, phishing identification, incident response help, and best practice recommendations — all in plain language.",
-      highlights: ["Phishing detection", "Incident response", "Real-time guidance", "Team security training"]
-    }
+      title: "SafeAssist™",
+      outcome: "Get expert security guidance — anytime, in plain language.",
+      description: "AI-powered security advisor that answers your questions, identifies phishing attempts, and guides you through incident response — no security expertise required.",
+    },
   ];
 
-  const benefits = [
-    "AI-powered security advisor included — get expert guidance anytime",
-    "No enterprise complexity — just simple, effective security",
-    "Modern design that anyone can understand and use",
-    "Affordable pricing for individuals and small teams",
-    "All-in-one bundle — no need to buy separate tools",
-    "Works seamlessly across all your devices",
-    "Privacy-first approach — your data stays yours",
-    "Free tier available to get started immediately"
+  const trustSignals = [
+    {
+      title: "Zero-knowledge encryption",
+      description: "Your passwords are encrypted on your device before they reach our servers. We can't read them — ever.",
+    },
+    {
+      title: "No data selling",
+      description: "We don't sell your data, serve ads, or monetize your browsing. Your security data belongs to you.",
+    },
+    {
+      title: "Veteran-owned",
+      description: "Built by a U.S. veteran-owned company with a security-first mission — not a growth-at-all-costs startup.",
+    },
+    {
+      title: "Continuous monitoring",
+      description: "Dark web scanning runs 24/7. When a breach happens, you're notified — not surprised months later.",
+    },
+    {
+      title: "Industry-standard cryptography",
+      description: "AES-256-GCM encryption, PBKDF2 with 600,000 iterations for key derivation, and TLS for all data in transit.",
+    },
+    {
+      title: "Free tier, no tricks",
+      description: "Start for free with core features. Upgrade when you're ready — no surprise charges or feature walls.",
+    },
   ];
 
-  const comparisonPoints = [
-    {
-      title: "vs. Enterprise Security Suites",
-      points: [
-        "No complex deployment or IT involvement required",
-        "Pricing that makes sense for individuals and SMBs",
-        "Simple interface without overwhelming options",
-        "Get started in minutes, not months"
-      ]
-    },
-    {
-      title: "vs. Free Password Managers",
-      points: [
-        "Comprehensive security beyond just passwords",
-        "Dark web monitoring included",
-        "AI-powered security guidance",
-        "Device and asset tracking in one place"
-      ]
-    }
-  ];
-
-  const howItWorks = [
-    {
-      icon: Smartphone,
-      title: "1. Sign Up",
-      description: "Create your account in under a minute. No credit card required for the free tier."
-    },
-    {
-      icon: RefreshCw,
-      title: "2. Import & Scan",
-      description: "Import existing passwords and run your first security scan to see where you stand."
-    },
-    {
-      icon: Shield,
-      title: "3. Get Protected",
-      description: "Follow simple recommendations to close security gaps and enable monitoring."
-    },
-    {
-      icon: Eye,
-      title: "4. Stay Informed",
-      description: "Receive alerts about new threats, breaches, and security recommendations."
-    }
+  const steps = [
+    { icon: Smartphone, label: "Try Free", description: "Create your account in under a minute. No credit card." },
+    { icon: RefreshCw, label: "Choose a Plan", description: "Stay free or pick the plan that matches your needs." },
+    { icon: Shield, label: "Get Protected", description: "Import passwords, run your first scan, and enable monitoring." },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
       <SEOHead
-        title="SafeSuite — Simple, Modern Security for People & Small Teams | UltriumAI"
-        description="Password management, threat scanning, and dark web monitoring — all in one easy-to-use bundle. No enterprise complexity. Just protection that works for individuals and SMBs."
+        title="SafeSuite — Protect Your Digital World | UltriumAI"
+        description="Passwords, breaches, and threats — all in one tool. Enterprise-grade security built for individuals, teams, and SMBs without the complexity."
         canonicalPath="/products/safesuite"
       />
       <Navigation />
-      
+
       {/* Hero Section */}
-      <section className="pt-32 pb-20 relative overflow-hidden">
+      <section className="pt-32 pb-16 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-green-500/5" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[120px]" />
-        
+
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
-          <Badge className="mb-6 bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-            <Heart className="h-3 w-3 mr-1" />
-            Security Made Simple
-          </Badge>
-          
           <div className="flex items-center justify-center mb-8">
-            <div className="h-48 w-80 rounded-3xl bg-black p-6 flex items-center justify-center shadow-2xl shadow-emerald-500/30 mx-auto">
+            <div className="h-44 w-72 rounded-3xl bg-black p-6 flex items-center justify-center shadow-2xl shadow-emerald-500/30 mx-auto">
               <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain" />
             </div>
           </div>
-          
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-foreground/50 bg-clip-text text-transparent">
-            SafeSuite — Simple, Modern Security
+
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-foreground/60 bg-clip-text text-transparent leading-tight">
+            Protect Your Digital World — Passwords, Breaches & Threats All in One Tool
           </h1>
-          
+
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
-            Password management, threat scanning, and dark web monitoring — 
-            all in one easy-to-use bundle.
+            Enterprise-grade security built for individuals, teams, and SMBs — without the complexity.
           </p>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            No enterprise complexity. Just protection that works.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
             <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600" asChild>
               <Link to="/auth">
-                Get Started Free
+                Try Free
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
@@ -176,41 +158,47 @@ const SafeSuiteProductPage = () => {
         </div>
       </section>
 
-      {/* What is SafeSuite */}
+      {/* Problem Statement */}
       <section className="py-16 px-4 border-b border-border/50">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6">What is SafeSuite?</h2>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            SafeSuite is a <strong className="text-foreground">Personal & SMB Security Suite</strong> that bundles 
-            the essential security tools everyone needs into one simple package. Instead of juggling separate 
-            password managers, scanning tools, and monitoring services, SafeSuite gives you everything in one 
-            place — with a modern interface that anyone can use.
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="w-14 h-14 rounded-xl bg-destructive/10 flex items-center justify-center mx-auto mb-6">
+            <AlertTriangle className="h-7 w-7 text-destructive" />
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">The Problem Is Real — and It's Getting Worse</h2>
+          <p className="text-lg text-muted-foreground leading-relaxed mb-4">
+            Every day, credentials are lost, reused, stolen, or compromised. Hackers exploit
+            weak passwords, exposed data, and unprotected accounts — and most security tools
+            are too complex or expensive for small teams and individuals.
+          </p>
+          <p className="text-muted-foreground leading-relaxed">
+            The result? People skip security altogether, reuse the same password everywhere,
+            and only find out about breaches months after the damage is done.
+            SafeSuite exists to change that.
           </p>
         </div>
       </section>
 
-      {/* Who It's For */}
+      {/* Audience Paths */}
       <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Who It's For</h2>
+            <h2 className="text-3xl font-bold mb-4">Who Is SafeSuite For?</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              SafeSuite is designed for people and small teams who want effective 
-              security without the complexity.
+              Security that fits your world — whether you're protecting a business, a family, or just yourself.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {audiences.map((audience, i) => {
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {audiencePaths.map((audience, i) => {
               const IconComponent = audience.icon;
               return (
                 <Card key={i} className="bg-card/50 border-border/50 hover:border-emerald-500/30 transition-all">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-14 h-14 rounded-xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
-                      <IconComponent className="h-7 w-7 text-emerald-500" />
+                  <CardContent className="p-6">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4">
+                      <IconComponent className="h-6 w-6 text-emerald-500" />
                     </div>
                     <h3 className="text-lg font-semibold mb-2">{audience.title}</h3>
-                    <p className="text-muted-foreground text-sm">{audience.description}</p>
+                    <p className="text-muted-foreground text-sm">{audience.outcome}</p>
                   </CardContent>
                 </Card>
               );
@@ -219,70 +207,41 @@ const SafeSuiteProductPage = () => {
         </div>
       </section>
 
-      {/* Core Features */}
+      {/* Outcome-Framed Products */}
       <section className="py-20 px-4 bg-muted/30">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <Badge className="mb-4 bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
               <Zap className="h-3 w-3 mr-1" />
-              All-in-One Bundle
+              Five Tools, One Suite
             </Badge>
-            <h2 className="text-3xl font-bold mb-4">What's Included</h2>
+            <h2 className="text-3xl font-bold mb-4">What You Get</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Five powerful tools in one simple package.
+              Each tool solves a specific security problem. Together, they cover the full picture.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, i) => (
-              <Card key={i} className="bg-card border-border/50 hover:border-emerald-500/30 transition-all">
-                <CardContent className="p-6">
-                  <div className="w-36 h-20 rounded-xl bg-black flex items-center justify-center mb-4 p-3">
-                    <img 
-                      src={feature.logo} 
-                      alt={feature.title} 
-                      className="h-full w-full object-contain"
-                    />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground text-sm mb-4">{feature.description}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {feature.highlights.map((highlight, j) => (
-                      <Badge key={j} variant="secondary" className="text-xs">
-                        {highlight}
-                      </Badge>
-                    ))}
+          <div className="space-y-4">
+            {outcomes.map((product, i) => (
+              <Card key={i} className="bg-card border-border/50 hover:border-emerald-500/20 transition-all overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="grid md:grid-cols-[200px_1fr] gap-0">
+                    <div className="bg-black/50 p-6 flex items-center justify-center">
+                      <img
+                        src={product.logo}
+                        alt={product.title}
+                        className="h-14 w-auto object-contain"
+                      />
+                    </div>
+                    <div className="p-6">
+                      <h3 className="text-lg font-bold mb-1">{product.title}</h3>
+                      <p className="text-emerald-500 font-medium text-sm mb-2">{product.outcome}</p>
+                      <p className="text-muted-foreground text-sm">{product.description}</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">How It Works</h2>
-            <p className="text-muted-foreground">
-              Getting protected takes minutes, not hours.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {howItWorks.map((step, i) => {
-              const IconComponent = step.icon;
-              return (
-                <div key={i} className="text-center">
-                  <div className="w-14 h-14 rounded-xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
-                    <IconComponent className="h-7 w-7 text-emerald-500" />
-                  </div>
-                  <h3 className="font-semibold mb-2">{step.title}</h3>
-                  <p className="text-muted-foreground text-sm">{step.description}</p>
-                </div>
-              );
-            })}
           </div>
         </div>
       </section>
@@ -297,7 +256,7 @@ const SafeSuiteProductPage = () => {
             </Badge>
             <h2 className="text-3xl font-bold mb-4">Experience SafeSuite Live</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Explore interactive demos of each SafeSuite tool. No signup required.
+              Explore interactive demos of each tool. No signup required.
             </p>
           </div>
 
@@ -387,56 +346,53 @@ const SafeSuiteProductPage = () => {
         </div>
       </section>
 
-      {/* Why SafeSuite */}
+      {/* Trust & Proof Section */}
       <section className="py-20 px-4 bg-muted/30">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Why Choose SafeSuite</h2>
-            <p className="text-muted-foreground">
-              Security should be simple. We made it that way.
+            <div className="w-14 h-14 rounded-xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+              <Lock className="h-7 w-7 text-emerald-500" />
+            </div>
+            <h2 className="text-3xl font-bold mb-4">Your Security Is Not Negotiable</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              SafeSuite is built on the principle that your data belongs to you — and only you.
+              Here's how we back that up.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            {benefits.map((item, i) => (
-              <div 
-                key={i} 
-                className="flex items-start gap-3 p-4 rounded-lg bg-card border border-border/50"
-              >
-                <Check className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                <span className="text-foreground/80">{item}</span>
-              </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {trustSignals.map((signal, i) => (
+              <Card key={i} className="bg-card/50 border-border/50">
+                <CardContent className="p-5">
+                  <h3 className="text-sm font-semibold text-foreground mb-1.5">{signal.title}</h3>
+                  <p className="text-sm text-muted-foreground">{signal.description}</p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Comparison */}
+      {/* How to Get Started — 3 Steps */}
       <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">How SafeSuite Compares</h2>
-            <p className="text-muted-foreground">
-              The right balance of features and simplicity.
-            </p>
+            <h2 className="text-3xl font-bold mb-4">Three Steps to Protected</h2>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {comparisonPoints.map((comparison, i) => (
-              <Card key={i} className="bg-card/50 border-border/50">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">{comparison.title}</h3>
-                  <ul className="space-y-2">
-                    {comparison.points.map((point, j) => (
-                      <li key={j} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <Check className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="grid md:grid-cols-3 gap-6">
+            {steps.map((step, i) => {
+              const IconComponent = step.icon;
+              return (
+                <div key={i} className="text-center">
+                  <div className="w-14 h-14 rounded-xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                    <IconComponent className="h-7 w-7 text-emerald-500" />
+                  </div>
+                  <h3 className="font-bold mb-2">{step.label}</h3>
+                  <p className="text-muted-foreground text-sm">{step.description}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -445,10 +401,9 @@ const SafeSuiteProductPage = () => {
       <section className="py-16 px-4 border-y border-border/50 bg-muted/20">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl font-bold mb-4">Part of the UltriumAI Platform</h2>
-          <p className="text-muted-foreground mb-6">
-            SafeSuite is part of the broader UltriumAI ecosystem. For organizations needing 
-            enterprise security operations or AI-powered business tools, explore our 
-            Vanguard and AI Studio products.
+          <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+            SafeSuite shares a single account, billing hub, and AI backbone with Vanguard and AI Studio.
+            Need enterprise IT operations or custom AI tools? They're one click away.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to="/products/vanguard">
@@ -465,30 +420,29 @@ const SafeSuiteProductPage = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Final CTA */}
       <section className="py-20 px-4 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent">
         <div className="max-w-3xl mx-auto">
           <Card className="bg-gradient-to-br from-card to-emerald-500/10 border-emerald-500/30">
             <CardContent className="p-10 text-center">
-              <Lock className="h-12 w-12 text-emerald-500 mx-auto mb-6" />
+              <Shield className="h-12 w-12 text-emerald-500 mx-auto mb-6" />
               <h2 className="text-3xl font-bold mb-4">
-                Ready to Protect Yourself?
+                Start protecting yourself today.
               </h2>
               <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-                Start with our free tier and upgrade when you're ready. 
-                No credit card required. No complicated setup.
+                Create a free account, import your passwords, and run your first security scan — all in under five minutes.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600" asChild>
                   <Link to="/auth">
-                    Get Started Free
+                    Try Free
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
                   <Link to="/pricing/safesuite">
-                    View Plans
+                    Choose a Plan
                   </Link>
                 </Button>
                 <Button size="lg" variant="ghost" asChild>
@@ -501,7 +455,7 @@ const SafeSuiteProductPage = () => {
               <div className="mt-8 flex items-center justify-center gap-6 text-sm text-muted-foreground">
                 <span>🇺🇸 Veteran-Owned</span>
                 <span>•</span>
-                <span>Privacy-First</span>
+                <span>Zero-Knowledge Encryption</span>
                 <span>•</span>
                 <span>Free Tier Available</span>
               </div>
