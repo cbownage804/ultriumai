@@ -28,7 +28,7 @@ const ADDON_PRICES: Record<string, { price_id: string; product_id: string; name:
   'comply':          { price_id: 'price_1SxuTaH1u6E0bsJT5NSVONG8', product_id: 'prod_Tvm1BCKLECzk9L', name: 'Comply' },
   'cross-client-soc':{ price_id: 'price_1SxuTcH1u6E0bsJTDDJsq086', product_id: 'prod_Tvm1pOuwM3afS1', name: 'Cross-Client SOC' },
   'atlas-docs':      { price_id: 'price_1SxuTdH1u6E0bsJTScVKEytG', product_id: 'prod_Tvm1IMy0GKTI7u', name: 'Atlas Docs' },
-  'phishing-sim':    { price_id: 'price_1SxuTfH1u6E0bsJTsRKTGLam', product_id: 'prod_Tvm1psna1dlfHE', name: 'Phishing Sim' },
+  
   'ai-copilot':      { price_id: 'price_1SxuTgH1u6E0bsJTKV8J0qSR', product_id: 'prod_Tvm1CcIDVjRGaW', name: 'AI Copilot' },
   'network-discovery':{ price_id: 'price_1SxuTiH1u6E0bsJTRwQiRkcm', product_id: 'prod_Tvm19bNlVCzSw2', name: 'Network Discovery' },
 };
