@@ -20,6 +20,7 @@ interface BuilderPreviewPanelProps {
   isStreamingPreview?: boolean;
   completedFileCount?: number;
   children?: React.ReactNode;
+  onErrorUpdate?: (errors: PreviewError[]) => void;
 }
 
 export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children }: BuilderPreviewPanelProps) {

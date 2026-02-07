@@ -111,6 +111,8 @@ export function useProjectFileSystem() {
     stripeConfig?: { publishableKey: string } | null,
     envVars?: { key: string; value: string }[],
     serviceKeys?: { id: string; serviceId: string; apiKey: string }[],
+    cdnPackages?: { name: string; version?: string; cdnUrl: string }[],
+    jsBundler?: (files: ProjectFile[]) => string,
   ): string | null => {
     const { files } = project;
     if (files.length === 0) return null;
@@ -136,7 +138,6 @@ export function useProjectFileSystem() {
     }
     // Inject service API keys using their catalog env key names
     if (serviceKeys && serviceKeys.length > 0) {
-      // Dynamic import would be circular, so we inline the key mapping
       const SERVICE_ENV_MAP: Record<string, string> = {
         openai: 'OPENAI_API_KEY', anthropic: 'ANTHROPIC_API_KEY', google_ai: 'GOOGLE_AI_API_KEY',
         perplexity: 'PERPLEXITY_API_KEY', mistral: 'MISTRAL_API_KEY', cohere: 'COHERE_API_KEY',
@@ -150,6 +151,13 @@ export function useProjectFileSystem() {
     }
     if (Object.keys(envObj).length > 0) {
       headInjects.push(`<script>window.ENV = ${JSON.stringify(envObj)};</script>`);
+    }
+
+    // Inject CDN packages
+    if (cdnPackages && cdnPackages.length > 0) {
+      for (const pkg of cdnPackages) {
+        headInjects.push(`<script src="${pkg.cdnUrl}"></script>`);
+      }
     }
 
     // Inject Supabase SDK if configured
@@ -193,11 +201,12 @@ export function useProjectFileSystem() {
       }
     }
 
-    // Inject JS files before </body>
+    // Inject JS files before </body> — use bundler if provided for proper import resolution
     if (jsFiles.length > 0) {
-      const jsInject = jsFiles
-        .map(f => `<script>/* ${f.path} */\n${f.content}</script>`)
-        .join('\n');
+      const jsContent = jsBundler
+        ? jsBundler(jsFiles)
+        : jsFiles.map(f => `/* ${f.path} */\n${f.content}`).join('\n\n');
+      const jsInject = `<script>${jsContent}</script>`;
       if (compiled.includes('</body>')) {
         compiled = compiled.replace('</body>', `${jsInject}\n</body>`);
       } else {
