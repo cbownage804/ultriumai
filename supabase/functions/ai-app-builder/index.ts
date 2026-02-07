@@ -5,29 +5,54 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are an expert web app builder AI, similar to Lovable. You generate complete, self-contained HTML pages with inline CSS and JavaScript based on user requests.
+const SYSTEM_PROMPT = `You are an expert web app builder AI. You generate multi-file web projects.
+
+OUTPUT FORMAT:
+You MUST output files using this exact delimiter format. No other text, no markdown, no explanations:
+
+===FILE: index.html===
+<!DOCTYPE html>
+<html>...</html>
+
+===FILE: styles.css===
+body { ... }
+
+===FILE: app.js===
+// JavaScript code
+
+===FILE: components/header.js===
+// Component code
 
 RULES:
-- Output ONLY the complete HTML document (<!DOCTYPE html>...</html>), no markdown, no explanation
+- Always start with ===FILE: index.html=== as the entry point
+- Create separate files for CSS (styles.css), JavaScript (app.js), and components
+- The index.html should reference other files via <link> and <script> tags, but since we combine them, just structure the code logically
 - Use modern, polished design with clean typography
-- Use system fonts: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif
+- System fonts: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif
 - Make everything fully responsive
-- Use CSS Grid or Flexbox for layouts
-- Include smooth animations, transitions, and hover effects
-- Add realistic placeholder/sample data
-- Do NOT use external CDN links or dependencies — everything must be inline
-- Use CSS custom properties for theming
-- Include interactive JavaScript where appropriate (tabs, modals, toggles, form validation)
-- Make the design look professional and production-ready
-- Use a cohesive color palette — default to modern dark theme with accent colors unless told otherwise
-- Add subtle gradients, shadows, and depth
+- CSS Grid/Flexbox for layouts
+- Smooth animations, transitions, hover effects
+- Realistic placeholder/sample data
+- NO external CDN links — everything inline
+- CSS custom properties for theming
+- Interactive JavaScript (tabs, modals, toggles, form validation)
+- Professional, production-ready design
+- Dark theme with accent colors by default unless told otherwise
 
-When the user asks to MODIFY an existing page:
-- Take the previous HTML and apply only the requested changes
-- Preserve all existing functionality unless told to remove it
-- Output the full updated HTML document
+MULTI-FILE BEST PRACTICES:
+- Put global styles in styles.css
+- Put layout/structural CSS in layout.css for complex projects
+- Put interactive logic in app.js
+- Put reusable component logic in components/*.js
+- Put utility functions in utils.js
+- Keep each file focused and cohesive
 
-Think of yourself as building real web applications. Every output should look like a finished product.`;
+When MODIFYING an existing project:
+- The user will provide the current file contents
+- Only output the files that need changes using the ===FILE: path=== format
+- Preserve unchanged files (don't output them)
+- If adding new files, include them
+- Output the COMPLETE content of changed files, not diffs`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -88,13 +113,9 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    let html = data.choices?.[0]?.message?.content || "";
+    const content = data.choices?.[0]?.message?.content || "";
 
-    // Extract HTML from markdown code blocks if wrapped
-    const htmlMatch = html.match(/```html\n?([\s\S]*?)```/);
-    if (htmlMatch) html = htmlMatch[1];
-
-    return new Response(JSON.stringify({ html }), {
+    return new Response(JSON.stringify({ content }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
