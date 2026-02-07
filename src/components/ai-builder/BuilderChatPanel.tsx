@@ -4,15 +4,19 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import {
   Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
-  Zap,
+  Zap, MessageCircle, Hammer,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BuilderMessage } from '@/hooks/useAIAppBuilder';
+import type { BuilderMode } from '@/hooks/useAIAppBuilder';
+import ReactMarkdown from 'react-markdown';
 
 interface BuilderChatPanelProps {
   messages: BuilderMessage[];
   isGenerating: boolean;
   fileCount: number;
+  mode: BuilderMode;
+  onModeChange: (mode: BuilderMode) => void;
   onSend: (message: string) => void;
   onStop: () => void;
   onClear: () => void;
@@ -53,7 +57,7 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
 }
 
 export function BuilderChatPanel({
-  messages, isGenerating, fileCount, onSend, onStop, onClear,
+  messages, isGenerating, fileCount, mode, onModeChange, onSend, onStop, onClear,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -107,7 +111,11 @@ export function BuilderChatPanel({
             )}
           </div>
         )}
-        {text && <p className="whitespace-pre-wrap text-[13px] text-white/80 leading-relaxed">{text}</p>}
+        {text && (
+          <div className="prose prose-sm prose-invert max-w-none text-[13px] text-white/80 leading-relaxed [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:text-white/70 [&_strong]:text-white/95 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
+            <ReactMarkdown>{text}</ReactMarkdown>
+          </div>
+        )}
         {isStreaming && !hasFiles && fileNames.length === 0 && !text && (
           <div className="flex items-center gap-2 text-white/50">
             <div className="flex gap-0.5">
@@ -245,15 +253,47 @@ export function BuilderChatPanel({
         </div>
       </ScrollArea>
 
-      {/* Input */}
-      <div className="p-3 border-t border-white/[0.06] shrink-0">
+      {/* Mode Toggle + Input */}
+      <div className="p-3 border-t border-white/[0.06] shrink-0 space-y-2">
+        {/* Build / Discuss toggle */}
+        <div className="flex items-center gap-1 bg-white/[0.03] rounded-lg p-0.5 border border-white/[0.06]">
+          <button
+            onClick={() => onModeChange('discuss')}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md transition-all font-medium",
+              mode === 'discuss'
+                ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
+                : "text-white/30 hover:text-white/50"
+            )}
+          >
+            <MessageCircle className="h-3 w-3" />
+            Discuss
+          </button>
+          <button
+            onClick={() => onModeChange('build')}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md transition-all font-medium",
+              mode === 'build'
+                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                : "text-white/30 hover:text-white/50"
+            )}
+          >
+            <Hammer className="h-3 w-3" />
+            Build
+          </button>
+        </div>
+
         <div className="flex gap-2 items-end bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 focus-within:border-cyan-500/30 transition-colors">
           <textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={messages.length === 0 ? 'Describe the app you want to build...' : 'Describe changes...'}
+            placeholder={
+              mode === 'discuss'
+                ? "Let's talk about what you want to build..."
+                : messages.length === 0 ? 'Describe the app you want to build...' : 'Describe changes...'
+            }
             rows={1}
             className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/20 resize-none outline-none min-h-[24px] max-h-[120px] py-0.5"
           />
@@ -271,7 +311,9 @@ export function BuilderChatPanel({
               className={cn(
                 "h-7 w-7 rounded-lg flex items-center justify-center transition-all shrink-0",
                 input.trim()
-                  ? "bg-gradient-to-r from-cyan-500 to-cyan-400 text-black hover:opacity-90"
+                  ? mode === 'discuss'
+                    ? "bg-gradient-to-r from-violet-500 to-violet-400 text-white hover:opacity-90"
+                    : "bg-gradient-to-r from-cyan-500 to-cyan-400 text-black hover:opacity-90"
                   : "bg-white/5 text-white/20"
               )}
             >

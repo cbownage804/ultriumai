@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 
 export function AIAppBuilderWorkspace() {
   const {
-    messages, isGenerating, latestFiles,
+    messages, isGenerating, latestFiles, mode, setMode,
     sendMessage, stopGenerating, clearChat,
   } = useAIAppBuilder();
 
@@ -168,6 +168,8 @@ export function AIAppBuilderWorkspace() {
                 messages={messages}
                 isGenerating={isGenerating}
                 fileCount={project.files.length}
+                mode={mode}
+                onModeChange={setMode}
                 onSend={handleSend}
                 onStop={stopGenerating}
                 onClear={handleClear}
