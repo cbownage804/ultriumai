@@ -6,11 +6,9 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ErrorConsole, type PreviewError } from './ErrorConsole';
-import { DevicePresetPicker, DEVICE_PRESETS, type DevicePreset } from './DevicePresetPicker';
 import { PreviewZoomControls } from './PreviewZoomControls';
 import { VisualEditOverlay } from './VisualEditOverlay';
 import { ResponsivePreviewBar, type ViewportMode, getViewportWidth } from './ResponsivePreviewBar';
-import { VisualEditClickOverlay } from './VisualEditClickOverlay';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
 interface BuilderPreviewPanelProps {
@@ -30,7 +28,7 @@ interface BuilderPreviewPanelProps {
 }
 
 export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts }: BuilderPreviewPanelProps) {
-  const [activePreset, setActivePreset] = useState('desktop');
+  const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
@@ -40,11 +38,10 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
   const [urlHistory, setUrlHistory] = useState<string[]>(['/']);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [zoom, setZoom] = useState(100);
-  const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const currentPreset = DEVICE_PRESETS.find(p => p.id === activePreset) || DEVICE_PRESETS[0];
+  const viewportWidth = getViewportWidth(viewportMode);
 
   // Inject error + console + network capture script into HTML
   const htmlWithErrorCapture = html ? html.replace(
@@ -224,22 +221,15 @@ window.addEventListener('unhandledrejection', function(e) {
 
             {/* Right toolbar */}
             <div className="flex items-center gap-0.5">
-              <ResponsivePreviewBar active={viewportMode} onChange={(m) => { setViewportMode(m); const w = getViewportWidth(m); if (w === 0) setActivePreset('desktop'); else if (w <= 430) setActivePreset('iphone-15'); else if (w <= 820) setActivePreset('ipad'); }} />
-              <DevicePresetPicker activePreset={activePreset} onSelect={(p) => setActivePreset(p.id)} />
-              {currentPreset.width > 0 && (
+              <ResponsivePreviewBar active={viewportMode} onChange={setViewportMode} />
+              {viewportWidth > 0 && (
                 <span className="text-[9px] text-white/15 font-mono">
-                  {currentPreset.width}×{currentPreset.height}
+                  {viewportWidth}px
                 </span>
               )}
 
               <div className="h-4 w-px bg-white/[0.06] mx-1" />
 
-              <VisualEditClickOverlay
-                isActive={isVisualEditActive}
-                onToggle={() => setIsVisualEditActive(!isVisualEditActive)}
-                iframeRef={iframeRef}
-                onAIPromptEdit={onAIEditRequest}
-              />
               <VisualEditOverlay
                 isActive={isVisualEditActive}
                 onToggle={() => setIsVisualEditActive(!isVisualEditActive)}
@@ -271,12 +261,12 @@ window.addEventListener('unhandledrejection', function(e) {
           <div
             className={cn(
               'h-full transition-all duration-300',
-              activePreset !== 'desktop' && 'mx-auto rounded-lg border border-white/[0.06] shadow-2xl shadow-black/50 my-4'
+              viewportMode !== 'desktop' && 'mx-auto rounded-lg border border-white/[0.06] shadow-2xl shadow-black/50 my-4'
             )}
             style={{
-              width: currentPreset.width > 0 ? `${currentPreset.width}px` : '100%',
+              width: viewportWidth > 0 ? `${viewportWidth}px` : '100%',
               maxWidth: '100%',
-              height: activePreset === 'desktop' ? '100%' : 'calc(100% - 32px)',
+              height: viewportMode === 'desktop' ? '100%' : 'calc(100% - 32px)',
             }}
           >
             <iframe
