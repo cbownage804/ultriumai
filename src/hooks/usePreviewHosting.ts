@@ -24,7 +24,7 @@ export function usePreviewHosting() {
         setIsUploading(true);
         lastHtml.current = compiledHtml;
 
-        const filePath = `previews/${user.id}/${slug}/index.html`;
+        const filePath = `${user.id}/previews/${slug}/index.html`;
 
         const { error } = await supabase.storage
           .from('published-apps')

@@ -6,7 +6,6 @@ const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 Deno.serve(async (req) => {
   const url = new URL(req.url)
 
-  // The slug comes from the Host header: <slug>.ultriumai.app
   const host = req.headers.get('host') || ''
   const slug = extractSlug(host, url)
 
@@ -20,32 +19,41 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-    // Look up the preview file in storage — search across all user directories
-    // Storage path: previews/{userId}/{slug}/index.html
-    const { data: files, error: listError } = await supabase.storage
+    // List all top-level user directories in the bucket
+    const { data: userDirs, error: listError } = await supabase.storage
       .from('published-apps')
-      .list('previews', { limit: 1000 })
+      .list('', { limit: 1000 })
 
     if (listError) {
       console.error('Storage list error:', listError)
       return errorPage(500, 'Internal error')
     }
 
-    // Search through user directories for the matching slug
     let htmlContent: string | null = null
 
-    for (const userDir of (files || [])) {
-      if (!userDir.id && userDir.name) {
-        // This is a folder (user ID directory)
-        const filePath = `previews/${userDir.name}/${slug}/index.html`
-        const { data, error } = await supabase.storage
-          .from('published-apps')
-          .download(filePath)
+    for (const userDir of (userDirs || [])) {
+      // Folders have id: null
+      if (userDir.id === null && userDir.name) {
+        // Try both path patterns:
+        // New: {userId}/previews/{slug}/index.html
+        // Legacy: {userId}/{slug}/index.html
+        const paths = [
+          `${userDir.name}/previews/${slug}/index.html`,
+          `${userDir.name}/${slug}/index.html`,
+        ]
 
-        if (!error && data) {
-          htmlContent = await data.text()
-          break
+        for (const filePath of paths) {
+          const { data, error } = await supabase.storage
+            .from('published-apps')
+            .download(filePath)
+
+          if (!error && data) {
+            htmlContent = await data.text()
+            break
+          }
         }
+
+        if (htmlContent) break
       }
     }
 
@@ -72,17 +80,14 @@ Deno.serve(async (req) => {
 })
 
 function extractSlug(host: string, url: URL): string | null {
-  // Option 1: Subdomain — <slug>.ultriumai.app
   if (host.endsWith('.ultriumai.app')) {
     const subdomain = host.replace('.ultriumai.app', '').split('.')[0]
     if (subdomain && subdomain !== 'www') return subdomain
   }
 
-  // Option 2: Query param fallback — ?slug=my-app (for edge function direct calls)
   const slugParam = url.searchParams.get('slug')
   if (slugParam) return slugParam
 
-  // Option 3: Path-based — /preview/my-app
   const pathMatch = url.pathname.match(/^\/preview\/([a-z0-9-]+)/i)
   if (pathMatch) return pathMatch[1]
 
