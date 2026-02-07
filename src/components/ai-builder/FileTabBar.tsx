@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import { X, FileCode } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -13,7 +12,7 @@ export function FileTabBar({ openPaths, activePath, onSelect, onClose }: FileTab
   if (openPaths.length === 0) return null;
 
   return (
-    <div className="flex items-center border-b border-border bg-background overflow-x-auto">
+    <div className="flex items-center border-b border-white/[0.06] bg-black/20 overflow-x-auto shrink-0">
       {openPaths.map(path => {
         const fileName = path.split('/').pop()!;
         const isActive = path === activePath;
@@ -22,10 +21,10 @@ export function FileTabBar({ openPaths, activePath, onSelect, onClose }: FileTab
             key={path}
             onClick={() => onSelect(path)}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-2 text-xs border-r border-border whitespace-nowrap transition-colors group',
+              'flex items-center gap-1.5 px-3 py-2 text-[11px] whitespace-nowrap transition-all group relative font-mono',
               isActive
-                ? 'bg-background text-foreground border-b-2 border-b-primary'
-                : 'bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                ? 'text-white bg-[#0d0d14]'
+                : 'text-white/30 hover:text-white/50 bg-black/20 hover:bg-white/[0.02]'
             )}
           >
             <FileCode className="h-3 w-3 shrink-0" />
@@ -35,10 +34,13 @@ export function FileTabBar({ openPaths, activePath, onSelect, onClose }: FileTab
                 e.stopPropagation();
                 onClose(path);
               }}
-              className="ml-1 opacity-0 group-hover:opacity-100 hover:bg-muted rounded p-0.5"
+              className="ml-1 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded p-0.5 transition-opacity"
             >
-              <X className="h-3 w-3" />
+              <X className="h-2.5 w-2.5" />
             </button>
+            {isActive && (
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cyan-500 to-violet-500" />
+            )}
           </button>
         );
       })}
