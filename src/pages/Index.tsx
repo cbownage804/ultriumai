@@ -7,6 +7,7 @@ import {
   Play, Lock, Network, Bot, Headphones, FileText, Award, Building
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
+import { AIStudioShowcase } from '@/components/marketing/AIStudioShowcase';
 import Footer from '@/components/Footer';
 import { FAQSection } from '@/components/FAQSection';
 import { FAQSchema, OrganizationSchema, ServiceSchema } from '@/components/SEOSchemas';
@@ -310,6 +311,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* AI Studio Showcase */}
+      <AIStudioShowcase />
 
       {/* Services Section */}
       <section className="py-20 px-4">
