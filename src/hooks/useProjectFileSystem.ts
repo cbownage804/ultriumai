@@ -110,6 +110,7 @@ export function useProjectFileSystem() {
     supabaseConfig?: { url: string; anonKey: string } | null,
     stripeConfig?: { publishableKey: string } | null,
     envVars?: { key: string; value: string }[],
+    serviceKeys?: { id: string; serviceId: string; apiKey: string }[],
   ): string | null => {
     const { files } = project;
     if (files.length === 0) return null;
@@ -126,12 +127,28 @@ export function useProjectFileSystem() {
     // Build head injections
     const headInjects: string[] = [];
 
-    // Inject environment variables
+    // Inject environment variables + service keys into window.ENV
+    const envObj: Record<string, string> = {};
     if (envVars && envVars.length > 0) {
-      const envObj = envVars.reduce((acc, v) => {
-        if (v.key) acc[v.key] = v.value;
-        return acc;
-      }, {} as Record<string, string>);
+      for (const v of envVars) {
+        if (v.key) envObj[v.key] = v.value;
+      }
+    }
+    // Inject service API keys using their catalog env key names
+    if (serviceKeys && serviceKeys.length > 0) {
+      // Dynamic import would be circular, so we inline the key mapping
+      const SERVICE_ENV_MAP: Record<string, string> = {
+        openai: 'OPENAI_API_KEY', anthropic: 'ANTHROPIC_API_KEY', google_ai: 'GOOGLE_AI_API_KEY',
+        perplexity: 'PERPLEXITY_API_KEY', mistral: 'MISTRAL_API_KEY', cohere: 'COHERE_API_KEY',
+        groq: 'GROQ_API_KEY', elevenlabs: 'ELEVENLABS_API_KEY', deepgram: 'DEEPGRAM_API_KEY',
+        assemblyai: 'ASSEMBLYAI_API_KEY', replicate: 'REPLICATE_API_KEY', huggingface: 'HUGGINGFACE_API_KEY',
+      };
+      for (const sk of serviceKeys) {
+        const envKey = SERVICE_ENV_MAP[sk.serviceId];
+        if (envKey && sk.apiKey) envObj[envKey] = sk.apiKey;
+      }
+    }
+    if (Object.keys(envObj).length > 0) {
       headInjects.push(`<script>window.ENV = ${JSON.stringify(envObj)};</script>`);
     }
 
