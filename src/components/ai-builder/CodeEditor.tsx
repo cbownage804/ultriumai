@@ -1,6 +1,8 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import Editor, { OnMount } from '@monaco-editor/react';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
+import { Sparkles, Wand2, TestTube2, FileText, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface RemoteCursor {
   userId: string;
@@ -15,6 +17,7 @@ interface CodeEditorProps {
   onContentChange?: (path: string, content: string) => void;
   remoteCursors?: RemoteCursor[];
   onCursorChange?: (line: number, column: number) => void;
+  onInlineAIAction?: (action: string, selection: string, filePath: string) => void;
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
@@ -22,10 +25,20 @@ const LANGUAGE_MAP: Record<string, string> = {
   typescript: 'typescript', json: 'json', markdown: 'markdown', xml: 'xml', plaintext: 'plaintext',
 };
 
-export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursorChange }: CodeEditorProps) {
+const AI_ACTIONS = [
+  { id: 'explain', label: 'Explain', icon: FileText },
+  { id: 'refactor', label: 'Refactor', icon: Wand2 },
+  { id: 'test', label: 'Generate Test', icon: TestTube2 },
+  { id: 'fix', label: 'Fix', icon: Sparkles },
+];
+
+export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursorChange, onInlineAIAction }: CodeEditorProps) {
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
   const decorationsRef = useRef<string[]>([]);
+  const [showAIBar, setShowAIBar] = useState(false);
+  const [aiBarPosition, setAIBarPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [selectedText, setSelectedText] = useState('');
 
   const handleChange = useCallback((value: string | undefined) => {
     if (file && value !== undefined && onContentChange) {
@@ -108,6 +121,30 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
       onCursorChange?.(e.position.lineNumber, e.position.column);
     });
 
+    // Track selection for inline AI actions
+    editor.onDidChangeCursorSelection((e: any) => {
+      const selection = editor.getModel()?.getValueInRange(e.selection);
+      if (selection && selection.trim().length > 3) {
+        setSelectedText(selection);
+        // Get pixel position of selection end
+        const endPos = e.selection.getEndPosition();
+        const coords = editor.getScrolledVisiblePosition(endPos);
+        if (coords) {
+          const editorDom = editor.getDomNode();
+          const rect = editorDom?.getBoundingClientRect();
+          if (rect) {
+            setAIBarPosition({
+              top: coords.top + rect.top - 36,
+              left: coords.left + rect.left,
+            });
+            setShowAIBar(true);
+          }
+        }
+      } else {
+        setShowAIBar(false);
+      }
+    });
+
     // Register HTML/CSS/JS completions for common patterns
     monaco.languages.registerCompletionItemProvider('html', {
       provideCompletionItems: (model: any, position: any) => {
@@ -168,6 +205,13 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
     updateRemoteCursors();
   }, [onCursorChange, updateRemoteCursors]);
 
+  const handleAIAction = useCallback((actionId: string) => {
+    if (onInlineAIAction && file && selectedText) {
+      onInlineAIAction(actionId, selectedText, file.path);
+    }
+    setShowAIBar(false);
+  }, [onInlineAIAction, file, selectedText]);
+
   if (!file) {
     return (
       <div className="flex items-center justify-center h-full text-white/20 text-sm">
@@ -177,53 +221,81 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
   }
 
   return (
-    <Editor
-      height="100%"
-      language={LANGUAGE_MAP[file.language] || 'plaintext'}
-      value={file.content}
-      onChange={handleChange}
-      onMount={handleMount}
-      theme="builder-dark"
-      options={{
-        minimap: { enabled: true, scale: 1, maxColumn: 80, renderCharacters: false, showSlider: 'mouseover' },
-        fontSize: 13,
-        lineHeight: 20,
-        padding: { top: 12 },
-        scrollBeyondLastLine: false,
-        wordWrap: 'on',
-        automaticLayout: true,
-        tabSize: 2,
-        renderLineHighlight: 'line',
-        cursorBlinking: 'smooth',
-        cursorSmoothCaretAnimation: 'on',
-        smoothScrolling: true,
-        bracketPairColorization: { enabled: true },
-        autoClosingBrackets: 'always',
-        autoClosingQuotes: 'always',
-        matchBrackets: 'always',
-        formatOnPaste: true,
-        find: { addExtraSpaceOnTop: false, autoFindInSelection: 'multiline', seedSearchStringFromSelection: 'selection' },
-        suggest: {
-          showWords: true,
-          showSnippets: true,
-          showClasses: true,
-          showColors: true,
-          showFunctions: true,
-          showKeywords: true,
-          preview: true,
-        },
-        quickSuggestions: { other: true, comments: false, strings: true },
-        parameterHints: { enabled: true },
-        hover: { enabled: true, delay: 300 },
-      }}
-      loading={
-        <div className="flex items-center justify-center h-full">
-          <div className="flex flex-col items-center gap-2">
-            <div className="h-5 w-5 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
-            <span className="text-xs text-white/20">Loading editor...</span>
+    <div className="relative h-full">
+      <Editor
+        height="100%"
+        language={LANGUAGE_MAP[file.language] || 'plaintext'}
+        value={file.content}
+        onChange={handleChange}
+        onMount={handleMount}
+        theme="builder-dark"
+        options={{
+          minimap: { enabled: true, scale: 1, maxColumn: 80, renderCharacters: false, showSlider: 'mouseover' },
+          fontSize: 13,
+          lineHeight: 20,
+          padding: { top: 12 },
+          scrollBeyondLastLine: false,
+          wordWrap: 'on',
+          automaticLayout: true,
+          tabSize: 2,
+          renderLineHighlight: 'line',
+          cursorBlinking: 'smooth',
+          cursorSmoothCaretAnimation: 'on',
+          smoothScrolling: true,
+          bracketPairColorization: { enabled: true },
+          autoClosingBrackets: 'always',
+          autoClosingQuotes: 'always',
+          matchBrackets: 'always',
+          formatOnPaste: true,
+          find: { addExtraSpaceOnTop: false, autoFindInSelection: 'multiline', seedSearchStringFromSelection: 'selection' },
+          suggest: {
+            showWords: true,
+            showSnippets: true,
+            showClasses: true,
+            showColors: true,
+            showFunctions: true,
+            showKeywords: true,
+            preview: true,
+          },
+          quickSuggestions: { other: true, comments: false, strings: true },
+          parameterHints: { enabled: true },
+          hover: { enabled: true, delay: 300 },
+        }}
+        loading={
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-2">
+              <div className="h-5 w-5 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+              <span className="text-xs text-white/20">Loading editor...</span>
+            </div>
           </div>
+        }
+      />
+
+      {/* Inline AI Actions Toolbar */}
+      {showAIBar && onInlineAIAction && (
+        <div
+          className="fixed z-50 flex items-center gap-0.5 bg-[#1a1a2e] border border-white/[0.1] rounded-lg shadow-xl px-1 py-0.5 animate-in fade-in zoom-in-95 duration-150"
+          style={{ top: aiBarPosition.top, left: aiBarPosition.left }}
+        >
+          {AI_ACTIONS.map(action => (
+            <button
+              key={action.id}
+              onClick={() => handleAIAction(action.id)}
+              className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-white/50 hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors"
+              title={action.label}
+            >
+              <action.icon className="h-3 w-3" />
+              {action.label}
+            </button>
+          ))}
+          <button
+            onClick={() => setShowAIBar(false)}
+            className="h-5 w-5 flex items-center justify-center text-white/20 hover:text-white/50 rounded transition-colors"
+          >
+            <X className="h-2.5 w-2.5" />
+          </button>
         </div>
-      }
-    />
+      )}
+    </div>
   );
 }

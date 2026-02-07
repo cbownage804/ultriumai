@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Search, X, FileCode, ChevronDown, ChevronRight, Replace } from 'lucide-react';
+import { Search, X, FileCode, ChevronDown, ChevronRight, Replace, ArrowRightLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,6 +10,7 @@ interface FileSearchPanelProps {
   files: ProjectFile[];
   onSelectFile: (path: string) => void;
   onSwitchToCode: () => void;
+  onReplaceInFiles?: (query: string, replacement: string, isRegex: boolean, caseSensitive: boolean) => number;
 }
 
 interface SearchMatch {
@@ -20,11 +21,14 @@ interface SearchMatch {
   matchEnd: number;
 }
 
-export function FileSearchPanel({ open, onClose, files, onSelectFile, onSwitchToCode }: FileSearchPanelProps) {
+export function FileSearchPanel({ open, onClose, files, onSelectFile, onSwitchToCode, onReplaceInFiles }: FileSearchPanelProps) {
   const [query, setQuery] = useState('');
+  const [replaceText, setReplaceText] = useState('');
+  const [showReplace, setShowReplace] = useState(false);
   const [isRegex, setIsRegex] = useState(false);
   const [caseSensitive, setCaseSensitive] = useState(false);
   const [collapsedFiles, setCollapsedFiles] = useState<Set<string>>(new Set());
+  const [replacedCount, setReplacedCount] = useState(0);
 
   const results = useMemo(() => {
     if (!query || query.length < 2) return [];
@@ -87,6 +91,13 @@ export function FileSearchPanel({ open, onClose, files, onSelectFile, onSwitchTo
     onSwitchToCode();
   }, [onSelectFile, onSwitchToCode]);
 
+  const handleReplaceAll = useCallback(() => {
+    if (!onReplaceInFiles || !query) return;
+    const count = onReplaceInFiles(query, replaceText, isRegex, caseSensitive);
+    setReplacedCount(count);
+    setTimeout(() => setReplacedCount(0), 3000);
+  }, [onReplaceInFiles, query, replaceText, isRegex, caseSensitive]);
+
   if (!open) return null;
 
   return (
@@ -102,11 +113,20 @@ export function FileSearchPanel({ open, onClose, files, onSelectFile, onSwitchTo
         <div className="flex items-center justify-between px-3 h-9 border-b border-white/[0.06] shrink-0">
           <div className="flex items-center gap-1.5 text-[10px] text-white/30 uppercase tracking-wider font-medium">
             <Search className="h-3 w-3" />
-            Search Files
+            Search {showReplace ? '& Replace' : 'Files'}
           </div>
-          <button onClick={onClose} className="h-5 w-5 flex items-center justify-center text-white/30 hover:text-white/60 rounded transition-colors">
-            <X className="h-3 w-3" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowReplace(!showReplace)}
+              className={cn("h-5 w-5 flex items-center justify-center rounded transition-colors", showReplace ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60")}
+              title="Toggle Replace"
+            >
+              <ArrowRightLeft className="h-3 w-3" />
+            </button>
+            <button onClick={onClose} className="h-5 w-5 flex items-center justify-center text-white/30 hover:text-white/60 rounded transition-colors">
+              <X className="h-3 w-3" />
+            </button>
+          </div>
         </div>
 
         {/* Search input */}
@@ -122,6 +142,21 @@ export function FileSearchPanel({ open, onClose, files, onSelectFile, onSwitchTo
               autoFocus
             />
           </div>
+
+          {/* Replace input */}
+          {showReplace && (
+            <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1.5 mt-1.5 focus-within:border-cyan-500/30 transition-colors">
+              <Replace className="h-3 w-3 text-white/20 shrink-0" />
+              <input
+                type="text"
+                value={replaceText}
+                onChange={e => setReplaceText(e.target.value)}
+                placeholder="Replace with..."
+                className="flex-1 bg-transparent text-xs text-white/80 placeholder:text-white/20 outline-none"
+              />
+            </div>
+          )}
+
           <div className="flex items-center gap-2 mt-1.5 px-0.5">
             <button
               onClick={() => setCaseSensitive(!caseSensitive)}
@@ -141,12 +176,28 @@ export function FileSearchPanel({ open, onClose, files, onSelectFile, onSwitchTo
             >
               .*
             </button>
-            {results.length > 0 && (
+
+            {showReplace && results.length > 0 && (
+              <button
+                onClick={handleReplaceAll}
+                className="text-[9px] px-2 py-0.5 rounded border border-cyan-500/30 text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 transition-colors ml-auto"
+              >
+                Replace All ({results.length})
+              </button>
+            )}
+
+            {!showReplace && results.length > 0 && (
               <span className="text-[9px] text-white/20 ml-auto">
                 {results.length}{results.length >= 200 ? '+' : ''} results
               </span>
             )}
           </div>
+
+          {replacedCount > 0 && (
+            <div className="text-[9px] text-emerald-400 mt-1 px-0.5">
+              ✓ Replaced {replacedCount} occurrence{replacedCount > 1 ? 's' : ''}
+            </div>
+          )}
         </div>
 
         {/* Results */}

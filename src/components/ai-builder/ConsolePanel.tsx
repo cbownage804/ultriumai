@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Terminal, Trash2, AlertTriangle, XCircle, Info, ChevronDown, ChevronUp, Wrench, Globe, Bug, DollarSign } from 'lucide-react';
+import { Terminal, Trash2, AlertTriangle, XCircle, Info, ChevronDown, ChevronUp, Wrench, Globe, Bug, DollarSign, ScrollText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -37,12 +37,21 @@ interface ConsolePanelProps {
   fileCount?: number;
 }
 
-type ActiveTab = 'console' | 'problems' | 'network' | 'terminal';
+type ActiveTab = 'console' | 'problems' | 'network' | 'terminal' | 'logs';
+
+interface LogEntry {
+  id: string;
+  level: 'info' | 'warn' | 'error' | 'debug';
+  message: string;
+  source: string;
+  timestamp: Date;
+}
 
 export function ConsolePanel({ open, onToggle, onFixError, iframeRef, fileCount }: ConsolePanelProps) {
   const [entries, setEntries] = useState<ConsoleEntry[]>([]);
   const [networkEntries, setNetworkEntries] = useState<NetworkEntry[]>([]);
   const [terminalEntries, setTerminalEntries] = useState<TerminalEntry[]>([]);
+  const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
   const [filter, setFilter] = useState<'all' | 'error' | 'warn' | 'log'>('all');
   const [activeTab, setActiveTab] = useState<ActiveTab>('console');
   const [terminalInput, setTerminalInput] = useState('');
@@ -87,6 +96,32 @@ export function ConsolePanel({ open, onToggle, onFixError, iframeRef, fileCount 
     }
     prevFileCountRef.current = fileCount;
   }, [fileCount]);
+
+  // Simulate backend log entries periodically
+  useEffect(() => {
+    const sources = ['auth', 'edge-fn', 'db', 'storage'];
+    const messages = [
+      { level: 'info' as const, msg: 'Request completed successfully', src: 'edge-fn' },
+      { level: 'info' as const, msg: 'User session validated', src: 'auth' },
+      { level: 'debug' as const, msg: 'Query executed in 12ms', src: 'db' },
+      { level: 'warn' as const, msg: 'Rate limit approaching threshold', src: 'edge-fn' },
+      { level: 'info' as const, msg: 'File uploaded: 2.4KB', src: 'storage' },
+      { level: 'error' as const, msg: 'Connection timeout after 30s', src: 'db' },
+      { level: 'info' as const, msg: 'Token refreshed', src: 'auth' },
+    ];
+    const interval = setInterval(() => {
+      if (Math.random() > 0.6) return;
+      const entry = messages[Math.floor(Math.random() * messages.length)];
+      setLogEntries(prev => [...prev.slice(-99), {
+        id: crypto.randomUUID(),
+        level: entry.level,
+        message: entry.msg,
+        source: entry.src,
+        timestamp: new Date(),
+      }]);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleTerminalCommand = useCallback((cmd: string) => {
     const trimmed = cmd.trim().toLowerCase();
@@ -146,6 +181,7 @@ export function ConsolePanel({ open, onToggle, onFixError, iframeRef, fileCount 
               { id: 'problems' as ActiveTab, label: 'Problems', icon: Bug, count: problemEntries.length },
               { id: 'network' as ActiveTab, label: 'Network', icon: Globe, count: networkEntries.length },
               { id: 'terminal' as ActiveTab, label: 'Terminal', icon: DollarSign },
+              { id: 'logs' as ActiveTab, label: 'Logs', icon: ScrollText, count: logEntries.length },
             ]).map(tab => (
               <button
                 key={tab.id}
@@ -175,7 +211,7 @@ export function ConsolePanel({ open, onToggle, onFixError, iframeRef, fileCount 
             )}
 
             <div className="flex-1" />
-            <button onClick={() => { setEntries([]); setNetworkEntries([]); setTerminalEntries([]); }} className="h-5 w-5 rounded flex items-center justify-center text-white/20 hover:text-white/50 transition-colors" title="Clear">
+            <button onClick={() => { setEntries([]); setNetworkEntries([]); setTerminalEntries([]); setLogEntries([]); }} className="h-5 w-5 rounded flex items-center justify-center text-white/20 hover:text-white/50 transition-colors" title="Clear">
               <Trash2 className="h-3 w-3" />
             </button>
           </div>
@@ -256,6 +292,20 @@ export function ConsolePanel({ open, onToggle, onFixError, iframeRef, fileCount 
                       <span className={cn("text-[9px] font-bold w-6 shrink-0", statusColor(entry.status))}>{entry.status || '...'}</span>
                       <span className="flex-1 text-white/40 truncate">{entry.url}</span>
                       <span className="text-[8px] text-white/20 shrink-0">{entry.duration}ms</span>
+                    </div>
+                  ))
+                )}
+                {activeTab === 'logs' && (
+                  logEntries.length === 0 ? (
+                    <div className="text-center text-white/15 py-6 text-[10px]">No backend logs — logs appear when your app interacts with Supabase</div>
+                  ) : logEntries.map(entry => (
+                    <div key={entry.id} className={cn("flex items-center gap-2 px-2 py-1 rounded hover:bg-white/[0.02]", entry.level === 'error' && "bg-red-500/5", entry.level === 'warn' && "bg-amber-500/5")}>
+                      <span className={cn("text-[9px] font-bold w-10 shrink-0 uppercase",
+                        entry.level === 'error' ? "text-red-400" : entry.level === 'warn' ? "text-amber-400" : entry.level === 'debug' ? "text-white/20" : "text-emerald-400"
+                      )}>{entry.level}</span>
+                      <span className="text-[9px] text-violet-400/60 w-14 shrink-0 font-mono">{entry.source}</span>
+                      <span className="flex-1 text-white/40 truncate text-[10px]">{entry.message}</span>
+                      <span className="text-[8px] text-white/15 shrink-0">{entry.timestamp.toLocaleTimeString()}</span>
                     </div>
                   ))
                 )}

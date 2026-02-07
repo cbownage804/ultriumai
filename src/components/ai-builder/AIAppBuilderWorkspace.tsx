@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react';
 import { useAIAppBuilder } from '@/hooks/useAIAppBuilder';
 import { useProjectFileSystem } from '@/hooks/useProjectFileSystem';
 import type { RemoteCursor } from './CodeEditor';
@@ -30,11 +30,6 @@ import { DeployDialog } from './DeployDialog';
 import { EnvVarsPanel, type EnvVariable } from './EnvVarsPanel';
 import { FileConflictDialog } from './FileConflictDialog';
 import { QuickFileSwitcher } from './QuickFileSwitcher';
-import { DatabasePanel } from './DatabasePanel';
-import { AuthConfigPanel } from './AuthConfigPanel';
-import { KnowledgePanel, type KnowledgeConfig } from './KnowledgePanel';
-import { StorageBrowser } from './StorageBrowser';
-import { EdgeFunctionEditor } from './EdgeFunctionEditor';
 import { AssetManager, type ProjectAsset } from './AssetManager';
 import { PackageManager, type CDNPackage } from './PackageManager';
 import { useProjectBundler } from '@/hooks/useProjectBundler';
@@ -44,14 +39,25 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { KeyboardShortcutsPanel } from './KeyboardShortcutsPanel';
+import { ActivityFeed, type ActivityEntry } from './ActivityFeed';
+import type { KnowledgeConfig } from './KnowledgePanel';
 import {
   Eye, Code, Pencil, Database, CreditCard, Key,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
   History, Variable, Image, Package, Columns, Keyboard,
-  Shield, Brain, FolderOpen, Zap,
+  Shield, Brain, FolderOpen, Zap, Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+// Lazy load heavy panels
+const DatabasePanel = lazy(() => import('./DatabasePanel').then(m => ({ default: m.DatabasePanel })));
+const AuthConfigPanel = lazy(() => import('./AuthConfigPanel').then(m => ({ default: m.AuthConfigPanel })));
+const KnowledgePanel = lazy(() => import('./KnowledgePanel').then(m => ({ default: m.KnowledgePanel })));
+const StorageBrowser = lazy(() => import('./StorageBrowser').then(m => ({ default: m.StorageBrowser })));
+const EdgeFunctionEditor = lazy(() => import('./EdgeFunctionEditor').then(m => ({ default: m.EdgeFunctionEditor })));
+
+const PanelLoader = () => <div className="flex items-center justify-center h-full text-white/15 text-xs">Loading...</div>;
 
 export function AIAppBuilderWorkspace() {
   const {
@@ -123,6 +129,12 @@ export function AIAppBuilderWorkspace() {
   const [showEdgeFunctions, setShowEdgeFunctions] = useState(false);
   const [knowledge, setKnowledge] = useState<KnowledgeConfig>({ customInstructions: '', contextFiles: [] });
   const [edgeFunctions, setEdgeFunctions] = useState<{ name: string; status: 'deployed' | 'draft' | 'error'; lastDeployed?: string }[]>([]);
+  const [showActivity, setShowActivity] = useState(false);
+  const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>([]);
+
+  const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
+    setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
+  }, []);
 
   // Sync env vars from EnvVarsPanel into compilation envVars
   useEffect(() => {
@@ -373,6 +385,30 @@ export function AIAppBuilderWorkspace() {
     );
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys]);
 
+  const handleInlineAIAction = useCallback((action: string, selection: string, filePath: string) => {
+    const prompts: Record<string, string> = {
+      explain: `Explain this code from ${filePath}:\n\n\`\`\`\n${selection}\n\`\`\``,
+      refactor: `Refactor this code from ${filePath} to be cleaner and more efficient:\n\n\`\`\`\n${selection}\n\`\`\``,
+      test: `Generate unit tests for this code from ${filePath}:\n\n\`\`\`\n${selection}\n\`\`\``,
+      fix: `Fix any issues in this code from ${filePath}:\n\n\`\`\`\n${selection}\n\`\`\``,
+    };
+    sendMessage(prompts[action] || selection, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel);
+    addActivity('ai_generation', `AI ${action}`, filePath);
+  }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, addActivity]);
+
+  const handleReplaceInFiles = useCallback((query: string, replacement: string, isRegex: boolean, caseSensitive: boolean) => {
+    let count = 0;
+    const regex = isRegex
+      ? new RegExp(query, caseSensitive ? 'g' : 'gi')
+      : new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), caseSensitive ? 'g' : 'gi');
+    for (const file of project.files) {
+      const newContent = file.content.replace(regex, () => { count++; return replacement; });
+      if (newContent !== file.content) upsertFile(file.path, newContent);
+    }
+    if (count > 0) { pushUndo('Replace all', project.files); addActivity('file_edit', `Replaced ${count} occurrences`); }
+    return count;
+  }, [project.files, upsertFile, pushUndo, addActivity]);
+
   const handleClear = () => { clearChat(); resetProject(); };
 
   const handleRename = () => {
@@ -493,7 +529,7 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   // Close other panels when opening one
-  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions') => {
+  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity') => {
     setShowVersionHistory(panel === 'history' ? !showVersionHistory : false);
     setShowEnvVars(panel === 'envVars' ? !showEnvVars : false);
     setShowAssets(panel === 'assets' ? !showAssets : false);
@@ -503,6 +539,7 @@ export function AIAppBuilderWorkspace() {
     setShowKnowledge(panel === 'knowledge' ? !showKnowledge : false);
     setShowStorage(panel === 'storage' ? !showStorage : false);
     setShowEdgeFunctions(panel === 'edgeFunctions' ? !showEdgeFunctions : false);
+    setShowActivity(panel === 'activity' ? !showActivity : false);
   };
 
   return (
@@ -716,6 +753,18 @@ export function AIAppBuilderWorkspace() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
+                  onClick={() => openPanel('activity')}
+                  className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showActivity ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Activity</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
                   onClick={() => setShowShortcuts(true)}
                   className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
                 >
@@ -894,11 +943,14 @@ export function AIAppBuilderWorkspace() {
                   open={showAssets}
                   onClose={() => setShowAssets(false)}
                 />
-                <DatabasePanel open={showDatabase} onClose={() => setShowDatabase(false)} supabaseConfig={supabaseConfig} />
-                <AuthConfigPanel open={showAuth} onClose={() => setShowAuth(false)} supabaseConfig={supabaseConfig} onGenerateAuthPages={handleGenerateAuthPages} />
-                <KnowledgePanel open={showKnowledge} onClose={() => setShowKnowledge(false)} knowledge={knowledge} onKnowledgeChange={setKnowledge} />
-                <StorageBrowser open={showStorage} onClose={() => setShowStorage(false)} supabaseConfig={supabaseConfig} />
-                <EdgeFunctionEditor open={showEdgeFunctions} onClose={() => setShowEdgeFunctions(false)} onCreateFunction={handleCreateEdgeFunction} functions={edgeFunctions} onSelectFunction={(name) => { setActiveFile(`functions/${name}/index.ts`); setRightTab('code'); }} />
+                <Suspense fallback={<PanelLoader />}>
+                  <DatabasePanel open={showDatabase} onClose={() => setShowDatabase(false)} supabaseConfig={supabaseConfig} />
+                  <AuthConfigPanel open={showAuth} onClose={() => setShowAuth(false)} supabaseConfig={supabaseConfig} onGenerateAuthPages={handleGenerateAuthPages} />
+                  <KnowledgePanel open={showKnowledge} onClose={() => setShowKnowledge(false)} knowledge={knowledge} onKnowledgeChange={setKnowledge} />
+                  <StorageBrowser open={showStorage} onClose={() => setShowStorage(false)} supabaseConfig={supabaseConfig} />
+                  <EdgeFunctionEditor open={showEdgeFunctions} onClose={() => setShowEdgeFunctions(false)} onCreateFunction={handleCreateEdgeFunction} functions={edgeFunctions} onSelectFunction={(name) => { setActiveFile(`functions/${name}/index.ts`); setRightTab('code'); }} />
+                </Suspense>
+                <ActivityFeed open={showActivity} onClose={() => setShowActivity(false)} entries={activityEntries} />
                 {showPackages && (
                   <div className="w-64 border-r border-white/[0.06] bg-[#0d0d14] overflow-hidden">
                     <PackageManager
@@ -999,6 +1051,7 @@ export function AIAppBuilderWorkspace() {
                       files={project.files}
                       onSelectFile={(path) => { setActiveFile(path); }}
                       onSwitchToCode={() => setRightTab('code')}
+                      onReplaceInFiles={handleReplaceInFiles}
                     />
 
                     <div className="flex-1 overflow-hidden flex flex-col">
@@ -1036,7 +1089,7 @@ export function AIAppBuilderWorkspace() {
                                     <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} dirtyFiles={dirtyFiles} onSelect={setActiveFile} onClose={closeFile} onReorder={reorderOpenFiles} />
                                     <FileBreadcrumb file={activeFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
                                     <div className="flex-1 overflow-hidden">
-                                      <CodeEditor file={activeFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
+                                      <CodeEditor file={activeFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} />
                                     </div>
                                   </div>
                                 </ResizablePanel>
@@ -1059,7 +1112,7 @@ export function AIAppBuilderWorkspace() {
                                 />
                                 <FileBreadcrumb file={activeFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
                                 <div className="flex-1 overflow-hidden">
-                                  <CodeEditor file={activeFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
+                                  <CodeEditor file={activeFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} />
                                 </div>
                               </div>
                             )}
