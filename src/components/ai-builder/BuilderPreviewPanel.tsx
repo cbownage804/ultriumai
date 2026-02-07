@@ -183,25 +183,51 @@ window.addEventListener('unhandledrejection', function(e) {
       {children}
       {/* Toolbar */}
       {html && (
-        <div className="flex flex-col border-b border-white/[0.06] bg-black/30 shrink-0">
-          <div className="flex items-center justify-between px-3 h-9">
-            <div className="flex items-center gap-1">
+        <div className="flex flex-col border-b border-white/[0.06] bg-[#0a0a10] shrink-0">
+          {/* Address bar — Lovable-style single row */}
+          <div className="flex items-center gap-1.5 px-2 h-10">
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={() => { if (canGoBack) { setHistoryIndex(i => i - 1); setCurrentUrl(urlHistory[historyIndex - 1]); } }}
+                disabled={!canGoBack}
+                className={cn("h-6 w-6 rounded-md flex items-center justify-center transition-colors", canGoBack ? "text-white/40 hover:text-white/70 hover:bg-white/5" : "text-white/[0.08]")}
+              >
+                <ArrowLeft className="h-3 w-3" />
+              </button>
+              <button
+                onClick={() => { if (canGoForward) { setHistoryIndex(i => i + 1); setCurrentUrl(urlHistory[historyIndex + 1]); } }}
+                disabled={!canGoForward}
+                className={cn("h-6 w-6 rounded-md flex items-center justify-center transition-colors", canGoForward ? "text-white/40 hover:text-white/70 hover:bg-white/5" : "text-white/[0.08]")}
+              >
+                <ArrowRight className="h-3 w-3" />
+              </button>
+              <button
+                onClick={() => setIframeKey(k => k + 1)}
+                className="h-6 w-6 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
+              >
+                <RefreshCw className="h-3 w-3" />
+              </button>
+            </div>
+
+            {/* URL bar */}
+            <div className="flex-1 flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.06] rounded-lg h-7 px-2.5 hover:border-white/[0.1] transition-colors">
+              <Lock className="h-2.5 w-2.5 text-emerald-400/60 shrink-0" />
+              <span className="text-[11px] text-white/40 font-mono truncate">
+                localhost:3000{currentUrl}
+              </span>
+            </div>
+
+            {/* Right toolbar */}
+            <div className="flex items-center gap-0.5">
               <DevicePresetPicker activePreset={activePreset} onSelect={(p) => setActivePreset(p.id)} />
               {currentPreset.width > 0 && (
-                <span className="text-[9px] text-white/20 font-mono ml-1">
+                <span className="text-[9px] text-white/15 font-mono">
                   {currentPreset.width}×{currentPreset.height}
                 </span>
               )}
-              {(isGenerating || isStreamingPreview) && (
-                <div className="flex items-center gap-1.5 ml-3 text-[10px] text-amber-400/60">
-                  <Activity className="h-3 w-3 animate-pulse" />
-                  <span>
-                    {isStreamingPreview && completedFileCount ? `updating... (${completedFileCount} files)` : 'updating...'}
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-0.5">
+
+              <div className="h-4 w-px bg-white/[0.06] mx-1" />
+
               <VisualEditOverlay
                 isActive={isVisualEditActive}
                 onToggle={() => setIsVisualEditActive(!isVisualEditActive)}
@@ -210,34 +236,18 @@ window.addEventListener('unhandledrejection', function(e) {
                 isProcessingAIEdit={isProcessingAIEdit}
                 iframeRef={iframeRef}
               />
-              <ToolButton icon={RefreshCw} onClick={() => setIframeKey(k => k + 1)} title="Refresh" />
               <ToolButton icon={copied ? CheckCircle : Copy} onClick={copyHTML} title="Copy HTML" active={copied} />
               <ToolButton icon={ExternalLink} onClick={openInNewTab} title="Open in tab" />
               <ToolButton icon={isFullscreen ? Minimize2 : Maximize2} onClick={toggleFullscreen} title="Fullscreen" />
             </div>
-          </div>
-          {/* Address bar */}
-          <div className="flex items-center gap-1.5 px-3 h-8 border-t border-white/[0.04]">
-            <button
-              onClick={() => { if (canGoBack) { setHistoryIndex(i => i - 1); setCurrentUrl(urlHistory[historyIndex - 1]); } }}
-              disabled={!canGoBack}
-              className={cn("h-5 w-5 rounded flex items-center justify-center transition-colors", canGoBack ? "text-white/40 hover:text-white/70 hover:bg-white/5" : "text-white/10")}
-            >
-              <ArrowLeft className="h-3 w-3" />
-            </button>
-            <button
-              onClick={() => { if (canGoForward) { setHistoryIndex(i => i + 1); setCurrentUrl(urlHistory[historyIndex + 1]); } }}
-              disabled={!canGoForward}
-              className={cn("h-5 w-5 rounded flex items-center justify-center transition-colors", canGoForward ? "text-white/40 hover:text-white/70 hover:bg-white/5" : "text-white/10")}
-            >
-              <ArrowRight className="h-3 w-3" />
-            </button>
-            <div className="flex-1 flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.06] rounded-md h-6 px-2">
-              <Lock className="h-2.5 w-2.5 text-emerald-400/50" />
-              <span className="text-[10px] text-white/40 font-mono truncate">
-                localhost:3000{currentUrl}
-              </span>
-            </div>
+
+            {/* Streaming indicator */}
+            {(isGenerating || isStreamingPreview) && (
+              <div className="flex items-center gap-1.5 text-[10px] text-amber-400/60 shrink-0">
+                <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <span>{isStreamingPreview && completedFileCount ? `${completedFileCount} files` : 'building'}</span>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -266,16 +276,14 @@ window.addEventListener('unhandledrejection', function(e) {
             />
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-            <div className="relative">
-              <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-500/5 to-violet-500/5 border border-white/[0.04] flex items-center justify-center">
-                <Activity className="h-9 w-9 text-white/10" />
-              </div>
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
+            <div className="h-16 w-16 rounded-2xl bg-white/[0.02] border border-white/[0.04] flex items-center justify-center">
+              <Activity className="h-7 w-7 text-white/[0.06]" />
             </div>
             <div>
-              <h3 className="font-medium text-white/50 text-sm">Live Preview</h3>
-              <p className="text-xs text-white/20 max-w-[200px] mt-1">
-                Your app will render here in real-time as it's built.
+              <h3 className="font-medium text-white/40 text-sm">Live Preview</h3>
+              <p className="text-[11px] text-white/15 max-w-[200px] mt-1">
+                Your app will appear here as it's built
               </p>
             </div>
           </div>
