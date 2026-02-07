@@ -33,7 +33,7 @@ export function DeployDialog({ onPublish, publishedUrl, hasFiles, isPublishing, 
   const [deployStep, setDeployStep] = useState(-1);
   const [deployComplete, setDeployComplete] = useState(false);
 
-  const previewUrl = previewSlug ? `https://${previewSlug}-preview.ultriumai.app` : null;
+  const previewUrl = previewSlug ? `https://${previewSlug}.ultriumai.app` : null;
   const isLoading = deploying || isPublishing;
 
   // Animated deploy progress

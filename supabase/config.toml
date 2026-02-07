@@ -351,3 +351,6 @@ verify_jwt = false
 
 [functions.vercel-deploy]
 verify_jwt = false
+
+[functions.serve-preview]
+verify_jwt = false
