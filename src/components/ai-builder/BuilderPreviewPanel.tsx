@@ -2,8 +2,8 @@ import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Monitor, Smartphone, Tablet, Download, Code, Copy, CheckCircle,
-  Maximize2, Minimize2, ExternalLink, Sparkles,
+  Monitor, Smartphone, Tablet, Download, Copy, CheckCircle,
+  Maximize2, Minimize2, ExternalLink, Sparkles, RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -23,9 +23,9 @@ const DEVICE_WIDTHS: Record<DeviceMode, string> = {
 
 export function BuilderPreviewPanel({ html, isGenerating }: BuilderPreviewPanelProps) {
   const [device, setDevice] = useState<DeviceMode>('desktop');
-  const [showCode, setShowCode] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [iframeKey, setIframeKey] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const copyHTML = useCallback(() => {
@@ -104,13 +104,14 @@ export function BuilderPreviewPanel({ html, isGenerating }: BuilderPreviewPanelP
         </div>
         <div className="flex items-center gap-1">
           <Button
-            variant={showCode ? 'secondary' : 'ghost'}
+            variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => setShowCode(!showCode)}
+            onClick={() => setIframeKey(k => k + 1)}
             disabled={!html}
+            title="Refresh preview"
           >
-            <Code className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
@@ -118,6 +119,7 @@ export function BuilderPreviewPanel({ html, isGenerating }: BuilderPreviewPanelP
             className="h-8 w-8"
             onClick={copyHTML}
             disabled={!html}
+            title="Copy HTML"
           >
             {copied ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
           </Button>
@@ -127,6 +129,7 @@ export function BuilderPreviewPanel({ html, isGenerating }: BuilderPreviewPanelP
             className="h-8 w-8"
             onClick={downloadHTML}
             disabled={!html}
+            title="Download HTML"
           >
             <Download className="h-4 w-4" />
           </Button>
@@ -136,6 +139,7 @@ export function BuilderPreviewPanel({ html, isGenerating }: BuilderPreviewPanelP
             className="h-8 w-8"
             onClick={openInNewTab}
             disabled={!html}
+            title="Open in new tab"
           >
             <ExternalLink className="h-4 w-4" />
           </Button>
@@ -144,6 +148,7 @@ export function BuilderPreviewPanel({ html, isGenerating }: BuilderPreviewPanelP
             size="icon"
             className="h-8 w-8"
             onClick={toggleFullscreen}
+            title="Toggle fullscreen"
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </Button>
@@ -152,11 +157,7 @@ export function BuilderPreviewPanel({ html, isGenerating }: BuilderPreviewPanelP
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-4 flex items-start justify-center">
-        {showCode && html ? (
-          <pre className="bg-background border border-border rounded-lg p-4 text-xs overflow-auto w-full max-h-full font-mono">
-            <code>{html}</code>
-          </pre>
-        ) : html ? (
+        {html ? (
           <div
             className={cn(
               'rounded-lg shadow-lg overflow-hidden transition-all duration-300 h-full',
@@ -168,6 +169,7 @@ export function BuilderPreviewPanel({ html, isGenerating }: BuilderPreviewPanelP
             }}
           >
             <iframe
+              key={iframeKey}
               srcDoc={html}
               className="w-full h-full border-0 bg-background"
               sandbox="allow-scripts allow-forms"
