@@ -56,7 +56,7 @@ export default function VanguardCustomers() {
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = 'Sites | Ultrium Vanguard';
+    document.title = 'Sites | Vanguard';
   }, []);
 
   const customers: CustomerDisplay[] = useMemo(() => {

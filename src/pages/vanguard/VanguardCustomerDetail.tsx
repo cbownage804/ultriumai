@@ -60,7 +60,7 @@ export default function VanguardCustomerDetail() {
 
   useEffect(() => {
     if (customer) {
-      document.title = `${customer.company_name} | Customers | Ultrium Vanguard`;
+      document.title = `${customer.company_name} | Sites | Vanguard`;
     }
   }, [customer?.company_name]);
 

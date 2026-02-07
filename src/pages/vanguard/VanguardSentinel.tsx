@@ -19,7 +19,7 @@ export default function VanguardSentinel() {
   const { moduleId } = useParams<{ moduleId: string }>();
 
   useEffect(() => {
-    document.title = 'Vanguard Sentinel | Ultrium Vanguard';
+    document.title = 'Sentinel | Vanguard';
   }, []);
 
   const content = moduleId ? moduleComponents[moduleId] : null;

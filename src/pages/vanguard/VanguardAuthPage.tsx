@@ -58,7 +58,7 @@ const VanguardAuthPage = () => {
   }, [location.state, searchParams]);
 
   useEffect(() => {
-    document.title = 'Sign In | Ultrium Vanguard';
+    document.title = 'Sign In | Vanguard';
   }, []);
 
   useEffect(() => {
@@ -170,7 +170,7 @@ const VanguardAuthPage = () => {
                     </div>
                     <h3 className="text-xl font-semibold text-white">Request Submitted!</h3>
                     <p className="text-white/60 max-w-xs mx-auto">
-                      Thank you for your interest in Ultrium Vanguard. Our team will review your request and contact you within 24-48 hours.
+                      Thank you for your interest in Vanguard. Our team will review your request and contact you within 24-48 hours.
                     </p>
                     <Button 
                       variant="outline" 

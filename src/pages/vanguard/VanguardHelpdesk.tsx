@@ -5,7 +5,7 @@ import { ModuleIntroBanner } from '@/components/vanguard/shared/ModuleInstructio
 
 export default function VanguardHelpdesk() {
   useEffect(() => {
-    document.title = 'Vanguard Response | Ultrium Vanguard';
+    document.title = 'Response | Vanguard';
   }, []);
 
   return (

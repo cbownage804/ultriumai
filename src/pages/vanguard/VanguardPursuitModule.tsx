@@ -37,7 +37,7 @@ export default function VanguardPursuitModule() {
   const { moduleId } = useParams<{ moduleId: string }>();
 
   useEffect(() => {
-    document.title = 'Vanguard Pursuit | Ultrium Vanguard';
+    document.title = 'Pursuit XDR | Vanguard';
   }, []);
 
   const content = moduleId ? moduleComponents[moduleId] : null;

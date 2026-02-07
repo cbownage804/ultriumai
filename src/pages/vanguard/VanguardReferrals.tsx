@@ -57,7 +57,7 @@ export default function VanguardReferrals() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    document.title = 'Refer a Friend | Ultrium Vanguard';
+    document.title = 'Referral Program | Vanguard';
   }, []);
 
   const copyLink = () => {

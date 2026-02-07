@@ -75,7 +75,7 @@ export default function VanguardBilling() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    document.title = 'Billing | Ultrium Vanguard';
+    document.title = 'Billing | Vanguard';
   }, []);
 
   const stats = [

@@ -62,7 +62,7 @@ export default function VanguardHome() {
   const { agents, isLoading: agentsLoading } = useVanguardAgents();
 
   useEffect(() => {
-    document.title = 'Ultrium Vanguard | Security Platform';
+    document.title = 'Vanguard | Security Operations Platform';
   }, []);
 
   const quickStats = [
@@ -161,7 +161,7 @@ export default function VanguardHome() {
     { title: 'Incident Playbooks', icon: BookOpen, path: `${basePath}/playbooks`, gradient: 'from-rose-500 to-red-600' },
   ];
 
-  const phase16Features = [
+  const featuredCapabilities = [
     {
       title: 'AI Voice Assistant',
       description: 'Hands-free ticket management with voice commands',
@@ -255,11 +255,11 @@ export default function VanguardHome() {
           </div>
         </motion.div>
 
-        {/* New Features - Phase 16 */}
+        {/* Featured Capabilities */}
         <motion.div variants={itemVariants}>
-          <SectionHeader title="New Features" badge="Phase 16" />
+          <SectionHeader title="Featured Capabilities" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            {phase16Features.map((feature, index) => (
+            {featuredCapabilities.map((feature, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -272,7 +272,7 @@ export default function VanguardHome() {
                   icon={feature.icon}
                   gradient={feature.gradient}
                   onClick={() => navigate(feature.path)}
-                  badge="NEW"
+                  badge={undefined}
                 />
               </motion.div>
             ))}
