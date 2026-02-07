@@ -1,23 +1,29 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Crosshair, Type, Palette, X, Check } from 'lucide-react';
+import { Crosshair, Type, Palette, X, Check, Sparkles, Send, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VisualEditOverlayProps {
   isActive: boolean;
   onToggle: () => void;
   onEditApply: (selector: string, property: string, value: string) => void;
+  onAIEditRequest?: (selector: string, elementContext: string, prompt: string) => void;
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
+  isProcessingAIEdit?: boolean;
 }
 
-export function VisualEditOverlay({ isActive, onToggle, onEditApply, iframeRef }: VisualEditOverlayProps) {
+export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditRequest, iframeRef, isProcessingAIEdit }: VisualEditOverlayProps) {
   const [selectedElement, setSelectedElement] = useState<{
     tagName: string;
     text: string;
     selector: string;
     rect: DOMRect;
+    outerHTML: string;
+    parentHTML: string;
   } | null>(null);
-  const [editMode, setEditMode] = useState<'text' | 'color' | null>(null);
+  const [editMode, setEditMode] = useState<'text' | 'color' | 'ai' | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [aiPrompt, setAIPrompt] = useState('');
+  const aiInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isActive || !iframeRef.current) return;
@@ -26,7 +32,6 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, iframeRef }
     const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
     if (!iframeDoc) return;
 
-    // Inject selection styles
     const style = iframeDoc.createElement('style');
     style.id = '__visual-edit-styles__';
     style.textContent = `
@@ -54,14 +59,16 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, iframeRef }
       e.stopPropagation();
       const el = e.target as HTMLElement;
       
-      // Remove previous selection
       iframeDoc.querySelectorAll('.__ve-selected').forEach(sel => sel.classList.remove('__ve-selected'));
       el.classList.add('__ve-selected');
 
-      // Build a simple CSS selector
       const selector = buildSelector(el);
       const iframeRect = iframe.getBoundingClientRect();
       const elRect = el.getBoundingClientRect();
+
+      // Capture element context for AI edits
+      const outerHTML = el.outerHTML.slice(0, 500);
+      const parentHTML = el.parentElement?.innerHTML.slice(0, 1000) || '';
       
       setSelectedElement({
         tagName: el.tagName.toLowerCase(),
@@ -73,8 +80,12 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, iframeRef }
           elRect.width,
           elRect.height
         ),
+        outerHTML,
+        parentHTML,
       });
       setEditValue(el.textContent || '');
+      setAIPrompt('');
+      setEditMode(null);
     };
 
     iframeDoc.addEventListener('mouseover', onMouseOver, true);
@@ -93,7 +104,15 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, iframeRef }
   }, [isActive, iframeRef]);
 
   const applyEdit = useCallback(() => {
-    if (!selectedElement || !editMode || !editValue) return;
+    if (!selectedElement || !editMode || (editMode !== 'ai' && !editValue)) return;
+
+    if (editMode === 'ai') {
+      if (!aiPrompt.trim() || !onAIEditRequest) return;
+      onAIEditRequest(selectedElement.selector, selectedElement.outerHTML, aiPrompt);
+      setEditMode(null);
+      setSelectedElement(null);
+      return;
+    }
 
     const iframe = iframeRef.current;
     const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
@@ -111,7 +130,14 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, iframeRef }
     onEditApply(selectedElement.selector, editMode, editValue);
     setEditMode(null);
     setSelectedElement(null);
-  }, [selectedElement, editMode, editValue, iframeRef, onEditApply]);
+  }, [selectedElement, editMode, editValue, aiPrompt, iframeRef, onEditApply, onAIEditRequest]);
+
+  // Focus AI input when mode switches
+  useEffect(() => {
+    if (editMode === 'ai') {
+      setTimeout(() => aiInputRef.current?.focus(), 50);
+    }
+  }, [editMode]);
 
   if (!isActive) {
     return (
@@ -143,8 +169,8 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, iframeRef }
         <div
           className="fixed z-50 flex items-center gap-1 p-1 rounded-lg bg-[#0d0d14] border border-white/[0.08] shadow-xl shadow-black/50"
           style={{
-            top: selectedElement.rect.bottom + 8,
-            left: selectedElement.rect.left,
+            top: Math.min(selectedElement.rect.bottom + 8, window.innerHeight - 50),
+            left: Math.max(8, Math.min(selectedElement.rect.left, window.innerWidth - 280)),
           }}
         >
           <span className="text-[9px] text-white/30 px-1.5 font-mono">{selectedElement.tagName}</span>
@@ -161,16 +187,23 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, iframeRef }
           >
             <Palette className="h-2.5 w-2.5" /> Color
           </button>
+          <div className="h-3 w-px bg-white/[0.06]" />
+          <button
+            onClick={() => setEditMode('ai')}
+            className="h-6 px-2 rounded flex items-center gap-1 text-[10px] text-violet-400/80 hover:text-violet-400 hover:bg-violet-500/10"
+          >
+            <Sparkles className="h-2.5 w-2.5" /> AI Edit
+          </button>
         </div>
       )}
 
-      {/* Inline editor */}
-      {selectedElement && editMode && (
+      {/* Inline editor for text/color */}
+      {selectedElement && editMode && editMode !== 'ai' && (
         <div
           className="fixed z-50 flex items-center gap-1 p-1 rounded-lg bg-[#0d0d14] border border-cyan-500/30 shadow-xl shadow-black/50"
           style={{
-            top: selectedElement.rect.bottom + 8,
-            left: selectedElement.rect.left,
+            top: Math.min(selectedElement.rect.bottom + 8, window.innerHeight - 50),
+            left: Math.max(8, Math.min(selectedElement.rect.left, window.innerWidth - 220)),
           }}
         >
           <input
@@ -186,6 +219,43 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, iframeRef }
           <button onClick={() => { setEditMode(null); setSelectedElement(null); }} className="h-6 w-6 rounded flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5">
             <X className="h-3 w-3" />
           </button>
+        </div>
+      )}
+
+      {/* AI prompt input */}
+      {selectedElement && editMode === 'ai' && (
+        <div
+          className="fixed z-50 flex flex-col gap-1.5 p-2 rounded-lg bg-[#0d0d14] border border-violet-500/30 shadow-xl shadow-black/50 w-72"
+          style={{
+            top: Math.min(selectedElement.rect.bottom + 8, window.innerHeight - 80),
+            left: Math.max(8, Math.min(selectedElement.rect.left, window.innerWidth - 300)),
+          }}
+        >
+          <div className="flex items-center gap-1.5 text-[9px] text-violet-400/60">
+            <Sparkles className="h-2.5 w-2.5" />
+            <span>Describe what you want to change</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <input
+              ref={aiInputRef}
+              value={aiPrompt}
+              onChange={e => setAIPrompt(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && !e.shiftKey && applyEdit()}
+              placeholder="e.g. make this button bigger and blue"
+              className="flex-1 h-7 px-2 text-[11px] bg-white/5 border border-white/[0.08] rounded text-white/80 outline-none focus:border-violet-500/30 placeholder:text-white/20"
+              disabled={isProcessingAIEdit}
+            />
+            <button
+              onClick={applyEdit}
+              disabled={!aiPrompt.trim() || isProcessingAIEdit}
+              className="h-7 w-7 rounded flex items-center justify-center text-violet-400 hover:bg-violet-500/10 disabled:opacity-30 disabled:pointer-events-none"
+            >
+              {isProcessingAIEdit ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+            </button>
+            <button onClick={() => { setEditMode(null); setSelectedElement(null); }} className="h-7 w-7 rounded flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5">
+              <X className="h-3 w-3" />
+            </button>
+          </div>
         </div>
       )}
     </>

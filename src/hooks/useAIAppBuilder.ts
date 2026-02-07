@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import type { ProjectFile } from './useProjectFileSystem';
+import { useStreamingPreview } from './useStreamingPreview';
 
 export interface BuilderMessage {
   id: string;
@@ -138,6 +139,7 @@ export function useAIAppBuilder() {
   const [versions, setVersions] = useState<VersionSnapshot[]>([]);
   const [totalTokensUsed, setTotalTokensUsed] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
+  const streaming = useStreamingPreview();
 
   const sendMessage = useCallback(async (
     input: string,
@@ -255,6 +257,7 @@ export function useAIAppBuilder() {
       setThinkingPhase(null);
       clearTimeout(phaseTimer1);
       clearTimeout(phaseTimer2);
+      streaming.startStreaming();
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
@@ -297,7 +300,12 @@ export function useAIAppBuilder() {
           try {
             const parsed = JSON.parse(jsonStr);
             const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) upsertAssistant(fullContent + delta);
+            if (delta) {
+              const newContent = fullContent + delta;
+              upsertAssistant(newContent);
+              // Incrementally parse files for hot-reload
+              streaming.parseIncremental(newContent);
+            }
           } catch {
             textBuffer = line + '\n' + textBuffer;
             break;
@@ -327,6 +335,7 @@ export function useAIAppBuilder() {
       if (parsedFiles.length > 0) {
         setLatestFiles(parsedFiles);
       }
+      streaming.stopStreaming();
 
       // Track token usage
       const msgTokens = estimateTokens(input + fullContent);
@@ -391,5 +400,9 @@ export function useAIAppBuilder() {
     stopGenerating,
     clearChat,
     restoreVersion,
+    // Streaming preview state
+    partialFiles: streaming.partialFiles,
+    isStreamingPreview: streaming.isStreaming,
+    completedFileCount: streaming.completedFileCount,
   };
 }

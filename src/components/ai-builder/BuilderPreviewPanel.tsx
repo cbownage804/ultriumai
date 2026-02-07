@@ -7,15 +7,22 @@ import { toast } from 'sonner';
 import { ErrorConsole, type PreviewError } from './ErrorConsole';
 import { DevicePresetPicker, DEVICE_PRESETS, type DevicePreset } from './DevicePresetPicker';
 import { VisualEditOverlay } from './VisualEditOverlay';
+import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
 interface BuilderPreviewPanelProps {
   html: string | null;
   isGenerating: boolean;
   onFixError?: (errorMessage: string) => void;
+  onSmartFixError?: (error: import('./ErrorConsole').PreviewError, context: string) => void;
+  onAIEditRequest?: (selector: string, elementContext: string, prompt: string) => void;
+  isProcessingAIEdit?: boolean;
+  projectFiles?: ProjectFile[];
+  isStreamingPreview?: boolean;
+  completedFileCount?: number;
   children?: React.ReactNode;
 }
 
-export function BuilderPreviewPanel({ html, isGenerating, onFixError, children }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children }: BuilderPreviewPanelProps) {
   const [activePreset, setActivePreset] = useState('desktop');
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -134,10 +141,12 @@ window.addEventListener('unhandledrejection', function(e) {
                 {currentPreset.width}×{currentPreset.height}
               </span>
             )}
-            {isGenerating && (
+            {(isGenerating || isStreamingPreview) && (
               <div className="flex items-center gap-1.5 ml-3 text-[10px] text-amber-400/60">
                 <Activity className="h-3 w-3 animate-pulse" />
-                <span>updating...</span>
+                <span>
+                  {isStreamingPreview && completedFileCount ? `updating... (${completedFileCount} files)` : 'updating...'}
+                </span>
               </div>
             )}
           </div>
@@ -146,6 +155,8 @@ window.addEventListener('unhandledrejection', function(e) {
               isActive={isVisualEditActive}
               onToggle={() => setIsVisualEditActive(!isVisualEditActive)}
               onEditApply={handleVisualEdit}
+              onAIEditRequest={onAIEditRequest}
+              isProcessingAIEdit={isProcessingAIEdit}
               iframeRef={iframeRef}
             />
             <ToolButton icon={RefreshCw} onClick={() => setIframeKey(k => k + 1)} title="Refresh" />
@@ -201,6 +212,8 @@ window.addEventListener('unhandledrejection', function(e) {
         errors={errors}
         onClear={() => setErrors([])}
         onFixRequest={(err) => onFixError?.(`Fix this error in my app: "${err.message}"${err.source ? ` (in ${err.source}${err.line ? `:${err.line}` : ''})` : ''}`)}
+        onSmartFixRequest={onSmartFixError}
+        projectFiles={projectFiles}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { AlertTriangle, X, ChevronDown, ChevronUp, Zap, Bug } from 'lucide-react';
+import { AlertTriangle, X, ChevronDown, ChevronUp, Zap, Bug, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
 export interface PreviewError {
   id: string;
@@ -9,21 +10,50 @@ export interface PreviewError {
   line?: number;
   timestamp: Date;
   type: 'error' | 'warning';
+  fixAttempts?: number;
 }
 
 interface ErrorConsoleProps {
   errors: PreviewError[];
   onClear: () => void;
   onFixRequest: (error: PreviewError) => void;
+  /** Enhanced: auto-fix with full context */
+  onSmartFixRequest?: (error: PreviewError, context: string) => void;
+  projectFiles?: ProjectFile[];
+  maxRetries?: number;
 }
 
-export function ErrorConsole({ errors, onClear, onFixRequest }: ErrorConsoleProps) {
+const MAX_FIX_RETRIES = 3;
+
+export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest, projectFiles, maxRetries = MAX_FIX_RETRIES }: ErrorConsoleProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   if (errors.length === 0) return null;
 
   const errorCount = errors.filter(e => e.type === 'error').length;
   const warnCount = errors.filter(e => e.type === 'warning').length;
+
+  const handleSmartFix = (err: PreviewError) => {
+    if ((err.fixAttempts ?? 0) >= maxRetries) return;
+
+    if (onSmartFixRequest && projectFiles) {
+      // Build rich context: find the erroring file and include its content + stack trace
+      const errorFile = err.source
+        ? projectFiles.find(f => err.source?.includes(f.path))
+        : null;
+
+      const contextParts: string[] = [
+        `Error: "${err.message}"`,
+        err.source ? `Source: ${err.source}${err.line ? `:${err.line}` : ''}` : '',
+        err.fixAttempts ? `Previous fix attempts: ${err.fixAttempts} (this is retry #${err.fixAttempts + 1})` : '',
+        errorFile ? `\nFile content (${errorFile.path}):\n\`\`\`\n${errorFile.content}\n\`\`\`` : '',
+      ].filter(Boolean);
+
+      onSmartFixRequest(err, contextParts.join('\n'));
+    } else {
+      onFixRequest(err);
+    }
+  };
 
   return (
     <div className="border-t border-red-500/20 bg-red-500/[0.03]">
@@ -54,35 +84,49 @@ export function ErrorConsole({ errors, onClear, onFixRequest }: ErrorConsoleProp
       {/* Error list */}
       {isExpanded && (
         <div className="max-h-32 overflow-auto">
-          {errors.map((err) => (
-            <div
-              key={err.id}
-              className={cn(
-                "flex items-start gap-2 px-3 py-1.5 border-t",
-                err.type === 'error' ? 'border-red-500/10' : 'border-amber-500/10'
-              )}
-            >
-              <AlertTriangle className={cn(
-                "h-3 w-3 shrink-0 mt-0.5",
-                err.type === 'error' ? 'text-red-400' : 'text-amber-400'
-              )} />
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] text-white/70 font-mono truncate">{err.message}</p>
-                {err.source && (
-                  <p className="text-[9px] text-white/30 font-mono">
-                    {err.source}{err.line ? `:${err.line}` : ''}
-                  </p>
+          {errors.map((err) => {
+            const attemptsExhausted = (err.fixAttempts ?? 0) >= maxRetries;
+            return (
+              <div
+                key={err.id}
+                className={cn(
+                  "flex items-start gap-2 px-3 py-1.5 border-t",
+                  err.type === 'error' ? 'border-red-500/10' : 'border-amber-500/10'
                 )}
-              </div>
-              <button
-                onClick={() => onFixRequest(err)}
-                className="shrink-0 flex items-center gap-1 text-[10px] text-cyan-400/70 hover:text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/15 rounded px-1.5 py-0.5 transition-colors"
               >
-                <Zap className="h-2.5 w-2.5" />
-                Fix
-              </button>
-            </div>
-          ))}
+                <AlertTriangle className={cn(
+                  "h-3 w-3 shrink-0 mt-0.5",
+                  err.type === 'error' ? 'text-red-400' : 'text-amber-400'
+                )} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-white/70 font-mono truncate">{err.message}</p>
+                  {err.source && (
+                    <p className="text-[9px] text-white/30 font-mono">
+                      {err.source}{err.line ? `:${err.line}` : ''}
+                    </p>
+                  )}
+                  {err.fixAttempts && err.fixAttempts > 0 && (
+                    <p className="text-[9px] text-amber-400/50 mt-0.5">
+                      {attemptsExhausted ? `Max retries (${maxRetries}) reached` : `Fix attempt ${err.fixAttempts}/${maxRetries}`}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleSmartFix(err)}
+                  disabled={attemptsExhausted}
+                  className={cn(
+                    "shrink-0 flex items-center gap-1 text-[10px] rounded px-1.5 py-0.5 transition-colors",
+                    attemptsExhausted
+                      ? "text-white/20 bg-white/5 cursor-not-allowed"
+                      : "text-cyan-400/70 hover:text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/15"
+                  )}
+                >
+                  {err.fixAttempts ? <RotateCcw className="h-2.5 w-2.5" /> : <Zap className="h-2.5 w-2.5" />}
+                  {attemptsExhausted ? 'Max retries' : err.fixAttempts ? 'Retry Fix' : 'Try to Fix'}
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

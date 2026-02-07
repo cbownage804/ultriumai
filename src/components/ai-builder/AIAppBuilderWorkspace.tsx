@@ -43,6 +43,7 @@ export function AIAppBuilderWorkspace() {
   const {
     messages, isGenerating, latestFiles, previousFiles, mode, setMode, thinkingPhase, versions,
     totalTokensUsed, sendMessage, stopGenerating, clearChat, restoreVersion,
+    partialFiles, isStreamingPreview, completedFileCount,
   } = useAIAppBuilder();
 
   const {
@@ -102,6 +103,15 @@ export function AIAppBuilderWorkspace() {
     }
   }, [latestFiles]);
 
+  // Hot-reload: sync partial files during streaming
+  useEffect(() => {
+    if (isStreamingPreview && partialFiles.length > 0) {
+      for (const file of partialFiles) {
+        upsertFile(file.path, file.content);
+      }
+    }
+  }, [partialFiles, isStreamingPreview]);
+
   // Auto-save on file changes
   useEffect(() => {
     if (project.files.length > 0) {
@@ -144,6 +154,20 @@ export function AIAppBuilderWorkspace() {
   const handleFixError = (errorPrompt: string) => {
     sendMessage(errorPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys);
   };
+
+  const handleSmartFixError = useCallback((error: import('./ErrorConsole').PreviewError, context: string) => {
+    sendMessage(
+      `Fix this error in my app. Here is the full context:\n\n${context}\n\nPlease fix the code and return the corrected file(s).`,
+      project.files, supabaseConfig, stripeConfig, serviceKeys
+    );
+  }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys]);
+
+  const handleAIEditRequest = useCallback((selector: string, elementContext: string, prompt: string) => {
+    sendMessage(
+      `The user selected an element in the preview and wants you to edit it.\n\nElement selector: ${selector}\nElement HTML:\n${elementContext}\n\nUser request: "${prompt}"\n\nPlease update the relevant file(s) to apply this change.`,
+      project.files, supabaseConfig, stripeConfig, serviceKeys
+    );
+  }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys]);
 
   const handleClear = () => { clearChat(); resetProject(); };
 
@@ -452,7 +476,7 @@ export function AIAppBuilderWorkspace() {
                 onFixError={handleFixError}
               />
             ) : (
-              <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError}>
+              <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount}>
                 <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
               </BuilderPreviewPanel>
             )
@@ -605,7 +629,7 @@ export function AIAppBuilderWorkspace() {
 
                           <ResizablePanel defaultSize={hasFiles && showFileTree ? 82 : 100}>
                             {rightTab === 'preview' || !hasFiles ? (
-                              <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError}>
+                              <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount}>
                                 <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
                               </BuilderPreviewPanel>
                             ) : (
