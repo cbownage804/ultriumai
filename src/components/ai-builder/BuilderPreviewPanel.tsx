@@ -9,6 +9,8 @@ import { ErrorConsole, type PreviewError } from './ErrorConsole';
 import { DevicePresetPicker, DEVICE_PRESETS, type DevicePreset } from './DevicePresetPicker';
 import { PreviewZoomControls } from './PreviewZoomControls';
 import { VisualEditOverlay } from './VisualEditOverlay';
+import { ResponsivePreviewBar, type ViewportMode, getViewportWidth } from './ResponsivePreviewBar';
+import { VisualEditClickOverlay } from './VisualEditClickOverlay';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
 interface BuilderPreviewPanelProps {
@@ -38,6 +40,7 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
   const [urlHistory, setUrlHistory] = useState<string[]>(['/']);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [zoom, setZoom] = useState(100);
+  const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -221,6 +224,7 @@ window.addEventListener('unhandledrejection', function(e) {
 
             {/* Right toolbar */}
             <div className="flex items-center gap-0.5">
+              <ResponsivePreviewBar active={viewportMode} onChange={(m) => { setViewportMode(m); const w = getViewportWidth(m); if (w === 0) setActivePreset('desktop'); else if (w <= 430) setActivePreset('iphone-15'); else if (w <= 820) setActivePreset('ipad'); }} />
               <DevicePresetPicker activePreset={activePreset} onSelect={(p) => setActivePreset(p.id)} />
               {currentPreset.width > 0 && (
                 <span className="text-[9px] text-white/15 font-mono">
@@ -230,6 +234,12 @@ window.addEventListener('unhandledrejection', function(e) {
 
               <div className="h-4 w-px bg-white/[0.06] mx-1" />
 
+              <VisualEditClickOverlay
+                isActive={isVisualEditActive}
+                onToggle={() => setIsVisualEditActive(!isVisualEditActive)}
+                iframeRef={iframeRef}
+                onAIPromptEdit={onAIEditRequest}
+              />
               <VisualEditOverlay
                 isActive={isVisualEditActive}
                 onToggle={() => setIsVisualEditActive(!isVisualEditActive)}
