@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import {
-  Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb,
+  Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BuilderMessage } from '@/hooks/useAIAppBuilder';
@@ -11,23 +12,25 @@ import type { BuilderMessage } from '@/hooks/useAIAppBuilder';
 interface BuilderChatPanelProps {
   messages: BuilderMessage[];
   isGenerating: boolean;
+  fileCount: number;
   onSend: (message: string) => void;
   onStop: () => void;
   onClear: () => void;
 }
 
 const STARTER_PROMPTS = [
-  'A modern landing page for a SaaS product with hero, features, and pricing sections',
-  'A dashboard with analytics cards, a line chart, and a recent activity feed',
-  'A task management app with drag-and-drop columns (To Do, In Progress, Done)',
-  'A settings page with profile info, notification toggles, and theme selector',
-  'A login & signup page with social auth buttons and form validation',
-  'An e-commerce product grid with filters, search, and a cart sidebar',
+  'A modern landing page with hero, features grid, testimonials, and footer',
+  'A dashboard with analytics cards, a chart section, and recent activity feed',
+  'A task management app with columns for To Do, In Progress, and Done',
+  'A settings page with profile, notifications, and theme sections',
+  'An e-commerce product grid with search, filters, and shopping cart',
+  'A blog with article cards, categories sidebar, and newsletter signup',
 ];
 
 export function BuilderChatPanel({
   messages,
   isGenerating,
+  fileCount,
   onSend,
   onStop,
   onClear,
@@ -36,7 +39,6 @@ export function BuilderChatPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -47,10 +49,7 @@ export function BuilderChatPanel({
     if (!input.trim() || isGenerating) return;
     onSend(input.trim());
     setInput('');
-    // Reset textarea height
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -70,7 +69,9 @@ export function BuilderChatPanel({
           </div>
           <div>
             <h2 className="text-sm font-semibold">AI App Builder</h2>
-            <p className="text-xs text-muted-foreground">Describe what you want to build</p>
+            <p className="text-xs text-muted-foreground">
+              {fileCount > 0 ? `${fileCount} files in project` : 'Describe what to build'}
+            </p>
           </div>
         </div>
         {messages.length > 0 && (
@@ -91,7 +92,7 @@ export function BuilderChatPanel({
                 </div>
                 <h3 className="font-semibold text-lg">What do you want to build?</h3>
                 <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                  Describe any web page or app and I'll build it live. You can iterate and refine as we go.
+                  Describe any web app and I'll generate a multi-file project with live preview. Iterate as much as you want.
                 </p>
               </div>
               <div className="space-y-2 pt-4">
@@ -132,23 +133,21 @@ export function BuilderChatPanel({
                       : 'bg-muted'
                   )}
                 >
-                  {msg.role === 'assistant' && msg.html ? (
+                  {msg.role === 'assistant' && msg.filesGenerated ? (
                     <div className="flex items-center gap-2">
-                      <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                      <FileCode className="h-3.5 w-3.5 shrink-0" />
                       <span>
-                        {isGenerating && messages[messages.length - 1]?.id === msg.id
-                          ? 'Building your app...'
-                          : 'App generated! See the preview →'}
+                        Generated {msg.filesGenerated} file{msg.filesGenerated > 1 ? 's' : ''}
                       </span>
+                      <Badge variant="secondary" className="text-[10px]">
+                        See preview →
+                      </Badge>
                     </div>
                   ) : msg.role === 'assistant' ? (
-                    <p className="whitespace-pre-wrap">{
-                      msg.content.length > 200
-                        ? (isGenerating && messages[messages.length - 1]?.id === msg.id
-                            ? 'Generating...'
-                            : 'App generated! See the preview →')
-                        : msg.content
-                    }</p>
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-3.5 w-3.5 shrink-0 animate-pulse" />
+                      <span>Building your app...</span>
+                    </div>
                   ) : (
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                   )}
@@ -161,13 +160,13 @@ export function BuilderChatPanel({
               </div>
             ))
           )}
-          {isGenerating && (
+          {isGenerating && !messages.some(m => m.role === 'assistant' && !m.filesGenerated) && (
             <div className="flex gap-3">
               <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <Loader2 className="h-3.5 w-3.5 text-primary animate-spin" />
               </div>
-              <div className="bg-muted rounded-xl px-4 py-2.5 text-sm">
-                <span className="animate-pulse">Building...</span>
+              <div className="bg-muted rounded-xl px-4 py-2.5 text-sm animate-pulse">
+                Building...
               </div>
             </div>
           )}
@@ -185,7 +184,7 @@ export function BuilderChatPanel({
             placeholder={
               messages.length === 0
                 ? 'Describe the app you want to build...'
-                : 'Describe changes or ask for something new...'
+                : 'Describe changes to your project...'
             }
             rows={1}
             className="min-h-[44px] max-h-[160px] resize-none"

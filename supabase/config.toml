@@ -339,3 +339,6 @@ verify_jwt = false
 
 [functions.generate-marketing-kit]
 verify_jwt = false
+
+[functions.ai-app-builder]
+verify_jwt = false

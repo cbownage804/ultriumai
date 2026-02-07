@@ -1,37 +1,76 @@
 import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
+import type { ProjectFile } from './useProjectFileSystem';
 
 export interface BuilderMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  html?: string;
+  filesGenerated?: number;
   timestamp: Date;
 }
 
 const BUILDER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-app-builder`;
+const FILE_DELIMITER = /^===FILE:\s*(.+?)===$/;
 
-function extractHTML(text: string): string | null {
-  // Try markdown code block first
-  const match = text.match(/```html\n?([\s\S]*?)```/);
-  if (match) return match[1].trim();
+/** Parse the ===FILE: path=== delimited format into ProjectFile[] */
+export function parseMultiFileOutput(raw: string): ProjectFile[] {
+  const lines = raw.split('\n');
+  const files: ProjectFile[] = [];
+  let currentPath: string | null = null;
+  let currentLines: string[] = [];
 
-  // If it starts with <!DOCTYPE or <html, it's raw HTML
-  const trimmed = text.trim();
-  if (trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html')) {
-    return trimmed;
+  const flush = () => {
+    if (currentPath) {
+      const content = currentLines.join('\n').trim();
+      if (content) {
+        const ext = currentPath.split('.').pop()?.toLowerCase() || '';
+        const langMap: Record<string, string> = {
+          html: 'html', htm: 'html', css: 'css', scss: 'scss',
+          js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript',
+          json: 'json', md: 'markdown', svg: 'xml',
+        };
+        files.push({ path: currentPath, content, language: langMap[ext] || 'plaintext' });
+      }
+    }
+  };
+
+  for (const line of lines) {
+    const match = line.match(FILE_DELIMITER);
+    if (match) {
+      flush();
+      currentPath = match[1].trim();
+      currentLines = [];
+    } else if (currentPath !== null) {
+      currentLines.push(line);
+    }
+  }
+  flush();
+
+  // Fallback: if no files parsed, try treating the whole thing as a single HTML file
+  if (files.length === 0) {
+    const trimmed = raw.trim();
+    // Strip markdown code fences
+    const htmlMatch = trimmed.match(/```html\n?([\s\S]*?)```/);
+    const html = htmlMatch ? htmlMatch[1] : trimmed;
+    if (html.includes('<') && html.includes('>')) {
+      files.push({ path: 'index.html', content: html, language: 'html' });
+    }
   }
 
-  return null;
+  return files;
 }
 
 export function useAIAppBuilder() {
   const [messages, setMessages] = useState<BuilderMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [currentHTML, setCurrentHTML] = useState<string | null>(null);
+  const [latestFiles, setLatestFiles] = useState<ProjectFile[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
-  const sendMessage = useCallback(async (input: string) => {
+  const sendMessage = useCallback(async (
+    input: string,
+    currentFiles: ProjectFile[] = []
+  ) => {
     if (!input.trim() || isGenerating) return;
 
     const userMsg: BuilderMessage = {
@@ -44,24 +83,29 @@ export function useAIAppBuilder() {
     setMessages(prev => [...prev, userMsg]);
     setIsGenerating(true);
 
-    // Build conversation context — include previous HTML for iteration
-    const apiMessages = messages
-      .filter(m => m.role === 'user' || m.role === 'assistant')
-      .map(m => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.role === 'assistant' && m.html ? m.html : m.content,
-      }));
+    // Build conversation context
+    const apiMessages: { role: string; content: string }[] = [];
 
-    // If there's existing HTML context and the user is iterating, include it
-    if (currentHTML && apiMessages.length > 0) {
-      // The previous assistant messages already contain the HTML
+    // Include previous conversation
+    for (const m of messages) {
+      apiMessages.push({ role: m.role, content: m.content });
     }
 
-    apiMessages.push({ role: 'user', content: input });
+    // If iterating on existing files, include current project state
+    if (currentFiles.length > 0) {
+      const fileContext = currentFiles
+        .map(f => `===FILE: ${f.path}===\n${f.content}`)
+        .join('\n\n');
+      apiMessages.push({
+        role: 'user',
+        content: `Here is my current project:\n\n${fileContext}\n\nNow please: ${input}`,
+      });
+    } else {
+      apiMessages.push({ role: 'user', content: input });
+    }
 
     const controller = new AbortController();
     abortRef.current = controller;
-
     let fullContent = '';
 
     try {
@@ -76,14 +120,10 @@ export function useAIAppBuilder() {
       });
 
       if (!resp.ok) {
-        const errorData = await resp.json().catch(() => ({ error: 'Unknown error' }));
-        if (resp.status === 429) {
-          toast.error('Rate limited — please wait a moment and try again.');
-        } else if (resp.status === 402) {
-          toast.error('AI credits exhausted. Add credits to continue building.');
-        } else {
-          toast.error(errorData.error || 'Failed to generate');
-        }
+        const errData = await resp.json().catch(() => ({ error: 'Unknown error' }));
+        if (resp.status === 429) toast.error('Rate limited — please wait and try again.');
+        else if (resp.status === 402) toast.error('AI credits exhausted.');
+        else toast.error(errData.error || 'Failed to generate');
         setIsGenerating(false);
         return;
       }
@@ -106,12 +146,7 @@ export function useAIAppBuilder() {
           }
           return [
             ...prev,
-            {
-              id: crypto.randomUUID(),
-              role: 'assistant' as const,
-              content,
-              timestamp: new Date(),
-            },
+            { id: crypto.randomUUID(), role: 'assistant' as const, content, timestamp: new Date() },
           ];
         });
       };
@@ -131,10 +166,7 @@ export function useAIAppBuilder() {
           if (!line.startsWith('data: ')) continue;
 
           const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') {
-            streamDone = true;
-            break;
-          }
+          if (jsonStr === '[DONE]') { streamDone = true; break; }
 
           try {
             const parsed = JSON.parse(jsonStr);
@@ -147,7 +179,7 @@ export function useAIAppBuilder() {
         }
       }
 
-      // Flush remaining buffer
+      // Flush remaining
       if (textBuffer.trim()) {
         for (let raw of textBuffer.split('\n')) {
           if (!raw) continue;
@@ -164,15 +196,15 @@ export function useAIAppBuilder() {
         }
       }
 
-      // Extract HTML from final content and update preview
-      const html = extractHTML(fullContent);
-      if (html) {
-        setCurrentHTML(html);
-        // Update the last assistant message with extracted HTML
+      // Parse multi-file output
+      const parsedFiles = parseMultiFileOutput(fullContent);
+      if (parsedFiles.length > 0) {
+        setLatestFiles(parsedFiles);
+        // Update assistant message with file count
         setMessages(prev =>
           prev.map((m, i) =>
             i === prev.length - 1 && m.role === 'assistant'
-              ? { ...m, html, content: fullContent }
+              ? { ...m, filesGenerated: parsedFiles.length }
               : m
           )
         );
@@ -186,7 +218,7 @@ export function useAIAppBuilder() {
       setIsGenerating(false);
       abortRef.current = null;
     }
-  }, [messages, isGenerating, currentHTML]);
+  }, [messages, isGenerating]);
 
   const stopGenerating = useCallback(() => {
     abortRef.current?.abort();
@@ -195,13 +227,13 @@ export function useAIAppBuilder() {
 
   const clearChat = useCallback(() => {
     setMessages([]);
-    setCurrentHTML(null);
+    setLatestFiles([]);
   }, []);
 
   return {
     messages,
     isGenerating,
-    currentHTML,
+    latestFiles,
     sendMessage,
     stopGenerating,
     clearChat,
