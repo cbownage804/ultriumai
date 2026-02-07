@@ -286,17 +286,28 @@ export function AIAppBuilderWorkspace() {
       if (!hasAutoNamed.current && project.name === 'Untitled Project') {
         const firstUserMsg = messages.find(m => m.role === 'user');
         if (firstUserMsg) {
-          // Extract a short, meaningful name from the user's prompt
           const prompt = firstUserMsg.content
             .replace(/\[Currently viewing:.*?\]\n?/g, '')
             .replace(/\[Auto-detected relevant files:.*?\]\n?/g, '')
             .trim();
-          // Take first ~40 chars, break at word boundary
-          const shortName = prompt.length <= 40
-            ? prompt
-            : prompt.slice(0, 40).replace(/\s+\S*$/, '').trim();
-          // Title-case the first letter and clean up
-          const projectName = shortName.charAt(0).toUpperCase() + shortName.slice(1);
+          
+          // Strip common prompt prefixes to extract the subject
+          const cleaned = prompt
+            .replace(/^(please\s+)?(can you\s+)?(help me\s+)?(create|build|make|design|generate|develop|code|write)\s+(me\s+)?(a|an|the)?\s*/i, '')
+            .replace(/\s+(app|application|website|site|page|tool|platform|system|dashboard|portal)\s*$/i, (match) => match) // keep trailing app-type words
+            .trim();
+          
+          // Take first meaningful chunk (up to 35 chars, break at word boundary)
+          const subject = cleaned.length <= 35
+            ? cleaned
+            : cleaned.slice(0, 35).replace(/\s+\S*$/, '').trim();
+          
+          // Title case each word
+          const projectName = subject
+            .split(/\s+/)
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+            .join(' ');
+          
           if (projectName.length >= 3) {
             renameProject(projectName);
             hasAutoNamed.current = true;
