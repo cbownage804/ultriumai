@@ -55,7 +55,7 @@ export function AIAppBuilderWorkspace() {
   const {
     project, setFiles, upsertFile, deleteFile,
     setActiveFile, closeFile, resetProject, renameProject,
-    getCompiledHTML, activeFile,
+    reorderOpenFiles, getCompiledHTML, activeFile,
   } = useProjectFileSystem();
 
   const { canUndo, canRedo, pushUndo, undo, redo } = useUndoRedo();
@@ -97,6 +97,10 @@ export function AIAppBuilderWorkspace() {
   const { findReferencedFiles, bundleForBrowser } = useProjectBundler();
   const [remoteCursors, setRemoteCursors] = useState<RemoteCursor[]>([]);
   const channelRef = useRef<any>(null);
+  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
+  const [dirtyFiles, setDirtyFiles] = useState<Set<string>>(new Set());
+  const [cursorPosition, setCursorPosition] = useState<{ line: number; column: number }>({ line: 1, column: 1 });
+  const prevIsGeneratingRef = useRef(isGenerating);
 
   // Sync env vars from EnvVarsPanel into compilation envVars
   useEffect(() => {
@@ -136,6 +140,7 @@ export function AIAppBuilderWorkspace() {
   }, [currentProjectId]);
 
   const handleCursorChange = useCallback((line: number, column: number) => {
+    setCursorPosition({ line, column });
     if (channelRef.current) {
       channelRef.current.send({
         type: 'broadcast',
@@ -159,8 +164,27 @@ export function AIAppBuilderWorkspace() {
         }
       }
       updateBranchFiles(latestFiles);
+      // Clear dirty state for AI-generated files
+      setDirtyFiles(prev => {
+        const next = new Set(prev);
+        latestFiles.forEach(f => next.delete(f.path));
+        return next;
+      });
     }
   }, [latestFiles]);
+
+  // AI completion toast
+  useEffect(() => {
+    if (prevIsGeneratingRef.current && !isGenerating && latestFiles.length > 0) {
+      toast.success(`Generated ${latestFiles.length} file${latestFiles.length > 1 ? 's' : ''}`, {
+        action: {
+          label: 'View',
+          onClick: () => setRightTab('preview'),
+        },
+      });
+    }
+    prevIsGeneratingRef.current = isGenerating;
+  }, [isGenerating, latestFiles.length]);
 
   // Hot-reload: sync partial files during streaming
   useEffect(() => {
@@ -232,6 +256,12 @@ export function AIAppBuilderWorkspace() {
     );
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys]);
 
+  // Track dirty files on manual edits
+  const handleContentChange = useCallback((path: string, content: string) => {
+    upsertFile(path, content);
+    setDirtyFiles(prev => new Set(prev).add(path));
+  }, [upsertFile]);
+
   const handleAIEditRequest = useCallback((selector: string, elementContext: string, prompt: string) => {
     sendMessage(
       `The user selected an element in the preview and wants you to edit it.\n\nElement selector: ${selector}\nElement HTML:\n${elementContext}\n\nUser request: "${prompt}"\n\nPlease update the relevant file(s) to apply this change.`,
@@ -276,6 +306,7 @@ export function AIAppBuilderWorkspace() {
 
   const handleSave = useCallback(async () => {
     await saveProject(project.name, project.files, branches, activeBranch);
+    setDirtyFiles(new Set());
     toast.success('Project saved');
   }, [saveProject, project.name, project.files, branches, activeBranch]);
 
@@ -607,32 +638,53 @@ export function AIAppBuilderWorkspace() {
               />
             ) : (
               <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount}>
-                <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
+                <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} />
               </BuilderPreviewPanel>
             )
           ) : (
           <ResizablePanelGroup direction="horizontal" className="h-full">
-            {/* Chat Panel */}
+            {/* Chat Panel - Collapsible */}
+            {isChatCollapsed ? (
+              <div className="w-10 border-r border-white/[0.06] bg-[#0a0a0f] flex flex-col items-center pt-3 shrink-0">
+                <button
+                  onClick={() => setIsChatCollapsed(false)}
+                  className="h-8 w-8 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
+                  title="Expand chat"
+                >
+                  <PanelLeftOpen className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
             <ResizablePanel defaultSize={28} minSize={20} maxSize={40}>
-              <BuilderChatPanel
-                messages={messages}
-                isGenerating={isGenerating}
-                fileCount={project.files.length}
-                mode={mode}
-                thinkingPhase={thinkingPhase}
-                versions={versions}
-                totalTokensUsed={totalTokensUsed}
-                previousFiles={previousFiles}
-                latestFiles={latestFiles}
-                onModeChange={setMode}
-                onSend={handleSend}
-                onStop={stopGenerating}
-                onClear={handleClear}
-                onRestoreVersion={restoreVersion}
-                onOpenTemplates={() => setShowTemplates(true)}
-                onFixError={handleFixError}
-              />
+              <div className="h-full relative">
+                <button
+                  onClick={() => setIsChatCollapsed(true)}
+                  className="absolute top-2 right-2 z-10 h-6 w-6 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors"
+                  title="Collapse chat"
+                >
+                  <PanelLeftClose className="h-3.5 w-3.5" />
+                </button>
+                <BuilderChatPanel
+                  messages={messages}
+                  isGenerating={isGenerating}
+                  fileCount={project.files.length}
+                  mode={mode}
+                  thinkingPhase={thinkingPhase}
+                  versions={versions}
+                  totalTokensUsed={totalTokensUsed}
+                  previousFiles={previousFiles}
+                  latestFiles={latestFiles}
+                  onModeChange={setMode}
+                  onSend={handleSend}
+                  onStop={stopGenerating}
+                  onClear={handleClear}
+                  onRestoreVersion={restoreVersion}
+                  onOpenTemplates={() => setShowTemplates(true)}
+                  onFixError={handleFixError}
+                />
+              </div>
             </ResizablePanel>
+            )}
 
             <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors data-[resize-handle-active]:bg-cyan-500/50" />
 
@@ -787,17 +839,17 @@ export function AIAppBuilderWorkspace() {
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="preview" className="h-full">
                                     <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount}>
-                                      <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
+                                      <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} />
                                     </BuilderPreviewPanel>
                                   </div>
                                 </ResizablePanel>
                                 <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors" />
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
-                                    <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} onSelect={setActiveFile} onClose={closeFile} />
+                                    <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} dirtyFiles={dirtyFiles} onSelect={setActiveFile} onClose={closeFile} onReorder={reorderOpenFiles} />
                                     <FileBreadcrumb file={activeFile} />
                                     <div className="flex-1 overflow-hidden">
-                                      <CodeEditor file={activeFile} onContentChange={upsertFile} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
+                                      <CodeEditor file={activeFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
                                     </div>
                                   </div>
                                 </ResizablePanel>
@@ -805,7 +857,7 @@ export function AIAppBuilderWorkspace() {
                             ) : rightTab === 'preview' || !hasFiles ? (
                               <div data-tour="preview" className="h-full">
                                 <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount}>
-                                  <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
+                                  <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} />
                                 </BuilderPreviewPanel>
                               </div>
                             ) : (
@@ -813,12 +865,14 @@ export function AIAppBuilderWorkspace() {
                                 <FileTabBar
                                   openPaths={project.openFilePaths}
                                   activePath={project.activeFilePath}
+                                  dirtyFiles={dirtyFiles}
                                   onSelect={setActiveFile}
                                   onClose={closeFile}
+                                  onReorder={reorderOpenFiles}
                                 />
                                 <FileBreadcrumb file={activeFile} />
                                 <div className="flex-1 overflow-hidden">
-                                  <CodeEditor file={activeFile} onContentChange={upsertFile} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
+                                  <CodeEditor file={activeFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
                                 </div>
                               </div>
                             )}
@@ -840,6 +894,20 @@ export function AIAppBuilderWorkspace() {
           </ResizablePanelGroup>
           )}
         </div>
+
+        {/* Status Bar */}
+        {hasFiles && !isMobile && (
+          <div className="flex items-center h-5 px-3 border-t border-white/[0.06] bg-black/40 text-[10px] text-white/30 font-mono shrink-0 gap-4">
+            <span>{activeFile?.language || 'plaintext'}</span>
+            <span>Ln {cursorPosition.line}, Col {cursorPosition.column}</span>
+            <span>{project.files.length} file{project.files.length !== 1 ? 's' : ''}</span>
+            <span>{activeBranchName}</span>
+            {dirtyFiles.size > 0 && (
+              <span className="text-amber-400/60">{dirtyFiles.size} unsaved</span>
+            )}
+            <span className="ml-auto">{isSaving ? 'Saving...' : lastSaved ? `Saved ${lastSaved.toLocaleTimeString()}` : ''}</span>
+          </div>
+        )}
       </div>
 
       <TemplateLibrary

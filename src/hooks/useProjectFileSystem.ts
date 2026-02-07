@@ -97,6 +97,10 @@ export function useProjectFileSystem() {
     });
   }, []);
 
+  const reorderOpenFiles = useCallback((paths: string[]) => {
+    setProject(prev => ({ ...prev, openFilePaths: paths }));
+  }, []);
+
   const renameProject = useCallback((name: string) => {
     setProject(prev => ({ ...prev, name }));
   }, []);
@@ -224,6 +228,7 @@ export function useProjectFileSystem() {
     deleteFile,
     setActiveFile,
     closeFile,
+    reorderOpenFiles,
     renameProject,
     resetProject,
     getCompiledHTML,
