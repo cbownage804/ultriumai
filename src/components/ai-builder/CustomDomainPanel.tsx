@@ -91,6 +91,14 @@ export function CustomDomainPanel({ isOpen, onClose, previewUrl }: CustomDomainP
             <div className="flex items-center gap-2 p-3 rounded-lg border border-white/[0.06] bg-white/[0.02]">
               <div className="h-2 w-2 rounded-full bg-emerald-400 shrink-0" />
               <span className="text-[11px] font-mono text-white/50 truncate flex-1">{previewUrl}</span>
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/30 hover:text-cyan-400 transition-colors"
+              >
+                <ExternalLink className="h-3 w-3" />
+              </a>
               <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">Default</span>
             </div>
           )}
