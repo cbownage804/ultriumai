@@ -637,8 +637,8 @@ export function BuilderChatPanel({
                   ? "Ask a question..."
                   : messages.length === 0 ? 'Describe the app you want to build...' : 'Describe changes...'
               }
-              rows={1}
-              className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/20 resize-none outline-none min-h-[24px] max-h-[120px] py-0.5"
+              rows={3}
+              className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/20 resize-none outline-none min-h-[72px] max-h-[200px] py-0.5"
             />
             {isGenerating ? (
               <button
