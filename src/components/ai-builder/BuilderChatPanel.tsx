@@ -3,7 +3,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
   Zap, MessageCircle, Hammer, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
-  LayoutGrid, Wrench, AlertTriangle,
+  LayoutGrid, Wrench, AlertTriangle, Copy, RotateCcw, Pencil,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from '@/hooks/useAIAppBuilder';
@@ -79,6 +79,8 @@ export function BuilderChatPanel({
   const [input, setInput] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [editInput, setEditInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -368,7 +370,7 @@ export function BuilderChatPanel({
               <div
                 key={msg.id}
                 className={cn(
-                  'flex gap-2.5',
+                  'flex gap-2.5 group/msg relative',
                   msg.role === 'user' ? 'justify-end' : 'justify-start'
                 )}
               >
@@ -377,23 +379,77 @@ export function BuilderChatPanel({
                     <Bot className="h-3 w-3 text-cyan-400" />
                   </div>
                 )}
-                <div
-                  className={cn(
-                    'rounded-xl px-3.5 py-2.5 max-w-[88%]',
-                    msg.role === 'user'
-                      ? 'bg-gradient-to-r from-cyan-600/80 to-cyan-500/80 text-white text-[13px]'
-                      : 'bg-white/[0.03] border border-white/[0.06]'
-                  )}
-                >
-                  {msg.role === 'assistant' ? (
-                    renderAssistantMessage(msg, idx === messages.length - 1)
-                  ) : (
-                    <div>
-                      {msg.imageUrl && (
-                        <img src={msg.imageUrl} alt="Reference" className="rounded-lg max-h-32 mb-2 border border-white/10" />
-                      )}
-                      <p className="whitespace-pre-wrap text-[13px]">{msg.content}</p>
+                <div className="relative max-w-[88%]">
+                  {/* Hover actions */}
+                  <div className={cn(
+                    "absolute -top-5 flex items-center gap-0.5 opacity-0 group-hover/msg:opacity-100 transition-opacity z-10",
+                    msg.role === 'user' ? 'right-0' : 'left-0'
+                  )}>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(msg.content)}
+                      className="h-5 w-5 rounded flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors"
+                      title="Copy"
+                    >
+                      <Copy className="h-2.5 w-2.5" />
+                    </button>
+                    {msg.role === 'user' && (
+                      <>
+                        <button
+                          onClick={() => onSend(msg.content)}
+                          className="h-5 w-5 rounded flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors"
+                          title="Retry"
+                        >
+                          <RotateCcw className="h-2.5 w-2.5" />
+                        </button>
+                        <button
+                          onClick={() => { setEditingMsgId(msg.id); setEditInput(msg.content); }}
+                          className="h-5 w-5 rounded flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors"
+                          title="Edit"
+                        >
+                          <Pencil className="h-2.5 w-2.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {editingMsgId === msg.id ? (
+                    <div className="bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 space-y-2">
+                      <textarea
+                        value={editInput}
+                        onChange={(e) => setEditInput(e.target.value)}
+                        className="w-full bg-transparent text-sm text-white/90 resize-none outline-none min-h-[40px]"
+                        autoFocus
+                      />
+                      <div className="flex gap-1.5 justify-end">
+                        <button onClick={() => setEditingMsgId(null)} className="text-[10px] text-white/30 hover:text-white/60 px-2 py-1 rounded">Cancel</button>
+                        <button
+                          onClick={() => { onSend(editInput); setEditingMsgId(null); }}
+                          className="text-[10px] text-cyan-400 hover:text-cyan-300 px-2 py-1 rounded bg-cyan-500/10"
+                        >
+                          Re-send
+                        </button>
+                      </div>
                     </div>
+                  ) : (
+                  <div
+                    className={cn(
+                      'rounded-xl px-3.5 py-2.5',
+                      msg.role === 'user'
+                        ? 'bg-gradient-to-r from-cyan-600/80 to-cyan-500/80 text-white text-[13px]'
+                        : 'bg-white/[0.03] border border-white/[0.06]'
+                    )}
+                  >
+                    {msg.role === 'assistant' ? (
+                      renderAssistantMessage(msg, idx === messages.length - 1)
+                    ) : (
+                      <div>
+                        {msg.imageUrl && (
+                          <img src={msg.imageUrl} alt="Reference" className="rounded-lg max-h-32 mb-2 border border-white/10" />
+                        )}
+                        <p className="whitespace-pre-wrap text-[13px]">{msg.content}</p>
+                      </div>
+                    )}
+                  </div>
                   )}
                 </div>
                 {msg.role === 'user' && (

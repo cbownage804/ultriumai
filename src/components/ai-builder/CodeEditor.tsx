@@ -185,7 +185,7 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
       onMount={handleMount}
       theme="builder-dark"
       options={{
-        minimap: { enabled: false },
+        minimap: { enabled: true, scale: 1, maxColumn: 80, renderCharacters: false, showSlider: 'mouseover' },
         fontSize: 13,
         lineHeight: 20,
         padding: { top: 12 },
@@ -198,7 +198,11 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
         cursorSmoothCaretAnimation: 'on',
         smoothScrolling: true,
         bracketPairColorization: { enabled: true },
+        autoClosingBrackets: 'always',
+        autoClosingQuotes: 'always',
+        matchBrackets: 'always',
         formatOnPaste: true,
+        find: { addExtraSpaceOnTop: false, autoFindInSelection: 'multiline', seedSearchStringFromSelection: 'selection' },
         suggest: {
           showWords: true,
           showSnippets: true,
