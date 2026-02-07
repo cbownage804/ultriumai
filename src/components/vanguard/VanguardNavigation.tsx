@@ -220,14 +220,28 @@ export function VanguardNavigation() {
       dashboardPath: `${basePath}/helpdesk`,
       items: [
         { title: 'Helpdesk', path: `${basePath}/helpdesk`, icon: Ticket },
-        { title: 'Tickets', path: `${basePath}/tickets`, icon: Ticket },
-        { title: 'Co-Managed IT', path: `${basePath}/comanaged`, icon: Users, badge: 'NEW' },
-        { title: 'SLA Management', path: `${basePath}/sla`, icon: Activity },
-        { title: 'Workflows', path: `${basePath}/workflows`, icon: Settings },
-        { title: 'Email Integration', path: `${basePath}/email-integration`, icon: Bell },
-        { title: 'Time & Billing', path: `${basePath}/time-billing`, icon: CreditCard },
-        { title: 'CSAT Surveys', path: `${basePath}/csat`, icon: Gift },
-      ]
+      ],
+      subGroups: [
+        {
+          label: 'Service Desk',
+          icon: Ticket,
+          items: [
+            { title: 'Tickets', path: `${basePath}/tickets`, icon: Ticket },
+            { title: 'Co-Managed IT', path: `${basePath}/comanaged`, icon: Users, badge: 'NEW' },
+          ],
+        },
+        {
+          label: 'Operations',
+          icon: Settings,
+          items: [
+            { title: 'SLA Management', path: `${basePath}/sla`, icon: Activity },
+            { title: 'Workflows', path: `${basePath}/workflows`, icon: Settings },
+            { title: 'Email Integration', path: `${basePath}/email-integration`, icon: Bell },
+            { title: 'Time & Billing', path: `${basePath}/time-billing`, icon: CreditCard },
+            { title: 'CSAT Surveys', path: `${basePath}/csat`, icon: Gift },
+          ],
+        },
+      ],
     },
     {
       header: 'VANGUARD RECON',
@@ -261,12 +275,20 @@ export function VanguardNavigation() {
       dashboardPath: `${basePath}/reports`,
       items: [
         { title: 'Reports Dashboard', path: `${basePath}/reports`, icon: BarChart3 },
-        { title: 'Helpdesk Reports', path: `${basePath}/helpdesk-reports`, icon: Ticket },
-        { title: 'Security Analytics', path: `${basePath}/security-reports`, icon: Shield },
-        { title: 'Scheduled Scans', path: `${basePath}/scheduled-scans`, icon: Activity },
-        { title: 'Compliance', path: `${basePath}/compliance-reports`, icon: FileText },
-        { title: 'Attack Paths', path: `${basePath}/attack-paths`, icon: Target },
-      ]
+      ],
+      subGroups: [
+        {
+          label: 'Reports',
+          icon: FileText,
+          items: [
+            { title: 'Helpdesk Reports', path: `${basePath}/helpdesk-reports`, icon: Ticket },
+            { title: 'Security Analytics', path: `${basePath}/security-reports`, icon: Shield },
+            { title: 'Compliance', path: `${basePath}/compliance-reports`, icon: FileText },
+            { title: 'Attack Paths', path: `${basePath}/attack-paths`, icon: Target },
+            { title: 'Scheduled Scans', path: `${basePath}/scheduled-scans`, icon: Activity },
+          ],
+        },
+      ],
     },
     {
       header: 'VANGUARD COMPLY',
@@ -276,9 +298,6 @@ export function VanguardNavigation() {
       dashboardPath: `${basePath}/comply`,
       items: [
         { title: 'Comply Dashboard', path: `${basePath}/comply`, icon: ClipboardCheck },
-        { title: 'Client Compliance', path: `${basePath}/comply`, icon: Users },
-        { title: 'Compliance Scanner', path: `${basePath}/comply`, icon: Shield },
-        { title: 'Reports', path: `${basePath}/compliance-reports`, icon: FileText },
       ]
     },
     {
@@ -289,12 +308,20 @@ export function VanguardNavigation() {
       dashboardPath: `${basePath}/cortex`,
       items: [
         { title: 'Cortex Hub', path: `${basePath}/cortex`, icon: Sparkles },
-        { title: 'AI Summarizer', path: `${basePath}/cortex-summarizer`, icon: FileText },
-        { title: 'Pattern Detection', path: `${basePath}/cortex-patterns`, icon: Activity },
-        { title: 'KB Generator', path: `${basePath}/cortex-kb`, icon: Wand2 },
-        { title: 'Smart Router', path: `${basePath}/cortex-router`, icon: Network },
-        { title: 'AI Analytics', path: `${basePath}/cortex-analytics`, icon: BarChart3 },
-      ]
+      ],
+      subGroups: [
+        {
+          label: 'AI Tools',
+          icon: Bot,
+          items: [
+            { title: 'AI Summarizer', path: `${basePath}/cortex-summarizer`, icon: FileText },
+            { title: 'Pattern Detection', path: `${basePath}/cortex-patterns`, icon: Activity },
+            { title: 'KB Generator', path: `${basePath}/cortex-kb`, icon: Wand2 },
+            { title: 'Smart Router', path: `${basePath}/cortex-router`, icon: Network },
+            { title: 'AI Analytics', path: `${basePath}/cortex-analytics`, icon: BarChart3 },
+          ],
+        },
+      ],
     },
   ];
 
@@ -304,18 +331,22 @@ export function VanguardNavigation() {
     { title: 'Password Vault', path: '/safesuite/pass', icon: Key, badge: 'SafePass' },
   ];
 
-  // Additional standalone items
-  const additionalItems: NavItem[] = [
+  // Business & Partner items
+  const businessItems: NavItem[] = [
     { title: 'Partner Program', path: `${basePath}/partner-program`, icon: Crown, badge: 'NEW' },
     { title: 'White-Label', path: `${basePath}/whitelabel`, icon: Wand2 },
     { title: 'Client Provisioning', path: `${basePath}/client-provisioning`, icon: Upload },
     { title: 'Reseller Billing', path: `${basePath}/reseller-billing`, icon: CreditCard },
-    { title: 'Marketing Kit', path: `${basePath}/marketing-kit`, icon: FileText },
     { title: 'MSP Billing', path: `${basePath}/msp-billing`, icon: CreditCard },
-    { title: 'Integrations', path: `${basePath}/integrations`, icon: Network, badge: 'NEW' },
-    { title: 'Theme Editor', path: `${basePath}/theme-editor`, icon: Wand2 },
+    { title: 'Marketing Kit', path: `${basePath}/marketing-kit`, icon: FileText },
+  ];
+
+  // Platform & Settings items
+  const platformItems: NavItem[] = [
+    { title: 'Integrations', path: `${basePath}/integrations`, icon: Network },
     { title: 'Customer Portal', path: `${basePath}/portal`, icon: Globe },
     { title: 'Portal App', path: `${basePath}/portal/download`, icon: Monitor },
+    { title: 'Theme Editor', path: `${basePath}/theme-editor`, icon: Wand2 },
     { title: 'Admin', path: `${basePath}/admin`, icon: Settings },
     { title: 'Refer a Friend', path: `${basePath}/referrals`, icon: Gift },
   ];
@@ -478,11 +509,25 @@ export function VanguardNavigation() {
                 </div>
               )}
 
-              {/* Divider */}
-              <div className="my-4 border-t border-cyan-500/10" />
+              {/* Business & Partner */}
+              {!isCollapsed && (
+                <div className="mt-3">
+                  <div className="px-4 py-1.5 text-[10px] font-bold tracking-wider text-slate-500/70 uppercase">
+                    Business
+                  </div>
+                  {businessItems.map(renderNavItem)}
+                </div>
+              )}
 
-              {/* Additional Items */}
-              {additionalItems.map(renderNavItem)}
+              {/* Platform & Settings */}
+              {!isCollapsed && (
+                <div className="mt-3">
+                  <div className="px-4 py-1.5 text-[10px] font-bold tracking-wider text-slate-500/70 uppercase">
+                    Platform
+                  </div>
+                  {platformItems.map(renderNavItem)}
+                </div>
+              )}
             </TooltipProvider>
           </nav>
 
