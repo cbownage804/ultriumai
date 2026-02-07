@@ -146,7 +146,7 @@ const DOC_SECTIONS: DocSection[] = [
             id: "integrations",
             title: "Third-Party Integrations",
             content:
-              "## Vanguard Integrations\n- **PSA**: ConnectWise, Autotask (bi-directional sync)\n- **Documentation**: IT Glue (via Atlas)\n- **BCDR**: Veeam, Acronis, Datto\n- **Remote Access**: Splashtop, AnyDesk\n- **Accounting**: QuickBooks Online, Xero\n- **Identity**: Azure AD, SSO (SAML/OIDC)\n\n## AI Studio Integrations\n- **Communication**: Slack, Microsoft Teams\n- **Ticketing**: Jira, ServiceNow, Zendesk\n- **Data**: Web search, URL scraping, document parsing\n\n## SafeSuite Integrations\n- **Browsers**: Chrome/Edge extension for SafePass\n- **Mobile**: iOS & Android apps\n- **Email**: Automated breach notifications",
+              "## Vanguard Integrations\n- **PSA**: ConnectWise, Autotask (bi-directional sync)\n- **Documentation**: IT Glue (via Atlas)\n- **BCDR**: Veeam, Acronis, Datto\n- **Remote Access**: RustDesk (built-in), TeamViewer, ScreenConnect\n- **Accounting**: QuickBooks Online, Xero\n- **Identity**: Azure AD, SSO (SAML/OIDC)\n\n## AI Studio Integrations\n- **Communication**: Slack, Microsoft Teams\n- **Ticketing**: Jira, ServiceNow, Zendesk\n- **Data**: Web search, URL scraping, document parsing\n\n## SafeSuite Integrations\n- **Browsers**: Chrome/Edge extension for SafePass\n- **Mobile**: iOS & Android apps\n- **Email**: Automated breach notifications",
           },
         ],
       },
@@ -263,7 +263,7 @@ const DOC_SECTIONS: DocSection[] = [
             id: "horizon-overview",
             title: "Horizon Overview",
             content:
-              "Horizon is Vanguard's RMM module — monitor, manage, and secure endpoints at scale.\n\n## Core Features\n- **Device Management** — Windows, Mac, Linux agent deployment\n- **Patch Management** — Automated Windows updates + 3rd-party via Chocolatey/WinGet with rollback\n- **Remote Access** — Splashtop & AnyDesk integration with session history\n- **Alerting** — Multi-channel (email, SMS, webhook) with escalation rules and on-call scheduling\n- **Software Management** — Deploy, update, and remove software fleet-wide\n- **File Transfer** — Secure file transfer up to 80GB/mo (plan-dependent)\n- **Network Discovery** — Subnet scanning and device auto-detection\n- **Asset Lifecycle** — Track hardware from procurement to retirement\n\n## Site-Centric Navigation\nDevices are organized by **Sites** (client organizations). Select a site to view its devices, alerts, tickets, and configurations via horizontal tabs.",
+              "Horizon is Vanguard's RMM module — monitor, manage, and secure endpoints at scale.\n\n## Core Features\n- **Device Management** — Windows, Mac, Linux agent deployment\n- **Patch Management** — Automated Windows updates + 3rd-party via Chocolatey/WinGet with rollback\n- **Remote Access** — RustDesk built-in remote access with session history\n- **Alerting** — Multi-channel (email, SMS, webhook) with escalation rules and on-call scheduling\n- **Software Management** — Deploy, update, and remove software fleet-wide\n- **File Transfer** — Secure file transfer up to 80GB/mo (plan-dependent)\n- **Network Discovery** — Subnet scanning and device auto-detection\n- **Asset Lifecycle** — Track hardware from procurement to retirement\n\n## Site-Centric Navigation\nDevices are organized by **Sites** (client organizations). Select a site to view its devices, alerts, tickets, and configurations via horizontal tabs.",
           },
           {
             id: "horizon-agents",

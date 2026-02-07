@@ -28,7 +28,7 @@ export const IT_DEPARTMENT_PLANS: VanguardPlan[] = [
     features: [
       'Remote monitoring and alerts',
       'Remote management',
-      'Splashtop (up to 2 concurrent sessions)',
+      'RustDesk remote access (up to 2 concurrent sessions)',
       'Patch management',
       'Software management (Chocolatey, Homebrew, WinGet)',
       'Azure AD integration',
@@ -41,7 +41,7 @@ export const IT_DEPARTMENT_PLANS: VanguardPlan[] = [
     highlights: [
       'Remote monitoring and alerts',
       'Patch management',
-      'Splashtop remote access',
+      'RustDesk remote access',
     ],
     stripePriceId: 'price_1SxuTIH1u6E0bsJTmXs4WsZF',
     stripeProductId: 'prod_Tvm1tGkEFFA8xx',
@@ -55,8 +55,7 @@ export const IT_DEPARTMENT_PLANS: VanguardPlan[] = [
     popular: true,
     features: [
       'Everything in Professional, plus:',
-      'Splashtop concurrent sessions (unlimited)',
-      'AnyDesk remote access',
+      'RustDesk concurrent sessions (unlimited)',
       '11 preset reports',
       'AI ticket auto-tagging',
       'Custom asset types (up to 5)',
@@ -65,9 +64,9 @@ export const IT_DEPARTMENT_PLANS: VanguardPlan[] = [
       'Custom support addresses (2)',
     ],
     highlights: [
-      'Unlimited Splashtop sessions',
+      'Unlimited RustDesk sessions',
       'AI ticket auto-tagging',
-      'AnyDesk + Splashtop',
+      'Advanced remote access',
     ],
     stripePriceId: 'price_1SxuTKH1u6E0bsJTokP26ceC',
     stripeProductId: 'prod_Tvm1v7saOMFPLn',
@@ -134,7 +133,7 @@ export const MSP_PLANS: VanguardPlan[] = [
     features: [
       'Remote monitoring and alerts',
       'Remote management',
-      'Splashtop (up to 2 concurrent sessions)',
+      'RustDesk remote access (up to 2 concurrent sessions)',
       'Patch management',
       'Software management',
       'Knowledge base',
@@ -166,8 +165,7 @@ export const MSP_PLANS: VanguardPlan[] = [
     features: [
       'Everything in Pro, plus:',
       'Mac and Linux support',
-      'Splashtop concurrent sessions (unlimited)',
-      'AnyDesk remote access',
+      'RustDesk concurrent sessions (unlimited)',
       '11 Preset Reports',
       'Custom support addresses (up to 10)',
       'Custom asset types (up to 5)',
