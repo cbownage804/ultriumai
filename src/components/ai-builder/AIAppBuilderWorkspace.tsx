@@ -50,9 +50,11 @@ import {
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
   History, Variable, Image, Package, Columns, Keyboard,
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users,
+  Settings, ChevronDown, ArrowLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 // Lazy load heavy panels
 const DatabasePanel = lazy(() => import('./DatabasePanel').then(m => ({ default: m.DatabasePanel })));
@@ -64,6 +66,7 @@ const EdgeFunctionEditor = lazy(() => import('./EdgeFunctionEditor').then(m => (
 const PanelLoader = () => <div className="flex items-center justify-center h-full text-white/15 text-xs">Loading...</div>;
 
 export function AIAppBuilderWorkspace() {
+  const navigate = useNavigate();
   const {
     messages, setMessages, isGenerating, latestFiles, previousFiles, mode, setMode, thinkingPhase, versions,
     totalTokensUsed, sendMessage, stopGenerating, clearChat, restoreVersion,
@@ -103,7 +106,7 @@ export function AIAppBuilderWorkspace() {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showFileSearch, setShowFileSearch] = useState(false);
 
-  // New panel states
+  // Panel states
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showConsole, setShowConsole] = useState(false);
   const [showEnvVars, setShowEnvVars] = useState(false);
@@ -137,6 +140,7 @@ export function AIAppBuilderWorkspace() {
   const [showBilling, setShowBilling] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showSEOEditor, setShowSEOEditor] = useState(false);
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [collaborators, setCollaborators] = useState<{ id: string; email: string; role: 'viewer' | 'editor' | 'admin'; avatarColor: string; joinedAt: Date }[]>([]);
   const [buildNotifications, setBuildNotifications] = useState<BuildNotification[]>([]);
   const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>([]);
@@ -152,7 +156,6 @@ export function AIAppBuilderWorkspace() {
         .filter(v => v.key && v.value)
         .map(v => ({ key: v.key, value: v.value }));
       setEnvVars(prev => {
-        // Merge: panel vars take priority, keep settings vars that aren't overridden
         const panelKeys = new Set(mapped.map(m => m.key));
         const kept = prev.filter(p => !panelKeys.has(p.key));
         return [...kept, ...mapped];
@@ -199,7 +202,6 @@ export function AIAppBuilderWorkspace() {
       if (project.files.length > 0) {
         pushUndo('AI generation', project.files);
       }
-      // Check for conflicts with dirty files
       const conflicts = latestFiles.filter(f => dirtyFiles.has(f.path));
       if (conflicts.length > 0) {
         setPendingConflicts(conflicts.map(f => ({
@@ -207,7 +209,6 @@ export function AIAppBuilderWorkspace() {
           userContent: project.files.find(pf => pf.path === f.path)?.content || '',
           aiContent: f.content,
         })));
-        // Apply non-conflicting files immediately
         const nonConflicting = latestFiles.filter(f => !dirtyFiles.has(f.path));
         for (const file of nonConflicting) upsertFile(file.path, file.content);
       } else {
@@ -223,20 +224,16 @@ export function AIAppBuilderWorkspace() {
         latestFiles.forEach(f => next.delete(f.path));
         return next;
       });
-      // Reset fix attempts on successful generation
       setFixAttemptCount(0);
       setLastFixError(null);
     }
   }, [latestFiles]);
 
-  // AI completion toast + notification
+  // AI completion notification
   useEffect(() => {
     if (prevIsGeneratingRef.current && !isGenerating && latestFiles.length > 0) {
       toast.success(`Generated ${latestFiles.length} file${latestFiles.length > 1 ? 's' : ''}`, {
-        action: {
-          label: 'View',
-          onClick: () => setRightTab('preview'),
-        },
+        action: { label: 'View', onClick: () => setRightTab('preview') },
       });
       setBuildNotifications(prev => [{
         id: crypto.randomUUID(),
@@ -249,64 +246,36 @@ export function AIAppBuilderWorkspace() {
     prevIsGeneratingRef.current = isGenerating;
   }, [isGenerating, latestFiles.length]);
 
-  // Hot-reload: sync partial files during streaming
+  // Hot-reload
   useEffect(() => {
     if (isStreamingPreview && partialFiles.length > 0) {
-      for (const file of partialFiles) {
-        upsertFile(file.path, file.content);
-      }
+      for (const file of partialFiles) upsertFile(file.path, file.content);
     }
   }, [partialFiles, isStreamingPreview]);
 
-  // Auto-save on file changes
+  // Auto-save
   useEffect(() => {
-    if (project.files.length > 0) {
-      scheduleAutoSave(project.name, project.files);
-    }
+    if (project.files.length > 0) scheduleAutoSave(project.name, project.files);
   }, [project.files, project.name, scheduleAutoSave]);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
-        e.preventDefault();
-        if (e.shiftKey) handleRedo();
-        else handleUndo();
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setShowCommandPalette(prev => !prev);
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
-        e.preventDefault();
-        setShowQuickSwitcher(prev => !prev);
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault();
-        handleSave();
-      }
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') {
-        e.preventDefault();
-        setShowFileSearch(prev => !prev);
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === '/') {
-        e.preventDefault();
-        setShowShortcuts(prev => !prev);
-      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); if (e.shiftKey) handleRedo(); else handleUndo(); }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setShowCommandPalette(prev => !prev); }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'p') { e.preventDefault(); setShowQuickSwitcher(prev => !prev); }
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); handleSave(); }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') { e.preventDefault(); setShowFileSearch(prev => !prev); }
+      if ((e.metaKey || e.ctrlKey) && e.key === '/') { e.preventDefault(); setShowShortcuts(prev => !prev); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [project.files, canUndo, canRedo]);
 
   const handleSend = (input: string, imageDataUrl?: string | null) => {
-    const contextPrefix = activeFile && rightTab === 'code'
-      ? `[Currently viewing: ${activeFile.path}]\n`
-      : '';
+    const contextPrefix = activeFile && rightTab === 'code' ? `[Currently viewing: ${activeFile.path}]\n` : '';
     const referencedFiles = findReferencedFiles(input, project.files);
-    const contextHint = referencedFiles.length > 0
-      ? `[Auto-detected relevant files: ${referencedFiles.map(f => f.path).join(', ')}]\n`
-      : '';
-    // Build knowledge context
+    const contextHint = referencedFiles.length > 0 ? `[Auto-detected relevant files: ${referencedFiles.map(f => f.path).join(', ')}]\n` : '';
     const knowledgeCtx = knowledge.customInstructions
       ? `Custom instructions: ${knowledge.customInstructions}${knowledge.contextFiles.length > 0 ? '\n\nContext files:\n' + knowledge.contextFiles.map(f => `--- ${f.name} ---\n${f.content}`).join('\n\n') : ''}`
       : undefined;
@@ -322,17 +291,9 @@ export function AIAppBuilderWorkspace() {
     const newCount = isSameError ? fixAttemptCount + 1 : 1;
     setFixAttemptCount(newCount);
     setLastFixError(error.message);
-
-    if (newCount > MAX_FIX_ATTEMPTS) {
-      toast.error('Unable to auto-fix — try describing the issue differently.');
-      return;
-    }
-
+    if (newCount > MAX_FIX_ATTEMPTS) { toast.error('Unable to auto-fix — try describing the issue differently.'); return; }
     const retryContext = newCount > 1 ? `\n\nThis is attempt ${newCount}/${MAX_FIX_ATTEMPTS}. Previous fix attempts did not resolve the issue. Please try a different approach.` : '';
-    sendMessage(
-      `Fix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`,
-      project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel
-    );
+    sendMessage(`Fix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel);
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, fixAttemptCount, lastFixError]);
 
   const handleForkFromMessage = useCallback(async (messageId: string) => {
@@ -365,7 +326,6 @@ export function AIAppBuilderWorkspace() {
     setEdgeFunctions(prev => [...prev, { name, status: 'draft' }]);
   }, [upsertFile]);
 
-  // Generate preview slug from project name
   useEffect(() => {
     if (project.name && !previewSlug) {
       const slug = project.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30);
@@ -376,9 +336,7 @@ export function AIAppBuilderWorkspace() {
   const handleConflictResolve = useCallback((resolutions: Record<string, 'mine' | 'ai'>) => {
     if (!pendingConflicts) return;
     for (const conflict of pendingConflicts) {
-      if (resolutions[conflict.path] === 'ai') {
-        upsertFile(conflict.path, conflict.aiContent);
-      }
+      if (resolutions[conflict.path] === 'ai') upsertFile(conflict.path, conflict.aiContent);
     }
     setPendingConflicts(null);
     setDirtyFiles(prev => {
@@ -388,17 +346,13 @@ export function AIAppBuilderWorkspace() {
     });
   }, [pendingConflicts, upsertFile]);
 
-  // Track dirty files on manual edits
   const handleContentChange = useCallback((path: string, content: string) => {
     upsertFile(path, content);
     setDirtyFiles(prev => new Set(prev).add(path));
   }, [upsertFile]);
 
   const handleAIEditRequest = useCallback((selector: string, elementContext: string, prompt: string) => {
-    sendMessage(
-      `The user selected an element in the preview and wants you to edit it.\n\nElement selector: ${selector}\nElement HTML:\n${elementContext}\n\nUser request: "${prompt}"\n\nPlease update the relevant file(s) to apply this change.`,
-      project.files, supabaseConfig, stripeConfig, serviceKeys
-    );
+    sendMessage(`The user selected an element in the preview and wants you to edit it.\n\nElement selector: ${selector}\nElement HTML:\n${elementContext}\n\nUser request: "${prompt}"\n\nPlease update the relevant file(s) to apply this change.`, project.files, supabaseConfig, stripeConfig, serviceKeys);
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys]);
 
   const handleInlineAIAction = useCallback((action: string, selection: string, filePath: string) => {
@@ -414,9 +368,7 @@ export function AIAppBuilderWorkspace() {
 
   const handleReplaceInFiles = useCallback((query: string, replacement: string, isRegex: boolean, caseSensitive: boolean) => {
     let count = 0;
-    const regex = isRegex
-      ? new RegExp(query, caseSensitive ? 'g' : 'gi')
-      : new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), caseSensitive ? 'g' : 'gi');
+    const regex = isRegex ? new RegExp(query, caseSensitive ? 'g' : 'gi') : new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), caseSensitive ? 'g' : 'gi');
     for (const file of project.files) {
       const newContent = file.content.replace(regex, () => { count++; return replacement; });
       if (newContent !== file.content) upsertFile(file.path, newContent);
@@ -472,7 +424,6 @@ export function AIAppBuilderWorkspace() {
       setFiles(loaded.files as any[]);
       renameProject(loaded.name);
       if (loaded.published_url) setPublishedUrl(loaded.published_url);
-      // Restore chat messages if saved
       if (loaded.settings?.chatMessages) {
         setMessages(loaded.settings.chatMessages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
       }
@@ -496,14 +447,8 @@ export function AIAppBuilderWorkspace() {
     }
   }, [loadProject, setFiles, renameProject]);
 
-  const handleAssetUpload = useCallback((asset: ProjectAsset) => {
-    setAssets(prev => [...prev, asset]);
-  }, []);
-
-  const handleAssetDelete = useCallback((id: string) => {
-    setAssets(prev => prev.filter(a => a.id !== id));
-    toast.success('Asset deleted');
-  }, []);
+  const handleAssetUpload = useCallback((asset: ProjectAsset) => { setAssets(prev => [...prev, asset]); }, []);
+  const handleAssetDelete = useCallback((id: string) => { setAssets(prev => prev.filter(a => a.id !== id)); toast.success('Asset deleted'); }, []);
 
   const STARTER_CONTENT: Record<string, string> = {
     html: '<!DOCTYPE html>\n<html>\n<head>\n  <title>Page</title>\n</head>\n<body>\n  \n</body>\n</html>',
@@ -558,16 +503,42 @@ export function AIAppBuilderWorkspace() {
     setShowActivity(panel === 'activity' ? !showActivity : false);
   };
 
+  // ─── Left sidebar icon bar items ───
+  const sidebarIcons = [
+    { id: 'database', icon: Database, label: 'Database', show: !!supabaseConfig, active: showDatabase, color: 'emerald' },
+    { id: 'auth', icon: Shield, label: 'Auth', show: !!supabaseConfig, active: showAuth, color: 'violet' },
+    { id: 'storage', icon: FolderOpen, label: 'Storage', show: !!supabaseConfig, active: showStorage, color: 'blue' },
+    { id: 'edgeFunctions', icon: Zap, label: 'Edge Functions', show: true, active: showEdgeFunctions, color: 'yellow' },
+    { id: 'knowledge', icon: Brain, label: 'Knowledge', show: true, active: showKnowledge, color: 'amber' },
+    { id: 'envVars', icon: Variable, label: 'Env Variables', show: true, active: showEnvVars, color: 'cyan' },
+    { id: 'assets', icon: Image, label: 'Assets', show: true, active: showAssets, color: 'cyan' },
+    { id: 'packages', icon: Package, label: 'Packages', show: true, active: showPackages, color: 'cyan' },
+    { id: 'history', icon: History, label: 'Version History', show: true, active: showVersionHistory, color: 'cyan' },
+    { id: 'activity', icon: Clock, label: 'Activity', show: true, active: showActivity, color: 'cyan' },
+  ] as const;
+
   return (
     <TooltipProvider delayDuration={300}>
       <OnboardingTour />
-      <div className="h-[calc(100vh-5rem)] w-full flex flex-col bg-[#0a0a0f]">
-        {/* ── Top Bar ── */}
-        <div className="flex items-center justify-between px-3 h-11 border-b border-white/[0.06] bg-black/40 backdrop-blur-sm shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
+      <div className="h-screen w-full flex flex-col bg-[#09090b]">
+        {/* ── Top Bar — Lovable-style ── */}
+        <div className="flex items-center justify-between px-2 h-12 border-b border-white/[0.06] bg-[#09090b] shrink-0">
+          {/* LEFT: Back + Project name */}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={() => navigate('/hub')} className="h-8 w-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors shrink-0">
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Back to Hub</TooltipContent>
+            </Tooltip>
+
+            <div className="h-4 w-px bg-white/[0.06]" />
+
+            <div className="flex items-center gap-1.5 min-w-0">
               <div className={cn(
-                "h-2 w-2 rounded-full transition-colors",
+                "h-2 w-2 rounded-full shrink-0 transition-colors",
                 isGenerating ? "bg-amber-400 animate-pulse" : hasFiles ? "bg-emerald-400" : "bg-white/20"
               )} />
               {isEditingName ? (
@@ -576,25 +547,19 @@ export function AIAppBuilderWorkspace() {
                   onChange={(e) => setEditName(e.target.value)}
                   onBlur={handleRename}
                   onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-                  className="h-6 w-44 text-xs bg-white/5 border-white/10 text-white"
+                  className="h-7 w-48 text-sm bg-white/5 border-white/10 text-white"
                   autoFocus
                 />
               ) : (
                 <button
                   onClick={() => { setEditName(project.name); setIsEditingName(true); }}
-                  className="flex items-center gap-1.5 text-xs font-medium text-white/80 hover:text-white transition-colors group"
+                  className="flex items-center gap-1 text-sm font-medium text-white/80 hover:text-white transition-colors truncate max-w-[200px]"
                 >
                   {project.name}
-                  <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-60" />
+                  <ChevronDown className="h-3 w-3 text-white/30 shrink-0" />
                 </button>
               )}
             </div>
-
-            {hasFiles && (
-              <span className="text-[10px] text-white/30 font-mono">
-                {project.files.length} file{project.files.length !== 1 ? 's' : ''}
-              </span>
-            )}
 
             <BranchManager
               branches={branches}
@@ -607,14 +572,10 @@ export function AIAppBuilderWorkspace() {
             />
 
             {hasFiles && (
-              <div className="flex items-center gap-0.5">
+              <div className="hidden md:flex items-center gap-0.5 ml-1">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button
-                      onClick={handleUndo}
-                      disabled={!canUndo}
-                      className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", canUndo ? "text-white/40 hover:text-white/70 hover:bg-white/5" : "text-white/10")}
-                    >
+                    <button onClick={handleUndo} disabled={!canUndo} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", canUndo ? "text-white/30 hover:text-white/60 hover:bg-white/5" : "text-white/10")}>
                       <Undo2 className="h-3.5 w-3.5" />
                     </button>
                   </TooltipTrigger>
@@ -622,11 +583,7 @@ export function AIAppBuilderWorkspace() {
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button
-                      onClick={handleRedo}
-                      disabled={!canRedo}
-                      className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", canRedo ? "text-white/40 hover:text-white/70 hover:bg-white/5" : "text-white/10")}
-                    >
+                    <button onClick={handleRedo} disabled={!canRedo} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", canRedo ? "text-white/30 hover:text-white/60 hover:bg-white/5" : "text-white/10")}>
                       <Redo2 className="h-3.5 w-3.5" />
                     </button>
                   </TooltipTrigger>
@@ -634,186 +591,55 @@ export function AIAppBuilderWorkspace() {
                 </Tooltip>
               </div>
             )}
+          </div>
 
-            {(supabaseConfig || stripeConfig || serviceKeys.length > 0) && (
-              <div className="hidden md:flex items-center gap-1 ml-1">
-                {supabaseConfig && (
-                  <Badge className="h-5 text-[9px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20">
-                    <Database className="h-2.5 w-2.5 mr-0.5" />DB
-                  </Badge>
-                )}
-                {stripeConfig && (
-                  <Badge className="h-5 text-[9px] bg-violet-500/10 text-violet-400 border-violet-500/20 hover:bg-violet-500/20">
-                    <CreditCard className="h-2.5 w-2.5 mr-0.5" />Pay
-                  </Badge>
-                )}
-                {serviceKeys.length > 0 && (
-                  <Badge className="h-5 text-[9px] bg-cyan-500/10 text-cyan-400 border-cyan-500/20 hover:bg-cyan-500/20">
-                    <Key className="h-2.5 w-2.5 mr-0.5" />{serviceKeys.length} API{serviceKeys.length > 1 ? 's' : ''}
-                  </Badge>
-                )}
-              </div>
-            )}
+          {/* CENTER: View tabs */}
+          <div className="hidden md:flex items-center gap-0.5 bg-white/[0.03] rounded-lg p-0.5 border border-white/[0.06]">
+            <button
+              onClick={() => setRightTab('preview')}
+              className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md transition-all font-medium", rightTab === 'preview' ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70")}
+            >
+              <Eye className="h-3.5 w-3.5" />
+              Preview
+            </button>
+            <button
+              onClick={() => setRightTab('code')}
+              className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md transition-all font-medium", rightTab === 'code' ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70")}
+            >
+              <Code className="h-3.5 w-3.5" />
+              Code
+            </button>
+            <button
+              onClick={() => setRightTab('split')}
+              className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md transition-all font-medium", rightTab === 'split' ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70")}
+            >
+              <Columns className="h-3.5 w-3.5" />
+              Split
+            </button>
+          </div>
 
+          {/* RIGHT: Actions */}
+          <div className="flex items-center gap-1">
             <CollaboratorAvatars collaborators={collaborators} onClick={() => setShowShareDialog(true)} />
             <CollaborativePresence projectId={currentProjectId} />
             <CreditsPill onClick={() => setShowBilling(true)} />
-          </div>
 
-          <div className="flex items-center gap-1">
             <BuildNotificationCenter
               notifications={buildNotifications}
               onMarkRead={(id) => setBuildNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))}
               onClear={() => setBuildNotifications([])}
             />
+
             <Tooltip>
               <TooltipTrigger asChild>
-                <button onClick={() => setShowSEOEditor(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
-                  <Globe className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">SEO Editor</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={() => setShowShareDialog(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
-                  <Users className="h-3.5 w-3.5" />
+                <button onClick={() => setShowShareDialog(true)} className="h-8 w-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                  <Users className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">Share</TooltipContent>
             </Tooltip>
-            {/* Panel toggle buttons */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => openPanel('history')}
-                  className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showVersionHistory ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
-                >
-                  <History className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Version History</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => openPanel('envVars')}
-                  className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showEnvVars ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
-                >
-                  <Variable className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Env Variables</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => openPanel('assets')}
-                  className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showAssets ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
-                >
-                  <Image className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Assets</TooltipContent>
-            </Tooltip>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => openPanel('packages')}
-                  className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showPackages ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
-                >
-                  <Package className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Packages</TooltipContent>
-            </Tooltip>
-
-            {supabaseConfig && (
-              <>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => openPanel('database')}
-                      className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showDatabase ? "text-emerald-400 bg-emerald-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
-                    >
-                      <Database className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs">Database</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => openPanel('auth')}
-                      className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showAuth ? "text-violet-400 bg-violet-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
-                    >
-                      <Shield className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs">Auth</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => openPanel('storage')}
-                      className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showStorage ? "text-blue-400 bg-blue-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
-                    >
-                      <FolderOpen className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs">Storage</TooltipContent>
-                </Tooltip>
-              </>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => openPanel('edgeFunctions')}
-                  className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showEdgeFunctions ? "text-yellow-400 bg-yellow-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
-                >
-                  <Zap className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Edge Functions</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => openPanel('knowledge')}
-                  className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showKnowledge ? "text-amber-400 bg-amber-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
-                >
-                  <Brain className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Knowledge</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => openPanel('activity')}
-                  className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showActivity ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
-                >
-                  <Clock className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Activity</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setShowShortcuts(true)}
-                  className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
-                >
-                  <Keyboard className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Shortcuts (⌘/)</TooltipContent>
-            </Tooltip>
-
-            <div className="h-4 w-px bg-white/[0.06] mx-1" />
+            <div className="h-5 w-px bg-white/[0.06] mx-0.5" />
 
             <DeployDialog
               onPublish={handlePublish}
@@ -837,42 +663,23 @@ export function AIAppBuilderWorkspace() {
               onLoadProjects={loadProjects}
               onRemix={handleRemix}
             />
-            <ProjectSettings
-              supabaseConfig={supabaseConfig}
-              githubConfig={githubConfig}
-              stripeConfig={stripeConfig}
-              vercelConfig={vercelConfig}
-              serviceKeys={serviceKeys}
-              envVars={envVars}
-              onSupabaseChange={setSupabaseConfig}
-              onGithubChange={setGithubConfig}
-              onStripeChange={setStripeConfig}
-              onVercelChange={setVercelConfig}
-              onServiceKeysChange={setServiceKeys}
-              onEnvVarsChange={setEnvVars}
-            />
-            {vercelConfig && <VercelDeployButton projectName={project.name} files={project.files} vercelToken={vercelConfig.token} />}
-            {githubConfig && <GithubSyncButton projectName={project.name} files={project.files} githubToken={githubConfig.token} onPullFiles={(files) => { pushUndo('GitHub pull', project.files); setFiles(files); }} />}
-            <SharePreview html={compiledHTML} projectName={project.name} />
-            <ExportButton projectName={project.name} files={project.files} />
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={() => setShowSettingsPanel(true)} className="h-8 w-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                  <Settings className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Settings</TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
         {/* Mobile tab switcher */}
         {isMobile && (
           <div className="flex items-center h-10 border-b border-white/[0.06] bg-black/30 shrink-0 md:hidden">
-            <button
-              onClick={() => setMobileTab('chat')}
-              className={cn("flex-1 h-full text-xs font-medium transition-colors", mobileTab === 'chat' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}
-            >
-              Chat
-            </button>
-            <button
-              onClick={() => setMobileTab('editor')}
-              className={cn("flex-1 h-full text-xs font-medium transition-colors", mobileTab === 'editor' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}
-            >
-              Editor
-            </button>
+            <button onClick={() => setMobileTab('chat')} className={cn("flex-1 h-full text-xs font-medium transition-colors", mobileTab === 'chat' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}>Chat</button>
+            <button onClick={() => setMobileTab('editor')} className={cn("flex-1 h-full text-xs font-medium transition-colors", mobileTab === 'editor' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}>Editor</button>
           </div>
         )}
 
@@ -880,28 +687,7 @@ export function AIAppBuilderWorkspace() {
         <div className="flex-1 overflow-hidden">
           {isMobile ? (
             mobileTab === 'chat' ? (
-              <BuilderChatPanel
-                messages={messages}
-                isGenerating={isGenerating}
-                fileCount={project.files.length}
-                mode={mode}
-                thinkingPhase={thinkingPhase}
-                versions={versions}
-                totalTokensUsed={totalTokensUsed}
-                previousFiles={previousFiles}
-                latestFiles={latestFiles}
-                onModeChange={setMode}
-                onSend={handleSend}
-                onStop={stopGenerating}
-                onClear={handleClear}
-                onRestoreVersion={restoreVersion}
-                onOpenTemplates={() => setShowTemplates(true)}
-                onFixError={handleFixError}
-                onForkFromMessage={handleForkFromMessage}
-                onRevertToMessage={handleRevertToMessage}
-                selectedModel={selectedModel}
-                onModelChange={setSelectedModel}
-              />
+              <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} />
             ) : (
               <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount}>
                 <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} />
@@ -911,47 +697,18 @@ export function AIAppBuilderWorkspace() {
           <ResizablePanelGroup direction="horizontal" className="h-full">
             {/* Chat Panel - Collapsible */}
             {isChatCollapsed ? (
-              <div className="w-10 border-r border-white/[0.06] bg-[#0a0a0f] flex flex-col items-center pt-3 shrink-0">
-                <button
-                  onClick={() => setIsChatCollapsed(false)}
-                  className="h-8 w-8 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
-                  title="Expand chat"
-                >
+              <div className="w-10 border-r border-white/[0.06] bg-[#09090b] flex flex-col items-center pt-3 shrink-0">
+                <button onClick={() => setIsChatCollapsed(false)} className="h-8 w-8 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors" title="Expand chat">
                   <PanelLeftOpen className="h-4 w-4" />
                 </button>
               </div>
             ) : (
             <ResizablePanel defaultSize={28} minSize={20} maxSize={40}>
               <div className="h-full relative">
-                <button
-                  onClick={() => setIsChatCollapsed(true)}
-                  className="absolute top-2 right-2 z-10 h-6 w-6 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors"
-                  title="Collapse chat"
-                >
+                <button onClick={() => setIsChatCollapsed(true)} className="absolute top-2 right-2 z-10 h-6 w-6 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors" title="Collapse chat">
                   <PanelLeftClose className="h-3.5 w-3.5" />
                 </button>
-                <BuilderChatPanel
-                  messages={messages}
-                  isGenerating={isGenerating}
-                  fileCount={project.files.length}
-                  mode={mode}
-                  thinkingPhase={thinkingPhase}
-                  versions={versions}
-                  totalTokensUsed={totalTokensUsed}
-                  previousFiles={previousFiles}
-                  latestFiles={latestFiles}
-                  onModeChange={setMode}
-                  onSend={handleSend}
-                  onStop={stopGenerating}
-                  onClear={handleClear}
-                  onRestoreVersion={restoreVersion}
-                  onOpenTemplates={() => setShowTemplates(true)}
-                  onFixError={handleFixError}
-                  onForkFromMessage={handleForkFromMessage}
-                  onRevertToMessage={handleRevertToMessage}
-                  selectedModel={selectedModel}
-                  onModelChange={setSelectedModel}
-                />
+                <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} />
               </div>
             </ResizablePanel>
             )}
@@ -961,27 +718,77 @@ export function AIAppBuilderWorkspace() {
             {/* Right Panel */}
             <ResizablePanel defaultSize={72} minSize={50}>
               <div className="h-full flex">
+                {/* Lovable-style left icon sidebar */}
+                <div className="w-10 border-r border-white/[0.06] bg-[#09090b] flex flex-col items-center py-2 gap-0.5 shrink-0">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button onClick={() => setShowFileTree(!showFileTree)} className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-colors", showFileTree ? "text-white/70 bg-white/5" : "text-white/25 hover:text-white/50 hover:bg-white/[0.03]")}>
+                        <FolderOpen className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs">Files</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button onClick={() => setShowFileSearch(!showFileSearch)} className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-colors", showFileSearch ? "text-white/70 bg-white/5" : "text-white/25 hover:text-white/50 hover:bg-white/[0.03]")}>
+                        <Search className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs">Search (⌘⇧F)</TooltipContent>
+                  </Tooltip>
+
+                  <div className="h-px w-5 bg-white/[0.06] my-1" />
+
+                  {sidebarIcons.filter(i => i.show).map(item => (
+                    <Tooltip key={item.id}>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => openPanel(item.id as any)}
+                          className={cn(
+                            "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
+                            item.active ? `text-${item.color}-400 bg-${item.color}-500/10` : "text-white/25 hover:text-white/50 hover:bg-white/[0.03]"
+                          )}
+                        >
+                          <item.icon className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>
+                    </Tooltip>
+                  ))}
+
+                  <div className="mt-auto flex flex-col items-center gap-0.5">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button onClick={() => setShowSEOEditor(true)} className="h-8 w-8 rounded-lg flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/[0.03] transition-colors">
+                          <Globe className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs">SEO</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button onClick={() => setShowConsole(!showConsole)} className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-colors", showConsole ? "text-white/70 bg-white/5" : "text-white/25 hover:text-white/50 hover:bg-white/[0.03]")}>
+                          <Activity className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs">Console</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button onClick={() => setShowShortcuts(true)} className="h-8 w-8 rounded-lg flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/[0.03] transition-colors">
+                          <Keyboard className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs">Shortcuts (⌘/)</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </div>
+
                 {/* Side panels */}
-                <VersionHistoryPanel
-                  versions={versions}
-                  currentFiles={project.files}
-                  onRestore={restoreVersion}
-                  onClose={() => setShowVersionHistory(false)}
-                  open={showVersionHistory}
-                />
-                <EnvVarsPanel
-                  envVars={envVariables}
-                  onChange={setEnvVariables}
-                  open={showEnvVars}
-                  onClose={() => setShowEnvVars(false)}
-                />
-                <AssetManager
-                  assets={assets}
-                  onUpload={handleAssetUpload}
-                  onDelete={handleAssetDelete}
-                  open={showAssets}
-                  onClose={() => setShowAssets(false)}
-                />
+                <VersionHistoryPanel versions={versions} currentFiles={project.files} onRestore={restoreVersion} onClose={() => setShowVersionHistory(false)} open={showVersionHistory} />
+                <EnvVarsPanel envVars={envVariables} onChange={setEnvVariables} open={showEnvVars} onClose={() => setShowEnvVars(false)} />
+                <AssetManager assets={assets} onUpload={handleAssetUpload} onDelete={handleAssetDelete} open={showAssets} onClose={() => setShowAssets(false)} />
                 <Suspense fallback={<PanelLoader />}>
                   <DatabasePanel open={showDatabase} onClose={() => setShowDatabase(false)} supabaseConfig={supabaseConfig} />
                   <AuthConfigPanel open={showAuth} onClose={() => setShowAuth(false)} supabaseConfig={supabaseConfig} onGenerateAuthPages={handleGenerateAuthPages} />
@@ -992,88 +799,15 @@ export function AIAppBuilderWorkspace() {
                 <ActivityFeed open={showActivity} onClose={() => setShowActivity(false)} entries={activityEntries} />
                 {showPackages && (
                   <div className="w-64 border-r border-white/[0.06] bg-[#0d0d14] overflow-hidden">
-                    <PackageManager
-                      packages={cdnPackages}
-                      onAddPackage={(pkg) => setCdnPackages(prev => [...prev, pkg])}
-                      onRemovePackage={(name) => setCdnPackages(prev => prev.filter(p => p.name !== name))}
-                    />
+                    <PackageManager packages={cdnPackages} onAddPackage={(pkg) => setCdnPackages(prev => [...prev, pkg])} onRemovePackage={(name) => setCdnPackages(prev => prev.filter(p => p.name !== name))} />
                   </div>
                 )}
 
                 <div className="flex-1 flex flex-col overflow-hidden">
-                  {hasFiles && (
-                    <div className="flex items-center h-9 border-b border-white/[0.06] bg-black/20 shrink-0">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={() => setShowFileTree(!showFileTree)}
-                            className="h-9 w-9 flex items-center justify-center text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors"
-                          >
-                            {showFileTree ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="text-xs">
-                          {showFileTree ? 'Hide files' : 'Show files'}
-                        </TooltipContent>
-                      </Tooltip>
-
-                      <div className="h-4 w-px bg-white/[0.06] mx-0.5" />
-
-                      <button
-                        onClick={() => setRightTab('preview')}
-                        className={cn(
-                          "h-9 px-3 flex items-center gap-1.5 text-xs transition-all relative",
-                          rightTab === 'preview' ? "text-white" : "text-white/40 hover:text-white/70"
-                        )}
-                      >
-                        <Eye className="h-3 w-3" />
-                        Preview
-                        {rightTab === 'preview' && (
-                          <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => setRightTab('code')}
-                        className={cn(
-                          "h-9 px-3 flex items-center gap-1.5 text-xs transition-all relative",
-                          rightTab === 'code' ? "text-white" : "text-white/40 hover:text-white/70"
-                        )}
-                      >
-                        <Code className="h-3 w-3" />
-                        Code
-                        {rightTab === 'code' && (
-                          <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => setRightTab('split')}
-                        className={cn(
-                          "h-9 px-3 flex items-center gap-1.5 text-xs transition-all relative",
-                          rightTab === 'split' ? "text-white" : "text-white/40 hover:text-white/70"
-                        )}
-                      >
-                        <Columns className="h-3 w-3" />
-                        Split
-                        {rightTab === 'split' && (
-                          <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full" />
-                        )}
-                      </button>
-
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={() => setShowFileSearch(!showFileSearch)}
-                            className={cn(
-                              "h-9 px-2.5 flex items-center gap-1 text-xs transition-all",
-                              showFileSearch ? "text-cyan-400" : "text-white/30 hover:text-white/60"
-                            )}
-                          >
-                            <Search className="h-3 w-3" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="text-xs">Search files (⌘⇧F)</TooltipContent>
-                      </Tooltip>
-
+                  {/* File tab bar (code/split only) */}
+                  {hasFiles && rightTab !== 'preview' && (
+                    <div className="flex items-center h-9 border-b border-white/[0.06] bg-[#0d0d14] shrink-0">
+                      <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} dirtyFiles={dirtyFiles} onSelect={setActiveFile} onClose={closeFile} onReorder={reorderOpenFiles} />
                       {isGenerating && (
                         <div className="ml-auto mr-3 flex items-center gap-1.5 text-[10px] text-amber-400/80">
                           <Activity className="h-3 w-3 animate-pulse" />
@@ -1084,14 +818,7 @@ export function AIAppBuilderWorkspace() {
                   )}
 
                   <div className="flex-1 overflow-hidden flex">
-                    <FileSearchPanel
-                      open={showFileSearch}
-                      onClose={() => setShowFileSearch(false)}
-                      files={project.files}
-                      onSelectFile={(path) => { setActiveFile(path); }}
-                      onSwitchToCode={() => setRightTab('code')}
-                      onReplaceInFiles={handleReplaceInFiles}
-                    />
+                    <FileSearchPanel open={showFileSearch} onClose={() => setShowFileSearch(false)} files={project.files} onSelectFile={(path) => { setActiveFile(path); }} onSwitchToCode={() => setRightTab('code')} onReplaceInFiles={handleReplaceInFiles} />
 
                     <div className="flex-1 overflow-hidden flex flex-col">
                       <div className="flex-1 overflow-hidden">
@@ -1099,14 +826,7 @@ export function AIAppBuilderWorkspace() {
                           {hasFiles && showFileTree && !showFileSearch && (
                             <>
                               <ResizablePanel defaultSize={18} minSize={12} maxSize={28}>
-                                <ProjectFileTree
-                                  files={project.files}
-                                  activeFilePath={project.activeFilePath}
-                                  onSelectFile={(path) => { setActiveFile(path); if (rightTab === 'preview') setRightTab('code'); }}
-                                  onDeleteFile={deleteFile}
-                                  onCreateFile={handleCreateFile}
-                                  onRenameFile={handleRenameFile}
-                                />
+                                <ProjectFileTree files={project.files} activeFilePath={project.activeFilePath} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} onDeleteFile={deleteFile} onCreateFile={handleCreateFile} onRenameFile={handleRenameFile} />
                               </ResizablePanel>
                               <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors" />
                             </>
@@ -1125,7 +845,6 @@ export function AIAppBuilderWorkspace() {
                                 <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors" />
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
-                                    <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} dirtyFiles={dirtyFiles} onSelect={setActiveFile} onClose={closeFile} onReorder={reorderOpenFiles} />
                                     <FileBreadcrumb file={activeFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
                                     <div className="flex-1 overflow-hidden">
                                       <CodeEditor file={activeFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} />
@@ -1141,14 +860,6 @@ export function AIAppBuilderWorkspace() {
                               </div>
                             ) : (
                               <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
-                                <FileTabBar
-                                  openPaths={project.openFilePaths}
-                                  activePath={project.activeFilePath}
-                                  dirtyFiles={dirtyFiles}
-                                  onSelect={setActiveFile}
-                                  onClose={closeFile}
-                                  onReorder={reorderOpenFiles}
-                                />
                                 <FileBreadcrumb file={activeFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
                                 <div className="flex-1 overflow-hidden">
                                   <CodeEditor file={activeFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} />
@@ -1160,11 +871,7 @@ export function AIAppBuilderWorkspace() {
                       </div>
 
                       {/* Console Panel */}
-                      <ConsolePanel
-                        open={showConsole}
-                        onToggle={() => setShowConsole(!showConsole)}
-                        onFixError={handleFixError}
-                      />
+                      <ConsolePanel open={showConsole} onToggle={() => setShowConsole(!showConsole)} onFixError={handleFixError} />
                     </div>
                   </div>
                 </div>
@@ -1176,66 +883,46 @@ export function AIAppBuilderWorkspace() {
 
         {/* Status Bar */}
         {hasFiles && !isMobile && (
-          <div className="flex items-center h-5 px-3 border-t border-white/[0.06] bg-black/40 text-[10px] text-white/30 font-mono shrink-0 gap-4">
+          <div className="flex items-center h-6 px-3 border-t border-white/[0.06] bg-[#09090b] text-[10px] text-white/30 font-mono shrink-0 gap-4">
             <span>{activeFile?.language || 'plaintext'}</span>
             <span>Ln {cursorPosition.line}, Col {cursorPosition.column}</span>
             <span>{project.files.length} file{project.files.length !== 1 ? 's' : ''}</span>
             <span>{activeBranchName}</span>
-            {dirtyFiles.size > 0 && (
-              <span className="text-amber-400/60">{dirtyFiles.size} unsaved</span>
-            )}
+            {dirtyFiles.size > 0 && <span className="text-amber-400/60">{dirtyFiles.size} unsaved</span>}
             <span className="ml-auto">{isSaving ? 'Saving...' : lastSaved ? `Saved ${lastSaved.toLocaleTimeString()}` : ''}</span>
           </div>
         )}
       </div>
 
-      <TemplateLibrary
-        isOpen={showTemplates}
-        onClose={() => setShowTemplates(false)}
-        onSelectTemplate={(prompt) => handleSend(prompt)}
-      />
-
-      <CommandPalette
-        open={showCommandPalette}
-        onOpenChange={setShowCommandPalette}
-        files={project.files}
-        onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }}
-        onSwitchTab={setRightTab}
-        onSwitchMode={setMode}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        onSave={handleSave}
-        onClear={handleClear}
-        onOpenTemplates={() => setShowTemplates(true)}
-        onPublish={handlePublish}
-        canUndo={canUndo}
-        canRedo={canRedo}
-      />
+      <TemplateLibrary isOpen={showTemplates} onClose={() => setShowTemplates(false)} onSelectTemplate={(prompt) => handleSend(prompt)} />
+      <CommandPalette open={showCommandPalette} onOpenChange={setShowCommandPalette} files={project.files} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} onSwitchTab={setRightTab} onSwitchMode={setMode} onUndo={handleUndo} onRedo={handleRedo} onSave={handleSave} onClear={handleClear} onOpenTemplates={() => setShowTemplates(true)} onPublish={handlePublish} canUndo={canUndo} canRedo={canRedo} />
       <KeyboardShortcutsPanel open={showShortcuts} onOpenChange={setShowShortcuts} />
       <BillingPanel isOpen={showBilling} onClose={() => setShowBilling(false)} />
-      <ProjectShareDialog
-        isOpen={showShareDialog}
-        onClose={() => setShowShareDialog(false)}
-        projectName={project.name}
-        collaborators={collaborators}
-        onInvite={(email, role) => setCollaborators(prev => [...prev, { id: crypto.randomUUID(), email, role, avatarColor: ['#06b6d4','#8b5cf6','#f43f5e','#22c55e'][prev.length % 4], joinedAt: new Date() }])}
-        onChangeRole={(id, role) => setCollaborators(prev => prev.map(c => c.id === id ? { ...c, role } : c))}
-        onRemove={(id) => setCollaborators(prev => prev.filter(c => c.id !== id))}
-      />
+      <ProjectShareDialog isOpen={showShareDialog} onClose={() => setShowShareDialog(false)} projectName={project.name} collaborators={collaborators} onInvite={(email, role) => setCollaborators(prev => [...prev, { id: crypto.randomUUID(), email, role, avatarColor: ['#06b6d4','#8b5cf6','#f43f5e','#22c55e'][prev.length % 4], joinedAt: new Date() }])} onChangeRole={(id, role) => setCollaborators(prev => prev.map(c => c.id === id ? { ...c, role } : c))} onRemove={(id) => setCollaborators(prev => prev.filter(c => c.id !== id))} />
       <SEOEditor isOpen={showSEOEditor} onClose={() => setShowSEOEditor(false)} files={project.files} onUpdateFile={upsertFile} />
-      <QuickFileSwitcher
-        open={showQuickSwitcher}
-        onOpenChange={setShowQuickSwitcher}
-        files={project.files}
-        onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }}
-      />
-      {pendingConflicts && (
-        <FileConflictDialog
-          open={!!pendingConflicts}
-          conflicts={pendingConflicts}
-          onResolve={handleConflictResolve}
-          onCancel={() => setPendingConflicts(null)}
+      <QuickFileSwitcher open={showQuickSwitcher} onOpenChange={setShowQuickSwitcher} files={project.files} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} />
+      {showSettingsPanel && (
+        <ProjectSettings
+          supabaseConfig={supabaseConfig}
+          githubConfig={githubConfig}
+          stripeConfig={stripeConfig}
+          vercelConfig={vercelConfig}
+          serviceKeys={serviceKeys}
+          envVars={envVars}
+          onSupabaseChange={setSupabaseConfig}
+          onGithubChange={setGithubConfig}
+          onStripeChange={setStripeConfig}
+          onVercelChange={setVercelConfig}
+          onServiceKeysChange={setServiceKeys}
+          onEnvVarsChange={setEnvVars}
         />
+      )}
+      {vercelConfig && <VercelDeployButton projectName={project.name} files={project.files} vercelToken={vercelConfig.token} />}
+      {githubConfig && <GithubSyncButton projectName={project.name} files={project.files} githubToken={githubConfig.token} onPullFiles={(files) => { pushUndo('GitHub pull', project.files); setFiles(files); }} />}
+      <SharePreview html={compiledHTML} projectName={project.name} />
+      <ExportButton projectName={project.name} files={project.files} />
+      {pendingConflicts && (
+        <FileConflictDialog open={!!pendingConflicts} conflicts={pendingConflicts} onResolve={handleConflictResolve} onCancel={() => setPendingConflicts(null)} />
       )}
     </TooltipProvider>
   );
