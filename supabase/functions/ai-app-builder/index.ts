@@ -229,11 +229,11 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, stream = true, supabaseConfig, stripeConfig, activeServices = [], mode = 'build' } = await req.json();
+    const { messages, stream = true, supabaseConfig, stripeConfig, activeServices = [], mode = 'build', model } = await req.json();
 
     // Context window management: summarize old messages if conversation is too long
     let processedMessages = [...messages];
-    const MAX_CONTEXT_MESSAGES = 20;
+    const MAX_CONTEXT_MESSAGES = 40;
     if (processedMessages.length > MAX_CONTEXT_MESSAGES) {
       // Keep the first 2 messages (initial context) and the last 10
       const oldMessages = processedMessages.slice(2, -10);
@@ -333,7 +333,7 @@ You're essentially acting as a senior product consultant + architect who happens
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-preview-05-20",
+        model: model || "google/gemini-3-pro-preview",
         messages: [{ role: "system", content: systemPrompt }, ...enrichedMessages],
         stream,
       }),
