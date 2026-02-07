@@ -191,6 +191,14 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="AI App Builder - Build full apps with AI">
+                  <NavLink to="/ai-studio/app-builder" className={getNavClass}>
+                    <Zap className="h-4 w-4 text-cyan-400" />
+                    {!isCollapsed && <span className="ml-2 font-semibold text-cyan-400">App Builder</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
