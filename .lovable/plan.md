@@ -1,122 +1,120 @@
 
 
-# Strategic Module Add-Ons & MSP Reseller Program
+# Reaching Lovable Parity: Next Feature Wave
 
-## Part 1: Reselling to MSPs & IT Companies
+## What You Already Have
+Your AI App Builder already includes: command palette, file tree, Monaco editor, version history, branching, visual edit overlay, device preview presets, console panel, env vars, asset manager, deploy dialog, templates, export (ZIP/Docker), collaborative presence, undo/redo, file search, breadcrumbs, and code diff viewer. That's impressive.
 
-### Current State
-Your Vanguard pricing already targets MSPs with per-technician plans (Pro $109, Growth $159, Power $189), but the **resale opportunity** is about letting MSPs white-label and resell your modules to *their* clients. This is the real revenue multiplier.
+## What's Still Missing vs. Lovable
 
-### Recommended Reseller Architecture
-
-**MSP Partner Program (3 Tiers)**
-
-| Tier | Monthly Commitment | Discount | White-Label | Co-Branding |
-|------|-------------------|----------|-------------|-------------|
-| Silver Partner | 10+ seats | 15% off | No | UltriumAI badge |
-| Gold Partner | 25+ seats | 25% off | Partial | Your logo + "Powered by" |
-| Platinum Partner | 50+ seats | 35% off | Full | Complete white-label |
-
-**Key Reseller Features to Build:**
-- **Bulk Licensing Dashboard** - MSPs purchase seat blocks at wholesale, assign to clients
-- **Margin Calculator** - Shows MSPs their profit at different markups (e.g., buy at $8/user, sell at $15/user)
-- **Client Provisioning API** - Auto-create isolated client tenants with selected modules
-- **Reseller Billing Portal** - MSPs manage their client subscriptions, see MRR, churn
-- **Marketing Kit Generator** - Co-branded collateral, proposals, and slide decks
+Here are the remaining high-impact gaps, grouped into three implementation phases:
 
 ---
 
-## Part 2: Module Add-On Strategy
+### Phase 1: Smart Editing and Iteration (Core UX)
 
-### Proposed Add-On Pricing Matrix
+**1. Select-to-Edit in Preview ("Visual Edits 2.0")**
+Your current visual edit overlay only supports text and color changes. Lovable lets users click any element and type a natural language prompt like "make this button bigger and blue" which the AI then applies surgically. This means:
+- When an element is selected in the preview, show a prompt input (not just text/color buttons)
+- Send the element's selector + surrounding HTML context to the AI so it rewrites just that section
+- Apply the diff back into the file system automatically
 
-Each Vanguard module becomes a standalone purchasable add-on. The base plans include core modules, and everything else is upsellable:
+**2. Streaming Preview (Hot Reload)**
+Currently, the preview only updates after the full AI response finishes. Lovable updates the preview as code streams in. This means:
+- Parse `===FILE:` blocks incrementally during streaming
+- Recompile and refresh the iframe as each file completes
+- Show a subtle "updating..." badge on the preview during partial renders
 
-| Module | Category | Per-User/Mo | Included In |
-|--------|----------|-------------|-------------|
-| **Pursuit XDR** | Security | $8 | Power+ |
-| **Sentinel SaaS** | Security | $6 | Power+ |
-| **Recon Pentest** | Security | $12 | Enterprise only |
-| **Cortex AI** | AI | $5 | Growth+ |
-| **Comply** | Compliance | $7 | Power+ |
-| **Cross-Client SOC** | Intelligence | $10 | Enterprise only |
-| **Atlas Documentation** | Operations | $3 | Growth+ |
-| **Phishing Sim** | Security | $4 | Power+ |
-
-**Strategic Bundling:**
-- "Security Bundle" (Pursuit + Sentinel + Comply) = $18 vs $21 a la carte (save 15%)
-- "Complete SOC" (All security + Cross-Client) = $35 vs $43 (save 20%)
-
----
-
-## Part 3: Social Media Integration with Module Logos
-
-### What Changes
-
-**1. Add Vanguard module logos to the watermark system**
-
-Update the `generate-social-image` edge function's `PRODUCT_LOGOS` and `PRODUCT_KEYWORDS` maps to include every Vanguard module:
-
-```
-horizon -> vanguard-horizon-logo.png
-pursuit -> vanguard-pursuit-logo.png  
-response -> vanguard-response-logo.png
-sentinel -> vanguard-sentinel-logo.png
-recon -> vanguard-recon-logo.png
-cortex -> vanguard-cortex-logo.png
-comply -> vanguard-comply-logo.png
-atlas -> vanguard-atlas-logo.png
-```
-
-**2. Add Vanguard module content types to the AI Post Generator**
-
-New "Vanguard Modules" group in `AIPostGenerator.tsx`:
-
-- Horizon RMM - "Endpoint management & patch automation"
-- Pursuit XDR - "Advanced threat detection & response"
-- Response PSA - "Helpdesk & service management"
-- Sentinel SaaS - "SaaS security monitoring"
-- Recon Pentest - "Vulnerability assessment & pentesting"
-- Cortex AI - "AI-powered IT intelligence"
-- Comply - "Compliance lifecycle management"
-- Atlas Docs - "IT documentation & knowledge base"
-
-Each content type maps to its module's color theme and visual style, and auto-watermarks the generated image with that module's logo.
-
-**3. Add visual styles per module**
-
-Each module gets a custom visual prompt style matching its brand colors:
-- Horizon = Cyan command center aesthetic
-- Pursuit = Red/crimson threat hunting visuals
-- Sentinel = Orange/amber SaaS monitoring dashboards
-- Recon = Indigo penetration testing imagery
-- etc.
-
-**4. "MSP Marketing Mode" toggle in the AI Post Generator**
-
-A new toggle that switches the generator into reseller-focused content:
-- Generates posts positioning modules as value-adds for MSP clients
-- Uses business-impact language ("increase MRR", "reduce churn", "upsell opportunity")
-- Auto-includes ROI statistics and competitive positioning
-- Watermarks with the Vanguard Suite logo instead of individual modules
+**3. "Try to Fix" Error Loop**
+Your error console has a "Fix" button, but it just sends a generic prompt. A smarter version would:
+- Automatically include the erroring file's content, the stack trace, and the line number
+- Add a "Try to Fix" button directly on errors that auto-sends a precisely scoped fix request
+- Track fix attempts to avoid infinite loops (max 3 retries)
 
 ---
 
-## Technical Implementation Plan
+### Phase 2: Multi-File Intelligence
 
-### Files to Create
-1. `src/config/vanguardAddons.ts` - Module add-on pricing, bundling logic, and reseller tiers
-2. `src/pages/vanguard/VanguardPartnerProgram.tsx` - Reseller dashboard with margin calculator, bulk licensing, and marketing kit access
-3. Module logo assets uploaded to `logos/` storage bucket (8 Vanguard module logos)
+**4. Dependency Graph and Import Resolution**
+When the AI generates multiple files, imports between them don't actually resolve in the sandbox iframe. This is the biggest fidelity gap. Implementation:
+- Build a simple bundler that concatenates JS/CSS from the file system into the HTML
+- Resolve `import` and `<link>` references between project files
+- Inject all resolved code into the iframe's `srcdoc`
 
-### Files to Edit
-1. **`supabase/functions/generate-social-image/index.ts`** - Add Vanguard module entries to `PRODUCT_LOGOS`, `PRODUCT_KEYWORDS`, `CONTENT_TYPE_TO_PRODUCT`, and `VISUAL_STYLES`
-2. **`src/components/social/AIPostGenerator.tsx`** - Add "Vanguard Modules" content type group with all 8 modules, plus "MSP Marketing Mode" toggle
-3. **`src/config/vanguardPricing.ts`** - Expand `ADDONS` array from 2 items to include all modules with per-user pricing
-4. **`src/pages/vanguard/VanguardSuite.tsx`** - Update the product modules list and pricing tiers to reflect the new add-on structure
-5. **`src/components/vanguard/VanguardNavigation.tsx`** - Add "Partner Program" link under a new business/sales section
+**5. Package/CDN Manager**
+Let users add npm packages (loaded via CDN like esm.sh or unpkg) with a UI panel:
+- Search for packages
+- Auto-inject `<script>` tags or ESM imports into the compiled HTML
+- Track which packages are used per project
 
-### Edge Function Changes
-- **`generate-social-image`** - 8 new logo mappings, 8 new keyword sets, 8 new visual style prompts
-- **`generate-social-post`** - Add MSP marketing mode context to system prompt when toggled
+**6. Multi-File Awareness in Chat**
+When the user says "update the header component", the AI should know which file contains the header without the user specifying. This means:
+- Index all files by their exported component/function names
+- When a user references a component name, auto-include that file's content in the prompt
+- Show which files were sent as context in the chat UI
+
+---
+
+### Phase 3: Collaboration and Polish
+
+**7. Real-Time Collaborative Editing**
+Your `CollaborativePresence` shows who's online, but there's no shared editing. Add:
+- Broadcast file changes via Supabase Realtime channels
+- Show other users' cursor positions in the Monaco editor
+- Conflict resolution (last-write-wins with toast notification)
+
+**8. Project Forking / Remixing**
+Let users duplicate any saved project as a starting point:
+- "Remix" button on saved projects that creates a deep copy
+- New project gets a "Remixed from [original]" badge
+- Useful for templates and sharing
+
+**9. Publish with Custom Subdomain**
+Your deploy dialog publishes HTML but doesn't give users a persistent, branded URL. Add:
+- Let users pick a subdomain (e.g., `myapp.ultriumai.app`)
+- Store published projects in Supabase storage with a slug
+- Serve via an edge function that looks up the slug and returns the HTML
+
+**10. Onboarding Tour**
+First-time users see the empty builder and don't know what's possible. Add:
+- A step-by-step overlay tour highlighting: chat input, mode toggle, preview, code editor, command palette
+- Dismissible, stored in localStorage so it only shows once
+- Optional "Show me around" button in the empty state
+
+---
+
+## Technical Details
+
+### Phase 1 File Changes
+| File | Change |
+|------|--------|
+| `VisualEditOverlay.tsx` | Add prompt input mode alongside text/color; send element context to AI |
+| `useAIAppBuilder.ts` | Parse files incrementally during stream; expose partial file updates |
+| `BuilderPreviewPanel.tsx` | Subscribe to partial file updates for hot-reload; add retry tracking to error fix |
+| `ErrorConsole.tsx` | Enhanced "Try to Fix" with file content + stack trace auto-injection |
+
+### Phase 2 File Changes
+| File | Change |
+|------|--------|
+| New: `useProjectBundler.ts` | Simple bundler that resolves imports between VFS files and compiles to single HTML |
+| New: `PackageManager.tsx` | CDN package search + install UI panel |
+| `useProjectFileSystem.ts` | Add file indexing by exports/component names |
+| `useAIAppBuilder.ts` | Auto-detect referenced components and include their files in context |
+
+### Phase 3 File Changes
+| File | Change |
+|------|--------|
+| `CollaborativePresence.tsx` | Add Realtime channel for file change broadcast + cursor sync |
+| `CodeEditor.tsx` | Render remote cursors with colored indicators |
+| `ProjectManager.tsx` | Add "Remix" button and fork logic |
+| `DeployDialog.tsx` | Custom subdomain input + Supabase storage publishing |
+| New: `OnboardingTour.tsx` | Step-by-step overlay tour component |
+
+### Estimated scope per phase
+- Phase 1: 4 files modified -- highest impact, most visible improvement
+- Phase 2: 2 new files, 2 modified -- makes multi-file projects actually work
+- Phase 3: 5 files modified, 1 new -- collaboration and growth features
+
+### Recommended order
+Start with Phase 1 (streaming preview + smart visual edits + better error fixing) since these are the features users interact with every session. Phase 2 makes the builder genuinely useful for real projects. Phase 3 adds viral/growth mechanics.
 
