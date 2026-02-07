@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  File, FileCode, FileText, Image, Folder, Trash2, Plus, Download, Pencil,
+  File, FileCode, FileText, Image, Folder, FolderOpen, Trash2, Plus, Download, Pencil,
+  ChevronRight, ChevronDown, Search, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
@@ -24,20 +25,57 @@ function getFileIcon(path: string) {
     case 'ts': case 'tsx': return <FileCode className="h-3.5 w-3.5 text-blue-500/70" />;
     case 'json': return <FileText className="h-3.5 w-3.5 text-emerald-400/70" />;
     case 'md': return <FileText className="h-3.5 w-3.5 text-white/30" />;
-    case 'svg': case 'png': case 'jpg': return <Image className="h-3.5 w-3.5 text-violet-400/70" />;
+    case 'svg': case 'png': case 'jpg': case 'gif': case 'webp': return <Image className="h-3.5 w-3.5 text-violet-400/70" />;
     default: return <File className="h-3.5 w-3.5 text-white/30" />;
   }
 }
 
-function buildTree(files: ProjectFile[]) {
-  const dirs = new Map<string, ProjectFile[]>();
+interface TreeNode {
+  name: string;
+  path: string;
+  isFolder: boolean;
+  children: TreeNode[];
+  file?: ProjectFile;
+}
+
+function buildNestedTree(files: ProjectFile[]): TreeNode[] {
+  const root: TreeNode = { name: '', path: '', isFolder: true, children: [] };
+  
   for (const file of files) {
     const parts = file.path.split('/');
-    const dir = parts.length > 1 ? parts.slice(0, -1).join('/') : '.';
-    if (!dirs.has(dir)) dirs.set(dir, []);
-    dirs.get(dir)!.push(file);
+    let current = root;
+    
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      const isLast = i === parts.length - 1;
+      
+      if (isLast) {
+        current.children.push({ name: part, path: file.path, isFolder: false, children: [], file });
+      } else {
+        let folder = current.children.find(c => c.isFolder && c.name === part);
+        if (!folder) {
+          folder = { name: part, path: parts.slice(0, i + 1).join('/'), isFolder: true, children: [] };
+          current.children.push(folder);
+        }
+        current = folder;
+      }
+    }
   }
-  return dirs;
+  
+  // Sort: folders first, then alphabetical
+  const sortNodes = (nodes: TreeNode[]): TreeNode[] => {
+    return nodes.sort((a, b) => {
+      if (a.isFolder !== b.isFolder) return a.isFolder ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    }).map(n => ({ ...n, children: sortNodes(n.children) }));
+  };
+  
+  return sortNodes(root.children);
+}
+
+function countFiles(node: TreeNode): number {
+  if (!node.isFolder) return 1;
+  return node.children.reduce((sum, c) => sum + countFiles(c), 0);
 }
 
 function downloadFile(file: ProjectFile) {
@@ -50,20 +88,196 @@ function downloadFile(file: ProjectFile) {
   URL.revokeObjectURL(url);
 }
 
+function TreeItem({ 
+  node, depth, activeFilePath, expandedFolders, searchQuery,
+  onSelectFile, onDeleteFile, onToggleFolder, renamingPath, renameValue,
+  onStartRename, onRenameChange, onFinishRename, onCancelRename, onRenameFile, onDownload,
+}: {
+  node: TreeNode;
+  depth: number;
+  activeFilePath: string | null;
+  expandedFolders: Set<string>;
+  searchQuery: string;
+  onSelectFile: (path: string) => void;
+  onDeleteFile: (path: string) => void;
+  onToggleFolder: (path: string) => void;
+  renamingPath: string | null;
+  renameValue: string;
+  onStartRename: (path: string, name: string) => void;
+  onRenameChange: (val: string) => void;
+  onFinishRename: (oldPath: string) => void;
+  onCancelRename: () => void;
+  onRenameFile?: (oldPath: string, newPath: string) => void;
+  onDownload: (file: ProjectFile) => void;
+}) {
+  const isExpanded = expandedFolders.has(node.path);
+  const isActive = activeFilePath === node.path;
+  const isRenaming = renamingPath === node.path;
+  const fileCount = node.isFolder ? countFiles(node) : 0;
+
+  if (node.isFolder) {
+    return (
+      <div>
+        <button
+          onClick={() => onToggleFolder(node.path)}
+          className={cn(
+            "flex items-center gap-1.5 w-full rounded-md text-[11px] transition-all group hover:bg-white/[0.03]",
+            "text-white/40 hover:text-white/60"
+          )}
+          style={{ paddingLeft: `${depth * 12 + 6}px`, paddingRight: 6, paddingTop: 3, paddingBottom: 3 }}
+        >
+          {isExpanded ? (
+            <ChevronDown className="h-3 w-3 text-white/20 shrink-0" />
+          ) : (
+            <ChevronRight className="h-3 w-3 text-white/20 shrink-0" />
+          )}
+          {isExpanded ? (
+            <FolderOpen className="h-3.5 w-3.5 text-cyan-400/50 shrink-0" />
+          ) : (
+            <Folder className="h-3.5 w-3.5 text-white/25 shrink-0" />
+          )}
+          <span className="truncate font-medium">{node.name}</span>
+          <span className="text-[9px] text-white/15 ml-auto shrink-0">{fileCount}</span>
+        </button>
+        {isExpanded && node.children.map(child => (
+          <TreeItem
+            key={child.path}
+            node={child}
+            depth={depth + 1}
+            activeFilePath={activeFilePath}
+            expandedFolders={expandedFolders}
+            searchQuery={searchQuery}
+            onSelectFile={onSelectFile}
+            onDeleteFile={onDeleteFile}
+            onToggleFolder={onToggleFolder}
+            renamingPath={renamingPath}
+            renameValue={renameValue}
+            onStartRename={onStartRename}
+            onRenameChange={onRenameChange}
+            onFinishRename={onFinishRename}
+            onCancelRename={onCancelRename}
+            onRenameFile={onRenameFile}
+            onDownload={onDownload}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-1.5 w-full rounded-md text-[11px] transition-all group',
+        isActive
+          ? 'bg-cyan-500/10 text-cyan-300'
+          : 'text-white/45 hover:text-white/70 hover:bg-white/[0.03]'
+      )}
+      style={{ paddingLeft: `${depth * 12 + 20}px`, paddingRight: 4, paddingTop: 3, paddingBottom: 3 }}
+    >
+      <button
+        onClick={() => onSelectFile(node.path)}
+        className="flex items-center gap-1.5 flex-1 min-w-0 text-left"
+      >
+        {getFileIcon(node.path)}
+        {isRenaming ? (
+          <input
+            autoFocus
+            value={renameValue}
+            onChange={(e) => onRenameChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') onFinishRename(node.path);
+              if (e.key === 'Escape') onCancelRename();
+            }}
+            onBlur={() => onFinishRename(node.path)}
+            onClick={(e) => e.stopPropagation()}
+            className="flex-1 bg-transparent text-[11px] text-white/80 outline-none border-b border-cyan-500/30 font-mono py-0"
+          />
+        ) : (
+          <span className="truncate flex-1 font-mono">{node.name}</span>
+        )}
+      </button>
+      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+        {onRenameFile && (
+          <button
+            className="h-4 w-4 flex items-center justify-center hover:bg-white/10 rounded"
+            onClick={(e) => { e.stopPropagation(); onStartRename(node.path, node.name); }}
+            title="Rename"
+          >
+            <Pencil className="h-2.5 w-2.5 text-white/30" />
+          </button>
+        )}
+        {node.file && (
+          <button
+            className="h-4 w-4 flex items-center justify-center hover:bg-white/10 rounded"
+            onClick={(e) => { e.stopPropagation(); onDownload(node.file!); }}
+            title="Download"
+          >
+            <Download className="h-2.5 w-2.5 text-white/30" />
+          </button>
+        )}
+        <button
+          className="h-4 w-4 flex items-center justify-center hover:bg-white/10 rounded"
+          onClick={(e) => { e.stopPropagation(); onDeleteFile(node.path); }}
+          title="Delete"
+        >
+          <Trash2 className="h-2.5 w-2.5 text-red-400/50" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function ProjectFileTree({ files, activeFilePath, onSelectFile, onDeleteFile, onCreateFile, onRenameFile }: ProjectFileTreeProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const [renamingPath, setRenamingPath] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
-  const tree = buildTree(files);
+  // Auto-expand all folders on first render or when files change
+  useMemo(() => {
+    const folders = new Set<string>();
+    for (const file of files) {
+      const parts = file.path.split('/');
+      for (let i = 1; i < parts.length; i++) {
+        folders.add(parts.slice(0, i).join('/'));
+      }
+    }
+    setExpandedFolders(folders);
+  }, [files.length]);
+
+  const tree = useMemo(() => buildNestedTree(files), [files]);
+
+  const filteredTree = useMemo(() => {
+    if (!searchQuery.trim()) return tree;
+    const q = searchQuery.toLowerCase();
+    const filterNodes = (nodes: TreeNode[]): TreeNode[] => {
+      return nodes.reduce<TreeNode[]>((acc, node) => {
+        if (!node.isFolder) {
+          if (node.name.toLowerCase().includes(q)) acc.push(node);
+        } else {
+          const filtered = filterNodes(node.children);
+          if (filtered.length > 0) acc.push({ ...node, children: filtered });
+        }
+        return acc;
+      }, []);
+    };
+    return filterNodes(tree);
+  }, [tree, searchQuery]);
+
+  const toggleFolder = useCallback((path: string) => {
+    setExpandedFolders(prev => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path); else next.add(path);
+      return next;
+    });
+  }, []);
 
   const handleCreate = () => {
     const name = newFileName.trim();
-    if (name && onCreateFile) {
-      onCreateFile(name);
-    }
+    if (name && onCreateFile) onCreateFile(name);
     setNewFileName('');
     setIsCreating(false);
   };
@@ -115,23 +329,46 @@ export function ProjectFileTree({ files, activeFilePath, onSelectFile, onDeleteF
       onDragLeave={() => setIsDragOver(false)}
       onDrop={handleDrop}
     >
-      <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between">
-        <h3 className="text-[10px] font-semibold text-white/20 uppercase tracking-widest">Explorer</h3>
-        {onCreateFile && (
-          <button
-            onClick={() => setIsCreating(true)}
-            className="h-5 w-5 rounded flex items-center justify-center text-white/20 hover:text-white/60 hover:bg-white/5 transition-colors"
-            title="New file"
-          >
-            <Plus className="h-3 w-3" />
-          </button>
-        )}
+      {/* Header */}
+      <div className="px-2 py-1.5 border-b border-white/[0.06] flex items-center justify-between gap-1">
+        <span className="text-[10px] font-semibold text-white/20 uppercase tracking-widest shrink-0">Explorer</span>
+        <div className="flex items-center gap-0.5">
+          <span className="text-[9px] text-white/15 font-mono">{files.length}</span>
+          {onCreateFile && (
+            <button
+              onClick={() => setIsCreating(true)}
+              className="h-5 w-5 rounded flex items-center justify-center text-white/20 hover:text-white/60 hover:bg-white/5 transition-colors"
+              title="New file"
+            >
+              <Plus className="h-3 w-3" />
+            </button>
+          )}
+        </div>
       </div>
-      <ScrollArea className="h-[calc(100%-33px)]">
-        <div className="p-1.5 space-y-0.5">
+
+      {/* Search filter */}
+      <div className="px-2 py-1.5 border-b border-white/[0.04]">
+        <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.06] rounded-md px-2 h-6">
+          <Search className="h-2.5 w-2.5 text-white/20 shrink-0" />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Filter files..."
+            className="flex-1 bg-transparent text-[10px] text-white/60 placeholder:text-white/15 outline-none font-mono"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="text-white/20 hover:text-white/50">
+              <X className="h-2.5 w-2.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <ScrollArea className="h-[calc(100%-68px)]">
+        <div className="py-1">
           {/* New file input */}
           {isCreating && (
-            <div className="flex items-center gap-1.5 px-2 py-1">
+            <div className="flex items-center gap-1.5 px-3 py-1.5">
               <File className="h-3.5 w-3.5 text-cyan-400/50 shrink-0" />
               <input
                 autoFocus
@@ -143,94 +380,31 @@ export function ProjectFileTree({ files, activeFilePath, onSelectFile, onDeleteF
                 }}
                 onBlur={handleCreate}
                 placeholder="filename.html"
-                className="flex-1 bg-transparent text-xs text-white/80 placeholder:text-white/20 outline-none border-b border-cyan-500/30 font-mono py-0.5"
+                className="flex-1 bg-transparent text-[11px] text-white/80 placeholder:text-white/20 outline-none border-b border-cyan-500/30 font-mono py-0.5"
               />
             </div>
           )}
 
-          {Array.from(tree.entries()).map(([dir, dirFiles]) => (
-            <div key={dir}>
-              {dir !== '.' && (
-                <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-medium text-white/20 uppercase tracking-wider">
-                  <Folder className="h-3 w-3" />
-                  {dir}
-                </div>
-              )}
-              {dirFiles.map(file => {
-                const fileName = file.path.split('/').pop()!;
-                const isActive = activeFilePath === file.path;
-                const isRenaming = renamingPath === file.path;
-
-                return (
-                  <div
-                    key={file.path}
-                    className={cn(
-                      'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-xs transition-all group',
-                      isActive
-                        ? 'bg-cyan-500/10 text-cyan-300 border-l-2 border-cyan-400'
-                        : 'text-white/50 hover:text-white/70 hover:bg-white/[0.03] border-l-2 border-transparent'
-                    )}
-                  >
-                    <button
-                      onClick={() => onSelectFile(file.path)}
-                      className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                    >
-                      {getFileIcon(file.path)}
-                      {isRenaming ? (
-                        <input
-                          autoFocus
-                          value={renameValue}
-                          onChange={(e) => setRenameValue(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleRename(file.path);
-                            if (e.key === 'Escape') { setRenamingPath(null); setRenameValue(''); }
-                          }}
-                          onBlur={() => handleRename(file.path)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex-1 bg-transparent text-xs text-white/80 outline-none border-b border-cyan-500/30 font-mono py-0"
-                        />
-                      ) : (
-                        <span className="truncate flex-1 font-mono">{fileName}</span>
-                      )}
-                    </button>
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                      {onRenameFile && (
-                        <button
-                          className="h-5 w-5 flex items-center justify-center hover:bg-white/10 rounded"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setRenamingPath(file.path);
-                            setRenameValue(fileName);
-                          }}
-                          title="Rename"
-                        >
-                          <Pencil className="h-2.5 w-2.5 text-white/40" />
-                        </button>
-                      )}
-                      <button
-                        className="h-5 w-5 flex items-center justify-center hover:bg-white/10 rounded"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          downloadFile(file);
-                        }}
-                        title="Download"
-                      >
-                        <Download className="h-2.5 w-2.5 text-white/40" />
-                      </button>
-                      <button
-                        className="h-5 w-5 flex items-center justify-center hover:bg-white/10 rounded"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteFile(file.path);
-                        }}
-                      >
-                        <Trash2 className="h-2.5 w-2.5 text-red-400/60" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          {filteredTree.map(node => (
+            <TreeItem
+              key={node.path}
+              node={node}
+              depth={0}
+              activeFilePath={activeFilePath}
+              expandedFolders={expandedFolders}
+              searchQuery={searchQuery}
+              onSelectFile={onSelectFile}
+              onDeleteFile={onDeleteFile}
+              onToggleFolder={toggleFolder}
+              renamingPath={renamingPath}
+              renameValue={renameValue}
+              onStartRename={(path, name) => { setRenamingPath(path); setRenameValue(name); }}
+              onRenameChange={setRenameValue}
+              onFinishRename={handleRename}
+              onCancelRename={() => { setRenamingPath(null); setRenameValue(''); }}
+              onRenameFile={onRenameFile}
+              onDownload={downloadFile}
+            />
           ))}
         </div>
       </ScrollArea>

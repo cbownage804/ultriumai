@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { X, FileCode } from 'lucide-react';
+import { X, FileCode, FileText, Image, File } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FileTabBarProps {
@@ -9,6 +9,20 @@ interface FileTabBarProps {
   onSelect: (path: string) => void;
   onClose: (path: string) => void;
   onReorder?: (paths: string[]) => void;
+}
+
+function getTabIcon(path: string) {
+  const ext = path.split('.').pop()?.toLowerCase() || '';
+  switch (ext) {
+    case 'html': case 'htm': return <FileCode className="h-3 w-3 text-orange-400/60" />;
+    case 'css': case 'scss': return <FileCode className="h-3 w-3 text-blue-400/60" />;
+    case 'js': case 'jsx': return <FileCode className="h-3 w-3 text-yellow-400/60" />;
+    case 'ts': case 'tsx': return <FileCode className="h-3 w-3 text-blue-500/60" />;
+    case 'json': return <FileText className="h-3 w-3 text-emerald-400/60" />;
+    case 'md': return <FileText className="h-3 w-3 text-white/25" />;
+    case 'svg': case 'png': case 'jpg': case 'gif': return <Image className="h-3 w-3 text-violet-400/60" />;
+    default: return <File className="h-3 w-3 text-white/25" />;
+  }
 }
 
 export function FileTabBar({ openPaths, activePath, dirtyFiles, onSelect, onClose, onReorder }: FileTabBarProps) {
@@ -46,7 +60,7 @@ export function FileTabBar({ openPaths, activePath, dirtyFiles, onSelect, onClos
   if (openPaths.length === 0) return null;
 
   return (
-    <div className="flex items-center border-b border-white/[0.06] bg-black/20 overflow-x-auto shrink-0">
+    <div className="flex items-center overflow-x-auto scrollbar-none shrink-0">
       {openPaths.map((path, index) => {
         const fileName = path.split('/').pop()!;
         const isActive = path === activePath;
@@ -61,14 +75,14 @@ export function FileTabBar({ openPaths, activePath, dirtyFiles, onSelect, onClos
             onDragEnd={handleDragEnd}
             onClick={() => onSelect(path)}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-2 text-[11px] whitespace-nowrap transition-all group relative font-mono cursor-grab active:cursor-grabbing',
+              'flex items-center gap-1.5 px-3 h-9 text-[11px] whitespace-nowrap transition-all group relative font-mono cursor-grab active:cursor-grabbing border-r border-white/[0.04]',
               isActive
-                ? 'text-white bg-[#0d0d14]'
-                : 'text-white/30 hover:text-white/50 bg-black/20 hover:bg-white/[0.02]',
+                ? 'text-white/90 bg-[#0d0d14]'
+                : 'text-white/30 hover:text-white/50 bg-[#08080c] hover:bg-white/[0.02]',
               dragOverIndex === index && 'border-l-2 border-cyan-400'
             )}
           >
-            <FileCode className="h-3 w-3 shrink-0" />
+            {getTabIcon(path)}
             <span>{fileName}</span>
             {isDirty && (
               <div className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
@@ -83,7 +97,7 @@ export function FileTabBar({ openPaths, activePath, dirtyFiles, onSelect, onClos
               <X className="h-2.5 w-2.5" />
             </button>
             {isActive && (
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cyan-500 to-violet-500" />
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-cyan-500" />
             )}
           </button>
         );

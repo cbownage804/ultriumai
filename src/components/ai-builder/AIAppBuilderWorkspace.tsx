@@ -885,13 +885,30 @@ export function AIAppBuilderWorkspace() {
 
         {/* Status Bar */}
         {hasFiles && !isMobile && (
-          <div className="flex items-center h-6 px-3 border-t border-white/[0.06] bg-[#09090b] text-[10px] text-white/30 font-mono shrink-0 gap-4">
+          <div className="flex items-center h-6 px-3 border-t border-white/[0.06] bg-[#09090b] text-[10px] text-white/30 font-mono shrink-0 gap-3">
+            <div className="flex items-center gap-1.5">
+              <div className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                isGenerating ? "bg-amber-400 animate-pulse" : "bg-emerald-400"
+              )} />
+              <span>{isGenerating ? 'Building' : 'Ready'}</span>
+            </div>
+            <div className="h-3 w-px bg-white/[0.06]" />
             <span>{activeFile?.language || 'plaintext'}</span>
             <span>Ln {cursorPosition.line}, Col {cursorPosition.column}</span>
+            <div className="h-3 w-px bg-white/[0.06]" />
             <span>{project.files.length} file{project.files.length !== 1 ? 's' : ''}</span>
-            <span>{activeBranchName}</span>
-            {dirtyFiles.size > 0 && <span className="text-amber-400/60">{dirtyFiles.size} unsaved</span>}
-            <span className="ml-auto">{isSaving ? 'Saving...' : lastSaved ? `Saved ${lastSaved.toLocaleTimeString()}` : ''}</span>
+            <span className="text-cyan-400/50">{activeBranchName}</span>
+            {dirtyFiles.size > 0 && (
+              <span className="text-amber-400/60 flex items-center gap-1">
+                <div className="h-1 w-1 rounded-full bg-amber-400/60" />
+                {dirtyFiles.size} unsaved
+              </span>
+            )}
+            <div className="flex-1" />
+            <span className="text-white/15">{rightTab === 'preview' ? 'Preview' : rightTab === 'code' ? 'Editor' : 'Split'}</span>
+            <div className="h-3 w-px bg-white/[0.06]" />
+            <span>{isSaving ? 'Saving...' : lastSaved ? `Saved ${lastSaved.toLocaleTimeString()}` : ''}</span>
           </div>
         )}
       </div>
