@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Rocket, Globe, Copy, CheckCircle, Loader2, ExternalLink, Settings2 } from 'lucide-react';
+import { Rocket, Globe, Copy, CheckCircle, Loader2, ExternalLink, Link2 } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface DeployDialogProps {
-  onPublish: () => Promise<void>;
+  onPublish: (subdomain?: string) => Promise<void>;
   publishedUrl: string | null;
   hasFiles: boolean;
   isPublishing?: boolean;
@@ -19,11 +19,13 @@ export function DeployDialog({ onPublish, publishedUrl, hasFiles, isPublishing }
   const [open, setOpen] = useState(false);
   const [deploying, setDeploying] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [customSubdomain, setCustomSubdomain] = useState('');
+  const [showSubdomain, setShowSubdomain] = useState(false);
 
   const handleDeploy = async () => {
     setDeploying(true);
     try {
-      await onPublish();
+      await onPublish(customSubdomain || undefined);
     } finally {
       setDeploying(false);
     }
@@ -101,6 +103,29 @@ export function DeployDialog({ onPublish, publishedUrl, hasFiles, isPublishing }
               <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[9px]">
                 Live
               </Badge>
+            )}
+          </div>
+
+          {/* Custom Subdomain */}
+          <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+            <button
+              onClick={() => setShowSubdomain(!showSubdomain)}
+              className="flex items-center gap-2 text-[11px] text-white/40 hover:text-white/60 transition-colors w-full"
+            >
+              <Link2 className="h-3 w-3" />
+              <span>Custom subdomain</span>
+              <span className="ml-auto text-[9px] text-white/20">{showSubdomain ? '▲' : '▼'}</span>
+            </button>
+            {showSubdomain && (
+              <div className="mt-2 flex items-center gap-1">
+                <input
+                  value={customSubdomain}
+                  onChange={e => setCustomSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                  placeholder="myapp"
+                  className="flex-1 h-7 px-2 text-[11px] bg-white/5 border border-white/[0.08] rounded text-white/80 outline-none focus:border-cyan-500/30 font-mono placeholder:text-white/15"
+                />
+                <span className="text-[10px] text-white/20 font-mono">.ultriumai.app</span>
+              </div>
             )}
           </div>
 

@@ -27,6 +27,9 @@ import { ConsolePanel } from './ConsolePanel';
 import { DeployDialog } from './DeployDialog';
 import { EnvVarsPanel, type EnvVariable } from './EnvVarsPanel';
 import { AssetManager, type ProjectAsset } from './AssetManager';
+import { PackageManager, type CDNPackage } from './PackageManager';
+import { useProjectBundler } from '@/hooks/useProjectBundler';
+import { OnboardingTour } from './OnboardingTour';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +37,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import {
   Eye, Code, Pencil, Database, CreditCard, Key,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
-  History, Variable, Image,
+  History, Variable, Image, Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -85,7 +88,9 @@ export function AIAppBuilderWorkspace() {
   const [showAssets, setShowAssets] = useState(false);
   const [envVariables, setEnvVariables] = useState<EnvVariable[]>([]);
   const [assets, setAssets] = useState<ProjectAsset[]>([]);
-
+  const [showPackages, setShowPackages] = useState(false);
+  const [cdnPackages, setCdnPackages] = useState<CDNPackage[]>([]);
+  const { findReferencedFiles } = useProjectBundler();
   // Sync latest files from AI
   useEffect(() => {
     if (latestFiles.length > 0) {
@@ -148,7 +153,14 @@ export function AIAppBuilderWorkspace() {
     const contextPrefix = activeFile && rightTab === 'code'
       ? `[Currently viewing: ${activeFile.path}]\n`
       : '';
-    sendMessage(contextPrefix + input, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl);
+
+    // Multi-file awareness: auto-detect referenced components
+    const referencedFiles = findReferencedFiles(input, project.files);
+    const contextHint = referencedFiles.length > 0
+      ? `[Auto-detected relevant files: ${referencedFiles.map(f => f.path).join(', ')}]\n`
+      : '';
+
+    sendMessage(contextPrefix + contextHint + input, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl);
   };
 
   const handleFixError = (errorPrompt: string) => {
@@ -251,14 +263,16 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   // Close other panels when opening one
-  const openPanel = (panel: 'history' | 'envVars' | 'assets') => {
+  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages') => {
     setShowVersionHistory(panel === 'history' ? !showVersionHistory : false);
     setShowEnvVars(panel === 'envVars' ? !showEnvVars : false);
     setShowAssets(panel === 'assets' ? !showAssets : false);
+    setShowPackages(panel === 'packages' ? !showPackages : false);
   };
 
   return (
     <TooltipProvider delayDuration={300}>
+      <OnboardingTour />
       <div className="h-[calc(100vh-5rem)] w-full flex flex-col bg-[#0a0a0f]">
         {/* ── Top Bar ── */}
         <div className="flex items-center justify-between px-3 h-11 border-b border-white/[0.06] bg-black/40 backdrop-blur-sm shrink-0">
@@ -390,6 +404,18 @@ export function AIAppBuilderWorkspace() {
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">Assets</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => openPanel('packages')}
+                  className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showPackages ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
+                >
+                  <Package className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Packages</TooltipContent>
             </Tooltip>
 
             <div className="h-4 w-px bg-white/[0.06] mx-1" />
@@ -530,6 +556,15 @@ export function AIAppBuilderWorkspace() {
                   open={showAssets}
                   onClose={() => setShowAssets(false)}
                 />
+                {showPackages && (
+                  <div className="w-64 border-r border-white/[0.06] bg-[#0d0d14] overflow-hidden">
+                    <PackageManager
+                      packages={cdnPackages}
+                      onAddPackage={(pkg) => setCdnPackages(prev => [...prev, pkg])}
+                      onRemovePackage={(name) => setCdnPackages(prev => prev.filter(p => p.name !== name))}
+                    />
+                  </div>
+                )}
 
                 <div className="flex-1 flex flex-col overflow-hidden">
                   {hasFiles && (
