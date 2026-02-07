@@ -1,89 +1,88 @@
 
 
-# AI Studio App Builder -- Production Refinements
+# AI Studio App Builder -- Advanced Features & Final Parity
 
 ## Overview
 
-The builder now has all major IDE features wired up. This next phase focuses on **production polish**, **missing micro-interactions**, and **workflow features** that make the difference between a capable tool and a delightful one.
+The builder has solid foundations: streaming preview, split view, file management, collaborative presence, error fixing, and all the micro-interactions. This phase adds the **last missing features** that separate it from Lovable: real-time responsive preview controls, intelligent file context in prompts, chat persistence, and several UX refinements.
 
 ---
 
-## 1. Inline Code Minimap and Find/Replace
+## 1. Chat History Persistence
 
-Monaco editor supports a minimap and built-in find/replace, but the current configuration doesn't explicitly enable them. Additionally, there's no in-editor find/replace shortcut -- only a file-level search panel.
+Chat messages are lost on page reload. Lovable persists conversations alongside projects so users can continue where they left off.
 
 **Changes:**
-- `CodeEditor.tsx`: Enable Monaco minimap (small, right-side scrollbar overview) and ensure Cmd+F triggers the editor's built-in find/replace widget rather than browser search. Configure word wrap, bracket matching, and auto-closing brackets for a polished editing experience.
+- `useProjectPersistence.ts`: Save `messages` alongside project files when saving. Load them back when loading a project.
+- `AIAppBuilderWorkspace.tsx`: Pass messages to `saveProject` and restore them from `loadProject`. Add a `setMessages` export from `useAIAppBuilder`.
+- `useAIAppBuilder.ts`: Export a `setMessages` setter so the workspace can restore saved messages.
 
 ---
 
-## 2. Streaming Progress Indicator with File List
+## 2. Responsive Preview with Live Resize Handle
 
-During AI generation, the workspace shows "generating..." text but doesn't show which files are being written in real-time. Lovable shows a file-by-file progress list.
+The `DevicePresetPicker` only has fixed presets. Lovable allows free-form resizing of the preview by dragging the edges. This lets users test any arbitrary width.
 
 **Changes:**
-- `GeneratingOverlay.tsx`: Upgrade from a simple spinner to a live file progress list. Show each file being generated with a checkmark when complete, using `partialFiles` and `completedFileCount` from the workspace. Add a subtle progress bar showing overall completion.
+- `BuilderPreviewPanel.tsx`: Wrap the iframe container in a resizable wrapper with drag handles on the left and right edges. Show the current width/height as a live badge while dragging. Keep presets as quick shortcuts.
 
 ---
 
-## 3. Chat Message Actions (Copy, Retry, Edit)
+## 3. Multi-Tab Terminal / Console with Tabs
 
-Chat messages currently have no action buttons. Lovable allows copying responses, retrying failed generations, and editing previous prompts.
+The `ConsolePanel` shows console output but has no concept of separate log streams. Add tabs for "Console", "Network", and "Problems" like VS Code.
 
 **Changes:**
-- `BuilderChatPanel.tsx`: Add hover action buttons to each message:
-  - **Copy**: Copy message content to clipboard
-  - **Retry**: Re-send the same prompt (user messages only)
-  - **Edit**: Click to edit a previous user message, then re-send (replaces messages after it)
+- `ConsolePanel.tsx`: Add a tab bar with Console (current), Problems (filtered errors/warnings only), and Network (tracks fetch/XHR from the iframe). The Problems tab shows a count badge. Network tab captures `__NETWORK_LOG__` messages from an injected fetch wrapper.
+- `BuilderPreviewPanel.tsx`: Inject a `fetch` wrapper into the preview HTML that posts `__NETWORK_LOG__` messages with URL, status, and timing.
 
 ---
 
-## 4. Status Bar at the Bottom
+## 4. Breadcrumb-Based Folder Navigation
 
-Professional IDEs have a status bar showing cursor position, language, encoding, etc. The builder currently has the console panel but no persistent status information.
+The `FileBreadcrumb` shows the current file path but isn't interactive. Make each segment clickable to navigate the file tree.
 
 **Changes:**
-- `AIAppBuilderWorkspace.tsx`: Add a thin (20px) status bar at the very bottom showing: current file language, line/column position (from CodeEditor cursor), file count, branch name, and save status. Wire cursor position via a new callback from CodeEditor.
-- `CodeEditor.tsx`: Add an `onCursorPositionChange` callback that reports `{ line, column }` on cursor movement.
+- `FileBreadcrumb.tsx`: Make each path segment a clickable button that filters the file tree to that folder. Add a dropdown on each segment showing sibling files/folders for quick navigation (like VS Code breadcrumbs).
 
 ---
 
-## 5. File Tab Drag Reordering
+## 5. AI Context Window Indicator
 
-The file tab bar shows open files but doesn't support drag-to-reorder, which is standard in IDEs.
+Users have no visibility into how much context the AI can "see." When projects get large, context truncation causes poor results. Show a visual indicator of context usage.
 
 **Changes:**
-- `FileTabBar.tsx`: Add drag-and-drop reordering to file tabs using native HTML drag events (no library needed for a simple horizontal reorder). Update `openFilePaths` order on drop.
-- `useProjectFileSystem.ts`: Add a `reorderOpenFiles` method that updates the `openFilePaths` array.
+- `BuilderChatPanel.tsx`: Below the input, show a small bar indicating "Context: X/Y tokens" based on the current project file sizes. Warn when nearing the limit (e.g., >80% of 128K tokens). This helps users understand when to simplify prompts or reduce project scope.
 
 ---
 
-## 6. Unsaved Changes Indicator
+## 6. Quick Actions Bar Above Input
 
-There's no visual indication when a file has been edited but not saved/committed. This is critical for preventing data loss.
+Lovable has quick-action chips above the input for common operations like "Make responsive", "Add dark mode", "Improve performance". These appear contextually based on the current project state.
 
 **Changes:**
-- `useProjectFileSystem.ts`: Track a `dirtyFiles` set -- files modified since last AI generation or save.
-- `FileTabBar.tsx`: Show a dot indicator on tabs with unsaved changes.
-- `AIAppBuilderWorkspace.tsx`: Clear dirty state on save and on AI file generation.
+- `BuilderChatPanel.tsx`: Add a horizontal scrollable row of contextual action chips above the textarea. Show different chips depending on project state:
+  - No files: Show starter prompts (already exists, move above input)
+  - Has files: Show refinement chips like "Add animations", "Make responsive", "Improve accessibility", "Add loading states"
+  - After errors: Show "Fix all errors" chip
 
 ---
 
-## 7. Collapsible Chat Sidebar
+## 7. Inline Image Preview in Chat
 
-On smaller screens or when focusing on code, users might want to collapse the chat panel entirely (not just resize it).
+When users upload an image with their prompt, the image preview disappears after sending. Show the uploaded image inline in the chat message.
 
 **Changes:**
-- `AIAppBuilderWorkspace.tsx`: Add a collapse toggle button on the chat panel edge. When collapsed, show only a thin vertical bar with a chat icon that expands on click. Persist the collapsed state.
+- `BuilderChatPanel.tsx`: When rendering user messages that have `imageUrl`, show the image as a small thumbnail above the message text. Already tracked on the message object, just not rendered.
 
 ---
 
-## 8. Toast Notification for AI Completion
+## 8. Project Search Across All Saved Projects
 
-When a long AI generation finishes and the user has scrolled away or switched tabs, there's no notification that work is done.
+The `ProjectManager` lists saved projects but has no search. When users accumulate many projects, finding the right one is hard.
 
 **Changes:**
-- `AIAppBuilderWorkspace.tsx`: Add a `useEffect` that watches `isGenerating` transitioning from `true` to `false`. When it does, fire a toast with the number of files generated and a "View changes" action button that switches to the preview.
+- `ProjectManager.tsx`: Add a search input at the top of the project list that filters by project name. Show file count and last-modified date for each project.
 
 ---
 
@@ -91,14 +90,16 @@ When a long AI generation finishes and the user has scrolled away or switched ta
 
 | File | Changes |
 |------|---------|
-| `CodeEditor.tsx` | Enable minimap, bracket matching, word wrap; add cursor position callback |
-| `GeneratingOverlay.tsx` | Upgrade to file-by-file progress list with checkmarks |
-| `BuilderChatPanel.tsx` | Add copy/retry/edit actions to messages |
-| `AIAppBuilderWorkspace.tsx` | Status bar, chat collapse, AI completion toast, dirty file tracking |
-| `FileTabBar.tsx` | Drag reorder tabs, unsaved dot indicator |
-| `useProjectFileSystem.ts` | Add `reorderOpenFiles` and `dirtyFiles` tracking |
+| `useAIAppBuilder.ts` | Export `setMessages` for restoring saved chat |
+| `useProjectPersistence.ts` | Save/load messages with projects |
+| `AIAppBuilderWorkspace.tsx` | Wire message persistence on save/load |
+| `BuilderPreviewPanel.tsx` | Resizable preview container, inject network logger |
+| `ConsolePanel.tsx` | Multi-tab (Console/Problems/Network) |
+| `FileBreadcrumb.tsx` | Clickable segments with sibling dropdown |
+| `BuilderChatPanel.tsx` | Context indicator, quick action chips, inline image preview |
+| `ProjectManager.tsx` | Search input for saved projects |
 
 ### Estimated scope
-- 6 files modified, 0 new files
-- Focused on micro-interactions and polish that make the builder feel professional
+- 8 files modified, 0 new files
+- Focuses on workflow intelligence and discoverability features
 
