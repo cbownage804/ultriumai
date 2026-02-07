@@ -49,12 +49,15 @@ import { AICodeIntelligence, type CodeSuggestion } from './AICodeIntelligence';
 import { DatabaseExplorer } from './DatabaseExplorer';
 import { ComponentLibrary } from './ComponentLibrary';
 import { TestingDebugSuite, type TestCase } from './TestingDebugSuite';
+import { DiffReviewPanel } from './DiffReviewPanel';
+import { CustomDomainPanel } from './CustomDomainPanel';
+import { TerminalEmulator } from './TerminalEmulator';
 import {
   Eye, Code, Pencil, Database, CreditCard, Key,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
   History, Variable, Image, Package, Columns, Keyboard,
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users,
-  Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug,
+  Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -154,6 +157,10 @@ export function AIAppBuilderWorkspace() {
   const [showTestingSuite, setShowTestingSuite] = useState(false);
   const [codeSuggestions, setCodeSuggestions] = useState<CodeSuggestion[]>([]);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [showDiffReview, setShowDiffReview] = useState(false);
+  const [pendingDiffChanges, setPendingDiffChanges] = useState<{ path: string; oldContent: string; newContent: string; isNew: boolean }[]>([]);
+  const [showDomainPanel, setShowDomainPanel] = useState(false);
+  const [showTerminal, setShowTerminal] = useState(false);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
@@ -783,11 +790,19 @@ export function AIAppBuilderWorkspace() {
                   <div className="mt-auto flex flex-col items-center gap-0.5">
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button onClick={() => setShowSEOEditor(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/45 hover:bg-white/[0.03] transition-all">
+                        <button onClick={() => setShowTerminal(!showTerminal)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showTerminal ? "text-white/80 bg-white/[0.06]" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
+                          <Terminal className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs">Terminal</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button onClick={() => setShowDomainPanel(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/45 hover:bg-white/[0.03] transition-all">
                           <Globe className="h-3.5 w-3.5" />
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent side="right" className="text-xs">SEO</TooltipContent>
+                      <TooltipContent side="right" className="text-xs">Domains</TooltipContent>
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -899,6 +914,8 @@ export function AIAppBuilderWorkspace() {
 
                       {/* Console Panel */}
                       <ConsolePanel open={showConsole} onToggle={() => setShowConsole(!showConsole)} onFixError={handleFixError} />
+                      {/* Terminal */}
+                      <TerminalEmulator open={showTerminal} onClose={() => setShowTerminal(false)} projectName={project.name} />
                     </div>
                   </div>
                 </div>
@@ -944,6 +961,8 @@ export function AIAppBuilderWorkspace() {
       <BillingPanel isOpen={showBilling} onClose={() => setShowBilling(false)} />
       <ProjectShareDialog isOpen={showShareDialog} onClose={() => setShowShareDialog(false)} projectName={project.name} collaborators={collaborators} onInvite={(email, role) => setCollaborators(prev => [...prev, { id: crypto.randomUUID(), email, role, avatarColor: ['#06b6d4','#8b5cf6','#f43f5e','#22c55e'][prev.length % 4], joinedAt: new Date() }])} onChangeRole={(id, role) => setCollaborators(prev => prev.map(c => c.id === id ? { ...c, role } : c))} onRemove={(id) => setCollaborators(prev => prev.filter(c => c.id !== id))} />
       <SEOEditor isOpen={showSEOEditor} onClose={() => setShowSEOEditor(false)} files={project.files} onUpdateFile={upsertFile} />
+      <CustomDomainPanel isOpen={showDomainPanel} onClose={() => setShowDomainPanel(false)} previewUrl={previewSlug ? `${previewSlug}.lovable.app` : undefined} />
+      <DiffReviewPanel isOpen={showDiffReview} onClose={() => setShowDiffReview(false)} changes={pendingDiffChanges} onApprove={() => { pendingDiffChanges.forEach(c => upsertFile(c.path, c.newContent)); setPendingDiffChanges([]); setShowDiffReview(false); toast.success('Changes applied'); }} onReject={() => { setPendingDiffChanges([]); setShowDiffReview(false); toast.info('Changes rejected'); }} onApproveFile={(path) => { const c = pendingDiffChanges.find(ch => ch.path === path); if (c) upsertFile(c.path, c.newContent); }} onRejectFile={() => {}} />
       <QuickFileSwitcher open={showQuickSwitcher} onOpenChange={setShowQuickSwitcher} files={project.files} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} />
       <ProjectSettings
         supabaseConfig={supabaseConfig}
