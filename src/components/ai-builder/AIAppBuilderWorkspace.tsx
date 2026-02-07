@@ -59,7 +59,7 @@ import { ExportGuidePanel } from './ExportGuidePanel';
 import { TerminalEmulator } from './TerminalEmulator';
 import { AgentModePanel } from './AgentModePanel';
 import { ResponsivePreviewBar, type ViewportMode, getViewportWidth } from './ResponsivePreviewBar';
-import { VisualEditClickOverlay } from './VisualEditClickOverlay';
+
 import {
   Eye, Code, Pencil, Database, CreditCard, Key,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
