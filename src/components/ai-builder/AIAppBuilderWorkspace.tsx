@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react';
 import { useAIAppBuilder } from '@/hooks/useAIAppBuilder';
 import { useProjectFileSystem } from '@/hooks/useProjectFileSystem';
+import { useAgentMode } from '@/hooks/useAgentMode';
+import { useAutoErrorRecovery } from '@/hooks/useAutoErrorRecovery';
 import type { RemoteCursor } from './CodeEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
@@ -52,6 +54,9 @@ import { TestingDebugSuite, type TestCase } from './TestingDebugSuite';
 import { DiffReviewPanel } from './DiffReviewPanel';
 import { CustomDomainPanel } from './CustomDomainPanel';
 import { TerminalEmulator } from './TerminalEmulator';
+import { AgentModePanel } from './AgentModePanel';
+import { ResponsivePreviewBar, type ViewportMode, getViewportWidth } from './ResponsivePreviewBar';
+import { VisualEditClickOverlay } from './VisualEditClickOverlay';
 import {
   Eye, Code, Pencil, Database, CreditCard, Key,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
@@ -96,6 +101,12 @@ export function AIAppBuilderWorkspace() {
     loadProjects, saveProject, loadProject, deleteProject, publishProject,
     scheduleAutoSave,
   } = useProjectPersistence();
+  const {
+    currentRun: agentRun,
+    startAgentRun, cancelRun: cancelAgent,
+    simulateAgentExecution,
+  } = useAgentMode();
+  const autoRecovery = useAutoErrorRecovery();
 
   const [rightTab, setRightTab] = useState<'preview' | 'code' | 'split'>('preview');
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -161,6 +172,8 @@ export function AIAppBuilderWorkspace() {
   const [pendingDiffChanges, setPendingDiffChanges] = useState<{ path: string; oldContent: string; newContent: string; isNew: boolean }[]>([]);
   const [showDomainPanel, setShowDomainPanel] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
+  const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
+  const previewIframeRef = useRef<HTMLIFrameElement>(null);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
@@ -296,7 +309,16 @@ export function AIAppBuilderWorkspace() {
     const knowledgeCtx = knowledge.customInstructions
       ? `Custom instructions: ${knowledge.customInstructions}${knowledge.contextFiles.length > 0 ? '\n\nContext files:\n' + knowledge.contextFiles.map(f => `--- ${f.name} ---\n${f.content}`).join('\n\n') : ''}`
       : undefined;
-    sendMessage(contextPrefix + contextHint + input, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl, selectedModel, knowledgeCtx);
+    const fullInput = contextPrefix + contextHint + input;
+
+    // Agent mode: wrap in plan-execute-verify loop
+    if (mode === 'build') {
+      const run = startAgentRun(input);
+      simulateAgentExecution(run, sendMessage, project.files, [supabaseConfig, stripeConfig, serviceKeys, imageDataUrl, selectedModel, knowledgeCtx]);
+    } else {
+      sendMessage(fullInput, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl, selectedModel, knowledgeCtx);
+    }
+    autoRecovery.resetRecovery();
   };
 
   const handleFixError = (errorPrompt: string) => {
@@ -732,11 +754,15 @@ export function AIAppBuilderWorkspace() {
               </div>
             ) : (
             <ResizablePanel defaultSize={28} minSize={20} maxSize={40}>
-              <div className="h-full relative">
+              <div className="h-full relative flex flex-col">
                 <button onClick={() => setIsChatCollapsed(true)} className="absolute top-2 right-2 z-10 h-6 w-6 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors" title="Collapse chat">
                   <PanelLeftClose className="h-3.5 w-3.5" />
                 </button>
-                <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} />
+                {/* Agent mode step tracker */}
+                <AgentModePanel run={agentRun} onCancel={cancelAgent} />
+                <div className="flex-1 overflow-hidden">
+                  <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} />
+                </div>
               </div>
             </ResizablePanel>
             )}
