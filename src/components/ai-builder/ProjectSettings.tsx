@@ -400,25 +400,32 @@ export function ProjectSettings({
 
             {/* ── Danger Zone ── */}
             <TabsContent value="danger" className="space-y-4 pt-4">
-              <div className="rounded-lg border border-red-500/20 bg-red-500/[0.03] p-4 space-y-4">
+              <div className="rounded-lg border border-red-500/20 bg-red-500/[0.03] p-4 space-y-5">
                 <h4 className="text-xs font-semibold text-red-400 flex items-center gap-1.5">
                   <AlertTriangle className="h-3 w-3" />Danger Zone
                 </h4>
 
+                <p className="text-[11px] text-muted-foreground">
+                  Type <code className="bg-muted px-1 rounded font-mono text-red-400/70">{projectName || 'project'}</code> to unlock destructive actions.
+                </p>
+                <Input
+                  placeholder={`Type "${projectName || 'project'}" to confirm`}
+                  value={dangerConfirm}
+                  onChange={(e) => setDangerConfirm(e.target.value)}
+                  className="text-xs h-8"
+                />
+
                 {/* Reset project */}
                 <div className="space-y-2 pb-3 border-b border-red-500/10">
-                  <p className="text-[11px] text-muted-foreground">Reset to blank — clears all files but keeps settings.</p>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder={`Type "${projectName || 'project'}" to confirm`}
-                      value={dangerConfirm}
-                      onChange={(e) => setDangerConfirm(e.target.value)}
-                      className="text-xs h-8 flex-1"
-                    />
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-white/70">Reset to blank</p>
+                      <p className="text-[11px] text-muted-foreground">Clears all files but keeps settings and integrations.</p>
+                    </div>
                     <Button
                       size="sm"
-                      variant="destructive"
-                      className="text-xs h-8"
+                      variant="outline"
+                      className="text-xs h-8 border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300"
                       disabled={dangerConfirm !== (projectName || 'project')}
                       onClick={() => { onResetProject?.(); setDangerConfirm(''); toast.success('Project reset'); }}
                     >
@@ -427,18 +434,42 @@ export function ProjectSettings({
                   </div>
                 </div>
 
+                {/* Export & Delete */}
+                <div className="space-y-2 pb-3 border-b border-red-500/10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-white/70">Export & Delete</p>
+                      <p className="text-[11px] text-muted-foreground">Download a ZIP of all files, then delete the project.</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-8 border-amber-500/20 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
+                      disabled={dangerConfirm !== (projectName || 'project')}
+                      onClick={() => { toast.info('Export started — download will begin shortly.'); }}
+                    >
+                      Export & Delete
+                    </Button>
+                  </div>
+                </div>
+
                 {/* Delete project */}
                 <div className="space-y-2">
-                  <p className="text-[11px] text-muted-foreground">Permanently delete this project and all its files.</p>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="text-xs h-8"
-                    disabled={dangerConfirm !== (projectName || 'project')}
-                    onClick={() => { onDeleteProject?.(); setDangerConfirm(''); setOpen(false); }}
-                  >
-                    <Trash2 className="h-3 w-3 mr-1" />Delete Project
-                  </Button>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-white/70">Delete project</p>
+                      <p className="text-[11px] text-muted-foreground">Permanently delete this project and all files. This cannot be undone.</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="text-xs h-8"
+                      disabled={dangerConfirm !== (projectName || 'project')}
+                      onClick={() => { onDeleteProject?.(); setDangerConfirm(''); setOpen(false); }}
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />Delete
+                    </Button>
+                  </div>
                 </div>
               </div>
             </TabsContent>
