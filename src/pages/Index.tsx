@@ -338,7 +338,7 @@ const Index = () => {
                   <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> Templates and guides</li>
                   <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> Monthly subscription pricing</li>
                 </ul>
-                <Link to="/pricing">
+                <Link to="/pricing/ai-studio">
                   <Button variant="outline" className="w-full">View Pricing</Button>
                 </Link>
               </CardContent>
@@ -360,8 +360,8 @@ const Index = () => {
                   <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> Enterprise integrations</li>
                   <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> Dedicated support</li>
                 </ul>
-                <Link to="/contact">
-                  <Button className="w-full">Schedule Consultation</Button>
+                <Link to="/pricing/custom-apps">
+                  <Button className="w-full">Get a Quote</Button>
                 </Link>
               </CardContent>
             </Card>

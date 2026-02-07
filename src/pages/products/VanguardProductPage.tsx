@@ -606,7 +606,7 @@ const VanguardProductPage = () => {
                   </Link>
                 </Button>
                 <Button size="lg" variant="ghost" asChild>
-                  <Link to="/pricing">
+                  <Link to="/pricing/vanguard">
                     View Pricing
                   </Link>
                 </Button>
