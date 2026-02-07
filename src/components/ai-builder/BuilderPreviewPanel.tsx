@@ -1,14 +1,16 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import {
   Monitor, Smartphone, Tablet, Copy, CheckCircle,
   Maximize2, Minimize2, ExternalLink, RefreshCw, Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { ErrorConsole, type PreviewError } from './ErrorConsole';
 
 interface BuilderPreviewPanelProps {
   html: string | null;
   isGenerating: boolean;
+  onFixError?: (errorMessage: string) => void;
 }
 
 type DeviceMode = 'desktop' | 'tablet' | 'mobile';
@@ -19,12 +21,67 @@ const DEVICE_WIDTHS: Record<DeviceMode, string> = {
   mobile: '375px',
 };
 
-export function BuilderPreviewPanel({ html, isGenerating }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, isGenerating, onFixError }: BuilderPreviewPanelProps) {
   const [device, setDevice] = useState<DeviceMode>('desktop');
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
+  const [errors, setErrors] = useState<PreviewError[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Inject error capture script into HTML
+  const htmlWithErrorCapture = html ? html.replace(
+    '</head>',
+    `<script>
+window.addEventListener('error', function(e) {
+  window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: e.message, source: e.filename, line: e.lineno, col: e.colno }, '*');
+});
+window.addEventListener('unhandledrejection', function(e) {
+  window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: 'Unhandled Promise: ' + (e.reason?.message || e.reason || 'Unknown'), source: '', line: 0 }, '*');
+});
+console.error = (function(orig) {
+  return function() {
+    window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: Array.from(arguments).join(' '), source: 'console.error', line: 0, isWarning: false }, '*');
+    orig.apply(console, arguments);
+  };
+})(console.error);
+console.warn = (function(orig) {
+  return function() {
+    window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: Array.from(arguments).join(' '), source: 'console.warn', line: 0, isWarning: true }, '*');
+    orig.apply(console, arguments);
+  };
+})(console.warn);
+</script>
+</head>`
+  ) : null;
+
+  // Listen for error messages from iframe
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === '__PREVIEW_ERROR__') {
+        setErrors(prev => {
+          // Deduplicate
+          if (prev.some(p => p.message === e.data.message)) return prev;
+          return [...prev.slice(-19), {
+            id: crypto.randomUUID(),
+            message: e.data.message,
+            source: e.data.source || undefined,
+            line: e.data.line || undefined,
+            timestamp: new Date(),
+            type: e.data.isWarning ? 'warning' : 'error',
+          }];
+        });
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  // Clear errors when HTML changes
+  useEffect(() => {
+    setErrors([]);
+  }, [html]);
 
   const copyHTML = useCallback(() => {
     if (!html) return;
@@ -127,8 +184,9 @@ export function BuilderPreviewPanel({ html, isGenerating }: BuilderPreviewPanelP
             }}
           >
             <iframe
+              ref={iframeRef}
               key={iframeKey}
-              srcDoc={html}
+              srcDoc={htmlWithErrorCapture || ''}
               className="w-full h-full border-0 bg-white rounded-[inherit]"
               sandbox="allow-scripts allow-forms"
               title="App Preview"
@@ -153,6 +211,13 @@ export function BuilderPreviewPanel({ html, isGenerating }: BuilderPreviewPanelP
           </div>
         )}
       </div>
+
+      {/* Error Console */}
+      <ErrorConsole
+        errors={errors}
+        onClear={() => setErrors([])}
+        onFixRequest={(err) => onFixError?.(`Fix this error in my app: "${err.message}"${err.source ? ` (in ${err.source}${err.line ? `:${err.line}` : ''})` : ''}`)}
+      />
     </div>
   );
 }

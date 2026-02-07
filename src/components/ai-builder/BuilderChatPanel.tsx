@@ -3,6 +3,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
   Zap, MessageCircle, Hammer, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
+  LayoutGrid,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from '@/hooks/useAIAppBuilder';
@@ -20,6 +21,7 @@ interface BuilderChatPanelProps {
   onStop: () => void;
   onClear: () => void;
   onRestoreVersion: (id: string) => void;
+  onOpenTemplates: () => void;
 }
 
 const STARTER_PROMPTS = [
@@ -64,7 +66,7 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
 
 export function BuilderChatPanel({
   messages, isGenerating, fileCount, mode, thinkingPhase, versions,
-  onModeChange, onSend, onStop, onClear, onRestoreVersion,
+  onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -312,6 +314,20 @@ export function BuilderChatPanel({
                     </div>
                   </button>
                 ))}
+
+                {/* Browse templates button */}
+                <button
+                  onClick={onOpenTemplates}
+                  className="w-full text-left px-3 py-2.5 rounded-lg border border-dashed border-white/[0.08] hover:border-cyan-500/20 hover:bg-cyan-500/[0.03] text-sm transition-all group"
+                >
+                  <div className="flex items-center gap-2">
+                    <LayoutGrid className="h-4 w-4 text-white/20 group-hover:text-cyan-400/60" />
+                    <div>
+                      <div className="text-xs font-medium text-white/50 group-hover:text-white/70">Browse All Templates</div>
+                      <div className="text-[10px] text-white/20 group-hover:text-white/35">12 starter templates across 4 categories</div>
+                    </div>
+                  </div>
+                </button>
               </div>
             </div>
           ) : (

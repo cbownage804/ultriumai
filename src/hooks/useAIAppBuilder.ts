@@ -75,11 +75,22 @@ export function parseMultiFileOutput(raw: string): ProjectFile[] {
 /** Generate contextual follow-up suggestions based on the response */
 function generateSuggestions(content: string, mode: BuilderMode): string[] {
   if (mode === 'discuss') {
-    return [
-      "Let's build this now →",
-      "Can you suggest alternatives?",
-      "What about mobile layout?",
-    ];
+    const suggestions: string[] = [];
+    const lowerContent = content.toLowerCase();
+    // Detect if the AI seems to have a solid plan
+    const planSignals = ['here\'s what i\'d recommend', 'here\'s the plan', 'i\'d suggest', 'let me outline', 'for v1', 'here are the steps', 'the architecture', 'ready to'];
+    const hasPlan = planSignals.some(signal => lowerContent.includes(signal));
+    
+    if (hasPlan) {
+      suggestions.push('🚀 Ready to build this →');
+      suggestions.push('Can we refine the design?');
+      suggestions.push('What about edge cases?');
+    } else {
+      suggestions.push('Tell me more about this');
+      suggestions.push('What are the alternatives?');
+      suggestions.push('What about mobile layout?');
+    }
+    return suggestions;
   }
   // Build mode — suggest refinements
   const suggestions: string[] = [];
