@@ -21,9 +21,11 @@ interface BuilderPreviewPanelProps {
   completedFileCount?: number;
   children?: React.ReactNode;
   onErrorUpdate?: (errors: PreviewError[]) => void;
+  fixAttemptCount?: number;
+  maxFixAttempts?: number;
 }
 
-export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts }: BuilderPreviewPanelProps) {
   const [activePreset, setActivePreset] = useState('desktop');
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -256,6 +258,11 @@ window.addEventListener('unhandledrejection', function(e) {
           >
             <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
             AI can fix this — click to auto-fix
+            {fixAttemptCount !== undefined && maxFixAttempts !== undefined && fixAttemptCount > 0 && (
+              <span className="text-[10px] text-red-400/60 ml-1">
+                (Attempt {fixAttemptCount}/{maxFixAttempts})
+              </span>
+            )}
           </button>
         </div>
       )}

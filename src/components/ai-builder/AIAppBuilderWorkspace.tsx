@@ -28,6 +28,8 @@ import { VersionHistoryPanel } from './VersionHistoryPanel';
 import { ConsolePanel } from './ConsolePanel';
 import { DeployDialog } from './DeployDialog';
 import { EnvVarsPanel, type EnvVariable } from './EnvVarsPanel';
+import { FileConflictDialog } from './FileConflictDialog';
+import { QuickFileSwitcher } from './QuickFileSwitcher';
 import { AssetManager, type ProjectAsset } from './AssetManager';
 import { PackageManager, type CDNPackage } from './PackageManager';
 import { useProjectBundler } from '@/hooks/useProjectBundler';
@@ -101,6 +103,13 @@ export function AIAppBuilderWorkspace() {
   const [dirtyFiles, setDirtyFiles] = useState<Set<string>>(new Set());
   const [cursorPosition, setCursorPosition] = useState<{ line: number; column: number }>({ line: 1, column: 1 });
   const prevIsGeneratingRef = useRef(isGenerating);
+  const [fixAttemptCount, setFixAttemptCount] = useState(0);
+  const [lastFixError, setLastFixError] = useState<string | null>(null);
+  const MAX_FIX_ATTEMPTS = 3;
+  const [selectedModel, setSelectedModel] = useState('flash');
+  const [showQuickSwitcher, setShowQuickSwitcher] = useState(false);
+  const [previewSlug, setPreviewSlug] = useState<string | null>(null);
+  const [pendingConflicts, setPendingConflicts] = useState<{ path: string; userContent: string; aiContent: string }[] | null>(null);
 
   // Sync env vars from EnvVarsPanel into compilation envVars
   useEffect(() => {
@@ -156,20 +165,33 @@ export function AIAppBuilderWorkspace() {
       if (project.files.length > 0) {
         pushUndo('AI generation', project.files);
       }
-      if (project.files.length === 0) {
-        setFiles(latestFiles);
+      // Check for conflicts with dirty files
+      const conflicts = latestFiles.filter(f => dirtyFiles.has(f.path));
+      if (conflicts.length > 0) {
+        setPendingConflicts(conflicts.map(f => ({
+          path: f.path,
+          userContent: project.files.find(pf => pf.path === f.path)?.content || '',
+          aiContent: f.content,
+        })));
+        // Apply non-conflicting files immediately
+        const nonConflicting = latestFiles.filter(f => !dirtyFiles.has(f.path));
+        for (const file of nonConflicting) upsertFile(file.path, file.content);
       } else {
-        for (const file of latestFiles) {
-          upsertFile(file.path, file.content);
+        if (project.files.length === 0) {
+          setFiles(latestFiles);
+        } else {
+          for (const file of latestFiles) upsertFile(file.path, file.content);
         }
       }
       updateBranchFiles(latestFiles);
-      // Clear dirty state for AI-generated files
       setDirtyFiles(prev => {
         const next = new Set(prev);
         latestFiles.forEach(f => next.delete(f.path));
         return next;
       });
+      // Reset fix attempts on successful generation
+      setFixAttemptCount(0);
+      setLastFixError(null);
     }
   }, [latestFiles]);
 
@@ -214,6 +236,10 @@ export function AIAppBuilderWorkspace() {
         e.preventDefault();
         setShowCommandPalette(prev => !prev);
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
+        e.preventDefault();
+        setShowQuickSwitcher(prev => !prev);
+      }
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
@@ -235,26 +261,68 @@ export function AIAppBuilderWorkspace() {
     const contextPrefix = activeFile && rightTab === 'code'
       ? `[Currently viewing: ${activeFile.path}]\n`
       : '';
-
-    // Multi-file awareness: auto-detect referenced components
     const referencedFiles = findReferencedFiles(input, project.files);
     const contextHint = referencedFiles.length > 0
       ? `[Auto-detected relevant files: ${referencedFiles.map(f => f.path).join(', ')}]\n`
       : '';
-
-    sendMessage(contextPrefix + contextHint + input, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl);
+    sendMessage(contextPrefix + contextHint + input, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl, selectedModel);
   };
 
   const handleFixError = (errorPrompt: string) => {
-    sendMessage(errorPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys);
+    sendMessage(errorPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel);
   };
 
   const handleSmartFixError = useCallback((error: import('./ErrorConsole').PreviewError, context: string) => {
+    const isSameError = lastFixError === error.message;
+    const newCount = isSameError ? fixAttemptCount + 1 : 1;
+    setFixAttemptCount(newCount);
+    setLastFixError(error.message);
+
+    if (newCount > MAX_FIX_ATTEMPTS) {
+      toast.error('Unable to auto-fix — try describing the issue differently.');
+      return;
+    }
+
+    const retryContext = newCount > 1 ? `\n\nThis is attempt ${newCount}/${MAX_FIX_ATTEMPTS}. Previous fix attempts did not resolve the issue. Please try a different approach.` : '';
     sendMessage(
-      `Fix this error in my app. Here is the full context:\n\n${context}\n\nPlease fix the code and return the corrected file(s).`,
-      project.files, supabaseConfig, stripeConfig, serviceKeys
+      `Fix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`,
+      project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel
     );
-  }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys]);
+  }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, fixAttemptCount, lastFixError]);
+
+  const handleForkFromMessage = useCallback(async (messageId: string) => {
+    await saveProject(project.name, project.files, branches, activeBranch, messages);
+    const msgIndex = messages.findIndex(m => m.id === messageId);
+    const truncatedMessages = messages.slice(0, msgIndex + 1);
+    const forkName = `${project.name} (fork)`;
+    setMessages(truncatedMessages);
+    renameProject(forkName);
+    await saveProject(forkName, project.files, branches, activeBranch, truncatedMessages);
+    toast.success(`Forked as "${forkName}"`);
+  }, [saveProject, project.name, project.files, branches, activeBranch, messages, setMessages, renameProject]);
+
+  // Generate preview slug from project name
+  useEffect(() => {
+    if (project.name && !previewSlug) {
+      const slug = project.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30);
+      if (slug) setPreviewSlug(slug);
+    }
+  }, [project.name]);
+
+  const handleConflictResolve = useCallback((resolutions: Record<string, 'mine' | 'ai'>) => {
+    if (!pendingConflicts) return;
+    for (const conflict of pendingConflicts) {
+      if (resolutions[conflict.path] === 'ai') {
+        upsertFile(conflict.path, conflict.aiContent);
+      }
+    }
+    setPendingConflicts(null);
+    setDirtyFiles(prev => {
+      const next = new Set(prev);
+      pendingConflicts.forEach(c => { if (resolutions[c.path] === 'ai') next.delete(c.path); });
+      return next;
+    });
+  }, [pendingConflicts, upsertFile]);
 
   // Track dirty files on manual edits
   const handleContentChange = useCallback((path: string, content: string) => {
@@ -562,6 +630,7 @@ export function AIAppBuilderWorkspace() {
               onPublish={handlePublish}
               publishedUrl={publishedUrl}
               hasFiles={hasFiles}
+              previewSlug={previewSlug || undefined}
             />
 
             <ProjectManager
@@ -639,6 +708,9 @@ export function AIAppBuilderWorkspace() {
                 onRestoreVersion={restoreVersion}
                 onOpenTemplates={() => setShowTemplates(true)}
                 onFixError={handleFixError}
+                onForkFromMessage={handleForkFromMessage}
+                selectedModel={selectedModel}
+                onModelChange={setSelectedModel}
               />
             ) : (
               <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount}>
@@ -685,6 +757,9 @@ export function AIAppBuilderWorkspace() {
                   onRestoreVersion={restoreVersion}
                   onOpenTemplates={() => setShowTemplates(true)}
                   onFixError={handleFixError}
+                  onForkFromMessage={handleForkFromMessage}
+                  selectedModel={selectedModel}
+                  onModelChange={setSelectedModel}
                 />
               </div>
             </ResizablePanel>
@@ -937,6 +1012,20 @@ export function AIAppBuilderWorkspace() {
         canRedo={canRedo}
       />
       <KeyboardShortcutsPanel open={showShortcuts} onOpenChange={setShowShortcuts} />
+      <QuickFileSwitcher
+        open={showQuickSwitcher}
+        onOpenChange={setShowQuickSwitcher}
+        files={project.files}
+        onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }}
+      />
+      {pendingConflicts && (
+        <FileConflictDialog
+          open={!!pendingConflicts}
+          conflicts={pendingConflicts}
+          onResolve={handleConflictResolve}
+          onCancel={() => setPendingConflicts(null)}
+        />
+      )}
     </TooltipProvider>
   );
 }

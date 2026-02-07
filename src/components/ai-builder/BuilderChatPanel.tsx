@@ -3,7 +3,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
   Zap, MessageCircle, Hammer, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
-  LayoutGrid, Wrench, AlertTriangle, Copy, RotateCcw, Pencil,
+  LayoutGrid, Wrench, AlertTriangle, Copy, RotateCcw, Pencil, GitFork, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from '@/hooks/useAIAppBuilder';
@@ -29,7 +29,11 @@ interface BuilderChatPanelProps {
   onRestoreVersion: (id: string) => void;
   onOpenTemplates: () => void;
   onFixError: (errorPrompt: string) => void;
+  onForkFromMessage?: (messageId: string) => void;
+  selectedModel?: string;
+  onModelChange?: (model: string) => void;
 }
+
 
 const STARTER_PROMPTS = [
   { label: 'Landing Page', desc: 'Hero, features, testimonials, footer', icon: '🚀' },
@@ -71,10 +75,17 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
   return { text: cleaned, fileNames };
 }
 
+const AI_MODELS = [
+  { id: 'flash', label: 'Flash', desc: 'Fast & efficient', icon: '⚡' },
+  { id: 'pro', label: 'Pro', desc: 'Higher quality', icon: '💎' },
+  { id: 'gpt5', label: 'GPT-5', desc: 'Most capable', icon: '🧠' },
+];
+
 export function BuilderChatPanel({
   messages, isGenerating, fileCount, mode, thinkingPhase, versions,
   totalTokensUsed, previousFiles, latestFiles,
   onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates, onFixError,
+  onForkFromMessage, selectedModel, onModelChange,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -392,6 +403,15 @@ export function BuilderChatPanel({
                     >
                       <Copy className="h-2.5 w-2.5" />
                     </button>
+                    {msg.role === 'assistant' && onForkFromMessage && (
+                      <button
+                        onClick={() => onForkFromMessage(msg.id)}
+                        className="h-5 w-5 rounded flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors"
+                        title="Fork from here"
+                      >
+                        <GitFork className="h-2.5 w-2.5" />
+                      </button>
+                    )}
                     {msg.role === 'user' && (
                       <>
                         <button
@@ -526,32 +546,65 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Build / Discuss toggle */}
-        <div data-tour="mode-toggle" className="flex items-center gap-1 bg-white/[0.03] rounded-lg p-0.5 border border-white/[0.06]">
-          <button
-            onClick={() => onModeChange('discuss')}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md transition-all font-medium",
-              mode === 'discuss'
-                ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
-                : "text-white/30 hover:text-white/50"
-            )}
-          >
-            <MessageCircle className="h-3 w-3" />
-            Discuss
-          </button>
-          <button
-            onClick={() => onModeChange('build')}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md transition-all font-medium",
-              mode === 'build'
-                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                : "text-white/30 hover:text-white/50"
-            )}
-          >
-            <Hammer className="h-3 w-3" />
-            Build
-          </button>
+        {/* Model selector + Mode toggle */}
+        <div className="flex items-center gap-2">
+          {/* Model selector */}
+          {onModelChange && (
+            <div className="relative group/model">
+              <button className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white/50 transition-colors px-1.5 py-1 rounded border border-white/[0.06] hover:border-white/[0.12]">
+                <span>{AI_MODELS.find(m => m.id === selectedModel)?.icon || '⚡'}</span>
+                <span>{AI_MODELS.find(m => m.id === selectedModel)?.label || 'Flash'}</span>
+                <ChevronDown className="h-2.5 w-2.5" />
+              </button>
+              <div className="absolute bottom-full left-0 mb-1 hidden group-hover/model:block z-20">
+                <div className="bg-[#0d0d14] border border-white/[0.08] rounded-lg p-1 shadow-xl min-w-[120px]">
+                  {AI_MODELS.map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => onModelChange(m.id)}
+                      className={cn(
+                        "w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[10px] transition-colors",
+                        selectedModel === m.id ? "bg-white/10 text-white/80" : "text-white/40 hover:text-white/70 hover:bg-white/[0.03]"
+                      )}
+                    >
+                      <span>{m.icon}</span>
+                      <div className="text-left">
+                        <div className="font-medium">{m.label}</div>
+                        <div className="text-[8px] text-white/20">{m.desc}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div data-tour="mode-toggle" className="flex-1 flex items-center gap-1 bg-white/[0.03] rounded-lg p-0.5 border border-white/[0.06]">
+            <button
+              onClick={() => onModeChange('discuss')}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md transition-all font-medium",
+                mode === 'discuss'
+                  ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
+                  : "text-white/30 hover:text-white/50"
+              )}
+            >
+              <MessageCircle className="h-3 w-3" />
+              Discuss
+            </button>
+            <button
+              onClick={() => onModeChange('build')}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md transition-all font-medium",
+                mode === 'build'
+                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                  : "text-white/30 hover:text-white/50"
+              )}
+            >
+              <Hammer className="h-3 w-3" />
+              Build
+            </button>
+          </div>
         </div>
 
         <div data-tour="chat-input" className="flex gap-2 items-end bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 focus-within:border-cyan-500/30 transition-colors">
