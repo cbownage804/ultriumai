@@ -195,18 +195,6 @@ const Navigation = () => {
                 </div>
                 <div className="p-2 space-y-0.5">
                   <button
-                    onClick={() => handleNavigation('/pricing')}
-                    className="flex items-center gap-3 w-full p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group/item"
-                  >
-                    <div className="shrink-0 w-8 h-8 rounded-md bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
-                      <Layers className="h-4 w-4 text-white" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-foreground group-hover/item:text-primary transition-colors">All Products</div>
-                      <div className="text-xs text-muted-foreground">Compare all plans side by side</div>
-                    </div>
-                  </button>
-                  <button
                     onClick={() => handleNavigation('/pricing/vanguard')}
                     className="flex items-center gap-3 w-full p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group/item"
                   >
@@ -373,9 +361,6 @@ const Navigation = () => {
               
               <div className="pl-3 space-y-0.5">
                 <p className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pricing</p>
-                <button onClick={() => handleNavigationWithMenuClose('/pricing')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md text-sm">
-                  All Products
-                </button>
                 <button onClick={() => handleNavigationWithMenuClose('/pricing/vanguard')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md text-sm">
                   Vanguard Suite
                 </button>
