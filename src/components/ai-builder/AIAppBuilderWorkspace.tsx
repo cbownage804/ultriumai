@@ -148,7 +148,7 @@ export function AIAppBuilderWorkspace() {
   const [fixAttemptCount, setFixAttemptCount] = useState(0);
   const [lastFixError, setLastFixError] = useState<string | null>(null);
   const MAX_FIX_ATTEMPTS = 3;
-  const [selectedModel, setSelectedModel] = useState('flash');
+  const [selectedModel, setSelectedModel] = useState('google/gemini-3-flash-preview');
   const [showQuickSwitcher, setShowQuickSwitcher] = useState(false);
   const [previewSlug, setPreviewSlug] = useState<string | null>(null);
   const [pendingConflicts, setPendingConflicts] = useState<{ path: string; userContent: string; aiContent: string }[] | null>(null);
