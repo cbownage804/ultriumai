@@ -310,8 +310,13 @@ export function BuilderChatPanel({
   return (
     <div className="flex flex-col h-full bg-[#0a0a0f]">
       {/* Minimal header — Lovable style */}
-      <div className="flex items-center justify-between px-3 h-10 border-b border-white/[0.06] shrink-0">
-        <span className="text-[11px] font-medium text-white/50 tracking-wide uppercase">Chat</span>
+      <div className="flex items-center justify-between px-3 h-10 border-b border-white/[0.06] bg-gradient-to-r from-[#0a0a0f] to-[#0d0a14] shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="h-5 w-5 rounded-md bg-gradient-to-br from-cyan-500/20 to-violet-500/20 flex items-center justify-center border border-white/[0.06]">
+            <Sparkles className="h-2.5 w-2.5 text-cyan-400/70" />
+          </div>
+          <span className="text-[11px] font-medium text-white/50 tracking-wide uppercase">Chat</span>
+        </div>
         <div className="flex items-center gap-1">
           {totalTokensUsed > 0 && (
             <TokenUsageIndicator
@@ -369,27 +374,34 @@ export function BuilderChatPanel({
       <ScrollArea className="flex-1" ref={scrollRef}>
         <div className="p-4 space-y-4">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-8">
+            <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-8 relative">
+              {/* Ambient glow */}
+              <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[200px] rounded-full bg-gradient-to-br from-cyan-500/[0.04] to-violet-500/[0.03] blur-3xl pointer-events-none" />
+              
               {/* Hero empty state */}
-              <div className="text-center space-y-2">
-                <h3 className="font-semibold text-white/90 text-lg">What do you want to build?</h3>
+              <div className="text-center space-y-2.5 relative z-10">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-cyan-500/10 to-violet-500/10 border border-white/[0.06] mb-3">
+                  <Sparkles className="h-3 w-3 text-cyan-400/60" />
+                  <span className="text-[10px] text-white/40 font-medium">AI-Powered Builder</span>
+                </div>
+                <h3 className="font-semibold text-white/90 text-lg tracking-tight">What do you want to build?</h3>
                 <p className="text-xs text-white/30 max-w-[280px] mx-auto leading-relaxed">
                   Describe your app idea and I'll generate production-ready code with live preview.
                 </p>
               </div>
 
-              <div className="w-full max-w-[320px] space-y-1.5">
+              <div className="w-full max-w-[320px] space-y-1.5 relative z-10">
                 {STARTER_PROMPTS.map((prompt, i) => (
                   <button
                     key={i}
                     onClick={() => onSend(`${prompt.label}: ${prompt.desc}`)}
-                    className="w-full text-left px-3 py-2 rounded-lg border border-white/[0.05] hover:border-white/[0.12] hover:bg-white/[0.03] text-sm transition-all group"
+                    className="w-full text-left px-3 py-2.5 rounded-xl border border-white/[0.06] hover:border-cyan-500/20 bg-white/[0.01] hover:bg-gradient-to-r hover:from-cyan-500/[0.04] hover:to-violet-500/[0.03] text-sm transition-all duration-200 group"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-sm opacity-60 group-hover:opacity-100 transition-opacity">{prompt.icon}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-base h-8 w-8 rounded-lg bg-white/[0.03] border border-white/[0.04] flex items-center justify-center group-hover:border-white/[0.08] group-hover:bg-white/[0.05] transition-all shrink-0">{prompt.icon}</span>
                       <div>
-                        <div className="text-[12px] font-medium text-white/60 group-hover:text-white/90 transition-colors">{prompt.label}</div>
-                        <div className="text-[10px] text-white/20 group-hover:text-white/35 transition-colors">{prompt.desc}</div>
+                        <div className="text-[12px] font-medium text-white/70 group-hover:text-white/95 transition-colors">{prompt.label}</div>
+                        <div className="text-[10px] text-white/25 group-hover:text-white/40 transition-colors">{prompt.desc}</div>
                       </div>
                     </div>
                   </button>
@@ -398,12 +410,14 @@ export function BuilderChatPanel({
                 {/* Browse templates */}
                 <button
                   onClick={onOpenTemplates}
-                  className="w-full text-left px-3 py-2 rounded-lg border border-dashed border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.02] text-sm transition-all group mt-2"
+                  className="w-full text-left px-3 py-2.5 rounded-xl border border-dashed border-white/[0.08] hover:border-cyan-500/20 hover:bg-white/[0.02] text-sm transition-all duration-200 group mt-2"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <LayoutGrid className="h-3.5 w-3.5 text-white/15 group-hover:text-white/40 transition-colors" />
+                  <div className="flex items-center gap-3">
+                    <span className="h-8 w-8 rounded-lg bg-white/[0.02] border border-white/[0.04] flex items-center justify-center group-hover:border-white/[0.08] transition-all shrink-0">
+                      <LayoutGrid className="h-3.5 w-3.5 text-white/20 group-hover:text-white/50 transition-colors" />
+                    </span>
                     <div>
-                      <div className="text-[12px] font-medium text-white/40 group-hover:text-white/60 transition-colors">Browse Templates</div>
+                      <div className="text-[12px] font-medium text-white/40 group-hover:text-white/65 transition-colors">Browse Templates</div>
                       <div className="text-[10px] text-white/15 group-hover:text-white/30 transition-colors">Start from a pre-built template</div>
                     </div>
                   </div>
