@@ -100,6 +100,7 @@ const SafePassBreachMonitor = lazy(() => import('@/pages/safepass/SafePassBreach
 
 // Lazy-loaded - Marketing/Public pages
 const AIStudioLanding = lazy(() => import('@/pages/AIStudioLanding'));
+const AIStudioUseCases = lazy(() => import('@/pages/AIStudioUseCases'));
 const Pricing = lazy(() => import('@/pages/Pricing'));
 const MSPPricing = lazy(() => import('@/pages/MSPPricing'));
 const AIStudioPricing = lazy(() => import('@/pages/pricing/AIStudioPricing'));
@@ -391,6 +392,7 @@ function AppRouter() {
         {/* Legacy redirect */}
         <Route path="/ultrium-gpt" element={<Navigate to="/ai-studio/assistant" replace />} />
         <Route path="/ai-studio-platform" element={<SuspenseWrapper><AIStudioLanding /></SuspenseWrapper>} />
+        <Route path="/ai-studio/use-cases" element={<SuspenseWrapper variant="cards"><AIStudioUseCases /></SuspenseWrapper>} />
         <Route path="/small-business" element={<SuspenseWrapper><SmallBusiness /></SuspenseWrapper>} />
         <Route path="/medium-business" element={<SuspenseWrapper><MediumBusiness /></SuspenseWrapper>} />
         <Route path="/enterprise" element={<SuspenseWrapper><Enterprise /></SuspenseWrapper>} />
