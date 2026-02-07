@@ -10,15 +10,206 @@ const slugify = (name: string) =>
 
 export type ExportMode = 'raw' | 'docker' | 'fullstack';
 
+export interface EdgeFunctionMeta {
+  name: string;
+  status: 'deployed' | 'draft' | 'error';
+}
+
 export interface ExportContext {
   supabaseConfig?: SupabaseConfig | null;
   stripeConfig?: StripeConfig | null;
   serviceKeys?: ServiceKey[];
   envVars?: EnvVar[];
   cdnPackages?: Array<{ name: string; version: string }>;
+  edgeFunctions?: EdgeFunctionMeta[];
+  storageBuckets?: string[];
+  authProviders?: string[];
 }
 
 // ── Full-Stack Scaffolding ─────────────────────────────────
+
+// ── CDN URL → npm import rewriting ────────────────────────
+function rewriteCdnImports(content: string, cdnPkgs: Array<{ name: string; version: string }>): string {
+  let result = content;
+  // Rewrite esm.sh imports: https://esm.sh/package@version → package
+  result = result.replace(/['"]https?:\/\/esm\.sh\/([^@'"]+)(?:@[^'"]*)?['"]/g, (_, pkg) => `'${pkg}'`);
+  // Rewrite cdn.jsdelivr.net imports
+  result = result.replace(/['"]https?:\/\/cdn\.jsdelivr\.net\/npm\/([^@'"]+)(?:@[^'"]*)?(?:\/[^'"]*)?['"]/g, (_, pkg) => `'${pkg}'`);
+  // Rewrite unpkg imports
+  result = result.replace(/['"]https?:\/\/unpkg\.com\/([^@'"]+)(?:@[^'"]*)?(?:\/[^'"]*)?['"]/g, (_, pkg) => `'${pkg}'`);
+  return result;
+}
+
+// ── Extract table names from user code for schema generation ──
+function extractTableReferences(files: ProjectFile[]): string[] {
+  const tables = new Set<string>();
+  const patterns = [
+    /\.from\(['"](\w+)['"]\)/g,           // supabase.from('table')
+    /\.rpc\(['"](\w+)['"]\)/g,            // supabase.rpc('func')
+    /INSERT\s+INTO\s+(?:public\.)?(\w+)/gi,
+    /SELECT\s+.*?\s+FROM\s+(?:public\.)?(\w+)/gi,
+    /UPDATE\s+(?:public\.)?(\w+)/gi,
+    /DELETE\s+FROM\s+(?:public\.)?(\w+)/gi,
+    /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:public\.)?(\w+)/gi,
+  ];
+  for (const file of files) {
+    for (const pattern of patterns) {
+      let match;
+      while ((match = pattern.exec(file.content)) !== null) {
+        const name = match[1].toLowerCase();
+        if (!['select', 'from', 'where', 'and', 'or', 'not', 'null', 'true', 'false'].includes(name)) {
+          tables.add(name);
+        }
+      }
+    }
+  }
+  return Array.from(tables);
+}
+
+// ── Generate schema SQL with RLS ──────────────────────────
+function generateSchemaSQL(projectName: string, tables: string[], storageBuckets: string[]): string {
+  const lines: string[] = [
+    `-- ============================================`,
+    `-- ${projectName} — Supabase Database Schema`,
+    `-- ============================================`,
+    `--`,
+    `-- Run this in your Supabase SQL Editor to set up your database.`,
+    `--`,
+    `-- Steps:`,
+    `-- 1. Go to https://supabase.com/dashboard → your project → SQL Editor`,
+    `-- 2. Paste this entire file and click "Run"`,
+    `-- 3. Verify tables were created in Table Editor`,
+    `-- ============================================`,
+    ``,
+  ];
+
+  if (tables.length > 0) {
+    lines.push(`-- Detected tables used by your app: ${tables.join(', ')}`, ``);
+    for (const table of tables) {
+      lines.push(
+        `-- ── ${table} ──────────────────────────────`,
+        `-- Customize this schema based on your app's requirements.`,
+        `CREATE TABLE IF NOT EXISTS public.${table} (`,
+        `  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,`,
+        `  user_id UUID NOT NULL,  -- references auth.users(id)`,
+        `  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),`,
+        `  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`,
+        `  -- TODO: Add your columns here`,
+        `);`,
+        ``,
+        `-- Enable Row Level Security`,
+        `ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY;`,
+        ``,
+        `-- RLS Policies: Users can only access their own data`,
+        `CREATE POLICY "${table}_select_own" ON public.${table}`,
+        `  FOR SELECT USING (auth.uid() = user_id);`,
+        ``,
+        `CREATE POLICY "${table}_insert_own" ON public.${table}`,
+        `  FOR INSERT WITH CHECK (auth.uid() = user_id);`,
+        ``,
+        `CREATE POLICY "${table}_update_own" ON public.${table}`,
+        `  FOR UPDATE USING (auth.uid() = user_id);`,
+        ``,
+        `CREATE POLICY "${table}_delete_own" ON public.${table}`,
+        `  FOR DELETE USING (auth.uid() = user_id);`,
+        ``,
+        `-- Auto-update updated_at timestamp`,
+        `CREATE OR REPLACE FUNCTION public.update_${table}_updated_at()`,
+        `RETURNS TRIGGER AS $$`,
+        `BEGIN`,
+        `  NEW.updated_at = now();`,
+        `  RETURN NEW;`,
+        `END;`,
+        `$$ LANGUAGE plpgsql;`,
+        ``,
+        `CREATE TRIGGER trg_${table}_updated_at`,
+        `  BEFORE UPDATE ON public.${table}`,
+        `  FOR EACH ROW EXECUTE FUNCTION public.update_${table}_updated_at();`,
+        ``,
+      );
+    }
+  } else {
+    lines.push(
+      `-- No tables were auto-detected in your code.`,
+      `-- Add your CREATE TABLE statements below.`,
+      ``,
+    );
+  }
+
+  // Storage bucket setup
+  if (storageBuckets.length > 0) {
+    lines.push(
+      `-- ── Storage Buckets ──────────────────────────`,
+      `-- Create the storage buckets your app uses.`,
+      ``,
+    );
+    for (const bucket of storageBuckets) {
+      lines.push(
+        `INSERT INTO storage.buckets (id, name, public)`,
+        `VALUES ('${bucket}', '${bucket}', false)`,
+        `ON CONFLICT (id) DO NOTHING;`,
+        ``,
+        `-- Storage policies for "${bucket}"`,
+        `CREATE POLICY "${bucket}_select" ON storage.objects`,
+        `  FOR SELECT USING (bucket_id = '${bucket}' AND auth.uid()::text = (storage.foldername(name))[1]);`,
+        ``,
+        `CREATE POLICY "${bucket}_insert" ON storage.objects`,
+        `  FOR INSERT WITH CHECK (bucket_id = '${bucket}' AND auth.uid()::text = (storage.foldername(name))[1]);`,
+        ``,
+        `CREATE POLICY "${bucket}_update" ON storage.objects`,
+        `  FOR UPDATE USING (bucket_id = '${bucket}' AND auth.uid()::text = (storage.foldername(name))[1]);`,
+        ``,
+        `CREATE POLICY "${bucket}_delete" ON storage.objects`,
+        `  FOR DELETE USING (bucket_id = '${bucket}' AND auth.uid()::text = (storage.foldername(name))[1]);`,
+        ``,
+      );
+    }
+  }
+
+  return lines.join('\n');
+}
+
+// ── Supabase CLI config.toml ──────────────────────────────
+function generateSupabaseConfig(projectName: string): string {
+  return `# Supabase CLI configuration for ${projectName}
+# See: https://supabase.com/docs/guides/cli/config
+
+[project]
+id = "your-project-ref"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://localhost"
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+`;
+}
 
 function getFullStackFiles(
   projectName: string,
@@ -31,6 +222,9 @@ function getFullStackFiles(
   const serviceKeysUsed = ctx.serviceKeys?.filter(sk => sk.apiKey) || [];
   const envVarsUsed = ctx.envVars?.filter(ev => ev.key && ev.value) || [];
   const cdnPkgs = ctx.cdnPackages || [];
+  const edgeFns = ctx.edgeFunctions || [];
+  const storageBuckets = ctx.storageBuckets || [];
+  const authProviders = ctx.authProviders || [];
 
   // ── package.json ──
   const deps: Record<string, string> = {
@@ -52,11 +246,18 @@ function getFullStackFiles(
       dev: 'vite',
       build: 'vite build',
       preview: 'vite preview',
+      ...(hasSupabase ? {
+        'db:push': 'npx supabase db push',
+        'db:reset': 'npx supabase db reset',
+        'supabase:start': 'npx supabase start',
+        'supabase:stop': 'npx supabase stop',
+      } : {}),
     },
     dependencies: deps,
     devDependencies: {
       '@vitejs/plugin-react': '^4.3.4',
       vite: '^6.0.0',
+      ...(hasSupabase ? { supabase: '^2.0.0' } : {}),
     },
   }, null, 2);
 
@@ -204,17 +405,20 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 );
 `;
 
-  // ── App.jsx (inlines user HTML/CSS/JS) ──
+  // ── App.jsx (inlines user HTML/CSS/JS with CDN rewrites) ──
   const htmlFile = userFiles.find(f => f.path === 'index.html') || userFiles.find(f => f.language === 'html');
   const cssFiles = userFiles.filter(f => f.language === 'css');
   const jsFiles = userFiles.filter(f => f.language === 'javascript' || f.language === 'typescript');
   const cssImports = cssFiles.map((_, i) => `import './user-styles-${i}.css';`).join('\n');
 
+  // Rewrite CDN URLs in JS files
+  const rewrittenScripts = jsFiles.map(f => rewriteCdnImports(f.content, cdnPkgs));
+
   const appJsx = `import React, { useEffect, useRef } from 'react';
 ${cssImports}
 
 const USER_HTML = ${JSON.stringify(htmlFile?.content || '<div>No HTML content</div>')};
-const USER_SCRIPTS = ${JSON.stringify(jsFiles.map(f => f.content))};
+const USER_SCRIPTS = ${JSON.stringify(rewrittenScripts)};
 
 export default function App() {
   const containerRef = useRef(null);
@@ -292,6 +496,9 @@ dist/
 .DS_Store
 `;
 
+  // ── Extract tables for schema generation ──
+  const detectedTables = extractTableReferences(userFiles);
+
   // ── README ──
   const readmeLines = [
     `# ${projectName}`,
@@ -314,17 +521,68 @@ dist/
       '',
       'This app uses [Supabase](https://supabase.com) for backend services.',
       '',
-      '1. Create a free Supabase project at [supabase.com/dashboard](https://supabase.com/dashboard)',
+      '### 1. Create Your Supabase Project',
+      '1. Go to [supabase.com/dashboard](https://supabase.com/dashboard) and create a new project',
       '2. Go to **Settings → API** and copy your **Project URL** and **anon key**',
       '3. Paste them into your `.env` file',
-      '4. If this project uses database tables, import the schema:',
-      '   - Open the **SQL Editor** in your Supabase dashboard',
-      '   - Paste the contents of `supabase/schema.sql` and run it',
-      '5. If this project uses **Storage**, create the required buckets in **Storage → New Bucket**',
-      '6. If this project uses **Auth**, configure your providers in **Authentication → Providers**',
       '',
-      '> **Note:** The `supabase/schema.sql` file contains the table definitions used by this app.',
-      '> Review and customize it for your own project.',
+      '### 2. Import Database Schema',
+      '1. Open the **SQL Editor** in your Supabase dashboard',
+      '2. Paste the contents of `supabase/schema.sql` and click **Run**',
+      '3. Verify tables were created in **Table Editor**',
+      '',
+    );
+
+    if (detectedTables.length > 0) {
+      readmeLines.push(
+        `> **Detected tables:** ${detectedTables.join(', ')}`,
+        '> The schema file includes starter definitions with RLS policies for each.',
+        '',
+      );
+    }
+
+    if (storageBuckets.length > 0) {
+      readmeLines.push(
+        '### 3. Storage Buckets',
+        `The schema file will create these storage buckets: **${storageBuckets.join(', ')}**`,
+        'Storage policies are included — users can only access files in their own folder.',
+        '',
+      );
+    }
+
+    if (authProviders.length > 0) {
+      readmeLines.push(
+        '### 4. Authentication Providers',
+        'This app uses the following auth methods. Configure them in **Authentication → Providers**:',
+        '',
+      );
+      const providerDocs: Record<string, string> = {
+        email: 'Email/Password — enabled by default',
+        google: 'Google OAuth — [Setup guide](https://supabase.com/docs/guides/auth/social-login/auth-google)',
+        github: 'GitHub OAuth — [Setup guide](https://supabase.com/docs/guides/auth/social-login/auth-github)',
+        apple: 'Apple Sign In — [Setup guide](https://supabase.com/docs/guides/auth/social-login/auth-apple)',
+        discord: 'Discord OAuth — [Setup guide](https://supabase.com/docs/guides/auth/social-login/auth-discord)',
+        facebook: 'Facebook OAuth — [Setup guide](https://supabase.com/docs/guides/auth/social-login/auth-facebook)',
+        twitter: 'Twitter/X OAuth — [Setup guide](https://supabase.com/docs/guides/auth/social-login/auth-twitter)',
+        azure: 'Azure AD — [Setup guide](https://supabase.com/docs/guides/auth/social-login/auth-azure)',
+        magic_link: 'Magic Link — enabled via email settings',
+        phone: 'Phone/SMS Auth — [Setup guide](https://supabase.com/docs/guides/auth/phone-login)',
+      };
+      for (const provider of authProviders) {
+        const doc = providerDocs[provider] || `${provider} — configure in Auth → Providers`;
+        readmeLines.push(`- ${doc}`);
+      }
+      readmeLines.push('');
+    }
+
+    readmeLines.push(
+      '### Supabase CLI (Optional)',
+      'For local development with the Supabase CLI:',
+      '```bash',
+      'npx supabase init          # already done — config.toml is included',
+      'npx supabase start         # starts local Supabase stack',
+      'npx supabase db push       # pushes schema to remote project',
+      '```',
       '',
     );
   }
@@ -355,6 +613,29 @@ dist/
     readmeLines.push('');
   }
 
+  if (edgeFns.length > 0) {
+    readmeLines.push(
+      '## Edge Functions',
+      '',
+      'This project includes Supabase Edge Functions (Deno). To deploy them:',
+      '',
+      '```bash',
+      'npx supabase functions deploy   # deploys all functions',
+      '```',
+      '',
+      '| Function | Status |',
+      '|----------|--------|',
+    );
+    for (const fn of edgeFns) {
+      readmeLines.push(`| \`${fn.name}\` | ${fn.status} |`);
+    }
+    readmeLines.push(
+      '',
+      'Edge function source code is in the `supabase/functions/` directory.',
+      '',
+    );
+  }
+
   readmeLines.push(
     '## Deployment',
     '',
@@ -374,37 +655,6 @@ dist/
     '',
   );
 
-  // ── Supabase schema placeholder ──
-  let schemaSQL = '';
-  if (hasSupabase) {
-    schemaSQL = `-- ============================================
--- ${projectName} — Supabase Database Schema
--- ============================================
--- 
--- This file contains the database tables used by your app.
--- Run this in your Supabase SQL Editor to set up your database.
---
--- Steps:
--- 1. Go to https://supabase.com/dashboard → your project → SQL Editor
--- 2. Paste this entire file and click "Run"
--- 3. Verify tables were created in Table Editor
---
--- IMPORTANT: Review and customize the schema below.
--- Add Row Level Security (RLS) policies for production use.
--- ============================================
-
--- Example: Enable RLS on all tables you create
--- ALTER TABLE your_table ENABLE ROW LEVEL SECURITY;
--- CREATE POLICY "Users can view their own data"
---   ON your_table FOR SELECT
---   USING (auth.uid() = user_id);
-
--- Add your table definitions below:
--- (If your app created tables during development, paste those schemas here)
-
-`;
-  }
-
   // ── Assemble files map ──
   const files: Record<string, string> = {
     'package.json': packageJson,
@@ -423,7 +673,8 @@ dist/
 
   if (hasSupabase) {
     files['src/lib/supabase.js'] = supabaseClient;
-    files['supabase/schema.sql'] = schemaSQL;
+    files['supabase/schema.sql'] = generateSchemaSQL(projectName, detectedTables, storageBuckets);
+    files['supabase/config.toml'] = generateSupabaseConfig(projectName);
   }
   if (hasStripe) {
     files['src/lib/stripe.js'] = stripeHelper;
@@ -433,6 +684,12 @@ dist/
   cssFiles.forEach((f, i) => {
     files[`src/user-styles-${i}.css`] = f.content;
   });
+
+  // Add edge function source files
+  const edgeFnFiles = userFiles.filter(f => f.path.startsWith('functions/'));
+  for (const ef of edgeFnFiles) {
+    files[`supabase/${ef.path}`] = rewriteCdnImports(ef.content, cdnPkgs);
+  }
 
   return files;
 }
