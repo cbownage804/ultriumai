@@ -1,14 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import {
   Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
-  Zap, MessageCircle, Hammer,
+  Zap, MessageCircle, Hammer, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { BuilderMessage } from '@/hooks/useAIAppBuilder';
-import type { BuilderMode } from '@/hooks/useAIAppBuilder';
+import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from '@/hooks/useAIAppBuilder';
 import ReactMarkdown from 'react-markdown';
 
 interface BuilderChatPanelProps {
@@ -16,10 +13,13 @@ interface BuilderChatPanelProps {
   isGenerating: boolean;
   fileCount: number;
   mode: BuilderMode;
+  thinkingPhase: ThinkingPhase;
+  versions: VersionSnapshot[];
   onModeChange: (mode: BuilderMode) => void;
-  onSend: (message: string) => void;
+  onSend: (message: string, imageDataUrl?: string | null) => void;
   onStop: () => void;
   onClear: () => void;
+  onRestoreVersion: (id: string) => void;
 }
 
 const STARTER_PROMPTS = [
@@ -30,6 +30,12 @@ const STARTER_PROMPTS = [
   { label: 'SaaS Settings', desc: 'Profile, billing, notifications', icon: '⚙️' },
   { label: 'Chat Interface', desc: 'AI chat with streaming responses', icon: '💬' },
 ];
+
+const THINKING_LABELS: Record<string, { icon: typeof Brain; label: string; color: string }> = {
+  analyzing: { icon: Brain, label: 'Analyzing your request...', color: 'text-violet-400' },
+  planning: { icon: Compass, label: 'Planning architecture...', color: 'text-cyan-400' },
+  writing: { icon: Code2, label: 'Writing code...', color: 'text-emerald-400' },
+};
 
 function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: string[] } {
   if (msg.role === 'user') return { text: msg.content, fileNames: [] };
@@ -57,22 +63,27 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
 }
 
 export function BuilderChatPanel({
-  messages, isGenerating, fileCount, mode, onModeChange, onSend, onStop, onClear,
+  messages, isGenerating, fileCount, mode, thinkingPhase, versions,
+  onModeChange, onSend, onStop, onClear, onRestoreVersion,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, thinkingPhase]);
 
   const handleSend = () => {
     if (!input.trim() || isGenerating) return;
-    onSend(input.trim());
+    onSend(input.trim(), imagePreview);
     setInput('');
+    setImagePreview(null);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
@@ -83,9 +94,55 @@ export function BuilderChatPanel({
     }
   };
 
-  const renderAssistantMessage = (msg: BuilderMessage) => {
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setImagePreview(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  }, []);
+
+  const renderThinkingIndicator = () => {
+    if (!thinkingPhase) return null;
+    const phase = THINKING_LABELS[thinkingPhase];
+    if (!phase) return null;
+    const Icon = phase.icon;
+
+    return (
+      <div className="flex gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="h-6 w-6 rounded-md bg-gradient-to-br from-cyan-500/20 to-violet-500/20 flex items-center justify-center shrink-0 border border-white/[0.06]">
+          <Loader2 className="h-3 w-3 text-cyan-400 animate-spin" />
+        </div>
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl px-3.5 py-2.5">
+          <div className="flex items-center gap-2">
+            <Icon className={cn("h-3.5 w-3.5 animate-pulse", phase.color)} />
+            <span className={cn("text-xs font-medium", phase.color)}>{phase.label}</span>
+          </div>
+          <div className="flex gap-1 mt-1.5">
+            {['analyzing', 'planning', 'writing'].map((step, i) => (
+              <div
+                key={step}
+                className={cn(
+                  "h-1 rounded-full transition-all duration-500",
+                  step === thinkingPhase ? 'w-8 bg-cyan-400' :
+                  ['analyzing', 'planning', 'writing'].indexOf(step) < ['analyzing', 'planning', 'writing'].indexOf(thinkingPhase)
+                    ? 'w-8 bg-cyan-400/30' : 'w-8 bg-white/5'
+                )}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderAssistantMessage = (msg: BuilderMessage, isLast: boolean) => {
     const { text, fileNames } = getDisplayContent(msg);
-    const isStreaming = isGenerating && msg === messages[messages.length - 1];
+    const isStreaming = isGenerating && isLast;
     const hasFiles = msg.filesGenerated && msg.filesGenerated > 0;
 
     return (
@@ -132,6 +189,27 @@ export function BuilderChatPanel({
             <span>Writing {fileNames.length} file{fileNames.length > 1 ? 's' : ''}...</span>
           </div>
         )}
+
+        {/* Follow-up suggestion chips */}
+        {!isStreaming && isLast && msg.suggestions && msg.suggestions.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.04] mt-3">
+            {msg.suggestions.map((suggestion, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  if (suggestion.includes('→')) {
+                    onModeChange('build');
+                  } else {
+                    onSend(suggestion);
+                  }
+                }}
+                className="text-[11px] px-2.5 py-1 rounded-full border border-white/[0.08] text-white/50 hover:text-white/80 hover:border-cyan-500/30 hover:bg-cyan-500/[0.05] transition-all"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
@@ -151,15 +229,51 @@ export function BuilderChatPanel({
             </p>
           </div>
         </div>
-        {messages.length > 0 && (
-          <button
-            onClick={onClear}
-            className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        )}
+        <div className="flex items-center gap-1">
+          {versions.length > 0 && (
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className={cn(
+                "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+                showHistory ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5"
+              )}
+            >
+              <History className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {messages.length > 0 && (
+            <button
+              onClick={onClear}
+              className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Version History Drawer */}
+      {showHistory && versions.length > 0 && (
+        <div className="border-b border-white/[0.06] bg-white/[0.02] max-h-40 overflow-auto">
+          <div className="px-3 py-2">
+            <div className="text-[10px] text-white/20 uppercase tracking-wider font-medium mb-1.5">Version History</div>
+            {versions.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => { onRestoreVersion(v.id); setShowHistory(false); }}
+                className="w-full text-left px-2 py-1.5 rounded-md hover:bg-white/5 transition-colors group flex items-center gap-2"
+              >
+                <div className="h-1.5 w-1.5 rounded-full bg-cyan-400/40 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11px] text-white/60 group-hover:text-white/80 truncate">{v.label}</div>
+                  <div className="text-[9px] text-white/20">{v.files.length} files · {v.timestamp.toLocaleTimeString()}</div>
+                </div>
+                <ChevronRight className="h-3 w-3 text-white/20 group-hover:text-white/40 shrink-0" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <ScrollArea className="flex-1" ref={scrollRef}>
@@ -201,7 +315,7 @@ export function BuilderChatPanel({
               </div>
             </div>
           ) : (
-            messages.map((msg) => (
+            messages.map((msg, idx) => (
               <div
                 key={msg.id}
                 className={cn(
@@ -223,9 +337,14 @@ export function BuilderChatPanel({
                   )}
                 >
                   {msg.role === 'assistant' ? (
-                    renderAssistantMessage(msg)
+                    renderAssistantMessage(msg, idx === messages.length - 1)
                   ) : (
-                    <p className="whitespace-pre-wrap text-[13px]">{msg.content}</p>
+                    <div>
+                      {msg.imageUrl && (
+                        <img src={msg.imageUrl} alt="Reference" className="rounded-lg max-h-32 mb-2 border border-white/10" />
+                      )}
+                      <p className="whitespace-pre-wrap text-[13px]">{msg.content}</p>
+                    </div>
                   )}
                 </div>
                 {msg.role === 'user' && (
@@ -236,22 +355,26 @@ export function BuilderChatPanel({
               </div>
             ))
           )}
-          {isGenerating && !messages.some(m => m.role === 'assistant') && (
-            <div className="flex gap-2.5">
-              <div className="h-6 w-6 rounded-md bg-gradient-to-br from-cyan-500/20 to-violet-500/20 flex items-center justify-center shrink-0 border border-white/[0.06]">
-                <Loader2 className="h-3 w-3 text-cyan-400 animate-spin" />
-              </div>
-              <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl px-3.5 py-2.5 text-[13px] text-white/40">
-                <div className="flex gap-0.5">
-                  <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                  <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse [animation-delay:0.2s]" />
-                  <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse [animation-delay:0.4s]" />
-                </div>
-              </div>
-            </div>
-          )}
+
+          {/* Thinking indicator */}
+          {isGenerating && thinkingPhase && renderThinkingIndicator()}
         </div>
       </ScrollArea>
+
+      {/* Image preview */}
+      {imagePreview && (
+        <div className="px-3 pt-2 shrink-0">
+          <div className="relative inline-block">
+            <img src={imagePreview} alt="Upload preview" className="h-16 rounded-lg border border-white/10" />
+            <button
+              onClick={() => setImagePreview(null)}
+              className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500/80 text-white flex items-center justify-center hover:bg-red-500 transition-colors"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Mode Toggle + Input */}
       <div className="p-3 border-t border-white/[0.06] shrink-0 space-y-2">
@@ -284,6 +407,22 @@ export function BuilderChatPanel({
         </div>
 
         <div className="flex gap-2 items-end bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 focus-within:border-cyan-500/30 transition-colors">
+          {/* Image upload button */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors shrink-0"
+            title="Upload reference image"
+          >
+            <ImagePlus className="h-3.5 w-3.5" />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+
           <textarea
             ref={textareaRef}
             value={input}

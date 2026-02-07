@@ -8,6 +8,19 @@ export interface BuilderMessage {
   content: string;
   filesGenerated?: number;
   timestamp: Date;
+  suggestions?: string[];
+  imageUrl?: string;
+}
+
+export type BuilderMode = 'build' | 'discuss';
+export type ThinkingPhase = 'analyzing' | 'planning' | 'writing' | null;
+
+export interface VersionSnapshot {
+  id: string;
+  label: string;
+  files: ProjectFile[];
+  timestamp: Date;
+  messageId: string;
 }
 
 const BUILDER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-app-builder`;
@@ -47,10 +60,8 @@ export function parseMultiFileOutput(raw: string): ProjectFile[] {
   }
   flush();
 
-  // Fallback: if no files parsed, try treating the whole thing as a single HTML file
   if (files.length === 0) {
     const trimmed = raw.trim();
-    // Strip markdown code fences
     const htmlMatch = trimmed.match(/```html\n?([\s\S]*?)```/);
     const html = htmlMatch ? htmlMatch[1] : trimmed;
     if (html.includes('<') && html.includes('>')) {
@@ -61,13 +72,32 @@ export function parseMultiFileOutput(raw: string): ProjectFile[] {
   return files;
 }
 
-export type BuilderMode = 'build' | 'discuss';
+/** Generate contextual follow-up suggestions based on the response */
+function generateSuggestions(content: string, mode: BuilderMode): string[] {
+  if (mode === 'discuss') {
+    return [
+      "Let's build this now →",
+      "Can you suggest alternatives?",
+      "What about mobile layout?",
+    ];
+  }
+  // Build mode — suggest refinements
+  const suggestions: string[] = [];
+  if (content.includes('===FILE:')) {
+    suggestions.push('Make it darker & more premium');
+    suggestions.push('Add smooth animations');
+    suggestions.push('Make it fully responsive');
+  }
+  return suggestions.slice(0, 3);
+}
 
 export function useAIAppBuilder() {
   const [messages, setMessages] = useState<BuilderMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [latestFiles, setLatestFiles] = useState<ProjectFile[]>([]);
   const [mode, setMode] = useState<BuilderMode>('build');
+  const [thinkingPhase, setThinkingPhase] = useState<ThinkingPhase>(null);
+  const [versions, setVersions] = useState<VersionSnapshot[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
   const sendMessage = useCallback(async (
@@ -76,29 +106,55 @@ export function useAIAppBuilder() {
     supabaseConfig?: { url: string; anonKey: string } | null,
     stripeConfig?: { publishableKey: string } | null,
     serviceKeys?: { id: string; serviceId: string; apiKey: string }[],
+    imageDataUrl?: string | null,
   ) => {
     if (!input.trim() || isGenerating) return;
+
+    // Save current state as a version before generating
+    if (currentFiles.length > 0) {
+      setVersions(prev => [...prev, {
+        id: crypto.randomUUID(),
+        label: `Before: ${input.slice(0, 40)}...`,
+        files: [...currentFiles],
+        timestamp: new Date(),
+        messageId: '',
+      }]);
+    }
 
     const userMsg: BuilderMessage = {
       id: crypto.randomUUID(),
       role: 'user',
       content: input,
       timestamp: new Date(),
+      imageUrl: imageDataUrl || undefined,
     };
 
     setMessages(prev => [...prev, userMsg]);
     setIsGenerating(true);
 
-    // Build conversation context
-    const apiMessages: { role: string; content: string }[] = [];
+    // Thinking phases
+    setThinkingPhase('analyzing');
+    const phaseTimer1 = setTimeout(() => setThinkingPhase('planning'), 1500);
+    const phaseTimer2 = setTimeout(() => setThinkingPhase('writing'), 3500);
 
-    // Include previous conversation
+    // Build conversation context
+    const apiMessages: { role: string; content: string | any[] }[] = [];
+
     for (const m of messages) {
       apiMessages.push({ role: m.role, content: m.content });
     }
 
-    // If iterating on existing files, include current project state
-    if (currentFiles.length > 0) {
+    // Build the user message content (potentially multimodal)
+    if (imageDataUrl) {
+      const userContent: any[] = [
+        { type: 'text', text: currentFiles.length > 0
+          ? `Here is my current project:\n\n${currentFiles.map(f => `===FILE: ${f.path}===\n${f.content}`).join('\n\n')}\n\nNow please: ${input}`
+          : input
+        },
+        { type: 'image_url', image_url: { url: imageDataUrl } },
+      ];
+      apiMessages.push({ role: 'user', content: userContent });
+    } else if (currentFiles.length > 0) {
       const fileContext = currentFiles
         .map(f => `===FILE: ${f.path}===\n${f.content}`)
         .join('\n\n');
@@ -138,10 +194,18 @@ export function useAIAppBuilder() {
         else if (resp.status === 402) toast.error('AI credits exhausted.');
         else toast.error(errData.error || 'Failed to generate');
         setIsGenerating(false);
+        setThinkingPhase(null);
+        clearTimeout(phaseTimer1);
+        clearTimeout(phaseTimer2);
         return;
       }
 
       if (!resp.body) throw new Error('No response body');
+
+      // Clear thinking phases once streaming starts
+      setThinkingPhase(null);
+      clearTimeout(phaseTimer1);
+      clearTimeout(phaseTimer2);
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
@@ -213,15 +277,17 @@ export function useAIAppBuilder() {
       const parsedFiles = parseMultiFileOutput(fullContent);
       if (parsedFiles.length > 0) {
         setLatestFiles(parsedFiles);
-        // Update assistant message with file count
-        setMessages(prev =>
-          prev.map((m, i) =>
-            i === prev.length - 1 && m.role === 'assistant'
-              ? { ...m, filesGenerated: parsedFiles.length }
-              : m
-          )
-        );
       }
+
+      // Add suggestions + file count to the final assistant message
+      const suggestions = generateSuggestions(fullContent, mode);
+      setMessages(prev =>
+        prev.map((m, i) =>
+          i === prev.length - 1 && m.role === 'assistant'
+            ? { ...m, filesGenerated: parsedFiles.length || undefined, suggestions }
+            : m
+        )
+      );
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.error('AI Builder error:', err);
@@ -229,6 +295,9 @@ export function useAIAppBuilder() {
       }
     } finally {
       setIsGenerating(false);
+      setThinkingPhase(null);
+      clearTimeout(phaseTimer1);
+      clearTimeout(phaseTimer2);
       abortRef.current = null;
     }
   }, [messages, isGenerating, mode]);
@@ -236,12 +305,22 @@ export function useAIAppBuilder() {
   const stopGenerating = useCallback(() => {
     abortRef.current?.abort();
     setIsGenerating(false);
+    setThinkingPhase(null);
   }, []);
 
   const clearChat = useCallback(() => {
     setMessages([]);
     setLatestFiles([]);
+    setVersions([]);
   }, []);
+
+  const restoreVersion = useCallback((versionId: string) => {
+    const version = versions.find(v => v.id === versionId);
+    if (version) {
+      setLatestFiles(version.files);
+      toast.success(`Restored to: ${version.label}`);
+    }
+  }, [versions]);
 
   return {
     messages,
@@ -249,8 +328,11 @@ export function useAIAppBuilder() {
     latestFiles,
     mode,
     setMode,
+    thinkingPhase,
+    versions,
     sendMessage,
     stopGenerating,
     clearChat,
+    restoreVersion,
   };
 }
