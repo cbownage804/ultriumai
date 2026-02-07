@@ -72,7 +72,7 @@ export function useAIAppBuilder() {
     currentFiles: ProjectFile[] = [],
     supabaseConfig?: { url: string; anonKey: string } | null,
     stripeConfig?: { publishableKey: string } | null,
-    openaiConfig?: { apiKey: string } | null,
+    serviceKeys?: { id: string; serviceId: string; apiKey: string }[],
   ) => {
     if (!input.trim() || isGenerating) return;
 
@@ -123,7 +123,7 @@ export function useAIAppBuilder() {
           stream: true,
           supabaseConfig: supabaseConfig || undefined,
           stripeConfig: stripeConfig || undefined,
-          openaiConfig: openaiConfig || undefined,
+          activeServices: serviceKeys?.map(sk => sk.serviceId) || [],
         }),
         signal: controller.signal,
       });
