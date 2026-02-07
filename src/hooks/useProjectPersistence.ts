@@ -148,11 +148,35 @@ export function useProjectPersistence() {
       }
 
       const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'app';
-      // Use project ID for a stable, unique slug (like Lovable does)
       const projectSuffix = currentProjectId
         ? currentProjectId.split('-')[0]
         : crypto.randomUUID().split('-')[0];
-      const slug = `${baseSlug}--${projectSuffix}`;
+      let slug = `${baseSlug}--${projectSuffix}`;
+
+      // Check if slug is already taken by another user, increment if needed
+      let attempt = 0;
+      while (attempt < 10) {
+        const checkPath = `${user.id}/${slug}/index.html`;
+        // If this is our own project re-publishing, upsert will handle it
+        // Check if any OTHER user has this slug by listing all previews
+        const { data: existing } = await supabase.storage
+          .from('published-apps')
+          .list('previews', { search: slug });
+        
+        // Also check the user's own folder - if it exists and belongs to current project, allow overwrite
+        const { data: ownFiles } = await supabase.storage
+          .from('published-apps')
+          .list(`${user.id}/${slug}`);
+
+        const isOwnExisting = ownFiles && ownFiles.length > 0;
+        const isNewSlug = !existing || existing.length === 0;
+
+        if (isNewSlug || isOwnExisting) break;
+
+        attempt++;
+        slug = `${baseSlug}--${projectSuffix}-${attempt}`;
+      }
+
       const filePath = `${user.id}/${slug}/index.html`;
 
       const { error } = await supabase.storage
