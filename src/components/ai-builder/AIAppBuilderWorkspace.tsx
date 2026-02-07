@@ -7,13 +7,14 @@ import { ProjectFileTree } from './ProjectFileTree';
 import { FileTabBar } from './FileTabBar';
 import { CodeEditor } from './CodeEditor';
 import { ExportButton } from './ExportButton';
-import { ProjectSettings, type SupabaseConfig, type GithubConfig } from './ProjectSettings';
+import { ProjectSettings, type SupabaseConfig, type GithubConfig, type StripeConfig, type VercelConfig, type OpenAIConfig, type EnvVar } from './ProjectSettings';
 import { GithubPushButton } from './GithubPushButton';
+import { VercelDeployButton } from './VercelDeployButton';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Code, FolderTree, Pencil, Database } from 'lucide-react';
+import { Eye, Code, FolderTree, Pencil, Database, CreditCard } from 'lucide-react';
 import { useState } from 'react';
 
 export function AIAppBuilderWorkspace() {
@@ -33,6 +34,10 @@ export function AIAppBuilderWorkspace() {
   const [editName, setEditName] = useState(project.name);
   const [supabaseConfig, setSupabaseConfig] = useState<SupabaseConfig | null>(null);
   const [githubConfig, setGithubConfig] = useState<GithubConfig | null>(null);
+  const [stripeConfig, setStripeConfig] = useState<StripeConfig | null>(null);
+  const [vercelConfig, setVercelConfig] = useState<VercelConfig | null>(null);
+  const [openaiConfig, setOpenaiConfig] = useState<OpenAIConfig | null>(null);
+  const [envVars, setEnvVars] = useState<EnvVar[]>([]);
 
   // When AI generates new files, merge them into the project
   useEffect(() => {
@@ -48,7 +53,7 @@ export function AIAppBuilderWorkspace() {
   }, [latestFiles]);
 
   const handleSend = (input: string) => {
-    sendMessage(input, project.files, supabaseConfig);
+    sendMessage(input, project.files, supabaseConfig, stripeConfig, openaiConfig);
   };
 
   const handleClear = () => {
@@ -63,7 +68,7 @@ export function AIAppBuilderWorkspace() {
     setIsEditingName(false);
   };
 
-  const compiledHTML = getCompiledHTML(supabaseConfig);
+  const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars);
   const hasFiles = project.files.length > 0;
 
   return (
@@ -95,8 +100,12 @@ export function AIAppBuilderWorkspace() {
             </Badge>
             {supabaseConfig && (
               <Badge variant="secondary" className="text-[10px] gap-1">
-                <Database className="h-2.5 w-2.5" />
-                Supabase
+                <Database className="h-2.5 w-2.5" />Supabase
+              </Badge>
+            )}
+            {stripeConfig && (
+              <Badge variant="secondary" className="text-[10px] gap-1">
+                <CreditCard className="h-2.5 w-2.5" />Stripe
               </Badge>
             )}
           </div>
@@ -104,9 +113,24 @@ export function AIAppBuilderWorkspace() {
             <ProjectSettings
               supabaseConfig={supabaseConfig}
               githubConfig={githubConfig}
+              stripeConfig={stripeConfig}
+              vercelConfig={vercelConfig}
+              openaiConfig={openaiConfig}
+              envVars={envVars}
               onSupabaseChange={setSupabaseConfig}
               onGithubChange={setGithubConfig}
+              onStripeChange={setStripeConfig}
+              onVercelChange={setVercelConfig}
+              onOpenAIChange={setOpenaiConfig}
+              onEnvVarsChange={setEnvVars}
             />
+            {vercelConfig && (
+              <VercelDeployButton
+                projectName={project.name}
+                files={project.files}
+                vercelToken={vercelConfig.token}
+              />
+            )}
             {githubConfig && (
               <GithubPushButton
                 projectName={project.name}
@@ -169,19 +193,11 @@ export function AIAppBuilderWorkspace() {
                     <div className="flex items-center border-b border-border bg-background">
                       <Tabs value={rightTab} onValueChange={(v) => setRightTab(v as 'preview' | 'code')} className="w-full">
                         <TabsList className="h-9 bg-transparent border-0 p-0 rounded-none">
-                          <TabsTrigger
-                            value="preview"
-                            className="text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
-                          >
-                            <Eye className="h-3 w-3 mr-1" />
-                            Preview
+                          <TabsTrigger value="preview" className="text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
+                            <Eye className="h-3 w-3 mr-1" />Preview
                           </TabsTrigger>
-                          <TabsTrigger
-                            value="code"
-                            className="text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
-                          >
-                            <Code className="h-3 w-3 mr-1" />
-                            Code
+                          <TabsTrigger value="code" className="text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
+                            <Code className="h-3 w-3 mr-1" />Code
                           </TabsTrigger>
                         </TabsList>
                       </Tabs>
