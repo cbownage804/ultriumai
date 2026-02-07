@@ -101,6 +101,7 @@ const MSPPricing = lazy(() => import('@/pages/MSPPricing'));
 const AIStudioPricing = lazy(() => import('@/pages/pricing/AIStudioPricing'));
 const SafeSuitePricing = lazy(() => import('@/pages/pricing/SafeSuitePricing'));
 const VanguardPricing = lazy(() => import('@/pages/pricing/VanguardPricing'));
+const CustomAppsPricing = lazy(() => import('@/pages/pricing/CustomAppsPricing'));
 const Solutions = lazy(() => import('@/pages/Solutions'));
 const LiveDemos = lazy(() => import('@/pages/LiveDemos'));
 const ProductsPage = lazy(() => import('@/pages/ProductsPage'));
@@ -355,6 +356,7 @@ function AppRouter() {
         <Route path="/pricing/ai-studio" element={<SuspenseWrapper variant="cards"><AIStudioPricing /></SuspenseWrapper>} />
         <Route path="/pricing/safesuite" element={<SuspenseWrapper variant="cards"><SafeSuitePricing /></SuspenseWrapper>} />
         <Route path="/pricing/vanguard" element={<SuspenseWrapper variant="cards"><VanguardPricing /></SuspenseWrapper>} />
+        <Route path="/pricing/custom-apps" element={<SuspenseWrapper variant="cards"><CustomAppsPricing /></SuspenseWrapper>} />
         <Route path="/msp-pricing" element={<SuspenseWrapper variant="cards"><MSPPricing /></SuspenseWrapper>} />
         <Route path="/contact" element={<SuspenseWrapper variant="form"><Contact /></SuspenseWrapper>} />
         <Route path="/about" element={<SuspenseWrapper><About /></SuspenseWrapper>} />
