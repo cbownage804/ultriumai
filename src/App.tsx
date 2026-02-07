@@ -14,7 +14,7 @@ import SubscriptionProtectedRoute from '@/components/SubscriptionProtectedRoute'
 import EnhancedErrorBoundary from '@/components/EnhancedErrorBoundary';
 import CookieConsent from '@/components/CookieConsent';
 import { isVanguardDomain, isSafeSuiteDomain } from '@/utils/subdomain';
-import { SafeSuiteSubdomainRoutes } from '@/components/SubdomainRouter';
+
 import { VanguardLayout } from '@/components/vanguard/VanguardLayout';
 import { getVanguardProtectedRoutes, getVanguardPublicRoutes } from '@/routes/vanguardRoutes';
 import { PageSkeleton, LoadingSpinner } from '@/components/ui/PageSkeleton';
@@ -290,34 +290,34 @@ function AppRouter() {
     return 'ultrium';
   };
 
-  // If on SafeSuite subdomain (safesuite.ultriumai.com), render SafeSuite-specific routes
+  // If on SafeSuite subdomain, redirect to main domain with /safesuite prefix
   if (isSafeSuite) {
+    const mainDomain = window.location.hostname.includes('lovable.app')
+      ? 'https://ultriumai.lovable.app'
+      : 'https://ultriumai.com';
+    const currentPath = location.pathname === '/' ? '' : location.pathname;
+    const targetUrl = `${mainDomain}/safesuite${currentPath}${location.search}${location.hash}`;
+    window.location.replace(targetUrl);
     return (
-      <EnhancedErrorBoundary context="SafeSuite Application" level="critical">
-        <SafeSuiteSubdomainRoutes />
-        <CookieConsent />
-      </EnhancedErrorBoundary>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner />
+      </div>
     );
   }
 
-  // If on Vanguard subdomain, render Vanguard-specific routes
+  // If on Vanguard subdomain, redirect to main domain with /vanguard prefix
   if (isVanguard) {
+    const mainDomain = window.location.hostname.includes('lovable.app')
+      ? 'https://ultriumai.lovable.app'
+      : 'https://ultriumai.com';
+    // Map subdomain paths: /app/* → /vanguard/app/*, / → /vanguard
+    const currentPath = location.pathname === '/' ? '' : location.pathname;
+    const targetUrl = `${mainDomain}/vanguard${currentPath}${location.search}${location.hash}`;
+    window.location.replace(targetUrl);
     return (
-      <EnhancedErrorBoundary context="Vanguard Application" level="critical">
-        <Routes>
-          {/* Public routes without layout (landing, auth) */}
-          {getVanguardPublicRoutes()}
-          {/* Protected routes with layout */}
-          <Route path="/app" element={<VanguardLayout />}>
-            {getVanguardProtectedRoutes()}
-          </Route>
-          {/* Dashboard shortcut - redirect to app */}
-          <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
-          {/* Catch-all: redirect to landing page, not app (let users see marketing first) */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        <CookieConsent />
-      </EnhancedErrorBoundary>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner />
+      </div>
     );
   }
 

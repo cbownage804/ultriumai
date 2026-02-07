@@ -8,7 +8,7 @@ import { useAccountType } from "@/hooks/useAccountType";
 import { useToast } from "@/hooks/use-toast";
 import { createNavigationHandler } from "@/hooks/useScrollToTop";
 import ThemeToggle from "./ThemeToggle";
-import { isVanguardDomain, isSafeSuiteDomain } from "@/utils/subdomain";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,58 +29,14 @@ const Navigation = () => {
   const { toast } = useToast();
   
   const handleNavigation = createNavigationHandler(navigate);
-
-  const isOnSubdomain = isSafeSuiteDomain() || isVanguardDomain();
-
-  // SafeSuite subdomain local paths (routes that exist in SafeSuiteSubdomainRoutes)
-  const safeSuiteLocalPrefixes = ['/', '/auth', '/dashboard', '/pass', '/scan', '/web', '/track', '/assist', '/billing', '/settings', '/admin', '/products/safe', '/features', '/asset-management'];
-  // Vanguard subdomain local paths
-  const vanguardLocalPrefixes = ['/', '/auth', '/app', '/dashboard'];
-
-  /**
-   * Smart navigation: if on a subdomain and the path doesn't belong to
-   * this subdomain's routes, navigate to the main domain instead.
-   */
-  const smartNavigate = (path: string) => {
-    if (!isOnSubdomain) {
-      handleNavigation(path);
-      return;
-    }
-
-    const localPrefixes = isSafeSuiteDomain() ? safeSuiteLocalPrefixes : vanguardLocalPrefixes;
-    const isLocal = localPrefixes.some(prefix =>
-      prefix === '/' ? path === '/' : path.startsWith(prefix)
-    );
-
-    if (isLocal) {
-      handleNavigation(path);
-    } else {
-      // Navigate to the main domain for cross-product pages
-      const mainDomain = window.location.hostname.includes('lovable.app')
-        ? 'https://ultriumai.lovable.app'
-        : 'https://ultriumai.com';
-      window.location.href = `${mainDomain}${path}`;
-    }
-  };
-
-  const smartNavigateWithMenuClose = (path: string) => {
-    smartNavigate(path);
-    setIsMenuOpen(false);
-  };
   
   // Get the correct dashboard path based on subdomain
   const getDashboardPath = () => {
-    if (isVanguardDomain()) {
-      return '/app/dashboard';
-    }
-    if (isSafeSuiteDomain()) {
-      return '/dashboard';
-    }
     return '/hub';
   };
   
   const handleNavigationWithMenuClose = (path: string) => {
-    smartNavigate(path);
+    handleNavigation(path);
     setIsMenuOpen(false);
   };
 
@@ -104,7 +60,7 @@ const Navigation = () => {
       title: "Signed out",
       description: "You have been successfully signed out.",
     });
-    smartNavigate('/');
+    handleNavigation('/');
   };
 
   return (
@@ -151,7 +107,7 @@ const Navigation = () => {
                 <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
                   {/* SafeSuite */}
                   <button
-                    onClick={() => smartNavigate('/safesuite')}
+                    onClick={() => handleNavigation('/safesuite')}
                     className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/30 transition-all duration-200 text-left"
                   >
                     <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-emerald-500/20 overflow-hidden">
@@ -168,7 +124,7 @@ const Navigation = () => {
 
                   {/* AI Studio */}
                   <button
-                    onClick={() => smartNavigate('/products/ai-studio')}
+                    onClick={() => handleNavigation('/products/ai-studio')}
                     className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all duration-200 text-left"
                   >
                     <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-primary/20 overflow-hidden">
@@ -185,7 +141,7 @@ const Navigation = () => {
 
                   {/* Vanguard Suite */}
                   <button
-                    onClick={() => smartNavigate('/vanguard')}
+                    onClick={() => handleNavigation('/vanguard')}
                     className="group/item col-span-2 flex items-start gap-3 p-3 rounded-xl hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/30 transition-all duration-200 text-left"
                   >
                     <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-cyan-500/20 overflow-hidden">
@@ -205,7 +161,7 @@ const Navigation = () => {
                 <div className="px-5 py-3 bg-muted/30 border-t border-border/30 flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">Enterprise solutions available</span>
                   <button 
-                    onClick={() => smartNavigate('/pricing')}
+                    onClick={() => handleNavigation('/pricing')}
                     className="text-xs font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
                   >
                     Compare plans <ArrowRight className="h-3 w-3" />
@@ -233,7 +189,7 @@ const Navigation = () => {
                 </div>
                 <div className="p-2 space-y-0.5">
                   <button
-                    onClick={() => smartNavigate('/pricing/vanguard')}
+                    onClick={() => handleNavigation('/pricing/vanguard')}
                     className="flex items-center gap-3 w-full p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group/item"
                   >
                     <div className="shrink-0 w-8 h-8 rounded-md bg-black flex items-center justify-center overflow-hidden">
@@ -245,7 +201,7 @@ const Navigation = () => {
                     </div>
                   </button>
                   <button
-                    onClick={() => smartNavigate('/pricing/ai-studio')}
+                    onClick={() => handleNavigation('/pricing/ai-studio')}
                     className="flex items-center gap-3 w-full p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group/item"
                   >
                     <div className="shrink-0 w-8 h-8 rounded-md bg-black flex items-center justify-center overflow-hidden">
@@ -257,7 +213,7 @@ const Navigation = () => {
                     </div>
                   </button>
                   <button
-                    onClick={() => smartNavigate('/pricing/safesuite')}
+                    onClick={() => handleNavigation('/pricing/safesuite')}
                     className="flex items-center gap-3 w-full p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group/item"
                   >
                     <div className="shrink-0 w-8 h-8 rounded-md bg-black flex items-center justify-center overflow-hidden">
@@ -269,7 +225,7 @@ const Navigation = () => {
                     </div>
                   </button>
                   <button
-                    onClick={() => smartNavigate('/pricing/custom-apps')}
+                    onClick={() => handleNavigation('/pricing/custom-apps')}
                     className="flex items-center gap-3 w-full p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group/item"
                   >
                     <div className="shrink-0 w-8 h-8 rounded-md bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
@@ -285,7 +241,7 @@ const Navigation = () => {
             </DropdownMenu>
             
             <button 
-              onClick={() => smartNavigate('/docs')}
+              onClick={() => handleNavigation('/docs')}
               className="relative text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 group"
             >
               Docs
@@ -293,7 +249,7 @@ const Navigation = () => {
             </button>
             
             <button 
-              onClick={() => smartNavigate('/contact')}
+              onClick={() => handleNavigation('/contact')}
               className="relative text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 group"
             >
               Contact
@@ -335,7 +291,7 @@ const Navigation = () => {
               <div className="flex items-center gap-3">
                 <ThemeToggle />
                 <Button 
-                  onClick={() => smartNavigate('/auth')} 
+                  onClick={() => handleNavigation('/auth')} 
                   size="sm"
                   className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-primary/30 transition-all duration-300 hover:scale-105"
                 >
