@@ -38,7 +38,7 @@ export default function VanguardAppCenter() {
   const [selectedApp, setSelectedApp] = useState<typeof initialApps[0] | null>(null);
 
   useEffect(() => {
-    document.title = 'App Center | Ultrium Vanguard';
+    document.title = 'App Center | Vanguard';
   }, []);
 
   const filteredApps = apps.filter(app => {

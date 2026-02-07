@@ -404,7 +404,7 @@ export default function VanguardKnowledge() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    document.title = 'Vanguard Atlas | Ultrium Vanguard';
+    document.title = 'Atlas | Vanguard';
   }, []);
 
   const filteredArticles = articles.filter(article => {

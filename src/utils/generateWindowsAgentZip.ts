@@ -225,7 +225,7 @@ pause
 `;
 
 // README for Windows
-const WINDOWS_README = `# Ultrium Vanguard Agent for Windows
+const WINDOWS_README = `# Vanguard Agent for Windows
 
 Enterprise RMM agent for Windows systems.
 

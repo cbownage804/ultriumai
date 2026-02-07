@@ -93,7 +93,7 @@ export default function VanguardAlerts() {
   const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
-    document.title = 'Vanguard Pursuit | Ultrium Vanguard';
+    document.title = 'Realtime Alerts | Vanguard';
   }, []);
 
   const normalizeSeverity = (sev: string | null | undefined): UiSeverity => {

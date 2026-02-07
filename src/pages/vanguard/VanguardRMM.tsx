@@ -61,7 +61,7 @@ export default function VanguardRMM() {
   const { moduleId } = useParams<{ moduleId: string }>();
 
   useEffect(() => {
-    document.title = 'Vanguard Horizon | Ultrium Vanguard';
+    document.title = 'Horizon RMM | Vanguard';
   }, []);
 
   const content = moduleId ? moduleComponents[moduleId] : null;

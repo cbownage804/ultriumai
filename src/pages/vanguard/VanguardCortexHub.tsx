@@ -87,7 +87,7 @@ export default function VanguardCortexHub() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = 'Cortex AI Hub | Ultrium Vanguard';
+    document.title = 'Cortex AI Hub | Vanguard';
   }, []);
 
   const allTools = Object.values(toolCategories).flatMap(cat => cat.tools);

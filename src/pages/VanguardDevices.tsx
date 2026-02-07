@@ -3,7 +3,7 @@ import { DevicesTabbedView } from '@/components/vanguard/devices';
 
 export default function VanguardDevices() {
   useEffect(() => {
-    document.title = 'Vanguard Devices | Ultrium Vanguard';
+    document.title = 'Devices | Vanguard';
   }, []);
 
   return (

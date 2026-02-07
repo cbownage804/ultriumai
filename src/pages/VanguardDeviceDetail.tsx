@@ -3,7 +3,7 @@ import { VanguardDeviceDetails } from '@/components/vanguard/VanguardDeviceDetai
 
 export default function VanguardDeviceDetail() {
   useEffect(() => {
-    document.title = 'Device Details | Ultrium Vanguard';
+    document.title = 'Device Details | Vanguard';
   }, []);
 
   return (

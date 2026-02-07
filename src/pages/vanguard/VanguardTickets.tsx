@@ -187,7 +187,7 @@ export default function VanguardTickets() {
   }, [tickets]);
 
   useEffect(() => {
-    document.title = 'Tickets | Ultrium Vanguard';
+    document.title = 'Tickets | Vanguard';
   }, []);
 
   // Filter by client search as well

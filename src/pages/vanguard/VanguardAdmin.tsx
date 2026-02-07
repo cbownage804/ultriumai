@@ -142,7 +142,7 @@ export default function VanguardAdmin() {
   ]);
 
   useEffect(() => {
-    document.title = 'Admin | Ultrium Vanguard';
+    document.title = 'Admin | Vanguard';
   }, []);
 
   // Team actions

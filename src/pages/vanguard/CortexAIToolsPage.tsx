@@ -5,7 +5,7 @@ import { Sparkles, Wand2, Rocket } from 'lucide-react';
 
 export default function CortexAIToolsPage() {
   useEffect(() => {
-    document.title = 'AI Tools | Ultrium Vanguard';
+    document.title = 'AI Tools | Vanguard';
   }, []);
 
   return (

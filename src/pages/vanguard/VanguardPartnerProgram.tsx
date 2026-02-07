@@ -19,7 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export default function VanguardPartnerProgram() {
   useEffect(() => {
-    document.title = 'Partner Program | Ultrium Vanguard';
+    document.title = 'Partner Program | Vanguard';
   }, []);
 
   const [seats, setSeats] = useState(25);

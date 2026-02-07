@@ -131,7 +131,7 @@ export default function VanguardSetup() {
   };
 
   useEffect(() => {
-    document.title = 'Install Agent | Ultrium Vanguard';
+    document.title = 'Install Agent | Vanguard';
   }, []);
 
   // Handle Windows download with provisioning token

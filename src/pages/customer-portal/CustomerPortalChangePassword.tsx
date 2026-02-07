@@ -189,7 +189,7 @@ export default function CustomerPortalChangePassword() {
         </Card>
 
         <p className="text-center text-white/40 text-xs mt-6">
-          Powered by Ultrium Vanguard • Secure Customer Portal
+          Powered by Vanguard • Secure Customer Portal
         </p>
       </motion.div>
     </div>

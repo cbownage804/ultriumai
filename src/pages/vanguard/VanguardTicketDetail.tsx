@@ -240,7 +240,7 @@ export default function VanguardTicketDetail() {
   const [showUserTickets, setShowUserTickets] = useState(true);
 
   useEffect(() => {
-    document.title = `${ticket.id} | Tickets | Ultrium Vanguard`;
+    document.title = `${ticket.id} | Tickets | Vanguard`;
   }, [ticket.id]);
 
   useEffect(() => {

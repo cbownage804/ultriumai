@@ -114,8 +114,8 @@ export default function VanguardLanding() {
 
   const faqs = [
     {
-      question: "What makes Ultrium Vanguard different from other security platforms?",
-      answer: "Ultrium Vanguard combines multiple security disciplines into one AI-powered platform. Instead of managing separate tools for SOC operations, vulnerability scanning, penetration testing, and compliance, you get everything integrated with advanced AI analysis and automated response capabilities."
+      question: "What makes Vanguard different from other security platforms?",
+      answer: "Vanguard combines multiple security disciplines into one AI-powered platform. Instead of managing separate tools for SOC operations, vulnerability scanning, penetration testing, and compliance, you get everything integrated with advanced AI analysis and automated response capabilities."
     },
     {
       question: "How quickly can we see results after deployment?",
@@ -123,14 +123,14 @@ export default function VanguardLanding() {
     },
     {
       question: "Do you replace our existing security tools?",
-      answer: "Ultrium Vanguard can operate alongside your existing tools or replace them entirely. Our platform integrates with major SIEM systems, EDR solutions, and security frameworks. Many customers use us as their primary security operations platform while maintaining specialized tools for specific use cases."
+      answer: "Vanguard can operate alongside your existing tools or replace them entirely. Our platform integrates with major SIEM systems, EDR solutions, and security frameworks. Many customers use us as their primary security operations platform while maintaining specialized tools for specific use cases."
     },
     {
       question: "What compliance frameworks does Vanguard support?",
       answer: "We support all major compliance frameworks including SOC2, HIPAA, PCI-DSS, ISO 27001, NIST, and GDPR. Our automated compliance monitoring continuously tracks your security posture and generates audit-ready reports for any framework."
     },
     {
-      question: "Is Ultrium Vanguard suitable for MSPs?",
+      question: "Is Vanguard suitable for MSPs?",
       answer: "Absolutely! Our multi-tenant architecture is specifically designed for MSPs and MSSPs. You get white-label branding, per-client reporting, automated billing integration, and comprehensive partner support including training and marketing materials."
     }
   ];
@@ -273,7 +273,7 @@ export default function VanguardLanding() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Six Security Disciplines. One Unified Platform.</h2>
             <p className="text-lg text-white/60 max-w-3xl mx-auto">
-              Stop juggling multiple security tools. Ultrium Vanguard consolidates everything into one AI-powered platform 
+              Stop juggling multiple security tools. Vanguard consolidates everything into one AI-powered platform 
               with seamless integration and unified reporting.
             </p>
           </div>
@@ -489,7 +489,7 @@ export default function VanguardLanding() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Frequently Asked Questions</h2>
             <p className="text-lg text-white/60">
-              Everything you need to know about Ultrium Vanguard
+              Everything you need to know about Vanguard
             </p>
           </div>
           
@@ -521,7 +521,7 @@ export default function VanguardLanding() {
             Ready to Revolutionize Your Security?
           </h2>
           <p className="text-lg text-white/60 mb-8 max-w-3xl mx-auto">
-            Join thousands of organizations that trust Ultrium Vanguard to protect their digital infrastructure. 
+            Join thousands of organizations that trust Vanguard to protect their digital infrastructure. 
             Start your free trial today and experience the future of cybersecurity.
           </p>
           

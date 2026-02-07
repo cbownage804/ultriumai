@@ -3,7 +3,7 @@ import { ScreenRecordingKBGenerator } from '@/components/vanguard/cortex/ScreenR
 
 export default function CortexScreenToDocsPage() {
   useEffect(() => {
-    document.title = 'Screen Recording to Docs | Ultrium Vanguard';
+    document.title = 'Screen to Docs | Vanguard';
   }, []);
 
   return (
