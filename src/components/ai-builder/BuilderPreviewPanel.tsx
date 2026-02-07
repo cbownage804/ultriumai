@@ -35,7 +35,7 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
 
   const currentPreset = DEVICE_PRESETS.find(p => p.id === activePreset) || DEVICE_PRESETS[0];
 
-  // Inject error + console capture script into HTML
+  // Inject error + console + network capture script into HTML
   const htmlWithErrorCapture = html ? html.replace(
     '</head>',
     `<script>
@@ -56,6 +56,33 @@ window.addEventListener('unhandledrejection', function(e) {
     orig.apply(console, arguments);
   };
 });
+// Network logger
+(function() {
+  var origFetch = window.fetch;
+  window.fetch = function() {
+    var url = arguments[0];
+    if (typeof url === 'object' && url.url) url = url.url;
+    var method = (arguments[1] && arguments[1].method) || 'GET';
+    var start = performance.now();
+    return origFetch.apply(this, arguments).then(function(resp) {
+      window.parent.postMessage({ type: '__NETWORK_LOG__', method: method, url: String(url), status: resp.status, duration: Math.round(performance.now() - start) }, '*');
+      return resp;
+    }).catch(function(err) {
+      window.parent.postMessage({ type: '__NETWORK_LOG__', method: method, url: String(url), status: 0, duration: Math.round(performance.now() - start) }, '*');
+      throw err;
+    });
+  };
+  var origXHR = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(method, url) {
+    this._netMethod = method;
+    this._netUrl = url;
+    this._netStart = performance.now();
+    this.addEventListener('loadend', function() {
+      window.parent.postMessage({ type: '__NETWORK_LOG__', method: this._netMethod, url: String(this._netUrl), status: this.status, duration: Math.round(performance.now() - this._netStart) }, '*');
+    });
+    return origXHR.apply(this, arguments);
+  };
+})();
 </script>
 </head>`
   ) : null;

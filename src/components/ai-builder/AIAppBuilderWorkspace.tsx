@@ -47,7 +47,7 @@ import { toast } from 'sonner';
 
 export function AIAppBuilderWorkspace() {
   const {
-    messages, isGenerating, latestFiles, previousFiles, mode, setMode, thinkingPhase, versions,
+    messages, setMessages, isGenerating, latestFiles, previousFiles, mode, setMode, thinkingPhase, versions,
     totalTokensUsed, sendMessage, stopGenerating, clearChat, restoreVersion,
     partialFiles, isStreamingPreview, completedFileCount,
   } = useAIAppBuilder();
@@ -305,10 +305,10 @@ export function AIAppBuilderWorkspace() {
   }, [mergeBranch, project.files, pushUndo, setFiles]);
 
   const handleSave = useCallback(async () => {
-    await saveProject(project.name, project.files, branches, activeBranch);
+    await saveProject(project.name, project.files, branches, activeBranch, messages);
     setDirtyFiles(new Set());
     toast.success('Project saved');
-  }, [saveProject, project.name, project.files, branches, activeBranch]);
+  }, [saveProject, project.name, project.files, branches, activeBranch, messages]);
 
   const handleLoadProject = useCallback(async (projectId: string) => {
     const loaded = await loadProject(projectId);
@@ -316,9 +316,13 @@ export function AIAppBuilderWorkspace() {
       setFiles(loaded.files as any[]);
       renameProject(loaded.name);
       if (loaded.published_url) setPublishedUrl(loaded.published_url);
+      // Restore chat messages if saved
+      if (loaded.settings?.chatMessages) {
+        setMessages(loaded.settings.chatMessages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+      }
       toast.success(`Loaded "${loaded.name}"`);
     }
-  }, [loadProject, setFiles, renameProject]);
+  }, [loadProject, setFiles, renameProject, setMessages]);
 
   const handlePublish = useCallback(async () => {
     const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
@@ -847,7 +851,7 @@ export function AIAppBuilderWorkspace() {
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
                                     <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} dirtyFiles={dirtyFiles} onSelect={setActiveFile} onClose={closeFile} onReorder={reorderOpenFiles} />
-                                    <FileBreadcrumb file={activeFile} />
+                                    <FileBreadcrumb file={activeFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
                                     <div className="flex-1 overflow-hidden">
                                       <CodeEditor file={activeFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
                                     </div>
@@ -870,7 +874,7 @@ export function AIAppBuilderWorkspace() {
                                   onClose={closeFile}
                                   onReorder={reorderOpenFiles}
                                 />
-                                <FileBreadcrumb file={activeFile} />
+                                <FileBreadcrumb file={activeFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
                                 <div className="flex-1 overflow-hidden">
                                   <CodeEditor file={activeFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
                                 </div>
