@@ -10,6 +10,7 @@ export interface BuilderMessage {
   timestamp: Date;
   suggestions?: string[];
   imageUrl?: string;
+  tokenEstimate?: number;
 }
 
 export type BuilderMode = 'build' | 'discuss';
@@ -102,13 +103,40 @@ function generateSuggestions(content: string, mode: BuilderMode): string[] {
   return suggestions.slice(0, 3);
 }
 
+/** Auto-detect whether a message is a build or discuss intent */
+function detectIntent(input: string): BuilderMode | null {
+  const lower = input.toLowerCase().trim();
+  const buildSignals = [
+    /^(build|create|make|generate|code|implement|add|design)\b/,
+    /landing page/i, /dashboard/i, /website/i, /web app/i, /clone/i,
+    /with (dark|light) (theme|mode)/i, /responsive/i,
+  ];
+  const discussSignals = [
+    /^(what|how|why|should|can|could|would|is it|do you|compare|explain|tell me|help me think|let'?s talk|let'?s discuss)/,
+    /\?$/, /pros and cons/i, /tradeoffs?/i, /best (practice|approach|way)/i,
+    /what do you think/i, /advice/i, /opinion/i,
+  ];
+  const buildScore = buildSignals.filter(r => r.test(lower)).length;
+  const discussScore = discussSignals.filter(r => r.test(lower)).length;
+  if (buildScore > 0 && discussScore === 0) return 'build';
+  if (discussScore > 0 && buildScore === 0) return 'discuss';
+  return null;
+}
+
+/** Rough token estimate (~4 chars per token) */
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
 export function useAIAppBuilder() {
   const [messages, setMessages] = useState<BuilderMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [latestFiles, setLatestFiles] = useState<ProjectFile[]>([]);
+  const [previousFiles, setPreviousFiles] = useState<ProjectFile[]>([]);
   const [mode, setMode] = useState<BuilderMode>('build');
   const [thinkingPhase, setThinkingPhase] = useState<ThinkingPhase>(null);
   const [versions, setVersions] = useState<VersionSnapshot[]>([]);
+  const [totalTokensUsed, setTotalTokensUsed] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   const sendMessage = useCallback(async (
@@ -121,7 +149,17 @@ export function useAIAppBuilder() {
   ) => {
     if (!input.trim() || isGenerating) return;
 
-    // Save current state as a version before generating
+    // Auto-detect intent and switch mode
+    const detectedMode = detectIntent(input);
+    if (detectedMode && detectedMode !== mode) {
+      setMode(detectedMode);
+    }
+    const effectiveMode = detectedMode || mode;
+
+    // Save previous files for diff view
+    if (currentFiles.length > 0) {
+      setPreviousFiles([...currentFiles]);
+    }
     if (currentFiles.length > 0) {
       setVersions(prev => [...prev, {
         id: crypto.randomUUID(),
@@ -191,7 +229,7 @@ export function useAIAppBuilder() {
         body: JSON.stringify({
           messages: apiMessages,
           stream: true,
-          mode,
+          mode: effectiveMode,
           supabaseConfig: supabaseConfig || undefined,
           stripeConfig: stripeConfig || undefined,
           activeServices: serviceKeys?.map(sk => sk.serviceId) || [],
@@ -290,12 +328,16 @@ export function useAIAppBuilder() {
         setLatestFiles(parsedFiles);
       }
 
-      // Add suggestions + file count to the final assistant message
-      const suggestions = generateSuggestions(fullContent, mode);
+      // Track token usage
+      const msgTokens = estimateTokens(input + fullContent);
+      setTotalTokensUsed(prev => prev + msgTokens);
+
+      // Add suggestions + file count + token estimate to the final assistant message
+      const suggestions = generateSuggestions(fullContent, effectiveMode);
       setMessages(prev =>
         prev.map((m, i) =>
           i === prev.length - 1 && m.role === 'assistant'
-            ? { ...m, filesGenerated: parsedFiles.length || undefined, suggestions }
+            ? { ...m, filesGenerated: parsedFiles.length || undefined, suggestions, tokenEstimate: msgTokens }
             : m
         )
       );
@@ -322,7 +364,9 @@ export function useAIAppBuilder() {
   const clearChat = useCallback(() => {
     setMessages([]);
     setLatestFiles([]);
+    setPreviousFiles([]);
     setVersions([]);
+    setTotalTokensUsed(0);
   }, []);
 
   const restoreVersion = useCallback((versionId: string) => {
@@ -337,10 +381,12 @@ export function useAIAppBuilder() {
     messages,
     isGenerating,
     latestFiles,
+    previousFiles,
     mode,
     setMode,
     thinkingPhase,
     versions,
+    totalTokensUsed,
     sendMessage,
     stopGenerating,
     clearChat,

@@ -3,11 +3,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
   Zap, MessageCircle, Hammer, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
-  LayoutGrid,
+  LayoutGrid, Wrench, AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from '@/hooks/useAIAppBuilder';
+import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
+import { CodeDiffViewer } from './CodeDiffViewer';
+import { TokenUsageIndicator } from './TokenUsageIndicator';
 
 interface BuilderChatPanelProps {
   messages: BuilderMessage[];
@@ -16,12 +19,16 @@ interface BuilderChatPanelProps {
   mode: BuilderMode;
   thinkingPhase: ThinkingPhase;
   versions: VersionSnapshot[];
+  totalTokensUsed: number;
+  previousFiles: ProjectFile[];
+  latestFiles: ProjectFile[];
   onModeChange: (mode: BuilderMode) => void;
   onSend: (message: string, imageDataUrl?: string | null) => void;
   onStop: () => void;
   onClear: () => void;
   onRestoreVersion: (id: string) => void;
   onOpenTemplates: () => void;
+  onFixError: (errorPrompt: string) => void;
 }
 
 const STARTER_PROMPTS = [
@@ -66,7 +73,8 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
 
 export function BuilderChatPanel({
   messages, isGenerating, fileCount, mode, thinkingPhase, versions,
-  onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates,
+  totalTokensUsed, previousFiles, latestFiles,
+  onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates, onFixError,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -192,6 +200,24 @@ export function BuilderChatPanel({
           </div>
         )}
 
+        {/* Code diff viewer for changed files */}
+        {!isStreaming && isLast && hasFiles && previousFiles.length > 0 && (
+          <div className="space-y-1.5 pt-1">
+            {latestFiles.slice(0, 3).map(file => {
+              const prev = previousFiles.find(p => p.path === file.path);
+              if (!prev) return null;
+              return (
+                <CodeDiffViewer
+                  key={file.path}
+                  oldContent={prev.content}
+                  newContent={file.content}
+                  fileName={file.path}
+                />
+              );
+            })}
+          </div>
+        )}
+
         {/* Follow-up suggestion chips */}
         {!isStreaming && isLast && msg.suggestions && msg.suggestions.length > 0 && (
           <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.04] mt-3">
@@ -231,7 +257,14 @@ export function BuilderChatPanel({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
+          {totalTokensUsed > 0 && (
+            <TokenUsageIndicator
+              tokensUsed={totalTokensUsed}
+              maxTokens={200000}
+              messageCount={messages.filter(m => m.role === 'user').length}
+            />
+          )}
           {versions.length > 0 && (
             <button
               onClick={() => setShowHistory(!showHistory)}

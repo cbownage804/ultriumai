@@ -24,8 +24,8 @@ import { cn } from '@/lib/utils';
 
 export function AIAppBuilderWorkspace() {
   const {
-    messages, isGenerating, latestFiles, mode, setMode, thinkingPhase, versions,
-    sendMessage, stopGenerating, clearChat, restoreVersion,
+    messages, isGenerating, latestFiles, previousFiles, mode, setMode, thinkingPhase, versions,
+    totalTokensUsed, sendMessage, stopGenerating, clearChat, restoreVersion,
   } = useAIAppBuilder();
 
   const {
@@ -179,12 +179,16 @@ export function AIAppBuilderWorkspace() {
                 mode={mode}
                 thinkingPhase={thinkingPhase}
                 versions={versions}
+                totalTokensUsed={totalTokensUsed}
+                previousFiles={previousFiles}
+                latestFiles={latestFiles}
                 onModeChange={setMode}
                 onSend={handleSend}
                 onStop={stopGenerating}
                 onClear={handleClear}
                 onRestoreVersion={restoreVersion}
                 onOpenTemplates={() => setShowTemplates(true)}
+                onFixError={handleFixError}
               />
             </ResizablePanel>
 
