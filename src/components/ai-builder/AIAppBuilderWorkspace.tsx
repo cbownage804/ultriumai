@@ -7,11 +7,13 @@ import { ProjectFileTree } from './ProjectFileTree';
 import { FileTabBar } from './FileTabBar';
 import { CodeEditor } from './CodeEditor';
 import { ExportButton } from './ExportButton';
+import { ProjectSettings, type SupabaseConfig, type GithubConfig } from './ProjectSettings';
+import { GithubPushButton } from './GithubPushButton';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Code, FolderTree, Pencil } from 'lucide-react';
+import { Eye, Code, FolderTree, Pencil, Database } from 'lucide-react';
 import { useState } from 'react';
 
 export function AIAppBuilderWorkspace() {
@@ -29,6 +31,8 @@ export function AIAppBuilderWorkspace() {
   const [rightTab, setRightTab] = useState<'preview' | 'code'>('preview');
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(project.name);
+  const [supabaseConfig, setSupabaseConfig] = useState<SupabaseConfig | null>(null);
+  const [githubConfig, setGithubConfig] = useState<GithubConfig | null>(null);
 
   // When AI generates new files, merge them into the project
   useEffect(() => {
@@ -44,7 +48,7 @@ export function AIAppBuilderWorkspace() {
   }, [latestFiles]);
 
   const handleSend = (input: string) => {
-    sendMessage(input, project.files);
+    sendMessage(input, project.files, supabaseConfig);
   };
 
   const handleClear = () => {
@@ -59,12 +63,12 @@ export function AIAppBuilderWorkspace() {
     setIsEditingName(false);
   };
 
-  const compiledHTML = getCompiledHTML();
+  const compiledHTML = getCompiledHTML(supabaseConfig);
   const hasFiles = project.files.length > 0;
 
   return (
     <div className="h-[calc(100vh-5rem)] w-full flex flex-col">
-      {/* Workspace header - only show when project has files */}
+      {/* Workspace header */}
       {hasFiles && (
         <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-background">
           <div className="flex items-center gap-2">
@@ -89,8 +93,29 @@ export function AIAppBuilderWorkspace() {
             <Badge variant="outline" className="text-[10px]">
               {project.files.length} file{project.files.length !== 1 ? 's' : ''}
             </Badge>
+            {supabaseConfig && (
+              <Badge variant="secondary" className="text-[10px] gap-1">
+                <Database className="h-2.5 w-2.5" />
+                Supabase
+              </Badge>
+            )}
           </div>
-          <ExportButton projectName={project.name} files={project.files} />
+          <div className="flex items-center gap-1.5">
+            <ProjectSettings
+              supabaseConfig={supabaseConfig}
+              githubConfig={githubConfig}
+              onSupabaseChange={setSupabaseConfig}
+              onGithubChange={setGithubConfig}
+            />
+            {githubConfig && (
+              <GithubPushButton
+                projectName={project.name}
+                files={project.files}
+                githubToken={githubConfig.token}
+              />
+            )}
+            <ExportButton projectName={project.name} files={project.files} />
+          </div>
         </div>
       )}
 
@@ -140,7 +165,6 @@ export function AIAppBuilderWorkspace() {
               {/* Preview / Code Panel */}
               <ResizablePanel defaultSize={hasFiles ? 80 : 100}>
                 <div className="h-full flex flex-col">
-                  {/* Tab switcher */}
                   {hasFiles && (
                     <div className="flex items-center border-b border-border bg-background">
                       <Tabs value={rightTab} onValueChange={(v) => setRightTab(v as 'preview' | 'code')} className="w-full">
@@ -164,7 +188,6 @@ export function AIAppBuilderWorkspace() {
                     </div>
                   )}
 
-                  {/* Content */}
                   <div className="flex-1 overflow-hidden">
                     {rightTab === 'preview' || !hasFiles ? (
                       <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} />
