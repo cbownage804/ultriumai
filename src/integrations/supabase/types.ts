@@ -2394,6 +2394,51 @@ export type Database = {
         }
         Relationships: []
       }
+      builder_projects: {
+        Row: {
+          active_branch: string
+          branches: Json
+          created_at: string
+          files: Json
+          id: string
+          is_published: boolean | null
+          last_saved_at: string
+          name: string
+          published_url: string | null
+          settings: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_branch?: string
+          branches?: Json
+          created_at?: string
+          files?: Json
+          id?: string
+          is_published?: boolean | null
+          last_saved_at?: string
+          name?: string
+          published_url?: string | null
+          settings?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_branch?: string
+          branches?: Json
+          created_at?: string
+          files?: Json
+          id?: string
+          is_published?: boolean | null
+          last_saved_at?: string
+          name?: string
+          published_url?: string | null
+          settings?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       business_customers: {
         Row: {
           account_manager_id: string | null

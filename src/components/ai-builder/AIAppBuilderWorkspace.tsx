@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAIAppBuilder } from '@/hooks/useAIAppBuilder';
 import { useProjectFileSystem } from '@/hooks/useProjectFileSystem';
+import { useUndoRedo } from '@/hooks/useUndoRedo';
+import { useBranching } from '@/hooks/useBranching';
+import { useProjectPersistence } from '@/hooks/useProjectPersistence';
 import { BuilderChatPanel } from './BuilderChatPanel';
 import { BuilderPreviewPanel } from './BuilderPreviewPanel';
 import { ProjectFileTree } from './ProjectFileTree';
@@ -12,15 +15,19 @@ import { GithubPushButton } from './GithubPushButton';
 import { VercelDeployButton } from './VercelDeployButton';
 import { TemplateLibrary } from './TemplateLibrary';
 import { SharePreview } from './SharePreview';
+import { BranchManager } from './BranchManager';
+import { ProjectManager } from './ProjectManager';
+import { CollaborativePresence } from './CollaborativePresence';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Eye, Code, Pencil, Database, CreditCard, Key,
-  PanelLeftClose, PanelLeftOpen, Activity,
+  PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export function AIAppBuilderWorkspace() {
   const {
@@ -34,6 +41,17 @@ export function AIAppBuilderWorkspace() {
     getCompiledHTML, activeFile,
   } = useProjectFileSystem();
 
+  const { canUndo, canRedo, pushUndo, undo, redo } = useUndoRedo();
+  const {
+    branches, activeBranch, activeBranchName,
+    createBranch, switchBranch, mergeBranch, deleteBranch, updateBranchFiles,
+  } = useBranching();
+  const {
+    savedProjects, currentProjectId, isSaving, isLoading, lastSaved,
+    loadProjects, saveProject, loadProject, deleteProject, publishProject,
+    scheduleAutoSave,
+  } = useProjectPersistence();
+
   const [rightTab, setRightTab] = useState<'preview' | 'code'>('preview');
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(project.name);
@@ -45,9 +63,15 @@ export function AIAppBuilderWorkspace() {
   const [envVars, setEnvVars] = useState<EnvVar[]>([]);
   const [showFileTree, setShowFileTree] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
 
+  // Sync latest files from AI
   useEffect(() => {
     if (latestFiles.length > 0) {
+      // Push undo before applying
+      if (project.files.length > 0) {
+        pushUndo('AI generation', project.files);
+      }
       if (project.files.length === 0) {
         setFiles(latestFiles);
       } else {
@@ -55,8 +79,32 @@ export function AIAppBuilderWorkspace() {
           upsertFile(file.path, file.content);
         }
       }
+      updateBranchFiles(latestFiles);
     }
   }, [latestFiles]);
+
+  // Auto-save on file changes
+  useEffect(() => {
+    if (project.files.length > 0) {
+      scheduleAutoSave(project.name, project.files);
+    }
+  }, [project.files, project.name, scheduleAutoSave]);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [project.files, canUndo, canRedo]);
 
   const handleSend = (input: string, imageDataUrl?: string | null) => {
     sendMessage(input, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl);
@@ -76,14 +124,73 @@ export function AIAppBuilderWorkspace() {
     setIsEditingName(false);
   };
 
+  const handleUndo = useCallback(() => {
+    const restored = undo(project.files);
+    if (restored) {
+      setFiles(restored);
+      toast.success('Undone');
+    }
+  }, [undo, project.files, setFiles]);
+
+  const handleRedo = useCallback(() => {
+    const restored = redo(project.files);
+    if (restored) {
+      setFiles(restored);
+      toast.success('Redone');
+    }
+  }, [redo, project.files, setFiles]);
+
+  const handleCreateBranch = useCallback((name: string) => {
+    createBranch(name, project.files);
+    toast.success(`Branch "${name}" created`);
+  }, [createBranch, project.files]);
+
+  const handleSwitchBranch = useCallback((branchId: string) => {
+    const files = switchBranch(branchId, project.files);
+    if (files && files.length > 0) {
+      pushUndo('Branch switch', project.files);
+      setFiles(files);
+    }
+    toast.success('Switched branch');
+  }, [switchBranch, project.files, pushUndo, setFiles]);
+
+  const handleMergeBranch = useCallback((branchId: string) => {
+    pushUndo('Before merge', project.files);
+    const merged = mergeBranch(branchId, project.files);
+    setFiles(merged);
+    toast.success('Branch merged');
+  }, [mergeBranch, project.files, pushUndo, setFiles]);
+
+  const handleSave = useCallback(async () => {
+    await saveProject(project.name, project.files, branches, activeBranch);
+    toast.success('Project saved');
+  }, [saveProject, project.name, project.files, branches, activeBranch]);
+
+  const handleLoadProject = useCallback(async (projectId: string) => {
+    const loaded = await loadProject(projectId);
+    if (loaded) {
+      setFiles(loaded.files as any[]);
+      renameProject(loaded.name);
+      if (loaded.published_url) setPublishedUrl(loaded.published_url);
+      toast.success(`Loaded "${loaded.name}"`);
+    }
+  }, [loadProject, setFiles, renameProject]);
+
+  const handlePublish = useCallback(async () => {
+    const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys);
+    if (!compiledHTML) {
+      toast.error('Nothing to publish');
+      return;
+    }
+    const url = await publishProject(project.name, compiledHTML);
+    if (url) {
+      setPublishedUrl(url);
+      toast.success('Published successfully!');
+    }
+  }, [publishProject, project.name, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys]);
+
   const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys);
   const hasFiles = project.files.length > 0;
-
-  const connectedServices = [
-    supabaseConfig && 'Supabase',
-    stripeConfig && 'Stripe',
-    ...serviceKeys.map(sk => sk.serviceId),
-  ].filter(Boolean);
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -91,7 +198,7 @@ export function AIAppBuilderWorkspace() {
         {/* ── Top Bar ── */}
         <div className="flex items-center justify-between px-3 h-11 border-b border-white/[0.06] bg-black/40 backdrop-blur-sm shrink-0">
           <div className="flex items-center gap-3">
-            {/* Status indicator */}
+            {/* Status + Name */}
             <div className="flex items-center gap-2">
               <div className={cn(
                 "h-2 w-2 rounded-full transition-colors",
@@ -123,8 +230,49 @@ export function AIAppBuilderWorkspace() {
               </span>
             )}
 
+            {/* Branch manager */}
+            <BranchManager
+              branches={branches}
+              activeBranch={activeBranch}
+              activeBranchName={activeBranchName}
+              onCreateBranch={handleCreateBranch}
+              onSwitchBranch={handleSwitchBranch}
+              onMergeBranch={handleMergeBranch}
+              onDeleteBranch={deleteBranch}
+            />
+
+            {/* Undo/Redo */}
+            {hasFiles && (
+              <div className="flex items-center gap-0.5">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleUndo}
+                      disabled={!canUndo}
+                      className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", canUndo ? "text-white/40 hover:text-white/70 hover:bg-white/5" : "text-white/10")}
+                    >
+                      <Undo2 className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">Undo (⌘Z)</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleRedo}
+                      disabled={!canRedo}
+                      className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", canRedo ? "text-white/40 hover:text-white/70 hover:bg-white/5" : "text-white/10")}
+                    >
+                      <Redo2 className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">Redo (⌘⇧Z)</TooltipContent>
+                </Tooltip>
+              </div>
+            )}
+
             {/* Connected service pills */}
-            {connectedServices.length > 0 && (
+            {(supabaseConfig || stripeConfig || serviceKeys.length > 0) && (
               <div className="hidden md:flex items-center gap-1 ml-1">
                 {supabaseConfig && (
                   <Badge className="h-5 text-[9px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20">
@@ -143,9 +291,26 @@ export function AIAppBuilderWorkspace() {
                 )}
               </div>
             )}
+
+            {/* Collaborative presence */}
+            <CollaborativePresence projectId={currentProjectId} />
           </div>
 
           <div className="flex items-center gap-1">
+            <ProjectManager
+              savedProjects={savedProjects}
+              currentProjectId={currentProjectId}
+              isSaving={isSaving}
+              isLoading={isLoading}
+              lastSaved={lastSaved}
+              isPublished={!!publishedUrl}
+              publishedUrl={publishedUrl}
+              onSave={handleSave}
+              onLoad={handleLoadProject}
+              onDelete={deleteProject}
+              onPublish={handlePublish}
+              onLoadProjects={loadProjects}
+            />
             <ProjectSettings
               supabaseConfig={supabaseConfig}
               githubConfig={githubConfig}
@@ -194,10 +359,9 @@ export function AIAppBuilderWorkspace() {
 
             <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors data-[resize-handle-active]:bg-cyan-500/50" />
 
-            {/* Right Panel: File Tree + Preview/Code */}
+            {/* Right Panel */}
             <ResizablePanel defaultSize={72} minSize={50}>
               <div className="h-full flex flex-col">
-                {/* Panel tab bar */}
                 {hasFiles && (
                   <div className="flex items-center h-9 border-b border-white/[0.06] bg-black/20 shrink-0">
                     <Tooltip>
@@ -220,9 +384,7 @@ export function AIAppBuilderWorkspace() {
                       onClick={() => setRightTab('preview')}
                       className={cn(
                         "h-9 px-3 flex items-center gap-1.5 text-xs transition-all relative",
-                        rightTab === 'preview'
-                          ? "text-white"
-                          : "text-white/40 hover:text-white/70"
+                        rightTab === 'preview' ? "text-white" : "text-white/40 hover:text-white/70"
                       )}
                     >
                       <Eye className="h-3 w-3" />
@@ -235,9 +397,7 @@ export function AIAppBuilderWorkspace() {
                       onClick={() => setRightTab('code')}
                       className={cn(
                         "h-9 px-3 flex items-center gap-1.5 text-xs transition-all relative",
-                        rightTab === 'code'
-                          ? "text-white"
-                          : "text-white/40 hover:text-white/70"
+                        rightTab === 'code' ? "text-white" : "text-white/40 hover:text-white/70"
                       )}
                     >
                       <Code className="h-3 w-3" />
@@ -256,7 +416,6 @@ export function AIAppBuilderWorkspace() {
                   </div>
                 )}
 
-                {/* Content area */}
                 <div className="flex-1 overflow-hidden">
                   <ResizablePanelGroup direction="horizontal" className="h-full">
                     {hasFiles && showFileTree && (
@@ -298,7 +457,6 @@ export function AIAppBuilderWorkspace() {
         </div>
       </div>
 
-      {/* Template Library Modal */}
       <TemplateLibrary
         isOpen={showTemplates}
         onClose={() => setShowTemplates(false)}
