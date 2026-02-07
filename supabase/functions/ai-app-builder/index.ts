@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are an expert web app builder AI. You generate multi-file web projects.
+const BASE_SYSTEM_PROMPT = `You are an expert web app builder AI. You generate multi-file web projects.
 
 OUTPUT FORMAT:
 You MUST output files using this exact delimiter format. No other text, no markdown, no explanations:
@@ -54,11 +54,35 @@ When MODIFYING an existing project:
 - If adding new files, include them
 - Output the COMPLETE content of changed files, not diffs`;
 
+const SUPABASE_ADDON = `
+
+SUPABASE INTEGRATION:
+The user has connected a Supabase project. The supabase-js SDK is pre-loaded and a \`supabase\` client is already initialized globally. You can use it directly in your JavaScript:
+
+Available globals:
+- \`supabase\` — a fully configured Supabase client
+- \`SUPABASE_URL\` — the project URL
+- \`SUPABASE_ANON_KEY\` — the anon/public key
+
+Use these for:
+- Authentication: \`supabase.auth.signInWithPassword()\`, \`supabase.auth.signUp()\`, \`supabase.auth.getSession()\`
+- Database queries: \`supabase.from('table').select()\`, \`.insert()\`, \`.update()\`, \`.delete()\`
+- Realtime: \`supabase.channel('name').on('postgres_changes', ...)\`
+- Storage: \`supabase.storage.from('bucket').upload()\`
+
+IMPORTANT:
+- Do NOT include any <script> tag for supabase-js — it's already injected
+- Do NOT create a supabase client — it's already available as \`supabase\`
+- Always use async/await with try/catch for Supabase operations
+- Show loading states and error messages to users
+- When the user asks for auth, database, or realtime features, USE SUPABASE
+`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, stream = true } = await req.json();
+    const { messages, stream = true, supabaseConfig } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -78,7 +102,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: BASE_SYSTEM_PROMPT + (supabaseConfig ? SUPABASE_ADDON : '') },
           ...messages,
         ],
         stream,

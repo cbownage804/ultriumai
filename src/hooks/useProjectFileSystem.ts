@@ -106,11 +106,10 @@ export function useProjectFileSystem() {
   }, []);
 
   /** Combine all project files into a single renderable HTML document */
-  const getCompiledHTML = useCallback((): string | null => {
+  const getCompiledHTML = useCallback((supabaseConfig?: { url: string; anonKey: string } | null): string | null => {
     const { files } = project;
     if (files.length === 0) return null;
 
-    // If there's a single HTML file, return it directly
     const htmlFiles = files.filter(f => f.language === 'html');
     const cssFiles = files.filter(f => f.language === 'css');
     const jsFiles = files.filter(f => f.language === 'javascript' || f.language === 'typescript');
@@ -119,6 +118,21 @@ export function useProjectFileSystem() {
 
     const mainHTML = files.find(f => f.path === 'index.html') || htmlFiles[0];
     let compiled = mainHTML.content;
+
+    // Inject Supabase SDK if configured
+    if (supabaseConfig?.url && supabaseConfig?.anonKey) {
+      const supabaseInject = `<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  const SUPABASE_URL = '${supabaseConfig.url}';
+  const SUPABASE_ANON_KEY = '${supabaseConfig.anonKey}';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>`;
+      if (compiled.includes('</head>')) {
+        compiled = compiled.replace('</head>', `${supabaseInject}\n</head>`);
+      } else {
+        compiled = `${supabaseInject}\n${compiled}`;
+      }
+    }
 
     // Inject CSS files before </head>
     if (cssFiles.length > 0) {
