@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Save, FolderOpen, Trash2, Globe, Loader2, Check, Clock,
-  X, FileText, ChevronRight,
+  X, FileText, ChevronRight, Copy, GitFork,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import type { SavedProject } from '@/hooks/useProjectPersistence';
 
 interface ProjectManagerProps {
@@ -19,12 +20,13 @@ interface ProjectManagerProps {
   onDelete: (projectId: string) => void;
   onPublish: () => void;
   onLoadProjects: () => void;
+  onRemix?: (projectId: string) => void;
 }
 
 export function ProjectManager({
   savedProjects, currentProjectId, isSaving, isLoading, lastSaved,
   isPublished, publishedUrl,
-  onSave, onLoad, onDelete, onPublish, onLoadProjects,
+  onSave, onLoad, onDelete, onPublish, onLoadProjects, onRemix,
 }: ProjectManagerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'save' | 'load' | 'publish'>('save');
@@ -123,6 +125,15 @@ export function ProjectManager({
                         </div>
                       </div>
                       {project.is_published && <Globe className="h-3 w-3 text-emerald-400 shrink-0" />}
+                      {onRemix && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onRemix(project.id); toast.success('Project remixed!'); }}
+                          className="hidden group-hover:flex h-5 w-5 rounded items-center justify-center text-white/30 hover:text-violet-400 hover:bg-violet-500/10"
+                          title="Remix (fork)"
+                        >
+                          <GitFork className="h-2.5 w-2.5" />
+                        </button>
+                      )}
                       <button
                         onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
                         className="hidden group-hover:flex h-5 w-5 rounded items-center justify-center text-white/30 hover:text-red-400 hover:bg-red-500/10"

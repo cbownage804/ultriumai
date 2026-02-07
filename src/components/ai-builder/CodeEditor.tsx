@@ -2,9 +2,19 @@ import { useCallback, useRef } from 'react';
 import Editor, { OnMount } from '@monaco-editor/react';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
+export interface RemoteCursor {
+  userId: string;
+  email: string;
+  color: string;
+  line: number;
+  column: number;
+}
+
 interface CodeEditorProps {
   file: ProjectFile | null;
   onContentChange?: (path: string, content: string) => void;
+  remoteCursors?: RemoteCursor[];
+  onCursorChange?: (line: number, column: number) => void;
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
@@ -12,8 +22,10 @@ const LANGUAGE_MAP: Record<string, string> = {
   typescript: 'typescript', json: 'json', markdown: 'markdown', xml: 'xml', plaintext: 'plaintext',
 };
 
-export function CodeEditor({ file, onContentChange }: CodeEditorProps) {
+export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursorChange }: CodeEditorProps) {
   const editorRef = useRef<any>(null);
+  const monacoRef = useRef<any>(null);
+  const decorationsRef = useRef<string[]>([]);
 
   const handleChange = useCallback((value: string | undefined) => {
     if (file && value !== undefined && onContentChange) {
@@ -21,8 +33,34 @@ export function CodeEditor({ file, onContentChange }: CodeEditorProps) {
     }
   }, [file, onContentChange]);
 
+  // Update remote cursor decorations
+  const updateRemoteCursors = useCallback(() => {
+    const editor = editorRef.current;
+    const monaco = monacoRef.current;
+    if (!editor || !monaco || remoteCursors.length === 0) {
+      if (editor && decorationsRef.current.length > 0) {
+        decorationsRef.current = editor.deltaDecorations(decorationsRef.current, []);
+      }
+      return;
+    }
+
+    const newDecorations = remoteCursors.map(cursor => ({
+      range: new monaco.Range(cursor.line, cursor.column, cursor.line, cursor.column + 1),
+      options: {
+        className: `remote-cursor-${cursor.userId.slice(0, 8)}`,
+        beforeContentClassName: `remote-cursor-line`,
+        hoverMessage: { value: `**${cursor.email}**` },
+        afterContentClassName: undefined,
+        stickiness: 1,
+      },
+    }));
+
+    decorationsRef.current = editor.deltaDecorations(decorationsRef.current, newDecorations);
+  }, [remoteCursors]);
+
   const handleMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
+    monacoRef.current = monaco;
 
     // Custom dark theme to match workspace
     monaco.editor.defineTheme('builder-dark', {
@@ -54,6 +92,21 @@ export function CodeEditor({ file, onContentChange }: CodeEditorProps) {
       },
     });
     monaco.editor.setTheme('builder-dark');
+
+    // Inject remote cursor CSS
+    const style = document.createElement('style');
+    style.textContent = `
+      .remote-cursor-line {
+        border-left: 2px solid var(--cursor-color, #8b5cf6);
+        margin-left: -1px;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Track cursor position for collaboration
+    editor.onDidChangeCursorPosition((e: any) => {
+      onCursorChange?.(e.position.lineNumber, e.position.column);
+    });
 
     // Register HTML/CSS/JS completions for common patterns
     monaco.languages.registerCompletionItemProvider('html', {
@@ -110,7 +163,10 @@ export function CodeEditor({ file, onContentChange }: CodeEditorProps) {
         return null;
       },
     });
-  }, []);
+
+    // Initial remote cursor render
+    updateRemoteCursors();
+  }, [onCursorChange, updateRemoteCursors]);
 
   if (!file) {
     return (
