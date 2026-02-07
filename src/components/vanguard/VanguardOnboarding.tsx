@@ -51,13 +51,13 @@ export function VanguardOnboarding() {
   const [isLoading, setIsLoading] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   
-  // SafeOps setup state
+  // Horizon setup state
   const [deviceName, setDeviceName] = useState('');
   const [deviceType, setDeviceType] = useState('workstation');
   const [enableAlerts, setEnableAlerts] = useState(true);
   const [enablePatching, setEnablePatching] = useState(true);
   
-  // SafeDesk setup state
+  // Response setup state
   const [supportEmail, setSupportEmail] = useState('');
   const [defaultPriority, setDefaultPriority] = useState('medium');
   const [enableAIResponses, setEnableAIResponses] = useState(true);
@@ -72,15 +72,15 @@ export function VanguardOnboarding() {
       completed: currentStep > 0
     },
     {
-      id: 'safeops',
-      title: 'SafeOps Setup',
+      id: 'horizon',
+      title: 'Horizon Setup',
       description: 'Configure your first device for remote monitoring',
       icon: Monitor,
       completed: currentStep > 1
     },
     {
-      id: 'safedesk',
-      title: 'SafeDesk Setup',
+      id: 'response',
+      title: 'Response Setup',
       description: 'Set up your IT helpdesk and ticket routing',
       icon: Headphones,
       completed: currentStep > 2
@@ -123,7 +123,7 @@ export function VanguardOnboarding() {
       // Save device configuration preferences (would connect to real setup)
       toast({
         title: "Device configuration saved",
-        description: "Your SafeOps preferences have been saved. Download the agent to complete setup.",
+        description: "Your Horizon preferences have been saved. Download the agent to complete setup.",
       });
       handleNext();
     } catch (error) {
@@ -143,7 +143,7 @@ export function VanguardOnboarding() {
       // Save ticket configuration preferences
       toast({
         title: "Helpdesk configured",
-        description: "Your SafeDesk settings have been saved.",
+        description: "Your Response helpdesk settings have been saved.",
       });
       handleNext();
     } catch (error) {
@@ -196,7 +196,7 @@ export function VanguardOnboarding() {
                       <Monitor className="h-6 w-6 text-cyan-400" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-white">SafeOps™ RMM</h3>
+                      <h3 className="font-semibold text-white">Vanguard Horizon</h3>
                       <p className="text-sm text-white/60">Remote monitoring, patch management, and endpoint security</p>
                     </div>
                   </div>
@@ -210,7 +210,7 @@ export function VanguardOnboarding() {
                       <Headphones className="h-6 w-6 text-purple-400" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-white">SafeDesk™ Helpdesk</h3>
+                      <h3 className="font-semibold text-white">Vanguard Response</h3>
                       <p className="text-sm text-white/60">AI-powered ticketing, SLA tracking, and automated responses</p>
                     </div>
                   </div>
@@ -231,7 +231,7 @@ export function VanguardOnboarding() {
           </div>
         );
 
-      case 'safeops':
+      case 'horizon':
         return (
           <div className="space-y-6">
             <div className="flex items-center gap-3 mb-6">
@@ -239,8 +239,8 @@ export function VanguardOnboarding() {
                 <Monitor className="h-6 w-6 text-cyan-400" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">SafeOps Device Setup</h2>
-                <p className="text-sm text-white/60">Configure your first monitored device</p>
+                <h2 className="text-xl font-bold text-white">Horizon Device Setup</h2>
+                <p className="text-sm text-white/60">Configure your first monitored endpoint</p>
               </div>
             </div>
 
@@ -333,7 +333,7 @@ export function VanguardOnboarding() {
           </div>
         );
 
-      case 'safedesk':
+      case 'response':
         return (
           <div className="space-y-6">
             <div className="flex items-center gap-3 mb-6">
@@ -341,8 +341,8 @@ export function VanguardOnboarding() {
                 <Headphones className="h-6 w-6 text-purple-400" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">SafeDesk Ticket Configuration</h2>
-                <p className="text-sm text-white/60">Set up your IT helpdesk preferences</p>
+                <h2 className="text-xl font-bold text-white">Response Helpdesk Configuration</h2>
+                <p className="text-sm text-white/60">Set up your service desk preferences</p>
               </div>
             </div>
 
@@ -411,7 +411,7 @@ export function VanguardOnboarding() {
                 <div className="flex items-start gap-3">
                   <Sparkles className="h-5 w-5 text-purple-400 mt-0.5" />
                   <p className="text-sm text-white/80">
-                    SafeDesk AI will automatically respond to common issues. Tickets below the confidence threshold go to your technicians for review.
+                    Vanguard Response AI will automatically respond to common issues. Tickets below the confidence threshold go to your technicians for review.
                   </p>
                 </div>
               </CardContent>
@@ -478,7 +478,7 @@ export function VanguardOnboarding() {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-medium text-white">Create Your First Ticket</h3>
-                      <p className="text-sm text-white/60">Test SafeDesk by submitting a sample ticket</p>
+                      <p className="text-sm text-white/60">Test Response by submitting a sample ticket</p>
                     </div>
                     <Button 
                       variant="outline" 
