@@ -257,21 +257,11 @@ export function BuilderChatPanel({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0f] border-r border-white/[0.06]">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-violet-500/20 flex items-center justify-center border border-white/[0.06]">
-            <Zap className="h-4 w-4 text-cyan-400" />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-white">Builder</h2>
-            <p className="text-[10px] text-white/30">
-              {fileCount > 0 ? `${fileCount} files` : 'Describe what to build'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5">
+    <div className="flex flex-col h-full bg-[#0a0a0f]">
+      {/* Minimal header — Lovable style */}
+      <div className="flex items-center justify-between px-3 h-10 border-b border-white/[0.06] shrink-0">
+        <span className="text-[11px] font-medium text-white/50 tracking-wide uppercase">Chat</span>
+        <div className="flex items-center gap-1">
           {totalTokensUsed > 0 && (
             <TokenUsageIndicator
               tokensUsed={totalTokensUsed}
@@ -283,19 +273,19 @@ export function BuilderChatPanel({
             <button
               onClick={() => setShowHistory(!showHistory)}
               className={cn(
-                "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
-                showHistory ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5"
+                "h-6 w-6 rounded-md flex items-center justify-center transition-colors",
+                showHistory ? "text-cyan-400 bg-cyan-500/10" : "text-white/25 hover:text-white/50 hover:bg-white/5"
               )}
             >
-              <History className="h-3.5 w-3.5" />
+              <History className="h-3 w-3" />
             </button>
           )}
           {messages.length > 0 && (
             <button
               onClick={onClear}
-              className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
+              className="h-6 w-6 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-3 w-3" />
             </button>
           )}
         </div>
@@ -328,50 +318,42 @@ export function BuilderChatPanel({
       <ScrollArea className="flex-1" ref={scrollRef}>
         <div className="p-4 space-y-4">
           {messages.length === 0 ? (
-            <div className="space-y-6 pt-6">
-              <div className="text-center space-y-3">
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-violet-500/10 border border-white/[0.06] flex items-center justify-center mx-auto">
-                  <Sparkles className="h-7 w-7 text-cyan-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white text-base">What do you want to build?</h3>
-                  <p className="text-xs text-white/30 mt-1 max-w-[260px] mx-auto">
-                    Describe any web app and I'll generate a multi-file project with live preview.
-                  </p>
-                </div>
+            <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-8">
+              {/* Hero empty state */}
+              <div className="text-center space-y-2">
+                <h3 className="font-semibold text-white/90 text-lg">What do you want to build?</h3>
+                <p className="text-xs text-white/30 max-w-[280px] mx-auto leading-relaxed">
+                  Describe your app idea and I'll generate production-ready code with live preview.
+                </p>
               </div>
 
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-1.5 text-[10px] text-white/20 px-1 uppercase tracking-wider font-medium">
-                  <Lightbulb className="h-3 w-3" />
-                  Quick start
-                </div>
+              <div className="w-full max-w-[320px] space-y-1.5">
                 {STARTER_PROMPTS.map((prompt, i) => (
                   <button
                     key={i}
                     onClick={() => onSend(`${prompt.label}: ${prompt.desc}`)}
-                    className="w-full text-left px-3 py-2.5 rounded-lg border border-white/[0.06] hover:border-cyan-500/20 hover:bg-cyan-500/[0.03] text-sm transition-all group"
+                    className="w-full text-left px-3 py-2 rounded-lg border border-white/[0.05] hover:border-white/[0.12] hover:bg-white/[0.03] text-sm transition-all group"
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">{prompt.icon}</span>
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-sm opacity-60 group-hover:opacity-100 transition-opacity">{prompt.icon}</span>
                       <div>
-                        <div className="text-xs font-medium text-white/70 group-hover:text-white/90">{prompt.label}</div>
-                        <div className="text-[10px] text-white/25 group-hover:text-white/40">{prompt.desc}</div>
+                        <div className="text-[12px] font-medium text-white/60 group-hover:text-white/90 transition-colors">{prompt.label}</div>
+                        <div className="text-[10px] text-white/20 group-hover:text-white/35 transition-colors">{prompt.desc}</div>
                       </div>
                     </div>
                   </button>
                 ))}
 
-                {/* Browse templates button */}
+                {/* Browse templates */}
                 <button
                   onClick={onOpenTemplates}
-                  className="w-full text-left px-3 py-2.5 rounded-lg border border-dashed border-white/[0.08] hover:border-cyan-500/20 hover:bg-cyan-500/[0.03] text-sm transition-all group"
+                  className="w-full text-left px-3 py-2 rounded-lg border border-dashed border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.02] text-sm transition-all group mt-2"
                 >
-                  <div className="flex items-center gap-2">
-                    <LayoutGrid className="h-4 w-4 text-white/20 group-hover:text-cyan-400/60" />
+                  <div className="flex items-center gap-2.5">
+                    <LayoutGrid className="h-3.5 w-3.5 text-white/15 group-hover:text-white/40 transition-colors" />
                     <div>
-                      <div className="text-xs font-medium text-white/50 group-hover:text-white/70">Browse All Templates</div>
-                      <div className="text-[10px] text-white/20 group-hover:text-white/35">12 starter templates across 4 categories</div>
+                      <div className="text-[12px] font-medium text-white/40 group-hover:text-white/60 transition-colors">Browse Templates</div>
+                      <div className="text-[10px] text-white/15 group-hover:text-white/30 transition-colors">Start from a pre-built template</div>
                     </div>
                   </div>
                 </button>

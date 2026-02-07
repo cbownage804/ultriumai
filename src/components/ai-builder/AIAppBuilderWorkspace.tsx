@@ -505,16 +505,16 @@ export function AIAppBuilderWorkspace() {
 
   // ─── Left sidebar icon bar items ───
   const sidebarIcons = [
-    { id: 'database', icon: Database, label: 'Database', show: !!supabaseConfig, active: showDatabase, color: 'emerald' },
-    { id: 'auth', icon: Shield, label: 'Auth', show: !!supabaseConfig, active: showAuth, color: 'violet' },
-    { id: 'storage', icon: FolderOpen, label: 'Storage', show: !!supabaseConfig, active: showStorage, color: 'blue' },
-    { id: 'edgeFunctions', icon: Zap, label: 'Edge Functions', show: true, active: showEdgeFunctions, color: 'yellow' },
-    { id: 'knowledge', icon: Brain, label: 'Knowledge', show: true, active: showKnowledge, color: 'amber' },
-    { id: 'envVars', icon: Variable, label: 'Env Variables', show: true, active: showEnvVars, color: 'cyan' },
-    { id: 'assets', icon: Image, label: 'Assets', show: true, active: showAssets, color: 'cyan' },
-    { id: 'packages', icon: Package, label: 'Packages', show: true, active: showPackages, color: 'cyan' },
-    { id: 'history', icon: History, label: 'Version History', show: true, active: showVersionHistory, color: 'cyan' },
-    { id: 'activity', icon: Clock, label: 'Activity', show: true, active: showActivity, color: 'cyan' },
+    { id: 'database', icon: Database, label: 'Database', show: !!supabaseConfig, active: showDatabase },
+    { id: 'auth', icon: Shield, label: 'Auth', show: !!supabaseConfig, active: showAuth },
+    { id: 'storage', icon: FolderOpen, label: 'Storage', show: !!supabaseConfig, active: showStorage },
+    { id: 'edgeFunctions', icon: Zap, label: 'Edge Functions', show: true, active: showEdgeFunctions },
+    { id: 'knowledge', icon: Brain, label: 'Knowledge', show: true, active: showKnowledge },
+    { id: 'envVars', icon: Variable, label: 'Env Variables', show: true, active: showEnvVars },
+    { id: 'assets', icon: Image, label: 'Assets', show: true, active: showAssets },
+    { id: 'packages', icon: Package, label: 'Packages', show: true, active: showPackages },
+    { id: 'history', icon: History, label: 'Version History', show: true, active: showVersionHistory },
+    { id: 'activity', icon: Clock, label: 'Activity', show: true, active: showActivity },
   ] as const;
 
   return (
@@ -722,8 +722,8 @@ export function AIAppBuilderWorkspace() {
                 <div className="w-10 border-r border-white/[0.06] bg-[#09090b] flex flex-col items-center py-2 gap-0.5 shrink-0">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button onClick={() => setShowFileTree(!showFileTree)} className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-colors", showFileTree ? "text-white/70 bg-white/5" : "text-white/25 hover:text-white/50 hover:bg-white/[0.03]")}>
-                        <FolderOpen className="h-4 w-4" />
+                      <button onClick={() => setShowFileTree(!showFileTree)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showFileTree ? "text-white/80 bg-white/[0.06]" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
+                        <FolderOpen className="h-3.5 w-3.5" />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="right" className="text-xs">Files</TooltipContent>
@@ -731,14 +731,14 @@ export function AIAppBuilderWorkspace() {
 
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button onClick={() => setShowFileSearch(!showFileSearch)} className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-colors", showFileSearch ? "text-white/70 bg-white/5" : "text-white/25 hover:text-white/50 hover:bg-white/[0.03]")}>
-                        <Search className="h-4 w-4" />
+                      <button onClick={() => setShowFileSearch(!showFileSearch)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showFileSearch ? "text-white/80 bg-white/[0.06]" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
+                        <Search className="h-3.5 w-3.5" />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="right" className="text-xs">Search (⌘⇧F)</TooltipContent>
                   </Tooltip>
 
-                  <div className="h-px w-5 bg-white/[0.06] my-1" />
+                  <div className="h-px w-4 bg-white/[0.06] my-1.5" />
 
                   {sidebarIcons.filter(i => i.show).map(item => (
                     <Tooltip key={item.id}>
@@ -746,11 +746,13 @@ export function AIAppBuilderWorkspace() {
                         <button
                           onClick={() => openPanel(item.id as any)}
                           className={cn(
-                            "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
-                            item.active ? `text-${item.color}-400 bg-${item.color}-500/10` : "text-white/25 hover:text-white/50 hover:bg-white/[0.03]"
+                            "h-7 w-7 rounded-md flex items-center justify-center transition-all",
+                            item.active
+                              ? "text-cyan-400 bg-cyan-500/10 shadow-[0_0_8px_rgba(6,182,212,0.15)]"
+                              : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]"
                           )}
                         >
-                          <item.icon className="h-4 w-4" />
+                          <item.icon className="h-3.5 w-3.5" />
                         </button>
                       </TooltipTrigger>
                       <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>
@@ -760,24 +762,24 @@ export function AIAppBuilderWorkspace() {
                   <div className="mt-auto flex flex-col items-center gap-0.5">
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button onClick={() => setShowSEOEditor(true)} className="h-8 w-8 rounded-lg flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/[0.03] transition-colors">
-                          <Globe className="h-4 w-4" />
+                        <button onClick={() => setShowSEOEditor(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/45 hover:bg-white/[0.03] transition-all">
+                          <Globe className="h-3.5 w-3.5" />
                         </button>
                       </TooltipTrigger>
                       <TooltipContent side="right" className="text-xs">SEO</TooltipContent>
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button onClick={() => setShowConsole(!showConsole)} className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-colors", showConsole ? "text-white/70 bg-white/5" : "text-white/25 hover:text-white/50 hover:bg-white/[0.03]")}>
-                          <Activity className="h-4 w-4" />
+                        <button onClick={() => setShowConsole(!showConsole)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showConsole ? "text-white/80 bg-white/[0.06]" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
+                          <Activity className="h-3.5 w-3.5" />
                         </button>
                       </TooltipTrigger>
                       <TooltipContent side="right" className="text-xs">Console</TooltipContent>
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button onClick={() => setShowShortcuts(true)} className="h-8 w-8 rounded-lg flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/[0.03] transition-colors">
-                          <Keyboard className="h-4 w-4" />
+                        <button onClick={() => setShowShortcuts(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/45 hover:bg-white/[0.03] transition-all">
+                          <Keyboard className="h-3.5 w-3.5" />
                         </button>
                       </TooltipTrigger>
                       <TooltipContent side="right" className="text-xs">Shortcuts (⌘/)</TooltipContent>
