@@ -4,7 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
-  Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode,
+  Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BuilderMessage } from '@/hooks/useAIAppBuilder';
@@ -26,6 +26,38 @@ const STARTER_PROMPTS = [
   'An e-commerce product grid with search, filters, and shopping cart',
   'A blog with article cards, categories sidebar, and newsletter signup',
 ];
+
+/** Strip ===FILE: ...=== blocks from assistant message to show only conversational text */
+function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: string[] } {
+  if (msg.role === 'user') return { text: msg.content, fileNames: [] };
+  
+  const lines = msg.content.split('\n');
+  const textLines: string[] = [];
+  const fileNames: string[] = [];
+  let insideFile = false;
+
+  for (const line of lines) {
+    const fileMatch = line.match(/^===FILE:\s*(.+?)===$/);
+    if (fileMatch) {
+      insideFile = true;
+      fileNames.push(fileMatch[1].trim());
+    } else if (insideFile) {
+      // Skip file content lines
+      // If we hit another non-code looking line after a blank section, 
+      // check if it could be conversational text after the files
+      continue;
+    } else {
+      textLines.push(line);
+    }
+  }
+
+  // Also try to extract text before any ===FILE: blocks
+  const text = textLines.join('\n').trim();
+  // Strip markdown code fences that might wrap the whole thing
+  const cleaned = text.replace(/```html\n?[\s\S]*?```/g, '').trim();
+  
+  return { text: cleaned, fileNames };
+}
 
 export function BuilderChatPanel({
   messages,
@@ -57,6 +89,65 @@ export function BuilderChatPanel({
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const renderAssistantMessage = (msg: BuilderMessage) => {
+    const { text, fileNames } = getDisplayContent(msg);
+    const isStreaming = isGenerating && msg === messages[messages.length - 1];
+    const hasFiles = msg.filesGenerated && msg.filesGenerated > 0;
+
+    return (
+      <div className="space-y-2">
+        {/* Show file generation summary */}
+        {hasFiles && (
+          <div className="flex items-center gap-2 text-xs">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+            <span>
+              Generated {msg.filesGenerated} file{msg.filesGenerated! > 1 ? 's' : ''}
+            </span>
+            <Badge variant="secondary" className="text-[10px]">
+              See preview →
+            </Badge>
+          </div>
+        )}
+
+        {/* Show file names if available */}
+        {fileNames.length > 0 && !hasFiles && (
+          <div className="flex flex-wrap gap-1">
+            {fileNames.slice(0, 6).map((name, i) => (
+              <Badge key={i} variant="outline" className="text-[10px] font-mono">
+                <FileCode className="h-2.5 w-2.5 mr-1" />
+                {name}
+              </Badge>
+            ))}
+            {fileNames.length > 6 && (
+              <Badge variant="outline" className="text-[10px]">
+                +{fileNames.length - 6} more
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {/* Show conversational text if any */}
+        {text && <p className="whitespace-pre-wrap text-sm">{text}</p>}
+
+        {/* Show building indicator during streaming with no content yet */}
+        {isStreaming && !hasFiles && fileNames.length === 0 && !text && (
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-3.5 w-3.5 shrink-0 animate-pulse" />
+            <span>Building your app...</span>
+          </div>
+        )}
+        
+        {/* Show streaming indicator when actively generating files */}
+        {isStreaming && fileNames.length > 0 && !hasFiles && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            <span>Writing {fileNames.length} file{fileNames.length > 1 ? 's' : ''}...</span>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -127,29 +218,16 @@ export function BuilderChatPanel({
                 )}
                 <div
                   className={cn(
-                    'rounded-xl px-4 py-2.5 max-w-[85%] text-sm',
+                    'rounded-xl px-4 py-2.5 max-w-[85%]',
                     msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
+                      ? 'bg-primary text-primary-foreground text-sm'
                       : 'bg-muted'
                   )}
                 >
-                  {msg.role === 'assistant' && msg.filesGenerated ? (
-                    <div className="flex items-center gap-2">
-                      <FileCode className="h-3.5 w-3.5 shrink-0" />
-                      <span>
-                        Generated {msg.filesGenerated} file{msg.filesGenerated > 1 ? 's' : ''}
-                      </span>
-                      <Badge variant="secondary" className="text-[10px]">
-                        See preview →
-                      </Badge>
-                    </div>
-                  ) : msg.role === 'assistant' ? (
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-3.5 w-3.5 shrink-0 animate-pulse" />
-                      <span>Building your app...</span>
-                    </div>
+                  {msg.role === 'assistant' ? (
+                    renderAssistantMessage(msg)
                   ) : (
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
                   )}
                 </div>
                 {msg.role === 'user' && (
@@ -160,7 +238,7 @@ export function BuilderChatPanel({
               </div>
             ))
           )}
-          {isGenerating && !messages.some(m => m.role === 'assistant' && !m.filesGenerated) && (
+          {isGenerating && !messages.some(m => m.role === 'assistant') && (
             <div className="flex gap-3">
               <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <Loader2 className="h-3.5 w-3.5 text-primary animate-spin" />
