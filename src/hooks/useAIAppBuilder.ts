@@ -12,6 +12,7 @@ export interface BuilderMessage {
   suggestions?: string[];
   imageUrl?: string;
   tokenEstimate?: number;
+  filesSnapshot?: ProjectFile[];
 }
 
 export type BuilderMode = 'build' | 'discuss';
@@ -149,6 +150,7 @@ export function useAIAppBuilder() {
     serviceKeys?: { id: string; serviceId: string; apiKey: string }[],
     imageDataUrl?: string | null,
     model?: string,
+    knowledgeContext?: string,
   ) => {
     if (!input.trim() || isGenerating) return;
 
@@ -191,6 +193,11 @@ export function useAIAppBuilder() {
 
     // Build conversation context
     const apiMessages: { role: string; content: string | any[] }[] = [];
+
+    // Prepend knowledge context if provided
+    if (knowledgeContext) {
+      apiMessages.push({ role: 'system', content: knowledgeContext });
+    }
 
     for (const m of messages) {
       apiMessages.push({ role: m.role, content: m.content });
@@ -343,12 +350,13 @@ export function useAIAppBuilder() {
       const msgTokens = estimateTokens(input + fullContent);
       setTotalTokensUsed(prev => prev + msgTokens);
 
-      // Add suggestions + file count + token estimate to the final assistant message
+      // Add suggestions + file count + token estimate + filesSnapshot to the final assistant message
       const suggestions = generateSuggestions(fullContent, effectiveMode);
+      const snapshot = parsedFiles.length > 0 ? [...currentFiles, ...parsedFiles.filter(pf => !currentFiles.some(cf => cf.path === pf.path))] : [...currentFiles];
       setMessages(prev =>
         prev.map((m, i) =>
           i === prev.length - 1 && m.role === 'assistant'
-            ? { ...m, filesGenerated: parsedFiles.length || undefined, suggestions, tokenEstimate: msgTokens }
+            ? { ...m, filesGenerated: parsedFiles.length || undefined, suggestions, tokenEstimate: msgTokens, filesSnapshot: snapshot }
             : m
         )
       );

@@ -30,6 +30,7 @@ interface BuilderChatPanelProps {
   onOpenTemplates: () => void;
   onFixError: (errorPrompt: string) => void;
   onForkFromMessage?: (messageId: string) => void;
+  onRevertToMessage?: (messageId: string) => void;
   selectedModel?: string;
   onModelChange?: (model: string) => void;
 }
@@ -85,7 +86,7 @@ export function BuilderChatPanel({
   messages, isGenerating, fileCount, mode, thinkingPhase, versions,
   totalTokensUsed, previousFiles, latestFiles,
   onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates, onFixError,
-  onForkFromMessage, selectedModel, onModelChange,
+  onForkFromMessage, onRevertToMessage, selectedModel, onModelChange,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -410,6 +411,15 @@ export function BuilderChatPanel({
                         title="Fork from here"
                       >
                         <GitFork className="h-2.5 w-2.5" />
+                      </button>
+                    )}
+                    {msg.role === 'assistant' && onRevertToMessage && msg.filesSnapshot && (
+                      <button
+                        onClick={() => onRevertToMessage(msg.id)}
+                        className="h-5 w-5 rounded flex items-center justify-center text-white/30 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                        title="Revert to here"
+                      >
+                        <RotateCcw className="h-2.5 w-2.5" />
                       </button>
                     )}
                     {msg.role === 'user' && (
