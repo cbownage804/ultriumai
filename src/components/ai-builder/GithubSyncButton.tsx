@@ -25,6 +25,7 @@ export function GithubSyncButton({ projectName, files, githubToken, onPullFiles 
   const [repoName, setRepoName] = useState(
     projectName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'my-app'
   );
+  const [repoFullName, setRepoFullName] = useState('');
   const [isPrivate, setIsPrivate] = useState(true);
   const [isPushing, setIsPushing] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
@@ -49,6 +50,11 @@ export function GithubSyncButton({ projectName, files, githubToken, onPullFiles 
       if (data?.error) throw new Error(data.error);
 
       setSyncStatus('synced');
+      if (data?.repoUrl) {
+        // Extract full name for pull
+        const match = data.repoUrl.match(/github\.com\/(.+)/);
+        if (match) setRepoFullName(match[1]);
+      }
       toast.success('Pushed to GitHub!', {
         description: data?.repoUrl,
         action: data?.repoUrl ? {
@@ -65,15 +71,31 @@ export function GithubSyncButton({ projectName, files, githubToken, onPullFiles 
   };
 
   const handlePull = async () => {
-    if (!repoName.trim()) return;
+    const pullTarget = repoFullName.trim();
+    if (!pullTarget) {
+      toast.error('Enter the full repo name (owner/repo) to pull from');
+      return;
+    }
     setIsPulling(true);
 
     try {
-      // Simulate pull — in real impl this calls GitHub API to fetch repo contents
-      await new Promise(r => setTimeout(r, 1200));
-      setSyncStatus('synced');
-      toast.success('Pulled latest changes from GitHub');
-      // onPullFiles would be called with fetched files
+      const { data, error } = await supabase.functions.invoke('github-pull', {
+        body: {
+          token: githubToken,
+          repoFullName: pullTarget,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.files && data.files.length > 0 && onPullFiles) {
+        onPullFiles(data.files);
+        setSyncStatus('synced');
+        toast.success(`Pulled ${data.fetchedFiles} files from GitHub`);
+      } else {
+        toast.info('No files found in repository');
+      }
     } catch (e: any) {
       console.error('GitHub pull error:', e);
       toast.error(e.message || 'Failed to pull from GitHub');
@@ -108,7 +130,7 @@ export function GithubSyncButton({ projectName, files, githubToken, onPullFiles 
 
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <Label htmlFor="repo-name" className="text-xs text-white/60">Repository Name</Label>
+            <Label htmlFor="repo-name" className="text-xs text-white/60">Repository Name (for push)</Label>
             <Input
               id="repo-name"
               value={repoName}
@@ -117,6 +139,18 @@ export function GithubSyncButton({ projectName, files, githubToken, onPullFiles 
               className="text-sm font-mono bg-white/[0.03] border-white/[0.08] text-white/80"
             />
           </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="repo-full" className="text-xs text-white/60">Full Repo Name (for pull)</Label>
+            <Input
+              id="repo-full"
+              value={repoFullName}
+              onChange={(e) => setRepoFullName(e.target.value)}
+              placeholder="username/repo-name"
+              className="text-sm font-mono bg-white/[0.03] border-white/[0.08] text-white/80"
+            />
+          </div>
+
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -145,7 +179,7 @@ export function GithubSyncButton({ projectName, files, githubToken, onPullFiles 
         <DialogFooter className="gap-2">
           <Button
             onClick={handlePull}
-            disabled={isLoading || !repoName.trim()}
+            disabled={isLoading || !repoFullName.trim()}
             variant="outline"
             size="sm"
             className="border-white/[0.08] text-white/60 hover:text-white/80"

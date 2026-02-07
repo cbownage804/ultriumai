@@ -390,11 +390,14 @@ export function useAIAppBuilder() {
 
   const restoreVersion = useCallback((versionId: string) => {
     const version = versions.find(v => v.id === versionId);
-    if (version) {
-      setLatestFiles(version.files);
+    if (version && version.files.length > 0) {
+      setPreviousFiles([...latestFiles]);
+      setLatestFiles([...version.files]);
       toast.success(`Restored to: ${version.label}`);
+    } else {
+      toast.error('Version has no files to restore');
     }
-  }, [versions]);
+  }, [versions, latestFiles]);
 
   return {
     messages,
