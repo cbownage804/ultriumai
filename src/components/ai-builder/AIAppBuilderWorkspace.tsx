@@ -13,7 +13,7 @@ import { FileTabBar } from './FileTabBar';
 import { CodeEditor } from './CodeEditor';
 import { ExportButton } from './ExportButton';
 import { ProjectSettings, type SupabaseConfig, type GithubConfig, type StripeConfig, type VercelConfig, type ServiceKey, type EnvVar } from './ProjectSettings';
-import { GithubPushButton } from './GithubPushButton';
+import { GithubSyncButton } from './GithubSyncButton';
 import { VercelDeployButton } from './VercelDeployButton';
 import { TemplateLibrary } from './TemplateLibrary';
 import { SharePreview } from './SharePreview';
@@ -30,6 +30,11 @@ import { DeployDialog } from './DeployDialog';
 import { EnvVarsPanel, type EnvVariable } from './EnvVarsPanel';
 import { FileConflictDialog } from './FileConflictDialog';
 import { QuickFileSwitcher } from './QuickFileSwitcher';
+import { DatabasePanel } from './DatabasePanel';
+import { AuthConfigPanel } from './AuthConfigPanel';
+import { KnowledgePanel, type KnowledgeConfig } from './KnowledgePanel';
+import { StorageBrowser } from './StorageBrowser';
+import { EdgeFunctionEditor } from './EdgeFunctionEditor';
 import { AssetManager, type ProjectAsset } from './AssetManager';
 import { PackageManager, type CDNPackage } from './PackageManager';
 import { useProjectBundler } from '@/hooks/useProjectBundler';
@@ -43,6 +48,7 @@ import {
   Eye, Code, Pencil, Database, CreditCard, Key,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
   History, Variable, Image, Package, Columns, Keyboard,
+  Shield, Brain, FolderOpen, Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -110,6 +116,13 @@ export function AIAppBuilderWorkspace() {
   const [showQuickSwitcher, setShowQuickSwitcher] = useState(false);
   const [previewSlug, setPreviewSlug] = useState<string | null>(null);
   const [pendingConflicts, setPendingConflicts] = useState<{ path: string; userContent: string; aiContent: string }[] | null>(null);
+  const [showDatabase, setShowDatabase] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
+  const [showKnowledge, setShowKnowledge] = useState(false);
+  const [showStorage, setShowStorage] = useState(false);
+  const [showEdgeFunctions, setShowEdgeFunctions] = useState(false);
+  const [knowledge, setKnowledge] = useState<KnowledgeConfig>({ customInstructions: '', contextFiles: [] });
+  const [edgeFunctions, setEdgeFunctions] = useState<{ name: string; status: 'deployed' | 'draft' | 'error'; lastDeployed?: string }[]>([]);
 
   // Sync env vars from EnvVarsPanel into compilation envVars
   useEffect(() => {
@@ -265,7 +278,11 @@ export function AIAppBuilderWorkspace() {
     const contextHint = referencedFiles.length > 0
       ? `[Auto-detected relevant files: ${referencedFiles.map(f => f.path).join(', ')}]\n`
       : '';
-    sendMessage(contextPrefix + contextHint + input, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl, selectedModel);
+    // Build knowledge context
+    const knowledgeCtx = knowledge.customInstructions
+      ? `Custom instructions: ${knowledge.customInstructions}${knowledge.contextFiles.length > 0 ? '\n\nContext files:\n' + knowledge.contextFiles.map(f => `--- ${f.name} ---\n${f.content}`).join('\n\n') : ''}`
+      : undefined;
+    sendMessage(contextPrefix + contextHint + input, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl, selectedModel, knowledgeCtx);
   };
 
   const handleFixError = (errorPrompt: string) => {
@@ -300,6 +317,25 @@ export function AIAppBuilderWorkspace() {
     await saveProject(forkName, project.files, branches, activeBranch, truncatedMessages);
     toast.success(`Forked as "${forkName}"`);
   }, [saveProject, project.name, project.files, branches, activeBranch, messages, setMessages, renameProject]);
+
+  const handleRevertToMessage = useCallback((messageId: string) => {
+    const msg = messages.find(m => m.id === messageId);
+    if (!msg?.filesSnapshot) { toast.error('No snapshot available for this message'); return; }
+    pushUndo('Before revert', project.files);
+    setFiles(msg.filesSnapshot);
+    toast.success('Reverted to message snapshot');
+  }, [messages, pushUndo, project.files, setFiles]);
+
+  const handleGenerateAuthPages = useCallback((providers: string[]) => {
+    const prompt = `Generate authentication pages for my app with the following providers: ${providers.join(', ')}. Include login, signup, and password reset pages. Use the connected Supabase auth.`;
+    sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel);
+  }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel]);
+
+  const handleCreateEdgeFunction = useCallback((name: string) => {
+    const template = `// Deno edge function: ${name}\nimport { serve } from "https://deno.land/std@0.168.0/http/server.ts";\n\nserve(async (req) => {\n  return new Response(JSON.stringify({ message: "Hello from ${name}" }), {\n    headers: { "Content-Type": "application/json" },\n  });\n});`;
+    upsertFile(`functions/${name}/index.ts`, template);
+    setEdgeFunctions(prev => [...prev, { name, status: 'draft' }]);
+  }, [upsertFile]);
 
   // Generate preview slug from project name
   useEffect(() => {
@@ -457,11 +493,16 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   // Close other panels when opening one
-  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages') => {
+  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions') => {
     setShowVersionHistory(panel === 'history' ? !showVersionHistory : false);
     setShowEnvVars(panel === 'envVars' ? !showEnvVars : false);
     setShowAssets(panel === 'assets' ? !showAssets : false);
     setShowPackages(panel === 'packages' ? !showPackages : false);
+    setShowDatabase(panel === 'database' ? !showDatabase : false);
+    setShowAuth(panel === 'auth' ? !showAuth : false);
+    setShowKnowledge(panel === 'knowledge' ? !showKnowledge : false);
+    setShowStorage(panel === 'storage' ? !showStorage : false);
+    setShowEdgeFunctions(panel === 'edgeFunctions' ? !showEdgeFunctions : false);
   };
 
   return (
@@ -612,6 +653,66 @@ export function AIAppBuilderWorkspace() {
               <TooltipContent side="bottom" className="text-xs">Packages</TooltipContent>
             </Tooltip>
 
+            {supabaseConfig && (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => openPanel('database')}
+                      className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showDatabase ? "text-emerald-400 bg-emerald-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
+                    >
+                      <Database className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">Database</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => openPanel('auth')}
+                      className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showAuth ? "text-violet-400 bg-violet-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
+                    >
+                      <Shield className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">Auth</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => openPanel('storage')}
+                      className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showStorage ? "text-blue-400 bg-blue-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
+                    >
+                      <FolderOpen className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">Storage</TooltipContent>
+                </Tooltip>
+              </>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => openPanel('edgeFunctions')}
+                  className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showEdgeFunctions ? "text-yellow-400 bg-yellow-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
+                >
+                  <Zap className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Edge Functions</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => openPanel('knowledge')}
+                  className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showKnowledge ? "text-amber-400 bg-amber-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
+                >
+                  <Brain className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Knowledge</TooltipContent>
+            </Tooltip>
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -663,7 +764,7 @@ export function AIAppBuilderWorkspace() {
               onEnvVarsChange={setEnvVars}
             />
             {vercelConfig && <VercelDeployButton projectName={project.name} files={project.files} vercelToken={vercelConfig.token} />}
-            {githubConfig && <GithubPushButton projectName={project.name} files={project.files} githubToken={githubConfig.token} />}
+            {githubConfig && <GithubSyncButton projectName={project.name} files={project.files} githubToken={githubConfig.token} onPullFiles={(files) => { pushUndo('GitHub pull', project.files); setFiles(files); }} />}
             <SharePreview html={compiledHTML} projectName={project.name} />
             <ExportButton projectName={project.name} files={project.files} />
           </div>
@@ -709,6 +810,7 @@ export function AIAppBuilderWorkspace() {
                 onOpenTemplates={() => setShowTemplates(true)}
                 onFixError={handleFixError}
                 onForkFromMessage={handleForkFromMessage}
+                onRevertToMessage={handleRevertToMessage}
                 selectedModel={selectedModel}
                 onModelChange={setSelectedModel}
               />
@@ -758,6 +860,7 @@ export function AIAppBuilderWorkspace() {
                   onOpenTemplates={() => setShowTemplates(true)}
                   onFixError={handleFixError}
                   onForkFromMessage={handleForkFromMessage}
+                  onRevertToMessage={handleRevertToMessage}
                   selectedModel={selectedModel}
                   onModelChange={setSelectedModel}
                 />
@@ -791,6 +894,11 @@ export function AIAppBuilderWorkspace() {
                   open={showAssets}
                   onClose={() => setShowAssets(false)}
                 />
+                <DatabasePanel open={showDatabase} onClose={() => setShowDatabase(false)} supabaseConfig={supabaseConfig} />
+                <AuthConfigPanel open={showAuth} onClose={() => setShowAuth(false)} supabaseConfig={supabaseConfig} onGenerateAuthPages={handleGenerateAuthPages} />
+                <KnowledgePanel open={showKnowledge} onClose={() => setShowKnowledge(false)} knowledge={knowledge} onKnowledgeChange={setKnowledge} />
+                <StorageBrowser open={showStorage} onClose={() => setShowStorage(false)} supabaseConfig={supabaseConfig} />
+                <EdgeFunctionEditor open={showEdgeFunctions} onClose={() => setShowEdgeFunctions(false)} onCreateFunction={handleCreateEdgeFunction} functions={edgeFunctions} onSelectFunction={(name) => { setActiveFile(`functions/${name}/index.ts`); setRightTab('code'); }} />
                 {showPackages && (
                   <div className="w-64 border-r border-white/[0.06] bg-[#0d0d14] overflow-hidden">
                     <PackageManager

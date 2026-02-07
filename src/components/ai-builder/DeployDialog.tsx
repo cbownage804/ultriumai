@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Rocket, Globe, Copy, CheckCircle, Loader2, ExternalLink, Link2, Eye, ArrowRight } from 'lucide-react';
+import { Rocket, Globe, Copy, CheckCircle, Loader2, ExternalLink, Link2, Eye, ArrowRight, AlertCircle } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
@@ -229,6 +229,22 @@ export function DeployDialog({ onPublish, publishedUrl, hasFiles, isPublishing, 
                     <span className={cn("text-white/50", !item.ok && "text-red-400/70")}>{item.label}</span>
                   </div>
                 ))}
+              </div>
+
+              {/* Custom Domain */}
+              <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <div className="flex items-center gap-2 mb-2">
+                  <Globe className="h-3 w-3 text-white/40" />
+                  <span className="text-[11px] text-white/40">Custom Domain</span>
+                </div>
+                <input
+                  placeholder="app.yourdomain.com"
+                  className="w-full h-7 px-2 text-[11px] bg-white/5 border border-white/[0.08] rounded text-white/80 outline-none focus:border-cyan-500/30 font-mono placeholder:text-white/15 mb-2"
+                />
+                <div className="text-[9px] text-white/20 space-y-1">
+                  <p className="flex items-center gap-1"><AlertCircle className="h-2.5 w-2.5" /> Add a CNAME record pointing to <code className="text-cyan-400/60">cname.ultriumai.app</code></p>
+                  <p>DNS propagation may take up to 48 hours.</p>
+                </div>
               </div>
 
               {/* Publish button */}
