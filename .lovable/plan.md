@@ -1,90 +1,89 @@
 
 
-# AI Studio App Builder -- Next Level Polish
+# AI Studio App Builder -- Production Refinements
 
 ## Overview
 
-The wiring phase is complete. The next push focuses on **missing core features** and **UX improvements** that separate a prototype from a production-grade builder like Lovable.
+The builder now has all major IDE features wired up. This next phase focuses on **production polish**, **missing micro-interactions**, and **workflow features** that make the difference between a capable tool and a delightful one.
 
 ---
 
-## 1. New File Creation from the File Tree
+## 1. Inline Code Minimap and Find/Replace
 
-Currently, users can only get files through AI generation. There's no way to manually create a new file -- a basic IDE feature.
+Monaco editor supports a minimap and built-in find/replace, but the current configuration doesn't explicitly enable them. Additionally, there's no in-editor find/replace shortcut -- only a file-level search panel.
 
 **Changes:**
-- `ProjectFileTree.tsx`: Add a "New File" button (+ icon) at the top of the explorer. When clicked, show an inline input for the filename. On submit, call a new `onCreateFile(path)` callback with starter content based on extension.
-- `AIAppBuilderWorkspace.tsx`: Pass a `handleCreateFile` callback that calls `upsertFile(path, starterContent)` and switches to code view.
+- `CodeEditor.tsx`: Enable Monaco minimap (small, right-side scrollbar overview) and ensure Cmd+F triggers the editor's built-in find/replace widget rather than browser search. Configure word wrap, bracket matching, and auto-closing brackets for a polished editing experience.
 
 ---
 
-## 2. Split View -- Code and Preview Side by Side
+## 2. Streaming Progress Indicator with File List
 
-Lovable shows code and preview simultaneously. Currently, users must toggle between "Preview" and "Code" tabs. This is a major workflow friction.
+During AI generation, the workspace shows "generating..." text but doesn't show which files are being written in real-time. Lovable shows a file-by-file progress list.
 
 **Changes:**
-- `AIAppBuilderWorkspace.tsx`: Add a third tab option `'split'` to `rightTab`. When active, render a nested `ResizablePanelGroup` with the preview on the left and the code editor on the right, both visible at once.
-- Add a split-view toggle button (e.g., `Columns` icon) in the toolbar alongside Preview and Code.
+- `GeneratingOverlay.tsx`: Upgrade from a simple spinner to a live file progress list. Show each file being generated with a checkmark when complete, using `partialFiles` and `completedFileCount` from the workspace. Add a subtle progress bar showing overall completion.
 
 ---
 
-## 3. Auto-Fix Errors with One Click
+## 3. Chat Message Actions (Copy, Retry, Edit)
 
-The error console has a "Fix" button, but the flow could be more automated. When a preview error occurs, offer a prominent "Auto-fix" banner that sends the error plus relevant file context to the AI automatically.
+Chat messages currently have no action buttons. Lovable allows copying responses, retrying failed generations, and editing previous prompts.
 
 **Changes:**
-- `BuilderPreviewPanel.tsx`: When errors are detected, show a floating "AI can fix this" banner at the top of the preview with a one-click button. The banner auto-dismisses after a fix is attempted.
-- Pass the relevant file content along with the error message for better AI context.
+- `BuilderChatPanel.tsx`: Add hover action buttons to each message:
+  - **Copy**: Copy message content to clipboard
+  - **Retry**: Re-send the same prompt (user messages only)
+  - **Edit**: Click to edit a previous user message, then re-send (replaces messages after it)
 
 ---
 
-## 4. File Rename Support
+## 4. Status Bar at the Bottom
 
-Users can delete files but cannot rename them -- another basic IDE feature.
+Professional IDEs have a status bar showing cursor position, language, encoding, etc. The builder currently has the console panel but no persistent status information.
 
 **Changes:**
-- `ProjectFileTree.tsx`: Add a rename action (double-click or context menu). Show an inline input pre-filled with the current filename. On confirm, call `onRenameFile(oldPath, newPath)`.
-- `AIAppBuilderWorkspace.tsx`: Add `handleRenameFile` that creates the new file, copies the content, and deletes the old one.
+- `AIAppBuilderWorkspace.tsx`: Add a thin (20px) status bar at the very bottom showing: current file language, line/column position (from CodeEditor cursor), file count, branch name, and save status. Wire cursor position via a new callback from CodeEditor.
+- `CodeEditor.tsx`: Add an `onCursorPositionChange` callback that reports `{ line, column }` on cursor movement.
 
 ---
 
-## 5. Drag-and-Drop File Upload
+## 5. File Tab Drag Reordering
 
-Allow users to drag files (HTML, CSS, JS, images) directly into the file tree or workspace to import them.
+The file tab bar shows open files but doesn't support drag-to-reorder, which is standard in IDEs.
 
 **Changes:**
-- `ProjectFileTree.tsx`: Wrap the tree in a drop zone that accepts file drops. Read file contents via `FileReader` and call `onCreateFile`.
-- Support text files (HTML/CSS/JS/JSON/MD) by reading as text, and images by reading as data URLs stored in the asset manager.
+- `FileTabBar.tsx`: Add drag-and-drop reordering to file tabs using native HTML drag events (no library needed for a simple horizontal reorder). Update `openFilePaths` order on drop.
+- `useProjectFileSystem.ts`: Add a `reorderOpenFiles` method that updates the `openFilePaths` array.
 
 ---
 
-## 6. Improved AI Context -- Send Active File with Errors
+## 6. Unsaved Changes Indicator
 
-When the AI tries to fix an error, it currently receives all project files. This wastes tokens. Instead, prioritize the file where the error occurred.
+There's no visual indication when a file has been edited but not saved/committed. This is critical for preventing data loss.
 
 **Changes:**
-- `BuilderPreviewPanel.tsx` / `ErrorConsole.tsx`: Parse the error's `source` field to identify which file caused it. When calling `onSmartFixError`, include only the relevant file(s) plus the error trace, not the entire project.
-- `AIAppBuilderWorkspace.tsx`: Update `handleSmartFixError` to include targeted file context.
+- `useProjectFileSystem.ts`: Track a `dirtyFiles` set -- files modified since last AI generation or save.
+- `FileTabBar.tsx`: Show a dot indicator on tabs with unsaved changes.
+- `AIAppBuilderWorkspace.tsx`: Clear dirty state on save and on AI file generation.
 
 ---
 
-## 7. Keyboard Shortcut Help Panel
+## 7. Collapsible Chat Sidebar
 
-Lovable has a keyboard shortcut reference. The builder has shortcuts (Cmd+K, Cmd+Z, Cmd+S, Cmd+Shift+F) but no discoverability.
+On smaller screens or when focusing on code, users might want to collapse the chat panel entirely (not just resize it).
 
 **Changes:**
-- Create a new `KeyboardShortcutsPanel.tsx` component that lists all available shortcuts in a modal dialog.
-- Add a `?` or keyboard icon button in the top bar that opens it.
-- Accessible via Cmd+/ as well.
+- `AIAppBuilderWorkspace.tsx`: Add a collapse toggle button on the chat panel edge. When collapsed, show only a thin vertical bar with a chat icon that expands on click. Persist the collapsed state.
 
 ---
 
-## 8. Download Single File
+## 8. Toast Notification for AI Completion
 
-Users can export the entire project as ZIP, but sometimes they just want to download a single file. Add a download option to the file context menu.
+When a long AI generation finishes and the user has scrolled away or switched tabs, there's no notification that work is done.
 
 **Changes:**
-- `ProjectFileTree.tsx`: Add a download icon button alongside the delete button (visible on hover). Clicking it triggers a browser download of that single file.
+- `AIAppBuilderWorkspace.tsx`: Add a `useEffect` that watches `isGenerating` transitioning from `true` to `false`. When it does, fire a toast with the number of files generated and a "View changes" action button that switches to the preview.
 
 ---
 
@@ -92,11 +91,14 @@ Users can export the entire project as ZIP, but sometimes they just want to down
 
 | File | Changes |
 |------|---------|
-| `ProjectFileTree.tsx` | New file button, rename, drag-and-drop upload, single file download |
-| `AIAppBuilderWorkspace.tsx` | Split view mode, create/rename file handlers, improved error context |
-| `BuilderPreviewPanel.tsx` | Auto-fix error banner, targeted error file detection |
-| `KeyboardShortcutsPanel.tsx` | New component -- keyboard shortcut reference modal |
+| `CodeEditor.tsx` | Enable minimap, bracket matching, word wrap; add cursor position callback |
+| `GeneratingOverlay.tsx` | Upgrade to file-by-file progress list with checkmarks |
+| `BuilderChatPanel.tsx` | Add copy/retry/edit actions to messages |
+| `AIAppBuilderWorkspace.tsx` | Status bar, chat collapse, AI completion toast, dirty file tracking |
+| `FileTabBar.tsx` | Drag reorder tabs, unsaved dot indicator |
+| `useProjectFileSystem.ts` | Add `reorderOpenFiles` and `dirtyFiles` tracking |
 
 ### Estimated scope
-- 3 files modified, 1 new file created
-- Focused on core IDE features that make the builder genuinely usable day-to-day
+- 6 files modified, 0 new files
+- Focused on micro-interactions and polish that make the builder feel professional
+
