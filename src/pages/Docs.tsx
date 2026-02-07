@@ -262,6 +262,43 @@ const DOC_SECTIONS: DocSection[] = [
         ],
       },
       {
+        id: "ai-studio-app-builder",
+        label: "App Builder",
+        icon: Code,
+        articles: [
+          {
+            id: "app-builder-overview",
+            title: "App Builder Overview",
+            content:
+              "The **App Builder** is a full-featured in-browser IDE for building web applications with AI assistance.\n\n## Key Features\n- **AI Chat & Agent modes** — Describe what you want, the AI generates code\n- **Live preview** — See changes instantly in a sandboxed iframe\n- **File explorer** — Full file tree with Monaco editor\n- **Integrations** — Supabase (auth, database, storage), Stripe, 13+ AI providers\n- **Edge Functions** — Write and manage Deno serverless functions\n- **Export** — Download your project as a fully portable ZIP\n\n## Workflow\n1. Describe your app in the chat panel\n2. The AI generates HTML, CSS, and JavaScript files\n3. Preview updates in real-time\n4. Configure integrations (Supabase, Stripe, API keys)\n5. Export or deploy when ready",
+          },
+          {
+            id: "export-guide",
+            title: "Exporting Your Project",
+            content:
+              "## Export Modes\n\n### Full-Stack Export (Recommended)\nA complete, production-ready React + Vite project:\n- **package.json** with all dependencies mapped from CDN imports\n- **.env + .env.example** with pre-filled and documented environment variables\n- **src/lib/supabase.js** — Ready-to-use Supabase client\n- **src/lib/stripe.js** — Stripe.js loader (if configured)\n- **supabase/schema.sql** — Auto-detected database tables with RLS policies, triggers, and storage bucket setup\n- **supabase/config.toml** — Supabase CLI configuration for local development\n- **supabase/functions/** — Edge function source code\n- **Dockerfile + nginx.conf** — Multi-stage Docker build for production\n- **README.md** — Step-by-step setup guide with all integration instructions\n\n### Docker-Ready Export\nReact + Vite scaffolding with Dockerfile and nginx config. Good for quick containerized deployments without backend integration setup.\n\n### Raw ZIP\nJust your source files — HTML, CSS, JS. No scaffolding or build tools.\n\n## How to Export\n1. Click the **Export** button in the top toolbar\n2. Choose your export mode\n3. A ZIP file downloads automatically\n4. Extract, run `npm install`, and you're ready to go",
+          },
+          {
+            id: "supabase-portability",
+            title: "Making Supabase Portable",
+            content:
+              "When you export a project that uses Supabase, the Full-Stack Export includes everything needed to recreate the backend on a new Supabase project.\n\n## What's Included\n- **Schema SQL** — Table definitions auto-detected from your code (`.from('table')` calls, SQL statements)\n- **RLS Policies** — Row Level Security policies generated for each table (users can only access their own data)\n- **Triggers** — `updated_at` auto-update triggers for all detected tables\n- **Storage Buckets** — Bucket creation SQL with folder-scoped access policies\n- **Auth Provider Docs** — Documentation for which auth methods your app uses\n\n## Setup Steps\n1. Create a new Supabase project at [supabase.com](https://supabase.com)\n2. Copy your **Project URL** and **anon key** from Settings → API\n3. Paste into your `.env` file\n4. Open the SQL Editor and run `supabase/schema.sql`\n5. Configure auth providers in Authentication → Providers\n6. Deploy edge functions: `npx supabase functions deploy`\n\n## Supabase CLI (Optional)\nThe export includes `supabase/config.toml` for local development:\n```bash\nnpx supabase start    # Local Supabase stack\nnpx supabase db push  # Push schema to remote\n```",
+          },
+          {
+            id: "docker-deployment",
+            title: "Docker Deployment",
+            content:
+              "Both the **Full-Stack** and **Docker-Ready** exports include a production Dockerfile.\n\n## How It Works\nThe Dockerfile uses a **multi-stage build**:\n1. **Stage 1 (Build)**: Node.js 20 installs dependencies and runs `vite build`\n2. **Stage 2 (Serve)**: nginx Alpine serves the static `dist/` output\n\nThe final image is ~25 MB.\n\n## Commands\n```bash\n# Build\ndocker build -t my-app .\n\n# Run\ndocker run -p 8080:80 my-app\n\n# With environment variables\ndocker run -p 8080:80 --env-file .env my-app\n\n# Docker Compose (create docker-compose.yml)\nversion: '3.8'\nservices:\n  app:\n    build: .\n    ports:\n      - '8080:80'\n    env_file: .env\n```\n\n## nginx Configuration\nThe included `nginx.conf` handles:\n- SPA routing (all paths → `index.html`)\n- Static asset caching (1 year for JS/CSS/images)\n- Gzip compression\n\n## Production Tips\n- Use a reverse proxy (Cloudflare, Traefik) for SSL termination\n- Set `server_name` in nginx.conf to your domain\n- Add health check endpoint for container orchestration\n- Use Docker Compose for multi-service setups (app + database)",
+          },
+          {
+            id: "hosting-options",
+            title: "Hosting Options",
+            content:
+              "After exporting, you can deploy your app anywhere.\n\n## Vercel\n1. Push to GitHub (use the **Push to GitHub** button)\n2. Import the repo at [vercel.com/new](https://vercel.com/new)\n3. Add environment variables in Vercel dashboard\n4. Deploy — Vercel auto-detects Vite\n\n## Netlify\n1. Push to GitHub\n2. Import at [app.netlify.com](https://app.netlify.com)\n3. Build command: `npm run build`\n4. Publish directory: `dist`\n\n## Docker / VPS\nUse the included Dockerfile (see Docker Deployment guide).\n\n## GitHub Pages\n1. Run `npm run build`\n2. Deploy the `dist/` folder\n3. Add a `404.html` that redirects to `index.html` for SPA routing\n\n## Cloudflare Pages\n1. Push to GitHub\n2. Connect at [dash.cloudflare.com](https://dash.cloudflare.com)\n3. Framework preset: Vite\n4. Build output: `dist`\n\n## Railway / Render\nBoth support Docker deployments. Push your repo and they'll auto-detect the Dockerfile.",
+          },
+        ],
+      },
+      {
         id: "ai-studio-embedding",
         label: "Embedding & Deployment",
         icon: Globe,

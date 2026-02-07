@@ -55,6 +55,7 @@ import { ComponentLibrary } from './ComponentLibrary';
 import { TestingDebugSuite, type TestCase } from './TestingDebugSuite';
 import { DiffReviewPanel } from './DiffReviewPanel';
 import { CustomDomainPanel } from './CustomDomainPanel';
+import { ExportGuidePanel } from './ExportGuidePanel';
 import { TerminalEmulator } from './TerminalEmulator';
 import { AgentModePanel } from './AgentModePanel';
 import { ResponsivePreviewBar, type ViewportMode, getViewportWidth } from './ResponsivePreviewBar';
@@ -63,7 +64,7 @@ import {
   Eye, Code, Pencil, Database, CreditCard, Key,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
   History, Variable, Image, Package, Columns, Keyboard,
-  Shield, Brain, FolderOpen, Zap, Clock, Globe, Users,
+  Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen,
   Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -163,6 +164,7 @@ export function AIAppBuilderWorkspace() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showSEOEditor, setShowSEOEditor] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+  const [showExportGuide, setShowExportGuide] = useState(false);
   const [collaborators, setCollaborators] = useState<{ id: string; email: string; role: 'viewer' | 'editor' | 'admin'; avatarColor: string; joinedAt: Date }[]>([]);
   const [buildNotifications, setBuildNotifications] = useState<BuildNotification[]>([]);
   const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>([]);
@@ -581,7 +583,7 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   // Close other panels when opening one
-  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity' | 'codeIntel' | 'componentLib' | 'testingSuite') => {
+  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity' | 'codeIntel' | 'componentLib' | 'testingSuite' | 'exportGuide') => {
     setShowVersionHistory(panel === 'history' ? !showVersionHistory : false);
     setShowEnvVars(panel === 'envVars' ? !showEnvVars : false);
     setShowAssets(panel === 'assets' ? !showAssets : false);
@@ -595,6 +597,7 @@ export function AIAppBuilderWorkspace() {
     setShowCodeIntel(panel === 'codeIntel' ? !showCodeIntel : false);
     setShowComponentLib(panel === 'componentLib' ? !showComponentLib : false);
     setShowTestingSuite(panel === 'testingSuite' ? !showTestingSuite : false);
+    setShowExportGuide(panel === 'exportGuide' ? !showExportGuide : false);
   };
 
   // ─── Left sidebar icon bar items ───
@@ -612,6 +615,7 @@ export function AIAppBuilderWorkspace() {
     { id: 'packages', icon: Package, label: 'Packages', show: true, active: showPackages },
     { id: 'history', icon: History, label: 'Version History', show: true, active: showVersionHistory },
     { id: 'activity', icon: Clock, label: 'Activity', show: true, active: showActivity },
+    { id: 'exportGuide', icon: BookOpen, label: 'Export & Deploy Guide', show: true, active: showExportGuide },
   ] as const;
 
   return (
@@ -908,6 +912,7 @@ export function AIAppBuilderWorkspace() {
                   <EdgeFunctionEditor open={showEdgeFunctions} onClose={() => setShowEdgeFunctions(false)} onCreateFunction={handleCreateEdgeFunction} functions={edgeFunctions} onSelectFunction={(name) => { setActiveFile(`functions/${name}/index.ts`); setRightTab('code'); }} onDeleteFunction={handleDeleteEdgeFunction} />
                 </Suspense>
                 <ActivityFeed open={showActivity} onClose={() => setShowActivity(false)} entries={activityEntries} />
+                <ExportGuidePanel open={showExportGuide} onClose={() => setShowExportGuide(false)} />
                 <AICodeIntelligence open={showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); toast.success('Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => toast.success('Refreshed suggestions')} activeFilePath={project.activeFilePath} />
                 <DatabaseExplorer open={showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
                 <ComponentLibrary open={showComponentLib} onClose={() => setShowComponentLib(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); } }} onApplyTheme={() => {}} />
