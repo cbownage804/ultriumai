@@ -59,6 +59,10 @@ Deno.serve(async (req) => {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=60, s-maxage=300',
         'X-Served-By': 'ultrium-preview',
+        'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'SAMEORIGIN',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
       },
     })
   } catch (err) {
