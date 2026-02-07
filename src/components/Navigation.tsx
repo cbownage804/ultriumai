@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Menu, LogOut, Phone, X, ChevronDown, Package, Shield, Cpu, Monitor, Headphones, Sparkles, ArrowRight, DollarSign, Code2, Layers } from "lucide-react";
+import { AIStudioMegaMenu } from "@/components/marketing/AIStudioMegaMenu";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,7 +96,7 @@ const Navigation = () => {
               <DropdownMenuContent 
                 align="center" 
                 sideOffset={12}
-                className="w-[90vw] max-w-[520px] p-0 bg-background/95 backdrop-blur-xl border border-border/50 shadow-2xl shadow-black/20 rounded-2xl overflow-hidden"
+                className="w-[90vw] max-w-[720px] p-0 bg-background/95 backdrop-blur-xl border border-border/50 shadow-2xl shadow-black/20 rounded-2xl overflow-hidden"
               >
                 {/* Header */}
                 <div className="px-5 py-4 bg-gradient-to-r from-primary/10 via-transparent to-cyan-500/10 border-b border-border/30">
@@ -103,63 +104,61 @@ const Navigation = () => {
                   <p className="text-xs text-muted-foreground">AI-powered security & operations tools</p>
                 </div>
                 
-                {/* Products Grid - responsive columns */}
-                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
-                  {/* SafeSuite */}
-                  <button
-                    onClick={() => handleNavigation('/safesuite')}
-                    className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/30 transition-all duration-200 text-left"
-                  >
-                    <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-emerald-500/20 overflow-hidden">
-                      <img src={safesuiteLogo} alt="SafeSuite" className="w-10 h-10 object-contain" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-sm text-foreground group-hover/item:text-emerald-500 transition-colors">SafeSuite™</span>
-                        <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
+                {/* Mega-menu grid: Products + AI Studio tools */}
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr]">
+                  {/* Left — Core Products */}
+                  <div className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">Platforms</span>
+                    
+                    {/* SafeSuite */}
+                    <button
+                      onClick={() => handleNavigation('/safesuite')}
+                      className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/30 transition-all duration-200 text-left w-full"
+                    >
+                      <div className="shrink-0 w-10 h-10 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-emerald-500/20 overflow-hidden">
+                        <img src={safesuiteLogo} alt="SafeSuite" className="w-8 h-8 object-contain" />
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">Password vault, threat scanning, dark web monitoring</p>
-                    </div>
-                  </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-sm text-foreground group-hover/item:text-emerald-500 transition-colors">SafeSuite™</span>
+                          <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-1">Password vault, scanning, dark web</p>
+                      </div>
+                    </button>
 
-                  {/* AI Studio */}
-                  <button
-                    onClick={() => handleNavigation('/products/ai-studio')}
-                    className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all duration-200 text-left"
-                  >
-                    <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-primary/20 overflow-hidden">
-                      <img src={aiStudioLogo} alt="AI Studio" className="w-10 h-10 object-contain" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-sm text-foreground group-hover/item:text-primary transition-colors">AI Studio™</span>
-                        <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
+                    {/* Vanguard Suite */}
+                    <button
+                      onClick={() => handleNavigation('/vanguard')}
+                      className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/30 transition-all duration-200 text-left w-full"
+                    >
+                      <div className="shrink-0 w-10 h-10 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-cyan-500/20 overflow-hidden">
+                        <img src={vanguardLogo} alt="Vanguard" className="w-8 h-8 object-contain" />
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">Business AI Control Plane for governed AI assistants</p>
-                    </div>
-                  </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-sm text-foreground group-hover/item:text-cyan-500 transition-colors">Vanguard™</span>
+                          <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-1">RMM, helpdesk, security & compliance</p>
+                      </div>
+                    </button>
+                  </div>
 
-                  {/* Vanguard Suite */}
-                  <button
-                    onClick={() => handleNavigation('/vanguard')}
-                    className="group/item col-span-2 flex items-start gap-3 p-3 rounded-xl hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/30 transition-all duration-200 text-left"
-                  >
-                    <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-cyan-500/20 overflow-hidden">
-                      <img src={vanguardLogo} alt="Vanguard" className="w-10 h-10 object-contain" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-sm text-foreground group-hover/item:text-cyan-500 transition-colors">Vanguard Suite™</span>
-                        <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
-                      </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">AI-powered security & operations platform with RMM, helpdesk, and compliance</p>
-                    </div>
-                  </button>
+                  {/* Right — AI Studio Mega Menu */}
+                  <div className="border-l border-border/30">
+                    <AIStudioMegaMenu onNavigate={handleNavigation} />
+                  </div>
                 </div>
 
                 {/* Footer CTA */}
                 <div className="px-5 py-3 bg-muted/30 border-t border-border/30 flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Enterprise solutions available</span>
+                  <button
+                    onClick={() => handleNavigation('/ai-studio/use-cases')}
+                    className="text-xs font-medium text-foreground/60 hover:text-primary flex items-center gap-1 transition-colors"
+                  >
+                    <Sparkles className="h-3 w-3" /> Browse use cases
+                  </button>
                   <button 
                     onClick={() => handleNavigation('/pricing')}
                     className="text-xs font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
