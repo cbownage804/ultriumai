@@ -60,6 +60,7 @@ const menuItems = [
     icon: Bot,
     items: [
       { title: "Studio Assistant", url: "/ai-studio/assistant", icon: Bot },
+      { title: "App Builder", url: "/ai-studio/app-builder", icon: Bot },
       { title: "Voice Assistant", url: "/dashboard/voice-assistant", icon: Bot },
       { title: "AI Intelligence", url: "/dashboard/ai/intelligence", icon: Bot },
       { title: "Vision Analyzer", url: "/dashboard/ai/vision", icon: Eye },
