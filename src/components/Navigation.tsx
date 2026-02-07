@@ -88,44 +88,8 @@ const Navigation = () => {
             </span>
           </div>
           
-          {/* Desktop Navigation - Enhanced Product Cards */}
+          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-5">
-            {/* AI Studio Button */}
-            <button 
-              onClick={() => handleNavigation('/ai-studio')}
-              className="relative group transition-all duration-300 hover:scale-105"
-              title="AI Studio™"
-            >
-              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-black to-gray-900 flex items-center justify-center overflow-hidden shadow-lg group-hover:shadow-primary/40 p-1 border border-primary/20 group-hover:border-primary/50 transition-all duration-300">
-                <img src={aiStudioLogo} alt="AI Studio" className="h-full w-full object-contain scale-150" />
-              </div>
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-primary rounded-full group-hover:w-3/4 transition-all duration-300" />
-            </button>
-            
-            {/* Vanguard Button */}
-            <button 
-              onClick={() => handleNavigation('/vanguard')}
-              className="relative group transition-all duration-300 hover:scale-105"
-              title="Vanguard™"
-            >
-              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-black to-gray-900 flex items-center justify-center overflow-hidden shadow-lg group-hover:shadow-cyan-500/40 border border-cyan-500/20 group-hover:border-cyan-500/50 transition-all duration-300">
-                <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
-              </div>
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-cyan-500 rounded-full group-hover:w-3/4 transition-all duration-300" />
-            </button>
-            
-            {/* SafeSuite Button */}
-            <button 
-              onClick={() => handleNavigation('/safesuite')}
-              className="relative group transition-all duration-300 hover:scale-105"
-              title="SafeSuite™"
-            >
-              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-black to-gray-900 flex items-center justify-center overflow-hidden shadow-lg group-hover:shadow-emerald-500/40 p-1 border border-emerald-500/20 group-hover:border-emerald-500/50 transition-all duration-300">
-                <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain scale-150" />
-              </div>
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-emerald-500 rounded-full group-hover:w-3/4 transition-all duration-300" />
-            </button>
-            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 flex items-center gap-1.5 group">
