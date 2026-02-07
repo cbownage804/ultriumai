@@ -148,8 +148,11 @@ export function useProjectPersistence() {
       }
 
       const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'app';
-      const uniqueSuffix = Math.random().toString(36).substring(2, 8);
-      const slug = `${baseSlug}-${uniqueSuffix}`;
+      // Use project ID for a stable, unique slug (like Lovable does)
+      const projectSuffix = currentProjectId
+        ? currentProjectId.split('-')[0]
+        : crypto.randomUUID().split('-')[0];
+      const slug = `${baseSlug}--${projectSuffix}`;
       const filePath = `${user.id}/${slug}/index.html`;
 
       const { error } = await supabase.storage
