@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
-  Zap, MessageCircle, Hammer, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
+  Zap, MessageCircle, Wand2, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
   LayoutGrid, Wrench, AlertTriangle, Copy, RotateCcw, Pencil, GitFork, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -560,120 +560,123 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Model selector + Mode toggle */}
-        <div className="flex items-center gap-2">
-          {/* Model selector */}
-          {onModelChange && (
-            <div className="relative group/model">
-              <button className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white/50 transition-colors px-1.5 py-1 rounded border border-white/[0.06] hover:border-white/[0.12]">
-                <span>{AI_MODELS.find(m => m.id === selectedModel)?.icon || '⚡'}</span>
-                <span>{AI_MODELS.find(m => m.id === selectedModel)?.label || 'Flash'}</span>
-                <ChevronDown className="h-2.5 w-2.5" />
-              </button>
-              <div className="absolute bottom-full left-0 mb-1 hidden group-hover/model:block z-20">
-                <div className="bg-[#0d0d14] border border-white/[0.08] rounded-lg p-1 shadow-xl min-w-[120px]">
-                  {AI_MODELS.map(m => (
-                    <button
-                      key={m.id}
-                      onClick={() => onModelChange(m.id)}
-                      className={cn(
-                        "w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[10px] transition-colors",
-                        selectedModel === m.id ? "bg-white/10 text-white/80" : "text-white/40 hover:text-white/70 hover:bg-white/[0.03]"
-                      )}
-                    >
-                      <span>{m.icon}</span>
-                      <div className="text-left">
-                        <div className="font-medium">{m.label}</div>
-                        <div className="text-[8px] text-white/20">{m.desc}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div data-tour="mode-toggle" className="flex-1 flex items-center gap-1 bg-white/[0.03] rounded-lg p-0.5 border border-white/[0.06]">
+        {/* Lovable-style input area with integrated mode toggle */}
+        <div data-tour="chat-input" className="rounded-xl border border-white/[0.08] bg-white/[0.03] focus-within:border-cyan-500/30 transition-colors overflow-hidden">
+          <div className="flex items-end gap-2 px-3 py-2.5">
+            {/* Image upload button */}
             <button
-              onClick={() => onModeChange('discuss')}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md transition-all font-medium",
+              onClick={() => fileInputRef.current?.click()}
+              className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors shrink-0"
+              title="Upload reference image"
+            >
+              <ImagePlus className="h-3.5 w-3.5" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={
                 mode === 'discuss'
-                  ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
-                  : "text-white/30 hover:text-white/50"
-              )}
-            >
-              <MessageCircle className="h-3 w-3" />
-              Discuss
-            </button>
-            <button
-              onClick={() => onModeChange('build')}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md transition-all font-medium",
-                mode === 'build'
-                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                  : "text-white/30 hover:text-white/50"
-              )}
-            >
-              <Hammer className="h-3 w-3" />
-              Build
-            </button>
+                  ? "Ask a question..."
+                  : messages.length === 0 ? 'Describe the app you want to build...' : 'Describe changes...'
+              }
+              rows={1}
+              className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/20 resize-none outline-none min-h-[24px] max-h-[120px] py-0.5"
+            />
+            {isGenerating ? (
+              <button
+                onClick={onStop}
+                className="h-7 w-7 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center hover:bg-red-500/30 transition-colors shrink-0"
+              >
+                <Square className="h-3 w-3" />
+              </button>
+            ) : (
+              <button
+                onClick={handleSend}
+                disabled={!input.trim()}
+                className={cn(
+                  "h-7 w-7 rounded-lg flex items-center justify-center transition-all shrink-0",
+                  input.trim()
+                    ? "bg-gradient-to-r from-cyan-500 to-cyan-400 text-black hover:opacity-90"
+                    : "bg-white/5 text-white/20"
+                )}
+              >
+                <Send className="h-3 w-3" />
+              </button>
+            )}
           </div>
-        </div>
+          {/* Bottom bar: mode toggle + model selector */}
+          <div className="flex items-center justify-between px-3 py-1.5 border-t border-white/[0.04] bg-white/[0.01]">
+            <div data-tour="mode-toggle" className="flex items-center gap-0.5 bg-white/[0.03] rounded-md p-0.5">
+              <button
+                onClick={() => onModeChange('discuss')}
+                className={cn(
+                  "flex items-center gap-1 text-[10px] px-2 py-1 rounded transition-all font-medium",
+                  mode === 'discuss'
+                    ? "bg-white/10 text-white/80"
+                    : "text-white/30 hover:text-white/50"
+                )}
+              >
+                <MessageCircle className="h-2.5 w-2.5" />
+                Chat
+              </button>
+              <button
+                onClick={() => onModeChange('build')}
+                className={cn(
+                  "flex items-center gap-1 text-[10px] px-2 py-1 rounded transition-all font-medium",
+                  mode === 'build'
+                    ? "bg-white/10 text-white/80"
+                    : "text-white/30 hover:text-white/50"
+                )}
+              >
+                <Wand2 className="h-2.5 w-2.5" />
+                Agent
+              </button>
+            </div>
 
-        <div data-tour="chat-input" className="flex gap-2 items-end bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 focus-within:border-cyan-500/30 transition-colors">
-          {/* Image upload button */}
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors shrink-0"
-            title="Upload reference image"
-          >
-            <ImagePlus className="h-3.5 w-3.5" />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="hidden"
-          />
-
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={
-              mode === 'discuss'
-                ? "Let's talk about what you want to build..."
-                : messages.length === 0 ? 'Describe the app you want to build...' : 'Describe changes...'
-            }
-            rows={1}
-            className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/20 resize-none outline-none min-h-[24px] max-h-[120px] py-0.5"
-          />
-          {isGenerating ? (
-            <button
-              onClick={onStop}
-              className="h-7 w-7 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center hover:bg-red-500/30 transition-colors shrink-0"
-            >
-              <Square className="h-3 w-3" />
-            </button>
-          ) : (
-            <button
-              onClick={handleSend}
-              disabled={!input.trim()}
-              className={cn(
-                "h-7 w-7 rounded-lg flex items-center justify-center transition-all shrink-0",
-                input.trim()
-                  ? mode === 'discuss'
-                    ? "bg-gradient-to-r from-violet-500 to-violet-400 text-white hover:opacity-90"
-                    : "bg-gradient-to-r from-cyan-500 to-cyan-400 text-black hover:opacity-90"
-                  : "bg-white/5 text-white/20"
+            <div className="flex items-center gap-2">
+              {/* Model selector */}
+              {onModelChange && (
+                <div className="relative group/model">
+                  <button className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white/50 transition-colors px-1.5 py-0.5 rounded hover:bg-white/[0.03]">
+                    <span>{AI_MODELS.find(m => m.id === selectedModel)?.icon || '⚡'}</span>
+                    <span>{AI_MODELS.find(m => m.id === selectedModel)?.label || 'Flash'}</span>
+                    <ChevronDown className="h-2.5 w-2.5" />
+                  </button>
+                  <div className="absolute bottom-full right-0 mb-1 hidden group-hover/model:block z-20">
+                    <div className="bg-[#0d0d14] border border-white/[0.08] rounded-lg p-1 shadow-xl min-w-[120px]">
+                      {AI_MODELS.map(m => (
+                        <button
+                          key={m.id}
+                          onClick={() => onModelChange(m.id)}
+                          className={cn(
+                            "w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[10px] transition-colors",
+                            selectedModel === m.id ? "bg-white/10 text-white/80" : "text-white/40 hover:text-white/70 hover:bg-white/[0.03]"
+                          )}
+                        >
+                          <span>{m.icon}</span>
+                          <div className="text-left">
+                            <div className="font-medium">{m.label}</div>
+                            <div className="text-[8px] text-white/20">{m.desc}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               )}
-            >
-              <Send className="h-3 w-3" />
-            </button>
-          )}
+              <span className="text-[9px] text-white/15 font-mono">{mode === 'discuss' ? '1 credit' : '1 credit'}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
