@@ -1,88 +1,93 @@
 
 
-# AI Studio App Builder -- Advanced Features & Final Parity
+# AI Studio App Builder -- Lovable Parity Phase 4: Deep IDE Intelligence
 
 ## Overview
 
-The builder has solid foundations: streaming preview, split view, file management, collaborative presence, error fixing, and all the micro-interactions. This phase adds the **last missing features** that separate it from Lovable: real-time responsive preview controls, intelligent file context in prompts, chat persistence, and several UX refinements.
+The builder now has the core IDE shell: file management, split view, multi-tab console, chat persistence, error fixing, visual edits, and collaborative features. This phase tackles the **deeper behavioral patterns** that make Lovable feel intelligent and trustworthy -- real-time URL-based deployment, conversation-driven project forking, intelligent error recovery loops, and a polished settings/integrations experience.
 
 ---
 
-## 1. Chat History Persistence
+## 1. Deployment Preview URL with Live Reload
 
-Chat messages are lost on page reload. Lovable persists conversations alongside projects so users can continue where they left off.
+Lovable gives every project a live preview URL (e.g., `project-name.lovable.app`) that updates on each change. Currently, publishing requires a manual click and uploads to Supabase Storage. Add a persistent preview URL concept and auto-refresh on publish.
 
 **Changes:**
-- `useProjectPersistence.ts`: Save `messages` alongside project files when saving. Load them back when loading a project.
-- `AIAppBuilderWorkspace.tsx`: Pass messages to `saveProject` and restore them from `loadProject`. Add a `setMessages` export from `useAIAppBuilder`.
-- `useAIAppBuilder.ts`: Export a `setMessages` setter so the workspace can restore saved messages.
+- `DeployDialog.tsx`: Redesign as a two-step flow: (1) Preview environment (auto-generated slug URL shown always), (2) Production publish with custom domain input. Show the preview URL prominently with a copy button and external link.
+- `AIAppBuilderWorkspace.tsx`: Generate a stable preview slug from the project name on first save. Show the preview URL in the top bar next to the project name.
 
 ---
 
-## 2. Responsive Preview with Live Resize Handle
+## 2. Error Recovery Loop with Retry Counter
 
-The `DevicePresetPicker` only has fixed presets. Lovable allows free-form resizing of the preview by dragging the edges. This lets users test any arbitrary width.
+When "Try to Fix" fails, Lovable automatically retries up to 3 times with increasing context. Currently, the builder fires one fix attempt and stops.
 
 **Changes:**
-- `BuilderPreviewPanel.tsx`: Wrap the iframe container in a resizable wrapper with drag handles on the left and right edges. Show the current width/height as a live badge while dragging. Keep presets as quick shortcuts.
+- `AIAppBuilderWorkspace.tsx`: Track `fixAttemptCount` per error. If the same error persists after a fix, automatically retry with additional context (include the previous fix attempt in the prompt). Cap at 3 retries, then show "Unable to auto-fix -- try describing the issue differently."
+- `BuilderPreviewPanel.tsx`: Show retry count on the auto-fix banner (e.g., "Attempt 2/3").
 
 ---
 
-## 3. Multi-Tab Terminal / Console with Tabs
+## 3. Conversation-Based Project Forking
 
-The `ConsolePanel` shows console output but has no concept of separate log streams. Add tabs for "Console", "Network", and "Problems" like VS Code.
+Lovable lets users fork a project mid-conversation to try a different approach without losing the original. Currently, "Remix" only works from the project manager.
 
 **Changes:**
-- `ConsolePanel.tsx`: Add a tab bar with Console (current), Problems (filtered errors/warnings only), and Network (tracks fetch/XHR from the iframe). The Problems tab shows a count badge. Network tab captures `__NETWORK_LOG__` messages from an injected fetch wrapper.
-- `BuilderPreviewPanel.tsx`: Inject a `fetch` wrapper into the preview HTML that posts `__NETWORK_LOG__` messages with URL, status, and timing.
+- `BuilderChatPanel.tsx`: Add a "Fork from here" action on assistant messages. Clicking it saves the current state as a snapshot, creates a new project with the conversation history up to that point, and opens it.
+- `AIAppBuilderWorkspace.tsx`: Add `handleForkFromMessage(messageId)` that saves current project, creates a new project copy with truncated message history, and switches to it.
 
 ---
 
-## 4. Breadcrumb-Based Folder Navigation
+## 4. Integrated Terminal with Command Execution Simulation
 
-The `FileBreadcrumb` shows the current file path but isn't interactive. Make each segment clickable to navigate the file tree.
+Lovable has a terminal panel. While we can't run real commands, we can simulate common build tool outputs and provide a "Run" button for the preview.
 
 **Changes:**
-- `FileBreadcrumb.tsx`: Make each path segment a clickable button that filters the file tree to that folder. Add a dropdown on each segment showing sibling files/folders for quick navigation (like VS Code breadcrumbs).
+- `ConsolePanel.tsx`: Add a "Terminal" tab alongside Console/Problems/Network. Show simulated build output when files change (e.g., "Compiling... Done in 0.3s", "Hot reload: 4 modules updated"). Add a command input at the bottom that handles pseudo-commands like `clear`, `help`, and `build`.
 
 ---
 
-## 5. AI Context Window Indicator
+## 5. Settings Panel Redesign -- Tabbed Integration Hub
 
-Users have no visibility into how much context the AI can "see." When projects get large, context truncation causes poor results. Show a visual indicator of context usage.
+The current `ProjectSettings` is a single dialog with all integrations crammed together. Lovable uses a clean tabbed settings page with sections for General, Integrations, Environment, and Danger Zone.
 
 **Changes:**
-- `BuilderChatPanel.tsx`: Below the input, show a small bar indicating "Context: X/Y tokens" based on the current project file sizes. Warn when nearing the limit (e.g., >80% of 128K tokens). This helps users understand when to simplify prompts or reduce project scope.
+- `ProjectSettings.tsx`: Restructure into a tabbed layout:
+  - **General**: Project name, description, icon/color picker
+  - **Integrations**: Supabase, Stripe, GitHub, Vercel -- each as a collapsible card with connection status indicator
+  - **Environment**: Merge the EnvVarsPanel inline (environment variables + service API keys)
+  - **Danger Zone**: Delete project, reset to blank
 
 ---
 
-## 6. Quick Actions Bar Above Input
+## 6. AI Model Selector
 
-Lovable has quick-action chips above the input for common operations like "Make responsive", "Add dark mode", "Improve performance". These appear contextually based on the current project state.
+Lovable lets users pick which AI model to use. The builder currently hardcodes the model in the edge function. Add a model picker in the chat panel.
 
 **Changes:**
-- `BuilderChatPanel.tsx`: Add a horizontal scrollable row of contextual action chips above the textarea. Show different chips depending on project state:
-  - No files: Show starter prompts (already exists, move above input)
-  - Has files: Show refinement chips like "Add animations", "Make responsive", "Improve accessibility", "Add loading states"
-  - After errors: Show "Fix all errors" chip
+- `BuilderChatPanel.tsx`: Add a small model selector dropdown next to the mode toggle. Options: "Flash" (fast, default), "Pro" (higher quality), "GPT-5" (if available). Pass the selected model to `sendMessage`.
+- `useAIAppBuilder.ts`: Accept an optional `model` parameter in `sendMessage` and forward it to the edge function.
+- Edge function `ai-app-builder`: Read the `model` field from the request body and route to the appropriate provider.
 
 ---
 
-## 7. Inline Image Preview in Chat
+## 7. File Conflict Resolution on AI Generation
 
-When users upload an image with their prompt, the image preview disappears after sending. Show the uploaded image inline in the chat message.
+When the AI generates files that the user has manually edited (dirty files), there's no conflict warning. The AI silently overwrites changes.
 
 **Changes:**
-- `BuilderChatPanel.tsx`: When rendering user messages that have `imageUrl`, show the image as a small thumbnail above the message text. Already tracked on the message object, just not rendered.
+- `AIAppBuilderWorkspace.tsx`: Before applying `latestFiles`, check if any overlap with `dirtyFiles`. If so, show a conflict resolution dialog listing the conflicting files with options: "Keep mine", "Use AI's", or "View diff" for each file.
+- Create a new `FileConflictDialog.tsx` component with a side-by-side diff view for each conflicting file.
 
 ---
 
-## 8. Project Search Across All Saved Projects
+## 8. Recent Files Quick Switcher
 
-The `ProjectManager` lists saved projects but has no search. When users accumulate many projects, finding the right one is hard.
+Lovable has Cmd+P for quick file switching. The builder has Cmd+K (command palette) and Cmd+Shift+F (file search), but no dedicated recent-files switcher.
 
 **Changes:**
-- `ProjectManager.tsx`: Add a search input at the top of the project list that filters by project name. Show file count and last-modified date for each project.
+- `AIAppBuilderWorkspace.tsx`: Add Cmd+P handler that opens a lightweight file picker showing all project files sorted by recently accessed. Typing filters the list. Selecting a file opens it in the editor.
+- Reuse the `CommandPalette.tsx` dialog pattern but filtered to files only.
 
 ---
 
@@ -90,16 +95,16 @@ The `ProjectManager` lists saved projects but has no search. When users accumula
 
 | File | Changes |
 |------|---------|
-| `useAIAppBuilder.ts` | Export `setMessages` for restoring saved chat |
-| `useProjectPersistence.ts` | Save/load messages with projects |
-| `AIAppBuilderWorkspace.tsx` | Wire message persistence on save/load |
-| `BuilderPreviewPanel.tsx` | Resizable preview container, inject network logger |
-| `ConsolePanel.tsx` | Multi-tab (Console/Problems/Network) |
-| `FileBreadcrumb.tsx` | Clickable segments with sibling dropdown |
-| `BuilderChatPanel.tsx` | Context indicator, quick action chips, inline image preview |
-| `ProjectManager.tsx` | Search input for saved projects |
+| `DeployDialog.tsx` | Two-step deploy flow with persistent preview URL |
+| `AIAppBuilderWorkspace.tsx` | Error retry loop, fork handler, file conflict check, Cmd+P switcher |
+| `BuilderPreviewPanel.tsx` | Retry counter display on auto-fix banner |
+| `BuilderChatPanel.tsx` | Fork action on messages, model selector dropdown |
+| `useAIAppBuilder.ts` | Accept model parameter in sendMessage |
+| `ConsolePanel.tsx` | Terminal tab with simulated build output |
+| `ProjectSettings.tsx` | Tabbed settings redesign |
+| `FileConflictDialog.tsx` | New -- conflict resolution with diff view |
 
 ### Estimated scope
-- 8 files modified, 0 new files
-- Focuses on workflow intelligence and discoverability features
+- 7 files modified, 1 new file created
+- Focuses on intelligent behaviors and trust-building features that distinguish a real IDE from a prototype
 
