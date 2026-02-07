@@ -14,6 +14,7 @@ import SubscriptionProtectedRoute from '@/components/SubscriptionProtectedRoute'
 import EnhancedErrorBoundary from '@/components/EnhancedErrorBoundary';
 import CookieConsent from '@/components/CookieConsent';
 import { isVanguardDomain, isSafeSuiteDomain } from '@/utils/subdomain';
+import { AIStudioCTABanner } from '@/components/marketing/AIStudioCTABanner';
 
 import { VanguardLayout } from '@/components/vanguard/VanguardLayout';
 import { getVanguardProtectedRoutes, getVanguardPublicRoutes } from '@/routes/vanguardRoutes';
@@ -97,6 +98,7 @@ const SafePassSecurity = lazy(() => import('@/pages/safepass/SafePassSecurity'))
 const SafePassBreachMonitor = lazy(() => import('@/pages/safepass/SafePassBreachMonitor'));
 
 // Lazy-loaded - Marketing/Public pages
+const AIStudioLanding = lazy(() => import('@/pages/AIStudioLanding'));
 const Pricing = lazy(() => import('@/pages/Pricing'));
 const MSPPricing = lazy(() => import('@/pages/MSPPricing'));
 const AIStudioPricing = lazy(() => import('@/pages/pricing/AIStudioPricing'));
@@ -387,6 +389,7 @@ function AppRouter() {
         } />
         {/* Legacy redirect */}
         <Route path="/ultrium-gpt" element={<Navigate to="/ai-studio/assistant" replace />} />
+        <Route path="/ai-studio-platform" element={<SuspenseWrapper><AIStudioLanding /></SuspenseWrapper>} />
         <Route path="/small-business" element={<SuspenseWrapper><SmallBusiness /></SuspenseWrapper>} />
         <Route path="/medium-business" element={<SuspenseWrapper><MediumBusiness /></SuspenseWrapper>} />
         <Route path="/enterprise" element={<SuspenseWrapper><Enterprise /></SuspenseWrapper>} />
@@ -919,6 +922,9 @@ function AppRouter() {
           context={getAIContext()}
         />
       )}
+      
+      {/* AI Studio CTA Banner for unauthenticated users */}
+      <AIStudioCTABanner />
       
       {/* Cookie Consent Banner */}
       <CookieConsent />
