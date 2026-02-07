@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { useBranching } from '@/hooks/useBranching';
 import { useProjectPersistence } from '@/hooks/useProjectPersistence';
+import { useDraftPersistence } from '@/hooks/useDraftPersistence';
 import { BuilderChatPanel } from './BuilderChatPanel';
 import { BuilderPreviewPanel } from './BuilderPreviewPanel';
 import { ProjectFileTree } from './ProjectFileTree';
@@ -107,6 +108,7 @@ export function AIAppBuilderWorkspace() {
     simulateAgentExecution,
   } = useAgentMode();
   const autoRecovery = useAutoErrorRecovery();
+  const { saveDraft, loadDraft, clearDraft, hasDraft } = useDraftPersistence();
 
   const [rightTab, setRightTab] = useState<'preview' | 'code' | 'split'>('preview');
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -283,10 +285,29 @@ export function AIAppBuilderWorkspace() {
     }
   }, [partialFiles, isStreamingPreview]);
 
-  // Auto-save
+  // Auto-save (cloud)
   useEffect(() => {
     if (project.files.length > 0) scheduleAutoSave(project.name, project.files);
   }, [project.files, project.name, scheduleAutoSave]);
+
+  // Auto-save draft to localStorage (survives refresh)
+  useEffect(() => {
+    saveDraft(project.name, project.files, messages);
+  }, [project.files, project.name, messages, saveDraft]);
+
+  // Restore draft on mount
+  useEffect(() => {
+    if (project.files.length > 0 || messages.length > 0) return; // already has content
+    const draft = loadDraft();
+    if (draft && (draft.files.length > 0 || draft.messages.length > 0)) {
+      setFiles(draft.files);
+      renameProject(draft.name);
+      if (draft.messages.length > 0) {
+        setMessages(draft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+      }
+      toast.success('Restored your unsaved draft', { description: `Saved ${new Date(draft.savedAt).toLocaleTimeString()}` });
+    }
+  }, []); // intentionally run once on mount
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -468,8 +489,9 @@ export function AIAppBuilderWorkspace() {
   const handleSave = useCallback(async () => {
     await saveProject(project.name, project.files, branches, activeBranch, messages);
     setDirtyFiles(new Set());
+    clearDraft();
     toast.success('Project saved');
-  }, [saveProject, project.name, project.files, branches, activeBranch, messages]);
+  }, [saveProject, project.name, project.files, branches, activeBranch, messages, clearDraft]);
 
   const handleLoadProject = useCallback(async (projectId: string) => {
     const loaded = await loadProject(projectId);
