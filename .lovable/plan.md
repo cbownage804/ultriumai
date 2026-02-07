@@ -1,120 +1,88 @@
 
 
-# Reaching Lovable Parity: Next Feature Wave
+# AI Studio App Builder -- Final Polish and Remaining Gaps
 
-## What You Already Have
-Your AI App Builder already includes: command palette, file tree, Monaco editor, version history, branching, visual edit overlay, device preview presets, console panel, env vars, asset manager, deploy dialog, templates, export (ZIP/Docker), collaborative presence, undo/redo, file search, breadcrumbs, and code diff viewer. That's impressive.
+## Current Status
 
-## What's Still Missing vs. Lovable
+All three phases from the roadmap have been implemented. The builder has: streaming preview, visual edits with AI prompts, smart error fixing with retries, multi-file bundler, package manager, multi-file context awareness, collaborative presence, project remixing, custom subdomain publishing, onboarding tour, Monaco editor with remote cursors, and much more.
 
-Here are the remaining high-impact gaps, grouped into three implementation phases:
-
----
-
-### Phase 1: Smart Editing and Iteration (Core UX)
-
-**1. Select-to-Edit in Preview ("Visual Edits 2.0")**
-Your current visual edit overlay only supports text and color changes. Lovable lets users click any element and type a natural language prompt like "make this button bigger and blue" which the AI then applies surgically. This means:
-- When an element is selected in the preview, show a prompt input (not just text/color buttons)
-- Send the element's selector + surrounding HTML context to the AI so it rewrites just that section
-- Apply the diff back into the file system automatically
-
-**2. Streaming Preview (Hot Reload)**
-Currently, the preview only updates after the full AI response finishes. Lovable updates the preview as code streams in. This means:
-- Parse `===FILE:` blocks incrementally during streaming
-- Recompile and refresh the iframe as each file completes
-- Show a subtle "updating..." badge on the preview during partial renders
-
-**3. "Try to Fix" Error Loop**
-Your error console has a "Fix" button, but it just sends a generic prompt. A smarter version would:
-- Automatically include the erroring file's content, the stack trace, and the line number
-- Add a "Try to Fix" button directly on errors that auto-sends a precisely scoped fix request
-- Track fix attempts to avoid infinite loops (max 3 retries)
+What remains is **integration wiring, bug fixes, and polish** to make everything actually work end-to-end rather than just exist as UI scaffolding.
 
 ---
 
-### Phase 2: Multi-File Intelligence
+## Remaining Work
 
-**4. Dependency Graph and Import Resolution**
-When the AI generates multiple files, imports between them don't actually resolve in the sandbox iframe. This is the biggest fidelity gap. Implementation:
-- Build a simple bundler that concatenates JS/CSS from the file system into the HTML
-- Resolve `import` and `<link>` references between project files
-- Inject all resolved code into the iframe's `srcdoc`
+### 1. Wire Up Collaborative Editing (Currently UI-only)
 
-**5. Package/CDN Manager**
-Let users add npm packages (loaded via CDN like esm.sh or unpkg) with a UI panel:
-- Search for packages
-- Auto-inject `<script>` tags or ESM imports into the compiled HTML
-- Track which packages are used per project
+The `CollaborativePresence` component shows online users but does NOT broadcast file changes or cursor positions. The `CodeEditor` accepts `remoteCursors` and `onCursorChange` props but they are never passed from the workspace.
 
-**6. Multi-File Awareness in Chat**
-When the user says "update the header component", the AI should know which file contains the header without the user specifying. This means:
-- Index all files by their exported component/function names
-- When a user references a component name, auto-include that file's content in the prompt
-- Show which files were sent as context in the chat UI
+**Changes:**
+- `AIAppBuilderWorkspace.tsx`: Pass `remoteCursors` and `onCursorChange` to `CodeEditor`, broadcast cursor position and file changes via Supabase Realtime channel, listen for remote changes and apply them.
 
----
+### 2. Wire Up Project Remixing (Button exists, handler missing)
 
-### Phase 3: Collaboration and Polish
+`ProjectManager` has a `onRemix` prop and renders a fork button, but the workspace never passes a remix handler.
 
-**7. Real-Time Collaborative Editing**
-Your `CollaborativePresence` shows who's online, but there's no shared editing. Add:
-- Broadcast file changes via Supabase Realtime channels
-- Show other users' cursor positions in the Monaco editor
-- Conflict resolution (last-write-wins with toast notification)
+**Changes:**
+- `AIAppBuilderWorkspace.tsx`: Add a `handleRemix` callback that loads a project, clears the `currentProjectId` (so the next save creates a new copy), and renames it with a "Remix of..." prefix.
 
-**8. Project Forking / Remixing**
-Let users duplicate any saved project as a starting point:
-- "Remix" button on saved projects that creates a deep copy
-- New project gets a "Remixed from [original]" badge
-- Useful for templates and sharing
+### 3. Use the Bundler in Preview Compilation
 
-**9. Publish with Custom Subdomain**
-Your deploy dialog publishes HTML but doesn't give users a persistent, branded URL. Add:
-- Let users pick a subdomain (e.g., `myapp.ultriumai.app`)
-- Store published projects in Supabase storage with a slug
-- Serve via an edge function that looks up the slug and returns the HTML
+`useProjectBundler` exists with `bundleForBrowser` and `resolveImportOrder`, but the preview still uses the simple `getCompiledHTML` from `useProjectFileSystem` which just concatenates files. Multi-file imports won't resolve.
 
-**10. Onboarding Tour**
-First-time users see the empty builder and don't know what's possible. Add:
-- A step-by-step overlay tour highlighting: chat input, mode toggle, preview, code editor, command palette
-- Dismissible, stored in localStorage so it only shows once
-- Optional "Show me around" button in the empty state
+**Changes:**
+- `AIAppBuilderWorkspace.tsx`: When computing `compiledHTML`, use `useProjectBundler().bundleForBrowser()` to process JS files instead of naive concatenation, and pass the bundled output to the preview.
+- `useProjectFileSystem.ts`: Update `getCompiledHTML` to accept an optional bundler function, or create a new `getBundledHTML` that uses the bundler for JS resolution.
+
+### 4. Inject CDN Packages into Preview
+
+The `PackageManager` tracks `cdnPackages` state but they are never injected into the compiled HTML.
+
+**Changes:**
+- `AIAppBuilderWorkspace.tsx` / `useProjectFileSystem.ts`: Pass `cdnPackages` to `getCompiledHTML` and inject their CDN script tags into the `<head>`.
+
+### 5. Wire Env Variables Panel to Compilation
+
+The `EnvVarsPanel` manages `envVariables` state but this is separate from the `envVars` state used in compilation. There are two disconnected env var systems.
+
+**Changes:**
+- `AIAppBuilderWorkspace.tsx`: Sync `envVariables` from `EnvVarsPanel` into the `envVars` array that gets passed to `getCompiledHTML`, or unify them into one state.
+
+### 6. Add data-tour Attributes for Onboarding
+
+The `OnboardingTour` targets elements by `data-tour` attributes (e.g., `data-tour="chat-input"`, `data-tour="preview"`), but these attributes don't exist on any elements in the workspace.
+
+**Changes:**
+- `AIAppBuilderWorkspace.tsx`: Add `data-tour="preview"`, `data-tour="code-editor"`, `data-tour="command-palette"` to the relevant wrapper elements.
+- `BuilderChatPanel.tsx`: Add `data-tour="chat-input"` to the textarea container and `data-tour="mode-toggle"` to the mode toggle.
+
+### 7. Console Log Forwarding to ConsolePanel
+
+The `ConsolePanel` exists but it receives no log data from the iframe. The iframe posts `__CONSOLE_LOG__` messages but only `BuilderPreviewPanel` listens for them (and only for errors).
+
+**Changes:**
+- `AIAppBuilderWorkspace.tsx` or `BuilderPreviewPanel.tsx`: Forward `__CONSOLE_LOG__` messages to the `ConsolePanel` by lifting console log state up or passing a callback.
+
+### 8. Fix Error Fix Retry Tracking
+
+The `ErrorConsole` tracks `fixAttempts` on errors but the state is never updated after a fix is attempted -- the error objects in `BuilderPreviewPanel` are plain objects that don't get their `fixAttempts` incremented.
+
+**Changes:**
+- `BuilderPreviewPanel.tsx`: When `handleSmartFix` is called, update the error's `fixAttempts` count in the `errors` state.
 
 ---
 
 ## Technical Details
 
-### Phase 1 File Changes
-| File | Change |
-|------|--------|
-| `VisualEditOverlay.tsx` | Add prompt input mode alongside text/color; send element context to AI |
-| `useAIAppBuilder.ts` | Parse files incrementally during stream; expose partial file updates |
-| `BuilderPreviewPanel.tsx` | Subscribe to partial file updates for hot-reload; add retry tracking to error fix |
-| `ErrorConsole.tsx` | Enhanced "Try to Fix" with file content + stack trace auto-injection |
+| File | Changes |
+|------|---------|
+| `AIAppBuilderWorkspace.tsx` | Wire remix handler, pass remote cursors to CodeEditor, add data-tour attrs, inject CDN packages, sync env vars, use bundler for preview |
+| `BuilderPreviewPanel.tsx` | Forward console logs, increment fixAttempts on retry |
+| `BuilderChatPanel.tsx` | Add data-tour attributes to textarea and mode toggle |
+| `useProjectFileSystem.ts` | Extend `getCompiledHTML` to accept CDN packages and optional bundler |
 
-### Phase 2 File Changes
-| File | Change |
-|------|--------|
-| New: `useProjectBundler.ts` | Simple bundler that resolves imports between VFS files and compiles to single HTML |
-| New: `PackageManager.tsx` | CDN package search + install UI panel |
-| `useProjectFileSystem.ts` | Add file indexing by exports/component names |
-| `useAIAppBuilder.ts` | Auto-detect referenced components and include their files in context |
-
-### Phase 3 File Changes
-| File | Change |
-|------|--------|
-| `CollaborativePresence.tsx` | Add Realtime channel for file change broadcast + cursor sync |
-| `CodeEditor.tsx` | Render remote cursors with colored indicators |
-| `ProjectManager.tsx` | Add "Remix" button and fork logic |
-| `DeployDialog.tsx` | Custom subdomain input + Supabase storage publishing |
-| New: `OnboardingTour.tsx` | Step-by-step overlay tour component |
-
-### Estimated scope per phase
-- Phase 1: 4 files modified -- highest impact, most visible improvement
-- Phase 2: 2 new files, 2 modified -- makes multi-file projects actually work
-- Phase 3: 5 files modified, 1 new -- collaboration and growth features
-
-### Recommended order
-Start with Phase 1 (streaming preview + smart visual edits + better error fixing) since these are the features users interact with every session. Phase 2 makes the builder genuinely useful for real projects. Phase 3 adds viral/growth mechanics.
+### Estimated scope
+- 4 files modified
+- No new files needed
+- Focuses entirely on wiring existing components together so everything actually works end-to-end
 
