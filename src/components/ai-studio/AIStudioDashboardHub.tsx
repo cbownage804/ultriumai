@@ -73,7 +73,7 @@ export const AIStudioDashboardHub = () => {
   const quickActions = [
     { label: "New GPT", icon: Bot, color: "text-violet-400", bg: "bg-violet-500/10", route: "/dashboard/gpt/build" },
     { label: "App Builder", icon: Code2, color: "text-cyan-400", bg: "bg-cyan-500/10", route: "/ai-studio/app-builder" },
-    { label: "New Agent", icon: Zap, color: "text-amber-400", bg: "bg-amber-500/10", route: "/ai-studio/agents/builder" },
+    { label: "New Agent", icon: Zap, color: "text-amber-400", bg: "bg-amber-500/10", route: "/ai-studio/agents/new" },
     { label: "Analytics", icon: BarChart3, color: "text-emerald-400", bg: "bg-emerald-500/10", route: "/dashboard/analytics" },
   ];
 
@@ -205,7 +205,7 @@ export const AIStudioDashboardHub = () => {
             {[
               { label: "Build a GPT", desc: "Create an AI assistant", icon: Bot, route: "/dashboard/gpt/build" },
               { label: "Build an App", desc: "Full-stack AI IDE", icon: Code2, route: "/ai-studio/app-builder" },
-              { label: "Create Agent", desc: "Automate workflows", icon: Zap, route: "/ai-studio/agents/builder" },
+              { label: "Create Agent", desc: "Automate workflows", icon: Zap, route: "/ai-studio/agents/new" },
               { label: "View Docs", desc: "Guides & tutorials", icon: ArrowRight, route: "/docs/ai-studio" },
             ].map(item => (
               <button

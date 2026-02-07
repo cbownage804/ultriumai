@@ -7,6 +7,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { AIStudioDashboardHub } from "@/components/ai-studio/AIStudioDashboardHub";
 import { AIStudioOnboardingWizard } from "@/components/ai-studio/AIStudioOnboardingWizard";
+import { AIStudioSubNav } from "@/components/ai-studio/AIStudioSubNav";
 import { 
   Building, 
   Building2,
@@ -175,6 +176,7 @@ const AIStudio = () => {
   return (
     <div className="min-h-screen bg-background safe-area-inset-bottom">
       <Navigation />
+      <AIStudioSubNav />
       
       {/* Hero Section */}
       <section className="relative pt-16 sm:pt-20 pb-12 sm:pb-20 overflow-hidden">
