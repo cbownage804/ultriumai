@@ -21,13 +21,15 @@ import { CollaborativePresence } from './CollaborativePresence';
 import { CommandPalette } from './CommandPalette';
 import { GeneratingOverlay } from './GeneratingOverlay';
 import { SkeletonPreview } from './SkeletonPreview';
+import { FileSearchPanel } from './FileSearchPanel';
+import { FileBreadcrumb } from './FileBreadcrumb';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Eye, Code, Pencil, Database, CreditCard, Key,
-  PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2,
+  PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -68,6 +70,7 @@ export function AIAppBuilderWorkspace() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showFileSearch, setShowFileSearch] = useState(false);
 
   // Sync latest files from AI
   useEffect(() => {
@@ -115,13 +118,22 @@ export function AIAppBuilderWorkspace() {
         e.preventDefault();
         handleSave();
       }
+      // ⌘⇧F → File Search
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') {
+        e.preventDefault();
+        setShowFileSearch(prev => !prev);
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [project.files, canUndo, canRedo]);
 
   const handleSend = (input: string, imageDataUrl?: string | null) => {
-    sendMessage(input, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl);
+    // AI context awareness: prepend active file context so AI knows where the user is focused
+    const contextPrefix = activeFile && rightTab === 'code'
+      ? `[Currently viewing: ${activeFile.path}]\n`
+      : '';
+    sendMessage(contextPrefix + input, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl);
   };
 
   const handleFixError = (errorPrompt: string) => {
@@ -205,6 +217,18 @@ export function AIAppBuilderWorkspace() {
 
   const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys);
   const hasFiles = project.files.length > 0;
+
+  // Mobile detection for responsive layout
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'chat' | 'editor'>('chat');
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -346,8 +370,53 @@ export function AIAppBuilderWorkspace() {
           </div>
         </div>
 
+        {/* Mobile tab switcher */}
+        {isMobile && (
+          <div className="flex items-center h-10 border-b border-white/[0.06] bg-black/30 shrink-0 md:hidden">
+            <button
+              onClick={() => setMobileTab('chat')}
+              className={cn("flex-1 h-full text-xs font-medium transition-colors", mobileTab === 'chat' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}
+            >
+              Chat
+            </button>
+            <button
+              onClick={() => setMobileTab('editor')}
+              className={cn("flex-1 h-full text-xs font-medium transition-colors", mobileTab === 'editor' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}
+            >
+              Editor
+            </button>
+          </div>
+        )}
+
         {/* ── Main Content ── */}
         <div className="flex-1 overflow-hidden">
+          {isMobile ? (
+            // Mobile: show one panel at a time
+            mobileTab === 'chat' ? (
+              <BuilderChatPanel
+                messages={messages}
+                isGenerating={isGenerating}
+                fileCount={project.files.length}
+                mode={mode}
+                thinkingPhase={thinkingPhase}
+                versions={versions}
+                totalTokensUsed={totalTokensUsed}
+                previousFiles={previousFiles}
+                latestFiles={latestFiles}
+                onModeChange={setMode}
+                onSend={handleSend}
+                onStop={stopGenerating}
+                onClear={handleClear}
+                onRestoreVersion={restoreVersion}
+                onOpenTemplates={() => setShowTemplates(true)}
+                onFixError={handleFixError}
+              />
+            ) : (
+              <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError}>
+                <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
+              </BuilderPreviewPanel>
+            )
+          ) : (
           <ResizablePanelGroup direction="horizontal" className="h-full">
             {/* Chat Panel */}
             <ResizablePanel defaultSize={28} minSize={20} maxSize={40}>
@@ -421,6 +490,22 @@ export function AIAppBuilderWorkspace() {
                       )}
                     </button>
 
+                    {/* Search button */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setShowFileSearch(!showFileSearch)}
+                          className={cn(
+                            "h-9 px-2.5 flex items-center gap-1 text-xs transition-all",
+                            showFileSearch ? "text-cyan-400" : "text-white/30 hover:text-white/60"
+                          )}
+                        >
+                          <Search className="h-3 w-3" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs">Search files (⌘⇧F)</TooltipContent>
+                    </Tooltip>
+
                     {isGenerating && (
                       <div className="ml-auto mr-3 flex items-center gap-1.5 text-[10px] text-amber-400/80">
                         <Activity className="h-3 w-3 animate-pulse" />
@@ -430,46 +515,59 @@ export function AIAppBuilderWorkspace() {
                   </div>
                 )}
 
-                <div className="flex-1 overflow-hidden">
-                  <ResizablePanelGroup direction="horizontal" className="h-full">
-                    {hasFiles && showFileTree && (
-                      <>
-                        <ResizablePanel defaultSize={18} minSize={12} maxSize={28}>
-                          <ProjectFileTree
-                            files={project.files}
-                            activeFilePath={project.activeFilePath}
-                            onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }}
-                            onDeleteFile={deleteFile}
-                          />
-                        </ResizablePanel>
-                        <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors" />
-                      </>
-                    )}
+                <div className="flex-1 overflow-hidden flex">
+                  {/* File Search Panel */}
+                  <FileSearchPanel
+                    open={showFileSearch}
+                    onClose={() => setShowFileSearch(false)}
+                    files={project.files}
+                    onSelectFile={(path) => { setActiveFile(path); }}
+                    onSwitchToCode={() => setRightTab('code')}
+                  />
 
-                    <ResizablePanel defaultSize={hasFiles && showFileTree ? 82 : 100}>
-                      {rightTab === 'preview' || !hasFiles ? (
-                        <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError}>
-                          <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
-                        </BuilderPreviewPanel>
-                      ) : (
-                        <div className="h-full flex flex-col bg-[#0d0d14]">
-                          <FileTabBar
-                            openPaths={project.openFilePaths}
-                            activePath={project.activeFilePath}
-                            onSelect={setActiveFile}
-                            onClose={closeFile}
-                          />
-                          <div className="flex-1 overflow-hidden">
-                            <CodeEditor file={activeFile} onContentChange={upsertFile} />
-                          </div>
-                        </div>
+                  <div className="flex-1 overflow-hidden">
+                    <ResizablePanelGroup direction="horizontal" className="h-full">
+                      {hasFiles && showFileTree && !showFileSearch && (
+                        <>
+                          <ResizablePanel defaultSize={18} minSize={12} maxSize={28}>
+                            <ProjectFileTree
+                              files={project.files}
+                              activeFilePath={project.activeFilePath}
+                              onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }}
+                              onDeleteFile={deleteFile}
+                            />
+                          </ResizablePanel>
+                          <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors" />
+                        </>
                       )}
-                    </ResizablePanel>
-                  </ResizablePanelGroup>
+
+                      <ResizablePanel defaultSize={hasFiles && showFileTree ? 82 : 100}>
+                        {rightTab === 'preview' || !hasFiles ? (
+                          <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError}>
+                            <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
+                          </BuilderPreviewPanel>
+                        ) : (
+                          <div className="h-full flex flex-col bg-[#0d0d14]">
+                            <FileTabBar
+                              openPaths={project.openFilePaths}
+                              activePath={project.activeFilePath}
+                              onSelect={setActiveFile}
+                              onClose={closeFile}
+                            />
+                            <FileBreadcrumb file={activeFile} />
+                            <div className="flex-1 overflow-hidden">
+                              <CodeEditor file={activeFile} onContentChange={upsertFile} />
+                            </div>
+                          </div>
+                        )}
+                      </ResizablePanel>
+                    </ResizablePanelGroup>
+                  </div>
                 </div>
               </div>
             </ResizablePanel>
           </ResizablePanelGroup>
+          )}
         </div>
       </div>
 
