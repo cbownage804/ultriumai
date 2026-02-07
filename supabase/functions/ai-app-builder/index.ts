@@ -219,6 +219,27 @@ serve(async (req) => {
 
   try {
     const { messages, stream = true, supabaseConfig, stripeConfig, activeServices = [], mode = 'build' } = await req.json();
+
+    // Context window management: summarize old messages if conversation is too long
+    let processedMessages = [...messages];
+    const MAX_CONTEXT_MESSAGES = 20;
+    if (processedMessages.length > MAX_CONTEXT_MESSAGES) {
+      // Keep the first 2 messages (initial context) and the last 10
+      const oldMessages = processedMessages.slice(2, -10);
+      const recentMessages = processedMessages.slice(-10);
+      const firstMessages = processedMessages.slice(0, 2);
+      
+      // Create a summary of old messages
+      const summary = oldMessages.map(m => 
+        `[${m.role}]: ${typeof m.content === 'string' ? m.content.slice(0, 100) : '(multimodal)'}...`
+      ).join('\n');
+      
+      processedMessages = [
+        ...firstMessages,
+        { role: 'system', content: `[CONVERSATION SUMMARY - ${oldMessages.length} older messages condensed]\n${summary}\n[END SUMMARY]` },
+        ...recentMessages,
+      ];
+    }
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -274,7 +295,7 @@ You're essentially acting as a senior product consultant + architect who happens
     }
 
     // Detect URLs and scrape branding data
-    const urls = extractUrls(messages);
+    const urls = extractUrls(processedMessages);
     let brandingContext = '';
     if (urls.length > 0) {
       console.log(`Detected URLs in message: ${urls.join(', ')}`);
@@ -283,7 +304,7 @@ You're essentially acting as a senior product consultant + architect who happens
     }
 
     // Inject branding data into the last user message
-    const enrichedMessages = [...messages];
+    const enrichedMessages = [...processedMessages];
     if (brandingContext) {
       const lastIdx = enrichedMessages.length - 1;
       if (enrichedMessages[lastIdx]?.role === 'user') {

@@ -1,11 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import {
-  Monitor, Smartphone, Tablet, Copy, CheckCircle,
-  Maximize2, Minimize2, ExternalLink, RefreshCw, Activity,
+  Copy, CheckCircle, Maximize2, Minimize2, ExternalLink, RefreshCw, Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ErrorConsole, type PreviewError } from './ErrorConsole';
+import { DevicePresetPicker, DEVICE_PRESETS, type DevicePreset } from './DevicePresetPicker';
+import { VisualEditOverlay } from './VisualEditOverlay';
 
 interface BuilderPreviewPanelProps {
   html: string | null;
@@ -13,22 +14,17 @@ interface BuilderPreviewPanelProps {
   onFixError?: (errorMessage: string) => void;
 }
 
-type DeviceMode = 'desktop' | 'tablet' | 'mobile';
-
-const DEVICE_WIDTHS: Record<DeviceMode, string> = {
-  desktop: '100%',
-  tablet: '768px',
-  mobile: '375px',
-};
-
 export function BuilderPreviewPanel({ html, isGenerating, onFixError }: BuilderPreviewPanelProps) {
-  const [device, setDevice] = useState<DeviceMode>('desktop');
+  const [activePreset, setActivePreset] = useState('desktop');
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const [errors, setErrors] = useState<PreviewError[]>([]);
+  const [isVisualEditActive, setIsVisualEditActive] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const currentPreset = DEVICE_PRESETS.find(p => p.id === activePreset) || DEVICE_PRESETS[0];
 
   // Inject error capture script into HTML
   const htmlWithErrorCapture = html ? html.replace(
@@ -61,7 +57,6 @@ console.warn = (function(orig) {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === '__PREVIEW_ERROR__') {
         setErrors(prev => {
-          // Deduplicate
           if (prev.some(p => p.message === e.data.message)) return prev;
           return [...prev.slice(-19), {
             id: crypto.randomUUID(),
@@ -78,10 +73,7 @@ console.warn = (function(orig) {
     return () => window.removeEventListener('message', handler);
   }, []);
 
-  // Clear errors when HTML changes
-  useEffect(() => {
-    setErrors([]);
-  }, [html]);
+  useEffect(() => { setErrors([]); }, [html]);
 
   const copyHTML = useCallback(() => {
     if (!html) return;
@@ -94,37 +86,26 @@ console.warn = (function(orig) {
   const openInNewTab = useCallback(() => {
     if (!html) return;
     const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
+    window.open(URL.createObjectURL(blob), '_blank');
   }, [html]);
 
   const toggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
     if (!isFullscreen) {
       containerRef.current.requestFullscreen?.();
-      setIsFullscreen(true);
     } else {
       document.exitFullscreen?.();
-      setIsFullscreen(false);
     }
+    setIsFullscreen(!isFullscreen);
   }, [isFullscreen]);
 
-  const DeviceButton = ({ mode, icon: Icon }: { mode: DeviceMode; icon: typeof Monitor }) => (
-    <button
-      onClick={() => setDevice(mode)}
-      className={cn(
-        "h-7 w-7 rounded-md flex items-center justify-center transition-all",
-        device === mode
-          ? "bg-white/10 text-white"
-          : "text-white/25 hover:text-white/50 hover:bg-white/5"
-      )}
-    >
-      <Icon className="h-3.5 w-3.5" />
-    </button>
-  );
+  const handleVisualEdit = useCallback((_selector: string, _property: string, _value: string) => {
+    // Visual edits are applied directly in the iframe
+    // Could be enhanced to persist edits back to source files
+  }, []);
 
   const ToolButton = ({ icon: Icon, onClick, disabled, title, active }: {
-    icon: typeof Monitor; onClick: () => void; disabled?: boolean; title: string; active?: boolean;
+    icon: typeof Copy; onClick: () => void; disabled?: boolean; title: string; active?: boolean;
   }) => (
     <button
       onClick={onClick}
@@ -145,10 +126,13 @@ console.warn = (function(orig) {
       {/* Toolbar */}
       {html && (
         <div className="flex items-center justify-between px-3 h-9 border-b border-white/[0.06] bg-black/30 shrink-0">
-          <div className="flex items-center gap-0.5">
-            <DeviceButton mode="desktop" icon={Monitor} />
-            <DeviceButton mode="tablet" icon={Tablet} />
-            <DeviceButton mode="mobile" icon={Smartphone} />
+          <div className="flex items-center gap-1">
+            <DevicePresetPicker activePreset={activePreset} onSelect={(p) => setActivePreset(p.id)} />
+            {currentPreset.width > 0 && (
+              <span className="text-[9px] text-white/20 font-mono ml-1">
+                {currentPreset.width}×{currentPreset.height}
+              </span>
+            )}
             {isGenerating && (
               <div className="flex items-center gap-1.5 ml-3 text-[10px] text-amber-400/60">
                 <Activity className="h-3 w-3 animate-pulse" />
@@ -157,14 +141,16 @@ console.warn = (function(orig) {
             )}
           </div>
           <div className="flex items-center gap-0.5">
+            <VisualEditOverlay
+              isActive={isVisualEditActive}
+              onToggle={() => setIsVisualEditActive(!isVisualEditActive)}
+              onEditApply={handleVisualEdit}
+              iframeRef={iframeRef}
+            />
             <ToolButton icon={RefreshCw} onClick={() => setIframeKey(k => k + 1)} title="Refresh" />
             <ToolButton icon={copied ? CheckCircle : Copy} onClick={copyHTML} title="Copy HTML" active={copied} />
             <ToolButton icon={ExternalLink} onClick={openInNewTab} title="Open in tab" />
-            <ToolButton
-              icon={isFullscreen ? Minimize2 : Maximize2}
-              onClick={toggleFullscreen}
-              title="Fullscreen"
-            />
+            <ToolButton icon={isFullscreen ? Minimize2 : Maximize2} onClick={toggleFullscreen} title="Fullscreen" />
           </div>
         </div>
       )}
@@ -175,12 +161,12 @@ console.warn = (function(orig) {
           <div
             className={cn(
               'h-full transition-all duration-300',
-              device !== 'desktop' && 'mx-auto rounded-lg border border-white/[0.06] shadow-2xl shadow-black/50 my-4'
+              activePreset !== 'desktop' && 'mx-auto rounded-lg border border-white/[0.06] shadow-2xl shadow-black/50 my-4'
             )}
             style={{
-              width: DEVICE_WIDTHS[device],
+              width: currentPreset.width > 0 ? `${currentPreset.width}px` : '100%',
               maxWidth: '100%',
-              height: device === 'desktop' ? '100%' : 'calc(100% - 32px)',
+              height: activePreset === 'desktop' ? '100%' : 'calc(100% - 32px)',
             }}
           >
             <iframe
@@ -196,10 +182,7 @@ console.warn = (function(orig) {
           <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
             <div className="relative">
               <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-500/5 to-violet-500/5 border border-white/[0.04] flex items-center justify-center">
-                <Monitor className="h-9 w-9 text-white/10" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-cyan-500/20 to-violet-500/20 flex items-center justify-center border border-white/[0.06]">
-                <Activity className="h-2.5 w-2.5 text-cyan-400/50" />
+                <Activity className="h-9 w-9 text-white/10" />
               </div>
             </div>
             <div>
