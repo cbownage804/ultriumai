@@ -84,7 +84,6 @@ export const IT_DEPARTMENT_PLANS: VanguardPlan[] = [
       'Audit log (12 months retention)',
       'Custom support addresses (unlimited)',
       'File view and transfer (up to 80GB/mo)',
-      'Data recovery',
     ],
     highlights: [
       'Custom analytics reports',
@@ -105,13 +104,11 @@ export const IT_DEPARTMENT_PLANS: VanguardPlan[] = [
       'Everything in Master, plus:',
       'Single sign-on (SSO)',
       'Azure AD continuous sync',
-      'Private software repository',
       'Custom domain SSL for service portal',
       'Network Discovery',
       'Custom reports (unlimited)',
       'Audit log (7 year retention)',
       'Script-based custom fields',
-      'HIPAA BAA available',
       'Custom asset types (unlimited)',
     ],
     highlights: [
@@ -171,8 +168,6 @@ export const MSP_PLANS: VanguardPlan[] = [
       'Custom asset types (up to 5)',
       'File view and transfer (up to 15GB/mo)',
       'Audit log (6 months retention)',
-      'QuickBooks Online & Xero integrations',
-      'CSV QuickBooks Desktop export',
     ],
     highlights: [
       'Mac & Linux support',
@@ -195,7 +190,6 @@ export const MSP_PLANS: VanguardPlan[] = [
       'Custom asset types (up to 20)',
       'File transfer (up to 50GB/mo)',
       'Audit log (12 months retention)',
-      'Data recovery',
     ],
     highlights: [
       'Custom reports',
@@ -216,12 +210,10 @@ export const MSP_PLANS: VanguardPlan[] = [
       'Everything in Power, plus:',
       'Single sign-on (SSO)',
       'Azure AD continuous sync',
-      'Private software repository',
       'Custom domain SSL for Service Portal',
       'Network Discovery',
       'Custom reports (unlimited)',
       'Audit log (7 year retention)',
-      'HIPAA BAA available',
       'Dedicated account manager',
       'Priority support',
     ],
@@ -350,16 +342,6 @@ export const ADDONS = [
     stripePriceId: 'price_1SxuTdH1u6E0bsJTScVKEytG',
     stripeProductId: 'prod_Tvm1IMy0GKTI7u',
     features: ['Knowledge base', 'Runbooks & SOPs', 'Password vault', 'Flexible assets'],
-  },
-  {
-    id: 'phishing-sim',
-    name: 'Phishing Simulation',
-    description: 'Employee phishing awareness training & testing.',
-    monthlyPrice: 4,
-    perUser: true,
-    stripePriceId: 'price_1SxuTfH1u6E0bsJTsRKTGLam',
-    stripeProductId: 'prod_Tvm1psna1dlfHE',
-    features: ['Simulated campaigns', 'Risk scoring', 'Awareness training', 'Reporting'],
   },
 ];
 
