@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useVanguardLimits } from '@/hooks/useVanguardLimits';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +51,7 @@ interface Device {
 
 export function FleetRemoteAccess() {
   const { user } = useAuth();
+  const { enforceLimit } = useVanguardLimits();
   const [sessions, setSessions] = useState<RemoteSession[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -137,6 +139,10 @@ export function FleetRemoteAccess() {
   };
 
   const handleConnect = async (deviceId: string, type: string) => {
+    // Enforce concurrent RustDesk session limit
+    const activeSessions = sessions.filter(s => s.status === 'active').length;
+    if (!enforceLimit('rustdeskSessions', activeSessions)) return;
+
     setIsConnecting(`${deviceId}-${type}`);
     const device = devices.find((d) => d.id === deviceId);
 

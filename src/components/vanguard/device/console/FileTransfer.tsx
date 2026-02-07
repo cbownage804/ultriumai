@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useVanguardLimits } from '@/hooks/useVanguardLimits';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +59,7 @@ export function FileTransfer({ agentId, sendCommand }: FileTransferProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [transfers, setTransfers] = useState<TransferJob[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const { hasFeature, limits } = useVanguardLimits();
 
   useEffect(() => {
     loadDirectory(currentPath);
@@ -96,6 +98,12 @@ export function FileTransfer({ agentId, sendCommand }: FileTransferProps) {
   };
 
   const uploadFile = async (file: File) => {
+    // Check file transfer feature availability
+    if (!hasFeature('fileTransferGB')) {
+      toast.error('File transfer is not available on your current plan. Please upgrade.');
+      return;
+    }
+
     const transfer: TransferJob = {
       id: crypto.randomUUID(),
       name: file.name,
