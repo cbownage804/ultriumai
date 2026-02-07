@@ -141,6 +141,79 @@ Inference: POST to https://api-inference.huggingface.co/models/{model_id} with A
 Supports text generation, image classification, translation, and more.`,
 };
 
+/** Extract URLs from the last user message */
+function extractUrls(messages: { role: string; content: string }[]): string[] {
+  const lastUser = [...messages].reverse().find(m => m.role === 'user');
+  if (!lastUser) return [];
+  const urlRegex = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+(?:\.[a-zA-Z]{2,})+)(?:\/[^\s)]*)?/gi;
+  const matches = lastUser.content.match(urlRegex) || [];
+  return matches.map(u => u.startsWith('http') ? u : `https://${u}`);
+}
+
+/** Scrape a website for branding using Firecrawl */
+async function scrapeBranding(url: string): Promise<string | null> {
+  const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
+  if (!apiKey) {
+    console.log("FIRECRAWL_API_KEY not available, skipping branding scrape");
+    return null;
+  }
+
+  try {
+    console.log(`Scraping branding from: ${url}`);
+    const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url,
+        formats: ['branding', 'screenshot', 'markdown'],
+        onlyMainContent: true,
+        waitFor: 3000,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(`Firecrawl error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    const branding = data.data?.branding || data.branding;
+    const markdown = data.data?.markdown || data.markdown;
+    const metadata = data.data?.metadata || data.metadata;
+
+    let context = `\n\nWEBSITE BRANDING DATA (scraped from ${url}):\n`;
+
+    if (branding) {
+      context += `Colors: ${JSON.stringify(branding.colors || {})}\n`;
+      context += `Fonts: ${JSON.stringify(branding.fonts || [])}\n`;
+      context += `Typography: ${JSON.stringify(branding.typography || {})}\n`;
+      context += `Logo: ${branding.logo || branding.images?.logo || 'N/A'}\n`;
+      context += `Color Scheme: ${branding.colorScheme || 'N/A'}\n`;
+      if (branding.spacing) context += `Spacing: ${JSON.stringify(branding.spacing)}\n`;
+      if (branding.components) context += `Component Styles: ${JSON.stringify(branding.components)}\n`;
+    }
+
+    if (metadata) {
+      context += `Page Title: ${metadata.title || 'N/A'}\n`;
+      context += `Description: ${metadata.description || 'N/A'}\n`;
+    }
+
+    if (markdown) {
+      context += `Page Content Preview:\n${markdown.slice(0, 1500)}\n`;
+    }
+
+    context += `\nCRITICAL: You MUST use the EXACT colors, fonts, and branding from above. Do NOT invent or guess colors. Match the website's actual design language precisely.`;
+
+    return context;
+  } catch (err) {
+    console.error("Branding scrape failed:", err);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -160,7 +233,6 @@ serve(async (req) => {
     if (supabaseConfig) systemPrompt += SUPABASE_ADDON;
     if (stripeConfig) systemPrompt += STRIPE_ADDON;
 
-    // Add prompts for each active service
     for (const serviceId of activeServices) {
       if (SERVICE_PROMPTS[serviceId]) {
         systemPrompt += SERVICE_PROMPTS[serviceId];
@@ -171,6 +243,27 @@ serve(async (req) => {
       systemPrompt += `\n\nIMPORTANT: All API keys are available via window.ENV.KEY_NAME. Do NOT hardcode keys. Always use window.ENV to access them. Note: browser-side API calls expose keys — acceptable for prototyping only.`;
     }
 
+    // Detect URLs and scrape branding data
+    const urls = extractUrls(messages);
+    let brandingContext = '';
+    if (urls.length > 0) {
+      console.log(`Detected URLs in message: ${urls.join(', ')}`);
+      const results = await Promise.all(urls.slice(0, 2).map(u => scrapeBranding(u)));
+      brandingContext = results.filter(Boolean).join('\n');
+    }
+
+    // Inject branding data into the last user message
+    const enrichedMessages = [...messages];
+    if (brandingContext) {
+      const lastIdx = enrichedMessages.length - 1;
+      if (enrichedMessages[lastIdx]?.role === 'user') {
+        enrichedMessages[lastIdx] = {
+          ...enrichedMessages[lastIdx],
+          content: enrichedMessages[lastIdx].content + brandingContext,
+        };
+      }
+    }
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -179,7 +272,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
-        messages: [{ role: "system", content: systemPrompt }, ...messages],
+        messages: [{ role: "system", content: systemPrompt }, ...enrichedMessages],
         stream,
       }),
     });
