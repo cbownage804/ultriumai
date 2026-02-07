@@ -44,7 +44,7 @@ const VANGUARD_ADDON_PRODUCTS: Record<string, string> = {
   'prod_Tvm1BCKLECzk9L': 'comply',
   'prod_Tvm1pOuwM3afS1': 'cross-client-soc',
   'prod_Tvm1IMy0GKTI7u': 'atlas-docs',
-  'prod_Tvm1psna1dlfHE': 'phishing-sim',
+  
   'prod_Tvm1CcIDVjRGaW': 'ai-copilot',
   'prod_Tvm19bNlVCzSw2': 'network-discovery',
 };

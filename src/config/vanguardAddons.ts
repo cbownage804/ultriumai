@@ -107,16 +107,6 @@ export const MODULE_ADDONS: ModuleAddon[] = [
     includedIn: ['msp-growth', 'it-expert', 'msp-power', 'it-master', 'msp-superpower', 'it-enterprise'],
     features: ['Knowledge base', 'Runbooks & SOPs', 'Password vault', 'Flexible assets'],
   },
-  {
-    id: 'phishing-sim',
-    module: 'sentinel',
-    name: 'Phishing Simulation',
-    description: 'Employee phishing awareness training & testing.',
-    category: 'security',
-    monthlyPricePerUser: 4,
-    includedIn: ['msp-power', 'it-master', 'msp-superpower', 'it-enterprise'],
-    features: ['Simulated campaigns', 'Employee risk scoring', 'Awareness training', 'Reporting & analytics'],
-  },
 ];
 
 // ── Strategic Bundles ───────────────────────────────────────────
@@ -134,10 +124,10 @@ export const ADDON_BUNDLES: AddonBundle[] = [
     id: 'complete-soc',
     name: 'Complete SOC',
     description: 'All security modules + Cross-Client SOC',
-    addonIds: ['pursuit-xdr', 'sentinel-saas', 'comply', 'cross-client-soc', 'phishing-sim', 'recon-pentest'],
+    addonIds: ['pursuit-xdr', 'sentinel-saas', 'comply', 'cross-client-soc', 'recon-pentest'],
     discountPercent: 20,
-    monthlyPricePerUser: 38, // vs $47 a la carte
-    alaCartePricePerUser: 47,
+    monthlyPricePerUser: 34, // vs $43 a la carte
+    alaCartePricePerUser: 43,
   },
 ];
 
