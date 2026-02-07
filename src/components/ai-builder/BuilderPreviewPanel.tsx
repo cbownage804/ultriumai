@@ -208,12 +208,41 @@ window.addEventListener('unhandledrejection', function(e) {
         )}
       </div>
 
+      {/* Auto-fix banner */}
+      {errors.length > 0 && errors.some(e => e.type === 'error') && onSmartFixError && (
+        <div className="absolute top-12 left-1/2 -translate-x-1/2 z-20 animate-in fade-in slide-in-from-top-2 duration-300">
+          <button
+            onClick={() => {
+              const firstError = errors.find(e => e.type === 'error');
+              if (!firstError) return;
+              const errorFile = firstError.source && projectFiles
+                ? projectFiles.find(f => firstError.source?.includes(f.path))
+                : null;
+              const ctx = [
+                `Error: "${firstError.message}"`,
+                firstError.source ? `Source: ${firstError.source}${firstError.line ? `:${firstError.line}` : ''}` : '',
+                errorFile ? `\nFile content (${errorFile.path}):\n\`\`\`\n${errorFile.content}\n\`\`\`` : '',
+              ].filter(Boolean).join('\n');
+              onSmartFixError(firstError, ctx);
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/20 border border-red-500/30 text-red-300 text-xs hover:bg-red-500/30 transition-colors backdrop-blur-sm shadow-lg"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
+            AI can fix this — click to auto-fix
+          </button>
+        </div>
+      )}
+
       {/* Error Console */}
       <ErrorConsole
         errors={errors}
         onClear={() => setErrors([])}
         onFixRequest={(err) => onFixError?.(`Fix this error in my app: "${err.message}"${err.source ? ` (in ${err.source}${err.line ? `:${err.line}` : ''})` : ''}`)}
-        onSmartFixRequest={onSmartFixError}
+        onSmartFixRequest={(err, ctx) => {
+          // Update fixAttempts in local state
+          setErrors(prev => prev.map(e => e.id === err.id ? { ...e, fixAttempts: err.fixAttempts } : e));
+          onSmartFixError?.(err, ctx);
+        }}
         projectFiles={projectFiles}
       />
     </div>

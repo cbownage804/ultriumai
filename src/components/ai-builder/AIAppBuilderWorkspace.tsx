@@ -36,10 +36,11 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { KeyboardShortcutsPanel } from './KeyboardShortcutsPanel';
 import {
   Eye, Code, Pencil, Database, CreditCard, Key,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
-  History, Variable, Image, Package,
+  History, Variable, Image, Package, Columns, Keyboard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -68,7 +69,8 @@ export function AIAppBuilderWorkspace() {
     scheduleAutoSave,
   } = useProjectPersistence();
 
-  const [rightTab, setRightTab] = useState<'preview' | 'code'>('preview');
+  const [rightTab, setRightTab] = useState<'preview' | 'code' | 'split'>('preview');
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(project.name);
   const [supabaseConfig, setSupabaseConfig] = useState<SupabaseConfig | null>(null);
@@ -196,6 +198,10 @@ export function AIAppBuilderWorkspace() {
         e.preventDefault();
         setShowFileSearch(prev => !prev);
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+        e.preventDefault();
+        setShowShortcuts(prev => !prev);
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -307,6 +313,30 @@ export function AIAppBuilderWorkspace() {
     setAssets(prev => prev.filter(a => a.id !== id));
     toast.success('Asset deleted');
   }, []);
+
+  const STARTER_CONTENT: Record<string, string> = {
+    html: '<!DOCTYPE html>\n<html>\n<head>\n  <title>Page</title>\n</head>\n<body>\n  \n</body>\n</html>',
+    css: '/* styles */\n',
+    js: '// script\n',
+    json: '{}',
+    md: '# Title\n',
+  };
+
+  const handleCreateFile = useCallback((path: string) => {
+    const ext = path.split('.').pop()?.toLowerCase() || '';
+    const content = STARTER_CONTENT[ext] || '';
+    upsertFile(path, content);
+    setRightTab('code');
+    toast.success(`Created ${path}`);
+  }, [upsertFile]);
+
+  const handleRenameFile = useCallback((oldPath: string, newPath: string) => {
+    const file = project.files.find(f => f.path === oldPath);
+    if (!file) return;
+    upsertFile(newPath, file.content);
+    deleteFile(oldPath);
+    toast.success(`Renamed to ${newPath.split('/').pop()}`);
+  }, [project.files, upsertFile, deleteFile]);
 
   const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
   const hasFiles = project.files.length > 0;
@@ -477,6 +507,18 @@ export function AIAppBuilderWorkspace() {
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">Packages</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setShowShortcuts(true)}
+                  className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
+                >
+                  <Keyboard className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Shortcuts (⌘/)</TooltipContent>
             </Tooltip>
 
             <div className="h-4 w-px bg-white/[0.06] mx-1" />
@@ -673,6 +715,19 @@ export function AIAppBuilderWorkspace() {
                           <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full" />
                         )}
                       </button>
+                      <button
+                        onClick={() => setRightTab('split')}
+                        className={cn(
+                          "h-9 px-3 flex items-center gap-1.5 text-xs transition-all relative",
+                          rightTab === 'split' ? "text-white" : "text-white/40 hover:text-white/70"
+                        )}
+                      >
+                        <Columns className="h-3 w-3" />
+                        Split
+                        {rightTab === 'split' && (
+                          <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full" />
+                        )}
+                      </button>
 
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -716,8 +771,10 @@ export function AIAppBuilderWorkspace() {
                                 <ProjectFileTree
                                   files={project.files}
                                   activeFilePath={project.activeFilePath}
-                                  onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }}
+                                  onSelectFile={(path) => { setActiveFile(path); if (rightTab === 'preview') setRightTab('code'); }}
                                   onDeleteFile={deleteFile}
+                                  onCreateFile={handleCreateFile}
+                                  onRenameFile={handleRenameFile}
                                 />
                               </ResizablePanel>
                               <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors" />
@@ -725,7 +782,27 @@ export function AIAppBuilderWorkspace() {
                           )}
 
                           <ResizablePanel defaultSize={hasFiles && showFileTree ? 82 : 100}>
-                            {rightTab === 'preview' || !hasFiles ? (
+                            {rightTab === 'split' && hasFiles ? (
+                              <ResizablePanelGroup direction="horizontal" className="h-full">
+                                <ResizablePanel defaultSize={50} minSize={30}>
+                                  <div data-tour="preview" className="h-full">
+                                    <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount}>
+                                      <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
+                                    </BuilderPreviewPanel>
+                                  </div>
+                                </ResizablePanel>
+                                <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors" />
+                                <ResizablePanel defaultSize={50} minSize={30}>
+                                  <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
+                                    <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} onSelect={setActiveFile} onClose={closeFile} />
+                                    <FileBreadcrumb file={activeFile} />
+                                    <div className="flex-1 overflow-hidden">
+                                      <CodeEditor file={activeFile} onContentChange={upsertFile} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
+                                    </div>
+                                  </div>
+                                </ResizablePanel>
+                              </ResizablePanelGroup>
+                            ) : rightTab === 'preview' || !hasFiles ? (
                               <div data-tour="preview" className="h-full">
                                 <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount}>
                                   <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
@@ -787,6 +864,7 @@ export function AIAppBuilderWorkspace() {
         canUndo={canUndo}
         canRedo={canRedo}
       />
+      <KeyboardShortcutsPanel open={showShortcuts} onOpenChange={setShowShortcuts} />
     </TooltipProvider>
   );
 }
