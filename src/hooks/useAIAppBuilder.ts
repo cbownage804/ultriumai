@@ -148,6 +148,7 @@ export function useAIAppBuilder() {
     stripeConfig?: { publishableKey: string } | null,
     serviceKeys?: { id: string; serviceId: string; apiKey: string }[],
     imageDataUrl?: string | null,
+    model?: string,
   ) => {
     if (!input.trim() || isGenerating) return;
 
@@ -232,6 +233,7 @@ export function useAIAppBuilder() {
           messages: apiMessages,
           stream: true,
           mode: effectiveMode,
+          model: model || undefined,
           supabaseConfig: supabaseConfig || undefined,
           stripeConfig: stripeConfig || undefined,
           activeServices: serviceKeys?.map(sk => sk.serviceId) || [],
