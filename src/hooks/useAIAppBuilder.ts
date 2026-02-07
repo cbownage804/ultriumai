@@ -61,10 +61,13 @@ export function parseMultiFileOutput(raw: string): ProjectFile[] {
   return files;
 }
 
+export type BuilderMode = 'build' | 'discuss';
+
 export function useAIAppBuilder() {
   const [messages, setMessages] = useState<BuilderMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [latestFiles, setLatestFiles] = useState<ProjectFile[]>([]);
+  const [mode, setMode] = useState<BuilderMode>('build');
   const abortRef = useRef<AbortController | null>(null);
 
   const sendMessage = useCallback(async (
@@ -121,6 +124,7 @@ export function useAIAppBuilder() {
         body: JSON.stringify({
           messages: apiMessages,
           stream: true,
+          mode,
           supabaseConfig: supabaseConfig || undefined,
           stripeConfig: stripeConfig || undefined,
           activeServices: serviceKeys?.map(sk => sk.serviceId) || [],
@@ -227,7 +231,7 @@ export function useAIAppBuilder() {
       setIsGenerating(false);
       abortRef.current = null;
     }
-  }, [messages, isGenerating]);
+  }, [messages, isGenerating, mode]);
 
   const stopGenerating = useCallback(() => {
     abortRef.current?.abort();
@@ -243,6 +247,8 @@ export function useAIAppBuilder() {
     messages,
     isGenerating,
     latestFiles,
+    mode,
+    setMode,
     sendMessage,
     stopGenerating,
     clearChat,
