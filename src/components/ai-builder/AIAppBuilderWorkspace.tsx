@@ -265,6 +265,9 @@ export function AIAppBuilderWorkspace() {
     }
   }, [latestFiles]);
 
+  // Auto-name project on first build based on user's initial prompt
+  const hasAutoNamed = useRef(false);
+
   // AI completion notification
   useEffect(() => {
     if (prevIsGeneratingRef.current && !isGenerating && latestFiles.length > 0) {
@@ -278,9 +281,31 @@ export function AIAppBuilderWorkspace() {
         timestamp: new Date(),
         read: false,
       }, ...prev].slice(0, 50));
+
+      // Auto-name project on first successful build
+      if (!hasAutoNamed.current && project.name === 'Untitled Project') {
+        const firstUserMsg = messages.find(m => m.role === 'user');
+        if (firstUserMsg) {
+          // Extract a short, meaningful name from the user's prompt
+          const prompt = firstUserMsg.content
+            .replace(/\[Currently viewing:.*?\]\n?/g, '')
+            .replace(/\[Auto-detected relevant files:.*?\]\n?/g, '')
+            .trim();
+          // Take first ~40 chars, break at word boundary
+          const shortName = prompt.length <= 40
+            ? prompt
+            : prompt.slice(0, 40).replace(/\s+\S*$/, '').trim();
+          // Title-case the first letter and clean up
+          const projectName = shortName.charAt(0).toUpperCase() + shortName.slice(1);
+          if (projectName.length >= 3) {
+            renameProject(projectName);
+            hasAutoNamed.current = true;
+          }
+        }
+      }
     }
     prevIsGeneratingRef.current = isGenerating;
-  }, [isGenerating, latestFiles.length]);
+  }, [isGenerating, latestFiles.length, messages, project.name, renameProject]);
 
   // Hot-reload
   useEffect(() => {
