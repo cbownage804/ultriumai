@@ -3,7 +3,7 @@ import { AIAppBuilderWorkspace } from '@/components/ai-builder/AIAppBuilderWorks
 
 export default function AIAppBuilderWorkspacePage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0a0a0f]">
       <Navigation />
       <div className="pt-20">
         <AIAppBuilderWorkspace />
