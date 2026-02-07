@@ -294,15 +294,32 @@ window.addEventListener('unhandledrejection', function(e) {
             />
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
-            <div className="h-16 w-16 rounded-2xl bg-white/[0.02] border border-white/[0.04] flex items-center justify-center">
-              <Activity className="h-7 w-7 text-white/[0.06]" />
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-5 relative overflow-hidden">
+            {/* Ambient background glow */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-cyan-500/[0.03] via-violet-500/[0.02] to-transparent blur-3xl" />
+              <div className="absolute bottom-1/4 left-1/3 w-[200px] h-[200px] rounded-full bg-violet-500/[0.02] blur-3xl" />
             </div>
-            <div>
-              <h3 className="font-medium text-white/40 text-sm">Live Preview</h3>
-              <p className="text-[11px] text-white/15 max-w-[200px] mt-1">
-                Your app will appear here as it's built
-              </p>
+            <div className="relative z-10 space-y-5">
+              <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-500/10 via-violet-500/10 to-transparent border border-white/[0.06] flex items-center justify-center mx-auto shadow-lg shadow-cyan-500/[0.05] backdrop-blur-sm">
+                <div className="relative">
+                  <Activity className="h-8 w-8 text-cyan-400/30" />
+                  <div className="absolute inset-0 animate-ping">
+                    <Activity className="h-8 w-8 text-cyan-400/10" />
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-semibold text-white/50 text-base tracking-tight">Live Preview</h3>
+                <p className="text-xs text-white/20 max-w-[240px] mx-auto leading-relaxed">
+                  Describe what you want to build and watch your app come to life in real-time
+                </p>
+              </div>
+              <div className="flex items-center gap-3 justify-center text-[10px] text-white/15">
+                <span className="flex items-center gap-1"><span className="h-1 w-1 rounded-full bg-cyan-400/40" /> Hot reload</span>
+                <span className="flex items-center gap-1"><span className="h-1 w-1 rounded-full bg-violet-400/40" /> Multi-file</span>
+                <span className="flex items-center gap-1"><span className="h-1 w-1 rounded-full bg-emerald-400/40" /> Responsive</span>
+              </div>
             </div>
           </div>
         )}
