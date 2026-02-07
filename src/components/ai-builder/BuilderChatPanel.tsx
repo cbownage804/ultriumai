@@ -3,7 +3,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
   Zap, MessageCircle, Wand2, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
-  LayoutGrid, Wrench, AlertTriangle, Copy, RotateCcw, Pencil, GitFork, ChevronDown,
+  LayoutGrid, Wrench, AlertTriangle, Copy, RotateCcw, Pencil, GitFork, ChevronDown, Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from '@/hooks/useAIAppBuilder';
@@ -81,6 +81,36 @@ const AI_MODELS = [
   { id: 'pro', label: 'Pro', desc: 'Higher quality', icon: '💎' },
   { id: 'gpt5', label: 'GPT-5', desc: 'Most capable', icon: '🧠' },
 ];
+
+function CopyCodeButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+      className="h-5 w-5 rounded flex items-center justify-center text-white/20 hover:text-white/60 hover:bg-white/10 transition-colors"
+      title="Copy code"
+    >
+      {copied ? <Check className="h-2.5 w-2.5 text-emerald-400" /> : <Copy className="h-2.5 w-2.5" />}
+    </button>
+  );
+}
+
+function TypingIndicator() {
+  return (
+    <div className="flex gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="h-6 w-6 rounded-md bg-gradient-to-br from-cyan-500/20 to-violet-500/20 flex items-center justify-center shrink-0 border border-white/[0.06]">
+        <Bot className="h-3 w-3 text-cyan-400" />
+      </div>
+      <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl px-3.5 py-3">
+        <div className="flex gap-1">
+          <div className="h-2 w-2 rounded-full bg-white/20 animate-bounce [animation-delay:0ms]" />
+          <div className="h-2 w-2 rounded-full bg-white/20 animate-bounce [animation-delay:150ms]" />
+          <div className="h-2 w-2 rounded-full bg-white/20 animate-bounce [animation-delay:300ms]" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function BuilderChatPanel({
   messages, isGenerating, fileCount, mode, thinkingPhase, versions,
@@ -194,7 +224,28 @@ export function BuilderChatPanel({
         )}
         {text && (
           <div className="prose prose-sm prose-invert max-w-none text-[13px] text-white/80 leading-relaxed [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:text-white/70 [&_strong]:text-white/95 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
-            <ReactMarkdown>{text}</ReactMarkdown>
+            <ReactMarkdown
+              components={{
+                code({ className, children, ...props }) {
+                  const isInline = !className;
+                  const codeStr = String(children).replace(/\n$/, '');
+                  if (isInline) {
+                    return <code className="bg-white/[0.08] rounded px-1 py-0.5 text-[12px] font-mono text-cyan-300/90" {...props}>{children}</code>;
+                  }
+                  return (
+                    <div className="relative group/code my-2">
+                      <div className="flex items-center justify-between px-3 py-1 bg-white/[0.04] border border-white/[0.06] rounded-t-lg">
+                        <span className="text-[9px] text-white/25 font-mono">{className?.replace('language-', '') || 'code'}</span>
+                        <CopyCodeButton text={codeStr} />
+                      </div>
+                      <pre className="!mt-0 !rounded-t-none border border-t-0 border-white/[0.06] !bg-black/30"><code className={className} {...props}>{children}</code></pre>
+                    </div>
+                  );
+                },
+              }}
+            >
+              {text}
+            </ReactMarkdown>
           </div>
         )}
         {isStreaming && !hasFiles && fileNames.length === 0 && !text && (
@@ -477,8 +528,9 @@ export function BuilderChatPanel({
             ))
           )}
 
-          {/* Thinking indicator */}
+          {/* Thinking / typing indicator */}
           {isGenerating && thinkingPhase && renderThinkingIndicator()}
+          {isGenerating && !thinkingPhase && <TypingIndicator />}
         </div>
       </ScrollArea>
 

@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ErrorConsole, type PreviewError } from './ErrorConsole';
 import { DevicePresetPicker, DEVICE_PRESETS, type DevicePreset } from './DevicePresetPicker';
+import { PreviewZoomControls } from './PreviewZoomControls';
 import { VisualEditOverlay } from './VisualEditOverlay';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
@@ -36,6 +37,7 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
   const [currentUrl, setCurrentUrl] = useState('/');
   const [urlHistory, setUrlHistory] = useState<string[]>(['/']);
   const [historyIndex, setHistoryIndex] = useState(0);
+  const [zoom, setZoom] = useState(100);
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -236,6 +238,7 @@ window.addEventListener('unhandledrejection', function(e) {
                 isProcessingAIEdit={isProcessingAIEdit}
                 iframeRef={iframeRef}
               />
+              <PreviewZoomControls zoom={zoom} onZoomChange={setZoom} />
               <ToolButton icon={copied ? CheckCircle : Copy} onClick={copyHTML} title="Copy HTML" active={copied} />
               <ToolButton icon={ExternalLink} onClick={openInNewTab} title="Open in tab" />
               <ToolButton icon={isFullscreen ? Minimize2 : Maximize2} onClick={toggleFullscreen} title="Fullscreen" />
@@ -270,9 +273,14 @@ window.addEventListener('unhandledrejection', function(e) {
               ref={iframeRef}
               key={iframeKey}
               srcDoc={htmlWithErrorCapture || ''}
-              className="w-full h-full border-0 bg-white rounded-[inherit]"
+              className="w-full h-full border-0 bg-white rounded-[inherit] origin-top-left"
               sandbox="allow-scripts allow-forms"
               title="App Preview"
+              style={{
+                transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
+                width: zoom !== 100 ? `${10000 / zoom}%` : '100%',
+                height: zoom !== 100 ? `${10000 / zoom}%` : '100%',
+              }}
             />
           </div>
         ) : (
