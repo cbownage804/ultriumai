@@ -45,12 +45,16 @@ import { ProjectShareDialog, CollaboratorAvatars } from './ProjectShareDialog';
 import { SEOEditor } from './SEOEditor';
 import { BuildNotificationCenter, type BuildNotification } from './BuildNotificationCenter';
 import type { KnowledgeConfig } from './KnowledgePanel';
+import { AICodeIntelligence, type CodeSuggestion } from './AICodeIntelligence';
+import { DatabaseExplorer } from './DatabaseExplorer';
+import { ComponentLibrary } from './ComponentLibrary';
+import { TestingDebugSuite, type TestCase } from './TestingDebugSuite';
 import {
   Eye, Code, Pencil, Database, CreditCard, Key,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
   History, Variable, Image, Package, Columns, Keyboard,
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users,
-  Settings, ChevronDown, ArrowLeft,
+  Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -144,6 +148,12 @@ export function AIAppBuilderWorkspace() {
   const [collaborators, setCollaborators] = useState<{ id: string; email: string; role: 'viewer' | 'editor' | 'admin'; avatarColor: string; joinedAt: Date }[]>([]);
   const [buildNotifications, setBuildNotifications] = useState<BuildNotification[]>([]);
   const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>([]);
+  const [showCodeIntel, setShowCodeIntel] = useState(false);
+  const [showDbExplorer, setShowDbExplorer] = useState(false);
+  const [showComponentLib, setShowComponentLib] = useState(false);
+  const [showTestingSuite, setShowTestingSuite] = useState(false);
+  const [codeSuggestions, setCodeSuggestions] = useState<CodeSuggestion[]>([]);
+  const [testCases, setTestCases] = useState<TestCase[]>([]);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
@@ -495,7 +505,7 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   // Close other panels when opening one
-  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity') => {
+  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity' | 'codeIntel' | 'componentLib' | 'testingSuite') => {
     setShowVersionHistory(panel === 'history' ? !showVersionHistory : false);
     setShowEnvVars(panel === 'envVars' ? !showEnvVars : false);
     setShowAssets(panel === 'assets' ? !showAssets : false);
@@ -506,15 +516,21 @@ export function AIAppBuilderWorkspace() {
     setShowStorage(panel === 'storage' ? !showStorage : false);
     setShowEdgeFunctions(panel === 'edgeFunctions' ? !showEdgeFunctions : false);
     setShowActivity(panel === 'activity' ? !showActivity : false);
+    setShowCodeIntel(panel === 'codeIntel' ? !showCodeIntel : false);
+    setShowComponentLib(panel === 'componentLib' ? !showComponentLib : false);
+    setShowTestingSuite(panel === 'testingSuite' ? !showTestingSuite : false);
   };
 
   // ─── Left sidebar icon bar items ───
   const sidebarIcons = [
-    { id: 'database', icon: Database, label: 'Database', show: !!supabaseConfig, active: showDatabase },
+    { id: 'database', icon: Database, label: 'Database', show: !!supabaseConfig, active: showDatabase || showDbExplorer },
     { id: 'auth', icon: Shield, label: 'Auth', show: !!supabaseConfig, active: showAuth },
     { id: 'storage', icon: FolderOpen, label: 'Storage', show: !!supabaseConfig, active: showStorage },
     { id: 'edgeFunctions', icon: Zap, label: 'Edge Functions', show: true, active: showEdgeFunctions },
     { id: 'knowledge', icon: Brain, label: 'Knowledge', show: true, active: showKnowledge },
+    { id: 'codeIntel', icon: Sparkles, label: 'Code Intelligence', show: true, active: showCodeIntel },
+    { id: 'componentLib', icon: Layers, label: 'Components', show: true, active: showComponentLib },
+    { id: 'testingSuite', icon: Bug, label: 'Testing & Debug', show: true, active: showTestingSuite },
     { id: 'envVars', icon: Variable, label: 'Env Variables', show: true, active: showEnvVars },
     { id: 'assets', icon: Image, label: 'Assets', show: true, active: showAssets },
     { id: 'packages', icon: Package, label: 'Packages', show: true, active: showPackages },
@@ -804,6 +820,10 @@ export function AIAppBuilderWorkspace() {
                   <EdgeFunctionEditor open={showEdgeFunctions} onClose={() => setShowEdgeFunctions(false)} onCreateFunction={handleCreateEdgeFunction} functions={edgeFunctions} onSelectFunction={(name) => { setActiveFile(`functions/${name}/index.ts`); setRightTab('code'); }} />
                 </Suspense>
                 <ActivityFeed open={showActivity} onClose={() => setShowActivity(false)} entries={activityEntries} />
+                <AICodeIntelligence open={showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); toast.success('Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => toast.success('Refreshed suggestions')} activeFilePath={project.activeFilePath} />
+                <DatabaseExplorer open={showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
+                <ComponentLibrary open={showComponentLib} onClose={() => setShowComponentLib(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); } }} onApplyTheme={() => {}} />
+                <TestingDebugSuite open={showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); toast.success('Test generated'); }} projectFiles={project.files} />
                 {showPackages && (
                   <div className="w-64 border-r border-white/[0.06] bg-[#0d0d14] overflow-hidden">
                     <PackageManager packages={cdnPackages} onAddPackage={(pkg) => setCdnPackages(prev => [...prev, pkg])} onRemovePackage={(name) => setCdnPackages(prev => prev.filter(p => p.name !== name))} />
