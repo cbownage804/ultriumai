@@ -8,7 +8,7 @@ import {
   ArrowRight, Building2, Shield, Lock,
   BarChart3, FileCheck, AlertTriangle, Users, Zap, Check, Brain,
   Network, Search, Activity, Server, Workflow, Play, Globe, Target,
-  BookOpen, FileText, Lightbulb, Compass
+  BookOpen, FileText, Lightbulb, Compass, Replace, MonitorSmartphone
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import vanguardLogo from '@/assets/vanguard-logo.png';
@@ -19,25 +19,19 @@ import { SafeTrackDemo } from "@/components/demos/SafeTrackDemo";
 import { ModuleLogo, type ModuleName } from "@/components/vanguard/ModuleLogo";
 
 const VanguardProductPage = () => {
-  const audiences = [
-    {
-      icon: Building2,
-      title: "Managed Service Providers",
-      description: "Unify security and operations tooling into a single platform for your clients. Deliver SOC-style protection with MSP-friendly multi-tenancy and billing."
-    },
-    {
-      icon: Users,
-      title: "IT Operations Teams",
-      description: "Streamline endpoint management, helpdesk, and threat detection in one place. Reduce tool sprawl while increasing operational visibility."
-    },
-    {
-      icon: Shield,
-      title: "Security-Conscious Organizations",
-      description: "Meet compliance requirements with built-in audit trails, automated evidence collection, and enterprise-grade security controls."
-    }
+  // What Vanguard replaces — outcome-focused
+  const replacements = [
+    { category: "RMM", examples: "Datto, NinjaOne, ConnectWise Automate", module: "Horizon" },
+    { category: "PSA / Service Desk", examples: "Autotask, ConnectWise Manage, Freshdesk", module: "Response" },
+    { category: "XDR / Endpoint Security", examples: "SentinelOne, CrowdStrike, Huntress", module: "Pursuit" },
+    { category: "SaaS Security", examples: "Augmentt, Saasment", module: "Sentinel" },
+    { category: "Vulnerability Scanning", examples: "Nessus, Qualys, Rapid7", module: "Recon" },
+    { category: "IT Documentation", examples: "IT Glue, Hudu", module: "Atlas" },
+    { category: "Compliance", examples: "Drata, Vanta, Secureframe", module: "Comply" },
+    { category: "Reporting", examples: "BrightGauge, CloudRadial", module: "Ledger" },
   ];
 
-  // Vanguard Modules - the core of the platform
+  // Vanguard Modules
   const modules: {
     moduleId: ModuleName;
     name: string;
@@ -52,151 +46,122 @@ const VanguardProductPage = () => {
     {
       moduleId: "horizon",
       name: "Vanguard Horizon",
-      tagline: "Operational Visibility & Device Health",
-      description: "Vanguard Horizon provides continuous insight into the health, availability, and performance of every device in your environment. It acts as your operational early-warning system, identifying issues before they impact users.",
+      tagline: "Endpoint Monitoring & Fleet Management",
+      description: "Continuous visibility into the health, performance, and security posture of every device in your environment. Horizon is the operational foundation — deploy agents, push patches, manage software, and connect remotely.",
       color: "text-cyan-400",
       bgColor: "bg-cyan-500/10",
       borderColor: "border-cyan-500/30",
       capabilities: [
         "Endpoint and server monitoring",
-        "Availability and uptime tracking",
-        "Agent health and connectivity status",
-        "Performance baselines and drift detection"
+        "Automated patch management with rollback",
+        "Built-in remote access via RustDesk",
+        "Fleet-wide software deployment"
       ],
-      bestFor: "MSPs and IT teams that need proactive monitoring and operational stability across all clients and sites."
+      bestFor: "MSPs and IT teams that need proactive monitoring and operational control across all sites."
     },
     {
       moduleId: "pursuit",
       name: "Vanguard Pursuit",
-      tagline: "Active Threat Detection & Security Intelligence",
-      description: "Vanguard Pursuit is the security hunting layer of the platform. It continuously analyzes activity across endpoints and networks to identify suspicious behavior, surface threats, and prioritize risk.",
+      tagline: "Threat Detection & Response",
+      description: "AI-powered detection across endpoints and networks. Pursuit identifies threats, maps them to MITRE ATT&CK, and provides automated response actions — isolate, quarantine, or remediate.",
       color: "text-red-400",
       bgColor: "bg-red-500/10",
       borderColor: "border-red-500/30",
       capabilities: [
-        "Threat detection and alerting",
-        "Behavioral and anomaly analysis",
-        "Security event correlation",
-        "Centralized alert severity and triage"
+        "Behavioral and signature-based detection",
+        "MITRE ATT&CK mapping",
+        "Automated isolation and remediation",
+        "Cross-client SOC visibility"
       ],
       bestFor: "Teams that need real-time threat visibility without managing a full SOC stack."
     },
     {
       moduleId: "response",
       name: "Vanguard Response",
-      tagline: "Incident Management & Service Resolution",
-      description: "Vanguard Response turns alerts and issues into action. It manages incidents, tickets, and remediation workflows to ensure problems are tracked, owned, and resolved efficiently.",
+      tagline: "Service Desk & Incident Management",
+      description: "The operational backbone for tracking work. Response manages tickets, SLAs, time entries, and client communication — from initial alert through resolution and invoicing.",
       color: "text-amber-400",
       bgColor: "bg-amber-500/10",
       borderColor: "border-amber-500/30",
       capabilities: [
-        "Ticket and incident tracking",
-        "SLA monitoring and escalation",
-        "Technician assignment and status visibility",
-        "Integrated workflow from detection to resolution"
+        "Ticket lifecycle management",
+        "SLA tracking with escalation rules",
+        "Time logging and contract billing",
+        "Client-facing service portal"
       ],
-      bestFor: "MSPs delivering managed services with accountability and response guarantees."
+      bestFor: "MSPs delivering managed services with accountability and SLA guarantees."
     },
     {
       moduleId: "recon",
       name: "Vanguard Recon",
-      tagline: "Network Discovery & Asset Intelligence",
-      description: "Vanguard Recon maps your environment so nothing is hidden or forgotten. It discovers devices, networks, and infrastructure components to provide accurate asset awareness.",
+      tagline: "Vulnerability Assessment & Network Discovery",
+      description: "Discover what's in your environment and where it's vulnerable. Recon scans networks, maps assets, and identifies CVEs — feeding results directly into compliance and remediation workflows.",
       color: "text-violet-400",
       bgColor: "bg-violet-500/10",
       borderColor: "border-violet-500/30",
       capabilities: [
+        "Automated vulnerability scanning",
         "Network and asset discovery",
-        "Device classification and mapping",
-        "Infrastructure visibility across sites",
-        "Foundational intelligence for security and ops"
+        "CIS and NIST benchmark checks",
+        "Guided penetration testing"
       ],
-      bestFor: "Teams onboarding new clients, auditing environments, or reducing blind spots."
+      bestFor: "Security teams onboarding new clients, running assessments, or preparing for audits."
     },
     {
       moduleId: "atlas",
       name: "Vanguard Atlas",
-      tagline: "Knowledge Base & Operational Intelligence",
-      description: "Vanguard Atlas centralizes institutional knowledge so your team always knows what to do and how to do it. It connects documentation, SOPs, and runbooks directly to operations.",
+      tagline: "IT Documentation & Knowledge Base",
+      description: "Centralized documentation for every client — contacts, configurations, credentials, SOPs, and runbooks. Atlas is the reference layer your technicians reach for mid-ticket.",
       color: "text-emerald-400",
       bgColor: "bg-emerald-500/10",
       borderColor: "border-emerald-500/30",
       capabilities: [
-        "Centralized knowledge base",
-        "SOPs and internal documentation",
-        "Searchable operational guidance",
-        "Shared intelligence across teams"
+        "Multi-tenant knowledge base",
+        "Password vault and credential management",
+        "Runbooks and SOP library",
+        "SSL and domain expiration tracking"
       ],
-      bestFor: "Scaling MSPs and IT teams that want consistency and faster issue resolution."
+      bestFor: "Scaling teams that need consistent documentation and faster issue resolution."
     },
     {
       moduleId: "ledger",
       name: "Vanguard Ledger",
-      tagline: "Compliance, Reporting & Audit Trails",
-      description: "Vanguard Ledger provides the evidence layer of the platform. It records activity, produces reports, and supports compliance and audit requirements without manual effort.",
+      tagline: "Unified Reporting Engine",
+      description: "Aggregates data from every module into structured reports — executive summaries, security posture, SLA performance, and compliance status. One reporting engine for the entire platform.",
       color: "text-blue-400",
       bgColor: "bg-blue-500/10",
       borderColor: "border-blue-500/30",
       capabilities: [
-        "Compliance-ready reporting",
-        "Audit logs and historical records",
-        "Scheduled and on-demand reports",
-        "Executive and client-facing visibility"
+        "Cross-module executive reports",
+        "Scheduled and on-demand generation",
+        "Client-facing QBR presentations",
+        "AI-generated report summaries"
       ],
-      bestFor: "Organizations that must prove security posture, service delivery, or regulatory compliance."
+      bestFor: "Organizations that need to prove security posture, service delivery, or regulatory compliance."
     },
     {
       moduleId: "cortex",
       name: "Vanguard Cortex",
-      tagline: "AI Command Center — 20+ Specialized Intelligence Tools",
-      description: "Vanguard Cortex is the AI intelligence layer with over 20 specialized tools for ticket analysis, predictive analytics, and automated documentation. Powered by Google Gemini and GPT-5, it delivers instant insights across security and operations.",
+      tagline: "AI Intelligence Layer",
+      description: "Over 20 specialized AI tools embedded across the platform — ticket analysis, SLA prediction, smart routing, automated documentation, and knowledge base generation. Cortex makes every module more intelligent.",
       color: "text-pink-400",
       bgColor: "bg-pink-500/10",
       borderColor: "border-pink-500/30",
       capabilities: [
-        "AI Ticket Analyzer with sentiment & priority detection",
-        "Smart routing with confidence scoring",
-        "AI Screen-to-Docs for automated documentation",
-        "SLA predictor with resolution estimates",
-        "Knowledge base auto-generation from patterns",
-        "Customer-facing chatbots with live escalation"
+        "AI ticket analyzer and smart routing",
+        "SLA breach prediction",
+        "Screen-to-Docs automation",
+        "Knowledge base auto-generation"
       ],
       bestFor: "Teams that want to reduce manual effort and operate more intelligently at scale."
-    }
-  ];
-
-  const differentiators = [
-    "Cortex AI with 20+ specialized tools — not just a chatbot wrapper",
-    "Powered by Google Gemini 3 and GPT-5 for enterprise-grade intelligence",
-    "AI-driven pentesting with automated compliance mapping (SOC2, HIPAA, ISO27001)",
-    "Unified platform eliminates tool sprawl and integration headaches",
-    "Built for MSPs with multi-tenant architecture and client billing visibility",
-    "Real-time threat detection with AI-powered automated response",
-    "Predictive SLA analysis and resolution time estimates",
-    "SOC-style security operations without the SOC-level investment",
-    "Veteran-owned with a commitment to protecting American businesses"
-  ];
-
-  const useCases = [
-    {
-      title: "For MSPs Managing Client Environments",
-      description: "Deploy unified security and operations across your entire client base. Get client-level visibility, automated billing metrics, and white-glove service delivery tools."
-    },
-    {
-      title: "For IT Teams in Regulated Industries",
-      description: "Meet HIPAA, PCI DSS, and SOC 2 requirements with built-in compliance frameworks. Automated evidence collection and audit-ready reporting reduce compliance burden."
-    },
-    {
-      title: "For Organizations Without a Dedicated SOC",
-      description: "Get SOC-style security operations with AI-powered threat detection and response. Enterprise security capabilities without enterprise security headcount."
     }
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
       <SEOHead
-        title="Vanguard — AI-Powered Security & Operations | UltriumAI"
-        description="A unified platform combining RMM, helpdesk, threat detection, and compliance tooling — all powered by AI. Built for MSPs, IT teams, and security-conscious organizations."
+        title="Vanguard — Unified IT Operations & Security Platform | UltriumAI"
+        description="Vanguard replaces your RMM, PSA, security tools, and compliance platforms with a single, AI-enabled system. Built for MSPs and internal IT teams."
         canonicalPath="/products/vanguard"
       />
       <Navigation />
@@ -207,27 +172,20 @@ const VanguardProductPage = () => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[120px]" />
         
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
-          <Badge className="mb-6 bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
-            <Brain className="h-3 w-3 mr-1" />
-            AI-Powered Security & Operations
-          </Badge>
-          
           <div className="flex items-center justify-center mb-8">
-            <div className="h-48 w-80 rounded-3xl bg-black p-6 flex items-center justify-center shadow-2xl shadow-cyan-500/30 mx-auto">
+            <div className="h-44 w-72 rounded-3xl bg-black p-6 flex items-center justify-center shadow-2xl shadow-cyan-500/20 mx-auto">
               <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
             </div>
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-foreground/50 bg-clip-text text-transparent">
-            Vanguard — AI-Powered Security & Operations
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-foreground/60 bg-clip-text text-transparent leading-tight">
+            One platform for IT operations, security, and compliance.
           </h1>
           
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
-            A unified platform combining RMM, helpdesk, threat detection, and compliance 
-            tooling — all powered by AI.
-          </p>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            Built for MSPs, IT teams, and security-conscious organizations.
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed">
+            Vanguard replaces the fragmented stack of tools your team manages today — 
+            RMM, service desk, threat detection, documentation, compliance, and reporting — 
+            with a single system that shares data, context, and intelligence across every workflow.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -246,44 +204,97 @@ const VanguardProductPage = () => {
         </div>
       </section>
 
-      {/* What is Vanguard */}
-      <section className="py-16 px-4 border-b border-border/50">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6">What is Vanguard?</h2>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            Vanguard is an <strong className="text-foreground">AI-Powered Security & Operations Platform</strong> that 
-            unifies remote monitoring, helpdesk, threat detection, and compliance into a single solution. It delivers 
-            SOC-style security operations to organizations that don't have dedicated security teams, while providing 
-            MSPs with the multi-tenant architecture and billing visibility they need to deliver managed security services profitably.
-          </p>
-        </div>
-      </section>
-
-      {/* Who It's For */}
-      <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
+      {/* What Vanguard Replaces */}
+      <section className="py-20 px-4 border-b border-border/50">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Who It's For</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              Vanguard serves organizations that need unified security and operations.
+            <h2 className="text-3xl font-bold mb-4">What Vanguard Replaces</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Most IT teams run 5–10 separate tools with separate logins, separate billing, and separate data. 
+              Vanguard consolidates them into one platform — reducing cost, complexity, and context-switching.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {audiences.map((audience, i) => {
-              const IconComponent = audience.icon;
-              return (
-                <Card key={i} className="bg-card/50 border-border/50 hover:border-cyan-500/30 transition-all">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-14 h-14 rounded-xl bg-cyan-500/10 flex items-center justify-center mx-auto mb-4">
-                      <IconComponent className="h-7 w-7 text-cyan-500" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">{audience.title}</h3>
-                    <p className="text-muted-foreground text-sm">{audience.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {replacements.map((item, i) => (
+              <Card key={i} className="bg-card/50 border-border/50 hover:border-cyan-500/20 transition-colors">
+                <CardContent className="p-5">
+                  <p className="text-sm font-semibold text-foreground mb-1">{item.category}</p>
+                  <p className="text-xs text-muted-foreground mb-3">{item.examples}</p>
+                  <div className="flex items-center gap-1.5">
+                    <ArrowRight className="h-3 w-3 text-cyan-400" />
+                    <span className="text-sm font-medium text-cyan-400">{item.module}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Two Operating Modes */}
+      <section className="py-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">One Platform, Two Operating Modes</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Vanguard is the same platform whether you're managing clients or managing your own environment. 
+              The difference is configuration, not product.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card className="bg-card border-cyan-500/20 hover:border-cyan-500/30 transition-colors">
+              <CardContent className="p-8">
+                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-5">
+                  <Building2 className="h-6 w-6 text-cyan-400" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">MSP Mode</h3>
+                <p className="text-sm text-muted-foreground mb-5">
+                  For managed service providers managing multiple client environments.
+                </p>
+                <ul className="space-y-2.5">
+                  {[
+                    "Multi-tenant with full client isolation",
+                    "Per-technician pricing, unlimited endpoints",
+                    "White-label branding and client portal",
+                    "Cross-client SOC and unified billing",
+                    "Partner tiers with volume discounts"
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-violet-500/20 hover:border-violet-500/30 transition-colors">
+              <CardContent className="p-8">
+                <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center mb-5">
+                  <MonitorSmartphone className="h-6 w-6 text-violet-400" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Internal IT Mode</h3>
+                <p className="text-sm text-muted-foreground mb-5">
+                  For IT departments managing their own organization's environment.
+                </p>
+                <ul className="space-y-2.5">
+                  {[
+                    "Single-tenant with internal user management",
+                    "Same modules, same capabilities",
+                    "Internal helpdesk and SLA tracking",
+                    "Compliance frameworks for regulated industries",
+                    "Executive reporting for leadership"
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
@@ -292,15 +303,11 @@ const VanguardProductPage = () => {
       <section className="py-20 px-4 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <Badge className="mb-4 bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
-              <Shield className="h-3 w-3 mr-1" />
-              Purpose-Built Modules
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Meet the Vanguard Modules</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">The Modules</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Vanguard is a unified security and operations platform composed of purpose-built modules.
-              Each module focuses on a specific operational mission — together, they form a complete 
-              command-and-control system for MSPs and IT teams.
+              Each module handles a specific operational domain. Together, they form a complete 
+              system where data flows between monitoring, detection, response, documentation, 
+              compliance, and reporting — without integration work.
             </p>
           </div>
 
@@ -309,7 +316,6 @@ const VanguardProductPage = () => {
               <Card key={i} className={`bg-card border ${module.borderColor} hover:shadow-lg transition-all overflow-hidden`}>
                 <CardContent className="p-0">
                   <div className="grid lg:grid-cols-3 gap-0">
-                    {/* Module Header */}
                     <div className={`${module.bgColor} p-8 flex flex-col justify-center`}>
                       <div className="w-20 h-20 rounded-2xl bg-background/80 flex items-center justify-center mb-4 p-2">
                         <ModuleLogo module={module.moduleId} size="xl" glow />
@@ -318,100 +324,87 @@ const VanguardProductPage = () => {
                       <p className="text-foreground font-medium">{module.tagline}</p>
                     </div>
 
-                      {/* Module Details */}
-                      <div className="lg:col-span-2 p-8">
-                        <p className="text-muted-foreground mb-6 leading-relaxed">
-                          {module.description}
-                        </p>
+                    <div className="lg:col-span-2 p-8">
+                      <p className="text-muted-foreground mb-6 leading-relaxed">
+                        {module.description}
+                      </p>
 
-                        <div className="mb-6">
-                          <h4 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">Key Capabilities</h4>
-                          <div className="grid sm:grid-cols-2 gap-2">
-                            {module.capabilities.map((cap, j) => (
-                              <div key={j} className="flex items-center gap-2">
-                                <Check className={`h-4 w-4 ${module.color} flex-shrink-0`} />
-                                <span className="text-sm text-muted-foreground">{cap}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className={`p-4 rounded-lg ${module.bgColor} border ${module.borderColor}`}>
-                          <div className="flex items-start gap-2">
-                            <Lightbulb className={`h-4 w-4 ${module.color} flex-shrink-0 mt-0.5`} />
-                            <div>
-                              <span className="text-xs font-semibold text-foreground uppercase tracking-wide">Best for:</span>
-                              <p className="text-sm text-muted-foreground mt-1">{module.bestFor}</p>
+                      <div className="mb-6">
+                        <h4 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">Key Capabilities</h4>
+                        <div className="grid sm:grid-cols-2 gap-2">
+                          {module.capabilities.map((cap, j) => (
+                            <div key={j} className="flex items-center gap-2">
+                              <Check className={`h-4 w-4 ${module.color} flex-shrink-0`} />
+                              <span className="text-sm text-muted-foreground">{cap}</span>
                             </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className={`p-4 rounded-lg ${module.bgColor} border ${module.borderColor}`}>
+                        <div className="flex items-start gap-2">
+                          <Lightbulb className={`h-4 w-4 ${module.color} flex-shrink-0 mt-0.5`} />
+                          <div>
+                            <span className="text-xs font-semibold text-foreground uppercase tracking-wide">Best for:</span>
+                            <p className="text-sm text-muted-foreground mt-1">{module.bestFor}</p>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* One Platform, One Command Surface */}
+      {/* Platform Credibility */}
       <section className="py-20 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <Badge className="mb-4 bg-violet-500/20 text-violet-400 border-violet-500/30">
-              <Workflow className="h-3 w-3 mr-1" />
-              Unified Platform
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">One Platform. One Command Surface.</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-              Each Vanguard module is powerful on its own — but the real value comes from how they work together.
+            <h2 className="text-3xl font-bold mb-4">Built as a Platform, Not a Bundle</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Vanguard isn't a collection of acquired products stitched together. 
+              Every module shares the same data model, the same agent, and the same AI layer.
             </p>
           </div>
 
-          <Card className="bg-gradient-to-br from-card via-card to-cyan-500/5 border-cyan-500/20">
-            <CardContent className="p-8">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Globe className="h-5 w-5 text-cyan-400" />
-                    <span className="text-foreground"><strong>Horizon</strong> sees issues.</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Target className="h-5 w-5 text-red-400" />
-                    <span className="text-foreground"><strong>Pursuit</strong> hunts threats.</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <AlertTriangle className="h-5 w-5 text-amber-400" />
-                    <span className="text-foreground"><strong>Response</strong> resolves incidents.</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Compass className="h-5 w-5 text-violet-400" />
-                    <span className="text-foreground"><strong>Recon</strong> maps the environment.</span>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <BookOpen className="h-5 w-5 text-emerald-400" />
-                    <span className="text-foreground"><strong>Atlas</strong> documents knowledge.</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-blue-400" />
-                    <span className="text-foreground"><strong>Ledger</strong> proves compliance.</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Brain className="h-5 w-5 text-pink-400" />
-                    <span className="text-foreground"><strong>Cortex</strong> helps you think faster.</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-border/50 text-center">
-                <p className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">
-                  That's Vanguard.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {[
+              {
+                title: "Unified data model",
+                description: "A device in Horizon is the same device in Pursuit, Response, and Comply. No sync delays, no duplicate records."
+              },
+              {
+                title: "Native agent",
+                description: "One lightweight agent handles monitoring, security, patching, and remote access. No stacking multiple agents on endpoints."
+              },
+              {
+                title: "Feature-gated by subscription",
+                description: "Start with what you need. Modules activate as you add them — no rip-and-replace when you expand."
+              },
+              {
+                title: "AI across every workflow",
+                description: "Cortex AI is embedded in every module — ticket triage, threat analysis, documentation generation, and report summaries."
+              },
+              {
+                title: "Security-first architecture",
+                description: "Role-based access control, full audit trails, encrypted credential storage, and tenant isolation by default."
+              },
+              {
+                title: "Per-technician pricing",
+                description: "Unlimited endpoints. No per-device surcharges. Predictable costs that scale with your team, not your device count."
+              }
+            ].map((item, i) => (
+              <Card key={i} className="bg-card/50 border-border/50">
+                <CardContent className="p-5">
+                  <h3 className="text-sm font-semibold text-foreground mb-1.5">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -425,7 +418,7 @@ const VanguardProductPage = () => {
             </Badge>
             <h2 className="text-3xl font-bold mb-4">Experience Vanguard</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Explore our security operations platform with interactive demos
+              Explore the platform with interactive demos.
             </p>
           </div>
 
@@ -433,7 +426,7 @@ const VanguardProductPage = () => {
             <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 mb-6">
               <TabsTrigger value="xdr" className="flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                XDR Platform
+                Threat Detection
               </TabsTrigger>
               <TabsTrigger value="assets" className="flex items-center gap-2">
                 <Server className="h-4 w-4" />
@@ -452,7 +445,7 @@ const VanguardProductPage = () => {
                 compactMode
                 compactHeight="h-[700px]"
                 fullDemoPath="/demos/vanguard"
-                description="AI-powered threat detection and autonomous response"
+                description="AI-powered threat detection and response"
               >
                 <div className="p-4 overflow-auto h-full">
                   <VanguardDemo />
@@ -462,12 +455,12 @@ const VanguardProductPage = () => {
 
             <TabsContent value="assets">
               <ProductDemoWrapper
-                productName="SafeTrack Asset Management"
+                productName="Asset Management"
                 productColor="orange"
                 compactMode
                 compactHeight="h-[600px]"
                 fullDemoPath="/vanguard/assets"
-                description="Complete IT asset lifecycle management"
+                description="IT asset lifecycle management"
               >
                 <SafeTrackDemo compactMode />
               </ProductDemoWrapper>
@@ -479,14 +472,13 @@ const VanguardProductPage = () => {
                 productColor="emerald"
                 compactMode
                 compactHeight="h-[500px]"
-                description="SOC 2, HIPAA, PCI DSS frameworks with automated evidence collection"
+                description="Automated evidence collection and audit-ready reporting"
               >
                 <div className="p-6 text-center">
                   <FileCheck className="h-16 w-16 mx-auto mb-4 text-emerald-500" />
                   <h3 className="text-xl font-bold mb-2">Compliance Automation</h3>
                   <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    Built-in frameworks for SOC 2, HIPAA, PCI DSS, NIST, and CIS benchmarks 
-                    with automated evidence collection and audit-ready reporting.
+                    Built-in frameworks with automated evidence collection from every Vanguard module.
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
                     {['SOC 2', 'HIPAA', 'PCI DSS', 'NIST'].map((framework) => (
@@ -509,60 +501,13 @@ const VanguardProductPage = () => {
         </div>
       </section>
 
-      {/* Use Cases */}
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Common Use Cases</h2>
-            <p className="text-muted-foreground">
-              How organizations deploy Vanguard.
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            {useCases.map((useCase, i) => (
-              <Card key={i} className="bg-card border-border/50">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-2">{useCase.title}</h3>
-                  <p className="text-muted-foreground">{useCase.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Differentiators */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">What Makes Vanguard Different</h2>
-            <p className="text-muted-foreground">
-              AI-driven, unified, and built for scale.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            {differentiators.map((item, i) => (
-              <div 
-                key={i} 
-                className="flex items-start gap-3 p-4 rounded-lg bg-card border border-border/50"
-              >
-                <Check className="h-5 w-5 text-cyan-500 flex-shrink-0 mt-0.5" />
-                <span className="text-foreground/80">{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Part of UltriumAI */}
       <section className="py-16 px-4 border-y border-border/50 bg-muted/20">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl font-bold mb-4">Part of the UltriumAI Platform</h2>
-          <p className="text-muted-foreground mb-6">
-            Vanguard integrates seamlessly with AI Studio for intelligent assistants and SafeSuite 
-            for personal security tools. Build a complete security ecosystem with AI at its core.
+          <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+            Vanguard shares a single account, billing hub, and AI backbone with AI Studio and SafeSuite. 
+            Use the products that match your role — they stay out of your way until you need them.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to="/products/ai-studio">
@@ -586,11 +531,11 @@ const VanguardProductPage = () => {
             <CardContent className="p-10 text-center">
               <Shield className="h-12 w-12 text-cyan-500 mx-auto mb-6" />
               <h2 className="text-3xl font-bold mb-4">
-                Ready to Unify Security & Operations?
+                Ready to consolidate your stack?
               </h2>
               <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-                See how Vanguard can transform your IT operations with AI-powered 
-                insights, unified tooling, and enterprise-grade security.
+                See how Vanguard replaces multiple tools with a single platform — 
+                fewer logins, fewer invoices, and complete operational visibility.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -615,9 +560,9 @@ const VanguardProductPage = () => {
               <div className="mt-8 flex items-center justify-center gap-6 text-sm text-muted-foreground">
                 <span>🇺🇸 Veteran-Owned</span>
                 <span>•</span>
-                <span>MSP-Focused</span>
+                <span>Per-Technician Pricing</span>
                 <span>•</span>
-                <span>AI-Powered</span>
+                <span>Unlimited Endpoints</span>
               </div>
             </CardContent>
           </Card>
