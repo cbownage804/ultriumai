@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { AIStudioDashboardHub } from "@/components/ai-studio/AIStudioDashboardHub";
+import { AIStudioOnboardingWizard } from "@/components/ai-studio/AIStudioOnboardingWizard";
 import { 
   Building, 
   Building2,
@@ -33,6 +36,15 @@ import heroAi from "@/assets/hero-ai.jpg";
 import ultriumGPTLogo from "@/assets/ultrium-gpt-logo.png";
 
 const AIStudio = () => {
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    return !localStorage.getItem("ai-studio-onboarding-dismissed");
+  });
+
+  const handleDismissOnboarding = () => {
+    setShowOnboarding(false);
+    localStorage.setItem("ai-studio-onboarding-dismissed", "true");
+  };
+
   const creationPaths = [
     {
       title: "Build It Yourself",
@@ -234,6 +246,21 @@ const AIStudio = () => {
               </Button>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Dashboard Hub */}
+      <section className="py-8 px-4">
+        <div className="max-w-7xl mx-auto">
+          {showOnboarding && (
+            <div className="mb-6">
+              <AIStudioOnboardingWizard 
+                onComplete={handleDismissOnboarding} 
+                onDismiss={handleDismissOnboarding} 
+              />
+            </div>
+          )}
+          <AIStudioDashboardHub />
         </div>
       </section>
 

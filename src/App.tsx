@@ -15,6 +15,7 @@ import EnhancedErrorBoundary from '@/components/EnhancedErrorBoundary';
 import CookieConsent from '@/components/CookieConsent';
 import { isVanguardDomain, isSafeSuiteDomain } from '@/utils/subdomain';
 import { AIStudioCTABanner } from '@/components/marketing/AIStudioCTABanner';
+import { AIStudioCommandPalette } from '@/components/ai-studio/AIStudioCommandPalette';
 
 import { VanguardLayout } from '@/components/vanguard/VanguardLayout';
 import { getVanguardProtectedRoutes, getVanguardPublicRoutes } from '@/routes/vanguardRoutes';
@@ -923,6 +924,9 @@ function AppRouter() {
         />
       )}
       
+      {/* AI Studio Command Palette (Cmd+K) */}
+      {user && <AIStudioCommandPalette />}
+
       {/* AI Studio CTA Banner for unauthenticated users */}
       <AIStudioCTABanner />
       
