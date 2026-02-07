@@ -5,7 +5,7 @@ import { BuilderChatPanel } from './BuilderChatPanel';
 import { BuilderPreviewPanel } from './BuilderPreviewPanel';
 import { ProjectFileTree } from './ProjectFileTree';
 import { FileTabBar } from './FileTabBar';
-import { CodeViewer } from './CodeViewer';
+import { CodeEditor } from './CodeEditor';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -175,7 +175,7 @@ export function AIAppBuilderWorkspace() {
                           onClose={closeFile}
                         />
                         <div className="flex-1 overflow-hidden">
-                          <CodeViewer file={activeFile} />
+                          <CodeEditor file={activeFile} onContentChange={upsertFile} />
                         </div>
                       </div>
                     )}
