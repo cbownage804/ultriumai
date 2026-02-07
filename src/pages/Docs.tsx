@@ -1,601 +1,789 @@
-import { useState } from "react";
-import DOMPurify from 'dompurify';
+import { useState, useEffect, useRef } from "react";
+import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Navigation from "@/components/Navigation";
-import { 
-  BookOpen, 
-  Search, 
-  Zap, 
-  Shield, 
-  Settings, 
-  Users, 
-  MessageSquare,
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Search,
+  ChevronDown,
+  ChevronRight,
+  BookOpen,
+  Zap,
+  Shield,
   Bot,
+  Code,
+  Users,
+  CreditCard,
+  Palette,
+  BarChart3,
+  Server,
+  Cpu,
   FileText,
   Lock,
-  Network,
-  Mail,
-  Link,
-  ChevronRight,
-  ExternalLink,
-  Code,
-  Database,
   Globe,
-  BarChart3,
-  Palette
+  Headphones,
+  MonitorSmartphone,
+  Layers,
+  Eye,
+  Target,
+  Radar,
+  Scale,
+  Brain,
+  Network,
+  ClipboardCheck,
+  ExternalLink,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import vanguardLogo from "@/assets/vanguard-logo.png";
+import aiStudioLogo from "@/assets/ai-studio-logo.png";
+import { safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
+
+// ── Content Types ──────────────────────────────────────────────
+
+interface DocArticle {
+  id: string;
+  title: string;
+  content: string; // markdown-ish plain text
+  tags?: string[];
+}
+
+interface DocCategory {
+  id: string;
+  label: string;
+  icon: React.ComponentType<any>;
+  articles: DocArticle[];
+}
 
 interface DocSection {
   id: string;
-  title: string;
-  description: string;
-  icon: React.ComponentType<any>;
-  articles: Article[];
+  label: string;
+  icon?: React.ComponentType<any>;
+  logo?: string;
+  color?: string;
+  categories: DocCategory[];
 }
 
-interface Article {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  content: string;
-  tags: string[];
-}
+// ── Documentation Content ──────────────────────────────────────
 
-const docSections: DocSection[] = [
+const DOC_SECTIONS: DocSection[] = [
+  // ─── Platform ──────────────────────────────────────────────
   {
-    id: "getting-started",
-    title: "Getting Started",
-    description: "Learn the basics of UltriumAI platform",
-    icon: Zap,
-    articles: [
+    id: "platform",
+    label: "Platform",
+    icon: BookOpen,
+    color: "text-primary",
+    categories: [
       {
-        id: "quick-start",
-        title: "Quick Start Guide",
-        description: "Get up and running with UltriumAI in 5 minutes",
-        category: "Basics",
-        content: "# Quick Start Guide\n\nWelcome to UltriumAI! This guide will help you get started with our AI-powered platform in just a few minutes.\n\n## Step 1: Create Your Account\n1. Click \"Sign In\" in the top navigation\n2. Choose \"Sign Up\" to create a new account\n3. Verify your email address\n4. Complete your profile setup\n\n## Step 2: Explore UltriumGPT\n1. Navigate to the UltriumGPT section\n2. Start a conversation with our AI assistant\n3. Ask questions about IT procedures, cybersecurity, or business processes\n4. Upload documents to create custom knowledge bases\n\n## Step 3: Try Security Apps\n1. Visit the \"AI Security Apps\" section\n2. Choose from 8 different security tools\n3. Try the live demos\n\n## Step 4: Customize Your Experience\n1. Set up API integrations\n2. Configure white-label options\n3. Invite team members\n4. Create custom GPT workflows",
-        tags: ["basics", "setup", "account"]
+        id: "getting-started",
+        label: "Getting Started",
+        icon: Zap,
+        articles: [
+          {
+            id: "quick-start",
+            title: "Quick Start Guide",
+            content:
+              "Welcome to UltriumAI — the unified platform for AI-powered IT operations, security, and compliance.\n\n## Create Your Account\n1. Click **Sign In** → **Sign Up**\n2. Verify your email address\n3. Complete your profile\n\n## Choose Your Product\n- **AI Studio** — Build and deploy governed AI assistants for your business\n- **Vanguard** — All-in-one RMM, PSA, XDR, and compliance platform for MSPs & IT teams\n- **SafeSuite** — Consumer/SMB security tools: password vault, breach monitoring, threat scanning\n\nAll three products are accessible from the **Product Hub** after sign-in.",
+          },
+          {
+            id: "account-setup",
+            title: "Account & Profile",
+            content:
+              "## Profile Settings\n- Upload avatar, set display name and bio\n- Configure notification preferences (email, in-app, push)\n- Set timezone and language\n\n## Security\n- Enable two-factor authentication (TOTP)\n- Generate backup codes\n- Review active sessions and login history\n- Configure session timeout duration\n\n## Organizations\n- Create or join an organization\n- Each org gets its own billing, users, and data isolation",
+          },
+          {
+            id: "product-hub",
+            title: "Product Hub & Navigation",
+            content:
+              "The **Product Hub** (`/hub`) is your central launch point.\n\n- **AI Studio** — Click to enter the AI assistant builder\n- **Vanguard** — Click to open the MSP/IT operations platform\n- **SafeSuite** — Click to access consumer security tools\n\nEach product has its own navigation, dashboard, and settings. You can switch between products at any time via the global Products menu.",
+          },
+        ],
       },
       {
-        id: "account-setup",
-        title: "Account Setup & Profile",
-        description: "Complete your profile and configure basic settings",
-        category: "Basics",
-        content: "# Account Setup & Profile\n\n## Profile Configuration\n- Upload avatar image\n- Set display name and bio\n- Configure notification preferences\n- Set timezone and language\n\n## Security Settings\n- Enable two-factor authentication\n- Set up backup codes\n- Configure session timeout\n- Review login history\n\n## Team Setup\n- Create or join teams\n- Set up team roles and permissions\n- Configure team billing\n- Invite team members",
-        tags: ["account", "profile", "security", "teams"]
+        id: "billing",
+        label: "Billing & Plans",
+        icon: CreditCard,
+        articles: [
+          {
+            id: "billing-overview",
+            title: "Billing Overview",
+            content:
+              "UltriumAI uses product-specific billing — each product (AI Studio, Vanguard, SafeSuite) has its own subscription and Stripe Customer Portal.\n\n## Key Concepts\n- Subscriptions are managed per-product\n- Plan upgrades are prorated (you only pay the difference)\n- Annual billing provides ~20% savings across all products\n- Enterprise plans include custom SLAs and dedicated support",
+          },
+          {
+            id: "ai-studio-plans",
+            title: "AI Studio Plans",
+            content:
+              "AI Studio uses **AI Capacity Credits** (not tokens) across three market segments:\n\n### MSPs & IT Firms\n| Plan | Credits | Price |\n|------|---------|-------|\n| MSP Starter | 40,000 | $99/mo |\n| MSP Pro | 150,000 | $249/mo |\n| MSP Elite | 350,000 | $499/mo |\n| Platform Pro | 600,000 | $999/mo |\n\n### Internal Business Teams\n| Plan | Credits | Price |\n|------|---------|-------|\n| Team Basic | 15,000 | $49/mo |\n| Team Plus | 75,000 | $149/mo |\n\n### Website / Embedded AI\n| Plan | Credits | Price |\n|------|---------|-------|\n| Website Basic | 3,000 | $29/mo |\n| Website Pro | 12,000 | $79/mo |\n\nCredits do not roll over (except Enterprise). Hard stops at limits.",
+          },
+          {
+            id: "vanguard-plans",
+            title: "Vanguard Plans",
+            content:
+              "Vanguard uses **per-technician pricing** with unlimited endpoints.\n\n### IT Departments\n| Plan | Monthly | Annual |\n|------|---------|--------|\n| Professional | $149/tech | $129/tech |\n| Expert ⭐ | $209/tech | $169/tech |\n| Master | $249/tech | $199/tech |\n| Enterprise | Custom | Custom |\n\n### MSPs\n| Plan | Monthly | Annual |\n|------|---------|--------|\n| Pro | $119/tech | $109/tech |\n| Growth ⭐ | $169/tech | $159/tech |\n| Power | $229/tech | $189/tech |\n| Superpower | Custom | Custom |\n\nAll plans include ticketing, helpdesk, patch management, reports, and 24/7 chat support.\n\nSee [Vanguard Pricing](/pricing/vanguard) for add-ons and bundles.",
+          },
+          {
+            id: "safesuite-plans",
+            title: "SafeSuite Plans",
+            content:
+              "SafeSuite offers three tiers:\n\n| Plan | Price |\n|------|-------|\n| Pro | $9.99/mo |\n| Business | $15/mo |\n| Enterprise | $45/mo |\n\nIncludes SafePass (password vault), SafeScan (threat scanner), SafeWeb (breach monitoring), SafeTrack (asset management), and SafeAssist (AI assistant).",
+          },
+        ],
       },
       {
-        id: "dashboard-overview",
-        title: "Dashboard Overview",
-        description: "Navigate the main dashboard and key features",
-        category: "Basics",
-        content: "# Dashboard Overview\n\n## Main Dashboard\nYour dashboard provides a centralized view of:\n- Recent conversations\n- Usage analytics\n- Security app activity\n- Team notifications\n- Quick actions\n\n## Navigation\n- **UltriumGPT**: AI assistant and chat interface\n- **Security Apps**: Access to all 8 security tools\n- **Analytics**: Usage metrics and insights\n- **Settings**: Account and system configuration\n- **API**: Integration management\n\n## Quick Actions\n- Start new conversation\n- Run security scans\n- Generate reports\n- Access templates",
-        tags: ["dashboard", "navigation", "overview"]
-      }
-    ]
+        id: "api-reference",
+        label: "API & Integrations",
+        icon: Code,
+        articles: [
+          {
+            id: "api-overview",
+            title: "API Overview",
+            content:
+              "UltriumAI provides REST APIs for all platform capabilities.\n\n## Authentication\n- API keys (created in Dashboard → API Keys)\n- Bearer token authentication\n- Rate limiting: configurable per key (RPM/RPD)\n- IP whitelisting available on Enterprise plans\n\n## Endpoints\n- `/api/v1/chat` — AI Studio conversation API\n- `/api/v1/security/*` — SafeSuite scanning APIs\n- `/api/v1/vanguard/*` — Vanguard management APIs\n\n## Webhooks\nAll products support webhook notifications for real-time events:\n- Security alerts, ticket updates, AI completions\n- Configurable retry policies and HMAC signature verification",
+          },
+          {
+            id: "integrations",
+            title: "Third-Party Integrations",
+            content:
+              "## Vanguard Integrations\n- **PSA**: ConnectWise, Autotask (bi-directional sync)\n- **Documentation**: IT Glue (via Atlas)\n- **BCDR**: Veeam, Acronis, Datto\n- **Remote Access**: Splashtop, AnyDesk\n- **Accounting**: QuickBooks Online, Xero\n- **Identity**: Azure AD, SSO (SAML/OIDC)\n\n## AI Studio Integrations\n- **Communication**: Slack, Microsoft Teams\n- **Ticketing**: Jira, ServiceNow, Zendesk\n- **Data**: Web search, URL scraping, document parsing\n\n## SafeSuite Integrations\n- **Browsers**: Chrome/Edge extension for SafePass\n- **Mobile**: iOS & Android apps\n- **Email**: Automated breach notifications",
+          },
+        ],
+      },
+      {
+        id: "team-management",
+        label: "Team & Collaboration",
+        icon: Users,
+        articles: [
+          {
+            id: "team-setup",
+            title: "Team Management",
+            content:
+              "## Roles\n- **Owner** — Full admin access, billing management\n- **Admin** — User management, configuration\n- **Technician** — Standard platform access (Vanguard)\n- **Member** — Standard access (AI Studio/SafeSuite)\n- **Viewer** — Read-only access\n\n## Invitations\n1. Go to Settings → Team\n2. Click Invite → Enter email(s)\n3. Assign role and product access\n4. Users receive email invitation with onboarding link\n\n## Multi-Tenant (Vanguard)\nVanguard supports full multi-tenant isolation per client site with RBAC, ensuring technicians only see their assigned sites.",
+          },
+        ],
+      },
+      {
+        id: "white-label",
+        label: "White-Label & Branding",
+        icon: Palette,
+        articles: [
+          {
+            id: "white-label-overview",
+            title: "White-Label Setup",
+            content:
+              "Available on Vanguard Platinum partner tier and AI Studio Platform Pro.\n\n## Customization Options\n- Custom logo, favicon, and color scheme\n- Custom domain with SSL\n- Branded login page and service portal\n- Custom email templates (from your domain)\n- Footer text and \"Powered by\" toggle\n\n## Setup\n1. Navigate to Settings → White Label\n2. Upload brand assets\n3. Configure color theme\n4. Set custom domain (DNS CNAME required)\n5. Preview and publish",
+          },
+        ],
+      },
+    ],
   },
+
+  // ─── AI Studio ──────────────────────────────────────────────
   {
-    id: "ultriumgpt",
-    title: "UltriumGPT",
-    description: "Master our AI assistant for business workflows",
-    icon: Bot,
-    articles: [
+    id: "ai-studio",
+    label: "AI Studio",
+    logo: aiStudioLogo,
+    color: "text-primary",
+    categories: [
       {
-        id: "ultriumgpt-basics",
-        title: "UltriumGPT Basics",
-        description: "Learn how to effectively use UltriumGPT",
-        category: "UltriumGPT",
-        content: "# UltriumGPT Basics\n\nUltriumGPT is your intelligent business assistant, trained specifically for MSPs, IT teams, and business professionals.\n\n## What UltriumGPT Can Do\n- Answer technical questions about IT procedures\n- Help with cybersecurity best practices\n- Assist with business process documentation\n- Analyze documents and provide insights\n- Generate reports and summaries\n- Troubleshoot common IT issues\n\n## Getting Started\n1. Click \"UltriumGPT\" in the main navigation\n2. Start typing your question or request\n3. Use @ mentions to reference specific documents\n4. Upload files for analysis\n5. Use conversation history for context\n\n## Best Practices\n- Be specific in your requests\n- Provide context when needed\n- Use follow-up questions for clarity\n- Save important conversations\n- Use templates for common tasks",
-        tags: ["chat", "ai", "assistant", "usage"]
+        id: "ai-studio-overview",
+        label: "Overview",
+        icon: Bot,
+        articles: [
+          {
+            id: "ai-studio-intro",
+            title: "What is AI Studio?",
+            content:
+              "AI Studio is the **Business AI Control Plane** — build, deploy, and govern custom AI assistants without writing code.\n\n## Key Capabilities\n- Create custom GPTs with system prompts, knowledge bases, and actions\n- Deploy assistants on your website, Slack, Teams, or via API\n- Full usage analytics and credit governance\n- 22 pre-built action templates (security scanning, ticket escalation, web search, etc.)\n- White-label embedding for MSP resale",
+          },
+          {
+            id: "custom-gpts",
+            title: "Creating Custom GPTs",
+            content:
+              "## Build Process\n1. **Define** — Set name, avatar, system prompt, and personality\n2. **Knowledge** — Upload documents (PDF, DOCX, TXT, MD, CSV, PPTX) or crawl websites\n3. **Actions** — Attach pre-built or custom API actions\n4. **Test** — Interact in the sandbox to refine behavior\n5. **Deploy** — Publish to web embed, API, or internal use\n\n## Configuration\n- **Model**: Choose between available LLMs\n- **Temperature**: Control creativity vs. precision\n- **Max tokens**: Set response length limits\n- **Knowledge retrieval**: RAG-based document Q&A\n- **Action permissions**: Control which APIs the GPT can call",
+          },
+        ],
       },
       {
-        id: "custom-gpts",
-        title: "Custom GPT Creation",
-        description: "Build and deploy custom AI assistants",
-        category: "UltriumGPT",
-        content: "# Custom GPT Creation\n\n## Overview\nCreate specialized AI assistants tailored to your specific business needs and workflows.\n\n## Creation Process\n1. **Define Purpose**: Specify the GPT's role and capabilities\n2. **System Prompt**: Write detailed instructions\n3. **Knowledge Base**: Upload relevant documents\n4. **Testing**: Validate responses and behavior\n5. **Deployment**: Make available to team or public\n\n## Configuration Options\n- **Appearance**: Custom avatar and branding\n- **Behavior**: Response style and tone\n- **Knowledge**: Document uploads and web crawling\n- **Integrations**: API connections and webhooks\n- **Access Control**: Public, team, or private\n\n## Advanced Features\n- Web search capabilities\n- File upload processing\n- API integrations\n- Custom actions\n- Analytics tracking",
-        tags: ["custom", "gpt", "creation", "deployment"]
+        id: "ai-studio-actions",
+        label: "Actions & Templates",
+        icon: Zap,
+        articles: [
+          {
+            id: "action-templates",
+            title: "Action Template Library",
+            content:
+              "AI Studio includes 22 pre-built action templates:\n\n### SafeSuite Security\n- URL scanning, breach alerts, password analysis\n\n### Support\n- Ticket escalation, Slack/Teams notifications, email dispatch\n\n### Productivity\n- Calendar management, task automation, meeting summaries\n\n### Data Operations\n- Web search, structured extraction, document parsing, CSV generation\n\nEach template includes a pre-defined JSON input schema for seamless integration.",
+          },
+        ],
       },
       {
-        id: "knowledge-management",
-        title: "Knowledge Base Management",
-        description: "Upload and manage documents for AI training",
-        category: "UltriumGPT",
-        content: "# Knowledge Base Management\n\n## Document Upload\nSupported formats:\n- PDF documents\n- Word documents (.docx)\n- Text files (.txt)\n- Markdown files (.md)\n- CSV spreadsheets\n- PowerPoint presentations\n\n## Processing Options\n- **Chunking Strategy**: How documents are split\n- **Embedding Model**: AI understanding method\n- **Access Control**: Who can access documents\n- **Version Control**: Track document updates\n\n## Web Crawling\n- Crawl websites for content\n- Set crawl depth and frequency\n- Filter content types\n- Monitor for updates\n- Extract structured data\n\n## Best Practices\n- Use clear, well-structured documents\n- Remove sensitive information\n- Regular updates for accuracy\n- Organize with clear naming\n- Test AI responses after uploads",
-        tags: ["knowledge", "documents", "upload", "crawling"]
+        id: "ai-studio-embedding",
+        label: "Embedding & Deployment",
+        icon: Globe,
+        articles: [
+          {
+            id: "embed-options",
+            title: "Embedding Your GPT",
+            content:
+              "## Embed Methods\n- **Chat Widget** — Floating bubble on your website (copy-paste script tag)\n- **Inline Embed** — Full-page or section embed via iframe\n- **API** — RESTful conversation API for custom UIs\n- **Slack/Teams** — Native app integration\n\n## Website Plans\n- Visitor message caps (3–5 per session)\n- IP-based rate limiting\n- Custom branding on chat widget\n- Analytics dashboard for visitor interactions",
+          },
+        ],
       },
-      {
-        id: "conversation-management",
-        title: "Conversation Management",
-        description: "Organize, share, and export conversations",
-        category: "UltriumGPT",
-        content: "# Conversation Management\n\n## Organization\n- **Folders**: Group related conversations\n- **Tags**: Label conversations by topic\n- **Search**: Find conversations quickly\n- **Favorites**: Mark important discussions\n- **Archive**: Store old conversations\n\n## Sharing Options\n- **Team Sharing**: Share with team members\n- **Public Links**: Create shareable links\n- **Embed Codes**: Embed in websites\n- **Export Formats**: PDF, Word, Markdown\n\n## Conversation Features\n- **Branching**: Explore different responses\n- **Regeneration**: Get alternative answers\n- **Editing**: Modify messages\n- **Attachments**: Include files in context\n- **Voice Input**: Speak instead of type\n\n## Privacy & Security\n- End-to-end encryption\n- Access controls\n- Audit logs\n- Data retention policies\n- GDPR compliance",
-        tags: ["conversations", "sharing", "export", "privacy"]
-      }
-    ]
+    ],
   },
+
+  // ─── Vanguard ───────────────────────────────────────────────
   {
-    id: "security-apps",
-    title: "AI Security Apps",
-    description: "Comprehensive guides for all 8 security applications",
-    icon: Shield,
-    articles: [
+    id: "vanguard",
+    label: "Vanguard",
+    logo: vanguardLogo,
+    color: "text-cyan-400",
+    categories: [
       {
-        id: "safeemail-guide",
-        title: "SafeMail: Email Security Analysis",
-        description: "Detect phishing, malware, and threats in emails",
-        category: "Security Apps",
-        content: "# Ultrium SafeMail™ Guide\n\nAdvanced AI-powered email security analysis to protect against sophisticated threats.\n\n## Key Features\n- **Phishing Detection**: Identify suspicious sender patterns\n- **Malware Scanning**: Deep analysis of attachments\n- **Link Analysis**: URL safety verification\n- **Social Engineering**: Detect manipulation attempts\n- **Threat Intelligence**: Real-time threat feeds\n- **Risk Scoring**: Quantify email threat levels\n\n## How to Use\n1. Upload email files or paste email content\n2. Select analysis depth (quick or comprehensive)\n3. Review detailed threat assessment\n4. Export results for documentation\n5. Set up automated scanning via API\n\n## Analysis Results\n- **Risk Score**: 0-100 threat assessment\n- **Threat Categories**: Specific threat types\n- **IOCs**: Indicators of compromise\n- **Recommendations**: Mitigation steps\n- **Evidence**: Supporting analysis data\n\n## Integration Options\n- Email server integration\n- SIEM platform connectivity\n- Webhook notifications\n- Batch processing APIs\n- Custom reporting formats",
-        tags: ["email", "security", "phishing", "malware", "analysis"]
+        id: "vanguard-overview",
+        label: "Overview",
+        icon: Shield,
+        articles: [
+          {
+            id: "vanguard-intro",
+            title: "What is Vanguard?",
+            content:
+              "Vanguard is the **AI-powered IT operations & security platform** for MSPs and IT departments.\n\nIt replaces your RMM, PSA, documentation, XDR, and compliance tools with a single unified platform — priced per technician with unlimited endpoints.\n\n## 9 Core Modules\n1. **Horizon** — Remote Monitoring & Management (RMM)\n2. **Response** — Service Desk & Ticketing (PSA)\n3. **Pursuit** — Extended Detection & Response (XDR)\n4. **Sentinel** — SaaS Security (M365/GWS monitoring)\n5. **Recon** — Vulnerability Assessment & Penetration Testing\n6. **Atlas** — IT Documentation & Knowledge Base\n7. **Ledger** — Unified Reporting Engine\n8. **Comply** — Compliance Lifecycle Management\n9. **Cortex** — AI Intelligence Hub",
+          },
+        ],
       },
       {
-        id: "safelink-guide",
-        title: "SafeLink: URL Security Scanner",
-        description: "Analyze URLs for malicious content and threats",
-        category: "Security Apps",
-        content: "# Ultrium SafeLink™ Guide\n\nComprehensive URL analysis and web threat detection system.\n\n## Capabilities\n- **Malware Detection**: Scan for malicious code\n- **Phishing Identification**: Detect fake websites\n- **Content Analysis**: Review page content\n- **Domain Reputation**: Check domain history\n- **SSL Verification**: Validate certificates\n- **Redirect Analysis**: Follow redirect chains\n\n## Scanning Process\n1. Enter URL or upload list of URLs\n2. Choose scan depth and options\n3. Wait for AI analysis completion\n4. Review comprehensive results\n5. Download detailed reports\n\n## Results Dashboard\n- **Safety Score**: Overall risk assessment\n- **Threat Categories**: Types of threats found\n- **Technical Details**: DNS, SSL, headers\n- **Screenshots**: Visual page capture\n- **Historical Data**: Previous scan results\n\n## Use Cases\n- Email link verification\n- Website security audits\n- Brand protection monitoring\n- Incident response investigations\n- Compliance reporting",
-        tags: ["url", "link", "security", "scanner", "malware"]
+        id: "horizon",
+        label: "Horizon (RMM)",
+        icon: MonitorSmartphone,
+        articles: [
+          {
+            id: "horizon-overview",
+            title: "Horizon Overview",
+            content:
+              "Horizon is Vanguard's RMM module — monitor, manage, and secure endpoints at scale.\n\n## Core Features\n- **Device Management** — Windows, Mac, Linux agent deployment\n- **Patch Management** — Automated Windows updates + 3rd-party via Chocolatey/WinGet with rollback\n- **Remote Access** — Splashtop & AnyDesk integration with session history\n- **Alerting** — Multi-channel (email, SMS, webhook) with escalation rules and on-call scheduling\n- **Software Management** — Deploy, update, and remove software fleet-wide\n- **File Transfer** — Secure file transfer up to 80GB/mo (plan-dependent)\n- **Network Discovery** — Subnet scanning and device auto-detection\n- **Asset Lifecycle** — Track hardware from procurement to retirement\n\n## Site-Centric Navigation\nDevices are organized by **Sites** (client organizations). Select a site to view its devices, alerts, tickets, and configurations via horizontal tabs.",
+          },
+          {
+            id: "horizon-agents",
+            title: "Agent Deployment",
+            content:
+              "## Deployment Methods\n1. **Direct Download** — Generate installer from Portal → Download\n2. **Provisioning Tokens** — Create tokens for zero-touch enrollment\n3. **Group Policy** — Deploy via GPO for domain-joined machines\n4. **Intune/SCCM** — Push via MDM/SCCM\n\n## Agent Capabilities\n- System inventory (hardware, software, OS)\n- Real-time performance monitoring (CPU, RAM, disk, network)\n- Script execution (PowerShell, Bash)\n- Patch status reporting\n- Security baseline compliance checking\n\n## System Requirements\n- Windows 10/11, Server 2016+\n- macOS 12+ (Monterey)\n- Ubuntu 20.04+, Debian 11+, CentOS 8+\n- 50MB disk space, 128MB RAM",
+          },
+        ],
       },
       {
-        id: "safedoc-guide",
-        title: "SafeDoc: Document Security Scanner",
-        description: "Analyze documents for malware and threats",
-        category: "Security Apps",
-        content: "# Ultrium SafeDoc™ Guide\n\nAdvanced document analysis for malware, macros, and embedded threats.\n\n## Supported Formats\n- **Office Documents**: Word, Excel, PowerPoint\n- **PDF Files**: All PDF versions and variants\n- **Archives**: ZIP, RAR, 7z and compressed files\n- **Images**: JPEG, PNG with embedded data\n- **Scripts**: JavaScript, VBA, PowerShell\n\n## Analysis Features\n- **Macro Detection**: Identify suspicious macros\n- **Embedded Objects**: Find hidden content\n- **Metadata Analysis**: Extract document properties\n- **Structural Analysis**: Validate file integrity\n- **Behavioral Analysis**: Sandbox execution\n- **Hash Comparison**: Check against threat databases\n\n## Security Checks\n- Password-protected files\n- Encrypted content analysis\n- Obfuscated code detection\n- Zero-day exploit patterns\n- Social engineering content\n\n## Reporting\n- Executive summaries\n- Technical analysis details\n- Risk categorization\n- Remediation recommendations\n- Compliance mapping",
-        tags: ["document", "security", "malware", "macro", "analysis"]
+        id: "response",
+        label: "Response (Service Desk)",
+        icon: Headphones,
+        articles: [
+          {
+            id: "response-overview",
+            title: "Response Overview",
+            content:
+              "Response is Vanguard's built-in PSA/service desk.\n\n## Features\n- **Ticket Management** — Create, assign, track, and resolve tickets\n- **SLA Tracking** — Automated SLA timers with escalation\n- **Time Tracking** — Per-ticket time logging for billing\n- **Service Portal** — Client-facing portal for ticket submission\n- **Contracts & Invoicing** — Manage recurring contracts and generate invoices\n- **AI Auto-Tagging** — Cortex AI categorizes and routes tickets automatically\n- **Knowledge Base Suggestions** — AI recommends relevant KB articles during resolution\n\n## Integrations\n- Bi-directional sync with ConnectWise and Autotask\n- QuickBooks Online and Xero for invoicing\n- Slack/Teams notifications for ticket updates",
+          },
+        ],
       },
       {
-        id: "safepass-guide",
-        title: "SafePass: Password Security Analyzer",
-        description: "Evaluate password strength and security",
-        category: "Security Apps",
-        content: "# Ultrium SafePass™ Guide\n\nComprehensive password security analysis and breach detection.\n\n## Password Analysis\n- **Strength Assessment**: Entropy and complexity scoring\n- **Dictionary Attacks**: Common password checks\n- **Pattern Recognition**: Identify predictable patterns\n- **Character Analysis**: Evaluate character usage\n- **Length Assessment**: Optimal length recommendations\n\n## Breach Detection\n- **Database Checks**: Known breach databases\n- **Hash Comparison**: Secure hash matching\n- **Historical Breaches**: Timeline of exposures\n- **Risk Assessment**: Exposure probability\n- **Account Monitoring**: Ongoing surveillance\n\n## Security Recommendations\n- Password improvement suggestions\n- Multi-factor authentication setup\n- Password manager recommendations\n- Security policy compliance\n- Training recommendations\n\n## Enterprise Features\n- Bulk password analysis\n- Policy compliance checking\n- Employee training integration\n- Audit trail generation\n- Executive reporting",
-        tags: ["password", "security", "strength", "breach", "analysis"]
+        id: "pursuit",
+        label: "Pursuit (XDR)",
+        icon: Target,
+        articles: [
+          {
+            id: "pursuit-overview",
+            title: "Pursuit XDR Overview",
+            content:
+              "Pursuit provides extended detection and response across your endpoint fleet.\n\n## Capabilities\n- **Threat Detection** — AI-powered behavioral analysis and signature matching\n- **MITRE ATT&CK Mapping** — Map detections to the ATT&CK framework\n- **Automated Remediation** — Isolate endpoints, kill processes, quarantine files\n- **SOC Dashboards** — Real-time threat visibility with drill-down\n- **Cross-Client SOC** — Detect coordinated campaigns across your MSP fleet (add-on)\n- **Incident Response Playbooks** — Guided response workflows\n- **Threat Hunting** — Proactive IOC and behavioral queries\n\n## Add-On Pricing\n- Pursuit XDR: $8/user/mo\n- Cross-Client SOC: $10/user/mo\n- Included in Power/Superpower (MSP) and Master/Enterprise (IT) plans",
+          },
+        ],
       },
       {
-        id: "safescore-guide",
-        title: "SafeScore: Computer Security Scanner",
-        description: "Comprehensive system and network security analysis",
-        category: "Security Apps",
-        content: "# Ultrium SafeScore™ Guide\n\nFull-spectrum computer and network security assessment platform.\n\n## System Analysis\n- **Vulnerability Scanning**: Known CVE detection\n- **Configuration Review**: Security hardening check\n- **Service Analysis**: Running services audit\n- **User Account Review**: Access control assessment\n- **Registry Analysis**: Windows registry security\n- **File System Scan**: Suspicious file detection\n\n## Network Security\n- **Port Scanning**: Open port identification\n- **Service Fingerprinting**: Service version detection\n- **Protocol Analysis**: Network traffic review\n- **Firewall Testing**: Rule effectiveness\n- **Wireless Security**: WiFi security assessment\n\n## Compliance Checking\n- **Framework Mapping**: NIST, ISO, CIS standards\n- **Policy Compliance**: Internal policy checks\n- **Regulatory Requirements**: Industry-specific rules\n- **Best Practices**: Security recommendations\n- **Gap Analysis**: Compliance deficiencies\n\n## Remediation\n- Prioritized fix recommendations\n- Step-by-step remediation guides\n- Risk-based prioritization\n- Timeline recommendations\n- Progress tracking",
-        tags: ["computer", "system", "network", "security", "vulnerability"]
+        id: "sentinel",
+        label: "Sentinel (SaaS Security)",
+        icon: Eye,
+        articles: [
+          {
+            id: "sentinel-overview",
+            title: "Sentinel Overview",
+            content:
+              "Sentinel monitors Microsoft 365 and Google Workspace tenants for security threats.\n\n## Features\n- **M365 Security Alerts** — Suspicious sign-ins, mail forwarding rules, admin changes\n- **Google Workspace Monitoring** — Drive sharing, admin audit, login anomalies\n- **AI Triage** — Cortex AI prioritizes and contextualizes alerts\n- **Tenant Management** — Manage multiple client tenants from one view\n- **Phishing Simulation** — Run simulated phishing campaigns with employee risk scoring (add-on)\n\n## Add-On Pricing\n- Sentinel SaaS: $6/user/mo\n- Phishing Simulation: $4/user/mo",
+          },
+        ],
       },
       {
-        id: "safenet-guide",
-        title: "SafeNet: Network Security Monitor",
-        description: "Real-time network threat detection and analysis",
-        category: "Security Apps",
-        content: "# Ultrium SafeNet™ Guide\n\nReal-time network monitoring and threat detection system.\n\n## Traffic Analysis\n- **Deep Packet Inspection**: Full traffic analysis\n- **Protocol Decoding**: Application layer analysis\n- **Anomaly Detection**: Unusual pattern identification\n- **Bandwidth Monitoring**: Usage pattern tracking\n- **Geographic Analysis**: Traffic source mapping\n\n## Threat Detection\n- **Intrusion Attempts**: Attack pattern recognition\n- **Malware Communication**: C&C detection\n- **Data Exfiltration**: Suspicious outbound traffic\n- **Lateral Movement**: Internal threat spreading\n- **APT Detection**: Advanced persistent threats\n\n## Monitoring Features\n- **Real-time Alerts**: Immediate threat notifications\n- **Historical Analysis**: Trend identification\n- **Forensic Tools**: Incident investigation\n- **Automated Response**: Threat containment\n- **Integration APIs**: SIEM and SOAR connectivity\n\n## Reporting & Analytics\n- Executive dashboards\n- Technical incident reports\n- Compliance documentation\n- Trend analysis\n- Performance metrics",
-        tags: ["network", "monitoring", "traffic", "intrusion", "detection"]
+        id: "recon",
+        label: "Recon (Security Assessment)",
+        icon: Radar,
+        articles: [
+          {
+            id: "recon-overview",
+            title: "Recon Overview",
+            content:
+              "Recon provides vulnerability assessment and penetration testing capabilities.\n\n## Features\n- **Vulnerability Scanning** — Automated CVE detection across network assets\n- **Pentest Workflows** — Guided penetration testing with evidence collection\n- **Network Discovery** — Subnet scanning and asset mapping\n- **Recon Hardware** — Optional physical appliances (Recon Lite $299, Recon Pro $499) for on-premises scanning\n- **Compliance Scanning** — CIS benchmarks, NIST framework checks\n\n## Hardware Subscriptions\n- Essential: $29/mo — Basic scanning\n- Professional: $49/mo — Advanced + scheduled scans\n- Enterprise: $99/mo — Continuous monitoring + API access\n\n## Add-On Pricing\n- Recon Pentest: $12/user/mo",
+          },
+        ],
       },
       {
-        id: "darkweb-guide",
-        title: "DarkWeb: Threat Intelligence Scanner",
-        description: "Monitor dark web for organizational threats",
-        category: "Security Apps",
-        content: "# Ultrium DarkWeb™ Scanner\n\nAdvanced dark web monitoring and threat intelligence platform.\n\n## Monitoring Capabilities\n- **Credential Monitoring**: Stolen login detection\n- **Data Breach Alerts**: Company data exposure\n- **Brand Monitoring**: Trademark and brand abuse\n- **Executive Monitoring**: Leadership team targeting\n- **Infrastructure Monitoring**: IP and domain abuse\n\n## Intelligence Sources\n- **Hidden Forums**: Criminal discussion boards\n- **Marketplaces**: Illegal goods and services\n- **Paste Sites**: Data dump locations\n- **Social Networks**: Criminal social platforms\n- **Communication Channels**: Encrypted messaging\n\n## Alert System\n- **Real-time Notifications**: Immediate threat alerts\n- **Risk Scoring**: Threat severity assessment\n- **Context Analysis**: Threat actor profiling\n- **Attribution**: Source identification\n- **Timeline Tracking**: Threat evolution\n\n## Response Features\n- Incident response playbooks\n- Takedown coordination\n- Law enforcement liaison\n- Victim notification\n- Remediation guidance",
-        tags: ["darkweb", "intelligence", "monitoring", "breach", "credential"]
+        id: "atlas",
+        label: "Atlas (Documentation)",
+        icon: FileText,
+        articles: [
+          {
+            id: "atlas-overview",
+            title: "Atlas Overview",
+            content:
+              "Atlas is Vanguard's IT documentation platform — comparable to IT Glue.\n\n## Core Features\n- **Organizations** — Multi-tenant client documentation\n- **Contacts** — Client contact database with roles\n- **Configurations** — Hardware, software, and network configs\n- **Documents & SOPs** — Rich-text documentation with versioning\n- **Runbooks** — Step-by-step procedures with difficulty levels\n- **Flexible Assets** — Custom schema asset types (e.g., \"Firewall Rules\", \"License Keys\")\n- **Password Vault** — Encrypted credential storage per organization\n- **SSL/Domain Tracking** — Automated expiration monitoring\n- **Checklists** — Onboarding/offboarding workflows\n\n## AI Features (via Cortex)\n- **AI Doc Generator** — Generate SOPs and policies from prompts\n- **AI Search & Q&A** — Natural language search across all documentation\n\n## Add-On Pricing\n- Atlas Documentation: $3/user/mo",
+          },
+        ],
       },
       {
-        id: "security-dashboard",
-        title: "Security Dashboard Overview",
-        description: "Centralized view of all security applications",
-        category: "Security Apps",
-        content: "# Security Dashboard Overview\n\nUnified SafeSOC for all UltriumAI security applications.\n\n## Dashboard Features\n- **Unified Alerts**: All security apps in one view\n- **Risk Scoring**: Overall security posture\n- **Trend Analysis**: Historical security metrics\n- **Quick Actions**: Rapid response capabilities\n- **Status Monitoring**: System health checks\n\n## Key Metrics\n- **Threat Level**: Current organizational risk\n- **Active Incidents**: Ongoing security events\n- **Resolution Time**: Average response times\n- **Coverage**: Monitored assets percentage\n- **Compliance Status**: Regulatory compliance\n\n## Workflow Integration\n- **SIEM Integration**: Security information management\n- **Ticket System**: Automated incident creation\n- **Notification System**: Multi-channel alerts\n- **Reporting Engine**: Automated report generation\n- **API Access**: Custom integrations\n\n## Team Collaboration\n- Shared incident tracking\n- Role-based access control\n- Communication tools\n- Knowledge sharing\n- Training resources",
-        tags: ["dashboard", "security", "monitoring", "alerts", "integration"]
-      }
-    ]
+        id: "comply",
+        label: "Comply (Compliance)",
+        icon: Scale,
+        articles: [
+          {
+            id: "comply-overview",
+            title: "Comply Overview",
+            content:
+              "Comply manages the full compliance lifecycle — from framework selection to audit readiness.\n\n## Supported Frameworks\n- SOC 2 Type I & II\n- HIPAA\n- ISO 27001\n- NIST CSF\n- CIS Controls\n- PCI DSS\n\n## Features\n- **Control Mapping** — Map controls to multiple frameworks simultaneously\n- **Evidence Collection** — Automated evidence gathering from Vanguard modules\n- **Continuous Monitoring** — Real-time control status dashboards\n- **Audit Reports** — Generate audit-ready reports with one click\n- **Gap Analysis** — Identify and track compliance gaps\n- **Policy Templates** — Pre-built policy documents\n\n## Add-On Pricing\n- Comply: $7/user/mo",
+          },
+        ],
+      },
+      {
+        id: "ledger",
+        label: "Ledger (Reporting)",
+        icon: BarChart3,
+        articles: [
+          {
+            id: "ledger-overview",
+            title: "Ledger Overview",
+            content:
+              "Ledger is the unified reporting engine across all Vanguard modules.\n\n## Report Categories\n1. **Executive Summaries** — C-level KPIs aggregated from all modules\n2. **Helpdesk** — Ticket volume, SLA performance, technician utilization\n3. **Security (Pursuit/Recon)** — Threat detections, vulnerabilities, incident response\n4. **SaaS Security (Sentinel)** — M365/GWS alerts, tenant health\n5. **Fleet (Horizon)** — Device health, patch compliance, asset inventory\n6. **Compliance (Comply)** — Framework status, control effectiveness\n7. **Documentation (Atlas)** — Coverage metrics, stale document alerts\n\n## AI Summaries\nEvery report includes a **Generate AI Summary** button powered by Cortex — producing attack narratives, risk assessments, and strategic recommendations.",
+          },
+        ],
+      },
+      {
+        id: "cortex",
+        label: "Cortex (AI Hub)",
+        icon: Brain,
+        articles: [
+          {
+            id: "cortex-overview",
+            title: "Cortex AI Overview",
+            content:
+              "Cortex is Vanguard's AI intelligence layer — over 20 specialized tools for IT operations.\n\n## Key Tools\n- **AI Ticket Analyzer** — Summarize, categorize, and suggest responses\n- **SLA Predictor** — Forecast SLA breaches before they happen\n- **Screen-to-Docs** — Convert screenshots into structured documentation\n- **Smart Router** — Route tickets to the best technician based on skills and workload\n- **Knowledge Base Generator** — Auto-generate KB articles from resolved tickets\n- **Voice Assistant** — Hands-free AI for operational tasks (intent detection)\n\n## AI Models\nPowered by Gemini 3 and GPT-5 via the Lovable AI Gateway.\n\n## Add-On Pricing\n- Cortex AI: $5/user/mo\n- AI Copilot: $50/technician/mo (premium tier with full automation)",
+          },
+        ],
+      },
+      {
+        id: "vanguard-addons",
+        label: "Add-Ons & Bundles",
+        icon: Layers,
+        articles: [
+          {
+            id: "addon-matrix",
+            title: "Add-On Pricing Matrix",
+            content:
+              "All add-ons are per-user/month and can be added to any base plan.\n\n| Module | Price | Category |\n|--------|-------|----------|\n| Pursuit XDR | $8 | Security |\n| Sentinel SaaS | $6 | Security |\n| Recon Pentest | $12 | Security |\n| Cortex AI | $5 | AI |\n| Comply | $7 | Compliance |\n| Cross-Client SOC | $10 | Intelligence |\n| Atlas Documentation | $3 | Operations |\n| Phishing Simulation | $4 | Security |\n| AI Copilot | $50 | AI (Premium) |\n| Network Discovery | $25 | Operations |\n\n## Strategic Bundles\n- **Security Bundle** (Pursuit + Sentinel + Comply): $18/user/mo (save 15%)\n- **Complete SOC** (All security modules): $38/user/mo (save 20%)\n\nHigher-tier plans include many add-ons at no extra cost. See [Vanguard Pricing](/pricing/vanguard) for inclusion details.",
+          },
+          {
+            id: "reseller-program",
+            title: "MSP Partner Program",
+            content:
+              "## Partner Tiers\n| Tier | Min Seats | Discount | White-Label |\n|------|-----------|----------|-------------|\n| Silver | 10 | 15% | None |\n| Gold | 25 | 25% | Partial (co-branded) |\n| Platinum | 50 | 35% | Full removal of UltriumAI branding |\n\n## Partner Benefits\n- Volume discounts on all plans and add-ons\n- Profit margin calculator in partner dashboard\n- Co-branded marketing kit generator\n- Client provisioning interface\n- Dedicated partner support\n\nApply via the **MSP Partner Portal** in Vanguard settings.",
+          },
+        ],
+      },
+    ],
   },
+
+  // ─── SafeSuite ──────────────────────────────────────────────
   {
-    id: "api-integration",
-    title: "API & Integrations",
-    description: "Connect UltriumAI with your existing systems",
-    icon: Code,
-    articles: [
+    id: "safesuite",
+    label: "SafeSuite",
+    logo: safesuiteLogo,
+    color: "text-emerald-400",
+    categories: [
       {
-        id: "api-overview",
-        title: "API Overview",
-        description: "Introduction to UltriumAI APIs and capabilities",
-        category: "API",
-        content: "# API Overview\n\nUltriumAI provides comprehensive REST APIs for all platform features.\n\n## Available APIs\n- **Chat API**: UltriumGPT conversation endpoints\n- **Security APIs**: All 8 security application endpoints\n- **User Management**: Account and team management\n- **Analytics API**: Usage and performance metrics\n- **Webhook API**: Real-time event notifications\n\n## Authentication\n- **API Keys**: Secure token-based authentication\n- **OAuth 2.0**: Standard OAuth implementation\n- **JWT Tokens**: JSON Web Token support\n- **Rate Limiting**: Usage-based throttling\n- **IP Whitelisting**: Enhanced security options\n\n## Getting Started\n1. Generate API key in dashboard\n2. Review API documentation\n3. Test endpoints in sandbox\n4. Implement in production\n5. Monitor usage and performance\n\n## Best Practices\n- Secure API key storage\n- Implement proper error handling\n- Use appropriate rate limiting\n- Monitor API usage\n- Keep integrations updated",
-        tags: ["api", "integration", "authentication", "documentation"]
+        id: "safesuite-overview",
+        label: "Overview",
+        icon: Shield,
+        articles: [
+          {
+            id: "safesuite-intro",
+            title: "What is SafeSuite?",
+            content:
+              "SafeSuite is UltriumAI's consumer and SMB security toolkit — five integrated tools for personal and small business cybersecurity.\n\n## Products\n1. **SafePass** — Zero-knowledge password vault (AES-256-GCM, 600K PBKDF2, TOTP authenticator)\n2. **SafeScan** — Unified email, URL, and document threat scanner (bulk scanning up to 50 items)\n3. **SafeWeb** — Dark web breach monitoring with AI-powered threat analysis\n4. **SafeTrack** — IT asset lifecycle management with QR tracking and depreciation\n5. **SafeAssist** — AI-powered security assistant for plain-language guidance",
+          },
+        ],
       },
       {
-        id: "api-keys",
-        title: "API Key Management",
-        description: "Create and manage API keys for secure access",
-        category: "API",
-        content: "# API Key Management\n\nSecure creation and management of API keys for platform access.\n\n## Creating API Keys\n1. Navigate to API section in dashboard\n2. Click \"Create New API Key\"\n3. Set key name and description\n4. Configure permissions and scope\n5. Set expiration date (optional)\n6. Generate and securely store key\n\n## Key Types\n- **Full Access**: Complete platform access\n- **Read Only**: Data retrieval only\n- **Security Apps**: Security tool access only\n- **Chat Only**: UltriumGPT conversations only\n- **Analytics**: Metrics and reporting only\n\n## Security Features\n- **Automatic Rotation**: Scheduled key updates\n- **Usage Monitoring**: Track API calls\n- **Rate Limiting**: Prevent abuse\n- **IP Restrictions**: Limit access by IP\n- **Audit Logging**: Complete access logs\n\n## Key Management\n- View usage statistics\n- Revoke compromised keys\n- Set usage limits\n- Monitor performance\n- Export usage reports",
-        tags: ["api", "keys", "security", "management", "access"]
+        id: "safepass",
+        label: "SafePass",
+        icon: Lock,
+        articles: [
+          {
+            id: "safepass-guide",
+            title: "SafePass Guide",
+            content:
+              "## Zero-Knowledge Architecture\nYour master password never leaves your device. All encryption/decryption happens client-side using AES-256-GCM with 600,000 PBKDF2 iterations.\n\n## Features\n- Password vault with folders and tags\n- Built-in TOTP authenticator (replace Google Authenticator)\n- Password health dashboard (weak, reused, breached)\n- Secure password generator (configurable length, character sets)\n- Browser extension (Chrome, Edge)\n- Mobile apps (iOS, Android)\n- Secure notes and credit card storage\n- Emergency access contacts\n\n## Import\nImport from LastPass, 1Password, Bitwarden, Chrome, and CSV.",
+          },
+        ],
       },
       {
-        id: "webhooks",
-        title: "Webhook Configuration",
-        description: "Set up real-time notifications and event handling",
-        category: "API",
-        content: "# Webhook Configuration\n\nReal-time event notifications for system integration.\n\n## Available Events\n- **Security Alerts**: Threat detection notifications\n- **Chat Events**: Conversation updates\n- **User Events**: Account and team changes\n- **System Events**: Platform status updates\n- **Analytics Events**: Usage milestone notifications\n\n## Setup Process\n1. Define webhook endpoint URL\n2. Select event types to monitor\n3. Configure authentication method\n4. Set retry policies\n5. Test webhook functionality\n\n## Event Payload\n- **Event Type**: Classification of event\n- **Timestamp**: When event occurred\n- **Data**: Event-specific information\n- **Metadata**: Additional context\n- **Signature**: Security verification\n\n## Security\n- **HTTPS Required**: Encrypted transmission\n- **Signature Verification**: Payload authenticity\n- **IP Whitelisting**: Source verification\n- **Retry Logic**: Delivery guarantee\n- **Rate Limiting**: Prevent flooding",
-        tags: ["webhooks", "events", "notifications", "integration", "real-time"]
+        id: "safescan",
+        label: "SafeScan",
+        icon: Search,
+        articles: [
+          {
+            id: "safescan-guide",
+            title: "SafeScan Guide",
+            content:
+              "## Scanning Capabilities\n- **Email Analysis** — Phishing detection, sender verification, attachment scanning\n- **URL Scanning** — Malware detection, domain reputation, redirect chain analysis\n- **Document Scanning** — Macro detection, embedded object analysis, metadata extraction\n\n## Features\n- Bulk scanning (up to 50 items per batch)\n- Scheduled recurring scans\n- PDF and CSV report generation\n- Risk scoring (0–100)\n- Threat intelligence integration\n\n## API Access\nAvailable on Business and Enterprise plans for automated scanning workflows.",
+          },
+        ],
       },
       {
-        id: "third-party-integrations",
-        title: "Third-Party Integrations",
-        description: "Connect with popular business tools and platforms",
-        category: "Integrations",
-        content: "# Third-Party Integrations\n\nSeamless connectivity with popular business and security platforms.\n\n## Security Platforms\n- **SIEM Systems**: Splunk, QRadar, LogRhythm\n- **SOAR Platforms**: Phantom, Demisto, Swimlane\n- **Ticketing Systems**: ServiceNow, Jira, Zendesk\n- **Email Security**: Proofpoint, Mimecast, Office 365\n- **Endpoint Protection**: CrowdStrike, SentinelOne\n\n## Business Tools\n- **Communication**: Slack, Microsoft Teams, Discord\n- **Documentation**: Confluence, Notion, SharePoint\n- **CRM Systems**: Salesforce, HubSpot, Pipedrive\n- **Cloud Platforms**: AWS, Azure, Google Cloud\n- **Monitoring**: Datadog, New Relic, Grafana\n\n## Integration Methods\n- **Native Connectors**: Pre-built integrations\n- **API Connections**: Custom API integrations\n- **Webhook Events**: Real-time notifications\n- **File Sync**: Automated data exchange\n- **SSO Integration**: Single sign-on support\n\n## Configuration\n- Step-by-step setup guides\n- Authentication requirements\n- Data mapping options\n- Sync frequency settings\n- Error handling procedures",
-        tags: ["integrations", "siem", "soar", "business", "platforms"]
-      }
-    ]
+        id: "safeweb",
+        label: "SafeWeb",
+        icon: Globe,
+        articles: [
+          {
+            id: "safeweb-guide",
+            title: "SafeWeb Guide",
+            content:
+              "## Dark Web Monitoring\n- Monitor email addresses and domains for breach exposure\n- Aggregated breach intelligence from multiple databases\n- Real-time alerts when new breaches are detected\n\n## AI Analysis\n- AI-generated threat response plans\n- Exposure risk scoring per identity\n- Remediation guidance (password changes, account recovery steps)\n- Historical breach timeline\n\n## Enterprise Features\n- Bulk domain monitoring\n- Executive monitoring (leadership team alerts)\n- Compliance reporting for breach notification requirements",
+          },
+        ],
+      },
+      {
+        id: "safetrack",
+        label: "SafeTrack",
+        icon: Server,
+        articles: [
+          {
+            id: "safetrack-guide",
+            title: "SafeTrack Guide",
+            content:
+              "## Asset Management\n- Hardware and software inventory with custom fields\n- QR code generation and scanning for physical assets\n- Depreciation calculations (straight-line, declining balance)\n- Warranty tracking with expiration alerts\n\n## Lifecycle Management\n- Procurement → Deployment → Maintenance → Retirement\n- Maintenance scheduling with cost tracking\n- Assignment history (user, department, location)\n- Compliance audit trails\n\n## Reporting\n- Asset valuation reports\n- Depreciation schedules\n- Maintenance cost analysis\n- Warranty status overview",
+          },
+        ],
+      },
+      {
+        id: "safeassist",
+        label: "SafeAssist",
+        icon: Bot,
+        articles: [
+          {
+            id: "safeassist-guide",
+            title: "SafeAssist Guide",
+            content:
+              "## AI Security Assistant\nSafeAssist provides plain-language security guidance through a ChatGPT-style interface.\n\n## Capabilities\n- Answer security questions in plain English\n- Analyze uploaded files and emails for threats\n- Provide personalized security recommendations\n- Explain technical security concepts\n- Guide through incident response steps\n\n## Powered By\nSafeAssist uses the same AI models as Cortex (Gemini 3 / GPT-5) but optimized for consumer-friendly language.",
+          },
+        ],
+      },
+    ],
   },
-  {
-    id: "team-management",
-    title: "Team & Collaboration",
-    description: "Manage teams, roles, and collaborative workflows",
-    icon: Users,
-    articles: [
-      {
-        id: "team-setup",
-        title: "Team Setup & Management",
-        description: "Create and manage teams with role-based access",
-        category: "Teams",
-        content: "# Team Setup & Management\n\nComprehensive team management with role-based access control.\n\n## Creating Teams\n1. Navigate to Team Management\n2. Click \"Create New Team\"\n3. Set team name and description\n4. Configure team settings\n5. Invite initial members\n\n## Team Roles\n- **Owner**: Full administrative access\n- **Admin**: Team management and configuration\n- **Member**: Standard platform access\n- **Viewer**: Read-only access\n- **Guest**: Limited temporary access\n\n## Access Control\n- **Resource Permissions**: Control access to features\n- **Data Segmentation**: Team-specific data isolation\n- **API Access**: Team-scoped API keys\n- **Audit Trails**: Complete activity logging\n- **Compliance**: Role-based compliance tracking\n\n## Team Features\n- Shared conversations\n- Team knowledge bases\n- Collaborative security monitoring\n- Group analytics\n- Team-wide settings",
-        tags: ["teams", "management", "roles", "access", "collaboration"]
-      },
-      {
-        id: "user-invitations",
-        title: "User Invitations & Onboarding",
-        description: "Invite users and streamline onboarding process",
-        category: "Teams",
-        content: "# User Invitations & Onboarding\n\nStreamlined user invitation and onboarding workflows.\n\n## Invitation Process\n1. Click \"Invite Users\" in team dashboard\n2. Enter email addresses (bulk supported)\n3. Select role and permissions\n4. Add personalized welcome message\n5. Send invitations\n\n## Invitation Options\n- **Role Assignment**: Pre-set user roles\n- **Resource Access**: Specific feature access\n- **Expiration Dates**: Time-limited invitations\n- **Custom Messages**: Personalized welcome\n- **Bulk Operations**: Multiple user invitations\n\n## Onboarding Checklist\n- Account activation\n- Profile completion\n- Security setup (2FA)\n- Training module completion\n- First conversation or scan\n\n## Management Features\n- Track invitation status\n- Resend failed invitations\n- Revoke pending invitations\n- Monitor onboarding progress\n- Generate completion reports",
-        tags: ["invitations", "onboarding", "users", "setup", "training"]
-      },
-      {
-        id: "collaboration-features",
-        title: "Collaboration Features",
-        description: "Tools for effective team collaboration",
-        category: "Teams",
-        content: "# Collaboration Features\n\nAdvanced collaboration tools for team productivity.\n\n## Shared Workspaces\n- **Team Conversations**: Shared chat histories\n- **Knowledge Bases**: Collaborative document management\n- **Security Monitoring**: Team-wide threat visibility\n- **Project Spaces**: Organized collaboration areas\n- **Resource Libraries**: Shared templates and assets\n\n## Communication Tools\n- **Internal Messaging**: Team communication\n- **Annotations**: Collaborative note-taking\n- **Comments**: Conversation threading\n- **Mentions**: Team member notifications\n- **Status Updates**: Project progress tracking\n\n## Workflow Management\n- **Task Assignment**: Distribute work items\n- **Progress Tracking**: Monitor completion status\n- **Approval Workflows**: Review and approval processes\n- **Automated Routing**: Smart work distribution\n- **Escalation Rules**: Issue escalation protocols\n\n## Knowledge Sharing\n- Team knowledge bases\n- Best practice documentation\n- Training material sharing\n- Expertise location\n- Collaborative editing",
-        tags: ["collaboration", "communication", "workflow", "sharing", "productivity"]
-      }
-    ]
-  },
-  {
-    id: "white-label",
-    title: "White Label & Customization",
-    description: "Brand customization and white-label deployment",
-    icon: Palette,
-    articles: [
-      {
-        id: "branding-setup",
-        title: "Branding & Visual Customization",
-        description: "Customize the platform with your brand identity",
-        category: "White Label",
-        content: "# Branding & Visual Customization\n\nComplete brand customization for white-label deployments.\n\n## Visual Elements\n- **Logo Upload**: Custom company logos\n- **Color Schemes**: Brand color implementation\n- **Typography**: Custom font selection\n- **Themes**: Light and dark mode customization\n- **Icons**: Custom icon libraries\n\n## Interface Customization\n- **Navigation**: Custom menu structures\n- **Dashboard Layout**: Personalized dashboards\n- **Landing Pages**: Custom welcome screens\n- **Footer Content**: Company information\n- **Help Documentation**: Branded support content\n\n## Brand Guidelines\n- Logo usage specifications\n- Color palette definitions\n- Typography standards\n- Design system documentation\n- Asset management\n\n## Implementation\n1. Upload brand assets\n2. Configure color schemes\n3. Set typography preferences\n4. Customize interface elements\n5. Preview and publish changes",
-        tags: ["branding", "customization", "white-label", "design", "themes"]
-      },
-      {
-        id: "domain-setup",
-        title: "Custom Domain Configuration",
-        description: "Set up custom domains for your white-label deployment",
-        category: "White Label",
-        content: "# Custom Domain Configuration\n\nProfessional domain setup for white-label platforms.\n\n## Domain Requirements\n- **SSL Certificate**: HTTPS encryption required\n- **DNS Configuration**: Proper DNS record setup\n- **Domain Validation**: Ownership verification\n- **Subdomain Support**: Multiple subdomain options\n- **CDN Integration**: Global content delivery\n\n## Setup Process\n1. Purchase or prepare custom domain\n2. Configure DNS records\n3. Verify domain ownership\n4. Upload SSL certificate\n5. Test domain configuration\n6. Deploy to production\n\n## DNS Configuration\n- **A Records**: Point to platform servers\n- **CNAME Records**: Subdomain configuration\n- **MX Records**: Email routing (optional)\n- **TXT Records**: Domain verification\n- **TTL Settings**: Cache optimization\n\n## Management Features\n- Domain health monitoring\n- SSL certificate renewal\n- DNS propagation tracking\n- Performance optimization\n- Backup domain configuration",
-        tags: ["domain", "dns", "ssl", "hosting", "configuration"]
-      },
-      {
-        id: "feature-configuration",
-        title: "Feature Configuration",
-        description: "Enable and customize platform features",
-        category: "White Label",
-        content: "# Feature Configuration\n\nGranular control over platform features and capabilities.\n\n## Feature Toggles\n- **Security Apps**: Enable/disable specific tools\n- **AI Features**: Control AI capabilities\n- **Integrations**: Available third-party connections\n- **Analytics**: Reporting and metrics access\n- **User Features**: Account management options\n\n## Access Controls\n- **Role-Based Features**: Feature access by role\n- **Usage Limits**: Feature usage restrictions\n- **Subscription Tiers**: Tiered feature access\n- **Custom Permissions**: Granular access control\n- **Feature Licensing**: Commercial feature management\n\n## Customization Options\n- **Interface Layout**: Custom page arrangements\n- **Workflow Configuration**: Business process alignment\n- **Default Settings**: Pre-configured preferences\n- **Template Management**: Custom templates\n- **Automation Rules**: Custom automation\n\n## Deployment Settings\n- Environment configuration\n- Performance optimization\n- Security hardening\n- Monitoring setup\n- Backup configuration",
-        tags: ["features", "configuration", "access", "customization", "deployment"]
-      }
-    ]
-  },
-  {
-    id: "analytics",
-    title: "Analytics & Reporting",
-    description: "Comprehensive analytics and reporting capabilities",
-    icon: BarChart3,
-    articles: [
-      {
-        id: "usage-analytics",
-        title: "Usage Analytics",
-        description: "Track platform usage and user engagement",
-        category: "Analytics",
-        content: "# Usage Analytics\n\nComprehensive usage tracking and engagement analytics.\n\n## Key Metrics\n- **Active Users**: Daily, weekly, monthly active users\n- **Session Duration**: Average time spent on platform\n- **Feature Usage**: Most/least used features\n- **Conversation Volume**: Chat activity metrics\n- **API Calls**: Integration usage statistics\n\n## User Behavior\n- **User Journeys**: Path analysis through platform\n- **Feature Adoption**: New feature uptake rates\n- **Engagement Patterns**: Peak usage times\n- **Drop-off Points**: Where users disengage\n- **Success Metrics**: Goal completion rates\n\n## Performance Metrics\n- **Response Times**: System performance tracking\n- **Uptime Statistics**: Availability monitoring\n- **Error Rates**: System reliability metrics\n- **Throughput**: Processing capacity utilization\n- **Resource Usage**: System resource consumption\n\n## Reporting Options\n- Real-time dashboards\n- Scheduled reports\n- Custom report builder\n- Data export capabilities\n- Executive summaries",
-        tags: ["usage", "analytics", "metrics", "engagement", "performance"]
-      },
-      {
-        id: "security-analytics",
-        title: "Security Analytics",
-        description: "Security-focused analytics and threat intelligence",
-        category: "Analytics",
-        content: "# Security Analytics\n\nAdvanced security analytics and threat intelligence reporting.\n\n## Threat Metrics\n- **Threat Detection Rate**: Successful threat identification\n- **False Positive Rate**: Accuracy measurements\n- **Response Time**: Time to threat resolution\n- **Severity Distribution**: Threat categorization\n- **Attack Trends**: Emerging threat patterns\n\n## Risk Assessment\n- **Risk Scoring**: Organizational risk levels\n- **Vulnerability Trends**: Security posture over time\n- **Compliance Status**: Regulatory compliance tracking\n- **Incident Frequency**: Security incident rates\n- **Remediation Effectiveness**: Fix success rates\n\n## Security Reporting\n- **Executive Dashboards**: High-level security overview\n- **Technical Reports**: Detailed technical analysis\n- **Compliance Reports**: Regulatory documentation\n- **Incident Reports**: Security event documentation\n- **Trend Analysis**: Historical security trends\n\n## Intelligence Integration\n- **Threat Intelligence Feeds**: External threat data\n- **IOC Tracking**: Indicator of compromise monitoring\n- **Attribution Analysis**: Threat actor identification\n- **Campaign Tracking**: Attack campaign monitoring\n- **Predictive Analytics**: Future threat prediction",
-        tags: ["security", "analytics", "threats", "risk", "compliance"]
-      },
-      {
-        id: "custom-reports",
-        title: "Custom Report Builder",
-        description: "Create custom reports and dashboards",
-        category: "Analytics",
-        content: "# Custom Report Builder\n\nFlexible report creation with drag-and-drop interface.\n\n## Report Types\n- **Executive Reports**: High-level summaries\n- **Operational Reports**: Detailed operational data\n- **Compliance Reports**: Regulatory compliance\n- **Performance Reports**: System performance metrics\n- **Custom Dashboards**: Personalized views\n\n## Data Sources\n- **Platform Analytics**: Usage and engagement data\n- **Security Data**: Threat and vulnerability information\n- **User Data**: Account and team metrics\n- **API Data**: Integration usage statistics\n- **External Data**: Third-party data sources\n\n## Visualization Options\n- **Charts**: Bar, line, pie, scatter plots\n- **Tables**: Sortable data tables\n- **Maps**: Geographic visualizations\n- **Gauges**: Performance indicators\n- **Heatmaps**: Pattern visualization\n\n## Report Features\n- **Scheduling**: Automated report generation\n- **Distribution**: Email and notification delivery\n- **Filtering**: Dynamic data filtering\n- **Drill-down**: Detailed data exploration\n- **Export**: Multiple format support",
-        tags: ["reports", "custom", "dashboards", "visualization", "automation"]
-      }
-    ]
-  },
-  {
-    id: "deployment",
-    title: "Deployment & Configuration",
-    description: "Platform deployment and configuration guides",
-    icon: Database,
-    articles: [
-      {
-        id: "installation-guide",
-        title: "Installation Guide",
-        description: "Step-by-step platform installation instructions",
-        category: "Deployment",
-        content: "# Installation Guide\n\nComprehensive installation instructions for UltriumAI platform.\n\n## System Requirements\n- **Operating System**: Linux (Ubuntu 20.04+), Windows Server 2019+\n- **Memory**: Minimum 16GB RAM, Recommended 32GB+\n- **Storage**: 500GB SSD minimum\n- **CPU**: 8 cores minimum, 16 cores recommended\n- **Network**: High-speed internet connection\n\n## Prerequisites\n- **Docker**: Container runtime environment\n- **Kubernetes**: Container orchestration (optional)\n- **Database**: PostgreSQL 13+ or MongoDB 5.0+\n- **SSL Certificate**: Valid SSL/TLS certificate\n- **Domain**: Configured domain name\n\n## Installation Steps\n1. **Environment Preparation**\n   - Update system packages\n   - Install Docker and dependencies\n   - Configure firewall rules\n   - Set up monitoring\n\n2. **Database Setup**\n   - Install PostgreSQL\n   - Create database and users\n   - Configure connection settings\n   - Run initial migrations\n\n3. **Application Deployment**\n   - Download application images\n   - Configure environment variables\n   - Deploy application containers\n   - Verify installation\n\n4. **Post-Installation**\n   - Configure SSL certificates\n   - Set up monitoring and logging\n   - Create admin accounts\n   - Test functionality",
-        tags: ["installation", "deployment", "setup", "requirements", "configuration"]
-      },
-      {
-        id: "cloud-deployment",
-        title: "Cloud Deployment Options",
-        description: "Deploy UltriumAI on major cloud platforms",
-        category: "Deployment",
-        content: "# Cloud Deployment Options\n\nDeploy UltriumAI on AWS, Azure, Google Cloud, and other platforms.\n\n## AWS Deployment\n- **EC2 Instances**: Virtual server deployment\n- **EKS Clusters**: Kubernetes-based deployment\n- **RDS Database**: Managed database service\n- **CloudFront**: Content delivery network\n- **Route 53**: DNS management\n- **ALB/NLB**: Load balancing\n\n## Azure Deployment\n- **Virtual Machines**: Compute instances\n- **AKS Clusters**: Azure Kubernetes Service\n- **Azure Database**: Managed PostgreSQL\n- **Azure CDN**: Content delivery\n- **Azure DNS**: Domain management\n- **Application Gateway**: Load balancing\n\n## Google Cloud Deployment\n- **Compute Engine**: Virtual machines\n- **GKE Clusters**: Google Kubernetes Engine\n- **Cloud SQL**: Managed database\n- **Cloud CDN**: Content delivery\n- **Cloud DNS**: DNS management\n- **Cloud Load Balancing**: Traffic distribution\n\n## Deployment Automation\n- **Terraform**: Infrastructure as code\n- **Ansible**: Configuration management\n- **Helm Charts**: Kubernetes deployments\n- **CI/CD Pipelines**: Automated deployment\n- **Monitoring**: Health checks and alerts",
-        tags: ["cloud", "aws", "azure", "gcp", "kubernetes", "automation"]
-      },
-      {
-        id: "configuration-management",
-        title: "Configuration Management",
-        description: "Manage platform configuration and settings",
-        category: "Deployment",
-        content: "# Configuration Management\n\nCentralized configuration management for UltriumAI platform.\n\n## Configuration Files\n- **Application Config**: Core application settings\n- **Database Config**: Database connection parameters\n- **Security Config**: Security and authentication settings\n- **Integration Config**: Third-party service settings\n- **Feature Flags**: Feature enablement configuration\n\n## Environment Management\n- **Development**: Development environment settings\n- **Staging**: Pre-production configuration\n- **Production**: Live environment settings\n- **Testing**: Automated testing configuration\n- **Disaster Recovery**: Backup environment setup\n\n## Configuration Sources\n- **Environment Variables**: Runtime configuration\n- **Config Files**: Static configuration files\n- **Database Storage**: Dynamic configuration\n- **External Services**: Remote configuration\n- **Command Line**: Override parameters\n\n## Best Practices\n- **Version Control**: Track configuration changes\n- **Validation**: Validate configuration syntax\n- **Secrets Management**: Secure sensitive data\n- **Documentation**: Document configuration options\n- **Testing**: Test configuration changes\n\n## Tools and Integration\n- **Consul**: Service discovery and configuration\n- **Vault**: Secrets management\n- **Kubernetes ConfigMaps**: Container configuration\n- **AWS Parameter Store**: Cloud configuration\n- **Azure Key Vault**: Secret management",
-        tags: ["configuration", "management", "environment", "secrets", "automation"]
-      }
-    ]
-  },
-  {
-    id: "troubleshooting",
-    title: "Troubleshooting & Support",
-    description: "Common issues, solutions, and support resources",
-    icon: Settings,
-    articles: [
-      {
-        id: "common-issues",
-        title: "Common Issues & Solutions",
-        description: "Troubleshoot frequent problems and error messages",
-        category: "Support",
-        content: "# Common Issues & Solutions\n\nComprehensive troubleshooting guide for common platform issues.\n\n## Login & Authentication\n\n### Can't Sign In\n- **Check Credentials**: Verify email and password\n- **Password Reset**: Use \"Forgot Password\" link\n- **Account Verification**: Check email for verification link\n- **Browser Issues**: Clear cache, try incognito mode\n- **2FA Problems**: Use backup codes or contact support\n\n### Session Expiration\n- **Timeout Settings**: Check session timeout configuration\n- **Browser Storage**: Clear browser cookies and storage\n- **Multiple Sessions**: Log out from other devices\n- **Security Settings**: Review security policy settings\n\n## Performance Issues\n\n### Slow Loading\n- **Network Connection**: Check internet connectivity\n- **Browser Performance**: Update browser, disable extensions\n- **Server Status**: Check platform status page\n- **Cache Issues**: Clear browser cache\n- **Resource Usage**: Monitor system resources\n\n### API Timeouts\n- **Rate Limiting**: Check API rate limits\n- **Network Latency**: Test network connectivity\n- **Payload Size**: Reduce request size\n- **Server Load**: Check server performance\n- **Retry Logic**: Implement proper retry mechanisms\n\n## Feature-Specific Issues\n\n### UltriumGPT Not Responding\n- **Model Status**: Check AI model availability\n- **Credit Limits**: Verify account credits\n- **Input Validation**: Check message formatting\n- **Knowledge Base**: Ensure documents are processed\n- **API Connectivity**: Test API endpoints\n\n### Security Scans Failing\n- **File Format**: Verify supported file types\n- **File Size**: Check size limitations\n- **Network Access**: Ensure internet connectivity\n- **Subscription Status**: Verify active subscription\n- **Queue Status**: Check processing queue\n\n## Getting Help\n- **Email Support**: support@ultriumai.com\n- **Phone Support**: 888-884-1410\n- **Live Chat**: Available during business hours\n- **Documentation**: Comprehensive help articles\n- **Community Forum**: User community support",
-        tags: ["troubleshooting", "support", "issues", "help", "solutions"]
-      },
-      {
-        id: "error-codes",
-        title: "Error Code Reference",
-        description: "Comprehensive list of error codes and meanings",
-        category: "Support",
-        content: "# Error Code Reference\n\nComplete reference for platform error codes and resolution steps.\n\n## Authentication Errors (1000-1999)\n\n### 1001: Invalid Credentials\n- **Cause**: Incorrect username or password\n- **Solution**: Verify credentials, reset password if needed\n- **Prevention**: Use strong, unique passwords\n\n### 1002: Account Locked\n- **Cause**: Multiple failed login attempts\n- **Solution**: Wait for lockout period or contact support\n- **Prevention**: Enable 2FA, use password manager\n\n### 1003: Session Expired\n- **Cause**: Session timeout or security policy\n- **Solution**: Log in again\n- **Prevention**: Adjust session timeout settings\n\n## API Errors (2000-2999)\n\n### 2001: Rate Limit Exceeded\n- **Cause**: Too many API requests in time window\n- **Solution**: Implement backoff strategy\n- **Prevention**: Monitor usage, optimize requests\n\n### 2002: Invalid API Key\n- **Cause**: Missing, expired, or malformed API key\n- **Solution**: Generate new API key\n- **Prevention**: Secure key storage, regular rotation\n\n### 2003: Insufficient Permissions\n- **Cause**: API key lacks required permissions\n- **Solution**: Update API key permissions\n- **Prevention**: Follow principle of least privilege\n\n## Processing Errors (3000-3999)\n\n### 3001: File Upload Failed\n- **Cause**: Network issue or file corruption\n- **Solution**: Retry upload, check file integrity\n- **Prevention**: Validate files before upload\n\n### 3002: Processing Timeout\n- **Cause**: Large file or system overload\n- **Solution**: Reduce file size, retry later\n- **Prevention**: Optimize file size, batch processing\n\n### 3003: Unsupported Format\n- **Cause**: File format not supported\n- **Solution**: Convert to supported format\n- **Prevention**: Check format requirements\n\n## System Errors (4000-4999)\n\n### 4001: Service Unavailable\n- **Cause**: System maintenance or overload\n- **Solution**: Wait and retry\n- **Prevention**: Monitor status page\n\n### 4002: Database Connection Failed\n- **Cause**: Database connectivity issues\n- **Solution**: Contact support\n- **Prevention**: Regular system monitoring\n\n### 4003: Internal Server Error\n- **Cause**: Unexpected system error\n- **Solution**: Contact support with error details\n- **Prevention**: Report recurring errors",
-        tags: ["errors", "codes", "reference", "debugging", "resolution"]
-      },
-      {
-        id: "performance-optimization",
-        title: "Performance Optimization",
-        description: "Optimize platform performance and efficiency",
-        category: "Support",
-        content: "# Performance Optimization\n\nOptimize UltriumAI platform performance for better user experience.\n\n## System Optimization\n\n### Server Configuration\n- **Memory Allocation**: Optimize RAM usage\n- **CPU Settings**: Configure processor affinity\n- **Storage**: Use SSD storage for better I/O\n- **Network**: Optimize network configuration\n- **Caching**: Implement effective caching strategies\n\n### Database Optimization\n- **Indexing**: Create appropriate database indexes\n- **Query Optimization**: Optimize database queries\n- **Connection Pooling**: Manage database connections\n- **Partitioning**: Partition large tables\n- **Maintenance**: Regular database maintenance\n\n## Application Optimization\n\n### Frontend Performance\n- **Asset Optimization**: Minimize CSS/JS files\n- **Image Compression**: Optimize image sizes\n- **Lazy Loading**: Load content on demand\n- **CDN Usage**: Use content delivery networks\n- **Browser Caching**: Leverage browser caching\n\n### API Performance\n- **Request Optimization**: Minimize API calls\n- **Payload Optimization**: Reduce data transfer\n- **Compression**: Enable response compression\n- **Connection Reuse**: Reuse HTTP connections\n- **Async Processing**: Use asynchronous processing\n\n## Monitoring and Alerts\n\n### Performance Metrics\n- **Response Time**: Monitor API response times\n- **Throughput**: Track request volume\n- **Error Rate**: Monitor error percentages\n- **Resource Usage**: Track CPU, memory, disk usage\n- **User Experience**: Monitor user interaction metrics\n\n### Alerting\n- **Threshold Alerts**: Set performance thresholds\n- **Trend Analysis**: Monitor performance trends\n- **Predictive Alerts**: Predict performance issues\n- **Escalation**: Define alert escalation procedures\n- **Documentation**: Document performance baselines",
-        tags: ["performance", "optimization", "monitoring", "efficiency", "tuning"]
-      },
-      {
-        id: "backup-recovery",
-        title: "Backup & Recovery",
-        description: "Data backup and disaster recovery procedures",
-        category: "Support",
-        content: "# Backup & Recovery\n\nComprehensive backup and disaster recovery procedures.\n\n## Backup Strategy\n\n### Data Types\n- **User Data**: Conversations, documents, settings\n- **Configuration**: Platform and integration settings\n- **Databases**: Complete database backups\n- **Files**: Uploaded documents and assets\n- **Logs**: System and audit logs\n\n### Backup Schedule\n- **Real-time**: Critical data replication\n- **Hourly**: Transaction log backups\n- **Daily**: Full database backups\n- **Weekly**: Complete system backups\n- **Monthly**: Archive backups\n\n### Storage Options\n- **Local Storage**: On-site backup storage\n- **Cloud Storage**: Remote cloud backups\n- **Multiple Locations**: Geographic distribution\n- **Encryption**: Encrypted backup storage\n- **Retention**: Backup retention policies\n\n## Recovery Procedures\n\n### Recovery Types\n- **Point-in-Time**: Restore to specific time\n- **Full Restore**: Complete system restoration\n- **Partial Restore**: Selective data recovery\n- **Hot Standby**: Immediate failover\n- **Cold Standby**: Manual activation backup\n\n### Recovery Steps\n1. **Assessment**: Evaluate damage scope\n2. **Notification**: Alert stakeholders\n3. **Isolation**: Isolate affected systems\n4. **Recovery**: Execute recovery procedures\n5. **Validation**: Verify data integrity\n6. **Resumption**: Resume normal operations\n\n### Testing\n- **Regular Testing**: Monthly recovery tests\n- **Documentation**: Test procedure documentation\n- **Validation**: Verify backup integrity\n- **Performance**: Test recovery time objectives\n- **Training**: Staff recovery training",
-        tags: ["backup", "recovery", "disaster", "procedures", "data"]
-      }
-    ]
-  },
-  {
-    id: "compliance",
-    title: "Compliance & Security",
-    description: "Security standards, compliance, and regulatory information",
-    icon: Lock,
-    articles: [
-      {
-        id: "security-standards",
-        title: "Security Standards & Certifications",
-        description: "Overview of security standards and compliance certifications",
-        category: "Compliance",
-        content: "# Security Standards & Certifications\n\nUltriumAI maintains the highest security standards and compliance certifications.\n\n## Security Frameworks\n\n### ISO 27001\n- **Information Security Management**: Comprehensive security management\n- **Risk Assessment**: Regular security risk evaluations\n- **Continuous Improvement**: Ongoing security enhancements\n- **Audit Requirements**: Regular internal and external audits\n- **Documentation**: Complete security documentation\n\n### SOC 2 Type II\n- **Security**: Logical and physical access controls\n- **Availability**: System uptime and performance\n- **Processing Integrity**: Complete and accurate processing\n- **Confidentiality**: Protection of confidential information\n- **Privacy**: Personal information protection\n\n### GDPR Compliance\n- **Data Protection**: EU data protection regulations\n- **Right to Erasure**: Data deletion capabilities\n- **Data Portability**: Data export functionality\n- **Consent Management**: User consent tracking\n- **Breach Notification**: Incident reporting procedures\n\n## Technical Security\n\n### Encryption\n- **Data at Rest**: AES-256 encryption\n- **Data in Transit**: TLS 1.3 encryption\n- **Key Management**: Hardware security modules\n- **Certificate Management**: Automated certificate rotation\n- **End-to-End**: Client-to-server encryption\n\n### Access Controls\n- **Multi-Factor Authentication**: Required for all accounts\n- **Role-Based Access**: Granular permission system\n- **Zero Trust**: Never trust, always verify\n- **Privileged Access**: Enhanced controls for admin access\n- **Session Management**: Secure session handling\n\n### Infrastructure Security\n- **Network Segmentation**: Isolated network zones\n- **Intrusion Detection**: Real-time threat monitoring\n- **Vulnerability Management**: Regular security assessments\n- **Incident Response**: 24/7 SafeSOC\n- **Physical Security**: Secure data center facilities",
-        tags: ["security", "compliance", "standards", "certification", "audit"]
-      },
-      {
-        id: "data-privacy",
-        title: "Data Privacy & Protection",
-        description: "Data handling, privacy policies, and protection measures",
-        category: "Compliance",
-        content: "# Data Privacy & Protection\n\nComprehensive data privacy and protection measures.\n\n## Data Classification\n\n### Public Data\n- **Marketing Materials**: Publicly available content\n- **Product Information**: Feature descriptions\n- **Documentation**: Public help articles\n- **Compliance**: No special protection required\n\n### Internal Data\n- **Business Information**: Company operational data\n- **Employee Data**: Staff information (limited)\n- **System Logs**: Operational logging data\n- **Protection**: Standard encryption and access controls\n\n### Confidential Data\n- **Customer Data**: User account information\n- **Business Intelligence**: Analytics and reports\n- **Financial Data**: Billing and payment information\n- **Protection**: Enhanced encryption and access controls\n\n### Restricted Data\n- **Personal Information**: PII and sensitive data\n- **Security Information**: Keys, certificates, secrets\n- **Legal Data**: Contracts and legal documents\n- **Protection**: Maximum security measures\n\n## Privacy Controls\n\n### Data Minimization\n- **Collection Limitation**: Collect only necessary data\n- **Purpose Limitation**: Use data only for stated purposes\n- **Retention Limitation**: Delete data when no longer needed\n- **Storage Limitation**: Minimize data storage locations\n\n### User Rights\n- **Access Right**: Users can view their data\n- **Rectification Right**: Users can correct data\n- **Erasure Right**: Users can delete data\n- **Portability Right**: Users can export data\n- **Objection Right**: Users can object to processing\n\n### Consent Management\n- **Explicit Consent**: Clear consent mechanisms\n- **Granular Consent**: Specific purpose consent\n- **Withdrawal**: Easy consent withdrawal\n- **Documentation**: Consent tracking and logging\n- **Renewal**: Periodic consent renewal",
-        tags: ["privacy", "data", "protection", "gdpr", "consent"]
-      },
-      {
-        id: "audit-compliance",
-        title: "Audit & Compliance Reporting",
-        description: "Audit procedures and compliance reporting capabilities",
-        category: "Compliance",
-        content: "# Audit & Compliance Reporting\n\nComprehensive audit trails and compliance reporting capabilities.\n\n## Audit Logging\n\n### Event Types\n- **Authentication Events**: Login/logout activities\n- **Data Access**: File and record access\n- **Configuration Changes**: System modifications\n- **Security Events**: Security-related activities\n- **API Usage**: Integration and API calls\n\n### Log Details\n- **Timestamp**: Precise event timing\n- **User Identity**: Who performed the action\n- **Action Type**: What was done\n- **Resource**: What was accessed/modified\n- **Result**: Success or failure status\n- **Source**: IP address and location\n\n### Log Management\n- **Retention**: Long-term log retention\n- **Integrity**: Tamper-proof log storage\n- **Search**: Advanced log search capabilities\n- **Export**: Log export for external analysis\n- **Alerts**: Real-time security alerts\n\n## Compliance Reporting\n\n### Report Types\n- **Access Reports**: User access summaries\n- **Security Reports**: Security event analysis\n- **Privacy Reports**: Data handling compliance\n- **Operational Reports**: System operation metrics\n- **Executive Reports**: High-level compliance status\n\n### Automated Reporting\n- **Scheduled Reports**: Regular compliance reports\n- **Real-time Dashboards**: Live compliance status\n- **Exception Reports**: Non-compliance alerts\n- **Trend Analysis**: Compliance trend tracking\n- **Custom Reports**: Tailored compliance reports\n\n### External Audits\n- **Audit Preparation**: Support for external audits\n- **Evidence Collection**: Automated evidence gathering\n- **Audit Trails**: Complete activity documentation\n- **Remediation Tracking**: Issue resolution tracking\n- **Certification Support**: Compliance certification assistance",
-        tags: ["audit", "compliance", "reporting", "logging", "certification"]
-      }
-    ]
-  }
 ];
+
+// ── Component ──────────────────────────────────────────────────
 
 const Docs = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [activeSection, setActiveSection] = useState("platform");
+  const [activeArticle, setActiveArticle] = useState("quick-start");
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set(["getting-started"])
+  );
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  // Flatten all articles for search
-  const allArticles = docSections.flatMap(section => section.articles);
+  // Find current article
+  const findArticle = (
+    articleId: string
+  ): { article: DocArticle; section: DocSection; category: DocCategory } | null => {
+    for (const section of DOC_SECTIONS) {
+      for (const category of section.categories) {
+        const article = category.articles.find((a) => a.id === articleId);
+        if (article) return { article, section, category };
+      }
+    }
+    return null;
+  };
 
-  // Filter articles based on search and category
-  const filteredArticles = allArticles.filter(article => {
-    const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         article.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         article.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = selectedCategory === "all" || article.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const current = findArticle(activeArticle);
 
-  const categories = ["all", ...Array.from(new Set(allArticles.map(article => article.category)))];
+  // Search
+  const searchResults = searchTerm.trim()
+    ? DOC_SECTIONS.flatMap((s) =>
+        s.categories.flatMap((c) =>
+          c.articles
+            .filter(
+              (a) =>
+                a.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                a.content.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+            .map((a) => ({ article: a, section: s, category: c }))
+        )
+      )
+    : [];
+
+  const selectArticle = (articleId: string) => {
+    const found = findArticle(articleId);
+    if (found) {
+      setActiveSection(found.section.id);
+      setActiveArticle(articleId);
+      setExpandedCategories((prev) => new Set([...prev, found.category.id]));
+      setMobileSidebarOpen(false);
+      contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const toggleCategory = (catId: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(catId)) next.delete(catId);
+      else next.add(catId);
+      return next;
+    });
+  };
+
+  // Render markdown-ish content
+  const renderContent = (content: string) => {
+    return content.split("\n").map((line, i) => {
+      if (line.startsWith("### ")) return <h3 key={i} className="text-lg font-bold text-foreground mt-6 mb-2">{line.slice(4)}</h3>;
+      if (line.startsWith("## ")) return <h2 key={i} className="text-xl font-bold text-foreground mt-8 mb-3 pb-2 border-b border-border/30">{line.slice(3)}</h2>;
+      if (line.startsWith("# ")) return <h1 key={i} className="text-2xl font-bold text-foreground mt-6 mb-4">{line.slice(2)}</h1>;
+      if (line.startsWith("| ") && line.includes("|")) {
+        const cells = line.split("|").filter(Boolean).map((c) => c.trim());
+        if (cells.every((c) => /^[-:]+$/.test(c))) return null; // separator row
+        const isHeader = i > 0 && content.split("\n")[i + 1]?.includes("---");
+        return (
+          <div key={i} className={cn("grid gap-4 px-3 py-2 text-sm", `grid-cols-${cells.length}`, isHeader ? "font-semibold text-foreground border-b border-border/30" : "text-muted-foreground")}>
+            {cells.map((c, j) => <span key={j}>{c}</span>)}
+          </div>
+        );
+      }
+      if (line.startsWith("- **")) {
+        const match = line.match(/^- \*\*(.+?)\*\*\s*[—–-]\s*(.+)$/);
+        if (match) return <li key={i} className="ml-4 text-sm text-muted-foreground mb-1.5"><span className="font-semibold text-foreground">{match[1]}</span> — {match[2]}</li>;
+        const match2 = line.match(/^- \*\*(.+?)\*\*(.*)$/);
+        if (match2) return <li key={i} className="ml-4 text-sm text-muted-foreground mb-1.5"><span className="font-semibold text-foreground">{match2[1]}</span>{match2[2]}</li>;
+      }
+      if (line.startsWith("- ")) return <li key={i} className="ml-4 text-sm text-muted-foreground mb-1">{renderInline(line.slice(2))}</li>;
+      if (/^\d+\.\s/.test(line)) return <li key={i} className="ml-4 text-sm text-muted-foreground mb-1 list-decimal">{renderInline(line.replace(/^\d+\.\s/, ""))}</li>;
+      if (line.trim() === "") return <div key={i} className="h-2" />;
+      return <p key={i} className="text-sm text-muted-foreground leading-relaxed mb-2">{renderInline(line)}</p>;
+    });
+  };
+
+  const renderInline = (text: string) => {
+    // Handle **bold**, `code`, [links](/path)
+    const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("**") && part.endsWith("**"))
+        return <strong key={i} className="text-foreground font-semibold">{part.slice(2, -2)}</strong>;
+      if (part.startsWith("`") && part.endsWith("`"))
+        return <code key={i} className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">{part.slice(1, -1)}</code>;
+      const linkMatch = part.match(/\[([^\]]+)\]\(([^)]+)\)/);
+      if (linkMatch)
+        return <a key={i} href={linkMatch[2]} className="text-primary hover:underline">{linkMatch[1]}</a>;
+      return <span key={i}>{part}</span>;
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
-      <main className="pt-20">
-        {/* Hero Section */}
-        <section className="py-16 bg-gradient-to-br from-background via-background/95 to-primary/5">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <BookOpen className="h-12 w-12 text-primary" />
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                Knowledge Base
-              </h1>
+
+      <div className="pt-16 flex">
+        {/* ── Mobile Sidebar Toggle ─────────────────────── */}
+        <button
+          onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+          className="md:hidden fixed bottom-4 right-4 z-50 bg-primary text-primary-foreground rounded-full p-3 shadow-lg"
+        >
+          <BookOpen className="h-5 w-5" />
+        </button>
+
+        {/* ── Sidebar ───────────────────────────────────── */}
+        <aside
+          className={cn(
+            "fixed md:sticky top-16 left-0 z-40 h-[calc(100vh-64px)] w-72 bg-background border-r border-border/50 transition-transform md:translate-x-0 flex flex-col",
+            mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          )}
+        >
+          {/* Search */}
+          <div className="p-4 border-b border-border/30">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search docs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 h-9 text-sm bg-muted/50"
+              />
             </div>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-              Complete guides, tutorials, and reference materials for UltriumAI platform. 
-              Learn how to maximize your productivity with our AI-powered tools.
-            </p>
-            
-            {/* Search */}
-            <div className="max-w-2xl mx-auto mb-8">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search knowledge base..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 py-3 text-lg"
-                />
+
+            {/* Search Results */}
+            {searchTerm.trim() && searchResults.length > 0 && (
+              <div className="mt-2 max-h-60 overflow-y-auto space-y-1">
+                {searchResults.slice(0, 10).map((r) => (
+                  <button
+                    key={r.article.id}
+                    onClick={() => {
+                      selectArticle(r.article.id);
+                      setSearchTerm("");
+                    }}
+                    className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="text-foreground font-medium block truncate">{r.article.title}</span>
+                    <span className="text-muted-foreground text-xs">{r.section.label} → {r.category.label}</span>
+                  </button>
+                ))}
               </div>
-            </div>
-
-            {/* Category Filter */}
-            <div className="flex flex-wrap gap-2 justify-center">
-              {categories.map((category) => (
-                <Badge
-                  key={category}
-                  variant={selectedCategory === category ? "default" : "outline"}
-                  className="cursor-pointer px-4 py-2 text-sm capitalize"
-                  onClick={() => setSelectedCategory(category)}
-                >
-                  {category === "all" ? "All Categories" : category}
-                </Badge>
-              ))}
-            </div>
+            )}
           </div>
-        </section>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Sidebar Navigation */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24 space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Categories</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {docSections.map((section) => {
-                      const Icon = section.icon;
+          {/* Nav Tree */}
+          <ScrollArea className="flex-1">
+            <nav className="p-3 space-y-1">
+              {DOC_SECTIONS.map((section) => (
+                <div key={section.id} className="mb-3">
+                  {/* Section Header */}
+                  <button
+                    onClick={() => setActiveSection(section.id === activeSection ? "" : section.id)}
+                    className={cn(
+                      "flex items-center gap-2 w-full px-2 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition-colors",
+                      activeSection === section.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {section.logo ? (
+                      <img src={section.logo} alt={section.label} className="h-4 w-4 object-contain" />
+                    ) : (
+                      section.icon && <section.icon className="h-3.5 w-3.5" />
+                    )}
+                    {section.label}
+                  </button>
+
+                  {/* Categories */}
+                  <div className="ml-2 mt-1 space-y-0.5">
+                    {section.categories.map((category) => {
+                      const isExpanded = expandedCategories.has(category.id);
+                      const hasActive = category.articles.some((a) => a.id === activeArticle);
+
                       return (
-                        <div
-                          key={section.id}
-                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted cursor-pointer transition-colors"
-                          onClick={() => {
-                            setSelectedCategory(section.articles[0]?.category || "all");
-                            setSelectedArticle(null);
-                          }}
-                        >
-                          <Icon className="h-5 w-5 text-primary" />
-                          <div>
-                            <div className="font-medium">{section.title}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {section.articles.length} articles
+                        <div key={category.id}>
+                          <button
+                            onClick={() => toggleCategory(category.id)}
+                            className={cn(
+                              "flex items-center justify-between w-full px-2 py-1.5 text-sm rounded transition-colors",
+                              hasActive ? "text-primary font-medium" : "text-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            <div className="flex items-center gap-2">
+                              <category.icon className="h-3.5 w-3.5" />
+                              <span>{category.label}</span>
                             </div>
-                          </div>
+                            {isExpanded ? (
+                              <ChevronDown className="h-3 w-3" />
+                            ) : (
+                              <ChevronRight className="h-3 w-3" />
+                            )}
+                          </button>
+
+                          {isExpanded && (
+                            <div className="ml-5 border-l border-border/30 pl-2 space-y-0.5">
+                              {category.articles.map((article) => (
+                                <button
+                                  key={article.id}
+                                  onClick={() => selectArticle(article.id)}
+                                  className={cn(
+                                    "block w-full text-left px-2 py-1 text-sm rounded transition-colors truncate",
+                                    activeArticle === article.id
+                                      ? "text-primary bg-primary/10 font-medium"
+                                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                  )}
+                                >
+                                  {article.title}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
+              ))}
+            </nav>
+          </ScrollArea>
+        </aside>
+
+        {/* ── Overlay for mobile ────────────────────────── */}
+        {mobileSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-30 md:hidden"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+        )}
+
+        {/* ── Content ───────────────────────────────────── */}
+        <main ref={contentRef} className="flex-1 min-h-[calc(100vh-64px)] overflow-y-auto">
+          {current ? (
+            <div className="max-w-3xl mx-auto px-6 py-10">
+              {/* Breadcrumb */}
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+                <span>{current.section.label}</span>
+                <ChevronRight className="h-3 w-3" />
+                <span>{current.category.label}</span>
+                <ChevronRight className="h-3 w-3" />
+                <span className="text-foreground font-medium">{current.article.title}</span>
+              </div>
+
+              {/* Title */}
+              <h1 className="text-3xl font-bold text-foreground mb-8">
+                {current.article.title}
+              </h1>
+
+              {/* Content */}
+              <div className="prose-sm">{renderContent(current.article.content)}</div>
+
+              {/* Navigation */}
+              <div className="mt-12 pt-6 border-t border-border/30 flex items-center justify-between">
+                {(() => {
+                  const allArticles = DOC_SECTIONS.flatMap((s) =>
+                    s.categories.flatMap((c) => c.articles)
+                  );
+                  const idx = allArticles.findIndex((a) => a.id === activeArticle);
+                  const prev = idx > 0 ? allArticles[idx - 1] : null;
+                  const next = idx < allArticles.length - 1 ? allArticles[idx + 1] : null;
+
+                  return (
+                    <>
+                      {prev ? (
+                        <Button variant="ghost" size="sm" onClick={() => selectArticle(prev.id)}>
+                          ← {prev.title}
+                        </Button>
+                      ) : <div />}
+                      {next ? (
+                        <Button variant="ghost" size="sm" onClick={() => selectArticle(next.id)}>
+                          {next.title} →
+                        </Button>
+                      ) : <div />}
+                    </>
+                  );
+                })()}
               </div>
             </div>
-
-            {/* Main Content */}
-            <div className="lg:col-span-3">
-              {selectedArticle ? (
-                /* Article View */
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                      <button 
-                        onClick={() => setSelectedArticle(null)}
-                        className="text-primary hover:underline"
-                      >
-                        ← Back to articles
-                      </button>
-                    </div>
-                    <CardTitle className="text-2xl">{selectedArticle.title}</CardTitle>
-                    <CardDescription>{selectedArticle.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="prose prose-slate dark:prose-invert max-w-none">
-                      <div dangerouslySetInnerHTML={{ 
-                        __html: DOMPurify.sanitize(selectedArticle.content
-                          .replace(/^#\s(.+)/gm, '<h1>$1</h1>')
-                          .replace(/^##\s(.+)/gm, '<h2>$1</h2>')
-                          .replace(/\n/g, '<br>'))
-                      }} />
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                /* Articles Grid */
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {filteredArticles.map((article) => (
-                    <Card 
-                      key={article.id} 
-                      className="hover:shadow-lg transition-shadow cursor-pointer"
-                      onClick={() => setSelectedArticle(article)}
-                    >
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <Badge variant="outline" className="mb-2 text-xs">
-                              {article.category}
-                            </Badge>
-                            <CardTitle className="text-lg">{article.title}</CardTitle>
-                            <CardDescription className="mt-2">
-                              {article.description}
-                            </CardDescription>
-                          </div>
-                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  ))}
-                </div>
-              )}
+          ) : (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              Select an article from the sidebar
             </div>
-          </div>
-        </div>
-      </main>
-      <Footer />
+          )}
+        </main>
+      </div>
     </div>
   );
 };
