@@ -18,6 +18,9 @@ import { SharePreview } from './SharePreview';
 import { BranchManager } from './BranchManager';
 import { ProjectManager } from './ProjectManager';
 import { CollaborativePresence } from './CollaborativePresence';
+import { CommandPalette } from './CommandPalette';
+import { GeneratingOverlay } from './GeneratingOverlay';
+import { SkeletonPreview } from './SkeletonPreview';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +67,7 @@ export function AIAppBuilderWorkspace() {
   const [showFileTree, setShowFileTree] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
 
   // Sync latest files from AI
   useEffect(() => {
@@ -100,6 +104,16 @@ export function AIAppBuilderWorkspace() {
         } else {
           handleUndo();
         }
+      }
+      // ⌘K → Command Palette
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(prev => !prev);
+      }
+      // ⌘S → Save
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
       }
     };
     window.addEventListener('keydown', handler);
@@ -434,7 +448,9 @@ export function AIAppBuilderWorkspace() {
 
                     <ResizablePanel defaultSize={hasFiles && showFileTree ? 82 : 100}>
                       {rightTab === 'preview' || !hasFiles ? (
-                        <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} />
+                        <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError}>
+                          <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
+                        </BuilderPreviewPanel>
                       ) : (
                         <div className="h-full flex flex-col bg-[#0d0d14]">
                           <FileTabBar
@@ -461,6 +477,23 @@ export function AIAppBuilderWorkspace() {
         isOpen={showTemplates}
         onClose={() => setShowTemplates(false)}
         onSelectTemplate={(prompt) => handleSend(prompt)}
+      />
+
+      <CommandPalette
+        open={showCommandPalette}
+        onOpenChange={setShowCommandPalette}
+        files={project.files}
+        onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }}
+        onSwitchTab={setRightTab}
+        onSwitchMode={setMode}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onSave={handleSave}
+        onClear={handleClear}
+        onOpenTemplates={() => setShowTemplates(true)}
+        onPublish={handlePublish}
+        canUndo={canUndo}
+        canRedo={canRedo}
       />
     </TooltipProvider>
   );

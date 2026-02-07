@@ -12,9 +12,10 @@ interface BuilderPreviewPanelProps {
   html: string | null;
   isGenerating: boolean;
   onFixError?: (errorMessage: string) => void;
+  children?: React.ReactNode;
 }
 
-export function BuilderPreviewPanel({ html, isGenerating, onFixError }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, isGenerating, onFixError, children }: BuilderPreviewPanelProps) {
   const [activePreset, setActivePreset] = useState('desktop');
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -122,7 +123,8 @@ console.warn = (function(orig) {
   );
 
   return (
-    <div ref={containerRef} className="flex flex-col h-full bg-[#0d0d14]">
+    <div ref={containerRef} className="flex flex-col h-full bg-[#0d0d14] relative">
+      {children}
       {/* Toolbar */}
       {html && (
         <div className="flex items-center justify-between px-3 h-9 border-b border-white/[0.06] bg-black/30 shrink-0">

@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import Editor from '@monaco-editor/react';
+import { useCallback, useRef } from 'react';
+import Editor, { OnMount } from '@monaco-editor/react';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
 interface CodeEditorProps {
@@ -8,27 +8,113 @@ interface CodeEditorProps {
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
-  html: 'html',
-  css: 'css',
-  scss: 'scss',
-  javascript: 'javascript',
-  typescript: 'typescript',
-  json: 'json',
-  markdown: 'markdown',
-  xml: 'xml',
-  plaintext: 'plaintext',
+  html: 'html', css: 'css', scss: 'scss', javascript: 'javascript',
+  typescript: 'typescript', json: 'json', markdown: 'markdown', xml: 'xml', plaintext: 'plaintext',
 };
 
 export function CodeEditor({ file, onContentChange }: CodeEditorProps) {
+  const editorRef = useRef<any>(null);
+
   const handleChange = useCallback((value: string | undefined) => {
     if (file && value !== undefined && onContentChange) {
       onContentChange(file.path, value);
     }
   }, [file, onContentChange]);
 
+  const handleMount: OnMount = useCallback((editor, monaco) => {
+    editorRef.current = editor;
+
+    // Custom dark theme to match workspace
+    monaco.editor.defineTheme('builder-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '4a5568', fontStyle: 'italic' },
+        { token: 'keyword', foreground: '7dd3fc' },
+        { token: 'string', foreground: '86efac' },
+        { token: 'number', foreground: 'fbbf24' },
+        { token: 'type', foreground: 'c084fc' },
+        { token: 'tag', foreground: '67e8f9' },
+        { token: 'attribute.name', foreground: 'a5b4fc' },
+        { token: 'attribute.value', foreground: '86efac' },
+      ],
+      colors: {
+        'editor.background': '#0d0d14',
+        'editor.foreground': '#e2e8f0',
+        'editor.lineHighlightBackground': '#ffffff06',
+        'editor.selectionBackground': '#22d3ee20',
+        'editorCursor.foreground': '#22d3ee',
+        'editorLineNumber.foreground': '#334155',
+        'editorLineNumber.activeForeground': '#64748b',
+        'editorIndentGuide.background1': '#1e293b30',
+        'editorIndentGuide.activeBackground1': '#334155',
+        'editor.selectionHighlightBackground': '#22d3ee10',
+        'editorBracketMatch.background': '#22d3ee15',
+        'editorBracketMatch.border': '#22d3ee40',
+      },
+    });
+    monaco.editor.setTheme('builder-dark');
+
+    // Register HTML/CSS/JS completions for common patterns
+    monaco.languages.registerCompletionItemProvider('html', {
+      provideCompletionItems: (model: any, position: any) => {
+        const word = model.getWordUntilPosition(position);
+        const range = {
+          startLineNumber: position.lineNumber, startColumn: word.startColumn,
+          endLineNumber: position.lineNumber, endColumn: word.endColumn,
+        };
+        return {
+          suggestions: [
+            { label: 'div.flex', kind: monaco.languages.CompletionItemKind.Snippet, insertText: '<div class="flex items-center gap-2">\n\t$0\n</div>', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, range, detail: 'Flex container' },
+            { label: 'div.grid', kind: monaco.languages.CompletionItemKind.Snippet, insertText: '<div class="grid grid-cols-${1:3} gap-4">\n\t$0\n</div>', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, range, detail: 'Grid container' },
+            { label: 'button', kind: monaco.languages.CompletionItemKind.Snippet, insertText: '<button class="px-4 py-2 rounded-lg bg-primary text-white hover:opacity-90 transition">\n\t${1:Click me}\n</button>', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, range, detail: 'Button' },
+            { label: 'section', kind: monaco.languages.CompletionItemKind.Snippet, insertText: '<section class="py-16 px-4">\n\t<div class="max-w-6xl mx-auto">\n\t\t$0\n\t</div>\n</section>', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, range, detail: 'Page section' },
+          ],
+        };
+      },
+    });
+
+    monaco.languages.registerCompletionItemProvider('css', {
+      provideCompletionItems: (model: any, position: any) => {
+        const word = model.getWordUntilPosition(position);
+        const range = {
+          startLineNumber: position.lineNumber, startColumn: word.startColumn,
+          endLineNumber: position.lineNumber, endColumn: word.endColumn,
+        };
+        return {
+          suggestions: [
+            { label: 'glass', kind: monaco.languages.CompletionItemKind.Snippet, insertText: 'background: rgba(255,255,255,0.05);\nbackdrop-filter: blur(12px);\nborder: 1px solid rgba(255,255,255,0.1);', range, detail: 'Glass effect' },
+            { label: 'gradient-text', kind: monaco.languages.CompletionItemKind.Snippet, insertText: 'background: linear-gradient(135deg, #22d3ee, #a855f7);\n-webkit-background-clip: text;\n-webkit-text-fill-color: transparent;', range, detail: 'Gradient text' },
+          ],
+        };
+      },
+    });
+
+    // Hover provider for Tailwind classes
+    monaco.languages.registerHoverProvider('html', {
+      provideHover: (model: any, position: any) => {
+        const word = model.getWordAtPosition(position);
+        if (!word) return null;
+        const TAILWIND_HINTS: Record<string, string> = {
+          'flex': 'display: flex', 'grid': 'display: grid', 'hidden': 'display: none',
+          'relative': 'position: relative', 'absolute': 'position: absolute',
+          'rounded': 'border-radius: 0.25rem', 'shadow': 'box-shadow: 0 1px 3px rgba(0,0,0,0.1)',
+        };
+        const hint = TAILWIND_HINTS[word.word];
+        if (hint) {
+          return {
+            range: new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
+            contents: [{ value: `**Tailwind CSS**\n\`${hint}\`` }],
+          };
+        }
+        return null;
+      },
+    });
+  }, []);
+
   if (!file) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+      <div className="flex items-center justify-center h-full text-white/20 text-sm">
         Select a file to edit
       </div>
     );
@@ -40,7 +126,8 @@ export function CodeEditor({ file, onContentChange }: CodeEditorProps) {
       language={LANGUAGE_MAP[file.language] || 'plaintext'}
       value={file.content}
       onChange={handleChange}
-      theme="vs-dark"
+      onMount={handleMount}
+      theme="builder-dark"
       options={{
         minimap: { enabled: false },
         fontSize: 13,
@@ -59,11 +146,22 @@ export function CodeEditor({ file, onContentChange }: CodeEditorProps) {
         suggest: {
           showWords: true,
           showSnippets: true,
+          showClasses: true,
+          showColors: true,
+          showFunctions: true,
+          showKeywords: true,
+          preview: true,
         },
+        quickSuggestions: { other: true, comments: false, strings: true },
+        parameterHints: { enabled: true },
+        hover: { enabled: true, delay: 300 },
       }}
       loading={
-        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-          Loading editor...
+        <div className="flex items-center justify-center h-full">
+          <div className="flex flex-col items-center gap-2">
+            <div className="h-5 w-5 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+            <span className="text-xs text-white/20">Loading editor...</span>
+          </div>
         </div>
       }
     />
