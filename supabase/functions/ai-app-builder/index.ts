@@ -78,11 +78,74 @@ IMPORTANT:
 - When the user asks for auth, database, or realtime features, USE SUPABASE
 `;
 
+const STRIPE_ADDON = `
+
+STRIPE INTEGRATION:
+The user has connected Stripe. The Stripe.js SDK is pre-loaded and a \`stripe\` instance is already initialized globally.
+
+Available globals:
+- \`stripe\` — a fully configured Stripe instance (via Stripe.js)
+- \`STRIPE_PUBLISHABLE_KEY\` — the publishable key
+
+Use these for:
+- Stripe Elements: \`const elements = stripe.elements(); const card = elements.create('card');\`
+- Payment forms: Mount card elements, handle form submission with \`stripe.confirmCardPayment()\`
+- Checkout redirects: \`stripe.redirectToCheckout({ sessionId })\`
+- Payment Request Button: \`stripe.paymentRequest({ ... })\`
+
+IMPORTANT:
+- Do NOT include any <script> tag for Stripe.js — it's already injected
+- Do NOT call \`Stripe(key)\` — the \`stripe\` object is already available
+- For full checkout flows, create beautiful payment forms with Stripe Elements
+- Style card elements to match the app theme
+- Show loading states during payment processing
+- Handle errors gracefully with user-friendly messages
+- For subscriptions/complex flows, explain that a backend is needed
+`;
+
+const OPENAI_ADDON = `
+
+OPENAI / AI FEATURES:
+The user wants AI-powered features in their app. An OpenAI API key is available.
+
+Available globals:
+- \`window.ENV.OPENAI_API_KEY\` — the user's OpenAI API key
+
+Use this to build:
+- AI chat interfaces: Use fetch() to call OpenAI's chat completions API
+- Content generation: Summarization, rewriting, translation
+- Smart search: Semantic search with embeddings
+- AI assistants: Multi-turn conversations with system prompts
+
+Example API call:
+\`\`\`javascript
+const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': \`Bearer \${window.ENV.OPENAI_API_KEY}\`
+  },
+  body: JSON.stringify({
+    model: 'gpt-4o-mini',
+    messages: [{ role: 'user', content: prompt }],
+    stream: true
+  })
+});
+\`\`\`
+
+IMPORTANT:
+- Use streaming for chat interfaces (SSE parsing)
+- Show typing indicators during AI responses
+- Handle rate limits and errors gracefully
+- Use gpt-4o-mini as default for cost efficiency
+- Note: calling OpenAI directly from the browser exposes the API key — this is acceptable for prototyping but not production
+`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, stream = true, supabaseConfig } = await req.json();
+    const { messages, stream = true, supabaseConfig, stripeConfig, openaiConfig } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -93,6 +156,12 @@ serve(async (req) => {
       });
     }
 
+    // Build system prompt with active integrations
+    let systemPrompt = BASE_SYSTEM_PROMPT;
+    if (supabaseConfig) systemPrompt += SUPABASE_ADDON;
+    if (stripeConfig) systemPrompt += STRIPE_ADDON;
+    if (openaiConfig) systemPrompt += OPENAI_ADDON;
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -102,7 +171,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: BASE_SYSTEM_PROMPT + (supabaseConfig ? SUPABASE_ADDON : '') },
+          { role: "system", content: systemPrompt },
           ...messages,
         ],
         stream,

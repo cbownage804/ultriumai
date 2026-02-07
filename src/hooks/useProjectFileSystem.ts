@@ -106,7 +106,11 @@ export function useProjectFileSystem() {
   }, []);
 
   /** Combine all project files into a single renderable HTML document */
-  const getCompiledHTML = useCallback((supabaseConfig?: { url: string; anonKey: string } | null): string | null => {
+  const getCompiledHTML = useCallback((
+    supabaseConfig?: { url: string; anonKey: string } | null,
+    stripeConfig?: { publishableKey: string } | null,
+    envVars?: { key: string; value: string }[],
+  ): string | null => {
     const { files } = project;
     if (files.length === 0) return null;
 
@@ -119,18 +123,44 @@ export function useProjectFileSystem() {
     const mainHTML = files.find(f => f.path === 'index.html') || htmlFiles[0];
     let compiled = mainHTML.content;
 
+    // Build head injections
+    const headInjects: string[] = [];
+
+    // Inject environment variables
+    if (envVars && envVars.length > 0) {
+      const envObj = envVars.reduce((acc, v) => {
+        if (v.key) acc[v.key] = v.value;
+        return acc;
+      }, {} as Record<string, string>);
+      headInjects.push(`<script>window.ENV = ${JSON.stringify(envObj)};</script>`);
+    }
+
     // Inject Supabase SDK if configured
     if (supabaseConfig?.url && supabaseConfig?.anonKey) {
-      const supabaseInject = `<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+      headInjects.push(`<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
   const SUPABASE_URL = '${supabaseConfig.url}';
   const SUPABASE_ANON_KEY = '${supabaseConfig.anonKey}';
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-</script>`;
+</script>`);
+    }
+
+    // Inject Stripe.js if configured
+    if (stripeConfig?.publishableKey) {
+      headInjects.push(`<script src="https://js.stripe.com/v3/"></script>
+<script>
+  const STRIPE_PUBLISHABLE_KEY = '${stripeConfig.publishableKey}';
+  const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+</script>`);
+    }
+
+    // Apply head injections
+    if (headInjects.length > 0) {
+      const injection = headInjects.join('\n');
       if (compiled.includes('</head>')) {
-        compiled = compiled.replace('</head>', `${supabaseInject}\n</head>`);
+        compiled = compiled.replace('</head>', `${injection}\n</head>`);
       } else {
-        compiled = `${supabaseInject}\n${compiled}`;
+        compiled = `${injection}\n${compiled}`;
       }
     }
 

@@ -70,7 +70,9 @@ export function useAIAppBuilder() {
   const sendMessage = useCallback(async (
     input: string,
     currentFiles: ProjectFile[] = [],
-    supabaseConfig?: { url: string; anonKey: string } | null
+    supabaseConfig?: { url: string; anonKey: string } | null,
+    stripeConfig?: { publishableKey: string } | null,
+    openaiConfig?: { apiKey: string } | null,
   ) => {
     if (!input.trim() || isGenerating) return;
 
@@ -116,7 +118,13 @@ export function useAIAppBuilder() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: apiMessages, stream: true, supabaseConfig: supabaseConfig || undefined }),
+        body: JSON.stringify({
+          messages: apiMessages,
+          stream: true,
+          supabaseConfig: supabaseConfig || undefined,
+          stripeConfig: stripeConfig || undefined,
+          openaiConfig: openaiConfig || undefined,
+        }),
         signal: controller.signal,
       });
 
