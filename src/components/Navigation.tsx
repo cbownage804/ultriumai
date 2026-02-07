@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, Phone, X, ChevronDown, Package, Shield, Cpu, Monitor, Headphones, Sparkles, ArrowRight } from "lucide-react";
+import { Menu, LogOut, Phone, X, ChevronDown, Package, Shield, Cpu, Monitor, Headphones, Sparkles, ArrowRight, DollarSign, Code2, Layers } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -176,14 +176,87 @@ const Navigation = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            {/* Enhanced Text Nav Links */}
-            <button 
-              onClick={() => handleNavigation('/pricing')}
-              className="relative text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-300 group"
-            >
-              Pricing
-              <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-primary rounded-full group-hover:w-full transition-all duration-300" />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 flex items-center gap-1.5 group">
+                  <DollarSign className="h-4 w-4 text-primary group-hover:text-primary" />
+                  Pricing
+                  <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="center" 
+                sideOffset={12}
+                className="w-72 p-0 bg-background/95 backdrop-blur-xl border border-border/50 shadow-2xl shadow-black/20 rounded-2xl overflow-hidden z-50"
+              >
+                <div className="px-4 py-3 bg-gradient-to-r from-primary/10 via-transparent to-cyan-500/10 border-b border-border/30">
+                  <h3 className="text-sm font-semibold text-foreground">Pricing Plans</h3>
+                  <p className="text-xs text-muted-foreground">Choose a product to view pricing</p>
+                </div>
+                <div className="p-2 space-y-0.5">
+                  <button
+                    onClick={() => handleNavigation('/pricing')}
+                    className="flex items-center gap-3 w-full p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group/item"
+                  >
+                    <div className="shrink-0 w-8 h-8 rounded-md bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
+                      <Layers className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-foreground group-hover/item:text-primary transition-colors">All Products</div>
+                      <div className="text-xs text-muted-foreground">Compare all plans side by side</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleNavigation('/pricing/vanguard')}
+                    className="flex items-center gap-3 w-full p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group/item"
+                  >
+                    <div className="shrink-0 w-8 h-8 rounded-md bg-black flex items-center justify-center overflow-hidden">
+                      <img src={vanguardLogo} alt="Vanguard" className="w-6 h-6 object-contain" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-foreground group-hover/item:text-cyan-500 transition-colors">Vanguard Suite</div>
+                      <div className="text-xs text-muted-foreground">Per-technician plans & add-ons</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleNavigation('/pricing/ai-studio')}
+                    className="flex items-center gap-3 w-full p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group/item"
+                  >
+                    <div className="shrink-0 w-8 h-8 rounded-md bg-black flex items-center justify-center overflow-hidden">
+                      <img src={aiStudioLogo} alt="AI Studio" className="w-6 h-6 object-contain" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-foreground group-hover/item:text-primary transition-colors">AI Studio</div>
+                      <div className="text-xs text-muted-foreground">AI capacity plans for teams & MSPs</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleNavigation('/pricing/safesuite')}
+                    className="flex items-center gap-3 w-full p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group/item"
+                  >
+                    <div className="shrink-0 w-8 h-8 rounded-md bg-black flex items-center justify-center overflow-hidden">
+                      <img src={safesuiteLogo} alt="SafeSuite" className="w-6 h-6 object-contain" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-foreground group-hover/item:text-emerald-500 transition-colors">SafeSuite</div>
+                      <div className="text-xs text-muted-foreground">Security tools for businesses</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleNavigation('/pricing/custom-apps')}
+                    className="flex items-center gap-3 w-full p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group/item"
+                  >
+                    <div className="shrink-0 w-8 h-8 rounded-md bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                      <Code2 className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-foreground group-hover/item:text-amber-500 transition-colors">Custom Apps</div>
+                      <div className="text-xs text-muted-foreground">We build your app from scratch</div>
+                    </div>
+                  </button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
             
             <button 
               onClick={() => handleNavigation('/docs')}
@@ -298,9 +371,24 @@ const Navigation = () => {
                 Products
               </button>
               
-              <button onClick={() => handleNavigationWithMenuClose('/pricing')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
-                Pricing
-              </button>
+              <div className="pl-3 space-y-0.5">
+                <p className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pricing</p>
+                <button onClick={() => handleNavigationWithMenuClose('/pricing')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md text-sm">
+                  All Products
+                </button>
+                <button onClick={() => handleNavigationWithMenuClose('/pricing/vanguard')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md text-sm">
+                  Vanguard Suite
+                </button>
+                <button onClick={() => handleNavigationWithMenuClose('/pricing/ai-studio')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md text-sm">
+                  AI Studio
+                </button>
+                <button onClick={() => handleNavigationWithMenuClose('/pricing/safesuite')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md text-sm">
+                  SafeSuite
+                </button>
+                <button onClick={() => handleNavigationWithMenuClose('/pricing/custom-apps')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md text-sm">
+                  Custom Apps
+                </button>
+              </div>
               
               <button onClick={() => handleNavigationWithMenuClose('/docs')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
                 Docs
