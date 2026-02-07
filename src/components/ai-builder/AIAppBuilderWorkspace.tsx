@@ -9,6 +9,7 @@ import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { useBranching } from '@/hooks/useBranching';
 import { useProjectPersistence } from '@/hooks/useProjectPersistence';
 import { useDraftPersistence } from '@/hooks/useDraftPersistence';
+import { usePreviewHosting } from '@/hooks/usePreviewHosting';
 import { BuilderChatPanel } from './BuilderChatPanel';
 import { BuilderPreviewPanel } from './BuilderPreviewPanel';
 import { ProjectFileTree } from './ProjectFileTree';
@@ -109,6 +110,7 @@ export function AIAppBuilderWorkspace() {
   } = useAgentMode();
   const autoRecovery = useAutoErrorRecovery();
   const { saveDraft, loadDraft, clearDraft, hasDraft } = useDraftPersistence();
+  const { previewUrl: hostedPreviewUrl, isUploading: isUploadingPreview, uploadPreview, clearPreviewTimer } = usePreviewHosting();
 
   const [rightTab, setRightTab] = useState<'preview' | 'code' | 'split'>('preview');
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -308,6 +310,15 @@ export function AIAppBuilderWorkspace() {
       toast.success('Restored your unsaved draft', { description: `Saved ${new Date(draft.savedAt).toLocaleTimeString()}` });
     }
   }, []); // intentionally run once on mount
+
+  // Auto-upload preview to Supabase Storage for live hosting
+  const compiledForHosting = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+  useEffect(() => {
+    if (previewSlug && compiledForHosting) {
+      uploadPreview(previewSlug, compiledForHosting);
+    }
+    return () => clearPreviewTimer();
+  }, [compiledForHosting, previewSlug, uploadPreview, clearPreviewTimer]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -1023,7 +1034,7 @@ export function AIAppBuilderWorkspace() {
       <BillingPanel isOpen={showBilling} onClose={() => setShowBilling(false)} />
       <ProjectShareDialog isOpen={showShareDialog} onClose={() => setShowShareDialog(false)} projectName={project.name} collaborators={collaborators} onInvite={(email, role) => setCollaborators(prev => [...prev, { id: crypto.randomUUID(), email, role, avatarColor: ['#06b6d4','#8b5cf6','#f43f5e','#22c55e'][prev.length % 4], joinedAt: new Date() }])} onChangeRole={(id, role) => setCollaborators(prev => prev.map(c => c.id === id ? { ...c, role } : c))} onRemove={(id) => setCollaborators(prev => prev.filter(c => c.id !== id))} />
       <SEOEditor isOpen={showSEOEditor} onClose={() => setShowSEOEditor(false)} files={project.files} onUpdateFile={upsertFile} />
-      <CustomDomainPanel isOpen={showDomainPanel} onClose={() => setShowDomainPanel(false)} previewUrl={previewSlug ? `${previewSlug}.ultriumai.app` : undefined} />
+      <CustomDomainPanel isOpen={showDomainPanel} onClose={() => setShowDomainPanel(false)} previewUrl={hostedPreviewUrl || (previewSlug ? `${previewSlug}.ultriumai.app` : undefined)} />
       <DiffReviewPanel isOpen={showDiffReview} onClose={() => setShowDiffReview(false)} changes={pendingDiffChanges} onApprove={() => { pendingDiffChanges.forEach(c => upsertFile(c.path, c.newContent)); setPendingDiffChanges([]); setShowDiffReview(false); toast.success('Changes applied'); }} onReject={() => { setPendingDiffChanges([]); setShowDiffReview(false); toast.info('Changes rejected'); }} onApproveFile={(path) => { const c = pendingDiffChanges.find(ch => ch.path === path); if (c) upsertFile(c.path, c.newContent); }} onRejectFile={() => {}} />
       <QuickFileSwitcher open={showQuickSwitcher} onOpenChange={setShowQuickSwitcher} files={project.files} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} />
       <ProjectSettings
