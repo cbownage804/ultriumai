@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Users, Circle } from 'lucide-react';
+import { Users, Circle, MousePointer2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CollaborativePresenceProps {
   projectId: string | null;
@@ -12,6 +13,8 @@ interface PresenceUser {
   email: string;
   color: string;
   lastSeen: Date;
+  activeFile?: string;
+  isEditing?: boolean;
 }
 
 const PRESENCE_COLORS = [
@@ -45,6 +48,8 @@ export function CollaborativePresence({ projectId }: CollaborativePresenceProps)
                   email: presence.email || 'Anonymous',
                   color: PRESENCE_COLORS[users.length % PRESENCE_COLORS.length],
                   lastSeen: new Date(),
+                  activeFile: presence.activeFile,
+                  isEditing: presence.isEditing,
                 });
               }
             }
@@ -73,27 +78,44 @@ export function CollaborativePresence({ projectId }: CollaborativePresenceProps)
   if (onlineUsers.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5">
       <div className="flex -space-x-1.5">
-        {onlineUsers.slice(0, 3).map(user => (
-          <div
-            key={user.userId}
-            className="h-5 w-5 rounded-full border-2 border-[#0a0a0f] flex items-center justify-center text-[8px] font-bold text-white"
-            style={{ backgroundColor: user.color }}
-            title={user.email}
-          >
-            {user.email[0]?.toUpperCase() || '?'}
-          </div>
+        {onlineUsers.slice(0, 4).map(user => (
+          <Tooltip key={user.userId}>
+            <TooltipTrigger asChild>
+              <div
+                className="h-6 w-6 rounded-full border-2 border-[#0a0a0f] flex items-center justify-center text-[9px] font-bold text-white relative cursor-default"
+                style={{ backgroundColor: user.color }}
+              >
+                {user.email[0]?.toUpperCase() || '?'}
+                {user.isEditing && (
+                  <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#0a0a0f] flex items-center justify-center">
+                    <MousePointer2 className="h-1.5 w-1.5" style={{ color: user.color }} />
+                  </div>
+                )}
+                <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-[#0a0a0f] bg-emerald-400" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              <div className="font-medium">{user.email}</div>
+              {user.activeFile && (
+                <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <MousePointer2 className="h-2.5 w-2.5" />
+                  {user.activeFile.split('/').pop()}
+                </div>
+              )}
+            </TooltipContent>
+          </Tooltip>
         ))}
-        {onlineUsers.length > 3 && (
-          <div className="h-5 w-5 rounded-full border-2 border-[#0a0a0f] bg-white/10 flex items-center justify-center text-[8px] text-white/60">
-            +{onlineUsers.length - 3}
+        {onlineUsers.length > 4 && (
+          <div className="h-6 w-6 rounded-full border-2 border-[#0a0a0f] bg-white/10 flex items-center justify-center text-[9px] text-white/60 font-medium">
+            +{onlineUsers.length - 4}
           </div>
         )}
       </div>
-      <div className="flex items-center gap-0.5 text-[9px] text-white/30">
+      <div className="flex items-center gap-1 text-[9px] text-white/30">
         <Circle className="h-1.5 w-1.5 fill-emerald-400 text-emerald-400" />
-        {onlineUsers.length} online
+        <span>{onlineUsers.length} online</span>
       </div>
     </div>
   );
