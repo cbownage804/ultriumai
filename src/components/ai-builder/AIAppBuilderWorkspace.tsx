@@ -783,6 +783,14 @@ export function AIAppBuilderWorkspace() {
               publishedUrl={publishedUrl}
               hasFiles={hasFiles}
               previewSlug={previewSlug || undefined}
+              projectName={project.name}
+              files={project.files}
+              supabaseConfig={supabaseConfig}
+              stripeConfig={stripeConfig}
+              serviceKeys={serviceKeys}
+              envVars={envVars}
+              cdnPackages={cdnPackages}
+              edgeFunctions={edgeFunctions}
             />
 
             <ProjectManager
