@@ -428,7 +428,7 @@ export function BuilderChatPanel({
       {/* Mode Toggle + Input */}
       <div className="p-3 border-t border-white/[0.06] shrink-0 space-y-2">
         {/* Build / Discuss toggle */}
-        <div className="flex items-center gap-1 bg-white/[0.03] rounded-lg p-0.5 border border-white/[0.06]">
+        <div data-tour="mode-toggle" className="flex items-center gap-1 bg-white/[0.03] rounded-lg p-0.5 border border-white/[0.06]">
           <button
             onClick={() => onModeChange('discuss')}
             className={cn(
@@ -455,7 +455,7 @@ export function BuilderChatPanel({
           </button>
         </div>
 
-        <div className="flex gap-2 items-end bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 focus-within:border-cyan-500/30 transition-colors">
+        <div data-tour="chat-input" className="flex gap-2 items-end bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 focus-within:border-cyan-500/30 transition-colors">
           {/* Image upload button */}
           <button
             onClick={() => fileInputRef.current?.click()}

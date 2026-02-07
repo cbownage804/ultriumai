@@ -36,8 +36,10 @@ export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest,
   const handleSmartFix = (err: PreviewError) => {
     if ((err.fixAttempts ?? 0) >= maxRetries) return;
 
+    // Increment fixAttempts — notify parent to update state
+    const updatedErr = { ...err, fixAttempts: (err.fixAttempts ?? 0) + 1 };
+
     if (onSmartFixRequest && projectFiles) {
-      // Build rich context: find the erroring file and include its content + stack trace
       const errorFile = err.source
         ? projectFiles.find(f => err.source?.includes(f.path))
         : null;
@@ -45,13 +47,13 @@ export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest,
       const contextParts: string[] = [
         `Error: "${err.message}"`,
         err.source ? `Source: ${err.source}${err.line ? `:${err.line}` : ''}` : '',
-        err.fixAttempts ? `Previous fix attempts: ${err.fixAttempts} (this is retry #${err.fixAttempts + 1})` : '',
+        updatedErr.fixAttempts > 1 ? `Previous fix attempts: ${updatedErr.fixAttempts - 1} (this is retry #${updatedErr.fixAttempts})` : '',
         errorFile ? `\nFile content (${errorFile.path}):\n\`\`\`\n${errorFile.content}\n\`\`\`` : '',
       ].filter(Boolean);
 
-      onSmartFixRequest(err, contextParts.join('\n'));
+      onSmartFixRequest(updatedErr, contextParts.join('\n'));
     } else {
-      onFixRequest(err);
+      onFixRequest(updatedErr);
     }
   };
 

@@ -1,6 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAIAppBuilder } from '@/hooks/useAIAppBuilder';
 import { useProjectFileSystem } from '@/hooks/useProjectFileSystem';
+import type { RemoteCursor } from './CodeEditor';
+import { supabase } from '@/integrations/supabase/client';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { useBranching } from '@/hooks/useBranching';
 import { useProjectPersistence } from '@/hooks/useProjectPersistence';
@@ -90,7 +92,57 @@ export function AIAppBuilderWorkspace() {
   const [assets, setAssets] = useState<ProjectAsset[]>([]);
   const [showPackages, setShowPackages] = useState(false);
   const [cdnPackages, setCdnPackages] = useState<CDNPackage[]>([]);
-  const { findReferencedFiles } = useProjectBundler();
+  const { findReferencedFiles, bundleForBrowser } = useProjectBundler();
+  const [remoteCursors, setRemoteCursors] = useState<RemoteCursor[]>([]);
+  const channelRef = useRef<any>(null);
+
+  // Sync env vars from EnvVarsPanel into compilation envVars
+  useEffect(() => {
+    if (envVariables.length > 0) {
+      const mapped = envVariables
+        .filter(v => v.key && v.value)
+        .map(v => ({ key: v.key, value: v.value }));
+      setEnvVars(prev => {
+        // Merge: panel vars take priority, keep settings vars that aren't overridden
+        const panelKeys = new Set(mapped.map(m => m.key));
+        const kept = prev.filter(p => !panelKeys.has(p.key));
+        return [...kept, ...mapped];
+      });
+    }
+  }, [envVariables]);
+
+  // Collaborative cursor broadcasting via Supabase Realtime
+  useEffect(() => {
+    if (!currentProjectId) return;
+    const channel = supabase.channel(`cursors:${currentProjectId}`);
+    channelRef.current = channel;
+
+    channel
+      .on('broadcast', { event: 'cursor' }, ({ payload }: any) => {
+        if (!payload) return;
+        setRemoteCursors(prev => {
+          const filtered = prev.filter(c => c.userId !== payload.userId);
+          return [...filtered, payload as RemoteCursor];
+        });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [currentProjectId]);
+
+  const handleCursorChange = useCallback((line: number, column: number) => {
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'cursor',
+        payload: { userId: 'self', email: '', color: '#06b6d4', line, column },
+      });
+    }
+  }, []);
+
   // Sync latest files from AI
   useEffect(() => {
     if (latestFiles.length > 0) {
@@ -232,11 +284,20 @@ export function AIAppBuilderWorkspace() {
   }, [loadProject, setFiles, renameProject]);
 
   const handlePublish = useCallback(async () => {
-    const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys);
+    const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
     if (!compiledHTML) { toast.error('Nothing to publish'); return; }
     const url = await publishProject(project.name, compiledHTML);
     if (url) { setPublishedUrl(url); toast.success('Published successfully!'); }
-  }, [publishProject, project.name, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys]);
+  }, [publishProject, project.name, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser]);
+
+  const handleRemix = useCallback(async (projectId: string) => {
+    const loaded = await loadProject(projectId);
+    if (loaded) {
+      setFiles(loaded.files as any[]);
+      renameProject(`Remix of ${loaded.name}`);
+      toast.success(`Remixed "${loaded.name}" — save to create your own copy`);
+    }
+  }, [loadProject, setFiles, renameProject]);
 
   const handleAssetUpload = useCallback((asset: ProjectAsset) => {
     setAssets(prev => [...prev, asset]);
@@ -247,7 +308,7 @@ export function AIAppBuilderWorkspace() {
     toast.success('Asset deleted');
   }, []);
 
-  const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys);
+  const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
   const hasFiles = project.files.length > 0;
 
   // Mobile detection
@@ -439,6 +500,7 @@ export function AIAppBuilderWorkspace() {
               onDelete={deleteProject}
               onPublish={handlePublish}
               onLoadProjects={loadProjects}
+              onRemix={handleRemix}
             />
             <ProjectSettings
               supabaseConfig={supabaseConfig}
@@ -664,11 +726,13 @@ export function AIAppBuilderWorkspace() {
 
                           <ResizablePanel defaultSize={hasFiles && showFileTree ? 82 : 100}>
                             {rightTab === 'preview' || !hasFiles ? (
-                              <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount}>
-                                <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
-                              </BuilderPreviewPanel>
+                              <div data-tour="preview" className="h-full">
+                                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount}>
+                                  <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
+                                </BuilderPreviewPanel>
+                              </div>
                             ) : (
-                              <div className="h-full flex flex-col bg-[#0d0d14]">
+                              <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
                                 <FileTabBar
                                   openPaths={project.openFilePaths}
                                   activePath={project.activeFilePath}
@@ -677,7 +741,7 @@ export function AIAppBuilderWorkspace() {
                                 />
                                 <FileBreadcrumb file={activeFile} />
                                 <div className="flex-1 overflow-hidden">
-                                  <CodeEditor file={activeFile} onContentChange={upsertFile} />
+                                  <CodeEditor file={activeFile} onContentChange={upsertFile} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
                                 </div>
                               </div>
                             )}
