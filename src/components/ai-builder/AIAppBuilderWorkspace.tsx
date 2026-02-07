@@ -22,8 +22,8 @@ import { cn } from '@/lib/utils';
 
 export function AIAppBuilderWorkspace() {
   const {
-    messages, isGenerating, latestFiles, mode, setMode,
-    sendMessage, stopGenerating, clearChat,
+    messages, isGenerating, latestFiles, mode, setMode, thinkingPhase, versions,
+    sendMessage, stopGenerating, clearChat, restoreVersion,
   } = useAIAppBuilder();
 
   const {
@@ -55,8 +55,8 @@ export function AIAppBuilderWorkspace() {
     }
   }, [latestFiles]);
 
-  const handleSend = (input: string) => {
-    sendMessage(input, project.files, supabaseConfig, stripeConfig, serviceKeys);
+  const handleSend = (input: string, imageDataUrl?: string | null) => {
+    sendMessage(input, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl);
   };
 
   const handleClear = () => {
@@ -169,10 +169,13 @@ export function AIAppBuilderWorkspace() {
                 isGenerating={isGenerating}
                 fileCount={project.files.length}
                 mode={mode}
+                thinkingPhase={thinkingPhase}
+                versions={versions}
                 onModeChange={setMode}
                 onSend={handleSend}
                 onStop={stopGenerating}
                 onClear={handleClear}
+                onRestoreVersion={restoreVersion}
               />
             </ResizablePanel>
 
