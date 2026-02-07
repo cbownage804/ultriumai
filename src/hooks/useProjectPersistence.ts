@@ -147,7 +147,9 @@ export function useProjectPersistence() {
         return null;
       }
 
-      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'app';
+      const uniqueSuffix = Math.random().toString(36).substring(2, 8);
+      const slug = `${baseSlug}-${uniqueSuffix}`;
       const filePath = `${user.id}/${slug}/index.html`;
 
       const { error } = await supabase.storage

@@ -128,8 +128,14 @@ export function BuilderChatPanel({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    // ScrollArea's actual scrollable element is the Viewport child
+    const el = scrollRef.current;
+    if (el) {
+      const viewport = el.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+      const target = viewport || el;
+      requestAnimationFrame(() => {
+        target.scrollTop = target.scrollHeight;
+      });
     }
   }, [messages, thinkingPhase]);
 
