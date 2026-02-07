@@ -77,9 +77,9 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
 }
 
 const AI_MODELS = [
-  { id: 'flash', label: 'Flash', desc: 'Fast & efficient', icon: '⚡' },
-  { id: 'pro', label: 'Pro', desc: 'Higher quality', icon: '💎' },
-  { id: 'gpt5', label: 'GPT-5', desc: 'Most capable', icon: '🧠' },
+  { id: 'google/gemini-3-flash-preview', label: 'Flash', desc: 'Fast & efficient', icon: '⚡' },
+  { id: 'google/gemini-3-pro-preview', label: 'Pro', desc: 'Higher quality', icon: '💎' },
+  { id: 'openai/gpt-5', label: 'GPT-5', desc: 'Most capable', icon: '🧠' },
 ];
 
 function CopyCodeButton({ text }: { text: string }) {
