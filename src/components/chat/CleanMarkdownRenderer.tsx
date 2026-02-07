@@ -1,8 +1,59 @@
 import ReactMarkdown from 'react-markdown';
-import { Copy, Check, Lightbulb, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { Copy, Check, Lightbulb, AlertTriangle, CheckCircle, Info, ChevronRight, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
+function CollapsibleCodeBlock({ language, codeContent, codeId, copiedBlock, onCopy, className, props, children }: {
+  language: string;
+  codeContent: string;
+  codeId: string;
+  copiedBlock: string | null;
+  onCopy: (code: string, id: string) => void;
+  className?: string;
+  props: any;
+  children: React.ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const lineCount = codeContent.split('\n').length;
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="my-4 group">
+      <div className="flex items-center justify-between bg-muted/80 px-3 py-2 rounded-lg border transition-colors hover:bg-muted">
+        <CollapsibleTrigger className="flex items-center gap-2 flex-1 text-left">
+          <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform duration-200", isOpen && "rotate-90")} />
+          <Code className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+            {language}
+          </span>
+          <span className="text-[10px] text-muted-foreground/60">
+            {lineCount} line{lineCount !== 1 ? 's' : ''}
+          </span>
+        </CollapsibleTrigger>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={(e) => { e.stopPropagation(); onCopy(codeContent, codeId); }}
+        >
+          {copiedBlock === codeId ? (
+            <><Check className="h-3 w-3 mr-1 text-green-500" /> Copied</>
+          ) : (
+            <><Copy className="h-3 w-3 mr-1" /> Copy</>
+          )}
+        </Button>
+      </div>
+      <CollapsibleContent>
+        <pre className="bg-muted/50 p-4 rounded-b border border-t-0 overflow-x-auto">
+          <code className={cn("text-sm font-mono", className)} {...props}>
+            {children}
+          </code>
+        </pre>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
 
 interface CleanMarkdownRendererProps {
   content: string;
@@ -138,36 +189,17 @@ export function CleanMarkdownRenderer({ content, className }: CleanMarkdownRende
             }
             
             return (
-              <div className="relative my-4 group">
-                <div className="flex items-center justify-between bg-muted/80 px-3 py-2 rounded-t border border-b-0">
-                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-                    {match ? match[1] : 'code'}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => copyCode(codeContent, codeId)}
-                  >
-                    {copiedBlock === codeId ? (
-                      <>
-                        <Check className="h-3 w-3 mr-1 text-green-500" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-3 w-3 mr-1" />
-                        Copy
-                      </>
-                    )}
-                  </Button>
-                </div>
-                <pre className="bg-muted/50 p-4 rounded-b border overflow-x-auto">
-                  <code className={cn("text-sm font-mono", className)} {...props}>
-                    {children}
-                  </code>
-                </pre>
-              </div>
+              <CollapsibleCodeBlock
+                language={match ? match[1] : 'code'}
+                codeContent={codeContent}
+                codeId={codeId}
+                copiedBlock={copiedBlock}
+                onCopy={copyCode}
+                className={className}
+                props={props}
+              >
+                {children}
+              </CollapsibleCodeBlock>
             );
           },
 
