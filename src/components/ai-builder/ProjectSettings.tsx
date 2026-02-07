@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Database, Github, Settings, CheckCircle2, XCircle, ExternalLink,
-  CreditCard, Rocket, Key, Brain, Plus, Trash2, Mic, Sparkles,
+  CreditCard, Rocket, Key, Brain, Plus, Trash2, Mic, Sparkles, AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -85,19 +85,23 @@ interface ProjectSettingsProps {
   vercelConfig: VercelConfig | null;
   serviceKeys: ServiceKey[];
   envVars: EnvVar[];
+  projectName?: string;
   onSupabaseChange: (config: SupabaseConfig | null) => void;
   onGithubChange: (config: GithubConfig | null) => void;
   onStripeChange: (config: StripeConfig | null) => void;
   onVercelChange: (config: VercelConfig | null) => void;
   onServiceKeysChange: (keys: ServiceKey[]) => void;
   onEnvVarsChange: (vars: EnvVar[]) => void;
+  onDeleteProject?: () => void;
+  onResetProject?: () => void;
 }
 
 // ── Component ──────────────────────────────────────────
 
 export function ProjectSettings({
-  supabaseConfig, githubConfig, stripeConfig, vercelConfig, serviceKeys, envVars,
+  supabaseConfig, githubConfig, stripeConfig, vercelConfig, serviceKeys, envVars, projectName,
   onSupabaseChange, onGithubChange, onStripeChange, onVercelChange, onServiceKeysChange, onEnvVarsChange,
+  onDeleteProject, onResetProject,
 }: ProjectSettingsProps) {
   const [open, setOpen] = useState(false);
   const [sbUrl, setSbUrl] = useState(supabaseConfig?.url || '');
@@ -158,6 +162,7 @@ export function ProjectSettings({
   };
 
   const usedServiceIds = localServiceKeys.map(k => k.serviceId).filter(Boolean);
+  const [dangerConfirm, setDangerConfirm] = useState('');
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -177,7 +182,7 @@ export function ProjectSettings({
         </DialogHeader>
 
         <Tabs defaultValue="services">
-          <TabsList className="grid w-full grid-cols-5 h-9">
+          <TabsList className="grid w-full grid-cols-6 h-9">
             <TabsTrigger value="services" className="text-[10px] gap-1 px-1">
               <Sparkles className="h-3 w-3" />
               <span className="hidden sm:inline">Services</span>
@@ -197,6 +202,10 @@ export function ProjectSettings({
               <Key className="h-3 w-3" />
               <span className="hidden sm:inline">Env</span>
               {envVars.length > 0 && <span className="h-1.5 w-1.5 rounded-full bg-green-500" />}
+            </TabsTrigger>
+            <TabsTrigger value="danger" className="text-[10px] gap-1 px-1">
+              <AlertTriangle className="h-3 w-3" />
+              <span className="hidden sm:inline">Danger</span>
             </TabsTrigger>
             <TabsTrigger value="about" className="text-[10px] gap-1 px-1">
               ℹ️
@@ -387,6 +396,51 @@ export function ProjectSettings({
                 </div>
               </div>
               {envVars.length > 0 && <Badge variant="secondary" className="text-[10px] gap-1"><CheckCircle2 className="h-3 w-3 text-green-500" />{envVars.length} variable{envVars.length !== 1 ? 's' : ''}</Badge>}
+            </TabsContent>
+
+            {/* ── Danger Zone ── */}
+            <TabsContent value="danger" className="space-y-4 pt-4">
+              <div className="rounded-lg border border-red-500/20 bg-red-500/[0.03] p-4 space-y-4">
+                <h4 className="text-xs font-semibold text-red-400 flex items-center gap-1.5">
+                  <AlertTriangle className="h-3 w-3" />Danger Zone
+                </h4>
+
+                {/* Reset project */}
+                <div className="space-y-2 pb-3 border-b border-red-500/10">
+                  <p className="text-[11px] text-muted-foreground">Reset to blank — clears all files but keeps settings.</p>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder={`Type "${projectName || 'project'}" to confirm`}
+                      value={dangerConfirm}
+                      onChange={(e) => setDangerConfirm(e.target.value)}
+                      className="text-xs h-8 flex-1"
+                    />
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="text-xs h-8"
+                      disabled={dangerConfirm !== (projectName || 'project')}
+                      onClick={() => { onResetProject?.(); setDangerConfirm(''); toast.success('Project reset'); }}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Delete project */}
+                <div className="space-y-2">
+                  <p className="text-[11px] text-muted-foreground">Permanently delete this project and all its files.</p>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="text-xs h-8"
+                    disabled={dangerConfirm !== (projectName || 'project')}
+                    onClick={() => { onDeleteProject?.(); setDangerConfirm(''); setOpen(false); }}
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />Delete Project
+                  </Button>
+                </div>
+              </div>
             </TabsContent>
 
             {/* ── About ── */}
