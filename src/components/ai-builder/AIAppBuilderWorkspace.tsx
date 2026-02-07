@@ -628,11 +628,11 @@ export function AIAppBuilderWorkspace() {
           <div className="flex items-center gap-1.5 min-w-0">
             <Tooltip>
               <TooltipTrigger asChild>
-                <button onClick={() => navigate('/hub')} className="h-8 w-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors shrink-0">
+                <button onClick={() => navigate('/ai-studio')} className="h-8 w-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors shrink-0">
                   <ArrowLeft className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Back to Hub</TooltipContent>
+              <TooltipContent side="bottom" className="text-xs">Back to AI Studio</TooltipContent>
             </Tooltip>
 
             <div className="h-4 w-px bg-white/[0.06]" />
