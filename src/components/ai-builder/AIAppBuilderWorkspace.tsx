@@ -901,22 +901,23 @@ export function AIAppBuilderWorkspace() {
       <ProjectShareDialog isOpen={showShareDialog} onClose={() => setShowShareDialog(false)} projectName={project.name} collaborators={collaborators} onInvite={(email, role) => setCollaborators(prev => [...prev, { id: crypto.randomUUID(), email, role, avatarColor: ['#06b6d4','#8b5cf6','#f43f5e','#22c55e'][prev.length % 4], joinedAt: new Date() }])} onChangeRole={(id, role) => setCollaborators(prev => prev.map(c => c.id === id ? { ...c, role } : c))} onRemove={(id) => setCollaborators(prev => prev.filter(c => c.id !== id))} />
       <SEOEditor isOpen={showSEOEditor} onClose={() => setShowSEOEditor(false)} files={project.files} onUpdateFile={upsertFile} />
       <QuickFileSwitcher open={showQuickSwitcher} onOpenChange={setShowQuickSwitcher} files={project.files} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} />
-      {showSettingsPanel && (
-        <ProjectSettings
-          supabaseConfig={supabaseConfig}
-          githubConfig={githubConfig}
-          stripeConfig={stripeConfig}
-          vercelConfig={vercelConfig}
-          serviceKeys={serviceKeys}
-          envVars={envVars}
-          onSupabaseChange={setSupabaseConfig}
-          onGithubChange={setGithubConfig}
-          onStripeChange={setStripeConfig}
-          onVercelChange={setVercelConfig}
-          onServiceKeysChange={setServiceKeys}
-          onEnvVarsChange={setEnvVars}
-        />
-      )}
+      <ProjectSettings
+        supabaseConfig={supabaseConfig}
+        githubConfig={githubConfig}
+        stripeConfig={stripeConfig}
+        vercelConfig={vercelConfig}
+        serviceKeys={serviceKeys}
+        envVars={envVars}
+        projectName={project.name}
+        onSupabaseChange={setSupabaseConfig}
+        onGithubChange={setGithubConfig}
+        onStripeChange={setStripeConfig}
+        onVercelChange={setVercelConfig}
+        onServiceKeysChange={setServiceKeys}
+        onEnvVarsChange={setEnvVars}
+        onDeleteProject={() => { resetProject(); clearChat(); toast.success('Project deleted'); setShowSettingsPanel(false); }}
+        onResetProject={() => { resetProject(); toast.success('Project reset'); setShowSettingsPanel(false); }}
+      />
       {vercelConfig && <VercelDeployButton projectName={project.name} files={project.files} vercelToken={vercelConfig.token} />}
       {githubConfig && <GithubSyncButton projectName={project.name} files={project.files} githubToken={githubConfig.token} onPullFiles={(files) => { pushUndo('GitHub pull', project.files); setFiles(files); }} />}
       <SharePreview html={compiledHTML} projectName={project.name} />
