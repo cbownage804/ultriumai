@@ -52,8 +52,15 @@ export const EnhancedMessageBubble = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ 
+        type: "spring", 
+        stiffness: 500, 
+        damping: 30,
+        mass: 0.8
+      }}
+      layout
       className={`flex gap-3 ${
         message.role === 'user' ? 'justify-end' : 'justify-start'
       }`}
