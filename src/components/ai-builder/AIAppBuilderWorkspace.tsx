@@ -10,6 +10,8 @@ import { ExportButton } from './ExportButton';
 import { ProjectSettings, type SupabaseConfig, type GithubConfig, type StripeConfig, type VercelConfig, type ServiceKey, type EnvVar } from './ProjectSettings';
 import { GithubPushButton } from './GithubPushButton';
 import { VercelDeployButton } from './VercelDeployButton';
+import { TemplateLibrary } from './TemplateLibrary';
+import { SharePreview } from './SharePreview';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +44,7 @@ export function AIAppBuilderWorkspace() {
   const [serviceKeys, setServiceKeys] = useState<ServiceKey[]>([]);
   const [envVars, setEnvVars] = useState<EnvVar[]>([]);
   const [showFileTree, setShowFileTree] = useState(true);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   useEffect(() => {
     if (latestFiles.length > 0) {
@@ -57,6 +60,10 @@ export function AIAppBuilderWorkspace() {
 
   const handleSend = (input: string, imageDataUrl?: string | null) => {
     sendMessage(input, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl);
+  };
+
+  const handleFixError = (errorPrompt: string) => {
+    sendMessage(errorPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys);
   };
 
   const handleClear = () => {
@@ -155,6 +162,7 @@ export function AIAppBuilderWorkspace() {
             />
             {vercelConfig && <VercelDeployButton projectName={project.name} files={project.files} vercelToken={vercelConfig.token} />}
             {githubConfig && <GithubPushButton projectName={project.name} files={project.files} githubToken={githubConfig.token} />}
+            <SharePreview html={compiledHTML} projectName={project.name} />
             <ExportButton projectName={project.name} files={project.files} />
           </div>
         </div>
@@ -176,6 +184,7 @@ export function AIAppBuilderWorkspace() {
                 onStop={stopGenerating}
                 onClear={handleClear}
                 onRestoreVersion={restoreVersion}
+                onOpenTemplates={() => setShowTemplates(true)}
               />
             </ResizablePanel>
 
@@ -262,7 +271,7 @@ export function AIAppBuilderWorkspace() {
 
                     <ResizablePanel defaultSize={hasFiles && showFileTree ? 82 : 100}>
                       {rightTab === 'preview' || !hasFiles ? (
-                        <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} />
+                        <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} />
                       ) : (
                         <div className="h-full flex flex-col bg-[#0d0d14]">
                           <FileTabBar
@@ -284,6 +293,13 @@ export function AIAppBuilderWorkspace() {
           </ResizablePanelGroup>
         </div>
       </div>
+
+      {/* Template Library Modal */}
+      <TemplateLibrary
+        isOpen={showTemplates}
+        onClose={() => setShowTemplates(false)}
+        onSelectTemplate={(prompt) => handleSend(prompt)}
+      />
     </TooltipProvider>
   );
 }

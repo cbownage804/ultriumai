@@ -253,6 +253,10 @@ FORMAT:
 - When suggesting a plan, use numbered steps.
 - End messages with a clear question or next step to keep the conversation flowing.
 
+IMPORTANT: When you feel the plan is solid enough, end your message with something like:
+"I think we have a solid plan! When you're ready, switch to **Build** mode and I'll generate the code."
+This gives the user a natural cue to transition.
+
 You're essentially acting as a senior product consultant + architect who happens to know that once the plan is solid, they can switch to "Build" mode to generate the actual code.`;
 
     let systemPrompt = mode === 'discuss' ? DISCUSS_SYSTEM_PROMPT : BASE_SYSTEM_PROMPT;
