@@ -22,7 +22,7 @@ const defaultBranding: PortalBranding = {
   companyLogo: null,
   primaryColor: '#06b6d4', // cyan-500
   secondaryColor: '#a855f7', // purple-500
-  footerText: 'Powered by Ultrium',
+  footerText: 'Powered by Vanguard',
   hidePoweredBy: false,
   isLoading: true
 };

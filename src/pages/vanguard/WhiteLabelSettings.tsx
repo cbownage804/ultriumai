@@ -31,7 +31,7 @@ export default function WhiteLabelSettings() {
     tagline: activeTheme?.tagline || '',
     custom_domain: activeTheme?.custom_domain || '',
     hide_ultrium_branding: activeTheme?.hide_ultrium_branding || false,
-    powered_by_text: activeTheme?.powered_by_text || 'Powered by UltriumAI',
+    powered_by_text: activeTheme?.powered_by_text || 'Powered by Vanguard',
     logo_url: activeTheme?.logo_url || '',
   });
 
@@ -181,7 +181,7 @@ export default function WhiteLabelSettings() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-white/70">Hide UltriumAI Branding</Label>
+                <Label className="text-white/70">Hide Vanguard Branding</Label>
                 <p className="text-xs text-white/30">{canFullWhiteLabel ? 'Full white-label enabled' : 'Platinum required'}</p>
               </div>
               <Switch
