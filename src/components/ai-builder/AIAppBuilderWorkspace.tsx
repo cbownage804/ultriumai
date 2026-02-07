@@ -20,9 +20,13 @@ import { ProjectManager } from './ProjectManager';
 import { CollaborativePresence } from './CollaborativePresence';
 import { CommandPalette } from './CommandPalette';
 import { GeneratingOverlay } from './GeneratingOverlay';
-import { SkeletonPreview } from './SkeletonPreview';
 import { FileSearchPanel } from './FileSearchPanel';
 import { FileBreadcrumb } from './FileBreadcrumb';
+import { VersionHistoryPanel } from './VersionHistoryPanel';
+import { ConsolePanel } from './ConsolePanel';
+import { DeployDialog } from './DeployDialog';
+import { EnvVarsPanel, type EnvVariable } from './EnvVarsPanel';
+import { AssetManager, type ProjectAsset } from './AssetManager';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +34,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import {
   Eye, Code, Pencil, Database, CreditCard, Key,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
+  History, Variable, Image,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -72,10 +77,17 @@ export function AIAppBuilderWorkspace() {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showFileSearch, setShowFileSearch] = useState(false);
 
+  // New panel states
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showConsole, setShowConsole] = useState(false);
+  const [showEnvVars, setShowEnvVars] = useState(false);
+  const [showAssets, setShowAssets] = useState(false);
+  const [envVariables, setEnvVariables] = useState<EnvVariable[]>([]);
+  const [assets, setAssets] = useState<ProjectAsset[]>([]);
+
   // Sync latest files from AI
   useEffect(() => {
     if (latestFiles.length > 0) {
-      // Push undo before applying
       if (project.files.length > 0) {
         pushUndo('AI generation', project.files);
       }
@@ -97,28 +109,22 @@ export function AIAppBuilderWorkspace() {
     }
   }, [project.files, project.name, scheduleAutoSave]);
 
-  // Keyboard shortcuts for undo/redo
+  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
         e.preventDefault();
-        if (e.shiftKey) {
-          handleRedo();
-        } else {
-          handleUndo();
-        }
+        if (e.shiftKey) handleRedo();
+        else handleUndo();
       }
-      // ⌘K → Command Palette
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setShowCommandPalette(prev => !prev);
       }
-      // ⌘S → Save
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
       }
-      // ⌘⇧F → File Search
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') {
         e.preventDefault();
         setShowFileSearch(prev => !prev);
@@ -129,7 +135,6 @@ export function AIAppBuilderWorkspace() {
   }, [project.files, canUndo, canRedo]);
 
   const handleSend = (input: string, imageDataUrl?: string | null) => {
-    // AI context awareness: prepend active file context so AI knows where the user is focused
     const contextPrefix = activeFile && rightTab === 'code'
       ? `[Currently viewing: ${activeFile.path}]\n`
       : '';
@@ -140,10 +145,7 @@ export function AIAppBuilderWorkspace() {
     sendMessage(errorPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys);
   };
 
-  const handleClear = () => {
-    clearChat();
-    resetProject();
-  };
+  const handleClear = () => { clearChat(); resetProject(); };
 
   const handleRename = () => {
     if (editName.trim()) renameProject(editName.trim());
@@ -152,18 +154,12 @@ export function AIAppBuilderWorkspace() {
 
   const handleUndo = useCallback(() => {
     const restored = undo(project.files);
-    if (restored) {
-      setFiles(restored);
-      toast.success('Undone');
-    }
+    if (restored) { setFiles(restored); toast.success('Undone'); }
   }, [undo, project.files, setFiles]);
 
   const handleRedo = useCallback(() => {
     const restored = redo(project.files);
-    if (restored) {
-      setFiles(restored);
-      toast.success('Redone');
-    }
+    if (restored) { setFiles(restored); toast.success('Redone'); }
   }, [redo, project.files, setFiles]);
 
   const handleCreateBranch = useCallback((name: string) => {
@@ -173,10 +169,7 @@ export function AIAppBuilderWorkspace() {
 
   const handleSwitchBranch = useCallback((branchId: string) => {
     const files = switchBranch(branchId, project.files);
-    if (files && files.length > 0) {
-      pushUndo('Branch switch', project.files);
-      setFiles(files);
-    }
+    if (files && files.length > 0) { pushUndo('Branch switch', project.files); setFiles(files); }
     toast.success('Switched branch');
   }, [switchBranch, project.files, pushUndo, setFiles]);
 
@@ -204,21 +197,24 @@ export function AIAppBuilderWorkspace() {
 
   const handlePublish = useCallback(async () => {
     const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys);
-    if (!compiledHTML) {
-      toast.error('Nothing to publish');
-      return;
-    }
+    if (!compiledHTML) { toast.error('Nothing to publish'); return; }
     const url = await publishProject(project.name, compiledHTML);
-    if (url) {
-      setPublishedUrl(url);
-      toast.success('Published successfully!');
-    }
+    if (url) { setPublishedUrl(url); toast.success('Published successfully!'); }
   }, [publishProject, project.name, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys]);
+
+  const handleAssetUpload = useCallback((asset: ProjectAsset) => {
+    setAssets(prev => [...prev, asset]);
+  }, []);
+
+  const handleAssetDelete = useCallback((id: string) => {
+    setAssets(prev => prev.filter(a => a.id !== id));
+    toast.success('Asset deleted');
+  }, []);
 
   const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys);
   const hasFiles = project.files.length > 0;
 
-  // Mobile detection for responsive layout
+  // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
   const [mobileTab, setMobileTab] = useState<'chat' | 'editor'>('chat');
 
@@ -230,13 +226,19 @@ export function AIAppBuilderWorkspace() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
+  // Close other panels when opening one
+  const openPanel = (panel: 'history' | 'envVars' | 'assets') => {
+    setShowVersionHistory(panel === 'history' ? !showVersionHistory : false);
+    setShowEnvVars(panel === 'envVars' ? !showEnvVars : false);
+    setShowAssets(panel === 'assets' ? !showAssets : false);
+  };
+
   return (
     <TooltipProvider delayDuration={300}>
       <div className="h-[calc(100vh-5rem)] w-full flex flex-col bg-[#0a0a0f]">
         {/* ── Top Bar ── */}
         <div className="flex items-center justify-between px-3 h-11 border-b border-white/[0.06] bg-black/40 backdrop-blur-sm shrink-0">
           <div className="flex items-center gap-3">
-            {/* Status + Name */}
             <div className="flex items-center gap-2">
               <div className={cn(
                 "h-2 w-2 rounded-full transition-colors",
@@ -268,7 +270,6 @@ export function AIAppBuilderWorkspace() {
               </span>
             )}
 
-            {/* Branch manager */}
             <BranchManager
               branches={branches}
               activeBranch={activeBranch}
@@ -279,7 +280,6 @@ export function AIAppBuilderWorkspace() {
               onDeleteBranch={deleteBranch}
             />
 
-            {/* Undo/Redo */}
             {hasFiles && (
               <div className="flex items-center gap-0.5">
                 <Tooltip>
@@ -309,7 +309,6 @@ export function AIAppBuilderWorkspace() {
               </div>
             )}
 
-            {/* Connected service pills */}
             {(supabaseConfig || stripeConfig || serviceKeys.length > 0) && (
               <div className="hidden md:flex items-center gap-1 ml-1">
                 {supabaseConfig && (
@@ -330,11 +329,53 @@ export function AIAppBuilderWorkspace() {
               </div>
             )}
 
-            {/* Collaborative presence */}
             <CollaborativePresence projectId={currentProjectId} />
           </div>
 
           <div className="flex items-center gap-1">
+            {/* Panel toggle buttons */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => openPanel('history')}
+                  className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showVersionHistory ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
+                >
+                  <History className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Version History</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => openPanel('envVars')}
+                  className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showEnvVars ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
+                >
+                  <Variable className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Env Variables</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => openPanel('assets')}
+                  className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", showAssets ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}
+                >
+                  <Image className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Assets</TooltipContent>
+            </Tooltip>
+
+            <div className="h-4 w-px bg-white/[0.06] mx-1" />
+
+            <DeployDialog
+              onPublish={handlePublish}
+              publishedUrl={publishedUrl}
+              hasFiles={hasFiles}
+            />
+
             <ProjectManager
               savedProjects={savedProjects}
               currentProjectId={currentProjectId}
@@ -391,7 +432,6 @@ export function AIAppBuilderWorkspace() {
         {/* ── Main Content ── */}
         <div className="flex-1 overflow-hidden">
           {isMobile ? (
-            // Mobile: show one panel at a time
             mobileTab === 'chat' ? (
               <BuilderChatPanel
                 messages={messages}
@@ -444,124 +484,155 @@ export function AIAppBuilderWorkspace() {
 
             {/* Right Panel */}
             <ResizablePanel defaultSize={72} minSize={50}>
-              <div className="h-full flex flex-col">
-                {hasFiles && (
-                  <div className="flex items-center h-9 border-b border-white/[0.06] bg-black/20 shrink-0">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => setShowFileTree(!showFileTree)}
-                          className="h-9 w-9 flex items-center justify-center text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors"
-                        >
-                          {showFileTree ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-xs">
-                        {showFileTree ? 'Hide files' : 'Show files'}
-                      </TooltipContent>
-                    </Tooltip>
+              <div className="h-full flex">
+                {/* Side panels */}
+                <VersionHistoryPanel
+                  versions={versions}
+                  currentFiles={project.files}
+                  onRestore={restoreVersion}
+                  onClose={() => setShowVersionHistory(false)}
+                  open={showVersionHistory}
+                />
+                <EnvVarsPanel
+                  envVars={envVariables}
+                  onChange={setEnvVariables}
+                  open={showEnvVars}
+                  onClose={() => setShowEnvVars(false)}
+                />
+                <AssetManager
+                  assets={assets}
+                  onUpload={handleAssetUpload}
+                  onDelete={handleAssetDelete}
+                  open={showAssets}
+                  onClose={() => setShowAssets(false)}
+                />
 
-                    <div className="h-4 w-px bg-white/[0.06] mx-0.5" />
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  {hasFiles && (
+                    <div className="flex items-center h-9 border-b border-white/[0.06] bg-black/20 shrink-0">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => setShowFileTree(!showFileTree)}
+                            className="h-9 w-9 flex items-center justify-center text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors"
+                          >
+                            {showFileTree ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="text-xs">
+                          {showFileTree ? 'Hide files' : 'Show files'}
+                        </TooltipContent>
+                      </Tooltip>
 
-                    <button
-                      onClick={() => setRightTab('preview')}
-                      className={cn(
-                        "h-9 px-3 flex items-center gap-1.5 text-xs transition-all relative",
-                        rightTab === 'preview' ? "text-white" : "text-white/40 hover:text-white/70"
-                      )}
-                    >
-                      <Eye className="h-3 w-3" />
-                      Preview
-                      {rightTab === 'preview' && (
-                        <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setRightTab('code')}
-                      className={cn(
-                        "h-9 px-3 flex items-center gap-1.5 text-xs transition-all relative",
-                        rightTab === 'code' ? "text-white" : "text-white/40 hover:text-white/70"
-                      )}
-                    >
-                      <Code className="h-3 w-3" />
-                      Code
-                      {rightTab === 'code' && (
-                        <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full" />
-                      )}
-                    </button>
+                      <div className="h-4 w-px bg-white/[0.06] mx-0.5" />
 
-                    {/* Search button */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => setShowFileSearch(!showFileSearch)}
-                          className={cn(
-                            "h-9 px-2.5 flex items-center gap-1 text-xs transition-all",
-                            showFileSearch ? "text-cyan-400" : "text-white/30 hover:text-white/60"
-                          )}
-                        >
-                          <Search className="h-3 w-3" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-xs">Search files (⌘⇧F)</TooltipContent>
-                    </Tooltip>
-
-                    {isGenerating && (
-                      <div className="ml-auto mr-3 flex items-center gap-1.5 text-[10px] text-amber-400/80">
-                        <Activity className="h-3 w-3 animate-pulse" />
-                        <span>generating...</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex-1 overflow-hidden flex">
-                  {/* File Search Panel */}
-                  <FileSearchPanel
-                    open={showFileSearch}
-                    onClose={() => setShowFileSearch(false)}
-                    files={project.files}
-                    onSelectFile={(path) => { setActiveFile(path); }}
-                    onSwitchToCode={() => setRightTab('code')}
-                  />
-
-                  <div className="flex-1 overflow-hidden">
-                    <ResizablePanelGroup direction="horizontal" className="h-full">
-                      {hasFiles && showFileTree && !showFileSearch && (
-                        <>
-                          <ResizablePanel defaultSize={18} minSize={12} maxSize={28}>
-                            <ProjectFileTree
-                              files={project.files}
-                              activeFilePath={project.activeFilePath}
-                              onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }}
-                              onDeleteFile={deleteFile}
-                            />
-                          </ResizablePanel>
-                          <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors" />
-                        </>
-                      )}
-
-                      <ResizablePanel defaultSize={hasFiles && showFileTree ? 82 : 100}>
-                        {rightTab === 'preview' || !hasFiles ? (
-                          <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError}>
-                            <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
-                          </BuilderPreviewPanel>
-                        ) : (
-                          <div className="h-full flex flex-col bg-[#0d0d14]">
-                            <FileTabBar
-                              openPaths={project.openFilePaths}
-                              activePath={project.activeFilePath}
-                              onSelect={setActiveFile}
-                              onClose={closeFile}
-                            />
-                            <FileBreadcrumb file={activeFile} />
-                            <div className="flex-1 overflow-hidden">
-                              <CodeEditor file={activeFile} onContentChange={upsertFile} />
-                            </div>
-                          </div>
+                      <button
+                        onClick={() => setRightTab('preview')}
+                        className={cn(
+                          "h-9 px-3 flex items-center gap-1.5 text-xs transition-all relative",
+                          rightTab === 'preview' ? "text-white" : "text-white/40 hover:text-white/70"
                         )}
-                      </ResizablePanel>
-                    </ResizablePanelGroup>
+                      >
+                        <Eye className="h-3 w-3" />
+                        Preview
+                        {rightTab === 'preview' && (
+                          <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setRightTab('code')}
+                        className={cn(
+                          "h-9 px-3 flex items-center gap-1.5 text-xs transition-all relative",
+                          rightTab === 'code' ? "text-white" : "text-white/40 hover:text-white/70"
+                        )}
+                      >
+                        <Code className="h-3 w-3" />
+                        Code
+                        {rightTab === 'code' && (
+                          <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full" />
+                        )}
+                      </button>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => setShowFileSearch(!showFileSearch)}
+                            className={cn(
+                              "h-9 px-2.5 flex items-center gap-1 text-xs transition-all",
+                              showFileSearch ? "text-cyan-400" : "text-white/30 hover:text-white/60"
+                            )}
+                          >
+                            <Search className="h-3 w-3" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="text-xs">Search files (⌘⇧F)</TooltipContent>
+                      </Tooltip>
+
+                      {isGenerating && (
+                        <div className="ml-auto mr-3 flex items-center gap-1.5 text-[10px] text-amber-400/80">
+                          <Activity className="h-3 w-3 animate-pulse" />
+                          <span>generating...</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex-1 overflow-hidden flex">
+                    <FileSearchPanel
+                      open={showFileSearch}
+                      onClose={() => setShowFileSearch(false)}
+                      files={project.files}
+                      onSelectFile={(path) => { setActiveFile(path); }}
+                      onSwitchToCode={() => setRightTab('code')}
+                    />
+
+                    <div className="flex-1 overflow-hidden flex flex-col">
+                      <div className="flex-1 overflow-hidden">
+                        <ResizablePanelGroup direction="horizontal" className="h-full">
+                          {hasFiles && showFileTree && !showFileSearch && (
+                            <>
+                              <ResizablePanel defaultSize={18} minSize={12} maxSize={28}>
+                                <ProjectFileTree
+                                  files={project.files}
+                                  activeFilePath={project.activeFilePath}
+                                  onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }}
+                                  onDeleteFile={deleteFile}
+                                />
+                              </ResizablePanel>
+                              <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors" />
+                            </>
+                          )}
+
+                          <ResizablePanel defaultSize={hasFiles && showFileTree ? 82 : 100}>
+                            {rightTab === 'preview' || !hasFiles ? (
+                              <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError}>
+                                <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} />
+                              </BuilderPreviewPanel>
+                            ) : (
+                              <div className="h-full flex flex-col bg-[#0d0d14]">
+                                <FileTabBar
+                                  openPaths={project.openFilePaths}
+                                  activePath={project.activeFilePath}
+                                  onSelect={setActiveFile}
+                                  onClose={closeFile}
+                                />
+                                <FileBreadcrumb file={activeFile} />
+                                <div className="flex-1 overflow-hidden">
+                                  <CodeEditor file={activeFile} onContentChange={upsertFile} />
+                                </div>
+                              </div>
+                            )}
+                          </ResizablePanel>
+                        </ResizablePanelGroup>
+                      </div>
+
+                      {/* Console Panel */}
+                      <ConsolePanel
+                        open={showConsole}
+                        onToggle={() => setShowConsole(!showConsole)}
+                        onFixError={handleFixError}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

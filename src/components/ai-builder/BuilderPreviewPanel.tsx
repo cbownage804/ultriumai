@@ -27,7 +27,7 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, children }
 
   const currentPreset = DEVICE_PRESETS.find(p => p.id === activePreset) || DEVICE_PRESETS[0];
 
-  // Inject error capture script into HTML
+  // Inject error + console capture script into HTML
   const htmlWithErrorCapture = html ? html.replace(
     '</head>',
     `<script>
@@ -37,18 +37,17 @@ window.addEventListener('error', function(e) {
 window.addEventListener('unhandledrejection', function(e) {
   window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: 'Unhandled Promise: ' + (e.reason?.message || e.reason || 'Unknown'), source: '', line: 0 }, '*');
 });
-console.error = (function(orig) {
-  return function() {
-    window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: Array.from(arguments).join(' '), source: 'console.error', line: 0, isWarning: false }, '*');
+['log','info','warn','error'].forEach(function(level) {
+  var orig = console[level];
+  console[level] = function() {
+    var msg = Array.from(arguments).join(' ');
+    window.parent.postMessage({ type: '__CONSOLE_LOG__', level: level, message: msg, source: 'console.' + level, line: 0 }, '*');
+    if (level === 'error' || level === 'warn') {
+      window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: msg, source: 'console.' + level, line: 0, isWarning: level === 'warn' }, '*');
+    }
     orig.apply(console, arguments);
   };
-})(console.error);
-console.warn = (function(orig) {
-  return function() {
-    window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: Array.from(arguments).join(' '), source: 'console.warn', line: 0, isWarning: true }, '*');
-    orig.apply(console, arguments);
-  };
-})(console.warn);
+});
 </script>
 </head>`
   ) : null;
