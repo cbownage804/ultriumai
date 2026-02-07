@@ -477,6 +477,10 @@ export function BuilderChatPanel({
                           <img src={msg.imageUrl} alt="Reference" className="rounded-lg max-h-32 mb-2 border border-white/10" />
                         )}
                         <p className="whitespace-pre-wrap text-[13px]">{msg.content}</p>
+                        {/* Credit cost badge */}
+                        <div className="flex justify-end mt-1">
+                          <span className="text-[9px] text-white/30 bg-white/[0.05] rounded-full px-1.5 py-0.5 font-mono">1 credit</span>
+                        </div>
                       </div>
                     )}
                   </div>

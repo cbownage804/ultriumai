@@ -33,7 +33,15 @@ const TEMPLATES: Template[] = [
   { id: 'calendar-app', name: 'Calendar App', description: 'Month/week/day views, events', icon: '📅', category: 'Tool', prompt: 'Build a calendar application with: month view grid with event dots. Week view with time slots. Day view with hourly schedule. Create event modal with date/time picker, title, color selection. Today button. Navigation arrows for months. Mini calendar in sidebar. Dark productivity theme.' },
 ];
 
-const CATEGORIES = ['All', 'Landing', 'Dashboard', 'App', 'Tool'];
+const CATEGORIES = ['All', 'Landing', 'Dashboard', 'App', 'Tool'] as const;
+
+const CATEGORY_META: Record<string, { emoji: string; desc: string }> = {
+  All: { emoji: '✨', desc: 'All templates' },
+  Landing: { emoji: '🌐', desc: 'Marketing & landing pages' },
+  Dashboard: { emoji: '📊', desc: 'Analytics & management' },
+  App: { emoji: '📱', desc: 'Full applications' },
+  Tool: { emoji: '🛠️', desc: 'Utilities & tools' },
+};
 
 interface TemplateLibraryProps {
   isOpen: boolean;
@@ -103,21 +111,35 @@ export function TemplateLibrary({ isOpen, onClose, onSelectTemplate }: TemplateL
 
         {/* Template Grid */}
         <div className="flex-1 overflow-auto p-4">
+          {category !== 'All' && CATEGORY_META[category] && (
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <span className="text-base">{CATEGORY_META[category].emoji}</span>
+              <span className="text-[11px] text-white/40">{CATEGORY_META[category].desc}</span>
+              <span className="text-[10px] text-white/20 ml-auto">{filtered.length} templates</span>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2.5">
             {filtered.map(template => (
               <button
                 key={template.id}
                 onClick={() => { onSelectTemplate(template.prompt); onClose(); }}
-                className="text-left p-3.5 rounded-xl border border-white/[0.06] hover:border-cyan-500/20 hover:bg-cyan-500/[0.03] transition-all group"
+                className="text-left p-3.5 rounded-xl border border-white/[0.06] hover:border-cyan-500/20 hover:bg-cyan-500/[0.03] transition-all group relative overflow-hidden"
               >
-                <div className="flex items-start gap-2.5">
-                  <span className="text-xl">{template.icon}</span>
+                {/* Hover gradient effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 to-violet-500/0 group-hover:from-cyan-500/[0.02] group-hover:to-violet-500/[0.02] transition-all duration-300" />
+                <div className="relative flex items-start gap-2.5">
+                  <div className="h-10 w-10 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-lg group-hover:scale-105 transition-transform">
+                    {template.icon}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-medium text-white/80 group-hover:text-white/95">{template.name}</span>
                       <Sparkles className="h-2.5 w-2.5 text-cyan-400/0 group-hover:text-cyan-400/60 transition-colors" />
                     </div>
                     <p className="text-[10px] text-white/30 group-hover:text-white/45 mt-0.5 line-clamp-2">{template.description}</p>
+                    <div className="mt-1.5 flex items-center gap-1">
+                      <span className="text-[8px] text-white/15 px-1.5 py-0.5 rounded-full border border-white/[0.04] group-hover:border-white/[0.08] transition-colors">{template.category}</span>
+                    </div>
                   </div>
                 </div>
               </button>

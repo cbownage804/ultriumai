@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import {
   Copy, CheckCircle, Maximize2, Minimize2, ExternalLink, RefreshCw, Activity,
+  ArrowLeft, ArrowRight, Globe, Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -32,6 +33,9 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
   const [iframeKey, setIframeKey] = useState(0);
   const [errors, setErrors] = useState<PreviewError[]>([]);
   const [isVisualEditActive, setIsVisualEditActive] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState('/');
+  const [urlHistory, setUrlHistory] = useState<string[]>(['/']);
+  const [historyIndex, setHistoryIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -110,7 +114,23 @@ window.addEventListener('unhandledrejection', function(e) {
     return () => window.removeEventListener('message', handler);
   }, []);
 
-  useEffect(() => { setErrors([]); }, [html]);
+  useEffect(() => { setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0); }, [html]);
+
+  // Listen for navigation messages from iframe
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === '__NAV_CHANGE__' && e.data.url) {
+        setCurrentUrl(e.data.url);
+        setUrlHistory(prev => [...prev.slice(0, historyIndex + 1), e.data.url]);
+        setHistoryIndex(prev => prev + 1);
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [historyIndex]);
+
+  const canGoBack = historyIndex > 0;
+  const canGoForward = historyIndex < urlHistory.length - 1;
 
   const copyHTML = useCallback(() => {
     if (!html) return;
@@ -163,36 +183,61 @@ window.addEventListener('unhandledrejection', function(e) {
       {children}
       {/* Toolbar */}
       {html && (
-        <div className="flex items-center justify-between px-3 h-9 border-b border-white/[0.06] bg-black/30 shrink-0">
-          <div className="flex items-center gap-1">
-            <DevicePresetPicker activePreset={activePreset} onSelect={(p) => setActivePreset(p.id)} />
-            {currentPreset.width > 0 && (
-              <span className="text-[9px] text-white/20 font-mono ml-1">
-                {currentPreset.width}×{currentPreset.height}
-              </span>
-            )}
-            {(isGenerating || isStreamingPreview) && (
-              <div className="flex items-center gap-1.5 ml-3 text-[10px] text-amber-400/60">
-                <Activity className="h-3 w-3 animate-pulse" />
-                <span>
-                  {isStreamingPreview && completedFileCount ? `updating... (${completedFileCount} files)` : 'updating...'}
+        <div className="flex flex-col border-b border-white/[0.06] bg-black/30 shrink-0">
+          <div className="flex items-center justify-between px-3 h-9">
+            <div className="flex items-center gap-1">
+              <DevicePresetPicker activePreset={activePreset} onSelect={(p) => setActivePreset(p.id)} />
+              {currentPreset.width > 0 && (
+                <span className="text-[9px] text-white/20 font-mono ml-1">
+                  {currentPreset.width}×{currentPreset.height}
                 </span>
-              </div>
-            )}
+              )}
+              {(isGenerating || isStreamingPreview) && (
+                <div className="flex items-center gap-1.5 ml-3 text-[10px] text-amber-400/60">
+                  <Activity className="h-3 w-3 animate-pulse" />
+                  <span>
+                    {isStreamingPreview && completedFileCount ? `updating... (${completedFileCount} files)` : 'updating...'}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-0.5">
+              <VisualEditOverlay
+                isActive={isVisualEditActive}
+                onToggle={() => setIsVisualEditActive(!isVisualEditActive)}
+                onEditApply={handleVisualEdit}
+                onAIEditRequest={onAIEditRequest}
+                isProcessingAIEdit={isProcessingAIEdit}
+                iframeRef={iframeRef}
+              />
+              <ToolButton icon={RefreshCw} onClick={() => setIframeKey(k => k + 1)} title="Refresh" />
+              <ToolButton icon={copied ? CheckCircle : Copy} onClick={copyHTML} title="Copy HTML" active={copied} />
+              <ToolButton icon={ExternalLink} onClick={openInNewTab} title="Open in tab" />
+              <ToolButton icon={isFullscreen ? Minimize2 : Maximize2} onClick={toggleFullscreen} title="Fullscreen" />
+            </div>
           </div>
-          <div className="flex items-center gap-0.5">
-            <VisualEditOverlay
-              isActive={isVisualEditActive}
-              onToggle={() => setIsVisualEditActive(!isVisualEditActive)}
-              onEditApply={handleVisualEdit}
-              onAIEditRequest={onAIEditRequest}
-              isProcessingAIEdit={isProcessingAIEdit}
-              iframeRef={iframeRef}
-            />
-            <ToolButton icon={RefreshCw} onClick={() => setIframeKey(k => k + 1)} title="Refresh" />
-            <ToolButton icon={copied ? CheckCircle : Copy} onClick={copyHTML} title="Copy HTML" active={copied} />
-            <ToolButton icon={ExternalLink} onClick={openInNewTab} title="Open in tab" />
-            <ToolButton icon={isFullscreen ? Minimize2 : Maximize2} onClick={toggleFullscreen} title="Fullscreen" />
+          {/* Address bar */}
+          <div className="flex items-center gap-1.5 px-3 h-8 border-t border-white/[0.04]">
+            <button
+              onClick={() => { if (canGoBack) { setHistoryIndex(i => i - 1); setCurrentUrl(urlHistory[historyIndex - 1]); } }}
+              disabled={!canGoBack}
+              className={cn("h-5 w-5 rounded flex items-center justify-center transition-colors", canGoBack ? "text-white/40 hover:text-white/70 hover:bg-white/5" : "text-white/10")}
+            >
+              <ArrowLeft className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => { if (canGoForward) { setHistoryIndex(i => i + 1); setCurrentUrl(urlHistory[historyIndex + 1]); } }}
+              disabled={!canGoForward}
+              className={cn("h-5 w-5 rounded flex items-center justify-center transition-colors", canGoForward ? "text-white/40 hover:text-white/70 hover:bg-white/5" : "text-white/10")}
+            >
+              <ArrowRight className="h-3 w-3" />
+            </button>
+            <div className="flex-1 flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.06] rounded-md h-6 px-2">
+              <Lock className="h-2.5 w-2.5 text-emerald-400/50" />
+              <span className="text-[10px] text-white/40 font-mono truncate">
+                localhost:3000{currentUrl}
+              </span>
+            </div>
           </div>
         </div>
       )}

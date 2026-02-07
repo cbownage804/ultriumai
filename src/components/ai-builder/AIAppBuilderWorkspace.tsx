@@ -40,12 +40,16 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { KeyboardShortcutsPanel } from './KeyboardShortcutsPanel';
 import { ActivityFeed, type ActivityEntry } from './ActivityFeed';
+import { BillingPanel, CreditsPill } from './BillingPanel';
+import { ProjectShareDialog, CollaboratorAvatars } from './ProjectShareDialog';
+import { SEOEditor } from './SEOEditor';
+import { BuildNotificationCenter, type BuildNotification } from './BuildNotificationCenter';
 import type { KnowledgeConfig } from './KnowledgePanel';
 import {
   Eye, Code, Pencil, Database, CreditCard, Key,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
   History, Variable, Image, Package, Columns, Keyboard,
-  Shield, Brain, FolderOpen, Zap, Clock,
+  Shield, Brain, FolderOpen, Zap, Clock, Globe, Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -130,6 +134,11 @@ export function AIAppBuilderWorkspace() {
   const [knowledge, setKnowledge] = useState<KnowledgeConfig>({ customInstructions: '', contextFiles: [] });
   const [edgeFunctions, setEdgeFunctions] = useState<{ name: string; status: 'deployed' | 'draft' | 'error'; lastDeployed?: string }[]>([]);
   const [showActivity, setShowActivity] = useState(false);
+  const [showBilling, setShowBilling] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showSEOEditor, setShowSEOEditor] = useState(false);
+  const [collaborators, setCollaborators] = useState<{ id: string; email: string; role: 'viewer' | 'editor' | 'admin'; avatarColor: string; joinedAt: Date }[]>([]);
+  const [buildNotifications, setBuildNotifications] = useState<BuildNotification[]>([]);
   const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>([]);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
@@ -220,7 +229,7 @@ export function AIAppBuilderWorkspace() {
     }
   }, [latestFiles]);
 
-  // AI completion toast
+  // AI completion toast + notification
   useEffect(() => {
     if (prevIsGeneratingRef.current && !isGenerating && latestFiles.length > 0) {
       toast.success(`Generated ${latestFiles.length} file${latestFiles.length > 1 ? 's' : ''}`, {
@@ -229,6 +238,13 @@ export function AIAppBuilderWorkspace() {
           onClick: () => setRightTab('preview'),
         },
       });
+      setBuildNotifications(prev => [{
+        id: crypto.randomUUID(),
+        type: 'success' as const,
+        title: `Generated ${latestFiles.length} file${latestFiles.length > 1 ? 's' : ''}`,
+        timestamp: new Date(),
+        read: false,
+      }, ...prev].slice(0, 50));
     }
     prevIsGeneratingRef.current = isGenerating;
   }, [isGenerating, latestFiles.length]);
@@ -639,10 +655,33 @@ export function AIAppBuilderWorkspace() {
               </div>
             )}
 
+            <CollaboratorAvatars collaborators={collaborators} onClick={() => setShowShareDialog(true)} />
             <CollaborativePresence projectId={currentProjectId} />
+            <CreditsPill onClick={() => setShowBilling(true)} />
           </div>
 
           <div className="flex items-center gap-1">
+            <BuildNotificationCenter
+              notifications={buildNotifications}
+              onMarkRead={(id) => setBuildNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))}
+              onClear={() => setBuildNotifications([])}
+            />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={() => setShowSEOEditor(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                  <Globe className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">SEO Editor</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={() => setShowShareDialog(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                  <Users className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Share</TooltipContent>
+            </Tooltip>
             {/* Panel toggle buttons */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -1173,6 +1212,17 @@ export function AIAppBuilderWorkspace() {
         canRedo={canRedo}
       />
       <KeyboardShortcutsPanel open={showShortcuts} onOpenChange={setShowShortcuts} />
+      <BillingPanel isOpen={showBilling} onClose={() => setShowBilling(false)} />
+      <ProjectShareDialog
+        isOpen={showShareDialog}
+        onClose={() => setShowShareDialog(false)}
+        projectName={project.name}
+        collaborators={collaborators}
+        onInvite={(email, role) => setCollaborators(prev => [...prev, { id: crypto.randomUUID(), email, role, avatarColor: ['#06b6d4','#8b5cf6','#f43f5e','#22c55e'][prev.length % 4], joinedAt: new Date() }])}
+        onChangeRole={(id, role) => setCollaborators(prev => prev.map(c => c.id === id ? { ...c, role } : c))}
+        onRemove={(id) => setCollaborators(prev => prev.filter(c => c.id !== id))}
+      />
+      <SEOEditor isOpen={showSEOEditor} onClose={() => setShowSEOEditor(false)} files={project.files} onUpdateFile={upsertFile} />
       <QuickFileSwitcher
         open={showQuickSwitcher}
         onOpenChange={setShowQuickSwitcher}

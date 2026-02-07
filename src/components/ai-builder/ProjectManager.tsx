@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Save, FolderOpen, Trash2, Globe, Loader2, Check, Clock,
-  X, FileText, ChevronRight, Copy, GitFork,
+  X, FileText, ChevronRight, Copy, GitFork, Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -21,12 +21,13 @@ interface ProjectManagerProps {
   onPublish: () => void;
   onLoadProjects: () => void;
   onRemix?: (projectId: string) => void;
+  onShare?: (projectId: string) => void;
 }
 
 export function ProjectManager({
   savedProjects, currentProjectId, isSaving, isLoading, lastSaved,
   isPublished, publishedUrl,
-  onSave, onLoad, onDelete, onPublish, onLoadProjects, onRemix,
+  onSave, onLoad, onDelete, onPublish, onLoadProjects, onRemix, onShare,
 }: ProjectManagerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'save' | 'load' | 'publish'>('save');
@@ -142,6 +143,15 @@ export function ProjectManager({
                         </div>
                       </div>
                       {project.is_published && <Globe className="h-3 w-3 text-emerald-400 shrink-0" />}
+                      {onShare && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onShare(project.id); }}
+                          className="hidden group-hover:flex h-5 w-5 rounded items-center justify-center text-white/30 hover:text-cyan-400 hover:bg-cyan-500/10"
+                          title="Share"
+                        >
+                          <Users className="h-2.5 w-2.5" />
+                        </button>
+                      )}
                       {onRemix && (
                         <button
                           onClick={(e) => { e.stopPropagation(); onRemix(project.id); toast.success('Project remixed!'); }}
