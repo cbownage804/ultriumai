@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
+import { useVanguardLimits } from '@/hooks/useVanguardLimits';
 
 interface ScheduledReport {
   id: string;
@@ -79,6 +80,7 @@ export const AgentReportGenerator = () => {
 
   const { toast } = useToast();
   const { user } = useAuth();
+  const { enforceLimit } = useVanguardLimits();
 
   useEffect(() => {
     if (user) {
@@ -107,6 +109,9 @@ export const AgentReportGenerator = () => {
 
   const addReport = async () => {
     if (!user || !newReport.name || !newReport.report_type) return;
+    
+    // Enforce custom reports limit
+    if (!enforceLimit('customReports', reports.length)) return;
 
     try {
       const recipients = newReport.recipients.split(',').map(e => e.trim()).filter(Boolean);

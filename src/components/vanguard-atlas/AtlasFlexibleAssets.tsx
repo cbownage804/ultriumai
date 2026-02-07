@@ -9,6 +9,7 @@ import { Box, Plus, Pencil, Trash2, Settings2, Tag } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useVanguardLimits } from '@/hooks/useVanguardLimits';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -97,7 +98,12 @@ export function AtlasFlexibleAssets({ organizationId }: { organizationId?: strin
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  const { enforceLimit } = useVanguardLimits();
+
   const handleCreateType = (preset?: typeof PRESET_TYPES[0]) => {
+    // Enforce custom asset type limit
+    if (!enforceLimit('customAssetTypes', assetTypes.length)) return;
+    
     setEditingType(null);
     setTypeName(preset?.name || '');
     setTypeDesc('');
