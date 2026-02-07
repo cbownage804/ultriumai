@@ -49,9 +49,10 @@ export const EnhancedMessageList = ({
         {showWelcome && onQuestionSelect ? (
           <motion.div
             key="welcome"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
           >
             <TemplateWelcomeScreen
               gptName={gptName}
@@ -68,46 +69,64 @@ export const EnhancedMessageList = ({
             key="messages"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
             className="space-y-4 pb-4"
           >
-            {messages.map((message, index) => (
-              <EnhancedMessageBubble
-                key={message.id}
-                message={message}
-                copiedMessageId={copiedMessageId}
-                onCopyMessage={onCopyMessage}
-                gptName={gptName}
-                showExport={showExport}
-                themeColor={themeColor}
-                onRegenerate={index === messages.length - 1 && message.role === 'assistant' ? onRegenerate : undefined}
-                onFeedback={message.role === 'assistant' ? onFeedback : undefined}
-              />
-            ))}
+            <AnimatePresence initial={false}>
+              {messages.map((message, index) => (
+                <EnhancedMessageBubble
+                  key={message.id}
+                  message={message}
+                  copiedMessageId={copiedMessageId}
+                  onCopyMessage={onCopyMessage}
+                  gptName={gptName}
+                  showExport={showExport}
+                  themeColor={themeColor}
+                  onRegenerate={index === messages.length - 1 && message.role === 'assistant' ? onRegenerate : undefined}
+                  onFeedback={message.role === 'assistant' ? onFeedback : undefined}
+                />
+              ))}
+            </AnimatePresence>
             
-            {isLoading && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex gap-3 justify-start"
-              >
-                <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
-                  <AvatarFallback style={{ backgroundColor: themeColor }} className="text-white text-sm">
-                    {gptName.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="bg-muted rounded-lg p-4">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm text-muted-foreground">Generating response...</span>
+            <AnimatePresence>
+              {isLoading && (
+                <motion.div
+                  key="typing-indicator"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4, transition: { duration: 0.15 } }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  className="flex gap-3 justify-start"
+                >
+                  <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
+                    <AvatarFallback style={{ backgroundColor: themeColor }} className="text-white text-sm">
+                      {gptName.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="bg-muted rounded-lg px-4 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="flex gap-1">
+                        <motion.span
+                          className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full"
+                          animate={{ y: [0, -4, 0] }}
+                          transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
+                        />
+                        <motion.span
+                          className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full"
+                          animate={{ y: [0, -4, 0] }}
+                          transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }}
+                        />
+                        <motion.span
+                          className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full"
+                          animate={{ y: [0, -4, 0] }}
+                          transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
+                        />
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex gap-1 mt-2">
-                    <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
