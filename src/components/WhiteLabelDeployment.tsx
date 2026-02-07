@@ -581,8 +581,8 @@ const WhiteLabelDeployment = () => {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Remove Ultrium Branding</Label>
-                      <p className="text-sm text-muted-foreground">Hide "Powered by Ultrium" footer</p>
+                      <Label>Remove Vanguard Branding</Label>
+                      <p className="text-sm text-muted-foreground">Hide "Powered by Vanguard" footer</p>
                     </div>
                     <Switch checked={currentDeployment.features.remove_branding} />
                   </div>
