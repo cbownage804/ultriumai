@@ -157,9 +157,9 @@ export function CustomDomainPanel({ isOpen, onClose, previewUrl }: CustomDomainP
                         <div className="text-[9px] text-white/20 uppercase tracking-wider font-medium">Required DNS Records</div>
                         <div className="grid grid-cols-[50px_80px_1fr] gap-x-2 gap-y-1 text-[10px] font-mono">
                           <span className="text-white/30">Type</span><span className="text-white/30">Name</span><span className="text-white/30">Value</span>
-                          <span className="text-cyan-400">A</span><span className="text-white/50">@</span><span className="text-white/60">185.158.133.1</span>
-                          <span className="text-cyan-400">A</span><span className="text-white/50">www</span><span className="text-white/60">185.158.133.1</span>
-                          <span className="text-cyan-400">TXT</span><span className="text-white/50">_verify</span><span className="text-white/60 truncate">{domain.id.slice(0, 16)}</span>
+                          <span className="text-cyan-400">A</span><span className="text-white/50">@</span><span className="text-white/60">76.223.105.230</span>
+                          <span className="text-cyan-400">A</span><span className="text-white/50">www</span><span className="text-white/60">76.223.105.230</span>
+                          <span className="text-cyan-400">TXT</span><span className="text-white/50">_ultrium</span><span className="text-white/60 truncate">ultrium_verify={domain.id.slice(0, 16)}</span>
                         </div>
                       </div>
                     )}
@@ -172,7 +172,7 @@ export function CustomDomainPanel({ isOpen, onClose, previewUrl }: CustomDomainP
           {/* Help text */}
           <div className="text-[11px] text-white/25 space-y-1">
             <p>1. Add your domain above</p>
-            <p>2. Configure DNS A records pointing to <code className="text-white/40 bg-white/5 px-1 rounded">185.158.133.1</code></p>
+            <p>2. Configure DNS A records pointing to <code className="text-white/40 bg-white/5 px-1 rounded">76.223.105.230</code></p>
             <p>3. Add both root and www subdomain</p>
             <p>4. SSL is provisioned automatically (may take up to 72h)</p>
           </div>
