@@ -283,20 +283,20 @@ export function AIWorkflowCanvas() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
+          <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
             <Zap className="h-5 w-5 text-purple-400" />
             AI Workflow Builder
           </h2>
-          <p className="text-sm text-muted-foreground">Chain AI transformations with a visual node canvas</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Chain AI transformations with a visual node canvas</p>
         </div>
-        <Button onClick={createWorkflow} className="gap-2">
+        <Button onClick={createWorkflow} className="gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" /> New Workflow
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4" style={{ height: '620px' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4" style={{ minHeight: '500px', height: 'calc(100vh - 320px)', maxHeight: '700px' }}>
         {/* Workflow List */}
         <Card className="lg:col-span-1 flex flex-col">
           <CardHeader className="pb-3 shrink-0">

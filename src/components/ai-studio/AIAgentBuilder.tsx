@@ -151,18 +151,18 @@ export function AIAgentBuilder() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <Button variant="ghost" onClick={() => navigate('/ai-studio/agents')}>
+    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 px-1">
+      <Button variant="ghost" onClick={() => navigate('/ai-studio/agents')} className="min-h-[36px]">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Agents
       </Button>
 
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Bot className="h-6 w-6 text-primary" />
+        <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+          <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
           {isEditing ? 'Edit Agent' : 'Create AI Agent'}
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Configure an autonomous AI agent to process your data
         </p>
       </div>
@@ -306,9 +306,9 @@ export function AIAgentBuilder() {
       </Card>
 
       {/* Save */}
-      <div className="flex justify-end gap-3">
-        <Button variant="outline" onClick={() => navigate('/ai-studio/agents')}>Cancel</Button>
-        <Button onClick={handleSave} disabled={saving || !form.name.trim()}>
+      <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pb-6">
+        <Button variant="outline" onClick={() => navigate('/ai-studio/agents')} className="min-h-[44px] sm:min-h-0">Cancel</Button>
+        <Button onClick={handleSave} disabled={saving || !form.name.trim()} className="min-h-[44px] sm:min-h-0">
           {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
           {isEditing ? 'Update Agent' : 'Create Agent'}
         </Button>
