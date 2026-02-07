@@ -166,13 +166,13 @@ const VanguardPricing = () => {
             <button
               onClick={() => setAnnual(!annual)}
               className={cn(
-                'relative w-12 h-6 rounded-full transition-colors',
+                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0',
                 annual ? 'bg-cyan-500' : 'bg-white/20'
               )}
             >
               <span className={cn(
-                'absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform',
-                annual ? 'translate-x-6' : 'translate-x-0.5'
+                'inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform',
+                annual ? 'translate-x-6' : 'translate-x-1'
               )} />
             </button>
             <span className={cn('text-sm', annual ? 'text-white font-medium' : 'text-white/50')}>Annual</span>
