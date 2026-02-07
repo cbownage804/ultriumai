@@ -6,6 +6,7 @@ import { BuilderPreviewPanel } from './BuilderPreviewPanel';
 import { ProjectFileTree } from './ProjectFileTree';
 import { FileTabBar } from './FileTabBar';
 import { CodeEditor } from './CodeEditor';
+import { ExportButton } from './ExportButton';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -89,6 +90,7 @@ export function AIAppBuilderWorkspace() {
               {project.files.length} file{project.files.length !== 1 ? 's' : ''}
             </Badge>
           </div>
+          <ExportButton projectName={project.name} files={project.files} />
         </div>
       )}
 
