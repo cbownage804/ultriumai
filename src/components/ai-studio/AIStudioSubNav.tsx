@@ -7,7 +7,7 @@ import aiStudioLogo from '@/assets/ai-studio-logo.png';
 const navItems = [
   { path: '/ai-studio', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { path: '/ai-studio/assistant', label: 'Assistant', icon: MessageSquare },
-  { path: '/ai-studio/agents', label: 'Agents', icon: Bot },
+  { path: '/ai-studio/agents', label: 'Build', icon: Bot },
   { path: '/ai-studio/workflows', label: 'Workflows', icon: Workflow },
   { path: '/ai-studio/app-builder', label: 'App Builder', icon: Code2 },
 ];
