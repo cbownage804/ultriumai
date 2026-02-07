@@ -78,51 +78,51 @@ const UltriumGPT = () => {
       <Navigation />
       <AIStudioSubNav />
 
-      <div className="container mx-auto p-6 space-y-8">
+      <div className="container mx-auto px-4 sm:p-6 py-4 sm:py-8 space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="text-center space-y-4 py-6">
+        <div className="text-center space-y-3 sm:space-y-4 py-4 sm:py-6">
           <div className="flex items-center justify-center gap-3">
             <div className="relative">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-                <Bot className="h-8 w-8 text-primary-foreground" />
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+                <Bot className="h-6 w-6 sm:h-8 sm:w-8 text-primary-foreground" />
               </div>
-              <Sparkles className="h-5 w-5 text-yellow-500 absolute -top-1 -right-1" />
+              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 absolute -top-1 -right-1" />
             </div>
           </div>
           <div>
-            <h1 className="text-4xl font-bold">Studio Assistant</h1>
-            <p className="text-muted-foreground text-lg mt-2">
+            <h1 className="text-2xl sm:text-4xl font-bold">Studio Assistant</h1>
+            <p className="text-muted-foreground text-sm sm:text-lg mt-1 sm:mt-2">
               Your AI-powered guide to building, deploying, and managing custom GPTs
             </p>
           </div>
-          <Badge variant="secondary" className="px-4 py-1">
+          <Badge variant="secondary" className="px-3 sm:px-4 py-1 text-xs sm:text-sm">
             <Lightbulb className="h-3 w-3 mr-1" />
             AI Studio Help & Documentation
           </Badge>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
           {QUICK_ACTIONS.map((action) => {
             const Icon = action.icon;
             return (
               <Button
                 key={action.label}
                 variant="outline"
-                className="h-auto py-4 flex flex-col gap-2 hover:bg-primary/5 hover:border-primary/50"
+                className="h-auto py-3 sm:py-4 flex flex-col gap-1.5 sm:gap-2 hover:bg-primary/5 hover:border-primary/50 active:bg-primary/10 min-h-[64px]"
                 onClick={() => navigate(action.route)}
               >
-                <Icon className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">{action.label}</span>
+                <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <span className="text-xs sm:text-sm font-medium text-center leading-tight">{action.label}</span>
               </Button>
             );
           })}
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Main Chat Interface */}
-          <div className="lg:col-span-2">
-            <Card className="min-h-[500px]">
+          <div className="lg:col-span-2 order-1">
+            <Card className="min-h-[400px] sm:min-h-[500px]">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <MessageCircle className="h-5 w-5" />
@@ -209,7 +209,7 @@ Always be helpful and focused on empowering users to build great AI assistants!`
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6 order-2">
             {/* Suggested Questions */}
             <Card>
               <CardHeader className="pb-3">

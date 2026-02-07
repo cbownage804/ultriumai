@@ -355,43 +355,43 @@ const AIStudio = () => {
       </section>
 
       {/* Use Cases Section */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-12 sm:py-20 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6 text-foreground">
+          <div className="text-center mb-8 sm:mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold mb-4 sm:mb-6 text-foreground">
               Real-World GPT Applications
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto px-2">
               See how businesses like yours are using custom GPTs to transform their operations, 
               reduce costs, and deliver better service to their customers.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-12">
             {useCases.map((useCase, index) => {
               const Icon = useCase.icon;
               return (
                 <Card key={index} className="hover:shadow-lg transition-all duration-300">
-                  <CardHeader>
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="p-3 rounded-lg bg-primary/10">
-                        <Icon className="h-8 w-8 text-primary" />
+                  <CardHeader className="px-4 sm:px-6">
+                    <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                      <div className="p-2.5 sm:p-3 rounded-lg bg-primary/10 shrink-0">
+                        <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-2xl">{useCase.title}</CardTitle>
-                        <CardDescription className="text-lg font-medium text-primary">
+                        <CardTitle className="text-xl sm:text-2xl">{useCase.title}</CardTitle>
+                        <CardDescription className="text-sm sm:text-lg font-medium text-primary">
                           {useCase.subtitle}
                         </CardDescription>
                       </div>
                     </div>
                   </CardHeader>
                   
-                  <CardContent>
-                    <div className="space-y-4">
+                  <CardContent className="px-4 sm:px-6">
+                    <div className="space-y-3 sm:space-y-4">
                       {useCase.scenarios.map((scenario, idx) => (
-                        <div key={idx} className="border border-border/50 rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                          <h5 className="font-semibold text-foreground mb-2">{scenario.name}</h5>
-                          <p className="text-sm text-muted-foreground">{scenario.description}</p>
+                        <div key={idx} className="border border-border/50 rounded-lg p-3 sm:p-4 hover:bg-muted/50 transition-colors">
+                          <h5 className="font-semibold text-foreground mb-1 sm:mb-2 text-sm sm:text-base">{scenario.name}</h5>
+                          <p className="text-xs sm:text-sm text-muted-foreground">{scenario.description}</p>
                         </div>
                       ))}
                     </div>
