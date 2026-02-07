@@ -27,6 +27,37 @@ import { cn } from "@/lib/utils";
 
 type Segment = 'msp' | 'it';
 
+const VISIBLE_COUNT = 7;
+
+const PlanFeatureList = ({ features }: { features: string[] }) => {
+  const [expanded, setExpanded] = useState(false);
+  const hasMore = features.length > VISIBLE_COUNT;
+  const visible = expanded ? features : features.slice(0, VISIBLE_COUNT);
+
+  return (
+    <div className="space-y-2.5">
+      {visible.map((feature, i) => (
+        <div key={i} className="flex items-start gap-2.5">
+          <Check className="h-4 w-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+          <span className="text-sm text-white/70">{feature}</span>
+        </div>
+      ))}
+      {hasMore && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-xs text-cyan-400 hover:text-cyan-300 pl-6 flex items-center gap-1 transition-colors"
+        >
+          {expanded ? (
+            <><ChevronUp className="h-3 w-3" /> Show less</>
+          ) : (
+            <><ChevronDown className="h-3 w-3" /> +{features.length - VISIBLE_COUNT} more features</>
+          )}
+        </button>
+      )}
+    </div>
+  );
+};
+
 const VanguardPricing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -220,17 +251,7 @@ const VanguardPricing = () => {
                       </div>
                     )}
 
-                    <div className="space-y-2.5">
-                      {plan.features.slice(0, 7).map((feature, i) => (
-                        <div key={i} className="flex items-start gap-2.5">
-                          <Check className="h-4 w-4 text-cyan-400 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-white/70">{feature}</span>
-                        </div>
-                      ))}
-                      {plan.features.length > 7 && (
-                        <p className="text-xs text-white/40 pl-6">+{plan.features.length - 7} more features</p>
-                      )}
-                    </div>
+                    <PlanFeatureList features={plan.features} />
                   </CardContent>
 
                   <CardFooter className="p-6 pt-0">

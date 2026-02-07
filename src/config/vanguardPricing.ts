@@ -160,7 +160,7 @@ export const MSP_PLANS: VanguardPlan[] = [
     name: 'Growth',
     description: 'For MSPs seeking flexibility, dual remote monitoring tools and asset management.',
     monthlyPrice: 159, // Atera: $179
-    monthlyPriceBilledMonthly: 169, // Atera: $189
+    monthlyPriceBilledMonthly: 199, // Atera: $189
     popular: true,
     features: [
       'Everything in Pro, plus:',
