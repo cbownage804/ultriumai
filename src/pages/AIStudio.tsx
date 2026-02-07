@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,7 @@ import heroAi from "@/assets/hero-ai.jpg";
 import ultriumGPTLogo from "@/assets/ultrium-gpt-logo.png";
 
 const AIStudio = () => {
+  const navigate = useNavigate();
   const [showOnboarding, setShowOnboarding] = useState(() => {
     return !localStorage.getItem("ai-studio-onboarding-dismissed");
   });
@@ -228,19 +230,19 @@ const AIStudio = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center flex-wrap px-4">
-              <Button size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 h-auto bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 touch-target tap-scale" onClick={() => window.location.href = '/ultrium-gpt'}>
+              <Button size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 h-auto bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 touch-target tap-scale" onClick={() => navigate('/ai-studio/assistant')}>
                 <Play className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                 Launch AI Studio
               </Button>
-              <Button variant="outline" size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 h-auto border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 touch-target tap-scale" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
+              <Button variant="outline" size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 h-auto border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 touch-target tap-scale" onClick={() => navigate('/demos/custom-gpt-builder')}>
                 <Play className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                 View Demo
               </Button>
-              <Button variant="outline" size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 h-auto border-border/50 hover:border-violet-500/50 hover:bg-violet-500/5 transition-all duration-300 touch-target tap-scale" onClick={() => window.location.href = '/docs/ai-studio'}>
+              <Button variant="outline" size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 h-auto border-border/50 hover:border-violet-500/50 hover:bg-violet-500/5 transition-all duration-300 touch-target tap-scale" onClick={() => navigate('/docs/ai-studio')}>
                 <BookOpen className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                 Documentation
               </Button>
-              <Button variant="outline" size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 h-auto border-border/50 hover:border-violet-500/50 hover:bg-violet-500/5 transition-all duration-300 touch-target tap-scale" onClick={() => window.location.href = '/contact'}>
+              <Button variant="outline" size="lg" className="text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 h-auto border-border/50 hover:border-violet-500/50 hover:bg-violet-500/5 transition-all duration-300 touch-target tap-scale" onClick={() => navigate('/contact')}>
                 <Calendar className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                 Schedule Consultation
               </Button>
@@ -332,9 +334,9 @@ const AIStudio = () => {
                         size="lg"
                         onClick={() => {
                           if (path.cta === "Start Building Free") {
-                            window.location.href = '/auth';
+                            navigate('/auth');
                           } else if (path.cta === "Get Custom Quote") {
-                            window.location.href = '/contact';
+                            navigate('/contact');
                           }
                         }}
                       >

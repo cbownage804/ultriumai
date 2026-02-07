@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Footer from "@/components/Footer";
+import Navigation from "@/components/Navigation";
+import { AIStudioSubNav } from "@/components/ai-studio/AIStudioSubNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,10 +26,11 @@ import {
 } from 'lucide-react';
 
 const QUICK_ACTIONS = [
-  { label: "Create a new GPT", icon: Rocket, route: "/dashboard/gpt/build" },
-  { label: "Browse Templates", icon: BookOpen, route: "/dashboard/gpt/templates" },
-  { label: "My GPTs", icon: Share2, route: "/dashboard/gpt" },
-  { label: "AI Studio Hub", icon: Palette, route: "/dashboard" },
+  { label: "Create a new GPT", icon: Rocket, route: "/ai-studio" },
+  { label: "Browse Templates", icon: BookOpen, route: "/ai-studio/use-cases" },
+  { label: "AI Agents", icon: Share2, route: "/ai-studio/agents" },
+  { label: "App Builder", icon: Palette, route: "/ai-studio/app-builder" },
+  { label: "AI Workflows", icon: Settings, route: "/ai-studio/workflows" },
 ];
 
 const STARTER_QUESTIONS = [
@@ -72,28 +75,8 @@ const UltriumGPT = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation Header */}
-      <div className="bg-muted/30 border-b">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              className="shrink-0"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/dashboard')}
-            >
-              <Home className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </div>
-        </div>
-      </div>
+      <Navigation />
+      <AIStudioSubNav />
 
       <div className="container mx-auto p-6 space-y-8">
         {/* Header */}
