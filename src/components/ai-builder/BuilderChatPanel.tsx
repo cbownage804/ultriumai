@@ -481,8 +481,51 @@ export function BuilderChatPanel({
         </div>
       )}
 
-      {/* Mode Toggle + Input */}
+      {/* Quick Actions + Context Indicator + Mode Toggle + Input */}
       <div className="p-3 border-t border-white/[0.06] shrink-0 space-y-2">
+        {/* Quick action chips */}
+        {messages.length > 0 && fileCount > 0 && !isGenerating && (
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {[
+              { label: '✨ Add animations', prompt: 'Add smooth animations and transitions to improve the user experience' },
+              { label: '📱 Make responsive', prompt: 'Make all layouts fully responsive for mobile, tablet, and desktop' },
+              { label: '♿ Accessibility', prompt: 'Improve accessibility: add ARIA labels, focus states, and keyboard navigation' },
+              { label: '⏳ Loading states', prompt: 'Add loading states, skeleton screens, and error boundaries' },
+            ].map(action => (
+              <button
+                key={action.label}
+                onClick={() => onSend(action.prompt)}
+                className="shrink-0 text-[10px] px-2 py-1 rounded-full border border-white/[0.06] text-white/35 hover:text-white/70 hover:border-cyan-500/30 hover:bg-cyan-500/[0.05] transition-all"
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Context indicator */}
+        {fileCount > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-1 rounded-full bg-white/[0.04] overflow-hidden">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  totalTokensUsed > 160000 ? "bg-red-400" :
+                  totalTokensUsed > 100000 ? "bg-amber-400" : "bg-cyan-400/50"
+                )}
+                style={{ width: `${Math.min((totalTokensUsed / 200000) * 100, 100)}%` }}
+              />
+            </div>
+            <span className={cn(
+              "text-[9px] font-mono shrink-0",
+              totalTokensUsed > 160000 ? "text-red-400/70" :
+              totalTokensUsed > 100000 ? "text-amber-400/70" : "text-white/20"
+            )}>
+              {Math.round(totalTokensUsed / 1000)}k / 200k
+            </span>
+          </div>
+        )}
+
         {/* Build / Discuss toggle */}
         <div data-tour="mode-toggle" className="flex items-center gap-1 bg-white/[0.03] rounded-lg p-0.5 border border-white/[0.06]">
           <button

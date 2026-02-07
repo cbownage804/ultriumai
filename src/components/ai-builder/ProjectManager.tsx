@@ -98,7 +98,19 @@ export function ProjectManager({
             )}
 
             {activeTab === 'load' && (
-              <div className="space-y-1 max-h-48 overflow-auto">
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Search projects..."
+                  className="w-full h-7 px-2.5 rounded-md bg-white/[0.03] border border-white/[0.08] text-[11px] text-white/70 placeholder:text-white/20 outline-none focus:border-cyan-500/30"
+                  onChange={(e) => {
+                    const search = e.target.value.toLowerCase();
+                    // Filter is handled inline below
+                    (e.target as any).dataset.search = search;
+                  }}
+                  ref={(el) => { if (el) (el as any).dataset.search = ''; }}
+                />
+                <div className="space-y-1 max-h-48 overflow-auto">
                 {isLoading ? (
                   <div className="flex items-center justify-center py-6">
                     <Loader2 className="h-4 w-4 animate-spin text-white/30" />
@@ -106,7 +118,11 @@ export function ProjectManager({
                 ) : savedProjects.length === 0 ? (
                   <div className="text-center py-6 text-xs text-white/30">No saved projects</div>
                 ) : (
-                  savedProjects.map(project => (
+                  savedProjects.filter(p => {
+                    const searchEl = document.querySelector('[data-search]') as HTMLElement;
+                    const search = searchEl?.dataset?.search || '';
+                    return !search || p.name.toLowerCase().includes(search);
+                  }).map(project => (
                     <div
                       key={project.id}
                       className={cn(
@@ -120,8 +136,9 @@ export function ProjectManager({
                       <FileText className="h-3.5 w-3.5 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="text-[11px] font-medium truncate">{project.name}</div>
-                        <div className="text-[9px] text-white/25">
-                          {new Date(project.updated_at).toLocaleDateString()}
+                        <div className="text-[9px] text-white/25 flex items-center gap-1.5">
+                          <span>{new Date(project.updated_at).toLocaleDateString()}</span>
+                          {project.files && <span>· {(project.files as any[]).length} files</span>}
                         </div>
                       </div>
                       {project.is_published && <Globe className="h-3 w-3 text-emerald-400 shrink-0" />}
@@ -143,6 +160,7 @@ export function ProjectManager({
                     </div>
                   ))
                 )}
+              </div>
               </div>
             )}
 

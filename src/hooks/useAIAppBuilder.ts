@@ -388,6 +388,7 @@ export function useAIAppBuilder() {
 
   return {
     messages,
+    setMessages,
     isGenerating,
     latestFiles,
     previousFiles,

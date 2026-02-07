@@ -48,6 +48,7 @@ export function useProjectPersistence() {
     files: ProjectFile[],
     branches?: any,
     activeBranch?: string,
+    chatMessages?: any[],
   ) => {
     setIsSaving(true);
     try {
@@ -57,7 +58,7 @@ export function useProjectPersistence() {
         return null;
       }
 
-      const projectData = {
+      const projectData: any = {
         user_id: user.id,
         name,
         files: JSON.parse(JSON.stringify(files)),
@@ -65,6 +66,9 @@ export function useProjectPersistence() {
         active_branch: activeBranch || 'main',
         last_saved_at: new Date().toISOString(),
       };
+      if (chatMessages) {
+        projectData.settings = { chatMessages: JSON.parse(JSON.stringify(chatMessages)) };
+      }
 
       if (currentProjectId) {
         const { error } = await supabase
