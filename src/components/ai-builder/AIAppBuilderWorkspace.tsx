@@ -434,8 +434,13 @@ export function AIAppBuilderWorkspace() {
   const handlePublish = useCallback(async () => {
     const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
     if (!compiledHTML) { toast.error('Nothing to publish'); return; }
+    setBuildNotifications(prev => [{ id: crypto.randomUUID(), type: 'deploy' as const, title: 'Deploying to production...', timestamp: new Date(), read: false }, ...prev]);
     const url = await publishProject(project.name, compiledHTML);
-    if (url) { setPublishedUrl(url); toast.success('Published successfully!'); }
+    if (url) {
+      setPublishedUrl(url);
+      toast.success('Published successfully!');
+      setBuildNotifications(prev => [{ id: crypto.randomUUID(), type: 'success' as const, title: 'Published to production', detail: url, timestamp: new Date(), read: false }, ...prev].slice(0, 50));
+    }
   }, [publishProject, project.name, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser]);
 
   const handleRemix = useCallback(async (projectId: string) => {
