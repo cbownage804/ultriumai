@@ -86,6 +86,8 @@ interface ProjectSettingsProps {
   serviceKeys: ServiceKey[];
   envVars: EnvVar[];
   projectName?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onSupabaseChange: (config: SupabaseConfig | null) => void;
   onGithubChange: (config: GithubConfig | null) => void;
   onStripeChange: (config: StripeConfig | null) => void;
@@ -100,10 +102,13 @@ interface ProjectSettingsProps {
 
 export function ProjectSettings({
   supabaseConfig, githubConfig, stripeConfig, vercelConfig, serviceKeys, envVars, projectName,
+  open: controlledOpen, onOpenChange: controlledOnOpenChange,
   onSupabaseChange, onGithubChange, onStripeChange, onVercelChange, onServiceKeysChange, onEnvVarsChange,
   onDeleteProject, onResetProject,
 }: ProjectSettingsProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange || setInternalOpen;
   const [sbUrl, setSbUrl] = useState(supabaseConfig?.url || '');
   const [sbKey, setSbKey] = useState(supabaseConfig?.anonKey || '');
   const [ghToken, setGhToken] = useState(githubConfig?.token || '');

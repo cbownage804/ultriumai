@@ -1050,13 +1050,18 @@ export function AIAppBuilderWorkspace() {
         serviceKeys={serviceKeys}
         envVars={envVars}
         projectName={project.name}
+        open={showSettingsPanel}
+        onOpenChange={setShowSettingsPanel}
         onSupabaseChange={setSupabaseConfig}
         onGithubChange={setGithubConfig}
         onStripeChange={setStripeConfig}
         onVercelChange={setVercelConfig}
         onServiceKeysChange={setServiceKeys}
         onEnvVarsChange={setEnvVars}
-        onDeleteProject={() => { resetProject(); clearChat(); toast.success('Project deleted'); setShowSettingsPanel(false); }}
+        onDeleteProject={() => {
+          if (currentProjectId) deleteProject(currentProjectId);
+          resetProject(); clearChat(); toast.success('Project deleted'); setShowSettingsPanel(false);
+        }}
         onResetProject={() => { resetProject(); toast.success('Project reset'); setShowSettingsPanel(false); }}
       />
       {vercelConfig && <VercelDeployButton projectName={project.name} files={project.files} vercelToken={vercelConfig.token} />}
