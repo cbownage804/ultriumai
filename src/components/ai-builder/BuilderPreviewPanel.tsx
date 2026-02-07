@@ -284,7 +284,7 @@ window.addEventListener('unhandledrejection', function(e) {
               key={iframeKey}
               srcDoc={htmlWithErrorCapture || ''}
               className="w-full h-full border-0 bg-white rounded-[inherit] origin-top-left"
-              sandbox="allow-scripts allow-forms"
+              sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
               title="App Preview"
               style={{
                 transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
