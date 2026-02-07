@@ -130,7 +130,7 @@ const Navigation = () => {
 
                   {/* AI Studio */}
                   <button
-                    onClick={() => handleNavigation('/ai-studio')}
+                    onClick={() => handleNavigation('/products/ai-studio')}
                     className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all duration-200 text-left"
                   >
                     <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-primary/20 overflow-hidden">
@@ -325,7 +325,7 @@ const Navigation = () => {
           <div className="md:hidden bg-background border-t border-border/50 py-4">
             <div className="space-y-1">
               <button 
-                onClick={() => handleNavigationWithMenuClose('/ai-studio')} 
+                onClick={() => handleNavigationWithMenuClose('/products/ai-studio')} 
                 className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-primary hover:bg-muted/50 rounded-md"
               >
                 <div className="h-8 w-8 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
