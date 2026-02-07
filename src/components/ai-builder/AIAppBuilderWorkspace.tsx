@@ -360,10 +360,24 @@ export function AIAppBuilderWorkspace() {
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel]);
 
   const handleCreateEdgeFunction = useCallback((name: string) => {
-    const template = `// Deno edge function: ${name}\nimport { serve } from "https://deno.land/std@0.168.0/http/server.ts";\n\nserve(async (req) => {\n  return new Response(JSON.stringify({ message: "Hello from ${name}" }), {\n    headers: { "Content-Type": "application/json" },\n  });\n});`;
+    const template = `// Deno edge function: ${name}\nimport { serve } from "https://deno.land/std@0.168.0/http/server.ts";\n\nconst corsHeaders = {\n  "Access-Control-Allow-Origin": "*",\n  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",\n};\n\nserve(async (req) => {\n  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });\n\n  try {\n    const body = await req.json();\n    return new Response(JSON.stringify({ message: "Hello from ${name}", data: body }), {\n      headers: { ...corsHeaders, "Content-Type": "application/json" },\n    });\n  } catch (e) {\n    return new Response(JSON.stringify({ error: e.message }), {\n      status: 500,\n      headers: { ...corsHeaders, "Content-Type": "application/json" },\n    });\n  }\n});`;
     upsertFile(`functions/${name}/index.ts`, template);
     setEdgeFunctions(prev => [...prev, { name, status: 'draft' }]);
-  }, [upsertFile]);
+    addActivity('file_edit', `Created edge function: ${name}`);
+  }, [upsertFile, addActivity]);
+
+  const handleDeleteEdgeFunction = useCallback((name: string) => {
+    deleteFile(`functions/${name}/index.ts`);
+    setEdgeFunctions(prev => prev.filter(f => f.name !== name));
+    toast.success(`Function "${name}" deleted`);
+    addActivity('file_edit', `Deleted edge function: ${name}`);
+  }, [deleteFile, addActivity]);
+
+  const handleGithubPullFiles = useCallback((pulledFiles: { path: string; content: string; language: string }[]) => {
+    pushUndo('GitHub pull', project.files);
+    setFiles(pulledFiles as any[]);
+    addActivity('file_edit', `Pulled ${pulledFiles.length} files from GitHub`);
+  }, [pushUndo, project.files, setFiles, addActivity]);
 
   useEffect(() => {
     if (project.name && !previewSlug) {
@@ -858,7 +872,7 @@ export function AIAppBuilderWorkspace() {
                   <AuthConfigPanel open={showAuth} onClose={() => setShowAuth(false)} supabaseConfig={supabaseConfig} onGenerateAuthPages={handleGenerateAuthPages} />
                   <KnowledgePanel open={showKnowledge} onClose={() => setShowKnowledge(false)} knowledge={knowledge} onKnowledgeChange={setKnowledge} />
                   <StorageBrowser open={showStorage} onClose={() => setShowStorage(false)} supabaseConfig={supabaseConfig} />
-                  <EdgeFunctionEditor open={showEdgeFunctions} onClose={() => setShowEdgeFunctions(false)} onCreateFunction={handleCreateEdgeFunction} functions={edgeFunctions} onSelectFunction={(name) => { setActiveFile(`functions/${name}/index.ts`); setRightTab('code'); }} />
+                  <EdgeFunctionEditor open={showEdgeFunctions} onClose={() => setShowEdgeFunctions(false)} onCreateFunction={handleCreateEdgeFunction} functions={edgeFunctions} onSelectFunction={(name) => { setActiveFile(`functions/${name}/index.ts`); setRightTab('code'); }} onDeleteFunction={handleDeleteEdgeFunction} />
                 </Suspense>
                 <ActivityFeed open={showActivity} onClose={() => setShowActivity(false)} entries={activityEntries} />
                 <AICodeIntelligence open={showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); toast.success('Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => toast.success('Refreshed suggestions')} activeFilePath={project.activeFilePath} />
@@ -1008,7 +1022,7 @@ export function AIAppBuilderWorkspace() {
         onResetProject={() => { resetProject(); toast.success('Project reset'); setShowSettingsPanel(false); }}
       />
       {vercelConfig && <VercelDeployButton projectName={project.name} files={project.files} vercelToken={vercelConfig.token} />}
-      {githubConfig && <GithubSyncButton projectName={project.name} files={project.files} githubToken={githubConfig.token} onPullFiles={(files) => { pushUndo('GitHub pull', project.files); setFiles(files); }} />}
+      {githubConfig && <GithubSyncButton projectName={project.name} files={project.files} githubToken={githubConfig.token} onPullFiles={handleGithubPullFiles} />}
       <SharePreview html={compiledHTML} projectName={project.name} />
       <ExportButton projectName={project.name} files={project.files} />
       {pendingConflicts && (

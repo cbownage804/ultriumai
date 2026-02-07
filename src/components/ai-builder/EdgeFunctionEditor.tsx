@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Zap, Plus, Play, Loader2, CheckCircle, FileCode, Trash2 } from 'lucide-react';
+import { X, Zap, Plus, Play, Loader2, CheckCircle, FileCode, Trash2, ExternalLink } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ interface EdgeFunction {
   name: string;
   status: 'deployed' | 'draft' | 'error';
   lastDeployed?: string;
+  code?: string;
 }
 
 interface EdgeFunctionEditorProps {
@@ -18,6 +19,7 @@ interface EdgeFunctionEditorProps {
   onCreateFunction: (name: string) => void;
   functions: EdgeFunction[];
   onSelectFunction: (name: string) => void;
+  onDeleteFunction?: (name: string) => void;
 }
 
 const STATUS_STYLES = {
@@ -26,9 +28,68 @@ const STATUS_STYLES = {
   error: { color: 'text-red-400', bg: 'bg-red-500/10', label: 'Error' },
 };
 
-export function EdgeFunctionEditor({ open, onClose, onCreateFunction, functions, onSelectFunction }: EdgeFunctionEditorProps) {
+const FUNCTION_TEMPLATES: Record<string, string> = {
+  'api-handler': `import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const { action, data } = await req.json();
+    
+    // Handle different actions
+    switch (action) {
+      case "get":
+        return new Response(JSON.stringify({ items: [] }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      default:
+        return new Response(JSON.stringify({ error: "Unknown action" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+    }
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});`,
+  'webhook': `import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+serve(async (req) => {
+  try {
+    const payload = await req.json();
+    console.log("Webhook received:", JSON.stringify(payload));
+    
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    
+    // Process webhook payload
+    // await supabase.from('events').insert({ payload });
+    
+    return new Response(JSON.stringify({ received: true }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+  }
+});`,
+};
+
+export function EdgeFunctionEditor({ open, onClose, onCreateFunction, functions, onSelectFunction, onDeleteFunction }: EdgeFunctionEditorProps) {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('api-handler');
   const [deployingFn, setDeployingFn] = useState<string | null>(null);
 
   const handleCreate = () => {
@@ -42,9 +103,15 @@ export function EdgeFunctionEditor({ open, onClose, onCreateFunction, functions,
 
   const handleDeploy = async (name: string) => {
     setDeployingFn(name);
+    // Simulated deploy — in real impl this would call Supabase CLI or management API
     await new Promise(r => setTimeout(r, 1500));
     setDeployingFn(null);
-    toast.success(`"${name}" deployed successfully`);
+    toast.success(`"${name}" deployed successfully`, {
+      action: {
+        label: 'View Logs',
+        onClick: () => window.open(`https://supabase.com/dashboard/project/nsyobmjpdpvesjwdphlh/functions/${name}/logs`, '_blank'),
+      },
+    });
   };
 
   if (!open) return null;
@@ -57,6 +124,15 @@ export function EdgeFunctionEditor({ open, onClose, onCreateFunction, functions,
           <span className="text-xs font-medium text-white/80">Edge Functions</span>
         </div>
         <div className="flex items-center gap-1">
+          <a
+            href="https://supabase.com/dashboard/project/nsyobmjpdpvesjwdphlh/functions"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-5 w-5 rounded flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5"
+            title="View in Dashboard"
+          >
+            <ExternalLink className="h-3 w-3" />
+          </a>
           <button onClick={() => setShowCreate(true)} className="h-5 w-5 rounded flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5">
             <Plus className="h-3 w-3" />
           </button>
@@ -76,6 +152,20 @@ export function EdgeFunctionEditor({ open, onClose, onCreateFunction, functions,
             onKeyDown={e => e.key === 'Enter' && handleCreate()}
             autoFocus
           />
+          <div className="flex gap-1">
+            {Object.keys(FUNCTION_TEMPLATES).map(t => (
+              <button
+                key={t}
+                onClick={() => setSelectedTemplate(t)}
+                className={cn(
+                  "text-[9px] px-2 py-0.5 rounded-full transition-colors",
+                  selectedTemplate === t ? "bg-cyan-500/20 text-cyan-400" : "text-white/30 hover:text-white/50 bg-white/[0.03]"
+                )}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
           <div className="flex gap-1.5 justify-end">
             <button onClick={() => setShowCreate(false)} className="text-[10px] text-white/30 hover:text-white/60 px-2 py-1">Cancel</button>
             <button onClick={handleCreate} className="text-[10px] text-cyan-400 px-2 py-1 bg-cyan-500/10 rounded hover:bg-cyan-500/20">Create</button>
@@ -123,6 +213,16 @@ export function EdgeFunctionEditor({ open, onClose, onCreateFunction, functions,
                         <><Play className="h-2.5 w-2.5 mr-0.5" />Deploy</>
                       )}
                     </Button>
+                    {onDeleteFunction && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => { e.stopPropagation(); onDeleteFunction(fn.name); }}
+                        className="h-5 text-[9px] px-1.5 text-white/30 hover:text-red-400"
+                      >
+                        <Trash2 className="h-2.5 w-2.5" />
+                      </Button>
+                    )}
                     {fn.lastDeployed && (
                       <span className="text-[8px] text-white/15">{fn.lastDeployed}</span>
                     )}
