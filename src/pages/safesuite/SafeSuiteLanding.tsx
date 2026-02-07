@@ -4,6 +4,7 @@
  */
 
 import { Link } from 'react-router-dom';
+import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,31 +26,7 @@ const features: SafeSuiteProductKey[] = ['safepass', 'safescan', 'safeweb', 'saf
 export default function SafeSuiteLanding() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/hub" className="flex items-center gap-2 transition-transform hover:scale-105">
-            <div className="h-14 w-14 rounded-xl bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-emerald-500/20">
-              <img 
-                src={safesuiteLogo} 
-                alt="SafeSuite" 
-                className="h-full w-full object-contain scale-110"
-              />
-            </div>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link to="/auth">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link to="/auth?tab=signup">
-              <Button className="gap-2">
-                Get Started
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
       {/* Hero Section */}
       <section className="py-20 md:py-32 relative overflow-hidden">
