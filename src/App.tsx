@@ -352,7 +352,7 @@ function AppRouter() {
             </SuspenseWrapper>
           </ProtectedRoute>
         } />
-        <Route path="/pricing" element={<SuspenseWrapper variant="cards"><Pricing /></SuspenseWrapper>} />
+        <Route path="/pricing" element={<Navigate to="/pricing/vanguard" replace />} />
         <Route path="/pricing/ai-studio" element={<SuspenseWrapper variant="cards"><AIStudioPricing /></SuspenseWrapper>} />
         <Route path="/pricing/safesuite" element={<SuspenseWrapper variant="cards"><SafeSuitePricing /></SuspenseWrapper>} />
         <Route path="/pricing/vanguard" element={<SuspenseWrapper variant="cards"><VanguardPricing /></SuspenseWrapper>} />
