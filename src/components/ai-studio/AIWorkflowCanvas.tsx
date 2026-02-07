@@ -2,7 +2,7 @@
  * Phase 4: AI Workflow Builder — True drag-and-drop node-based canvas
  * powered by React Flow (@xyflow/react).
  */
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -127,12 +127,26 @@ const nodeTypes: NodeTypes = { workflowStep: WorkflowNode };
 // ─── Main Component ────────────────────────────────
 export function AIWorkflowCanvas() {
   const { user } = useAuth();
-  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [workflows, setWorkflows] = useState<Workflow[]>(() => {
+    try {
+      const saved = localStorage.getItem('ai-studio-workflows');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.map((w: any) => ({ ...w, createdAt: new Date(w.createdAt), lastRun: w.lastRun ? new Date(w.lastRun) : undefined }));
+      }
+    } catch {}
+    return [];
+  });
   const [activeWorkflow, setActiveWorkflow] = useState<Workflow | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showStepPicker, setShowStepPicker] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Persist workflows to localStorage
+  useEffect(() => {
+    localStorage.setItem('ai-studio-workflows', JSON.stringify(workflows));
+  }, [workflows]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<StepData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);

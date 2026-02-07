@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 
 const QUICK_ACTIONS = [
-  { label: "Create a new GPT", icon: Rocket, route: "/ai-studio" },
+  { label: "Create a new GPT", icon: Rocket, route: "/dashboard/gpt/build" },
   { label: "Browse Templates", icon: BookOpen, route: "/ai-studio/use-cases" },
   { label: "AI Agents", icon: Share2, route: "/ai-studio/agents" },
   { label: "App Builder", icon: Palette, route: "/ai-studio/app-builder" },
@@ -102,7 +102,7 @@ const UltriumGPT = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {QUICK_ACTIONS.map((action) => {
             const Icon = action.icon;
             return (
