@@ -70,7 +70,7 @@ export const OnboardingChecklist = ({
         title: 'Enable two-factor authentication',
         description: 'Add an extra layer of security',
         icon: <Shield className="h-4 w-4" />,
-        href: '/settings/security',
+        href: '/dashboard/security-center',
         isComplete: completedItems.includes('mfa'),
         reward: 'Free security badge',
       },
@@ -167,9 +167,13 @@ export const OnboardingChecklist = ({
         completed.push('profile');
       }
 
-      // Check MFA status
-      const { data: factors } = await supabase.auth.mfa.listFactors();
-      if (factors?.totp?.some(f => f.status === 'verified')) {
+      // Check MFA status from custom security_settings table
+      const { data: securitySettings } = await supabase
+        .from('security_settings')
+        .select('two_factor_enabled')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (securitySettings?.two_factor_enabled) {
         completed.push('mfa');
       }
 
