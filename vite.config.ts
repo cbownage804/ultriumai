@@ -47,29 +47,32 @@ export default defineConfig(({ mode }) => ({
     ],
   },
   build: {
-    // Optimize bundle size - but avoid chunking React separately to prevent multiple instances
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Keep React together in one chunk to avoid multiple instances
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
             return 'react-vendor';
           }
-          // Other large dependencies
-          if (id.includes('@radix-ui')) {
-            return 'ui';
-          }
-          if (id.includes('@supabase')) {
-            return 'supabase';
-          }
+          if (id.includes('@radix-ui')) return 'ui';
+          if (id.includes('@supabase')) return 'supabase';
+          if (id.includes('@monaco-editor') || id.includes('monaco-editor')) return 'monaco';
+          if (id.includes('@tiptap')) return 'tiptap';
+          if (id.includes('recharts') || id.includes('d3-')) return 'charts';
+          if (id.includes('@xyflow')) return 'xyflow';
+          if (id.includes('framer-motion')) return 'motion';
+          if (id.includes('lucide-react')) return 'icons';
+          if (id.includes('node_modules')) return 'vendor';
+          // Split large app sections
+          if (id.includes('/components/vanguard')) return 'app-vanguard';
+          if (id.includes('/components/ai-builder')) return 'app-builder';
+          if (id.includes('/components/msp') || id.includes('/components/MSP')) return 'app-msp';
+          if (id.includes('/components/safe')) return 'app-safe';
           return undefined;
         },
       },
     },
-    // Enable minification (using default esbuild minifier)
     minify: mode === 'production',
-    // Optimize chunk size
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2000,
   },
   // Enable gzip compression
   preview: {
