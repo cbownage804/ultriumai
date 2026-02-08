@@ -4,6 +4,7 @@ import {
   Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
   Zap, MessageCircle, Wand2, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
   LayoutGrid, Wrench, AlertTriangle, Copy, RotateCcw, Pencil, GitFork, ChevronDown, Check,
+  Crosshair,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from '@/hooks/useAIAppBuilder';
@@ -33,6 +34,8 @@ interface BuilderChatPanelProps {
   onRevertToMessage?: (messageId: string) => void;
   selectedModel?: string;
   onModelChange?: (model: string) => void;
+  onToggleVisualEdit?: () => void;
+  isVisualEditActive?: boolean;
 }
 
 
@@ -117,6 +120,7 @@ export function BuilderChatPanel({
   totalTokensUsed, previousFiles, latestFiles,
   onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates, onFixError,
   onForkFromMessage, onRevertToMessage, selectedModel, onModelChange,
+  onToggleVisualEdit, isVisualEditActive,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -632,6 +636,23 @@ export function BuilderChatPanel({
               onChange={handleImageUpload}
               className="hidden"
             />
+
+            {/* Visual Edit toggle — Lovable style */}
+            {onToggleVisualEdit && fileCount > 0 && (
+              <button
+                onClick={onToggleVisualEdit}
+                className={cn(
+                  "h-7 px-2 rounded-lg flex items-center gap-1.5 text-[11px] transition-all shrink-0 border",
+                  isVisualEditActive
+                    ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/30"
+                    : "text-white/20 hover:text-white/50 hover:bg-white/5 border-transparent"
+                )}
+                title="Visual Edit Mode"
+              >
+                <Crosshair className="h-3 w-3" />
+                <span className="hidden sm:inline">Edit</span>
+              </button>
+            )}
 
             <textarea
               ref={textareaRef}
