@@ -59,6 +59,8 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('@xyflow')) return 'xyflow';
           if (id.includes('framer-motion')) return 'motion';
           if (id.includes('lucide-react')) return 'icons';
+          if (id.includes('@supabase')) return 'supabase';
+          if (id.includes('@radix-ui')) return 'radix';
           return undefined;
         },
       },
