@@ -8342,6 +8342,45 @@ export type Database = {
           },
         ]
       }
+      feature_flags: {
+        Row: {
+          applies_to: string
+          created_at: string
+          description: string | null
+          flag_key: string
+          flag_name: string
+          id: string
+          is_enabled: boolean
+          metadata: Json | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          applies_to?: string
+          created_at?: string
+          description?: string | null
+          flag_key: string
+          flag_name: string
+          id?: string
+          is_enabled?: boolean
+          metadata?: Json | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          applies_to?: string
+          created_at?: string
+          description?: string | null
+          flag_key?: string
+          flag_name?: string
+          id?: string
+          is_enabled?: boolean
+          metadata?: Json | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       file_transfers: {
         Row: {
           bytes_transferred: number | null
@@ -26000,6 +26039,7 @@ export type Database = {
       user_roles: {
         Row: {
           created_at: string | null
+          granted_by: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string | null
@@ -26007,6 +26047,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          granted_by?: string | null
           id?: string
           role: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
@@ -26014,6 +26055,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          granted_by?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
