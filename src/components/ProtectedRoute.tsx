@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { LoginMFAGate } from '@/components/auth/LoginMFAGate';
 import { isSafeSuiteDomain, isVanguardDomain } from '@/utils/subdomain';
 import { Mail, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -202,5 +203,5 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  return <>{children}</>;
+  return <LoginMFAGate>{children}</LoginMFAGate>;
 }
