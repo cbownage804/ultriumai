@@ -1,4 +1,4 @@
-import { User, Crown, Coins, LogOut, Settings, Building2, Bell, CreditCard } from 'lucide-react';
+import { User, Crown, Coins, LogOut, Settings, Building2, Bell, CreditCard, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import { useCreditThresholdPrompt, ContextualUpgradePrompt } from '@/components/billing/ContextualUpgradePrompt';
 
 const UserProfileDropdown = () => {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ const UserProfileDropdown = () => {
   const { isMSPOrMSSP, accountType } = useAccountType();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const creditThreshold = useCreditThresholdPrompt(credits?.credits_used || 0, credits?.credits_limit || 100);
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -60,6 +62,7 @@ const UserProfileDropdown = () => {
     { icon: Settings, label: 'Settings', path: '/settings' },
     { icon: Bell, label: 'Notifications', path: '/notifications' },
     { icon: CreditCard, label: 'Billing', path: '/billing' },
+    { icon: Gift, label: 'Refer a Friend', path: '/referrals' },
     ...(isMSPOrMSSP ? [{ icon: Building2, label: 'MSP Control Center', path: '/msp-control-center' }] : []),
   ];
 
@@ -135,6 +138,13 @@ const UserProfileDropdown = () => {
                 </div>
               </div>
             </div>
+
+            {/* Credit threshold warning */}
+            {creditThreshold.show && creditThreshold.props && (
+              <div className="px-4 pb-3">
+                <ContextualUpgradePrompt {...creditThreshold.props} className="text-xs" />
+              </div>
+            )}
 
             <Separator />
 
