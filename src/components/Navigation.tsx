@@ -280,11 +280,8 @@ const Navigation = () => {
             
             {user ? (
               <div className="flex items-center gap-2">
-                <UserProfileDropdown />
                 <ThemeToggle />
-                <Button variant="ghost" size="icon" onClick={handleSignOut} className="hover:text-destructive h-8 w-8">
-                  <LogOut className="h-4 w-4" />
-                </Button>
+                <UserProfileDropdown />
               </div>
             ) : (
               <div className="flex items-center gap-3">
