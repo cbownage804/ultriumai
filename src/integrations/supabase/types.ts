@@ -68,6 +68,96 @@ export type Database = {
           },
         ]
       }
+      admin_alert_configs: {
+        Row: {
+          alert_type: string
+          conditions: Json
+          cooldown_minutes: number | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          is_enabled: boolean | null
+          last_triggered_at: string | null
+          name: string
+          notification_channels: Json
+          threshold_value: number | null
+          time_window_minutes: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          alert_type: string
+          conditions?: Json
+          cooldown_minutes?: number | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_triggered_at?: string | null
+          name: string
+          notification_channels?: Json
+          threshold_value?: number | null
+          time_window_minutes?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          alert_type?: string
+          conditions?: Json
+          cooldown_minutes?: number | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_triggered_at?: string | null
+          name?: string
+          notification_channels?: Json
+          threshold_value?: number | null
+          time_window_minutes?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      admin_announcements: {
+        Row: {
+          admin_user_id: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          message: string
+          severity: string
+          starts_at: string | null
+          target_audience: string
+          title: string
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          message: string
+          severity?: string
+          starts_at?: string | null
+          target_audience?: string
+          title: string
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          message?: string
+          severity?: string
+          starts_at?: string | null
+          target_audience?: string
+          title?: string
+        }
+        Relationships: []
+      }
       admin_audit_trails: {
         Row: {
           action: string
@@ -113,6 +203,39 @@ export type Database = {
           resource_name?: string | null
           resource_type?: string
           user_agent?: string | null
+        }
+        Relationships: []
+      }
+      admin_impersonation_logs: {
+        Row: {
+          actions_taken: Json | null
+          admin_user_id: string
+          ended_at: string | null
+          id: string
+          reason: string | null
+          started_at: string | null
+          target_email: string | null
+          target_user_id: string
+        }
+        Insert: {
+          actions_taken?: Json | null
+          admin_user_id: string
+          ended_at?: string | null
+          id?: string
+          reason?: string | null
+          started_at?: string | null
+          target_email?: string | null
+          target_user_id: string
+        }
+        Update: {
+          actions_taken?: Json | null
+          admin_user_id?: string
+          ended_at?: string | null
+          id?: string
+          reason?: string | null
+          started_at?: string | null
+          target_email?: string | null
+          target_user_id?: string
         }
         Relationships: []
       }
@@ -15423,6 +15546,48 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_error_logs: {
+        Row: {
+          browser_info: string | null
+          created_at: string | null
+          error_message: string
+          error_type: string
+          id: string
+          page_url: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          stack_trace: string | null
+          user_id: string | null
+        }
+        Insert: {
+          browser_info?: string | null
+          created_at?: string | null
+          error_message: string
+          error_type: string
+          id?: string
+          page_url?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          stack_trace?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          browser_info?: string | null
+          created_at?: string | null
+          error_message?: string
+          error_type?: string
+          id?: string
+          page_url?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          stack_trace?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       portal_activity_logs: {
         Row: {
           activity_details: Json | null
@@ -25798,6 +25963,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_activity_feed: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          resource_id: string | null
+          resource_type: string | null
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_activity_logs: {
         Row: {
