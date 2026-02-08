@@ -54,6 +54,19 @@ const ALL_VANGUARD_PRODUCT_IDS = new Set([
   ...Object.keys(VANGUARD_ADDON_PRODUCTS),
 ]);
 
+// Org license price IDs → product + access_level
+const ORG_LICENSE_PRICE_MAP: Record<string, { product: string; access_level: string }> = {
+  'price_1Sycz1H1u6E0bsJTgGh3yc3c': { product: 'safesuite', access_level: 'pro' },
+  'price_1Sycz2H1u6E0bsJTDndPDlqx': { product: 'safesuite', access_level: 'business' },
+  'price_1Sycz3H1u6E0bsJTjiwcAdjo': { product: 'safesuite', access_level: 'enterprise' },
+  'price_1Sycz5H1u6E0bsJT5zEp2Llm': { product: 'ai_studio', access_level: 'pro' },
+  'price_1Sycz6H1u6E0bsJTSdzQEdyX': { product: 'ai_studio', access_level: 'business' },
+  'price_1Sycz7H1u6E0bsJTA33IIQFD': { product: 'ai_studio', access_level: 'enterprise' },
+  'price_1Sycz8H1u6E0bsJTO9ziouyS': { product: 'vanguard', access_level: 'pro' },
+  'price_1Sycz9H1u6E0bsJTzBAFo3q4': { product: 'vanguard', access_level: 'business' },
+  'price_1SyczAH1u6E0bsJTdOzZvwRb': { product: 'vanguard', access_level: 'enterprise' },
+};
+
 // Check if a subscription contains any Vanguard products
 const isVanguardSubscription = (items: Stripe.SubscriptionItem[]): boolean => {
   return items.some(item => ALL_VANGUARD_PRODUCT_IDS.has(item.price.product as string));
@@ -227,6 +240,46 @@ serve(async (req) => {
           break;
         }
 
+        // ── ORG LICENSE SUBSCRIPTION HANDLING ──
+        const subMetadata = subscription.metadata || {};
+        if (subMetadata.type === 'org_license' && subMetadata.organizationId) {
+          const orgPriceId = subscription.items.data[0]?.price.id;
+          const orgLicenseInfo = ORG_LICENSE_PRICE_MAP[orgPriceId];
+          const orgSeats = parseInt(subMetadata.seats || '1', 10);
+          const orgEnd = new Date(subscription.current_period_end * 1000).toISOString();
+          const orgStart = new Date(subscription.current_period_start * 1000).toISOString();
+
+          if (orgLicenseInfo) {
+            // Upsert the org_team_licenses row
+            const { error: licError } = await supabaseClient
+              .from('org_team_licenses')
+              .upsert({
+                organization_id: subMetadata.organizationId,
+                product: orgLicenseInfo.product,
+                access_level: orgLicenseInfo.access_level,
+                total_seats: orgSeats,
+                used_seats: 0,
+                stripe_subscription_id: subscription.id,
+                billing_cycle: subscription.items.data[0]?.price.recurring?.interval === 'year' ? 'yearly' : 'monthly',
+                started_at: orgStart,
+                expires_at: subscription.status === 'active' ? orgEnd : null,
+                status: subscription.status === 'active' ? 'active' : 'inactive',
+              }, { onConflict: 'stripe_subscription_id' });
+
+            if (licError) {
+              logStep("Error upserting org license", { error: licError.message });
+            } else {
+              logStep("Org license provisioned", {
+                orgId: subMetadata.organizationId,
+                product: orgLicenseInfo.product,
+                level: orgLicenseInfo.access_level,
+                seats: orgSeats,
+              });
+            }
+          }
+          break;
+        }
+
         // ── VANGUARD SUBSCRIPTION HANDLING ──
         if (isVanguardSubscription(subscription.items.data)) {
           const { tier: vTier, seatCount, addons } = extractVanguardDetails(subscription.items.data);
@@ -246,7 +299,6 @@ serve(async (req) => {
             updated_at: new Date().toISOString(),
           }, { onConflict: 'user_id' });
 
-          // Also update user_product_access for Vanguard
           await supabaseClient.from('user_product_access').upsert({
             user_id: user.id,
             product: 'vanguard',
@@ -344,6 +396,58 @@ serve(async (req) => {
         
         const { data: users } = await supabaseClient.auth.admin.listUsers();
         const user = users.users.find(u => u.email === customer.email);
+
+        // ── ORG LICENSE CANCELLATION ──
+        const delMetadata = subscription.metadata || {};
+        if (delMetadata.type === 'org_license' && delMetadata.organizationId) {
+          await supabaseClient
+            .from('org_team_licenses')
+            .update({ status: 'cancelled', expires_at: new Date().toISOString() })
+            .eq('stripe_subscription_id', subscription.id);
+
+          // Revoke access for all assigned members
+          const { data: license } = await supabaseClient
+            .from('org_team_licenses')
+            .select('id')
+            .eq('stripe_subscription_id', subscription.id)
+            .single();
+
+          if (license) {
+            const { data: assignments } = await supabaseClient
+              .from('org_team_license_assignments')
+              .select('member_id')
+              .eq('license_id', license.id);
+
+            if (assignments?.length) {
+              for (const assignment of assignments) {
+                const { data: member } = await supabaseClient
+                  .from('org_team_members')
+                  .select('user_id')
+                  .eq('id', assignment.member_id)
+                  .single();
+
+                if (member?.user_id) {
+                  await supabaseClient.from('user_product_access').upsert({
+                    user_id: member.user_id,
+                    product: delMetadata.product || 'safesuite',
+                    access_level: 'free',
+                    expires_at: null,
+                    updated_at: new Date().toISOString(),
+                  }, { onConflict: 'user_id,product' });
+                }
+              }
+            }
+
+            // Clean up assignments
+            await supabaseClient
+              .from('org_team_license_assignments')
+              .delete()
+              .eq('license_id', license.id);
+          }
+
+          logStep("Org license cancelled", { orgId: delMetadata.organizationId, subId: subscription.id });
+          break;
+        }
 
         // ── VANGUARD CANCELLATION ──
         if (isVanguardSubscription(subscription.items.data)) {
