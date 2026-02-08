@@ -581,10 +581,13 @@ export function BuilderChatPanel({
         {messages.length > 0 && fileCount > 0 && !isGenerating && (
           <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             {[
+              { label: '🚀 Deployment guide', prompt: 'Give me a detailed step-by-step deployment guide for this project. Include hosting recommendations (Vercel, Netlify, Docker), environment variable setup, database configuration, custom domain setup, and a pre-launch checklist. Format it clearly with numbered steps.' },
+              { label: '💡 Recommendations', prompt: 'Analyze my current project and recommend improvements. Consider: performance optimizations, accessibility, SEO, security best practices, code organization, missing features, and UX enhancements. Prioritize them by impact.' },
               { label: '✨ Add animations', prompt: 'Add smooth animations and transitions to improve the user experience' },
               { label: '📱 Make responsive', prompt: 'Make all layouts fully responsive for mobile, tablet, and desktop' },
               { label: '♿ Accessibility', prompt: 'Improve accessibility: add ARIA labels, focus states, and keyboard navigation' },
               { label: '⏳ Loading states', prompt: 'Add loading states, skeleton screens, and error boundaries' },
+              { label: '🔒 Security review', prompt: 'Review my project for security issues. Check for XSS vulnerabilities, insecure data handling, missing input validation, exposed secrets, and recommend fixes with code examples.' },
             ].map(action => (
               <button
                 key={action.label}

@@ -505,15 +505,376 @@ dist/
     '',
     `Built with [UltriumAI App Builder](https://ultriumai.com).`,
     '',
+    '---',
+    '',
+    '## Table of Contents',
+    '',
+    '- [Quick Start](#quick-start)',
+    '- [Project Structure](#project-structure)',
+    ...(hasSupabase ? ['- [Supabase Setup](#supabase-setup)'] : []),
+    ...(hasStripe ? ['- [Stripe Setup](#stripe-setup)'] : []),
+    ...(serviceKeysUsed.length > 0 ? ['- [API Keys Required](#api-keys-required)'] : []),
+    ...(edgeFns.length > 0 ? ['- [Edge Functions](#edge-functions)'] : []),
+    '- [Deployment](#deployment)',
+    '- [Environment Variables](#environment-variables)',
+    '- [Security Checklist](#security-checklist)',
+    '- [Performance Optimization](#performance-optimization)',
+    '- [Troubleshooting](#troubleshooting)',
+    '- [Architecture Notes](#architecture-notes)',
+    '',
+    '---',
+    '',
     '## Quick Start',
     '',
     '```bash',
+    '# 1. Install dependencies',
     'npm install',
-    'cp .env.example .env   # then edit .env with your keys',
+    '',
+    '# 2. Set up environment variables',
+    'cp .env.example .env',
+    '# Edit .env with your actual keys (see sections below)',
+    '',
+    '# 3. Start development server',
     'npm run dev',
     '```',
     '',
+    'The app will be running at **http://localhost:3000**.',
+    '',
+    '## Project Structure',
+    '',
+    '```',
+    `${slug}/`,
+    '├── src/',
+    '│   ├── App.jsx              # Main application component',
+    '│   ├── main.jsx             # React entry point',
+    ...(hasSupabase ? ['│   ├── lib/supabase.js       # Supabase client (auto-configured from .env)'] : []),
+    ...(hasStripe ? ['│   ├── lib/stripe.js         # Stripe client helper'] : []),
+    '│   ├── user-styles-*.css    # Your application styles',
+    '│   └── original/            # Original source files from the builder',
+    '├── public/                  # Static assets',
+    ...(hasSupabase ? [
+      '├── supabase/',
+      '│   ├── schema.sql           # Database schema with RLS policies',
+      '│   ├── config.toml          # Supabase CLI configuration',
+      ...(edgeFns.length > 0 ? ['│   └── functions/           # Edge function source code'] : []),
+    ] : []),
+    '├── .env.example             # Template for environment variables',
+    '├── .env                     # Your actual env values (gitignored)',
+    '├── Dockerfile               # Multi-stage production build',
+    '├── nginx.conf               # nginx config for SPA routing',
+    '├── vite.config.js           # Vite build configuration',
+    '└── package.json             # Dependencies and scripts',
+    '```',
+    '',
   ];
+
+  if (hasSupabase) {
+    readmeLines.push(
+      '## Supabase Setup',
+      '',
+      'This app uses [Supabase](https://supabase.com) for backend services (database, auth, storage, edge functions).',
+      '',
+      '### 1. Create Your Supabase Project',
+      '',
+      '1. Go to [supabase.com/dashboard](https://supabase.com/dashboard) and create a new project',
+      '2. **Wait for the project to finish provisioning** (this can take 1-2 minutes)',
+      '3. Go to **Settings → API** and copy:',
+      '   - **Project URL** → paste as `VITE_SUPABASE_URL` in `.env`',
+      '   - **anon/public key** → paste as `VITE_SUPABASE_ANON_KEY` in `.env`',
+      '',
+      '> ⚠️ **Important:** Never expose the `service_role` key in frontend code. The anon key is safe for client-side use because RLS policies protect your data.',
+      '',
+      '### 2. Import Database Schema',
+      '',
+      '1. Open the **SQL Editor** in your Supabase dashboard',
+      '2. Paste the entire contents of `supabase/schema.sql`',
+      '3. Click **Run**',
+      '4. Go to **Table Editor** and verify all tables were created',
+      '5. Check **Authentication → Policies** to confirm RLS policies are active',
+      '',
+    );
+
+    if (detectedTables.length > 0) {
+      readmeLines.push(
+        `> **Detected tables:** \`${detectedTables.join('`, `')}\``,
+        '> ',
+        '> The schema file includes starter column definitions, RLS policies, and `updated_at` triggers for each table.',
+        '> **You should customize the columns** based on your actual data model — the defaults are just scaffolding.',
+        '',
+      );
+    }
+
+    if (storageBuckets.length > 0) {
+      readmeLines.push(
+        '### 3. Storage Buckets',
+        '',
+        `The schema creates these storage buckets: **${storageBuckets.join(', ')}**`,
+        '',
+        '- Storage policies are included — users can only access files in their own folder',
+        '- File upload limit is set to 50 MB by default',
+        '- To change bucket visibility (public/private), update the `INSERT INTO storage.buckets` statement in `schema.sql`',
+        '',
+      );
+    }
+
+    if (authProviders.length > 0) {
+      readmeLines.push(
+        '### 4. Authentication Providers',
+        '',
+        'Configure these in **Authentication → Providers**:',
+        '',
+      );
+      const providerDocs: Record<string, string> = {
+        email: '✅ **Email/Password** — enabled by default, no extra setup needed',
+        google: '🔗 **Google OAuth** — [Setup guide](https://supabase.com/docs/guides/auth/social-login/auth-google) — requires Google Cloud Console credentials',
+        github: '🔗 **GitHub OAuth** — [Setup guide](https://supabase.com/docs/guides/auth/social-login/auth-github) — create an OAuth App in GitHub settings',
+        apple: '🔗 **Apple Sign In** — [Setup guide](https://supabase.com/docs/guides/auth/social-login/auth-apple) — requires Apple Developer account',
+        discord: '🔗 **Discord OAuth** — [Setup guide](https://supabase.com/docs/guides/auth/social-login/auth-discord)',
+        facebook: '🔗 **Facebook OAuth** — [Setup guide](https://supabase.com/docs/guides/auth/social-login/auth-facebook)',
+        twitter: '🔗 **Twitter/X OAuth** — [Setup guide](https://supabase.com/docs/guides/auth/social-login/auth-twitter)',
+        azure: '🔗 **Azure AD** — [Setup guide](https://supabase.com/docs/guides/auth/social-login/auth-azure)',
+        magic_link: '✉️ **Magic Link** — enabled via email settings, no extra setup',
+        phone: '📱 **Phone/SMS Auth** — [Setup guide](https://supabase.com/docs/guides/auth/phone-login) — requires Twilio account',
+      };
+      for (const provider of authProviders) {
+        const doc = providerDocs[provider] || `- **${provider}** — configure in Auth → Providers`;
+        readmeLines.push(`${doc}`);
+      }
+      readmeLines.push('');
+    }
+
+    readmeLines.push(
+      '### Supabase CLI (Optional)',
+      '',
+      'For local development with the Supabase CLI:',
+      '',
+      '```bash',
+      '# Install CLI globally',
+      'npm install -g supabase',
+      '',
+      '# Link to your remote project',
+      'npx supabase link --project-ref YOUR_PROJECT_REF',
+      '',
+      '# Start local Supabase stack (Docker required)',
+      'npx supabase start',
+      '',
+      '# Push schema to remote project',
+      'npx supabase db push',
+      '',
+      '# Pull remote schema changes',
+      'npx supabase db pull',
+      '```',
+      '',
+      '> The `supabase/config.toml` file is already configured for this project.',
+      '',
+    );
+  }
+
+  if (hasStripe) {
+    readmeLines.push(
+      '## Stripe Setup',
+      '',
+      '1. Go to [dashboard.stripe.com/apikeys](https://dashboard.stripe.com/apikeys)',
+      '2. Copy your **Publishable key** (starts with `pk_test_` or `pk_live_`)',
+      '3. Add it to `.env` as `VITE_STRIPE_PUBLISHABLE_KEY`',
+      '',
+      '> ⚠️ **Test vs Live:** Start with `pk_test_` keys during development. Switch to `pk_live_` only when you\'re ready for real payments.',
+      '>',
+      '> 🔐 **Secret key:** If your app needs server-side Stripe operations, add `STRIPE_SECRET_KEY` as an edge function secret (never in frontend code).',
+      '',
+    );
+  }
+
+  if (serviceKeysUsed.length > 0) {
+    readmeLines.push(
+      '## API Keys Required',
+      '',
+      '| Service | Env Variable | Where to Get It |',
+      '|---------|-------------|-----------------|',
+    );
+    for (const sk of serviceKeysUsed) {
+      const catalog = SERVICE_CATALOG.find(s => s.id === sk.serviceId);
+      if (catalog) {
+        readmeLines.push(`| ${catalog.name} | \`VITE_${catalog.envKeyName}\` | [Get key →](${catalog.helpUrl}) |`);
+      }
+    }
+    readmeLines.push('');
+  }
+
+  if (edgeFns.length > 0) {
+    readmeLines.push(
+      '## Edge Functions',
+      '',
+      'This project includes Supabase Edge Functions (Deno runtime). Source code is in `supabase/functions/`.',
+      '',
+      '| Function | Status |',
+      '|----------|--------|',
+    );
+    for (const fn of edgeFns) {
+      readmeLines.push(`| \`${fn.name}\` | ${fn.status} |`);
+    }
+    readmeLines.push(
+      '',
+      '### Deploying Edge Functions',
+      '',
+      '```bash',
+      '# Deploy all functions',
+      'npx supabase functions deploy',
+      '',
+      '# Deploy a specific function',
+      'npx supabase functions deploy my-function',
+      '',
+      '# Set secrets for edge functions',
+      'npx supabase secrets set MY_SECRET_KEY=value',
+      '',
+      '# View function logs',
+      'npx supabase functions logs my-function',
+      '```',
+      '',
+    );
+  }
+
+  readmeLines.push(
+    '## Deployment',
+    '',
+    '### Option 1: Vercel (Recommended for beginners)',
+    '',
+    '```bash',
+    '# Install Vercel CLI',
+    'npm install -g vercel',
+    '',
+    '# Deploy (follow the prompts)',
+    'vercel',
+    '```',
+    '',
+    '- Add all `.env` variables in the Vercel dashboard under **Settings → Environment Variables**',
+    '- Vercel auto-detects Vite and configures the build',
+    '- Custom domains: **Settings → Domains → Add**',
+    '',
+    '### Option 2: Netlify',
+    '',
+    '```bash',
+    'npm run build',
+    '# Deploy the dist/ folder via Netlify dashboard or CLI',
+    'npx netlify deploy --prod --dir=dist',
+    '```',
+    '',
+    '- Add a `_redirects` file in `public/` with `/* /index.html 200` for SPA routing',
+    '',
+    '### Option 3: Docker',
+    '',
+    '```bash',
+    '# Build the image',
+    `docker build -t ${slug} .`,
+    '',
+    '# Run with environment variables',
+    `docker run -p 8080:80 --env-file .env ${slug}`,
+    '',
+    '# Or use docker-compose',
+    `docker compose up -d`,
+    '```',
+    '',
+    'The included Dockerfile uses a **multi-stage build** (Node → nginx), producing a ~25 MB image.',
+    '',
+    '### Option 4: GitHub Pages',
+    '',
+    '1. Push to GitHub',
+    '2. Go to **Settings → Pages → Source: GitHub Actions**',
+    '3. Note: SPA routing requires a `404.html` (copy of `index.html`)',
+    '4. ⚠️ GitHub Pages cannot use environment variables — you\'ll need to inline values at build time',
+    '',
+    '## Environment Variables',
+    '',
+    'All required environment variables are documented in `.env.example`.',
+    '',
+    '| Variable | Required | Description |',
+    '|----------|----------|-------------|',
+  );
+
+  if (hasSupabase) {
+    readmeLines.push(
+      '| `VITE_SUPABASE_URL` | Yes | Your Supabase project URL |',
+      '| `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anon/public API key |',
+    );
+  }
+  if (hasStripe) {
+    readmeLines.push('| `VITE_STRIPE_PUBLISHABLE_KEY` | Yes | Stripe publishable key |');
+  }
+  for (const sk of serviceKeysUsed) {
+    const catalog = SERVICE_CATALOG.find(s => s.id === sk.serviceId);
+    if (catalog) {
+      readmeLines.push(`| \`VITE_${catalog.envKeyName}\` | Yes | ${catalog.name} API key |`);
+    }
+  }
+  for (const ev of envVarsUsed) {
+    readmeLines.push(`| \`VITE_${ev.key}\` | Yes | Custom variable |`);
+  }
+
+  readmeLines.push(
+    '',
+    '> 💡 **Tip:** Variables prefixed with `VITE_` are exposed to the frontend. Never put secrets (database passwords, API secret keys) in `VITE_` variables.',
+    '',
+    '## Security Checklist',
+    '',
+    'Before going to production, review these items:',
+    '',
+    '- [ ] **RLS policies are active** on all tables — verify in Supabase → Authentication → Policies',
+    '- [ ] **No secret keys in frontend code** — only publishable/anon keys should be in `VITE_` vars',
+    '- [ ] **CORS configured** — update `Access-Control-Allow-Origin` in edge functions for your domain',
+    '- [ ] **Auth redirect URLs** — add your production domain in Supabase → Authentication → URL Configuration',
+    '- [ ] **Rate limiting** — consider adding rate limits to edge functions',
+    '- [ ] **Input validation** — validate all user input on the server (edge functions)',
+    '- [ ] **HTTPS only** — all hosting providers listed above use HTTPS by default',
+    '- [ ] **Environment variables** — double-check `.env` is in `.gitignore` and not committed',
+    '',
+    '## Performance Optimization',
+    '',
+    'Recommended optimizations for production:',
+    '',
+    '- **Code splitting:** Add `React.lazy()` and `Suspense` for route-based splitting',
+    '- **Image optimization:** Use WebP format and lazy loading (`loading="lazy"`)',
+    '- **Bundle analysis:** Run `npx vite-bundle-visualizer` to find large dependencies',
+    '- **Caching headers:** The included `nginx.conf` sets 1-year cache for static assets',
+    '- **CDN:** Vercel and Netlify include global CDN by default',
+    '- **Database indexes:** Add indexes on frequently queried columns in your Supabase tables',
+    '',
+    '## Troubleshooting',
+    '',
+    '### Common Issues',
+    '',
+    '| Problem | Solution |',
+    '|---------|----------|',
+    '| `npm run dev` fails | Delete `node_modules` and run `npm install` again |',
+    '| Blank page after build | Check browser console for errors; ensure all env vars are set |',
+    '| CORS errors | Update `Access-Control-Allow-Origin` in edge functions to match your domain |',
+    '| Auth not working | Add your domain to Supabase → Auth → URL Configuration |',
+    '| 404 on page refresh | Your hosting needs SPA fallback (the nginx.conf handles this for Docker) |',
+    '| "relation does not exist" | Run the `schema.sql` in Supabase SQL Editor |',
+    '| Edge function 500 errors | Check function logs: `npx supabase functions logs function-name` |',
+    '| Styles look different | Ensure all CSS files are imported; check Tailwind purge config |',
+    '',
+    '### Getting Help',
+    '',
+    '- **Supabase Docs:** [supabase.com/docs](https://supabase.com/docs)',
+    '- **Vite Docs:** [vitejs.dev/guide](https://vitejs.dev/guide/)',
+    '- **React Docs:** [react.dev](https://react.dev)',
+    '',
+    '## Architecture Notes',
+    '',
+    'This project was generated as a single-page React application. Here are recommendations for scaling:',
+    '',
+    '- **Routing:** Add `react-router-dom` for multi-page navigation',
+    '- **State management:** For complex state, consider Zustand or TanStack Query',
+    '- **Component library:** The app uses vanilla HTML/CSS — consider migrating to shadcn/ui or Radix for accessibility',
+    '- **TypeScript:** Convert `.jsx` files to `.tsx` for type safety',
+    '- **Testing:** Add Vitest + React Testing Library for unit/integration tests',
+    '- **CI/CD:** Set up GitHub Actions for automated build + deploy on push',
+    '',
+    '---',
+    '',
+    `*Generated on ${new Date().toISOString().split('T')[0]} by UltriumAI App Builder*`,
+    '',
+  );
 
   if (hasSupabase) {
     readmeLines.push(
