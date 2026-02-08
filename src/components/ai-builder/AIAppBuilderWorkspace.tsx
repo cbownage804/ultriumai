@@ -64,11 +64,15 @@ import { VersionTimelineSlider } from './VersionTimelineSlider';
 import { SplitEditorPane } from './SplitEditorPane';
 import { useVersionTimeline } from '@/hooks/useVersionTimeline';
 import { useBuildLog } from '@/hooks/useBuildLog';
+import { DeployPipelinePanel } from './DeployPipelinePanel';
+import { ComponentPalette } from './ComponentPalette';
+import { LiveCursors } from './LiveCursors';
+import { AIAutocompleteIndicator } from './AIAutocomplete';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
-  History, Variable, Image, Package, Columns, Keyboard,
+  History, Variable, Image, Package, Columns, Keyboard, Rocket,
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen,
   Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
 } from 'lucide-react';
@@ -192,6 +196,10 @@ export function AIAppBuilderWorkspace() {
   const [showTimeline, setShowTimeline] = useState(false);
   const [splitRightFile, setSplitRightFile] = useState<string | null>(null);
   const buildStartTimeRef = useRef<number>(0);
+  const [showDeployPipeline, setShowDeployPipeline] = useState(false);
+  const [showComponentPalette, setShowComponentPalette] = useState(false);
+  const [aiAutocompleteEnabled, setAiAutocompleteEnabled] = useState(true);
+  const workspaceContainerRef = useRef<HTMLDivElement>(null);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
@@ -673,6 +681,7 @@ export function AIAppBuilderWorkspace() {
     { id: 'packages', icon: Package, label: 'Packages', show: true, active: showPackages },
     { id: 'history', icon: History, label: 'Version History', show: true, active: showVersionHistory },
     { id: 'activity', icon: Clock, label: 'Activity', show: true, active: showActivity },
+    { id: 'exportGuide', icon: BookOpen, label: 'Export Guide', show: true, active: showExportGuide },
     { id: 'exportGuide', icon: BookOpen, label: 'Export & Deploy Guide', show: true, active: showExportGuide },
   ] as const;
 
@@ -799,6 +808,15 @@ export function AIAppBuilderWorkspace() {
             </Tooltip>
 
             <div className="h-5 w-px bg-white/[0.06] mx-0.5" />
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={() => setShowDeployPipeline(!showDeployPipeline)} className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-colors", showDeployPipeline ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}>
+                  <Rocket className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Deploy Pipeline</TooltipContent>
+            </Tooltip>
 
             <DeployDialog
               onPublish={handlePublish}
@@ -990,6 +1008,8 @@ export function AIAppBuilderWorkspace() {
                 <AICodeIntelligence open={showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); toast.success('Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => toast.success('Refreshed suggestions')} activeFilePath={project.activeFilePath} />
                 <DatabaseExplorer open={showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
                 <ComponentLibrary open={showComponentLib} onClose={() => setShowComponentLib(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); } }} onApplyTheme={() => {}} />
+                <DeployPipelinePanel open={showDeployPipeline} onClose={() => setShowDeployPipeline(false)} onDeploy={handlePublish} publishedUrl={publishedUrl} isDeploying={isGenerating} projectName={project.name} onOpenDomainPanel={() => { setShowDeployPipeline(false); setShowDomainPanel(true); }} />
+                <ComponentPalette open={showComponentPalette} onClose={() => setShowComponentPalette(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); setRightTab('code'); } }} />
                 <TestingDebugSuite open={showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); toast.success('Test generated'); }} projectFiles={project.files} />
                 {showPackages && (
                   <div className="w-64 border-r border-white/[0.06] bg-[#0d0d14] overflow-hidden">
@@ -1115,7 +1135,8 @@ export function AIAppBuilderWorkspace() {
               </span>
             )}
             <div className="flex-1" />
-            <span className="text-white/15">{rightTab === 'preview' ? 'Preview' : rightTab === 'code' ? 'Editor' : 'Split'}</span>
+            <AIAutocompleteIndicator enabled={aiAutocompleteEnabled} onToggle={() => setAiAutocompleteEnabled(prev => !prev)} />
+            <div className="h-3 w-px bg-white/[0.06]" />
             <div className="h-3 w-px bg-white/[0.06]" />
             <span>{isSaving ? 'Saving...' : lastSaved ? `Saved ${lastSaved.toLocaleTimeString()}` : ''}</span>
           </div>
