@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import {
   Plus, Search, Globe, Trash2, Clock, Code2, LayoutGrid,
   List, MoreHorizontal, FolderOpen, Sparkles, ArrowRight,
-  GitFork, ExternalLink, Loader2,
+  GitFork, ExternalLink, Loader2, Pencil, Copy, Check, X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +44,8 @@ export default function AIStudioProjectsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortBy>('updated');
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const fetchProjects = useCallback(async () => {
     if (!user?.id) return;
@@ -78,6 +80,44 @@ export default function AIStudioProjectsPage() {
       toast.error('Failed to delete project');
     } finally {
       setDeleteTarget(null);
+    }
+  };
+
+  const handleRename = async (id: string, newName: string) => {
+    if (!newName.trim()) { setRenamingId(null); return; }
+    try {
+      const { error } = await supabase
+        .from('builder_projects')
+        .update({ name: newName.trim() })
+        .eq('id', id);
+      if (error) throw error;
+      setProjects(prev => prev.map(p => p.id === id ? { ...p, name: newName.trim() } : p));
+      toast.success('Renamed');
+    } catch {
+      toast.error('Failed to rename');
+    } finally {
+      setRenamingId(null);
+    }
+  };
+
+  const handleDuplicate = async (project: Project) => {
+    if (!user?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('builder_projects')
+        .insert({
+          name: `${project.name} (copy)`,
+          files: project.files,
+          user_id: user.id,
+          is_published: false,
+        } as any)
+        .select()
+        .single();
+      if (error) throw error;
+      setProjects(prev => [data as unknown as Project, ...prev]);
+      toast.success('Project duplicated');
+    } catch {
+      toast.error('Failed to duplicate');
     }
   };
 
@@ -234,9 +274,26 @@ export default function AIStudioProjectsPage() {
                 {/* Info */}
                 <div className="p-3 flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                      {project.name || 'Untitled Project'}
-                    </h3>
+                    {renamingId === project.id ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onBlur={() => handleRename(project.id, renameValue)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleRename(project.id, renameValue);
+                            if (e.key === 'Escape') setRenamingId(null);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-sm font-medium bg-transparent border-b border-primary/50 outline-none w-full text-foreground"
+                          autoFocus
+                        />
+                      </div>
+                    ) : (
+                      <h3 className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                        {project.name || 'Untitled Project'}
+                      </h3>
+                    )}
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
@@ -260,6 +317,12 @@ export default function AIStudioProjectsPage() {
                     <DropdownMenuContent align="end" className="w-44">
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/ai-studio/app-builder?project=${project.id}`); }}>
                         <FolderOpen className="h-4 w-4 mr-2" /> Open
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setRenamingId(project.id); setRenameValue(project.name || ''); }}>
+                        <Pencil className="h-4 w-4 mr-2" /> Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(project); }}>
+                        <Copy className="h-4 w-4 mr-2" /> Duplicate
                       </DropdownMenuItem>
                       {project.published_url && (
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); window.open(project.published_url!, '_blank'); }}>
@@ -304,9 +367,24 @@ export default function AIStudioProjectsPage() {
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/10 to-violet-500/10 flex items-center justify-center shrink-0">
                           <Code2 className="h-4 w-4 text-cyan-400/50" />
                         </div>
-                        <span className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                          {project.name || 'Untitled Project'}
-                        </span>
+                        {renamingId === project.id ? (
+                          <input
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            onBlur={() => handleRename(project.id, renameValue)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleRename(project.id, renameValue);
+                              if (e.key === 'Escape') setRenamingId(null);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-sm font-medium bg-transparent border-b border-primary/50 outline-none text-foreground"
+                            autoFocus
+                          />
+                        ) : (
+                          <span className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                            {project.name || 'Untitled Project'}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">
@@ -336,6 +414,12 @@ export default function AIStudioProjectsPage() {
                         <DropdownMenuContent align="end" className="w-44">
                           <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/ai-studio/app-builder?project=${project.id}`); }}>
                             <FolderOpen className="h-4 w-4 mr-2" /> Open
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setRenamingId(project.id); setRenameValue(project.name || ''); }}>
+                            <Pencil className="h-4 w-4 mr-2" /> Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(project); }}>
+                            <Copy className="h-4 w-4 mr-2" /> Duplicate
                           </DropdownMenuItem>
                           {project.published_url && (
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); window.open(project.published_url!, '_blank'); }}>

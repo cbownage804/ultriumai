@@ -9,6 +9,7 @@ import { ErrorConsole, type PreviewError } from './ErrorConsole';
 import { PreviewZoomControls } from './PreviewZoomControls';
 import { VisualEditOverlay } from './VisualEditOverlay';
 import { ResponsivePreviewBar, type ViewportMode, getViewportWidth } from './ResponsivePreviewBar';
+import { SkeletonPreview } from './SkeletonPreview';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
 interface BuilderPreviewPanelProps {
@@ -330,6 +331,8 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
               }}
             />
           </div>
+        ) : isGenerating ? (
+          <SkeletonPreview />
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-5 relative overflow-hidden">
             {/* Ambient background glow */}
