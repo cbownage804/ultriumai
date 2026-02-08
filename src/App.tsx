@@ -15,7 +15,8 @@ import EnhancedErrorBoundary from '@/components/EnhancedErrorBoundary';
 import CookieConsent from '@/components/CookieConsent';
 import { isVanguardDomain, isSafeSuiteDomain } from '@/utils/subdomain';
 import { AIStudioCTABanner } from '@/components/marketing/AIStudioCTABanner';
-import { AIStudioCommandPalette } from '@/components/ai-studio/AIStudioCommandPalette';
+import { GlobalCommandPalette } from '@/components/GlobalCommandPalette';
+import { GlobalBreadcrumbs } from '@/components/GlobalBreadcrumbs';
 import { MaintenanceBanner } from '@/components/MaintenanceBanner';
 
 import { VanguardLayout } from '@/components/vanguard/VanguardLayout';
@@ -929,8 +930,11 @@ function AppRouter() {
         />
       )}
       
-      {/* AI Studio Command Palette (Cmd+K) */}
-      {user && <AIStudioCommandPalette />}
+      {/* Global Command Palette (Cmd+K) */}
+      {user && <GlobalCommandPalette />}
+
+      {/* Global Breadcrumbs */}
+      <GlobalBreadcrumbs />
 
       {/* AI Studio CTA Banner for unauthenticated users */}
       <AIStudioCTABanner />
