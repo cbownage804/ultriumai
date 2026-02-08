@@ -57,7 +57,7 @@ const ProductCard = ({
         } else if (product === 'vanguard') {
           navigate('/vanguard/dashboard');
         } else {
-          navigate('/dashboard');
+          navigate('/ai-studio');
         }
       } else {
         // Regular local navigation
@@ -198,7 +198,7 @@ export default function ProductHub() {
       name: 'AI Studio',
       description: 'Build custom GPTs and AI agents trained on your data',
       logo: aiStudioLogo,
-      href: '/dashboard',
+      href: '/ai-studio',
       accessLevel: getAccessLevel('ai_studio'),
       color: 'primary',
       bgGradient: 'from-primary/5 via-transparent to-primary/10',
