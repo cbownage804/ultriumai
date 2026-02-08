@@ -1,43 +1,110 @@
 
 
-# AI Studio Dashboard Redesign — App Builder as Centerpiece
+# Sitewide Feature Expansion — Phased Rollout
 
-## The Problem
-The current dashboard is a grid of equally-weighted elements (stat cards, activity feed, quick-start links, onboarding wizard) that treat the App Builder as just one of many options. Nothing draws the user toward the core product.
+## Phase 1: Global UX Upgrades
 
-## The New Layout
+### What already exists
+- Global Command Palette (Cmd+K) with 35+ routes
+- Global Breadcrumbs (auto-generated from URL)
+- Keyboard Shortcuts overlay (Shift+?)
+- Hub Onboarding Tour
+- Light/Dark/System theme toggle
 
-The redesigned dashboard will follow a clear visual hierarchy:
+### What to add
 
-### 1. Hero App Builder CTA (Top — Full Width)
-A prominent, visually striking card that dominates the top of the page. It will feature:
-- A bold headline like "Build your next app" with a large text input or button to start a new project
-- A gradient background (violet-to-cyan) to visually distinguish it from everything else
-- A single primary action: "Start Building" that navigates directly to `/ai-studio/app-builder`
-- Optionally shows the user's most recent project with a "Continue Building" shortcut
+**1.1 — Global User Menu (Profile Dropdown)**
+Replace the scattered Profile/Sign Out buttons across Product Hub, Vanguard, and SafeSuite headers with a single reusable `UserProfileDropdown` component. It will show the user avatar, name, email, and quick links to Profile, Settings, Notifications, Billing, and Sign Out. This gives every authenticated page a consistent top-right identity anchor.
 
-### 2. Recent Projects Row (Below Hero)
-A horizontal row of project cards (from `builder_projects`) showing the user's recent App Builder projects. Each card shows the project name, last modified time, and a quick "Open" action. If no projects exist, this section shows a friendly empty state encouraging the user to create their first app.
+**1.2 — Toast Notification Feed (Persistent)**
+The current notification centers are product-specific (Vanguard has `RealtimeNotificationCenter`, general app has `NotificationCenter`). Add a unified global notification bell in the user menu that aggregates all product notifications into one feed with badge count, available on every page.
 
-### 3. Secondary Tools Section (Below Projects)
-A compact, single row of smaller cards for the other AI Studio tools — GPTs, Agents, Workflows. These are still accessible but visually subordinate to the App Builder. Presented as a simple grid of 3 cards with icon + label + count.
+**1.3 — Global "What's New" Changelog Sidebar**
+A `PlatformChangelogTab` already exists in the Admin Center. Surface a user-facing "What's New" indicator (a sparkle dot on the user menu) that opens a slide-over showing recent platform updates. This keeps users informed about new features without requiring email blasts.
 
-### 4. Condensed Stats + Activity (Bottom)
-The stats (credits, counts) and recent activity feed are collapsed into a smaller, less prominent section at the bottom — or moved into an expandable "Activity" panel so they don't clutter the main view.
+**1.4 — Page Transition Animations**
+Add subtle Framer Motion page transitions (fade + slight vertical slide) at the route level via the `SuspenseWrapper`. This eliminates the jarring hard-cut between pages and feels polished.
 
-### 5. Onboarding Wizard
-The existing onboarding wizard will be simplified or replaced with the hero CTA itself. First-time users will see the hero with a "Get Started" prompt, removing the need for a separate multi-step wizard taking up half the page.
+---
 
-## Technical Details
+## Phase 2: Analytics and Insights
 
-### Files Modified
-- **`src/components/ai-studio/AIStudioDashboardHub.tsx`** — Complete redesign of the component layout with the hierarchy described above
-- **`src/components/ai-studio/AIStudioOnboardingWizard.tsx`** — Simplified or removed; its purpose is absorbed by the hero CTA
-- **`src/pages/AIStudio.tsx`** — Remove the conditional onboarding wizard render since the dashboard itself handles first-time UX
+### What already exists
+- `useAnalytics` hook (Google Analytics gtag integration)
+- `useAnalyticsTracking` hook (event tracking)
+- `ActivityFeedWidget` on Product Hub
+- Executive Dashboard in Vanguard (mock data)
+- Admin Center with user activity feed
 
-### Data
-- Reuses existing Supabase queries (`builder_projects`, `org_credits`, `custom_gpts`, `ai_agents`)
-- Adds a query for recent `builder_projects` with `name`, `updated_at` to populate the projects row
+### What to add
 
-### No new dependencies required
+**2.1 — Admin Analytics Dashboard**
+A new tab in the Unified Admin Center showing real user metrics: DAU/MAU, product adoption (which products are opened most), feature usage heatmap (which pages get traffic), and signup-to-activation funnel. Pulls from the existing `user_activity_feed` table.
+
+**2.2 — User Session Insights**
+Track and display per-user engagement: last login, session count, most-used product, and account health score. Visible in the Admin Center's customer accounts view.
+
+**2.3 — Product Adoption Metrics**
+Add a simple dashboard widget showing how many users have accessed each product (AI Studio, Vanguard, SafeSuite) in the last 7/30 days, plus new activations. Helps identify which products need more onboarding attention.
+
+---
+
+## Phase 3: Revenue and Growth
+
+### What already exists
+- Pricing pages for all products (AI Studio, Vanguard, SafeSuite, Custom Apps)
+- Stripe integration for payments (PaymentSuccess/PaymentCancel pages)
+- Credits purchase flow
+- MSP Churn Prediction component
+- Subscription management hooks
+
+### What to add
+
+**3.1 — In-App Upgrade Prompts**
+Smart contextual upgrade nudges that appear when users hit limits (e.g., "You've used 90% of your AI credits" or "Upgrade to unlock this feature"). Uses the existing feature-gating infrastructure but adds friendly, non-blocking banner prompts instead of hard walls.
+
+**3.2 — Referral Program**
+A "Refer a Friend" page accessible from the user menu. Users get a unique referral link, can track invites sent vs. converted, and earn credits or discounts. Requires a new `referrals` table and a simple tracking edge function.
+
+**3.3 — Usage-Based Billing Alerts**
+Email and in-app notifications when users approach credit thresholds (50%, 75%, 90%, 100%). Uses the existing `ai_credit_ledger` table and adds threshold-check logic.
+
+---
+
+## Phase 4: Content and Engagement
+
+### What already exists
+- Admin Announcements system (database tables exist)
+- Customer Portal announcement banner
+- Knowledge Base in Customer Portal and Docs pages
+- Survey page
+
+### What to add
+
+**4.1 — Public Changelog Page**
+A `/changelog` route showing versioned product updates with dates, descriptions, and category tags (New Feature, Improvement, Fix). Admin creates entries from the Admin Center; users see a read-only, nicely formatted timeline.
+
+**4.2 — In-App Feature Request Board**
+A `/feedback` page where authenticated users can submit feature requests, upvote existing ones, and see status updates (Under Review, Planned, Shipped). Requires a new `feature_requests` table with upvote tracking.
+
+**4.3 — System Status Banner**
+A lightweight global banner that appears at the top of every page when there's an active incident or scheduled maintenance. Controlled via an `system_status` table or admin toggle.
+
+---
+
+## Implementation Order
+
+```text
+Phase 1 (UX)      --> 1.1 User Menu -> 1.2 Notification Feed -> 1.4 Transitions -> 1.3 Changelog Sidebar
+Phase 2 (Analytics)--> 2.1 Admin Dashboard -> 2.2 Session Insights -> 2.3 Adoption Metrics
+Phase 3 (Revenue)  --> 3.1 Upgrade Prompts -> 3.3 Billing Alerts -> 3.2 Referral Program
+Phase 4 (Content)  --> 4.1 Changelog Page -> 4.3 Status Banner -> 4.2 Feature Request Board
+```
+
+## Technical Notes
+
+- **No new dependencies required** — Framer Motion (already installed) handles animations; all UI uses existing Radix/shadcn primitives
+- **Database tables needed**: `referrals`, `feature_requests`, `feature_request_votes`, `system_status`, `platform_changelog` (public-facing)
+- **Edge functions needed**: `track-referral`, `check-credit-thresholds`
+- **Existing patterns followed**: All new components use the established shadcn/Radix component library, Supabase queries via `@tanstack/react-query`, and the existing auth/subscription context providers
 
