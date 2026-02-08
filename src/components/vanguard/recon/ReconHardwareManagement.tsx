@@ -16,7 +16,9 @@ import {
   ShoppingCart,
   Server,
   HardDrive,
+  Wrench,
 } from 'lucide-react';
+import { ReconImageBuilder } from './ReconImageBuilder';
 
 interface ReconAgent {
   id: string;
@@ -43,6 +45,7 @@ interface ReconHardwareManagementProps {
 export const ReconHardwareManagement = ({ onShowPurchase }: ReconHardwareManagementProps) => {
   const { user } = useAuth();
   const [selectedOrgId, setSelectedOrgId] = useState<string>('all');
+  const [showImageBuilder, setShowImageBuilder] = useState(false);
 
   // Fetch orgs (msp_clients via msps)
   const { data: orgs = [] } = useQuery({
@@ -141,14 +144,32 @@ export const ReconHardwareManagement = ({ onShowPurchase }: ReconHardwareManagem
             Manage your deployed Recon units across organizations
           </p>
         </div>
-        <Button
-          onClick={onShowPurchase}
-          className="bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 gap-2"
-        >
-          <ShoppingCart className="h-4 w-4" />
-          Purchase New Unit
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowImageBuilder(!showImageBuilder)}
+            className="gap-2"
+          >
+            <Wrench className="h-4 w-4" />
+            {showImageBuilder ? 'Hide Image Builder' : 'Build Unit Image'}
+          </Button>
+          <Button
+            onClick={onShowPurchase}
+            className="bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 gap-2"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            Purchase New Unit
+          </Button>
+        </div>
       </div>
+
+      {/* Image Builder */}
+      {showImageBuilder && (
+        <ReconImageBuilder
+          mode="msp"
+          onClose={() => setShowImageBuilder(false)}
+        />
+      )}
 
       {/* Org Selector */}
       <div className="flex items-center gap-3">
