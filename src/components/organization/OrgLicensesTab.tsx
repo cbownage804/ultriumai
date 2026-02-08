@@ -35,11 +35,13 @@ export const OrgLicensesTab = () => {
   const [seatCount, setSeatCount] = useState(5);
   const [purchasing, setPurchasing] = useState(false);
 
-  // Handle checkout success callback
+  // Handle checkout success callback (one-time)
+  const [checkoutHandled, setCheckoutHandled] = useState(false);
   const checkoutStatus = searchParams.get('checkout');
-  if (checkoutStatus === 'success') {
-    // Could auto-provision license here; for now show toast
+  if (checkoutStatus === 'success' && !checkoutHandled) {
+    setCheckoutHandled(true);
     toast({ title: 'Payment successful!', description: 'Your license will be activated shortly.' });
+    refetch();
   }
 
   const activeMembers = members.filter(m => m.status === 'active');
