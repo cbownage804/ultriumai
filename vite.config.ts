@@ -51,7 +51,8 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks: (id) => {
           if (!id.includes('node_modules')) return undefined;
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) return 'react-vendor';
+          // React core only — must not catch react-router, react-day-picker, etc.
+          if (/node_modules\/(react-dom|react)\//.test(id)) return 'react-core';
           if (id.includes('@monaco-editor') || id.includes('monaco-editor')) return 'monaco';
           if (id.includes('@tiptap')) return 'tiptap';
           if (id.includes('recharts') || id.includes('d3-')) return 'charts';
@@ -63,12 +64,16 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('@tanstack')) return 'tanstack';
           if (id.includes('date-fns')) return 'datefns';
           if (id.includes('zod') || id.includes('react-hook-form') || id.includes('@hookform')) return 'forms';
+          if (id.includes('react-router') || id.includes('react-day-picker') || id.includes('react-dropzone') || id.includes('react-resizable-panels')) return 'react-libs';
           if (id.includes('cmdk') || id.includes('sonner') || id.includes('vaul') || id.includes('embla')) return 'ui-libs';
           if (id.includes('html2canvas') || id.includes('jspdf') || id.includes('jszip') || id.includes('qrcode')) return 'export-libs';
           if (id.includes('react-markdown') || id.includes('dompurify') || id.includes('react-color')) return 'content-libs';
-          if (id.includes('@hello-pangea') || id.includes('react-resizable-panels') || id.includes('react-dropzone')) return 'interaction-libs';
+          if (id.includes('@hello-pangea')) return 'dnd-libs';
           if (id.includes('@capacitor')) return 'capacitor';
-          return 'vendor';
+          if (id.includes('@elevenlabs')) return 'elevenlabs';
+          if (id.includes('@mendable') || id.includes('firecrawl')) return 'firecrawl';
+          // Don't put everything in one giant vendor chunk — let Vite auto-split
+          return undefined;
         },
       },
     },
