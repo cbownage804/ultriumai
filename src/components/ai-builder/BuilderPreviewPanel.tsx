@@ -64,26 +64,40 @@ window.addEventListener('unhandledrejection', function(e) {
     orig.apply(console, arguments);
   };
 });
-// Prevent link clicks from navigating the iframe to the parent app
+// === IFRAME NAVIGATION GUARD ===
+// 1. Block anchor link navigation (prevents recursive app loading)
 document.addEventListener('click', function(e) {
   var anchor = e.target.closest ? e.target.closest('a') : null;
   if (!anchor) return;
   var href = anchor.getAttribute('href');
   if (!href) return;
-  // Allow javascript: and blob: links, and same-page anchors
-  if (href.startsWith('javascript:') || href.startsWith('blob:') || href.startsWith('data:')) return;
-  // For hash-only links, handle smooth scrolling within the preview
+  if (href.startsWith('javascript:') || href.startsWith('blob:') || href.startsWith('data:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
   if (href.startsWith('#')) {
     e.preventDefault();
     var target = document.querySelector(href);
     if (target) target.scrollIntoView({ behavior: 'smooth' });
     return;
   }
-  // Block all other navigation (relative paths, absolute URLs) to prevent recursion
   e.preventDefault();
   console.info('[Preview] Navigation blocked: ' + href);
   window.parent.postMessage({ type: '__PREVIEW_NAV__', href: href }, '*');
 });
+// 2. Block form submissions that navigate away
+document.addEventListener('submit', function(e) {
+  var form = e.target;
+  if (form && form.tagName === 'FORM' && form.getAttribute('action')) {
+    e.preventDefault();
+    console.info('[Preview] Form submit blocked: ' + form.getAttribute('action'));
+  }
+});
+// 3. Block window.open to prevent pop-under recursion
+window.open = function(url) {
+  console.info('[Preview] window.open blocked: ' + url);
+  window.parent.postMessage({ type: '__PREVIEW_NAV__', href: url, newTab: true }, '*');
+  return null;
+};
+// 4. Block top-level navigation attempts
+window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
 // Network logger
 (function() {
   var origFetch = window.fetch;
@@ -145,6 +159,19 @@ document.addEventListener('click', function(e) {
         setCurrentUrl(e.data.url);
         setUrlHistory(prev => [...prev.slice(0, historyIndex + 1), e.data.url]);
         setHistoryIndex(prev => prev + 1);
+      }
+      // Handle blocked navigation attempts — update URL bar to show intent
+      if (e.data?.type === '__PREVIEW_NAV__' && e.data.href) {
+        const href = e.data.href;
+        // For hash links, update the URL bar
+        if (href.startsWith('#')) {
+          setCurrentUrl('/' + href);
+        } else if (href.startsWith('/')) {
+          setCurrentUrl(href);
+          setUrlHistory(prev => [...prev.slice(0, historyIndex + 1), href]);
+          setHistoryIndex(prev => prev + 1);
+        }
+        // External URLs — just log, don't update
       }
     };
     window.addEventListener('message', handler);
