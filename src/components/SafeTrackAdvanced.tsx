@@ -635,8 +635,8 @@ const SafeTrackAdvanced = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-4 border rounded-lg text-center">
                   <CheckCircle className="h-8 w-8 mx-auto mb-2 text-success" />
-                  <h4 className="font-medium">SOC 2 Ready</h4>
-                  <p className="text-sm text-muted-foreground">All requirements met</p>
+                  <h4 className="font-medium">SOC 2 Aligned</h4>
+                  <p className="text-sm text-muted-foreground">Controls in place</p>
                 </div>
                 <div className="p-4 border rounded-lg text-center">
                   <Clock className="h-8 w-8 mx-auto mb-2 text-warning" />

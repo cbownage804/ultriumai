@@ -478,7 +478,7 @@ const VanguardProductPage = () => {
                   <FileCheck className="h-16 w-16 mx-auto mb-4 text-emerald-500" />
                   <h3 className="text-xl font-bold mb-2">Compliance Automation</h3>
                   <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    Built-in frameworks with automated evidence collection from every Vanguard module.
+                    Help your clients achieve compliance with built-in framework templates and automated evidence collection.
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
                     {['SOC 2', 'HIPAA', 'PCI DSS', 'NIST'].map((framework) => (
