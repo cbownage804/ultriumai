@@ -15,6 +15,7 @@ import EnhancedErrorBoundary from '@/components/EnhancedErrorBoundary';
 import CookieConsent from '@/components/CookieConsent';
 import { PageTransition } from '@/components/transitions/PageTransition';
 import { isVanguardDomain, isSafeSuiteDomain } from '@/utils/subdomain';
+import { SystemStatusBanner } from '@/components/system/SystemStatusBanner';
 // Lazy-loaded global components (reduce initial bundle)
 const AIStudioCTABanner = lazy(() => import('@/components/marketing/AIStudioCTABanner').then(m => ({ default: m.AIStudioCTABanner })));
 const GlobalCommandPalette = lazy(() => import('@/components/GlobalCommandPalette').then(m => ({ default: m.GlobalCommandPalette })));
@@ -152,6 +153,8 @@ const ClientTicketsPage = lazy(() => import('@/pages/client/ClientTicketsPage'))
 const ClientBillingPage = lazy(() => import('@/pages/client/ClientBillingPage'));
 const PublicGPTEmbed = lazy(() => import('@/pages/PublicGPTEmbed'));
 const ReferralProgram = lazy(() => import('@/pages/ReferralProgram'));
+const ChangelogPage = lazy(() => import('@/pages/ChangelogPage'));
+const FeatureRequestBoard = lazy(() => import('@/pages/FeatureRequestBoard'));
 
 // Customer Portal (End-User Self-Service)
 const CustomerPortalLogin = lazy(() => import('@/pages/customer-portal/CustomerPortalLogin'));
@@ -297,6 +300,8 @@ function AppRouter() {
         <Route path="/status" element={<Navigate to="/vanguard" replace />} />
         <Route path="/api-docs" element={<SuspenseWrapper variant="detail"><APIDocsPage /></SuspenseWrapper>} />
         <Route path="/install" element={<SuspenseWrapper><InstallPage /></SuspenseWrapper>} />
+        <Route path="/changelog" element={<SuspenseWrapper><ChangelogPage /></SuspenseWrapper>} />
+        <Route path="/feedback" element={<SuspenseWrapper><FeatureRequestBoard /></SuspenseWrapper>} />
         <Route path="/referrals" element={
           <ProtectedRoute>
             <SuspenseWrapper><ReferralProgram /></SuspenseWrapper>
@@ -729,7 +734,7 @@ export default function App() {
               <Suspense fallback={<div className="min-h-screen bg-background" />}>
                 <VoiceAssistantProvider>
                   <Router>
-                    
+                    <SystemStatusBanner />
                     <AppRouter />
                     <ShadcnToaster />
                     <SonnerToaster />
