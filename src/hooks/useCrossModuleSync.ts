@@ -17,7 +17,7 @@ export interface SyncStatus {
 
 export function useCrossModuleSync() {
   const { user } = useAuth();
-  const { subscribed, loading: subLoading } = useVanguardSub();
+  const { loading: subLoading } = useVanguardSub();
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     lastSyncedAt: null,
     isSyncing: false,
@@ -59,12 +59,12 @@ export function useCrossModuleSync() {
     }
   }, [user]);
 
-  // Auto-sync when subscribed and not yet synced this session
+  // Auto-sync when user is authenticated and subscription check is done
   useEffect(() => {
-    if (subLoading || !subscribed || !user || hasAutoSynced.current) return;
+    if (subLoading || !user || hasAutoSynced.current) return;
     hasAutoSynced.current = true;
     runSync();
-  }, [subscribed, subLoading, user, runSync]);
+  }, [subLoading, user, runSync]);
 
   return {
     ...syncStatus,
