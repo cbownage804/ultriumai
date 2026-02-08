@@ -60,7 +60,8 @@ const EnvironmentConfigTab = lazy(() => import('@/components/admin/unified/Envir
 const MigrationHistoryTab = lazy(() => import('@/components/admin/unified/MigrationHistoryTab'));
 const RealtimeMonitorTab = lazy(() => import('@/components/admin/unified/RealtimeMonitorTab'));
 const PerformanceProfilerTab = lazy(() => import('@/components/admin/unified/PerformanceProfilerTab'));
-
+const AdminAnalyticsDashboard = lazy(() => import('@/components/admin/unified/AdminAnalyticsDashboard'));
+const UserSessionInsights = lazy(() => import('@/components/admin/unified/UserSessionInsights'));
 const TabLoader = () => (
   <div className="flex items-center justify-center py-12">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -84,6 +85,8 @@ const SIDEBAR_GROUPS = [
     { value: 'announcements', icon: MessageSquare, label: 'Announcements' },
   ]},
   { label: 'Monitoring', items: [
+    { value: 'analytics', icon: TrendingUp, label: 'Analytics' },
+    { value: 'user-insights', icon: Activity, label: 'User Insights' },
     { value: 'errors', icon: Bug, label: 'Error Tracking' },
     { value: 'activity-feed', icon: Radio, label: 'Activity Feed' },
     { value: 'alerts-config', icon: Bell, label: 'Alert Config' },
@@ -178,6 +181,8 @@ const CONTENT_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<
   'migrations': MigrationHistoryTab,
   'realtime': RealtimeMonitorTab,
   'performance': PerformanceProfilerTab,
+  'analytics': AdminAnalyticsDashboard,
+  'user-insights': UserSessionInsights,
 };
 
 const UnifiedAdminCenter = () => {
