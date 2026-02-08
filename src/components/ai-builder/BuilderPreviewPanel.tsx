@@ -64,6 +64,26 @@ window.addEventListener('unhandledrejection', function(e) {
     orig.apply(console, arguments);
   };
 });
+// Prevent link clicks from navigating the iframe to the parent app
+document.addEventListener('click', function(e) {
+  var anchor = e.target.closest ? e.target.closest('a') : null;
+  if (!anchor) return;
+  var href = anchor.getAttribute('href');
+  if (!href) return;
+  // Allow javascript: and blob: links, and same-page anchors
+  if (href.startsWith('javascript:') || href.startsWith('blob:') || href.startsWith('data:')) return;
+  // For hash-only links, handle smooth scrolling within the preview
+  if (href.startsWith('#')) {
+    e.preventDefault();
+    var target = document.querySelector(href);
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+  // Block all other navigation (relative paths, absolute URLs) to prevent recursion
+  e.preventDefault();
+  console.info('[Preview] Navigation blocked: ' + href);
+  window.parent.postMessage({ type: '__PREVIEW_NAV__', href: href }, '*');
+});
 // Network logger
 (function() {
   var origFetch = window.fetch;
