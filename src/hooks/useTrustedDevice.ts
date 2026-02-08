@@ -89,9 +89,9 @@ export function useTrustedDevice() {
         .eq('user_id', user.id)
         .eq('device_fingerprint', fingerprint);
 
-      // Insert new trust with 24-hour expiration
+      // Insert new trust with 30-day expiration
       const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24);
+      expiresAt.setDate(expiresAt.getDate() + 30);
 
       const { error } = await supabase
         .from('mfa_trusted_devices')

@@ -1,6 +1,6 @@
 /**
  * MFA Login Challenge - Shown after password auth for users with MFA enabled
- * Includes "Trust this device for 24 hours" checkbox
+ * Includes "Trust this device for 30 days" checkbox
  */
 
 import { useState } from 'react';
@@ -122,11 +122,11 @@ export function MFALoginChallenge({ onSuccess, onCancel }: MFALoginChallengeProp
             />
             <div className="space-y-1">
               <Label htmlFor="trustDevice" className="text-sm font-medium cursor-pointer">
-                Trust this device for 24 hours
+                Trust this device for 30 days
               </Label>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                Skip 2FA on this browser until tomorrow
+                Skip 2FA on this browser for 30 days
               </p>
             </div>
           </div>

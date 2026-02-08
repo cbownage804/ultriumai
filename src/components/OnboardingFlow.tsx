@@ -13,7 +13,8 @@ import {
   Users, 
   Rocket,
   Brain,
-  MessageSquare
+  MessageSquare,
+  Shield
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -41,6 +42,14 @@ const OnboardingFlow = () => {
       description: "Set up your name, avatar, and basic preferences to personalize your experience",
       icon: Settings,
       route: "/dashboard/profile",
+      completed: false
+    },
+    {
+      id: "mfa",
+      title: "Set Up Two-Factor Authentication",
+      description: "Protect your account with an authenticator app for enhanced security",
+      icon: Shield,
+      route: "/dashboard/security-center",
       completed: false
     },
     {
@@ -115,10 +124,19 @@ const OnboardingFlow = () => {
         .eq('user_id', user.id)
         .limit(1);
 
+      // Check MFA status
+      const { data: securitySettings } = await supabase
+        .from('security_settings')
+        .select('two_factor_enabled')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
       const updatedSteps = steps.map(step => {
         switch (step.id) {
           case "profile":
             return { ...step, completed: profile && profile.full_name };
+          case "mfa":
+            return { ...step, completed: !!securitySettings?.two_factor_enabled };
           case "create-gpt":
             return { ...step, completed: gpts && gpts.length > 0 };
           case "test-chat":
@@ -126,7 +144,7 @@ const OnboardingFlow = () => {
           case "invite-team":
             return { ...step, completed: teams && teams.length > 0 };
           case "explore-features":
-            return { ...step, completed: false }; // This can be manually marked as complete
+            return { ...step, completed: false };
           default:
             return step;
         }
