@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { NotificationCenter } from '@/components/notifications/NotificationCenter';
-import { UserPresenceIndicator } from '@/components/notifications/UserPresenceIndicator';
-import { Home, Shield, Users, BarChart3, Settings } from 'lucide-react';
+import { Home, Shield, Users, BarChart3 } from 'lucide-react';
+import UserProfileDropdown from '@/components/UserProfileDropdown';
 
 export const Header = () => {
   return (
@@ -43,12 +42,7 @@ export const Header = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <UserPresenceIndicator />
-          <NotificationCenter />
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
-          </Button>
+          <UserProfileDropdown />
         </div>
       </div>
     </header>
