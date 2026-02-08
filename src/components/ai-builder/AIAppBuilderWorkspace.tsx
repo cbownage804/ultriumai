@@ -68,6 +68,9 @@ import { DeployPipelinePanel } from './DeployPipelinePanel';
 import { ComponentPalette } from './ComponentPalette';
 import { LiveCursors } from './LiveCursors';
 import { AIAutocompleteIndicator } from './AIAutocomplete';
+import { BuilderHelpCenter } from './BuilderHelpCenter';
+import { WelcomeOverlay } from './WelcomeOverlay';
+import { ConfirmDialog } from './ConfirmDialog';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key,
@@ -199,6 +202,8 @@ export function AIAppBuilderWorkspace() {
   const [showDeployPipeline, setShowDeployPipeline] = useState(false);
   const [showComponentPalette, setShowComponentPalette] = useState(false);
   const [aiAutocompleteEnabled, setAiAutocompleteEnabled] = useState(true);
+  const [showHelpCenter, setShowHelpCenter] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ title: string; description: string; onConfirm: () => void } | null>(null);
   const workspaceContainerRef = useRef<HTMLDivElement>(null);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
@@ -530,7 +535,13 @@ export function AIAppBuilderWorkspace() {
     return count;
   }, [project.files, upsertFile, pushUndo, addActivity]);
 
-  const handleClear = () => { clearChat(); resetProject(); };
+  const handleClear = () => {
+    setConfirmAction({
+      title: 'Clear chat & project?',
+      description: 'This will remove all messages, generated files, and reset the project to a blank state. This cannot be undone.',
+      onConfirm: () => { clearChat(); resetProject(); },
+    });
+  };
 
   const handleRename = () => {
     if (editName.trim()) renameProject(editName.trim());
@@ -649,7 +660,7 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   // Close other panels when opening one
-  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity' | 'codeIntel' | 'componentLib' | 'testingSuite' | 'exportGuide') => {
+  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity' | 'codeIntel' | 'componentLib' | 'testingSuite' | 'exportGuide' | 'helpCenter') => {
     setShowVersionHistory(panel === 'history' ? !showVersionHistory : false);
     setShowEnvVars(panel === 'envVars' ? !showEnvVars : false);
     setShowAssets(panel === 'assets' ? !showAssets : false);
@@ -664,6 +675,7 @@ export function AIAppBuilderWorkspace() {
     setShowComponentLib(panel === 'componentLib' ? !showComponentLib : false);
     setShowTestingSuite(panel === 'testingSuite' ? !showTestingSuite : false);
     setShowExportGuide(panel === 'exportGuide' ? !showExportGuide : false);
+    setShowHelpCenter(panel === 'helpCenter' ? !showHelpCenter : false);
   };
 
   // ─── Left sidebar icon bar items ───
@@ -681,13 +693,23 @@ export function AIAppBuilderWorkspace() {
     { id: 'packages', icon: Package, label: 'Packages', show: true, active: showPackages },
     { id: 'history', icon: History, label: 'Version History', show: true, active: showVersionHistory },
     { id: 'activity', icon: Clock, label: 'Activity', show: true, active: showActivity },
-    { id: 'exportGuide', icon: BookOpen, label: 'Export Guide', show: true, active: showExportGuide },
-    { id: 'exportGuide', icon: BookOpen, label: 'Export & Deploy Guide', show: true, active: showExportGuide },
+    { id: 'exportGuide', icon: Rocket, label: 'Export & Deploy Guide', show: true, active: showExportGuide },
+    { id: 'helpCenter' as any, icon: BookOpen, label: 'Help Center', show: true, active: showHelpCenter },
   ] as const;
 
   return (
     <TooltipProvider delayDuration={300}>
+      <WelcomeOverlay />
       <OnboardingTour />
+      <ConfirmDialog
+        open={!!confirmAction}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={() => { confirmAction?.onConfirm(); setConfirmAction(null); }}
+        title={confirmAction?.title || ''}
+        description={confirmAction?.description || ''}
+        confirmLabel="Yes, clear everything"
+        variant="danger"
+      />
       <div className="h-screen w-full flex flex-col bg-[#09090b]">
         {/* ── Top Bar — Lovable-style ── */}
         <div className="flex items-center justify-between px-2 h-12 border-b border-white/[0.06] bg-[#09090b] shrink-0">
@@ -1005,6 +1027,7 @@ export function AIAppBuilderWorkspace() {
                 </Suspense>
                 <ActivityFeed open={showActivity} onClose={() => setShowActivity(false)} entries={activityEntries} />
                 <ExportGuidePanel open={showExportGuide} onClose={() => setShowExportGuide(false)} />
+                <BuilderHelpCenter open={showHelpCenter} onClose={() => setShowHelpCenter(false)} />
                 <AICodeIntelligence open={showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); toast.success('Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => toast.success('Refreshed suggestions')} activeFilePath={project.activeFilePath} />
                 <DatabaseExplorer open={showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
                 <ComponentLibrary open={showComponentLib} onClose={() => setShowComponentLib(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); } }} onApplyTheme={() => {}} />
