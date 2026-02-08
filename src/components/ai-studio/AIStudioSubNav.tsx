@@ -27,7 +27,7 @@ export function AIStudioSubNav() {
         <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto py-2 scrollbar-hide -mx-2 px-2 snap-x snap-mandatory">
           {/* Logo */}
           <Link to="/ai-studio" className="flex items-center mr-2 sm:mr-4 shrink-0">
-            <div className="h-8 sm:h-9 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
+            <div className="h-10 sm:h-12 rounded-lg bg-black p-1 flex items-center justify-center overflow-hidden">
               <img src={aiStudioLogo} alt="AI Studio" className="h-full w-auto object-contain" />
             </div>
           </Link>
