@@ -1,113 +1,54 @@
 
 
-# AI Studio App Builder -- Lovable Parity Phase 7: Billing, Access Control, and User Experience
+## Polish Pass: Empty States, Micro-Interactions, Skeletons, Mobile, and Tooltips
 
-## Overview
+This plan implements all remaining polish items in a single pass across the App Builder workspace.
 
-The builder now has a complete platform shell with IDE intelligence, database/auth/storage panels, edge functions, knowledge management, deployment, and GitHub sync. This phase targets the **commercial and user experience layer** -- the features that make the platform viable as a product: billing integration, project-level access control, a polished onboarding experience, and several UX refinements that Lovable ships by default.
+### What's Changing
 
----
+**1. Wire Empty States into Active Panels**
+Currently `EmptyStates.tsx` exists but is unused. We'll integrate the pre-built empty states into panels that show "No data" conditions:
+- Activity Feed: Show the `activity` empty state when `entries` is empty (replace plain text)
+- Edge Functions panel: Show `edgeFunctions` empty state when list is empty
+- Assets panel: Show `assets` empty state when no assets exist
+- Env Vars panel: Show `envVars` empty state when no variables configured
+- Version History panel: Show `history` empty state when no versions
 
-## Remaining Gap Analysis
+**2. Micro-Interactions on Sidebar Icons**
+Add subtle scale + spring transitions to the left icon sidebar buttons using `framer-motion`. Each sidebar icon will get a `whileHover={{ scale: 1.1 }}` and `whileTap={{ scale: 0.95 }}` for tactile feedback.
 
-| Lovable Feature | Current Status |
-|---|---|
-| Credit/billing system in builder | Missing -- no usage tracking or plan gating |
-| Project-level access control (share with roles) | Missing -- no per-project permissions |
-| Real-time preview URL (actually functional) | We show a slug URL but it's not live |
-| Responsive preview with URL bar | Preview exists but no address bar simulation |
-| Prompt suggestions after AI response | We generate suggestions but don't show them as clickable chips |
-| Chat image attachments with analysis | Image upload exists but no visual feedback in chat |
-| Loading skeleton for preview | SkeletonPreview exists but isn't wired consistently |
-| Project templates gallery (curated) | TemplateLibrary exists but needs richer categories and thumbnails |
-| Settings: Danger Zone | Missing delete/reset project actions |
-| SEO/meta tag editor | Missing |
-| Notification system for build events | Missing -- only toast notifications |
+**3. Loading Skeleton Consistency**
+The `SkeletonPreview` component already exists. We'll ensure it's rendered in the preview panel when `isGenerating` is true AND there's no HTML content yet (first build), replacing the blank state.
 
----
+**4. Mobile Responsiveness Refinements**
+- Add `safe-area-inset` padding to the top bar and bottom input area for notched devices
+- Ensure the mobile tab switcher (Chat/Editor) has proper 44px touch targets
+- Make the sidebar icon bar hidden on mobile (it's inaccessible at 40px width on small screens)
 
-## Phase 7 Scope
+**5. Suggestion Chips Polish**
+The follow-up suggestion chips are already implemented and wired. We'll enhance their styling with a subtle entrance animation using `framer-motion` staggered children.
 
-### 1. Credits and Usage Billing Panel
-
-Lovable shows credit usage per message and remaining credits in the builder. Add a billing awareness layer.
-
-**Changes:**
-- Create `BillingPanel.tsx`: A slide-out panel showing current plan, credits used/remaining, per-message cost history, and an upgrade CTA. Reads from the existing Vanguard subscription context.
-- `AIAppBuilderWorkspace.tsx`: Add a credits indicator in the top bar (compact pill showing remaining credits). Wire to billing panel on click.
-- `BuilderChatPanel.tsx`: Show credit cost badge on each sent message (e.g., "1 credit").
-
-### 2. Project Sharing and Access Control
-
-Lovable lets users share projects with teammates and set roles (viewer, editor, admin). Currently there's no per-project access model.
-
-**Changes:**
-- Create `ProjectShareDialog.tsx`: A dialog to invite users by email, set roles (Viewer/Editor/Admin), list current collaborators, and revoke access. Uses a new `project_collaborators` concept stored in project settings.
-- `ProjectManager.tsx`: Add a "Share" button on each project card.
-- `AIAppBuilderWorkspace.tsx`: Show collaborator avatars in the top bar next to the presence indicator.
-
-### 3. Clickable Follow-Up Suggestions
-
-Lovable shows clickable suggestion chips after each AI response. We generate suggestions in `useAIAppBuilder.ts` but they aren't rendered as interactive elements.
-
-**Changes:**
-- `BuilderChatPanel.tsx`: After each assistant message with `suggestions`, render them as styled clickable chips. Clicking a suggestion auto-sends it as the next user message.
-
-### 4. Preview Address Bar with Navigation
-
-Lovable's preview has a URL-like address bar showing the current page path, with back/forward navigation for multi-page apps. Our preview is a bare iframe.
-
-**Changes:**
-- `BuilderPreviewPanel.tsx`: Add a simulated browser address bar above the iframe showing the current page URL. Include back/forward/refresh buttons. Track iframe navigation via `postMessage` and update the displayed URL.
-
-### 5. SEO and Meta Tag Editor
-
-Lovable lets users edit page title, description, and social preview (OG tags) visually. We have no equivalent.
-
-**Changes:**
-- Create `SEOEditor.tsx`: A panel that reads the current `<title>`, `<meta>` tags from the project's HTML files and lets users edit them in a form. Changes are written back to the HTML file directly.
-- `AIAppBuilderWorkspace.tsx`: Add SEO icon to toolbar.
-
-### 6. Settings Danger Zone
-
-The tabbed settings redesign (Phase 4) planned a Danger Zone but it wasn't implemented. Add destructive project actions.
-
-**Changes:**
-- `ProjectSettings.tsx`: Add a "Danger Zone" tab with: Delete Project (with confirmation), Reset to Blank (clears all files), and Export & Delete. Each action requires typing the project name to confirm.
-
-### 7. Enhanced Template Gallery
-
-The current `TemplateLibrary` is functional but basic. Lovable has rich categorized templates with preview thumbnails.
-
-**Changes:**
-- `TemplateLibrary.tsx`: Add category tabs (Landing Pages, Dashboards, E-Commerce, SaaS, Portfolio, Mobile), preview thumbnail cards with hover animation, and a "Use Template" flow that populates the project with template files.
-
-### 8. Build Notification Center
-
-Lovable shows persistent notifications for build completions, errors, and deployment status. We only use ephemeral toasts.
-
-**Changes:**
-- Create `BuildNotificationCenter.tsx`: A dropdown in the top bar that accumulates build events (generation complete, deploy success, error detected) with timestamps. Badge shows unread count. Clicking a notification navigates to the relevant context (e.g., opens the file with the error).
-- `AIAppBuilderWorkspace.tsx`: Wire build events to the notification center.
+**6. Tooltip Coverage Audit**
+All sidebar icons already have tooltips. We'll add tooltips to the remaining toolbar buttons that lack them:
+- Image upload button in chat input
+- Visual Edit toggle button
+- Clear chat button
+- Version history toggle in chat header
 
 ---
 
-## Technical Details
+### Technical Details
 
-| File | Changes |
-|---|---|
-| `BillingPanel.tsx` | New -- credits/usage display with plan info |
-| `ProjectShareDialog.tsx` | New -- invite collaborators with role management |
-| `SEOEditor.tsx` | New -- meta tag and OG tag visual editor |
-| `BuildNotificationCenter.tsx` | New -- persistent build event notifications |
-| `BuilderChatPanel.tsx` | Render suggestion chips, show credit cost per message |
-| `BuilderPreviewPanel.tsx` | Add browser-like address bar with navigation |
-| `ProjectSettings.tsx` | Add Danger Zone tab with delete/reset actions |
-| `TemplateLibrary.tsx` | Enhanced categories, thumbnails, hover previews |
-| `AIAppBuilderWorkspace.tsx` | Wire billing panel, notification center, SEO editor, share dialog |
-| `ProjectManager.tsx` | Add share button per project |
+**Files to modify:**
+- `src/components/ai-builder/ActivityFeed.tsx` - Import and use `EmptyState` from `EmptyStates.tsx`
+- `src/components/ai-builder/AIAppBuilderWorkspace.tsx` - Add motion wrappers to sidebar icons, safe-area padding, hide sidebar on mobile
+- `src/components/ai-builder/BuilderChatPanel.tsx` - Add motion to suggestion chips, tooltips to buttons, safe-area bottom padding
+- `src/components/ai-builder/BuilderPreviewPanel.tsx` - Show `SkeletonPreview` during first-build generating state
+- `src/components/ai-builder/EnvVarsPanel.tsx` - Add empty state
+- `src/components/ai-builder/AssetManager.tsx` - Add empty state
+- `src/components/ai-builder/VersionHistoryPanel.tsx` - Add empty state
 
-### Estimated scope
-- 4 new files created, 6 files modified
-- Focuses on commercial viability and user experience polish
+**No new files or dependencies needed.** All changes use existing components (`EmptyStates.tsx`, `SkeletonPreview.tsx`) and the already-installed `framer-motion` library.
+
+**Build safety:** Changes are purely cosmetic/UX - no structural or routing changes. The simplified `manualChunks` strategy remains untouched.
 
