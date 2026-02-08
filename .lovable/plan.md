@@ -1,95 +1,79 @@
 
 
-# Unified Team & License Management System
+## Recon Hardware Page Redesign: Organization-Aware Management View
 
-## The Problem
+### Problem
+The Recon Hardware page (`/vanguard/app/recon`) is currently a static product landing/purchase page. It needs to become a management dashboard that:
+1. Shows the user's organizations (Sites) to choose from
+2. Displays owned Recon hardware assigned to each organization
+3. Falls back to the purchase portal if no hardware is owned
+4. The "ubuntu" agent (device `vanguard-823d22f7`) should appear as a Recon unit under the Ultrium organization
 
-Today, the platform has **fragmented team/access models**:
-- **SafeSuite** has `safesuite_teams` + `safesuite_team_members` with seat-based management (Business tier only)
-- **AI Studio** has credit pools but no team/member management
-- **Vanguard** has its own subscription context with per-technician billing
-- **`user_product_access`** tracks individual user access levels but has no concept of "this user belongs to Organization X and their access is paid for by Organization X"
+### Data Context
+- 3 MSP clients exist: KWC CPAs, Tegrity Marketing, Ultrium
+- 3 agents exist: "ubuntu" (no client_id), "R15" (assigned to Ultrium), "R16" (no client_id)
+- The "ubuntu" agent needs its `client_id` set to Ultrium's ID and potentially its `agent_type` updated to identify it as a recon unit
+- `recon_inventory` and `recon_orders` tables exist for tracking hardware lifecycle
 
-There's no unified way for a company admin to say: *"I'm paying for 10 seats across SafeSuite Pro + AI Studio Team Plus, and here are my employees."*
+### Implementation
 
-## Proposed Solution: Organization-Level License Management
+#### 1. Update the "ubuntu" agent record
+- Set `client_id` to Ultrium's ID (`e0cd8626-2490-4cae-8ed1-2aa41b439ac6`)
+- Add a distinguishing marker (e.g., tag or naming convention) so it can be identified as a Recon unit
 
-### Core Concept
+#### 2. Redesign `ReconProductPage.tsx` into a dual-mode page
+The page will check if the authenticated user has any Recon orders or inventory. If yes, show the management view. If no, show the existing purchase landing page.
 
-Introduce an **Organization** entity that owns licenses (subscriptions) and assigns them to members. This sits above the existing per-product access system.
+**Management View Layout:**
+- **Organization Selector** (top): Dropdown or card grid showing the user's MSP clients/sites
+- **Selected Organization Panel**: 
+  - Lists Recon units assigned to that organization (from `recon_inventory` joined with `vanguard_agents` via `agent_id` or `client_id`)
+  - Shows unit status, serial number, firmware version, last heartbeat
+  - "Add Recon Unit" button links to the purchase flow
+- **No Units State**: If the selected organization has no units, show a CTA to purchase one
+
+#### 3. Create `ReconHardwareManagement.tsx` component
+- Fetches organizations from `msp_clients` for the current user
+- Fetches Recon-related agents (linux/pi agents or agents linked to recon inventory) per organization
+- Displays device cards with status, specs, and quick actions
+- Includes a "Purchase New Unit" button that scrolls to or navigates to the existing pricing section
+
+#### 4. Link agents to Recon inventory
+- Query `vanguard_agents` where the agent is a Recon unit (by OS type, name pattern, or linked `recon_inventory.agent_id`)
+- Cross-reference with `recon_inventory` for serial numbers, activation keys, and hardware tier info
+- Display combined data per organization
+
+### Technical Details
+
+**New file:** `src/components/vanguard/recon/ReconHardwareManagement.tsx`
+- Fetches `msp_clients` for org list
+- Fetches `vanguard_agents` filtered to recon-type devices, joined by `client_id`
+- Fetches `recon_inventory` for hardware metadata
+- Renders org selector and per-org device cards
+
+**Modified file:** `src/pages/vanguard/ReconProductPage.tsx`
+- Add auth check: if logged in and has recon hardware, render `ReconHardwareManagement`
+- If not logged in or no hardware, render existing landing page
+- Keep purchase flow accessible via a button within the management view
+
+**Database update:** Assign "ubuntu" agent to Ultrium
+- `UPDATE vanguard_agents SET client_id = 'e0cd8626-...' WHERE id = '053b0bc1-...'`
+
+### User Flow
 
 ```text
-Organization (company)
-  |-- Licenses (SafeSuite Pro x10, AI Studio Team Plus x10)
-  |-- Members (employees)
-        |-- Assigned Licenses (John gets SafeSuite Pro + AI Studio)
+User visits Recon Hardware
+       |
+   Logged in?
+   /        \
+  No         Yes
+  |           |
+Landing    Has Recon units?
+Page       /        \
+          No         Yes
+          |           |
+        Landing    Org Selector
+        Page       -> Unit Cards
+                   -> Purchase More
 ```
-
-### Key Design Decisions
-
-1. **Per-seat licensing**: Each product license has a seat count. Admins assign seats to members.
-2. **Cross-product bundles**: An org can hold licenses for any combination of products (SafeSuite, AI Studio, Vanguard).
-3. **Role-based org management**: Owner, Admin, Member roles within the organization.
-4. **Backward compatible**: Individual users keep working exactly as today. Org membership is additive -- it upgrades a user's `user_product_access` level.
-
----
-
-## Technical Plan
-
-### 1. New Database Tables
-
-**`organizations`** -- The company/team entity
-- `id`, `name`, `slug`, `owner_id`, `billing_email`, `max_members`, `created_at`
-
-**`organization_members`** -- Who belongs to the org
-- `id`, `organization_id`, `user_id`, `email`, `role` (owner/admin/member), `status` (active/pending/suspended), `invited_by`, `joined_at`
-
-**`organization_licenses`** -- What products the org has paid for
-- `id`, `organization_id`, `product` (ai_studio/safesuite/vanguard), `access_level` (pro/business/enterprise), `total_seats`, `used_seats`, `stripe_subscription_id`, `billing_cycle`, `started_at`, `expires_at`
-
-**`organization_license_assignments`** -- Which member gets which license
-- `id`, `license_id`, `member_id`, `assigned_by`, `assigned_at`
-
-All tables get RLS policies scoped to organization membership.
-
-### 2. Backend Changes
-
-- **New edge function `org-checkout`**: Creates a Stripe checkout session for org-level licenses (product + seats + billing cycle). Replaces the need for separate per-product team checkout functions.
-- **Webhook handler update**: When an org subscription is confirmed, populate `organization_licenses` and auto-upgrade each assigned member's `user_product_access` row.
-- **Invite flow**: Org admins invite by email. On acceptance, the member's `user_product_access` is upgraded to match their assigned licenses.
-
-### 3. Frontend: Organization Management Page (`/organization`)
-
-A new page accessible from the user menu with tabs:
-
-- **Members** -- Invite, remove, change roles. Shows seat usage per license.
-- **Licenses** -- View active licenses, seat allocation, renewal dates. "Add License" triggers checkout.
-- **Settings** -- Org name, billing email, danger zone (delete org).
-
-### 4. Integration with Existing Systems
-
-- **`useProductAccess` hook**: Extended to check both individual access AND org-assigned licenses. If a user has an org license for SafeSuite Pro, `hasAccess('safesuite', 'pro')` returns `true`.
-- **SafeSuite Team**: The existing `safesuite_teams` system continues to work for shared vaults. Org membership becomes the billing/access layer on top.
-- **AI Studio Credits**: Org licenses for AI Studio grant the corresponding credit pool. The org admin can optionally set per-member credit limits.
-- **Vanguard**: Org licenses map to Vanguard tier access, working alongside the existing `VanguardSubscriptionContext`.
-
-### 5. Migration Path
-
-- Existing `safesuite_teams` data is preserved. A migration utility can optionally link existing teams to new organizations.
-- No breaking changes to individual users -- the org system is purely additive.
-
----
-
-## File Changes Summary
-
-| Area | Files | Action |
-|------|-------|--------|
-| Database | New migration SQL | Create 4 tables + RLS + triggers |
-| Hook | `src/hooks/useOrganization.ts` | New -- CRUD for org, members, licenses |
-| Hook | `src/hooks/useProductAccess.ts` | Update -- check org licenses too |
-| Page | `src/pages/OrganizationManagement.tsx` | New -- Members/Licenses/Settings tabs |
-| Edge Function | `supabase/functions/org-checkout/index.ts` | New -- Stripe checkout for org licenses |
-| Edge Function | `supabase/functions/stripe-webhooks/index.ts` | Update -- handle org subscription events |
-| Routes | `src/App.tsx` | Add `/organization` route |
-| Navigation | User menu component | Add "Organization" link |
 
