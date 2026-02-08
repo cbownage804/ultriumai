@@ -156,6 +156,7 @@ const ReferralProgram = lazy(() => import('@/pages/ReferralProgram'));
 const ChangelogPage = lazy(() => import('@/pages/ChangelogPage'));
 const FeatureRequestBoard = lazy(() => import('@/pages/FeatureRequestBoard'));
 const OrganizationManagement = lazy(() => import('@/pages/OrganizationManagement'));
+const OrgAcceptInvite = lazy(() => import('@/pages/OrgAcceptInvite'));
 
 // Customer Portal (End-User Self-Service)
 const CustomerPortalLogin = lazy(() => import('@/pages/customer-portal/CustomerPortalLogin'));
@@ -374,6 +375,9 @@ function AppRouter() {
         <Route path="/customer-portal/tickets" element={<SuspenseWrapper variant="list"><PortalLayout><CustomerPortalTickets /></PortalLayout></SuspenseWrapper>} />
         <Route path="/customer-portal/tickets/new" element={<SuspenseWrapper variant="form"><PortalLayout><CustomerPortalNewTicket /></PortalLayout></SuspenseWrapper>} />
         <Route path="/customer-portal/tickets/:ticketId" element={<SuspenseWrapper variant="detail"><PortalLayout><CustomerPortalTicketDetail /></PortalLayout></SuspenseWrapper>} />
+        
+        {/* Organization Invitation Acceptance (Public) */}
+        <Route path="/org/accept-invite" element={<SuspenseWrapper variant="form"><OrgAcceptInvite /></SuspenseWrapper>} />
         
         {/* Portal Invitation Acceptance (Public) */}
         <Route path="/portal/accept-invite" element={<SuspenseWrapper variant="form"><PortalAcceptInvite /></SuspenseWrapper>} />

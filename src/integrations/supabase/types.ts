@@ -14789,11 +14789,13 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          invite_token: string | null
           invited_by: string | null
           joined_at: string | null
           organization_id: string
           role: string
           status: string
+          token_expires_at: string | null
           updated_at: string
           user_id: string | null
         }
@@ -14801,11 +14803,13 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          invite_token?: string | null
           invited_by?: string | null
           joined_at?: string | null
           organization_id: string
           role?: string
           status?: string
+          token_expires_at?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -14813,11 +14817,13 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          invite_token?: string | null
           invited_by?: string | null
           joined_at?: string | null
           organization_id?: string
           role?: string
           status?: string
+          token_expires_at?: string | null
           updated_at?: string
           user_id?: string | null
         }
