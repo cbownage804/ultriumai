@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   GripVertical, X, Plus, BarChart3, Activity, Shield, 
   Headphones, Bot, Monitor, TrendingUp, Users, Clock
@@ -24,6 +25,19 @@ interface WidgetTemplate {
   description: string;
   defaultSize: 'sm' | 'md' | 'lg';
 }
+
+const WIDGET_ROUTES: Record<string, string> = {
+  'kpi-tickets': '/vanguard/tickets',
+  'kpi-devices': '/vanguard/horizon',
+  'kpi-threats': '/vanguard/pursuit',
+  'kpi-users': '/admin',
+  'chart-tickets': '/vanguard/tickets',
+  'chart-security': '/vanguard/recon',
+  'kpi-ai-usage': '/ai-studio',
+  'kpi-uptime': '/vanguard/horizon',
+  'chart-revenue': '/vanguard/billing',
+  'kpi-response-time': '/vanguard/tickets',
+};
 
 const WIDGET_TEMPLATES: WidgetTemplate[] = [
   { type: 'kpi-tickets', title: 'Open Tickets', icon: Headphones, description: 'Current open ticket count', defaultSize: 'sm' },
@@ -164,6 +178,7 @@ function ChartWidget({ widget, ticketTrend }: { widget: DashboardWidget; ticketT
 }
 
 export function CustomizableDashboard() {
+  const navigate = useNavigate();
   const [widgets, setWidgets] = useState<DashboardWidget[]>(() => {
     const saved = localStorage.getItem('hub_dashboard_widgets');
     return saved ? JSON.parse(saved) : DEFAULT_WIDGETS;
@@ -258,35 +273,39 @@ export function CustomizableDashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-        {widgets.map(widget => (
-          <Card 
-            key={widget.id} 
-            className={`${sizeClass(widget.size)} relative group border-border/30 bg-card/50 backdrop-blur-sm hover:border-primary/20 transition-all ${
-              isEditing ? 'ring-1 ring-dashed ring-border/50' : ''
-            }`}
-          >
-            {isEditing && (
-              <button
-                onClick={() => removeWidget(widget.id)}
-                className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            )}
-            <CardHeader className="pb-2 pt-3 px-4">
-              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                {widget.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-3">
-              {widget.type.startsWith('chart-') ? (
-                <ChartWidget widget={widget} ticketTrend={ticketTrend} />
-              ) : (
-                <KPIWidget widget={widget} kpiData={kpiData} />
+        {widgets.map(widget => {
+          const route = WIDGET_ROUTES[widget.type];
+          return (
+            <Card 
+              key={widget.id} 
+              className={`${sizeClass(widget.size)} relative group border-border/30 bg-card/50 backdrop-blur-sm hover:border-primary/20 transition-all ${
+                isEditing ? 'ring-1 ring-dashed ring-border/50' : ''
+              } ${!isEditing && route ? 'cursor-pointer hover:shadow-md hover:shadow-primary/5' : ''}`}
+              onClick={() => { if (!isEditing && route) navigate(route); }}
+            >
+              {isEditing && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); removeWidget(widget.id); }}
+                  className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                >
+                  <X className="h-3 w-3" />
+                </button>
               )}
-            </CardContent>
-          </Card>
-        ))}
+              <CardHeader className="pb-2 pt-3 px-4">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  {widget.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 pb-3">
+                {widget.type.startsWith('chart-') ? (
+                  <ChartWidget widget={widget} ticketTrend={ticketTrend} />
+                ) : (
+                  <KPIWidget widget={widget} kpiData={kpiData} />
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
