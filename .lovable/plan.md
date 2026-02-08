@@ -1,54 +1,43 @@
 
 
-## Polish Pass: Empty States, Micro-Interactions, Skeletons, Mobile, and Tooltips
+# AI Studio Dashboard Redesign — App Builder as Centerpiece
 
-This plan implements all remaining polish items in a single pass across the App Builder workspace.
+## The Problem
+The current dashboard is a grid of equally-weighted elements (stat cards, activity feed, quick-start links, onboarding wizard) that treat the App Builder as just one of many options. Nothing draws the user toward the core product.
 
-### What's Changing
+## The New Layout
 
-**1. Wire Empty States into Active Panels**
-Currently `EmptyStates.tsx` exists but is unused. We'll integrate the pre-built empty states into panels that show "No data" conditions:
-- Activity Feed: Show the `activity` empty state when `entries` is empty (replace plain text)
-- Edge Functions panel: Show `edgeFunctions` empty state when list is empty
-- Assets panel: Show `assets` empty state when no assets exist
-- Env Vars panel: Show `envVars` empty state when no variables configured
-- Version History panel: Show `history` empty state when no versions
+The redesigned dashboard will follow a clear visual hierarchy:
 
-**2. Micro-Interactions on Sidebar Icons**
-Add subtle scale + spring transitions to the left icon sidebar buttons using `framer-motion`. Each sidebar icon will get a `whileHover={{ scale: 1.1 }}` and `whileTap={{ scale: 0.95 }}` for tactile feedback.
+### 1. Hero App Builder CTA (Top — Full Width)
+A prominent, visually striking card that dominates the top of the page. It will feature:
+- A bold headline like "Build your next app" with a large text input or button to start a new project
+- A gradient background (violet-to-cyan) to visually distinguish it from everything else
+- A single primary action: "Start Building" that navigates directly to `/ai-studio/app-builder`
+- Optionally shows the user's most recent project with a "Continue Building" shortcut
 
-**3. Loading Skeleton Consistency**
-The `SkeletonPreview` component already exists. We'll ensure it's rendered in the preview panel when `isGenerating` is true AND there's no HTML content yet (first build), replacing the blank state.
+### 2. Recent Projects Row (Below Hero)
+A horizontal row of project cards (from `builder_projects`) showing the user's recent App Builder projects. Each card shows the project name, last modified time, and a quick "Open" action. If no projects exist, this section shows a friendly empty state encouraging the user to create their first app.
 
-**4. Mobile Responsiveness Refinements**
-- Add `safe-area-inset` padding to the top bar and bottom input area for notched devices
-- Ensure the mobile tab switcher (Chat/Editor) has proper 44px touch targets
-- Make the sidebar icon bar hidden on mobile (it's inaccessible at 40px width on small screens)
+### 3. Secondary Tools Section (Below Projects)
+A compact, single row of smaller cards for the other AI Studio tools — GPTs, Agents, Workflows. These are still accessible but visually subordinate to the App Builder. Presented as a simple grid of 3 cards with icon + label + count.
 
-**5. Suggestion Chips Polish**
-The follow-up suggestion chips are already implemented and wired. We'll enhance their styling with a subtle entrance animation using `framer-motion` staggered children.
+### 4. Condensed Stats + Activity (Bottom)
+The stats (credits, counts) and recent activity feed are collapsed into a smaller, less prominent section at the bottom — or moved into an expandable "Activity" panel so they don't clutter the main view.
 
-**6. Tooltip Coverage Audit**
-All sidebar icons already have tooltips. We'll add tooltips to the remaining toolbar buttons that lack them:
-- Image upload button in chat input
-- Visual Edit toggle button
-- Clear chat button
-- Version history toggle in chat header
+### 5. Onboarding Wizard
+The existing onboarding wizard will be simplified or replaced with the hero CTA itself. First-time users will see the hero with a "Get Started" prompt, removing the need for a separate multi-step wizard taking up half the page.
 
----
+## Technical Details
 
-### Technical Details
+### Files Modified
+- **`src/components/ai-studio/AIStudioDashboardHub.tsx`** — Complete redesign of the component layout with the hierarchy described above
+- **`src/components/ai-studio/AIStudioOnboardingWizard.tsx`** — Simplified or removed; its purpose is absorbed by the hero CTA
+- **`src/pages/AIStudio.tsx`** — Remove the conditional onboarding wizard render since the dashboard itself handles first-time UX
 
-**Files to modify:**
-- `src/components/ai-builder/ActivityFeed.tsx` - Import and use `EmptyState` from `EmptyStates.tsx`
-- `src/components/ai-builder/AIAppBuilderWorkspace.tsx` - Add motion wrappers to sidebar icons, safe-area padding, hide sidebar on mobile
-- `src/components/ai-builder/BuilderChatPanel.tsx` - Add motion to suggestion chips, tooltips to buttons, safe-area bottom padding
-- `src/components/ai-builder/BuilderPreviewPanel.tsx` - Show `SkeletonPreview` during first-build generating state
-- `src/components/ai-builder/EnvVarsPanel.tsx` - Add empty state
-- `src/components/ai-builder/AssetManager.tsx` - Add empty state
-- `src/components/ai-builder/VersionHistoryPanel.tsx` - Add empty state
+### Data
+- Reuses existing Supabase queries (`builder_projects`, `org_credits`, `custom_gpts`, `ai_agents`)
+- Adds a query for recent `builder_projects` with `name`, `updated_at` to populate the projects row
 
-**No new files or dependencies needed.** All changes use existing components (`EmptyStates.tsx`, `SkeletonPreview.tsx`) and the already-installed `framer-motion` library.
-
-**Build safety:** Changes are purely cosmetic/UX - no structural or routing changes. The simplified `manualChunks` strategy remains untouched.
+### No new dependencies required
 
