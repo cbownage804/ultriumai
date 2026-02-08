@@ -113,25 +113,33 @@ const CreditsPurchase = () => {
     const creditsParam = searchParams.get('credits');
     const sessionId = searchParams.get('session_id');
     
-    if (success === 'true') {
+    if (success === 'true' && session?.access_token) {
       const creditsToAdd = parseInt(creditsParam || '0');
-      if (creditsToAdd > 0) {
+      
+      if (sessionId) {
+        // Always verify via server when we have a session ID (most secure)
+        supabase.functions.invoke('verify-credit-purchase', {
+          body: { sessionId },
+        }).then(({ data, error }) => {
+          if (error) {
+            console.error('Credit verification error:', error);
+            // Fallback: add credits client-side if we know the amount
+            if (creditsToAdd > 0) {
+              addBonusCredits(creditsToAdd, 'Credit pack purchase');
+            }
+          }
+          toast({
+            title: "Credits purchased successfully!",
+            description: `${data?.creditsAdded || creditsToAdd} bonus credits have been added to your account.`,
+          });
+          refreshCredits();
+        });
+      } else if (creditsToAdd > 0) {
+        // Fallback: add credits client-side
         addBonusCredits(creditsToAdd, 'Credit pack purchase').then(() => {
           toast({
             title: "Credits purchased successfully!",
             description: `${creditsToAdd} credits have been added to your account.`,
-          });
-          refreshCredits();
-        });
-      } else if (sessionId) {
-        // Verify using session ID
-        supabase.functions.invoke('verify-credit-purchase', {
-          body: { sessionId },
-          headers: { Authorization: `Bearer ${session?.access_token}` },
-        }).then(() => {
-          toast({
-            title: "Credits purchased successfully!",
-            description: "Your credits have been added to your account.",
           });
           refreshCredits();
         });

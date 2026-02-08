@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,7 +31,7 @@ const CREDIT_PACKAGES = {
   }
 } as const;
 
-const logStep = (step: string, details?: any) => {
+const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-CREDIT-PURCHASE] ${step}${detailsStr}`);
 };
@@ -48,7 +48,6 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     logStep("Stripe key verified");
 
-    // Create Supabase client using anon key for user authentication
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
@@ -65,7 +64,6 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Parse request body
     const { packageId } = await req.json();
     if (!packageId || !CREDIT_PACKAGES[packageId as keyof typeof CREDIT_PACKAGES]) {
       throw new Error("Invalid package ID provided");
@@ -74,7 +72,7 @@ serve(async (req) => {
     const creditPackage = CREDIT_PACKAGES[packageId as keyof typeof CREDIT_PACKAGES];
     logStep("Credit package selected", { packageId, package: creditPackage });
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
     // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -86,7 +84,7 @@ serve(async (req) => {
       logStep("No existing customer found, will create during checkout");
     }
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const origin = req.headers.get("origin") || "https://ultriumai.lovable.app";
     
     // Create a one-time payment session for credits
     const session = await stripe.checkout.sessions.create({
@@ -98,7 +96,7 @@ serve(async (req) => {
             currency: "usd",
             product_data: { 
               name: creditPackage.name,
-              description: `${creditPackage.credits.toLocaleString()} credits for your UltriumGPT account`,
+              description: `${creditPackage.credits.toLocaleString()} bonus credits for your account`,
             },
             unit_amount: creditPackage.price,
           },
@@ -106,12 +104,13 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${origin}/credits?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/credits?success=true&credits=${creditPackage.credits}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/credits?canceled=true`,
       metadata: {
         user_id: user.id,
         package_id: packageId,
         credits: creditPackage.credits.toString(),
+        type: 'credit_purchase',
       },
     });
 
