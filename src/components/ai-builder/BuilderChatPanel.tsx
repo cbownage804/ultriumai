@@ -12,6 +12,7 @@ import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
 import { TokenUsageIndicator } from './TokenUsageIndicator';
+import { StreamingCursor } from './StreamingText';
 
 interface BuilderChatPanelProps {
   messages: BuilderMessage[];
@@ -256,6 +257,7 @@ export function BuilderChatPanel({
             >
               {text}
             </ReactMarkdown>
+            <StreamingCursor visible={isStreaming && !!text} />
           </div>
         )}
         {isStreaming && !hasFiles && fileNames.length === 0 && !text && (

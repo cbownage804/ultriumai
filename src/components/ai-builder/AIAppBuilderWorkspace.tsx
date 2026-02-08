@@ -59,6 +59,11 @@ import { ExportGuidePanel } from './ExportGuidePanel';
 import { TerminalEmulator } from './TerminalEmulator';
 import { AgentModePanel } from './AgentModePanel';
 import { ResponsivePreviewBar, type ViewportMode, getViewportWidth } from './ResponsivePreviewBar';
+import { BuildLogPanel } from './BuildLogPanel';
+import { VersionTimelineSlider } from './VersionTimelineSlider';
+import { SplitEditorPane } from './SplitEditorPane';
+import { useVersionTimeline } from '@/hooks/useVersionTimeline';
+import { useBuildLog } from '@/hooks/useBuildLog';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key,
@@ -110,6 +115,8 @@ export function AIAppBuilderWorkspace() {
     simulateAgentExecution,
   } = useAgentMode();
   const autoRecovery = useAutoErrorRecovery();
+  const versionTimeline = useVersionTimeline();
+  const buildLog = useBuildLog();
   const { saveDraft, loadDraft, clearDraft, hasDraft } = useDraftPersistence();
   const { previewUrl: hostedPreviewUrl, isUploading: isUploadingPreview, uploadPreview, clearPreviewTimer } = usePreviewHosting();
 
@@ -181,6 +188,10 @@ export function AIAppBuilderWorkspace() {
   const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
   const [isVisualEditActive, setIsVisualEditActive] = useState(false);
   const previewIframeRef = useRef<HTMLIFrameElement>(null);
+  const [showBuildLog, setShowBuildLog] = useState(true);
+  const [showTimeline, setShowTimeline] = useState(false);
+  const [splitRightFile, setSplitRightFile] = useState<string | null>(null);
+  const buildStartTimeRef = useRef<number>(0);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
@@ -238,6 +249,7 @@ export function AIAppBuilderWorkspace() {
     if (latestFiles.length > 0) {
       if (project.files.length > 0) {
         pushUndo('AI generation', project.files);
+        versionTimeline.addSnapshot('Before AI generation', project.files, 'auto');
       }
       const conflicts = latestFiles.filter(f => dirtyFiles.has(f.path));
       if (conflicts.length > 0) {
@@ -263,6 +275,8 @@ export function AIAppBuilderWorkspace() {
       });
       setFixAttemptCount(0);
       setLastFixError(null);
+      // Log files to build log
+      latestFiles.forEach(f => buildLog.logFileWrite(f.path));
     }
   }, [latestFiles]);
 
@@ -272,6 +286,7 @@ export function AIAppBuilderWorkspace() {
   // AI completion notification
   useEffect(() => {
     if (prevIsGeneratingRef.current && !isGenerating && latestFiles.length > 0) {
+      const duration = buildStartTimeRef.current ? Date.now() - buildStartTimeRef.current : 0;
       toast.success(`Generated ${latestFiles.length} file${latestFiles.length > 1 ? 's' : ''}`, {
         action: { label: 'View', onClick: () => setRightTab('preview') },
       });
@@ -282,6 +297,8 @@ export function AIAppBuilderWorkspace() {
         timestamp: new Date(),
         read: false,
       }, ...prev].slice(0, 50));
+      buildLog.logBuildComplete(latestFiles.length, duration);
+      versionTimeline.addSnapshot(`AI: ${messages[messages.length - 2]?.content?.slice(0, 40) || 'generation'}`, [...project.files], 'ai-generation');
 
       // Auto-name project on first successful build
       if (!hasAutoNamed.current && project.name === 'Untitled Project') {
@@ -381,6 +398,10 @@ export function AIAppBuilderWorkspace() {
       ? `Custom instructions: ${knowledge.customInstructions}${knowledge.contextFiles.length > 0 ? '\n\nContext files:\n' + knowledge.contextFiles.map(f => `--- ${f.name} ---\n${f.content}`).join('\n\n') : ''}`
       : undefined;
     const fullInput = contextPrefix + contextHint + input;
+
+    // Build log tracking
+    buildStartTimeRef.current = Date.now();
+    buildLog.logBuildStart(input);
 
     // Agent mode: wrap in plan-execute-verify loop
     if (mode === 'build') {
@@ -912,6 +933,14 @@ export function AIAppBuilderWorkspace() {
                   <div className="mt-auto flex flex-col items-center gap-0.5">
                     <Tooltip>
                       <TooltipTrigger asChild>
+                        <button onClick={() => setShowTimeline(!showTimeline)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showTimeline ? "text-white/80 bg-white/[0.06]" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
+                          <GitBranchIcon className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs">Version Timeline</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
                         <button onClick={() => setShowTerminal(!showTerminal)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showTerminal ? "text-white/80 bg-white/[0.06]" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
                           <Terminal className="h-3.5 w-3.5" />
                         </button>
@@ -1035,6 +1064,21 @@ export function AIAppBuilderWorkspace() {
                         </ResizablePanelGroup>
                       </div>
 
+                      {/* Build Log */}
+                      <BuildLogPanel entries={buildLog.entries} isBuilding={isGenerating} onClear={buildLog.clear} />
+                      {/* Version Timeline */}
+                      {showTimeline && versionTimeline.totalSnapshots > 0 && (
+                        <VersionTimelineSlider
+                          snapshots={versionTimeline.snapshots}
+                          currentIndex={versionTimeline.currentIndex}
+                          onNavigate={(idx) => {
+                            const files = versionTimeline.navigateToSnapshot(idx);
+                            if (files) setFiles(files);
+                          }}
+                          onExit={() => { versionTimeline.exitHistoryPreview(); setShowTimeline(false); }}
+                          getDiff={versionTimeline.getSnapshotDiff}
+                        />
+                      )}
                       {/* Console Panel */}
                       <ConsolePanel open={showConsole} onToggle={() => setShowConsole(!showConsole)} onFixError={handleFixError} />
                       {/* Terminal */}

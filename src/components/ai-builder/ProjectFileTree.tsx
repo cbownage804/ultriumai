@@ -164,65 +164,107 @@ function TreeItem({
     );
   }
 
+  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenuPos({ x: e.clientX, y: e.clientY });
+    setShowContextMenu(true);
+  };
+
   return (
-    <div
-      className={cn(
-        'flex items-center gap-1.5 w-full rounded-md text-[11px] transition-all group',
-        isActive
-          ? 'bg-cyan-500/10 text-cyan-300'
-          : 'text-white/45 hover:text-white/70 hover:bg-white/[0.03]'
-      )}
-      style={{ paddingLeft: `${depth * 12 + 20}px`, paddingRight: 4, paddingTop: 3, paddingBottom: 3 }}
-    >
-      <button
-        onClick={() => onSelectFile(node.path)}
-        className="flex items-center gap-1.5 flex-1 min-w-0 text-left"
+    <div className="relative">
+      <div
+        className={cn(
+          'flex items-center gap-1.5 w-full rounded-md text-[11px] transition-all group',
+          isActive
+            ? 'bg-cyan-500/10 text-cyan-300'
+            : 'text-white/45 hover:text-white/70 hover:bg-white/[0.03]'
+        )}
+        style={{ paddingLeft: `${depth * 12 + 20}px`, paddingRight: 4, paddingTop: 3, paddingBottom: 3 }}
+        onContextMenu={handleContextMenu}
       >
-        {getFileIcon(node.path)}
-        {isRenaming ? (
-          <input
-            autoFocus
-            value={renameValue}
-            onChange={(e) => onRenameChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') onFinishRename(node.path);
-              if (e.key === 'Escape') onCancelRename();
-            }}
-            onBlur={() => onFinishRename(node.path)}
-            onClick={(e) => e.stopPropagation()}
-            className="flex-1 bg-transparent text-[11px] text-white/80 outline-none border-b border-cyan-500/30 font-mono py-0"
-          />
-        ) : (
-          <span className="truncate flex-1 font-mono">{node.name}</span>
-        )}
-      </button>
-      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-        {onRenameFile && (
-          <button
-            className="h-4 w-4 flex items-center justify-center hover:bg-white/10 rounded"
-            onClick={(e) => { e.stopPropagation(); onStartRename(node.path, node.name); }}
-            title="Rename"
-          >
-            <Pencil className="h-2.5 w-2.5 text-white/30" />
-          </button>
-        )}
-        {node.file && (
-          <button
-            className="h-4 w-4 flex items-center justify-center hover:bg-white/10 rounded"
-            onClick={(e) => { e.stopPropagation(); onDownload(node.file!); }}
-            title="Download"
-          >
-            <Download className="h-2.5 w-2.5 text-white/30" />
-          </button>
-        )}
         <button
-          className="h-4 w-4 flex items-center justify-center hover:bg-white/10 rounded"
-          onClick={(e) => { e.stopPropagation(); onDeleteFile(node.path); }}
-          title="Delete"
+          onClick={() => onSelectFile(node.path)}
+          className="flex items-center gap-1.5 flex-1 min-w-0 text-left"
         >
-          <Trash2 className="h-2.5 w-2.5 text-red-400/50" />
+          {getFileIcon(node.path)}
+          {isRenaming ? (
+            <input
+              autoFocus
+              value={renameValue}
+              onChange={(e) => onRenameChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') onFinishRename(node.path);
+                if (e.key === 'Escape') onCancelRename();
+              }}
+              onBlur={() => onFinishRename(node.path)}
+              onClick={(e) => e.stopPropagation()}
+              className="flex-1 bg-transparent text-[11px] text-white/80 outline-none border-b border-cyan-500/30 font-mono py-0"
+            />
+          ) : (
+            <span className="truncate flex-1 font-mono">{node.name}</span>
+          )}
         </button>
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          {onRenameFile && (
+            <button
+              className="h-4 w-4 flex items-center justify-center hover:bg-white/10 rounded"
+              onClick={(e) => { e.stopPropagation(); onStartRename(node.path, node.name); }}
+              title="Rename"
+            >
+              <Pencil className="h-2.5 w-2.5 text-white/30" />
+            </button>
+          )}
+          {node.file && (
+            <button
+              className="h-4 w-4 flex items-center justify-center hover:bg-white/10 rounded"
+              onClick={(e) => { e.stopPropagation(); onDownload(node.file!); }}
+              title="Download"
+            >
+              <Download className="h-2.5 w-2.5 text-white/30" />
+            </button>
+          )}
+          <button
+            className="h-4 w-4 flex items-center justify-center hover:bg-white/10 rounded"
+            onClick={(e) => { e.stopPropagation(); onDeleteFile(node.path); }}
+            title="Delete"
+          >
+            <Trash2 className="h-2.5 w-2.5 text-red-400/50" />
+          </button>
+        </div>
       </div>
+
+      {/* Context Menu */}
+      {showContextMenu && (
+        <>
+          <div className="fixed inset-0 z-50" onClick={() => setShowContextMenu(false)} />
+          <div
+            className="fixed z-50 bg-[#0d0d14] border border-white/[0.08] rounded-lg shadow-xl py-1 min-w-[140px]"
+            style={{ left: contextMenuPos.x, top: contextMenuPos.y }}
+          >
+            {onRenameFile && (
+              <button onClick={() => { setShowContextMenu(false); onStartRename(node.path, node.name); }} className="w-full text-left px-3 py-1.5 text-[11px] text-white/60 hover:text-white/90 hover:bg-white/[0.04] flex items-center gap-2">
+                <Pencil className="h-3 w-3" /> Rename
+              </button>
+            )}
+            {node.file && (
+              <button onClick={() => { setShowContextMenu(false); onDownload(node.file!); }} className="w-full text-left px-3 py-1.5 text-[11px] text-white/60 hover:text-white/90 hover:bg-white/[0.04] flex items-center gap-2">
+                <Download className="h-3 w-3" /> Download
+              </button>
+            )}
+            <button onClick={() => { setShowContextMenu(false); navigator.clipboard.writeText(node.path); }} className="w-full text-left px-3 py-1.5 text-[11px] text-white/60 hover:text-white/90 hover:bg-white/[0.04] flex items-center gap-2">
+              <File className="h-3 w-3" /> Copy Path
+            </button>
+            <div className="h-px bg-white/[0.06] my-1" />
+            <button onClick={() => { setShowContextMenu(false); onDeleteFile(node.path); }} className="w-full text-left px-3 py-1.5 text-[11px] text-red-400/70 hover:text-red-400 hover:bg-red-500/[0.04] flex items-center gap-2">
+              <Trash2 className="h-3 w-3" /> Delete
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
