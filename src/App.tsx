@@ -136,6 +136,10 @@ const Blog = lazy(() => import('@/pages/Blog'));
 const Documentation = lazy(() => import('@/pages/Documentation'));
 const CreditsPurchase = lazy(() => import('@/pages/CreditsPurchase'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+const NotificationPreferencesPage = lazy(() => import('@/pages/NotificationPreferencesPage'));
+const InstallPage = lazy(() => import('@/pages/InstallPage'));
+const StatusPage = lazy(() => import('@/pages/StatusPage'));
+const APIDocsPage = lazy(() => import('@/pages/APIDocsPage'));
 
 // Lazy-loaded - Demo pages
 const SafeScanDemoPage = lazy(() => import('@/pages/demos/SafeScanDemoPage'));
@@ -374,6 +378,16 @@ function AppRouter() {
         <Route path="/terms" element={<SuspenseWrapper><Terms /></SuspenseWrapper>} />
         <Route path="/privacy" element={<SuspenseWrapper><Privacy /></SuspenseWrapper>} />
         <Route path="/security" element={<SuspenseWrapper><SecurityPolicy /></SuspenseWrapper>} />
+        <Route path="/status" element={<SuspenseWrapper><StatusPage /></SuspenseWrapper>} />
+        <Route path="/api-docs" element={<SuspenseWrapper variant="detail"><APIDocsPage /></SuspenseWrapper>} />
+        <Route path="/install" element={<SuspenseWrapper><InstallPage /></SuspenseWrapper>} />
+        <Route path="/notifications/preferences" element={
+          <ProtectedRoute>
+            <SuspenseWrapper variant="form">
+              <NotificationPreferencesPage />
+            </SuspenseWrapper>
+          </ProtectedRoute>
+        } />
         
         {/* Public Survey Page (no auth required) */}
         <Route path="/survey" element={<SuspenseWrapper variant="form"><SurveyPage /></SuspenseWrapper>} />
