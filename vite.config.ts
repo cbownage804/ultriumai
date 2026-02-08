@@ -47,25 +47,7 @@ export default defineConfig(({ mode }) => ({
     ],
   },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks: (id) => {
-          if (!id.includes('node_modules')) return undefined;
-          // Only split the largest, isolated third-party libraries
-          if (/node_modules\/(react-dom|react)\//.test(id)) return 'react-core';
-          if (id.includes('@monaco-editor') || id.includes('monaco-editor')) return 'monaco';
-          if (id.includes('@tiptap')) return 'tiptap';
-          if (id.includes('recharts') || id.includes('d3-')) return 'charts';
-          if (id.includes('@xyflow')) return 'xyflow';
-          if (id.includes('framer-motion')) return 'motion';
-          if (id.includes('lucide-react')) return 'icons';
-          if (id.includes('@supabase')) return 'supabase';
-          if (id.includes('@radix-ui')) return 'radix';
-          return undefined;
-        },
-      },
-    },
-    minify: mode === 'production',
+    minify: false,
     chunkSizeWarningLimit: 2000,
     sourcemap: false,
   },
