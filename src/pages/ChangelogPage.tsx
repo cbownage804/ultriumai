@@ -1,18 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Sparkles, Bug, Zap, AlertTriangle, Filter } from 'lucide-react';
+import { ArrowLeft, Sparkles, Bug, Zap, AlertTriangle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
 type EntryType = 'feature' | 'fix' | 'improvement' | 'breaking';
 
-interface ChangelogEntry {
+interface DbEntry {
+  id: string;
   version: string;
-  date: string;
-  entries: { title: string; description: string; type: EntryType }[];
+  title: string;
+  description: string;
+  entry_type: string;
+  published_at: string;
 }
 
 const typeConfig: Record<EntryType, { label: string; icon: typeof Sparkles; className: string }> = {
@@ -22,49 +26,41 @@ const typeConfig: Record<EntryType, { label: string; icon: typeof Sparkles; clas
   breaking: { label: 'Breaking', icon: AlertTriangle, className: 'bg-destructive/15 text-destructive border-destructive/30' },
 };
 
-const changelog: ChangelogEntry[] = [
-  {
-    version: 'v2.5.0', date: 'February 8, 2026',
-    entries: [
-      { title: 'Public Changelog Page', description: 'A dedicated changelog page showing all platform updates in a versioned timeline.', type: 'feature' },
-      { title: 'Feature Request Board', description: 'Submit ideas, upvote existing requests, and track their status from planning to shipped.', type: 'feature' },
-      { title: 'System Status Banner', description: 'Real-time incident and maintenance banners displayed globally when active.', type: 'feature' },
-      { title: 'Referral Program', description: 'Invite friends, track conversions, and earn credits through your unique referral link.', type: 'feature' },
-    ],
-  },
-  {
-    version: 'v2.4.0', date: 'February 7, 2026',
-    entries: [
-      { title: 'Admin Analytics Dashboard', description: 'Comprehensive admin metrics including DAU/MAU, product adoption, and activation funnels.', type: 'feature' },
-      { title: 'Contextual Upgrade Prompts', description: 'Smart banners that appear when approaching credit limits or encountering gated features.', type: 'improvement' },
-      { title: 'Page Transition Animations', description: 'Smooth Framer Motion transitions between all routes for a polished navigation experience.', type: 'improvement' },
-    ],
-  },
-  {
-    version: 'v2.3.5', date: 'February 6, 2026',
-    entries: [
-      { title: 'Webhook Manager', description: 'Configure outbound webhooks with retry logic and event filtering from the Admin Center.', type: 'feature' },
-      { title: 'Global Command Palette', description: 'Press Cmd+K to search across 35+ routes, actions, and settings instantly.', type: 'feature' },
-      { title: 'What\'s New Sidebar', description: 'A sparkle indicator in the header opens a slide-over with recent platform updates.', type: 'improvement' },
-    ],
-  },
-  {
-    version: 'v2.3.4', date: 'February 5, 2026',
-    entries: [
-      { title: 'OOM Build Fix', description: 'Resolved out-of-memory build errors with aggressive bundle splitting and lazy loading.', type: 'fix' },
-      { title: 'Session Replay Stability', description: 'Fixed edge case where session insights would show stale data after token refresh.', type: 'fix' },
-    ],
-  },
-];
-
 const ChangelogPage = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<EntryType | 'all'>('all');
+  const [entries, setEntries] = useState<DbEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredChangelog = changelog.map(release => ({
-    ...release,
-    entries: filter === 'all' ? release.entries : release.entries.filter(e => e.type === filter),
-  })).filter(r => r.entries.length > 0);
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase
+        .from('platform_changelog')
+        .select('*')
+        .eq('published', true)
+        .order('published_at', { ascending: false });
+      setEntries((data as DbEntry[]) || []);
+      setLoading(false);
+    };
+    fetch();
+  }, []);
+
+  // Group entries by version
+  const grouped = useMemo(() => {
+    const filtered = filter === 'all' ? entries : entries.filter(e => e.entry_type === filter);
+    const map = new Map<string, { version: string; date: string; entries: DbEntry[] }>();
+    for (const e of filtered) {
+      if (!map.has(e.version)) {
+        map.set(e.version, {
+          version: e.version,
+          date: new Date(e.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+          entries: [],
+        });
+      }
+      map.get(e.version)!.entries.push(e);
+    }
+    return Array.from(map.values());
+  }, [entries, filter]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -87,46 +83,47 @@ const ChangelogPage = () => {
           ))}
         </div>
 
-        <div className="relative">
-          {/* Timeline line */}
-          <div className="absolute left-[7px] top-2 bottom-0 w-px bg-border" />
-
-          <div className="space-y-12">
-            {filteredChangelog.map(release => (
-              <div key={release.version} className="relative pl-8">
-                {/* Timeline dot */}
-                <div className="absolute left-0 top-1.5 h-4 w-4 rounded-full bg-primary border-2 border-background" />
-
-                <div className="flex items-center gap-3 mb-4">
-                  <Badge variant="outline" className="font-mono text-xs">{release.version}</Badge>
-                  <span className="text-sm text-muted-foreground">{release.date}</span>
-                </div>
-
-                <div className="space-y-3">
-                  {release.entries.map((entry, i) => {
-                    const config = typeConfig[entry.type];
-                    const Icon = config.icon;
-                    return (
-                      <Card key={i} className="border-border/50">
-                        <CardContent className="py-4">
-                          <div className="flex items-start gap-3">
-                            <Badge variant="outline" className={`text-xs shrink-0 ${config.className}`}>
-                              <Icon className="h-3 w-3 mr-1" />{config.label}
-                            </Badge>
-                            <div>
-                              <h3 className="font-medium text-sm">{entry.title}</h3>
-                              <p className="text-sm text-muted-foreground mt-1">{entry.description}</p>
+        {loading ? (
+          <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+        ) : grouped.length === 0 ? (
+          <p className="text-center text-muted-foreground py-20">No changelog entries yet.</p>
+        ) : (
+          <div className="relative">
+            <div className="absolute left-[7px] top-2 bottom-0 w-px bg-border" />
+            <div className="space-y-12">
+              {grouped.map(release => (
+                <div key={release.version} className="relative pl-8">
+                  <div className="absolute left-0 top-1.5 h-4 w-4 rounded-full bg-primary border-2 border-background" />
+                  <div className="flex items-center gap-3 mb-4">
+                    <Badge variant="outline" className="font-mono text-xs">{release.version}</Badge>
+                    <span className="text-sm text-muted-foreground">{release.date}</span>
+                  </div>
+                  <div className="space-y-3">
+                    {release.entries.map(entry => {
+                      const config = typeConfig[(entry.entry_type as EntryType) || 'feature'];
+                      const Icon = config.icon;
+                      return (
+                        <Card key={entry.id} className="border-border/50">
+                          <CardContent className="py-4">
+                            <div className="flex items-start gap-3">
+                              <Badge variant="outline" className={`text-xs shrink-0 ${config.className}`}>
+                                <Icon className="h-3 w-3 mr-1" />{config.label}
+                              </Badge>
+                              <div>
+                                <h3 className="font-medium text-sm">{entry.title}</h3>
+                                <p className="text-sm text-muted-foreground mt-1">{entry.description}</p>
+                              </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </main>
       <Footer />
     </div>

@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ChevronUp, Plus, Search, MessageSquare, Filter } from 'lucide-react';
+import { ArrowLeft, ChevronUp, Plus, Search, MessageSquare, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -16,12 +17,12 @@ type RequestStatus = 'under_review' | 'planned' | 'in_progress' | 'shipped' | 'd
 interface FeatureRequest {
   id: string;
   title: string;
-  description: string;
-  status: RequestStatus;
-  votes: number;
+  description: string | null;
+  status: string;
+  votes_count: number;
   voted: boolean;
-  comments: number;
-  author: string;
+  comments_count: number;
+  author_name: string | null;
   created_at: string;
 }
 
@@ -33,49 +34,80 @@ const statusConfig: Record<RequestStatus, { label: string; className: string }> 
   declined: { label: 'Declined', className: 'bg-muted text-muted-foreground border-border' },
 };
 
-const initialRequests: FeatureRequest[] = [
-  { id: '1', title: 'Multi-language support for AI Studio GPTs', description: 'Allow GPTs to respond in multiple languages with auto-detection.', status: 'planned', votes: 47, voted: false, comments: 12, author: 'alex.m', created_at: '2026-01-28' },
-  { id: '2', title: 'Dark mode for Customer Portal', description: 'End-user portal should respect system theme preferences.', status: 'shipped', votes: 83, voted: true, comments: 6, author: 'sarah.k', created_at: '2026-01-15' },
-  { id: '3', title: 'Webhook retry configuration', description: 'Let admins configure retry counts and backoff for outbound webhooks.', status: 'in_progress', votes: 34, voted: false, comments: 8, author: 'dev.ops', created_at: '2026-02-01' },
-  { id: '4', title: 'Bulk device actions in Vanguard', description: 'Select multiple devices and run commands (restart, update, scan) in batch.', status: 'under_review', votes: 29, voted: false, comments: 5, author: 'msp.tech', created_at: '2026-02-05' },
-  { id: '5', title: 'Export compliance reports as PDF', description: 'One-click PDF export for CIS benchmark and compliance scan results.', status: 'planned', votes: 41, voted: false, comments: 3, author: 'compliance.lead', created_at: '2026-01-20' },
-  { id: '6', title: 'SSO/SAML support', description: 'Enterprise SSO integration for larger organizations.', status: 'under_review', votes: 62, voted: false, comments: 15, author: 'enterprise.admin', created_at: '2026-01-10' },
-];
-
 const FeatureRequestBoard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [requests, setRequests] = useState(initialRequests);
+  const [requests, setRequests] = useState<FeatureRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<RequestStatus | 'all'>('all');
   const [showForm, setShowForm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const toggleVote = (id: string) => {
+  const fetchRequests = useCallback(async () => {
+    const { data: reqs } = await supabase
+      .from('feature_requests')
+      .select('*')
+      .order('votes_count', { ascending: false });
+
+    if (!reqs) { setLoading(false); return; }
+
+    // Check which ones the current user voted on
+    let votedIds = new Set<string>();
+    if (user) {
+      const { data: votes } = await supabase
+        .from('feature_request_votes')
+        .select('request_id')
+        .eq('user_id', user.id);
+      votedIds = new Set((votes || []).map(v => v.request_id));
+    }
+
+    setRequests(reqs.map(r => ({ ...r, voted: votedIds.has(r.id) })));
+    setLoading(false);
+  }, [user]);
+
+  useEffect(() => { fetchRequests(); }, [fetchRequests]);
+
+  const toggleVote = async (id: string) => {
     if (!user) { toast.error('Sign in to vote'); return; }
+    const req = requests.find(r => r.id === id);
+    if (!req) return;
+
+    // Optimistic update
     setRequests(prev => prev.map(r =>
-      r.id === id ? { ...r, voted: !r.voted, votes: r.voted ? r.votes - 1 : r.votes + 1 } : r
+      r.id === id ? { ...r, voted: !r.voted, votes_count: r.voted ? r.votes_count - 1 : r.votes_count + 1 } : r
     ));
+
+    if (req.voted) {
+      await supabase.from('feature_request_votes').delete().eq('request_id', id).eq('user_id', user.id);
+    } else {
+      await supabase.from('feature_request_votes').insert({ request_id: id, user_id: user.id });
+    }
   };
 
-  const submit = () => {
+  const submit = async () => {
+    if (!user) { toast.error('Sign in to submit'); return; }
     if (!newTitle.trim()) { toast.error('Title is required'); return; }
-    const req: FeatureRequest = {
-      id: Date.now().toString(), title: newTitle, description: newDesc,
-      status: 'under_review', votes: 1, voted: true, comments: 0,
-      author: user?.email?.split('@')[0] || 'anonymous',
-      created_at: new Date().toISOString().split('T')[0],
-    };
-    setRequests(prev => [req, ...prev]);
-    setNewTitle(''); setNewDesc(''); setShowForm(false);
+    setSubmitting(true);
+
+    const { error } = await supabase.from('feature_requests').insert({
+      title: newTitle,
+      description: newDesc || null,
+      user_id: user.id,
+      author_name: user.email?.split('@')[0] || 'anonymous',
+    });
+
+    if (error) { toast.error('Failed to submit'); setSubmitting(false); return; }
+    setNewTitle(''); setNewDesc(''); setShowForm(false); setSubmitting(false);
     toast.success('Request submitted!');
+    fetchRequests();
   };
 
   const filtered = requests
     .filter(r => statusFilter === 'all' || r.status === statusFilter)
-    .filter(r => !search || r.title.toLowerCase().includes(search.toLowerCase()) || r.description.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => b.votes - a.votes);
+    .filter(r => !search || r.title.toLowerCase().includes(search.toLowerCase()) || (r.description || '').toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="min-h-screen bg-background">
@@ -103,7 +135,9 @@ const FeatureRequestBoard = () => {
               <Input placeholder="Feature title" value={newTitle} onChange={e => setNewTitle(e.target.value)} />
               <Textarea placeholder="Describe your idea..." value={newDesc} onChange={e => setNewDesc(e.target.value)} rows={3} />
               <div className="flex gap-2">
-                <Button onClick={submit}>Submit</Button>
+                <Button onClick={submit} disabled={submitting}>
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}Submit
+                </Button>
                 <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
               </div>
             </CardContent>
@@ -124,44 +158,47 @@ const FeatureRequestBoard = () => {
           </div>
         </div>
 
-        <div className="space-y-3">
-          {filtered.map(req => (
-            <Card key={req.id} className="border-border/50 hover:border-border transition-colors">
-              <CardContent className="py-4">
-                <div className="flex gap-4">
-                  {/* Vote button */}
-                  <button
-                    onClick={() => toggleVote(req.id)}
-                    className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg border transition-colors shrink-0 ${
-                      req.voted ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'
-                    }`}
-                  >
-                    <ChevronUp className="h-4 w-4" />
-                    <span className="text-sm font-semibold">{req.votes}</span>
-                  </button>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <h3 className="font-medium text-sm">{req.title}</h3>
-                      <Badge variant="outline" className={`text-xs ${statusConfig[req.status].className}`}>
-                        {statusConfig[req.status].label}
-                      </Badge>
+        {loading ? (
+          <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map(req => {
+              const sc = statusConfig[(req.status as RequestStatus)] || statusConfig.under_review;
+              return (
+                <Card key={req.id} className="border-border/50 hover:border-border transition-colors">
+                  <CardContent className="py-4">
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() => toggleVote(req.id)}
+                        className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg border transition-colors shrink-0 ${
+                          req.voted ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'
+                        }`}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                        <span className="text-sm font-semibold">{req.votes_count}</span>
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <h3 className="font-medium text-sm">{req.title}</h3>
+                          <Badge variant="outline" className={`text-xs ${sc.className}`}>{sc.label}</Badge>
+                        </div>
+                        {req.description && <p className="text-sm text-muted-foreground line-clamp-2">{req.description}</p>}
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                          <span>{req.author_name || 'anonymous'}</span>
+                          <span>{new Date(req.created_at).toLocaleDateString()}</span>
+                          <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" />{req.comments_count}</span>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{req.description}</p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                      <span>{req.author}</span>
-                      <span>{req.created_at}</span>
-                      <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" />{req.comments}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {filtered.length === 0 && (
-            <p className="text-center text-muted-foreground py-12">No matching requests found.</p>
-          )}
-        </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+            {filtered.length === 0 && (
+              <p className="text-center text-muted-foreground py-12">No matching requests found.</p>
+            )}
+          </div>
+        )}
       </main>
       <Footer />
     </div>

@@ -1,30 +1,48 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Gift, Copy, Check, Users, TrendingUp, Award, Link2, Share2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Gift, Copy, Check, Users, TrendingUp, Award, Link2, Share2, Loader2 } from 'lucide-react';
 
-// Mock data — replace with Supabase query from `referrals` table
-const mockReferrals = [
-  { id: '1', inviteeEmail: 'alice@example.com', status: 'converted', creditsEarned: 50, date: '2026-02-05' },
-  { id: '2', inviteeEmail: 'bob@company.io', status: 'pending', creditsEarned: 0, date: '2026-02-07' },
-  { id: '3', inviteeEmail: 'carol@tech.co', status: 'signed_up', creditsEarned: 0, date: '2026-02-08' },
-];
+interface Referral {
+  id: string;
+  referred_email: string | null;
+  status: string;
+  credits_earned: number;
+  created_at: string;
+}
 
 export function ReferralProgram() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const referralCode = user?.id?.slice(0, 8)?.toUpperCase() || 'LOADING';
   const referralLink = `${window.location.origin}/auth?ref=${referralCode}`;
 
-  const totalEarned = mockReferrals.filter(r => r.status === 'converted').reduce((s, r) => s + r.creditsEarned, 0);
-  const totalInvites = mockReferrals.length;
-  const totalConverted = mockReferrals.filter(r => r.status === 'converted').length;
+  useEffect(() => {
+    if (!user) return;
+    const fetch = async () => {
+      const { data } = await supabase
+        .from('referrals')
+        .select('*')
+        .eq('referrer_id', user.id)
+        .order('created_at', { ascending: false });
+      setReferrals((data as Referral[]) || []);
+      setLoading(false);
+    };
+    fetch();
+  }, [user]);
+
+  const totalEarned = referrals.filter(r => r.status === 'converted').reduce((s, r) => s + r.credits_earned, 0);
+  const totalInvites = referrals.length;
+  const totalConverted = referrals.filter(r => r.status === 'converted').length;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referralLink);
@@ -122,19 +140,21 @@ export function ReferralProgram() {
           <CardTitle className="text-lg">Referral History</CardTitle>
         </CardHeader>
         <CardContent>
-          {mockReferrals.length === 0 ? (
+          {loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          ) : referrals.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No referrals yet. Share your link to get started!</p>
           ) : (
             <div className="space-y-3">
-              {mockReferrals.map(ref => (
+              {referrals.map(ref => (
                 <div key={ref.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
                   <div>
-                    <p className="text-sm font-medium text-foreground">{ref.inviteeEmail}</p>
-                    <p className="text-xs text-muted-foreground">{ref.date}</p>
+                    <p className="text-sm font-medium text-foreground">{ref.referred_email || 'Pending signup'}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(ref.created_at).toLocaleDateString()}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    {ref.creditsEarned > 0 && (
-                      <span className="text-sm font-medium text-green-500">+{ref.creditsEarned} credits</span>
+                    {ref.credits_earned > 0 && (
+                      <span className="text-sm font-medium text-green-500">+{ref.credits_earned} credits</span>
                     )}
                     {getStatusBadge(ref.status)}
                   </div>
