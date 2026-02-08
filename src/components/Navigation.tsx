@@ -261,7 +261,7 @@ const Navigation = () => {
                   onClick={() => navigate(getDashboardPath())}
                   className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200"
                 >
-                  Dashboard
+                  My Hub
                 </button>
                 {isUltriumEmployee && (
                   <button 
@@ -379,7 +379,7 @@ const Navigation = () => {
               {user && (
                 <>
                   <button onClick={() => { navigate(getDashboardPath()); setIsMenuOpen(false); }} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
-                    Dashboard
+                    My Hub
                   </button>
                   {isUltriumEmployee && (
                     <button onClick={() => { navigate('/admin'); setIsMenuOpen(false); }} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
