@@ -13,31 +13,31 @@ const TOUR_STEPS: TourStep[] = [
   {
     target: '[data-tour="chat-input"]',
     title: 'Chat with AI',
-    description: 'Type your ideas here. Describe what you want to build and the AI will generate the code for you.',
+    description: 'Type your ideas here. Describe what you want to build — the AI generates production-ready code instantly.',
     position: 'top',
   },
   {
     target: '[data-tour="mode-toggle"]',
-    title: 'Build vs Discuss Mode',
-    description: 'Switch between Build mode (generates code) and Discuss mode (plans architecture) to control the AI\'s behavior.',
+    title: 'Build vs Chat Mode',
+    description: 'Build mode generates code with an agent workflow. Chat mode lets you discuss and plan without generating files.',
     position: 'bottom',
   },
   {
     target: '[data-tour="preview"]',
     title: 'Live Preview',
-    description: 'Your app renders here in real-time. You can interact with it, resize it, and even visually edit elements.',
+    description: 'Your app renders here in real-time. Use the responsive toggle, visual edit mode, and zoom controls to inspect your work.',
     position: 'left',
   },
   {
     target: '[data-tour="code-editor"]',
     title: 'Code Editor',
-    description: 'Switch to Code view to see and edit the generated code directly with Monaco editor, autocomplete, and Tailwind hints.',
+    description: 'Full Monaco editor with AI autocomplete (press Tab), inline AI actions (select code → right-click), and multi-file tabs.',
     position: 'left',
   },
   {
     target: '[data-tour="command-palette"]',
     title: 'Command Palette (⌘K)',
-    description: 'Press ⌘K anytime for quick actions: search files, switch branches, toggle panels, and more.',
+    description: 'Your shortcut to everything — search files, switch branches, toggle panels, run commands, and more.',
     position: 'bottom',
   },
 ];
