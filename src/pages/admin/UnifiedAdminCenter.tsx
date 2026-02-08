@@ -8,7 +8,8 @@ import {
   Building2, Share2, UserPlus, TrendingUp, ShieldCheck, ToggleLeft, CreditCard,
   Activity, Headset, UserCog, Eye, MessageSquare, Bug, Radio, Bell,
   Search, Layers, CalendarClock, Palette, Database, Cloud, HardDrive, Key,
-  Webhook, Mail, AlertTriangle, Trash2, Calendar, ShieldBan, Monitor, BookOpen
+  Webhook, Mail, AlertTriangle, Trash2, Calendar, ShieldBan, Monitor, BookOpen,
+  Compass, BellRing, Gauge, Building, Settings2, GitBranch, Wifi, Zap as ZapIcon
 } from 'lucide-react';
 import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
@@ -51,6 +52,14 @@ const CronSchedulerTab = lazy(() => import('@/components/admin/unified/CronSched
 const IpAllowlistTab = lazy(() => import('@/components/admin/unified/IpAllowlistTab'));
 const UserSessionManagerTab = lazy(() => import('@/components/admin/unified/UserSessionManagerTab'));
 const PlatformChangelogTab = lazy(() => import('@/components/admin/unified/PlatformChangelogTab'));
+const OnboardingWizardTab = lazy(() => import('@/components/admin/unified/OnboardingWizardTab'));
+const NotificationCenterTab = lazy(() => import('@/components/admin/unified/NotificationCenterTab'));
+const RateLimitingTab = lazy(() => import('@/components/admin/unified/RateLimitingTab'));
+const MultiTenantTab = lazy(() => import('@/components/admin/unified/MultiTenantTab'));
+const EnvironmentConfigTab = lazy(() => import('@/components/admin/unified/EnvironmentConfigTab'));
+const MigrationHistoryTab = lazy(() => import('@/components/admin/unified/MigrationHistoryTab'));
+const RealtimeMonitorTab = lazy(() => import('@/components/admin/unified/RealtimeMonitorTab'));
+const PerformanceProfilerTab = lazy(() => import('@/components/admin/unified/PerformanceProfilerTab'));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-12">
@@ -66,6 +75,7 @@ const SIDEBAR_GROUPS = [
     { value: 'all-users', icon: Users, label: 'Users' },
     { value: 'roles', icon: ShieldCheck, label: 'Roles' },
     { value: 'sessions', icon: Monitor, label: 'Sessions' },
+    { value: 'notifications', icon: BellRing, label: 'Notifications' },
   ]},
   { label: 'Support', items: [
     { value: 'tickets', icon: Headset, label: 'Tickets' },
@@ -77,6 +87,8 @@ const SIDEBAR_GROUPS = [
     { value: 'errors', icon: Bug, label: 'Error Tracking' },
     { value: 'activity-feed', icon: Radio, label: 'Activity Feed' },
     { value: 'alerts-config', icon: Bell, label: 'Alert Config' },
+    { value: 'realtime', icon: Wifi, label: 'Realtime Monitor' },
+    { value: 'performance', icon: Gauge, label: 'Performance' },
   ]},
   { label: 'Business', items: [
     { value: 'subscriptions', icon: CreditCard, label: 'Billing' },
@@ -84,6 +96,9 @@ const SIDEBAR_GROUPS = [
     { value: 'branding', icon: Palette, label: 'Branding' },
     { value: 'leads', icon: UserPlus, label: 'Leads' },
     { value: 'conversions', icon: TrendingUp, label: 'Conversions' },
+    { value: 'multi-tenant', icon: Building, label: 'Tenants' },
+    { value: 'rate-limiting', icon: Gauge, label: 'Rate Limits' },
+    { value: 'onboarding', icon: Compass, label: 'Onboarding' },
   ]},
   { label: 'Operations', items: [
     { value: 'bulk-actions', icon: Layers, label: 'Bulk Actions' },
@@ -101,6 +116,8 @@ const SIDEBAR_GROUPS = [
     { value: 'data-retention', icon: Trash2, label: 'Data Retention' },
     { value: 'ip-access', icon: ShieldBan, label: 'IP Access Control' },
     { value: 'changelog', icon: BookOpen, label: 'Changelog' },
+    { value: 'env-config', icon: Settings2, label: 'Env Config' },
+    { value: 'migrations', icon: GitBranch, label: 'Migrations' },
   ]},
   { label: 'Products', items: [
     { value: 'ai-studio', icon: Sparkles, label: 'AI Studio' },
@@ -153,6 +170,14 @@ const CONTENT_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<
   'ip-access': IpAllowlistTab,
   'sessions': UserSessionManagerTab,
   'changelog': PlatformChangelogTab,
+  'onboarding': OnboardingWizardTab,
+  'notifications': NotificationCenterTab,
+  'rate-limiting': RateLimitingTab,
+  'multi-tenant': MultiTenantTab,
+  'env-config': EnvironmentConfigTab,
+  'migrations': MigrationHistoryTab,
+  'realtime': RealtimeMonitorTab,
+  'performance': PerformanceProfilerTab,
 };
 
 const UnifiedAdminCenter = () => {
