@@ -26,11 +26,10 @@ export function AIStudioSubNav() {
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto py-2 scrollbar-hide -mx-2 px-2 snap-x snap-mandatory">
           {/* Logo */}
-          <Link to="/ai-studio" className="flex items-center gap-2 mr-2 sm:mr-4 shrink-0">
-            <div className="w-7 h-7 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
-              <img src={aiStudioLogo} alt="AI Studio" className="w-full h-full object-contain" />
+          <Link to="/ai-studio" className="flex items-center mr-2 sm:mr-4 shrink-0">
+            <div className="h-8 sm:h-9 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
+              <img src={aiStudioLogo} alt="AI Studio" className="h-full w-auto object-contain" />
             </div>
-            <span className="text-sm font-bold text-primary hidden sm:inline">AI Studio</span>
           </Link>
 
           {navItems.map((item) => {
