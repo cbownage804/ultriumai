@@ -194,8 +194,8 @@ Your security score is calculated based on:
         a: "Open any entry → Click Share → Select team members → Choose permission level (View Only, Can Edit, or One-Time). Shared passwords are end-to-end encrypted."
       },
       {
-        q: "Is SafePass HIPAA/SOC2 compliant?",
-        a: "Yes, SafePass meets HIPAA, SOC2, and GDPR compliance requirements. We provide audit logs and can sign BAAs for healthcare organizations."
+        q: "Is SafePass built with compliance in mind?",
+        a: "SafePass is built with SOC 2, HIPAA, and GDPR principles in mind — including zero-knowledge encryption, comprehensive audit logging, and strict data isolation. While we are not yet formally certified, our architecture is designed to support your compliance requirements."
       }
     ]
   },
