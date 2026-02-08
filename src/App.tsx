@@ -151,24 +151,11 @@ const VanguardDemoPage = lazy(() => import('@/pages/demos/VanguardDemoPage'));
 const AIStudioDemoPage = lazy(() => import('@/pages/demos/AIStudioDemoPage'));
 const CustomGPTBuilderDemoPage = lazy(() => import('@/pages/demos/CustomGPTBuilderDemoPage'));
 const DarkWebDemoPage = lazy(() => import('@/pages/demos/DarkWebDemoPage'));
-const MSPDemos = lazy(() => import('@/pages/MSPDemos'));
-const EmbedDemo = lazy(() => import('@/pages/EmbedDemo'));
-const SafeDocEmbedDemo = lazy(() => import('@/pages/SafeDocEmbedDemo'));
-const SafeMailEmbedDemo = lazy(() => import('@/pages/SafeMailEmbedDemo'));
 
 // Lazy-loaded - Product pages
-const SecuritySuitePage = lazy(() => import('@/pages/products/SecuritySuitePage'));
-const OperationsSuitePage = lazy(() => import('@/pages/products/OperationsSuitePage'));
-const HelpdeskPage = lazy(() => import('@/pages/products/HelpdeskPage'));
-const RMMPage = lazy(() => import('@/pages/products/RMMPage'));
 const AIStudioProductPage = lazy(() => import('@/pages/products/AIStudioProductPage'));
 const VanguardProductPage = lazy(() => import('@/pages/products/VanguardProductPage'));
 const SafeSuiteProductPage = lazy(() => import('@/pages/products/SafeSuiteProductPage'));
-const SafeScorePage = lazy(() => import('@/pages/products/SafeScorePage'));
-const SafeNetPage = lazy(() => import('@/pages/products/SafeNetPage'));
-const TicketingPage = lazy(() => import('@/pages/products/TicketingPage'));
-const AntivirusPage = lazy(() => import('@/pages/products/AntivirusPage'));
-const SafeMDRPage = lazy(() => import('@/pages/products/SafeMDRPage'));
 
 // Lazy-loaded - Admin pages
 const AdvancedHelpdeskAdmin = lazy(() => import('@/pages/admin/AdvancedHelpdeskAdmin'));
@@ -459,7 +446,7 @@ function AppRouter() {
         <Route path="/demos" element={<SuspenseWrapper variant="cards"><LiveDemos /></SuspenseWrapper>} />
         <Route path="/portfolio" element={<Navigate to="/products" replace />} />
         <Route path="/products" element={<SuspenseWrapper variant="cards"><ProductsPage /></SuspenseWrapper>} />
-        <Route path="/msp-demos" element={<SuspenseWrapper variant="cards"><MSPDemos /></SuspenseWrapper>} />
+        <Route path="/msp-demos" element={<Navigate to="/products" replace />} />
         <Route path="/msp-control-center" element={
           <SubscriptionProtectedRoute requiresPremium>
             <SuspenseWrapper>
@@ -510,11 +497,11 @@ function AppRouter() {
         <Route path="/demos/safekb" element={<Navigate to="/products/ai-studio" replace />} />
         <Route path="/demos/safesoc" element={<Navigate to="/products/vanguard" replace />} />
         
-        <Route path="/products/safescore" element={<SuspenseWrapper><SafeScorePage /></SuspenseWrapper>} />
-        <Route path="/products/security" element={<SuspenseWrapper><SecuritySuitePage /></SuspenseWrapper>} />
-        <Route path="/products/operations" element={<SuspenseWrapper><OperationsSuitePage /></SuspenseWrapper>} />
-        <Route path="/products/helpdesk" element={<SuspenseWrapper><HelpdeskPage /></SuspenseWrapper>} />
-        <Route path="/products/rmm" element={<SuspenseWrapper><RMMPage /></SuspenseWrapper>} />
+        <Route path="/products/safescore" element={<Navigate to="/products/safesuite" replace />} />
+        <Route path="/products/security" element={<Navigate to="/products/vanguard" replace />} />
+        <Route path="/products/operations" element={<Navigate to="/products/vanguard" replace />} />
+        <Route path="/products/helpdesk" element={<Navigate to="/products/vanguard" replace />} />
+        <Route path="/products/rmm" element={<Navigate to="/products/vanguard" replace />} />
         <Route path="/products/ai-studio" element={<SuspenseWrapper><AIStudioProductPage /></SuspenseWrapper>} />
         <Route path="/products/vanguard" element={<SuspenseWrapper><VanguardProductPage /></SuspenseWrapper>} />
         <Route path="/products/safesuite" element={<SuspenseWrapper><SafeSuiteProductPage /></SuspenseWrapper>} />
@@ -530,9 +517,9 @@ function AppRouter() {
         <Route path="/products/safemail" element={<Navigate to="/safesuite/features" replace />} />
         <Route path="/products/safedoc" element={<Navigate to="/safesuite/features" replace />} />
         <Route path="/safesuite/features" element={<SuspenseWrapper><SafeSuiteFeatures /></SuspenseWrapper>} />
-        <Route path="/embed-demo" element={<SuspenseWrapper><EmbedDemo /></SuspenseWrapper>} />
-        <Route path="/safedoc-embed-demo" element={<SuspenseWrapper><SafeDocEmbedDemo /></SuspenseWrapper>} />
-        <Route path="/safemail-embed-demo" element={<SuspenseWrapper><SafeMailEmbedDemo /></SuspenseWrapper>} />
+        <Route path="/embed-demo" element={<Navigate to="/products/safesuite" replace />} />
+        <Route path="/safedoc-embed-demo" element={<Navigate to="/products/safesuite" replace />} />
+        <Route path="/safemail-embed-demo" element={<Navigate to="/products/safesuite" replace />} />
         
         {/* SafeNet App Routes */}
         <Route path="/safenet-connector" element={
