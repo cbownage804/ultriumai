@@ -19,7 +19,7 @@ const AIStudioCTABanner = lazy(() => import('@/components/marketing/AIStudioCTAB
 const GlobalCommandPalette = lazy(() => import('@/components/GlobalCommandPalette').then(m => ({ default: m.GlobalCommandPalette })));
 const GlobalKeyboardShortcuts = lazy(() => import('@/components/GlobalKeyboardShortcuts').then(m => ({ default: m.GlobalKeyboardShortcuts })));
 const GlobalBreadcrumbs = lazy(() => import('@/components/GlobalBreadcrumbs').then(m => ({ default: m.GlobalBreadcrumbs })));
-const MaintenanceBanner = lazy(() => import('@/components/MaintenanceBanner').then(m => ({ default: m.MaintenanceBanner })));
+
 
 // Lazy-loaded layouts (heavy dependency trees)
 const VanguardLayout = lazy(() => import('@/components/vanguard/VanguardLayout').then(m => ({ default: m.VanguardLayout })));
@@ -241,7 +241,7 @@ const PortalAcceptInvite = lazy(() => import('@/pages/portal/AcceptInvite'));
 const VoiceAssistantProvider = lazy(() => import('@/components/voice/VoiceAssistantProvider').then(m => ({ default: m.VoiceAssistantProvider })));
 import { AuthProvider } from '@/hooks/useAuth';
 const PortalLayout = lazy(() => import('@/components/customer-portal/PortalLayout').then(m => ({ default: m.PortalLayout })));
-const UnifiedAIAssistant = lazy(() => import('@/components/UnifiedAIAssistant').then(m => ({ default: m.UnifiedAIAssistant })));
+
 import { useAnalytics } from '@/hooks/useAnalytics';
 
 // Suspense wrapper with branded loading state
@@ -257,7 +257,7 @@ function AppRouter() {
   const { user, loading } = useAuth();
   const { getRedirectPath, shouldRedirectToRole } = useRoleBasedRedirect();
   const location = useLocation();
-  const [isAIMinimized, setIsAIMinimized] = useState(true);
+  
   const { trackPageView, identifyUser } = useAnalytics();
   useScrollToTop();
   
@@ -288,21 +288,6 @@ function AppRouter() {
     );
   }
 
-  // Determine AI context and source based on current page
-  const getAIContext = () => {
-    if (location.pathname.includes('security') || location.pathname.includes('safescan') || location.pathname.includes('safeshield')) return 'security';
-    if (location.pathname.includes('helpdesk') || location.pathname.includes('admin')) return 'helpdesk';
-    if (location.pathname.includes('rmm') || location.pathname.includes('technician')) return 'rmm';
-    return 'dashboard';
-  };
-
-  const getAIDefaultSource = () => {
-    if (location.pathname.includes('security') || location.pathname.includes('safescan') || location.pathname.includes('safeshield')) return 'security';
-    if (location.pathname.includes('helpdesk') || location.pathname.includes('admin')) return 'helpdesk';
-    if (location.pathname.includes('rmm') || location.pathname.includes('technician')) return 'rmm';
-    if (location.pathname.includes('safescan')) return 'safescan';
-    return 'ultrium';
-  };
 
   // If on SafeSuite subdomain, redirect to main domain with /safesuite prefix
   if (isSafeSuite) {
@@ -934,22 +919,6 @@ function AppRouter() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       
-      {/* Global AI Assistant - Available on authenticated dashboard and MSP pages */}
-      <Suspense fallback={null}>
-        {user && location.pathname !== '/' && (
-          location.pathname.startsWith('/dashboard') || 
-          location.pathname.startsWith('/msp-') ||
-          location.pathname.includes('security') ||
-          location.pathname.includes('admin')
-        ) && (
-          <UnifiedAIAssistant
-            isMinimized={isAIMinimized}
-            onToggleMinimize={() => setIsAIMinimized(!isAIMinimized)}
-            defaultSource={getAIDefaultSource() as any}
-            context={getAIContext()}
-          />
-        )}
-      </Suspense>
       
       {/* Global Command Palette (Cmd+K) */}
       <Suspense fallback={null}>
@@ -991,7 +960,7 @@ export default function App() {
               <Suspense fallback={<div className="min-h-screen bg-background" />}>
                 <VoiceAssistantProvider>
                   <Router>
-                    <Suspense fallback={null}><MaintenanceBanner /></Suspense>
+                    
                     <AppRouter />
                     <ShadcnToaster />
                     <SonnerToaster />

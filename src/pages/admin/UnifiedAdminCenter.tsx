@@ -22,7 +22,7 @@ const SafeSuiteAdminTab = lazy(() => import('@/components/admin/unified/SafeSuit
 const VanguardAdminTab = lazy(() => import('@/components/admin/unified/VanguardAdminTab').then(m => ({ default: m.VanguardAdminTab })));
 const AdminAuditLogTab = lazy(() => import('@/components/admin/unified/AdminAuditLogTab').then(m => ({ default: m.AdminAuditLogTab })));
 const MSPCapacityReportingTab = lazy(() => import('@/components/admin/unified/MSPCapacityReportingTab').then(m => ({ default: m.MSPCapacityReportingTab })));
-const SocialMediaManager = lazy(() => import('@/components/social/SocialMediaManager').then(m => ({ default: m.SocialMediaManager })));
+
 const LeadManagementTab = lazy(() => import('@/components/admin/unified/LeadManagementTab').then(m => ({ default: m.LeadManagementTab })));
 const ConversionAnalyticsTab = lazy(() => import('@/components/admin/unified/ConversionAnalyticsTab').then(m => ({ default: m.ConversionAnalyticsTab })));
 const RoleManagementTab = lazy(() => import('@/components/admin/unified/RoleManagementTab').then(m => ({ default: m.RoleManagementTab })));
@@ -124,7 +124,7 @@ const SIDEBAR_GROUPS = [
     { value: 'safesuite', icon: Shield, label: 'SafeSuite' },
     { value: 'vanguard', icon: Zap, label: 'Vanguard' },
     { value: 'msp-capacity', icon: Building2, label: 'MSP Capacity' },
-    { value: 'social', icon: Share2, label: 'Social Media' },
+    
   ]},
   { label: 'Audit', items: [
     { value: 'audit-log', icon: FileText, label: 'Audit Log' },
@@ -160,7 +160,7 @@ const CONTENT_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<
   'safesuite': SafeSuiteAdminTab,
   'vanguard': VanguardAdminTab,
   'msp-capacity': MSPCapacityReportingTab,
-  'social': SocialMediaManager,
+  
   'audit-log': AdminAuditLogTab,
   'webhooks': WebhookManagerTab,
   'email-templates': EmailTemplateEditorTab,
