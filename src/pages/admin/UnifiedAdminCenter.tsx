@@ -1,8 +1,8 @@
 import { useState, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   ArrowLeft, LayoutDashboard, Sparkles, Shield, Zap, Settings, Users, FileText,
   Building2, Share2, UserPlus, TrendingUp, ShieldCheck, ToggleLeft, CreditCard,
@@ -10,7 +10,7 @@ import {
   Search, Layers, CalendarClock, Palette, Database, Cloud, HardDrive, Key
 } from 'lucide-react';
 import { useAdminAccess } from '@/hooks/useAdminAccess';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 // Lazy-load all tabs to prevent OOM build errors
 const AdminOverviewTab = lazy(() => import('@/components/admin/unified/AdminOverviewTab').then(m => ({ default: m.AdminOverviewTab })));
@@ -49,51 +49,84 @@ const TabLoader = () => (
   </div>
 );
 
-const TAB_GROUPS = [
-  { label: 'Core', tabs: [
+const SIDEBAR_GROUPS = [
+  { label: 'Core', items: [
     { value: 'overview', icon: LayoutDashboard, label: 'Overview' },
-    { value: 'health', icon: Activity, label: 'Health' },
-    { value: 'search', icon: Search, label: 'Search' },
+    { value: 'health', icon: Activity, label: 'System Health' },
+    { value: 'search', icon: Search, label: 'Global Search' },
     { value: 'all-users', icon: Users, label: 'Users' },
     { value: 'roles', icon: ShieldCheck, label: 'Roles' },
   ]},
-  { label: 'Support', tabs: [
+  { label: 'Support', items: [
     { value: 'tickets', icon: Headset, label: 'Tickets' },
     { value: 'accounts', icon: UserCog, label: 'Accounts' },
     { value: 'impersonate', icon: Eye, label: 'Impersonate' },
-    { value: 'announcements', icon: MessageSquare, label: 'Announce' },
+    { value: 'announcements', icon: MessageSquare, label: 'Announcements' },
   ]},
-  { label: 'Monitoring', tabs: [
-    { value: 'errors', icon: Bug, label: 'Errors' },
-    { value: 'activity-feed', icon: Radio, label: 'Activity' },
-    { value: 'alerts-config', icon: Bell, label: 'Alerts' },
+  { label: 'Monitoring', items: [
+    { value: 'errors', icon: Bug, label: 'Error Tracking' },
+    { value: 'activity-feed', icon: Radio, label: 'Activity Feed' },
+    { value: 'alerts-config', icon: Bell, label: 'Alert Config' },
   ]},
-  { label: 'Business', tabs: [
+  { label: 'Business', items: [
     { value: 'subscriptions', icon: CreditCard, label: 'Billing' },
-    { value: 'feature-flags', icon: ToggleLeft, label: 'Flags' },
+    { value: 'feature-flags', icon: ToggleLeft, label: 'Feature Flags' },
     { value: 'branding', icon: Palette, label: 'Branding' },
     { value: 'leads', icon: UserPlus, label: 'Leads' },
     { value: 'conversions', icon: TrendingUp, label: 'Conversions' },
   ]},
-  { label: 'Operations', tabs: [
-    { value: 'bulk-actions', icon: Layers, label: 'Bulk' },
+  { label: 'Operations', items: [
+    { value: 'bulk-actions', icon: Layers, label: 'Bulk Actions' },
     { value: 'reports', icon: CalendarClock, label: 'Reports' },
-    { value: 'table-browser', icon: Database, label: 'Tables' },
-    { value: 'edge-functions', icon: Cloud, label: 'Functions' },
+    { value: 'table-browser', icon: Database, label: 'Table Browser' },
+    { value: 'edge-functions', icon: Cloud, label: 'Edge Functions' },
     { value: 'storage', icon: HardDrive, label: 'Storage' },
     { value: 'api-keys', icon: Key, label: 'API Keys' },
   ]},
-  { label: 'Products', tabs: [
+  { label: 'Products', items: [
     { value: 'ai-studio', icon: Sparkles, label: 'AI Studio' },
     { value: 'safesuite', icon: Shield, label: 'SafeSuite' },
     { value: 'vanguard', icon: Zap, label: 'Vanguard' },
-    { value: 'msp-capacity', icon: Building2, label: 'MSP' },
-    { value: 'social', icon: Share2, label: 'Social' },
+    { value: 'msp-capacity', icon: Building2, label: 'MSP Capacity' },
+    { value: 'social', icon: Share2, label: 'Social Media' },
   ]},
-  { label: 'Audit', tabs: [
+  { label: 'Audit', items: [
     { value: 'audit-log', icon: FileText, label: 'Audit Log' },
   ]},
 ];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CONTENT_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
+  'overview': AdminOverviewTab,
+  'health': SystemHealthTab,
+  'search': GlobalSearchTab,
+  'all-users': AllUsersAdminTab,
+  'roles': RoleManagementTab,
+  'tickets': TicketOversightTab,
+  'accounts': CustomerAccountsTab,
+  'impersonate': UserImpersonationTab,
+  'announcements': AnnouncementsTab,
+  'errors': ErrorTrackingTab,
+  'activity-feed': ActivityFeedTab,
+  'alerts-config': AlertsConfigTab,
+  'subscriptions': SubscriptionManagementTab,
+  'feature-flags': FeatureFlagsTab,
+  'branding': BrandingControlsTab,
+  'leads': LeadManagementTab,
+  'conversions': ConversionAnalyticsTab,
+  'bulk-actions': BulkActionsTab,
+  'reports': ScheduledReportsTab,
+  'table-browser': TableBrowserTab,
+  'edge-functions': EdgeFunctionManagerTab,
+  'storage': StorageManagerTab,
+  'api-keys': ApiKeyOversightTab,
+  'ai-studio': AIStudioAdminTab,
+  'safesuite': SafeSuiteAdminTab,
+  'vanguard': VanguardAdminTab,
+  'msp-capacity': MSPCapacityReportingTab,
+  'social': SocialMediaManager,
+  'audit-log': AdminAuditLogTab,
+};
 
 const UnifiedAdminCenter = () => {
   const navigate = useNavigate();
@@ -113,80 +146,49 @@ const UnifiedAdminCenter = () => {
 
   if (!isAdmin) return null;
 
+  const ActiveComponent = CONTENT_MAP[activeTab];
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-2">
-                <ArrowLeft className="h-4 w-4" /> Back
-              </Button>
-              <div className="h-6 w-px bg-border" />
-              <div>
-                <h1 className="text-xl font-bold flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-primary" /> Admin Center
-                </h1>
-                <p className="text-sm text-muted-foreground">Unified management for all UltriumAI products</p>
-              </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50 shrink-0">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-2">
+              <ArrowLeft className="h-4 w-4" /> Back
+            </Button>
+            <div className="h-6 w-px bg-border" />
+            <div>
+              <h1 className="text-lg font-bold flex items-center gap-2">
+                <Settings className="h-5 w-5 text-primary" /> Admin Center
+              </h1>
+              <p className="text-xs text-muted-foreground">Unified management for all UltriumAI products</p>
             </div>
-            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">Internal Admin</Badge>
           </div>
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">Internal Admin</Badge>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <ScrollArea className="w-full">
-            <TabsList className="bg-muted/50 p-1 inline-flex w-auto min-w-full gap-1">
-              {TAB_GROUPS.map((group) => (
-                <div key={group.label} className="flex items-center gap-0.5">
-                  {group.tabs.map((tab) => (
-                    <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5 text-xs data-[state=active]:bg-background">
-                      <tab.icon className="h-3.5 w-3.5" />
-                      {tab.label}
-                    </TabsTrigger>
-                  ))}
-                  <div className="w-px h-5 bg-border mx-1 last:hidden" />
-                </div>
-              ))}
-            </TabsList>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+      <div className="flex flex-1 overflow-hidden">
+        <AdminSidebar
+          groups={SIDEBAR_GROUPS}
+          activeItem={activeTab}
+          onSelect={setActiveTab}
+        />
 
-          <Suspense fallback={<TabLoader />}>
-            <TabsContent value="overview"><AdminOverviewTab onNavigateToTab={setActiveTab} /></TabsContent>
-            <TabsContent value="health"><SystemHealthTab /></TabsContent>
-            <TabsContent value="search"><GlobalSearchTab /></TabsContent>
-            <TabsContent value="all-users"><AllUsersAdminTab /></TabsContent>
-            <TabsContent value="roles"><RoleManagementTab /></TabsContent>
-            <TabsContent value="tickets"><TicketOversightTab /></TabsContent>
-            <TabsContent value="accounts"><CustomerAccountsTab /></TabsContent>
-            <TabsContent value="impersonate"><UserImpersonationTab /></TabsContent>
-            <TabsContent value="announcements"><AnnouncementsTab /></TabsContent>
-            <TabsContent value="errors"><ErrorTrackingTab /></TabsContent>
-            <TabsContent value="activity-feed"><ActivityFeedTab /></TabsContent>
-            <TabsContent value="alerts-config"><AlertsConfigTab /></TabsContent>
-            <TabsContent value="subscriptions"><SubscriptionManagementTab /></TabsContent>
-            <TabsContent value="feature-flags"><FeatureFlagsTab /></TabsContent>
-            <TabsContent value="branding"><BrandingControlsTab /></TabsContent>
-            <TabsContent value="leads"><LeadManagementTab /></TabsContent>
-            <TabsContent value="conversions"><ConversionAnalyticsTab /></TabsContent>
-            <TabsContent value="bulk-actions"><BulkActionsTab /></TabsContent>
-            <TabsContent value="reports"><ScheduledReportsTab /></TabsContent>
-            <TabsContent value="table-browser"><TableBrowserTab /></TabsContent>
-            <TabsContent value="edge-functions"><EdgeFunctionManagerTab /></TabsContent>
-            <TabsContent value="storage"><StorageManagerTab /></TabsContent>
-            <TabsContent value="api-keys"><ApiKeyOversightTab /></TabsContent>
-            <TabsContent value="ai-studio"><AIStudioAdminTab /></TabsContent>
-            <TabsContent value="safesuite"><SafeSuiteAdminTab /></TabsContent>
-            <TabsContent value="vanguard"><VanguardAdminTab /></TabsContent>
-            <TabsContent value="msp-capacity"><MSPCapacityReportingTab /></TabsContent>
-            <TabsContent value="social"><SocialMediaManager /></TabsContent>
-            <TabsContent value="audit-log"><AdminAuditLogTab /></TabsContent>
-          </Suspense>
-        </Tabs>
-      </main>
+        <main className="flex-1 overflow-hidden">
+          <ScrollArea className="h-[calc(100vh-73px)]">
+            <div className="p-6">
+              <Suspense fallback={<TabLoader />}>
+                {ActiveComponent && (
+                  activeTab === 'overview'
+                    ? <ActiveComponent onNavigateToTab={setActiveTab} key={activeTab} />
+                    : <ActiveComponent key={activeTab} />
+                )}
+              </Suspense>
+            </div>
+          </ScrollArea>
+        </main>
+      </div>
     </div>
   );
 };
