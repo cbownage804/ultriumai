@@ -13,6 +13,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import SubscriptionProtectedRoute from '@/components/SubscriptionProtectedRoute';
 import EnhancedErrorBoundary from '@/components/EnhancedErrorBoundary';
 import CookieConsent from '@/components/CookieConsent';
+import { PageTransition } from '@/components/transitions/PageTransition';
 import { isVanguardDomain, isSafeSuiteDomain } from '@/utils/subdomain';
 // Lazy-loaded global components (reduce initial bundle)
 const AIStudioCTABanner = lazy(() => import('@/components/marketing/AIStudioCTABanner').then(m => ({ default: m.AIStudioCTABanner })));
@@ -169,11 +170,13 @@ const PortalLayout = lazy(() => import('@/components/customer-portal/PortalLayou
 
 import { useAnalytics } from '@/hooks/useAnalytics';
 
-// Suspense wrapper with branded loading state
+// Suspense wrapper with branded loading state + page transitions
 function SuspenseWrapper({ children, variant = 'dashboard' }: { children: React.ReactNode; variant?: 'dashboard' | 'list' | 'detail' | 'form' | 'cards' }) {
   return (
     <Suspense fallback={<PageSkeleton variant={variant} />}>
-      {children}
+      <PageTransition>
+        {children}
+      </PageTransition>
     </Suspense>
   );
 }
