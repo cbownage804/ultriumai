@@ -14,26 +14,29 @@ import SubscriptionProtectedRoute from '@/components/SubscriptionProtectedRoute'
 import EnhancedErrorBoundary from '@/components/EnhancedErrorBoundary';
 import CookieConsent from '@/components/CookieConsent';
 import { isVanguardDomain, isSafeSuiteDomain } from '@/utils/subdomain';
-import { AIStudioCTABanner } from '@/components/marketing/AIStudioCTABanner';
-import { GlobalCommandPalette } from '@/components/GlobalCommandPalette';
-import { GlobalKeyboardShortcuts } from '@/components/GlobalKeyboardShortcuts';
-import { GlobalBreadcrumbs } from '@/components/GlobalBreadcrumbs';
-import { MaintenanceBanner } from '@/components/MaintenanceBanner';
+// Lazy-loaded global components (reduce initial bundle)
+const AIStudioCTABanner = lazy(() => import('@/components/marketing/AIStudioCTABanner').then(m => ({ default: m.AIStudioCTABanner })));
+const GlobalCommandPalette = lazy(() => import('@/components/GlobalCommandPalette').then(m => ({ default: m.GlobalCommandPalette })));
+const GlobalKeyboardShortcuts = lazy(() => import('@/components/GlobalKeyboardShortcuts').then(m => ({ default: m.GlobalKeyboardShortcuts })));
+const GlobalBreadcrumbs = lazy(() => import('@/components/GlobalBreadcrumbs').then(m => ({ default: m.GlobalBreadcrumbs })));
+const MaintenanceBanner = lazy(() => import('@/components/MaintenanceBanner').then(m => ({ default: m.MaintenanceBanner })));
 
-import { VanguardLayout } from '@/components/vanguard/VanguardLayout';
+// Lazy-loaded layouts (heavy dependency trees)
+const VanguardLayout = lazy(() => import('@/components/vanguard/VanguardLayout').then(m => ({ default: m.VanguardLayout })));
+const SafeSuiteLayout = lazy(() => import('@/layouts/SafeSuiteLayout'));
+const SafePassLayout = lazy(() => import('@/layouts/SafePassLayout'));
+
 import { getVanguardProtectedRoutes, getVanguardPublicRoutes } from '@/routes/vanguardRoutes';
 import { PageSkeleton, LoadingSpinner } from '@/components/ui/PageSkeleton';
 
-// Core pages (always loaded)
-import Index from '@/pages/Index';
+// Core pages (always loaded - small footprint)
 import AuthPage from '@/pages/AuthPage';
 import AuthCallback from '@/pages/AuthCallback';
 import NotFound from '@/pages/NotFound';
 import LegacyVanguardRedirect from '@/routes/LegacyVanguardRedirect';
 
-// SafeSuite Layout imports (needed for nested routes)
-import SafeSuiteLayout from '@/layouts/SafeSuiteLayout';
-import SafePassLayout from '@/layouts/SafePassLayout';
+// Lazy-loaded Index (homepage is heavy)
+const Index = lazy(() => import('@/pages/Index'));
 
 // Lazy-loaded pages - Heavy dashboards and features
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
@@ -186,7 +189,7 @@ const SafeSIEMIncidents = lazy(() => import('@/pages/SafeSIEMIncidents'));
 const SafeSIEMAnalytics = lazy(() => import('@/pages/SafeSIEMAnalytics'));
 
 // Lazy-loaded - Other pages
-import { Agent as AgentComponent } from '@/pages/Agent';
+const AgentComponent = lazy(() => import('@/pages/Agent').then(m => ({ default: m.Agent })));
 const Reports = lazy(() => import('@/pages/Reports'));
 const Analytics = lazy(() => import('@/pages/Analytics'));
 const OnboardingFlow = lazy(() => import('@/components/OnboardingFlow'));
@@ -235,11 +238,10 @@ const CustomerPortalChangePassword = lazy(() => import('@/pages/customer-portal/
 const PortalAcceptInvite = lazy(() => import('@/pages/portal/AcceptInvite'));
 
 // Components that need to be loaded for layouts
-import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
+const VoiceAssistantProvider = lazy(() => import('@/components/voice/VoiceAssistantProvider').then(m => ({ default: m.VoiceAssistantProvider })));
 import { AuthProvider } from '@/hooks/useAuth';
-import { PortalLayout } from '@/components/customer-portal/PortalLayout';
-import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
-import { Loader2 } from 'lucide-react';
+const PortalLayout = lazy(() => import('@/components/customer-portal/PortalLayout').then(m => ({ default: m.PortalLayout })));
+const UnifiedAIAssistant = lazy(() => import('@/components/UnifiedAIAssistant').then(m => ({ default: m.UnifiedAIAssistant })));
 import { useAnalytics } from '@/hooks/useAnalytics';
 
 // Suspense wrapper with branded loading state
@@ -336,7 +338,7 @@ function AppRouter() {
   return (
     <EnhancedErrorBoundary context="Application Root" level="critical">
       <Routes>
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={<SuspenseWrapper><Index /></SuspenseWrapper>} />
         
         {/* Vanguard Public Landing Page (no auth required) */}
         <Route path="/vanguard" element={<SuspenseWrapper><VanguardProductPage /></SuspenseWrapper>} />
@@ -345,7 +347,7 @@ function AppRouter() {
         <Route path="/vanguard/auth" element={<SuspenseWrapper><VanguardAuthPage /></SuspenseWrapper>} />
         
         {/* Vanguard Protected App Routes (inside layout) */}
-        <Route path="/vanguard/app" element={<VanguardLayout />}>
+        <Route path="/vanguard/app" element={<SuspenseWrapper><VanguardLayout /></SuspenseWrapper>}>
           {getVanguardProtectedRoutes()}
         </Route>
         
@@ -355,7 +357,7 @@ function AppRouter() {
          {/* Legacy Vanguard routes (pre /vanguard/app move) */}
          <Route path="/vanguard/*" element={<LegacyVanguardRedirect />} />
 
-        <Route path="/agent" element={<AgentComponent />} />
+        <Route path="/agent" element={<SuspenseWrapper><AgentComponent /></SuspenseWrapper>} />
         <Route path="/auth" element={user ? <RoleBasedRedirect /> : <AuthPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/hub" element={
@@ -889,7 +891,7 @@ function AppRouter() {
         {/* SafePass Standalone App Routes */}
         <Route path="/safepass-app" element={<SuspenseWrapper><SafePassLanding /></SuspenseWrapper>} />
         <Route path="/safepass-app/auth" element={<SuspenseWrapper><SafePassAuth /></SuspenseWrapper>} />
-        <Route path="/safepass-app/portal" element={<SafePassLayout />}>
+        <Route path="/safepass-app/portal" element={<SuspenseWrapper><SafePassLayout /></SuspenseWrapper>}>
           <Route index element={<SuspenseWrapper><SafePassAppDashboard /></SuspenseWrapper>} />
           <Route path="import" element={<SuspenseWrapper><SafePassImport /></SuspenseWrapper>} />
           <Route path="security" element={<SuspenseWrapper><SafePassSecurity /></SuspenseWrapper>} />
@@ -904,7 +906,9 @@ function AppRouter() {
         <Route path="/safesuite/auth/mfa-recovery" element={<SuspenseWrapper variant="form"><MFARecoveryPage /></SuspenseWrapper>} />
         <Route element={
           <ProtectedRoute>
-            <SafeSuiteLayout />
+            <SuspenseWrapper>
+              <SafeSuiteLayout />
+            </SuspenseWrapper>
           </ProtectedRoute>
         }>
           <Route path="/safesuite/dashboard" element={<SuspenseWrapper><SafeSuiteDashboard /></SuspenseWrapper>} />
@@ -931,31 +935,29 @@ function AppRouter() {
       </Routes>
       
       {/* Global AI Assistant - Available on authenticated dashboard and MSP pages */}
-      {user && location.pathname !== '/' && (
-        location.pathname.startsWith('/dashboard') || 
-        location.pathname.startsWith('/msp-') ||
-        location.pathname.includes('security') ||
-        location.pathname.includes('admin')
-      ) && (
-        <UnifiedAIAssistant
-          isMinimized={isAIMinimized}
-          onToggleMinimize={() => setIsAIMinimized(!isAIMinimized)}
-          defaultSource={getAIDefaultSource() as any}
-          context={getAIContext()}
-        />
-      )}
+      <Suspense fallback={null}>
+        {user && location.pathname !== '/' && (
+          location.pathname.startsWith('/dashboard') || 
+          location.pathname.startsWith('/msp-') ||
+          location.pathname.includes('security') ||
+          location.pathname.includes('admin')
+        ) && (
+          <UnifiedAIAssistant
+            isMinimized={isAIMinimized}
+            onToggleMinimize={() => setIsAIMinimized(!isAIMinimized)}
+            defaultSource={getAIDefaultSource() as any}
+            context={getAIContext()}
+          />
+        )}
+      </Suspense>
       
       {/* Global Command Palette (Cmd+K) */}
-      {user && <GlobalCommandPalette />}
-
-      {/* Global Keyboard Shortcuts (Shift+?) */}
-      {user && <GlobalKeyboardShortcuts />}
-
-      {/* Global Breadcrumbs */}
-      <GlobalBreadcrumbs />
-
-      {/* AI Studio CTA Banner for unauthenticated users */}
-      <AIStudioCTABanner />
+      <Suspense fallback={null}>
+        {user && <GlobalCommandPalette />}
+        {user && <GlobalKeyboardShortcuts />}
+        <GlobalBreadcrumbs />
+        <AIStudioCTABanner />
+      </Suspense>
       
       {/* Cookie Consent Banner */}
       <CookieConsent />
@@ -986,14 +988,16 @@ export default function App() {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <NotificationProvider>
-              <VoiceAssistantProvider>
-                <Router>
-                  <MaintenanceBanner />
-                  <AppRouter />
-                  <ShadcnToaster />
-                  <SonnerToaster />
-                </Router>
-              </VoiceAssistantProvider>
+              <Suspense fallback={<div className="min-h-screen bg-background" />}>
+                <VoiceAssistantProvider>
+                  <Router>
+                    <Suspense fallback={null}><MaintenanceBanner /></Suspense>
+                    <AppRouter />
+                    <ShadcnToaster />
+                    <SonnerToaster />
+                  </Router>
+                </VoiceAssistantProvider>
+              </Suspense>
             </NotificationProvider>
           </AuthProvider>
         </QueryClientProvider>
