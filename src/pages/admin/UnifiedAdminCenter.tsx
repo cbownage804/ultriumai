@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import {
   ArrowLeft, LayoutDashboard, Sparkles, Shield, Zap, Settings, Users, FileText,
   Building2, Share2, UserPlus, TrendingUp, ShieldCheck, ToggleLeft, CreditCard,
-  Activity, Headset, UserCog, Eye, MessageSquare, Bug, Radio, Bell
+  Activity, Headset, UserCog, Eye, MessageSquare, Bug, Radio, Bell,
+  Search, Layers, CalendarClock, Palette, Database, Cloud, HardDrive, Key
 } from 'lucide-react';
 import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -33,6 +34,14 @@ const AnnouncementsTab = lazy(() => import('@/components/admin/unified/Announcem
 const ErrorTrackingTab = lazy(() => import('@/components/admin/unified/ErrorTrackingTab'));
 const ActivityFeedTab = lazy(() => import('@/components/admin/unified/ActivityFeedTab'));
 const AlertsConfigTab = lazy(() => import('@/components/admin/unified/AlertsConfigTab'));
+const GlobalSearchTab = lazy(() => import('@/components/admin/unified/GlobalSearchTab'));
+const BulkActionsTab = lazy(() => import('@/components/admin/unified/BulkActionsTab'));
+const ScheduledReportsTab = lazy(() => import('@/components/admin/unified/ScheduledReportsTab'));
+const BrandingControlsTab = lazy(() => import('@/components/admin/unified/BrandingControlsTab'));
+const TableBrowserTab = lazy(() => import('@/components/admin/unified/TableBrowserTab'));
+const EdgeFunctionManagerTab = lazy(() => import('@/components/admin/unified/EdgeFunctionManagerTab'));
+const StorageManagerTab = lazy(() => import('@/components/admin/unified/StorageManagerTab'));
+const ApiKeyOversightTab = lazy(() => import('@/components/admin/unified/ApiKeyOversightTab'));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-12">
@@ -44,6 +53,7 @@ const TAB_GROUPS = [
   { label: 'Core', tabs: [
     { value: 'overview', icon: LayoutDashboard, label: 'Overview' },
     { value: 'health', icon: Activity, label: 'Health' },
+    { value: 'search', icon: Search, label: 'Search' },
     { value: 'all-users', icon: Users, label: 'Users' },
     { value: 'roles', icon: ShieldCheck, label: 'Roles' },
   ]},
@@ -61,8 +71,17 @@ const TAB_GROUPS = [
   { label: 'Business', tabs: [
     { value: 'subscriptions', icon: CreditCard, label: 'Billing' },
     { value: 'feature-flags', icon: ToggleLeft, label: 'Flags' },
+    { value: 'branding', icon: Palette, label: 'Branding' },
     { value: 'leads', icon: UserPlus, label: 'Leads' },
     { value: 'conversions', icon: TrendingUp, label: 'Conversions' },
+  ]},
+  { label: 'Operations', tabs: [
+    { value: 'bulk-actions', icon: Layers, label: 'Bulk' },
+    { value: 'reports', icon: CalendarClock, label: 'Reports' },
+    { value: 'table-browser', icon: Database, label: 'Tables' },
+    { value: 'edge-functions', icon: Cloud, label: 'Functions' },
+    { value: 'storage', icon: HardDrive, label: 'Storage' },
+    { value: 'api-keys', icon: Key, label: 'API Keys' },
   ]},
   { label: 'Products', tabs: [
     { value: 'ai-studio', icon: Sparkles, label: 'AI Studio' },
@@ -138,6 +157,7 @@ const UnifiedAdminCenter = () => {
           <Suspense fallback={<TabLoader />}>
             <TabsContent value="overview"><AdminOverviewTab onNavigateToTab={setActiveTab} /></TabsContent>
             <TabsContent value="health"><SystemHealthTab /></TabsContent>
+            <TabsContent value="search"><GlobalSearchTab /></TabsContent>
             <TabsContent value="all-users"><AllUsersAdminTab /></TabsContent>
             <TabsContent value="roles"><RoleManagementTab /></TabsContent>
             <TabsContent value="tickets"><TicketOversightTab /></TabsContent>
@@ -149,8 +169,15 @@ const UnifiedAdminCenter = () => {
             <TabsContent value="alerts-config"><AlertsConfigTab /></TabsContent>
             <TabsContent value="subscriptions"><SubscriptionManagementTab /></TabsContent>
             <TabsContent value="feature-flags"><FeatureFlagsTab /></TabsContent>
+            <TabsContent value="branding"><BrandingControlsTab /></TabsContent>
             <TabsContent value="leads"><LeadManagementTab /></TabsContent>
             <TabsContent value="conversions"><ConversionAnalyticsTab /></TabsContent>
+            <TabsContent value="bulk-actions"><BulkActionsTab /></TabsContent>
+            <TabsContent value="reports"><ScheduledReportsTab /></TabsContent>
+            <TabsContent value="table-browser"><TableBrowserTab /></TabsContent>
+            <TabsContent value="edge-functions"><EdgeFunctionManagerTab /></TabsContent>
+            <TabsContent value="storage"><StorageManagerTab /></TabsContent>
+            <TabsContent value="api-keys"><ApiKeyOversightTab /></TabsContent>
             <TabsContent value="ai-studio"><AIStudioAdminTab /></TabsContent>
             <TabsContent value="safesuite"><SafeSuiteAdminTab /></TabsContent>
             <TabsContent value="vanguard"><VanguardAdminTab /></TabsContent>
