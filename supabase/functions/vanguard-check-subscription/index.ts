@@ -77,7 +77,7 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
-    if (dbSub?.admin_override && dbSub?.status === 'manual') {
+    if (dbSub?.admin_override) {
       logStep("Admin override found", { tier: dbSub.tier, seats: dbSub.seat_count });
       return new Response(JSON.stringify({
         subscribed: true,
