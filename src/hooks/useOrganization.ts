@@ -3,6 +3,18 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+type NotificationType = 'suspended' | 'reactivated' | 'removed' | 'role_changed';
+
+const sendMemberNotification = async (type: NotificationType, memberEmail: string, organizationId: string, newRole?: string) => {
+  try {
+    await supabase.functions.invoke('org-member-notify', {
+      body: { type, memberEmail, organizationId, newRole },
+    });
+  } catch (err) {
+    console.warn('Failed to send member notification:', err);
+  }
+};
+
 export interface OrgTeam {
   id: string;
   name: string;
@@ -220,6 +232,7 @@ export const useOrganization = () => {
       return false;
     }
 
+    if (target) sendMemberNotification('removed', target.email, organization.id);
     toast({ title: 'Member removed' });
     await fetchOrgDetails(organization.id);
     return true;
@@ -239,6 +252,7 @@ export const useOrganization = () => {
       return false;
     }
 
+    if (target) sendMemberNotification('suspended', target.email, organization.id);
     toast({ title: 'Member suspended' });
     await fetchOrgDetails(organization.id);
     return true;
@@ -253,6 +267,8 @@ export const useOrganization = () => {
       return false;
     }
 
+    const target = members.find(m => m.id === memberId);
+    if (target) sendMemberNotification('reactivated', target.email, organization.id);
     toast({ title: 'Member reactivated' });
     await fetchOrgDetails(organization.id);
     return true;
@@ -272,6 +288,7 @@ export const useOrganization = () => {
       return false;
     }
 
+    if (target) sendMemberNotification('role_changed', target.email, organization.id, role);
     toast({ title: 'Role updated' });
     await fetchOrgDetails(organization.id);
     return true;

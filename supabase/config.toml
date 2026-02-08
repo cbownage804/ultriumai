@@ -360,3 +360,6 @@ verify_jwt = false
 
 [functions.org-invite-send]
 verify_jwt = false
+
+[functions.org-member-notify]
+verify_jwt = false

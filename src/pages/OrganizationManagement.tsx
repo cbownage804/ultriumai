@@ -5,10 +5,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Building2, Users, Key, Settings, Plus, Loader2 } from 'lucide-react';
+import { Building2, Users, Key, Settings, Plus, Loader2, BarChart3 } from 'lucide-react';
 import { OrgMembersTab } from '@/components/organization/OrgMembersTab';
 import { OrgLicensesTab } from '@/components/organization/OrgLicensesTab';
 import { OrgSettingsTab } from '@/components/organization/OrgSettingsTab';
+import { OrgAnalyticsCards } from '@/components/organization/OrgAnalyticsCards';
 
 const OrganizationManagement = () => {
   const { user } = useAuth();
@@ -74,8 +75,12 @@ const OrganizationManagement = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="members" className="space-y-6">
+      <Tabs defaultValue="overview" className="space-y-6">
         <TabsList>
+          <TabsTrigger value="overview" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Overview
+          </TabsTrigger>
           <TabsTrigger value="members" className="gap-2">
             <Users className="h-4 w-4" />
             Members
@@ -89,6 +94,10 @@ const OrganizationManagement = () => {
             Settings
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="overview">
+          <OrgAnalyticsCards />
+        </TabsContent>
 
         <TabsContent value="members">
           <OrgMembersTab />

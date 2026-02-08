@@ -12,12 +12,6 @@ export interface ProductAccess {
   expires_at: string | null;
 }
 
-interface OrgLicenseAccess {
-  product: Product;
-  access_level: AccessLevel;
-  expires_at: string | null;
-}
-
 export interface UseProductAccessReturn {
   access: ProductAccess[];
   loading: boolean;
@@ -36,7 +30,7 @@ const ACCESS_HIERARCHY: Record<AccessLevel, number> = {
 export const useProductAccess = (): UseProductAccessReturn => {
   const { user } = useAuth();
   const [access, setAccess] = useState<ProductAccess[]>([]);
-  const [orgAccess, setOrgAccess] = useState<OrgLicenseAccess[]>([]);
+  const [orgAccess, setOrgAccess] = useState<ProductAccess[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAccess = async () => {
@@ -48,44 +42,51 @@ export const useProductAccess = (): UseProductAccessReturn => {
     }
 
     try {
-      // Fetch individual access and org license access in parallel
-      const [individualRes, orgRes] = await Promise.all([
-        supabase
-          .from('user_product_access')
-          .select('product, access_level, granted_at, expires_at')
-          .eq('user_id', user.id),
-        // Get org licenses assigned to this user
-        supabase
-          .from('org_team_members')
-          .select('id, organization_id, status')
-          .eq('user_id', user.id)
-          .eq('status', 'active')
-          .limit(1),
-      ]);
+      // Fetch individual access
+      const { data: individualData, error: individualErr } = await supabase
+        .from('user_product_access')
+        .select('product, access_level, granted_at, expires_at')
+        .eq('user_id', user.id);
 
-      if (individualRes.error) {
-        console.error('Error fetching product access:', individualRes.error);
+      if (individualErr) {
+        console.error('Error fetching product access:', individualErr);
         setAccess([]);
       } else {
-        setAccess((individualRes.data || []) as ProductAccess[]);
+        setAccess((individualData || []) as ProductAccess[]);
       }
 
-      // If user is in an org, fetch their license assignments
-      if (orgRes.data && orgRes.data.length > 0) {
-        const memberId = orgRes.data[0].id;
+      // Single optimized query: get org license access via a join-style approach
+      // Step 1: Get active membership
+      const { data: memberRow } = await supabase
+        .from('org_team_members')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .limit(1)
+        .single();
+
+      if (memberRow) {
+        // Step 2: Get assigned licenses with license details in one query
         const { data: assignmentData } = await supabase
           .from('org_team_license_assignments')
           .select('license_id')
-          .eq('member_id', memberId);
+          .eq('member_id', memberRow.id);
 
-        if (assignmentData && assignmentData.length > 0) {
-          const licenseIds = assignmentData.map((a: any) => a.license_id);
+        if (assignmentData?.length) {
+          const licenseIds = assignmentData.map(a => a.license_id);
           const { data: licenseData } = await supabase
             .from('org_team_licenses')
-            .select('product, access_level, expires_at')
+            .select('product, access_level, expires_at, started_at')
             .in('id', licenseIds);
 
-          setOrgAccess((licenseData || []) as OrgLicenseAccess[]);
+          setOrgAccess(
+            (licenseData || []).map((l: any) => ({
+              product: l.product as Product,
+              access_level: l.access_level as AccessLevel,
+              granted_at: l.started_at,
+              expires_at: l.expires_at,
+            }))
+          );
         } else {
           setOrgAccess([]);
         }
@@ -105,44 +106,29 @@ export const useProductAccess = (): UseProductAccessReturn => {
     fetchAccess();
   }, [user]);
 
-  // Get the effective access level considering both individual and org licenses
   const getEffectiveLevel = (product: Product): AccessLevel | null => {
-    // Check individual access
+    const now = new Date();
     let bestLevel: AccessLevel | null = null;
-    const individual = access.find(a => a.product === product);
-    if (individual) {
-      if (!individual.expires_at || new Date(individual.expires_at) >= new Date()) {
-        bestLevel = individual.access_level;
-      }
-    }
 
-    // Check org license access (may be higher)
-    const orgLicense = orgAccess.find(a => a.product === product);
-    if (orgLicense) {
-      if (!orgLicense.expires_at || new Date(orgLicense.expires_at) >= new Date()) {
-        if (!bestLevel || ACCESS_HIERARCHY[orgLicense.access_level] > ACCESS_HIERARCHY[bestLevel]) {
-          bestLevel = orgLicense.access_level;
-        }
+    // Check individual + org access combined
+    const allAccess = [...access, ...orgAccess];
+    for (const entry of allAccess) {
+      if (entry.product !== product) continue;
+      if (entry.expires_at && new Date(entry.expires_at) < now) continue;
+      if (!bestLevel || ACCESS_HIERARCHY[entry.access_level] > ACCESS_HIERARCHY[bestLevel]) {
+        bestLevel = entry.access_level;
       }
     }
 
     // SafeSuite always has free tier for authenticated users
-    if (product === 'safesuite' && !bestLevel) {
-      return 'free';
-    }
-
+    if (product === 'safesuite' && !bestLevel) return 'free';
     return bestLevel;
   };
 
   const hasAccess = (product: Product, requiredLevel: AccessLevel = 'free'): boolean => {
-    // SafeSuite free tier for all authenticated users
-    if (product === 'safesuite' && requiredLevel === 'free') {
-      return true;
-    }
-
+    if (product === 'safesuite' && requiredLevel === 'free') return true;
     const effectiveLevel = getEffectiveLevel(product);
     if (!effectiveLevel) return false;
-
     return ACCESS_HIERARCHY[effectiveLevel] >= ACCESS_HIERARCHY[requiredLevel];
   };
 
@@ -150,11 +136,5 @@ export const useProductAccess = (): UseProductAccessReturn => {
     return getEffectiveLevel(product);
   };
 
-  return {
-    access,
-    loading,
-    hasAccess,
-    getAccessLevel,
-    refetch: fetchAccess,
-  };
+  return { access, loading, hasAccess, getAccessLevel, refetch: fetchAccess };
 };
