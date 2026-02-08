@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Users, Key, TrendingUp, DollarSign, UserCheck, UserX, Clock,
-  CalendarClock, AlertTriangle, UserPlus, Plus, ArrowRight, Shield, Brain, Monitor,
+  CalendarClock, AlertTriangle, UserPlus, Plus, ArrowRight, Shield, Brain, Monitor, Info,
 } from 'lucide-react';
 
 const PRODUCT_LABELS: Record<string, string> = {
@@ -48,7 +49,6 @@ export const OrgAnalyticsCards = () => {
     const costPerMember = activeMembers > 0 ? monthlyCost / activeMembers : 0;
     const annualProjected = monthlyCost * 12;
 
-    // Cost breakdown by product
     const costByProduct = licenses.reduce((acc, l) => {
       const label = PRODUCT_LABELS[l.product] || l.product;
       const price = PRICING[l.product]?.[l.access_level] || 0;
@@ -57,14 +57,13 @@ export const OrgAnalyticsCards = () => {
       return acc;
     }, {} as Record<string, number>);
 
-    // Unassigned seats per license
     const unassignedByLicense = licenses.map(l => ({
       label: `${PRODUCT_LABELS[l.product]} ${l.access_level}`,
+      product: l.product,
       unassigned: l.total_seats - l.used_seats,
       total: l.total_seats,
     })).filter(l => l.unassigned > 0);
 
-    // License renewal timeline
     const now = new Date();
     const renewals = licenses
       .filter(l => l.expires_at)
@@ -83,7 +82,6 @@ export const OrgAnalyticsCards = () => {
       })
       .sort((a, b) => a.daysUntil - b.daysUntil);
 
-    // Members without any license
     const assignedMemberIds = new Set(assignments.map(a => a.member_id));
     const unlicensedMembers = members.filter(
       m => m.status === 'active' && !assignedMemberIds.has(m.id)
@@ -104,246 +102,215 @@ export const OrgAnalyticsCards = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Quick Actions */}
-      <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" onClick={() => scrollToTab('members')}>
-          <UserPlus className="h-4 w-4 mr-1.5" />
-          Invite Member
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => scrollToTab('licenses')}>
-          <Plus className="h-4 w-4 mr-1.5" />
-          Add License
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => scrollToTab('licenses')}>
-          <Key className="h-4 w-4 mr-1.5" />
-          Assign Seats
-        </Button>
-      </div>
+    <TooltipProvider>
+      <div className="space-y-6">
+        {/* Quick Actions */}
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={() => scrollToTab('members')}>
+            <UserPlus className="h-4 w-4 mr-1.5" />
+            Invite Member
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => scrollToTab('licenses')}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            Add License
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => scrollToTab('access')}>
+            <Key className="h-4 w-4 mr-1.5" />
+            Manage Access
+          </Button>
+        </div>
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.activeMembers}</p>
-                <p className="text-xs text-muted-foreground">Active Members</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-accent/10">
-                <TrendingUp className="h-5 w-5 text-accent-foreground" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.seatUtilization}%</p>
-                <p className="text-xs text-muted-foreground">Seat Utilization</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Key className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.usedSeats}/{stats.totalSeats}</p>
-                <p className="text-xs text-muted-foreground">Seats Used</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <DollarSign className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">${stats.monthlyCost.toFixed(0)}</p>
-                <p className="text-xs text-muted-foreground">Est. Monthly Cost</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Unlicensed Members Alert */}
-      {stats.unlicensedMembers.length > 0 && (
-        <Card className="border-destructive/30">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-4 w-4" />
-              {stats.unlicensedMembers.length} Member{stats.unlicensedMembers.length !== 1 ? 's' : ''} Without Licenses
-            </CardTitle>
-            <CardDescription>
-              These active members have no product licenses assigned and can't access paid features.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {stats.unlicensedMembers.slice(0, 5).map(m => (
-                <div key={m.id} className="flex items-center justify-between py-1.5 px-3 rounded-md bg-muted/50">
-                  <span className="text-sm">{m.email}</span>
-                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => scrollToTab('licenses')}>
-                    Assign <ArrowRight className="h-3 w-3 ml-1" />
-                  </Button>
-                </div>
-              ))}
-              {stats.unlicensedMembers.length > 5 && (
-                <p className="text-xs text-muted-foreground pl-3">
-                  +{stats.unlicensedMembers.length - 5} more
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Middle Row: Renewal Timeline + Cost Breakdown */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* License Renewal Timeline */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <CalendarClock className="h-4 w-4" />
-              Renewal Timeline
-            </CardTitle>
-            <CardDescription>Upcoming license renewals</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {stats.renewals.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No active licenses with renewal dates.</p>
-            ) : (
-              stats.renewals.map((r, i) => {
-                const Icon = PRODUCT_ICONS[r.productKey] || Key;
-                return (
-                  <div key={i} className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <span className="text-sm truncate capitalize">{r.product} {r.accessLevel}</span>
-                      <Badge variant="outline" className="text-[10px] shrink-0">{r.seats} seats</Badge>
-                    </div>
-                    <Badge
-                      variant={r.urgency === 'critical' ? 'destructive' : r.urgency === 'warning' ? 'secondary' : 'outline'}
-                      className="shrink-0"
-                    >
-                      {r.daysUntil <= 0 ? 'Expired' : r.daysUntil === 1 ? 'Tomorrow' : `${r.daysUntil}d`}
-                    </Badge>
+        {/* KPI Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { icon: Users, label: 'Active Members', value: String(stats.activeMembers), sub: stats.pendingMembers > 0 ? `+${stats.pendingMembers} pending` : undefined },
+            { icon: TrendingUp, label: 'Seat Utilization', value: `${stats.seatUtilization}%`, sub: stats.seatUtilization < 50 ? 'Under-utilized' : stats.seatUtilization > 90 ? 'Near capacity' : undefined },
+            { icon: Key, label: 'Seats Used', value: `${stats.usedSeats}/${stats.totalSeats}` },
+            { icon: DollarSign, label: 'Monthly Cost', value: `$${stats.monthlyCost.toFixed(0)}`, sub: `$${stats.costPerMember.toFixed(0)}/member` },
+          ].map((kpi, i) => (
+            <Card key={i}>
+              <CardContent className="pt-5 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                    <kpi.icon className="h-5 w-5 text-primary" />
                   </div>
-                );
-              })
-            )}
-          </CardContent>
-        </Card>
+                  <div className="min-w-0">
+                    <p className="text-2xl font-bold leading-tight">{kpi.value}</p>
+                    <p className="text-xs text-muted-foreground truncate">{kpi.label}</p>
+                    {kpi.sub && <p className="text-[10px] text-muted-foreground">{kpi.sub}</p>}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-        {/* Cost Breakdown & Budgeting */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Cost Breakdown
-            </CardTitle>
-            <CardDescription>Spending by product & projections</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Per-product breakdown */}
-            {Object.entries(stats.costByProduct).length > 0 ? (
-              <div className="space-y-2">
-                {Object.entries(stats.costByProduct).map(([product, cost]) => {
-                  const pct = stats.monthlyCost > 0 ? (cost / stats.monthlyCost) * 100 : 0;
+        {/* Unlicensed Members Alert */}
+        {stats.unlicensedMembers.length > 0 && (
+          <Card className="border-destructive/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-4 w-4" />
+                {stats.unlicensedMembers.length} Member{stats.unlicensedMembers.length !== 1 ? 's' : ''} Without Licenses
+              </CardTitle>
+              <CardDescription>
+                Active members with no product access. Assign licenses so they can use paid features.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1.5">
+                {stats.unlicensedMembers.slice(0, 5).map(m => (
+                  <div key={m.id} className="flex items-center justify-between py-1.5 px-3 rounded-md bg-muted/50">
+                    <span className="text-sm">{m.email}</span>
+                    <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => scrollToTab('access')}>
+                      Assign <ArrowRight className="h-3 w-3 ml-1" />
+                    </Button>
+                  </div>
+                ))}
+                {stats.unlicensedMembers.length > 5 && (
+                  <p className="text-xs text-muted-foreground pl-3">
+                    +{stats.unlicensedMembers.length - 5} more
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Middle Row */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Renewal Timeline */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <CalendarClock className="h-4 w-4" />
+                Renewal Timeline
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2.5">
+              {stats.renewals.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">No renewal dates set.</p>
+              ) : (
+                stats.renewals.map((r, i) => {
+                  const Icon = PRODUCT_ICONS[r.productKey] || Key;
                   return (
-                    <div key={product} className="space-y-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>{product}</span>
-                        <span className="font-medium">${cost.toFixed(2)}/mo</span>
+                    <div key={i} className="flex items-center justify-between gap-2 py-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="text-sm truncate capitalize">{r.product} {r.accessLevel}</span>
+                        <Badge variant="outline" className="text-[10px] shrink-0">{r.seats} seats</Badge>
                       </div>
-                      <Progress value={pct} className="h-1.5" />
+                      <Badge
+                        variant={r.urgency === 'critical' ? 'destructive' : r.urgency === 'warning' ? 'secondary' : 'outline'}
+                        className="shrink-0"
+                      >
+                        {r.daysUntil <= 0 ? 'Expired' : r.daysUntil === 1 ? 'Tomorrow' : `${r.daysUntil}d`}
+                      </Badge>
                     </div>
                   );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No licenses purchased yet.</p>
-            )}
+                })
+              )}
+            </CardContent>
+          </Card>
 
-            {/* Summary stats */}
-            <div className="border-t border-border pt-3 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Cost per member</span>
-                <span className="font-medium">${stats.costPerMember.toFixed(2)}/mo</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Projected annual</span>
-                <span className="font-semibold">${stats.annualProjected.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Bottom Row: Member Status + Unassigned Seats */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Member Status</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <UserCheck className="h-4 w-4 text-primary" />
-                Active
-              </div>
-              <Badge variant="default">{stats.activeMembers}</Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                Pending
-              </div>
-              <Badge variant="secondary">{stats.pendingMembers}</Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <UserX className="h-4 w-4 text-destructive" />
-                Suspended
-              </div>
-              <Badge variant="destructive">{stats.suspendedMembers}</Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Unassigned Seats</CardTitle>
-            <CardDescription>Licenses with available seats to assign</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {stats.unassignedByLicense.length === 0 ? (
-              <p className="text-sm text-muted-foreground">All seats are assigned.</p>
-            ) : (
-              stats.unassignedByLicense.map((l, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <span className="text-sm capitalize">{l.label}</span>
-                  <Badge variant="outline">{l.unassigned} of {l.total} free</Badge>
+          {/* Cost Breakdown */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Cost Breakdown
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {Object.entries(stats.costByProduct).length > 0 ? (
+                <div className="space-y-2.5">
+                  {Object.entries(stats.costByProduct).map(([product, cost]) => {
+                    const pct = stats.monthlyCost > 0 ? (cost / stats.monthlyCost) * 100 : 0;
+                    return (
+                      <div key={product} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>{product}</span>
+                          <span className="font-medium">${cost.toFixed(2)}/mo</span>
+                        </div>
+                        <Progress value={pct} className="h-1.5" />
+                      </div>
+                    );
+                  })}
                 </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+              ) : (
+                <p className="text-sm text-muted-foreground py-4 text-center">No licenses yet.</p>
+              )}
+
+              {stats.monthlyCost > 0 && (
+                <div className="border-t border-border pt-3 space-y-1.5">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      Cost per member
+                      <Tooltip>
+                        <TooltipTrigger><Info className="h-3 w-3" /></TooltipTrigger>
+                        <TooltipContent className="text-xs">Total monthly cost ÷ active members</TooltipContent>
+                      </Tooltip>
+                    </span>
+                    <span className="font-medium">${stats.costPerMember.toFixed(2)}/mo</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Projected annual</span>
+                    <span className="font-semibold">${stats.annualProjected.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Bottom Row */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Member Status</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2.5">
+              {[
+                { icon: UserCheck, label: 'Active', count: stats.activeMembers, variant: 'default' as const, iconClass: 'text-primary' },
+                { icon: Clock, label: 'Pending', count: stats.pendingMembers, variant: 'secondary' as const, iconClass: 'text-muted-foreground' },
+                { icon: UserX, label: 'Suspended', count: stats.suspendedMembers, variant: 'destructive' as const, iconClass: 'text-destructive' },
+              ].map(s => (
+                <div key={s.label} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm">
+                    <s.icon className={`h-4 w-4 ${s.iconClass}`} />
+                    {s.label}
+                  </div>
+                  <Badge variant={s.variant}>{s.count}</Badge>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Unassigned Seats</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2.5">
+              {stats.unassignedByLicense.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">All seats assigned.</p>
+              ) : (
+                stats.unassignedByLicense.map((l, i) => {
+                  const Icon = PRODUCT_ICONS[l.product] || Key;
+                  return (
+                    <div key={i} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm capitalize">{l.label}</span>
+                      </div>
+                      <Badge variant="outline">{l.unassigned} of {l.total} free</Badge>
+                    </div>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };

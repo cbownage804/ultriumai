@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Building2, Users, Key, Settings, Plus, Loader2, BarChart3, ShieldCheck } from 'lucide-react';
 import { OrgMembersTab } from '@/components/organization/OrgMembersTab';
 import { OrgLicensesTab } from '@/components/organization/OrgLicensesTab';
@@ -14,7 +15,7 @@ import { OrgEmployeeAccessTab } from '@/components/organization/OrgEmployeeAcces
 
 const OrganizationManagement = () => {
   const { user } = useAuth();
-  const { organization, loading, createOrganization } = useOrganization();
+  const { organization, loading, createOrganization, members, licenses, isMSPAdmin } = useOrganization();
   const [newOrgName, setNewOrgName] = useState('');
   const [creating, setCreating] = useState(false);
 
@@ -64,39 +65,52 @@ const OrganizationManagement = () => {
     );
   }
 
+  const activeCount = members.filter(m => m.status === 'active').length;
+  const licenseCount = licenses.length;
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Building2 className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{organization.name}</h1>
-          <p className="text-sm text-muted-foreground">Manage your team, licenses, and settings</p>
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 mb-8">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Building2 className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-foreground">{organization.name}</h1>
+              {isMSPAdmin && (
+                <Badge variant="secondary" className="text-[10px]">MSP Admin</Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {activeCount} active member{activeCount !== 1 ? 's' : ''} · {licenseCount} license{licenseCount !== 1 ? 's' : ''}
+            </p>
+          </div>
         </div>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="overview" className="gap-2">
+        <TabsList className="flex flex-wrap h-auto gap-1 p-1">
+          <TabsTrigger value="overview" className="gap-1.5">
             <BarChart3 className="h-4 w-4" />
-            Overview
+            <span className="hidden sm:inline">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="members" className="gap-2">
+          <TabsTrigger value="members" className="gap-1.5">
             <Users className="h-4 w-4" />
-            Members
+            <span className="hidden sm:inline">Members</span>
           </TabsTrigger>
-          <TabsTrigger value="access" className="gap-2">
+          <TabsTrigger value="access" className="gap-1.5">
             <ShieldCheck className="h-4 w-4" />
-            Employee Access
+            <span className="hidden sm:inline">Access</span>
           </TabsTrigger>
-          <TabsTrigger value="licenses" className="gap-2">
+          <TabsTrigger value="licenses" className="gap-1.5">
             <Key className="h-4 w-4" />
-            Licenses
+            <span className="hidden sm:inline">Licenses</span>
           </TabsTrigger>
-          <TabsTrigger value="settings" className="gap-2">
+          <TabsTrigger value="settings" className="gap-1.5">
             <Settings className="h-4 w-4" />
-            Settings
+            <span className="hidden sm:inline">Settings</span>
           </TabsTrigger>
         </TabsList>
 
