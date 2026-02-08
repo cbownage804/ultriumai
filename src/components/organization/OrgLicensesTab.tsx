@@ -21,8 +21,8 @@ const PRODUCT_META: Record<string, { label: string; icon: typeof Shield; color: 
 
 const PRICING: Record<string, Record<string, number>> = {
   safesuite: { pro: 9.99, business: 15, enterprise: 45 },
-  ai_studio: { pro: 29, business: 49, enterprise: 99 },
-  vanguard: { pro: 39, business: 59, enterprise: 99 },
+  ai_studio: { pro: 19.99, business: 39.99, enterprise: 79.99 },
+  vanguard: { pro: 29.99, business: 59.99, enterprise: 99.99 },
 };
 
 export const OrgLicensesTab = () => {

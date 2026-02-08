@@ -14738,6 +14738,7 @@ export type Database = {
           organization_id: string
           product: string
           started_at: string
+          status: string
           stripe_subscription_id: string | null
           total_seats: number
           updated_at: string
@@ -14752,6 +14753,7 @@ export type Database = {
           organization_id: string
           product: string
           started_at?: string
+          status?: string
           stripe_subscription_id?: string | null
           total_seats?: number
           updated_at?: string
@@ -14766,6 +14768,7 @@ export type Database = {
           organization_id?: string
           product?: string
           started_at?: string
+          status?: string
           stripe_subscription_id?: string | null
           total_seats?: number
           updated_at?: string

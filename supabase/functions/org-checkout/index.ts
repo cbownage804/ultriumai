@@ -15,19 +15,19 @@ const logStep = (step: string, details?: any) => {
 // Per-seat price IDs for org licenses
 const ORG_LICENSE_PRICES: Record<string, Record<string, string>> = {
   safesuite: {
-    pro: "price_1SycwFH1u6E0bsJTVQNxOlTu",
-    business: "price_1SycwFH1u6E0bsJT3wOeNGqE",
-    enterprise: "price_1SycwGH1u6E0bsJTkJJgRQG7",
+    pro: "price_1Sycz1H1u6E0bsJTgGh3yc3c",
+    business: "price_1Sycz2H1u6E0bsJTDndPDlqx",
+    enterprise: "price_1Sycz3H1u6E0bsJTjiwcAdjo",
   },
   ai_studio: {
-    pro: "price_1SycwIH1u6E0bsJTiBQVNl09",
-    business: "price_1SycwJH1u6E0bsJTkHd2vJ2D",
-    enterprise: "price_1SycwKH1u6E0bsJTrdbzttpP",
+    pro: "price_1Sycz5H1u6E0bsJT5zEp2Llm",
+    business: "price_1Sycz6H1u6E0bsJTSdzQEdyX",
+    enterprise: "price_1Sycz7H1u6E0bsJTA33IIQFD",
   },
   vanguard: {
-    pro: "price_1SycwLH1u6E0bsJTcCfKErNG",
-    business: "price_1SycwMH1u6E0bsJTZ64sE3Lg",
-    enterprise: "price_1SycwNH1u6E0bsJTWWIEkxUf",
+    pro: "price_1Sycz8H1u6E0bsJTO9ziouyS",
+    business: "price_1Sycz9H1u6E0bsJTzBAFo3q4",
+    enterprise: "price_1SyczAH1u6E0bsJTdOzZvwRb",
   },
 };
 
