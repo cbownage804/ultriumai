@@ -50,23 +50,13 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-            return 'react-vendor';
-          }
-          if (id.includes('@radix-ui')) return 'ui';
-          if (id.includes('@supabase')) return 'supabase';
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) return 'react-vendor';
           if (id.includes('@monaco-editor') || id.includes('monaco-editor')) return 'monaco';
           if (id.includes('@tiptap')) return 'tiptap';
           if (id.includes('recharts') || id.includes('d3-')) return 'charts';
           if (id.includes('@xyflow')) return 'xyflow';
           if (id.includes('framer-motion')) return 'motion';
-          if (id.includes('lucide-react')) return 'icons';
-          if (id.includes('node_modules')) return 'vendor';
-          // Split large app sections
-          if (id.includes('/components/vanguard')) return 'app-vanguard';
-          if (id.includes('/components/ai-builder')) return 'app-builder';
-          if (id.includes('/components/msp') || id.includes('/components/MSP')) return 'app-msp';
-          if (id.includes('/components/safe')) return 'app-safe';
           return undefined;
         },
       },
