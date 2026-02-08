@@ -7,7 +7,8 @@ import {
   ArrowLeft, LayoutDashboard, Sparkles, Shield, Zap, Settings, Users, FileText,
   Building2, Share2, UserPlus, TrendingUp, ShieldCheck, ToggleLeft, CreditCard,
   Activity, Headset, UserCog, Eye, MessageSquare, Bug, Radio, Bell,
-  Search, Layers, CalendarClock, Palette, Database, Cloud, HardDrive, Key
+  Search, Layers, CalendarClock, Palette, Database, Cloud, HardDrive, Key,
+  Webhook, Mail, AlertTriangle, Trash2, Calendar, ShieldBan, Monitor, BookOpen
 } from 'lucide-react';
 import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
@@ -42,6 +43,14 @@ const TableBrowserTab = lazy(() => import('@/components/admin/unified/TableBrows
 const EdgeFunctionManagerTab = lazy(() => import('@/components/admin/unified/EdgeFunctionManagerTab'));
 const StorageManagerTab = lazy(() => import('@/components/admin/unified/StorageManagerTab'));
 const ApiKeyOversightTab = lazy(() => import('@/components/admin/unified/ApiKeyOversightTab'));
+const WebhookManagerTab = lazy(() => import('@/components/admin/unified/WebhookManagerTab'));
+const EmailTemplateEditorTab = lazy(() => import('@/components/admin/unified/EmailTemplateEditorTab'));
+const MaintenanceModeTab = lazy(() => import('@/components/admin/unified/MaintenanceModeTab'));
+const DataRetentionTab = lazy(() => import('@/components/admin/unified/DataRetentionTab'));
+const CronSchedulerTab = lazy(() => import('@/components/admin/unified/CronSchedulerTab'));
+const IpAllowlistTab = lazy(() => import('@/components/admin/unified/IpAllowlistTab'));
+const UserSessionManagerTab = lazy(() => import('@/components/admin/unified/UserSessionManagerTab'));
+const PlatformChangelogTab = lazy(() => import('@/components/admin/unified/PlatformChangelogTab'));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-12">
@@ -56,6 +65,7 @@ const SIDEBAR_GROUPS = [
     { value: 'search', icon: Search, label: 'Global Search' },
     { value: 'all-users', icon: Users, label: 'Users' },
     { value: 'roles', icon: ShieldCheck, label: 'Roles' },
+    { value: 'sessions', icon: Monitor, label: 'Sessions' },
   ]},
   { label: 'Support', items: [
     { value: 'tickets', icon: Headset, label: 'Tickets' },
@@ -82,6 +92,15 @@ const SIDEBAR_GROUPS = [
     { value: 'edge-functions', icon: Cloud, label: 'Edge Functions' },
     { value: 'storage', icon: HardDrive, label: 'Storage' },
     { value: 'api-keys', icon: Key, label: 'API Keys' },
+    { value: 'cron', icon: Calendar, label: 'Cron Jobs' },
+    { value: 'webhooks', icon: Webhook, label: 'Webhooks' },
+    { value: 'maintenance', icon: AlertTriangle, label: 'Maintenance' },
+  ]},
+  { label: 'Platform', items: [
+    { value: 'email-templates', icon: Mail, label: 'Email Templates' },
+    { value: 'data-retention', icon: Trash2, label: 'Data Retention' },
+    { value: 'ip-access', icon: ShieldBan, label: 'IP Access Control' },
+    { value: 'changelog', icon: BookOpen, label: 'Changelog' },
   ]},
   { label: 'Products', items: [
     { value: 'ai-studio', icon: Sparkles, label: 'AI Studio' },
@@ -126,6 +145,14 @@ const CONTENT_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<
   'msp-capacity': MSPCapacityReportingTab,
   'social': SocialMediaManager,
   'audit-log': AdminAuditLogTab,
+  'webhooks': WebhookManagerTab,
+  'email-templates': EmailTemplateEditorTab,
+  'maintenance': MaintenanceModeTab,
+  'data-retention': DataRetentionTab,
+  'cron': CronSchedulerTab,
+  'ip-access': IpAllowlistTab,
+  'sessions': UserSessionManagerTab,
+  'changelog': PlatformChangelogTab,
 };
 
 const UnifiedAdminCenter = () => {
