@@ -28,7 +28,7 @@ interface WidgetTemplate {
 
 const WIDGET_ROUTES: Record<string, string> = {
   'kpi-tickets': '/vanguard/tickets',
-  'kpi-devices': '/vanguard/assets',
+  'kpi-devices': '/vanguard/devices',
   'kpi-threats': '/vanguard/threats',
   'kpi-users': '/vanguard/customers',
   'chart-tickets': '/vanguard/tickets',
