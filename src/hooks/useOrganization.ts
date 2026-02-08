@@ -69,9 +69,10 @@ export const useOrganization = () => {
   const [assignments, setAssignments] = useState<OrgLicenseAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<'owner' | 'admin' | 'member' | null>(null);
+  const [isMSPAdmin, setIsMSPAdmin] = useState(false);
 
   const isOwner = userRole === 'owner';
-  const isAdmin = userRole === 'owner' || userRole === 'admin';
+  const isAdmin = userRole === 'owner' || userRole === 'admin' || isMSPAdmin;
 
   const fetchOrganization = useCallback(async () => {
     if (!user) {
@@ -86,6 +87,15 @@ export const useOrganization = () => {
 
     try {
       setLoading(true);
+
+      // Check if user has msp_admin role in user_roles
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'msp_admin')
+        .maybeSingle();
+      setIsMSPAdmin(!!roleData);
 
       // Find the user's org via membership
       const { data: memberRows } = await supabase
@@ -446,6 +456,35 @@ export const useOrganization = () => {
     return true;
   };
 
+  const offboardMember = async (memberId: string) => {
+    if (!organization || !isAdmin) return false;
+    const target = members.find(m => m.id === memberId);
+    if (!target || target.role === 'owner') {
+      toast({ title: 'Cannot offboard', description: 'Cannot offboard the organization owner.', variant: 'destructive' });
+      return false;
+    }
+
+    // 1. Revoke all license assignments
+    const memberAssignments = assignments.filter(a => a.member_id === memberId);
+    for (const a of memberAssignments) {
+      await supabase.from('org_team_license_assignments').delete().eq('id', a.id);
+      const license = licenses.find(l => l.id === a.license_id);
+      if (license) {
+        await supabase.from('org_team_licenses').update({ used_seats: Math.max(0, license.used_seats - 1) }).eq('id', license.id);
+        // Revoke product access
+        await revokeMemberProductAccess(memberId, license.product);
+      }
+    }
+
+    // 2. Suspend the member
+    await supabase.from('org_team_members').update({ status: 'suspended' }).eq('id', memberId);
+
+    if (target) sendMemberNotification('suspended', target.email, organization.id);
+    toast({ title: 'Employee offboarded', description: `${target.email} has been suspended and all licenses revoked.` });
+    await fetchOrgDetails(organization.id);
+    return true;
+  };
+
   // SafeSuite team migration
   const migrateSafeSuiteTeam = async () => {
     if (!organization || !isOwner || !user) return false;
@@ -513,6 +552,7 @@ export const useOrganization = () => {
     loading,
     isAdmin,
     isOwner,
+    isMSPAdmin,
     userRole,
     canManageMember,
     createOrganization,
@@ -527,6 +567,7 @@ export const useOrganization = () => {
     updateOrganization,
     deleteOrganization,
     migrateSafeSuiteTeam,
+    offboardMember,
     refetch: fetchOrganization,
   };
 };
