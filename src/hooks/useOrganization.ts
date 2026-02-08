@@ -168,24 +168,26 @@ export const useOrganization = () => {
   const inviteMember = async (email: string, role: 'admin' | 'member' = 'member') => {
     if (!organization || !user) return false;
 
-    const { error } = await supabase
-      .from('org_team_members')
-      .insert({
-        organization_id: organization.id,
-        email,
-        role,
-        status: 'pending',
-        invited_by: user.id,
+    try {
+      // Call the edge function which creates the member row, generates token, and sends email
+      const { data, error } = await supabase.functions.invoke('org-invite-send', {
+        body: {
+          email,
+          organizationId: organization.id,
+          role,
+        },
       });
 
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: 'Invitation sent', description: `An invite email has been sent to ${email}.` });
+      await fetchOrgDetails(organization.id);
+      return true;
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
       return false;
     }
-
-    toast({ title: 'Invitation sent', description: `${email} has been invited.` });
-    await fetchOrgDetails(organization.id);
-    return true;
   };
 
   const removeMember = async (memberId: string) => {
