@@ -22,16 +22,22 @@ export const useAdminAccess = () => {
         return;
       }
 
-      // Check if user is admin (UltriumAI employee with CONFIRMED email)
-      const isEmailConfirmed = user.email_confirmed_at != null;
-      const isUltriumEmployee = user.email?.endsWith('@ultriumai.com');
-      
-      if (!isUltriumEmployee || !isEmailConfirmed) {
+      // Check admin role from user_roles table
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (roleError) {
+        console.error('Role check error:', roleError);
+      }
+
+      if (!roleData) {
         toast({
           title: "Access Denied",
-          description: !isEmailConfirmed 
-            ? "Please confirm your email address first." 
-            : "You don't have admin privileges.",
+          description: "You don't have admin privileges.",
           variant: "destructive",
         });
         navigate('/dashboard');
