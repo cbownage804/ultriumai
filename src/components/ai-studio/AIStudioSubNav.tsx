@@ -1,11 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Bot, Code2, Workflow, MessageSquare, Sparkles, LayoutDashboard } from 'lucide-react';
+import { Bot, Code2, Workflow, MessageSquare, Sparkles, LayoutDashboard, FolderOpen } from 'lucide-react';
 import aiStudioLogo from '@/assets/ai-studio-logo.png';
 
 const navItems = [
   { path: '/ai-studio', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { path: '/ai-studio/projects', label: 'Projects', icon: FolderOpen },
   { path: '/ai-studio/assistant', label: 'Assistant', icon: MessageSquare },
   { path: '/ai-studio/agents', label: 'Build', icon: Bot },
   { path: '/ai-studio/workflows', label: 'Workflows', icon: Workflow },
