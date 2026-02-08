@@ -28,14 +28,14 @@ interface WidgetTemplate {
 
 const WIDGET_ROUTES: Record<string, string> = {
   'kpi-tickets': '/vanguard/tickets',
-  'kpi-devices': '/vanguard/horizon',
-  'kpi-threats': '/vanguard/pursuit',
-  'kpi-users': '/admin',
+  'kpi-devices': '/vanguard/assets',
+  'kpi-threats': '/vanguard/threats',
+  'kpi-users': '/vanguard/customers',
   'chart-tickets': '/vanguard/tickets',
-  'chart-security': '/vanguard/recon',
+  'chart-security': '/vanguard/vulnscan',
   'kpi-ai-usage': '/ai-studio',
-  'kpi-uptime': '/vanguard/horizon',
-  'chart-revenue': '/vanguard/billing',
+  'kpi-uptime': '/vanguard/analytics',
+  'chart-revenue': '/vanguard/executive',
   'kpi-response-time': '/vanguard/tickets',
 };
 
