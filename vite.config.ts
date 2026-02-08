@@ -50,7 +50,21 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          if (!id.includes('node_modules')) return undefined;
+          if (!id.includes('node_modules')) {
+            // Split large app source directories into separate chunks
+            if (id.includes('/pages/safesuite/') || id.includes('/layouts/SafeSuite')) return 'app-safesuite';
+            if (id.includes('/pages/safepass/')) return 'app-safepass';
+            if (id.includes('/pages/vanguard/') || id.includes('/pages/Vanguard') || id.includes('/components/vanguard/')) return 'app-vanguard';
+            if (id.includes('/pages/admin/')) return 'app-admin';
+            if (id.includes('/pages/demos/')) return 'app-demos';
+            if (id.includes('/pages/products/')) return 'app-products';
+            if (id.includes('/pages/pricing/')) return 'app-pricing';
+            if (id.includes('/pages/customer-portal/') || id.includes('/pages/client/')) return 'app-portal';
+            if (id.includes('/pages/docs/') || id.includes('/pages/Docs')) return 'app-docs';
+            if (id.includes('/components/ai-builder/')) return 'app-ai-builder';
+            if (id.includes('/components/gpt/')) return 'app-gpt';
+            return undefined;
+          }
           // React core only — must not catch react-router, react-day-picker, etc.
           if (/node_modules\/(react-dom|react)\//.test(id)) return 'react-core';
           if (id.includes('@monaco-editor') || id.includes('monaco-editor')) return 'monaco';
@@ -79,6 +93,7 @@ export default defineConfig(({ mode }) => ({
     },
     minify: mode === 'production',
     chunkSizeWarningLimit: 2000,
+    sourcemap: false,
   },
   // Enable gzip compression
   preview: {
