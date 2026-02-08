@@ -151,6 +151,7 @@ const ClientPortalDashboard = lazy(() => import('@/pages/client/ClientPortalDash
 const ClientTicketsPage = lazy(() => import('@/pages/client/ClientTicketsPage'));
 const ClientBillingPage = lazy(() => import('@/pages/client/ClientBillingPage'));
 const PublicGPTEmbed = lazy(() => import('@/pages/PublicGPTEmbed'));
+const ReferralProgram = lazy(() => import('@/pages/ReferralProgram'));
 
 // Customer Portal (End-User Self-Service)
 const CustomerPortalLogin = lazy(() => import('@/pages/customer-portal/CustomerPortalLogin'));
@@ -296,6 +297,11 @@ function AppRouter() {
         <Route path="/status" element={<Navigate to="/vanguard" replace />} />
         <Route path="/api-docs" element={<SuspenseWrapper variant="detail"><APIDocsPage /></SuspenseWrapper>} />
         <Route path="/install" element={<SuspenseWrapper><InstallPage /></SuspenseWrapper>} />
+        <Route path="/referrals" element={
+          <ProtectedRoute>
+            <SuspenseWrapper><ReferralProgram /></SuspenseWrapper>
+          </ProtectedRoute>
+        } />
         <Route path="/notifications/preferences" element={
           <ProtectedRoute>
             <SuspenseWrapper variant="form">
