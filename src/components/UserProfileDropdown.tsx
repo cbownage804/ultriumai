@@ -59,6 +59,7 @@ const UserProfileDropdown = () => {
 
   const menuItems = [
     { icon: User, label: 'Profile', path: '/profile' },
+    { icon: Building2, label: 'Organization', path: '/organization' },
     { icon: Settings, label: 'Settings', path: '/settings' },
     { icon: Bell, label: 'Notifications', path: '/notifications' },
     { icon: CreditCard, label: 'Billing', path: '/billing' },

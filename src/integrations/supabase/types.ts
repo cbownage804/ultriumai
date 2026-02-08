@@ -14689,6 +14689,181 @@ export type Database = {
         }
         Relationships: []
       }
+      org_team_license_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          license_id: string
+          member_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          license_id: string
+          member_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          license_id?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_team_license_assignments_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "org_team_licenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_team_license_assignments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "org_team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_team_licenses: {
+        Row: {
+          access_level: string
+          billing_cycle: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          organization_id: string
+          product: string
+          started_at: string
+          stripe_subscription_id: string | null
+          total_seats: number
+          updated_at: string
+          used_seats: number
+        }
+        Insert: {
+          access_level: string
+          billing_cycle?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          organization_id: string
+          product: string
+          started_at?: string
+          stripe_subscription_id?: string | null
+          total_seats?: number
+          updated_at?: string
+          used_seats?: number
+        }
+        Update: {
+          access_level?: string
+          billing_cycle?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          organization_id?: string
+          product?: string
+          started_at?: string
+          stripe_subscription_id?: string | null
+          total_seats?: number
+          updated_at?: string
+          used_seats?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_team_licenses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "org_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_team_members: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          invited_by: string | null
+          joined_at: string | null
+          organization_id: string
+          role: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string | null
+          joined_at?: string | null
+          organization_id: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          joined_at?: string | null
+          organization_id?: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_team_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "org_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_teams: {
+        Row: {
+          billing_email: string | null
+          created_at: string
+          id: string
+          max_members: number
+          name: string
+          owner_id: string
+          settings: Json | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          billing_email?: string | null
+          created_at?: string
+          id?: string
+          max_members?: number
+          name: string
+          owner_id: string
+          settings?: Json | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          billing_email?: string | null
+          created_at?: string
+          id?: string
+          max_members?: number
+          name?: string
+          owner_id?: string
+          settings?: Json | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       organizations: {
         Row: {
           client_code: string
@@ -34273,6 +34448,14 @@ export type Database = {
       is_current_user_admin: { Args: never; Returns: boolean }
       is_msp_or_mssp: { Args: { _user_id: string }; Returns: boolean }
       is_msp_user: { Args: { check_user_id: string }; Returns: boolean }
+      is_org_team_admin: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_org_team_member: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: boolean
+      }
       is_safesuite_team_admin: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
