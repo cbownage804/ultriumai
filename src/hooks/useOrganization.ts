@@ -137,18 +137,25 @@ export const useOrganization = () => {
   }, [user]);
 
   const fetchOrgDetails = async (orgId: string) => {
-    const [membersRes, licensesRes, assignmentsRes] = await Promise.all([
+    const [membersRes, licensesRes] = await Promise.all([
       supabase.from('org_team_members').select('*').eq('organization_id', orgId).order('created_at'),
       supabase.from('org_team_licenses').select('*').eq('organization_id', orgId),
-      supabase.from('org_team_license_assignments').select('*'),
     ]);
 
     setMembers((membersRes.data || []) as unknown as OrgMember[]);
     setLicenses((licensesRes.data || []) as unknown as OrgLicense[]);
-    
-    const licenseIds = new Set((licensesRes.data || []).map((l: any) => l.id));
-    const filteredAssignments = (assignmentsRes.data || []).filter((a: any) => licenseIds.has(a.license_id));
-    setAssignments(filteredAssignments as unknown as OrgLicenseAssignment[]);
+
+    // Fetch assignments scoped to this org's licenses only
+    const licenseIds = (licensesRes.data || []).map((l: any) => l.id);
+    if (licenseIds.length > 0) {
+      const { data: assignmentsData } = await supabase
+        .from('org_team_license_assignments')
+        .select('*')
+        .in('license_id', licenseIds);
+      setAssignments((assignmentsData || []) as unknown as OrgLicenseAssignment[]);
+    } else {
+      setAssignments([]);
+    }
   };
 
   useEffect(() => {
@@ -326,6 +333,37 @@ export const useOrganization = () => {
     return true;
   };
 
+  const syncMemberProductAccess = async (memberId: string, product: string, accessLevel: string) => {
+    const member = members.find(m => m.id === memberId);
+    if (!member?.user_id) return;
+    await supabase.from('user_product_access').upsert({
+      user_id: member.user_id,
+      product,
+      access_level: accessLevel,
+      granted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id,product' });
+  };
+
+  const revokeMemberProductAccess = async (memberId: string, product: string) => {
+    const member = members.find(m => m.id === memberId);
+    if (!member?.user_id) return;
+    // Only revoke if no other org license for same product is assigned to this member
+    const otherAssignments = assignments.filter(a => a.member_id === memberId);
+    const hasOtherLicenseForProduct = otherAssignments.some(a => {
+      const lic = licenses.find(l => l.id === a.license_id);
+      return lic && lic.product === product;
+    });
+    if (!hasOtherLicenseForProduct) {
+      await supabase.from('user_product_access').upsert({
+        user_id: member.user_id,
+        product,
+        access_level: 'free',
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,product' });
+    }
+  };
+
   const assignLicense = async (licenseId: string, memberId: string) => {
     if (!user || !isAdmin) return false;
 
@@ -341,6 +379,8 @@ export const useOrganization = () => {
     const license = licenses.find(l => l.id === licenseId);
     if (license) {
       await supabase.from('org_team_licenses').update({ used_seats: license.used_seats + 1 }).eq('id', licenseId);
+      // Sync product access for the member
+      await syncMemberProductAccess(memberId, license.product, license.access_level);
     }
 
     toast({ title: 'License assigned' });
@@ -362,6 +402,8 @@ export const useOrganization = () => {
       const license = licenses.find(l => l.id === assignment.license_id);
       if (license) {
         await supabase.from('org_team_licenses').update({ used_seats: Math.max(0, license.used_seats - 1) }).eq('id', license.id);
+        // Revoke product access if no other license covers it
+        await revokeMemberProductAccess(assignment.member_id, license.product);
       }
     }
 
