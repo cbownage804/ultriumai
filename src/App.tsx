@@ -603,13 +603,7 @@ function AppRouter() {
         
         
         {/* Protected Routes */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <SuspenseWrapper>
-              <Dashboard />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
+        <Route path="/dashboard" element={<Navigate to="/ai-studio" replace />} />
         <Route path="/dashboard/*" element={
           <ProtectedRoute>
             <SuspenseWrapper>
