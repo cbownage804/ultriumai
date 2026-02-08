@@ -57,7 +57,18 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('recharts') || id.includes('d3-')) return 'charts';
           if (id.includes('@xyflow')) return 'xyflow';
           if (id.includes('framer-motion')) return 'motion';
-          return undefined;
+          if (id.includes('lucide-react')) return 'icons';
+          if (id.includes('@supabase')) return 'supabase';
+          if (id.includes('@radix-ui')) return 'radix';
+          if (id.includes('@tanstack')) return 'tanstack';
+          if (id.includes('date-fns')) return 'datefns';
+          if (id.includes('zod') || id.includes('react-hook-form') || id.includes('@hookform')) return 'forms';
+          if (id.includes('cmdk') || id.includes('sonner') || id.includes('vaul') || id.includes('embla')) return 'ui-libs';
+          if (id.includes('html2canvas') || id.includes('jspdf') || id.includes('jszip') || id.includes('qrcode')) return 'export-libs';
+          if (id.includes('react-markdown') || id.includes('dompurify') || id.includes('react-color')) return 'content-libs';
+          if (id.includes('@hello-pangea') || id.includes('react-resizable-panels') || id.includes('react-dropzone')) return 'interaction-libs';
+          if (id.includes('@capacitor')) return 'capacitor';
+          return 'vendor';
         },
       },
     },
