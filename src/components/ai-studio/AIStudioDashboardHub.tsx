@@ -40,11 +40,12 @@ export const AIStudioDashboardHub = () => {
     if (!user?.id) return;
     const fetchStats = async () => {
       try {
-        const [gptsRes, agentsRes, creditsRes, ledgerRes] = await Promise.all([
+        const [gptsRes, agentsRes, creditsRes, ledgerRes, appsRes] = await Promise.all([
           supabase.from("custom_gpts").select("id, name, updated_at", { count: "exact" }).eq("user_id", user.id).order("updated_at", { ascending: false }).limit(5),
           supabase.from("ai_agents").select("id, name, updated_at", { count: "exact" }).eq("user_id", user.id).order("updated_at", { ascending: false }).limit(5),
           supabase.from("org_credits").select("credits_remaining, credits_used_this_period").eq("user_id", user.id).single(),
           supabase.from("ai_credit_ledger").select("id, usage_type, credits_used, description, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(8),
+          supabase.from("builder_projects").select("id", { count: "exact" }).eq("user_id", user.id),
         ]);
 
         const activity: ActivityItem[] = [];
@@ -55,7 +56,7 @@ export const AIStudioDashboardHub = () => {
 
         setStats({
           totalGpts: gptsRes.count || 0,
-          totalApps: 0, // App builder projects are localStorage-based
+          totalApps: appsRes.count || 0,
           totalAgents: agentsRes.count || 0,
           creditsRemaining: creditsRes.data?.credits_remaining || 0,
           creditsUsed: creditsRes.data?.credits_used_this_period || 0,
@@ -72,15 +73,15 @@ export const AIStudioDashboardHub = () => {
 
   const quickActions = [
     { label: "New GPT", icon: Bot, color: "text-violet-400", bg: "bg-violet-500/10", route: "/dashboard/gpt/build" },
-    { label: "App Builder", icon: Code2, color: "text-cyan-400", bg: "bg-cyan-500/10", route: "/ai-studio/app-builder" },
+    { label: "My Projects", icon: Code2, color: "text-cyan-400", bg: "bg-cyan-500/10", route: "/ai-studio/projects" },
     { label: "New Agent", icon: Zap, color: "text-amber-400", bg: "bg-amber-500/10", route: "/ai-studio/agents/new" },
     { label: "Analytics", icon: BarChart3, color: "text-emerald-400", bg: "bg-emerald-500/10", route: "/dashboard/analytics" },
   ];
 
   const statCards = [
     { label: "Custom GPTs", value: stats.totalGpts, icon: Bot, color: "text-violet-400" },
+    { label: "App Projects", value: stats.totalApps, icon: Code2, color: "text-cyan-400" },
     { label: "AI Agents", value: stats.totalAgents, icon: Zap, color: "text-amber-400" },
-    { label: "Credits Used", value: stats.creditsUsed.toLocaleString(), icon: TrendingUp, color: "text-cyan-400" },
     { label: "Credits Left", value: stats.creditsRemaining.toLocaleString(), icon: Activity, color: "text-emerald-400" },
   ];
 
