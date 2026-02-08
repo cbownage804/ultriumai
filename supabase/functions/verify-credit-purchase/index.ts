@@ -1,13 +1,13 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, details?: any) => {
+const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[VERIFY-CREDIT-PURCHASE] ${step}${detailsStr}`);
 };
@@ -44,7 +44,7 @@ serve(async (req) => {
     if (!sessionId) throw new Error("Session ID is required");
     logStep("Session ID provided", { sessionId });
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
     // Retrieve the checkout session
     const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -70,12 +70,12 @@ serve(async (req) => {
       throw new Error("Invalid credits amount in session metadata");
     }
 
-    logStep("Payment verified, adding credits", { creditsToAdd });
+    logStep("Payment verified, adding bonus credits", { creditsToAdd });
 
-    // Add credits to user account
+    // Get current bonus credits
     const { data: currentCredits, error: fetchError } = await supabaseClient
       .from('user_credits')
-      .select('credits_used, credits_limit')
+      .select('bonus_credits')
       .eq('user_id', user.id)
       .single();
 
@@ -84,13 +84,13 @@ serve(async (req) => {
       throw new Error("Failed to fetch current credits");
     }
 
-    // Update the credit limit by adding purchased credits
-    const newCreditLimit = (currentCredits.credits_limit || 0) + creditsToAdd;
+    // Add to bonus_credits (purchased credits that never expire)
+    const newBonusCredits = (currentCredits.bonus_credits || 0) + creditsToAdd;
     
     const { error: updateError } = await supabaseClient
       .from('user_credits')
       .update({ 
-        credits_limit: newCreditLimit,
+        bonus_credits: newBonusCredits,
         updated_at: new Date().toISOString()
       })
       .eq('user_id', user.id);
@@ -100,16 +100,30 @@ serve(async (req) => {
       throw new Error("Failed to update credits");
     }
 
-    logStep("Credits successfully added", { 
+    // Log the purchase in credit_history
+    try {
+      await supabaseClient
+        .from('credit_history')
+        .insert({
+          user_id: user.id,
+          credits_amount: creditsToAdd,
+          action_type: 'purchase',
+          description: `Purchased ${creditsToAdd} bonus credits`
+        });
+    } catch (historyError) {
+      logStep("Warning: Failed to log credit history", { error: historyError });
+    }
+
+    logStep("Bonus credits successfully added", { 
       userId: user.id, 
       creditsAdded: creditsToAdd,
-      newCreditLimit: newCreditLimit
+      newBonusCredits
     });
 
     return new Response(JSON.stringify({ 
       success: true, 
       creditsAdded: creditsToAdd,
-      newCreditLimit: newCreditLimit
+      newBonusCredits
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
