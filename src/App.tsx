@@ -16,6 +16,7 @@ import CookieConsent from '@/components/CookieConsent';
 import { isVanguardDomain, isSafeSuiteDomain } from '@/utils/subdomain';
 import { AIStudioCTABanner } from '@/components/marketing/AIStudioCTABanner';
 import { AIStudioCommandPalette } from '@/components/ai-studio/AIStudioCommandPalette';
+import { MaintenanceBanner } from '@/components/MaintenanceBanner';
 
 import { VanguardLayout } from '@/components/vanguard/VanguardLayout';
 import { getVanguardProtectedRoutes, getVanguardPublicRoutes } from '@/routes/vanguardRoutes';
@@ -965,6 +966,7 @@ export default function App() {
             <NotificationProvider>
               <VoiceAssistantProvider>
                 <Router>
+                  <MaintenanceBanner />
                   <AppRouter />
                   <ShadcnToaster />
                   <SonnerToaster />
