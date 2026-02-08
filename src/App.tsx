@@ -155,6 +155,7 @@ const PublicGPTEmbed = lazy(() => import('@/pages/PublicGPTEmbed'));
 const ReferralProgram = lazy(() => import('@/pages/ReferralProgram'));
 const ChangelogPage = lazy(() => import('@/pages/ChangelogPage'));
 const FeatureRequestBoard = lazy(() => import('@/pages/FeatureRequestBoard'));
+const GuidePage = lazy(() => import('@/pages/GuidePage'));
 const OrganizationManagement = lazy(() => import('@/pages/OrganizationManagement'));
 const OrgAcceptInvite = lazy(() => import('@/pages/OrgAcceptInvite'));
 
@@ -304,6 +305,7 @@ function AppRouter() {
         <Route path="/install" element={<SuspenseWrapper><InstallPage /></SuspenseWrapper>} />
         <Route path="/changelog" element={<SuspenseWrapper><ChangelogPage /></SuspenseWrapper>} />
         <Route path="/feedback" element={<SuspenseWrapper><FeatureRequestBoard /></SuspenseWrapper>} />
+        <Route path="/guide" element={<SuspenseWrapper><GuidePage /></SuspenseWrapper>} />
         <Route path="/organization" element={
           <ProtectedRoute>
             <SuspenseWrapper><OrganizationManagement /></SuspenseWrapper>

@@ -228,6 +228,21 @@ export const HelpCenter = () => {
           </SheetDescription>
         </SheetHeader>
 
+        {/* Full Guide Link */}
+        <a
+          href="/guide"
+          className="mt-4 flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20 hover:bg-primary/10 transition-colors group"
+        >
+          <div className="p-2 rounded-lg bg-primary/10">
+            <BookOpen className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-sm">Full Platform Guide</p>
+            <p className="text-xs text-muted-foreground">Comprehensive how-to for every feature</p>
+          </div>
+          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+        </a>
+
         <Tabs defaultValue="tours" className="mt-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="tours" className="gap-2">
