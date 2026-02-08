@@ -11,7 +11,7 @@ export interface UserProfile {
 }
 
 export interface UserRole {
-  role: 'user' | 'msp_admin' | 'mssp_admin' | 'ultrium_admin' | 'admin' | 'moderator';
+  role: 'user' | 'msp_admin' | 'mssp_admin' | 'ultrium_admin' | 'admin' | 'moderator' | 'org_admin';
 }
 
 export const useRoleBasedRedirect = () => {

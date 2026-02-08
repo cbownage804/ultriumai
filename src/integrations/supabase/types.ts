@@ -34553,6 +34553,7 @@ export type Database = {
         | "msp_admin"
         | "mssp_admin"
         | "ultrium_admin"
+        | "org_admin"
       command_status: "queued" | "running" | "done" | "error" | "expired"
       device_status: "online" | "offline" | "stale" | "unknown"
       helpdesk_role: "msp_admin" | "msp_staff" | "client_admin" | "client_staff"
@@ -34694,6 +34695,7 @@ export const Constants = {
         "msp_admin",
         "mssp_admin",
         "ultrium_admin",
+        "org_admin",
       ],
       command_status: ["queued", "running", "done", "error", "expired"],
       device_status: ["online", "offline", "stale", "unknown"],
