@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import type { VersionSnapshot } from '@/hooks/useAIAppBuilder';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import { formatDistanceToNow } from 'date-fns';
+import { EmptyState, EMPTY_STATES } from './EmptyStates';
 
 interface VersionHistoryPanelProps {
   versions: VersionSnapshot[];

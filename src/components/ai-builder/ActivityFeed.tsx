@@ -3,6 +3,7 @@ import { Clock, FileCode, Rocket, GitBranch, Bot, Undo2, Save, X } from 'lucide-
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { motion, AnimatePresence } from 'framer-motion';
+import { EmptyState, EMPTY_STATES } from './EmptyStates';
 
 export interface ActivityEntry {
   id: string;
@@ -69,7 +70,7 @@ export function ActivityFeed({ open, onClose, entries }: ActivityFeedProps) {
         <ScrollArea className="flex-1">
           <div className="p-2 space-y-0.5">
             {entries.length === 0 ? (
-              <div className="text-center text-xs text-white/15 py-8">No activity yet</div>
+              <EmptyState {...EMPTY_STATES.activity} />
             ) : (
               entries.map((entry) => {
                 const Icon = ICONS[entry.type];

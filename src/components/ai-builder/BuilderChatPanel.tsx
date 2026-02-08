@@ -7,6 +7,8 @@ import {
   Crosshair,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from '@/hooks/useAIAppBuilder';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
@@ -299,8 +301,11 @@ export function BuilderChatPanel({
         {!isStreaming && isLast && msg.suggestions && msg.suggestions.length > 0 && (
           <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.04] mt-3">
             {msg.suggestions.map((suggestion, i) => (
-              <button
+              <motion.button
                 key={i}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.07, type: 'spring', stiffness: 300, damping: 20 }}
                 onClick={() => {
                   if (suggestion.includes('→')) {
                     onModeChange('build');
@@ -311,7 +316,7 @@ export function BuilderChatPanel({
                 className="text-[11px] px-2.5 py-1 rounded-full border border-white/[0.08] text-white/50 hover:text-white/80 hover:border-cyan-500/30 hover:bg-cyan-500/[0.05] transition-all"
               >
                 {suggestion}
-              </button>
+              </motion.button>
             ))}
           </div>
         )}
@@ -338,23 +343,33 @@ export function BuilderChatPanel({
             />
           )}
           {versions.length > 0 && (
-            <button
-              onClick={() => setShowHistory(!showHistory)}
-              className={cn(
-                "h-6 w-6 rounded-md flex items-center justify-center transition-colors",
-                showHistory ? "text-cyan-400 bg-cyan-500/10" : "text-white/25 hover:text-white/50 hover:bg-white/5"
-              )}
-            >
-              <History className="h-3 w-3" />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setShowHistory(!showHistory)}
+                  className={cn(
+                    "h-6 w-6 rounded-md flex items-center justify-center transition-colors",
+                    showHistory ? "text-cyan-400 bg-cyan-500/10" : "text-white/25 hover:text-white/50 hover:bg-white/5"
+                  )}
+                >
+                  <History className="h-3 w-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Version History</TooltipContent>
+            </Tooltip>
           )}
           {messages.length > 0 && (
-            <button
-              onClick={onClear}
-              className="h-6 w-6 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors"
-            >
-              <Trash2 className="h-3 w-3" />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onClear}
+                  className="h-6 w-6 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Clear chat</TooltipContent>
+            </Tooltip>
           )}
         </div>
       </div>
@@ -576,7 +591,7 @@ export function BuilderChatPanel({
       )}
 
       {/* Quick Actions + Context Indicator + Mode Toggle + Input */}
-      <div className="p-3 border-t border-white/[0.06] shrink-0 space-y-2">
+      <div className="p-3 border-t border-white/[0.06] shrink-0 space-y-2" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
         {/* Quick action chips */}
         {messages.length > 0 && fileCount > 0 && !isGenerating && (
           <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
@@ -627,13 +642,17 @@ export function BuilderChatPanel({
         <div data-tour="chat-input" className="rounded-xl border border-white/[0.08] bg-white/[0.03] focus-within:border-cyan-500/30 transition-colors overflow-hidden">
           <div className="flex items-end gap-2 px-3 py-2.5">
             {/* Image upload button */}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors shrink-0"
-              title="Upload reference image"
-            >
-              <ImagePlus className="h-3.5 w-3.5" />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors shrink-0"
+                >
+                  <ImagePlus className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">Upload reference image</TooltipContent>
+            </Tooltip>
             <input
               ref={fileInputRef}
               type="file"
@@ -644,19 +663,23 @@ export function BuilderChatPanel({
 
             {/* Visual Edit toggle — Lovable style */}
             {onToggleVisualEdit && fileCount > 0 && (
-              <button
-                onClick={onToggleVisualEdit}
-                className={cn(
-                  "h-7 px-2 rounded-lg flex items-center gap-1.5 text-[11px] transition-all shrink-0 border",
-                  isVisualEditActive
-                    ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/30"
-                    : "text-white/20 hover:text-white/50 hover:bg-white/5 border-transparent"
-                )}
-                title="Visual Edit Mode"
-              >
-                <Crosshair className="h-3 w-3" />
-                <span className="hidden sm:inline">Edit</span>
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onToggleVisualEdit}
+                    className={cn(
+                      "h-7 px-2 rounded-lg flex items-center gap-1.5 text-[11px] transition-all shrink-0 border",
+                      isVisualEditActive
+                        ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/30"
+                        : "text-white/20 hover:text-white/50 hover:bg-white/5 border-transparent"
+                    )}
+                  >
+                    <Crosshair className="h-3 w-3" />
+                    <span className="hidden sm:inline">Edit</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">Visual Edit Mode</TooltipContent>
+              </Tooltip>
             )}
 
             <textarea
