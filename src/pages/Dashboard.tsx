@@ -5,7 +5,7 @@ import { SubscriptionRenewalNotice } from '@/components/SubscriptionRenewalNotic
 import { GracePeriodManager } from '@/components/GracePeriodManager';
 import { HelpBanner } from '@/components/HelpBanner';
 
-import ProfilePage from "@/pages/ProfilePage";
+import Profile from "@/pages/Profile";
 import CustomGPTBuild from "@/components/CustomGPTBuild";
 import CustomGPTPersonalize from "@/components/CustomGPTPersonalize";
 import CustomGPTDeploy from "@/components/CustomGPTDeploy";
@@ -137,7 +137,7 @@ const Dashboard = () => {
     if (isGPTDashboard) return <GPTDashboard />;
     if (isChatPage) return <ChatInterface />;
     
-    if (isProfilePage) return <ProfilePage />;
+    if (isProfilePage) return <Profile />;
     if (isHistoryPage) return <ConversationHistory />;
     if (isCustomGPTBuildPage) return <div className="p-6"><CustomGPTBuild /></div>;
     if (isCustomGPTPersonalizePage) return <div className="p-6"><CustomGPTPersonalize /></div>;

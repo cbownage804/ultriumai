@@ -24,7 +24,7 @@ const GlobalBreadcrumbs = lazy(() => import('@/components/GlobalBreadcrumbs').th
 // Lazy-loaded layouts (heavy dependency trees)
 const VanguardLayout = lazy(() => import('@/components/vanguard/VanguardLayout').then(m => ({ default: m.VanguardLayout })));
 const SafeSuiteLayout = lazy(() => import('@/layouts/SafeSuiteLayout'));
-const SafePassLayout = lazy(() => import('@/layouts/SafePassLayout'));
+// SafePassLayout removed - standalone safepass redirects to safesuite
 
 import { getVanguardProtectedRoutes, getVanguardPublicRoutes } from '@/routes/vanguardRoutes';
 import { PageSkeleton, LoadingSpinner } from '@/components/ui/PageSkeleton';
@@ -51,7 +51,7 @@ const AIWorkflowsPage = lazy(() => import('@/pages/AIWorkflowsPage'));
 const AIAppBuilderWorkspacePage = lazy(() => import('@/pages/AIAppBuilderWorkspacePage'));
 const AIStudioProjectsPage = lazy(() => import('@/pages/AIStudioProjectsPage'));
 const Profile = lazy(() => import('@/pages/Profile'));
-const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
+// ProfilePage removed - use Profile
 
 // Lazy-loaded - Vanguard pages
 const VanguardDashboard = lazy(() => import('@/pages/VanguardDashboard'));
@@ -62,11 +62,7 @@ const UltriumVanguard = lazy(() => import('@/pages/UltriumVanguard'));
 const VanguardAuthPage = lazy(() => import('@/pages/vanguard/VanguardAuthPage'));
 
 // Lazy-loaded - MSP pages
-const MSPDashboardPage = lazy(() => import('@/pages/MSPDashboardPage'));
-const MSPSecurityDashboard = lazy(() => import('@/pages/MSPSecurityDashboard'));
-const MSPBillingPage = lazy(() => import('@/pages/MSPBillingPage'));
-const MSPReportingPage = lazy(() => import('@/pages/MSPReportingPage'));
-const MSPOnboardingPage = lazy(() => import('@/pages/MSPOnboardingPage'));
+// MSP pages removed - redirects in routes
 
 // Lazy-loaded - SafeSuite pages
 const SafeSuiteLanding = lazy(() => import('@/pages/safesuite/SafeSuiteLanding'));
@@ -96,24 +92,16 @@ const SafeWebProduct = lazy(() => import('@/pages/safesuite/products/SafeWebProd
 const SafeTrackProduct = lazy(() => import('@/pages/safesuite/products/SafeTrackProduct'));
 const SafeSuiteFeatures = lazy(() => import('@/pages/safesuite/SafeSuiteFeatures'));
 
-// Lazy-loaded - SafePass Standalone
-const SafePassLanding = lazy(() => import('@/pages/safepass/SafePassLanding'));
-const SafePassAuth = lazy(() => import('@/pages/safepass/SafePassAuth'));
-const SafePassAppDashboard = lazy(() => import('@/pages/safepass/SafePassDashboard'));
-const SafePassImport = lazy(() => import('@/pages/safepass/SafePassImport'));
-const SafePassExport = lazy(() => import('@/pages/safepass/SafePassExport'));
-const SafePassSecurity = lazy(() => import('@/pages/safepass/SafePassSecurity'));
-const SafePassBreachMonitor = lazy(() => import('@/pages/safepass/SafePassBreachMonitor'));
+// SafePass standalone removed - redirects in routes
 
 // Lazy-loaded - Marketing/Public pages
 const Pricing = lazy(() => import('@/pages/Pricing'));
-const MSPPricing = lazy(() => import('@/pages/MSPPricing'));
+// MSPPricing removed
 const AIStudioPricing = lazy(() => import('@/pages/pricing/AIStudioPricing'));
 const SafeSuitePricing = lazy(() => import('@/pages/pricing/SafeSuitePricing'));
 const VanguardPricing = lazy(() => import('@/pages/pricing/VanguardPricing'));
 const CustomAppsPricing = lazy(() => import('@/pages/pricing/CustomAppsPricing'));
-const Solutions = lazy(() => import('@/pages/Solutions'));
-const LiveDemos = lazy(() => import('@/pages/LiveDemos'));
+// Solutions/LiveDemos removed
 const ProductsPage = lazy(() => import('@/pages/ProductsPage'));
 const Docs = lazy(() => import('@/pages/Docs'));
 const SafeSuiteKnowledgeBase = lazy(() => import('@/pages/docs/SafeSuiteKnowledgeBase'));
@@ -122,27 +110,15 @@ const Terms = lazy(() => import('@/pages/Terms'));
 const Privacy = lazy(() => import('@/pages/Privacy'));
 const Security = lazy(() => import('@/pages/Security'));
 const SecurityPolicy = lazy(() => import('@/pages/SecurityPolicy'));
-const MSPs = lazy(() => import('@/pages/MSPs'));
-const MSSPs = lazy(() => import('@/pages/MSSPs'));
-const Contact = lazy(() => import('@/pages/Contact'));
-const About = lazy(() => import('@/pages/About'));
-const Features = lazy(() => import('@/pages/Features'));
-const Blog = lazy(() => import('@/pages/Blog'));
-const Documentation = lazy(() => import('@/pages/Documentation'));
+// Marketing pages removed
 const CreditsPurchase = lazy(() => import('@/pages/CreditsPurchase'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const NotificationPreferencesPage = lazy(() => import('@/pages/NotificationPreferencesPage'));
 const InstallPage = lazy(() => import('@/pages/InstallPage'));
-const StatusPage = lazy(() => import('@/pages/StatusPage'));
+// StatusPage removed
 const APIDocsPage = lazy(() => import('@/pages/APIDocsPage'));
 
-// Lazy-loaded - Demo pages
-const SafeScanDemoPage = lazy(() => import('@/pages/demos/SafeScanDemoPage'));
-const SafePassDemoPage = lazy(() => import('@/pages/demos/SafePassDemoPage'));
-const VanguardDemoPage = lazy(() => import('@/pages/demos/VanguardDemoPage'));
-const AIStudioDemoPage = lazy(() => import('@/pages/demos/AIStudioDemoPage'));
-const CustomGPTBuilderDemoPage = lazy(() => import('@/pages/demos/CustomGPTBuilderDemoPage'));
-const DarkWebDemoPage = lazy(() => import('@/pages/demos/DarkWebDemoPage'));
+// Demo pages removed
 
 // Lazy-loaded - Product pages
 const AIStudioProductPage = lazy(() => import('@/pages/products/AIStudioProductPage'));
@@ -162,20 +138,12 @@ const OnboardingFlow = lazy(() => import('@/components/OnboardingFlow'));
 const SafeShieldApp = lazy(() => import('@/components/apps/SafeShieldApp').then(m => ({ default: m.SafeShieldApp })));
 const SafeShieldDashboard = lazy(() => import('@/components/shield/SafeShieldDashboard').then(m => ({ default: m.SafeShieldDashboard })));
 const TemplateTestSuite = lazy(() => import('@/components/gpt/TemplateTestSuite'));
-const BusinessBillingPage = lazy(() => import('@/pages/BusinessBillingPage'));
-const BusinessBilling = lazy(() => import('@/pages/BusinessBilling'));
+// BusinessBilling pages removed
 const PaymentSuccess = lazy(() => import('@/pages/PaymentSuccess'));
 const PaymentCancel = lazy(() => import('@/pages/PaymentCancel'));
 const CustomerPortal = lazy(() => import('@/pages/CustomerPortal').then(m => ({ default: m.CustomerPortal })));
 const ClientLogin = lazy(() => import('@/pages/ClientLogin').then(m => ({ default: m.ClientLogin })));
-const AssetManagementPage = lazy(() => import('@/pages/AssetManagementPage'));
-const PatchManagementPage = lazy(() => import('@/pages/PatchManagementPage'));
-const RemoteAccessPage = lazy(() => import('@/pages/RemoteAccessPage'));
-const MonitoringPage = lazy(() => import('@/pages/MonitoringPage'));
-const TicketManagementPage = lazy(() => import('@/pages/TicketManagementPage'));
-const ClientPortalPage = lazy(() => import('@/pages/ClientPortalPage'));
-const BillingPage = lazy(() => import('@/pages/BillingPage'));
-const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
+// Standalone management pages removed - now in Vanguard
 const HelpdeskFeedback = lazy(() => import('@/pages/helpdesk/HelpdeskFeedback'));
 const SurveyPage = lazy(() => import('@/pages/SurveyPage'));
 const ClientPortalDashboard = lazy(() => import('@/pages/client/ClientPortalDashboard'));
@@ -314,15 +282,15 @@ function AppRouter() {
         <Route path="/pricing/safesuite" element={<SuspenseWrapper variant="cards"><SafeSuitePricing /></SuspenseWrapper>} />
         <Route path="/pricing/vanguard" element={<SuspenseWrapper variant="cards"><VanguardPricing /></SuspenseWrapper>} />
         <Route path="/pricing/custom-apps" element={<SuspenseWrapper variant="cards"><CustomAppsPricing /></SuspenseWrapper>} />
-        <Route path="/msp-pricing" element={<SuspenseWrapper variant="cards"><MSPPricing /></SuspenseWrapper>} />
-        <Route path="/contact" element={<SuspenseWrapper variant="form"><Contact /></SuspenseWrapper>} />
-        <Route path="/about" element={<SuspenseWrapper><About /></SuspenseWrapper>} />
-        <Route path="/features" element={<SuspenseWrapper><Features /></SuspenseWrapper>} />
+        <Route path="/msp-pricing" element={<Navigate to="/pricing/vanguard" replace />} />
+        <Route path="/contact" element={<Navigate to="/vanguard" replace />} />
+        <Route path="/about" element={<Navigate to="/vanguard" replace />} />
+        <Route path="/features" element={<Navigate to="/products" replace />} />
         <Route path="/credits" element={<SuspenseWrapper><CreditsPurchase /></SuspenseWrapper>} />
         <Route path="/terms" element={<SuspenseWrapper><Terms /></SuspenseWrapper>} />
         <Route path="/privacy" element={<SuspenseWrapper><Privacy /></SuspenseWrapper>} />
         <Route path="/security" element={<SuspenseWrapper><SecurityPolicy /></SuspenseWrapper>} />
-        <Route path="/status" element={<SuspenseWrapper><StatusPage /></SuspenseWrapper>} />
+        <Route path="/status" element={<Navigate to="/vanguard" replace />} />
         <Route path="/api-docs" element={<SuspenseWrapper variant="detail"><APIDocsPage /></SuspenseWrapper>} />
         <Route path="/install" element={<SuspenseWrapper><InstallPage /></SuspenseWrapper>} />
         <Route path="/notifications/preferences" element={
@@ -358,7 +326,7 @@ function AppRouter() {
         <Route path="/small-business" element={<Navigate to="/products" replace />} />
         <Route path="/medium-business" element={<Navigate to="/products" replace />} />
         <Route path="/enterprise" element={<Navigate to="/products" replace />} />
-        <Route path="/msps" element={<SuspenseWrapper><MSPs /></SuspenseWrapper>} />
+        <Route path="/msps" element={<Navigate to="/products/vanguard" replace />} />
         <Route path="/ai-studio/msps" element={<Navigate to="/msps" replace />} />
         <Route path="/ai-studio-for-msps" element={<Navigate to="/msps" replace />} />
         <Route path="/msp-solutions" element={<Navigate to="/msps" replace />} />
@@ -368,27 +336,9 @@ function AppRouter() {
         <Route path="/quickbooks-dashboard" element={<Navigate to="/hub" replace />} />
         <Route path="/psa-ticketing" element={<Navigate to="/hub" replace />} />
         <Route path="/rmm-scripts" element={<Navigate to="/hub" replace />} />
-        <Route path="/msp-onboarding" element={
-          <SubscriptionProtectedRoute requiresPremium>
-            <SuspenseWrapper variant="form">
-              <MSPOnboardingPage />
-            </SuspenseWrapper>
-          </SubscriptionProtectedRoute>
-        } />
-        <Route path="/msp-billing" element={
-          <SubscriptionProtectedRoute requiresPremium>
-            <SuspenseWrapper>
-              <MSPBillingPage />
-            </SuspenseWrapper>
-          </SubscriptionProtectedRoute>
-        } />
-        <Route path="/msp-reporting" element={
-          <SubscriptionProtectedRoute requiresPremium>
-            <SuspenseWrapper>
-              <MSPReportingPage />
-            </SuspenseWrapper>
-          </SubscriptionProtectedRoute>
-        } />
+        <Route path="/msp-onboarding" element={<Navigate to="/vanguard/app/dashboard" replace />} />
+        <Route path="/msp-billing" element={<Navigate to="/vanguard/app/billing" replace />} />
+        <Route path="/msp-reporting" element={<Navigate to="/vanguard/app/reports" replace />} />
         
         {/* Client Portal Routes */}
         <Route path="/client" element={<SuspenseWrapper><ClientPortalDashboard /></SuspenseWrapper>} />
@@ -411,45 +361,27 @@ function AppRouter() {
         {/* Helpdesk Feedback Route (Public - for email links) */}
         <Route path="/helpdesk/feedback" element={<SuspenseWrapper variant="form"><HelpdeskFeedback /></SuspenseWrapper>} />
         
-        <Route path="/mssps" element={<SuspenseWrapper><MSSPs /></SuspenseWrapper>} />
-        <Route path="/solutions" element={<SuspenseWrapper><Solutions /></SuspenseWrapper>} />
-        <Route path="/demos" element={<SuspenseWrapper variant="cards"><LiveDemos /></SuspenseWrapper>} />
+        <Route path="/mssps" element={<Navigate to="/products/vanguard" replace />} />
+        <Route path="/solutions" element={<Navigate to="/products" replace />} />
+        <Route path="/demos" element={<Navigate to="/products" replace />} />
         <Route path="/portfolio" element={<Navigate to="/products" replace />} />
         <Route path="/products" element={<SuspenseWrapper variant="cards"><ProductsPage /></SuspenseWrapper>} />
         <Route path="/msp-demos" element={<Navigate to="/products" replace />} />
-        <Route path="/msp-control-center" element={
-          <SubscriptionProtectedRoute requiresPremium>
-            <SuspenseWrapper>
-              <MSPDashboardPage />
-            </SuspenseWrapper>
-          </SubscriptionProtectedRoute>
-        } />
-        <Route path="/msp-security-dashboard" element={
-          <SubscriptionProtectedRoute requiresPremium>
-            <SuspenseWrapper>
-              <MSPSecurityDashboard />
-            </SuspenseWrapper>
-          </SubscriptionProtectedRoute>
-        } />
-        <Route path="/msp-dashboard" element={
-          <SubscriptionProtectedRoute requiresPremium>
-            <SuspenseWrapper>
-              <MSPDashboardPage />
-            </SuspenseWrapper>
-          </SubscriptionProtectedRoute>
-        } />
+        <Route path="/msp-control-center" element={<Navigate to="/vanguard/app/dashboard" replace />} />
+        <Route path="/msp-security-dashboard" element={<Navigate to="/vanguard/app/dashboard" replace />} />
+        <Route path="/msp-dashboard" element={<Navigate to="/vanguard/app/dashboard" replace />} />
         {/* Public Documentation - accessible without auth */}
         <Route path="/docs" element={<SuspenseWrapper variant="detail"><Docs /></SuspenseWrapper>} />
         <Route path="/docs/safesuite" element={<SuspenseWrapper variant="detail"><SafeSuiteKnowledgeBase /></SuspenseWrapper>} />
         <Route path="/docs/ai-studio" element={<SuspenseWrapper variant="detail"><AIStudioKnowledgeBase /></SuspenseWrapper>} />
-        <Route path="/demos/safescan" element={<SuspenseWrapper><SafeScanDemoPage /></SuspenseWrapper>} />
-        <Route path="/demos/safepass" element={<SuspenseWrapper><SafePassDemoPage /></SuspenseWrapper>} />
-        <Route path="/demos/ai-studio" element={<SuspenseWrapper><AIStudioDemoPage /></SuspenseWrapper>} />
+        <Route path="/demos/safescan" element={<Navigate to="/products/safesuite" replace />} />
+        <Route path="/demos/safepass" element={<Navigate to="/products/safesuite" replace />} />
+        <Route path="/demos/ai-studio" element={<Navigate to="/products/ai-studio" replace />} />
         {/* Legacy redirect */}
-        <Route path="/demos/ultriumgpt" element={<Navigate to="/demos/ai-studio" replace />} />
-        <Route path="/demos/custom-gpt-builder" element={<SuspenseWrapper><CustomGPTBuilderDemoPage /></SuspenseWrapper>} />
-        <Route path="/demos/vanguard" element={<SuspenseWrapper><VanguardDemoPage /></SuspenseWrapper>} />
-        <Route path="/demos/darkweb" element={<SuspenseWrapper><DarkWebDemoPage /></SuspenseWrapper>} />
+        <Route path="/demos/ultriumgpt" element={<Navigate to="/products/ai-studio" replace />} />
+        <Route path="/demos/custom-gpt-builder" element={<Navigate to="/products/ai-studio" replace />} />
+        <Route path="/demos/vanguard" element={<Navigate to="/products/vanguard" replace />} />
+        <Route path="/demos/darkweb" element={<Navigate to="/products/vanguard" replace />} />
         <Route path="/demos/safeintel" element={<Navigate to="/demos/darkweb" replace />} />
         
         {/* Redirect deprecated demo routes to active products */}
@@ -555,13 +487,7 @@ function AppRouter() {
             </SuspenseWrapper>
           </ProtectedRoute>
         } />
-        <Route path="/profile-old" element={
-          <ProtectedRoute>
-            <SuspenseWrapper variant="form">
-              <ProfilePage />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
+        <Route path="/profile-old" element={<Navigate to="/profile" replace />} />
         <Route path="/admin" element={
           <ProtectedRoute>
             <SuspenseWrapper>
@@ -683,74 +609,20 @@ function AppRouter() {
             </SuspenseWrapper>
           </ProtectedRoute>
         } />
-        <Route path="/safetrack" element={<Navigate to="/vanguard/assets" replace />} />
-        <Route path="/dashboard/msp/billing" element={
-          <SubscriptionProtectedRoute requiresPremium>
-            <SuspenseWrapper>
-              <MSPBillingPage />
-            </SuspenseWrapper>
-          </SubscriptionProtectedRoute>
-        } />
-        <Route path="/business-billing" element={
-          <ProtectedRoute>
-            <SuspenseWrapper>
-              <BusinessBilling />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
-        <Route path="/assets" element={
-          <ProtectedRoute>
-            <SuspenseWrapper variant="list">
-              <AssetManagementPage />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
-        <Route path="/patches" element={
-          <ProtectedRoute>
-            <SuspenseWrapper variant="list">
-              <PatchManagementPage />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
-        <Route path="/remote-access" element={
-          <ProtectedRoute>
-            <SuspenseWrapper>
-              <RemoteAccessPage />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
-        <Route path="/monitoring" element={
-          <ProtectedRoute>
-            <SuspenseWrapper>
-              <MonitoringPage />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
-        <Route path="/tickets" element={
-          <ProtectedRoute>
-            <SuspenseWrapper variant="list">
-              <TicketManagementPage />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
-        <Route path="/client-portal" element={
-          <ProtectedRoute>
-            <SuspenseWrapper>
-              <ClientPortalPage />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
-        <Route path="/billing" element={
-          <ProtectedRoute>
-            <SuspenseWrapper>
-              <BillingPage />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
+        <Route path="/safetrack" element={<Navigate to="/vanguard/app/assets" replace />} />
+        <Route path="/dashboard/msp/billing" element={<Navigate to="/vanguard/app/billing" replace />} />
+        <Route path="/business-billing" element={<Navigate to="/vanguard/app/billing" replace />} />
+        <Route path="/assets" element={<Navigate to="/vanguard/app/assets" replace />} />
+        <Route path="/patches" element={<Navigate to="/vanguard/app/patches" replace />} />
+        <Route path="/remote-access" element={<Navigate to="/vanguard/app/dashboard" replace />} />
+        <Route path="/monitoring" element={<Navigate to="/vanguard/app/dashboard" replace />} />
+        <Route path="/tickets" element={<Navigate to="/vanguard/app/tickets" replace />} />
+        <Route path="/client-portal" element={<Navigate to="/vanguard/app/customers" replace />} />
+        <Route path="/billing" element={<Navigate to="/vanguard/app/billing" replace />} />
         <Route path="/analytics" element={
           <ProtectedRoute>
             <SuspenseWrapper>
-              <AnalyticsPage />
+              <Analytics />
             </SuspenseWrapper>
           </ProtectedRoute>
         } />
@@ -767,15 +639,9 @@ function AppRouter() {
         <Route path="/client-login" element={<SuspenseWrapper><ClientLogin /></SuspenseWrapper>} />
         <Route path="/portal/client/:clientId" element={<SuspenseWrapper><CustomerPortal /></SuspenseWrapper>} />
         
-        {/* SafePass Standalone App Routes */}
-        <Route path="/safepass-app" element={<SuspenseWrapper><SafePassLanding /></SuspenseWrapper>} />
-        <Route path="/safepass-app/auth" element={<SuspenseWrapper><SafePassAuth /></SuspenseWrapper>} />
-        <Route path="/safepass-app/portal" element={<SuspenseWrapper><SafePassLayout /></SuspenseWrapper>}>
-          <Route index element={<SuspenseWrapper><SafePassAppDashboard /></SuspenseWrapper>} />
-          <Route path="import" element={<SuspenseWrapper><SafePassImport /></SuspenseWrapper>} />
-          <Route path="security" element={<SuspenseWrapper><SafePassSecurity /></SuspenseWrapper>} />
-          <Route path="breach-monitor" element={<SuspenseWrapper><SafePassBreachMonitor /></SuspenseWrapper>} />
-        </Route>
+        {/* SafePass Standalone - redirect to SafeSuite */}
+        <Route path="/safepass-app" element={<Navigate to="/safesuite" replace />} />
+        <Route path="/safepass-app/*" element={<Navigate to="/safesuite/pass" replace />} />
         
         {/* SafeSuite Portal Routes */}
         <Route path="/safesuite" element={<SuspenseWrapper><SafeSuiteLanding /></SuspenseWrapper>} />
@@ -795,8 +661,8 @@ function AppRouter() {
           <Route path="/safesuite/pass/shared" element={<SuspenseWrapper><SafePassShared /></SuspenseWrapper>} />
           <Route path="/safesuite/pass/emergency" element={<SuspenseWrapper><SafePassEmergency /></SuspenseWrapper>} />
           <Route path="/safesuite/pass/extension" element={<SuspenseWrapper><SafePassExtension /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/import" element={<SuspenseWrapper><SafePassImport /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/export" element={<SuspenseWrapper><SafePassExport /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/import" element={<Navigate to="/safesuite/pass" replace />} />
+          <Route path="/safesuite/pass/export" element={<Navigate to="/safesuite/pass" replace />} />
           <Route path="/safesuite/pass/reminders" element={<SuspenseWrapper><SafePassReminders /></SuspenseWrapper>} />
           <Route path="/safesuite/pass/breach" element={<SuspenseWrapper><SafePassBreach /></SuspenseWrapper>} />
           <Route path="/safesuite/pass/settings" element={<SuspenseWrapper variant="form"><SafePassSettings /></SuspenseWrapper>} />
