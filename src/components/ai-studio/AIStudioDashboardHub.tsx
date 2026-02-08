@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   Bot, Code2, Zap, ArrowRight, Sparkles, Clock,
-  Activity, ChevronRight, Layers
+  Activity, ChevronRight, Layers, CheckCircle
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -26,6 +28,7 @@ interface ToolCount {
 export const AIStudioDashboardHub = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { subscription } = useSubscription();
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
   const [tools, setTools] = useState<ToolCount>({ gpts: 0, agents: 0, credits: 0 });
   const [loading, setLoading] = useState(true);
@@ -94,6 +97,19 @@ export const AIStudioDashboardHub = () => {
 
   return (
     <div className="space-y-8">
+      {/* Plan Badge */}
+      <div className="flex items-center justify-end gap-2">
+        <Badge variant="outline" className="text-xs px-3 py-1 capitalize border-primary/30">
+          {subscription.subscription_tier || "Free"} Plan
+        </Badge>
+        {subscription.subscribed && (
+          <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-xs px-2 py-1">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Active
+          </Badge>
+        )}
+      </div>
+
       {/* ── 1. Hero App Builder CTA ── */}
       <Card className="overflow-hidden border-0 bg-gradient-to-br from-violet-600/20 via-violet-500/10 to-cyan-500/10 shadow-xl shadow-violet-500/5">
         <CardContent className="p-5 sm:p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center gap-5 md:gap-6">
