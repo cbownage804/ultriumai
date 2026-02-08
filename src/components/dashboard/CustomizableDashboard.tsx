@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { 
   GripVertical, X, Plus, BarChart3, Activity, Shield, 
   Headphones, Bot, Monitor, TrendingUp, Users, Clock
@@ -8,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
 
-// Widget type definitions
 interface DashboardWidget {
   id: string;
   type: string;
@@ -38,17 +38,6 @@ const WIDGET_TEMPLATES: WidgetTemplate[] = [
   { type: 'kpi-response-time', title: 'Avg Response', icon: Clock, description: 'Average ticket response time', defaultSize: 'sm' },
 ];
 
-// Demo KPI data
-const KPI_DATA: Record<string, { value: string; change: string; positive: boolean }> = {
-  'kpi-tickets': { value: '24', change: '-12%', positive: true },
-  'kpi-devices': { value: '847', change: '+3%', positive: true },
-  'kpi-threats': { value: '3', change: '-67%', positive: true },
-  'kpi-users': { value: '156', change: '+8%', positive: true },
-  'kpi-ai-usage': { value: '2,841', change: '+15%', positive: false },
-  'kpi-uptime': { value: '99.97%', change: '+0.02%', positive: true },
-  'kpi-response-time': { value: '14m', change: '-22%', positive: true },
-};
-
 const DEFAULT_WIDGETS: DashboardWidget[] = [
   { id: 'w1', type: 'kpi-tickets', title: 'Open Tickets', size: 'sm' },
   { id: 'w2', type: 'kpi-devices', title: 'Active Devices', size: 'sm' },
@@ -58,8 +47,68 @@ const DEFAULT_WIDGETS: DashboardWidget[] = [
   { id: 'w6', type: 'chart-security', title: 'Security Score', size: 'md' },
 ];
 
-function KPIWidget({ widget }: { widget: DashboardWidget }) {
-  const data = KPI_DATA[widget.type];
+type KPIValue = { value: string; change: string; positive: boolean };
+
+function useLiveKPIs() {
+  const [data, setData] = useState<Record<string, KPIValue>>({});
+  const [ticketTrend, setTicketTrend] = useState<number[]>([]);
+
+  useEffect(() => {
+    const fetchKPIs = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch counts in parallel
+      const [ticketsRes, devicesRes, threatsRes, creditsRes] = await Promise.all([
+        supabase.from('tickets').select('id', { count: 'exact', head: true }).in('status', ['open', 'in_progress', 'new', 'pending']),
+        supabase.from('vanguard_agents').select('id', { count: 'exact', head: true }).eq('status', 'online'),
+        supabase.from('security_events').select('id', { count: 'exact', head: true }).eq('status', 'open').in('severity', ['critical', 'high']),
+        supabase.from('ai_credit_ledger').select('credits_used').eq('user_id', user.id),
+      ]);
+
+      const openTickets = ticketsRes.count ?? 0;
+      const activeDevices = devicesRes.count ?? 0;
+      const activeThreats = threatsRes.count ?? 0;
+      const totalCredits = (creditsRes.data ?? []).reduce((sum, r) => sum + (r.credits_used || 0), 0);
+
+      setData({
+        'kpi-tickets': { value: String(openTickets), change: '', positive: true },
+        'kpi-devices': { value: String(activeDevices), change: '', positive: true },
+        'kpi-threats': { value: String(activeThreats), change: activeThreats === 0 ? 'No threats' : '', positive: activeThreats === 0 },
+        'kpi-users': { value: '—', change: '', positive: true },
+        'kpi-ai-usage': { value: totalCredits.toLocaleString(), change: '', positive: true },
+        'kpi-uptime': { value: '—', change: '', positive: true },
+        'kpi-response-time': { value: '—', change: '', positive: true },
+      });
+
+      // Fetch 7-day ticket trend
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const { data: recentTickets } = await supabase
+        .from('tickets')
+        .select('created_at')
+        .gte('created_at', sevenDaysAgo.toISOString());
+
+      // Group by day of week
+      const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+      (recentTickets ?? []).forEach(t => {
+        const dayIndex = Math.floor((Date.now() - new Date(t.created_at).getTime()) / 86400000);
+        if (dayIndex >= 0 && dayIndex < 7) {
+          dayCounts[6 - dayIndex]++;
+        }
+      });
+      const maxCount = Math.max(...dayCounts, 1);
+      setTicketTrend(dayCounts.map(c => Math.round((c / maxCount) * 100) || 5));
+    };
+
+    fetchKPIs();
+  }, []);
+
+  return { data, ticketTrend };
+}
+
+function KPIWidget({ widget, kpiData }: { widget: DashboardWidget; kpiData: Record<string, KPIValue> }) {
+  const data = kpiData[widget.type];
   const template = WIDGET_TEMPLATES.find(t => t.type === widget.type);
   const Icon = template?.icon || Activity;
 
@@ -67,9 +116,9 @@ function KPIWidget({ widget }: { widget: DashboardWidget }) {
     <div className="flex items-center justify-between">
       <div>
         <p className="text-2xl font-bold text-foreground">{data?.value ?? '—'}</p>
-        {data && (
+        {data?.change && (
           <p className={`text-xs font-medium ${data.positive ? 'text-emerald-500' : 'text-amber-500'}`}>
-            {data.change} vs last period
+            {data.change}
           </p>
         )}
       </div>
@@ -80,11 +129,17 @@ function KPIWidget({ widget }: { widget: DashboardWidget }) {
   );
 }
 
-function ChartWidget({ widget }: { widget: DashboardWidget }) {
-  // Simple sparkline-style bars
-  const bars = [40, 65, 45, 80, 55, 70, 90];
+function ChartWidget({ widget, ticketTrend }: { widget: DashboardWidget; ticketTrend: number[] }) {
+  const bars = ticketTrend.length > 0 ? ticketTrend : [5, 5, 5, 5, 5, 5, 5];
   const template = WIDGET_TEMPLATES.find(t => t.type === widget.type);
   const Icon = template?.icon || BarChart3;
+  const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const today = new Date().getDay(); // 0=Sun
+  const orderedLabels = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = (today - i + 7) % 7;
+    orderedLabels.push(dayLabels[d === 0 ? 6 : d - 1]);
+  }
 
   return (
     <div className="space-y-3">
@@ -102,7 +157,7 @@ function ChartWidget({ widget }: { widget: DashboardWidget }) {
         ))}
       </div>
       <div className="flex justify-between text-[10px] text-muted-foreground">
-        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+        {orderedLabels.map((l, i) => <span key={i}>{l}</span>)}
       </div>
     </div>
   );
@@ -115,6 +170,7 @@ export function CustomizableDashboard() {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const { data: kpiData, ticketTrend } = useLiveKPIs();
 
   const saveWidgets = useCallback((updated: DashboardWidget[]) => {
     setWidgets(updated);
@@ -152,7 +208,6 @@ export function CustomizableDashboard() {
 
   return (
     <div className="space-y-4">
-      {/* Controls */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
         <div className="flex items-center gap-2">
@@ -202,7 +257,6 @@ export function CustomizableDashboard() {
         </div>
       </div>
 
-      {/* Widget Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         {widgets.map(widget => (
           <Card 
@@ -226,9 +280,9 @@ export function CustomizableDashboard() {
             </CardHeader>
             <CardContent className="px-4 pb-3">
               {widget.type.startsWith('chart-') ? (
-                <ChartWidget widget={widget} />
+                <ChartWidget widget={widget} ticketTrend={ticketTrend} />
               ) : (
-                <KPIWidget widget={widget} />
+                <KPIWidget widget={widget} kpiData={kpiData} />
               )}
             </CardContent>
           </Card>
