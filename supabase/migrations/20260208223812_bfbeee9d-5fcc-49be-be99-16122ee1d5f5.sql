@@ -1,0 +1,1 @@
+UPDATE public.vanguard_agents SET client_id = 'e0cd8626-2490-4cae-8ed1-2aa41b439ac6' WHERE id = '053b0bc1-8c03-4250-a479-ef431c960197';
