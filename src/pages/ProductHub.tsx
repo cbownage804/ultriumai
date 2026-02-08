@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ActivityFeedWidget } from '@/components/dashboard/ActivityFeedWidget';
 import { CustomizableDashboard } from '@/components/dashboard/CustomizableDashboard';
+import { HubOnboardingTour } from '@/components/HubOnboardingTour';
 import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
 import safesuiteLogo from '@/assets/safesuite-logo.png';
 import vanguardLogo from '@/assets/vanguard-logo.png';
@@ -269,7 +270,7 @@ export default function ProductHub() {
             <img src={ultraiumAiLogo} alt="UltriumAI" className="h-9 w-auto transition-transform duration-300 group-hover:scale-110" />
             <span className="font-bold text-xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">UltriumAI</span>
           </a>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3" data-tour="hub-search">
             {isAdmin && (
               <Button variant="ghost" size="sm" onClick={() => navigate('/admin')} className="text-amber-500 hover:text-amber-400 hover:bg-amber-500/10">
                 <Settings className="h-4 w-4 mr-2" />
@@ -307,13 +308,16 @@ export default function ProductHub() {
           </p>
         </div>
 
+        {/* Onboarding Tour */}
+        <HubOnboardingTour />
+
         {/* Customizable Dashboard Widgets */}
-        <div className="mb-12">
+        <div className="mb-12" data-tour="hub-dashboard">
           <CustomizableDashboard />
         </div>
 
         {/* Product Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto" data-tour="hub-products">
           {products.map((product, index) => (
             <div key={product.product} className={`animate-fade-in-up stagger-${index + 1}`}>
               <ProductCard {...product} />
@@ -322,7 +326,7 @@ export default function ProductHub() {
         </div>
 
         {/* Activity Feed */}
-        <div className="mt-12 max-w-5xl mx-auto">
+        <div className="mt-12 max-w-5xl mx-auto" data-tour="hub-activity">
           <ActivityFeedWidget />
         </div>
 

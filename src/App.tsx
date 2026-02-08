@@ -16,6 +16,7 @@ import CookieConsent from '@/components/CookieConsent';
 import { isVanguardDomain, isSafeSuiteDomain } from '@/utils/subdomain';
 import { AIStudioCTABanner } from '@/components/marketing/AIStudioCTABanner';
 import { GlobalCommandPalette } from '@/components/GlobalCommandPalette';
+import { GlobalKeyboardShortcuts } from '@/components/GlobalKeyboardShortcuts';
 import { GlobalBreadcrumbs } from '@/components/GlobalBreadcrumbs';
 import { MaintenanceBanner } from '@/components/MaintenanceBanner';
 
@@ -932,6 +933,9 @@ function AppRouter() {
       
       {/* Global Command Palette (Cmd+K) */}
       {user && <GlobalCommandPalette />}
+
+      {/* Global Keyboard Shortcuts (Shift+?) */}
+      {user && <GlobalKeyboardShortcuts />}
 
       {/* Global Breadcrumbs */}
       <GlobalBreadcrumbs />
