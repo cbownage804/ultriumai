@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Sparkles, Lock, ArrowRight, Zap, LogOut, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ActivityFeedWidget } from '@/components/dashboard/ActivityFeedWidget';
+import { CustomizableDashboard } from '@/components/dashboard/CustomizableDashboard';
 import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
 import safesuiteLogo from '@/assets/safesuite-logo.png';
 import vanguardLogo from '@/assets/vanguard-logo.png';
@@ -305,6 +307,11 @@ export default function ProductHub() {
           </p>
         </div>
 
+        {/* Customizable Dashboard Widgets */}
+        <div className="mb-12">
+          <CustomizableDashboard />
+        </div>
+
         {/* Product Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {products.map((product, index) => (
@@ -314,8 +321,13 @@ export default function ProductHub() {
           ))}
         </div>
 
+        {/* Activity Feed */}
+        <div className="mt-12 max-w-5xl mx-auto">
+          <ActivityFeedWidget />
+        </div>
+
         {/* Quick Stats or Tips */}
-        <div className="mt-16 text-center animate-fade-in stagger-4">
+        <div className="mt-12 text-center animate-fade-in stagger-4">
           <div className="inline-flex items-center gap-4 px-6 py-3 rounded-full bg-muted/50 backdrop-blur-sm border border-border/50">
             <p className="text-sm text-muted-foreground">
               Need help choosing? <a href="/pricing" className="text-primary hover:underline font-medium">Compare plans</a> or <a href="/contact" className="text-primary hover:underline font-medium">talk to sales</a>.
