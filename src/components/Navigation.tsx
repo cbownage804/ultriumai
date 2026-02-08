@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Menu, LogOut, Phone, X, ChevronDown, Package, Shield, Cpu, Monitor, Headphones, Sparkles, ArrowRight, DollarSign, Code2, Layers } from "lucide-react";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+import { WhatsNewSidebar } from "@/components/changelog/WhatsNewSidebar";
 import { AIStudioMegaMenu } from "@/components/marketing/AIStudioMegaMenu";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -279,7 +281,9 @@ const Navigation = () => {
           <div className="hidden md:flex items-center gap-3">
             
             {user ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <WhatsNewSidebar />
+                <NotificationCenter />
                 <ThemeToggle />
                 <UserProfileDropdown />
               </div>

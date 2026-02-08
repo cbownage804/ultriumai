@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Home, Shield, Users, BarChart3 } from 'lucide-react';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { WhatsNewSidebar } from '@/components/changelog/WhatsNewSidebar';
 
 export const Header = () => {
   return (
@@ -41,7 +43,9 @@ export const Header = () => {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          <WhatsNewSidebar />
+          <NotificationCenter />
           <UserProfileDropdown />
         </div>
       </div>
