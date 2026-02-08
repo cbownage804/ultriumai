@@ -31795,6 +31795,7 @@ export type Database = {
       }
       vanguard_subscriptions: {
         Row: {
+          addons: string[] | null
           admin_override: boolean | null
           admin_override_by: string | null
           admin_override_reason: string | null
@@ -31811,6 +31812,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          addons?: string[] | null
           admin_override?: boolean | null
           admin_override_by?: string | null
           admin_override_reason?: string | null
@@ -31827,6 +31829,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          addons?: string[] | null
           admin_override?: boolean | null
           admin_override_by?: string | null
           admin_override_reason?: string | null
