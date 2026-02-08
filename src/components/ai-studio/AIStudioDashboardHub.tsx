@@ -96,22 +96,23 @@ export const AIStudioDashboardHub = () => {
     <div className="space-y-8">
       {/* ── 1. Hero App Builder CTA ── */}
       <Card className="overflow-hidden border-0 bg-gradient-to-br from-violet-600/20 via-violet-500/10 to-cyan-500/10 shadow-xl shadow-violet-500/5">
-        <CardContent className="p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center gap-6">
-          <div className="flex-1 space-y-3">
+        <CardContent className="p-5 sm:p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center gap-5 md:gap-6">
+          <div className="flex-1 space-y-3 w-full">
             <div className="flex items-center gap-2 text-violet-400 text-sm font-medium">
               <Sparkles className="h-4 w-4" />
               AI App Builder
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-foreground">
               Build your next app
             </h1>
-            <p className="text-muted-foreground max-w-lg">
+            <p className="text-sm sm:text-base text-muted-foreground max-w-lg">
               Describe what you want and let AI generate a production-ready application — complete with code, preview, and one-click deployment.
             </p>
-            <div className="flex flex-wrap gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Button
                 variant="premium"
                 size="xl"
+                className="min-h-[44px] w-full sm:w-auto"
                 onClick={() => navigate("/ai-studio/app-builder")}
               >
                 Start Building
@@ -121,18 +122,18 @@ export const AIStudioDashboardHub = () => {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="border-border/50"
+                  className="border-border/50 min-h-[44px] w-full sm:w-auto truncate max-w-full"
                   onClick={() => navigate(`/ai-studio/app-builder?project=${latestProject.id}`)}
                 >
-                  Continue "{latestProject.name}"
-                  <ChevronRight className="ml-1 h-4 w-4" />
+                  <span className="truncate">Continue "{latestProject.name}"</span>
+                  <ChevronRight className="ml-1 h-4 w-4 flex-shrink-0" />
                 </Button>
               )}
             </div>
           </div>
 
           {/* Decorative element */}
-          <div className="hidden md:flex items-center justify-center w-36 h-36 rounded-2xl bg-gradient-to-br from-violet-500/20 to-cyan-500/20 border border-white/5">
+          <div className="hidden md:flex items-center justify-center w-36 h-36 rounded-2xl bg-gradient-to-br from-violet-500/20 to-cyan-500/20 border border-white/5 flex-shrink-0">
             <Code2 className="h-16 w-16 text-violet-400/60" />
           </div>
         </CardContent>
@@ -163,7 +164,7 @@ export const AIStudioDashboardHub = () => {
               <button
                 key={p.id}
                 onClick={() => navigate(`/ai-studio/app-builder?project=${p.id}`)}
-                className="text-left p-4 rounded-xl border border-border/50 bg-card/60 hover:border-primary/30 hover:bg-card/80 transition-all group"
+                className="text-left p-4 rounded-xl border border-border/50 bg-card/60 hover:border-primary/30 hover:bg-card/80 transition-all group min-h-[44px]"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -184,7 +185,7 @@ export const AIStudioDashboardHub = () => {
       {/* ── 3. Secondary Tools ── */}
       <section>
         <h2 className="text-lg font-semibold text-foreground mb-4">Tools</h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { label: "Custom GPTs", count: tools.gpts, icon: Bot, route: "/dashboard/gpt/build", color: "text-violet-400", bg: "from-violet-500/10 to-violet-500/5" },
             { label: "AI Agents", count: tools.agents, icon: Zap, route: "/ai-studio/agents/new", color: "text-amber-400", bg: "from-amber-500/10 to-amber-500/5" },
@@ -193,7 +194,7 @@ export const AIStudioDashboardHub = () => {
             <button
               key={t.label}
               onClick={() => navigate(t.route)}
-              className={`p-4 rounded-xl border border-border/50 bg-gradient-to-br ${t.bg} hover:border-primary/30 transition-all text-left group`}
+              className={`p-4 rounded-xl border border-border/50 bg-gradient-to-br ${t.bg} hover:border-primary/30 transition-all text-left group min-h-[44px] flex sm:block items-center gap-3`}
             >
               <t.icon className={`h-5 w-5 ${t.color} mb-2`} />
               <div className="text-xl font-bold text-foreground">{typeof t.count === "number" ? t.count.toLocaleString() : t.count}</div>
