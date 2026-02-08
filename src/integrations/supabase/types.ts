@@ -6832,6 +6832,54 @@ export type Database = {
         }
         Relationships: []
       }
+      cross_module_sync_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          last_synced_at: string
+          source_module: string
+          source_record_id: string
+          source_table: string
+          sync_direction: string
+          sync_status: string
+          target_module: string
+          target_record_id: string
+          target_table: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_synced_at?: string
+          source_module: string
+          source_record_id: string
+          source_table: string
+          sync_direction?: string
+          sync_status?: string
+          target_module: string
+          target_record_id: string
+          target_table: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_synced_at?: string
+          source_module?: string
+          source_record_id?: string
+          source_table?: string
+          sync_direction?: string
+          sync_status?: string
+          target_module?: string
+          target_record_id?: string
+          target_table?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_gpts: {
         Row: {
           affiliate_id: string | null
