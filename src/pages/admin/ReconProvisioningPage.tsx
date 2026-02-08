@@ -11,12 +11,14 @@ import {
   Settings,
   RefreshCw,
   Code,
+  HardDrive,
 } from 'lucide-react';
 import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { ReconOrdersTable } from '@/components/admin/recon/ReconOrdersTable';
 import { ReconInventoryTable } from '@/components/admin/recon/ReconInventoryTable';
 import { ReconProvisioningPanel } from '@/components/admin/recon/ReconProvisioningPanel';
 import { ReconAgentDownloads } from '@/components/admin/recon/ReconAgentDownloads';
+import { ReconImageBuilder } from '@/components/vanguard/recon/ReconImageBuilder';
 import { useReconOrders } from '@/hooks/useReconOrders';
 import { useReconInventory } from '@/hooks/useReconInventory';
 
@@ -141,6 +143,10 @@ const ReconProvisioningPage = () => {
               <Code className="h-4 w-4" />
               Agent Software
             </TabsTrigger>
+            <TabsTrigger value="image-builder" className="gap-2 data-[state=active]:bg-background">
+              <HardDrive className="h-4 w-4" />
+              Image Builder
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders" className="mt-6">
@@ -166,6 +172,10 @@ const ReconProvisioningPage = () => {
 
           <TabsContent value="agent" className="mt-6">
             <ReconAgentDownloads />
+          </TabsContent>
+
+          <TabsContent value="image-builder" className="mt-6">
+            <ReconImageBuilder mode="admin" />
           </TabsContent>
         </Tabs>
       </main>
