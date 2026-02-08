@@ -80,6 +80,7 @@ import {
   Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -712,7 +713,7 @@ export function AIAppBuilderWorkspace() {
       />
       <div className="h-screen w-full flex flex-col bg-[#09090b]">
         {/* ── Top Bar — Lovable-style ── */}
-        <div className="flex items-center justify-between px-2 h-12 border-b border-white/[0.06] bg-[#09090b] shrink-0">
+        <div className="flex items-center justify-between px-2 h-12 border-b border-white/[0.06] bg-[#09090b] shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           {/* LEFT: Back + Project name */}
           <div className="flex items-center gap-1.5 min-w-0">
             <Tooltip>
@@ -884,9 +885,9 @@ export function AIAppBuilderWorkspace() {
 
         {/* Mobile tab switcher */}
         {isMobile && (
-          <div className="flex items-center h-10 border-b border-white/[0.06] bg-black/30 shrink-0 md:hidden">
-            <button onClick={() => setMobileTab('chat')} className={cn("flex-1 h-full text-xs font-medium transition-colors", mobileTab === 'chat' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}>Chat</button>
-            <button onClick={() => setMobileTab('editor')} className={cn("flex-1 h-full text-xs font-medium transition-colors", mobileTab === 'editor' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}>Editor</button>
+          <div className="flex items-center h-11 border-b border-white/[0.06] bg-black/30 shrink-0 md:hidden">
+            <button onClick={() => setMobileTab('chat')} className={cn("flex-1 h-full min-h-[44px] text-xs font-medium transition-colors", mobileTab === 'chat' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}>Chat</button>
+            <button onClick={() => setMobileTab('editor')} className={cn("flex-1 h-full min-h-[44px] text-xs font-medium transition-colors", mobileTab === 'editor' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}>Editor</button>
           </div>
         )}
 
@@ -930,7 +931,7 @@ export function AIAppBuilderWorkspace() {
             <ResizablePanel defaultSize={72} minSize={50}>
               <div className="h-full flex">
                 {/* Lovable-style left icon sidebar */}
-                <div className="w-10 border-r border-white/[0.06] bg-[#09090b] flex flex-col items-center py-2 gap-0.5 shrink-0">
+                <div className="w-10 border-r border-white/[0.06] bg-[#09090b] hidden md:flex flex-col items-center py-2 gap-0.5 shrink-0">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button onClick={() => setShowFileTree(!showFileTree)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showFileTree ? "text-white/80 bg-white/[0.06]" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
@@ -954,7 +955,10 @@ export function AIAppBuilderWorkspace() {
                   {sidebarIcons.filter(i => i.show).map(item => (
                     <Tooltip key={item.id}>
                       <TooltipTrigger asChild>
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.12 }}
+                          whileTap={{ scale: 0.92 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                           onClick={() => openPanel(item.id as any)}
                           className={cn(
                             "h-7 w-7 rounded-md flex items-center justify-center transition-all",
@@ -964,7 +968,7 @@ export function AIAppBuilderWorkspace() {
                           )}
                         >
                           <item.icon className="h-3.5 w-3.5" />
-                        </button>
+                        </motion.button>
                       </TooltipTrigger>
                       <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>
                     </Tooltip>

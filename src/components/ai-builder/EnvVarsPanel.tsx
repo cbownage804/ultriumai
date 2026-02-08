@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { EmptyState, EMPTY_STATES } from './EmptyStates';
 
 export interface EnvVariable {
   key: string;
@@ -52,6 +53,10 @@ export function EnvVarsPanel({ envVars, onChange, open, onClose }: EnvVarsPanelP
 
       <ScrollArea className="flex-1">
         <div className="p-3 space-y-3">
+          {envVars.length === 0 ? (
+            <EmptyState {...EMPTY_STATES.envVars} actionLabel="Add Variable" onAction={addVar} />
+          ) : (
+          <>
           <p className="text-[10px] text-white/25 leading-relaxed">
             Variables are injected as <code className="text-cyan-400/60 bg-black/30 px-1 rounded">window.ENV</code> in your app.
           </p>
@@ -109,6 +114,8 @@ export function EnvVarsPanel({ envVars, onChange, open, onClose }: EnvVarsPanelP
             <Plus className="h-3 w-3 mr-1" />
             Add Variable
           </Button>
+          </>
+          )}
         </div>
       </ScrollArea>
     </div>

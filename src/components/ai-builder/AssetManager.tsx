@@ -3,6 +3,7 @@ import { Image, Upload, Trash2, Copy, FileImage, File } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import { EmptyState, EMPTY_STATES } from './EmptyStates';
 
 export interface ProjectAsset {
   id: string;
@@ -108,7 +109,7 @@ export function AssetManager({ assets, onUpload, onDelete, open, onClose }: Asse
       <ScrollArea className="flex-1 mt-2">
         <div className="px-3 pb-3 space-y-1.5">
           {assets.length === 0 ? (
-            <p className="text-center text-[10px] text-white/15 py-6">No assets uploaded</p>
+            <EmptyState {...EMPTY_STATES.assets} />
           ) : (
             assets.map(asset => (
               <div key={asset.id} className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] group">
