@@ -1076,6 +1076,59 @@ export type Database = {
           },
         ]
       }
+      application_crashes: {
+        Row: {
+          agent_id: string | null
+          application: string
+          crash_time: string
+          created_at: string
+          device_name: string
+          error_message: string | null
+          error_type: string
+          id: string
+          occurrences: number | null
+          stack_trace: string | null
+          user_id: string
+          version: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          application: string
+          crash_time?: string
+          created_at?: string
+          device_name: string
+          error_message?: string | null
+          error_type: string
+          id?: string
+          occurrences?: number | null
+          stack_trace?: string | null
+          user_id: string
+          version?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          application?: string
+          crash_time?: string
+          created_at?: string
+          device_name?: string
+          error_message?: string | null
+          error_type?: string
+          id?: string
+          occurrences?: number | null
+          stack_trace?: string | null
+          user_id?: string
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_crashes_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_assignments: {
         Row: {
           asset_id: string | null
@@ -19018,6 +19071,51 @@ export type Database = {
         }
         Relationships: []
       }
+      rmm_report_schedules: {
+        Row: {
+          created_at: string
+          description: string | null
+          frequency: string | null
+          id: string
+          is_enabled: boolean | null
+          last_generated_at: string | null
+          name: string
+          recipients: Json | null
+          report_type: string
+          sections: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          frequency?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_generated_at?: string | null
+          name: string
+          recipients?: Json | null
+          report_type?: string
+          sections?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          frequency?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_generated_at?: string | null
+          name?: string
+          recipients?: Json | null
+          report_type?: string
+          sections?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       rmm_script_executions: {
         Row: {
           agent_id: string
@@ -23943,6 +24041,42 @@ export type Database = {
         }
         Relationships: []
       }
+      script_execution_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          results: Json | null
+          script: string
+          shell: string | null
+          status: string | null
+          target_device_ids: Json | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          results?: Json | null
+          script: string
+          shell?: string | null
+          status?: string | null
+          target_device_ids?: Json | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          results?: Json | null
+          script?: string
+          shell?: string | null
+          status?: string | null
+          target_device_ids?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       script_executions: {
         Row: {
           completed_at: string | null
@@ -24565,6 +24699,51 @@ export type Database = {
         }
         Relationships: []
       }
+      service_auto_restart_rules: {
+        Row: {
+          created_at: string
+          current_restarts: number | null
+          display_name: string | null
+          enabled: boolean | null
+          id: string
+          last_restart: string | null
+          max_restarts: number | null
+          restart_delay: number | null
+          service_name: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_restarts?: number | null
+          display_name?: string | null
+          enabled?: boolean | null
+          id?: string
+          last_restart?: string | null
+          max_restarts?: number | null
+          restart_delay?: number | null
+          service_name: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_restarts?: number | null
+          display_name?: string | null
+          enabled?: boolean | null
+          id?: string
+          last_restart?: string | null
+          max_restarts?: number | null
+          restart_delay?: number | null
+          service_name?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sla_policies: {
         Row: {
           business_hours_only: boolean | null
@@ -24667,6 +24846,45 @@ export type Database = {
           user_id?: string
           vendor?: string | null
           version?: string | null
+        }
+        Relationships: []
+      }
+      software_deployment_jobs: {
+        Row: {
+          action: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          package_name: string
+          package_source: string | null
+          results: Json | null
+          status: string | null
+          target_device_ids: Json | null
+          user_id: string
+        }
+        Insert: {
+          action?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          package_name: string
+          package_source?: string | null
+          results?: Json | null
+          status?: string | null
+          target_device_ids?: Json | null
+          user_id: string
+        }
+        Update: {
+          action?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          package_name?: string
+          package_source?: string | null
+          results?: Json | null
+          status?: string | null
+          target_device_ids?: Json | null
+          user_id?: string
         }
         Relationships: []
       }
