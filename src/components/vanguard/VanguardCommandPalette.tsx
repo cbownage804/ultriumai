@@ -41,7 +41,7 @@ interface SearchResult {
   id: string;
   title: string;
   subtitle?: string;
-  type: 'ticket' | 'customer' | 'device' | 'page';
+  type: 'ticket' | 'customer' | 'device' | 'page' | 'alert';
   path: string;
   icon: React.ElementType;
 }
@@ -163,6 +163,29 @@ export function VanguardCommandPalette() {
         });
       }
 
+      // Search alerts
+      try {
+        const { data: alertData } = await (supabase as any)
+          .from('rmm_alerts')
+          .select('id, alert_type, severity, status')
+          .eq('user_id', user.id)
+          .ilike('alert_type', `%${query}%`)
+          .limit(5);
+
+        if (alertData) {
+          (alertData as any[]).forEach((alert: any) => {
+            searchResults.push({
+              id: `alert-${alert.id}`,
+              title: alert.alert_type || 'Alert',
+              subtitle: `${alert.severity} · ${alert.status}`,
+              type: 'alert',
+              path: `${basePath}/alerts`,
+              icon: Bell,
+            });
+          });
+        }
+      } catch {}
+
     } catch (error) {
       console.error('Search error:', error);
     } finally {
@@ -197,7 +220,7 @@ export function VanguardCommandPalette() {
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput
-        placeholder="Search tickets, customers, devices, or jump to page..."
+        placeholder="Search tickets, customers, devices, alerts, or jump to page..."
         value={search}
         onValueChange={setSearch}
         className="border-0"
