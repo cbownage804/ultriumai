@@ -27703,6 +27703,104 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_alert_threshold_profiles: {
+        Row: {
+          applied_devices: number | null
+          created_at: string
+          description: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          applied_devices?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          applied_devices?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_alert_threshold_rules: {
+        Row: {
+          auto_remediate: boolean | null
+          created_at: string
+          duration: number
+          enabled: boolean | null
+          id: string
+          metric: string
+          name: string
+          notify_email: boolean | null
+          notify_webhook: boolean | null
+          operator: string
+          profile_id: string
+          remediation_script: string | null
+          severity: string
+          updated_at: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          auto_remediate?: boolean | null
+          created_at?: string
+          duration?: number
+          enabled?: boolean | null
+          id?: string
+          metric?: string
+          name: string
+          notify_email?: boolean | null
+          notify_webhook?: boolean | null
+          operator?: string
+          profile_id: string
+          remediation_script?: string | null
+          severity?: string
+          updated_at?: string
+          user_id: string
+          value?: number
+        }
+        Update: {
+          auto_remediate?: boolean | null
+          created_at?: string
+          duration?: number
+          enabled?: boolean | null
+          id?: string
+          metric?: string
+          name?: string
+          notify_email?: boolean | null
+          notify_webhook?: boolean | null
+          operator?: string
+          profile_id?: string
+          remediation_script?: string | null
+          severity?: string
+          updated_at?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_alert_threshold_rules_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_alert_threshold_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vanguard_asset_lifecycle: {
         Row: {
           asset_type: string
@@ -28581,6 +28679,81 @@ export type Database = {
           trend?: string | null
           trend_percent?: number | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_device_group_members: {
+        Row: {
+          agent_id: string
+          created_at: string
+          group_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          group_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_device_group_members_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vanguard_device_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_device_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_device_groups: {
+        Row: {
+          automation_profile: string | null
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          automation_profile?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          automation_profile?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          tags?: string[] | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -30079,6 +30252,66 @@ export type Database = {
           },
         ]
       }
+      vanguard_maintenance_windows: {
+        Row: {
+          allow_patching: boolean | null
+          allow_reboots: boolean | null
+          created_at: string
+          days_of_week: number[] | null
+          description: string | null
+          device_groups: string[] | null
+          end_time: string
+          id: string
+          is_active: boolean | null
+          name: string
+          next_occurrence: string | null
+          recurrence: string
+          start_time: string
+          suppress_alerts: boolean | null
+          timezone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allow_patching?: boolean | null
+          allow_reboots?: boolean | null
+          created_at?: string
+          days_of_week?: number[] | null
+          description?: string | null
+          device_groups?: string[] | null
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          next_occurrence?: string | null
+          recurrence?: string
+          start_time?: string
+          suppress_alerts?: boolean | null
+          timezone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allow_patching?: boolean | null
+          allow_reboots?: boolean | null
+          created_at?: string
+          days_of_week?: number[] | null
+          description?: string | null
+          device_groups?: string[] | null
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          next_occurrence?: string | null
+          recurrence?: string
+          start_time?: string
+          suppress_alerts?: boolean | null
+          timezone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_marketplace_connections: {
         Row: {
           category: string
@@ -30641,6 +30874,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_policy_templates: {
+        Row: {
+          assigned_devices: number | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          settings: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_devices?: number | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          settings?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_devices?: number | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          settings?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       vanguard_portal_appointments: {
         Row: {
