@@ -116,7 +116,7 @@ export function ComplianceScorecards({ agents }: ComplianceScorecardsProps) {
                     <div className="mt-3 pt-3 border-t">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                        {Object.values(score.categories).reduce((acc: number, c: any) => acc + c.issues.length, 0)} issues found
+                        {String(Object.values(score.categories).reduce((acc: number, c: any) => acc + c.issues.length, 0))} issues found
                       </div>
                     </div>
                   )}
