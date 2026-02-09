@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,16 +29,18 @@ import {
   MoreVertical,
   Hash,
   Plus,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Message {
   id: string;
   sender_id: string;
-  sender_name: string;
-  sender_type: 'msp_tech' | 'internal_tech' | 'system';
+  sender_type: string;
   message_content: string;
-  visibility: 'all' | 'msp_only' | 'internal_only';
+  visibility: string;
   is_pinned: boolean;
   created_at: string;
 }
@@ -46,9 +48,8 @@ interface Message {
 interface Channel {
   id: string;
   channel_name: string;
-  channel_type: 'general' | 'escalation' | 'announcement' | 'ticket';
+  channel_type: string;
   is_private: boolean;
-  unread_count: number;
 }
 
 interface CoManagedChatProps {
@@ -59,87 +60,111 @@ interface CoManagedChatProps {
 
 export function CoManagedChat({ 
   organizationId, 
-  organizationName = 'Acme Corp',
+  organizationName = 'Organization',
   currentUserType = 'msp_tech' 
 }: CoManagedChatProps) {
-  const [channels] = useState<Channel[]>([
-    { id: '1', channel_name: 'General', channel_type: 'general', is_private: false, unread_count: 3 },
-    { id: '2', channel_name: 'Escalations', channel_type: 'escalation', is_private: false, unread_count: 1 },
-    { id: '3', channel_name: 'MSP Internal', channel_type: 'general', is_private: true, unread_count: 0 },
-  ]);
-  
-  const [selectedChannel, setSelectedChannel] = useState<Channel>(channels[0]);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      sender_id: 'tech1',
-      sender_name: 'John (MSP)',
-      sender_type: 'msp_tech',
-      message_content: 'Hey team, we have a major outage reported for their main server.',
-      visibility: 'all',
-      is_pinned: true,
-      created_at: '10:30 AM',
-    },
-    {
-      id: '2',
-      sender_id: 'tech2',
-      sender_name: 'Sarah (Internal IT)',
-      sender_type: 'internal_tech',
-      message_content: 'Thanks for the heads up. We\'re seeing tickets come in now. Should we escalate?',
-      visibility: 'all',
-      is_pinned: false,
-      created_at: '10:32 AM',
-    },
-    {
-      id: '3',
-      sender_id: 'tech1',
-      sender_name: 'John (MSP)',
-      sender_type: 'msp_tech',
-      message_content: 'MSP Note: Customer is on premium SLA, prioritize this.',
-      visibility: 'msp_only',
-      is_pinned: false,
-      created_at: '10:33 AM',
-    },
-    {
-      id: '4',
-      sender_id: 'system',
-      sender_name: 'System',
-      sender_type: 'system',
-      message_content: 'Ticket #1234 has been escalated to MSP by Sarah',
-      visibility: 'all',
-      is_pinned: false,
-      created_at: '10:35 AM',
-    },
-  ]);
-  
+  const { user } = useAuth();
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
-  const [messageVisibility, setMessageVisibility] = useState<'all' | 'msp_only' | 'internal_only'>('all');
+  const [messageVisibility, setMessageVisibility] = useState<string>('all');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  useEffect(() => { scrollToBottom(); }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+  const loadChannels = useCallback(async () => {
+    if (!organizationId) return;
+    try {
+      const { data, error } = await (supabase as any)
+        .from('comanaged_chat_channels')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .order('channel_name');
+      if (error) throw error;
+      const mapped = (data || []).map((c: any) => ({
+        id: c.id,
+        channel_name: c.channel_name,
+        channel_type: c.channel_type || 'general',
+        is_private: c.is_private ?? false,
+      }));
+      setChannels(mapped);
+      if (mapped.length > 0 && !selectedChannel) setSelectedChannel(mapped[0]);
+    } catch (err) {
+      console.error('Failed to load channels:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [organizationId]);
 
-    const message: Message = {
-      id: Date.now().toString(),
-      sender_id: 'current',
-      sender_name: currentUserType === 'msp_tech' ? 'You (MSP)' : 'You (Internal)',
-      sender_type: currentUserType,
-      message_content: newMessage,
-      visibility: messageVisibility,
-      is_pinned: false,
-      created_at: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
+  const loadMessages = useCallback(async () => {
+    if (!selectedChannel) return;
+    try {
+      const { data, error } = await (supabase as any)
+        .from('comanaged_chat_messages')
+        .select('*')
+        .eq('channel_id', selectedChannel.id)
+        .order('created_at', { ascending: true })
+        .limit(100);
+      if (error) throw error;
+      setMessages((data || []).map((m: any) => ({
+        id: m.id,
+        sender_id: m.sender_id,
+        sender_type: m.sender_type || 'msp_tech',
+        message_content: m.message_content,
+        visibility: m.visibility || 'all',
+        is_pinned: m.is_pinned ?? false,
+        created_at: m.created_at,
+      })));
+    } catch (err) {
+      console.error('Failed to load messages:', err);
+    }
+  }, [selectedChannel]);
 
-    setMessages([...messages, message]);
-    setNewMessage('');
+  useEffect(() => { loadChannels(); }, [loadChannels]);
+  useEffect(() => { loadMessages(); }, [loadMessages]);
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedChannel || !user) return;
+    try {
+      const { error } = await (supabase as any)
+        .from('comanaged_chat_messages')
+        .insert({
+          channel_id: selectedChannel.id,
+          sender_id: user.id,
+          sender_type: currentUserType,
+          message_content: newMessage,
+          visibility: messageVisibility,
+        });
+      if (error) throw error;
+      setNewMessage('');
+      loadMessages();
+    } catch (err) {
+      toast.error('Failed to send message');
+    }
+  };
+
+  const handleCreateChannel = async () => {
+    if (!organizationId || !user) return;
+    try {
+      const { error } = await (supabase as any)
+        .from('comanaged_chat_channels')
+        .insert({
+          organization_id: organizationId,
+          channel_name: 'New Channel',
+          channel_type: 'general',
+          is_private: false,
+          created_by: user.id,
+        });
+      if (error) throw error;
+      toast.success('Channel created');
+      loadChannels();
+    } catch { toast.error('Failed to create channel'); }
   };
 
   const getVisibilityBadge = (visibility: string) => {
@@ -163,12 +188,18 @@ export function CoManagedChat({
   };
 
   const filteredMessages = messages.filter(msg => {
-    if (currentUserType === 'msp_tech') {
-      return msg.visibility !== 'internal_only';
-    } else {
-      return msg.visibility !== 'msp_only';
-    }
+    if (currentUserType === 'msp_tech') return msg.visibility !== 'internal_only';
+    return msg.visibility !== 'msp_only';
   });
+
+  const formatTime = (dateStr: string) => {
+    try { return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+    catch { return ''; }
+  };
+
+  if (loading) {
+    return <Card className="h-[600px] flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></Card>;
+  }
 
   return (
     <Card className="h-[600px] flex flex-col">
@@ -178,26 +209,18 @@ export function CoManagedChat({
             <MessageSquare className="h-5 w-5 text-primary" />
             <div>
               <CardTitle className="text-lg">{organizationName} Chat</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Collaborate with internal IT team
-              </p>
+              <p className="text-sm text-muted-foreground">Collaborate with internal IT team</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary">
-              <Users className="h-3 w-3 mr-1" />
-              5 online
-            </Badge>
-          </div>
+          <Badge variant="secondary"><Users className="h-3 w-3 mr-1" />Live</Badge>
         </div>
       </CardHeader>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Channel Sidebar */}
         <div className="w-48 border-r p-3 space-y-1">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-muted-foreground uppercase">Channels</span>
-            <Button variant="ghost" size="icon" className="h-5 w-5">
+            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={handleCreateChannel}>
               <Plus className="h-3 w-3" />
             </Button>
           </div>
@@ -206,27 +229,20 @@ export function CoManagedChat({
               key={channel.id}
               onClick={() => setSelectedChannel(channel)}
               className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors ${
-                selectedChannel.id === channel.id 
+                selectedChannel?.id === channel.id 
                   ? 'bg-primary/10 text-primary' 
                   : 'hover:bg-muted text-muted-foreground hover:text-foreground'
               }`}
             >
-              {channel.is_private ? (
-                <Lock className="h-3.5 w-3.5" />
-              ) : (
-                <Hash className="h-3.5 w-3.5" />
-              )}
+              {channel.is_private ? <Lock className="h-3.5 w-3.5" /> : <Hash className="h-3.5 w-3.5" />}
               <span className="flex-1 text-left truncate">{channel.channel_name}</span>
-              {channel.unread_count > 0 && (
-                <Badge variant="destructive" className="h-5 w-5 p-0 flex items-center justify-center text-xs">
-                  {channel.unread_count}
-                </Badge>
-              )}
             </button>
           ))}
+          {channels.length === 0 && (
+            <p className="text-xs text-muted-foreground italic px-2">No channels yet</p>
+          )}
         </div>
 
-        {/* Messages Area */}
         <div className="flex-1 flex flex-col">
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
@@ -240,33 +256,20 @@ export function CoManagedChat({
                     <>
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className={getSenderColor(msg.sender_type)}>
-                          {msg.sender_name.charAt(0)}
+                          {msg.sender_type === 'msp_tech' ? 'M' : 'I'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">{msg.sender_name}</span>
-                          <span className="text-xs text-muted-foreground">{msg.created_at}</span>
-                          {msg.is_pinned && (
-                            <Pin className="h-3 w-3 text-yellow-500" />
-                          )}
+                          <span className="font-medium text-sm">
+                            {msg.sender_id === user?.id ? 'You' : msg.sender_type === 'msp_tech' ? 'MSP Tech' : 'Internal Tech'}
+                          </span>
+                          <span className="text-xs text-muted-foreground">{formatTime(msg.created_at)}</span>
+                          {msg.is_pinned && <Pin className="h-3 w-3 text-yellow-500" />}
                           {getVisibilityBadge(msg.visibility)}
                         </div>
                         <p className="text-sm">{msg.message_content}</p>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
-                            <MoreVertical className="h-3 w-3" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Pin className="h-3 w-3 mr-2" />
-                            Pin message
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </>
                   )}
                 </div>
@@ -275,34 +278,24 @@ export function CoManagedChat({
             </div>
           </ScrollArea>
 
-          {/* Message Input */}
           <div className="p-4 border-t space-y-2">
             <div className="flex items-center gap-2">
-              <Select value={messageVisibility} onValueChange={(v: any) => setMessageVisibility(v)}>
+              <Select value={messageVisibility} onValueChange={setMessageVisibility}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">
-                    <div className="flex items-center gap-2">
-                      <Eye className="h-3 w-3" />
-                      Everyone
-                    </div>
+                    <div className="flex items-center gap-2"><Eye className="h-3 w-3" />Everyone</div>
                   </SelectItem>
                   {currentUserType === 'msp_tech' && (
                     <SelectItem value="msp_only">
-                      <div className="flex items-center gap-2">
-                        <EyeOff className="h-3 w-3" />
-                        MSP Only
-                      </div>
+                      <div className="flex items-center gap-2"><EyeOff className="h-3 w-3" />MSP Only</div>
                     </SelectItem>
                   )}
                   {currentUserType === 'internal_tech' && (
                     <SelectItem value="internal_only">
-                      <div className="flex items-center gap-2">
-                        <EyeOff className="h-3 w-3" />
-                        Internal Only
-                      </div>
+                      <div className="flex items-center gap-2"><EyeOff className="h-3 w-3" />Internal Only</div>
                     </SelectItem>
                   )}
                 </SelectContent>
