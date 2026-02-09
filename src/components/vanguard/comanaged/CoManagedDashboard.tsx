@@ -1,30 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Building2, 
-  Users, 
-  Ticket, 
-  Eye, 
-  EyeOff,
-  Plus,
-  Settings,
-  Palette,
-  Shield,
-  Mail,
-  Clock,
-  TrendingUp,
-  Search,
-  MoreVertical,
-  ExternalLink
+  Building2, Users, Ticket, Eye, EyeOff, Plus, Settings, Palette,
+  Shield, Mail, Clock, TrendingUp, Search, MoreVertical, ExternalLink, Loader2
 } from "lucide-react";
 import { CoManagedOrgSetup } from "./CoManagedOrgSetup";
 import { CoManagedBrandingEditor } from "./CoManagedBrandingEditor";
 import { CoManagedUserManager } from "./CoManagedUserManager";
 import { CoManagedTechAccess } from "./CoManagedTechAccess";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CoManagedOrg {
   id: string;
@@ -43,13 +32,50 @@ interface CoManagedOrg {
 }
 
 export function CoManagedDashboard() {
-  // Empty initial state - data loaded from database
+  const { user } = useAuth();
   const [organizations, setOrganizations] = useState<CoManagedOrg[]>([]);
-
+  const [loading, setLoading] = useState(true);
   const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
   const [showNewOrgDialog, setShowNewOrgDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
+
+  useEffect(() => {
+    if (user) loadOrganizations();
+  }, [user]);
+
+  const loadOrganizations = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('comanaged_organizations')
+        .select('*')
+        .eq('user_id', user!.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const orgs: CoManagedOrg[] = (data || []).map((org: any) => ({
+        id: org.id,
+        organization_name: org.organization_name,
+        internal_it_name: org.internal_it_name || org.organization_name,
+        is_active: org.is_active ?? true,
+        stats: {
+          total_users: org.total_end_users || 0,
+          active_tickets: org.active_ticket_count || 0,
+          avg_resolution_hours: org.avg_resolution_hours || 0,
+        },
+        branding: {
+          primary_color: org.primary_color || '#0066cc',
+        },
+      }));
+
+      setOrganizations(orgs);
+    } catch (err) {
+      console.error('Failed to load organizations:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredOrgs = organizations.filter(org =>
     org.organization_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -58,8 +84,15 @@ export function CoManagedDashboard() {
 
   const totalUsers = organizations.reduce((sum, org) => sum + org.stats.total_users, 0);
   const totalTickets = organizations.reduce((sum, org) => sum + org.stats.active_tickets, 0);
-
   const selectedOrgData = organizations.find(o => o.id === selectedOrg);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -123,7 +156,11 @@ export function CoManagedDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-white/60">Avg Resolution</p>
-                <p className="text-3xl font-bold text-white">3.4h</p>
+                <p className="text-3xl font-bold text-white">
+                  {organizations.length > 0 
+                    ? (organizations.reduce((s, o) => s + o.stats.avg_resolution_hours, 0) / organizations.length).toFixed(1) 
+                    : '0'}h
+                </p>
               </div>
               <Clock className="h-10 w-10 text-green-400/50" />
             </div>
@@ -194,6 +231,12 @@ export function CoManagedDashboard() {
                 </div>
               </div>
             ))}
+            {filteredOrgs.length === 0 && (
+              <div className="text-center py-8 text-white/40">
+                <Building2 className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No organizations found</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -233,24 +276,19 @@ export function CoManagedDashboard() {
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList className="bg-black/40 border border-cyan-500/30 mb-4">
                     <TabsTrigger value="overview" className="data-[state=active]:bg-cyan-500/20">
-                      <TrendingUp className="h-4 w-4 mr-1" />
-                      Overview
+                      <TrendingUp className="h-4 w-4 mr-1" />Overview
                     </TabsTrigger>
                     <TabsTrigger value="branding" className="data-[state=active]:bg-cyan-500/20">
-                      <Palette className="h-4 w-4 mr-1" />
-                      Branding
+                      <Palette className="h-4 w-4 mr-1" />Branding
                     </TabsTrigger>
                     <TabsTrigger value="users" className="data-[state=active]:bg-cyan-500/20">
-                      <Users className="h-4 w-4 mr-1" />
-                      Users
+                      <Users className="h-4 w-4 mr-1" />Users
                     </TabsTrigger>
                     <TabsTrigger value="technicians" className="data-[state=active]:bg-cyan-500/20">
-                      <Shield className="h-4 w-4 mr-1" />
-                      Tech Access
+                      <Shield className="h-4 w-4 mr-1" />Tech Access
                     </TabsTrigger>
                     <TabsTrigger value="email" className="data-[state=active]:bg-cyan-500/20">
-                      <Mail className="h-4 w-4 mr-1" />
-                      Email Masking
+                      <Mail className="h-4 w-4 mr-1" />Email Masking
                     </TabsTrigger>
                   </TabsList>
 
@@ -259,42 +297,14 @@ export function CoManagedDashboard() {
                       <div className="p-4 rounded-lg bg-black/20 border border-cyan-500/20">
                         <p className="text-sm text-white/60 mb-1">Total Users</p>
                         <p className="text-2xl font-bold text-white">{selectedOrgData.stats.total_users}</p>
-                        <p className="text-xs text-green-400">+12 this month</p>
                       </div>
                       <div className="p-4 rounded-lg bg-black/20 border border-cyan-500/20">
                         <p className="text-sm text-white/60 mb-1">Active Tickets</p>
                         <p className="text-2xl font-bold text-white">{selectedOrgData.stats.active_tickets}</p>
-                        <p className="text-xs text-white/40">3 escalated to MSP</p>
                       </div>
                       <div className="p-4 rounded-lg bg-black/20 border border-cyan-500/20">
                         <p className="text-sm text-white/60 mb-1">Avg Resolution</p>
                         <p className="text-2xl font-bold text-white">{selectedOrgData.stats.avg_resolution_hours}h</p>
-                        <p className="text-xs text-green-400">-0.5h vs last month</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-cyan-500/20">
-                      <h4 className="text-white font-medium mb-2 flex items-center gap-2">
-                        <EyeOff className="h-4 w-4 text-cyan-400" />
-                        Brand Isolation Status
-                      </h4>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center justify-between">
-                          <span className="text-white/60">Portal Branding</span>
-                          <Badge className="bg-green-500/20 text-green-400">Configured</Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-white/60">Email Masking</span>
-                          <Badge className="bg-green-500/20 text-green-400">Active</Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-white/60">Custom Domain</span>
-                          <Badge className="bg-amber-500/20 text-amber-400">Not Set</Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-white/60">Tech Identity Masking</span>
-                          <Badge className="bg-green-500/20 text-green-400">3 techs masked</Badge>
-                        </div>
                       </div>
                     </div>
                   </TabsContent>
@@ -302,15 +312,12 @@ export function CoManagedDashboard() {
                   <TabsContent value="branding">
                     <CoManagedBrandingEditor organizationId={selectedOrgData.id} />
                   </TabsContent>
-
                   <TabsContent value="users">
                     <CoManagedUserManager organizationId={selectedOrgData.id} />
                   </TabsContent>
-
                   <TabsContent value="technicians">
                     <CoManagedTechAccess organizationId={selectedOrgData.id} />
                   </TabsContent>
-
                   <TabsContent value="email">
                     <div className="space-y-4">
                       <div className="p-4 rounded-lg bg-black/20 border border-cyan-500/20">
@@ -324,24 +331,6 @@ export function CoManagedDashboard() {
                             <span className="text-white/60">From Email</span>
                             <span className="text-cyan-400">it@{selectedOrgData.organization_name.toLowerCase().replace(/\s/g, '')}.com</span>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-white/60">Reply-To</span>
-                            <span className="text-white/40">support@yourmsp.com (hidden)</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-                        <p className="text-sm text-white/60 mb-2">Email Preview</p>
-                        <div className="bg-white rounded-lg p-4 text-black text-sm">
-                          <p><strong>From:</strong> {selectedOrgData.internal_it_name} &lt;it@{selectedOrgData.organization_name.toLowerCase().replace(/\s/g, '')}.com&gt;</p>
-                          <p><strong>Subject:</strong> [Ticket #1234] Your support request has been updated</p>
-                          <hr className="my-2" />
-                          <p>Hi John,</p>
-                          <p className="mt-2">Your ticket has been updated by our team...</p>
-                          <p className="mt-4 text-gray-500 text-xs">
-                            © {selectedOrgData.organization_name} IT Department
-                          </p>
                         </div>
                       </div>
                     </div>
@@ -363,8 +352,8 @@ export function CoManagedDashboard() {
       {showNewOrgDialog && (
         <CoManagedOrgSetup 
           onClose={() => setShowNewOrgDialog(false)}
-          onSave={(org) => {
-            setOrganizations(prev => [...prev, org]);
+          onSave={() => {
+            loadOrganizations();
             setShowNewOrgDialog(false);
           }}
         />
