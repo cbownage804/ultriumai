@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
   const slug = extractSlug(host, url)
 
   if (!slug) {
-    return new Response('<!DOCTYPE html><html><body><h1>UltriumAI App Hosting</h1><p>Visit <code>your-app.ultriumai.app</code> to see your app.</p></body></html>', {
+    return new Response('<!DOCTYPE html><html><body><h1>UltriumAI App Hosting</h1><p>Visit <code>your-app.apps.ultriumai.com</code> to see your app.</p></body></html>', {
       status: 200,
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     })
@@ -80,8 +80,8 @@ Deno.serve(async (req) => {
 })
 
 function extractSlug(host: string, url: URL): string | null {
-  if (host.endsWith('.ultriumai.app')) {
-    const subdomain = host.replace('.ultriumai.app', '').split('.')[0]
+  if (host.endsWith('.apps.ultriumai.com')) {
+    const subdomain = host.replace('.apps.ultriumai.com', '').split('.')[0]
     if (subdomain && subdomain !== 'www') return subdomain
   }
 

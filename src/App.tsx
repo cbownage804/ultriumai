@@ -15,6 +15,7 @@ import EnhancedErrorBoundary from '@/components/EnhancedErrorBoundary';
 import CookieConsent from '@/components/CookieConsent';
 import { PageTransition } from '@/components/transitions/PageTransition';
 import { isVanguardDomain, isSafeSuiteDomain } from '@/utils/subdomain';
+import { getCrossDomainRedirect } from '@/utils/domainRouter';
 import { SystemStatusBanner } from '@/components/system/SystemStatusBanner';
 // Lazy-loaded global components (reduce initial bundle)
 const AIStudioCTABanner = lazy(() => import('@/components/marketing/AIStudioCTABanner').then(m => ({ default: m.AIStudioCTABanner })));
@@ -224,12 +225,22 @@ function AppRouter() {
     );
   }
 
+  // Cross-domain redirect: wrong domain for this route → redirect
+  const crossDomainRedirect = getCrossDomainRedirect(location.pathname, location.search, location.hash);
+  if (crossDomainRedirect) {
+    window.location.replace(crossDomainRedirect);
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   // If on SafeSuite subdomain, redirect to main domain with /safesuite prefix
   if (isSafeSuite) {
     const mainDomain = window.location.hostname.includes('lovable.app')
       ? 'https://ultriumai.lovable.app'
-      : 'https://ultriumai.com';
+      : 'https://ultriumai.app';
     const currentPath = location.pathname === '/' ? '' : location.pathname;
     const targetUrl = `${mainDomain}/safesuite${currentPath}${location.search}${location.hash}`;
     window.location.replace(targetUrl);
@@ -244,7 +255,7 @@ function AppRouter() {
   if (isVanguard) {
     const mainDomain = window.location.hostname.includes('lovable.app')
       ? 'https://ultriumai.lovable.app'
-      : 'https://ultriumai.com';
+      : 'https://ultriumai.app';
     // Map subdomain paths: /app/* → /vanguard/app/*, / → /vanguard
     const currentPath = location.pathname === '/' ? '' : location.pathname;
     const targetUrl = `${mainDomain}/vanguard${currentPath}${location.search}${location.hash}`;

@@ -24,13 +24,13 @@ export default function UnifiedAuthRedirect() {
     }
     
     // Only redirect to production domain if we're actually on a production subdomain
-    const isProductionSubdomain = hostname.endsWith('.ultriumai.com') && 
+    const isProductionSubdomain = (hostname.endsWith('.ultriumai.com') || hostname.endsWith('.ultriumai.app')) && 
       (hostname.startsWith('safesuite.') || hostname.startsWith('vanguard.'));
     
     if (isProductionSubdomain) {
-      // Production: redirect to main domain auth
-      const mainDomain = 'https://ultriumai.com';
-      const authUrl = `${mainDomain}/auth?return=${returnProduct}&path=${encodeURIComponent(returnPath)}`;
+      // Production: redirect to app domain auth
+      const appDomain = 'https://ultriumai.app';
+      const authUrl = `${appDomain}/auth?return=${returnProduct}&path=${encodeURIComponent(returnPath)}`;
       window.location.href = authUrl;
     } else {
       // Preview/localhost: use local auth page with return params in URL

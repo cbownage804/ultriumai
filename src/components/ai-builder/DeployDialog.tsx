@@ -52,7 +52,7 @@ export function DeployDialog({
   const [deployStep, setDeployStep] = useState(-1);
   const [deployComplete, setDeployComplete] = useState(false);
 
-  const previewUrl = previewSlug ? `https://${previewSlug}.ultriumai.app` : null;
+  const previewUrl = previewSlug ? `https://${previewSlug}.apps.ultriumai.com` : null;
   const isLoading = deploying || isPublishing;
   const hasIntegrations = !!(supabaseConfig || stripeConfig || (serviceKeys && serviceKeys.length > 0));
 
@@ -234,7 +234,7 @@ export function DeployDialog({
                       </div>
                       <div className="flex items-center gap-1 min-w-0">
                         <input value={customSubdomain} onChange={e => setCustomSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} placeholder="myapp" className="flex-1 min-w-0 h-7 px-2 text-[11px] bg-white/5 border border-white/[0.08] rounded text-white/80 outline-none focus:border-cyan-500/30 font-mono placeholder:text-white/15" />
-                        <span className="text-[10px] text-white/20 font-mono shrink-0 whitespace-nowrap">.ultriumai.app</span>
+                        <span className="text-[10px] text-white/20 font-mono shrink-0 whitespace-nowrap">.apps.ultriumai.com</span>
                       </div>
                     </div>
 
@@ -321,7 +321,7 @@ export function DeployDialog({
                       </div>
                       <input placeholder="app.yourdomain.com" className="w-full h-7 px-2 text-[11px] bg-white/5 border border-white/[0.08] rounded text-white/80 outline-none focus:border-cyan-500/30 font-mono placeholder:text-white/15 mb-2" />
                       <div className="text-[9px] text-white/20 space-y-1">
-                        <p className="flex items-start gap-1"><AlertCircle className="h-2.5 w-2.5 shrink-0 mt-0.5" /> <span>Add a CNAME record pointing to <code className="text-cyan-400/60 break-all">cname.ultriumai.app</code></span></p>
+                        <p className="flex items-start gap-1"><AlertCircle className="h-2.5 w-2.5 shrink-0 mt-0.5" /> <span>Add a CNAME record pointing to <code className="text-cyan-400/60 break-all">cname.apps.ultriumai.com</code></span></p>
                         <p>DNS propagation may take up to 48 hours.</p>
                       </div>
                     </div>
