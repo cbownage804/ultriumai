@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Search, Copy, MessageSquare, Zap, Hash, Filter } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 const CATEGORIES = ['general', 'greeting', 'closing', 'technical', 'billing', 'escalation', 'apology'];
 
@@ -23,14 +25,12 @@ interface CannedResponse {
   is_shared: boolean;
 }
 
-// Empty initial state - data loaded from database
-const initialResponses: CannedResponse[] = [];
-
 export function CannedResponsesLibrary() {
+  const { user } = useAuth();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [responses, setResponses] = useState<CannedResponse[]>(initialResponses);
+  const [responses, setResponses] = useState<CannedResponse[]>([]);
   const [newResponse, setNewResponse] = useState({
     name: '',
     content: '',
@@ -39,20 +39,53 @@ export function CannedResponsesLibrary() {
     is_shared: true
   });
 
-  const handleAddResponse = () => {
-    const response: CannedResponse = {
-      id: crypto.randomUUID(),
-      name: newResponse.name,
-      content: newResponse.content,
-      category: newResponse.category,
-      shortcut: newResponse.shortcut || null,
-      use_count: 0,
-      is_shared: newResponse.is_shared
-    };
-    setResponses([...responses, response]);
-    setIsAddOpen(false);
-    setNewResponse({ name: '', content: '', category: 'general', shortcut: '', is_shared: true });
-    toast.success('Response added successfully');
+  useEffect(() => {
+    if (user) loadResponses();
+  }, [user]);
+
+  const loadResponses = async () => {
+    if (!user) return;
+    const { data } = await (supabase as any)
+      .from('vanguard_canned_responses')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('use_count', { ascending: false });
+
+    if (data) {
+      setResponses(data.map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        content: r.content,
+        category: r.category || 'general',
+        shortcut: r.shortcut,
+        use_count: r.use_count || 0,
+        is_shared: r.is_shared ?? true,
+      })));
+    }
+  };
+
+  const handleAddResponse = async () => {
+    if (!user) return;
+    try {
+      const { error } = await (supabase as any)
+        .from('vanguard_canned_responses')
+        .insert({
+          user_id: user.id,
+          name: newResponse.name,
+          content: newResponse.content,
+          category: newResponse.category,
+          shortcut: newResponse.shortcut || null,
+          is_shared: newResponse.is_shared,
+        });
+      if (error) throw error;
+      setIsAddOpen(false);
+      setNewResponse({ name: '', content: '', category: 'general', shortcut: '', is_shared: true });
+      toast.success('Response added successfully');
+      loadResponses();
+    } catch (err) {
+      console.error('Error adding response:', err);
+      toast.error('Failed to add response');
+    }
   };
 
   const copyToClipboard = async (content: string, id: string) => {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-interface MockTicket {
+interface QueueTicket {
   id: string;
   title: string;
   priority: 'low' | 'medium' | 'high' | 'critical';
@@ -21,22 +21,47 @@ interface MockTicket {
   customer: string;
 }
 
-const MOCK_TICKETS: MockTicket[] = [
-  { id: '1', title: 'Email not syncing', priority: 'high', status: 'new', created_at: '2h ago', customer: 'Acme Corp' },
-  { id: '2', title: 'Password reset request', priority: 'medium', status: 'new', created_at: '3h ago', customer: 'TechStart Inc' },
-  { id: '3', title: 'VPN connection issues', priority: 'critical', status: 'in_progress', created_at: '1h ago', customer: 'Global Systems' },
-  { id: '4', title: 'Printer offline', priority: 'low', status: 'new', created_at: '5h ago', customer: 'Local Business' },
-  { id: '5', title: 'Software installation', priority: 'medium', status: 'pending', created_at: '4h ago', customer: 'StartUp LLC' },
-];
-
 export function QueueManagementBoard() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [tickets, setTickets] = useState<Record<string, MockTicket[]>>({
-    new: MOCK_TICKETS.filter(t => t.status === 'new'),
-    in_progress: MOCK_TICKETS.filter(t => t.status === 'in_progress'),
-    pending: MOCK_TICKETS.filter(t => t.status === 'pending'),
+  const [tickets, setTickets] = useState<Record<string, QueueTicket[]>>({
+    new: [],
+    in_progress: [],
+    pending: [],
     resolved: []
   });
+
+  // Load real tickets from helpdesk_tickets
+  useEffect(() => {
+    const loadTickets = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await (supabase as any)
+        .from('helpdesk_tickets')
+        .select('id, title, priority, status, created_at, customer_id, msp_clients(company_name)')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (data) {
+        const mapped: QueueTicket[] = data.map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          priority: t.priority || 'medium',
+          status: t.status || 'new',
+          created_at: new Date(t.created_at).toLocaleDateString(),
+          customer: t.msp_clients?.company_name || 'Unknown',
+        }));
+
+        setTickets({
+          new: mapped.filter(t => t.status === 'new' || t.status === 'open'),
+          in_progress: mapped.filter(t => t.status === 'in_progress'),
+          pending: mapped.filter(t => t.status === 'pending' || t.status === 'waiting'),
+          resolved: mapped.filter(t => t.status === 'resolved' || t.status === 'closed'),
+        });
+      }
+    };
+    loadTickets();
+  }, []);
   const [newQueue, setNewQueue] = useState({
     queue_name: '',
     description: '',
