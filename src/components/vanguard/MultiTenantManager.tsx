@@ -88,7 +88,7 @@ export const MultiTenantManager = () => {
           status: client.is_active ? 'active' : 'inactive',
           agentCount: agentCounts[client.id] || 0,
           threatCount: alertCounts[client.id] || 0,
-          riskScore: 85,
+          riskScore: Math.max(0, 100 - (alertCounts[client.id] || 0) * 5),
           lastActivity: client.updated_at || client.created_at,
           parentId: integrationSettings?.parent_org_id,
           level: integrationSettings?.hierarchy_level || 0
