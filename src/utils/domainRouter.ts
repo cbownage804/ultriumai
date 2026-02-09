@@ -123,7 +123,9 @@ export function getCrossDomainRedirect(pathname: string, search: string, hash: s
   }
 
   // On app domain but navigating to a marketing route → redirect to marketing domain
-  if (isAppDomain() && isMarketingRoute(pathname)) {
+  // Exception: root "/" on app domain should NOT redirect — let the app router handle it
+  // (it will send users to /hub or /auth based on auth state)
+  if (isAppDomain() && isMarketingRoute(pathname) && pathname !== '/') {
     return `https://${MARKETING_DOMAIN}${fullPath}`;
   }
 
