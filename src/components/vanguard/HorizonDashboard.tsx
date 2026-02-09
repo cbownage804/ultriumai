@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -111,8 +112,9 @@ export function HorizonDashboard() {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-cyan-100 to-purple-200 bg-clip-text text-transparent">
               Vanguard Horizon
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground flex items-center gap-1.5">
               Operational visibility and device health monitoring
+              <InfoTooltip content="Monitor all connected endpoints in real-time. Green = healthy, Yellow = needs attention, Red = critical/offline. Deploy patches, run scripts, and manage devices remotely." />
             </p>
           </div>
         </div>

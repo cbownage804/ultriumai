@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { ModuleLogo } from '../ModuleLogo';
 import { ModuleIntroBanner, ModuleGettingStarted } from '../shared/ModuleInstructions';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 
 interface TrendData {
   name: string;
@@ -161,7 +162,7 @@ export function SentinelDashboard() {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-orange-100 to-amber-200 bg-clip-text text-transparent">
               Vanguard Sentinel
             </h1>
-            <p className="text-slate-400 text-sm">Microsoft 365 & Google Workspace Security Monitoring</p>
+            <p className="text-slate-400 text-sm flex items-center gap-1.5">Microsoft 365 & Google Workspace Security Monitoring <InfoTooltip content="Monitors M365 and Google Workspace for suspicious sign-ins, admin changes, data exfiltration, and policy violations. AI auto-triages alerts by severity." /></p>
           </div>
         </div>
         <div className="flex items-center gap-2">

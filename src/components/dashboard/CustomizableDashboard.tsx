@@ -4,6 +4,7 @@ import {
   GripVertical, X, Plus, BarChart3, Activity, Shield, 
   Headphones, Bot, Monitor, TrendingUp, Users, Clock
 } from 'lucide-react';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -224,7 +225,10 @@ export function CustomizableDashboard() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
+          <InfoTooltip content="Live KPI widgets showing real-time data from your connected services. Click any widget to navigate to its detail page. Use 'Customize' to add, remove, or rearrange widgets." />
+        </div>
         <div className="flex items-center gap-2">
           {isEditing && (
             <>
