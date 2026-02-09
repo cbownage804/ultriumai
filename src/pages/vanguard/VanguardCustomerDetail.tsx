@@ -212,11 +212,11 @@ export default function VanguardCustomerDetail() {
                 <div className="flex justify-between items-center">
                   <Label className="text-white/60">Health Status</Label>
                   <Badge className={
-                    customer.health_status === 'healthy' ? 'bg-green-500/20 text-green-400' :
-                    customer.health_status === 'warning' ? 'bg-amber-500/20 text-amber-400' :
-                    'bg-red-500/20 text-red-400'
+                    alertCount >= 10 ? 'bg-red-500/20 text-red-400' :
+                    alertCount >= 5 ? 'bg-amber-500/20 text-amber-400' :
+                    'bg-green-500/20 text-green-400'
                   }>
-                    {customer.health_status || 'Unknown'}
+                    {alertCount >= 10 ? 'Critical' : alertCount >= 5 ? 'Warning' : 'Healthy'}
                   </Badge>
                 </div>
               </div>

@@ -74,26 +74,39 @@ function useLiveKPIs() {
       if (!user) return;
 
       // Fetch counts in parallel
-      const [ticketsRes, devicesRes, threatsRes, creditsRes] = await Promise.all([
+      const [ticketsRes, devicesRes, threatsRes, creditsRes, usersRes, totalDevicesRes, resolvedTicketsRes] = await Promise.all([
         supabase.from('tickets').select('id', { count: 'exact', head: true }).in('status', ['open', 'in_progress', 'new', 'pending']),
         supabase.from('vanguard_agents').select('id', { count: 'exact', head: true }).eq('status', 'online'),
         supabase.from('security_events').select('id', { count: 'exact', head: true }).eq('status', 'open').in('severity', ['critical', 'high']),
         supabase.from('ai_credit_ledger').select('credits_used').eq('user_id', user.id),
+        supabase.from('client_portal_users').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('vanguard_agents').select('id', { count: 'exact', head: true }),
+        supabase.from('helpdesk_tickets').select('actual_hours').not('actual_hours', 'is', null).gt('actual_hours', 0),
       ]);
 
       const openTickets = ticketsRes.count ?? 0;
       const activeDevices = devicesRes.count ?? 0;
       const activeThreats = threatsRes.count ?? 0;
       const totalCredits = (creditsRes.data ?? []).reduce((sum, r) => sum + (r.credits_used || 0), 0);
+      const activeUsers = usersRes.count ?? 0;
+      const totalDevicesAll = totalDevicesRes.count ?? 0;
+      const uptimePercent = totalDevicesAll > 0 ? Math.round((activeDevices / totalDevicesAll) * 100) : 100;
+
+      // Avg response time from resolved tickets
+      const resolvedData = resolvedTicketsRes.data ?? [];
+      const avgHours = resolvedData.length > 0
+        ? resolvedData.reduce((sum, t) => sum + (t.actual_hours || 0), 0) / resolvedData.length
+        : 0;
+      const avgResponseStr = avgHours > 0 ? (avgHours < 1 ? `${Math.round(avgHours * 60)}m` : `${avgHours.toFixed(1)}h`) : '—';
 
       setData({
         'kpi-tickets': { value: String(openTickets), change: '', positive: true },
         'kpi-devices': { value: String(activeDevices), change: '', positive: true },
         'kpi-threats': { value: String(activeThreats), change: activeThreats === 0 ? 'No threats' : '', positive: activeThreats === 0 },
-        'kpi-users': { value: '—', change: '', positive: true },
+        'kpi-users': { value: String(activeUsers), change: '', positive: true },
         'kpi-ai-usage': { value: totalCredits.toLocaleString(), change: '', positive: true },
-        'kpi-uptime': { value: '—', change: '', positive: true },
-        'kpi-response-time': { value: '—', change: '', positive: true },
+        'kpi-uptime': { value: `${uptimePercent}%`, change: '', positive: uptimePercent >= 90 },
+        'kpi-response-time': { value: avgResponseStr, change: '', positive: avgHours < 4 },
       });
 
       // Fetch 7-day ticket trend
