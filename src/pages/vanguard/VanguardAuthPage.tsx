@@ -49,7 +49,7 @@ const VanguardAuthPage = () => {
 
     // On non-UltriumAI hosts (Lovable preview/published), avoid returning to bare `/app`.
     // `/app` only exists on the Vanguard subdomain route tree.
-    const isUltriumHost = hostname === 'ultriumai.com' || hostname === 'www.ultriumai.com' || hostname.endsWith('.ultriumai.com');
+    const isUltriumHost = hostname === 'ultriumai.app' || hostname === 'www.ultriumai.app' || hostname.endsWith('.ultriumai.app') || hostname === 'ultriumai.com' || hostname === 'www.ultriumai.com' || hostname.endsWith('.ultriumai.com');
     if (!isVanguardSubdomain && !isUltriumHost && candidate === '/app') {
       return defaultFrom;
     }
@@ -72,8 +72,8 @@ const VanguardAuthPage = () => {
     const hostname = window.location.hostname;
 
     // In Ultrium production, always centralize auth on the main domain.
-    const isUltriumProdHost = hostname === 'ultriumai.com' || hostname === 'www.ultriumai.com' || hostname.endsWith('.ultriumai.com');
-    const unifiedOrigin = isUltriumProdHost ? 'https://ultriumai.com' : window.location.origin;
+    const isUltriumProdHost = hostname === 'ultriumai.app' || hostname === 'www.ultriumai.app' || hostname.endsWith('.ultriumai.app') || hostname === 'ultriumai.com' || hostname === 'www.ultriumai.com' || hostname.endsWith('.ultriumai.com');
+    const unifiedOrigin = isUltriumProdHost ? 'https://ultriumai.app' : window.location.origin;
 
     const authUrl = `${unifiedOrigin}/auth?return=vanguard&path=${encodeURIComponent(from)}`;
     window.location.href = authUrl;

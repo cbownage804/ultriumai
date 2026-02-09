@@ -166,7 +166,7 @@ const handler = async (req: Request): Promise<Response> => {
       if (resendApiKey) {
         try {
           const resend = new Resend(resendApiKey);
-          const inviteUrl = `https://ultriumai.com/portal/accept-invite?token=${inviteToken}`;
+          const inviteUrl = `https://ultriumai.app/portal/accept-invite?token=${inviteToken}`;
           
           await resend.emails.send({
             from: "Vanguard Portal <noreply@ultriumai.com>",
@@ -277,7 +277,7 @@ const handler = async (req: Request): Promise<Response> => {
       if (resendApiKey) {
         try {
           const resend = new Resend(resendApiKey);
-          const inviteUrl = `https://ultriumai.com/portal/accept-invite?token=${newToken}`;
+          const inviteUrl = `https://ultriumai.app/portal/accept-invite?token=${newToken}`;
           
           await resend.emails.send({
             from: "Vanguard Portal <noreply@ultriumai.com>",

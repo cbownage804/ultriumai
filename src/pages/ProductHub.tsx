@@ -45,9 +45,11 @@ const ProductCard = ({
   const hasAccess = accessLevel !== null;
 
   const handleClick = () => {
-    // Only use subdomain redirects on actual production (ultriumai.com)
+    // Only use subdomain redirects on actual production
     const isProduction = window.location.hostname.endsWith('.ultriumai.com') || 
-                        window.location.hostname === 'ultriumai.com';
+                        window.location.hostname === 'ultriumai.com' ||
+                        window.location.hostname.endsWith('.ultriumai.app') || 
+                        window.location.hostname === 'ultriumai.app';
     
     if (isSubdomain && isProduction) {
       // Production cross-domain redirect
