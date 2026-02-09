@@ -19,9 +19,10 @@ import safesuiteLogo from '@/assets/safesuite-logo.png';
 import vanguardLogo from '@/assets/vanguard-logo.png';
 
 // Product subdomain URLs
+// Product redirect URLs — use the app domain (subdomains are legacy aliases)
 const PRODUCT_URLS: Record<string, string> = {
-  safesuite: 'https://safesuite.ultriumai.com',
-  vanguard: 'https://vanguard.ultriumai.com',
+  safesuite: 'https://ultriumai.app',
+  vanguard: 'https://ultriumai.app',
 };
 
 const AuthPage = () => {

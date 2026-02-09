@@ -83,8 +83,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     const isProductionSubdomain = hostname.endsWith('.ultriumai.com');
     
     if (isProductionSubdomain) {
-      const mainDomain = 'https://ultriumai.com';
-      const authUrl = `${mainDomain}/auth?return=${returnProduct}&path=${encodeURIComponent(returnPath)}`;
+      const appDomain = 'https://ultriumai.app';
+      const authUrl = `${appDomain}/auth?return=${returnProduct}&path=${encodeURIComponent(returnPath)}`;
       window.location.href = authUrl;
       return null;
     }
