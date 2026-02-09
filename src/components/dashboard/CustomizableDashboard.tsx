@@ -44,7 +44,7 @@ const WIDGET_TEMPLATES: WidgetTemplate[] = [
   { type: 'kpi-tickets', title: 'Open Tickets', icon: Headphones, description: 'Current open ticket count', defaultSize: 'sm' },
   { type: 'kpi-devices', title: 'Active Devices', icon: Monitor, description: 'Online endpoints count', defaultSize: 'sm' },
   { type: 'kpi-threats', title: 'Active Threats', icon: Shield, description: 'Unresolved security alerts', defaultSize: 'sm' },
-  { type: 'kpi-users', title: 'Active Users', icon: Users, description: 'Users online now', defaultSize: 'sm' },
+  { type: 'kpi-users', title: 'Active Users', icon: Users, description: 'Portal users online', defaultSize: 'sm' },
   { type: 'chart-tickets', title: 'Ticket Trend', icon: TrendingUp, description: '7-day ticket volume chart', defaultSize: 'md' },
   { type: 'chart-security', title: 'Security Score', icon: Shield, description: 'Overall security posture', defaultSize: 'md' },
   { type: 'kpi-ai-usage', title: 'AI Credits Used', icon: Bot, description: 'Monthly AI credit consumption', defaultSize: 'sm' },
@@ -67,6 +67,7 @@ type KPIValue = { value: string; change: string; positive: boolean };
 function useLiveKPIs() {
   const [data, setData] = useState<Record<string, KPIValue>>({});
   const [ticketTrend, setTicketTrend] = useState<number[]>([]);
+  const [securityScore, setSecurityScore] = useState(0);
 
   useEffect(() => {
     const fetchKPIs = async () => {
@@ -74,7 +75,7 @@ function useLiveKPIs() {
       if (!user) return;
 
       // Fetch counts in parallel
-      const [ticketsRes, devicesRes, threatsRes, creditsRes, usersRes, totalDevicesRes, resolvedTicketsRes] = await Promise.all([
+      const [ticketsRes, devicesRes, threatsRes, creditsRes, usersRes, totalDevicesRes, resolvedTicketsRes, patchesRes, alertsAllRes] = await Promise.all([
         supabase.from('tickets').select('id', { count: 'exact', head: true }).in('status', ['open', 'in_progress', 'new', 'pending']),
         supabase.from('vanguard_agents').select('id', { count: 'exact', head: true }).eq('status', 'online'),
         supabase.from('security_events').select('id', { count: 'exact', head: true }).eq('status', 'open').in('severity', ['critical', 'high']),
@@ -82,6 +83,8 @@ function useLiveKPIs() {
         supabase.from('client_portal_users').select('id', { count: 'exact', head: true }).eq('is_active', true),
         supabase.from('vanguard_agents').select('id', { count: 'exact', head: true }),
         supabase.from('helpdesk_tickets').select('actual_hours').not('actual_hours', 'is', null).gt('actual_hours', 0),
+        supabase.from('rmm_patches').select('status'),
+        supabase.from('rmm_alerts').select('id, status'),
       ]);
 
       const openTickets = ticketsRes.count ?? 0;
@@ -92,12 +95,28 @@ function useLiveKPIs() {
       const totalDevicesAll = totalDevicesRes.count ?? 0;
       const uptimePercent = totalDevicesAll > 0 ? Math.round((activeDevices / totalDevicesAll) * 100) : 100;
 
-      // Avg response time from resolved tickets
+      // Avg response time
       const resolvedData = resolvedTicketsRes.data ?? [];
       const avgHours = resolvedData.length > 0
         ? resolvedData.reduce((sum, t) => sum + (t.actual_hours || 0), 0) / resolvedData.length
         : 0;
       const avgResponseStr = avgHours > 0 ? (avgHours < 1 ? `${Math.round(avgHours * 60)}m` : `${avgHours.toFixed(1)}h`) : '—';
+
+      // Compute real security score (0-100)
+      const patches = patchesRes.data ?? [];
+      const totalPatches = patches.length;
+      const installedPatches = patches.filter((p: any) => p.status === 'installed').length;
+      const patchScore = totalPatches > 0 ? (installedPatches / totalPatches) * 100 : 100;
+
+      const allAlerts = alertsAllRes.data ?? [];
+      const totalAlerts = allAlerts.length;
+      const resolvedAlerts = allAlerts.filter((a: any) => a.status === 'resolved').length;
+      const alertScore = totalAlerts > 0 ? (resolvedAlerts / totalAlerts) * 100 : 100;
+
+      const uptimeScore = uptimePercent;
+      const threatPenalty = Math.min(activeThreats * 5, 30); // Max 30 point penalty
+      const compositeScore = Math.max(0, Math.round((patchScore * 0.3 + alertScore * 0.3 + uptimeScore * 0.4) - threatPenalty));
+      setSecurityScore(compositeScore);
 
       setData({
         'kpi-tickets': { value: String(openTickets), change: '', positive: true },
@@ -117,7 +136,6 @@ function useLiveKPIs() {
         .select('created_at')
         .gte('created_at', sevenDaysAgo.toISOString());
 
-      // Group by day of week
       const dayCounts = [0, 0, 0, 0, 0, 0, 0];
       (recentTickets ?? []).forEach(t => {
         const dayIndex = Math.floor((Date.now() - new Date(t.created_at).getTime()) / 86400000);
@@ -132,7 +150,7 @@ function useLiveKPIs() {
     fetchKPIs();
   }, []);
 
-  return { data, ticketTrend };
+  return { data, ticketTrend, securityScore };
 }
 
 function KPIWidget({ widget, kpiData }: { widget: DashboardWidget; kpiData: Record<string, KPIValue> }) {
@@ -157,12 +175,45 @@ function KPIWidget({ widget, kpiData }: { widget: DashboardWidget; kpiData: Reco
   );
 }
 
-function ChartWidget({ widget, ticketTrend }: { widget: DashboardWidget; ticketTrend: number[] }) {
+function SecurityScoreWidget({ score }: { score: number }) {
+  const color = score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-amber-400' : 'text-red-400';
+  const bgColor = score >= 80 ? 'from-emerald-500/20 to-emerald-500/5' : score >= 60 ? 'from-amber-500/20 to-amber-500/5' : 'from-red-500/20 to-red-500/5';
+  const label = score >= 80 ? 'Good' : score >= 60 ? 'Fair' : 'At Risk';
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Shield className="h-4 w-4" />
+          <span>Security Posture</span>
+        </div>
+        <span className={`text-xs font-medium ${color}`}>{label}</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <p className={`text-3xl font-bold ${color}`}>{score}</p>
+        <span className="text-sm text-muted-foreground">/ 100</span>
+      </div>
+      <div className="w-full h-2 rounded-full bg-muted/30 overflow-hidden">
+        <div 
+          className={`h-full rounded-full bg-gradient-to-r ${bgColor}`} 
+          style={{ width: `${score}%` }}
+        />
+      </div>
+      <p className="text-[10px] text-muted-foreground">Based on patch compliance, alert resolution & uptime</p>
+    </div>
+  );
+}
+
+function ChartWidget({ widget, ticketTrend, securityScore }: { widget: DashboardWidget; ticketTrend: number[]; securityScore: number }) {
+  if (widget.type === 'chart-security') {
+    return <SecurityScoreWidget score={securityScore} />;
+  }
+
   const bars = ticketTrend.length > 0 ? ticketTrend : [5, 5, 5, 5, 5, 5, 5];
   const template = WIDGET_TEMPLATES.find(t => t.type === widget.type);
   const Icon = template?.icon || BarChart3;
   const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const today = new Date().getDay(); // 0=Sun
+  const today = new Date().getDay();
   const orderedLabels = [];
   for (let i = 6; i >= 0; i--) {
     const d = (today - i + 7) % 7;
@@ -199,7 +250,7 @@ export function CustomizableDashboard() {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const { data: kpiData, ticketTrend } = useLiveKPIs();
+  const { data: kpiData, ticketTrend, securityScore } = useLiveKPIs();
 
   const saveWidgets = useCallback((updated: DashboardWidget[]) => {
     setWidgets(updated);
@@ -315,7 +366,7 @@ export function CustomizableDashboard() {
               </CardHeader>
               <CardContent className="px-4 pb-3">
                 {widget.type.startsWith('chart-') ? (
-                  <ChartWidget widget={widget} ticketTrend={ticketTrend} />
+                  <ChartWidget widget={widget} ticketTrend={ticketTrend} securityScore={securityScore} />
                 ) : (
                   <KPIWidget widget={widget} kpiData={kpiData} />
                 )}
