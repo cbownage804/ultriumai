@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   BarChart3, TrendingUp, TrendingDown, Users, Monitor,
   Ticket, Shield, DollarSign, Clock, CheckCircle2, AlertTriangle,
-  Download, RefreshCw, Calendar, ArrowUpRight, ArrowDownRight
+  Download, RefreshCw, Calendar, ArrowUpRight, ArrowDownRight, Loader2
 } from 'lucide-react';
 import {
   Select,
@@ -17,61 +16,91 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend } from 'recharts';
+import { useHorizonStats } from '@/hooks/useHorizonStats';
+import { useSLAMetrics } from '@/hooks/useHorizon';
+import { useMSPDashboard } from '@/hooks/useMSPDashboard';
 
 export const ExecutiveDashboard: React.FC = () => {
   const [dateRange, setDateRange] = useState('30d');
   const [selectedTenant, setSelectedTenant] = useState('all');
+  const { stats, devices, isLoading: statsLoading, refetch } = useHorizonStats();
+  const { metrics: slaMetrics, isLoading: slaLoading } = useSLAMetrics();
+  const { clients, loading: clientsLoading } = useMSPDashboard();
 
-  const kpiData = {
-    totalDevices: { value: 1247, change: 8.5, trend: 'up' },
-    activeTickets: { value: 89, change: -12.3, trend: 'down' },
-    mttResolve: { value: 4.2, change: -18.5, trend: 'down' },
-    customerSat: { value: 94.2, change: 2.1, trend: 'up' },
-    threatBlocked: { value: 342, change: 15.8, trend: 'up' },
-    monthlyRevenue: { value: 48500, change: 5.2, trend: 'up' }
-  };
+  const isLoading = statsLoading || slaLoading || clientsLoading;
 
-  const ticketTrend = [
-    { date: 'Jan', opened: 145, closed: 138, backlog: 42 },
-    { date: 'Feb', opened: 132, closed: 145, backlog: 29 },
-    { date: 'Mar', opened: 168, closed: 155, backlog: 42 },
-    { date: 'Apr', opened: 155, closed: 162, backlog: 35 },
-    { date: 'May', opened: 142, closed: 148, backlog: 29 },
-    { date: 'Jun', opened: 138, closed: 145, backlog: 22 }
-  ];
+  // Compute real KPIs from live data
+  const kpiData = useMemo(() => {
+    const totalTickets = slaMetrics.reduce((sum, m) => sum + m.total_tickets, 0);
+    const avgResponseMin = slaMetrics.length > 0
+      ? slaMetrics.reduce((sum, m) => sum + (m.avg_response_time_minutes || 0), 0) / slaMetrics.length
+      : 0;
+    const avgResolutionMin = slaMetrics.length > 0
+      ? slaMetrics.reduce((sum, m) => sum + (m.avg_resolution_time_minutes || 0), 0) / slaMetrics.length
+      : 0;
+    const avgUptime = slaMetrics.length > 0
+      ? slaMetrics.reduce((sum, m) => sum + (m.uptime_percent || 0), 0) / slaMetrics.length
+      : 0;
+    const totalRevenue = clients.reduce((sum, c) => sum + c.monthlyRevenue, 0);
 
-  const deviceHealth = [
-    { name: 'Healthy', value: 1089, color: '#22c55e' },
-    { name: 'Warning', value: 112, color: '#eab308' },
-    { name: 'Critical', value: 46, color: '#ef4444' }
-  ];
+    return {
+      totalDevices: stats.totalDevices,
+      activeTickets: stats.openTickets,
+      mttResolve: Math.round(avgResolutionMin / 60 * 10) / 10 || 0,
+      threatsBlocked: stats.activeAlerts,
+      monthlyRevenue: totalRevenue,
+      uptime: Math.round(avgUptime * 10) / 10,
+    };
+  }, [stats, slaMetrics, clients]);
 
-  const revenueByService = [
-    { service: 'RMM', revenue: 18500 },
-    { service: 'Security', revenue: 12800 },
-    { service: 'Support', revenue: 9200 },
-    { service: 'Consulting', revenue: 5400 },
-    { service: 'Other', revenue: 2600 }
-  ];
+  // Build device health from live stats
+  const deviceHealth = useMemo(() => [
+    { name: 'Healthy', value: stats.onlineDevices, color: '#22c55e' },
+    { name: 'Warning', value: stats.warningDevices, color: '#eab308' },
+    { name: 'Critical', value: stats.criticalDevices + stats.offlineDevices, color: '#ef4444' },
+  ], [stats]);
 
-  const topClients = [
-    { name: 'Acme Corporation', devices: 156, tickets: 23, revenue: 8500, health: 95 },
-    { name: 'TechStart Inc', devices: 89, tickets: 12, revenue: 4200, health: 88 },
-    { name: 'Global Dynamics', devices: 234, tickets: 31, revenue: 12400, health: 92 },
-    { name: 'SecureHealth Ltd', devices: 78, tickets: 8, revenue: 5600, health: 97 },
-    { name: 'DataFlow Systems', devices: 145, tickets: 19, revenue: 7300, health: 85 }
-  ];
+  // Build revenue by client from live MSP data
+  const revenueByClient = useMemo(() => 
+    clients
+      .filter(c => c.monthlyRevenue > 0)
+      .sort((a, b) => b.monthlyRevenue - a.monthlyRevenue)
+      .slice(0, 5)
+      .map(c => ({ service: c.name, revenue: c.monthlyRevenue })),
+  [clients]);
 
-  const getTrendIcon = (trend: string, change: number) => {
-    if (trend === 'up' && change > 0) {
-      return <ArrowUpRight className="h-4 w-4 text-green-500" />;
-    } else if (trend === 'down' && change < 0) {
-      return <ArrowDownRight className="h-4 w-4 text-green-500" />;
-    } else if (trend === 'up' && change < 0) {
-      return <ArrowDownRight className="h-4 w-4 text-red-500" />;
-    }
-    return <ArrowUpRight className="h-4 w-4 text-red-500" />;
-  };
+  // Build top clients from live data
+  const topClients = useMemo(() =>
+    clients
+      .sort((a, b) => b.assets - a.assets)
+      .slice(0, 5)
+      .map(c => ({
+        name: c.name,
+        devices: c.assets,
+        threats: c.threats,
+        revenue: c.monthlyRevenue,
+        health: c.status === 'active' ? (100 - Math.min(c.threats * 5, 50)) : 50,
+      })),
+  [clients]);
+
+  // Build ticket trend from SLA metrics (last 6 periods)
+  const ticketTrend = useMemo(() => {
+    if (slaMetrics.length === 0) return [];
+    const sorted = [...slaMetrics].sort((a, b) => a.metric_date.localeCompare(b.metric_date));
+    return sorted.slice(-6).map(m => ({
+      date: new Date(m.metric_date).toLocaleDateString('en', { month: 'short' }),
+      opened: m.total_tickets,
+      resolved: m.tickets_within_resolution_sla,
+    }));
+  }, [slaMetrics]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -81,7 +110,7 @@ export const ExecutiveDashboard: React.FC = () => {
             <BarChart3 className="h-6 w-6" />
             Executive Dashboard
           </h2>
-          <p className="text-muted-foreground">High-level KPIs for management and clients</p>
+          <p className="text-muted-foreground">Live KPIs across your managed environment</p>
         </div>
         <div className="flex gap-2">
           <Select value={selectedTenant} onValueChange={setSelectedTenant}>
@@ -90,9 +119,9 @@ export const ExecutiveDashboard: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Tenants</SelectItem>
-              <SelectItem value="acme">Acme Corporation</SelectItem>
-              <SelectItem value="tech">TechStart Inc</SelectItem>
-              <SelectItem value="global">Global Dynamics</SelectItem>
+              {clients.map(c => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Select value={dateRange} onValueChange={setDateRange}>
@@ -107,11 +136,7 @@ export const ExecutiveDashboard: React.FC = () => {
               <SelectItem value="1y">Last Year</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={refetch}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -124,84 +149,55 @@ export const ExecutiveDashboard: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-2">
               <Monitor className="h-5 w-5 text-muted-foreground" />
-              <div className="flex items-center gap-1 text-xs">
-                {getTrendIcon(kpiData.totalDevices.trend, kpiData.totalDevices.change)}
-                <span className={kpiData.totalDevices.change > 0 ? 'text-green-500' : 'text-red-500'}>
-                  {Math.abs(kpiData.totalDevices.change)}%
-                </span>
-              </div>
             </div>
-            <p className="text-2xl font-bold">{kpiData.totalDevices.value.toLocaleString()}</p>
+            <p className="text-2xl font-bold">{kpiData.totalDevices}</p>
             <p className="text-xs text-muted-foreground">Total Devices</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-2">
               <Ticket className="h-5 w-5 text-muted-foreground" />
-              <div className="flex items-center gap-1 text-xs">
-                {getTrendIcon('down', kpiData.activeTickets.change)}
-                <span className="text-green-500">{Math.abs(kpiData.activeTickets.change)}%</span>
-              </div>
             </div>
-            <p className="text-2xl font-bold">{kpiData.activeTickets.value}</p>
-            <p className="text-xs text-muted-foreground">Active Tickets</p>
+            <p className="text-2xl font-bold">{kpiData.activeTickets}</p>
+            <p className="text-xs text-muted-foreground">Open Tickets</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-2">
               <Clock className="h-5 w-5 text-muted-foreground" />
-              <div className="flex items-center gap-1 text-xs">
-                {getTrendIcon('down', kpiData.mttResolve.change)}
-                <span className="text-green-500">{Math.abs(kpiData.mttResolve.change)}%</span>
-              </div>
             </div>
-            <p className="text-2xl font-bold">{kpiData.mttResolve.value}h</p>
+            <p className="text-2xl font-bold">{kpiData.mttResolve}h</p>
             <p className="text-xs text-muted-foreground">MTT Resolve</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-2">
               <Users className="h-5 w-5 text-muted-foreground" />
-              <div className="flex items-center gap-1 text-xs">
-                {getTrendIcon(kpiData.customerSat.trend, kpiData.customerSat.change)}
-                <span className="text-green-500">{kpiData.customerSat.change}%</span>
-              </div>
             </div>
-            <p className="text-2xl font-bold">{kpiData.customerSat.value}%</p>
-            <p className="text-xs text-muted-foreground">CSAT Score</p>
+            <p className="text-2xl font-bold">{kpiData.uptime > 0 ? `${kpiData.uptime}%` : '—'}</p>
+            <p className="text-xs text-muted-foreground">Avg Uptime</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-2">
               <Shield className="h-5 w-5 text-muted-foreground" />
-              <div className="flex items-center gap-1 text-xs">
-                {getTrendIcon(kpiData.threatBlocked.trend, kpiData.threatBlocked.change)}
-                <span className="text-green-500">{kpiData.threatBlocked.change}%</span>
-              </div>
             </div>
-            <p className="text-2xl font-bold">{kpiData.threatBlocked.value}</p>
-            <p className="text-xs text-muted-foreground">Threats Blocked</p>
+            <p className="text-2xl font-bold">{kpiData.threatsBlocked}</p>
+            <p className="text-xs text-muted-foreground">Active Alerts</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-2">
               <DollarSign className="h-5 w-5 text-muted-foreground" />
-              <div className="flex items-center gap-1 text-xs">
-                {getTrendIcon(kpiData.monthlyRevenue.trend, kpiData.monthlyRevenue.change)}
-                <span className="text-green-500">{kpiData.monthlyRevenue.change}%</span>
-              </div>
             </div>
-            <p className="text-2xl font-bold">${(kpiData.monthlyRevenue.value / 1000).toFixed(1)}k</p>
+            <p className="text-2xl font-bold">
+              {kpiData.monthlyRevenue > 0 ? `$${(kpiData.monthlyRevenue / 1000).toFixed(1)}k` : '—'}
+            </p>
             <p className="text-xs text-muted-foreground">Monthly Revenue</p>
           </CardContent>
         </Card>
@@ -212,20 +208,28 @@ export const ExecutiveDashboard: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle>Ticket Volume Trend</CardTitle>
-            <CardDescription>Opened vs closed tickets over time</CardDescription>
+            <CardDescription>
+              {ticketTrend.length > 0 ? 'Opened vs resolved tickets from SLA data' : 'No SLA metric data available yet'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={ticketTrend}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="date" className="text-xs" />
-                  <YAxis className="text-xs" />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="opened" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.3} name="Opened" />
-                  <Area type="monotone" dataKey="closed" stackId="2" stroke="#22c55e" fill="#22c55e" fillOpacity={0.3} name="Closed" />
-                </AreaChart>
-              </ResponsiveContainer>
+              {ticketTrend.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={ticketTrend}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="date" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip />
+                    <Area type="monotone" dataKey="opened" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.3} name="Opened" />
+                    <Area type="monotone" dataKey="resolved" stackId="2" stroke="#22c55e" fill="#22c55e" fillOpacity={0.3} name="Resolved" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  SLA metrics will appear here once tickets are tracked
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -234,50 +238,62 @@ export const ExecutiveDashboard: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle>Device Health Distribution</CardTitle>
-            <CardDescription>Current health status of all managed devices</CardDescription>
+            <CardDescription>Live health status of all managed devices</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={deviceHealth}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {deviceHealth.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Legend />
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              {stats.totalDevices > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={deviceHealth}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {deviceHealth.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Legend />
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  Deploy agents to see device health distribution
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Revenue by Service */}
+        {/* Revenue by Client */}
         <Card>
           <CardHeader>
-            <CardTitle>Revenue by Service</CardTitle>
-            <CardDescription>Monthly revenue breakdown by service type</CardDescription>
+            <CardTitle>Revenue by Client</CardTitle>
+            <CardDescription>Monthly revenue from managed clients</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={revenueByService} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis type="number" className="text-xs" />
-                  <YAxis dataKey="service" type="category" className="text-xs" width={80} />
-                  <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
-                  <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {revenueByClient.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={revenueByClient} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis type="number" className="text-xs" />
+                    <YAxis dataKey="service" type="category" className="text-xs" width={120} />
+                    <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+                    <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  Add clients with monthly rates to see revenue breakdown
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -289,27 +305,33 @@ export const ExecutiveDashboard: React.FC = () => {
             <CardDescription>Performance metrics by client</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {topClients.map((client) => (
-                <div key={client.name} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{client.name}</p>
-                    <div className="flex gap-4 text-xs text-muted-foreground mt-1">
-                      <span>{client.devices} devices</span>
-                      <span>{client.tickets} tickets</span>
-                      <span>${client.revenue.toLocaleString()}/mo</span>
+            {topClients.length > 0 ? (
+              <div className="space-y-4">
+                {topClients.map((client) => (
+                  <div key={client.name} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">{client.name}</p>
+                      <div className="flex gap-4 text-xs text-muted-foreground mt-1">
+                        <span>{client.devices} assets</span>
+                        <span>{client.threats} threats</span>
+                        {client.revenue > 0 && <span>${client.revenue.toLocaleString()}/mo</span>}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-2">
+                        <Progress value={client.health} className="w-24 h-2" />
+                        <span className="text-sm font-medium">{client.health}%</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Health Score</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-2">
-                      <Progress value={client.health} className="w-24 h-2" />
-                      <span className="text-sm font-medium">{client.health}%</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Health Score</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+                Add MSP clients to see performance metrics
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

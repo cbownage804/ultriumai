@@ -22,226 +22,98 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useSLAMetrics } from "@/hooks/useHorizon";
-
-interface SLAMetric {
-  id: string;
-  name: string;
-  target: number;
-  actual: number;
-  unit: string;
-  trend: "up" | "down" | "stable";
-  status: "met" | "at_risk" | "breached";
-}
-
-interface ClientSLA {
-  id: string;
-  clientName: string;
-  slaType: string;
-  responseTarget: number;
-  responseActual: number;
-  resolutionTarget: number;
-  resolutionActual: number;
-  uptimeTarget: number;
-  uptimeActual: number;
-  ticketsTotal: number;
-  ticketsMet: number;
-  ticketsBreached: number;
-  trend: "improving" | "declining" | "stable";
-}
+import { useMSPDashboard } from "@/hooks/useMSPDashboard";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export function SLATrackingDashboard() {
   const { metrics: dbMetrics, isLoading, refetch } = useSLAMetrics();
+  const { clients } = useMSPDashboard();
   const [timeRange, setTimeRange] = useState("month");
   const [selectedClient, setSelectedClient] = useState("all");
 
-  // Calculate aggregate metrics from DB data
-  const aggregateMetrics = useMemo(() => {
+  // Compute all stats from live DB data
+  const liveStats = useMemo(() => {
     if (dbMetrics.length === 0) return null;
-    
+
     const totalTickets = dbMetrics.reduce((sum, m) => sum + m.total_tickets, 0);
     const ticketsWithinResponseSLA = dbMetrics.reduce((sum, m) => sum + m.tickets_within_response_sla, 0);
     const ticketsWithinResolutionSLA = dbMetrics.reduce((sum, m) => sum + m.tickets_within_resolution_sla, 0);
     const avgResponseTime = dbMetrics.reduce((sum, m) => sum + (m.avg_response_time_minutes || 0), 0) / dbMetrics.length;
     const avgResolutionTime = dbMetrics.reduce((sum, m) => sum + (m.avg_resolution_time_minutes || 0), 0) / dbMetrics.length;
     const avgUptime = dbMetrics.reduce((sum, m) => sum + (m.uptime_percent || 0), 0) / dbMetrics.length;
+    const breaches = totalTickets - ticketsWithinResolutionSLA;
+    const responseCompliance = totalTickets > 0 ? (ticketsWithinResponseSLA / totalTickets * 100) : 0;
+    const resolutionCompliance = totalTickets > 0 ? (ticketsWithinResolutionSLA / totalTickets * 100) : 0;
+    const overallCompliance = (responseCompliance + resolutionCompliance) / 2;
 
     return {
       totalTickets,
-      responseCompliance: totalTickets > 0 ? (ticketsWithinResponseSLA / totalTickets * 100) : 0,
-      resolutionCompliance: totalTickets > 0 ? (ticketsWithinResolutionSLA / totalTickets * 100) : 0,
-      avgResponseTime,
-      avgResolutionTime,
-      avgUptime
+      breaches,
+      avgResponseTime: Math.round(avgResponseTime * 10) / 10,
+      avgResolutionTime: Math.round(avgResolutionTime * 10) / 10,
+      avgUptime: Math.round(avgUptime * 100) / 100,
+      overallCompliance: Math.round(overallCompliance * 10) / 10,
+      responseCompliance: Math.round(responseCompliance * 10) / 10,
+      resolutionCompliance: Math.round(resolutionCompliance * 10) / 10,
     };
   }, [dbMetrics]);
 
-  const overallMetrics: SLAMetric[] = [
-    {
-      id: "1",
-      name: "First Response Time",
-      target: 15,
-      actual: 12.4,
-      unit: "min",
-      trend: "down",
-      status: "met",
-    },
-    {
-      id: "2",
-      name: "Resolution Time",
-      target: 240,
-      actual: 198,
-      unit: "min",
-      trend: "down",
-      status: "met",
-    },
-    {
-      id: "3",
-      name: "System Uptime",
-      target: 99.9,
-      actual: 99.87,
-      unit: "%",
-      trend: "up",
-      status: "at_risk",
-    },
-    {
-      id: "4",
-      name: "Customer Satisfaction",
-      target: 90,
-      actual: 94.2,
-      unit: "%",
-      trend: "up",
-      status: "met",
-    },
-  ];
-
-  const clientSLAs: ClientSLA[] = [
-    {
-      id: "1",
-      clientName: "Acme Corporation",
-      slaType: "Premium",
-      responseTarget: 15,
-      responseActual: 11,
-      resolutionTarget: 120,
-      resolutionActual: 95,
-      uptimeTarget: 99.99,
-      uptimeActual: 99.98,
-      ticketsTotal: 47,
-      ticketsMet: 45,
-      ticketsBreached: 2,
-      trend: "improving",
-    },
-    {
-      id: "2",
-      clientName: "TechStart Inc",
-      slaType: "Standard",
-      responseTarget: 30,
-      responseActual: 22,
-      resolutionTarget: 240,
-      resolutionActual: 180,
-      uptimeTarget: 99.9,
-      uptimeActual: 99.95,
-      ticketsTotal: 23,
-      ticketsMet: 22,
-      ticketsBreached: 1,
-      trend: "stable",
-    },
-    {
-      id: "3",
-      clientName: "Global Finance Ltd",
-      slaType: "Enterprise",
-      responseTarget: 5,
-      responseActual: 4,
-      resolutionTarget: 60,
-      resolutionActual: 52,
-      uptimeTarget: 99.999,
-      uptimeActual: 99.998,
-      ticketsTotal: 156,
-      ticketsMet: 152,
-      ticketsBreached: 4,
-      trend: "improving",
-    },
-    {
-      id: "4",
-      clientName: "Retail Plus",
-      slaType: "Standard",
-      responseTarget: 30,
-      responseActual: 35,
-      resolutionTarget: 240,
-      resolutionActual: 280,
-      uptimeTarget: 99.9,
-      uptimeActual: 99.7,
-      ticketsTotal: 34,
-      ticketsMet: 28,
-      ticketsBreached: 6,
-      trend: "declining",
-    },
-  ];
-
-  const breachedTickets = [
-    {
-      id: "TKT-1234",
-      client: "Retail Plus",
-      subject: "Email server down",
-      priority: "Critical",
-      responseTime: 45,
-      responseTarget: 30,
-      resolutionTime: 320,
-      resolutionTarget: 240,
-    },
-    {
-      id: "TKT-1289",
-      client: "Acme Corporation",
-      subject: "VPN connectivity issues",
-      priority: "High",
-      responseTime: 18,
-      responseTarget: 15,
-      resolutionTime: 145,
-      resolutionTarget: 120,
-    },
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "met":
-        return "text-green-500";
-      case "at_risk":
-        return "text-yellow-500";
-      case "breached":
-        return "text-red-500";
-      default:
-        return "text-muted-foreground";
+  // Group SLA metrics by client_id for per-client view
+  const clientSLAs = useMemo(() => {
+    const byClient = new Map<string, typeof dbMetrics>();
+    for (const m of dbMetrics) {
+      const key = m.client_id || 'unknown';
+      if (!byClient.has(key)) byClient.set(key, []);
+      byClient.get(key)!.push(m);
     }
-  };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "met":
-        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Met</Badge>;
-      case "at_risk":
-        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">At Risk</Badge>;
-      case "breached":
-        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Breached</Badge>;
-      default:
-        return null;
-    }
-  };
+    return Array.from(byClient.entries()).map(([clientId, metrics]) => {
+      const client = clients.find(c => c.id === clientId);
+      const totalTickets = metrics.reduce((s, m) => s + m.total_tickets, 0);
+      const metSLA = metrics.reduce((s, m) => s + m.tickets_within_resolution_sla, 0);
+      const avgResponse = metrics.reduce((s, m) => s + (m.avg_response_time_minutes || 0), 0) / metrics.length;
+      const avgResolution = metrics.reduce((s, m) => s + (m.avg_resolution_time_minutes || 0), 0) / metrics.length;
+      const avgUptime = metrics.reduce((s, m) => s + (m.uptime_percent || 0), 0) / metrics.length;
+      const compliance = totalTickets > 0 ? Math.round((metSLA / totalTickets) * 100) : 100;
 
-  const getTrendIcon = (trend: string) => {
-    switch (trend) {
-      case "up":
-      case "improving":
-        return <TrendingUp className="h-4 w-4 text-green-500" />;
-      case "down":
-      case "declining":
-        return <TrendingDown className="h-4 w-4 text-red-500" />;
-      default:
-        return <div className="h-4 w-4" />;
-    }
-  };
+      return {
+        id: clientId,
+        clientName: client?.name || clientId,
+        totalTickets,
+        metSLA,
+        breaches: totalTickets - metSLA,
+        avgResponseMin: Math.round(avgResponse),
+        avgResolutionMin: Math.round(avgResolution),
+        uptime: Math.round(avgUptime * 100) / 100,
+        compliance,
+      };
+    });
+  }, [dbMetrics, clients]);
 
-  const calculateCompliance = (met: number, total: number) => {
-    return total > 0 ? Math.round((met / total) * 100) : 100;
-  };
+  // Build trend data from SLA metrics over time
+  const trendData = useMemo(() => {
+    if (dbMetrics.length === 0) return [];
+    const sorted = [...dbMetrics].sort((a, b) => a.metric_date.localeCompare(b.metric_date));
+    return sorted.slice(-12).map(m => ({
+      date: new Date(m.metric_date).toLocaleDateString('en', { month: 'short', day: 'numeric' }),
+      responseTime: m.avg_response_time_minutes || 0,
+      resolutionTime: m.avg_resolution_time_minutes || 0,
+      uptime: m.uptime_percent || 0,
+    }));
+  }, [dbMetrics]);
+
+  const getComplianceColor = (val: number) =>
+    val >= 95 ? "text-green-500" : val >= 85 ? "text-yellow-500" : "text-red-500";
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[300px]">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+      </div>
+    );
+  }
+
+  const hasData = dbMetrics.length > 0 && liveStats;
 
   return (
     <div className="space-y-4">
@@ -249,7 +121,7 @@ export function SLATrackingDashboard() {
         <div>
           <h3 className="text-lg font-semibold">SLA Tracking Dashboard</h3>
           <p className="text-sm text-muted-foreground">
-            Monitor service level agreement compliance
+            {hasData ? 'Live service level agreement compliance' : 'No SLA metric data available yet'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -259,10 +131,8 @@ export function SLATrackingDashboard() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Clients</SelectItem>
-              {clientSLAs.map((client) => (
-                <SelectItem key={client.id} value={client.id}>
-                  {client.clientName}
-                </SelectItem>
+              {clientSLAs.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.clientName}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -277,40 +147,54 @@ export function SLATrackingDashboard() {
               <SelectItem value="year">This Year</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      {/* Overall Metrics */}
+      {/* Overall Metrics from live data */}
       <div className="grid grid-cols-4 gap-4">
-        {overallMetrics.map((metric) => (
-          <Card key={metric.id}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-2">
-                <p className="text-xs text-muted-foreground">{metric.name}</p>
-                {getStatusBadge(metric.status)}
-              </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className={`text-2xl font-bold ${getStatusColor(metric.status)}`}>
-                    {metric.actual}
-                    <span className="text-sm font-normal text-muted-foreground ml-1">
-                      {metric.unit}
-                    </span>
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Target: {metric.target}
-                    {metric.unit}
-                  </p>
-                </div>
-                {getTrendIcon(metric.trend)}
-              </div>
-              <Progress
-                value={(metric.actual / metric.target) * 100}
-                className="h-1 mt-2"
-              />
-            </CardContent>
-          </Card>
-        ))}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between mb-2">
+              <p className="text-xs text-muted-foreground">Avg Response Time</p>
+            </div>
+            <p className="text-2xl font-bold">{hasData ? `${liveStats.avgResponseTime}m` : '—'}</p>
+            <p className="text-xs text-muted-foreground">Target: 15m</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between mb-2">
+              <p className="text-xs text-muted-foreground">Avg Resolution Time</p>
+            </div>
+            <p className="text-2xl font-bold">{hasData ? `${liveStats.avgResolutionTime}m` : '—'}</p>
+            <p className="text-xs text-muted-foreground">Target: 240m</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between mb-2">
+              <p className="text-xs text-muted-foreground">System Uptime</p>
+            </div>
+            <p className={`text-2xl font-bold ${hasData && liveStats.avgUptime >= 99.9 ? 'text-green-500' : hasData ? 'text-yellow-500' : ''}`}>
+              {hasData ? `${liveStats.avgUptime}%` : '—'}
+            </p>
+            <p className="text-xs text-muted-foreground">Target: 99.9%</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between mb-2">
+              <p className="text-xs text-muted-foreground">Response Compliance</p>
+            </div>
+            <p className={`text-2xl font-bold ${hasData ? getComplianceColor(liveStats.responseCompliance) : ''}`}>
+              {hasData ? `${liveStats.responseCompliance}%` : '—'}
+            </p>
+            <p className="text-xs text-muted-foreground">Tickets within SLA</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Summary Stats */}
@@ -321,7 +205,9 @@ export function SLATrackingDashboard() {
               <CheckCircle className="h-6 w-6 text-green-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-green-500">94.2%</p>
+              <p className={`text-2xl font-bold ${hasData ? getComplianceColor(liveStats.overallCompliance) : 'text-muted-foreground'}`}>
+                {hasData ? `${liveStats.overallCompliance}%` : '—'}
+              </p>
               <p className="text-xs text-muted-foreground">Overall Compliance</p>
             </div>
           </CardContent>
@@ -332,7 +218,7 @@ export function SLATrackingDashboard() {
               <Ticket className="h-6 w-6 text-cyan-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-cyan-500">260</p>
+              <p className="text-2xl font-bold text-cyan-500">{hasData ? liveStats.totalTickets : 0}</p>
               <p className="text-xs text-muted-foreground">Total Tickets</p>
             </div>
           </CardContent>
@@ -343,7 +229,7 @@ export function SLATrackingDashboard() {
               <AlertTriangle className="h-6 w-6 text-yellow-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-yellow-500">13</p>
+              <p className="text-2xl font-bold text-yellow-500">{hasData ? liveStats.breaches : 0}</p>
               <p className="text-xs text-muted-foreground">SLA Breaches</p>
             </div>
           </CardContent>
@@ -354,7 +240,9 @@ export function SLATrackingDashboard() {
               <Timer className="h-6 w-6 text-purple-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-purple-500">12.4m</p>
+              <p className="text-2xl font-bold text-purple-500">
+                {hasData ? `${liveStats.avgResponseTime}m` : '—'}
+              </p>
               <p className="text-xs text-muted-foreground">Avg Response Time</p>
             </div>
           </CardContent>
@@ -367,10 +255,6 @@ export function SLATrackingDashboard() {
             <Users className="h-4 w-4" />
             By Client
           </TabsTrigger>
-          <TabsTrigger value="breaches" className="gap-2">
-            <XCircle className="h-4 w-4" />
-            Breaches
-          </TabsTrigger>
           <TabsTrigger value="trends" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             Trends
@@ -380,176 +264,50 @@ export function SLATrackingDashboard() {
         <TabsContent value="clients" className="mt-4">
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="text-left p-4 text-xs font-medium text-muted-foreground">
-                        Client
-                      </th>
-                      <th className="text-center p-4 text-xs font-medium text-muted-foreground">
-                        SLA Type
-                      </th>
-                      <th className="text-center p-4 text-xs font-medium text-muted-foreground">
-                        Response Time
-                      </th>
-                      <th className="text-center p-4 text-xs font-medium text-muted-foreground">
-                        Resolution Time
-                      </th>
-                      <th className="text-center p-4 text-xs font-medium text-muted-foreground">
-                        Uptime
-                      </th>
-                      <th className="text-center p-4 text-xs font-medium text-muted-foreground">
-                        Compliance
-                      </th>
-                      <th className="text-center p-4 text-xs font-medium text-muted-foreground">
-                        Trend
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {clientSLAs.map((client) => {
-                      const compliance = calculateCompliance(
-                        client.ticketsMet,
-                        client.ticketsTotal
-                      );
-                      return (
+              {clientSLAs.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="text-left p-4 text-xs font-medium text-muted-foreground">Client</th>
+                        <th className="text-center p-4 text-xs font-medium text-muted-foreground">Tickets</th>
+                        <th className="text-center p-4 text-xs font-medium text-muted-foreground">Avg Response</th>
+                        <th className="text-center p-4 text-xs font-medium text-muted-foreground">Avg Resolution</th>
+                        <th className="text-center p-4 text-xs font-medium text-muted-foreground">Uptime</th>
+                        <th className="text-center p-4 text-xs font-medium text-muted-foreground">Compliance</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {clientSLAs.map((client) => (
                         <tr key={client.id} className="border-b hover:bg-muted/30">
                           <td className="p-4">
-                            <div>
-                              <p className="font-medium">{client.clientName}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {client.ticketsTotal} tickets
-                              </p>
-                            </div>
+                            <p className="font-medium">{client.clientName}</p>
+                            <p className="text-xs text-muted-foreground">{client.breaches} breaches</p>
                           </td>
+                          <td className="p-4 text-center">{client.totalTickets}</td>
+                          <td className="p-4 text-center">{client.avgResponseMin}m</td>
+                          <td className="p-4 text-center">{client.avgResolutionMin}m</td>
                           <td className="p-4 text-center">
-                            <Badge variant="outline">{client.slaType}</Badge>
-                          </td>
-                          <td className="p-4 text-center">
-                            <div>
-                              <p
-                                className={
-                                  client.responseActual <= client.responseTarget
-                                    ? "text-green-500"
-                                    : "text-red-500"
-                                }
-                              >
-                                {client.responseActual}m
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                / {client.responseTarget}m
-                              </p>
-                            </div>
-                          </td>
-                          <td className="p-4 text-center">
-                            <div>
-                              <p
-                                className={
-                                  client.resolutionActual <= client.resolutionTarget
-                                    ? "text-green-500"
-                                    : "text-red-500"
-                                }
-                              >
-                                {client.resolutionActual}m
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                / {client.resolutionTarget}m
-                              </p>
-                            </div>
-                          </td>
-                          <td className="p-4 text-center">
-                            <div>
-                              <p
-                                className={
-                                  client.uptimeActual >= client.uptimeTarget
-                                    ? "text-green-500"
-                                    : "text-red-500"
-                                }
-                              >
-                                {client.uptimeActual}%
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                / {client.uptimeTarget}%
-                              </p>
-                            </div>
+                            <span className={client.uptime >= 99.9 ? 'text-green-500' : 'text-yellow-500'}>
+                              {client.uptime}%
+                            </span>
                           </td>
                           <td className="p-4 text-center">
                             <div className="flex flex-col items-center gap-1">
-                              <span
-                                className={
-                                  compliance >= 95
-                                    ? "text-green-500"
-                                    : compliance >= 85
-                                    ? "text-yellow-500"
-                                    : "text-red-500"
-                                }
-                              >
-                                {compliance}%
-                              </span>
-                              <Progress value={compliance} className="h-1 w-16" />
-                            </div>
-                          </td>
-                          <td className="p-4 text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              {getTrendIcon(client.trend)}
-                              <span className="text-xs capitalize">{client.trend}</span>
+                              <span className={getComplianceColor(client.compliance)}>{client.compliance}%</span>
+                              <Progress value={client.compliance} className="h-1 w-16" />
                             </div>
                           </td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="breaches" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <XCircle className="h-4 w-4 text-red-500" />
-                Recent SLA Breaches
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {breachedTickets.map((ticket) => (
-                  <div
-                    key={ticket.id}
-                    className="p-4 rounded-lg bg-red-500/5 border border-red-500/20"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm">{ticket.id}</span>
-                          <Badge variant="destructive">{ticket.priority}</Badge>
-                        </div>
-                        <p className="font-medium mt-1">{ticket.subject}</p>
-                        <p className="text-sm text-muted-foreground">{ticket.client}</p>
-                      </div>
-                      <div className="text-right space-y-1">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Response</p>
-                          <p className="text-sm">
-                            <span className="text-red-500">{ticket.responseTime}m</span>
-                            <span className="text-muted-foreground"> / {ticket.responseTarget}m</span>
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Resolution</p>
-                          <p className="text-sm">
-                            <span className="text-red-500">{ticket.resolutionTime}m</span>
-                            <span className="text-muted-foreground"> / {ticket.resolutionTarget}m</span>
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+                  No SLA data by client yet. SLA metrics are recorded as tickets are resolved.
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -560,13 +318,27 @@ export function SLATrackingDashboard() {
               <CardTitle className="text-sm">SLA Performance Trends</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64 flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                  <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Trend charts will be displayed here</p>
-                  <p className="text-xs">Showing historical SLA performance data</p>
+              {trendData.length > 0 ? (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={trendData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="date" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="responseTime" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.2} name="Response (min)" />
+                      <Area type="monotone" dataKey="resolutionTime" stroke="#a855f7" fill="#a855f7" fillOpacity={0.2} name="Resolution (min)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
-              </div>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  <div className="text-center">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Trend data will appear as SLA metrics accumulate</p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
