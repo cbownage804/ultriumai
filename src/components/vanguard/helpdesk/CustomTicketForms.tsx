@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Trash2, GripVertical, FileText, Eye, Edit } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface FormField {
   id: string;
@@ -40,40 +42,35 @@ const FIELD_TYPES = [
   { value: 'email', label: 'Email' }
 ];
 
-// Mock data
-const MOCK_FORMS: CustomForm[] = [
-  {
-    id: '1',
-    form_name: 'Hardware Request',
-    category: 'Hardware',
-    description: 'Form for requesting new hardware or equipment',
-    fields: [
-      { id: '1', type: 'text', label: 'Equipment Type', required: true },
-      { id: '2', type: 'textarea', label: 'Justification', required: true },
-      { id: '3', type: 'select', label: 'Urgency', required: true, options: ['Low', 'Medium', 'High'] },
-      { id: '4', type: 'date', label: 'Needed By', required: false }
-    ],
-    is_active: true,
-    is_default: false
-  },
-  {
-    id: '2',
-    form_name: 'Network Access Request',
-    category: 'Security',
-    description: 'Request access to network resources',
-    fields: [
-      { id: '1', type: 'text', label: 'Resource Name', required: true },
-      { id: '2', type: 'select', label: 'Access Level', required: true, options: ['Read', 'Write', 'Admin'] },
-      { id: '3', type: 'textarea', label: 'Business Justification', required: true }
-    ],
-    is_active: true,
-    is_default: false
-  }
-];
-
 export function CustomTicketForms() {
+  const { user } = useAuth();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [forms, setForms] = useState<CustomForm[]>(MOCK_FORMS);
+  const [forms, setForms] = useState<CustomForm[]>([]);
+
+  useEffect(() => {
+    if (user) loadForms();
+  }, [user]);
+
+  const loadForms = async () => {
+    if (!user) return;
+    const { data } = await (supabase as any)
+      .from('vanguard_custom_ticket_forms')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      setForms(data.map((f: any) => ({
+        id: f.id,
+        form_name: f.form_name,
+        category: f.category,
+        description: f.description,
+        fields: f.fields || [],
+        is_active: f.is_active ?? true,
+        is_default: f.is_default ?? false,
+      })));
+    }
+  };
   const [newForm, setNewForm] = useState({
     form_name: '',
     category: '',
@@ -90,25 +87,39 @@ export function CustomTicketForms() {
     options: []
   });
 
-  const handleCreateForm = () => {
-    const form: CustomForm = {
-      id: crypto.randomUUID(),
-      form_name: newForm.form_name,
-      category: newForm.category || null,
-      description: newForm.description || null,
-      fields: newForm.fields,
-      is_active: newForm.is_active,
-      is_default: newForm.is_default
-    };
-    setForms([...forms, form]);
-    setIsCreateOpen(false);
-    setNewForm({ form_name: '', category: '', description: '', fields: [], is_active: true, is_default: false });
-    toast.success('Form created successfully');
+  const handleCreateForm = async () => {
+    if (!user) return;
+    try {
+      const { error } = await (supabase as any)
+        .from('vanguard_custom_ticket_forms')
+        .insert({
+          user_id: user.id,
+          form_name: newForm.form_name,
+          category: newForm.category || null,
+          description: newForm.description || null,
+          fields: newForm.fields,
+          is_active: newForm.is_active,
+          is_default: newForm.is_default,
+        });
+      if (error) throw error;
+      setIsCreateOpen(false);
+      setNewForm({ form_name: '', category: '', description: '', fields: [], is_active: true, is_default: false });
+      toast.success('Form created successfully');
+      loadForms();
+    } catch (err) {
+      console.error('Error creating form:', err);
+      toast.error('Failed to create form');
+    }
   };
 
-  const handleDeleteForm = (id: string) => {
-    setForms(forms.filter(f => f.id !== id));
-    toast.success('Form deleted');
+  const handleDeleteForm = async (id: string) => {
+    try {
+      await (supabase as any).from('vanguard_custom_ticket_forms').delete().eq('id', id);
+      setForms(forms.filter(f => f.id !== id));
+      toast.success('Form deleted');
+    } catch (err) {
+      console.error('Error deleting form:', err);
+    }
   };
 
   const addField = () => {

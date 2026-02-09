@@ -66,11 +66,11 @@ const defaultPolicies: SLAPolicy[] = [
 
 export function SLAEnforcementDashboard() {
   const { user } = useAuth();
-  const [policies, setPolicies] = useState<SLAPolicy[]>(defaultPolicies);
+  const [policies, setPolicies] = useState<SLAPolicy[]>([]);
   const [metrics, setMetrics] = useState<SLAMetric[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [showPolicyDialog, setShowPolicyDialog] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [newPolicy, setNewPolicy] = useState({
     name: '',
@@ -82,39 +82,105 @@ export function SLAEnforcementDashboard() {
   });
 
   useEffect(() => {
-    calculateMetrics();
-  }, []);
+    if (user) loadData();
+  }, [user]);
 
-  const calculateMetrics = () => {
-    // Simulated metrics - in production, this would come from the database
-    setMetrics([
-      { priority: 'critical', total: 12, met: 10, breached: 1, atRisk: 1, complianceRate: 83, avgResponseTime: 12, avgResolutionTime: 95 },
-      { priority: 'high', total: 45, met: 40, breached: 3, atRisk: 2, complianceRate: 89, avgResponseTime: 42, avgResolutionTime: 180 },
-      { priority: 'medium', total: 120, met: 112, breached: 5, atRisk: 3, complianceRate: 93, avgResponseTime: 180, avgResolutionTime: 420 },
-      { priority: 'low', total: 85, met: 82, breached: 2, atRisk: 1, complianceRate: 96, avgResponseTime: 320, avgResolutionTime: 960 },
-    ]);
+  const loadData = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      // Load SLA policies from database
+      const { data: policyData } = await supabase
+        .from('sla_policies')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (policyData && policyData.length > 0) {
+        setPolicies(policyData.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          priority: p.priority_level || 'medium',
+          responseTime: p.first_response_hours ? p.first_response_hours * 60 : 60,
+          resolutionTime: p.resolution_hours ? p.resolution_hours * 60 : 240,
+          isActive: p.is_active ?? true,
+          notifyOnWarning: true,
+          warningThreshold: 80,
+          autoEscalate: !!p.escalation_hours,
+          escalateTo: p.escalation_hours ? 'manager' : null,
+        })));
+      } else {
+        setPolicies(defaultPolicies);
+      }
+
+      // Calculate metrics from helpdesk_tickets
+      const { data: ticketData } = await (supabase as any)
+        .from('helpdesk_tickets')
+        .select('priority, status, sla_status, created_at, first_response_at, resolved_at')
+        .not('priority', 'is', null);
+
+      if (ticketData && ticketData.length > 0) {
+        const priorities = ['critical', 'high', 'medium', 'low'];
+        const calculatedMetrics: SLAMetric[] = priorities.map(priority => {
+          const priorityTickets = ticketData.filter((t: any) => t.priority === priority);
+          const total = priorityTickets.length;
+          const met = priorityTickets.filter((t: any) => t.sla_status === 'met' || t.sla_status === 'on_track').length;
+          const breached = priorityTickets.filter((t: any) => t.sla_status === 'breached').length;
+          const atRisk = priorityTickets.filter((t: any) => t.sla_status === 'at_risk').length;
+          return {
+            priority,
+            total,
+            met,
+            breached,
+            atRisk,
+            complianceRate: total > 0 ? Math.round((met / total) * 100) : 100,
+            avgResponseTime: 0,
+            avgResolutionTime: 0,
+          };
+        });
+        setMetrics(calculatedMetrics);
+      } else {
+        setMetrics([]);
+      }
+    } catch (err) {
+      console.error('Error loading SLA data:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleCreatePolicy = () => {
-    if (!newPolicy.name) {
+  const handleCreatePolicy = async () => {
+    if (!user || !newPolicy.name) {
       toast.error('Please enter a policy name');
       return;
     }
-    const policy: SLAPolicy = {
-      id: Date.now().toString(),
-      ...newPolicy,
-      isActive: true,
-      autoEscalate: false,
-      escalateTo: null
-    };
-    setPolicies(prev => [...prev, policy]);
-    toast.success('SLA policy created');
-    setShowPolicyDialog(false);
-    setNewPolicy({ name: '', priority: 'medium', responseTime: 60, resolutionTime: 240, notifyOnWarning: true, warningThreshold: 80 });
+    try {
+      const { error } = await supabase.from('sla_policies').insert({
+        name: newPolicy.name,
+        priority_level: newPolicy.priority,
+        first_response_hours: newPolicy.responseTime / 60,
+        resolution_hours: newPolicy.resolutionTime / 60,
+        is_active: true,
+      });
+      if (error) throw error;
+      toast.success('SLA policy created');
+      setShowPolicyDialog(false);
+      setNewPolicy({ name: '', priority: 'medium', responseTime: 60, resolutionTime: 240, notifyOnWarning: true, warningThreshold: 80 });
+      loadData();
+    } catch (err) {
+      console.error('Error creating policy:', err);
+      toast.error('Failed to create policy');
+    }
   };
 
-  const togglePolicy = (id: string) => {
-    setPolicies(prev => prev.map(p => p.id === id ? { ...p, isActive: !p.isActive } : p));
+  const togglePolicy = async (id: string) => {
+    const policy = policies.find(p => p.id === id);
+    if (!policy) return;
+    try {
+      await supabase.from('sla_policies').update({ is_active: !policy.isActive }).eq('id', id);
+      setPolicies(prev => prev.map(p => p.id === id ? { ...p, isActive: !p.isActive } : p));
+    } catch (err) {
+      console.error('Error toggling policy:', err);
+    }
   };
 
   const overallCompliance = metrics.length > 0 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,8 @@ import {
   Sun, Moon, Coffee, AlertTriangle, CheckCircle, Save, Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DaySchedule {
   enabled: boolean;
@@ -65,11 +67,9 @@ const DEFAULT_SCHEDULE: Record<string, DaySchedule> = {
 };
 
 export function BusinessHoursCalendar() {
+  const { user } = useAuth();
   const [schedule, setSchedule] = useState<Record<string, DaySchedule>>(DEFAULT_SCHEDULE);
-  const [holidays, setHolidays] = useState<Holiday[]>([
-    { id: '1', name: 'New Year\'s Day', date: new Date(2026, 0, 1), autoReply: 'Happy New Year! Our office is closed today. We\'ll respond on the next business day.' },
-    { id: '2', name: 'Christmas Day', date: new Date(2025, 11, 25), autoReply: 'Merry Christmas! Our team is enjoying the holiday. We\'ll be back soon!' },
-  ]);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [autoReply, setAutoReply] = useState<AutoReplyConfig>({
     afterHoursEnabled: true,
     afterHoursMessage: 'Thank you for contacting us! Our support team is currently offline. We operate {{hours}} and will respond to your message during our next business day. For emergencies, please call our 24/7 hotline.',
@@ -81,6 +81,47 @@ export function BusinessHoursCalendar() {
   const [isAddHolidayOpen, setIsAddHolidayOpen] = useState(false);
   const [newHoliday, setNewHoliday] = useState({ name: '', date: undefined as Date | undefined, autoReply: '' });
   const [showPreview, setShowPreview] = useState(false);
+
+  useEffect(() => {
+    if (user) loadBusinessHours();
+  }, [user]);
+
+  const loadBusinessHours = async () => {
+    if (!user) return;
+    try {
+      // Load business hours config
+      const { data: config } = await (supabase as any)
+        .from('vanguard_business_hours')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (config?.schedule) {
+        setSchedule(config.schedule);
+      }
+      if (config?.auto_reply_config) {
+        setAutoReply(prev => ({ ...prev, ...config.auto_reply_config }));
+      }
+
+      // Load holidays
+      const { data: holidayData } = await (supabase as any)
+        .from('vanguard_holidays')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: true });
+
+      if (holidayData) {
+        setHolidays(holidayData.map((h: any) => ({
+          id: h.id,
+          name: h.name,
+          date: new Date(h.date),
+          autoReply: h.auto_reply || '',
+        })));
+      }
+    } catch (err) {
+      console.error('Error loading business hours:', err);
+    }
+  };
 
   const updateDaySchedule = (day: string, updates: Partial<DaySchedule>) => {
     setSchedule(prev => ({

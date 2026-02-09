@@ -49,50 +49,7 @@ interface Appointment {
   notes?: string;
 }
 
-const mockTechnicians: Technician[] = [
-  { id: 'tech-1', name: 'John Smith', initials: 'JS', color: '#06b6d4', status: 'available', phone: '555-0101' },
-  { id: 'tech-2', name: 'Sarah Wilson', initials: 'SW', color: '#8b5cf6', status: 'busy', phone: '555-0102' },
-  { id: 'tech-3', name: 'Mike Johnson', initials: 'MJ', color: '#f59e0b', status: 'available', phone: '555-0103' },
-  { id: 'tech-4', name: 'Emily Davis', initials: 'ED', color: '#10b981', status: 'offline', phone: '555-0104' },
-];
-
-const mockAppointments: Appointment[] = [
-  {
-    id: 'apt-1',
-    title: 'Network Installation',
-    customer_name: 'Acme Corp',
-    customer_address: '123 Business Ave',
-    start_time: '2024-01-30T09:00:00',
-    end_time: '2024-01-30T11:00:00',
-    technician_id: 'tech-1',
-    ticket_id: 'TKT-001',
-    status: 'scheduled',
-    priority: 'high'
-  },
-  {
-    id: 'apt-2',
-    title: 'Server Maintenance',
-    customer_name: 'TechStart Inc',
-    customer_address: '456 Innovation Blvd',
-    start_time: '2024-01-30T13:00:00',
-    end_time: '2024-01-30T15:00:00',
-    technician_id: 'tech-2',
-    ticket_id: 'TKT-002',
-    status: 'in_progress',
-    priority: 'critical'
-  },
-  {
-    id: 'apt-3',
-    title: 'Workstation Setup',
-    customer_name: 'DataFlow LLC',
-    customer_address: '789 Data Drive',
-    start_time: '2024-01-30T10:00:00',
-    end_time: '2024-01-30T12:00:00',
-    technician_id: 'tech-3',
-    status: 'scheduled',
-    priority: 'medium'
-  },
-];
+const TECH_COLORS = ['#06b6d4', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#ec4899'];
 
 const timeSlots = Array.from({ length: 12 }, (_, i) => {
   const hour = i + 8;
@@ -101,8 +58,61 @@ const timeSlots = Array.from({ length: 12 }, (_, i) => {
 
 export function DispatchBoard() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [technicians] = useState<Technician[]>(mockTechnicians);
-  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load technicians from helpdesk_technicians or profiles
+        const { data: techData } = await (supabase as any)
+          .from('helpdesk_technicians')
+          .select('*')
+          .order('created_at', { ascending: true });
+
+        if (techData && techData.length > 0) {
+          setTechnicians(techData.map((t: any, i: number) => ({
+            id: t.id,
+            name: t.display_name || t.name || 'Technician',
+            initials: (t.display_name || t.name || 'T').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase(),
+            color: TECH_COLORS[i % TECH_COLORS.length],
+            phone: t.phone || undefined,
+            email: t.email || undefined,
+            status: (t.status || 'available') as Technician['status'],
+            current_location: t.current_location || undefined,
+          })));
+        }
+
+        // Load dispatch appointments
+        const { data: aptData } = await (supabase as any)
+          .from('vanguard_dispatch_appointments')
+          .select('*')
+          .order('start_time', { ascending: true });
+
+        if (aptData) {
+          setAppointments(aptData.map((a: any) => ({
+            id: a.id,
+            title: a.title,
+            customer_name: a.customer_name || '',
+            customer_address: a.customer_address || '',
+            start_time: a.start_time,
+            end_time: a.end_time,
+            technician_id: a.technician_id,
+            ticket_id: a.ticket_id,
+            status: a.status as Appointment['status'],
+            priority: (a.priority || 'medium') as Appointment['priority'],
+            notes: a.notes,
+          })));
+        }
+      } catch (err) {
+        console.error('Error loading dispatch data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
   const [showNewAppointment, setShowNewAppointment] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ techId: string; time: string } | null>(null);
