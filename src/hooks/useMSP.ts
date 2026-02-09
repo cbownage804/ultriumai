@@ -183,15 +183,24 @@ export const useMSP = () => {
     }
   };
 
-  // Load MSP clients
+  // Load MSP clients (across ALL MSPs owned by this user)
   const loadClients = async () => {
-    if (!msp) return;
+    if (!user) return;
 
     try {
+      // First get all MSP IDs owned by this user
+      const { data: userMsps } = await supabase
+        .from('msps')
+        .select('id')
+        .eq('user_id', user.id);
+
+      const mspIds = (userMsps || []).map(m => m.id);
+      if (mspIds.length === 0) return;
+
       const { data, error } = await supabase
         .from('msp_clients')
         .select('*')
-        .eq('msp_id', msp.id)
+        .in('msp_id', mspIds)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
