@@ -43,7 +43,7 @@ export const AIStudioDashboardHub = () => {
           supabase.from("builder_projects").select("id, name, updated_at").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(6),
           supabase.from("custom_gpts").select("id", { count: "exact" }).eq("user_id", user.id),
           supabase.from("ai_agents").select("id", { count: "exact" }).eq("user_id", user.id),
-          supabase.from("org_credits").select("credits_remaining").eq("user_id", user.id).single(),
+          supabase.from("org_credits").select("credits_remaining").eq("user_id", user.id).maybeSingle(),
           supabase.from("ai_credit_ledger").select("id, usage_type, credits_used, description, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
         ]);
 
