@@ -12,8 +12,11 @@ export function getSubdomain(): AppSubdomain {
     return null;
   }
   
-  // Handle main domain explicitly (no subdomain)
+  // Handle main domains explicitly (no subdomain)
   if (hostname === 'ultriumai.com' || hostname === 'www.ultriumai.com') {
+    return null;
+  }
+  if (hostname === 'ultriumai.app' || hostname === 'www.ultriumai.app') {
     return null;
   }
   

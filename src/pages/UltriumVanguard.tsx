@@ -6,13 +6,13 @@ const UltriumVanguard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if we're on the main ultriumai.com domain
+    // Check if we're on the main ultriumai.com domain — redirect to app domain
     const isMainDomain = window.location.hostname === 'ultriumai.com' || 
                          window.location.hostname === 'www.ultriumai.com';
     
     if (isMainDomain) {
-      // Redirect to the Vanguard subdomain
-      window.location.href = 'https://vanguard.ultriumai.com';
+      // Redirect to the app domain vanguard route
+      window.location.href = 'https://ultriumai.app/vanguard';
     } else {
       // In development or preview, navigate to the vanguard route
       navigate('/vanguard');

@@ -318,7 +318,7 @@ async function handleRequestReset(supabase: any, { email }: RequestResetRequest)
   if (resendApiKey) {
     try {
       const resend = new Resend(resendApiKey);
-      const resetUrl = `https://ultriumai.com/customer-portal/reset-password?token=${resetToken}`;
+      const resetUrl = `https://ultriumai.app/customer-portal/reset-password?token=${resetToken}`;
       
       await resend.emails.send({
         from: 'Ultrium Support <hello@send.ultriumai.com>',
@@ -441,7 +441,7 @@ async function handleAgentLogin(
     logStep("MSP admin attempted portal login", { email });
     return new Response(JSON.stringify({ 
       error: "MSP_ADMIN_ACCOUNT",
-      message: "This is an MSP administrator account. Please use the Vanguard dashboard at ultriumai.com/vanguard to manage your clients. The Customer Portal is for end-user clients only."
+      message: "This is an MSP administrator account. Please use the Vanguard dashboard at ultriumai.app/vanguard to manage your clients. The Customer Portal is for end-user clients only."
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 403,
@@ -463,7 +463,7 @@ async function handleAgentLogin(
   return new Response(JSON.stringify({
     ...loginData,
     agentConfig: {
-      portalUrl: "https://ultriumai.com/customer-portal",
+      portalUrl: "https://ultriumai.app/customer-portal",
       refreshInterval: 3600, // 1 hour
     }
   }), {

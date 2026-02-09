@@ -12,18 +12,19 @@ const getProductUrls = (): Record<string, string> => {
   const protocol = window.location.protocol;
   
   // Production environment
-  if (hostname === 'ultriumai.com' || hostname === 'www.ultriumai.com') {
+  if (hostname === 'ultriumai.com' || hostname === 'www.ultriumai.com' ||
+      hostname === 'ultriumai.app' || hostname === 'www.ultriumai.app') {
     return {
-      safesuite: 'https://safesuite.ultriumai.com',
-      vanguard: 'https://vanguard.ultriumai.com',
+      safesuite: 'https://ultriumai.app',
+      vanguard: 'https://ultriumai.app',
     };
   }
   
   // Already on a subdomain in production
-  if (hostname.endsWith('.ultriumai.com')) {
+  if (hostname.endsWith('.ultriumai.com') || hostname.endsWith('.ultriumai.app')) {
     return {
-      safesuite: 'https://safesuite.ultriumai.com',
-      vanguard: 'https://vanguard.ultriumai.com',
+      safesuite: 'https://ultriumai.app',
+      vanguard: 'https://ultriumai.app',
     };
   }
   

@@ -57,7 +57,7 @@ serve(async (req) => {
       logStep("Found existing customer", { customerId });
     }
 
-    const origin = req.headers.get("origin") || "https://safesuite.ultriumai.com";
+    const origin = req.headers.get("origin") || "https://ultriumai.app";
 
     // Create checkout session with per-seat pricing
     const session = await stripe.checkout.sessions.create({
