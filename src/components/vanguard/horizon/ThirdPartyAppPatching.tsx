@@ -1,20 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Package, Plus, Settings, CheckCircle, AlertTriangle, 
-  Clock, Download, RefreshCw, Chrome, FileCode
+  Package, Settings, CheckCircle, AlertTriangle, 
+  Download, RefreshCw, FileCode, Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ThirdPartyApp {
   id: string;
@@ -29,22 +30,57 @@ interface ThirdPartyApp {
   category: string;
 }
 
-const mockApps: ThirdPartyApp[] = [
-  { id: '1', name: 'Google Chrome', publisher: 'Google', currentVersion: '120.0.6099.130', latestVersion: '121.0.6167.85', installedCount: 48, needsUpdate: 48, autoUpdate: true, source: 'chocolatey', category: 'Browser' },
-  { id: '2', name: 'Mozilla Firefox', publisher: 'Mozilla', currentVersion: '121.0', latestVersion: '122.0', installedCount: 23, needsUpdate: 15, autoUpdate: true, source: 'chocolatey', category: 'Browser' },
-  { id: '3', name: 'Adobe Acrobat Reader', publisher: 'Adobe', currentVersion: '23.008.20421', latestVersion: '23.008.20533', installedCount: 52, needsUpdate: 38, autoUpdate: true, source: 'chocolatey', category: 'Document' },
-  { id: '4', name: 'Java Runtime', publisher: 'Oracle', currentVersion: '8.0.391', latestVersion: '8.0.401', installedCount: 31, needsUpdate: 31, autoUpdate: false, source: 'chocolatey', category: 'Runtime' },
-  { id: '5', name: '7-Zip', publisher: 'Igor Pavlov', currentVersion: '23.01', latestVersion: '24.01', installedCount: 45, needsUpdate: 12, autoUpdate: true, source: 'winget', category: 'Utility' },
-  { id: '6', name: 'VLC Media Player', publisher: 'VideoLAN', currentVersion: '3.0.18', latestVersion: '3.0.20', installedCount: 38, needsUpdate: 22, autoUpdate: true, source: 'winget', category: 'Media' },
-  { id: '7', name: 'Notepad++', publisher: 'Notepad++', currentVersion: '8.5.8', latestVersion: '8.6.2', installedCount: 42, needsUpdate: 28, autoUpdate: true, source: 'chocolatey', category: 'Development' },
-  { id: '8', name: 'Zoom', publisher: 'Zoom', currentVersion: '5.16.10', latestVersion: '5.17.5', installedCount: 35, needsUpdate: 35, autoUpdate: true, source: 'winget', category: 'Communication' },
-];
-
 export function ThirdPartyAppPatching() {
   const { toast } = useToast();
-  const [apps, setApps] = useState(mockApps);
+  const { user } = useAuth();
+  const [apps, setApps] = useState<ThirdPartyApp[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedApps, setSelectedApps] = useState<string[]>([]);
   const [showSettings, setShowSettings] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) fetchSoftware();
+  }, [user?.id]);
+
+  const fetchSoftware = async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    
+    const { data } = await (supabase as any)
+      .from('vanguard_software_audit')
+      .select('*')
+      .eq('user_id', user.id);
+
+    if (data && data.length > 0) {
+      // Group by software name to get fleet-wide view
+      const grouped = new Map<string, ThirdPartyApp>();
+      for (const sw of data) {
+        const key = sw.software_name?.toLowerCase() || sw.id;
+        const existing = grouped.get(key);
+        if (existing) {
+          existing.installedCount++;
+          if (sw.installed_version !== sw.latest_version && sw.latest_version) {
+            existing.needsUpdate++;
+          }
+        } else {
+          grouped.set(key, {
+            id: sw.id,
+            name: sw.software_name || 'Unknown',
+            publisher: sw.publisher || 'Unknown',
+            currentVersion: sw.installed_version || '0.0.0',
+            latestVersion: sw.latest_version || sw.installed_version || '0.0.0',
+            installedCount: 1,
+            needsUpdate: sw.installed_version !== sw.latest_version && sw.latest_version ? 1 : 0,
+            autoUpdate: sw.is_approved ?? true,
+            source: 'chocolatey',
+            category: sw.category || 'General',
+          });
+        }
+      }
+      setApps(Array.from(grouped.values()));
+    }
+    setLoading(false);
+  };
 
   const toggleAutoUpdate = (id: string) => {
     setApps(prev => prev.map(app => 
@@ -72,6 +108,14 @@ export function ThirdPartyAppPatching() {
   const totalNeedsUpdate = apps.reduce((sum, a) => sum + a.needsUpdate, 0);
   const appsWithUpdates = apps.filter(a => a.needsUpdate > 0).length;
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -80,7 +124,7 @@ export function ThirdPartyAppPatching() {
           <p className="text-muted-foreground">Auto-update Chrome, Adobe, Java, and more via Chocolatey/WinGet</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => toast({ title: 'Scanning for updates...' })}>
+          <Button variant="outline" onClick={() => { fetchSoftware(); toast({ title: 'Scanning for updates...' }); }}>
             <RefreshCw className="h-4 w-4 mr-2" /> Scan Now
           </Button>
           <Dialog open={showSettings} onOpenChange={setShowSettings}>
@@ -108,22 +152,6 @@ export function ThirdPartyAppPatching() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label>Auto-Scan Schedule</Label>
-                    <p className="text-xs text-muted-foreground">Check for updates</p>
-                  </div>
-                  <Select defaultValue="daily">
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="hourly">Hourly</SelectItem>
-                      <SelectItem value="daily">Daily</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
                     <Label>Silent Install</Label>
                     <p className="text-xs text-muted-foreground">No user prompts</p>
                   </div>
@@ -135,7 +163,6 @@ export function ThirdPartyAppPatching() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-5 gap-4">
         <Card className="bg-card/50">
           <CardContent className="pt-4">
@@ -163,13 +190,12 @@ export function ThirdPartyAppPatching() {
         </Card>
         <Card className="bg-card/50">
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold">247</div>
-            <p className="text-sm text-muted-foreground">Updated (7d)</p>
+            <div className="text-2xl font-bold">{apps.reduce((s, a) => s + a.installedCount, 0)}</div>
+            <p className="text-sm text-muted-foreground">Total Installs</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Update All Banner */}
       {appsWithUpdates > 0 && (
         <Card className="bg-yellow-500/10 border-yellow-500/30">
           <CardContent className="p-4">
@@ -189,222 +215,95 @@ export function ThirdPartyAppPatching() {
         </Card>
       )}
 
-      <Tabs defaultValue="all">
-        <TabsList>
-          <TabsTrigger value="all">All Applications</TabsTrigger>
-          <TabsTrigger value="outdated">Needs Update ({appsWithUpdates})</TabsTrigger>
-          <TabsTrigger value="sources">Package Sources</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all" className="space-y-4">
-          {selectedApps.length > 0 && (
-            <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg">
-              <span>{selectedApps.length} applications selected</span>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={updateSelected}>
-                  <Download className="h-4 w-4 mr-2" /> Update Selected
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setSelectedApps([])}>
-                  Clear
-                </Button>
-              </div>
-            </div>
-          )}
-
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">
+      {apps.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <Package className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
+            <h3 className="text-lg font-medium mb-2">No software inventory data</h3>
+            <p className="text-sm text-muted-foreground">Software will appear here once agents report their installed applications.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox 
+                    checked={selectedApps.length === apps.filter(a => a.needsUpdate > 0).length && selectedApps.length > 0}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedApps(apps.filter(a => a.needsUpdate > 0).map(a => a.id));
+                      } else {
+                        setSelectedApps([]);
+                      }
+                    }}
+                  />
+                </TableHead>
+                <TableHead>Application</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Current</TableHead>
+                <TableHead>Latest</TableHead>
+                <TableHead>Installed</TableHead>
+                <TableHead>Outdated</TableHead>
+                <TableHead>Auto</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {apps.map(app => (
+                <TableRow key={app.id}>
+                  <TableCell>
                     <Checkbox 
-                      checked={selectedApps.length === apps.filter(a => a.needsUpdate > 0).length}
+                      checked={selectedApps.includes(app.id)}
+                      disabled={app.needsUpdate === 0}
                       onCheckedChange={(checked) => {
                         if (checked) {
-                          setSelectedApps(apps.filter(a => a.needsUpdate > 0).map(a => a.id));
+                          setSelectedApps(prev => [...prev, app.id]);
                         } else {
-                          setSelectedApps([]);
+                          setSelectedApps(prev => prev.filter(id => id !== app.id));
                         }
                       }}
                     />
-                  </TableHead>
-                  <TableHead>Application</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Current</TableHead>
-                  <TableHead>Latest</TableHead>
-                  <TableHead>Installed</TableHead>
-                  <TableHead>Outdated</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Auto</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {apps.map(app => (
-                  <TableRow key={app.id}>
-                    <TableCell>
-                      <Checkbox 
-                        checked={selectedApps.includes(app.id)}
-                        disabled={app.needsUpdate === 0}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedApps(prev => [...prev, app.id]);
-                          } else {
-                            setSelectedApps(prev => prev.filter(id => id !== app.id));
-                          }
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">{app.name}</p>
-                          <p className="text-xs text-muted-foreground">{app.publisher}</p>
-                        </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">{app.name}</p>
+                        <p className="text-xs text-muted-foreground">{app.publisher}</p>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{app.category}</Badge>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">{app.currentVersion}</TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {app.latestVersion !== app.currentVersion ? (
-                        <span className="text-green-400">{app.latestVersion}</span>
-                      ) : (
-                        app.latestVersion
-                      )}
-                    </TableCell>
-                    <TableCell>{app.installedCount}</TableCell>
-                    <TableCell>
-                      {app.needsUpdate > 0 ? (
-                        <Badge className="bg-yellow-500/20 text-yellow-400">{app.needsUpdate}</Badge>
-                      ) : (
-                        <CheckCircle className="h-4 w-4 text-green-400" />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {app.source}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Switch 
-                        checked={app.autoUpdate}
-                        onCheckedChange={() => toggleAutoUpdate(app.id)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Button size="sm" variant="ghost" disabled={app.needsUpdate === 0}>
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="outdated">
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Application</TableHead>
-                  <TableHead>Current → Latest</TableHead>
-                  <TableHead>Outdated Endpoints</TableHead>
-                  <TableHead>Actions</TableHead>
+                    </div>
+                  </TableCell>
+                  <TableCell><Badge variant="outline">{app.category}</Badge></TableCell>
+                  <TableCell className="font-mono text-sm">{app.currentVersion}</TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {app.latestVersion !== app.currentVersion ? (
+                      <span className="text-green-400">{app.latestVersion}</span>
+                    ) : app.latestVersion}
+                  </TableCell>
+                  <TableCell>{app.installedCount}</TableCell>
+                  <TableCell>
+                    {app.needsUpdate > 0 ? (
+                      <Badge className="bg-yellow-500/20 text-yellow-400">{app.needsUpdate}</Badge>
+                    ) : (
+                      <CheckCircle className="h-4 w-4 text-green-400" />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Switch checked={app.autoUpdate} onCheckedChange={() => toggleAutoUpdate(app.id)} />
+                  </TableCell>
+                  <TableCell>
+                    <Button size="sm" variant="ghost" disabled={app.needsUpdate === 0}>
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {apps.filter(a => a.needsUpdate > 0).map(app => (
-                  <TableRow key={app.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{app.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-mono text-sm">
-                        {app.currentVersion} → <span className="text-green-400">{app.latestVersion}</span>
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="bg-yellow-500/20 text-yellow-400">{app.needsUpdate} devices</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button size="sm">
-                        <Download className="h-4 w-4 mr-2" /> Update All
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="sources">
-          <div className="grid grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Chocolatey
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>Status</span>
-                    <Badge className="bg-green-500/20 text-green-400">Active</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Managed Apps</span>
-                    <span className="font-medium">{apps.filter(a => a.source === 'chocolatey').length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Last Sync</span>
-                    <span className="text-muted-foreground">2 hours ago</span>
-                  </div>
-                  <Button className="w-full" variant="outline">
-                    <RefreshCw className="h-4 w-4 mr-2" /> Sync Repository
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileCode className="h-5 w-5" />
-                  WinGet
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>Status</span>
-                    <Badge className="bg-green-500/20 text-green-400">Active</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Managed Apps</span>
-                    <span className="font-medium">{apps.filter(a => a.source === 'winget').length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Last Sync</span>
-                    <span className="text-muted-foreground">1 hour ago</span>
-                  </div>
-                  <Button className="w-full" variant="outline">
-                    <RefreshCw className="h-4 w-4 mr-2" /> Sync Repository
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
     </div>
   );
 }
