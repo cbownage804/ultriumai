@@ -81,8 +81,8 @@ export function isAppDomain(): boolean {
  * Check if a given path is a marketing route
  */
 export function isMarketingRoute(path: string): boolean {
-  // Root "/" is marketing (homepage)
-  if (path === '/' || path === '') return true;
+  // Root "/" is marketing only on the marketing domain; on app domain it should go to /hub
+  if (path === '/' || path === '') return isMarketingDomain();
   return MARKETING_ROUTE_PREFIXES.some(prefix => path.startsWith(prefix));
 }
 
