@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { getVanguardBasePath } from '@/utils/subdomain';
+import { supabase } from '@/integrations/supabase/client';
 import { AddCustomerDialog } from '@/components/vanguard/AddCustomerDialog';
 import { useMSP } from '@/hooks/useMSP';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
@@ -54,17 +55,40 @@ export default function VanguardCustomers() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [deviceCounts, setDeviceCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     document.title = 'Sites | Vanguard';
   }, []);
+
+  // Fetch real device counts from vanguard_agents
+  useEffect(() => {
+    if (clients.length === 0) return;
+    const fetchDeviceCounts = async () => {
+      const clientIds = clients.map(c => c.id);
+      const { data } = await supabase
+        .from('vanguard_agents')
+        .select('client_id')
+        .in('client_id', clientIds);
+      if (data) {
+        const counts: Record<string, number> = {};
+        data.forEach(row => {
+          if (row.client_id) {
+            counts[row.client_id] = (counts[row.client_id] || 0) + 1;
+          }
+        });
+        setDeviceCounts(counts);
+      }
+    };
+    fetchDeviceCounts();
+  }, [clients]);
 
   const customers: CustomerDisplay[] = useMemo(() => {
     return clients.map(client => ({
       id: client.id,
       name: client.company_name,
       description: '',
-      devices: client.endpoints || 0,
+      devices: deviceCounts[client.id] || 0,
       alerts: client.alerts || 0,
       type: 'Managed' as const,
       psaCompanyName: client.company_name || '',
@@ -72,7 +96,7 @@ export default function VanguardCustomers() {
       mrr: client.monthly_rate || 0,
       securityScore: (client.alerts || 0) < 3 ? 92 : (client.alerts || 0) < 8 ? 75 : 50,
     }));
-  }, [clients]);
+  }, [clients, deviceCounts]);
 
   const totalDevices = customers.reduce((acc, c) => acc + c.devices, 0);
 
