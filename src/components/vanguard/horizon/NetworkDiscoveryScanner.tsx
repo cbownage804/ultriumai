@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,54 +11,42 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Network, Search, Play, Pause, Server, Monitor, Printer,
-  Wifi, Router, HelpCircle, Plus, RefreshCw, MapPin, AlertTriangle
+  Wifi, Router, HelpCircle, Plus, RefreshCw, MapPin, AlertTriangle, Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface DiscoveredDevice {
-  id: string;
-  ipAddress: string;
-  macAddress: string;
-  hostname: string;
-  deviceType: 'server' | 'workstation' | 'printer' | 'network' | 'iot' | 'unknown';
-  vendor: string;
-  firstSeen: string;
-  lastSeen: string;
-  status: 'online' | 'offline';
-  managed: boolean;
-  openPorts: number[];
-}
-
-interface ScanJob {
-  id: string;
-  subnet: string;
-  status: 'running' | 'completed' | 'scheduled';
-  startedAt: string;
-  devicesFound: number;
-  progress: number;
-}
-
-const mockDevices: DiscoveredDevice[] = [
-  { id: '1', ipAddress: '192.168.1.1', macAddress: '00:11:22:33:44:55', hostname: 'gateway.local', deviceType: 'network', vendor: 'Cisco', firstSeen: '2024-01-01', lastSeen: '2024-01-15', status: 'online', managed: false, openPorts: [22, 80, 443] },
-  { id: '2', ipAddress: '192.168.1.10', macAddress: 'AA:BB:CC:DD:EE:01', hostname: 'SRV-DC01', deviceType: 'server', vendor: 'Dell', firstSeen: '2024-01-01', lastSeen: '2024-01-15', status: 'online', managed: true, openPorts: [135, 389, 445, 3389] },
-  { id: '3', ipAddress: '192.168.1.50', macAddress: 'AA:BB:CC:DD:EE:02', hostname: 'WKS-001', deviceType: 'workstation', vendor: 'HP', firstSeen: '2024-01-05', lastSeen: '2024-01-15', status: 'online', managed: true, openPorts: [135, 445] },
-  { id: '4', ipAddress: '192.168.1.100', macAddress: 'AA:BB:CC:DD:EE:03', hostname: 'PRINTER-01', deviceType: 'printer', vendor: 'HP', firstSeen: '2024-01-02', lastSeen: '2024-01-15', status: 'online', managed: false, openPorts: [80, 443, 9100] },
-  { id: '5', ipAddress: '192.168.1.150', macAddress: 'AA:BB:CC:DD:EE:04', hostname: 'unknown-device', deviceType: 'unknown', vendor: 'Unknown', firstSeen: '2024-01-14', lastSeen: '2024-01-15', status: 'online', managed: false, openPorts: [80] },
-  { id: '6', ipAddress: '192.168.1.200', macAddress: 'AA:BB:CC:DD:EE:05', hostname: 'AP-FLOOR2', deviceType: 'network', vendor: 'Ubiquiti', firstSeen: '2024-01-01', lastSeen: '2024-01-14', status: 'offline', managed: false, openPorts: [22, 80] },
-];
-
-const mockScans: ScanJob[] = [
-  { id: '1', subnet: '192.168.1.0/24', status: 'completed', startedAt: '2024-01-15 10:00', devicesFound: 45, progress: 100 },
-  { id: '2', subnet: '10.0.0.0/24', status: 'running', startedAt: '2024-01-15 10:30', devicesFound: 12, progress: 48 },
-];
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 export function NetworkDiscoveryScanner() {
   const { toast } = useToast();
-  const [devices] = useState(mockDevices);
-  const [scans, setScans] = useState(mockScans);
+  const { user } = useAuth();
+  const [scanJobs, setScanJobs] = useState<any[]>([]);
+  const [discoveredDevices, setDiscoveredDevices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showNewScan, setShowNewScan] = useState(false);
   const [newSubnet, setNewSubnet] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+
+  const fetchData = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data: jobs } = await supabase
+        .from('network_scan_jobs')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      setScanJobs(jobs || []);
+      setDiscoveredDevices([]);
+    } catch (err) {
+      console.error('Error fetching network data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const getDeviceIcon = (type: string) => {
     switch (type) {
@@ -77,311 +65,218 @@ export function NetworkDiscoveryScanner() {
       case 'workstation': return 'bg-green-500/20 text-green-400';
       case 'printer': return 'bg-purple-500/20 text-purple-400';
       case 'network': return 'bg-orange-500/20 text-orange-400';
-      case 'iot': return 'bg-cyan-500/20 text-cyan-400';
       default: return 'bg-muted text-muted-foreground';
     }
   };
 
-  const startScan = () => {
-    if (!newSubnet) return;
-    const newScan: ScanJob = {
-      id: Date.now().toString(),
-      subnet: newSubnet,
-      status: 'running',
-      startedAt: new Date().toISOString(),
-      devicesFound: 0,
-      progress: 0
-    };
-    setScans(prev => [newScan, ...prev]);
-    setShowNewScan(false);
-    setNewSubnet('');
-    toast({ title: 'Scan started', description: `Scanning ${newSubnet}...` });
+  const filteredDevices = typeFilter === 'all' 
+    ? discoveredDevices 
+    : discoveredDevices.filter(d => d.device_type === typeFilter);
+
+  const handleStartScan = async () => {
+    if (!newSubnet.trim() || !user) return;
+    const { error } = await supabase.from('network_scan_jobs').insert({
+      user_id: user.id,
+      scan_type: 'discovery',
+      status: 'pending',
+      targets: [newSubnet],
+    } as any);
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to start scan', variant: 'destructive' });
+    } else {
+      toast({ title: 'Scan queued', description: `Network discovery scan queued for ${newSubnet}` });
+      setShowNewScan(false);
+      setNewSubnet('');
+      fetchData();
+    }
   };
 
-  const filteredDevices = typeFilter === 'all' 
-    ? devices 
-    : devices.filter(d => d.deviceType === typeFilter);
-
-  const onlineCount = devices.filter(d => d.status === 'online').length;
-  const unmanagedCount = devices.filter(d => !d.managed).length;
-  const unknownCount = devices.filter(d => d.deviceType === 'unknown').length;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[300px]">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Network Discovery</h2>
-          <p className="text-muted-foreground">Discover devices on network segments automatically</p>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Network className="h-6 w-6" />
+            Network Discovery
+          </h2>
+          <p className="text-muted-foreground">
+            {discoveredDevices.length > 0 ? `${discoveredDevices.length} devices discovered` : 'Scan your network to discover devices'}
+          </p>
         </div>
-        <Dialog open={showNewScan} onOpenChange={setShowNewScan}>
-          <DialogTrigger asChild>
-            <Button><Search className="h-4 w-4 mr-2" /> New Scan</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Start Network Scan</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Subnet / IP Range</Label>
-                <Input 
-                  placeholder="e.g., 192.168.1.0/24"
-                  value={newSubnet}
-                  onChange={(e) => setNewSubnet(e.target.value)}
-                />
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={fetchData}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+          <Dialog open={showNewScan} onOpenChange={setShowNewScan}>
+            <DialogTrigger asChild>
+              <Button><Plus className="h-4 w-4 mr-2" />New Scan</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Start Network Discovery Scan</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label>Subnet / CIDR</Label>
+                  <Input placeholder="e.g., 192.168.1.0/24" value={newSubnet} onChange={e => setNewSubnet(e.target.value)} />
+                </div>
+                <Button onClick={handleStartScan} disabled={!newSubnet.trim()}>
+                  <Play className="h-4 w-4 mr-2" />Start Scan
+                </Button>
               </div>
-              <div>
-                <Label>Scan Type</Label>
-                <Select defaultValue="full">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="quick">Quick Scan (Ping only)</SelectItem>
-                    <SelectItem value="full">Full Scan (Ports + Services)</SelectItem>
-                    <SelectItem value="deep">Deep Scan (Vulnerability check)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Scanner Agent</Label>
-                <Select defaultValue="auto">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="auto">Auto-select nearest</SelectItem>
-                    <SelectItem value="srv-dc01">SRV-DC01 (192.168.1.10)</SelectItem>
-                    <SelectItem value="srv-file01">SRV-FILE01 (192.168.1.20)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button className="w-full" onClick={startScan}>
-                <Play className="h-4 w-4 mr-2" /> Start Scan
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-5 gap-4">
-        <Card className="bg-card/50">
-          <CardContent className="pt-4">
-            <div className="text-2xl font-bold">{devices.length}</div>
-            <p className="text-sm text-muted-foreground">Total Discovered</p>
+      <div className="grid grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-4 text-center">
+            <p className="text-2xl font-bold">{discoveredDevices.length}</p>
+            <p className="text-xs text-muted-foreground">Devices Found</p>
           </CardContent>
         </Card>
-        <Card className="bg-green-500/10 border-green-500/30">
-          <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-green-400">{onlineCount}</div>
-            <p className="text-sm text-muted-foreground">Online</p>
+        <Card>
+          <CardContent className="pt-4 text-center">
+            <p className="text-2xl font-bold text-green-400">{discoveredDevices.filter(d => d.status === 'online').length}</p>
+            <p className="text-xs text-muted-foreground">Online</p>
           </CardContent>
         </Card>
-        <Card className="bg-card/50">
-          <CardContent className="pt-4">
-            <div className="text-2xl font-bold">{devices.filter(d => d.managed).length}</div>
-            <p className="text-sm text-muted-foreground">Managed</p>
+        <Card>
+          <CardContent className="pt-4 text-center">
+            <p className="text-2xl font-bold text-yellow-400">{discoveredDevices.filter(d => !d.is_managed).length}</p>
+            <p className="text-xs text-muted-foreground">Unmanaged</p>
           </CardContent>
         </Card>
-        <Card className={`${unmanagedCount > 0 ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-card/50'}`}>
-          <CardContent className="pt-4">
-            <div className={`text-2xl font-bold ${unmanagedCount > 0 ? 'text-yellow-400' : ''}`}>{unmanagedCount}</div>
-            <p className="text-sm text-muted-foreground">Unmanaged</p>
-          </CardContent>
-        </Card>
-        <Card className={`${unknownCount > 0 ? 'bg-red-500/10 border-red-500/30' : 'bg-card/50'}`}>
-          <CardContent className="pt-4">
-            <div className={`text-2xl font-bold ${unknownCount > 0 ? 'text-red-400' : ''}`}>{unknownCount}</div>
-            <p className="text-sm text-muted-foreground">Unknown</p>
+        <Card>
+          <CardContent className="pt-4 text-center">
+            <p className="text-2xl font-bold">{scanJobs.length}</p>
+            <p className="text-xs text-muted-foreground">Scans Run</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Active Scans */}
-      {scans.filter(s => s.status === 'running').length > 0 && (
-        <Card className="bg-blue-500/10 border-blue-500/30">
-          <CardContent className="p-4">
-            {scans.filter(s => s.status === 'running').map(scan => (
-              <div key={scan.id} className="flex items-center gap-4">
-                <RefreshCw className="h-5 w-5 text-blue-400 animate-spin" />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium">Scanning {scan.subnet}</span>
-                    <span className="text-sm text-muted-foreground">{scan.devicesFound} devices found</span>
-                  </div>
-                  <Progress value={scan.progress} className="h-2" />
-                </div>
-                <Button variant="ghost" size="sm">
-                  <Pause className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Unknown Device Alert */}
-      {unknownCount > 0 && (
-        <Card className="bg-red-500/10 border-red-500/30">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <AlertTriangle className="h-6 w-6 text-red-400" />
-              <div className="flex-1">
-                <p className="font-medium text-red-400">{unknownCount} unknown device(s) detected</p>
-                <p className="text-sm text-muted-foreground">Review and classify these devices</p>
-              </div>
-              <Button variant="outline" size="sm" className="text-red-400 border-red-400/30">
-                Review Devices
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <Tabs defaultValue="devices">
-        <div className="flex items-center justify-between mb-4">
-          <TabsList>
-            <TabsTrigger value="devices">Discovered Devices</TabsTrigger>
-            <TabsTrigger value="topology">Network Map</TabsTrigger>
-            <TabsTrigger value="scans">Scan History</TabsTrigger>
-          </TabsList>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filter by type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="server">Servers</SelectItem>
-              <SelectItem value="workstation">Workstations</SelectItem>
-              <SelectItem value="printer">Printers</SelectItem>
-              <SelectItem value="network">Network Devices</SelectItem>
-              <SelectItem value="unknown">Unknown</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <TabsList>
+          <TabsTrigger value="devices">Discovered Devices ({discoveredDevices.length})</TabsTrigger>
+          <TabsTrigger value="scans">Scan History ({scanJobs.length})</TabsTrigger>
+        </TabsList>
 
         <TabsContent value="devices">
+          <div className="flex items-center gap-4 mb-4">
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="server">Servers</SelectItem>
+                <SelectItem value="workstation">Workstations</SelectItem>
+                <SelectItem value="network">Network</SelectItem>
+                <SelectItem value="printer">Printers</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Device</TableHead>
-                  <TableHead>IP Address</TableHead>
-                  <TableHead>MAC Address</TableHead>
-                  <TableHead>Vendor</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Open Ports</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDevices.map(device => (
-                  <TableRow key={device.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getDeviceIcon(device.deviceType)}
-                        <div>
-                          <p className="font-medium">{device.hostname}</p>
-                          {device.managed && <Badge variant="outline" className="text-xs">Managed</Badge>}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono">{device.ipAddress}</TableCell>
-                    <TableCell className="font-mono text-xs">{device.macAddress}</TableCell>
-                    <TableCell>{device.vendor}</TableCell>
-                    <TableCell>
-                      <Badge className={getTypeColor(device.deviceType)}>
-                        {device.deviceType}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {device.openPorts.slice(0, 3).map(port => (
-                          <Badge key={port} variant="outline" className="text-xs">{port}</Badge>
-                        ))}
-                        {device.openPorts.length > 3 && (
-                          <Badge variant="outline" className="text-xs">+{device.openPorts.length - 3}</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={device.status === 'online' ? 'bg-green-500/20 text-green-400' : 'bg-muted text-muted-foreground'}>
-                        {device.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {!device.managed && (
-                          <Button size="sm" variant="ghost" onClick={() => toast({ title: 'Deploy agent to this device' })}>
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button size="sm" variant="ghost">
-                          <MapPin className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="topology">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Network className="h-5 w-5" />
-                Network Topology
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[400px] flex items-center justify-center text-muted-foreground border rounded-lg bg-muted/10">
-                <div className="text-center">
-                  <Network className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Interactive network topology map</p>
-                  <p className="text-sm">Visualizing device connections and hierarchy</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="scans">
-          <Card>
-            <CardHeader>
-              <CardTitle>Scan History</CardTitle>
-            </CardHeader>
-            <CardContent>
+            {filteredDevices.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Subnet</TableHead>
-                    <TableHead>Started</TableHead>
-                    <TableHead>Devices Found</TableHead>
+                    <TableHead>Device</TableHead>
+                    <TableHead>IP Address</TableHead>
+                    <TableHead>MAC</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Last Seen</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {scans.map(scan => (
-                    <TableRow key={scan.id}>
-                      <TableCell className="font-mono">{scan.subnet}</TableCell>
-                      <TableCell>{scan.startedAt}</TableCell>
-                      <TableCell>{scan.devicesFound}</TableCell>
+                  {filteredDevices.map(device => (
+                    <TableRow key={device.id}>
                       <TableCell>
-                        <Badge className={scan.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'}>
-                          {scan.status === 'running' && <RefreshCw className="h-3 w-3 mr-1 animate-spin" />}
-                          {scan.status}
+                        <div className="flex items-center gap-2">
+                          {getDeviceIcon(device.device_type)}
+                          <span className="font-medium">{device.hostname || 'Unknown'}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">{device.ip_address}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{device.mac_address || '—'}</TableCell>
+                      <TableCell><Badge className={getTypeColor(device.device_type)}>{device.device_type || 'unknown'}</Badge></TableCell>
+                      <TableCell>
+                        <Badge className={device.status === 'online' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}>
+                          {device.status || 'unknown'}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {device.last_seen ? new Date(device.last_seen).toLocaleDateString() : '—'}
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </CardContent>
+            ) : (
+              <CardContent>
+                <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
+                  <Network className="h-12 w-12 mb-3 opacity-50" />
+                  <p className="font-medium">No devices discovered</p>
+                  <p className="text-sm">Run a network scan to discover devices on your network</p>
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="scans">
+          <Card>
+            {scanJobs.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Scan Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Targets</TableHead>
+                    <TableHead>Created</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {scanJobs.map(job => (
+                    <TableRow key={job.id}>
+                      <TableCell className="font-medium capitalize">{job.scan_type}</TableCell>
+                      <TableCell>
+                        <Badge className={
+                          job.status === 'completed' ? 'bg-green-500/10 text-green-400' :
+                          job.status === 'running' ? 'bg-cyan-500/10 text-cyan-400' :
+                          job.status === 'failed' ? 'bg-red-500/10 text-red-400' :
+                          'bg-yellow-500/10 text-yellow-400'
+                        }>{job.status}</Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {Array.isArray(job.target_subnets) ? job.target_subnets.join(', ') : '—'}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(job.created_at).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <CardContent>
+                <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+                  No scan history yet
+                </div>
+              </CardContent>
+            )}
           </Card>
         </TabsContent>
       </Tabs>
