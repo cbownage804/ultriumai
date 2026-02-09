@@ -42,7 +42,7 @@ const statusColors = {
 };
 
 export default function VanguardReferrals() {
-  const referralLink = 'https://vanguard.ultriumai.com/ref/VGMSP2024';
+  const referralLink = 'https://ultriumai.app/vanguard/ref/VGMSP2024';
   const [referrals, setReferrals] = useState<Referral[]>(initialReferrals);
   
   // Dialogs

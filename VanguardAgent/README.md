@@ -37,7 +37,7 @@ VanguardAgent.exe --register ^
   --portal-name "Your Company Support"
 ```
 
-Get your credentials from: https://ultriumai.com/vanguard/settings
+Get your credentials from: https://ultriumai.app/vanguard/settings
 
 ## Configuration
 
@@ -53,7 +53,7 @@ Get your credentials from: https://ultriumai.com/vanguard/settings
   "telemetry_interval": 300,
   "portal_key": "pk_xxx",
   "portal_name": "Vanguard",
-  "portal_url": "https://ultriumai.com/customer-portal",
+  "portal_url": "https://ultriumai.app/customer-portal",
   "show_portal": true,
   "features": {
     "collect_processes": true,
@@ -119,5 +119,5 @@ VanguardAgent.exe --uninstall
 
 ## Support
 
-- Dashboard: https://ultriumai.com/vanguard
+- Dashboard: https://ultriumai.app/vanguard
 - Email: support@ultriumai.com

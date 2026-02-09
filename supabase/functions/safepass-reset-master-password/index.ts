@@ -191,7 +191,7 @@ serve(async (req) => {
         .eq('user_id', user.id);
 
       // Send email
-      const origin = req.headers.get("origin") || "https://safesuite.ultriumai.com";
+      const origin = req.headers.get("origin") || "https://ultriumai.app";
       const resetUrl = `${origin}/pass/reset-master-password?token=${resetToken}`;
 
       await resend.emails.send({

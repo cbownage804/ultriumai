@@ -127,7 +127,7 @@ public class Program
                 {
                     PortalKey = root.TryGetProperty("portal_key", out var pk) ? pk.GetString() ?? "" : "",
                     PortalName = root.TryGetProperty("portal_name", out var pn) ? pn.GetString() ?? "Vanguard" : "Vanguard",
-                    PortalUrl = root.TryGetProperty("portal_url", out var pu) ? pu.GetString() ?? "https://ultriumai.com/customer-portal" : "https://ultriumai.com/customer-portal",
+                    PortalUrl = root.TryGetProperty("portal_url", out var pu) ? pu.GetString() ?? "https://ultriumai.app/customer-portal" : "https://ultriumai.app/customer-portal",
                     ApiEndpoint = root.TryGetProperty("api_endpoint", out var ae) ? ae.GetString() ?? "" : "",
                     ClientId = root.TryGetProperty("client_id", out var ci) ? ci.GetString() : null,
                     ShowPortal = root.TryGetProperty("show_portal", out var sp) && sp.GetBoolean()
@@ -273,7 +273,7 @@ public class Program
             Console.WriteLine("  --portal-url <URL>    Portal URL");
             Console.WriteLine("  --show-portal <1|0>   Enable portal (default: 1)");
             Console.WriteLine();
-            Console.WriteLine("Get your credentials from: https://ultriumai.com/vanguard/settings");
+            Console.WriteLine("Get your credentials from: https://ultriumai.app/vanguard/settings");
             return;
         }
 
@@ -291,7 +291,7 @@ public class Program
             telemetry_interval = 300,
             portal_key = portalKey ?? "",
             portal_name = portalName ?? "Vanguard",
-            portal_url = portalUrl ?? "https://ultriumai.com/customer-portal",
+            portal_url = portalUrl ?? "https://ultriumai.app/customer-portal",
             show_portal = showPortal
         };
 

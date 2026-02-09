@@ -68,7 +68,7 @@ const Index = () => {
 
   const services = [
     { name: "Custom GPT Development", description: "Build intelligent AI assistants tailored to your business", url: "https://ultriumai.com/ai-studio" },
-    { name: "AI Security Operations", description: "Complete security platform with AI copilot", url: "https://vanguard.ultriumai.com" },
+    { name: "AI Security Operations", description: "Complete security platform with AI copilot", url: "https://ultriumai.com/products/vanguard" },
     { name: "Enterprise AI Solutions", description: "Full-service custom AI development", url: "https://ultriumai.com/contact" }
   ];
 

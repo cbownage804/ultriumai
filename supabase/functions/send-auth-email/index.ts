@@ -245,7 +245,7 @@ const handler = async (req: Request): Promise<Response> => {
       newEmail = user.new_email;
 
       // Build the confirmation URL using the token_hash
-      const baseUrl = email_data.redirect_to || "https://safesuite.ultriumai.com/dashboard";
+      const baseUrl = email_data.redirect_to || "https://ultriumai.app/safesuite/dashboard";
       const tokenHash = email_data.token_hash;
       const type = email_data.email_action_type;
       
@@ -257,7 +257,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Direct API call format (legacy)
       email = payload.email;
       emailType = payload.type;
-      actionUrl = payload.redirectUrl || "https://safesuite.ultriumai.com/dashboard";
+      actionUrl = payload.redirectUrl || "https://ultriumai.app/safesuite/dashboard";
       userName = payload.name;
       newEmail = payload.newEmail;
 
