@@ -756,6 +756,57 @@ export type Database = {
         }
         Relationships: []
       }
+      alert_suppression_windows: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_time: string
+          id: string
+          is_active: boolean | null
+          name: string
+          recurring_days: number[] | null
+          scope: string
+          scope_items: string[] | null
+          start_time: string
+          updated_at: string
+          user_id: string
+          window_type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          recurring_days?: number[] | null
+          scope?: string
+          scope_items?: string[] | null
+          start_time: string
+          updated_at?: string
+          user_id: string
+          window_type?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          recurring_days?: number[] | null
+          scope?: string
+          scope_items?: string[] | null
+          start_time?: string
+          updated_at?: string
+          user_id?: string
+          window_type?: string
+        }
+        Relationships: []
+      }
       analytics_aggregates: {
         Row: {
           created_at: string
@@ -14653,6 +14704,86 @@ export type Database = {
         }
         Relationships: []
       }
+      oncall_shifts: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          member_id: string | null
+          notes: string | null
+          shift_type: string
+          start_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          member_id?: string | null
+          notes?: string | null
+          shift_type?: string
+          start_date: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          member_id?: string | null
+          notes?: string | null
+          shift_type?: string
+          start_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oncall_shifts_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "oncall_team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oncall_team_members: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string | null
+          role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone?: string | null
+          role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string | null
+          role?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       one_time_payments: {
         Row: {
           amount: number
@@ -19088,6 +19219,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      runbook_alert_rules: {
+        Row: {
+          alert_severity: string
+          alert_type: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_triggered_at: string | null
+          name: string
+          runbook_id: string | null
+          trigger_count: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_severity?: string
+          alert_type: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          name: string
+          runbook_id?: string | null
+          trigger_count?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_severity?: string
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          name?: string
+          runbook_id?: string | null
+          trigger_count?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "runbook_alert_rules_runbook_id_fkey"
+            columns: ["runbook_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_runbooks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       safe_av_definitions: {
         Row: {
@@ -33095,6 +33276,66 @@ export type Database = {
           url?: string
           user_id?: string
           webhook_type?: string
+        }
+        Relationships: []
+      }
+      white_label_configs: {
+        Row: {
+          accent_color: string
+          company_name: string
+          company_tagline: string | null
+          created_at: string
+          custom_css: string | null
+          font_family: string
+          footer_text: string | null
+          header_layout: string
+          id: string
+          is_default: boolean | null
+          logo_url: string | null
+          name: string
+          primary_color: string
+          secondary_color: string
+          show_powered_by: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accent_color?: string
+          company_name: string
+          company_tagline?: string | null
+          created_at?: string
+          custom_css?: string | null
+          font_family?: string
+          footer_text?: string | null
+          header_layout?: string
+          id?: string
+          is_default?: boolean | null
+          logo_url?: string | null
+          name: string
+          primary_color?: string
+          secondary_color?: string
+          show_powered_by?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accent_color?: string
+          company_name?: string
+          company_tagline?: string | null
+          created_at?: string
+          custom_css?: string | null
+          font_family?: string
+          footer_text?: string | null
+          header_layout?: string
+          id?: string
+          is_default?: boolean | null
+          logo_url?: string | null
+          name?: string
+          primary_color?: string
+          secondary_color?: string
+          show_powered_by?: boolean | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
