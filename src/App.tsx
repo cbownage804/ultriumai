@@ -278,8 +278,8 @@ function AppRouter() {
       <Routes>
         <Route path="/" element={<SuspenseWrapper><Index /></SuspenseWrapper>} />
         
-        {/* Vanguard Public Landing Page (no auth required) */}
-        <Route path="/vanguard" element={<SuspenseWrapper><VanguardProductPage /></SuspenseWrapper>} />
+        {/* Vanguard root redirects to the Vanguard dashboard */}
+        <Route path="/vanguard" element={<Navigate to="/vanguard/app/dashboard" replace />} />
         
         {/* Vanguard Auth Route */}
         <Route path="/vanguard/auth" element={<SuspenseWrapper><VanguardAuthPage /></SuspenseWrapper>} />
