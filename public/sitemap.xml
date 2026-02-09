@@ -251,9 +251,9 @@
     <priority>0.6</priority>
   </url>
   
-  <!-- Authentication -->
+  <!-- Authentication (on app domain) -->
   <url>
-    <loc>https://ultriumai.com/auth</loc>
+    <loc>https://ultriumai.app/auth</loc>
     <lastmod>2026-01-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

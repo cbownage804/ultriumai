@@ -75,7 +75,7 @@ async function sendTeamsNotification(webhookUrl: string, payload: AlertPayload) 
       "name": "View in Vanguard",
       "targets": [{
         "os": "default",
-        "uri": "https://vanguard.ultriumai.com/soc"
+        "uri": "https://ultriumai.app/vanguard/soc"
       }]
     }]
   };
@@ -138,7 +138,7 @@ ${payload.device_ip ? `IP Address: ${payload.device_ip}` : ''}
 Time: ${new Date().toISOString()}
 
 ---
-View in Vanguard: https://vanguard.ultriumai.com/soc
+View in Vanguard: https://ultriumai.app/vanguard/soc
         `.trim();
 
         const emailResult = await sendEmail(payload.email_recipients, subject, body);

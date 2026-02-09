@@ -140,7 +140,7 @@ serve(async (req) => {
 
     // Send invitation email
     const resend = new Resend(resendApiKey);
-    const portalUrl = `https://ultriumai.com/customer-portal/accept-invitation?token=${invitationToken}`;
+    const portalUrl = `https://ultriumai.app/customer-portal/accept-invitation?token=${invitationToken}`;
     const companyName = mspBranding?.companyName || 'Your IT Provider';
     const primaryColor = mspBranding?.primaryColor || '#0891b2';
 

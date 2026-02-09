@@ -202,7 +202,7 @@ namespace VanguardInstaller
                 // Portal configuration - always enable for customer portal access
                 msiArgs += $" PORTALKEY=\"{creds.ClientId ?? ""}\"";
                 msiArgs += $" PORTALNAME=\"{_config.ClientName} Portal\"";
-                msiArgs += " PORTALURL=\"https://ultriumai.com/customer-portal\"";
+                msiArgs += " PORTALURL=\"https://ultriumai.app/customer-portal\"";
                 
                 var installResult = await RunProcess("msiexec.exe", msiArgs);
                 

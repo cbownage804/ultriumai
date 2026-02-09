@@ -86,7 +86,7 @@ serve(async (req) => {
           type: 'recovery',
           email: request.email,
           options: {
-            redirectTo: request.redirectTo || `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '') || 'https://safesuite.ultriumai.com'}/auth/mfa-recovery-complete`
+            redirectTo: request.redirectTo || `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '') || 'https://ultriumai.app'}/auth/mfa-recovery-complete`
           }
         });
 
