@@ -139,7 +139,7 @@ export default function VanguardCustomerDetail() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-black/90 border-cyan-500/30">
-            <DropdownMenuItem onClick={() => navigate(`${basePath}/customers/${customerId}/edit`)} className="text-white hover:bg-white/10">
+            <DropdownMenuItem onClick={() => navigate(`${basePath}/customers/${customerId}?tab=settings`)} className="text-white hover:bg-white/10">
               <Pencil className="h-4 w-4 mr-2" />
               Edit Customer
             </DropdownMenuItem>
