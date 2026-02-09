@@ -335,7 +335,7 @@ export default function VanguardCustomerDetail() {
         {activeTab === 'alerts' && (
           <Card className="bg-black/40 border-cyan-500/20">
             <CardHeader>
-              <CardTitle className="text-white">Active Alerts ({customer.alerts || 0})</CardTitle>
+              <CardTitle className="text-white">Active Alerts ({alertCount})</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center py-12 text-white/60">
