@@ -28,6 +28,11 @@ import { ExecutiveDashboard } from '@/components/vanguard/horizon/ExecutiveDashb
 import { ScheduledReportDelivery } from '@/components/vanguard/horizon/ScheduledReportDelivery';
 import { WhiteLabelReports } from '@/components/vanguard/horizon/WhiteLabelReports';
 import { SLATrackingDashboard } from '@/components/vanguard/horizon/SLATrackingDashboard';
+import { ComplianceDriftDetector } from '@/components/vanguard/horizon/ComplianceDriftDetector';
+import { VulnerabilityTrending } from '@/components/vanguard/horizon/VulnerabilityTrending';
+import { ThreatCorrelationEngine } from '@/components/vanguard/horizon/ThreatCorrelationEngine';
+import { PredictiveMaintenancePanel } from '@/components/vanguard/horizon/PredictiveMaintenancePanel';
+import { RunbookAlertTrigger } from '@/components/vanguard/horizon/RunbookAlertTrigger';
 
 const moduleComponents: Record<string, React.ReactNode> = {
   notifications: <AlertNotificationManager />,
@@ -55,6 +60,11 @@ const moduleComponents: Record<string, React.ReactNode> = {
   'scheduled-reports': <ScheduledReportDelivery />,
   'white-label': <WhiteLabelReports />,
   'sla-tracking': <SLATrackingDashboard />,
+  'compliance-drift': <ComplianceDriftDetector />,
+  'vuln-trending': <VulnerabilityTrending />,
+  'threat-correlation': <ThreatCorrelationEngine />,
+  'predictive-maintenance': <PredictiveMaintenancePanel />,
+  'runbook-triggers': <RunbookAlertTrigger />,
 };
 
 export default function VanguardRMM() {

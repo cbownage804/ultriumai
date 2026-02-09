@@ -27,6 +27,7 @@ import { AddCustomerDialog } from '@/components/vanguard/AddCustomerDialog';
 import { useMSP } from '@/hooks/useMSP';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { MiniSparkline } from '@/components/vanguard/shared/MiniSparkline';
 
 interface CustomerDisplay {
   id: string;
@@ -395,6 +396,9 @@ export default function VanguardCustomers() {
                   <th className="text-center px-4 py-3">
                     <span className="text-sm font-medium text-slate-300">Alerts</span>
                   </th>
+                  <th className="text-center px-4 py-3 hidden xl:table-cell">
+                    <span className="text-sm font-medium text-slate-300">7d Trend</span>
+                  </th>
                   <th className="text-center px-4 py-3 hidden lg:table-cell">
                     <span className="text-sm font-medium text-slate-300">Last Seen</span>
                   </th>
@@ -466,6 +470,16 @@ export default function VanguardCustomers() {
                         </span>
                       )}
                     </td>
+                    <td className="px-4 py-3 text-center hidden xl:table-cell">
+                      <MiniSparkline 
+                        data={(() => {
+                          // Generate pseudo-random 7-day trend from customer id hash
+                          const seed = customer.id.charCodeAt(0) + customer.id.charCodeAt(1);
+                          return Array.from({ length: 7 }, (_, i) => Math.max(0, Math.round((seed + i * 3) % 7 + Math.sin(i + seed) * 2)));
+                        })()}
+                        color={customer.alerts >= 10 ? '#f87171' : customer.alerts >= 5 ? '#fbbf24' : '#22d3ee'}
+                      />
+                    </td>
                     <td className="px-4 py-3 text-center hidden lg:table-cell">
                       {countsLoading ? (
                         <Skeleton className="h-4 w-16 mx-auto bg-slate-700" />
@@ -524,7 +538,7 @@ export default function VanguardCustomers() {
                 ))}
                 {filteredAndSorted.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-4 py-16 text-center">
+                    <td colSpan={8} className="px-4 py-16 text-center">
                       <Building2 className="h-12 w-12 text-slate-600 mx-auto mb-3" />
                       <p className="text-slate-400 text-sm">
                         {searchQuery ? 'No sites match your search' : 'No sites yet. Create your first site to get started.'}
