@@ -21,6 +21,7 @@ const AIStudioCTABanner = lazy(() => import('@/components/marketing/AIStudioCTAB
 const GlobalCommandPalette = lazy(() => import('@/components/GlobalCommandPalette').then(m => ({ default: m.GlobalCommandPalette })));
 const GlobalKeyboardShortcuts = lazy(() => import('@/components/GlobalKeyboardShortcuts').then(m => ({ default: m.GlobalKeyboardShortcuts })));
 const GlobalBreadcrumbs = lazy(() => import('@/components/GlobalBreadcrumbs').then(m => ({ default: m.GlobalBreadcrumbs })));
+const FloatingHelpButton = lazy(() => import('@/components/help/FloatingHelpButton').then(m => ({ default: m.FloatingHelpButton })));
 
 
 // Lazy-loaded layouts (heavy dependency trees)
@@ -710,6 +711,7 @@ function AppRouter() {
       <Suspense fallback={null}>
         {user && <GlobalCommandPalette />}
         {user && <GlobalKeyboardShortcuts />}
+        {user && <FloatingHelpButton />}
         <GlobalBreadcrumbs />
         <AIStudioCTABanner />
       </Suspense>
