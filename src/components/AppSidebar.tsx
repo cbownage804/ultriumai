@@ -156,15 +156,15 @@ export function AppSidebar() {
             )}
           </NavLink>
         </div>
-        {/* Back to Marketing Link */}
+        {/* Back to Product Hub */}
         {!isCollapsed && (
           <div className="mt-2">
             <NavLink 
-              to="/" 
+              to="/hub" 
               className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-3 w-3" />
-              Back to UltriumAI
+              Back to Product Hub
             </NavLink>
           </div>
         )}

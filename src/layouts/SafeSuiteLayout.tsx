@@ -39,7 +39,8 @@ import {
   ChevronDown,
   Sparkles,
   Coins,
-  HelpCircle
+  HelpCircle,
+  ArrowLeftFromLine
 } from 'lucide-react';
 import { HelpCenter } from '@/components/onboarding/HelpCenter';
 import { cn } from '@/lib/utils';
@@ -373,6 +374,13 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
             alt="SafeSuite" 
             className="h-32 w-auto object-contain"
           />
+        </Link>
+        <Link
+          to="/hub"
+          className="flex items-center gap-2 px-4 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeftFromLine className="h-3.5 w-3.5" />
+          Back to Product Hub
         </Link>
       </div>
 

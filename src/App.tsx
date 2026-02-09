@@ -688,7 +688,7 @@ function AppRouter() {
         <Route path="/safepass-app/*" element={<Navigate to="/safesuite/pass" replace />} />
         
         {/* SafeSuite Portal Routes */}
-        <Route path="/safesuite" element={<SuspenseWrapper><SafeSuiteLanding /></SuspenseWrapper>} />
+        <Route path="/safesuite" element={<Navigate to="/safesuite/dashboard" replace />} />
         <Route path="/safesuite/auth" element={<SuspenseWrapper><SafeSuiteAuth /></SuspenseWrapper>} />
         <Route path="/safesuite/auth/forgot-password" element={<SuspenseWrapper variant="form"><ForgotPasswordPage /></SuspenseWrapper>} />
         <Route path="/safesuite/auth/reset-password" element={<SuspenseWrapper variant="form"><ResetPasswordPage /></SuspenseWrapper>} />
