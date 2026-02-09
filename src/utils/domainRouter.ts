@@ -1,5 +1,6 @@
 /**
  * Cross-domain routing utilities for ultriumai.com (marketing) vs ultriumai.app (platform apps)
+ * Updated: 2026-02-09 — fixed root redirect loop
  */
 
 const MARKETING_DOMAIN = 'ultriumai.com';
