@@ -118,15 +118,25 @@ export function getCrossDomainRedirect(pathname: string, search: string, hash: s
 
   const fullPath = `${pathname}${search}${hash}`;
 
+  console.log('[DomainRouter]', {
+    hostname: window.location.hostname,
+    pathname,
+    isMarketingDomain: isMarketingDomain(),
+    isAppDomain: isAppDomain(),
+    isMarketingRoute: isMarketingRoute(pathname),
+    isAppRoute: isAppRoute(pathname),
+  });
+
   // On marketing domain but navigating to an app route → redirect to app domain
   if (isMarketingDomain() && isAppRoute(pathname)) {
+    console.log('[DomainRouter] Redirecting to app domain:', `https://${APP_DOMAIN}${fullPath}`);
     return `https://${APP_DOMAIN}${fullPath}`;
   }
 
   // On app domain but navigating to a marketing route → redirect to marketing domain
   // Exception: root "/" on app domain should NOT redirect — let the app router handle it
-  // (it will send users to /hub or /auth based on auth state)
   if (isAppDomain() && isMarketingRoute(pathname) && pathname !== '/') {
+    console.log('[DomainRouter] Redirecting to marketing domain:', `https://${MARKETING_DOMAIN}${fullPath}`);
     return `https://${MARKETING_DOMAIN}${fullPath}`;
   }
 
