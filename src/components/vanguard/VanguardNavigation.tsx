@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Shield,
   LayoutDashboard, 
@@ -24,6 +24,7 @@ import {
   Target,
   Activity,
   ChevronLeft,
+  ArrowLeftFromLine,
   ChevronRight,
   Search,
   Users,
@@ -456,6 +457,32 @@ export function VanguardNavigation() {
           >
             {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
           </Button>
+
+          {/* Back to Product Hub */}
+          {!isCollapsed && (
+            <NavLink
+              to="/hub"
+              className="flex items-center gap-2 mx-3 mb-2 px-3 py-1.5 text-xs text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-all rounded-md"
+            >
+              <ArrowLeftFromLine className="h-3.5 w-3.5" />
+              <span>Back to Product Hub</span>
+            </NavLink>
+          )}
+          {isCollapsed && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <NavLink
+                  to="/hub"
+                  className="flex items-center justify-center mx-1 mb-2 py-1.5 text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-all rounded-md"
+                >
+                  <ArrowLeftFromLine className="h-4 w-4" />
+                </NavLink>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-black border-cyan-500/40 text-slate-200">
+                <p className="text-xs">Back to Product Hub</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           {/* Navigation Items */}
           <nav className="flex-1 py-3 overflow-y-auto">
