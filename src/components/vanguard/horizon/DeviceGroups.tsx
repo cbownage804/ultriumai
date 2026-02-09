@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,8 +31,11 @@ import {
   Trash2,
   Play,
   Settings,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DeviceGroup {
   id: string;
@@ -55,11 +58,9 @@ const COLORS = [
 ];
 
 export function DeviceGroups({ agents, onSelectGroup }: DeviceGroupsProps) {
-  const [groups, setGroups] = useState<DeviceGroup[]>([
-    { id: '1', name: 'Production Servers', description: 'Critical production infrastructure', color: 'bg-red-500', deviceCount: 12, tags: ['production', 'critical'] },
-    { id: '2', name: 'Development', description: 'Development workstations', color: 'bg-blue-500', deviceCount: 8, tags: ['dev'] },
-    { id: '3', name: 'Remote Workers', description: 'WFH laptops and devices', color: 'bg-green-500', deviceCount: 25, tags: ['remote', 'laptop'] },
-  ]);
+  const { user } = useAuth();
+  const [groups, setGroups] = useState<DeviceGroup[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
@@ -72,38 +73,96 @@ export function DeviceGroups({ agents, onSelectGroup }: DeviceGroupsProps) {
     tags: '',
   });
 
-  const handleCreateGroup = () => {
-    const group: DeviceGroup = {
-      id: crypto.randomUUID(),
-      name: newGroup.name,
-      description: newGroup.description,
-      color: newGroup.color,
-      deviceCount: 0,
-      tags: newGroup.tags.split(',').map(t => t.trim()).filter(Boolean),
-    };
-    setGroups([...groups, group]);
+  useEffect(() => { if (user) loadGroups(); }, [user]);
+
+  const loadGroups = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const { data: groupsData } = await (supabase as any)
+        .from('vanguard_device_groups')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (groupsData) {
+        // Get member counts
+        const { data: members } = await (supabase as any)
+          .from('vanguard_device_group_members')
+          .select('group_id')
+          .eq('user_id', user.id);
+
+        const countMap: Record<string, number> = {};
+        (members || []).forEach((m: any) => {
+          countMap[m.group_id] = (countMap[m.group_id] || 0) + 1;
+        });
+
+        setGroups(groupsData.map((g: any) => ({
+          id: g.id,
+          name: g.name,
+          description: g.description || '',
+          color: g.color || 'bg-blue-500',
+          deviceCount: countMap[g.id] || 0,
+          tags: g.tags || [],
+          automationProfile: g.automation_profile,
+        })));
+      }
+    } catch (e) { console.error(e); }
+    setIsLoading(false);
+  };
+
+  const handleCreateGroup = async () => {
+    if (!user) return;
+    const { error } = await (supabase as any)
+      .from('vanguard_device_groups')
+      .insert({
+        user_id: user.id,
+        name: newGroup.name,
+        description: newGroup.description,
+        color: newGroup.color,
+        tags: newGroup.tags.split(',').map((t: string) => t.trim()).filter(Boolean),
+      });
+
+    if (error) { toast.error('Failed to create group'); return; }
     setShowCreateDialog(false);
     setNewGroup({ name: '', description: '', color: 'bg-blue-500', tags: '' });
     toast.success('Device group created');
+    loadGroups();
   };
 
-  const handleDeleteGroup = (groupId: string) => {
-    setGroups(groups.filter(g => g.id !== groupId));
+  const handleDeleteGroup = async (groupId: string) => {
+    const { error } = await (supabase as any)
+      .from('vanguard_device_groups')
+      .delete()
+      .eq('id', groupId);
+    if (error) { toast.error('Failed to delete group'); return; }
     toast.success('Group deleted');
+    loadGroups();
   };
 
-  const handleAssignDevices = () => {
-    if (selectedGroup) {
-      setGroups(groups.map(g => 
-        g.id === selectedGroup.id 
-          ? { ...g, deviceCount: selectedDevices.length }
-          : g
-      ));
-      toast.success(`${selectedDevices.length} devices assigned to ${selectedGroup.name}`);
+  const handleAssignDevices = async () => {
+    if (!selectedGroup || !user) return;
+    // Remove existing members, then insert new ones
+    await (supabase as any)
+      .from('vanguard_device_group_members')
+      .delete()
+      .eq('group_id', selectedGroup.id);
+
+    if (selectedDevices.length > 0) {
+      await (supabase as any)
+        .from('vanguard_device_group_members')
+        .insert(selectedDevices.map(agentId => ({
+          user_id: user.id,
+          group_id: selectedGroup.id,
+          agent_id: agentId,
+        })));
     }
+
+    toast.success(`${selectedDevices.length} devices assigned to ${selectedGroup.name}`);
     setShowAssignDialog(false);
     setSelectedDevices([]);
     setSelectedGroup(null);
+    loadGroups();
   };
 
   const filteredGroups = groups.filter(g =>
@@ -136,6 +195,9 @@ export function DeviceGroups({ agents, onSelectGroup }: DeviceGroupsProps) {
           </div>
         </CardHeader>
         <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+          ) : (
           <ScrollArea className="h-[400px]">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredGroups.map((group) => (
@@ -217,8 +279,15 @@ export function DeviceGroups({ agents, onSelectGroup }: DeviceGroupsProps) {
                   </CardContent>
                 </Card>
               ))}
+              {filteredGroups.length === 0 && !isLoading && (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  <Folders className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No device groups found</p>
+                </div>
+              )}
             </div>
           </ScrollArea>
+          )}
         </CardContent>
       </Card>
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,47 +9,27 @@ import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  AlertTriangle,
-  Bell,
-  BellOff,
-  Cpu,
-  HardDrive,
-  MemoryStick,
-  Network,
-  Plus,
-  Settings,
-  Trash2,
-  Shield,
-  Zap,
-  Clock,
+  AlertTriangle, Bell, BellOff, Cpu, HardDrive, MemoryStick, Network, Plus, Settings, Trash2, Shield, Zap, Clock, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ThresholdRule {
   id: string;
   name: string;
-  metric: "cpu" | "memory" | "disk" | "network_in" | "network_out" | "process_count" | "uptime";
-  operator: ">" | "<" | ">=" | "<=" | "=";
+  metric: string;
+  operator: string;
   value: number;
-  duration: number; // seconds the condition must be true
-  severity: "info" | "warning" | "critical";
+  duration: number;
+  severity: string;
   enabled: boolean;
   notifyEmail: boolean;
   notifyWebhook: boolean;
@@ -66,42 +46,6 @@ interface ThresholdProfile {
   appliedDevices: number;
   createdAt: string;
 }
-
-const DEFAULT_PROFILES: ThresholdProfile[] = [
-  {
-    id: "default-workstation",
-    name: "Workstation Standard",
-    description: "Default thresholds for Windows workstations",
-    isDefault: true,
-    appliedDevices: 12,
-    createdAt: new Date().toISOString(),
-    rules: [
-      { id: "cpu-warning", name: "High CPU Usage", metric: "cpu", operator: ">", value: 80, duration: 300, severity: "warning", enabled: true, notifyEmail: true, notifyWebhook: false, autoRemediate: false },
-      { id: "cpu-critical", name: "Critical CPU Usage", metric: "cpu", operator: ">", value: 95, duration: 120, severity: "critical", enabled: true, notifyEmail: true, notifyWebhook: true, autoRemediate: false },
-      { id: "mem-warning", name: "High Memory Usage", metric: "memory", operator: ">", value: 85, duration: 300, severity: "warning", enabled: true, notifyEmail: true, notifyWebhook: false, autoRemediate: false },
-      { id: "mem-critical", name: "Critical Memory Usage", metric: "memory", operator: ">", value: 95, duration: 120, severity: "critical", enabled: true, notifyEmail: true, notifyWebhook: true, autoRemediate: false },
-      { id: "disk-warning", name: "Low Disk Space", metric: "disk", operator: ">", value: 85, duration: 0, severity: "warning", enabled: true, notifyEmail: true, notifyWebhook: false, autoRemediate: false },
-      { id: "disk-critical", name: "Critical Disk Space", metric: "disk", operator: ">", value: 95, duration: 0, severity: "critical", enabled: true, notifyEmail: true, notifyWebhook: true, autoRemediate: true, remediationScript: "Clear-TempFiles" },
-    ],
-  },
-  {
-    id: "server-production",
-    name: "Production Server",
-    description: "Strict thresholds for production servers",
-    isDefault: false,
-    appliedDevices: 5,
-    createdAt: new Date().toISOString(),
-    rules: [
-      { id: "cpu-warning", name: "High CPU Usage", metric: "cpu", operator: ">", value: 70, duration: 180, severity: "warning", enabled: true, notifyEmail: true, notifyWebhook: true, autoRemediate: false },
-      { id: "cpu-critical", name: "Critical CPU Usage", metric: "cpu", operator: ">", value: 90, duration: 60, severity: "critical", enabled: true, notifyEmail: true, notifyWebhook: true, autoRemediate: false },
-      { id: "mem-warning", name: "High Memory Usage", metric: "memory", operator: ">", value: 75, duration: 180, severity: "warning", enabled: true, notifyEmail: true, notifyWebhook: true, autoRemediate: false },
-      { id: "mem-critical", name: "Critical Memory Usage", metric: "memory", operator: ">", value: 90, duration: 60, severity: "critical", enabled: true, notifyEmail: true, notifyWebhook: true, autoRemediate: false },
-      { id: "disk-warning", name: "Low Disk Space", metric: "disk", operator: ">", value: 75, duration: 0, severity: "warning", enabled: true, notifyEmail: true, notifyWebhook: true, autoRemediate: false },
-      { id: "disk-critical", name: "Critical Disk Space", metric: "disk", operator: ">", value: 90, duration: 0, severity: "critical", enabled: true, notifyEmail: true, notifyWebhook: true, autoRemediate: true, remediationScript: "Clear-TempFiles" },
-      { id: "uptime-warning", name: "Extended Uptime", metric: "uptime", operator: ">", value: 720, duration: 0, severity: "info", enabled: true, notifyEmail: false, notifyWebhook: false, autoRemediate: false },
-    ],
-  },
-];
 
 const METRIC_ICONS: Record<string, React.ReactNode> = {
   cpu: <Cpu className="h-4 w-4" />,
@@ -120,88 +64,114 @@ const SEVERITY_COLORS: Record<string, string> = {
 };
 
 export function AlertThresholdManager() {
-  const [profiles, setProfiles] = useState<ThresholdProfile[]>(DEFAULT_PROFILES);
-  const [selectedProfile, setSelectedProfile] = useState<ThresholdProfile | null>(profiles[0]);
+  const { user } = useAuth();
+  const [profiles, setProfiles] = useState<ThresholdProfile[]>([]);
+  const [selectedProfile, setSelectedProfile] = useState<ThresholdProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [editRuleOpen, setEditRuleOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<ThresholdRule | null>(null);
   const [createProfileOpen, setCreateProfileOpen] = useState(false);
   const [newProfileName, setNewProfileName] = useState("");
 
-  const updateRule = (profileId: string, ruleId: string, updates: Partial<ThresholdRule>) => {
-    setProfiles(prev => prev.map(p => 
-      p.id === profileId 
-        ? { ...p, rules: p.rules.map(r => r.id === ruleId ? { ...r, ...updates } : r) }
-        : p
-    ));
+  useEffect(() => { if (user) loadData(); }, [user]);
+
+  const loadData = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const { data: profilesData } = await (supabase as any)
+        .from('vanguard_alert_threshold_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at');
+
+      const { data: rulesData } = await (supabase as any)
+        .from('vanguard_alert_threshold_rules')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (profilesData) {
+        const mapped = profilesData.map((p: any) => ({
+          id: p.id, name: p.name, description: p.description || '',
+          isDefault: p.is_default, appliedDevices: p.applied_devices || 0,
+          createdAt: p.created_at,
+          rules: (rulesData || []).filter((r: any) => r.profile_id === p.id).map((r: any) => ({
+            id: r.id, name: r.name, metric: r.metric, operator: r.operator,
+            value: Number(r.value), duration: r.duration, severity: r.severity,
+            enabled: r.enabled, notifyEmail: r.notify_email, notifyWebhook: r.notify_webhook,
+            autoRemediate: r.auto_remediate, remediationScript: r.remediation_script,
+          })),
+        }));
+        setProfiles(mapped);
+        if (mapped.length > 0 && !selectedProfile) setSelectedProfile(mapped[0]);
+        else if (selectedProfile) {
+          const updated = mapped.find((p: ThresholdProfile) => p.id === selectedProfile.id);
+          if (updated) setSelectedProfile(updated);
+        }
+      }
+    } catch (e) { console.error(e); }
+    setIsLoading(false);
+  };
+
+  const updateRule = async (profileId: string, ruleId: string, updates: Partial<ThresholdRule>) => {
+    const dbUpdates: any = {};
+    if ('enabled' in updates) dbUpdates.enabled = updates.enabled;
+    if ('value' in updates) dbUpdates.value = updates.value;
+    if ('name' in updates) dbUpdates.name = updates.name;
+    if ('metric' in updates) dbUpdates.metric = updates.metric;
+    if ('operator' in updates) dbUpdates.operator = updates.operator;
+    if ('duration' in updates) dbUpdates.duration = updates.duration;
+    if ('severity' in updates) dbUpdates.severity = updates.severity;
+    if ('notifyEmail' in updates) dbUpdates.notify_email = updates.notifyEmail;
+    if ('notifyWebhook' in updates) dbUpdates.notify_webhook = updates.notifyWebhook;
+    if ('autoRemediate' in updates) dbUpdates.auto_remediate = updates.autoRemediate;
+    if ('remediationScript' in updates) dbUpdates.remediation_script = updates.remediationScript;
+
+    await (supabase as any).from('vanguard_alert_threshold_rules').update(dbUpdates).eq('id', ruleId);
+    
+    // Optimistic update
+    setProfiles(prev => prev.map(p => p.id === profileId ? { ...p, rules: p.rules.map(r => r.id === ruleId ? { ...r, ...updates } : r) } : p));
     if (selectedProfile?.id === profileId) {
-      setSelectedProfile(prev => prev ? {
-        ...prev,
-        rules: prev.rules.map(r => r.id === ruleId ? { ...r, ...updates } : r)
-      } : null);
+      setSelectedProfile(prev => prev ? { ...prev, rules: prev.rules.map(r => r.id === ruleId ? { ...r, ...updates } : r) } : null);
     }
   };
 
-  const addRule = (profileId: string) => {
-    const newRule: ThresholdRule = {
-      id: `rule-${Date.now()}`,
-      name: "New Rule",
-      metric: "cpu",
-      operator: ">",
-      value: 80,
-      duration: 300,
-      severity: "warning",
-      enabled: true,
-      notifyEmail: true,
-      notifyWebhook: false,
-      autoRemediate: false,
-    };
-    setProfiles(prev => prev.map(p =>
-      p.id === profileId ? { ...p, rules: [...p.rules, newRule] } : p
-    ));
-    if (selectedProfile?.id === profileId) {
-      setSelectedProfile(prev => prev ? { ...prev, rules: [...prev.rules, newRule] } : null);
-    }
+  const addRule = async (profileId: string) => {
+    if (!user) return;
+    const { data, error } = await (supabase as any).from('vanguard_alert_threshold_rules').insert({
+      user_id: user.id, profile_id: profileId, name: "New Rule",
+      metric: "cpu", operator: ">", value: 80, duration: 300,
+      severity: "warning", enabled: true, notify_email: true,
+    }).select().single();
+    if (error) { toast.error('Failed to add rule'); return; }
     toast.success("Rule added");
+    loadData();
   };
 
-  const deleteRule = (profileId: string, ruleId: string) => {
-    setProfiles(prev => prev.map(p =>
-      p.id === profileId ? { ...p, rules: p.rules.filter(r => r.id !== ruleId) } : p
-    ));
-    if (selectedProfile?.id === profileId) {
-      setSelectedProfile(prev => prev ? { ...prev, rules: prev.rules.filter(r => r.id !== ruleId) } : null);
-    }
+  const deleteRule = async (profileId: string, ruleId: string) => {
+    await (supabase as any).from('vanguard_alert_threshold_rules').delete().eq('id', ruleId);
     toast.success("Rule deleted");
+    loadData();
   };
 
-  const createProfile = () => {
-    if (!newProfileName.trim()) return;
-    const newProfile: ThresholdProfile = {
-      id: `profile-${Date.now()}`,
-      name: newProfileName,
-      description: "Custom threshold profile",
-      isDefault: false,
-      appliedDevices: 0,
-      createdAt: new Date().toISOString(),
-      rules: [],
-    };
-    setProfiles(prev => [...prev, newProfile]);
-    setSelectedProfile(newProfile);
+  const createProfile = async () => {
+    if (!newProfileName.trim() || !user) return;
+    const { error } = await (supabase as any).from('vanguard_alert_threshold_profiles').insert({
+      user_id: user.id, name: newProfileName, description: "Custom threshold profile", is_default: false,
+    });
+    if (error) { toast.error('Failed to create profile'); return; }
     setNewProfileName("");
     setCreateProfileOpen(false);
     toast.success("Profile created");
+    loadData();
   };
 
-  const deleteProfile = (profileId: string) => {
-    if (profiles.find(p => p.id === profileId)?.isDefault) {
-      toast.error("Cannot delete default profile");
-      return;
-    }
-    setProfiles(prev => prev.filter(p => p.id !== profileId));
-    if (selectedProfile?.id === profileId) {
-      setSelectedProfile(profiles[0]);
-    }
+  const deleteProfile = async (profileId: string) => {
+    if (profiles.find(p => p.id === profileId)?.isDefault) { toast.error("Cannot delete default profile"); return; }
+    await (supabase as any).from('vanguard_alert_threshold_profiles').delete().eq('id', profileId);
     toast.success("Profile deleted");
+    if (selectedProfile?.id === profileId) setSelectedProfile(null);
+    loadData();
   };
 
   const formatDuration = (seconds: number) => {
@@ -211,42 +181,24 @@ export function AlertThresholdManager() {
     return `${Math.floor(seconds / 3600)}h`;
   };
 
+  if (isLoading) {
+    return <Card><CardContent className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></CardContent></Card>;
+  }
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-cyan-500" />
-              Alert Thresholds
-            </CardTitle>
-            <CardDescription>
-              Configure metric thresholds and alerting rules
-            </CardDescription>
+            <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5 text-cyan-500" />Alert Thresholds</CardTitle>
+            <CardDescription>Configure metric thresholds and alerting rules</CardDescription>
           </div>
           <Dialog open={createProfileOpen} onOpenChange={setCreateProfileOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                New Profile
-              </Button>
-            </DialogTrigger>
+            <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-2" />New Profile</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Threshold Profile</DialogTitle>
-                <DialogDescription>
-                  Create a new set of alerting thresholds
-                </DialogDescription>
-              </DialogHeader>
+              <DialogHeader><DialogTitle>Create Threshold Profile</DialogTitle><DialogDescription>Create a new set of alerting thresholds</DialogDescription></DialogHeader>
               <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Profile Name</Label>
-                  <Input
-                    value={newProfileName}
-                    onChange={(e) => setNewProfileName(e.target.value)}
-                    placeholder="e.g., High-Performance Server"
-                  />
-                </div>
+                <div className="space-y-2"><Label>Profile Name</Label><Input value={newProfileName} onChange={(e) => setNewProfileName(e.target.value)} placeholder="e.g., High-Performance Server" /></div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setCreateProfileOpen(false)}>Cancel</Button>
@@ -258,37 +210,26 @@ export function AlertThresholdManager() {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-4 gap-4">
-          {/* Profile List */}
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground uppercase tracking-wide">Profiles</Label>
             <ScrollArea className="h-[500px]">
               <div className="space-y-2 pr-2">
                 {profiles.map(profile => (
-                  <div
-                    key={profile.id}
-                    onClick={() => setSelectedProfile(profile)}
-                    className={cn(
-                      "p-3 rounded-lg border cursor-pointer transition-colors",
-                      selectedProfile?.id === profile.id 
-                        ? "border-primary bg-primary/5" 
-                        : "hover:border-muted-foreground/30"
-                    )}
-                  >
+                  <div key={profile.id} onClick={() => setSelectedProfile(profile)}
+                    className={cn("p-3 rounded-lg border cursor-pointer transition-colors", selectedProfile?.id === profile.id ? "border-primary bg-primary/5" : "hover:border-muted-foreground/30")}>
                     <div className="flex items-center justify-between">
                       <h4 className="font-medium text-sm">{profile.name}</h4>
-                      {profile.isDefault && (
-                        <Badge variant="secondary" className="text-xs">Default</Badge>
-                      )}
+                      {profile.isDefault && <Badge variant="secondary" className="text-xs">Default</Badge>}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">{profile.rules.length} rules</p>
                     <p className="text-xs text-muted-foreground">{profile.appliedDevices} devices</p>
                   </div>
                 ))}
+                {profiles.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No profiles yet</p>}
               </div>
             </ScrollArea>
           </div>
 
-          {/* Rules Editor */}
           <div className="col-span-3 space-y-4">
             {selectedProfile ? (
               <>
@@ -298,101 +239,49 @@ export function AlertThresholdManager() {
                     <p className="text-sm text-muted-foreground">{selectedProfile.description}</p>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => addRule(selectedProfile.id)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Rule
-                    </Button>
-                    {!selectedProfile.isDefault && (
-                      <Button size="sm" variant="destructive" onClick={() => deleteProfile(selectedProfile.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <Button size="sm" variant="outline" onClick={() => addRule(selectedProfile.id)}><Plus className="h-4 w-4 mr-2" />Add Rule</Button>
+                    {!selectedProfile.isDefault && <Button size="sm" variant="destructive" onClick={() => deleteProfile(selectedProfile.id)}><Trash2 className="h-4 w-4" /></Button>}
                   </div>
                 </div>
 
                 <ScrollArea className="h-[450px]">
                   <div className="space-y-3 pr-4">
                     {selectedProfile.rules.map(rule => (
-                      <div
-                        key={rule.id}
-                        className={cn(
-                          "p-4 rounded-lg border transition-colors",
-                          rule.enabled ? SEVERITY_COLORS[rule.severity] : "bg-muted/30 opacity-50"
-                        )}
-                      >
+                      <div key={rule.id} className={cn("p-4 rounded-lg border transition-colors", rule.enabled ? SEVERITY_COLORS[rule.severity] || '' : "bg-muted/30 opacity-50")}>
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-3">
-                            <div className="p-2 rounded-lg bg-background/50">
-                              {METRIC_ICONS[rule.metric]}
-                            </div>
+                            <div className="p-2 rounded-lg bg-background/50">{METRIC_ICONS[rule.metric]}</div>
                             <div>
                               <div className="flex items-center gap-2">
                                 <h4 className="font-medium">{rule.name}</h4>
-                                <Badge variant="outline" className="text-xs capitalize">
-                                  {rule.severity}
-                                </Badge>
+                                <Badge variant="outline" className="text-xs capitalize">{rule.severity}</Badge>
                               </div>
                               <p className="text-sm text-muted-foreground mt-1">
                                 {rule.metric.replace("_", " ")} {rule.operator} {rule.value}%
                                 {rule.duration > 0 && ` for ${formatDuration(rule.duration)}`}
                               </p>
                               <div className="flex items-center gap-3 mt-2">
-                                {rule.notifyEmail && (
-                                  <Badge variant="outline" className="text-xs">📧 Email</Badge>
-                                )}
-                                {rule.notifyWebhook && (
-                                  <Badge variant="outline" className="text-xs">🔗 Webhook</Badge>
-                                )}
-                                {rule.autoRemediate && (
-                                  <Badge variant="outline" className="text-xs">⚡ Auto-fix</Badge>
-                                )}
+                                {rule.notifyEmail && <Badge variant="outline" className="text-xs">📧 Email</Badge>}
+                                {rule.notifyWebhook && <Badge variant="outline" className="text-xs">🔗 Webhook</Badge>}
+                                {rule.autoRemediate && <Badge variant="outline" className="text-xs">⚡ Auto-fix</Badge>}
                               </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Switch
-                              checked={rule.enabled}
-                              onCheckedChange={(checked) => updateRule(selectedProfile.id, rule.id, { enabled: checked })}
-                            />
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setEditingRule(rule);
-                                setEditRuleOpen(true);
-                              }}
-                            >
-                              <Settings className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-destructive"
-                              onClick={() => deleteRule(selectedProfile.id, rule.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <Switch checked={rule.enabled} onCheckedChange={(checked) => updateRule(selectedProfile.id, rule.id, { enabled: checked })} />
+                            <Button size="sm" variant="ghost" onClick={() => { setEditingRule(rule); setEditRuleOpen(true); }}><Settings className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteRule(selectedProfile.id, rule.id)}><Trash2 className="h-4 w-4" /></Button>
                           </div>
                         </div>
-
-                        {/* Threshold Slider */}
                         <div className="mt-4 pt-4 border-t border-border/50">
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-xs text-muted-foreground">Threshold Value</span>
                             <span className="text-sm font-medium">{rule.value}%</span>
                           </div>
-                          <Slider
-                            value={[rule.value]}
-                            min={0}
-                            max={100}
-                            step={5}
-                            onValueChange={([value]) => updateRule(selectedProfile.id, rule.id, { value })}
-                            className="w-full"
-                          />
+                          <Slider value={[rule.value]} min={0} max={100} step={5} onValueChange={([value]) => updateRule(selectedProfile.id, rule.id, { value })} className="w-full" />
                         </div>
                       </div>
                     ))}
-
                     {selectedProfile.rules.length === 0 && (
                       <div className="text-center py-12 text-muted-foreground">
                         <BellOff className="h-12 w-12 mx-auto mb-3 opacity-50" />
@@ -415,25 +304,14 @@ export function AlertThresholdManager() {
         {/* Edit Rule Dialog */}
         <Dialog open={editRuleOpen} onOpenChange={setEditRuleOpen}>
           <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Edit Rule</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Edit Rule</DialogTitle></DialogHeader>
             {editingRule && selectedProfile && (
               <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Rule Name</Label>
-                  <Input
-                    value={editingRule.name}
-                    onChange={(e) => setEditingRule({ ...editingRule, name: e.target.value })}
-                  />
-                </div>
+                <div className="space-y-2"><Label>Rule Name</Label><Input value={editingRule.name} onChange={(e) => setEditingRule({ ...editingRule, name: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Metric</Label>
-                    <Select
-                      value={editingRule.metric}
-                      onValueChange={(v: any) => setEditingRule({ ...editingRule, metric: v })}
-                    >
+                    <Select value={editingRule.metric} onValueChange={(v) => setEditingRule({ ...editingRule, metric: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="cpu">CPU Usage</SelectItem>
@@ -448,10 +326,7 @@ export function AlertThresholdManager() {
                   </div>
                   <div className="space-y-2">
                     <Label>Severity</Label>
-                    <Select
-                      value={editingRule.severity}
-                      onValueChange={(v: any) => setEditingRule({ ...editingRule, severity: v })}
-                    >
+                    <Select value={editingRule.severity} onValueChange={(v) => setEditingRule({ ...editingRule, severity: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="info">Info</SelectItem>
@@ -464,10 +339,7 @@ export function AlertThresholdManager() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Operator</Label>
-                    <Select
-                      value={editingRule.operator}
-                      onValueChange={(v: any) => setEditingRule({ ...editingRule, operator: v })}
-                    >
+                    <Select value={editingRule.operator} onValueChange={(v) => setEditingRule({ ...editingRule, operator: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value=">">Greater than</SelectItem>
@@ -478,46 +350,20 @@ export function AlertThresholdManager() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Value</Label>
-                    <Input
-                      type="number"
-                      value={editingRule.value}
-                      onChange={(e) => setEditingRule({ ...editingRule, value: parseInt(e.target.value) || 0 })}
-                    />
-                  </div>
+                  <div className="space-y-2"><Label>Value</Label><Input type="number" value={editingRule.value} onChange={(e) => setEditingRule({ ...editingRule, value: parseInt(e.target.value) || 0 })} /></div>
                 </div>
                 <div className="space-y-2">
                   <Label>Duration (seconds)</Label>
-                  <Input
-                    type="number"
-                    value={editingRule.duration}
-                    onChange={(e) => setEditingRule({ ...editingRule, duration: parseInt(e.target.value) || 0 })}
-                  />
+                  <Input type="number" value={editingRule.duration} onChange={(e) => setEditingRule({ ...editingRule, duration: parseInt(e.target.value) || 0 })} />
                   <p className="text-xs text-muted-foreground">How long the condition must be true before alerting (0 = immediate)</p>
                 </div>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label>Email Notification</Label>
-                    <Switch
-                      checked={editingRule.notifyEmail}
-                      onCheckedChange={(checked) => setEditingRule({ ...editingRule, notifyEmail: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label>Webhook Notification</Label>
-                    <Switch
-                      checked={editingRule.notifyWebhook}
-                      onCheckedChange={(checked) => setEditingRule({ ...editingRule, notifyWebhook: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label>Auto-Remediate</Label>
-                    <Switch
-                      checked={editingRule.autoRemediate}
-                      onCheckedChange={(checked) => setEditingRule({ ...editingRule, autoRemediate: checked })}
-                    />
-                  </div>
+                  <div className="flex items-center justify-between"><Label>Email Notification</Label><Switch checked={editingRule.notifyEmail} onCheckedChange={(checked) => setEditingRule({ ...editingRule, notifyEmail: checked })} /></div>
+                  <div className="flex items-center justify-between"><Label>Webhook Notification</Label><Switch checked={editingRule.notifyWebhook} onCheckedChange={(checked) => setEditingRule({ ...editingRule, notifyWebhook: checked })} /></div>
+                  <div className="flex items-center justify-between"><Label>Auto-Remediate</Label><Switch checked={editingRule.autoRemediate} onCheckedChange={(checked) => setEditingRule({ ...editingRule, autoRemediate: checked })} /></div>
+                  {editingRule.autoRemediate && (
+                    <div className="space-y-2"><Label>Remediation Script</Label><Input value={editingRule.remediationScript || ''} onChange={(e) => setEditingRule({ ...editingRule, remediationScript: e.target.value })} placeholder="Script name" /></div>
+                  )}
                 </div>
               </div>
             )}
@@ -529,7 +375,7 @@ export function AlertThresholdManager() {
                   setEditRuleOpen(false);
                   toast.success("Rule updated");
                 }
-              }}>Save</Button>
+              }}>Save Changes</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
