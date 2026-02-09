@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Key, Eye, EyeOff, CheckCircle2, AlertTriangle, Lock, RefreshCw, Copy, ShieldCheck } from 'lucide-react';
+import { Key, Eye, EyeOff, CheckCircle2, AlertTriangle, Lock, RefreshCw, ShieldCheck, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PasswordEntry {
   id: string;
@@ -16,19 +18,48 @@ interface PasswordEntry {
 }
 
 export function SelfServicePasswordReset() {
+  const { user } = useAuth();
   const [selectedEntry, setSelectedEntry] = useState<PasswordEntry | null>(null);
   const [showChangeDialog, setShowChangeDialog] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [entries, setEntries] = useState<PasswordEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [entries] = useState<PasswordEntry[]>([
-    { id: '1', name: 'Email Account', username: 'user@company.com', category: 'Email', lastRotated: new Date(Date.now() - 86400000 * 30).toISOString() },
-    { id: '2', name: 'VPN Access', username: 'vpn-user', category: 'Network', lastRotated: new Date(Date.now() - 86400000 * 60).toISOString() },
-    { id: '3', name: 'WiFi Network', username: 'N/A', category: 'Network', lastRotated: new Date(Date.now() - 86400000 * 90).toISOString() },
-  ]);
+  useEffect(() => {
+    loadPasswords();
+  }, [user]);
+
+  const loadPasswords = async () => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { data } = await supabase
+        .from('atlas_passwords')
+        .select('id, name, username, category, updated_at')
+        .eq('user_id', user.id)
+        .order('name');
+
+      if (data) {
+        setEntries(data.map(p => ({
+          id: p.id,
+          name: p.name,
+          username: p.username || 'N/A',
+          category: p.category || 'General',
+          lastRotated: p.updated_at,
+        })));
+      }
+    } catch (err) {
+      console.error('Failed to load passwords:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getPasswordStrength = (pw: string): { label: string; color: string; score: number } => {
     let score = 0;
@@ -52,20 +83,55 @@ export function SelfServicePasswordReset() {
       toast.error('Password must be at least 8 characters');
       return;
     }
+    if (!selectedEntry || !user) return;
 
     setIsResetting(true);
-    // Simulate API call
-    await new Promise(r => setTimeout(r, 1500));
-    setIsResetting(false);
-    setShowChangeDialog(false);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setSelectedEntry(null);
-    toast.success('Password reset submitted. Your IT admin will process this shortly.');
+    try {
+      // Create a helpdesk ticket for the password reset request
+      const ticketNumber = `PWD-${Date.now().toString(36).toUpperCase()}`;
+      const { error } = await supabase
+        .from('tickets')
+        .insert({
+          user_id: user.id,
+          ticket_number: ticketNumber,
+          title: `Password Reset: ${selectedEntry.name}`,
+          description: `Password reset requested for account "${selectedEntry.name}" (${selectedEntry.username}). New password has been submitted securely.`,
+          priority: 'medium',
+          status: 'open',
+          category: 'password_reset',
+          source: 'portal',
+        });
+
+      if (error) throw error;
+
+      // Update the password's last rotated timestamp
+      await supabase
+        .from('atlas_passwords')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', selectedEntry.id);
+
+      toast.success('Password reset submitted. Your IT admin will process this shortly.');
+      setShowChangeDialog(false);
+      setNewPassword('');
+      setConfirmPassword('');
+      setSelectedEntry(null);
+      loadPasswords();
+    } catch (err: any) {
+      toast.error('Failed to submit reset request: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   const strength = getPasswordStrength(newPassword);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -77,51 +143,61 @@ export function SelfServicePasswordReset() {
         <p className="text-sm text-muted-foreground">Request password resets for your managed accounts</p>
       </div>
 
-      <div className="grid gap-3">
-        {entries.map((entry) => {
-          const daysSinceRotation = Math.floor((Date.now() - new Date(entry.lastRotated).getTime()) / 86400000);
-          const needsRotation = daysSinceRotation > 60;
-          return (
-            <Card key={entry.id}>
-              <CardContent className="py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-muted">
-                    <Lock className="h-4 w-4" />
+      {entries.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <Lock className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <p>No managed passwords found</p>
+            <p className="text-sm">Contact your IT administrator to set up managed accounts.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-3">
+          {entries.map((entry) => {
+            const daysSinceRotation = Math.floor((Date.now() - new Date(entry.lastRotated).getTime()) / 86400000);
+            const needsRotation = daysSinceRotation > 60;
+            return (
+              <Card key={entry.id}>
+                <CardContent className="py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-muted">
+                      <Lock className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{entry.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {entry.username} · {entry.category}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">{entry.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {entry.username} · {entry.category}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    {needsRotation && (
+                      <Badge className="bg-amber-500/20 text-amber-400 border-0">
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                        Rotation Due
+                      </Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      Last changed {daysSinceRotation}d ago
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedEntry(entry);
+                        setShowChangeDialog(true);
+                      }}
+                    >
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                      Reset
+                    </Button>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {needsRotation && (
-                    <Badge className="bg-amber-500/20 text-amber-400 border-0">
-                      <AlertTriangle className="h-3 w-3 mr-1" />
-                      Rotation Due
-                    </Badge>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    Last changed {daysSinceRotation}d ago
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedEntry(entry);
-                      setShowChangeDialog(true);
-                    }}
-                  >
-                    <RefreshCw className="h-3 w-3 mr-1" />
-                    Reset
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {showChangeDialog && selectedEntry && (
         <Card className="border-primary/30">
