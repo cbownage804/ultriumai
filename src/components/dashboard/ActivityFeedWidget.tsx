@@ -3,6 +3,7 @@ import {
   Bot, Shield, Monitor, Headphones, FileText, Lock, AlertTriangle,
   Zap, Users, Settings, ArrowRight, Clock
 } from 'lucide-react';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -128,6 +129,7 @@ export function ActivityFeedWidget() {
         <div className="flex items-center gap-2">
           <div className={`h-2 w-2 rounded-full ${activities.length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground'}`} />
           <h3 className="text-sm font-semibold text-foreground">Activity Feed</h3>
+          <InfoTooltip content="Real-time log of actions across all products — tickets, security events, AI usage, and device changes. Use filters to focus on a specific category." />
         </div>
         <div className="flex items-center gap-1">
           {FILTERS.map(f => (

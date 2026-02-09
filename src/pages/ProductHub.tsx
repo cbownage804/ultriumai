@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Sparkles, Lock, ArrowRight, Zap, LogOut, Settings } from 'lucide-react';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ActivityFeedWidget } from '@/components/dashboard/ActivityFeedWidget';
@@ -298,6 +299,7 @@ export default function ProductHub() {
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 mb-6 animate-fade-in backdrop-blur-sm group hover:bg-primary/15 hover:border-primary/40 transition-all cursor-default">
             <Sparkles className="h-4 w-4 text-primary group-hover:animate-pulse" />
             <span className="text-sm font-medium text-primary">Product Hub</span>
+            <InfoTooltip content="This is your central command center. Dashboard widgets show live data, product cards give quick access to each platform, and the activity feed tracks actions across all products." size="md" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in-up">
             Welcome back, <span className="bg-gradient-to-r from-primary via-violet-500 to-cyan-500 bg-clip-text text-transparent bg-[size:200%_auto] animate-[gradient-shift_8s_ease_infinite]">{userName}</span>!

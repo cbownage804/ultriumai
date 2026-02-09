@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart3, Users, Shield, FileText, ClipboardCheck, Target, Database, Archive, Building2, GraduationCap } from 'lucide-react';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { ModuleLogo } from '@/components/vanguard/ModuleLogo';
 import { ComplyOverview } from './ComplyOverview';
 import { ComplyClientsView } from './ComplyClientsView';
@@ -40,7 +41,7 @@ export function ComplyDashboard() {
           <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-teal-100 to-emerald-200 bg-clip-text text-transparent">
             Vanguard Comply
           </h1>
-          <p className="text-muted-foreground">Compliance & audit readiness center</p>
+          <p className="text-muted-foreground flex items-center gap-1.5">Compliance & audit readiness center <InfoTooltip content="Track compliance across 13 frameworks (SOC 2, HIPAA, GDPR, etc). Map controls to evidence, run gap analysis, manage vendor risk, and generate audit-ready reports." /></p>
         </div>
       </div>
 

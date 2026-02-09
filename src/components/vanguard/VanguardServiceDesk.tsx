@@ -27,6 +27,7 @@ import {
   Building2,
   Ticket
 } from "lucide-react";
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -587,7 +588,7 @@ export function VanguardServiceDesk() {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Category</Label>
+                    <Label className="flex items-center gap-1.5">Category <InfoTooltip content="Categorize the issue type so AI can auto-route it to the right team and suggest solutions." /></Label>
                     <Select 
                       value={newTicket.category} 
                       onValueChange={(v) => setNewTicket(prev => ({ ...prev, category: v }))}
@@ -604,7 +605,7 @@ export function VanguardServiceDesk() {
                   </div>
                   
                   <div>
-                    <Label>Priority</Label>
+                    <Label className="flex items-center gap-1.5">Priority <InfoTooltip content="Sets the SLA timer. Critical = 1hr response, High = 4hr, Medium = 8hr, Low = 24hr." /></Label>
                     <Select 
                       value={newTicket.priority} 
                       onValueChange={(v) => setNewTicket(prev => ({ ...prev, priority: v }))}
