@@ -6,7 +6,7 @@ import { VanguardAccessGate } from './VanguardAccessGate';
 import { RealtimeNotificationCenter } from './RealtimeNotificationCenter';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { LanguageProvider } from '@/contexts/LanguageContext';
-import { FloatingHelpButton } from '@/components/help/FloatingHelpButton';
+
 import { CortexFeaturesProvider } from '@/hooks/useCortexFeatures';
 import { VanguardSubscriptionProvider } from '@/contexts/VanguardSubscriptionContext';
 import { CrossModuleSyncTrigger } from './CrossModuleSyncTrigger';
@@ -36,8 +36,6 @@ export function VanguardLayout() {
             </main>
           </div>
 
-          {/* Floating Help Button */}
-          <FloatingHelpButton />
 
           <Toaster />
         </div>
