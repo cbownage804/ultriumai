@@ -140,18 +140,18 @@ export function useVanguardCustomer(customerId: string | undefined): UseVanguard
 
         setTicketCount(ticketCountResult || 0);
 
-        // Count active alerts - try multiple sources
+        // Count active alerts for this customer from rmm_alerts
         let alertTotal = 0;
         
-        // Count from security_alerts table if it exists
         try {
           const { count: alertsCount } = await supabase
-            .from('automated_alerts')
+            .from('rmm_alerts')
             .select('id', { count: 'exact', head: true })
-            .eq('is_active', true);
+            .eq('client_id', customerId)
+            .in('status', ['active', 'triggered']);
           alertTotal = alertsCount || 0;
         } catch {
-          // Fallback to 0 if table doesn't exist
+          // Fallback to 0
         }
 
         setAlertCount(alertTotal);

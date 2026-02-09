@@ -56,31 +56,46 @@ export default function VanguardCustomers() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [deviceCounts, setDeviceCounts] = useState<Record<string, number>>({});
+  const [alertCounts, setAlertCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     document.title = 'Sites | Vanguard';
   }, []);
 
-  // Fetch real device counts from vanguard_agents
+  // Fetch real device and alert counts
   useEffect(() => {
     if (clients.length === 0) return;
-    const fetchDeviceCounts = async () => {
-      const clientIds = clients.map(c => c.id);
-      const { data } = await supabase
+    const clientIds = clients.map(c => c.id);
+    
+    const fetchCounts = async () => {
+      // Device counts from vanguard_agents
+      const { data: agentData } = await supabase
         .from('vanguard_agents')
         .select('client_id')
         .in('client_id', clientIds);
-      if (data) {
+      if (agentData) {
         const counts: Record<string, number> = {};
-        data.forEach(row => {
-          if (row.client_id) {
-            counts[row.client_id] = (counts[row.client_id] || 0) + 1;
-          }
+        agentData.forEach(row => {
+          if (row.client_id) counts[row.client_id] = (counts[row.client_id] || 0) + 1;
         });
         setDeviceCounts(counts);
       }
+
+      // Alert counts from rmm_alerts
+      const { data: alertData } = await supabase
+        .from('rmm_alerts')
+        .select('client_id')
+        .in('client_id', clientIds)
+        .in('status', ['active', 'triggered']);
+      if (alertData) {
+        const counts: Record<string, number> = {};
+        alertData.forEach(row => {
+          if (row.client_id) counts[row.client_id] = (counts[row.client_id] || 0) + 1;
+        });
+        setAlertCounts(counts);
+      }
     };
-    fetchDeviceCounts();
+    fetchCounts();
   }, [clients]);
 
   const customers: CustomerDisplay[] = useMemo(() => {
@@ -89,14 +104,14 @@ export default function VanguardCustomers() {
       name: client.company_name,
       description: '',
       devices: deviceCounts[client.id] || 0,
-      alerts: client.alerts || 0,
+      alerts: alertCounts[client.id] || 0,
       type: 'Managed' as const,
       psaCompanyName: client.company_name || '',
-      status: getHealthStatus(client.alerts || 0),
+      status: getHealthStatus(alertCounts[client.id] || 0),
       mrr: client.monthly_rate || 0,
-      securityScore: (client.alerts || 0) < 3 ? 92 : (client.alerts || 0) < 8 ? 75 : 50,
+      securityScore: (alertCounts[client.id] || 0) < 3 ? 92 : (alertCounts[client.id] || 0) < 8 ? 75 : 50,
     }));
-  }, [clients, deviceCounts]);
+  }, [clients, deviceCounts, alertCounts]);
 
   const totalDevices = customers.reduce((acc, c) => acc + c.devices, 0);
 

@@ -65,16 +65,29 @@ export const MultiTenantManager = () => {
       .order('created_at', { ascending: false });
 
     if (data && data.length > 0) {
+      const clientIds = data.map(c => c.id);
+
+      // Fetch real agent and alert counts
+      const [agentsRes, alertsRes] = await Promise.all([
+        supabase.from('vanguard_agents').select('client_id').in('client_id', clientIds),
+        supabase.from('rmm_alerts').select('client_id').in('client_id', clientIds).in('status', ['active', 'triggered']),
+      ]);
+
+      const agentCounts: Record<string, number> = {};
+      (agentsRes.data || []).forEach(r => { if (r.client_id) agentCounts[r.client_id] = (agentCounts[r.client_id] || 0) + 1; });
+
+      const alertCounts: Record<string, number> = {};
+      (alertsRes.data || []).forEach(r => { if (r.client_id) alertCounts[r.client_id] = (alertCounts[r.client_id] || 0) + 1; });
+
       const mapped = data.map(client => {
-        // Use integration_settings for hierarchy metadata
         const integrationSettings = client.integration_settings as Record<string, any> | null;
         return {
           id: client.id,
           name: client.company_name,
           industry: client.business_size || 'Standard',
           status: client.is_active ? 'active' : 'inactive',
-          agentCount: 0,
-          threatCount: client.alerts || 0,
+          agentCount: agentCounts[client.id] || 0,
+          threatCount: alertCounts[client.id] || 0,
           riskScore: 85,
           lastActivity: client.updated_at || client.created_at,
           parentId: integrationSettings?.parent_org_id,
