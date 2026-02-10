@@ -347,14 +347,25 @@ export function AIAppBuilderWorkspace() {
 
       // Auto-name project on first successful build
       if (!hasAutoNamed.current && project.name === 'Untitled Project') {
-        const firstUserMsg = messages.find(m => m.role === 'user');
+        // Find the first real user message (skip internal planning/system prompts)
+        const firstUserMsg = messages.find(m => {
+          if (m.role !== 'user') return false;
+          const c = m.content;
+          if (c.includes('PLANNING MODE') || c.includes('Return ONLY valid JSON') ||
+              c.includes('return a structured plan as JSON') || c.includes('filesToCreate') ||
+              c.includes('filesToModify') || c.includes('Analyze the user') ||
+              c.includes('[PLANNING') || c.includes('Do Not Generate') ||
+              (c.includes('"approach"') && c.includes('"steps"'))) {
+            return false;
+          }
+          return true;
+        });
         if (firstUserMsg) {
           const prompt = firstUserMsg.content
             .replace(/\[Currently viewing:.*?\]\n?/g, '')
             .replace(/\[Auto-detected relevant files:.*?\]\n?/g, '')
-            // Strip agent-mode planning prefixes (e.g. "[planning Mode — Do Not Generate]")
             .replace(/\[.*?(?:planning|mode|do not generate).*?\]\s*/gi, '')
-            .replace(/^\s*\[.*?\]\s*/g, '') // strip any leading bracketed text
+            .replace(/^\s*\[.*?\]\s*/g, '')
             .trim();
           
           // Strip common prompt prefixes to extract the subject
