@@ -633,7 +633,7 @@ export function AIAppBuilderWorkspace() {
     setConfirmAction({
       title: 'Clear chat & project?',
       description: 'This will remove all messages, generated files, and reset the project to a blank state. This cannot be undone.',
-      onConfirm: () => { clearChat(); resetProject(); },
+      onConfirm: () => { clearChat(); resetProject(); setStableHTML(null); },
     });
   };
 
@@ -1377,9 +1377,9 @@ export function AIAppBuilderWorkspace() {
           onEnvVarsChange={setEnvVars}
           onDeleteProject={() => {
             if (currentProjectId) deleteProject(currentProjectId);
-            resetProject(); clearChat(); toast.success('Project deleted'); setShowSettingsPanel(false);
+            resetProject(); clearChat(); setStableHTML(null); toast.success('Project deleted'); setShowSettingsPanel(false);
           }}
-          onResetProject={() => { resetProject(); toast.success('Project reset'); setShowSettingsPanel(false); }}
+          onResetProject={() => { resetProject(); setStableHTML(null); toast.success('Project reset'); setShowSettingsPanel(false); }}
         />
         {vercelConfig && <VercelDeployButton projectName={project.name} files={project.files} vercelToken={vercelConfig.token} />}
         {githubConfig && <GithubSyncButton projectName={project.name} files={project.files} githubToken={githubConfig.token} onPullFiles={handleGithubPullFiles} />}
