@@ -191,10 +191,39 @@ export const AIStudioDashboardHub = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
+      <div className="space-y-10 animate-pulse">
+        {/* Stats bar skeleton */}
+        <div className="flex items-center gap-3">
+          <div className="h-7 w-24 bg-muted/30 rounded-full" />
+          <div className="h-4 w-16 bg-muted/20 rounded" />
+          <div className="h-4 w-16 bg-muted/20 rounded" />
+        </div>
+        {/* Hero cards skeleton */}
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="h-64 bg-muted/30 rounded-2xl" />
-          <div className="h-64 bg-muted/30 rounded-2xl" />
+          {[0, 1].map(i => (
+            <div key={i} className="rounded-2xl border border-border/30 overflow-hidden">
+              <div className="h-40 bg-muted/20" />
+              <div className="p-5 space-y-3">
+                <div className="h-5 w-3/4 bg-muted/30 rounded" />
+                <div className="h-3 w-1/2 bg-muted/20 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Recent work skeleton */}
+        <div className="space-y-4">
+          <div className="h-5 w-32 bg-muted/30 rounded" />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} className="rounded-xl border border-border/30 overflow-hidden">
+                <div className="aspect-[16/10] bg-muted/15" />
+                <div className="p-3 space-y-2">
+                  <div className="h-4 w-2/3 bg-muted/25 rounded" />
+                  <div className="h-3 w-1/3 bg-muted/15 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

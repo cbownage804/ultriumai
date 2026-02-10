@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGPTBuilderChat } from '@/hooks/useGPTBuilderChat';
 import { useCustomGPTs } from '@/hooks/useCustomGPTs';
@@ -42,6 +42,22 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
   const { captureGPTThumbnail } = useGPTPreviewCapture();
 
   const isEditMode = !!savedGptId;
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+      if (e.key === 'Escape') {
+        if (sidePanel) { setSidePanel(null); return; }
+        if (showTemplatePicker) { setShowTemplatePicker(false); return; }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [sidePanel, showTemplatePicker]);
 
   const handleApplyTemplate = useCallback((tplId: string) => {
     // Navigate to apply template via URL, which triggers the useEffect in useGPTBuilderChat
