@@ -22,11 +22,12 @@ type SidePanel = 'config' | 'knowledge' | 'actions' | 'embed' | null;
 
 interface GPTBuilderWorkspaceProps {
   editGptId?: string;
+  templateId?: string;
 }
 
-export function GPTBuilderWorkspace({ editGptId }: GPTBuilderWorkspaceProps) {
+export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspaceProps) {
   const navigate = useNavigate();
-  const { config, messages, isGenerating, isLoading, savedGptId, setSavedGptId, sendMessage, updateConfig, resetConfig, stopGeneration } = useGPTBuilderChat(editGptId);
+  const { config, messages, isGenerating, isLoading, savedGptId, setSavedGptId, sendMessage, updateConfig, resetConfig, stopGeneration } = useGPTBuilderChat(editGptId, templateId);
   const { createGPT, updateGPT } = useCustomGPTs();
   const [activeTab, setActiveTab] = useState<'chat' | 'preview' | 'config'>('chat');
   const [isSaving, setIsSaving] = useState(false);

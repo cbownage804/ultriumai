@@ -431,9 +431,10 @@ export function AIAppBuilderWorkspace() {
     })();
   }, [initialProjectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Restore draft on mount (only if no project param)
+  // Restore draft on mount (only if no project param and not explicitly new)
+  const isNewProject = searchParams.get('new') === 'true';
   useEffect(() => {
-    if (initialProjectId) return; // skip draft restore when loading a specific project
+    if (initialProjectId || isNewProject) return; // skip draft restore when loading a specific project or starting fresh
     if (project.files.length > 0 || messages.length > 0) return;
     const draft = loadDraft();
     if (draft && (draft.files.length > 0 || draft.messages.length > 0)) {
@@ -445,6 +446,13 @@ export function AIAppBuilderWorkspace() {
       toast.success('Restored your unsaved draft', { description: `Saved ${new Date(draft.savedAt).toLocaleTimeString()}` });
     }
   }, []); // intentionally run once on mount
+
+  // Clear draft when starting a new project
+  useEffect(() => {
+    if (isNewProject) {
+      clearDraft();
+    }
+  }, [isNewProject]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-upload preview to Supabase Storage for live hosting
   const compiledForHosting = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
