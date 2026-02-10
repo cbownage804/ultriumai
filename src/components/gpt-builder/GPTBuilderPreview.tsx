@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { GPTConfig } from '@/types/gptConfig';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { GPTConfig, DEFAULT_WIDGET_THEME } from '@/types/gptConfig';
 import { Bot, Send, Globe, Sparkles, RotateCcw, User, MessageCircle, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,6 +24,9 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const themeColor = config.theme_color || '#6366f1';
+  const wt = useMemo(() => ({ ...DEFAULT_WIDGET_THEME, ...(config.widget_theme || {}) }), [config.widget_theme]);
+  const userBubble = wt.user_bubble || themeColor;
+  const starterBg = wt.starter_background || themeColor;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -174,9 +177,10 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
           transition={{ type: 'spring', damping: 25 }}
           className={cn(
             frame.container,
-            'bg-white shadow-2xl shadow-black/30 flex flex-col overflow-hidden relative border border-gray-200',
+            'shadow-2xl shadow-black/30 flex flex-col overflow-hidden relative',
             embedStyle === 'bubble' && 'rounded-[2rem]',
           )}
+          style={{ backgroundColor: wt.background, color: wt.text_color, borderWidth: 1, borderColor: wt.input_border }}
         >
           {/* Phone notch - only for bubble style */}
           {embedStyle === 'bubble' && (
@@ -204,10 +208,10 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
 
                 {/* Welcome message */}
                 {config.welcome_message && (
-                  <div className="w-full max-w-md border border-gray-200 rounded-xl p-4 mb-4">
+                  <div className="w-full max-w-md rounded-xl p-4 mb-4" style={{ borderWidth: 1, borderColor: wt.input_border }}>
                     <div className="flex gap-2.5 items-start">
-                      <MessageCircle className="h-4 w-4 text-gray-400 shrink-0 mt-0.5" />
-                      <p className="text-sm text-gray-700 leading-relaxed">{config.welcome_message}</p>
+                      <MessageCircle className="h-4 w-4 shrink-0 mt-0.5" style={{ color: wt.text_color + '66' }} />
+                      <p className="text-sm leading-relaxed" style={{ color: wt.text_color }}>{config.welcome_message}</p>
                     </div>
                   </div>
                 )}
@@ -220,8 +224,8 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
                         key={i}
                         onClick={() => handleSend(q)}
                         disabled={isResponding || !config.system_prompt}
-                        className="w-full text-left px-4 py-3 rounded-lg text-white text-sm font-medium transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
-                        style={{ backgroundColor: themeColor }}
+                        className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ backgroundColor: starterBg, color: wt.starter_text }}
                       >
                         "{q}"
                       </button>
@@ -229,7 +233,8 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
                     {config.starter_questions.length > 3 && !showAllStarters && (
                       <button
                         onClick={() => setShowAllStarters(true)}
-                        className="w-full text-center text-sm text-gray-400 hover:text-gray-600 flex items-center justify-center gap-1 py-1"
+                        className="w-full text-center text-sm flex items-center justify-center gap-1 py-1"
+                        style={{ color: wt.text_color + '88' }}
                       >
                         View More <ChevronDown className="h-3.5 w-3.5" />
                       </button>
@@ -246,7 +251,7 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
                     >
                       <Sparkles className="h-6 w-6 text-white" />
                     </div>
-                    <p className="text-xs text-gray-400 max-w-[200px]">
+                    <p className="text-xs max-w-[200px]" style={{ color: wt.text_color + '66' }}>
                       Describe your GPT in the chat panel, then test it here
                     </p>
                   </div>
@@ -275,14 +280,16 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
                     <div
                       className={cn(
                         'max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm',
-                        msg.role === 'user'
-                          ? 'rounded-br-md text-white'
-                          : 'bg-gray-100 rounded-bl-md text-gray-800'
+                        msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'
                       )}
-                      style={msg.role === 'user' ? { backgroundColor: themeColor } : undefined}
+                      style={
+                        msg.role === 'user'
+                          ? { backgroundColor: userBubble, color: wt.user_bubble_text }
+                          : { backgroundColor: wt.assistant_bubble, color: wt.assistant_bubble_text }
+                      }
                     >
                       {msg.role === 'assistant' ? (
-                        <div className="prose prose-sm max-w-none [&>p]:mb-1 [&>p:last-child]:mb-0 text-gray-800">
+                        <div className="prose prose-sm max-w-none [&>p]:mb-1 [&>p:last-child]:mb-0" style={{ color: wt.assistant_bubble_text }}>
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
                       ) : (
@@ -290,8 +297,8 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
                       )}
                     </div>
                     {msg.role === 'user' && (
-                      <div className="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center shrink-0 mt-0.5">
-                        <User className="h-3.5 w-3.5 text-gray-500" />
+                      <div className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: wt.assistant_bubble }}>
+                        <User className="h-3.5 w-3.5" style={{ color: wt.assistant_bubble_text + '88' }} />
                       </div>
                     )}
                   </motion.div>
@@ -304,11 +311,11 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
                   <div className="h-6 w-6 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: themeColor }}>
                     <Bot className="h-3.5 w-3.5 text-white animate-pulse" />
                   </div>
-                  <div className="bg-gray-100 rounded-2xl rounded-bl-md px-3.5 py-2.5">
+                  <div className="rounded-2xl rounded-bl-md px-3.5 py-2.5" style={{ backgroundColor: wt.assistant_bubble }}>
                     <div className="flex gap-1">
-                      <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="h-1.5 w-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <span className="h-1.5 w-1.5 rounded-full animate-bounce" style={{ backgroundColor: wt.assistant_bubble_text + '55', animationDelay: '0ms' }} />
+                      <span className="h-1.5 w-1.5 rounded-full animate-bounce" style={{ backgroundColor: wt.assistant_bubble_text + '55', animationDelay: '150ms' }} />
+                      <span className="h-1.5 w-1.5 rounded-full animate-bounce" style={{ backgroundColor: wt.assistant_bubble_text + '55', animationDelay: '300ms' }} />
                     </div>
                   </div>
                 </div>
@@ -317,14 +324,15 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
           </div>
 
           {/* Input Area */}
-          <div className="shrink-0 px-4 pb-4 pt-2 border-t border-gray-100">
-            <div className="flex items-center gap-2 border border-gray-200 rounded-full px-4 py-2.5">
+          <div className="shrink-0 px-4 pb-4 pt-2" style={{ borderTopWidth: 1, borderColor: wt.input_border }}>
+            <div className="flex items-center gap-2 rounded-full px-4 py-2.5" style={{ backgroundColor: wt.input_background, borderWidth: 1, borderColor: wt.input_border }}>
               <input
                 value={previewInput}
                 onChange={(e) => setPreviewInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={config.system_prompt ? (config.placeholder_prompt || 'How can I help you today?') : 'Configure system prompt first...'}
-                className="flex-1 bg-transparent text-sm text-gray-700 placeholder:text-gray-400 outline-none"
+                className="flex-1 bg-transparent text-sm outline-none"
+                style={{ color: wt.input_text }}
                 disabled={!config.system_prompt || isResponding}
               />
               <button
@@ -337,7 +345,7 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
               </button>
             </div>
             {config.description && (
-              <p className="text-[10px] text-gray-400 text-center mt-2 px-4 truncate">
+              <p className="text-[10px] text-center mt-2 px-4 truncate" style={{ color: wt.text_color + '66' }}>
                 {config.description}
               </p>
             )}

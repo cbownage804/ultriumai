@@ -69,6 +69,7 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
         placeholder_prompt: config.placeholder_prompt,
         category: config.category,
         features: config.features,
+        integration_settings: { widget_theme: config.widget_theme } as any,
       };
 
       if (isEditMode && savedGptId) {
@@ -106,6 +107,7 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
       placeholder_prompt: config.placeholder_prompt,
       category: config.category,
       features: config.features,
+      integration_settings: { widget_theme: config.widget_theme } as any,
     };
     try {
       const result = await createGPT(dupData);
