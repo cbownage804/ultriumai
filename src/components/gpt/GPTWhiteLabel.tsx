@@ -163,7 +163,7 @@ const GPTWhiteLabel = () => {
             <p className="text-muted-foreground mb-4">
               Create a GPT first to configure white-label settings
             </p>
-            <Button onClick={() => navigate('/dashboard/gpt/build')}>
+            <Button onClick={() => navigate('/ai-studio/gpt-builder')}>
               Create Your First GPT
             </Button>
           </CardContent>

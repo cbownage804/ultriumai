@@ -190,7 +190,7 @@ export const GPTDashboard = () => {
                 <div 
                   key={gpt.id} 
                   className="flex flex-col lg:flex-row lg:items-center justify-between p-4 border rounded-lg gap-4 hover:bg-muted/50 transition-colors cursor-pointer group"
-                  onClick={() => navigate(`/ai-studio/settings/${gpt.id}`)}
+                  onClick={() => navigate(`/ai-studio/gpt-builder/${gpt.id}`)}
                 >
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -218,7 +218,7 @@ export const GPTDashboard = () => {
                       <div className="flex items-center gap-1 ml-2">
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(`/ai-studio/settings/${gpt.id}`)}>
+                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(`/ai-studio/gpt-builder/${gpt.id}`)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
