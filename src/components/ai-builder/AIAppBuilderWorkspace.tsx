@@ -119,8 +119,12 @@ export function AIAppBuilderWorkspace() {
   } = useProjectPersistence();
   const {
     currentRun: agentRun,
+    taskQueue: agentTaskQueue,
     startAgentRun, cancelRun: cancelAgent,
-    simulateAgentExecution,
+    enqueueTask, cancelTask: cancelAgentTask,
+    retryTask: retryAgentTask, clearCompleted: clearAgentCompleted,
+    processQueue: processAgentQueue,
+    executeAgentTask, setIframeRef: setAgentIframeRef,
   } = useAgentMode();
   const autoRecovery = useAutoErrorRecovery();
   const versionTimeline = useVersionTimeline();
@@ -417,10 +421,14 @@ export function AIAppBuilderWorkspace() {
     buildStartTimeRef.current = Date.now();
     buildLog.logBuildStart(input);
 
-    // Agent mode: wrap in plan-execute-verify loop
+    // Agent mode: enqueue task and process queue
     if (mode === 'build') {
-      const run = startAgentRun(input);
-      simulateAgentExecution(run, sendMessage, project.files, [supabaseConfig, stripeConfig, serviceKeys, imageDataUrl, selectedModel, knowledgeCtx]);
+      const task = enqueueTask(input);
+      const extraArgs = [supabaseConfig, stripeConfig, serviceKeys, imageDataUrl, selectedModel, knowledgeCtx];
+      // Use setTimeout to allow state to settle before processing
+      setTimeout(() => {
+        executeAgentTask(task, sendMessage, project.files, extraArgs);
+      }, 50);
     } else {
       sendMessage(fullInput, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl, selectedModel, knowledgeCtx);
     }
@@ -917,7 +925,7 @@ export function AIAppBuilderWorkspace() {
                   <PanelLeftClose className="h-3.5 w-3.5" />
                 </button>
                 {/* Agent mode step tracker */}
-                <AgentModePanel run={agentRun} onCancel={cancelAgent} />
+                <AgentModePanel run={agentRun} taskQueue={agentTaskQueue} onCancel={cancelAgent} onCancelTask={cancelAgentTask} onRetryTask={retryAgentTask} onClearCompleted={clearAgentCompleted} />
                 <div className="flex-1 overflow-hidden">
                   <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} />
                 </div>
