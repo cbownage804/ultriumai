@@ -119,6 +119,34 @@ fetch('${apiEndpoint}', {
         publicUrl={publicUrl}
       />
 
+      {/* Quick Embed Script Tag for easy external embedding */}
+      {selectedGPTData && isPublic && (
+        <div className="rounded-lg border bg-card p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-medium">Quick Embed (Script Tag)</h4>
+            <button
+              onClick={() => copyToClipboard(
+                `<script src="${baseUrl}/gpt-widget.js" data-gpt-id="${selectedGPTData.id}" data-position="bottom-right" data-theme="${embedSettings.theme}"></script>`,
+                "Embed script tag"
+              )}
+              className="text-xs text-primary hover:underline"
+            >
+              Copy
+            </button>
+          </div>
+          <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto font-mono text-muted-foreground">
+{`<script src="${baseUrl}/gpt-widget.js"
+  data-gpt-id="${selectedGPTData.id}"
+  data-position="bottom-right"
+  data-theme="${embedSettings.theme}">
+</script>`}
+          </pre>
+          <p className="text-xs text-muted-foreground mt-2">
+            Add this single line to any website to embed your GPT as a floating chat widget.
+          </p>
+        </div>
+      )}
+
       {selectedGPTData && isPublic && (
         <Tabs defaultValue="teams" className="space-y-4">
           <TabsList className="grid w-full grid-cols-5">

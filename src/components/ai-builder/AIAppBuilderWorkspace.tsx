@@ -78,7 +78,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { GPTConnectorPanel, type LinkedGPTConfig } from './GPTConnectorPanel';
 
 import {
-  Eye, Code, Pencil, Database, CreditCard, Key, Bot,
+  Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
   History, Variable, Image, Package, Columns, Keyboard, Rocket,
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen, Gauge,
@@ -845,7 +845,7 @@ export function AIAppBuilderWorkspace() {
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
-  const [mobileTab, setMobileTab] = useState<'chat' | 'editor'>('chat');
+  const [mobileTab, setMobileTab] = useState<'chat' | 'preview' | 'editor'>('chat');
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');
@@ -1086,8 +1086,18 @@ export function AIAppBuilderWorkspace() {
         {/* Mobile tab switcher */}
         {isMobile && (
           <div className="flex items-center h-11 border-b border-white/[0.06] bg-black/30 shrink-0 md:hidden">
-            <button onClick={() => setMobileTab('chat')} className={cn("flex-1 h-full min-h-[44px] text-xs font-medium transition-colors", mobileTab === 'chat' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}>Chat</button>
-            <button onClick={() => setMobileTab('editor')} className={cn("flex-1 h-full min-h-[44px] text-xs font-medium transition-colors", mobileTab === 'editor' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}>Editor</button>
+            <button onClick={() => setMobileTab('chat')} className={cn("flex-1 h-full min-h-[44px] flex items-center justify-center gap-1.5 text-xs font-medium transition-colors", mobileTab === 'chat' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}>
+              <MessageSquare className="h-3.5 w-3.5" />
+              Chat
+            </button>
+            <button onClick={() => setMobileTab('preview' as any)} className={cn("flex-1 h-full min-h-[44px] flex items-center justify-center gap-1.5 text-xs font-medium transition-colors", mobileTab === ('preview' as any) ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}>
+              <Eye className="h-3.5 w-3.5" />
+              Preview
+            </button>
+            <button onClick={() => setMobileTab('editor')} className={cn("flex-1 h-full min-h-[44px] flex items-center justify-center gap-1.5 text-xs font-medium transition-colors", mobileTab === 'editor' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}>
+              <Code className="h-3.5 w-3.5" />
+              Code
+            </button>
           </div>
         )}
 
@@ -1096,10 +1106,26 @@ export function AIAppBuilderWorkspace() {
           {isMobile ? (
             mobileTab === 'chat' ? (
               <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} />
-            ) : (
+            ) : mobileTab === 'preview' ? (
                 <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef}>
                   <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} />
                 </BuilderPreviewPanel>
+            ) : (
+              <div className="h-full flex flex-col bg-[#09090b]">
+                {activeFile && (
+                  <>
+                    <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} dirtyFiles={dirtyFiles} onSelect={(path) => setActiveFile(path)} onClose={(path) => closeFile(path)} onReorder={reorderOpenFiles} />
+                    <div className="flex-1 min-h-0">
+                      <CodeEditor file={activeFile} onContentChange={(path, content) => { upsertFile(path, content); setDirtyFiles(prev => new Set(prev).add(path)); }} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
+                    </div>
+                  </>
+                )}
+                {!activeFile && (
+                  <div className="flex-1 flex items-center justify-center text-white/20 text-sm">
+                    No file open — generate code via Chat
+                  </div>
+                )}
+              </div>
             )
           ) : (
           <ResizablePanelGroup direction="horizontal" className="h-full">
