@@ -84,14 +84,15 @@ STRUCTURE FOR COMPLEX APPS:
 - Router for multi-page apps using history.pushState
 
 When MODIFYING an existing project:
-- Read ALL existing files with extreme care before making changes
+- CRITICAL RULE: ONLY output ===FILE: path=== blocks for files you are ACTUALLY CHANGING. Do NOT re-output unchanged files. If you change 1 file out of 10, output ONLY that 1 file.
+- Read the provided file manifest and contents carefully before making changes
 - Map the complete dependency graph — understand how files relate to each other
-- Only output files that need changes using ===FILE: path=== format
-- Preserve unchanged files (don't output them)
-- Output COMPLETE content of changed files, never partial content or diffs
+- Output COMPLETE content of changed files (full file, not diffs), but ONLY the files that changed
+- Preserve unchanged files by simply NOT outputting them — they will be kept as-is automatically
 - Maintain the existing design language, naming conventions, and patterns — extend naturally
 - If the user reports an error, perform root cause analysis: trace the data flow, check for race conditions, verify API contracts, inspect state management. Fix the underlying issue, not just the visible symptom. Explain your diagnosis.
-- When adding features, ensure they integrate seamlessly with existing navigation, state, and styling. New features should feel like they were always there.`;
+- When adding features, ensure they integrate seamlessly with existing navigation, state, and styling. New features should feel like they were always there.
+- EFFICIENCY: For small changes (text edits, color changes, adding a button), you should typically only need to modify 1-2 files. Think carefully about the minimum set of files that need to change.`;
 
 const SUPABASE_ADDON = `
 

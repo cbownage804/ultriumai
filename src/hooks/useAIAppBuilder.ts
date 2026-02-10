@@ -203,26 +203,48 @@ export function useAIAppBuilder() {
       apiMessages.push({ role: m.role, content: m.content });
     }
 
-    // Build the user message content (potentially multimodal)
+    // Build the user message content — send manifest + only relevant files for efficiency
+    const buildFileContext = (files: ProjectFile[], userInput: string): string => {
+      if (files.length === 0) return userInput;
+
+      // Build a compact manifest of all files
+      const manifest = files.map(f => `  - ${f.path} (${f.content.length} chars)`).join('\n');
+
+      // Determine which files are likely relevant based on the user's input
+      const lowerInput = userInput.toLowerCase();
+      const relevantFiles = files.filter(f => {
+        const lowerPath = f.path.toLowerCase();
+        // Always include HTML entry point and main CSS
+        if (lowerPath === 'index.html' || lowerPath === 'styles.css') return true;
+        // Include files mentioned by name in the prompt
+        if (lowerInput.includes(lowerPath) || lowerInput.includes(f.path.split('/').pop()?.split('.')[0]?.toLowerCase() || '')) return true;
+        // For small projects (≤5 files), include everything
+        if (files.length <= 5) return true;
+        // Include JS/TS files for logic changes
+        if ((lowerPath.endsWith('.js') || lowerPath.endsWith('.ts')) && files.length <= 10) return true;
+        return false;
+      });
+
+      // If we filtered too aggressively, include all files
+      const filesToSend = relevantFiles.length > 0 ? relevantFiles : files;
+      const fileContext = filesToSend.map(f => `===FILE: ${f.path}===\n${f.content}`).join('\n\n');
+
+      const omittedCount = files.length - filesToSend.length;
+      const omittedNote = omittedCount > 0
+        ? `\n\n(${omittedCount} other files exist but are omitted for brevity. Only output files you need to change.)`
+        : '';
+
+      return `PROJECT FILE MANIFEST (${files.length} files total):\n${manifest}\n\nFILE CONTENTS:\n${fileContext}${omittedNote}\n\nIMPORTANT: Only output ===FILE: path=== blocks for files you are CHANGING. Do NOT re-output unchanged files.\n\nUser request: ${userInput}`;
+    };
+
     if (imageDataUrl) {
       const userContent: any[] = [
-        { type: 'text', text: currentFiles.length > 0
-          ? `Here is my current project:\n\n${currentFiles.map(f => `===FILE: ${f.path}===\n${f.content}`).join('\n\n')}\n\nNow please: ${input}`
-          : input
-        },
+        { type: 'text', text: buildFileContext(currentFiles, input) },
         { type: 'image_url', image_url: { url: imageDataUrl } },
       ];
       apiMessages.push({ role: 'user', content: userContent });
-    } else if (currentFiles.length > 0) {
-      const fileContext = currentFiles
-        .map(f => `===FILE: ${f.path}===\n${f.content}`)
-        .join('\n\n');
-      apiMessages.push({
-        role: 'user',
-        content: `Here is my current project:\n\n${fileContext}\n\nNow please: ${input}`,
-      });
     } else {
-      apiMessages.push({ role: 'user', content: input });
+      apiMessages.push({ role: 'user', content: buildFileContext(currentFiles, input) });
     }
 
     const controller = new AbortController();
@@ -339,10 +361,20 @@ export function useAIAppBuilder() {
         }
       }
 
-      // Parse multi-file output
+      // Parse multi-file output and MERGE with existing files (incremental editing)
       const parsedFiles = parseMultiFileOutput(fullContent);
       if (parsedFiles.length > 0) {
-        setLatestFiles(parsedFiles);
+        // Merge: start with current files, then overlay changed files
+        const mergedFiles = [...currentFiles];
+        for (const newFile of parsedFiles) {
+          const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
+          if (existingIdx >= 0) {
+            mergedFiles[existingIdx] = newFile; // Update existing file
+          } else {
+            mergedFiles.push(newFile); // Add new file
+          }
+        }
+        setLatestFiles(mergedFiles);
       }
       streaming.stopStreaming();
 
