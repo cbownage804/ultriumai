@@ -83,7 +83,7 @@ import {
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 // Lazy load heavy panels
 const DatabasePanel = lazy(() => import('./DatabasePanel').then(m => ({ default: m.DatabasePanel })));
@@ -95,6 +95,7 @@ const EdgeFunctionEditor = lazy(() => import('./EdgeFunctionEditor').then(m => (
 const PanelLoader = () => <div className="flex items-center justify-center h-full text-white/15 text-xs">Loading...</div>;
 
 export function AIAppBuilderWorkspace() {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const {
     messages, setMessages, isGenerating, latestFiles, previousFiles, mode, setMode, thinkingPhase, versions,
@@ -397,9 +398,29 @@ export function AIAppBuilderWorkspace() {
     saveDraft(project.name, project.files, messages);
   }, [project.files, project.name, messages, saveDraft]);
 
-  // Restore draft on mount
+  // Auto-load project from URL ?project=<id> param
+  const initialProjectId = searchParams.get('project');
+  const hasAutoLoaded = useRef(false);
   useEffect(() => {
-    if (project.files.length > 0 || messages.length > 0) return; // already has content
+    if (!initialProjectId || hasAutoLoaded.current) return;
+    hasAutoLoaded.current = true;
+    (async () => {
+      const loaded = await loadProject(initialProjectId);
+      if (loaded) {
+        setFiles((loaded.files as any[]) || []);
+        renameProject(loaded.name);
+        if (loaded.published_url) setPublishedUrl(loaded.published_url);
+        if (loaded.settings?.chatMessages) {
+          setMessages(loaded.settings.chatMessages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+        }
+      }
+    })();
+  }, [initialProjectId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Restore draft on mount (only if no project param)
+  useEffect(() => {
+    if (initialProjectId) return; // skip draft restore when loading a specific project
+    if (project.files.length > 0 || messages.length > 0) return;
     const draft = loadDraft();
     if (draft && (draft.files.length > 0 || draft.messages.length > 0)) {
       setFiles(draft.files);
