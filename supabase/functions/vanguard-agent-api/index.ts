@@ -289,6 +289,18 @@ async function handleRegister(supabase: any, body: any) {
     }
   };
 
+  // Store RustDesk ID in the top-level column (plain numeric ID)
+  if (body.rustdesk_id) {
+    // Ensure we store only the clean numeric ID (strip spaces)
+    const cleanId = String(body.rustdesk_id).replace(/\s+/g, '').trim();
+    if (/^\d{6,}$/.test(cleanId)) {
+      agentData.rustdesk_id = cleanId;
+      console.log(`[vanguard-agent-api] RustDesk ID set during registration: ${cleanId}`);
+    } else {
+      console.warn(`[vanguard-agent-api] Invalid RustDesk ID format during registration: ${body.rustdesk_id}`);
+    }
+  }
+
   // Include client_id if provided (for MSP client association)
   if (body.client_id) {
     agentData.client_id = body.client_id;
@@ -316,8 +328,32 @@ async function handleRegister(supabase: any, body: any) {
   }
   
   console.log(`[vanguard-agent-api] Agent registered: ${device_id}, Hostname: ${hostname}, IP: ${ip_address}, Version: ${agentData.agent_version}, Type: ${agentType}`);
+  
+  // Build relay config for agent to auto-configure RustDesk
+  const relayServer = Deno.env.get('RUSTDESK_RELAY_SERVER') || '';
+  const publicKey = Deno.env.get('RUSTDESK_PUBLIC_KEY') || '';
+  const apiServer = Deno.env.get('RUSTDESK_API_SERVER') || '';
+  
+  const response: Record<string, any> = {
+    status: 'ok',
+    agent_id: data.id,
+    device_id: device_id,
+  };
+  
+  // Include RustDesk deployment config if relay is configured
+  if (relayServer) {
+    response.rustdesk_config = {
+      deploy: true,
+      relay_server: relayServer,
+      public_key: publicKey,
+      api_server: apiServer,
+      version: '1.3.7',
+    };
+    console.log(`[vanguard-agent-api] RustDesk deploy config included for ${device_id}`);
+  }
+  
   return new Response(
-    JSON.stringify({ status: 'ok', agent_id: data.id, device_id: device_id }),
+    JSON.stringify(response),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
 }
@@ -713,7 +749,6 @@ function formatSize(gb: number | undefined): string {
 async function handleUpdateRustDeskId(supabase: any, body: any) {
   const { device_id, rustdesk_id } = body;
   
-  // Get device_id from header if not in body
   const actualDeviceId = device_id || body.device_id;
   
   if (!actualDeviceId) {
@@ -730,11 +765,21 @@ async function handleUpdateRustDeskId(supabase: any, body: any) {
     );
   }
   
-  // Update agent with RustDesk ID
+  // Clean and validate: RustDesk IDs are numeric, typically 9 digits
+  const cleanId = String(rustdesk_id).replace(/\s+/g, '').trim();
+  if (!/^\d{6,}$/.test(cleanId)) {
+    console.warn(`[vanguard-agent-api] Rejected invalid RustDesk ID for ${actualDeviceId}: ${rustdesk_id}`);
+    return new Response(
+      JSON.stringify({ error: 'Invalid RustDesk ID format. Must be numeric (6+ digits).' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Update agent with clean RustDesk ID
   const { error } = await supabase
     .from('vanguard_agents')
     .update({
-      rustdesk_id: rustdesk_id,
+      rustdesk_id: cleanId,
       updated_at: new Date().toISOString()
     })
     .eq('device_id', actualDeviceId);
@@ -747,10 +792,10 @@ async function handleUpdateRustDeskId(supabase: any, body: any) {
     );
   }
   
-  console.log(`[vanguard-agent-api] Updated RustDesk ID for ${actualDeviceId}: ${rustdesk_id}`);
+  console.log(`[vanguard-agent-api] Updated RustDesk ID for ${actualDeviceId}: ${cleanId}`);
   
   return new Response(
-    JSON.stringify({ status: 'ok' }),
+    JSON.stringify({ status: 'ok', rustdesk_id: cleanId }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
 }
