@@ -1191,8 +1191,8 @@ export function AIAppBuilderWorkspace() {
                         </ResizablePanelGroup>
                       </div>
 
-                      {/* Bottom panels — fixed height, never compress preview */}
-                      <div className="shrink-0 max-h-[40%] overflow-y-auto">
+                      {/* Bottom panels — shrink-to-fit, never compress preview */}
+                      <div className="shrink-0 overflow-hidden">
                         {/* Build Log */}
                         <BuildLogPanel entries={buildLog.entries} isBuilding={isGenerating} onClear={buildLog.clear} />
                         {/* Version Timeline */}
