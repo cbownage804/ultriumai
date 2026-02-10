@@ -1,3 +1,20 @@
+export interface KnowledgeSource {
+  id: string;
+  type: 'text' | 'url' | 'file';
+  name: string;
+  content: string;
+  addedAt: Date;
+}
+
+export interface GPTAction {
+  id: string;
+  name: string;
+  description: string;
+  type: 'web_search' | 'url_scrape' | 'api_call' | 'image_gen' | 'code_interpreter';
+  enabled: boolean;
+  config?: Record<string, string>;
+}
+
 export interface GPTConfig {
   name: string;
   description: string;
@@ -13,6 +30,10 @@ export interface GPTConfig {
   category: string;
   features: string[];
   placeholder_prompt: string;
+  knowledge_sources: KnowledgeSource[];
+  actions: GPTAction[];
+  embed_allowed_domains: string[];
+  embed_style: 'bubble' | 'inline' | 'fullpage';
 }
 
 export const DEFAULT_GPT_CONFIG: GPTConfig = {
@@ -30,6 +51,10 @@ export const DEFAULT_GPT_CONFIG: GPTConfig = {
   category: 'general',
   features: [],
   placeholder_prompt: 'Ask me anything...',
+  knowledge_sources: [],
+  actions: [],
+  embed_allowed_domains: [],
+  embed_style: 'bubble',
 };
 
 export interface GPTBuilderMessage {
