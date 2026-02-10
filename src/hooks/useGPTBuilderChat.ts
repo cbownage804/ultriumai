@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GPTConfig, DEFAULT_GPT_CONFIG, GPTBuilderMessage } from '@/types/gptConfig';
+import { GPTConfig, DEFAULT_GPT_CONFIG, DEFAULT_WIDGET_THEME, GPTBuilderMessage } from '@/types/gptConfig';
 import { useToast } from '@/hooks/use-toast';
 
 const GPT_TEMPLATES: Record<string, Partial<GPTConfig>> = {
@@ -84,6 +84,10 @@ export function useGPTBuilderChat(editGptId?: string, templateId?: string) {
             category: data.category || 'general',
             features: (data.features as string[]) || [],
             placeholder_prompt: data.placeholder_prompt || 'Ask me anything...',
+            widget_theme: {
+              ...DEFAULT_WIDGET_THEME,
+              ...((data.integration_settings as any)?.widget_theme || {}),
+            },
           }));
           setSavedGptId(data.id);
         }

@@ -15,12 +15,43 @@ export interface GPTAction {
   config?: Record<string, string>;
 }
 
+export interface WidgetTheme {
+  background: string;
+  text_color: string;
+  user_bubble: string;
+  user_bubble_text: string;
+  assistant_bubble: string;
+  assistant_bubble_text: string;
+  input_background: string;
+  input_text: string;
+  input_border: string;
+  header_background: string;
+  starter_background: string;
+  starter_text: string;
+}
+
+export const DEFAULT_WIDGET_THEME: WidgetTheme = {
+  background: '#ffffff',
+  text_color: '#1f2937',
+  user_bubble: '', // falls back to theme_color
+  user_bubble_text: '#ffffff',
+  assistant_bubble: '#f3f4f6',
+  assistant_bubble_text: '#1f2937',
+  input_background: '#ffffff',
+  input_text: '#374151',
+  input_border: '#e5e7eb',
+  header_background: '', // falls back to transparent
+  starter_background: '', // falls back to theme_color
+  starter_text: '#ffffff',
+};
+
 export interface GPTConfig {
   name: string;
   description: string;
   system_prompt: string;
   avatar_url?: string;
   theme_color: string;
+  widget_theme: WidgetTheme;
   welcome_message: string;
   starter_questions: string[];
   preferred_model: string;
@@ -42,6 +73,7 @@ export const DEFAULT_GPT_CONFIG: GPTConfig = {
   system_prompt: '',
   avatar_url: '',
   theme_color: '#6366f1',
+  widget_theme: { ...DEFAULT_WIDGET_THEME },
   welcome_message: '',
   starter_questions: [],
   preferred_model: 'google/gemini-3-flash-preview',

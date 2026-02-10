@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GPTConfig } from '@/types/gptConfig';
+import { GPTConfig, DEFAULT_WIDGET_THEME, WidgetTheme } from '@/types/gptConfig';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -212,7 +212,7 @@ export function GPTBuilderConfigSidebar({ config, onChange }: GPTBuilderConfigSi
           {/* Appearance */}
           <div className="space-y-3">
             <h4 className="text-[11px] uppercase tracking-wider text-white/30 font-medium flex items-center gap-1.5">
-              <Palette className="h-3 w-3" /> Theme
+              <Palette className="h-3 w-3" /> Theme Color
             </h4>
             <div className="flex flex-wrap gap-1.5">
               {THEME_COLORS.map(color => (
@@ -245,6 +245,37 @@ export function GPTBuilderConfigSidebar({ config, onChange }: GPTBuilderConfigSi
                 maxLength={7}
               />
             </div>
+          </div>
+
+          <Separator className="bg-white/[0.06]" />
+
+          {/* Widget Theme — Per-element colors */}
+          <div className="space-y-3">
+            <h4 className="text-[11px] uppercase tracking-wider text-white/30 font-medium flex items-center gap-1.5">
+              <Palette className="h-3 w-3" /> Widget Colors
+            </h4>
+            <p className="text-[10px] text-white/20">Customize each part of the chat widget. Leave blank to use defaults.</p>
+
+            <WidgetColorRow label="Background" field="background" config={config} onChange={onChange} />
+            <WidgetColorRow label="Text" field="text_color" config={config} onChange={onChange} />
+            <WidgetColorRow label="User Bubble" field="user_bubble" config={config} onChange={onChange} placeholder="Theme color" />
+            <WidgetColorRow label="User Bubble Text" field="user_bubble_text" config={config} onChange={onChange} />
+            <WidgetColorRow label="Assistant Bubble" field="assistant_bubble" config={config} onChange={onChange} />
+            <WidgetColorRow label="Assistant Bubble Text" field="assistant_bubble_text" config={config} onChange={onChange} />
+            <WidgetColorRow label="Input Background" field="input_background" config={config} onChange={onChange} />
+            <WidgetColorRow label="Input Text" field="input_text" config={config} onChange={onChange} />
+            <WidgetColorRow label="Input Border" field="input_border" config={config} onChange={onChange} />
+            <WidgetColorRow label="Starter Btn BG" field="starter_background" config={config} onChange={onChange} placeholder="Theme color" />
+            <WidgetColorRow label="Starter Btn Text" field="starter_text" config={config} onChange={onChange} />
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-[10px] text-white/30 hover:text-white/60 h-7"
+              onClick={() => onChange({ widget_theme: { ...DEFAULT_WIDGET_THEME } })}
+            >
+              Reset to defaults
+            </Button>
           </div>
 
           <Separator className="bg-white/[0.06]" />
@@ -288,6 +319,50 @@ export function GPTBuilderConfigSidebar({ config, onChange }: GPTBuilderConfigSi
           </div>
         </div>
       </ScrollArea>
+    </div>
+  );
+}
+
+// Helper: inline color picker row for widget theme
+function WidgetColorRow({
+  label, field, config, onChange, placeholder,
+}: {
+  label: string;
+  field: keyof WidgetTheme;
+  config: GPTConfig;
+  onChange: (u: Partial<GPTConfig>) => void;
+  placeholder?: string;
+}) {
+  const wt = config.widget_theme || DEFAULT_WIDGET_THEME;
+  const value = wt[field] || '';
+  const update = (v: string) => {
+    onChange({ widget_theme: { ...DEFAULT_WIDGET_THEME, ...wt, [field]: v } });
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] text-white/40 w-24 shrink-0 truncate">{label}</span>
+      <div
+        className="h-6 w-6 rounded border border-white/[0.1] shrink-0 cursor-pointer relative overflow-hidden"
+        style={{ backgroundColor: value || (placeholder ? config.theme_color : '#ccc') }}
+      >
+        <input
+          type="color"
+          value={value || config.theme_color || '#6366f1'}
+          onChange={(e) => update(e.target.value)}
+          className="absolute inset-0 opacity-0 cursor-pointer"
+        />
+      </div>
+      <Input
+        value={value}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (/^#[0-9a-fA-F]{0,6}$/.test(v) || v === '') update(v);
+        }}
+        placeholder={placeholder || DEFAULT_WIDGET_THEME[field] || '#000000'}
+        className="h-6 text-[10px] bg-white/[0.04] border-white/[0.08] text-white font-mono flex-1"
+        maxLength={7}
+      />
     </div>
   );
 }
