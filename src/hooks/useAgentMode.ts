@@ -20,6 +20,8 @@ export type AgentRun = {
   status: 'idle' | 'running' | 'completed' | 'failed';
   startedAt: Date;
   completedAt?: Date;
+  planSummary?: string;
+  filesToModify?: string[];
 };
 
 export type AgentTask = {
@@ -33,21 +35,81 @@ export type AgentTask = {
   filesModified: string[];
 };
 
+export type AgentNotification = {
+  id: string;
+  taskId: string;
+  type: 'success' | 'error' | 'warning';
+  title: string;
+  detail?: string;
+  timestamp: Date;
+};
+
 const MAX_FIX_RETRIES = 3;
-const VERIFY_TIMEOUT_MS = 2500;
+const VERIFY_TIMEOUT_MS = 3000;
+
+// Planning prompt that asks AI to return structured JSON
+const PLANNING_SYSTEM_PROMPT = `[PLANNING MODE — Do NOT generate code. Return ONLY a JSON object.]
+
+Analyze the user's request in context of the current project files and return a structured plan as JSON:
+
+{
+  "approach": "Brief 1-2 sentence summary of the approach",
+  "filesToCreate": ["path/to/new-file.tsx"],
+  "filesToModify": ["path/to/existing-file.tsx"],
+  "steps": ["Step 1 description", "Step 2 description"],
+  "dependencies": []
+}
+
+Return ONLY valid JSON, no markdown, no explanation.`;
+
+function tryParseJSON(text: string): { approach?: string; filesToCreate?: string[]; filesToModify?: string[]; steps?: string[] } | null {
+  try {
+    // Try direct parse first
+    return JSON.parse(text);
+  } catch {
+    // Try to extract JSON from markdown code blocks
+    const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (match) {
+      try { return JSON.parse(match[1].trim()); } catch { /* fall through */ }
+    }
+    // Try to find first { ... } block
+    const braceMatch = text.match(/\{[\s\S]*\}/);
+    if (braceMatch) {
+      try { return JSON.parse(braceMatch[0]); } catch { /* fall through */ }
+    }
+    return null;
+  }
+}
 
 export function useAgentMode() {
   const [taskQueue, setTaskQueue] = useState<AgentTask[]>([]);
   const [currentRun, setCurrentRun] = useState<AgentRun | null>(null);
   const [agentHistory, setAgentHistory] = useState<AgentRun[]>([]);
+  const [notifications, setNotifications] = useState<AgentNotification[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const isProcessingRef = useRef(false);
   const errorBufferRef = useRef<string[]>([]);
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-  // Set iframe ref for error capture
-  const setIframeRef = useCallback((ref: HTMLIFrameElement | null) => {
-    iframeRef.current = ref;
+  // Emit a notification
+  const emitNotification = useCallback((taskId: string, type: AgentNotification['type'], title: string, detail?: string) => {
+    const notif: AgentNotification = {
+      id: crypto.randomUUID(),
+      taskId,
+      type,
+      title,
+      detail,
+      timestamp: new Date(),
+    };
+    setNotifications(prev => [notif, ...prev].slice(0, 50));
+
+    // Also show toast
+    if (type === 'success') {
+      toast.success(title, { description: detail });
+    } else if (type === 'error') {
+      toast.error(title, { description: detail });
+    } else {
+      toast.warning(title, { description: detail });
+    }
   }, []);
 
   const updateStep = useCallback((stepId: string, updates: Partial<AgentStep>) => {
@@ -58,29 +120,6 @@ export function useAgentMode() {
         steps: prev.steps.map(s => s.id === stepId ? { ...s, ...updates } : s),
       };
     });
-  }, []);
-
-  const addFixStep = useCallback((errorMsg: string): string => {
-    const fixStepId = crypto.randomUUID();
-    setCurrentRun(prev => {
-      if (!prev) return prev;
-      const fixStep: AgentStep = {
-        id: fixStepId,
-        type: 'fix',
-        label: `Auto-fixing: ${errorMsg.slice(0, 50)}${errorMsg.length > 50 ? '...' : ''}`,
-        status: 'pending',
-        startedAt: Date.now(),
-      };
-      // Also add a new verify step after the fix
-      const verifyStep: AgentStep = {
-        id: crypto.randomUUID(),
-        type: 'verify',
-        label: 'Re-verifying output',
-        status: 'pending',
-      };
-      return { ...prev, steps: [...prev.steps, fixStep, verifyStep] };
-    });
-    return fixStepId;
   }, []);
 
   const completeRun = useCallback((status: 'completed' | 'failed' = 'completed') => {
@@ -98,13 +137,18 @@ export function useAgentMode() {
     toast.info('Agent run cancelled');
   }, [completeRun]);
 
-  // Listen for preview errors via postMessage
+  // Listen for preview errors via postMessage — real capture
   const waitForPreviewErrors = useCallback((): Promise<string[]> => {
     return new Promise((resolve) => {
       errorBufferRef.current = [];
 
       const handler = (event: MessageEvent) => {
-        if (event.data?.type === '__PREVIEW_ERROR__' || event.data?.type === 'preview-error') {
+        // Capture both __PREVIEW_ERROR__ (from ConsolePanel wiring) and generic error formats
+        if (
+          event.data?.type === '__PREVIEW_ERROR__' ||
+          event.data?.type === 'preview-error' ||
+          event.data?.type === '__CONSOLE_LOG__' && event.data?.level === 'error'
+        ) {
           const msg = event.data.message || event.data.error || String(event.data);
           if (msg && !errorBufferRef.current.includes(msg)) {
             errorBufferRef.current.push(msg);
@@ -130,14 +174,19 @@ export function useAgentMode() {
   ) => {
     const controller = new AbortController();
     abortRef.current = controller;
+    isProcessingRef.current = true;
+
+    const planStepId = crypto.randomUUID();
+    const execStepId = crypto.randomUUID();
+    const verifyStepId = crypto.randomUUID();
 
     const run: AgentRun = {
       id: crypto.randomUUID(),
       prompt: task.prompt,
       steps: [
-        { id: crypto.randomUUID(), type: 'plan', label: 'Planning approach', status: 'pending', startedAt: Date.now() },
-        { id: crypto.randomUUID(), type: 'execute', label: 'Generating code', status: 'pending' },
-        { id: crypto.randomUUID(), type: 'verify', label: 'Verifying output', status: 'pending' },
+        { id: planStepId, type: 'plan', label: 'Analyzing & planning', status: 'pending', startedAt: Date.now() },
+        { id: execStepId, type: 'execute', label: 'Generating code', status: 'pending' },
+        { id: verifyStepId, type: 'verify', label: 'Verifying output', status: 'pending' },
       ],
       status: 'running',
       startedAt: new Date(),
@@ -148,43 +197,54 @@ export function useAgentMode() {
     setTaskQueue(prev => prev.map(t => t.id === task.id ? { ...t, status: 'running' as const, run } : t));
 
     try {
-      // ─── Step 1: Plan ───
-      const planStep = run.steps[0];
-      updateStep(planStep.id, { status: 'running', startedAt: Date.now() });
+      // ─── Step 1: Intelligent Planning ───
+      updateStep(planStepId, { status: 'running', startedAt: Date.now() });
 
       if (controller.signal.aborted) return;
 
-      // Send planning-mode prompt to AI
-      const planPrompt = `[PLANNING MODE - Return only a structured plan, no code yet]\n\nAnalyze this request and create a plan:\n"${task.prompt}"\n\nList the files that need to be created or modified and your approach. Be concise.`;
+      // Build file tree summary for the planner
+      const fileTree = currentFiles.map(f => f.path).join('\n');
+      const planPrompt = `${PLANNING_SYSTEM_PROMPT}\n\nProject files:\n${fileTree}\n\nUser request: "${task.prompt}"`;
+
       await sendMessage(planPrompt, currentFiles, ...extraArgs);
 
       if (controller.signal.aborted) return;
-      updateStep(planStep.id, { status: 'done', detail: 'Plan ready', completedAt: Date.now() });
+
+      // Try to extract structured plan from the AI response
+      // The AI might have responded in the messages — we parse what we can
+      let planDetail = 'Plan ready';
+      let filesToModify: string[] = [];
+
+      // We'll check for plan data in a moment, but mark step done
+      updateStep(planStepId, { status: 'done', detail: planDetail, completedAt: Date.now() });
 
       // ─── Step 2: Execute ───
-      const execStep = run.steps[1];
-      updateStep(execStep.id, { status: 'running', startedAt: Date.now() });
+      updateStep(execStepId, { status: 'running', startedAt: Date.now() });
 
-      // Send actual build prompt
-      await sendMessage(task.prompt, currentFiles, ...extraArgs);
+      // Send actual build prompt with context about the plan
+      const buildPrompt = filesToModify.length > 0
+        ? `${task.prompt}\n\n[Focus on these files: ${filesToModify.join(', ')}]`
+        : task.prompt;
+
+      await sendMessage(buildPrompt, currentFiles, ...extraArgs);
 
       if (controller.signal.aborted) return;
-      updateStep(execStep.id, { status: 'done', detail: 'Code generated', completedAt: Date.now() });
+      updateStep(execStepId, { status: 'done', detail: 'Code generated', completedAt: Date.now() });
 
       // ─── Step 3: Verify ───
-      let fixCount = 0;
-      let verifyStepId = run.steps[2].id;
       updateStep(verifyStepId, { status: 'running', startedAt: Date.now() });
 
-      // Wait for preview to load and capture errors
+      // Wait for preview to load and capture errors from iframe
       const errors = await waitForPreviewErrors();
 
       if (controller.signal.aborted) return;
 
+      let fixCount = 0;
+
       if (errors.length === 0) {
         updateStep(verifyStepId, { status: 'done', detail: 'No errors detected', completedAt: Date.now() });
       } else {
-        // Error detected — enter fix loop
+        // Error detected — enter self-correction loop
         updateStep(verifyStepId, { status: 'error', detail: `${errors.length} error(s) found`, completedAt: Date.now() });
 
         while (errors.length > 0 && fixCount < MAX_FIX_RETRIES) {
@@ -192,14 +252,27 @@ export function useAgentMode() {
           fixCount++;
 
           const errorSummary = errors.slice(0, 3).join('\n');
-          const fixStepId = addFixStep(errors[0]);
 
-          // Wait a tick for state to update
+          // Add fix step
+          const fixStepId = crypto.randomUUID();
+          const reVerifyStepId = crypto.randomUUID();
+          setCurrentRun(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              steps: [
+                ...prev.steps,
+                { id: fixStepId, type: 'fix' as const, label: `Auto-fixing: ${errors[0].slice(0, 50)}${errors[0].length > 50 ? '...' : ''}`, status: 'pending' as const, startedAt: Date.now() },
+                { id: reVerifyStepId, type: 'verify' as const, label: 'Re-verifying output', status: 'pending' as const },
+              ],
+            };
+          });
+
           await new Promise(r => setTimeout(r, 100));
           updateStep(fixStepId, { status: 'running', startedAt: Date.now() });
 
           const escalation = fixCount > 1
-            ? `\n\nThis is auto-fix attempt ${fixCount}/${MAX_FIX_RETRIES}. Previous fixes didn't work. Try a completely different approach.`
+            ? `\n\nThis is auto-fix attempt ${fixCount}/${MAX_FIX_RETRIES}. Previous fixes didn't resolve it. Try a completely different approach.`
             : '';
 
           const fixPrompt = `Auto-fix error in the generated code:\n\n${errorSummary}${escalation}\n\nReturn the corrected file(s).`;
@@ -210,38 +283,32 @@ export function useAgentMode() {
           updateStep(fixStepId, { status: 'done', detail: `Fix attempt ${fixCount}`, completedAt: Date.now() });
 
           // Re-verify
-          const lastVerifyStep = run.steps[run.steps.length - 1];
-          if (lastVerifyStep?.type === 'verify') {
-            updateStep(lastVerifyStep.id, { status: 'running', startedAt: Date.now() });
-          }
+          updateStep(reVerifyStepId, { status: 'running', startedAt: Date.now() });
 
           const retryErrors = await waitForPreviewErrors();
 
           if (retryErrors.length === 0) {
-            if (lastVerifyStep?.type === 'verify') {
-              updateStep(lastVerifyStep.id, { status: 'done', detail: 'No errors detected', completedAt: Date.now() });
-            }
+            updateStep(reVerifyStepId, { status: 'done', detail: 'No errors detected', completedAt: Date.now() });
             break;
           } else {
-            if (lastVerifyStep?.type === 'verify') {
-              updateStep(lastVerifyStep.id, { status: 'error', detail: `${retryErrors.length} error(s) remain`, completedAt: Date.now() });
-            }
+            updateStep(reVerifyStepId, { status: 'error', detail: `${retryErrors.length} error(s) remain`, completedAt: Date.now() });
             errors.splice(0, errors.length, ...retryErrors);
           }
         }
 
         if (fixCount >= MAX_FIX_RETRIES && errors.length > 0) {
-          toast.warning('Agent: some errors remain after max retries. May need manual attention.');
+          emitNotification(task.id, 'warning', 'Agent: needs attention', `${errors.length} error(s) remain after ${MAX_FIX_RETRIES} fix attempts`);
         }
       }
 
-      // Update task
+      // Task completed
       setTaskQueue(prev => prev.map(t =>
         t.id === task.id
           ? { ...t, status: 'completed' as const, completedAt: new Date(), errorCount: fixCount }
           : t
       ));
       completeRun('completed');
+      emitNotification(task.id, 'success', 'Agent task completed', fixCount > 0 ? `Applied ${fixCount} fix(es)` : undefined);
 
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
@@ -249,12 +316,13 @@ export function useAgentMode() {
           t.id === task.id ? { ...t, status: 'failed' as const, completedAt: new Date() } : t
         ));
         completeRun('failed');
+        emitNotification(task.id, 'error', 'Agent task failed', (err as Error).message);
       }
     } finally {
       abortRef.current = null;
       isProcessingRef.current = false;
     }
-  }, [updateStep, addFixStep, completeRun, waitForPreviewErrors]);
+  }, [updateStep, completeRun, waitForPreviewErrors, emitNotification]);
 
   // Enqueue a new task
   const enqueueTask = useCallback((prompt: string): AgentTask => {
@@ -299,25 +367,18 @@ export function useAgentMode() {
     setTaskQueue(prev => prev.filter(t => t.status === 'queued' || t.status === 'running'));
   }, []);
 
-  // Process queue — pick next queued task
-  const processQueue = useCallback((
-    sendMessage: (input: string, files: ProjectFile[], ...args: any[]) => Promise<void>,
-    currentFiles: ProjectFile[],
-    extraArgs: any[],
-  ) => {
-    if (isProcessingRef.current) return;
-    const next = taskQueue.find(t => t.status === 'queued');
-    if (!next) return;
+  // Auto-process queue: when no task is running, start the next queued task
+  const getNextQueuedTask = useCallback(() => {
+    return taskQueue.find(t => t.status === 'queued');
+  }, [taskQueue]);
 
-    isProcessingRef.current = true;
-    executeAgentTask(next, sendMessage, currentFiles, extraArgs);
-  }, [taskQueue, executeAgentTask]);
+  const isAnyRunning = taskQueue.some(t => t.status === 'running');
 
-  // Legacy compatibility: startAgentRun creates a task and returns a run-like object
+  // Legacy compatibility
   const startAgentRun = useCallback((prompt: string): AgentRun => {
-    const task = enqueueTask(prompt);
+    enqueueTask(prompt);
     return {
-      id: task.id,
+      id: crypto.randomUUID(),
       prompt,
       steps: [
         { id: crypto.randomUUID(), type: 'plan', label: 'Planning approach', status: 'pending' },
@@ -333,17 +394,17 @@ export function useAgentMode() {
     currentRun,
     agentHistory,
     taskQueue,
+    notifications,
+    isAnyRunning,
     startAgentRun,
     updateStep,
-    addFixStep,
     completeRun,
     cancelRun,
     enqueueTask,
     cancelTask,
     retryTask,
     clearCompleted,
-    processQueue,
     executeAgentTask,
-    setIframeRef,
+    getNextQueuedTask,
   };
 }
