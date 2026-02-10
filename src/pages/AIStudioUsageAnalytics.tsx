@@ -42,41 +42,34 @@ export default function AIStudioUsageAnalytics() {
   const loadStats = async () => {
     if (!user) return;
     try {
-      const { count: gptCount } = await supabase
-        .from('custom_gpts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
+      // Parallel fetches for all data
+      const [gptRes, convsRes, projectsRes, creditsRes] = await Promise.all([
+        supabase.from('custom_gpts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('conversations').select('id, title, created_at').eq('user_id', user.id),
+        supabase.from('builder_projects').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('ai_credit_ledger').select('credits_used, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(200),
+      ]);
 
-      const { data: convs } = await supabase
-        .from('gpt_conversations')
-        .select('id, gpt_id, created_at')
-        .eq('user_id', user.id);
-
-      const convIds = convs?.map(c => c.id) || [];
+      const convIds = convsRes.data?.map(c => c.id) || [];
       let totalMessages = 0;
       if (convIds.length > 0) {
         const { count } = await supabase
-          .from('gpt_messages')
+          .from('messages')
           .select('*', { count: 'exact', head: true })
           .in('conversation_id', convIds);
         totalMessages = count || 0;
       }
 
-      const { data: credits } = await supabase
-        .from('ai_credit_ledger')
-        .select('credits_used, created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(100);
-
+      const credits = creditsRes.data || [];
       const today = new Date().toISOString().slice(0, 10);
       const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
       
-      const creditsUsedToday = credits?.filter(c => c.created_at.slice(0, 10) === today)
-        .reduce((sum, c) => sum + c.credits_used, 0) || 0;
-      const creditsUsedThisMonth = credits?.filter(c => c.created_at.slice(0, 10) >= monthStart)
-        .reduce((sum, c) => sum + c.credits_used, 0) || 0;
+      const creditsUsedToday = credits.filter(c => c.created_at.slice(0, 10) === today)
+        .reduce((sum, c) => sum + c.credits_used, 0);
+      const creditsUsedThisMonth = credits.filter(c => c.created_at.slice(0, 10) >= monthStart)
+        .reduce((sum, c) => sum + c.credits_used, 0);
 
+      // Build daily usage map from conversations + credits
       const dailyMap = new Map<string, { messages: number; credits: number }>();
       for (let i = 13; i >= 0; i--) {
         const d = new Date();
@@ -84,43 +77,38 @@ export default function AIStudioUsageAnalytics() {
         const key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         dailyMap.set(key, { messages: 0, credits: 0 });
       }
-      convs?.forEach(c => {
+      convsRes.data?.forEach(c => {
         const key = new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const entry = dailyMap.get(key);
         if (entry) entry.messages++;
       });
-      credits?.forEach(c => {
+      credits.forEach(c => {
         const key = new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const entry = dailyMap.get(key);
         if (entry) entry.credits += c.credits_used;
       });
 
-      const gptConvCounts = new Map<string, number>();
-      convs?.forEach(c => {
-        gptConvCounts.set(c.gpt_id, (gptConvCounts.get(c.gpt_id) || 0) + 1);
-      });
-      const topGptIds = Array.from(gptConvCounts.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5);
+      // Top GPTs by conversation count
+      const { data: gpts } = await supabase
+        .from('custom_gpts')
+        .select('id, name, chat_count')
+        .eq('user_id', user.id)
+        .order('chat_count', { ascending: false })
+        .limit(5);
 
-      let topGPTs: { name: string; conversations: number; messages: number }[] = [];
-      if (topGptIds.length > 0) {
-        const { data: gpts } = await supabase
-          .from('custom_gpts')
-          .select('id, name')
-          .in('id', topGptIds.map(g => g[0]));
-        topGPTs = topGptIds.map(([id, count]) => ({
-          name: gpts?.find(g => g.id === id)?.name || 'Unknown',
-          conversations: count,
+      const topGPTs = (gpts || [])
+        .filter(g => (g.chat_count || 0) > 0)
+        .map(g => ({
+          name: g.name,
+          conversations: g.chat_count || 0,
           messages: 0,
         }));
-      }
 
       setStats({
-        totalGPTs: gptCount || 0,
-        totalConversations: convs?.length || 0,
+        totalGPTs: gptRes.count || 0,
+        totalConversations: convsRes.data?.length || 0,
         totalMessages,
-        totalProjects: 0,
+        totalProjects: projectsRes.count || 0,
         creditBalance: 0,
         creditsUsedToday,
         creditsUsedThisMonth,
