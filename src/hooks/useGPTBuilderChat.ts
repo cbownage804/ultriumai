@@ -1,14 +1,57 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { GPTConfig, DEFAULT_GPT_CONFIG, GPTBuilderMessage } from '@/types/gptConfig';
 import { useToast } from '@/hooks/use-toast';
 
-export function useGPTBuilderChat() {
+export function useGPTBuilderChat(editGptId?: string) {
   const [config, setConfig] = useState<GPTConfig>({ ...DEFAULT_GPT_CONFIG });
   const [messages, setMessages] = useState<GPTBuilderMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [savedGptId, setSavedGptId] = useState<string | null>(editGptId || null);
   const abortRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
+
+  // Load existing GPT for editing
+  useEffect(() => {
+    if (!editGptId) return;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('custom_gpts')
+          .select('*')
+          .eq('id', editGptId)
+          .single();
+        if (error) throw error;
+        if (data) {
+          setConfig(prev => ({
+            ...prev,
+            name: data.name || '',
+            description: data.description || '',
+            system_prompt: data.system_prompt || '',
+            avatar_url: data.avatar_url || '',
+            theme_color: data.theme_color || '#6366f1',
+            welcome_message: (data as any).welcome_message || '',
+            starter_questions: (data.starter_questions as string[]) || [],
+            preferred_model: data.preferred_model || 'google/gemini-3-flash-preview',
+            enable_web_search: data.enable_web_search || false,
+            communication_style: (data as any).communication_style || '',
+            expertise_areas: (data as any).expertise_areas || '',
+            category: data.category || 'general',
+            features: (data.features as string[]) || [],
+            placeholder_prompt: data.placeholder_prompt || 'Ask me anything...',
+          }));
+          setSavedGptId(data.id);
+        }
+      } catch {
+        toast({ title: 'Error', description: 'Failed to load GPT for editing.', variant: 'destructive' });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
+  }, [editGptId]);
 
   const sendMessage = useCallback(async (userInput: string) => {
     if (!userInput.trim() || isGenerating) return;
@@ -89,13 +132,6 @@ export function useGPTBuilderChat() {
 
           try {
             const parsed = JSON.parse(jsonStr);
-
-            // Check for config update in tool calls
-            const toolCall = parsed.choices?.[0]?.delta?.tool_calls?.[0];
-            if (toolCall?.function?.arguments) {
-              // Will be handled after stream ends
-            }
-
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
               assistantContent += content;
@@ -120,7 +156,6 @@ export function useGPTBuilderChat() {
         if (configMatch) {
           const updates = JSON.parse(configMatch[1]) as Partial<GPTConfig>;
           setConfig(prev => ({ ...prev, ...updates }));
-          // Clean up message to remove raw JSON block
           const cleanContent = assistantContent.replace(/```json\s*\n[\s\S]*?\n```/, '').trim();
           if (cleanContent) {
             assistantContent = cleanContent;
@@ -150,6 +185,7 @@ export function useGPTBuilderChat() {
   const resetConfig = useCallback(() => {
     setConfig({ ...DEFAULT_GPT_CONFIG });
     setMessages([]);
+    setSavedGptId(null);
   }, []);
 
   const stopGeneration = useCallback(() => {
@@ -161,6 +197,9 @@ export function useGPTBuilderChat() {
     config,
     messages,
     isGenerating,
+    isLoading,
+    savedGptId,
+    setSavedGptId,
     sendMessage,
     updateConfig,
     resetConfig,

@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { GPTConfig } from '@/types/gptConfig';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, Globe, Palette, Brain, Sparkles } from 'lucide-react';
+import { Bot, Globe, Palette, Brain, Sparkles, MessageCircle, Plus, X, Target } from 'lucide-react';
 
 interface GPTBuilderConfigSidebarProps {
   config: GPTConfig;
@@ -19,6 +22,18 @@ const THEME_COLORS = [
 ];
 
 export function GPTBuilderConfigSidebar({ config, onChange }: GPTBuilderConfigSidebarProps) {
+  const [newQuestion, setNewQuestion] = useState('');
+
+  const addStarterQuestion = () => {
+    if (!newQuestion.trim() || config.starter_questions.length >= 4) return;
+    onChange({ starter_questions: [...config.starter_questions, newQuestion.trim()] });
+    setNewQuestion('');
+  };
+
+  const removeStarterQuestion = (index: number) => {
+    onChange({ starter_questions: config.starter_questions.filter((_, i) => i !== index) });
+  };
+
   return (
     <div className="h-full flex flex-col bg-[#09090b] border-l border-white/[0.06]">
       <div className="h-10 shrink-0 flex items-center px-4 border-b border-white/[0.06]">
@@ -42,6 +57,15 @@ export function GPTBuilderConfigSidebar({ config, onChange }: GPTBuilderConfigSi
               />
             </div>
             <div className="space-y-2">
+              <Label className="text-xs text-white/50">Description</Label>
+              <Input
+                value={config.description}
+                onChange={(e) => onChange({ description: e.target.value })}
+                placeholder="A brief description of your GPT"
+                className="h-8 text-xs bg-white/[0.04] border-white/[0.08] text-white"
+              />
+            </div>
+            <div className="space-y-2">
               <Label className="text-xs text-white/50">Category</Label>
               <Select value={config.category} onValueChange={(v) => onChange({ category: v })}>
                 <SelectTrigger className="h-8 text-xs bg-white/[0.04] border-white/[0.08] text-white">
@@ -57,6 +81,96 @@ export function GPTBuilderConfigSidebar({ config, onChange }: GPTBuilderConfigSi
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <Separator className="bg-white/[0.06]" />
+
+          {/* Personality */}
+          <div className="space-y-3">
+            <h4 className="text-[11px] uppercase tracking-wider text-white/30 font-medium flex items-center gap-1.5">
+              <Target className="h-3 w-3" /> Personality
+            </h4>
+            <div className="space-y-2">
+              <Label className="text-xs text-white/50">Communication Style</Label>
+              <Input
+                value={config.communication_style}
+                onChange={(e) => onChange({ communication_style: e.target.value })}
+                placeholder="e.g., Professional and friendly"
+                className="h-8 text-xs bg-white/[0.04] border-white/[0.08] text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs text-white/50">Expertise Areas</Label>
+              <Input
+                value={config.expertise_areas}
+                onChange={(e) => onChange({ expertise_areas: e.target.value })}
+                placeholder="e.g., Customer service, billing"
+                className="h-8 text-xs bg-white/[0.04] border-white/[0.08] text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs text-white/50">Welcome Message</Label>
+              <Textarea
+                value={config.welcome_message}
+                onChange={(e) => onChange({ welcome_message: e.target.value })}
+                placeholder="Hi! How can I help you today?"
+                className="min-h-[60px] text-xs bg-white/[0.04] border-white/[0.08] text-white resize-none"
+                rows={2}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs text-white/50">Placeholder Prompt</Label>
+              <Input
+                value={config.placeholder_prompt}
+                onChange={(e) => onChange({ placeholder_prompt: e.target.value })}
+                placeholder="Ask me anything..."
+                className="h-8 text-xs bg-white/[0.04] border-white/[0.08] text-white"
+              />
+            </div>
+          </div>
+
+          <Separator className="bg-white/[0.06]" />
+
+          {/* Starter Questions */}
+          <div className="space-y-3">
+            <h4 className="text-[11px] uppercase tracking-wider text-white/30 font-medium flex items-center gap-1.5">
+              <MessageCircle className="h-3 w-3" /> Starter Questions
+            </h4>
+            <div className="space-y-1.5">
+              {config.starter_questions.map((q, i) => (
+                <div key={i} className="flex items-center gap-1.5 group">
+                  <span className="flex-1 text-[11px] text-white/50 truncate bg-white/[0.02] border border-white/[0.06] rounded-lg px-2.5 py-1.5">
+                    {q}
+                  </span>
+                  <button
+                    onClick={() => removeStarterQuestion(i)}
+                    className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-red-400/60 transition-all shrink-0"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            {config.starter_questions.length < 4 && (
+              <div className="flex gap-1.5">
+                <Input
+                  value={newQuestion}
+                  onChange={(e) => setNewQuestion(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addStarterQuestion(); } }}
+                  placeholder="Add a starter question..."
+                  className="h-7 text-[11px] bg-white/[0.04] border-white/[0.08] text-white"
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={addStarterQuestion}
+                  disabled={!newQuestion.trim()}
+                  className="h-7 px-2 text-white/40 hover:text-white shrink-0"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
           </div>
 
           <Separator className="bg-white/[0.06]" />
@@ -93,9 +207,12 @@ export function GPTBuilderConfigSidebar({ config, onChange }: GPTBuilderConfigSi
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
-                <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                <SelectItem value="gpt-4">GPT-4</SelectItem>
+                <SelectItem value="google/gemini-3-flash-preview">Gemini 3 Flash (Fast)</SelectItem>
+                <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                <SelectItem value="google/gemini-3-pro-preview">Gemini 3 Pro</SelectItem>
+                <SelectItem value="openai/gpt-5-mini">GPT-5 Mini</SelectItem>
+                <SelectItem value="openai/gpt-5">GPT-5</SelectItem>
               </SelectContent>
             </Select>
           </div>
