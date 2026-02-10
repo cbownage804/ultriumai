@@ -140,6 +140,9 @@ export function FloatingHelpButton({ className }: FloatingHelpButtonProps) {
     },
   ];
 
+  // Hide on full-screen IDE routes
+  if (location.pathname.startsWith('/ai-studio/app-builder')) return null;
+
   return (
     <>
       {/* Floating Button */}
