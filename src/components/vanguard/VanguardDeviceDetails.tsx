@@ -166,7 +166,12 @@ export function VanguardDeviceDetails() {
     disk: m.disk_percent
   }));
 
-  const remoteAccess = agent.config?.remote_access || {};
+  const remoteAccess = {
+    rustdesk_id: agent.rustdesk_id || agent.config?.remote_access?.rustdesk_id,
+    splashtop_id: agent.config?.remote_access?.splashtop_id,
+    anydesk_id: agent.config?.remote_access?.anydesk_id,
+    teamviewer_id: agent.config?.remote_access?.teamviewer_id,
+  };
   const hw = (agent.config as any)?.hardware || {};
   const sysInfo = {
     os_name: hw.os_name,
@@ -217,15 +222,30 @@ export function VanguardDeviceDetails() {
             </Badge>
           )}
         </div>
-        <span className="text-sm text-slate-400 hidden md:block">
-          {agent.ip_address || 'No IP'} • {agent.location || 'No location'}
-        </span>
-        <Button 
-          variant="outline" size="sm" onClick={refetch}
-          className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 gap-2"
-        >
-          <RefreshCw className="h-4 w-4" /> Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          {remoteAccess.rustdesk_id && (
+            <Button
+              size="sm"
+              onClick={() => {
+                window.open(`rustdesk://${remoteAccess.rustdesk_id}`, "_blank");
+                toast.success(`Opening RustDesk...`, { description: `Connecting to ${agent.name}` });
+              }}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white gap-2"
+            >
+              <Monitor className="h-4 w-4" />
+              Remote In
+            </Button>
+          )}
+          <span className="text-sm text-slate-400 hidden md:block">
+            {agent.ip_address || 'No IP'} • {agent.location || 'No location'}
+          </span>
+          <Button 
+            variant="outline" size="sm" onClick={refetch}
+            className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 gap-2"
+          >
+            <RefreshCw className="h-4 w-4" /> Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Sidebar + Content Layout */}
