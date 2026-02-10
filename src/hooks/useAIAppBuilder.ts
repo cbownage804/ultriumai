@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import type { ProjectFile } from './useProjectFileSystem';
 import { useStreamingPreview } from './useStreamingPreview';
+import { useUserCredits } from './useUserCredits';
 
 export interface BuilderMessage {
   id: string;
@@ -152,6 +153,7 @@ export function useAIAppBuilder() {
   const [totalTokensUsed, setTotalTokensUsed] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
   const streaming = useStreamingPreview();
+  const { useCredits, totalRemaining } = useUserCredits();
 
   const sendMessage = useCallback(async (
     input: string,
@@ -164,6 +166,13 @@ export function useAIAppBuilder() {
     knowledgeContext?: string,
   ) => {
     if (!input.trim() || isGenerating) return;
+
+    // Check credits before sending
+    const creditCost = mode === 'build' ? 3 : 1; // Build costs more than discuss
+    if (totalRemaining < creditCost) {
+      toast.error(`Insufficient credits. You need ${creditCost} but have ${totalRemaining}. Purchase more to continue.`);
+      return;
+    }
 
     // Auto-detect intent and switch mode
     const detectedMode = detectIntent(input);
@@ -403,9 +412,12 @@ export function useAIAppBuilder() {
       }
       streaming.stopStreaming();
 
-      // Track token usage
+      // Track token usage and deduct credits
       const msgTokens = estimateTokens(input + fullContent);
       setTotalTokensUsed(prev => prev + msgTokens);
+      
+      // Deduct credits after successful generation
+      await useCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
 
       // Add suggestions + file count + token estimate + filesSnapshot to the final assistant message
       const suggestions = generateSuggestions(fullContent, effectiveMode);
@@ -430,7 +442,7 @@ export function useAIAppBuilder() {
       clearTimeout(phaseTimer2);
       abortRef.current = null;
     }
-  }, [messages, isGenerating, mode]);
+  }, [messages, isGenerating, mode, totalRemaining, useCredits]);
 
   const stopGenerating = useCallback(() => {
     abortRef.current?.abort();
