@@ -1287,32 +1287,34 @@ export function AIAppBuilderWorkspace() {
       <CustomDomainPanel isOpen={showDomainPanel} onClose={() => setShowDomainPanel(false)} previewUrl={previewSlug ? `https://${previewSlug}.apps.ultriumai.com` : hostedPreviewUrl} />
       <DiffReviewPanel isOpen={showDiffReview} onClose={() => setShowDiffReview(false)} changes={pendingDiffChanges} onApprove={() => { pendingDiffChanges.forEach(c => upsertFile(c.path, c.newContent)); setPendingDiffChanges([]); setShowDiffReview(false); toast.success('Changes applied'); }} onReject={() => { setPendingDiffChanges([]); setShowDiffReview(false); toast.info('Changes rejected'); }} onApproveFile={(path) => { const c = pendingDiffChanges.find(ch => ch.path === path); if (c) upsertFile(c.path, c.newContent); }} onRejectFile={() => {}} />
       <QuickFileSwitcher open={showQuickSwitcher} onOpenChange={setShowQuickSwitcher} files={project.files} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} />
-      <ProjectSettings
-        supabaseConfig={supabaseConfig}
-        githubConfig={githubConfig}
-        stripeConfig={stripeConfig}
-        vercelConfig={vercelConfig}
-        serviceKeys={serviceKeys}
-        envVars={envVars}
-        projectName={project.name}
-        open={showSettingsPanel}
-        onOpenChange={setShowSettingsPanel}
-        onSupabaseChange={setSupabaseConfig}
-        onGithubChange={setGithubConfig}
-        onStripeChange={setStripeConfig}
-        onVercelChange={setVercelConfig}
-        onServiceKeysChange={setServiceKeys}
-        onEnvVarsChange={setEnvVars}
-        onDeleteProject={() => {
-          if (currentProjectId) deleteProject(currentProjectId);
-          resetProject(); clearChat(); toast.success('Project deleted'); setShowSettingsPanel(false);
-        }}
-        onResetProject={() => { resetProject(); toast.success('Project reset'); setShowSettingsPanel(false); }}
-      />
-      {vercelConfig && <VercelDeployButton projectName={project.name} files={project.files} vercelToken={vercelConfig.token} />}
-      {githubConfig && <GithubSyncButton projectName={project.name} files={project.files} githubToken={githubConfig.token} onPullFiles={handleGithubPullFiles} />}
-      <SharePreview html={compiledHTML} projectName={project.name} />
-      <ExportButton projectName={project.name} files={project.files} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} envVars={envVars} cdnPackages={cdnPackages} edgeFunctions={edgeFunctions} />
+      <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
+        <ProjectSettings
+          supabaseConfig={supabaseConfig}
+          githubConfig={githubConfig}
+          stripeConfig={stripeConfig}
+          vercelConfig={vercelConfig}
+          serviceKeys={serviceKeys}
+          envVars={envVars}
+          projectName={project.name}
+          open={showSettingsPanel}
+          onOpenChange={setShowSettingsPanel}
+          onSupabaseChange={setSupabaseConfig}
+          onGithubChange={setGithubConfig}
+          onStripeChange={setStripeConfig}
+          onVercelChange={setVercelConfig}
+          onServiceKeysChange={setServiceKeys}
+          onEnvVarsChange={setEnvVars}
+          onDeleteProject={() => {
+            if (currentProjectId) deleteProject(currentProjectId);
+            resetProject(); clearChat(); toast.success('Project deleted'); setShowSettingsPanel(false);
+          }}
+          onResetProject={() => { resetProject(); toast.success('Project reset'); setShowSettingsPanel(false); }}
+        />
+        {vercelConfig && <VercelDeployButton projectName={project.name} files={project.files} vercelToken={vercelConfig.token} />}
+        {githubConfig && <GithubSyncButton projectName={project.name} files={project.files} githubToken={githubConfig.token} onPullFiles={handleGithubPullFiles} />}
+        <SharePreview html={compiledHTML} projectName={project.name} />
+        <ExportButton projectName={project.name} files={project.files} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} envVars={envVars} cdnPackages={cdnPackages} edgeFunctions={edgeFunctions} />
+      </div>
       {pendingConflicts && (
         <FileConflictDialog open={!!pendingConflicts} conflicts={pendingConflicts} onResolve={handleConflictResolve} onCancel={() => setPendingConflicts(null)} />
       )}
