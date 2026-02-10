@@ -341,11 +341,11 @@ export default function AIStudioProjectsPage() {
             )}
           </div>
         ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" style={{ gridAutoRows: 'min-content' }}>
             {/* New project card */}
             <button
               onClick={() => navigate('/ai-studio/app-builder')}
-              className="group h-[180px] rounded-xl border-2 border-dashed border-border/50 hover:border-primary/40 flex flex-col items-center justify-center gap-2 transition-all hover:bg-primary/[0.02]"
+              className="group h-[260px] rounded-xl border-2 border-dashed border-border/50 hover:border-primary/40 flex flex-col items-center justify-center gap-2 transition-all hover:bg-primary/[0.02]"
             >
               <div className="w-10 h-10 rounded-lg bg-primary/5 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
                 <Plus className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -357,10 +357,10 @@ export default function AIStudioProjectsPage() {
               <div
                 key={`${item.type}-${item.id}`}
                 onClick={() => openItem(item)}
-                className="group relative h-[180px] rounded-xl border border-border/50 bg-card/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 cursor-pointer transition-all overflow-hidden"
+                className="group relative h-[260px] rounded-xl border border-border/50 bg-card/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 cursor-pointer transition-all overflow-hidden"
               >
                 {/* Preview thumbnail */}
-                <div className="h-[110px] overflow-hidden relative">
+                <div className="h-[190px] overflow-hidden relative">
                   {item.type === 'app' && item.thumbnail_url ? (
                     <img
                       src={item.thumbnail_url}
