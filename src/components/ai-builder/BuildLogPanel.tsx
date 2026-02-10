@@ -18,7 +18,7 @@ interface BuildLogPanelProps {
 }
 
 export function BuildLogPanel({ entries, isBuilding, onClear }: BuildLogPanelProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
