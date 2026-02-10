@@ -117,6 +117,7 @@ export function useProjectFileSystem() {
     serviceKeys?: { id: string; serviceId: string; apiKey: string }[],
     cdnPackages?: { name: string; version?: string; cdnUrl: string }[],
     jsBundler?: (files: ProjectFile[]) => string,
+    linkedGPT?: { gptId: string; name: string; themeColor: string; widgetStyle: 'bubble' | 'inline'; position: 'bottom-right' | 'bottom-left'; welcomeMessage: string; placeholderPrompt: string } | null,
   ): string | null => {
     const { files } = project;
     if (files.length === 0) return null;
@@ -215,6 +216,50 @@ export function useProjectFileSystem() {
         compiled = compiled.replace('</body>', `${jsInject}\n</body>`);
       } else {
         compiled += `\n${jsInject}`;
+      }
+    }
+
+    // Inject GPT Chat Widget if linked
+    if (linkedGPT?.gptId) {
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const chatUrl = `${origin}/gpt/chat/${linkedGPT.gptId}`;
+      const isBubble = linkedGPT.widgetStyle === 'bubble';
+      const posRight = linkedGPT.position === 'bottom-right';
+      const themeColor = linkedGPT.themeColor || '#6366f1';
+
+      const widgetHTML = isBubble ? `
+<!-- GPT Chat Widget: ${linkedGPT.name} -->
+<style>
+  #gpt-widget-bubble { position: fixed; ${posRight ? 'right: 20px;' : 'left: 20px;'} bottom: 20px; z-index: 9999; font-family: system-ui, -apple-system, sans-serif; }
+  #gpt-widget-bubble .gpt-fab { width: 56px; height: 56px; border-radius: 50%; background: ${themeColor}; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: transform 0.2s, box-shadow 0.2s; }
+  #gpt-widget-bubble .gpt-fab:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(0,0,0,0.4); }
+  #gpt-widget-bubble .gpt-fab svg { width: 24px; height: 24px; fill: white; }
+  #gpt-widget-bubble .gpt-chat-frame { display: none; width: 380px; height: 560px; border: none; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.4); margin-bottom: 12px; background: white; }
+  #gpt-widget-bubble.open .gpt-chat-frame { display: block; }
+  #gpt-widget-bubble.open .gpt-fab svg.icon-open { display: none; }
+  #gpt-widget-bubble.open .gpt-fab svg.icon-close { display: block; }
+  #gpt-widget-bubble .gpt-fab svg.icon-close { display: none; }
+</style>
+<div id="gpt-widget-bubble">
+  <iframe class="gpt-chat-frame" src="${chatUrl}?embed=true&hideHeader=false" allow="microphone"></iframe>
+  <button class="gpt-fab" onclick="this.parentElement.classList.toggle('open')">
+    <svg class="icon-open" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+    <svg class="icon-close" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+  </button>
+</div>` : `
+<!-- GPT Chat Widget: ${linkedGPT.name} (inline) -->
+<style>
+  #gpt-widget-inline { width: 100%; max-width: 440px; height: 520px; margin: 20px auto; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.08); }
+  #gpt-widget-inline iframe { width: 100%; height: 100%; border: none; }
+</style>
+<div id="gpt-widget-inline">
+  <iframe src="${chatUrl}?embed=true&hideHeader=false" allow="microphone"></iframe>
+</div>`;
+
+      if (compiled.includes('</body>')) {
+        compiled = compiled.replace('</body>', `${widgetHTML}\n</body>`);
+      } else {
+        compiled += `\n${widgetHTML}`;
       }
     }
 
