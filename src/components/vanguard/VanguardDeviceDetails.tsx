@@ -58,12 +58,18 @@ export function VanguardDeviceDetails() {
     if (!container) return;
 
     const handleScroll = () => {
-      const scrollTop = container.scrollTop + 120; // offset for header
+      const containerRect = container.getBoundingClientRect();
+      const viewportMid = containerRect.top + containerRect.height * 0.35;
       let current = 'summary';
+      let closestDist = Infinity;
       
       for (const section of sidebarSections) {
         const el = sectionRefs.current[section.id];
-        if (el && el.offsetTop <= scrollTop) {
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        const dist = Math.abs(rect.top - viewportMid);
+        if (rect.top <= viewportMid + rect.height * 0.5 && dist < closestDist) {
+          closestDist = dist;
           current = section.id;
         }
       }
