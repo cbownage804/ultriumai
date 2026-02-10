@@ -61,6 +61,7 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
           body: JSON.stringify({
             messages: allMessages,
             systemPrompt: config.system_prompt,
+            enableWebSearch: !!config.enable_web_search,
           }),
           signal: abortRef.current.signal,
         }
