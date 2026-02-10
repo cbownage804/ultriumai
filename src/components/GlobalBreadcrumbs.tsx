@@ -61,8 +61,8 @@ const LABELS: Record<string, string> = {
   "msp-control-center": "MSP Control Center",
 };
 
-// Routes where breadcrumbs should be hidden (home, landing, auth)
-const HIDDEN_ROUTES = ["/", "/auth", "/auth/callback"];
+// Routes where breadcrumbs should be hidden (home, landing, auth, full-screen IDEs)
+const HIDDEN_ROUTES = ["/", "/auth", "/auth/callback", "/ai-studio/app-builder"];
 
 function formatSegment(segment: string): string {
   if (LABELS[segment]) return LABELS[segment];
