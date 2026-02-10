@@ -63,6 +63,7 @@ type ViewMode = 'grid' | 'list';
 type SortBy = 'updated' | 'created' | 'name';
 type FilterType = 'all' | 'app' | 'gpt';
 type StatusFilter = 'all' | 'draft' | 'deployed' | 'pinned';
+type DateRange = 'all' | 'today' | 'week' | 'month' | 'older';
 
 export default function AIStudioProjectsPage() {
   const navigate = useNavigate();
@@ -75,6 +76,7 @@ export default function AIStudioProjectsPage() {
   const [sortBy, setSortBy] = useState<SortBy>('updated');
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [dateRange, setDateRange] = useState<DateRange>('all');
   const [deleteTarget, setDeleteTarget] = useState<UnifiedItem | null>(null);
   const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -268,6 +270,16 @@ export default function AIStudioProjectsPage() {
       return true;
     })
     .filter(item => !search || item.name.toLowerCase().includes(search.toLowerCase()))
+    .filter(item => {
+      if (dateRange === 'all') return true;
+      const updated = new Date(item.updated_at).getTime();
+      const now = Date.now();
+      if (dateRange === 'today') return now - updated < 86400000;
+      if (dateRange === 'week') return now - updated < 604800000;
+      if (dateRange === 'month') return now - updated < 2592000000;
+      if (dateRange === 'older') return now - updated >= 2592000000;
+      return true;
+    })
     .sort((a, b) => {
       // Pinned items always first
       if (a.pinned && !b.pinned) return -1;
@@ -442,6 +454,18 @@ export default function AIStudioProjectsPage() {
           </div>
 
           <select
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value as DateRange)}
+            className="h-9 px-3 rounded-lg bg-card/50 border border-border/50 text-sm text-foreground outline-none"
+          >
+            <option value="all">Any time</option>
+            <option value="today">Today</option>
+            <option value="week">This week</option>
+            <option value="month">This month</option>
+            <option value="older">Older</option>
+          </select>
+
+          <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortBy)}
             className="h-9 px-3 rounded-lg bg-card/50 border border-border/50 text-sm text-foreground outline-none"
@@ -468,8 +492,18 @@ export default function AIStudioProjectsPage() {
 
         {/* Content */}
         {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="animate-pulse">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-[260px] rounded-xl border border-border/30 overflow-hidden">
+                  <div className="h-[180px] bg-muted/15" />
+                  <div className="p-2.5 space-y-2">
+                    <div className="h-3.5 w-3/4 bg-muted/25 rounded" />
+                    <div className="h-2.5 w-1/2 bg-muted/15 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">

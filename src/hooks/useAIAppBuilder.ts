@@ -299,9 +299,20 @@ export function useAIAppBuilder() {
 
       if (!resp.ok) {
         const errData = await resp.json().catch(() => ({ error: 'Unknown error' }));
-        if (resp.status === 429) toast.error('Rate limited — please wait and try again.');
-        else if (resp.status === 402) toast.error('AI credits exhausted.');
-        else toast.error(errData.error || 'Failed to generate');
+        if (resp.status === 429) {
+          toast.error('Rate limited — please wait 30 seconds and try again.', { duration: 6000 });
+        } else if (resp.status === 402) {
+          toast.error('AI credits exhausted. Purchase more credits to continue building.', {
+            duration: 8000,
+            action: { label: 'Get Credits', onClick: () => window.dispatchEvent(new CustomEvent('open-billing')) },
+          });
+        } else if (resp.status === 504 || resp.status === 408) {
+          toast.error('Request timed out. The AI is overloaded — try again with a simpler prompt.', { duration: 6000 });
+        } else if (resp.status >= 500) {
+          toast.error('Server error — our AI service is temporarily unavailable. Please try again in a moment.', { duration: 6000 });
+        } else {
+          toast.error(errData.error || 'Failed to generate. Check your prompt and try again.');
+        }
         setIsGenerating(false);
         setThinkingPhase(null);
         clearTimeout(phaseTimer1);
@@ -433,7 +444,12 @@ export function useAIAppBuilder() {
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.error('AI Builder error:', err);
-        toast.error('Something went wrong. Please try again.');
+        const errorMsg = err.message?.includes('fetch')
+          ? 'Network error — check your connection and try again.'
+          : err.message?.includes('timeout') || err.message?.includes('Timeout')
+          ? 'Request timed out. Try a simpler prompt or try again.'
+          : 'Something went wrong during generation. Your project files are safe — try again.';
+        toast.error(errorMsg, { duration: 5000 });
       }
     } finally {
       setIsGenerating(false);

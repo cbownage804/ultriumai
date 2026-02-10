@@ -482,10 +482,22 @@ export function AIAppBuilderWorkspace() {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); handleSave(); }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') { e.preventDefault(); setShowFileSearch(prev => !prev); }
       if ((e.metaKey || e.ctrlKey) && e.key === '/') { e.preventDefault(); setShowShortcuts(prev => !prev); }
+      if (e.key === 'Escape') {
+        if (showSettingsPanel) { setShowSettingsPanel(false); return; }
+        if (showFileSearch) { setShowFileSearch(false); return; }
+        if (showVersionHistory) { setShowVersionHistory(false); return; }
+        if (showConsole) { setShowConsole(false); return; }
+        if (showEnvVars) { setShowEnvVars(false); return; }
+        if (showAssets) { setShowAssets(false); return; }
+        if (showPackages) { setShowPackages(false); return; }
+        if (showActivity) { setShowActivity(false); return; }
+        if (showBilling) { setShowBilling(false); return; }
+        if (showFileTree) { setShowFileTree(false); return; }
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [project.files, canUndo, canRedo]);
+  }, [project.files, canUndo, canRedo, showSettingsPanel, showFileSearch, showVersionHistory, showConsole, showEnvVars, showAssets, showPackages, showActivity, showBilling, showFileTree]);
 
   const handleSend = (input: string, imageDataUrl?: string | null) => {
     const contextPrefix = activeFile && rightTab === 'code' ? `[Currently viewing: ${activeFile.path}]\n` : '';
