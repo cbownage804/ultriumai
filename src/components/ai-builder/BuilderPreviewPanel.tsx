@@ -316,7 +316,7 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
       )}
 
       {/* Preview */}
-      <div className="flex-1 overflow-auto flex items-start justify-center p-0">
+      <div className="flex-1 min-h-0 flex items-stretch justify-center p-0">
         {html ? (
           <div
             className={cn(
