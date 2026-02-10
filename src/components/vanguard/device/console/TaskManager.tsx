@@ -53,15 +53,12 @@ interface TaskManagerProps {
 
 export function TaskManager({ agentId, sendCommand, currentMetrics }: TaskManagerProps) {
   const [processes, setProcesses] = useState<Process[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'cpu' | 'memory' | 'name'>('cpu');
   const [killingPid, setKillingPid] = useState<number | null>(null);
 
-  useEffect(() => {
-    loadProcesses();
-    // Don't auto-poll - sendCommand queues real commands to the agent
-  }, [agentId]);
+  // No auto-load on mount - user must click Refresh to avoid flooding the command queue
 
   const loadProcesses = async () => {
     try {
