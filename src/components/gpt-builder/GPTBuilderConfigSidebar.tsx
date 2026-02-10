@@ -227,6 +227,24 @@ export function GPTBuilderConfigSidebar({ config, onChange }: GPTBuilderConfigSi
                 />
               ))}
             </div>
+            <div className="flex items-center gap-2">
+              <div
+                className="h-7 w-7 rounded-md border border-white/[0.1] shrink-0"
+                style={{ backgroundColor: config.theme_color }}
+              />
+              <Input
+                value={config.theme_color}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (/^#[0-9a-fA-F]{0,6}$/.test(v) || v === '') {
+                    onChange({ theme_color: v || '#6366f1' });
+                  }
+                }}
+                placeholder="#6366f1"
+                className="h-7 text-xs bg-white/[0.04] border-white/[0.08] text-white font-mono"
+                maxLength={7}
+              />
+            </div>
           </div>
 
           <Separator className="bg-white/[0.06]" />
