@@ -26,15 +26,19 @@ interface BuilderPreviewPanelProps {
   onErrorUpdate?: (errors: PreviewError[]) => void;
   fixAttemptCount?: number;
   maxFixAttempts?: number;
+  isVisualEditActive?: boolean;
+  onToggleVisualEdit?: () => void;
 }
 
-export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit }: BuilderPreviewPanelProps) {
   const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const [errors, setErrors] = useState<PreviewError[]>([]);
-  const [isVisualEditActive, setIsVisualEditActive] = useState(false);
+  const [internalVisualEdit, setInternalVisualEdit] = useState(false);
+  const isVisualEditActive = externalVisualEdit ?? internalVisualEdit;
+  const toggleVisualEdit = externalToggleVisualEdit ?? (() => setInternalVisualEdit(v => !v));
   const [currentUrl, setCurrentUrl] = useState('/');
   const [urlHistory, setUrlHistory] = useState<string[]>(['/']);
   const [historyIndex, setHistoryIndex] = useState(0);
@@ -280,7 +284,7 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
 
               <VisualEditOverlay
                 isActive={isVisualEditActive}
-                onToggle={() => setIsVisualEditActive(!isVisualEditActive)}
+                onToggle={toggleVisualEdit}
                 onEditApply={handleVisualEdit}
                 onAIEditRequest={onAIEditRequest}
                 isProcessingAIEdit={isProcessingAIEdit}
