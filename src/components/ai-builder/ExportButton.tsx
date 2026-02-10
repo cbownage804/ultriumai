@@ -2,9 +2,10 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { Download, FileArchive, Container, Rocket } from 'lucide-react';
+import { Download, FileArchive, Container, Rocket, MonitorSmartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportProject, type ExportMode, type ExportContext, type EdgeFunctionMeta } from './exportProject';
+import { exportTeamsApp } from './exportTeamsApp';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import type { SupabaseConfig, StripeConfig, ServiceKey, EnvVar } from './ProjectSettings';
 
@@ -19,12 +20,13 @@ interface ExportButtonProps {
   edgeFunctions?: EdgeFunctionMeta[];
   storageBuckets?: string[];
   authProviders?: string[];
+  publishedUrl?: string;
 }
 
 export function ExportButton({
   projectName, files,
   supabaseConfig, stripeConfig, serviceKeys, envVars, cdnPackages,
-  edgeFunctions, storageBuckets, authProviders,
+  edgeFunctions, storageBuckets, authProviders, publishedUrl,
 }: ExportButtonProps) {
   const hasIntegrations = !!(supabaseConfig || stripeConfig || (serviceKeys && serviceKeys.length > 0));
 
@@ -41,6 +43,20 @@ export function ExportButton({
     } catch (e) {
       console.error('Export error:', e);
       toast.error('Failed to export project');
+    }
+  };
+
+  const handleTeamsExport = async () => {
+    try {
+      if (!publishedUrl) {
+        toast.error('Publish your app first to export as a Teams app');
+        return;
+      }
+      await exportTeamsApp(projectName, publishedUrl);
+      toast.success('Teams app package downloaded! See README.md for install instructions.');
+    } catch (e: any) {
+      console.error('Teams export error:', e);
+      toast.error(e?.message || 'Failed to export Teams app');
     }
   };
 
@@ -80,6 +96,16 @@ export function ExportButton({
           <div>
             <div className="font-medium">Download as ZIP</div>
             <div className="text-xs text-muted-foreground">Raw project files only</div>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleTeamsExport}>
+          <MonitorSmartphone className="h-4 w-4 mr-2 text-purple-400" />
+          <div>
+            <div className="font-medium">Microsoft Teams App</div>
+            <div className="text-xs text-muted-foreground">
+              {publishedUrl ? 'Sideloadable Teams tab package' : 'Publish app first to enable'}
+            </div>
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>
