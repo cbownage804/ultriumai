@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useVanguardLimits } from '@/hooks/useVanguardLimits';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,8 +60,14 @@ export function FileTransfer({ agentId, sendCommand }: FileTransferProps) {
   const [transfers, setTransfers] = useState<TransferJob[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const { hasFeature, limits } = useVanguardLimits();
+  const hasLoadedRef = useRef(false);
 
-  // No auto-load - user must click Refresh to avoid flooding the command queue
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadDirectory(currentPath);
+    }
+  }, [agentId]);
 
   const loadDirectory = async (path: string) => {
     setIsLoading(true);

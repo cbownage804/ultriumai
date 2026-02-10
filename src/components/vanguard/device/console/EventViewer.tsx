@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,7 @@ export function EventViewer({ agentId, sendCommand }: EventViewerProps) {
   const [levelFilter, setLevelFilter] = useState<'all' | 'error' | 'warning' | 'information' | 'critical'>('all');
   const [selectedEvent, setSelectedEvent] = useState<EventLog | null>(null);
   const [lastLoadTime, setLastLoadTime] = useState<Date | null>(null);
+  const hasLoadedRef = useRef(false);
 
   const loadEvents = async () => {
     setIsLoading(true);
@@ -90,7 +91,12 @@ export function EventViewer({ agentId, sendCommand }: EventViewerProps) {
     }
   };
 
-  // No auto-load - user must click Refresh to avoid flooding the command queue
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadEvents();
+    }
+  }, [agentId]);
 
   const filteredEvents = events.filter(e => {
     const matchesSearch = e.message.toLowerCase().includes(searchQuery.toLowerCase()) ||

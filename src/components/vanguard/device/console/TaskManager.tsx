@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,12 +53,18 @@ interface TaskManagerProps {
 
 export function TaskManager({ agentId, sendCommand, currentMetrics }: TaskManagerProps) {
   const [processes, setProcesses] = useState<Process[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'cpu' | 'memory' | 'name'>('cpu');
   const [killingPid, setKillingPid] = useState<number | null>(null);
+  const hasLoadedRef = useRef(false);
 
-  // No auto-load on mount - user must click Refresh to avoid flooding the command queue
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadProcesses();
+    }
+  }, [agentId]);
 
   const loadProcesses = async () => {
     try {

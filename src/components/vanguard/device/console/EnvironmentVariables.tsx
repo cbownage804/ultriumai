@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,15 +57,21 @@ interface EnvironmentVariablesProps {
 
 export function EnvironmentVariables({ agentId, sendCommand }: EnvironmentVariablesProps) {
   const [variables, setVariables] = useState<EnvVariable[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [scope, setScope] = useState<'system' | 'user'>('system');
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingVar, setEditingVar] = useState<EnvVariable | null>(null);
   const [newVar, setNewVar] = useState<{ name: string; value: string; scope: 'system' | 'user' }>({ name: '', value: '', scope: 'system' });
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
-  // No auto-load - user must click Refresh to avoid flooding the command queue
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadVariables();
+    }
+  }, [agentId]);
 
   const loadVariables = async () => {
     setIsLoading(true);

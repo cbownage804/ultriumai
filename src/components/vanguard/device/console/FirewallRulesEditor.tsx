@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,7 +61,7 @@ interface FirewallRulesEditorProps {
 
 export function FirewallRulesEditor({ agentId, sendCommand }: FirewallRulesEditorProps) {
   const [rules, setRules] = useState<FirewallRule[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [direction, setDirection] = useState<'inbound' | 'outbound'>('inbound');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -77,8 +77,14 @@ export function FirewallRulesEditor({ agentId, sendCommand }: FirewallRulesEdito
     program: '',
     enabled: true,
   });
+  const hasLoadedRef = useRef(false);
 
-  // No auto-load - user must click Refresh to avoid flooding the command queue
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadRules();
+    }
+  }, [agentId]);
 
   const loadRules = async () => {
     setIsLoading(true);

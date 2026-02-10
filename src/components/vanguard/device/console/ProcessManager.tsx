@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,15 +51,21 @@ interface ProcessManagerProps {
 
 export function ProcessManager({ agentId, sendCommand }: ProcessManagerProps) {
   const [processes, setProcesses] = useState<ProcessInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof ProcessInfo; direction: 'asc' | 'desc' }>({ 
     key: 'cpu', 
     direction: 'desc' 
   });
   const [killingPids, setKillingPids] = useState<Set<number>>(new Set());
+  const hasLoadedRef = useRef(false);
 
-  // No auto-load on mount - user must click Refresh to avoid flooding the command queue
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadProcesses();
+    }
+  }, [agentId]);
 
   const loadProcesses = async () => {
     try {
