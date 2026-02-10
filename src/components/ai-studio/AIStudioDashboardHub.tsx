@@ -109,26 +109,66 @@ export const AIStudioDashboardHub = () => {
     if (!user?.id) return;
     const fetch = async () => {
       try {
-        const [projectsRes, gptsRes, ledgerRes, projectCountRes, gptCountRes] = await Promise.all([
+        const [projectsRes, gptsRes, ledgerRes, projectCountRes, gptCountRes, msgsRes] = await Promise.all([
           supabase.from("builder_projects").select("id, name, updated_at, thumbnail_url").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(4),
           supabase.from("custom_gpts").select("id, name, updated_at, avatar_url").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(4),
-          supabase.from("ai_credit_ledger").select("id, usage_type, credits_used, description, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
+          supabase.from("ai_credit_ledger").select("id, usage_type, credits_used, description, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
           supabase.from("builder_projects").select("id", { count: "exact", head: true }).eq("user_id", user.id),
           supabase.from("custom_gpts").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+          supabase.from("messages").select("id, role, conversation_id, created_at").eq("role", "assistant").order("created_at", { ascending: false }).limit(20),
         ]);
 
         setRecentProjects(projectsRes.data || []);
         setRecentGPTs((gptsRes.data || []) as RecentGPT[]);
         setTotalProjects(projectCountRes.count || 0);
         setTotalGPTs(gptCountRes.count || 0);
-        setActivity(
-          (ledgerRes.data || []).map(l => ({
-            id: l.id,
+
+        // Build activity from multiple sources
+        const activityItems: { id: string; label: string; detail: string; timestamp: string }[] = [];
+
+        // Credit ledger entries
+        (ledgerRes.data || []).forEach(l => {
+          activityItems.push({
+            id: `credit-${l.id}`,
             label: l.description || l.usage_type,
-            detail: `${l.credits_used} credits`,
+            detail: `${l.credits_used} credits used`,
             timestamp: l.created_at,
-          }))
-        );
+          });
+        });
+
+        // GPT creations/updates
+        (gptsRes.data || []).forEach(g => {
+          activityItems.push({
+            id: `gpt-${g.id}`,
+            label: `GPT created: ${g.name}`,
+            detail: 'Custom GPT',
+            timestamp: g.updated_at,
+          });
+        });
+
+        // App builder projects
+        (projectsRes.data || []).forEach(p => {
+          activityItems.push({
+            id: `project-${p.id}`,
+            label: `App project: ${p.name || 'Untitled'}`,
+            detail: 'App Builder',
+            timestamp: p.updated_at,
+          });
+        });
+
+        // Recent AI messages (assistant responses = build attempts)
+        (msgsRes.data || []).slice(0, 10).forEach(m => {
+          activityItems.push({
+            id: `msg-${m.id}`,
+            label: 'AI response generated',
+            detail: 'Chat message',
+            timestamp: m.created_at,
+          });
+        });
+
+        // Sort by timestamp descending and take top 15
+        activityItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        setActivity(activityItems.slice(0, 15));
       } catch (err) {
         console.error("Failed to fetch AI Studio stats:", err);
       } finally {
