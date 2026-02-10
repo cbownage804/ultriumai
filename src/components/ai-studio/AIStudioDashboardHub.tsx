@@ -17,6 +17,7 @@ interface RecentProject {
   id: string;
   name: string;
   updated_at: string;
+  thumbnail_url?: string | null;
 }
 
 interface ToolCount {
@@ -40,7 +41,7 @@ export const AIStudioDashboardHub = () => {
     const fetch = async () => {
       try {
         const [projectsRes, gptsRes, agentsRes, creditsRes, ledgerRes] = await Promise.all([
-          supabase.from("builder_projects").select("id, name, updated_at").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(6),
+          supabase.from("builder_projects").select("id, name, updated_at, thumbnail_url").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(6),
           supabase.from("custom_gpts").select("id", { count: "exact" }).eq("user_id", user.id),
           supabase.from("ai_agents").select("id", { count: "exact" }).eq("user_id", user.id),
           supabase.from("org_credits").select("credits_remaining").eq("user_id", user.id).maybeSingle(),
@@ -180,17 +181,35 @@ export const AIStudioDashboardHub = () => {
               <button
                 key={p.id}
                 onClick={() => navigate(`/ai-studio/app-builder?project=${p.id}`)}
-                className="text-left p-4 rounded-xl border border-border/50 bg-card/60 hover:border-primary/30 hover:bg-card/80 transition-all group min-h-[44px]"
+                className="text-left rounded-xl border border-border/50 bg-card/60 hover:border-primary/30 hover:bg-card/80 transition-all group overflow-hidden"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-medium text-sm truncate text-foreground">{p.name}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      <Clock className="inline h-3 w-3 mr-1" />
-                      {formatTimeAgo(p.updated_at)}
-                    </p>
+                {/* Thumbnail */}
+                <div className="w-full aspect-[16/10] bg-muted/20 relative overflow-hidden">
+                  {p.thumbnail_url ? (
+                    <img
+                      src={p.thumbnail_url}
+                      alt={`${p.name} preview`}
+                      className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
+                      <Code2 className="h-8 w-8 text-muted-foreground/30" />
+                    </div>
+                  )}
+                </div>
+                {/* Info */}
+                <div className="p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate text-foreground">{p.name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        <Clock className="inline h-3 w-3 mr-1" />
+                        {formatTimeAgo(p.updated_at)}
+                      </p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5" />
                   </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5" />
                 </div>
               </button>
             ))}

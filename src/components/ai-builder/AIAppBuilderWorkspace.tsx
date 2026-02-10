@@ -10,6 +10,7 @@ import { useBranching } from '@/hooks/useBranching';
 import { useProjectPersistence } from '@/hooks/useProjectPersistence';
 import { useDraftPersistence } from '@/hooks/useDraftPersistence';
 import { usePreviewHosting } from '@/hooks/usePreviewHosting';
+import { usePreviewCapture } from '@/hooks/usePreviewCapture';
 import { BuilderChatPanel } from './BuilderChatPanel';
 import { BuilderPreviewPanel } from './BuilderPreviewPanel';
 import { ProjectFileTree } from './ProjectFileTree';
@@ -618,12 +619,19 @@ export function AIAppBuilderWorkspace() {
     toast.success('Branch merged');
   }, [mergeBranch, project.files, pushUndo, setFiles]);
 
+  const { captureAndUpload } = usePreviewCapture();
+
   const handleSave = useCallback(async () => {
-    await saveProject(project.name, project.files, branches, activeBranch, messages);
+    const projectId = await saveProject(project.name, project.files, branches, activeBranch, messages);
     setDirtyFiles(new Set());
     clearDraft();
     toast.success('Project saved');
-  }, [saveProject, project.name, project.files, branches, activeBranch, messages, clearDraft]);
+    // Capture thumbnail in background (non-blocking)
+    const html = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+    if (projectId && html) {
+      captureAndUpload(html, projectId).catch(() => {});
+    }
+  }, [saveProject, project.name, project.files, branches, activeBranch, messages, clearDraft, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, captureAndUpload]);
 
   const handleLoadProject = useCallback(async (projectId: string) => {
     const loaded = await loadProject(projectId);

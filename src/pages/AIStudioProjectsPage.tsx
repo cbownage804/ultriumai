@@ -30,6 +30,7 @@ interface Project {
   published_url: string | null;
   updated_at: string;
   created_at: string;
+  thumbnail_url?: string | null;
 }
 
 type ViewMode = 'grid' | 'list';
@@ -52,7 +53,7 @@ export default function AIStudioProjectsPage() {
     try {
       const { data, error } = await supabase
         .from('builder_projects')
-        .select('id, name, files, is_published, published_url, updated_at, created_at')
+        .select('id, name, files, is_published, published_url, updated_at, created_at, thumbnail_url')
         .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
       if (error) throw error;
@@ -266,9 +267,20 @@ export default function AIStudioProjectsPage() {
                 onClick={() => navigate(`/ai-studio/app-builder?project=${project.id}`)}
                 className="group relative h-[200px] rounded-xl border border-border/50 bg-card/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 cursor-pointer transition-all overflow-hidden"
               >
-                {/* Preview gradient placeholder */}
-                <div className="h-[120px] bg-gradient-to-br from-card via-muted/30 to-card flex items-center justify-center">
-                  <Code2 className="h-8 w-8 text-muted-foreground/20" />
+                {/* Preview thumbnail */}
+                <div className="h-[120px] overflow-hidden">
+                  {project.thumbnail_url ? (
+                    <img
+                      src={project.thumbnail_url}
+                      alt={`${project.name} preview`}
+                      className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-card via-muted/30 to-card flex items-center justify-center">
+                      <Code2 className="h-8 w-8 text-muted-foreground/20" />
+                    </div>
+                  )}
                 </div>
 
                 {/* Info */}
