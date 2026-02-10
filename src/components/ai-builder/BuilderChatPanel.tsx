@@ -13,7 +13,7 @@ import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
-import { TokenUsageIndicator } from './TokenUsageIndicator';
+
 import { StreamingCursor } from './StreamingText';
 
 interface BuilderChatPanelProps {
@@ -335,12 +335,13 @@ export function BuilderChatPanel({
           <span className="text-[11px] font-medium text-white/50 tracking-wide uppercase">Chat</span>
         </div>
         <div className="flex items-center gap-1">
-          {totalTokensUsed > 0 && (
-            <TokenUsageIndicator
-              tokensUsed={totalTokensUsed}
-              maxTokens={200000}
-              messageCount={messages.filter(m => m.role === 'user').length}
-            />
+          {messages.filter(m => m.role === 'user').length > 0 && (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/[0.03] border border-white/[0.06]">
+              <Zap className="h-2.5 w-2.5 text-white/25" />
+              <span className="text-[9px] text-white/30 font-mono">
+                {messages.filter(m => m.role === 'user').length} msg{messages.filter(m => m.role === 'user').length > 1 ? 's' : ''}
+              </span>
+            </div>
           )}
           {versions.length > 0 && (
             <Tooltip>
@@ -551,10 +552,6 @@ export function BuilderChatPanel({
                           <img src={msg.imageUrl} alt="Reference" className="rounded-lg max-h-32 mb-2 border border-white/10" />
                         )}
                         <p className="whitespace-pre-wrap text-[13px]">{msg.content}</p>
-                        {/* Credit cost badge */}
-                        <div className="flex justify-end mt-1">
-                          <span className="text-[9px] text-white/30 bg-white/[0.05] rounded-full px-1.5 py-0.5 font-mono">1 credit</span>
-                        </div>
                       </div>
                     )}
                   </div>
@@ -593,50 +590,7 @@ export function BuilderChatPanel({
       {/* Quick Actions + Context Indicator + Mode Toggle + Input */}
       <div className="p-3 border-t border-white/[0.06] shrink-0 space-y-2" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
         {/* Quick action chips */}
-        {messages.length > 0 && fileCount > 0 && !isGenerating && (
-          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {[
-              { label: '🚀 Deployment guide', prompt: 'Give me a detailed step-by-step deployment guide for this project. Include hosting recommendations (Vercel, Netlify, Docker), environment variable setup, database configuration, custom domain setup, and a pre-launch checklist. Format it clearly with numbered steps.' },
-              { label: '💡 Recommendations', prompt: 'Analyze my current project and recommend improvements. Consider: performance optimizations, accessibility, SEO, security best practices, code organization, missing features, and UX enhancements. Prioritize them by impact.' },
-              { label: '✨ Add animations', prompt: 'Add smooth animations and transitions to improve the user experience' },
-              { label: '📱 Make responsive', prompt: 'Make all layouts fully responsive for mobile, tablet, and desktop' },
-              { label: '♿ Accessibility', prompt: 'Improve accessibility: add ARIA labels, focus states, and keyboard navigation' },
-              { label: '⏳ Loading states', prompt: 'Add loading states, skeleton screens, and error boundaries' },
-              { label: '🔒 Security review', prompt: 'Review my project for security issues. Check for XSS vulnerabilities, insecure data handling, missing input validation, exposed secrets, and recommend fixes with code examples.' },
-            ].map(action => (
-              <button
-                key={action.label}
-                onClick={() => onSend(action.prompt)}
-                className="shrink-0 text-[10px] px-2 py-1 rounded-full border border-white/[0.06] text-white/35 hover:text-white/70 hover:border-cyan-500/30 hover:bg-cyan-500/[0.05] transition-all"
-              >
-                {action.label}
-              </button>
-            ))}
-          </div>
-        )}
 
-        {/* Context indicator */}
-        {fileCount > 0 && (
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-1 rounded-full bg-white/[0.04] overflow-hidden">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all",
-                  totalTokensUsed > 160000 ? "bg-red-400" :
-                  totalTokensUsed > 100000 ? "bg-amber-400" : "bg-cyan-400/50"
-                )}
-                style={{ width: `${Math.min((totalTokensUsed / 200000) * 100, 100)}%` }}
-              />
-            </div>
-            <span className={cn(
-              "text-[9px] font-mono shrink-0",
-              totalTokensUsed > 160000 ? "text-red-400/70" :
-              totalTokensUsed > 100000 ? "text-amber-400/70" : "text-white/20"
-            )}>
-              {Math.round(totalTokensUsed / 1000)}k / 200k
-            </span>
-          </div>
-        )}
 
         {/* Lovable-style input area with integrated mode toggle */}
         <div data-tour="chat-input" className="rounded-xl border border-white/[0.08] bg-white/[0.03] focus-within:border-cyan-500/30 transition-colors overflow-hidden">
@@ -777,7 +731,11 @@ export function BuilderChatPanel({
                   </div>
                 </div>
               )}
-              <span className="text-[9px] text-white/15 font-mono">{mode === 'discuss' ? '1 credit' : '1 credit'}</span>
+              <span className="text-[9px] text-white/15 font-mono">
+                {messages.filter(m => m.role === 'user').length > 0
+                  ? `${messages.filter(m => m.role === 'user').length} msg${messages.filter(m => m.role === 'user').length > 1 ? 's' : ''}`
+                  : '1 credit/msg'}
+              </span>
             </div>
           </div>
         </div>
