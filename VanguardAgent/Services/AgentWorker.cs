@@ -161,6 +161,18 @@ public class AgentWorker : BackgroundService
             _configService.SetDeviceId(response.DeviceId);
             _logger.LogInformation("Device registered successfully: {DeviceId}", response.DeviceId);
             _isRegistered = true;
+            
+            // If server returned RustDesk relay config, pre-load it into the installer
+            // so it doesn't need a separate fetch from vanguard-relay-config
+            if (response.RustDeskConfig != null && response.RustDeskConfig.Deploy && 
+                !string.IsNullOrEmpty(response.RustDeskConfig.RelayServer))
+            {
+                _logger.LogInformation("Server provided RustDesk relay config during registration: {Relay}", 
+                    response.RustDeskConfig.RelayServer);
+                _rustDeskInstaller.SetRelayConfig(
+                    response.RustDeskConfig.RelayServer, 
+                    response.RustDeskConfig.PublicKey ?? "");
+            }
         }
         else
         {

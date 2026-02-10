@@ -823,6 +823,35 @@ public class RegistrationResponse
 
     [JsonProperty("error")]
     public string? Error { get; set; }
+    
+    /// <summary>
+    /// RustDesk relay configuration returned by server during registration.
+    /// When present, the agent should auto-configure RustDesk with these settings
+    /// instead of making a separate relay-config fetch.
+    /// </summary>
+    [JsonProperty("rustdesk_config")]
+    public RustDeskDeployConfig? RustDeskConfig { get; set; }
+}
+
+/// <summary>
+/// RustDesk deployment configuration returned during agent registration
+/// </summary>
+public class RustDeskDeployConfig
+{
+    [JsonProperty("deploy")]
+    public bool Deploy { get; set; }
+    
+    [JsonProperty("relay_server")]
+    public string? RelayServer { get; set; }
+    
+    [JsonProperty("public_key")]
+    public string? PublicKey { get; set; }
+    
+    [JsonProperty("api_server")]
+    public string? ApiServer { get; set; }
+    
+    [JsonProperty("version")]
+    public string? Version { get; set; }
 }
 
 public class DeviceInfo

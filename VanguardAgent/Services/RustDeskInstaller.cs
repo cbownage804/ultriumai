@@ -934,7 +934,8 @@ direct-access-port = ''
     }
 
     /// <summary>
-    /// Get the current RustDesk ID - exhaustive multi-strategy retrieval
+    /// Get the current RustDesk ID - exhaustive multi-strategy retrieval.
+    /// Only returns plain numeric IDs (6+ digits). Rejects encoded/base64 values.
     /// </summary>
     public string? GetRustDeskId()
     {
@@ -945,10 +946,14 @@ direct-access-port = ''
             {
                 using var key = Registry.LocalMachine.OpenSubKey(regPath);
                 var id = key?.GetValue("id")?.ToString()?.Replace(" ", "");
-                if (!string.IsNullOrEmpty(id) && id.Length >= 6)
+                if (!string.IsNullOrEmpty(id) && id.Length >= 6 && System.Text.RegularExpressions.Regex.IsMatch(id, @"^\d+$"))
                 {
-                    Console.WriteLine($"[RustDesk] Found ID in registry ({regPath}): {id}");
+                    Console.WriteLine($"[RustDesk] Found numeric ID in registry ({regPath}): {id}");
                     return id;
+                }
+                else if (!string.IsNullOrEmpty(id))
+                {
+                    Console.WriteLine($"[RustDesk] Ignoring non-numeric registry ID ({regPath}): {id.Substring(0, Math.Min(20, id.Length))}...");
                 }
             }
         }
@@ -1218,7 +1223,9 @@ direct-access-port = ''
     }
     
     /// <summary>
-    /// Extract RustDesk ID from a config file
+    /// Extract RustDesk ID from a config file.
+    /// IMPORTANT: Only returns plain numeric IDs (6+ digits). 
+    /// enc_id values are base64-encoded and must NOT be used as the machine ID.
     /// </summary>
     private string? ExtractIdFromConfig(string path)
     {
@@ -1232,18 +1239,23 @@ direct-access-port = ''
                 if (match.Success)
                 {
                     var rawId = match.Groups[1].Value.Replace(" ", "").Trim();
-                    if (rawId.Length >= 6)
+                    if (rawId.Length >= 6 && System.Text.RegularExpressions.Regex.IsMatch(rawId, @"^\d+$"))
                     {
-                        Console.WriteLine($"[RustDesk] Found ID in {path}: {rawId}");
+                        Console.WriteLine($"[RustDesk] Found numeric ID in {path}: {rawId}");
                         return rawId;
                     }
+                    else
+                    {
+                        Console.WriteLine($"[RustDesk] Ignoring non-numeric id value in {path}: {rawId}");
+                    }
                 }
-                // Also try 'enc_id' which newer RustDesk versions may use
-                match = System.Text.RegularExpressions.Regex.Match(content, @"^enc_id\s*=\s*['""]?(.+?)['""]?\s*$", System.Text.RegularExpressions.RegexOptions.Multiline);
-                if (match.Success)
+                // NOTE: enc_id is intentionally NOT used - it contains a base64-encoded value
+                // that is NOT the machine's RustDesk ID. The plain numeric 'id' field or
+                // the registry value is the correct source.
+                var encMatch = System.Text.RegularExpressions.Regex.Match(content, @"^enc_id\s*=\s*['""]?(.+?)['""]?\s*$", System.Text.RegularExpressions.RegexOptions.Multiline);
+                if (encMatch.Success)
                 {
-                    Console.WriteLine($"[RustDesk] Found ID in {path}: {match.Groups[1].Value}");
-                    return match.Groups[1].Value;
+                    Console.WriteLine($"[RustDesk] Skipping enc_id in {path} (encoded, not usable as machine ID): {encMatch.Groups[1].Value.Substring(0, Math.Min(20, encMatch.Groups[1].Value.Length))}...");
                 }
             }
         }
