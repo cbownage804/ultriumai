@@ -53,6 +53,7 @@ const AIAgentsPage = lazy(() => import('@/pages/AIAgentsPage'));
 const AIAgentBuilderPage = lazy(() => import('@/pages/AIAgentBuilderPage'));
 const AIWorkflowsPage = lazy(() => import('@/pages/AIWorkflowsPage'));
 const AIAppBuilderWorkspacePage = lazy(() => import('@/pages/AIAppBuilderWorkspacePage'));
+const GPTBuilderPage = lazy(() => import('@/pages/GPTBuilderPage'));
 const AIStudioProjectsPage = lazy(() => import('@/pages/AIStudioProjectsPage'));
 const Profile = lazy(() => import('@/pages/Profile'));
 // ProfilePage removed - use Profile
@@ -650,6 +651,13 @@ function AppRouter() {
           <ProtectedRoute>
             <Suspense fallback={<PageSkeleton variant="dashboard" />}>
               <AIAppBuilderWorkspacePage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
+        <Route path="/ai-studio/gpt-builder" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageSkeleton variant="dashboard" />}>
+              <GPTBuilderPage />
             </Suspense>
           </ProtectedRoute>
         } />
