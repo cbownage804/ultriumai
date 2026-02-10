@@ -1,28 +1,25 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Ticket, Plus, Search, Filter, Clock, AlertCircle, CheckCircle2, 
-  XCircle, User, Building2, MoreVertical, MessageSquare, Eye,
-  Paperclip, History, Send, Phone, Mail, MapPin, Monitor, 
-  HardDrive, Wifi, Calendar, Tag, AlertTriangle, ExternalLink,
-  FileText, Image, Copy, ArrowUpRight, Timer, Target, Zap,
-  Shield, RefreshCw, ChevronRight, ChevronDown, Trash2, 
-  UserPlus, GitMerge, Smile, Meh, Frown, Download, Loader2,
+  XCircle, User, Building2, MessageSquare,
+  Calendar, Tag, AlertTriangle, FileText, Zap,
+  Shield, RefreshCw, ChevronDown, Trash2, 
+  UserPlus, GitMerge, Download, Loader2,
   ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
 import {
@@ -30,144 +27,54 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { getVanguardBasePath } from '@/utils/subdomain';
-import { useVanguardTickets, useIsAdmin } from '@/hooks/useVanguardTickets';
+import { useVanguardTickets, useIsAdmin, VanguardTicket } from '@/hooks/useVanguardTickets';
 import { useMSP } from '@/hooks/useMSP';
 import { Switch } from '@/components/ui/switch';
 import { formatDistanceToNow } from 'date-fns';
 import { VanguardBreadcrumbs } from '@/components/vanguard/VanguardBreadcrumbs';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
-interface TicketActivity {
-  id: string;
-  type: 'comment' | 'status_change' | 'assignment' | 'note' | 'system';
-  user: string;
-  userAvatar?: string;
-  content: string;
-  timestamp: string;
-}
-
-interface TicketAttachment {
-  id: string;
-  name: string;
-  type: 'image' | 'document' | 'log';
-  size: string;
-  uploadedBy: string;
-  uploadedAt: string;
-}
-
-interface TicketContact {
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  avatar?: string;
-}
-
-interface TicketDevice {
-  hostname: string;
-  ip: string;
-  os: string;
-  lastSeen: string;
-  agentVersion: string;
-  status: 'online' | 'offline' | 'warning';
-}
-
-interface Ticket {
-  id: string;
-  title: string;
-  customer: string;
-  customerId: string;
-  priority: 'critical' | 'high' | 'medium' | 'low';
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
-  assignee: string;
-  assigneeAvatar?: string;
-  created: string;
-  createdAt: string;
-  updatedAt: string;
-  sla: string;
-  slaDeadline: string;
-  slaProgress: number;
-  description: string;
-  category: string;
-  subcategory: string;
-  source: 'email' | 'portal' | 'phone' | 'chat' | 'api';
-  impact: 'single_user' | 'department' | 'organization';
-  urgency: 'low' | 'medium' | 'high' | 'critical';
-  tags: string[];
-  contact: TicketContact;
-  device?: TicketDevice;
-  relatedTickets: string[];
-  activities: TicketActivity[];
-  attachments: TicketAttachment[];
-  resolution?: string;
-  firstResponseTime?: string;
-  timeSpent: string;
-  estimatedTime: string;
-  linkedAlerts: string[];
-}
-
-// Empty default - data is fetched from database
-const mockTickets: Ticket[] = [];
-
-const priorityColors = {
+const priorityColors: Record<string, string> = {
   critical: 'bg-red-500/20 text-red-400 border-red-500/30',
   high: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
   medium: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   low: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
 };
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   open: 'bg-blue-500/20 text-blue-400',
   in_progress: 'bg-cyan-500/20 text-cyan-400',
+  pending: 'bg-amber-500/20 text-amber-400',
   resolved: 'bg-emerald-500/20 text-emerald-400',
   closed: 'bg-slate-500/20 text-slate-400',
-};
-
-const statusIcons = {
-  open: AlertCircle,
-  in_progress: Clock,
-  resolved: CheckCircle2,
-  closed: XCircle,
-};
-
-const sourceIcons = {
-  email: Mail,
-  phone: Phone,
-  portal: Monitor,
-  chat: MessageSquare,
-  api: Zap,
-};
-
-const impactLabels = {
-  single_user: { label: 'Single User', color: 'text-slate-400' },
-  department: { label: 'Department', color: 'text-yellow-400' },
-  organization: { label: 'Organization-wide', color: 'text-red-400' },
 };
 
 export default function VanguardTickets() {
   const navigate = useNavigate();
   const basePath = getVanguardBasePath();
+  const { user } = useAuth();
   const { clients } = useMSP();
   const { isAdmin } = useIsAdmin();
   const [adminMode, setAdminMode] = useState(false);
+  const { tickets: dbTickets, isLoading: ticketsLoading, refetch: refetchTickets } = useVanguardTickets({ adminMode });
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('tickets');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [organizationFilter, setOrganizationFilter] = useState('all');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
-  const [tickets, setTickets] = useState(mockTickets);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState<typeof mockTickets[0] | null>(null);
   const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
   const [viewType, setViewType] = useState('default');
   const [showFilters, setShowFilters] = useState(false);
   const [sortField, setSortField] = useState<'created' | 'priority' | 'client' | 'status'>('created');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [clientSearch, setClientSearch] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
   const [newTicket, setNewTicket] = useState({
     title: '',
     description: '',
@@ -178,19 +85,18 @@ export default function VanguardTickets() {
   // Extract unique assignees from tickets
   const uniqueAssignees = useMemo(() => {
     const assignees = new Set<string>();
-    tickets.forEach(t => {
-      if (t.assignee && t.assignee !== 'Unassigned') {
-        assignees.add(t.assignee);
+    dbTickets.forEach(t => {
+      if (t.assigned_to) {
+        assignees.add(t.assigned_to);
       }
     });
     return Array.from(assignees);
-  }, [tickets]);
+  }, [dbTickets]);
 
   useEffect(() => {
     document.title = 'Tickets | Vanguard';
   }, []);
 
-  // Filter by client search as well
   const filteredClients = useMemo(() => {
     if (!clientSearch) return clients;
     return clients.filter(c => 
@@ -199,44 +105,41 @@ export default function VanguardTickets() {
   }, [clients, clientSearch]);
 
   const filteredTickets = useMemo(() => {
-    let result = tickets.filter(ticket => {
+    let result = dbTickets.filter(ticket => {
       const matchesSearch = ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            ticket.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            ticket.contact.name.toLowerCase().includes(searchQuery.toLowerCase());
+                            (ticket.client_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            (ticket.contact_name || '').toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
       const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
-      const matchesOrg = organizationFilter === 'all' || ticket.customerId === organizationFilter;
-      const matchesAssignee = assigneeFilter === 'all' || ticket.assignee === assigneeFilter;
+      const matchesOrg = organizationFilter === 'all' || ticket.client_id === organizationFilter;
+      const matchesAssignee = assigneeFilter === 'all' || ticket.assigned_to === assigneeFilter;
       return matchesSearch && matchesStatus && matchesPriority && matchesOrg && matchesAssignee;
     });
 
-    // Sort tickets
-    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-    const statusOrder = { open: 0, in_progress: 1, resolved: 2, closed: 3 };
+    const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+    const statusOrder: Record<string, number> = { open: 0, in_progress: 1, pending: 2, resolved: 3, closed: 4 };
 
     result.sort((a, b) => {
       let comparison = 0;
-      
       switch (sortField) {
         case 'created':
-          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
           break;
         case 'priority':
-          comparison = priorityOrder[a.priority] - priorityOrder[b.priority];
+          comparison = (priorityOrder[a.priority] ?? 2) - (priorityOrder[b.priority] ?? 2);
           break;
         case 'client':
-          comparison = a.customer.localeCompare(b.customer);
+          comparison = (a.client_name || '').localeCompare(b.client_name || '');
           break;
         case 'status':
-          comparison = statusOrder[a.status] - statusOrder[b.status];
+          comparison = (statusOrder[a.status] ?? 2) - (statusOrder[b.status] ?? 2);
           break;
       }
-      
       return sortOrder === 'asc' ? comparison : -comparison;
     });
 
     return result;
-  }, [tickets, searchQuery, statusFilter, priorityFilter, organizationFilter, assigneeFilter, sortField, sortOrder]);
+  }, [dbTickets, searchQuery, statusFilter, priorityFilter, organizationFilter, assigneeFilter, sortField, sortOrder]);
 
   const handleSort = (field: typeof sortField) => {
     if (sortField === field) {
@@ -270,124 +173,141 @@ export default function VanguardTickets() {
     }
   };
 
-  const handleBulkDelete = () => {
-    setTickets(tickets.filter(t => !selectedTickets.includes(t.id)));
-    toast.success(`${selectedTickets.length} tickets deleted`);
-    setSelectedTickets([]);
+  const handleBulkDelete = async () => {
+    if (selectedTickets.length === 0) return;
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .delete()
+        .in('id', selectedTickets);
+      if (error) throw error;
+      toast.success(`${selectedTickets.length} tickets deleted`);
+      setSelectedTickets([]);
+      refetchTickets();
+    } catch (err: any) {
+      toast.error('Failed to delete tickets', { description: err.message });
+    }
   };
 
-  const handleBulkAssign = () => {
-    setTickets(tickets.map(t => 
-      selectedTickets.includes(t.id) ? { ...t, assignee: 'Current User', status: 'in_progress' as const } : t
-    ));
-    toast.success(`${selectedTickets.length} tickets assigned to you`);
-    setSelectedTickets([]);
+  const handleBulkAssign = async () => {
+    if (selectedTickets.length === 0 || !user) return;
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .update({ assigned_to: user.id, status: 'in_progress' })
+        .in('id', selectedTickets);
+      if (error) throw error;
+      toast.success(`${selectedTickets.length} tickets assigned to you`);
+      setSelectedTickets([]);
+      refetchTickets();
+    } catch (err: any) {
+      toast.error('Failed to assign tickets', { description: err.message });
+    }
   };
 
-  const handleBulkSetStatus = (status: string) => {
-    setTickets(tickets.map(t => 
-      selectedTickets.includes(t.id) ? { ...t, status: status as Ticket['status'] } : t
-    ));
-    toast.success(`${selectedTickets.length} tickets updated`);
-    setSelectedTickets([]);
+  const handleBulkSetStatus = async (status: string) => {
+    if (selectedTickets.length === 0) return;
+    try {
+      const updateData: any = { status };
+      if (status === 'resolved') updateData.resolved_at = new Date().toISOString();
+      if (status === 'closed') updateData.closed_at = new Date().toISOString();
+      const { error } = await supabase
+        .from('tickets')
+        .update(updateData)
+        .in('id', selectedTickets);
+      if (error) throw error;
+      toast.success(`${selectedTickets.length} tickets updated`);
+      setSelectedTickets([]);
+      refetchTickets();
+    } catch (err: any) {
+      toast.error('Failed to update tickets', { description: err.message });
+    }
   };
 
-  const getSentimentIcon = (urgency: string) => {
-    if (urgency === 'critical' || urgency === 'high') return { icon: Frown, color: 'text-red-400' };
-    if (urgency === 'medium') return { icon: Meh, color: 'text-yellow-400' };
-    return { icon: Smile, color: 'text-emerald-400' };
-  };
-
-  const getActivityStatus = (ticket: Ticket) => {
-    const hasUnread = ticket.activities.length > 0;
-    if (ticket.status === 'open' && hasUnread) return { label: 'Awaiting response', color: 'text-amber-400', dot: 'bg-amber-400' };
-    if (ticket.status === 'in_progress') return { label: 'Read', color: 'text-emerald-400', dot: 'bg-emerald-400' };
-    return { label: 'Read', color: 'text-emerald-400', dot: 'bg-emerald-400' };
-  };
-
-  const handleCreateTicket = () => {
-    if (!newTicket.title || !newTicket.customer) {
+  const handleCreateTicket = async () => {
+    if (!newTicket.title || !newTicket.customer || !user) {
       toast.error('Please fill in required fields');
       return;
     }
 
-    const ticketId = `TKT-${String(tickets.length + 1).padStart(3, '0')}`;
-    const createdTicket = {
-      id: ticketId,
-      title: newTicket.title,
-      description: newTicket.description || 'No description provided',
-      priority: newTicket.priority as Ticket['priority'],
-      customer: newTicket.customer,
-      customerId: `cust-${Date.now()}`,
-      status: 'open' as const,
-      assignee: 'Unassigned',
-      created: 'Just now',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      sla: '24h remaining',
-      slaDeadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      slaProgress: 0,
-      category: 'General',
-      subcategory: 'Support Request',
-      source: 'portal' as const,
-      impact: 'single_user' as const,
-      urgency: 'medium' as const,
-      tags: ['new'],
-      contact: {
-        name: 'Portal User',
-        email: 'user@example.com',
-        phone: 'N/A',
-        role: 'End User',
-      },
-      relatedTickets: [],
-      activities: [
-        { id: 'act-1', type: 'system' as const, user: 'System', content: 'Ticket created via MSP portal', timestamp: 'Just now' },
-      ],
-      attachments: [],
-      timeSpent: '0m',
-      estimatedTime: '2h',
-      linkedAlerts: [],
-    };
+    setIsCreating(true);
+    try {
+      // Generate ticket number
+      const ticketNumber = `TKT-${Date.now().toString(36).toUpperCase()}`;
 
-    setTickets([createdTicket, ...tickets]);
-    setNewTicket({ title: '', description: '', priority: 'medium', customer: '' });
-    setIsCreateDialogOpen(false);
-    toast.success(`Ticket ${ticketId} created successfully`);
+      const { error } = await supabase
+        .from('tickets')
+        .insert({
+          title: newTicket.title,
+          description: newTicket.description || 'No description provided',
+          priority: newTicket.priority,
+          status: 'open',
+          source: 'portal',
+          category: 'General',
+          ticket_number: ticketNumber,
+          user_id: user.id,
+          client_id: newTicket.customer,
+        });
+
+      if (error) throw error;
+
+      setNewTicket({ title: '', description: '', priority: 'medium', customer: '' });
+      setIsCreateDialogOpen(false);
+      toast.success(`Ticket ${ticketNumber} created successfully`);
+      refetchTickets();
+    } catch (err: any) {
+      toast.error('Failed to create ticket', { description: err.message });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
-  const handleAssign = (ticketId: string) => {
-    setTickets(tickets.map(t => 
-      t.id === ticketId ? { ...t, assignee: 'Current User', status: 'in_progress' } : t
-    ));
-    toast.success(`Ticket ${ticketId} assigned to you`);
+  const handleAssign = async (ticketId: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .update({ assigned_to: user.id, status: 'in_progress' })
+        .eq('id', ticketId);
+      if (error) throw error;
+      toast.success(`Ticket assigned to you`);
+      refetchTickets();
+    } catch (err: any) {
+      toast.error('Failed to assign ticket', { description: err.message });
+    }
   };
 
-  const handleAddNote = (ticketId: string) => {
-    toast.success(`Note added to ${ticketId}`);
+  const handleCloseTicket = async (ticketId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .update({ status: 'resolved', resolved_at: new Date().toISOString() })
+        .eq('id', ticketId);
+      if (error) throw error;
+      toast.success(`Ticket resolved`);
+      refetchTickets();
+    } catch (err: any) {
+      toast.error('Failed to close ticket', { description: err.message });
+    }
   };
 
-  const handleCloseTicket = (ticketId: string) => {
-    setTickets(tickets.map(t => 
-      t.id === ticketId ? { ...t, status: 'resolved', sla: 'Completed' } : t
-    ));
-    toast.success(`Ticket ${ticketId} closed`);
-  };
-
-  const handleViewDetails = (ticket: Ticket) => {
-    // Navigate to full ticket detail page
+  const handleViewDetails = (ticket: VanguardTicket) => {
     navigate(`${basePath}/tickets/${ticket.id}`);
   };
 
-  const handleQuickView = (ticket: Ticket) => {
-    setSelectedTicket(ticket);
-  };
+  if (ticketsLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-4">
-      {/* Breadcrumbs */}
       <VanguardBreadcrumbs />
       
-      {/* Top Bar - Atera Style */}
+      {/* Top Bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <DropdownMenu>
@@ -405,17 +325,13 @@ export default function VanguardTickets() {
                 <Ticket className="h-4 w-4 mr-2" />
                 New Ticket
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-white/80 hover:bg-cyan-500/10">
-                <Calendar className="h-4 w-4 mr-2" />
-                Scheduled Ticket
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
             <Input 
-              placeholder="Search" 
+              placeholder="Search tickets..." 
               className="pl-10 w-64 bg-slate-800/50 border-cyan-500/20 text-white placeholder:text-white/40"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -424,6 +340,10 @@ export default function VanguardTickets() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => refetchTickets()} className="border-cyan-500/20 text-white/80">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
           <Button 
             variant="outline" 
             className="border-cyan-500/20 text-white/80"
@@ -447,7 +367,6 @@ export default function VanguardTickets() {
           )}
         </div>
         
-        {/* Admin Mode Toggle - Only visible to admins */}
         {isAdmin && (
           <div className="flex items-center gap-3 px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-lg">
             <div className="flex items-center gap-2">
@@ -466,20 +385,14 @@ export default function VanguardTickets() {
         )}
       </div>
 
-      {/* Tabs - Atera Style */}
+      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-transparent border-b border-cyan-500/20 rounded-none h-auto p-0 w-full justify-start">
           <TabsTrigger 
             value="tickets" 
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-400 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 px-4 py-2"
           >
-            Tickets
-          </TabsTrigger>
-          <TabsTrigger 
-            value="scheduled" 
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-400 data-[state=active]:bg-transparent data-[state=active]:text-cyan-400 px-4 py-2"
-          >
-            Scheduled Tickets
+            Tickets ({dbTickets.length})
           </TabsTrigger>
         </TabsList>
 
@@ -489,6 +402,7 @@ export default function VanguardTickets() {
             <div className="flex items-center gap-2">
               {selectedTickets.length > 0 && (
                 <>
+                  <span className="text-sm text-cyan-400 mr-2">{selectedTickets.length} selected</span>
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -505,7 +419,7 @@ export default function VanguardTickets() {
                     onClick={handleBulkAssign}
                   >
                     <UserPlus className="h-4 w-4 mr-1" />
-                    Assign ticket
+                    Assign to me
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -521,22 +435,13 @@ export default function VanguardTickets() {
                       <DropdownMenuItem onClick={() => handleBulkSetStatus('closed')} className="text-white/80">Closed</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                  <Button variant="ghost" size="sm" className="text-white/60 hover:bg-cyan-500/10">
-                    <Tag className="h-4 w-4 mr-1" />
-                    Set priority
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-white/60 hover:bg-cyan-500/10">
-                    <GitMerge className="h-4 w-4 mr-1" />
-                    Merge tickets
-                  </Button>
                 </>
               )}
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-white/40 text-sm">Displaying {filteredTickets.length} of {tickets.length} tickets</span>
+              <span className="text-white/40 text-sm">Displaying {filteredTickets.length} of {dbTickets.length} tickets</span>
               
-              {/* Sort Dropdown */}
               <Select value={`${sortField}-${sortOrder}`} onValueChange={(v) => {
                 const [field, order] = v.split('-') as [typeof sortField, 'asc' | 'desc'];
                 setSortField(field);
@@ -558,16 +463,6 @@ export default function VanguardTickets() {
                 </SelectContent>
               </Select>
 
-              <Select value={viewType} onValueChange={setViewType}>
-                <SelectTrigger className="w-36 bg-slate-800/50 border-cyan-500/20 text-white">
-                  <SelectValue placeholder="Default view" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-cyan-500/20">
-                  <SelectItem value="default">Default view</SelectItem>
-                  <SelectItem value="compact">Compact view</SelectItem>
-                  <SelectItem value="detailed">Detailed view</SelectItem>
-                </SelectContent>
-              </Select>
               <Button 
                 variant="outline" 
                 className={`border-cyan-500/20 ${showFilters ? 'bg-cyan-500/20 text-cyan-400' : 'text-white/60'}`}
@@ -616,7 +511,7 @@ export default function VanguardTickets() {
                       </Button>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {/* Organization Filter with Search */}
+                      {/* Organization Filter */}
                       <div className="space-y-1.5">
                         <Label className="text-xs text-slate-400">Client / Organization</Label>
                         <Select value={organizationFilter} onValueChange={setOrganizationFilter}>
@@ -642,9 +537,6 @@ export default function VanguardTickets() {
                                 {client.company_name}
                               </SelectItem>
                             ))}
-                            {filteredClients.length === 0 && clientSearch && (
-                              <div className="p-2 text-sm text-white/40 text-center">No clients found</div>
-                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -658,30 +550,11 @@ export default function VanguardTickets() {
                           </SelectTrigger>
                           <SelectContent className="bg-slate-900 border-cyan-500/20">
                             <SelectItem value="all">All Statuses</SelectItem>
-                            <SelectItem value="open">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-blue-400" />
-                                Open
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="in_progress">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-cyan-400" />
-                                In Progress
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="resolved">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                                Resolved
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="closed">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-slate-400" />
-                                Closed
-                              </div>
-                            </SelectItem>
+                            <SelectItem value="open">Open</SelectItem>
+                            <SelectItem value="in_progress">In Progress</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="resolved">Resolved</SelectItem>
+                            <SelectItem value="closed">Closed</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -695,35 +568,15 @@ export default function VanguardTickets() {
                           </SelectTrigger>
                           <SelectContent className="bg-slate-900 border-cyan-500/20">
                             <SelectItem value="all">All Priorities</SelectItem>
-                            <SelectItem value="critical">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-red-500" />
-                                Critical
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="high">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-orange-500" />
-                                High
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="medium">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                                Medium
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="low">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-slate-500" />
-                                Low
-                              </div>
-                            </SelectItem>
+                            <SelectItem value="critical">Critical</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="low">Low</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
-                      {/* Assigned Technician Filter */}
+                      {/* Assignee Filter */}
                       <div className="space-y-1.5">
                         <Label className="text-xs text-slate-400">Assigned To</Label>
                         <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
@@ -732,8 +585,7 @@ export default function VanguardTickets() {
                             <SelectValue placeholder="All Technicians" />
                           </SelectTrigger>
                           <SelectContent className="bg-slate-900 border-cyan-500/20">
-                            <SelectItem value="all">All Technicians</SelectItem>
-                            <SelectItem value="Unassigned">Unassigned</SelectItem>
+                            <SelectItem value="all">All</SelectItem>
                             {uniqueAssignees.map(assignee => (
                               <SelectItem key={assignee} value={assignee}>
                                 {assignee}
@@ -743,63 +595,13 @@ export default function VanguardTickets() {
                         </Select>
                       </div>
                     </div>
-
-                    {/* Active Filters Display */}
-                    {(organizationFilter !== 'all' || priorityFilter !== 'all' || assigneeFilter !== 'all' || statusFilter !== 'all') && (
-                      <div className="mt-4 pt-4 border-t border-cyan-500/20">
-                        <div className="flex flex-wrap gap-2">
-                          {organizationFilter !== 'all' && (
-                            <Badge 
-                              variant="outline" 
-                              className="bg-cyan-500/10 border-cyan-500/30 text-cyan-400 cursor-pointer hover:bg-cyan-500/20"
-                              onClick={() => setOrganizationFilter('all')}
-                            >
-                              <Building2 className="h-3 w-3 mr-1" />
-                              {clients.find(c => c.id === organizationFilter)?.company_name || 'Organization'}
-                              <XCircle className="h-3 w-3 ml-1" />
-                            </Badge>
-                          )}
-                          {statusFilter !== 'all' && (
-                            <Badge 
-                              variant="outline" 
-                              className="bg-blue-500/10 border-blue-500/30 text-blue-400 cursor-pointer hover:bg-blue-500/20"
-                              onClick={() => setStatusFilter('all')}
-                            >
-                              Status: {statusFilter.replace('_', ' ')}
-                              <XCircle className="h-3 w-3 ml-1" />
-                            </Badge>
-                          )}
-                          {priorityFilter !== 'all' && (
-                            <Badge 
-                              variant="outline" 
-                              className="bg-orange-500/10 border-orange-500/30 text-orange-400 cursor-pointer hover:bg-orange-500/20"
-                              onClick={() => setPriorityFilter('all')}
-                            >
-                              Priority: {priorityFilter}
-                              <XCircle className="h-3 w-3 ml-1" />
-                            </Badge>
-                          )}
-                          {assigneeFilter !== 'all' && (
-                            <Badge 
-                              variant="outline" 
-                              className="bg-purple-500/10 border-purple-500/30 text-purple-400 cursor-pointer hover:bg-purple-500/20"
-                              onClick={() => setAssigneeFilter('all')}
-                            >
-                              <User className="h-3 w-3 mr-1" />
-                              {assigneeFilter}
-                              <XCircle className="h-3 w-3 ml-1" />
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Tickets Table - Atera Style */}
+          {/* Tickets Table */}
           <Card className="bg-slate-900/50 border-cyan-500/20">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -832,7 +634,6 @@ export default function VanguardTickets() {
                           {getSortIcon('client')}
                         </div>
                       </th>
-                      <th className="text-left p-3 text-white/60 font-medium text-sm">SLA</th>
                       <th className="text-left p-3 text-white/60 font-medium text-sm">Assigned</th>
                       <th 
                         className="text-left p-3 text-white/60 font-medium text-sm cursor-pointer hover:text-white transition-colors"
@@ -855,91 +656,76 @@ export default function VanguardTickets() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredTickets.map((ticket) => {
-                      return (
-                        <tr 
-                          key={ticket.id} 
-                          className="border-b border-cyan-500/10 hover:bg-cyan-500/5 transition-colors cursor-pointer"
-                          onClick={() => handleViewDetails(ticket)}
-                        >
-                          <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                            <Checkbox 
-                              checked={selectedTickets.includes(ticket.id)}
-                              onCheckedChange={(checked) => handleSelectTicket(ticket.id, checked as boolean)}
-                              className="border-white/20"
-                            />
-                          </td>
-                          <td className="p-3">
-                            <div className="flex items-start gap-3">
-                              <Avatar className="h-8 w-8 mt-1">
-                                <AvatarFallback className="bg-gradient-to-br from-cyan-500/30 to-purple-500/30 text-white text-xs">
-                                  {ticket.customer.substring(0, 2).toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-cyan-400 font-mono text-sm">#{ticket.id.split('-')[1]}</span>
-                                  <span className="text-white font-medium">{ticket.title}</span>
-                                </div>
-                                <div className="text-white/40 text-xs mt-0.5">
-                                  {ticket.contact.name} • Created {ticket.created}
-                                </div>
+                    {filteredTickets.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-12 text-center">
+                          <Ticket className="h-12 w-12 mx-auto text-white/20 mb-4" />
+                          <h3 className="text-lg font-medium text-white mb-2">No tickets found</h3>
+                          <p className="text-white/50 mb-4">Create your first ticket or adjust your filters</p>
+                          <Button 
+                            className="bg-cyan-500 hover:bg-cyan-600 text-black"
+                            onClick={() => setIsCreateDialogOpen(true)}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create Ticket
+                          </Button>
+                        </td>
+                      </tr>
+                    ) : filteredTickets.map((ticket) => (
+                      <tr 
+                        key={ticket.id} 
+                        className="border-b border-cyan-500/10 hover:bg-cyan-500/5 transition-colors cursor-pointer"
+                        onClick={() => handleViewDetails(ticket)}
+                      >
+                        <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                          <Checkbox 
+                            checked={selectedTickets.includes(ticket.id)}
+                            onCheckedChange={(checked) => handleSelectTicket(ticket.id, checked as boolean)}
+                            className="border-white/20"
+                          />
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="h-8 w-8 mt-1">
+                              <AvatarFallback className="bg-gradient-to-br from-cyan-500/30 to-purple-500/30 text-white text-xs">
+                                {(ticket.client_name || 'T').substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-white font-medium">{ticket.title}</span>
+                              </div>
+                              <div className="text-white/40 text-xs mt-0.5">
+                                {ticket.contact_name || 'Unknown'} • {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
                               </div>
                             </div>
-                          </td>
-                          <td className="p-3">
-                            <div className="flex items-center gap-2">
-                              <Building2 className="h-4 w-4 text-cyan-400/60" />
-                              <span className="text-cyan-400 font-medium text-sm">{ticket.customer}</span>
-                            </div>
-                          </td>
-                          <td className="p-3">
-                            <Badge 
-                              variant="outline" 
-                              className={`${
-                                ticket.slaProgress >= 75 ? 'border-red-500/50 text-red-400 bg-red-500/10' :
-                                ticket.slaProgress >= 50 ? 'border-amber-500/50 text-amber-400 bg-amber-500/10' :
-                                'border-slate-500/50 text-slate-400 bg-slate-500/10'
-                              }`}
-                            >
-                              {ticket.sla === 'Completed' ? 'N/A' : 'No SLA'}
-                            </Badge>
-                          </td>
-                          <td className="p-3">
-                            <span className="text-white/80">{ticket.assignee}</span>
-                          </td>
-                          <td className="p-3">
-                            <Badge className={priorityColors[ticket.priority]}>
-                              {ticket.priority}
-                            </Badge>
-                          </td>
-                          <td className="p-3">
-                            <Badge className={statusColors[ticket.status]}>
-                              {ticket.status === 'open' ? 'Open' : 
-                               ticket.status === 'in_progress' ? 'In Progress' :
-                               ticket.status === 'resolved' ? 'Resolved' : 'Closed'}
-                            </Badge>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-cyan-400/60" />
+                            <span className="text-cyan-400 font-medium text-sm">{ticket.client_name || 'Unassigned'}</span>
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <span className="text-white/80">{ticket.assigned_to ? 'Assigned' : 'Unassigned'}</span>
+                        </td>
+                        <td className="p-3">
+                          <Badge className={priorityColors[ticket.priority] || priorityColors.medium}>
+                            {ticket.priority}
+                          </Badge>
+                        </td>
+                        <td className="p-3">
+                          <Badge className={statusColors[ticket.status] || statusColors.open}>
+                            {ticket.status === 'in_progress' ? 'In Progress' : 
+                             ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="scheduled" className="mt-4">
-          <Card className="bg-slate-900/50 border-cyan-500/20">
-            <CardContent className="p-12 text-center">
-              <Calendar className="h-12 w-12 mx-auto text-white/20 mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">No scheduled tickets</h3>
-              <p className="text-white/50 mb-4">Schedule recurring tickets to automate routine maintenance tasks</p>
-              <Button className="bg-cyan-500 hover:bg-cyan-600 text-black">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Scheduled Ticket
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -968,11 +754,14 @@ export default function VanguardTickets() {
                   <SelectValue placeholder="Select customer" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-900 border-cyan-500/20">
-                  <SelectItem value="Acme Corp">Acme Corp</SelectItem>
-                  <SelectItem value="TechStart Inc">TechStart Inc</SelectItem>
-                  <SelectItem value="GlobalTech">GlobalTech</SelectItem>
-                  <SelectItem value="DataFlow LLC">DataFlow LLC</SelectItem>
-                  <SelectItem value="StartupXYZ">StartupXYZ</SelectItem>
+                  {clients.map(client => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.company_name}
+                    </SelectItem>
+                  ))}
+                  {clients.length === 0 && (
+                    <div className="p-2 text-sm text-white/40 text-center">No customers yet. Add one first.</div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -1004,436 +793,11 @@ export default function VanguardTickets() {
             <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="border-cyan-500/20 text-white/80">
               Cancel
             </Button>
-            <Button onClick={handleCreateTicket} className="bg-cyan-500 hover:bg-cyan-600 text-black">
+            <Button onClick={handleCreateTicket} disabled={isCreating} className="bg-cyan-500 hover:bg-cyan-600 text-black">
+              {isCreating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Create Ticket
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Enhanced Ticket Details Dialog */}
-      <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
-        <DialogContent className="bg-slate-900 border-cyan-500/20 max-w-5xl max-h-[90vh] overflow-hidden p-0">
-          {selectedTicket && (
-            <div className="flex flex-col h-full max-h-[90vh]">
-              {/* Header */}
-              <div className="p-6 border-b border-cyan-500/20 bg-slate-900/80">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Ticket className="h-5 w-5 text-cyan-400" />
-                      <span className="text-white/60 font-mono">{selectedTicket.id}</span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-6 w-6 p-0 text-white/40 hover:text-white"
-                        onClick={() => {
-                          navigator.clipboard.writeText(selectedTicket.id);
-                          toast.success('Ticket ID copied');
-                        }}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <h2 className="text-xl font-semibold text-white mb-3">{selectedTicket.title}</h2>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge className={priorityColors[selectedTicket.priority]}>
-                        {selectedTicket.priority}
-                      </Badge>
-                      <Badge className={statusColors[selectedTicket.status]}>
-                        {statusIcons[selectedTicket.status] && (() => {
-                          const Icon = statusIcons[selectedTicket.status];
-                          return <Icon className="h-3 w-3 mr-1" />;
-                        })()}
-                        {selectedTicket.status.replace('_', ' ')}
-                      </Badge>
-                      <Badge variant="outline" className="border-cyan-500/30 text-cyan-400">
-                        {(() => {
-                          const Icon = sourceIcons[selectedTicket.source];
-                          return <Icon className="h-3 w-3 mr-1" />;
-                        })()}
-                        {selectedTicket.source}
-                      </Badge>
-                      {selectedTicket.tags.slice(0, 3).map(tag => (
-                        <Badge key={tag} variant="outline" className="border-white/20 text-white/60 text-xs">
-                          <Tag className="h-2.5 w-2.5 mr-1" />
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="border-cyan-500/20 text-cyan-400">
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      Open Full
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Content Area */}
-              <div className="flex-1 flex overflow-hidden">
-                {/* Main Content */}
-                <ScrollArea className="flex-1 p-6">
-                  <div className="space-y-6">
-                    {/* SLA Progress */}
-                    <Card className="bg-black/30 border-cyan-500/20">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <Timer className="h-4 w-4 text-cyan-400" />
-                            <span className="text-white/80 font-medium">SLA Status</span>
-                          </div>
-                          <span className={`font-medium ${
-                            selectedTicket.slaProgress >= 75 ? 'text-red-400' : 
-                            selectedTicket.slaProgress >= 50 ? 'text-yellow-400' : 'text-emerald-400'
-                          }`}>
-                            {selectedTicket.sla}
-                          </span>
-                        </div>
-                        <Progress 
-                          value={selectedTicket.slaProgress} 
-                          className="h-2 bg-black/40"
-                        />
-                        <div className="flex justify-between mt-2 text-xs text-white/40">
-                          <span>Time Spent: {selectedTicket.timeSpent}</span>
-                          <span>Estimated: {selectedTicket.estimatedTime}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Description */}
-                    <div>
-                      <h3 className="text-white font-medium mb-2 flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-cyan-400" />
-                        Description
-                      </h3>
-                      <p className="text-white/70 bg-black/20 p-4 rounded-lg border border-cyan-500/10 leading-relaxed">
-                        {selectedTicket.description}
-                      </p>
-                    </div>
-
-                    {/* Resolution (if resolved) */}
-                    {selectedTicket.resolution && (
-                      <div>
-                        <h3 className="text-white font-medium mb-2 flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                          Resolution
-                        </h3>
-                        <p className="text-emerald-400/80 bg-emerald-500/10 p-4 rounded-lg border border-emerald-500/20">
-                          {selectedTicket.resolution}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Impact & Category */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <Card className="bg-black/30 border-cyan-500/20">
-                        <CardContent className="p-4">
-                          <Label className="text-white/50 text-xs uppercase tracking-wide">Impact</Label>
-                          <p className={`font-medium mt-1 ${impactLabels[selectedTicket.impact].color}`}>
-                            {impactLabels[selectedTicket.impact].label}
-                          </p>
-                        </CardContent>
-                      </Card>
-                      <Card className="bg-black/30 border-cyan-500/20">
-                        <CardContent className="p-4">
-                          <Label className="text-white/50 text-xs uppercase tracking-wide">Category</Label>
-                          <p className="text-white mt-1">{selectedTicket.category}</p>
-                          <p className="text-white/50 text-sm">{selectedTicket.subcategory}</p>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    {/* Device Info */}
-                    {selectedTicket.device && (
-                      <div>
-                        <h3 className="text-white font-medium mb-2 flex items-center gap-2">
-                          <Monitor className="h-4 w-4 text-cyan-400" />
-                          Affected Device
-                        </h3>
-                        <Card className="bg-black/30 border-cyan-500/20">
-                          <CardContent className="p-4">
-                            <div className="grid grid-cols-3 gap-4">
-                              <div>
-                                <Label className="text-white/50 text-xs">Hostname</Label>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <div className={`w-2 h-2 rounded-full ${
-                                    selectedTicket.device.status === 'online' ? 'bg-emerald-400' :
-                                    selectedTicket.device.status === 'warning' ? 'bg-yellow-400' : 'bg-red-400'
-                                  }`} />
-                                  <span className="text-white font-mono">{selectedTicket.device.hostname}</span>
-                                </div>
-                              </div>
-                              <div>
-                                <Label className="text-white/50 text-xs">IP Address</Label>
-                                <p className="text-white font-mono mt-1">{selectedTicket.device.ip}</p>
-                              </div>
-                              <div>
-                                <Label className="text-white/50 text-xs">Operating System</Label>
-                                <p className="text-white mt-1">{selectedTicket.device.os}</p>
-                              </div>
-                              <div>
-                                <Label className="text-white/50 text-xs">Last Seen</Label>
-                                <p className="text-white/70 mt-1">{selectedTicket.device.lastSeen}</p>
-                              </div>
-                              <div>
-                                <Label className="text-white/50 text-xs">Agent Version</Label>
-                                <p className="text-white/70 mt-1">{selectedTicket.device.agentVersion}</p>
-                              </div>
-                              <div>
-                                <Button variant="outline" size="sm" className="mt-1 border-cyan-500/20 text-cyan-400 text-xs">
-                                  <ArrowUpRight className="h-3 w-3 mr-1" />
-                                  View Device
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-                    )}
-
-                    {/* Attachments */}
-                    {selectedTicket.attachments.length > 0 && (
-                      <div>
-                        <h3 className="text-white font-medium mb-2 flex items-center gap-2">
-                          <Paperclip className="h-4 w-4 text-cyan-400" />
-                          Attachments ({selectedTicket.attachments.length})
-                        </h3>
-                        <div className="space-y-2">
-                          {selectedTicket.attachments.map(att => (
-                            <div 
-                              key={att.id}
-                              className="flex items-center justify-between p-3 bg-black/30 rounded-lg border border-cyan-500/10 hover:border-cyan-500/30 transition-colors cursor-pointer"
-                            >
-                              <div className="flex items-center gap-3">
-                                {att.type === 'image' ? (
-                                  <Image className="h-4 w-4 text-purple-400" />
-                                ) : att.type === 'log' ? (
-                                  <FileText className="h-4 w-4 text-amber-400" />
-                                ) : (
-                                  <FileText className="h-4 w-4 text-blue-400" />
-                                )}
-                                <div>
-                                  <p className="text-white text-sm">{att.name}</p>
-                                  <p className="text-white/40 text-xs">{att.size} • {att.uploadedBy} • {att.uploadedAt}</p>
-                                </div>
-                              </div>
-                              <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300">
-                                Download
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Related Tickets & Alerts */}
-                    <div className="grid grid-cols-2 gap-4">
-                      {selectedTicket.relatedTickets.length > 0 && (
-                        <div>
-                          <h3 className="text-white font-medium mb-2 flex items-center gap-2">
-                            <RefreshCw className="h-4 w-4 text-cyan-400" />
-                            Related Tickets
-                          </h3>
-                          <div className="space-y-2">
-                            {selectedTicket.relatedTickets.map(rt => (
-                              <div key={rt} className="flex items-center gap-2 p-2 bg-black/20 rounded border border-cyan-500/10">
-                                <Ticket className="h-4 w-4 text-white/40" />
-                                <span className="text-cyan-400 font-mono text-sm">{rt}</span>
-                                <ChevronRight className="h-4 w-4 text-white/20 ml-auto" />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {selectedTicket.linkedAlerts.length > 0 && (
-                        <div>
-                          <h3 className="text-white font-medium mb-2 flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4 text-amber-400" />
-                            Linked Alerts
-                          </h3>
-                          <div className="space-y-2">
-                            {selectedTicket.linkedAlerts.map(alt => (
-                              <div key={alt} className="flex items-center gap-2 p-2 bg-black/20 rounded border border-amber-500/10">
-                                <AlertTriangle className="h-4 w-4 text-amber-400" />
-                                <span className="text-amber-400 font-mono text-sm">{alt}</span>
-                                <ChevronRight className="h-4 w-4 text-white/20 ml-auto" />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Activity Timeline */}
-                    <div>
-                      <h3 className="text-white font-medium mb-4 flex items-center gap-2">
-                        <History className="h-4 w-4 text-cyan-400" />
-                        Activity Timeline
-                      </h3>
-                      <div className="space-y-4">
-                        {selectedTicket.activities.map((activity, idx) => (
-                          <div key={activity.id} className="flex gap-3">
-                            <div className="flex flex-col items-center">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                activity.type === 'comment' ? 'bg-blue-500/20 text-blue-400' :
-                                activity.type === 'status_change' ? 'bg-cyan-500/20 text-cyan-400' :
-                                activity.type === 'assignment' ? 'bg-purple-500/20 text-purple-400' :
-                                activity.type === 'note' ? 'bg-amber-500/20 text-amber-400' :
-                                'bg-slate-500/20 text-slate-400'
-                              }`}>
-                                {activity.type === 'comment' && <MessageSquare className="h-4 w-4" />}
-                                {activity.type === 'status_change' && <RefreshCw className="h-4 w-4" />}
-                                {activity.type === 'assignment' && <User className="h-4 w-4" />}
-                                {activity.type === 'note' && <FileText className="h-4 w-4" />}
-                                {activity.type === 'system' && <Zap className="h-4 w-4" />}
-                              </div>
-                              {idx < selectedTicket.activities.length - 1 && (
-                                <div className="w-px h-full bg-cyan-500/20 my-1" />
-                              )}
-                            </div>
-                            <div className="flex-1 pb-4">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-white font-medium text-sm">{activity.user}</span>
-                                <span className="text-white/40 text-xs">{activity.timestamp}</span>
-                              </div>
-                              <p className="text-white/70 text-sm bg-black/20 p-3 rounded-lg border border-cyan-500/10">
-                                {activity.content}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </ScrollArea>
-
-                {/* Sidebar */}
-                <div className="w-80 border-l border-cyan-500/20 p-4 bg-black/20 overflow-y-auto">
-                  {/* Quick Stats */}
-                  <div className="space-y-4 mb-6">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-white/50">Created</span>
-                      <span className="text-white">{selectedTicket.created}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-white/50">First Response</span>
-                      <span className={selectedTicket.firstResponseTime ? 'text-emerald-400' : 'text-amber-400'}>
-                        {selectedTicket.firstResponseTime || 'Pending'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-white/50">Time Spent</span>
-                      <span className="text-white">{selectedTicket.timeSpent}</span>
-                    </div>
-                  </div>
-
-                  <Separator className="bg-cyan-500/20 mb-4" />
-
-                  {/* Assignee */}
-                  <div className="mb-6">
-                    <Label className="text-white/50 text-xs uppercase tracking-wide">Assignee</Label>
-                    <div className="mt-2 flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-cyan-500/20 text-cyan-400">
-                          {selectedTicket.assignee === 'Unassigned' ? '?' : selectedTicket.assignee.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-white font-medium">{selectedTicket.assignee}</p>
-                        {selectedTicket.assignee !== 'Unassigned' && (
-                          <p className="text-white/40 text-xs">Technician</p>
-                        )}
-                      </div>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full mt-3 border-cyan-500/20 text-cyan-400"
-                      onClick={() => {
-                        handleAssign(selectedTicket.id);
-                        setSelectedTicket({ ...selectedTicket, assignee: 'Current User' });
-                      }}
-                    >
-                      <User className="h-3 w-3 mr-2" />
-                      {selectedTicket.assignee === 'Unassigned' ? 'Assign to Me' : 'Reassign'}
-                    </Button>
-                  </div>
-
-                  <Separator className="bg-cyan-500/20 mb-4" />
-
-                  {/* Contact */}
-                  <div className="mb-6">
-                    <Label className="text-white/50 text-xs uppercase tracking-wide">Requester</Label>
-                    <div className="mt-2 space-y-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-purple-500/20 text-purple-400">
-                            {selectedTicket.contact.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-white font-medium">{selectedTicket.contact.name}</p>
-                          <p className="text-white/40 text-xs">{selectedTicket.contact.role}</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2 pl-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Mail className="h-3 w-3 text-white/40" />
-                          <span className="text-cyan-400 text-xs">{selectedTicket.contact.email}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Phone className="h-3 w-3 text-white/40" />
-                          <span className="text-white/70 text-xs">{selectedTicket.contact.phone}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Building2 className="h-3 w-3 text-white/40" />
-                          <span className="text-white/70 text-xs">{selectedTicket.customer}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator className="bg-cyan-500/20 mb-4" />
-
-                  {/* Actions */}
-                  <div className="space-y-2">
-                    <Button 
-                      className="w-full bg-cyan-500 hover:bg-cyan-600 text-black"
-                      onClick={() => {
-                        toast.success('Reply sent');
-                      }}
-                    >
-                      <Send className="h-4 w-4 mr-2" />
-                      Reply
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full border-cyan-500/20 text-white/80"
-                      onClick={() => handleAddNote(selectedTicket.id)}
-                    >
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Add Note
-                    </Button>
-                    {selectedTicket.status !== 'resolved' && selectedTicket.status !== 'closed' && (
-                      <Button 
-                        variant="outline" 
-                        className="w-full border-emerald-500/20 text-emerald-400"
-                        onClick={() => {
-                          handleCloseTicket(selectedTicket.id);
-                          setSelectedTicket(null);
-                        }}
-                      >
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Resolve Ticket
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </DialogContent>
       </Dialog>
     </div>
