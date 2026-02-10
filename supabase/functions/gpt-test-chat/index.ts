@@ -75,7 +75,9 @@ serve(async (req) => {
       }
     }
 
-    const fullSystemPrompt = systemPrompt + (searchContext
+    const formattingInstruction = "\n\nIMPORTANT FORMATTING: Always format your responses using clean Markdown. Use **bold** for emphasis, ## headings for sections, numbered lists (1. 2. 3.) for steps, bullet points for lists, and proper paragraph breaks for readability. Never output raw unformatted walls of text.";
+
+    const fullSystemPrompt = systemPrompt + formattingInstruction + (searchContext
       ? "\n\nYou have access to real-time web search. Use the search results provided below to give accurate, up-to-date answers. Cite sources when relevant." + searchContext
       : "");
 
