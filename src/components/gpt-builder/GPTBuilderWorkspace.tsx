@@ -20,13 +20,19 @@ import { toast } from 'sonner';
 
 type SidePanel = 'config' | 'knowledge' | 'actions' | 'embed' | null;
 
-export function GPTBuilderWorkspace() {
+interface GPTBuilderWorkspaceProps {
+  editGptId?: string;
+}
+
+export function GPTBuilderWorkspace({ editGptId }: GPTBuilderWorkspaceProps) {
   const navigate = useNavigate();
-  const { config, messages, isGenerating, sendMessage, updateConfig, resetConfig, stopGeneration } = useGPTBuilderChat();
-  const { createGPT } = useCustomGPTs();
+  const { config, messages, isGenerating, isLoading, savedGptId, setSavedGptId, sendMessage, updateConfig, resetConfig, stopGeneration } = useGPTBuilderChat(editGptId);
+  const { createGPT, updateGPT } = useCustomGPTs();
   const [activeTab, setActiveTab] = useState<'chat' | 'preview' | 'config'>('chat');
   const [isSaving, setIsSaving] = useState(false);
   const [sidePanel, setSidePanel] = useState<SidePanel>(null);
+
+  const isEditMode = !!savedGptId;
 
   const togglePanel = (panel: SidePanel) => {
     setSidePanel(prev => prev === panel ? null : panel);
@@ -39,7 +45,7 @@ export function GPTBuilderWorkspace() {
     }
     setIsSaving(true);
     try {
-      const result = await createGPT({
+      const gptData = {
         name: config.name,
         description: config.description,
         system_prompt: config.system_prompt,
@@ -51,10 +57,21 @@ export function GPTBuilderWorkspace() {
         placeholder_prompt: config.placeholder_prompt,
         category: config.category,
         features: config.features,
-      });
-      if (result) {
-        toast.success(`${config.name} has been created!`);
-        navigate('/dashboard/gpt');
+      };
+
+      if (isEditMode && savedGptId) {
+        const result = await updateGPT(savedGptId, gptData);
+        if (result) {
+          toast.success(`${config.name} has been updated!`);
+        }
+      } else {
+        const result = await createGPT(gptData);
+        if (result) {
+          setSavedGptId(result.id);
+          toast.success(`${config.name} has been created!`);
+          // Update URL to edit mode without full navigation
+          window.history.replaceState(null, '', `/ai-studio/gpt-builder/${result.id}`);
+        }
       }
     } catch {
       toast.error('Failed to save GPT');
@@ -79,11 +96,19 @@ export function GPTBuilderWorkspace() {
       case 'actions':
         return <GPTBuilderActionsPanel config={config} onChange={updateConfig} onClose={() => setSidePanel(null)} />;
       case 'embed':
-        return <GPTBuilderEmbedPanel config={config} onChange={updateConfig} onClose={() => setSidePanel(null)} />;
+        return <GPTBuilderEmbedPanel config={config} onChange={updateConfig} onClose={() => setSidePanel(null)} gptId={savedGptId || undefined} />;
       default:
         return null;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center bg-[#09090b]">
+        <Loader2 className="h-8 w-8 animate-spin text-white/30" />
+      </div>
+    );
+  }
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -110,6 +135,9 @@ export function GPTBuilderWorkspace() {
               <span className="text-sm font-medium text-white/80 truncate max-w-[200px]">
                 {config.name || 'New GPT'}
               </span>
+              {isEditMode && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.06] text-white/40">Editing</span>
+              )}
             </div>
           </div>
 
@@ -177,7 +205,7 @@ export function GPTBuilderWorkspace() {
               className="h-8 bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5"
             >
               {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-              <span className="hidden sm:inline">Save GPT</span>
+              <span className="hidden sm:inline">{isEditMode ? 'Update GPT' : 'Save GPT'}</span>
             </Button>
           </div>
         </header>

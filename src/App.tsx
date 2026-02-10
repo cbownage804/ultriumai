@@ -661,6 +661,13 @@ function AppRouter() {
             </Suspense>
           </ProtectedRoute>
         } />
+        <Route path="/ai-studio/gpt-builder/:gptId" element={
+          <ProtectedRoute>
+            <Suspense fallback={<PageSkeleton variant="dashboard" />}>
+              <GPTBuilderPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
         <Route path="/safetrack" element={<Navigate to="/vanguard/app/assets" replace />} />
         <Route path="/dashboard/msp/billing" element={<Navigate to="/vanguard/app/billing" replace />} />
         <Route path="/business-billing" element={<Navigate to="/vanguard/app/billing" replace />} />
