@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,12 +51,18 @@ interface CertificateManagerProps {
 
 export function CertificateManager({ agentId, sendCommand }: CertificateManagerProps) {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [store, setStore] = useState<'personal' | 'root' | 'ca' | 'trustedpeople'>('personal');
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
+  const hasLoadedRef = useRef(false);
 
-  // No auto-load - user must click Refresh to avoid flooding the command queue
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadCertificates();
+    }
+  }, [agentId]);
 
   const loadCertificates = async () => {
     setIsLoading(true);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +65,7 @@ interface ScheduledTasksManagerProps {
 
 export function ScheduledTasksManager({ agentId, sendCommand }: ScheduledTasksManagerProps) {
   const [tasks, setTasks] = useState<ScheduledTask[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -75,8 +75,14 @@ export function ScheduledTasksManager({ agentId, sendCommand }: ScheduledTasksMa
     schedule: 'daily',
     time: '09:00',
   });
+  const hasLoadedRef = useRef(false);
 
-  // No auto-load - user must click Refresh to avoid flooding the command queue
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadTasks();
+    }
+  }, [agentId]);
 
   const loadTasks = async () => {
     setIsLoading(true);

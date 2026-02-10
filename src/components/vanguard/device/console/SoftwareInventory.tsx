@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,8 +63,14 @@ export function SoftwareInventory({ agentId, sendCommand }: SoftwareInventoryPro
   const [packageManager, setPackageManager] = useState<"chocolatey" | "winget">("chocolatey");
   const [installing, setInstalling] = useState(false);
   const [uninstallingName, setUninstallingName] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
-  // No auto-load - user must click Refresh to avoid flooding the command queue
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadSoftware();
+    }
+  }, [agentId]);
 
   const loadSoftware = async () => {
     setIsLoading(true);
