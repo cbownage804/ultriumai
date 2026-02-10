@@ -12,10 +12,13 @@ import {
   MessageSquare, Database, Globe, FileText,
   Layout, ShoppingCart, BarChart3, FileCode,
   Zap, Plus, Search, Star, Command,
+  MoreVertical, Settings, Trash2, Copy,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface RecentProject {
   id: string;
@@ -79,6 +82,26 @@ export const AIStudioDashboardHub = () => {
       localStorage.setItem('ai-studio-pinned', JSON.stringify([...next]));
       return next;
     });
+  };
+
+  const deleteProject = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Delete this project? This cannot be undone.')) return;
+    const { error } = await supabase.from('builder_projects').delete().eq('id', id);
+    if (error) { toast.error('Failed to delete project'); return; }
+    setRecentProjects(prev => prev.filter(p => p.id !== id));
+    setTotalProjects(prev => prev - 1);
+    toast.success('Project deleted');
+  };
+
+  const deleteGPT = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Delete this GPT? This cannot be undone.')) return;
+    const { error } = await supabase.from('custom_gpts').delete().eq('id', id);
+    if (error) { toast.error('Failed to delete GPT'); return; }
+    setRecentGPTs(prev => prev.filter(g => g.id !== id));
+    setTotalGPTs(prev => prev - 1);
+    toast.success('GPT deleted');
   };
 
   useEffect(() => {
@@ -312,12 +335,28 @@ export const AIStudioDashboardHub = () => {
                     </div>
                   )}
                   <Badge className="absolute top-2 left-2 text-[10px] bg-violet-500/80 border-0">App</Badge>
-                  <button
-                    onClick={(e) => togglePin(p.id, e)}
-                    className="absolute top-2 right-2 h-6 w-6 rounded-md bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60"
-                  >
-                    <Star className={cn("h-3 w-3", pinnedIds.has(p.id) ? "text-amber-400 fill-amber-400" : "text-white/60")} />
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <button className="absolute top-2 right-2 h-6 w-6 rounded-md bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60">
+                        <MoreVertical className="h-3.5 w-3.5 text-white/80" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); togglePin(p.id, e as any); }}>
+                        <Star className={cn("h-3.5 w-3.5 mr-2", pinnedIds.has(p.id) ? "text-amber-400 fill-amber-400" : "")} />
+                        {pinnedIds.has(p.id) ? 'Unpin' : 'Pin'}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/ai-studio/app-builder?project=${p.id}`); }}>
+                        <Settings className="h-3.5 w-3.5 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => deleteProject(p.id, e as any)}>
+                        <Trash2 className="h-3.5 w-3.5 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
                 <div className="p-3">
                   <p className="font-medium text-sm truncate text-foreground">{p.name}</p>
@@ -341,12 +380,28 @@ export const AIStudioDashboardHub = () => {
                     <Bot className="h-6 w-6 text-muted-foreground/30" />
                   )}
                   <Badge className="absolute top-2 left-2 text-[10px] bg-primary/80 border-0">GPT</Badge>
-                  <button
-                    onClick={(e) => togglePin(g.id, e)}
-                    className="absolute top-2 right-2 h-6 w-6 rounded-md bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60"
-                  >
-                    <Star className={cn("h-3 w-3", pinnedIds.has(g.id) ? "text-amber-400 fill-amber-400" : "text-white/60")} />
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <button className="absolute top-2 right-2 h-6 w-6 rounded-md bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60">
+                        <MoreVertical className="h-3.5 w-3.5 text-white/80" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); togglePin(g.id, e as any); }}>
+                        <Star className={cn("h-3.5 w-3.5 mr-2", pinnedIds.has(g.id) ? "text-amber-400 fill-amber-400" : "")} />
+                        {pinnedIds.has(g.id) ? 'Unpin' : 'Pin'}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/ai-studio/gpt-builder/${g.id}`); }}>
+                        <Settings className="h-3.5 w-3.5 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => deleteGPT(g.id, e as any)}>
+                        <Trash2 className="h-3.5 w-3.5 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
                 <div className="p-3">
                   <p className="font-medium text-sm truncate text-foreground">{g.name}</p>
