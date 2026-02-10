@@ -33,6 +33,7 @@ interface RecentGPT {
   name: string;
   updated_at: string;
   avatar_url?: string | null;
+  logo_url?: string | null;
 }
 
 const GPT_TEMPLATES = [
@@ -111,7 +112,7 @@ export const AIStudioDashboardHub = () => {
       try {
         const [projectsRes, gptsRes, ledgerRes, projectCountRes, gptCountRes, msgsRes] = await Promise.all([
           supabase.from("builder_projects").select("id, name, updated_at, thumbnail_url").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(4),
-          supabase.from("custom_gpts").select("id, name, updated_at, avatar_url").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(4),
+          supabase.from("custom_gpts").select("id, name, updated_at, avatar_url, logo_url").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(4),
           supabase.from("ai_credit_ledger").select("id, usage_type, credits_used, description, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
           supabase.from("builder_projects").select("id", { count: "exact", head: true }).eq("user_id", user.id),
           supabase.from("custom_gpts").select("id", { count: "exact", head: true }).eq("user_id", user.id),
@@ -427,7 +428,9 @@ export const AIStudioDashboardHub = () => {
                 className="text-left rounded-xl border border-border/50 bg-card/60 hover:border-primary/30 hover:bg-card/80 transition-all group overflow-hidden"
               >
                 <div className="w-full aspect-[16/10] bg-muted/20 relative overflow-hidden flex items-center justify-center bg-gradient-to-br from-primary/10 to-muted/10">
-                  {g.avatar_url ? (
+                  {g.logo_url ? (
+                    <img src={g.logo_url} alt={g.name} className="w-full h-full object-cover object-top" loading="lazy" />
+                  ) : g.avatar_url ? (
                     <img src={g.avatar_url} alt={g.name} className="w-12 h-12 rounded-full object-cover" loading="lazy" />
                   ) : (
                     <Bot className="h-6 w-6 text-muted-foreground/30" />
