@@ -621,8 +621,14 @@ export function AIAppBuilderWorkspace() {
     });
   };
 
-  const handleRename = () => {
-    if (editName.trim()) renameProject(editName.trim());
+  const handleRename = async () => {
+    const newName = editName.trim();
+    if (newName && newName !== project.name) {
+      renameProject(newName);
+      // Immediately persist the rename to Supabase
+      await saveProject(newName, project.files, branches, activeBranch, messages);
+      toast.success(`Renamed to "${newName}"`);
+    }
     setIsEditingName(false);
   };
 
