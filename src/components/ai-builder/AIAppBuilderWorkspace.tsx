@@ -474,6 +474,14 @@ export function AIAppBuilderWorkspace() {
     sendMessage(`Fix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel);
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, fixAttemptCount, lastFixError]);
 
+  // Auto-fix pipeline: automatically attempt to fix preview errors
+  const handleAutoFixError = useCallback((error: import('./ErrorConsole').PreviewError) => {
+    if (isGenerating || fixAttemptCount >= MAX_FIX_ATTEMPTS) return;
+    autoRecovery.attemptRecovery(error, project.files, (prompt) => {
+      sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel);
+    });
+  }, [isGenerating, fixAttemptCount, autoRecovery, project.files, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel]);
+
   const handleForkFromMessage = useCallback(async (messageId: string) => {
     await saveProject(project.name, project.files, branches, activeBranch, messages);
     const msgIndex = messages.findIndex(m => m.id === messageId);
@@ -714,21 +722,24 @@ export function AIAppBuilderWorkspace() {
 
   // ─── Left sidebar icon bar items ───
   const sidebarIcons = [
-    { id: 'database', icon: Database, label: 'Database', show: !!supabaseConfig, active: showDatabase || showDbExplorer },
-    { id: 'auth', icon: Shield, label: 'Auth', show: !!supabaseConfig, active: showAuth },
-    { id: 'storage', icon: FolderOpen, label: 'Storage', show: !!supabaseConfig, active: showStorage },
-    { id: 'edgeFunctions', icon: Zap, label: 'Edge Functions', show: true, active: showEdgeFunctions },
-    { id: 'knowledge', icon: Brain, label: 'Knowledge', show: true, active: showKnowledge },
-    { id: 'codeIntel', icon: Sparkles, label: 'Code Intelligence', show: true, active: showCodeIntel },
-    { id: 'componentLib', icon: Layers, label: 'Components', show: true, active: showComponentLib },
-    { id: 'testingSuite', icon: Bug, label: 'Testing & Debug', show: true, active: showTestingSuite },
-    { id: 'envVars', icon: Variable, label: 'Env Variables', show: true, active: showEnvVars },
-    { id: 'assets', icon: Image, label: 'Assets', show: true, active: showAssets },
-    { id: 'packages', icon: Package, label: 'Packages', show: true, active: showPackages },
-    { id: 'history', icon: History, label: 'Version History', show: true, active: showVersionHistory },
-    { id: 'activity', icon: Clock, label: 'Activity', show: true, active: showActivity },
-    { id: 'exportGuide', icon: Rocket, label: 'Export & Deploy Guide', show: true, active: showExportGuide },
-    { id: 'helpCenter' as any, icon: BookOpen, label: 'Help Center', show: true, active: showHelpCenter },
+    // ── Data & Auth ──
+    { id: 'database', icon: Database, label: 'Database', show: !!supabaseConfig, active: showDatabase || showDbExplorer, group: 'data' },
+    { id: 'auth', icon: Shield, label: 'Auth', show: !!supabaseConfig, active: showAuth, group: 'data' },
+    { id: 'storage', icon: FolderOpen, label: 'Storage', show: !!supabaseConfig, active: showStorage, group: 'data' },
+    { id: 'edgeFunctions', icon: Zap, label: 'Edge Functions', show: true, active: showEdgeFunctions, group: 'data' },
+    // ── AI & Intelligence ──
+    { id: 'knowledge', icon: Brain, label: 'Knowledge', show: true, active: showKnowledge, group: 'ai' },
+    { id: 'codeIntel', icon: Sparkles, label: 'Code Intelligence', show: true, active: showCodeIntel, group: 'ai' },
+    { id: 'componentLib', icon: Layers, label: 'Components', show: true, active: showComponentLib, group: 'ai' },
+    // ── Project ──
+    { id: 'testingSuite', icon: Bug, label: 'Testing & Debug', show: true, active: showTestingSuite, group: 'project' },
+    { id: 'envVars', icon: Variable, label: 'Env Variables', show: true, active: showEnvVars, group: 'project' },
+    { id: 'assets', icon: Image, label: 'Assets', show: true, active: showAssets, group: 'project' },
+    { id: 'packages', icon: Package, label: 'Packages', show: true, active: showPackages, group: 'project' },
+    { id: 'history', icon: History, label: 'Version History', show: true, active: showVersionHistory, group: 'project' },
+    { id: 'activity', icon: Clock, label: 'Activity', show: true, active: showActivity, group: 'project' },
+    { id: 'exportGuide', icon: Rocket, label: 'Export & Deploy Guide', show: true, active: showExportGuide, group: 'project' },
+    { id: 'helpCenter' as any, icon: BookOpen, label: 'Help Center', show: true, active: showHelpCenter, group: 'project' },
   ] as const;
 
   return (
@@ -930,9 +941,9 @@ export function AIAppBuilderWorkspace() {
             mobileTab === 'chat' ? (
               <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} />
             ) : (
-              <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)}>
-                <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} />
-              </BuilderPreviewPanel>
+                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError}>
+                  <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} />
+                </BuilderPreviewPanel>
             )
           ) : (
           <ResizablePanelGroup direction="horizontal" className="h-full">
@@ -985,27 +996,34 @@ export function AIAppBuilderWorkspace() {
 
                   <div className="h-px w-4 bg-white/[0.06] my-1.5" />
 
-                  {sidebarIcons.filter(i => i.show).map(item => (
-                    <Tooltip key={item.id}>
-                      <TooltipTrigger asChild>
-                        <motion.button
-                          whileHover={{ scale: 1.12 }}
-                          whileTap={{ scale: 0.92 }}
-                          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                          onClick={() => openPanel(item.id as any)}
-                          className={cn(
-                            "h-7 w-7 rounded-md flex items-center justify-center transition-all",
-                            item.active
-                              ? "text-cyan-400 bg-cyan-500/10 shadow-[0_0_8px_rgba(6,182,212,0.15)]"
-                              : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]"
-                          )}
-                        >
-                          <item.icon className="h-3.5 w-3.5" />
-                        </motion.button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>
-                    </Tooltip>
-                  ))}
+                  {sidebarIcons.filter(i => i.show).map((item, idx, arr) => {
+                    const prevGroup = idx > 0 ? arr[idx - 1].group : null;
+                    const showDivider = prevGroup && prevGroup !== item.group;
+                    return (
+                      <div key={item.id}>
+                        {showDivider && <div className="h-px w-4 bg-white/[0.06] my-1.5 mx-auto" />}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <motion.button
+                              whileHover={{ scale: 1.12 }}
+                              whileTap={{ scale: 0.92 }}
+                              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                              onClick={() => openPanel(item.id as any)}
+                              className={cn(
+                                "h-7 w-7 rounded-md flex items-center justify-center transition-all",
+                                item.active
+                                  ? "text-cyan-400 bg-cyan-500/10 shadow-[0_0_8px_rgba(6,182,212,0.15)]"
+                                  : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]"
+                              )}
+                            >
+                              <item.icon className="h-3.5 w-3.5" />
+                            </motion.button>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    );
+                  })}
 
                   <div className="mt-auto flex flex-col items-center gap-0.5">
                     <Tooltip>
@@ -1111,7 +1129,7 @@ export function AIAppBuilderWorkspace() {
                               <ResizablePanelGroup direction="horizontal" className="h-full">
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="preview" className="h-full">
-                                    <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)}>
+                                    <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError}>
                                       <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} />
                                     </BuilderPreviewPanel>
                                   </div>
@@ -1128,7 +1146,7 @@ export function AIAppBuilderWorkspace() {
                               </ResizablePanelGroup>
                             ) : rightTab === 'preview' || !hasFiles ? (
                               <div data-tour="preview" className="h-full">
-                                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)}>
+                                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError}>
                                   <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} />
                                 </BuilderPreviewPanel>
                               </div>

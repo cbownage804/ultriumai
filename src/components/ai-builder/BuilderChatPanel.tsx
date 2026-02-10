@@ -454,22 +454,25 @@ export function BuilderChatPanel({
             </div>
           ) : (
             messages.map((msg, idx) => (
-              <div
+              <motion.div
                 key={msg.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: idx === messages.length - 1 ? 0.05 : 0 }}
                 className={cn(
                   'flex gap-2.5 group/msg relative',
                   msg.role === 'user' ? 'justify-end' : 'justify-start'
                 )}
               >
                 {msg.role === 'assistant' && (
-                  <div className="h-6 w-6 rounded-md bg-gradient-to-br from-cyan-500/20 to-violet-500/20 flex items-center justify-center shrink-0 mt-0.5 border border-white/[0.06]">
-                    <Bot className="h-3 w-3 text-cyan-400" />
+                  <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-cyan-500/20 to-violet-500/20 flex items-center justify-center shrink-0 mt-0.5 border border-white/[0.08] shadow-sm shadow-cyan-500/5">
+                    <Bot className="h-3.5 w-3.5 text-cyan-400" />
                   </div>
                 )}
                 <div className="relative max-w-[88%]">
                   {/* Hover actions */}
                   <div className={cn(
-                    "absolute -top-5 flex items-center gap-0.5 opacity-0 group-hover/msg:opacity-100 transition-opacity z-10",
+                    "absolute -top-6 flex items-center gap-0.5 opacity-0 group-hover/msg:opacity-100 transition-opacity z-10 bg-[#0d0d14]/90 backdrop-blur-sm rounded-md border border-white/[0.06] px-0.5 py-0.5",
                     msg.role === 'user' ? 'right-0' : 'left-0'
                   )}>
                     <button
@@ -538,10 +541,10 @@ export function BuilderChatPanel({
                   ) : (
                   <div
                     className={cn(
-                      'rounded-xl px-3.5 py-2.5',
+                      'rounded-2xl px-3.5 py-2.5',
                       msg.role === 'user'
-                        ? 'bg-gradient-to-r from-cyan-600/80 to-cyan-500/80 text-white text-[13px]'
-                        : 'bg-white/[0.03] border border-white/[0.06]'
+                        ? 'bg-gradient-to-br from-cyan-600/80 to-cyan-500/70 text-white text-[13px] shadow-sm shadow-cyan-500/10'
+                        : 'bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm'
                     )}
                   >
                     {msg.role === 'assistant' ? (
@@ -556,13 +559,21 @@ export function BuilderChatPanel({
                     )}
                   </div>
                   )}
+                  {/* Timestamp */}
+                  <div className={cn(
+                    "text-[9px] text-white/15 mt-1 opacity-0 group-hover/msg:opacity-100 transition-opacity",
+                    msg.role === 'user' ? 'text-right' : 'text-left'
+                  )}>
+                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {msg.tokenEstimate && ` · ~${msg.tokenEstimate} tokens`}
+                  </div>
                 </div>
                 {msg.role === 'user' && (
-                  <div className="h-6 w-6 rounded-md bg-white/5 flex items-center justify-center shrink-0 mt-0.5 border border-white/[0.06]">
-                    <User className="h-3 w-3 text-white/50" />
+                  <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-white/[0.06] to-white/[0.02] flex items-center justify-center shrink-0 mt-0.5 border border-white/[0.08]">
+                    <User className="h-3.5 w-3.5 text-white/50" />
                   </div>
                 )}
-              </div>
+              </motion.div>
             ))
           )}
 

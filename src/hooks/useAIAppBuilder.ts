@@ -29,10 +29,13 @@ export interface VersionSnapshot {
 const BUILDER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-app-builder`;
 const FILE_DELIMITER = /^===FILE:\s*(.+?)===$/;
 
-/** Parse the ===FILE: path=== delimited format into ProjectFile[] */
-export function parseMultiFileOutput(raw: string): ProjectFile[] {
+const DELETE_DELIMITER = /^===DELETE:\s*(.+?)===$/;
+
+/** Parse the ===FILE: path=== and ===DELETE: path=== delimited format */
+export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; deletions: string[] } {
   const lines = raw.split('\n');
   const files: ProjectFile[] = [];
+  const deletions: string[] = [];
   let currentPath: string | null = null;
   let currentLines: string[] = [];
 
@@ -52,6 +55,14 @@ export function parseMultiFileOutput(raw: string): ProjectFile[] {
   };
 
   for (const line of lines) {
+    const deleteMatch = line.match(DELETE_DELIMITER);
+    if (deleteMatch) {
+      flush();
+      currentPath = null;
+      currentLines = [];
+      deletions.push(deleteMatch[1].trim());
+      continue;
+    }
     const match = line.match(FILE_DELIMITER);
     if (match) {
       flush();
@@ -63,7 +74,7 @@ export function parseMultiFileOutput(raw: string): ProjectFile[] {
   }
   flush();
 
-  if (files.length === 0) {
+  if (files.length === 0 && deletions.length === 0) {
     const trimmed = raw.trim();
     const htmlMatch = trimmed.match(/```html\n?([\s\S]*?)```/);
     const html = htmlMatch ? htmlMatch[1] : trimmed;
@@ -72,7 +83,7 @@ export function parseMultiFileOutput(raw: string): ProjectFile[] {
     }
   }
 
-  return files;
+  return { files, deletions };
 }
 
 /** Generate contextual follow-up suggestions based on the response */
@@ -191,7 +202,8 @@ export function useAIAppBuilder() {
     const phaseTimer1 = setTimeout(() => setThinkingPhase('planning'), 1500);
     const phaseTimer2 = setTimeout(() => setThinkingPhase('writing'), 3500);
 
-    // Build conversation context
+    // Build conversation context — smart windowing: only last N messages
+    const MAX_CONTEXT_MESSAGES = 20;
     const apiMessages: { role: string; content: string | any[] }[] = [];
 
     // Prepend knowledge context if provided
@@ -199,8 +211,14 @@ export function useAIAppBuilder() {
       apiMessages.push({ role: 'system', content: knowledgeContext });
     }
 
-    for (const m of messages) {
-      apiMessages.push({ role: m.role, content: m.content });
+    // Only include the last N messages to avoid token bloat
+    const recentMessages = messages.slice(-MAX_CONTEXT_MESSAGES);
+    for (const m of recentMessages) {
+      // Strip file content from old assistant messages to save tokens
+      const content = m.role === 'assistant' && m !== recentMessages[recentMessages.length - 1]
+        ? m.content.replace(/===FILE:[\s\S]*?(?====FILE:|$)/g, '[file content omitted]').slice(0, 500)
+        : m.content;
+      apiMessages.push({ role: m.role, content });
     }
 
     // Build the user message content — send manifest + only relevant files for efficiency
@@ -234,7 +252,7 @@ export function useAIAppBuilder() {
         ? `\n\n(${omittedCount} other files exist but are omitted for brevity. Only output files you need to change.)`
         : '';
 
-      return `PROJECT FILE MANIFEST (${files.length} files total):\n${manifest}\n\nFILE CONTENTS:\n${fileContext}${omittedNote}\n\nIMPORTANT: Only output ===FILE: path=== blocks for files you are CHANGING. Do NOT re-output unchanged files.\n\nUser request: ${userInput}`;
+      return `PROJECT FILE MANIFEST (${files.length} files total):\n${manifest}\n\nFILE CONTENTS:\n${fileContext}${omittedNote}\n\nIMPORTANT: Only output ===FILE: path=== blocks for files you are CHANGING. To delete a file, use ===DELETE: path===. Do NOT re-output unchanged files.\n\nUser request: ${userInput}`;
     };
 
     if (imageDataUrl) {
@@ -362,16 +380,23 @@ export function useAIAppBuilder() {
       }
 
       // Parse multi-file output and MERGE with existing files (incremental editing)
-      const parsedFiles = parseMultiFileOutput(fullContent);
-      if (parsedFiles.length > 0) {
-        // Merge: start with current files, then overlay changed files
-        const mergedFiles = [...currentFiles];
+      const { files: parsedFiles, deletions } = parseMultiFileOutput(fullContent);
+      if (parsedFiles.length > 0 || deletions.length > 0) {
+        // Merge: start with current files, remove deletions, then overlay changed files
+        let mergedFiles = [...currentFiles];
+        
+        // Process deletions
+        if (deletions.length > 0) {
+          mergedFiles = mergedFiles.filter(f => !deletions.includes(f.path));
+        }
+        
+        // Process additions/updates
         for (const newFile of parsedFiles) {
           const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
           if (existingIdx >= 0) {
-            mergedFiles[existingIdx] = newFile; // Update existing file
+            mergedFiles[existingIdx] = newFile;
           } else {
-            mergedFiles.push(newFile); // Add new file
+            mergedFiles.push(newFile);
           }
         }
         setLatestFiles(mergedFiles);
@@ -384,11 +409,12 @@ export function useAIAppBuilder() {
 
       // Add suggestions + file count + token estimate + filesSnapshot to the final assistant message
       const suggestions = generateSuggestions(fullContent, effectiveMode);
-      const snapshot = parsedFiles.length > 0 ? [...currentFiles, ...parsedFiles.filter(pf => !currentFiles.some(cf => cf.path === pf.path))] : [...currentFiles];
+      const totalChanges = parsedFiles.length + deletions.length;
+      const snapshot = totalChanges > 0 ? [...currentFiles, ...parsedFiles.filter(pf => !currentFiles.some(cf => cf.path === pf.path))] : [...currentFiles];
       setMessages(prev =>
         prev.map((m, i) =>
           i === prev.length - 1 && m.role === 'assistant'
-            ? { ...m, filesGenerated: parsedFiles.length || undefined, suggestions, tokenEstimate: msgTokens, filesSnapshot: snapshot }
+            ? { ...m, filesGenerated: totalChanges || undefined, suggestions, tokenEstimate: msgTokens, filesSnapshot: snapshot }
             : m
         )
       );
