@@ -81,14 +81,43 @@ function tryParseJSON(text: string): { approach?: string; filesToCreate?: string
   }
 }
 
+const STORAGE_KEY = 'agent-task-history';
+
+function loadPersistedTasks(): AgentTask[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as AgentTask[];
+    // Only restore completed/failed tasks as history (not queued/running)
+    return parsed
+      .filter(t => ['completed', 'failed', 'cancelled'].includes(t.status))
+      .slice(0, 20)
+      .map(t => ({ ...t, createdAt: new Date(t.createdAt), completedAt: t.completedAt ? new Date(t.completedAt) : undefined }));
+  } catch { return []; }
+}
+
+function persistTasks(tasks: AgentTask[]) {
+  try {
+    const toSave = tasks
+      .filter(t => ['completed', 'failed', 'cancelled'].includes(t.status))
+      .slice(0, 20);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch { /* ignore */ }
+}
+
 export function useAgentMode() {
-  const [taskQueue, setTaskQueue] = useState<AgentTask[]>([]);
+  const [taskQueue, setTaskQueue] = useState<AgentTask[]>(() => loadPersistedTasks());
   const [currentRun, setCurrentRun] = useState<AgentRun | null>(null);
   const [agentHistory, setAgentHistory] = useState<AgentRun[]>([]);
   const [notifications, setNotifications] = useState<AgentNotification[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const isProcessingRef = useRef(false);
   const errorBufferRef = useRef<string[]>([]);
+
+  // Persist completed tasks to localStorage
+  useEffect(() => {
+    persistTasks(taskQueue);
+  }, [taskQueue]);
 
   // Emit a notification
   const emitNotification = useCallback((taskId: string, type: AgentNotification['type'], title: string, detail?: string) => {
@@ -374,6 +403,11 @@ export function useAgentMode() {
 
   const isAnyRunning = taskQueue.some(t => t.status === 'running');
 
+  // Reorder queued tasks (drag & drop)
+  const reorderQueue = useCallback((newOrder: AgentTask[]) => {
+    setTaskQueue(newOrder);
+  }, []);
+
   // Legacy compatibility
   const startAgentRun = useCallback((prompt: string): AgentRun => {
     enqueueTask(prompt);
@@ -404,6 +438,7 @@ export function useAgentMode() {
     cancelTask,
     retryTask,
     clearCompleted,
+    reorderQueue,
     executeAgentTask,
     getNextQueuedTask,
   };
