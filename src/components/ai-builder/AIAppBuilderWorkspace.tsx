@@ -654,6 +654,20 @@ export function AIAppBuilderWorkspace() {
     }
   }, [saveProject, project.name, project.files, branches, activeBranch, messages, clearDraft, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, captureAndUpload]);
 
+  // Auto-capture thumbnail after generation completes
+  const wasGeneratingRef = useRef(false);
+  useEffect(() => {
+    if (wasGeneratingRef.current && !isGenerating && project.files.length > 0 && currentProjectId) {
+      const html = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+      if (html) {
+        setTimeout(() => {
+          captureAndUpload(html, currentProjectId).catch(() => {});
+        }, 2000);
+      }
+    }
+    wasGeneratingRef.current = isGenerating;
+  }, [isGenerating, project.files.length, currentProjectId, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, captureAndUpload]);
+
   const handleLoadProject = useCallback(async (projectId: string) => {
     const loaded = await loadProject(projectId);
     if (loaded) {
@@ -784,7 +798,7 @@ export function AIAppBuilderWorkspace() {
         confirmLabel="Yes, clear everything"
         variant="danger"
       />
-      <div className="h-screen w-full flex flex-col bg-[#09090b] overflow-hidden">
+      <div className="h-full w-full flex flex-col bg-[#09090b] overflow-hidden">
         {/* ── Top Bar — Lovable-style ── */}
         <div className="flex items-center justify-between px-2 h-12 border-b border-white/[0.06] bg-[#09090b] shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           {/* LEFT: Back + Project name */}
