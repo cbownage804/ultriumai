@@ -5,7 +5,7 @@ import { AIStudioCommandPaletteGlobal } from "@/components/ai-studio/AIStudioCom
 
 const AIStudio = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-16">
       <Navigation />
       <AIStudioSubNav />
       <AIStudioCommandPaletteGlobal />
