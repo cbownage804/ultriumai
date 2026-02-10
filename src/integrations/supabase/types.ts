@@ -2633,6 +2633,7 @@ export type Database = {
           name: string
           published_url: string | null
           settings: Json | null
+          thumbnail_url: string | null
           updated_at: string
           user_id: string
         }
@@ -2647,6 +2648,7 @@ export type Database = {
           name?: string
           published_url?: string | null
           settings?: Json | null
+          thumbnail_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -2661,6 +2663,7 @@ export type Database = {
           name?: string
           published_url?: string | null
           settings?: Json | null
+          thumbnail_url?: string | null
           updated_at?: string
           user_id?: string
         }
