@@ -77,9 +77,21 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
     }
   }
 
-  const text = textLines.join('\n').trim();
-  const cleaned = text.replace(/```html\n?[\s\S]*?```/g, '').trim();
-  return { text: cleaned, fileNames };
+  let text = textLines.join('\n').trim();
+  // Strip HTML code blocks
+  text = text.replace(/```html\n?[\s\S]*?```/g, '').trim();
+  // Hide raw JSON planning objects (approach, steps, filesToCreate, etc.)
+  text = text.replace(/^\s*\{[\s\S]*?"(?:approach|filesToCreate|steps|filesTo(?:Modify|Create)|dependencies)"[\s\S]*?\}\s*$/gm, '').trim();
+  // If the entire message is a JSON object, hide it completely
+  if (/^\s*\{[\s\S]*\}\s*$/.test(text)) {
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed && typeof parsed === 'object' && ('approach' in parsed || 'steps' in parsed || 'filesToCreate' in parsed)) {
+        text = '';
+      }
+    } catch { /* not JSON, keep as-is */ }
+  }
+  return { text: text, fileNames };
 }
 
 const AI_MODELS = [
@@ -453,12 +465,20 @@ export function BuilderChatPanel({
               </div>
             </div>
           ) : (
-            messages.map((msg, idx) => (
+            messages.filter((msg) => {
+              // Hide assistant messages that are only internal planning JSON
+              if (msg.role === 'assistant') {
+                const { text, fileNames } = getDisplayContent(msg);
+                const hasFiles = msg.filesGenerated && msg.filesGenerated > 0;
+                if (!text && fileNames.length === 0 && !hasFiles) return false;
+              }
+              return true;
+            }).map((msg, idx, filteredArr) => (
               <motion.div
                 key={msg.id}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: idx === messages.length - 1 ? 0.05 : 0 }}
+                transition={{ duration: 0.2, delay: idx === filteredArr.length - 1 ? 0.05 : 0 }}
                 className={cn(
                   'flex gap-2.5 group/msg relative',
                   msg.role === 'user' ? 'justify-end' : 'justify-start'
@@ -548,7 +568,7 @@ export function BuilderChatPanel({
                     )}
                   >
                     {msg.role === 'assistant' ? (
-                      renderAssistantMessage(msg, idx === messages.length - 1)
+                      renderAssistantMessage(msg, idx === filteredArr.length - 1)
                     ) : (
                       <div>
                         {msg.imageUrl && (
