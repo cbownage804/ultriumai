@@ -188,6 +188,24 @@ export function BuilderChatPanel({
     e.target.value = '';
   }, []);
 
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file) continue;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setImagePreview(ev.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+        break;
+      }
+    }
+  }, []);
+
   const renderThinkingIndicator = () => {
     if (!thinkingPhase) return null;
     const phase = THINKING_LABELS[thinkingPhase];
@@ -700,6 +718,7 @@ export function BuilderChatPanel({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
               placeholder={
                 mode === 'discuss'
                   ? "Ask a question..."

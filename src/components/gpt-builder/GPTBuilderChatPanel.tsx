@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { GPTBuilderMessage, GPTConfig } from '@/types/gptConfig';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Square, Bot, User, Sparkles } from 'lucide-react';
+import { Send, Square, Bot, User, Sparkles, X, ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,8 +24,27 @@ const SUGGESTIONS = [
 
 export function GPTBuilderChatPanel({ messages, isGenerating, onSend, onStop, config }: GPTBuilderChatPanelProps) {
   const [input, setInput] = useState('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file) continue;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setImagePreview(ev.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+        break;
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -37,6 +56,7 @@ export function GPTBuilderChatPanel({ messages, isGenerating, onSend, onStop, co
     if (!input.trim() || isGenerating) return;
     onSend(input.trim());
     setInput('');
+    setImagePreview(null);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -168,12 +188,27 @@ export function GPTBuilderChatPanel({ messages, isGenerating, onSend, onStop, co
 
       {/* Input */}
       <div className="shrink-0 border-t border-white/[0.06] p-3">
+        {imagePreview && (
+          <div className="flex items-center gap-2 mb-2 max-w-3xl mx-auto">
+            <div className="relative group">
+              <img src={imagePreview} alt="Pasted" className="h-16 w-16 rounded-lg object-cover border border-white/[0.08]" />
+              <button
+                onClick={() => setImagePreview(null)}
+                className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+            <span className="text-xs text-white/40">Image pasted</span>
+          </div>
+        )}
         <div className="relative flex items-end gap-2 max-w-3xl mx-auto">
           <Textarea
             ref={textareaRef}
             value={input}
             onChange={handleTextareaInput}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder="Describe your ideal AI assistant..."
             className="min-h-[44px] max-h-[160px] bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/30 resize-none rounded-xl pr-12 focus-visible:ring-primary/30"
             rows={1}
