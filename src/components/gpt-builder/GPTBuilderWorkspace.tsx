@@ -8,6 +8,7 @@ import { GPTBuilderConfigSidebar } from './GPTBuilderConfigSidebar';
 import { GPTBuilderKnowledgePanel } from './GPTBuilderKnowledgePanel';
 import { GPTBuilderActionsPanel } from './GPTBuilderActionsPanel';
 import { GPTBuilderEmbedPanel } from './GPTBuilderEmbedPanel';
+import { GPTBuilderAnalyticsPanel } from './GPTBuilderAnalyticsPanel';
 import { GPTExportImportPanel } from './GPTExportImportPanel';
 import { GPTTemplatePickerModal } from './GPTTemplatePickerModal';
 import { GPTConfigIndicators } from './GPTConfigIndicators';
@@ -16,12 +17,12 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   ArrowLeft, Save, RotateCcw, Settings2, Eye, MessageSquare, Loader2,
-  BookOpen, Zap, Code2, Layers, FileJson, Copy
+  BookOpen, Zap, Code2, Layers, FileJson, Copy, BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-type SidePanel = 'config' | 'knowledge' | 'actions' | 'embed' | 'export' | null;
+type SidePanel = 'config' | 'knowledge' | 'actions' | 'embed' | 'export' | 'analytics' | null;
 
 interface GPTBuilderWorkspaceProps {
   editGptId?: string;
@@ -122,6 +123,7 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
     { id: 'knowledge' as const, icon: BookOpen, label: 'Knowledge' },
     { id: 'actions' as const, icon: Zap, label: 'Actions' },
     { id: 'embed' as const, icon: Code2, label: 'Embed' },
+    { id: 'analytics' as const, icon: BarChart3, label: 'Analytics' },
     { id: 'export' as const, icon: FileJson, label: 'Export/Import' },
   ];
 
@@ -135,6 +137,8 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
         return <GPTBuilderActionsPanel config={config} onChange={updateConfig} onClose={() => setSidePanel(null)} />;
       case 'embed':
         return <GPTBuilderEmbedPanel config={config} onChange={updateConfig} onClose={() => setSidePanel(null)} gptId={savedGptId || undefined} />;
+      case 'analytics':
+        return <GPTBuilderAnalyticsPanel config={config} onClose={() => setSidePanel(null)} gptId={savedGptId || undefined} />;
       case 'export':
         return <GPTExportImportPanel config={config} onChange={updateConfig} onClose={() => setSidePanel(null)} onDuplicate={handleDuplicate} />;
       default:

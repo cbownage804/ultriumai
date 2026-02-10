@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BookOpen, Plus, Link, FileText, Type, Trash2, X } from 'lucide-react';
+import { BookOpen, Plus, Link, FileText, Type, Trash2, X, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useCallback } from 'react';
 
 interface GPTBuilderKnowledgePanelProps {
   config: GPTConfig;
@@ -16,7 +17,7 @@ interface GPTBuilderKnowledgePanelProps {
   onClose: () => void;
 }
 
-type AddMode = 'text' | 'url' | null;
+type AddMode = 'text' | 'url' | 'file' | null;
 
 export function GPTBuilderKnowledgePanel({ config, onChange, onClose }: GPTBuilderKnowledgePanelProps) {
   const [addMode, setAddMode] = useState<AddMode>(null);
@@ -67,6 +68,33 @@ export function GPTBuilderKnowledgePanel({ config, onChange, onClose }: GPTBuild
     }
   };
 
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+    
+    for (const file of Array.from(files)) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} is too large (max 5MB)`);
+        continue;
+      }
+      try {
+        const text = await file.text();
+        const source: KnowledgeSource = {
+          id: crypto.randomUUID(),
+          type: 'text',
+          name: file.name,
+          content: text.slice(0, 50000), // Limit content size
+          addedAt: new Date(),
+        };
+        onChange({ knowledge_sources: [...config.knowledge_sources, source] });
+        toast.success(`${file.name} added`);
+      } catch {
+        toast.error(`Failed to read ${file.name}`);
+      }
+    }
+    e.target.value = '';
+  }, [config.knowledge_sources, onChange]);
+
   const removeSource = (id: string) => {
     onChange({ knowledge_sources: config.knowledge_sources.filter(s => s.id !== id) });
   };
@@ -86,7 +114,7 @@ export function GPTBuilderKnowledgePanel({ config, onChange, onClose }: GPTBuild
         <div className="p-4 space-y-4">
           {/* Add buttons */}
           {!addMode && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => setAddMode('text')}
                 className="flex flex-col items-center gap-2 p-4 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] transition-colors"
@@ -101,6 +129,17 @@ export function GPTBuilderKnowledgePanel({ config, onChange, onClose }: GPTBuild
                 <Link className="h-5 w-5 text-white/40" />
                 <span className="text-[11px] text-white/50">Add URL</span>
               </button>
+              <label className="flex flex-col items-center gap-2 p-4 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] transition-colors cursor-pointer">
+                <Upload className="h-5 w-5 text-white/40" />
+                <span className="text-[11px] text-white/50">Upload File</span>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept=".txt,.md,.csv,.json,.xml,.html"
+                  multiple
+                  onChange={handleFileUpload}
+                />
+              </label>
             </div>
           )}
 
