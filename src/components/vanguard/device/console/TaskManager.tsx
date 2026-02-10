@@ -60,8 +60,7 @@ export function TaskManager({ agentId, sendCommand, currentMetrics }: TaskManage
 
   useEffect(() => {
     loadProcesses();
-    const interval = setInterval(loadProcesses, 5000);
-    return () => clearInterval(interval);
+    // Don't auto-poll - sendCommand queues real commands to the agent
   }, [agentId]);
 
   const loadProcesses = async () => {

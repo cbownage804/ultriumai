@@ -61,8 +61,8 @@ export function ProcessManager({ agentId, sendCommand }: ProcessManagerProps) {
 
   useEffect(() => {
     loadProcesses();
-    const interval = setInterval(loadProcesses, 10000);
-    return () => clearInterval(interval);
+    // Don't auto-poll - sendCommand queues real commands to the agent
+    // Use manual refresh instead to avoid flooding the command queue
   }, [agentId]);
 
   const loadProcesses = async () => {
