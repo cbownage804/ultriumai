@@ -66,6 +66,7 @@ TECHNICAL EXCELLENCE:
 - CSS custom properties for ALL design tokens — colors, spacing, radii, shadows, transitions, typography — full theming in one place
 - Smooth 200-300ms transitions on ALL interactive elements (buttons, links, inputs, cards, toggles)
 - Realistic, contextual placeholder data — real-sounding names, actual-looking emails, realistic prices, proper dates. Never "Lorem ipsum" for visible content — use contextual copy.
+- IMAGES MUST MATCH THE SUBJECT: This is critical. When the user asks for a "BMW parts site", every image MUST be of BMW vehicles/parts — NEVER a Camaro, Ford, or generic car. When building a "bakery site", show bread and pastries — not random food. Use Unsplash with SPECIFIC search terms: https://images.unsplash.com/photo-{id}?w=800 or use https://source.unsplash.com/800x600/?{exact-subject} with precise keywords (e.g., "bmw+m3+engine", "bmw+headlights", "bmw+wheel"). For product/brand-specific sites, use the EXACT brand name in image search queries. If unsure about image accuracy, use CSS gradients or SVG illustrations with descriptive labels instead of risking wrong images. NEVER use generic stock photos that contradict the user's requested subject.
 - NO external CDN links for JS libraries — everything inline and self-contained
 - Google Fonts via CSS @import are allowed and encouraged
 - Semantic HTML5: header, main, nav, section, article, aside, footer, dialog, details/summary
