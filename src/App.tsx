@@ -51,6 +51,8 @@ const GPTSettings = lazy(() => import('@/pages/GPTSettings'));
 const AIAppBuilderWorkspacePage = lazy(() => import('@/pages/AIAppBuilderWorkspacePage'));
 const GPTBuilderPage = lazy(() => import('@/pages/GPTBuilderPage'));
 const AIStudioProjectsPage = lazy(() => import('@/pages/AIStudioProjectsPage'));
+const AIStudioUsageAnalytics = lazy(() => import('@/pages/AIStudioUsageAnalytics'));
+const AIStudioTemplateGallery = lazy(() => import('@/pages/AIStudioTemplateGallery'));
 const Profile = lazy(() => import('@/pages/Profile'));
 // ProfilePage removed - use Profile
 
@@ -632,6 +634,20 @@ function AppRouter() {
             <Suspense fallback={<PageSkeleton variant="dashboard" />}>
               <GPTBuilderPage />
             </Suspense>
+          </ProtectedRoute>
+        } />
+        <Route path="/ai-studio/analytics" element={
+          <ProtectedRoute>
+            <SuspenseWrapper>
+              <AIStudioUsageAnalytics />
+            </SuspenseWrapper>
+          </ProtectedRoute>
+        } />
+        <Route path="/ai-studio/templates" element={
+          <ProtectedRoute>
+            <SuspenseWrapper>
+              <AIStudioTemplateGallery />
+            </SuspenseWrapper>
           </ProtectedRoute>
         } />
         <Route path="/safetrack" element={<Navigate to="/vanguard/app/assets" replace />} />
