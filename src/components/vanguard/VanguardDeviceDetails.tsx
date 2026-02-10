@@ -167,7 +167,21 @@ export function VanguardDeviceDetails() {
   }));
 
   const remoteAccess = agent.config?.remote_access || {};
-  const sysInfo = (agent as any).system_info || {} as any;
+  const hw = (agent.config as any)?.hardware || {};
+  const sysInfo = {
+    os_name: hw.os_name,
+    os_arch: hw.form_factor,
+    os_version: hw.os_version,
+    manufacturer: hw.manufacturer || hw.bios_manufacturer,
+    model: hw.model,
+    serial_number: hw.serial_number,
+    processor: hw.cpu_info,
+    cpu_cores: hw.cores,
+    total_memory: hw.total_memory_gb ? hw.total_memory_gb * 1073741824 : null,
+    domain: hw.domain,
+    last_user: hw.last_user,
+    ...((agent as any).system_info || {}),
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-3rem)]">
