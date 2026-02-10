@@ -36,6 +36,7 @@ export interface CustomerDevice {
   id: string;
   hostname: string;
   device_type: string | null;
+  agent_type: string | null;
   status: string;
   ip_address: string | null;
 }
@@ -126,6 +127,7 @@ export function useVanguardCustomer(customerId: string | undefined): UseVanguard
             id: a.id,
             hostname: a.name,
             device_type: a.agent_type,
+            agent_type: a.agent_type,
             status: a.status,
             ip_address: a.ip_address ? String(a.ip_address) : null,
           })));

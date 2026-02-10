@@ -301,23 +301,30 @@ export default function VanguardCustomerDetail() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {devices.map((device) => (
-                      <div key={device.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-cyan-500/10 cursor-pointer">
-                        <div className="flex items-center gap-3">
-                          <div className={`h-3 w-3 rounded-full ${device.status === 'online' ? 'bg-green-500' : 'bg-red-500'}`} />
-                          <Monitor className="h-5 w-5 text-white/40" />
-                          <div>
-                            <span className="font-medium text-white">{device.hostname}</span>
-                            {device.device_type && (
-                              <div className="text-sm text-white/60">{device.device_type}</div>
-                            )}
+                    {devices.map((device) => {
+                      const agentType = (device.agent_type || device.device_type || '').toLowerCase();
+                      const isRecon = agentType.includes('linux') || agentType.includes('pi_appliance') || agentType.includes('recon');
+                      const displayType = isRecon ? 'Recon Unit' : (device.device_type || 'windows');
+                      return (
+                        <div 
+                          key={device.id} 
+                          className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-cyan-500/10 cursor-pointer transition-colors"
+                          onClick={() => navigate(`${basePath}/devices/${device.id}`)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`h-3 w-3 rounded-full ${device.status === 'online' ? 'bg-green-500' : 'bg-red-500'}`} />
+                            <Monitor className="h-5 w-5 text-white/40" />
+                            <div>
+                              <span className="font-medium text-white">{device.hostname}</span>
+                              <div className={`text-sm ${isRecon ? 'text-purple-400' : 'text-white/60'}`}>{displayType}</div>
+                            </div>
                           </div>
+                          {device.ip_address && (
+                            <code className="text-sm text-cyan-400">{device.ip_address}</code>
+                          )}
                         </div>
-                        {device.ip_address && (
-                          <code className="text-sm text-cyan-400">{device.ip_address}</code>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
