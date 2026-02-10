@@ -3,20 +3,22 @@ import { GPTConfig } from '@/types/gptConfig';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import {
-  X, Download, Upload, Copy, Check, FileJson, AlertCircle
+  X, Download, Upload, Copy, Check, FileJson, AlertCircle, MonitorSmartphone
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { exportTeamsApp } from '../ai-builder/exportTeamsApp';
 
 interface GPTExportImportPanelProps {
   config: GPTConfig;
   onChange: (updates: Partial<GPTConfig>) => void;
   onClose: () => void;
   onDuplicate?: () => void;
+  gptId?: string;
 }
 
-export function GPTExportImportPanel({ config, onChange, onClose, onDuplicate }: GPTExportImportPanelProps) {
+export function GPTExportImportPanel({ config, onChange, onClose, onDuplicate, gptId }: GPTExportImportPanelProps) {
   const [copied, setCopied] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [previewData, setPreviewData] = useState<Partial<GPTConfig> | null>(null);
@@ -218,6 +220,34 @@ export function GPTExportImportPanel({ config, onChange, onClose, onDuplicate }:
                 </motion.div>
               )}
             </AnimatePresence>
+          </div>
+
+          {/* Teams Export Section */}
+          <div className="space-y-3">
+            <h4 className="text-[11px] uppercase tracking-wider text-white/30 font-medium">Microsoft Teams</h4>
+            <p className="text-[10px] text-white/20">
+              Export this GPT as a sideloadable Microsoft Teams tab app.
+              {!gptId && ' Save your GPT first to enable this option.'}
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!gptId}
+              onClick={async () => {
+                if (!gptId) return;
+                try {
+                  const gptUrl = `${window.location.origin}/gpt/embed/${gptId}`;
+                  await exportTeamsApp(config.name || 'Custom GPT', gptUrl, config.theme_color);
+                  toast.success('Teams app package downloaded! See README for install instructions.');
+                } catch (err: any) {
+                  toast.error(err?.message || 'Failed to export Teams app');
+                }
+              }}
+              className="w-full h-9 text-xs border-white/[0.08] bg-white/[0.03] text-white/70 hover:text-white hover:bg-white/[0.06]"
+            >
+              <MonitorSmartphone className="h-3.5 w-3.5 mr-1.5 text-purple-400" />
+              Export as Teams App
+            </Button>
           </div>
 
           {/* Duplicate Section */}

@@ -140,7 +140,7 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
       case 'analytics':
         return <GPTBuilderAnalyticsPanel config={config} onClose={() => setSidePanel(null)} gptId={savedGptId || undefined} />;
       case 'export':
-        return <GPTExportImportPanel config={config} onChange={updateConfig} onClose={() => setSidePanel(null)} onDuplicate={handleDuplicate} />;
+        return <GPTExportImportPanel config={config} onChange={updateConfig} onClose={() => setSidePanel(null)} onDuplicate={handleDuplicate} gptId={savedGptId || undefined} />;
       default:
         return null;
     }
