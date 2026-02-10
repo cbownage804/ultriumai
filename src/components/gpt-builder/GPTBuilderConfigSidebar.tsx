@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, Globe, Palette, Brain, Sparkles, MessageCircle, Plus, X, Target } from 'lucide-react';
+import { Bot, Globe, Palette, Brain, Sparkles, MessageCircle, Plus, X, Target, ImageIcon, FileText } from 'lucide-react';
 
 interface GPTBuilderConfigSidebarProps {
   config: GPTConfig;
@@ -66,6 +66,15 @@ export function GPTBuilderConfigSidebar({ config, onChange }: GPTBuilderConfigSi
               />
             </div>
             <div className="space-y-2">
+              <Label className="text-xs text-white/50">Avatar URL</Label>
+              <Input
+                value={config.avatar_url || ''}
+                onChange={(e) => onChange({ avatar_url: e.target.value })}
+                placeholder="https://example.com/avatar.png"
+                className="h-8 text-xs bg-white/[0.04] border-white/[0.08] text-white"
+              />
+            </div>
+            <div className="space-y-2">
               <Label className="text-xs text-white/50">Category</Label>
               <Select value={config.category} onValueChange={(v) => onChange({ category: v })}>
                 <SelectTrigger className="h-8 text-xs bg-white/[0.04] border-white/[0.08] text-white">
@@ -81,6 +90,25 @@ export function GPTBuilderConfigSidebar({ config, onChange }: GPTBuilderConfigSi
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <Separator className="bg-white/[0.06]" />
+
+          {/* System Prompt */}
+          <div className="space-y-3">
+            <h4 className="text-[11px] uppercase tracking-wider text-white/30 font-medium flex items-center gap-1.5">
+              <FileText className="h-3 w-3" /> System Prompt
+            </h4>
+            <Textarea
+              value={config.system_prompt}
+              onChange={(e) => onChange({ system_prompt: e.target.value })}
+              placeholder="You are a helpful assistant that..."
+              className="min-h-[100px] text-xs bg-white/[0.04] border-white/[0.08] text-white resize-none font-mono leading-relaxed"
+              rows={5}
+            />
+            <p className="text-[10px] text-white/20">
+              {config.system_prompt.length} characters · The AI chat panel can also generate this for you
+            </p>
           </div>
 
           <Separator className="bg-white/[0.06]" />

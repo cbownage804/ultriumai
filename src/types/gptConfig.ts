@@ -44,7 +44,7 @@ export const DEFAULT_GPT_CONFIG: GPTConfig = {
   theme_color: '#6366f1',
   welcome_message: '',
   starter_questions: [],
-  preferred_model: 'gpt-4o-mini',
+  preferred_model: 'google/gemini-3-flash-preview',
   enable_web_search: false,
   communication_style: '',
   expertise_areas: '',
