@@ -89,7 +89,7 @@ export function ProjectCard({
 
       {/* Preview thumbnail */}
       <div className="h-[180px] overflow-hidden relative">
-        {item.type === 'app' && item.thumbnail_url ? (
+        {item.thumbnail_url ? (
           <img
             src={item.thumbnail_url}
             alt={`${item.name} preview`}

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { GPTConfig, DEFAULT_WIDGET_THEME } from '@/types/gptConfig';
 import { Bot, Send, Globe, Sparkles, RotateCcw, User, MessageCircle, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -6,6 +6,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
 import { useUserCredits } from '@/hooks/useUserCredits';
+
+export interface GPTBuilderPreviewHandle {
+  getPreviewElement: () => HTMLElement | null;
+}
 
 interface GPTBuilderPreviewProps {
   config: GPTConfig;
@@ -17,7 +21,12 @@ interface PreviewMessage {
   content: string;
 }
 
-export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
+export const GPTBuilderPreview = forwardRef<GPTBuilderPreviewHandle, GPTBuilderPreviewProps>(function GPTBuilderPreview({ config }, ref) {
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    getPreviewElement: () => previewContainerRef.current,
+  }), []);
   const [previewInput, setPreviewInput] = useState('');
   const [chatMessages, setChatMessages] = useState<PreviewMessage[]>([]);
   const [isResponding, setIsResponding] = useState(false);
@@ -180,7 +189,7 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
       {/* Frame — White themed chat widget */}
       <div className="flex-1 flex items-center justify-center p-6 overflow-auto">
         <motion.div
-          key={embedStyle}
+          ref={previewContainerRef}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'spring', damping: 25 }}
@@ -388,4 +397,4 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
       </div>
     </div>
   );
-}
+});

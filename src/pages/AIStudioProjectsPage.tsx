@@ -43,6 +43,7 @@ interface GPTItem {
   updated_at: string;
   created_at: string;
   avatar_url?: string | null;
+  logo_url?: string | null;
 }
 
 interface UnifiedItem {
@@ -102,7 +103,7 @@ export default function AIStudioProjectsPage() {
           .eq('user_id', user.id)
           .order('updated_at', { ascending: false }),
         supabase.from('custom_gpts')
-          .select('id, name, updated_at, created_at, avatar_url')
+          .select('id, name, updated_at, created_at, avatar_url, logo_url')
           .eq('user_id', user.id)
           .order('updated_at', { ascending: false }),
       ]);
@@ -150,7 +151,7 @@ export default function AIStudioProjectsPage() {
   // Merge into unified list
   const unified: UnifiedItem[] = [
     ...projects.map(p => ({ ...p, type: 'app' as const, thumbnail_url: p.thumbnail_url, pinned: pinnedIds.has(p.id) })),
-    ...gpts.map(g => ({ ...g, type: 'gpt' as const, thumbnail_url: g.avatar_url, files: undefined, published_url: null, pinned: pinnedIds.has(g.id) })),
+    ...gpts.map(g => ({ ...g, type: 'gpt' as const, thumbnail_url: g.logo_url || g.avatar_url, files: undefined, published_url: null, pinned: pinnedIds.has(g.id) })),
   ];
 
   const handleDelete = async () => {

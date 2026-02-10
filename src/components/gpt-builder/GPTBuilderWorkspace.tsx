@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGPTBuilderChat } from '@/hooks/useGPTBuilderChat';
 import { useCustomGPTs } from '@/hooks/useCustomGPTs';
 import { GPTBuilderChatPanel } from './GPTBuilderChatPanel';
-import { GPTBuilderPreview } from './GPTBuilderPreview';
+import { GPTBuilderPreview, GPTBuilderPreviewHandle } from './GPTBuilderPreview';
 import { GPTBuilderConfigSidebar } from './GPTBuilderConfigSidebar';
 import { GPTBuilderKnowledgePanel } from './GPTBuilderKnowledgePanel';
 import { GPTBuilderActionsPanel } from './GPTBuilderActionsPanel';
@@ -12,6 +12,7 @@ import { GPTBuilderAnalyticsPanel } from './GPTBuilderAnalyticsPanel';
 import { GPTExportImportPanel } from './GPTExportImportPanel';
 import { GPTTemplatePickerModal } from './GPTTemplatePickerModal';
 import { GPTConfigIndicators } from './GPTConfigIndicators';
+import { useGPTPreviewCapture } from '@/hooks/useGPTPreviewCapture';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -37,6 +38,8 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
   const [isSaving, setIsSaving] = useState(false);
   const [sidePanel, setSidePanel] = useState<SidePanel>(null);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const previewRef = useRef<GPTBuilderPreviewHandle>(null);
+  const { captureGPTThumbnail } = useGPTPreviewCapture();
 
   const isEditMode = !!savedGptId;
 
@@ -76,14 +79,23 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
         const result = await updateGPT(savedGptId, gptData);
         if (result) {
           toast.success(`${config.name} has been updated!`);
+          // Capture thumbnail after save
+          setTimeout(() => {
+            const el = previewRef.current?.getPreviewElement();
+            captureGPTThumbnail(el, savedGptId).catch(() => {});
+          }, 500);
         }
       } else {
         const result = await createGPT(gptData);
         if (result) {
           setSavedGptId(result.id);
           toast.success(`${config.name} has been created!`);
-          // Update URL to edit mode without full navigation
           window.history.replaceState(null, '', `/ai-studio/gpt-builder/${result.id}`);
+          // Capture thumbnail after creation
+          setTimeout(() => {
+            const el = previewRef.current?.getPreviewElement();
+            captureGPTThumbnail(el, result.id).catch(() => {});
+          }, 500);
         }
       }
     } catch {
@@ -291,7 +303,7 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
               <ResizableHandle className="w-px bg-white/[0.06] hover:bg-primary/30 transition-colors" />
 
               <ResizablePanel defaultSize={sidePanel ? 35 : 55} minSize={25}>
-                <GPTBuilderPreview config={config} />
+                <GPTBuilderPreview ref={previewRef} config={config} />
               </ResizablePanel>
 
               {sidePanel && (
@@ -316,7 +328,7 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
                 config={config}
               />
             )}
-            {activeTab === 'preview' && <GPTBuilderPreview config={config} />}
+            {activeTab === 'preview' && <GPTBuilderPreview ref={previewRef} config={config} />}
             {activeTab === 'config' && <GPTBuilderConfigSidebar config={config} onChange={updateConfig} />}
           </div>
         </div>
