@@ -156,10 +156,10 @@ const Navigation = () => {
                 {/* Footer CTA */}
                 <div className="px-5 py-3 bg-muted/30 border-t border-border/30 flex items-center justify-between">
                   <button
-                    onClick={() => handleNavigation('/ai-studio/use-cases')}
+                    onClick={() => handleNavigation('/ai-studio')}
                     className="text-xs font-medium text-foreground/60 hover:text-primary flex items-center gap-1 transition-colors"
                   >
-                    <Sparkles className="h-3 w-3" /> Browse use cases
+                    <Sparkles className="h-3 w-3" /> Open AI Studio
                   </button>
                   <button 
                     onClick={() => handleNavigation('/pricing')}

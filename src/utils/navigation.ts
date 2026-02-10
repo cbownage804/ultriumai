@@ -51,7 +51,7 @@ export const CTAActions = {
   
   // Products
   launchAIStudio: () => navigateToExternal('/ai-studio'),
-  openStudioAssistant: () => navigateToExternal('/ai-studio/assistant'),
+  openGPTBuilder: () => navigateToExternal('/ai-studio/gpt-builder'),
   
   // Pricing
   viewPricing: () => navigateToExternal('/pricing'),

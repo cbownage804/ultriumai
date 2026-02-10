@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Bot, Code2, Zap, BarChart3, Settings, BookOpen, Search,
-  Home, MessageSquare, Palette, Rocket, Globe, Shield,
-  FileText, ArrowRight
+  Bot, Code2, BarChart3, Settings, BookOpen, Search,
+  Home, FileText, ArrowRight
 } from "lucide-react";
 
 interface CommandItem {
@@ -19,17 +18,10 @@ const COMMANDS: CommandItem[] = [
   { id: "home", label: "AI Studio Home", category: "Navigate", icon: Home, route: "/ai-studio", keywords: ["home", "dashboard", "hub"] },
   { id: "new-gpt", label: "Create New GPT", category: "Create", icon: Bot, route: "/ai-studio/gpt-builder", keywords: ["new", "gpt", "create", "build", "assistant"] },
   { id: "app-builder", label: "Open App Builder", category: "Create", icon: Code2, route: "/ai-studio/app-builder", keywords: ["app", "builder", "ide", "code"] },
-  { id: "new-agent", label: "Create AI Agent", category: "Create", icon: Zap, route: "/ai-studio/agents/builder", keywords: ["agent", "workflow", "automation"] },
-  { id: "my-gpts", label: "My GPTs", category: "Navigate", icon: MessageSquare, route: "/dashboard/gpt", keywords: ["gpts", "assistants", "list"] },
-  { id: "agents", label: "AI Agents", category: "Navigate", icon: Zap, route: "/ai-studio/agents", keywords: ["agents", "list"] },
-  { id: "workflows", label: "Workflows", category: "Navigate", icon: Rocket, route: "/ai-studio/workflows", keywords: ["workflows", "canvas"] },
+  { id: "projects", label: "My Projects", category: "Navigate", icon: FileText, route: "/ai-studio/projects", keywords: ["projects", "apps", "list"] },
   { id: "analytics", label: "Analytics Dashboard", category: "Navigate", icon: BarChart3, route: "/dashboard/analytics", keywords: ["analytics", "usage", "credits", "stats"] },
-  { id: "templates", label: "GPT Templates", category: "Navigate", icon: Palette, route: "/dashboard/gpt/templates", keywords: ["templates", "gallery"] },
-  { id: "assistant", label: "Studio Assistant", category: "Navigate", icon: Bot, route: "/ai-studio/assistant", keywords: ["assistant", "help", "guide"] },
   { id: "docs", label: "Documentation", category: "Help", icon: BookOpen, route: "/docs/ai-studio", keywords: ["docs", "documentation", "help"] },
   { id: "settings", label: "Settings", category: "Navigate", icon: Settings, route: "/settings", keywords: ["settings", "preferences"] },
-  { id: "pricing", label: "Pricing", category: "Navigate", icon: Globe, route: "/pricing/ai-studio", keywords: ["pricing", "plans", "upgrade"] },
-  { id: "security", label: "Security", category: "Help", icon: Shield, route: "/security", keywords: ["security", "policy"] },
 ];
 
 export const AIStudioCommandPalette = () => {

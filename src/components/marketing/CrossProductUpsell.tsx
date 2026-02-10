@@ -85,8 +85,8 @@ export function CrossProductUpsell({ context, compact = false }: CrossProductUps
                   Try AI Studio Free <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/ai-studio/use-cases">
-                <Button variant="outline">View Use Cases</Button>
+              <Link to="/ai-studio">
+                <Button variant="outline">Explore AI Studio</Button>
               </Link>
             </div>
           </div>

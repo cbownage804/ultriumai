@@ -8,8 +8,9 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
-  Bot, Code2, Zap, ArrowRight, Sparkles, Clock,
-  Activity, ChevronRight, Layers, CheckCircle
+  Bot, Code2, ArrowRight, Sparkles, Clock,
+  Activity, ChevronRight, Layers, CheckCircle,
+  MessageSquare, Database, Globe, FileText
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -20,47 +21,51 @@ interface RecentProject {
   thumbnail_url?: string | null;
 }
 
-interface ToolCount {
-  gpts: number;
-  agents: number;
-  credits: number;
+interface RecentGPT {
+  id: string;
+  name: string;
+  updated_at: string;
+  avatar_url?: string | null;
 }
+
+const GPT_TEMPLATES = [
+  { id: "support", icon: MessageSquare, label: "Customer Support Bot", desc: "AI trained on your KB to handle tier-1 tickets" },
+  { id: "knowledge", icon: Database, label: "Knowledge Base Q&A", desc: "Query internal docs in natural language" },
+  { id: "lead", icon: Globe, label: "Website Lead Bot", desc: "Qualify visitors and capture leads 24/7" },
+  { id: "docs", icon: FileText, label: "Doc Analyzer", desc: "Upload and analyze contracts and proposals" },
+];
 
 export const AIStudioDashboardHub = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { subscription } = useSubscription();
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
-  const [tools, setTools] = useState<ToolCount>({ gpts: 0, agents: 0, credits: 0 });
+  const [recentGPTs, setRecentGPTs] = useState<RecentGPT[]>([]);
+  const [credits, setCredits] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activityOpen, setActivityOpen] = useState(false);
-  const [activity, setActivity] = useState<{ id: string; label: string; detail: string; timestamp: string; icon: "gpt" | "agent" | "credit" }[]>([]);
+  const [activity, setActivity] = useState<{ id: string; label: string; detail: string; timestamp: string }[]>([]);
 
   useEffect(() => {
     if (!user?.id) return;
     const fetch = async () => {
       try {
-        const [projectsRes, gptsRes, agentsRes, creditsRes, ledgerRes] = await Promise.all([
-          supabase.from("builder_projects").select("id, name, updated_at, thumbnail_url").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(6),
-          supabase.from("custom_gpts").select("id", { count: "exact" }).eq("user_id", user.id),
-          supabase.from("ai_agents").select("id", { count: "exact" }).eq("user_id", user.id),
+        const [projectsRes, gptsRes, creditsRes, ledgerRes] = await Promise.all([
+          supabase.from("builder_projects").select("id, name, updated_at, thumbnail_url").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(4),
+          supabase.from("custom_gpts").select("id, name, updated_at, avatar_url").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(4),
           supabase.from("org_credits").select("credits_remaining").eq("user_id", user.id).maybeSingle(),
           supabase.from("ai_credit_ledger").select("id, usage_type, credits_used, description, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
         ]);
 
         setRecentProjects(projectsRes.data || []);
-        setTools({
-          gpts: gptsRes.count || 0,
-          agents: agentsRes.count || 0,
-          credits: creditsRes.data?.credits_remaining || 0,
-        });
+        setRecentGPTs((gptsRes.data || []) as RecentGPT[]);
+        setCredits(creditsRes.data?.credits_remaining || 0);
         setActivity(
           (ledgerRes.data || []).map(l => ({
             id: l.id,
             label: l.description || l.usage_type,
             detail: `${l.credits_used} credits`,
             timestamp: l.created_at,
-            icon: "credit" as const,
           }))
         );
       } catch (err) {
@@ -85,16 +90,16 @@ export const AIStudioDashboardHub = () => {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-48 bg-muted/30 rounded-2xl" />
-        <div className="h-28 bg-muted/20 rounded-xl" />
-        <div className="grid grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => <div key={i} className="h-20 bg-muted/20 rounded-lg" />)}
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="h-64 bg-muted/30 rounded-2xl" />
+          <div className="h-64 bg-muted/30 rounded-2xl" />
         </div>
       </div>
     );
   }
 
   const latestProject = recentProjects[0];
+  const latestGPT = recentGPTs[0];
 
   return (
     <div className="space-y-8">
@@ -103,143 +108,172 @@ export const AIStudioDashboardHub = () => {
         <Badge variant="outline" className="text-xs px-3 py-1 capitalize border-primary/30">
           {subscription.subscription_tier || "Free"} Plan
         </Badge>
-        {subscription.subscribed && (
-          <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-xs px-2 py-1">
-            <CheckCircle className="h-3 w-3 mr-1" />
-            Active
-          </Badge>
-        )}
+        <Badge variant="outline" className="text-xs px-3 py-1 border-border/50">
+          <Activity className="h-3 w-3 mr-1" />
+          {credits.toLocaleString()} Credits
+        </Badge>
       </div>
 
-      {/* ── 1. Hero App Builder CTA ── */}
-      <Card className="overflow-hidden border-0 bg-gradient-to-br from-violet-600/20 via-violet-500/10 to-cyan-500/10 shadow-xl shadow-violet-500/5">
-        <CardContent className="p-5 sm:p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center gap-5 md:gap-6">
-          <div className="flex-1 space-y-3 w-full">
-            <div className="flex items-center gap-2 text-violet-400 text-sm font-medium">
-              <Sparkles className="h-4 w-4" />
-              AI App Builder
+      {/* ── Two Hero Cards ── */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* App Builder Card */}
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-violet-600/20 via-violet-500/10 to-cyan-500/10 shadow-xl shadow-violet-500/5 group hover:shadow-violet-500/10 transition-shadow">
+          <CardContent className="p-6 sm:p-8 flex flex-col h-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500/30 to-cyan-500/20 flex items-center justify-center">
+                <Code2 className="h-6 w-6 text-violet-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-foreground">App Builder</h2>
+                <p className="text-xs text-muted-foreground">AI-powered full-stack apps</p>
+              </div>
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-              Build your next app
-            </h1>
-            <p className="text-sm sm:text-base text-muted-foreground max-w-lg">
+            <p className="text-sm text-muted-foreground mb-6 flex-1">
               Describe what you want and let AI generate a production-ready application — complete with code, preview, and one-click deployment.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <div className="space-y-3">
               <Button
                 variant="premium"
-                size="xl"
-                className="min-h-[44px] w-full sm:w-auto"
+                size="lg"
+                className="w-full min-h-[44px]"
                 onClick={() => navigate("/ai-studio/app-builder")}
               >
-                Start Building
-                <ArrowRight className="ml-1 h-5 w-5" />
+                <Sparkles className="mr-2 h-4 w-4" />
+                New App
+                <ArrowRight className="ml-auto h-4 w-4" />
               </Button>
               {latestProject && (
                 <Button
                   variant="outline"
-                  size="lg"
-                  className="border-border/50 min-h-[44px] w-full sm:w-auto truncate max-w-full"
+                  size="sm"
+                  className="w-full border-border/50 truncate"
                   onClick={() => navigate(`/ai-studio/app-builder?project=${latestProject.id}`)}
                 >
                   <span className="truncate">Continue "{latestProject.name}"</span>
-                  <ChevronRight className="ml-1 h-4 w-4 flex-shrink-0" />
+                  <ChevronRight className="ml-auto h-3.5 w-3.5 flex-shrink-0" />
                 </Button>
               )}
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Decorative element */}
-          <div className="hidden md:flex items-center justify-center w-36 h-36 rounded-2xl bg-gradient-to-br from-violet-500/20 to-cyan-500/20 border border-white/5 flex-shrink-0">
-            <Code2 className="h-16 w-16 text-violet-400/60" />
-          </div>
-        </CardContent>
-      </Card>
+        {/* GPT Builder Card */}
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary/20 via-primary/10 to-emerald-500/10 shadow-xl shadow-primary/5 group hover:shadow-primary/10 transition-shadow">
+          <CardContent className="p-6 sm:p-8 flex flex-col h-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/30 to-emerald-500/20 flex items-center justify-center">
+                <Bot className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-foreground">GPT Builder</h2>
+                <p className="text-xs text-muted-foreground">Custom AI assistants</p>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mb-6 flex-1">
+              Build custom AI chatbots trained on your data — configure personality, knowledge sources, actions, and deploy with an embed code.
+            </p>
+            <div className="space-y-3">
+              <Button
+                variant="premium"
+                size="lg"
+                className="w-full min-h-[44px]"
+                onClick={() => navigate("/ai-studio/gpt-builder")}
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                New GPT
+                <ArrowRight className="ml-auto h-4 w-4" />
+              </Button>
+              {latestGPT && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-border/50 truncate"
+                  onClick={() => navigate(`/ai-studio/gpt-builder/${latestGPT.id}`)}
+                >
+                  <span className="truncate">Continue "{latestGPT.name}"</span>
+                  <ChevronRight className="ml-auto h-3.5 w-3.5 flex-shrink-0" />
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* ── 2. Recent Projects ── */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Recent Projects</h2>
-          {recentProjects.length > 0 && (
+      {/* ── Recent Projects ── */}
+      {(recentProjects.length > 0 || recentGPTs.length > 0) && (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-foreground">Recent Work</h2>
             <Button variant="ghost" size="sm" onClick={() => navigate("/ai-studio/projects")} className="text-muted-foreground">
               View all <ArrowRight className="ml-1 h-3.5 w-3.5" />
             </Button>
-          )}
-        </div>
-
-        {recentProjects.length === 0 ? (
-          <EmptyState
-            icon={Layers}
-            title="No projects yet"
-            description="Create your first app with the AI App Builder above."
-            size="sm"
-            className="border border-dashed border-border/50 rounded-xl"
-          />
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {recentProjects.map(p => (
               <button
                 key={p.id}
                 onClick={() => navigate(`/ai-studio/app-builder?project=${p.id}`)}
                 className="text-left rounded-xl border border-border/50 bg-card/60 hover:border-primary/30 hover:bg-card/80 transition-all group overflow-hidden"
               >
-                {/* Thumbnail */}
                 <div className="w-full aspect-[16/10] bg-muted/20 relative overflow-hidden">
                   {p.thumbnail_url ? (
-                    <img
-                      src={p.thumbnail_url}
-                      alt={`${p.name} preview`}
-                      className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
-                      loading="lazy"
-                    />
+                    <img src={p.thumbnail_url} alt={p.name} className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105" loading="lazy" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
-                      <Code2 className="h-8 w-8 text-muted-foreground/30" />
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-500/10 to-muted/10">
+                      <Code2 className="h-6 w-6 text-muted-foreground/30" />
                     </div>
                   )}
+                  <Badge className="absolute top-2 left-2 text-[10px] bg-violet-500/80 border-0">App</Badge>
                 </div>
-                {/* Info */}
                 <div className="p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate text-foreground">{p.name}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        <Clock className="inline h-3 w-3 mr-1" />
-                        {formatTimeAgo(p.updated_at)}
-                      </p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5" />
-                  </div>
+                  <p className="font-medium text-sm truncate text-foreground">{p.name}</p>
+                  <p className="text-xs text-muted-foreground mt-1"><Clock className="inline h-3 w-3 mr-1" />{formatTimeAgo(p.updated_at)}</p>
+                </div>
+              </button>
+            ))}
+            {recentGPTs.map(g => (
+              <button
+                key={g.id}
+                onClick={() => navigate(`/ai-studio/gpt-builder/${g.id}`)}
+                className="text-left rounded-xl border border-border/50 bg-card/60 hover:border-primary/30 hover:bg-card/80 transition-all group overflow-hidden"
+              >
+                <div className="w-full aspect-[16/10] bg-muted/20 relative overflow-hidden flex items-center justify-center bg-gradient-to-br from-primary/10 to-muted/10">
+                  {g.avatar_url ? (
+                    <img src={g.avatar_url} alt={g.name} className="w-12 h-12 rounded-full object-cover" loading="lazy" />
+                  ) : (
+                    <Bot className="h-6 w-6 text-muted-foreground/30" />
+                  )}
+                  <Badge className="absolute top-2 left-2 text-[10px] bg-primary/80 border-0">GPT</Badge>
+                </div>
+                <div className="p-3">
+                  <p className="font-medium text-sm truncate text-foreground">{g.name}</p>
+                  <p className="text-xs text-muted-foreground mt-1"><Clock className="inline h-3 w-3 mr-1" />{formatTimeAgo(g.updated_at)}</p>
                 </div>
               </button>
             ))}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {/* ── 3. Secondary Tools ── */}
+      {/* ── GPT Templates ── */}
       <section>
-        <h2 className="text-lg font-semibold text-foreground mb-4">Tools</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[
-            { label: "Custom GPTs", count: tools.gpts, icon: Bot, route: "/ai-studio/gpt-builder", color: "text-violet-400", bg: "from-violet-500/10 to-violet-500/5" },
-            { label: "AI Agents", count: tools.agents, icon: Zap, route: "/ai-studio/agents/new", color: "text-amber-400", bg: "from-amber-500/10 to-amber-500/5" },
-            { label: "Credits", count: tools.credits, icon: Activity, route: "/dashboard/analytics", color: "text-emerald-400", bg: "from-emerald-500/10 to-emerald-500/5" },
-          ].map(t => (
+        <h2 className="text-lg font-semibold text-foreground mb-4">Start from a Template</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {GPT_TEMPLATES.map(t => (
             <button
-              key={t.label}
-              onClick={() => navigate(t.route)}
-              className={`p-4 rounded-xl border border-border/50 bg-gradient-to-br ${t.bg} hover:border-primary/30 transition-all text-left group min-h-[44px] flex sm:block items-center gap-3`}
+              key={t.id}
+              onClick={() => navigate(`/ai-studio/gpt-builder?template=${t.id}`)}
+              className="text-left p-4 rounded-xl border border-border/50 bg-card/60 hover:border-primary/30 hover:bg-card/80 transition-all group"
             >
-              <t.icon className={`h-5 w-5 ${t.color} mb-2`} />
-              <div className="text-xl font-bold text-foreground">{typeof t.count === "number" ? t.count.toLocaleString() : t.count}</div>
-              <div className="text-xs text-muted-foreground">{t.label}</div>
+              <t.icon className="h-5 w-5 text-primary mb-3" />
+              <p className="font-medium text-sm text-foreground">{t.label}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t.desc}</p>
             </button>
           ))}
         </div>
       </section>
 
-      {/* ── 4. Condensed Activity ── */}
+      {/* ── Activity ── */}
       {activity.length > 0 && (
         <Collapsible open={activityOpen} onOpenChange={setActivityOpen}>
           <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full">

@@ -148,10 +148,10 @@ export const DashboardOverview = () => {
       color: "bg-secondary",
     },
     {
-      title: "Studio Assistant",
-      description: "Your AI co-pilot",
+      title: "GPT Builder",
+      description: "Build custom AI chatbots",
       icon: Sparkles,
-      action: () => navigate("/ai-studio/assistant"),
+      action: () => navigate("/ai-studio/gpt-builder"),
       color: "bg-purple-500",
     },
   ];

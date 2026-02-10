@@ -4,15 +4,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Bot, Code2, Zap, ArrowRight, ArrowLeft, CheckCircle,
-  MessageSquare, Database, Workflow, FileText, Globe, Sparkles
+  Bot, Code2, ArrowRight, ArrowLeft, CheckCircle,
+  MessageSquare, Database, Globe, FileText, Sparkles
 } from "lucide-react";
 
 const TEMPLATES = [
   { id: "support", icon: MessageSquare, label: "Customer Support Bot", desc: "AI trained on your KB to handle tier-1 tickets", category: "GPT" },
   { id: "knowledge", icon: Database, label: "Knowledge Base Q&A", desc: "Query internal docs in natural language", category: "GPT" },
   { id: "lead", icon: Globe, label: "Website Lead Bot", desc: "Qualify visitors and capture leads 24/7", category: "GPT" },
-  { id: "workflow", icon: Workflow, label: "Ticket Router Agent", desc: "Auto-triage and route support tickets", category: "Agent" },
   { id: "docs", icon: FileText, label: "Doc Analyzer", desc: "Upload and analyze contracts and proposals", category: "GPT" },
   { id: "app", icon: Code2, label: "Dashboard App", desc: "Build a full-stack admin dashboard", category: "App" },
 ];
@@ -35,14 +34,11 @@ export const AIStudioOnboardingWizard = ({ onComplete, onDismiss }: Props) => {
     } else if (step === 1) {
       setStep(2);
     } else if (step === 2) {
-      // Navigate to the appropriate builder
       const template = TEMPLATES.find(t => t.id === selectedTemplate);
       if (template?.category === "App") {
         navigate("/ai-studio/app-builder");
-      } else if (template?.category === "Agent") {
-        navigate("/ai-studio/agents/builder");
       } else {
-        navigate("/ai-studio/gpt-builder");
+        navigate(`/ai-studio/gpt-builder?template=${selectedTemplate}`);
       }
       onComplete?.();
     }
@@ -119,13 +115,13 @@ export const AIStudioOnboardingWizard = ({ onComplete, onDismiss }: Props) => {
               </div>
             </div>
             <div className="space-y-3 text-sm text-muted-foreground">
-              <p>Your {selected.category.toLowerCase()} will be pre-configured with:</p>
+              <p>Your {selected.category === "App" ? "app" : "GPT"} will be pre-configured with:</p>
               <ul className="space-y-2">
                 {[
                   "Optimized system prompt for this use case",
                   "Recommended model selection (Gemini 3 Flash)",
                   "Sample knowledge base structure",
-                  "Pre-built action templates",
+                  selected.category === "App" ? "Pre-built UI components" : "Pre-built action templates",
                 ].map(item => (
                   <li key={item} className="flex items-center gap-2">
                     <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
@@ -145,7 +141,7 @@ export const AIStudioOnboardingWizard = ({ onComplete, onDismiss }: Props) => {
             <div>
               <h4 className="font-semibold text-lg">Ready to Build!</h4>
               <p className="text-sm text-muted-foreground mt-1">
-                You'll be taken to the {selected?.category === "App" ? "App Builder IDE" : selected?.category === "Agent" ? "Agent Builder" : "GPT Builder"} with your template pre-loaded.
+                You'll be taken to the {selected?.category === "App" ? "App Builder IDE" : "GPT Builder"} with your template pre-loaded.
               </p>
             </div>
           </div>

@@ -31,10 +31,7 @@ const COMMANDS: CommandItem[] = [
   { id: "ai-studio", label: "AI Studio Dashboard", category: "AI Studio", icon: Sparkles, route: "/ai-studio", keywords: ["ai", "studio", "dashboard"] },
   { id: "new-gpt", label: "Create New GPT", category: "AI Studio", icon: Bot, route: "/ai-studio/gpt-builder", keywords: ["new", "gpt", "create", "build", "assistant"] },
   { id: "app-builder", label: "App Builder", category: "AI Studio", icon: Code2, route: "/ai-studio/app-builder", keywords: ["app", "builder", "ide", "code"] },
-  { id: "ai-agents", label: "AI Agents", category: "AI Studio", icon: Zap, route: "/ai-studio/agents", keywords: ["agents", "automation"] },
-  { id: "workflows", label: "Workflows", category: "AI Studio", icon: Rocket, route: "/ai-studio/workflows", keywords: ["workflows", "canvas"] },
-  { id: "my-gpts", label: "My GPTs", category: "AI Studio", icon: MessageSquare, route: "/dashboard/gpt", keywords: ["gpts", "assistants"] },
-  { id: "ai-analytics", label: "AI Analytics", category: "AI Studio", icon: BarChart3, route: "/dashboard/analytics", keywords: ["analytics", "usage", "credits"] },
+  { id: "projects", label: "My Projects", category: "AI Studio", icon: Sparkles, route: "/ai-studio/projects", keywords: ["projects", "apps"] },
 
   // Vanguard
   { id: "vanguard", label: "Vanguard Dashboard", category: "Vanguard", icon: Monitor, route: "/vanguard", keywords: ["vanguard", "msp", "rmm"] },
