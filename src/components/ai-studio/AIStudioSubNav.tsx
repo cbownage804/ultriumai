@@ -1,13 +1,15 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Bot, Code2, LayoutDashboard, FolderOpen } from 'lucide-react';
+import { Bot, Code2, LayoutDashboard, FolderOpen, BarChart3, LayoutGrid } from 'lucide-react';
 import aiStudioLogo from '@/assets/ai-studio-logo.png';
 
 const navItems = [
   { path: '/ai-studio', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { path: '/ai-studio/projects', label: 'Projects', icon: FolderOpen },
-  { path: '/ai-studio/gpt-builder', label: 'GPT Builder', icon: Bot },
   { path: '/ai-studio/app-builder', label: 'App Builder', icon: Code2 },
+  { path: '/ai-studio/gpt-builder', label: 'GPT Builder', icon: Bot },
+  { path: '/ai-studio/templates', label: 'Templates', icon: LayoutGrid },
+  { path: '/ai-studio/analytics', label: 'Analytics', icon: BarChart3 },
 ];
 
 export function AIStudioSubNav() {
@@ -24,7 +26,7 @@ export function AIStudioSubNav() {
         <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto py-4 scrollbar-hide -mx-2 px-2 snap-x snap-mandatory">
           {/* Logo */}
           <Link to="/ai-studio" className="flex items-center mr-4 sm:mr-8 shrink-0">
-            <img src={aiStudioLogo} alt="AI Studio" className="h-[72px] sm:h-[88px] w-auto object-contain drop-shadow-[0_0_12px_rgba(139,92,246,0.3)]" />
+            <img src={aiStudioLogo} alt="AI Studio" className="h-10 sm:h-12 w-auto object-contain drop-shadow-[0_0_12px_rgba(139,92,246,0.3)]" />
           </Link>
 
           {navItems.map((item) => {
