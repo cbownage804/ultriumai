@@ -95,13 +95,18 @@ export function ActivityFeedWidget() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchActivity = async () => {
+    // Delay activity feed queries to stagger with other page-load queries
+    const timer = setTimeout(async () => {
       setLoading(true);
       const results: ActivityItem[] = [];
 
-      const [ticketsRes, securityRes, aiRes, devicesRes] = await Promise.all([
+      // Split into two batches to avoid rate limits
+      const [ticketsRes, securityRes] = await Promise.all([
         supabase.from('tickets').select('id, subject, status, priority, created_at, updated_at').order('updated_at', { ascending: false }).limit(10),
         supabase.from('security_events').select('id, event_type, description, severity, created_at').order('created_at', { ascending: false }).limit(10),
+      ]);
+
+      const [aiRes, devicesRes] = await Promise.all([
         supabase.from('ai_credit_ledger').select('id, credits_used, usage_type, description, created_at').order('created_at', { ascending: false }).limit(10),
         supabase.from('vanguard_agents').select('id, hostname, status, os_type, last_seen, created_at').order('last_seen', { ascending: false }).limit(10),
       ]);
@@ -114,9 +119,9 @@ export function ActivityFeedWidget() {
       results.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
       setActivities(results);
       setLoading(false);
-    };
+    }, 1000); // Delay 1s to stagger with dashboard KPIs
 
-    fetchActivity();
+    return () => clearTimeout(timer);
   }, []);
 
   const filtered = filter === 'all' 
