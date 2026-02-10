@@ -85,6 +85,7 @@ STRUCTURE FOR COMPLEX APPS:
 
 When MODIFYING an existing project:
 - CRITICAL RULE: ONLY output ===FILE: path=== blocks for files you are ACTUALLY CHANGING. Do NOT re-output unchanged files. If you change 1 file out of 10, output ONLY that 1 file.
+- To DELETE a file, use ===DELETE: path=== (e.g., ===DELETE: old-component.js===). The file will be removed from the project.
 - Read the provided file manifest and contents carefully before making changes
 - Map the complete dependency graph — understand how files relate to each other
 - Output COMPLETE content of changed files (full file, not diffs), but ONLY the files that changed

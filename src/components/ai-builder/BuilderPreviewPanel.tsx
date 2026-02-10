@@ -28,9 +28,11 @@ interface BuilderPreviewPanelProps {
   maxFixAttempts?: number;
   isVisualEditActive?: boolean;
   onToggleVisualEdit?: () => void;
+  /** Called when a new error is detected — for auto-fix pipeline */
+  onAutoFixError?: (error: PreviewError) => void;
 }
 
-export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onAutoFixError }: BuilderPreviewPanelProps) {
   const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -138,22 +140,28 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === '__PREVIEW_ERROR__') {
+        const newError: PreviewError = {
+          id: crypto.randomUUID(),
+          message: e.data.message,
+          source: e.data.source || undefined,
+          line: e.data.line || undefined,
+          timestamp: new Date(),
+          type: e.data.isWarning ? 'warning' : 'error',
+        };
         setErrors(prev => {
           if (prev.some(p => p.message === e.data.message)) return prev;
-          return [...prev.slice(-19), {
-            id: crypto.randomUUID(),
-            message: e.data.message,
-            source: e.data.source || undefined,
-            line: e.data.line || undefined,
-            timestamp: new Date(),
-            type: e.data.isWarning ? 'warning' : 'error',
-          }];
+          const updated = [...prev.slice(-19), newError];
+          // Auto-fix pipeline: notify parent of new errors (only actual errors, not warnings)
+          if (!e.data.isWarning && onAutoFixError && !isGenerating) {
+            setTimeout(() => onAutoFixError(newError), 500);
+          }
+          return updated;
         });
       }
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, []);
+  }, [onAutoFixError, isGenerating]);
 
   useEffect(() => { setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0); }, [html]);
 
