@@ -67,6 +67,8 @@ import { useVersionTimeline } from '@/hooks/useVersionTimeline';
 import { useBuildLog } from '@/hooks/useBuildLog';
 import { DeployPipelinePanel } from './DeployPipelinePanel';
 import { ComponentPalette } from './ComponentPalette';
+import { PerformanceProfiler } from './PerformanceProfiler';
+import { ChangelogPanel, type ChangelogEntry } from './ChangelogPanel';
 import { LiveCursors } from './LiveCursors';
 import { AIAutocompleteIndicator } from './AIAutocomplete';
 import { BuilderHelpCenter } from './BuilderHelpCenter';
@@ -78,7 +80,7 @@ import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
   History, Variable, Image, Package, Columns, Keyboard, Rocket,
-  Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen,
+  Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen, Gauge,
   Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -216,6 +218,9 @@ export function AIAppBuilderWorkspace() {
   const workspaceContainerRef = useRef<HTMLDivElement>(null);
   const [showGPTConnector, setShowGPTConnector] = useState(false);
   const [linkedGPT, setLinkedGPT] = useState<LinkedGPTConfig | null>(null);
+  const [showPerformanceProfiler, setShowPerformanceProfiler] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
+  const [changelogEntries, setChangelogEntries] = useState<ChangelogEntry[]>([]);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
@@ -1122,6 +1127,22 @@ export function AIAppBuilderWorkspace() {
                   <div className="mt-auto flex flex-col items-center gap-0.5">
                     <Tooltip>
                       <TooltipTrigger asChild>
+                        <button onClick={() => setShowPerformanceProfiler(!showPerformanceProfiler)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showPerformanceProfiler ? "text-emerald-400 bg-emerald-500/10" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
+                          <Gauge className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs">Performance</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button onClick={() => setShowChangelog(!showChangelog)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showChangelog ? "text-cyan-400 bg-cyan-500/10" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
+                          <History className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs">Changelog</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
                         <button onClick={() => setShowTimeline(!showTimeline)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showTimeline ? "text-white/80 bg-white/[0.06]" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
                           <GitBranchIcon className="h-3.5 w-3.5" />
                         </button>
@@ -1181,7 +1202,8 @@ export function AIAppBuilderWorkspace() {
                 <DatabaseExplorer open={showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
                 <ComponentLibrary open={showComponentLib} onClose={() => setShowComponentLib(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); } }} onApplyTheme={() => {}} />
                 <DeployPipelinePanel open={showDeployPipeline} onClose={() => setShowDeployPipeline(false)} onDeploy={handlePublish} publishedUrl={publishedUrl} isDeploying={isGenerating} projectName={project.name} onOpenDomainPanel={() => { setShowDeployPipeline(false); setShowDomainPanel(true); }} />
-                <ComponentPalette open={showComponentPalette} onClose={() => setShowComponentPalette(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); setRightTab('code'); } }} />
+                <PerformanceProfiler open={showPerformanceProfiler} onClose={() => setShowPerformanceProfiler(false)} files={project.files} cdnPackages={cdnPackages} />
+                <ChangelogPanel open={showChangelog} onClose={() => setShowChangelog(false)} entries={changelogEntries} />
                 <TestingDebugSuite open={showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); toast.success('Test generated'); }} projectFiles={project.files} />
                 <GPTConnectorPanel open={showGPTConnector} onClose={() => setShowGPTConnector(false)} linkedGPT={linkedGPT} onLinkGPT={setLinkedGPT} onUnlinkGPT={() => setLinkedGPT(null)} />
                 {showPackages && (
