@@ -88,6 +88,15 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
   return { text: text, fileNames };
 }
 
+function isInternalMessage(content: string): boolean {
+  return content.includes('PLANNING MODE') || 
+    content.includes('Return ONLY valid JSON') || 
+    content.includes('return a structured plan as JSON') ||
+    content.includes('filesToCreate') ||
+    content.includes('filesToModify') ||
+    (content.includes('"approach"') && content.includes('"steps"'));
+}
+
 const AI_MODELS = [
   { id: 'google/gemini-3-flash-preview', label: 'Flash', desc: 'Fast & efficient', icon: '⚡' },
   { id: 'google/gemini-3-pro-preview', label: 'Pro', desc: 'Higher quality', icon: '💎' },
@@ -341,11 +350,11 @@ export function BuilderChatPanel({
           <span className="text-[11px] font-medium text-white/50 tracking-wide uppercase">Chat</span>
         </div>
         <div className="flex items-center gap-1">
-          {messages.filter(m => m.role === 'user').length > 0 && (
+          {messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length > 0 && (
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/[0.03] border border-white/[0.06]">
               <Zap className="h-2.5 w-2.5 text-white/25" />
               <span className="text-[9px] text-white/30 font-mono">
-                {messages.filter(m => m.role === 'user').length} msg{messages.filter(m => m.role === 'user').length > 1 ? 's' : ''}
+                {messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length} msg{messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length > 1 ? 's' : ''}
               </span>
             </div>
           )}
@@ -460,13 +469,8 @@ export function BuilderChatPanel({
             </div>
           ) : (
             messages.filter((msg) => {
-              // Hide internal planning prompts sent as user messages
-              if (msg.role === 'user') {
-                const c = msg.content;
-                if (c.includes('[PLANNING MODE') || c.includes('Return ONLY valid JSON') || c.includes('Analyze the user\'s request in context of the current project files and return a structured plan')) {
-                  return false;
-                }
-              }
+              // Hide any message containing internal planning/system prompts
+              if (isInternalMessage(msg.content)) return false;
               // Hide assistant messages that are only internal planning JSON
               if (msg.role === 'assistant') {
                 const { text, fileNames } = getDisplayContent(msg);
@@ -764,8 +768,8 @@ export function BuilderChatPanel({
                 </div>
               )}
               <span className="text-[9px] text-white/15 font-mono">
-                {messages.filter(m => m.role === 'user').length > 0
-                  ? `${messages.filter(m => m.role === 'user').length} msg${messages.filter(m => m.role === 'user').length > 1 ? 's' : ''}`
+                {messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length > 0
+                  ? `${messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length} msg${messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length > 1 ? 's' : ''}`
                   : '1 credit/msg'}
               </span>
             </div>
