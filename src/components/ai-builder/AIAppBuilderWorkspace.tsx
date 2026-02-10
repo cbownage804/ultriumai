@@ -163,7 +163,7 @@ export function AIAppBuilderWorkspace() {
   const { findReferencedFiles, bundleForBrowser } = useProjectBundler();
   const [remoteCursors, setRemoteCursors] = useState<RemoteCursor[]>([]);
   const channelRef = useRef<any>(null);
-  const [isChatCollapsed, setIsChatCollapsed] = useState(true);
+  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
   const [dirtyFiles, setDirtyFiles] = useState<Set<string>>(new Set());
   const [cursorPosition, setCursorPosition] = useState<{ line: number; column: number }>({ line: 1, column: 1 });
   const prevIsGeneratingRef = useRef(isGenerating);
