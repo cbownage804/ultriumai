@@ -99,21 +99,30 @@ export const checkCredits = async (
 
 /**
  * Get user's current credit status
+ * Uses the new daily/monthly/bonus credit system
  */
 export const getUserCredits = async (userId: string) => {
   try {
     const { data, error } = await supabase
       .from('user_credits')
-      .select('credits_used, credits_limit, reset_date')
+      .select('credits_used, credits_limit, reset_date, daily_credits_used, daily_credits_limit, monthly_credits_used, monthly_credits_limit, bonus_credits')
       .eq('user_id', userId)
       .single();
 
     if (error) throw error;
 
+    // Use new credit system: daily + monthly + bonus
+    const dailyRemaining = (data?.daily_credits_limit || 5) - (data?.daily_credits_used || 0);
+    const monthlyRemaining = (data?.monthly_credits_limit || 0) - (data?.monthly_credits_used || 0);
+    const bonusRemaining = data?.bonus_credits || 0;
+    const totalRemaining = dailyRemaining + monthlyRemaining + bonusRemaining;
+    const totalLimit = (data?.daily_credits_limit || 5) + (data?.monthly_credits_limit || 0) + bonusRemaining;
+    const totalUsed = (data?.daily_credits_used || 0) + (data?.monthly_credits_used || 0);
+
     return {
-      used: data?.credits_used || 0,
-      limit: data?.credits_limit || 0,
-      remaining: (data?.credits_limit || 0) - (data?.credits_used || 0),
+      used: totalUsed,
+      limit: totalLimit,
+      remaining: totalRemaining,
       resetDate: data?.reset_date
     };
   } catch (error) {
