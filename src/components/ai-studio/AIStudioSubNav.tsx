@@ -26,7 +26,7 @@ export function AIStudioSubNav() {
         <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto py-4 scrollbar-hide -mx-2 px-2 snap-x snap-mandatory">
           {/* Logo */}
           <Link to="/ai-studio" className="flex items-center mr-4 sm:mr-8 shrink-0">
-            <img src={aiStudioLogo} alt="AI Studio" className="h-10 sm:h-12 w-auto object-contain drop-shadow-[0_0_12px_rgba(139,92,246,0.3)]" />
+            <img src={aiStudioLogo} alt="AI Studio" className="h-14 sm:h-16 w-auto object-contain drop-shadow-[0_0_12px_rgba(139,92,246,0.3)]" />
           </Link>
 
           {navItems.map((item) => {
