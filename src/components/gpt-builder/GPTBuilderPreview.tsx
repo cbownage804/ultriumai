@@ -131,6 +131,26 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
 
   const hasContent = config.welcome_message || config.starter_questions.length > 0 || chatMessages.length > 0;
 
+  const embedStyle = config.embed_style || 'bubble';
+
+  // Frame dimensions based on widget style
+  const frameStyles = {
+    bubble: {
+      container: 'w-full max-w-[380px] h-[660px] rounded-[2rem]',
+      label: 'Chat Bubble',
+    },
+    inline: {
+      container: 'w-full max-w-[480px] h-[500px] rounded-2xl',
+      label: 'Inline Embed',
+    },
+    fullpage: {
+      container: 'w-full max-w-[700px] h-[580px] rounded-xl',
+      label: 'Full Page',
+    },
+  };
+
+  const frame = frameStyles[embedStyle];
+
   return (
     <div className="h-full flex flex-col bg-[#0a0a0c]">
       {/* Preview Header */}
@@ -138,6 +158,7 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
         <div className="flex items-center gap-2">
           <span className="text-[10px] uppercase tracking-widest text-white/30 font-medium">Live Preview</span>
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[10px] text-white/20 ml-1">— {frame.label}</span>
         </div>
         <div className="flex items-center gap-2">
           {chatMessages.length > 0 && (
@@ -151,19 +172,30 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
         </div>
       </div>
 
-      {/* Phone Frame */}
+      {/* Frame */}
       <div className="flex-1 flex items-center justify-center p-6 overflow-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          key={embedStyle}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'spring', damping: 25 }}
-          className="w-full max-w-[380px] h-[660px] rounded-[2rem] border border-white/[0.08] bg-[#111113] shadow-2xl shadow-black/50 flex flex-col overflow-hidden relative"
+          className={cn(
+            frame.container,
+            'border border-white/[0.08] bg-[#111113] shadow-2xl shadow-black/50 flex flex-col overflow-hidden relative',
+            embedStyle === 'bubble' && 'rounded-[2rem]',
+          )}
         >
-          {/* Phone notch */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-2xl z-10 border-x border-b border-white/[0.04]" />
+          {/* Phone notch - only for bubble style */}
+          {embedStyle === 'bubble' && (
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-2xl z-10 border-x border-b border-white/[0.04]" />
+          )}
+
           {/* Chat Header */}
           <div
-            className="px-5 pt-8 pb-4 flex items-center gap-3 shrink-0"
+            className={cn(
+              "px-5 pb-4 flex items-center gap-3 shrink-0",
+              embedStyle === 'bubble' ? 'pt-8' : 'pt-4',
+            )}
             style={{ background: `linear-gradient(135deg, ${themeColor}20, transparent)` }}
           >
             <div
@@ -176,8 +208,8 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
                 <Bot className="h-5 w-5 text-white" />
               )}
             </div>
-            <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-white truncate">
+            <div className="min-w-0 flex-1">
+              <h3 className={cn("font-semibold text-white truncate", embedStyle === 'fullpage' ? 'text-base' : 'text-sm')}>
                 {config.name || 'Your GPT'}
               </h3>
               <div className="flex items-center gap-1.5">
@@ -212,7 +244,7 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
 
             {/* Starter Questions */}
             {config.starter_questions.length > 0 && chatMessages.length === 0 && (
-              <div className="space-y-1.5 pl-8">
+              <div className={cn("space-y-1.5 pl-8", embedStyle === 'fullpage' && 'grid grid-cols-2 gap-2 space-y-0')}>
                 {config.starter_questions.map((q, i) => (
                   <button
                     key={i}
