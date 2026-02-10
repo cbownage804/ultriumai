@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
+import { useUserCredits } from '@/hooks/useUserCredits';
 
 interface GPTBuilderPreviewProps {
   config: GPTConfig;
@@ -23,6 +24,7 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
   const [showAllStarters, setShowAllStarters] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const { useCredits, totalRemaining } = useUserCredits();
   const themeColor = config.theme_color || '#6366f1';
   const wt = useMemo(() => ({ ...DEFAULT_WIDGET_THEME, ...(config.widget_theme || {}) }), [config.widget_theme]);
   const userBubble = wt.user_bubble || themeColor;
@@ -39,6 +41,10 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
     if (!message || isResponding) return;
     if (!config.system_prompt) {
       toast.info('Configure a system prompt first via the chat panel');
+      return;
+    }
+    if (totalRemaining < 1) {
+      toast.error('Insufficient credits. Purchase more to continue.');
       return;
     }
 
@@ -122,7 +128,10 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
       setIsResponding(false);
       abortRef.current = null;
     }
-  }, [previewInput, isResponding, config.system_prompt, chatMessages]);
+
+    // Deduct 1 credit for test chat
+    await useCredits(1, 'GPT test chat');
+  }, [previewInput, isResponding, config.system_prompt, chatMessages, totalRemaining, useCredits]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }

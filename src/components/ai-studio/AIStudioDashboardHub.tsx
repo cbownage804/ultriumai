@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useUserCredits } from "@/hooks/useUserCredits";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Bot, Code2, ArrowRight, Sparkles, Clock,
@@ -62,9 +63,9 @@ export const AIStudioDashboardHub = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { subscription } = useSubscription();
+  const { dailyRemaining, monthlyRemaining, credits: userCredits, totalRemaining, getTimeUntilDailyReset } = useUserCredits();
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
   const [recentGPTs, setRecentGPTs] = useState<RecentGPT[]>([]);
-  const [credits, setCredits] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activityOpen, setActivityOpen] = useState(false);
   const [activity, setActivity] = useState<{ id: string; label: string; detail: string; timestamp: string }[]>([]);
@@ -108,10 +109,9 @@ export const AIStudioDashboardHub = () => {
     if (!user?.id) return;
     const fetch = async () => {
       try {
-        const [projectsRes, gptsRes, creditsRes, ledgerRes, projectCountRes, gptCountRes] = await Promise.all([
+        const [projectsRes, gptsRes, ledgerRes, projectCountRes, gptCountRes] = await Promise.all([
           supabase.from("builder_projects").select("id, name, updated_at, thumbnail_url").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(4),
           supabase.from("custom_gpts").select("id, name, updated_at, avatar_url").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(4),
-          supabase.from("org_credits").select("credits_remaining").eq("user_id", user.id).maybeSingle(),
           supabase.from("ai_credit_ledger").select("id, usage_type, credits_used, description, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
           supabase.from("builder_projects").select("id", { count: "exact", head: true }).eq("user_id", user.id),
           supabase.from("custom_gpts").select("id", { count: "exact", head: true }).eq("user_id", user.id),
@@ -119,7 +119,6 @@ export const AIStudioDashboardHub = () => {
 
         setRecentProjects(projectsRes.data || []);
         setRecentGPTs((gptsRes.data || []) as RecentGPT[]);
-        setCredits(creditsRes.data?.credits_remaining || 0);
         setTotalProjects(projectCountRes.count || 0);
         setTotalGPTs(gptCountRes.count || 0);
         setActivity(
@@ -199,10 +198,24 @@ export const AIStudioDashboardHub = () => {
             <span>Search</span>
             <kbd className="ml-1 text-[10px] px-1 py-0.5 rounded bg-muted/30 border border-border/50 font-mono">⌘K</kbd>
           </button>
-          <Badge variant="outline" className="text-xs px-3 py-1.5 border-border/50">
-            <Activity className="h-3 w-3 mr-1.5" />
-            {credits.toLocaleString()} Credits
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "text-xs px-3 py-1.5 border-border/50 cursor-pointer hover:bg-card/60 transition-colors",
+                totalRemaining < 2 && "border-destructive/40 bg-destructive/5 text-destructive animate-pulse"
+              )}
+              onClick={() => navigate('/credits')}
+            >
+              <Zap className="h-3 w-3 mr-1.5" />
+              {totalRemaining} Credit{totalRemaining !== 1 ? 's' : ''}
+            </Badge>
+            {userCredits.bonus_credits > 0 && (
+              <Badge variant="outline" className="text-[10px] px-2 py-1 border-amber-500/20 bg-amber-500/5 text-amber-400">
+                +{userCredits.bonus_credits} bonus
+              </Badge>
+            )}
+          </div>
         </div>
       </motion.div>
 

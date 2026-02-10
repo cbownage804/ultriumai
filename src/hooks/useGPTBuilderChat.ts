@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { GPTConfig, DEFAULT_GPT_CONFIG, DEFAULT_WIDGET_THEME, GPTBuilderMessage } from '@/types/gptConfig';
 import { useToast } from '@/hooks/use-toast';
+import { useUserCredits } from '@/hooks/useUserCredits';
 
 const GPT_TEMPLATES: Record<string, Partial<GPTConfig>> = {
   support: {
@@ -54,6 +55,7 @@ export function useGPTBuilderChat(editGptId?: string, templateId?: string) {
   const [savedGptId, setSavedGptId] = useState<string | null>(editGptId || null);
   const abortRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
+  const { useCredits: deductCredits, totalRemaining } = useUserCredits();
 
   // Load existing GPT for editing
   useEffect(() => {
@@ -117,6 +119,12 @@ export function useGPTBuilderChat(editGptId?: string, templateId?: string) {
 
   const sendMessage = useCallback(async (userInput: string) => {
     if (!userInput.trim() || isGenerating) return;
+
+    // Check credits before sending
+    if (totalRemaining < 2) {
+      toast({ title: 'Insufficient credits', description: 'You need at least 2 credits. Purchase more to continue.', variant: 'destructive' });
+      return;
+    }
 
     const userMsg: GPTBuilderMessage = {
       id: crypto.randomUUID(),
@@ -229,6 +237,9 @@ export function useGPTBuilderChat(editGptId?: string, templateId?: string) {
       } catch {
         // Config parse failed, that's fine
       }
+
+      // Deduct credits after successful response
+      await deductCredits(2, 'GPT Builder chat');
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.error('GPT Builder chat error:', err);
@@ -238,7 +249,7 @@ export function useGPTBuilderChat(editGptId?: string, templateId?: string) {
       setIsGenerating(false);
       abortRef.current = null;
     }
-  }, [config, messages, isGenerating, toast]);
+  }, [config, messages, isGenerating, toast, totalRemaining, deductCredits]);
 
   const updateConfig = useCallback((updates: Partial<GPTConfig>) => {
     setConfig(prev => ({ ...prev, ...updates }));
