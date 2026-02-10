@@ -1191,28 +1191,30 @@ export function AIAppBuilderWorkspace() {
                         </ResizablePanelGroup>
                       </div>
 
-                      {/* Bottom panels — shrink-to-fit, never compress preview */}
-                      <div className="shrink-0 overflow-hidden">
-                        {/* Build Log */}
-                        <BuildLogPanel entries={buildLog.entries} isBuilding={isGenerating} onClear={buildLog.clear} />
-                        {/* Version Timeline */}
-                        {showTimeline && versionTimeline.totalSnapshots > 0 && (
-                          <VersionTimelineSlider
-                            snapshots={versionTimeline.snapshots}
-                            currentIndex={versionTimeline.currentIndex}
-                            onNavigate={(idx) => {
-                              const files = versionTimeline.navigateToSnapshot(idx);
-                              if (files) setFiles(files);
-                            }}
-                            onExit={() => { versionTimeline.exitHistoryPreview(); setShowTimeline(false); }}
-                            getDiff={versionTimeline.getSnapshotDiff}
-                          />
-                        )}
-                        {/* Console Panel */}
-                        <ConsolePanel open={showConsole} onToggle={() => setShowConsole(!showConsole)} onFixError={handleFixError} />
-                        {/* Terminal */}
-                        <TerminalEmulator open={showTerminal} onClose={() => setShowTerminal(false)} projectName={project.name} />
-                      </div>
+                      {/* Bottom panels — only visible when actively needed */}
+                      {(isGenerating || buildLog.entries.length > 0 || showConsole || showTerminal || (showTimeline && versionTimeline.totalSnapshots > 0)) && (
+                        <div className="shrink-0 max-h-[35vh] overflow-hidden flex flex-col">
+                          {(isGenerating || buildLog.entries.length > 0) && (
+                            <BuildLogPanel entries={buildLog.entries} isBuilding={isGenerating} onClear={buildLog.clear} />
+                          )}
+                          {showTimeline && versionTimeline.totalSnapshots > 0 && (
+                            <VersionTimelineSlider
+                              snapshots={versionTimeline.snapshots}
+                              currentIndex={versionTimeline.currentIndex}
+                              onNavigate={(idx) => {
+                                const files = versionTimeline.navigateToSnapshot(idx);
+                                if (files) setFiles(files);
+                              }}
+                              onExit={() => { versionTimeline.exitHistoryPreview(); setShowTimeline(false); }}
+                              getDiff={versionTimeline.getSnapshotDiff}
+                            />
+                          )}
+                          {showConsole && (
+                            <ConsolePanel open={showConsole} onToggle={() => setShowConsole(!showConsole)} onFixError={handleFixError} />
+                          )}
+                          <TerminalEmulator open={showTerminal} onClose={() => setShowTerminal(false)} projectName={project.name} />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
