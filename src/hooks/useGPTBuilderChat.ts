@@ -3,7 +3,50 @@ import { supabase } from '@/integrations/supabase/client';
 import { GPTConfig, DEFAULT_GPT_CONFIG, GPTBuilderMessage } from '@/types/gptConfig';
 import { useToast } from '@/hooks/use-toast';
 
-export function useGPTBuilderChat(editGptId?: string) {
+const GPT_TEMPLATES: Record<string, Partial<GPTConfig>> = {
+  support: {
+    name: 'Customer Support Bot',
+    description: 'AI assistant trained on your knowledge base to handle customer inquiries',
+    system_prompt: 'You are a friendly and professional customer support assistant. Answer questions based on the provided knowledge base. If you don\'t know the answer, politely say so and offer to escalate to a human agent. Always be empathetic, concise, and solution-oriented.',
+    category: 'support',
+    communication_style: 'Professional yet friendly',
+    expertise_areas: 'Customer support, troubleshooting, FAQ handling',
+    starter_questions: ['How can I reset my password?', 'What are your business hours?', 'I need help with my order'],
+    welcome_message: 'Hi! I\'m here to help. What can I assist you with today?',
+  },
+  knowledge: {
+    name: 'Knowledge Base Q&A',
+    description: 'Query internal documentation in natural language',
+    system_prompt: 'You are a knowledgeable assistant with access to internal documentation. Provide accurate, well-sourced answers based on the uploaded knowledge base. Cite specific documents when possible. If the information isn\'t in the knowledge base, clearly state that.',
+    category: 'knowledge',
+    communication_style: 'Clear and informative',
+    expertise_areas: 'Document analysis, information retrieval, research',
+    starter_questions: ['What does our policy say about...?', 'Summarize the key points of...', 'Where can I find information about...?'],
+    welcome_message: 'I can help you find information from your documentation. What would you like to know?',
+  },
+  lead: {
+    name: 'Website Lead Bot',
+    description: 'Qualify website visitors and capture leads 24/7',
+    system_prompt: 'You are a friendly sales assistant embedded on a website. Your goal is to engage visitors, understand their needs, qualify them as potential customers, and collect their contact information. Be conversational, not pushy. Ask about their business needs and suggest relevant solutions.',
+    category: 'sales',
+    communication_style: 'Conversational and engaging',
+    expertise_areas: 'Lead qualification, sales discovery, product recommendations',
+    starter_questions: ['Tell me about your product', 'What pricing plans do you offer?', 'Can I schedule a demo?'],
+    welcome_message: 'Welcome! 👋 I\'d love to help you find the right solution. What brings you here today?',
+  },
+  docs: {
+    name: 'Doc Analyzer',
+    description: 'Upload and analyze contracts, proposals, and documents',
+    system_prompt: 'You are an expert document analyst. Help users understand, summarize, and extract key information from uploaded documents including contracts, proposals, reports, and legal documents. Highlight important clauses, risks, and action items.',
+    category: 'productivity',
+    communication_style: 'Analytical and thorough',
+    expertise_areas: 'Document analysis, contract review, summarization',
+    starter_questions: ['Summarize this document', 'What are the key terms?', 'Are there any risks I should know about?'],
+    welcome_message: 'Upload a document and I\'ll help you analyze it. What would you like to know?',
+  },
+};
+
+export function useGPTBuilderChat(editGptId?: string, templateId?: string) {
   const [config, setConfig] = useState<GPTConfig>({ ...DEFAULT_GPT_CONFIG });
   const [messages, setMessages] = useState<GPTBuilderMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -52,6 +95,21 @@ export function useGPTBuilderChat(editGptId?: string) {
     };
     load();
   }, [editGptId]);
+
+  // Apply template if provided
+  useEffect(() => {
+    if (!templateId || editGptId) return;
+    const template = GPT_TEMPLATES[templateId];
+    if (template) {
+      setConfig(prev => ({ ...prev, ...template }));
+      setMessages([{
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: `I've set up the **${template.name}** template for you! The system prompt, starter questions, and personality are pre-configured.\n\nYou can customize anything — just tell me what changes you'd like, or click **Save GPT** to create it as-is.`,
+        timestamp: new Date(),
+      }]);
+    }
+  }, [templateId, editGptId]);
 
   const sendMessage = useCallback(async (userInput: string) => {
     if (!userInput.trim() || isGenerating) return;

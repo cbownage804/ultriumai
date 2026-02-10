@@ -136,7 +136,7 @@ export const AIStudioDashboardHub = () => {
                 variant="premium"
                 size="lg"
                 className="w-full min-h-[44px]"
-                onClick={() => navigate("/ai-studio/app-builder")}
+                onClick={() => navigate("/ai-studio/app-builder?new=true")}
               >
                 <Sparkles className="mr-2 h-4 w-4" />
                 New App
