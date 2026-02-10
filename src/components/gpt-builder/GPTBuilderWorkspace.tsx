@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGPTBuilderChat } from '@/hooks/useGPTBuilderChat';
 import { useCustomGPTs } from '@/hooks/useCustomGPTs';
@@ -8,12 +8,13 @@ import { GPTBuilderConfigSidebar } from './GPTBuilderConfigSidebar';
 import { GPTBuilderKnowledgePanel } from './GPTBuilderKnowledgePanel';
 import { GPTBuilderActionsPanel } from './GPTBuilderActionsPanel';
 import { GPTBuilderEmbedPanel } from './GPTBuilderEmbedPanel';
+import { GPTTemplatePickerModal } from './GPTTemplatePickerModal';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   ArrowLeft, Save, RotateCcw, Settings2, Eye, MessageSquare, Loader2,
-  BookOpen, Zap, Code2
+  BookOpen, Zap, Code2, Layers
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -32,8 +33,15 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
   const [activeTab, setActiveTab] = useState<'chat' | 'preview' | 'config'>('chat');
   const [isSaving, setIsSaving] = useState(false);
   const [sidePanel, setSidePanel] = useState<SidePanel>(null);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   const isEditMode = !!savedGptId;
+
+  const handleApplyTemplate = useCallback((tplId: string) => {
+    // Navigate to apply template via URL, which triggers the useEffect in useGPTBuilderChat
+    navigate(`/ai-studio/gpt-builder?template=${tplId}`, { replace: true });
+    window.location.reload();
+  }, [navigate]);
 
   const togglePanel = (panel: SidePanel) => {
     setSidePanel(prev => prev === panel ? null : panel);
@@ -190,6 +198,20 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => setShowTemplatePicker(true)}
+                  className="text-white/50 hover:text-white hover:bg-white/[0.06] h-8 px-2"
+                >
+                  <Layers className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Templates</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={resetConfig}
                   className="text-white/50 hover:text-white hover:bg-white/[0.06] h-8 px-2"
                 >
@@ -258,6 +280,13 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
             {activeTab === 'config' && <GPTBuilderConfigSidebar config={config} onChange={updateConfig} />}
           </div>
         </div>
+
+        {/* Template Picker Modal */}
+        <GPTTemplatePickerModal
+          open={showTemplatePicker}
+          onOpenChange={setShowTemplatePicker}
+          onSelect={handleApplyTemplate}
+        />
       </div>
     </TooltipProvider>
   );
