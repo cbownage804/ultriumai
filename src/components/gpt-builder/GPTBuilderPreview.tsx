@@ -135,12 +135,20 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
     <div className="h-full flex flex-col bg-[#0a0a0c]">
       {/* Preview Header */}
       <div className="h-10 shrink-0 flex items-center justify-between px-4 border-b border-white/[0.06] bg-white/[0.02]">
-        <span className="text-[10px] uppercase tracking-widest text-white/30 font-medium">Live Preview</span>
-        {chatMessages.length > 0 && (
-          <button onClick={resetChat} className="text-white/30 hover:text-white/60 transition-colors">
-            <RotateCcw className="h-3.5 w-3.5" />
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase tracking-widest text-white/30 font-medium">Live Preview</span>
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        </div>
+        <div className="flex items-center gap-2">
+          {chatMessages.length > 0 && (
+            <span className="text-[10px] text-white/20">{chatMessages.length} messages</span>
+          )}
+          {chatMessages.length > 0 && (
+            <button onClick={resetChat} className="text-white/30 hover:text-white/60 transition-colors" title="Reset test chat">
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Phone Frame */}
@@ -149,11 +157,13 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', damping: 25 }}
-          className="w-full max-w-[380px] h-[640px] rounded-[2rem] border border-white/[0.08] bg-[#111113] shadow-2xl shadow-black/50 flex flex-col overflow-hidden"
+          className="w-full max-w-[380px] h-[660px] rounded-[2rem] border border-white/[0.08] bg-[#111113] shadow-2xl shadow-black/50 flex flex-col overflow-hidden relative"
         >
+          {/* Phone notch */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-2xl z-10 border-x border-b border-white/[0.04]" />
           {/* Chat Header */}
           <div
-            className="px-5 py-4 flex items-center gap-3 shrink-0"
+            className="px-5 pt-8 pb-4 flex items-center gap-3 shrink-0"
             style={{ background: `linear-gradient(135deg, ${themeColor}20, transparent)` }}
           >
             <div
