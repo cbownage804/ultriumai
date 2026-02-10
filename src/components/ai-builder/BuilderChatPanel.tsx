@@ -222,34 +222,75 @@ export function BuilderChatPanel({
     );
   };
 
+  const [expandedBuildMessages, setExpandedBuildMessages] = useState<Set<string>>(new Set());
+
+  const toggleBuildExpanded = (msgId: string) => {
+    setExpandedBuildMessages(prev => {
+      const next = new Set(prev);
+      if (next.has(msgId)) next.delete(msgId);
+      else next.add(msgId);
+      return next;
+    });
+  };
+
   const renderAssistantMessage = (msg: BuilderMessage, isLast: boolean) => {
     const { text, fileNames } = getDisplayContent(msg);
     const isStreaming = isGenerating && isLast;
     const hasFiles = msg.filesGenerated && msg.filesGenerated > 0;
+    const isBuildExpanded = expandedBuildMessages.has(msg.id);
+    const totalFiles = hasFiles ? msg.filesGenerated! : fileNames.length;
 
     return (
       <div className="space-y-2">
-        {hasFiles && (
-          <div className="flex items-center gap-2 text-xs">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-            <span className="text-white/70">
-              Generated {msg.filesGenerated} file{msg.filesGenerated! > 1 ? 's' : ''}
-            </span>
-          </div>
-        )}
-        {fileNames.length > 0 && !hasFiles && (
-          <div className="flex flex-wrap gap-1">
-            {fileNames.slice(0, 5).map((name, i) => (
-              <span key={i} className="inline-flex items-center gap-1 text-[10px] text-cyan-400/80 bg-cyan-500/10 rounded px-1.5 py-0.5 font-mono">
-                <FileCode className="h-2.5 w-2.5" />
-                {name}
+        {/* Compact build summary - always shown */}
+        {(hasFiles || (fileNames.length > 0 && !isStreaming)) && (
+          <button
+            onClick={() => toggleBuildExpanded(msg.id)}
+            className="w-full flex items-center justify-between gap-2 text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] transition-colors group"
+          >
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+              <span className="text-white/70">
+                Generated {totalFiles} file{totalFiles > 1 ? 's' : ''}
               </span>
-            ))}
-            {fileNames.length > 5 && (
-              <span className="text-[10px] text-white/30">+{fileNames.length - 5} more</span>
+            </div>
+            <ChevronDown className={cn("h-3 w-3 text-white/30 transition-transform", isBuildExpanded && "rotate-180")} />
+          </button>
+        )}
+
+        {/* Expandable build details */}
+        {isBuildExpanded && (
+          <div className="space-y-1.5 pl-2 border-l border-white/[0.06]">
+            {fileNames.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {fileNames.map((name, i) => (
+                  <span key={i} className="inline-flex items-center gap-1 text-[10px] text-cyan-400/80 bg-cyan-500/10 rounded px-1.5 py-0.5 font-mono">
+                    <FileCode className="h-2.5 w-2.5" />
+                    {name}
+                  </span>
+                ))}
+              </div>
+            )}
+            {/* Code diff viewer for changed files */}
+            {!isStreaming && hasFiles && previousFiles.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                {latestFiles.slice(0, 3).map(file => {
+                  const prev = previousFiles.find(p => p.path === file.path);
+                  if (!prev) return null;
+                  return (
+                    <CodeDiffViewer
+                      key={file.path}
+                      oldContent={prev.content}
+                      newContent={file.content}
+                      fileName={file.path}
+                    />
+                  );
+                })}
+              </div>
             )}
           </div>
         )}
+
         {text && (
           <div className="prose prose-sm prose-invert max-w-none text-[13px] text-white/80 leading-relaxed [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:text-white/70 [&_strong]:text-white/95 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
             <ReactMarkdown
@@ -291,24 +332,6 @@ export function BuilderChatPanel({
           <div className="flex items-center gap-2 text-xs text-white/40">
             <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
             <span>Writing {fileNames.length} file{fileNames.length > 1 ? 's' : ''}...</span>
-          </div>
-        )}
-
-        {/* Code diff viewer for changed files */}
-        {!isStreaming && isLast && hasFiles && previousFiles.length > 0 && (
-          <div className="space-y-1.5 pt-1">
-            {latestFiles.slice(0, 3).map(file => {
-              const prev = previousFiles.find(p => p.path === file.path);
-              if (!prev) return null;
-              return (
-                <CodeDiffViewer
-                  key={file.path}
-                  oldContent={prev.content}
-                  newContent={file.content}
-                  fileName={file.path}
-                />
-              );
-            })}
           </div>
         )}
 
