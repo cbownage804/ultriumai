@@ -38,6 +38,7 @@ import { QuickFileSwitcher } from './QuickFileSwitcher';
 import { AssetManager, type ProjectAsset } from './AssetManager';
 import { PackageManager, type CDNPackage } from './PackageManager';
 import { useProjectBundler } from '@/hooks/useProjectBundler';
+import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 import { OnboardingTour } from './OnboardingTour';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Input } from '@/components/ui/input';
@@ -164,6 +165,7 @@ export function AIAppBuilderWorkspace() {
   const [showPackages, setShowPackages] = useState(false);
   const [cdnPackages, setCdnPackages] = useState<CDNPackage[]>([]);
   const { findReferencedFiles, bundleForBrowser } = useProjectBundler();
+  const liveSync = useLivePreviewSync();
   const [remoteCursors, setRemoteCursors] = useState<RemoteCursor[]>([]);
   const channelRef = useRef<any>(null);
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
@@ -805,12 +807,25 @@ export function AIAppBuilderWorkspace() {
   const liveCompiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
   const [stableHTML, setStableHTML] = useState<string | null>(null);
 
-  // Defer preview updates until build completes — keep old preview visible during generation
+  // Defer preview updates until build completes — but allow CSS hot-patches through immediately
   useEffect(() => {
     if (!isGenerating && liveCompiledHTML) {
-      setStableHTML(liveCompiledHTML);
+      // Try hot-patching first (CSS-only changes skip full reload)
+      const patched = liveSync.applyPatches(previewIframeRef, project.files);
+      if (!patched) {
+        // Full reload needed — update srcdoc
+        setStableHTML(liveCompiledHTML);
+        liveSync.resetSnapshot(project.files);
+      }
     }
-  }, [isGenerating, liveCompiledHTML]);
+  }, [isGenerating, liveCompiledHTML, project.files]);
+
+  // Also hot-patch during manual edits (when not generating)
+  useEffect(() => {
+    if (!isGenerating && stableHTML && project.files.length > 0) {
+      liveSync.applyPatches(previewIframeRef, project.files);
+    }
+  }, [project.files, isGenerating, stableHTML]);
 
   // For first load (no previous build), show immediately
   const compiledHTML = stableHTML || liveCompiledHTML;
@@ -1070,7 +1085,7 @@ export function AIAppBuilderWorkspace() {
             mobileTab === 'chat' ? (
               <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} />
             ) : (
-                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit}>
+                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef}>
                   <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} />
                 </BuilderPreviewPanel>
             )
@@ -1276,7 +1291,7 @@ export function AIAppBuilderWorkspace() {
                               <ResizablePanelGroup direction="horizontal" className="h-full">
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="preview" className="h-full">
-                                    <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit}>
+                                    <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef}>
                                       <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} />
                                     </BuilderPreviewPanel>
                                   </div>
@@ -1293,7 +1308,7 @@ export function AIAppBuilderWorkspace() {
                               </ResizablePanelGroup>
                             ) : rightTab === 'preview' || !hasFiles ? (
                               <div data-tour="preview" className="h-full">
-                                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit}>
+                                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef}>
                                   <GeneratingOverlay isGenerating={isGenerating} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} />
                                 </BuilderPreviewPanel>
                               </div>
