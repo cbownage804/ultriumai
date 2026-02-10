@@ -1191,25 +1191,28 @@ export function AIAppBuilderWorkspace() {
                         </ResizablePanelGroup>
                       </div>
 
-                      {/* Build Log */}
-                      <BuildLogPanel entries={buildLog.entries} isBuilding={isGenerating} onClear={buildLog.clear} />
-                      {/* Version Timeline */}
-                      {showTimeline && versionTimeline.totalSnapshots > 0 && (
-                        <VersionTimelineSlider
-                          snapshots={versionTimeline.snapshots}
-                          currentIndex={versionTimeline.currentIndex}
-                          onNavigate={(idx) => {
-                            const files = versionTimeline.navigateToSnapshot(idx);
-                            if (files) setFiles(files);
-                          }}
-                          onExit={() => { versionTimeline.exitHistoryPreview(); setShowTimeline(false); }}
-                          getDiff={versionTimeline.getSnapshotDiff}
-                        />
-                      )}
-                      {/* Console Panel */}
-                      <ConsolePanel open={showConsole} onToggle={() => setShowConsole(!showConsole)} onFixError={handleFixError} />
-                      {/* Terminal */}
-                      <TerminalEmulator open={showTerminal} onClose={() => setShowTerminal(false)} projectName={project.name} />
+                      {/* Bottom panels — fixed height, never compress preview */}
+                      <div className="shrink-0 max-h-[40%] overflow-y-auto">
+                        {/* Build Log */}
+                        <BuildLogPanel entries={buildLog.entries} isBuilding={isGenerating} onClear={buildLog.clear} />
+                        {/* Version Timeline */}
+                        {showTimeline && versionTimeline.totalSnapshots > 0 && (
+                          <VersionTimelineSlider
+                            snapshots={versionTimeline.snapshots}
+                            currentIndex={versionTimeline.currentIndex}
+                            onNavigate={(idx) => {
+                              const files = versionTimeline.navigateToSnapshot(idx);
+                              if (files) setFiles(files);
+                            }}
+                            onExit={() => { versionTimeline.exitHistoryPreview(); setShowTimeline(false); }}
+                            getDiff={versionTimeline.getSnapshotDiff}
+                          />
+                        )}
+                        {/* Console Panel */}
+                        <ConsolePanel open={showConsole} onToggle={() => setShowConsole(!showConsole)} onFixError={handleFixError} />
+                        {/* Terminal */}
+                        <TerminalEmulator open={showTerminal} onClose={() => setShowTerminal(false)} projectName={project.name} />
+                      </div>
                     </div>
                   </div>
                 </div>
