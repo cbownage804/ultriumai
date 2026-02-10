@@ -146,7 +146,7 @@ export function FloatingHelpButton({ className }: FloatingHelpButtonProps) {
   return (
     <>
       {/* Floating Button */}
-      <div className={cn("fixed bottom-6 right-6 z-50", className)}>
+      <div className={cn("fixed bottom-24 right-6 z-50", className)}>
         <AnimatePresence>
           {isExpanded && (
             <motion.div
