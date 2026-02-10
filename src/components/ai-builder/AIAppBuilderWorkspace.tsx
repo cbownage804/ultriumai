@@ -120,11 +120,11 @@ export function AIAppBuilderWorkspace() {
   const {
     currentRun: agentRun,
     taskQueue: agentTaskQueue,
+    notifications: agentNotifications,
     startAgentRun, cancelRun: cancelAgent,
     enqueueTask, cancelTask: cancelAgentTask,
     retryTask: retryAgentTask, clearCompleted: clearAgentCompleted,
-    processQueue: processAgentQueue,
-    executeAgentTask, setIframeRef: setAgentIframeRef,
+    executeAgentTask, getNextQueuedTask, isAnyRunning: isAgentRunning,
   } = useAgentMode();
   const autoRecovery = useAutoErrorRecovery();
   const versionTimeline = useVersionTimeline();
@@ -297,6 +297,30 @@ export function AIAppBuilderWorkspace() {
       latestFiles.forEach(f => buildLog.logFileWrite(f.path));
     }
   }, [latestFiles]);
+
+  // Auto-process agent queue: when no task is running and there's a queued task, start it
+  useEffect(() => {
+    if (isAgentRunning) return;
+    const next = getNextQueuedTask();
+    if (!next) return;
+    const extraArgs = [supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, knowledge.customInstructions || undefined];
+    executeAgentTask(next, sendMessage, project.files, extraArgs);
+  }, [isAgentRunning, getNextQueuedTask, executeAgentTask, sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, knowledge]);
+
+  // Sync agent notifications to build notification center
+  useEffect(() => {
+    if (agentNotifications.length > 0) {
+      const latest = agentNotifications[0];
+      setBuildNotifications(prev => [{
+        id: latest.id,
+        type: (latest.type === 'warning' ? 'info' : latest.type) as 'success' | 'error' | 'info' | 'deploy',
+        title: latest.title,
+        detail: latest.detail,
+        timestamp: latest.timestamp,
+        read: false,
+      }, ...prev].slice(0, 50));
+    }
+  }, [agentNotifications]);
 
   // Auto-name project on first build based on user's initial prompt
   const hasAutoNamed = useRef(false);
