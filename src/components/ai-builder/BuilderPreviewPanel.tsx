@@ -31,9 +31,11 @@ interface BuilderPreviewPanelProps {
   onVisualEdit?: (selector: string, property: string, value: string) => void;
   /** Called when a new error is detected — for auto-fix pipeline */
   onAutoFixError?: (error: PreviewError) => void;
+  /** External iframe ref for hot-patching */
+  externalIframeRef?: React.RefObject<HTMLIFrameElement | null>;
 }
 
-export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef }: BuilderPreviewPanelProps) {
   const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -47,16 +49,40 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
   const [historyIndex, setHistoryIndex] = useState(0);
   const [zoom, setZoom] = useState(100);
   const containerRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const internalIframeRef = useRef<HTMLIFrameElement>(null);
+  const iframeRef = externalIframeRef || internalIframeRef;
 
   const viewportWidth = getViewportWidth(viewportMode);
 
-  // Inject error + console + network capture script into HTML
+  // Inject error + console + network capture + hot-patch listener script into HTML
   const htmlWithErrorCapture = html ? html.replace(
     '</head>',
     `<script>
 window.addEventListener('error', function(e) {
   window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: e.message, source: e.filename, line: e.lineno, col: e.colno }, '*');
+});
+// === LIVE PREVIEW HOT-PATCH LISTENER ===
+window.addEventListener('message', function(e) {
+  if (!e.data || e.data.type !== '__LIVE_PATCH__') return;
+  var patches = e.data.patches || [];
+  for (var i = 0; i < patches.length; i++) {
+    var p = patches[i];
+    if (p.kind === 'css') {
+      var styleId = '__hotcss_' + p.path.replace(/[^a-z0-9]/gi, '_');
+      var existing = document.getElementById(styleId);
+      if (existing) {
+        existing.textContent = p.content;
+      } else {
+        var style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = p.content;
+        document.head.appendChild(style);
+      }
+    } else if (p.kind === 'html-body') {
+      document.body.innerHTML = p.content;
+    }
+  }
+  window.parent.postMessage({ type: '__LIVE_PATCH_ACK__', count: patches.length }, '*');
 });
 window.addEventListener('unhandledrejection', function(e) {
   window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: 'Unhandled Promise: ' + (e.reason?.message || e.reason || 'Unknown'), source: '', line: 0 }, '*');
