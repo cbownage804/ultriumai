@@ -70,17 +70,21 @@ function useLiveKPIs() {
   const [securityScore, setSecurityScore] = useState(0);
 
   useEffect(() => {
-    const fetchKPIs = async () => {
+    // Stagger dashboard queries to avoid Supabase rate limits
+    const timer = setTimeout(async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch counts in parallel
-      const [ticketsRes, devicesRes, threatsRes, creditsRes, usersRes, totalDevicesRes, resolvedTicketsRes, patchesRes, alertsAllRes] = await Promise.all([
+      // Split into two batches to avoid Supabase rate limits
+      const [ticketsRes, devicesRes, threatsRes, creditsRes, usersRes] = await Promise.all([
         supabase.from('tickets').select('id', { count: 'exact', head: true }).in('status', ['open', 'in_progress', 'new', 'pending']),
         supabase.from('vanguard_agents').select('id', { count: 'exact', head: true }).eq('status', 'online'),
         supabase.from('security_events').select('id', { count: 'exact', head: true }).eq('status', 'open').in('severity', ['critical', 'high']),
         supabase.from('ai_credit_ledger').select('credits_used').eq('user_id', user.id),
         supabase.from('client_portal_users').select('id', { count: 'exact', head: true }).eq('is_active', true),
+      ]);
+
+      const [totalDevicesRes, resolvedTicketsRes, patchesRes, alertsAllRes] = await Promise.all([
         supabase.from('vanguard_agents').select('id', { count: 'exact', head: true }),
         supabase.from('helpdesk_tickets').select('actual_hours').not('actual_hours', 'is', null).gt('actual_hours', 0),
         supabase.from('rmm_patches').select('status'),
@@ -145,9 +149,9 @@ function useLiveKPIs() {
       });
       const maxCount = Math.max(...dayCounts, 1);
       setTicketTrend(dayCounts.map(c => Math.round((c / maxCount) * 100) || 5));
-    };
+    }, 500); // Delay 500ms to stagger with other page-load queries
 
-    fetchKPIs();
+    return () => clearTimeout(timer);
   }, []);
 
   return { data, ticketTrend, securityScore };
