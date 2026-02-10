@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { GPTBuilderOnboardingTour } from './GPTBuilderOnboardingTour';
 
 type SidePanel = 'config' | 'knowledge' | 'actions' | 'embed' | 'export' | 'analytics' | null;
 
@@ -187,6 +188,7 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
   return (
     <TooltipProvider delayDuration={300}>
       <div className="h-full flex flex-col bg-[#09090b] text-white">
+        <GPTBuilderOnboardingTour />
         {/* Header */}
         <header className="h-12 shrink-0 flex items-center justify-between px-3 border-b border-white/[0.06] bg-white/[0.02]">
           <div className="flex items-center gap-2">
@@ -238,7 +240,7 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
             </div>
 
             {/* Desktop panel toggles */}
-            <div className="hidden md:flex items-center gap-0.5">
+            <div className="hidden md:flex items-center gap-0.5" data-tour="gpt-config-bar">
               {sidePanelButtons.map(btn => (
                 <Tooltip key={btn.id}>
                   <TooltipTrigger asChild>
@@ -294,6 +296,7 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
               onClick={handleSave}
               disabled={isSaving || !config.name}
               className="h-8 bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5"
+              data-tour="gpt-save"
             >
               {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               <span className="hidden sm:inline">{isEditMode ? 'Update GPT' : 'Save GPT'}</span>
@@ -307,6 +310,7 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
           <div className="hidden md:block h-full">
             <ResizablePanelGroup direction="horizontal" className="h-full">
               <ResizablePanel defaultSize={sidePanel ? 40 : 45} minSize={30}>
+                <div data-tour="gpt-chat" className="h-full">
                 <GPTBuilderChatPanel
                   messages={messages}
                   isGenerating={isGenerating}
@@ -314,12 +318,15 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
                   onStop={stopGeneration}
                   config={config}
                 />
+                </div>
               </ResizablePanel>
 
               <ResizableHandle className="w-px bg-white/[0.06] hover:bg-primary/30 transition-colors" />
 
               <ResizablePanel defaultSize={sidePanel ? 35 : 55} minSize={25}>
+                <div data-tour="gpt-preview" className="h-full">
                 <GPTBuilderPreview ref={previewRef} config={config} />
+                </div>
               </ResizablePanel>
 
               {sidePanel && (
