@@ -81,15 +81,9 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
   // Strip HTML code blocks
   text = text.replace(/```html\n?[\s\S]*?```/g, '').trim();
   // Hide raw JSON planning objects (approach, steps, filesToCreate, etc.)
-  text = text.replace(/^\s*\{[\s\S]*?"(?:approach|filesToCreate|steps|filesTo(?:Modify|Create)|dependencies)"[\s\S]*?\}\s*$/gm, '').trim();
-  // If the entire message is a JSON object, hide it completely
-  if (/^\s*\{[\s\S]*\}\s*$/.test(text)) {
-    try {
-      const parsed = JSON.parse(text);
-      if (parsed && typeof parsed === 'object' && ('approach' in parsed || 'steps' in parsed || 'filesToCreate' in parsed)) {
-        text = '';
-      }
-    } catch { /* not JSON, keep as-is */ }
+  // Check if content looks like a planning JSON (even if incomplete/streaming)
+  if (/^\s*\{/.test(text) && /["'](?:approach|filesToCreate|steps|filesToModify|dependencies)["']\s*:/.test(text)) {
+    text = '';
   }
   return { text: text, fileNames };
 }
@@ -466,6 +460,13 @@ export function BuilderChatPanel({
             </div>
           ) : (
             messages.filter((msg) => {
+              // Hide internal planning prompts sent as user messages
+              if (msg.role === 'user') {
+                const c = msg.content;
+                if (c.includes('[PLANNING MODE') || c.includes('Return ONLY valid JSON') || c.includes('Analyze the user\'s request in context of the current project files and return a structured plan')) {
+                  return false;
+                }
+              }
               // Hide assistant messages that are only internal planning JSON
               if (msg.role === 'assistant') {
                 const { text, fileNames } = getDisplayContent(msg);
