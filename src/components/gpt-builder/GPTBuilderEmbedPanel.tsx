@@ -17,13 +17,26 @@ interface GPTBuilderEmbedPanelProps {
 
 export function GPTBuilderEmbedPanel({ config, onChange, onClose, gptId }: GPTBuilderEmbedPanelProps) {
   const [copied, setCopied] = useState(false);
+  const style = config.embed_style || 'bubble';
 
-  const embedCode = `<!-- ${config.name || 'GPT'} Chat Widget -->
+  const widgetPosition = style === 'bubble'
+    ? "position:fixed;bottom:20px;right:20px;z-index:9999;"
+    : style === 'inline'
+      ? "width:480px;height:500px;"
+      : "position:fixed;inset:0;z-index:9999;";
+
+  const iframeDims = style === 'bubble'
+    ? { width: 380, height: 660 }
+    : style === 'inline'
+      ? { width: 480, height: 500 }
+      : { width: '100%' as any, height: '100%' as any };
+
+  const embedCode = `<!-- ${config.name || 'GPT'} Chat Widget (${style}) -->
 <script>
   (function() {
     var w = document.createElement('div');
     w.id = 'gpt-widget-${gptId || 'preview'}';
-    w.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;';
+    w.style.cssText = '${widgetPosition}';
     document.body.appendChild(w);
     var s = document.createElement('script');
     s.src = '${window.location.origin}/embed/gpt/${gptId || 'preview'}.js';
@@ -34,9 +47,9 @@ export function GPTBuilderEmbedPanel({ config, onChange, onClose, gptId }: GPTBu
 
   const iframeCode = `<iframe
   src="${window.location.origin}/gpt/chat/${gptId || 'preview'}"
-  width="400"
-  height="600"
-  style="border:none;border-radius:16px;"
+  width="${iframeDims.width}"
+  height="${iframeDims.height}"
+  style="border:none;border-radius:${style === 'fullpage' ? '0' : '16px'};"
   allow="microphone"
 ></iframe>`;
 
@@ -86,7 +99,7 @@ export function GPTBuilderEmbedPanel({ config, onChange, onClose, gptId }: GPTBu
           {/* Bubble Widget Code */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h4 className="text-[11px] uppercase tracking-wider text-white/30 font-medium">Chat Bubble Code</h4>
+              <h4 className="text-[11px] uppercase tracking-wider text-white/30 font-medium">Widget Code ({style === 'bubble' ? 'Bubble' : style === 'inline' ? 'Inline' : 'Full Page'})</h4>
               <button
                 onClick={() => copyCode(embedCode)}
                 className="text-white/30 hover:text-white/60 transition-colors"
