@@ -29,6 +29,7 @@ export function PageTransition({ children }: PageTransitionProps) {
         exit="exit"
         variants={pageVariants}
         transition={pageTransition}
+        className="h-full"
       >
         {children}
       </motion.div>
