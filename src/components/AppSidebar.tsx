@@ -30,13 +30,13 @@ import { useState, useEffect } from "react";
 const gptGeneralItems = [
   { title: "GPT Dashboard", url: "/dashboard/gpt", icon: Bot, tooltip: "Custom GPT overview and analytics" },
   { title: "Templates", url: "/dashboard/gpt/templates", icon: Star, tooltip: "Browse pre-built GPT templates for common use cases" },
-  { title: "Build New", url: "/dashboard/gpt/build", icon: Bot, tooltip: "Create a new custom AI assistant" },
+  { title: "Build New", url: "/ai-studio/gpt-builder", icon: Bot, tooltip: "Create a new custom AI assistant" },
 ];
 
 // GPT-specific items (only visible when a GPT is selected)
 const getGptSpecificItems = (gptId: string) => [
   { title: "Chat", url: `/chat/${gptId}`, icon: MessageSquare, tooltip: "Chat with this GPT" },
-  { title: "Edit", url: `/dashboard/gpt/build?edit=${gptId}`, icon: Bot, tooltip: "Edit GPT configuration" },
+  { title: "Edit", url: `/ai-studio/gpt-builder/${gptId}`, icon: Bot, tooltip: "Edit GPT configuration" },
   { title: "Personalize", url: `/ai-studio/settings/${gptId}`, icon: User, tooltip: "Customize appearance and behavior" },
   { title: "Actions", url: `/ai-studio/actions/${gptId}`, icon: Zap, tooltip: "Configure custom actions" },
   { title: "Analyze", url: `/ai-studio/analytics/${gptId}`, icon: BarChart3, tooltip: "View performance metrics" },

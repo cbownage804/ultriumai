@@ -42,7 +42,7 @@ export const AIStudioOnboardingWizard = ({ onComplete, onDismiss }: Props) => {
       } else if (template?.category === "Agent") {
         navigate("/ai-studio/agents/builder");
       } else {
-        navigate("/dashboard/gpt/build");
+        navigate("/ai-studio/gpt-builder");
       }
       onComplete?.();
     }

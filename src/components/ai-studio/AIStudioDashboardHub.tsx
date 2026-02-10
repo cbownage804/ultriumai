@@ -222,7 +222,7 @@ export const AIStudioDashboardHub = () => {
         <h2 className="text-lg font-semibold text-foreground mb-4">Tools</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { label: "Custom GPTs", count: tools.gpts, icon: Bot, route: "/dashboard/gpt/build", color: "text-violet-400", bg: "from-violet-500/10 to-violet-500/5" },
+            { label: "Custom GPTs", count: tools.gpts, icon: Bot, route: "/ai-studio/gpt-builder", color: "text-violet-400", bg: "from-violet-500/10 to-violet-500/5" },
             { label: "AI Agents", count: tools.agents, icon: Zap, route: "/ai-studio/agents/new", color: "text-amber-400", bg: "from-amber-500/10 to-amber-500/5" },
             { label: "Credits", count: tools.credits, icon: Activity, route: "/dashboard/analytics", color: "text-emerald-400", bg: "from-emerald-500/10 to-emerald-500/5" },
           ].map(t => (

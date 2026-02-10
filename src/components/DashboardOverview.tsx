@@ -137,7 +137,7 @@ export const DashboardOverview = () => {
       title: "Build a GPT",
       description: "Create custom AI assistants",
       icon: Bot,
-      action: () => navigate("/dashboard/gpt/build"),
+      action: () => navigate("/ai-studio/gpt-builder"),
       color: "bg-primary",
     },
     {
