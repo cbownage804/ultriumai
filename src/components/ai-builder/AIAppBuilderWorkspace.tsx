@@ -732,7 +732,18 @@ export function AIAppBuilderWorkspace() {
     toast.success(`Renamed to ${newPath.split('/').pop()}`);
   }, [project.files, upsertFile, deleteFile]);
 
-  const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+  const liveCompiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+  const [stableHTML, setStableHTML] = useState<string | null>(null);
+
+  // Defer preview updates until build completes — keep old preview visible during generation
+  useEffect(() => {
+    if (!isGenerating && liveCompiledHTML) {
+      setStableHTML(liveCompiledHTML);
+    }
+  }, [isGenerating, liveCompiledHTML]);
+
+  // For first load (no previous build), show immediately
+  const compiledHTML = stableHTML || liveCompiledHTML;
   const hasFiles = project.files.length > 0;
 
   // Mobile detection
