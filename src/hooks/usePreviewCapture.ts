@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Captures a screenshot of compiled HTML and uploads it as a project thumbnail.
- * Uses an offscreen iframe + html2canvas for reliable cross-origin capture.
+ * Uses a blob URL iframe approach for reliable same-origin rendering + html2canvas.
  */
 export function usePreviewCapture() {
   const captureInProgress = useRef(false);
@@ -20,36 +20,47 @@ export function usePreviewCapture() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      // Create an offscreen iframe to render the HTML
-      const iframe = document.createElement('iframe');
-      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1280px;height:800px;border:none;opacity:0;pointer-events:none;';
-      document.body.appendChild(iframe);
+      // Create an offscreen container div to render HTML
+      const container = document.createElement('div');
+      container.style.cssText = 'position:fixed;left:-9999px;top:0;width:1280px;height:800px;overflow:hidden;z-index:-1;';
+      document.body.appendChild(container);
 
-      // Write the HTML content
-      const doc = iframe.contentDocument || iframe.contentWindow?.document;
-      if (!doc) {
-        document.body.removeChild(iframe);
-        return null;
-      }
-      doc.open();
-      doc.write(compiledHtml);
-      doc.close();
+      // Use a shadow DOM to isolate styles
+      const shadow = container.attachShadow({ mode: 'open' });
+      
+      // Parse and inject HTML content
+      const parser = new DOMParser();
+      const parsed = parser.parseFromString(compiledHtml, 'text/html');
+      
+      // Create a wrapper div inside shadow DOM
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'width:1280px;height:800px;overflow:hidden;background:#0a0a0a;';
+      
+      // Copy styles from parsed HTML
+      const styles = parsed.querySelectorAll('style, link[rel="stylesheet"]');
+      styles.forEach(s => {
+        shadow.appendChild(s.cloneNode(true));
+      });
+      
+      // Copy body content
+      wrapper.innerHTML = parsed.body.innerHTML;
+      shadow.appendChild(wrapper);
 
       // Wait for content to render
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Capture with html2canvas
-      const canvas = await html2canvas(doc.body, {
+      const canvas = await html2canvas(wrapper, {
         width: 1280,
         height: 800,
-        scale: 0.5, // 640x400 output — small enough for thumbnails
+        scale: 0.5,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#0a0a0a',
         logging: false,
       });
 
-      document.body.removeChild(iframe);
+      document.body.removeChild(container);
 
       // Convert to blob
       const blob = await new Promise<Blob | null>(resolve =>
@@ -75,7 +86,7 @@ export function usePreviewCapture() {
         .from('project-thumbnails')
         .getPublicUrl(filePath);
 
-      const thumbnailUrl = `${urlData.publicUrl}?t=${Date.now()}`; // cache bust
+      const thumbnailUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
       // Update project record
       await supabase
@@ -83,6 +94,7 @@ export function usePreviewCapture() {
         .update({ thumbnail_url: thumbnailUrl } as any)
         .eq('id', projectId);
 
+      console.log('Thumbnail captured and uploaded successfully');
       return thumbnailUrl;
     } catch (err) {
       console.error('Preview capture error:', err);

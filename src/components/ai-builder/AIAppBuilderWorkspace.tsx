@@ -352,12 +352,15 @@ export function AIAppBuilderWorkspace() {
           const prompt = firstUserMsg.content
             .replace(/\[Currently viewing:.*?\]\n?/g, '')
             .replace(/\[Auto-detected relevant files:.*?\]\n?/g, '')
+            // Strip agent-mode planning prefixes (e.g. "[planning Mode — Do Not Generate]")
+            .replace(/\[.*?(?:planning|mode|do not generate).*?\]\s*/gi, '')
+            .replace(/^\s*\[.*?\]\s*/g, '') // strip any leading bracketed text
             .trim();
           
           // Strip common prompt prefixes to extract the subject
           const cleaned = prompt
             .replace(/^(please\s+)?(can you\s+)?(help me\s+)?(create|build|make|design|generate|develop|code|write)\s+(me\s+)?(a|an|the)?\s*/i, '')
-            .replace(/\s+(app|application|website|site|page|tool|platform|system|dashboard|portal)\s*$/i, (match) => match) // keep trailing app-type words
+            .replace(/\s+(app|application|website|site|page|tool|platform|system|dashboard|portal)\s*$/i, (match) => match)
             .trim();
           
           // Take first meaningful chunk (up to 35 chars, break at word boundary)
