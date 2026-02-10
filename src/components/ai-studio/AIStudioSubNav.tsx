@@ -1,15 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Bot, Code2, Workflow, MessageSquare, Sparkles, LayoutDashboard, FolderOpen } from 'lucide-react';
+import { Bot, Code2, LayoutDashboard, FolderOpen } from 'lucide-react';
 import aiStudioLogo from '@/assets/ai-studio-logo.png';
 
 const navItems = [
   { path: '/ai-studio', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { path: '/ai-studio/projects', label: 'Projects', icon: FolderOpen },
-  { path: '/ai-studio/assistant', label: 'Assistant', icon: MessageSquare },
-  { path: '/ai-studio/agents', label: 'Build', icon: Bot },
-  { path: '/ai-studio/workflows', label: 'Workflows', icon: Workflow },
+  { path: '/ai-studio/gpt-builder', label: 'GPT Builder', icon: Bot },
   { path: '/ai-studio/app-builder', label: 'App Builder', icon: Code2 },
 ];
 
@@ -49,18 +46,6 @@ export function AIStudioSubNav() {
             );
           })}
 
-          <Link
-            to="/ai-studio/use-cases"
-            className={cn(
-              "flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs sm:text-sm font-medium rounded-md transition-colors shrink-0 ml-auto snap-start min-h-[36px]",
-              location.pathname === '/ai-studio/use-cases'
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50 active:bg-muted/70"
-            )}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline sm:inline">Use Cases</span>
-          </Link>
         </div>
       </div>
     </div>

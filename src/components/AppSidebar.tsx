@@ -184,10 +184,10 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Studio Assistant - AI-powered guide for AI Studio">
-                  <NavLink to="/ai-studio/assistant" className={getNavClass}>
+                <SidebarMenuButton asChild tooltip="GPT Builder - Build custom AI chatbots">
+                  <NavLink to="/ai-studio/gpt-builder" className={getNavClass}>
                     <Bot className="h-4 w-4 text-primary" />
-                    {!isCollapsed && <span className="ml-2 font-semibold text-primary">Studio Assistant</span>}
+                    {!isCollapsed && <span className="ml-2 font-semibold text-primary">GPT Builder</span>}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

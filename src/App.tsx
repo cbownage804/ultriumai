@@ -46,12 +46,8 @@ const Index = lazy(() => import('@/pages/Index'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const ProductHub = lazy(() => import('@/pages/ProductHub'));
 const AIStudio = lazy(() => import('@/pages/AIStudio'));
-const StudioAssistant = lazy(() => import('@/pages/StudioAssistant'));
 const GPTChat = lazy(() => import('@/pages/GPTChat'));
 const GPTSettings = lazy(() => import('@/pages/GPTSettings'));
-const AIAgentsPage = lazy(() => import('@/pages/AIAgentsPage'));
-const AIAgentBuilderPage = lazy(() => import('@/pages/AIAgentBuilderPage'));
-const AIWorkflowsPage = lazy(() => import('@/pages/AIWorkflowsPage'));
 const AIAppBuilderWorkspacePage = lazy(() => import('@/pages/AIAppBuilderWorkspacePage'));
 const GPTBuilderPage = lazy(() => import('@/pages/GPTBuilderPage'));
 const AIStudioProjectsPage = lazy(() => import('@/pages/AIStudioProjectsPage'));
@@ -354,15 +350,9 @@ function AppRouter() {
         } />
         
         {/* AI Studio Platform */}
-        <Route path="/ai-studio/assistant" element={
-          <ProtectedRoute>
-            <SuspenseWrapper>
-              <StudioAssistant />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
-        {/* Legacy redirect */}
-        <Route path="/ultrium-gpt" element={<Navigate to="/ai-studio/assistant" replace />} />
+        {/* Legacy redirects */}
+        <Route path="/ai-studio/assistant" element={<Navigate to="/ai-studio" replace />} />
+        <Route path="/ultrium-gpt" element={<Navigate to="/ai-studio" replace />} />
         <Route path="/ai-studio-platform" element={<Navigate to="/products/ai-studio" replace />} />
         <Route path="/ai-studio/use-cases" element={<Navigate to="/products/ai-studio" replace />} />
         <Route path="/small-business" element={<Navigate to="/products" replace />} />
@@ -612,34 +602,10 @@ function AppRouter() {
             </SuspenseWrapper>
           </ProtectedRoute>
         } />
-        <Route path="/ai-studio/agents" element={
-          <ProtectedRoute>
-            <SuspenseWrapper>
-              <AIAgentsPage />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
-        <Route path="/ai-studio/agents/new" element={
-          <ProtectedRoute>
-            <SuspenseWrapper variant="form">
-              <AIAgentBuilderPage />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
-        <Route path="/ai-studio/agents/:agentId" element={
-          <ProtectedRoute>
-            <SuspenseWrapper variant="form">
-              <AIAgentBuilderPage />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
-        <Route path="/ai-studio/workflows" element={
-          <ProtectedRoute>
-            <SuspenseWrapper>
-              <AIWorkflowsPage />
-            </SuspenseWrapper>
-          </ProtectedRoute>
-        } />
+        {/* Legacy redirects for removed pages */}
+        <Route path="/ai-studio/agents" element={<Navigate to="/ai-studio" replace />} />
+        <Route path="/ai-studio/agents/*" element={<Navigate to="/ai-studio" replace />} />
+        <Route path="/ai-studio/workflows" element={<Navigate to="/ai-studio" replace />} />
         <Route path="/ai-studio/projects" element={
           <ProtectedRoute>
             <SuspenseWrapper>
