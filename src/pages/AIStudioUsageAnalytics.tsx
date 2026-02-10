@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
 import {
-  ArrowLeft, BarChart3, MessageSquare, Bot, Zap, Clock, TrendingUp,
+  BarChart3, MessageSquare, Bot, Zap, TrendingUp,
   Cpu, FileText, Activity, Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import Navigation from '@/components/Navigation';
+import { AIStudioSubNav } from '@/components/ai-studio/AIStudioSubNav';
 
 interface UsageStats {
   totalGPTs: number;
@@ -41,19 +42,16 @@ export default function AIStudioUsageAnalytics() {
   const loadStats = async () => {
     if (!user) return;
     try {
-      // Load GPT count
       const { count: gptCount } = await supabase
         .from('custom_gpts')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
-      // Load conversations
       const { data: convs } = await supabase
         .from('gpt_conversations')
         .select('id, gpt_id, created_at')
         .eq('user_id', user.id);
 
-      // Load messages count
       const convIds = convs?.map(c => c.id) || [];
       let totalMessages = 0;
       if (convIds.length > 0) {
@@ -64,7 +62,6 @@ export default function AIStudioUsageAnalytics() {
         totalMessages = count || 0;
       }
 
-      // Load credit usage
       const { data: credits } = await supabase
         .from('ai_credit_ledger')
         .select('credits_used, created_at')
@@ -80,7 +77,6 @@ export default function AIStudioUsageAnalytics() {
       const creditsUsedThisMonth = credits?.filter(c => c.created_at.slice(0, 10) >= monthStart)
         .reduce((sum, c) => sum + c.credits_used, 0) || 0;
 
-      // Build daily usage (last 14 days)
       const dailyMap = new Map<string, { messages: number; credits: number }>();
       for (let i = 13; i >= 0; i--) {
         const d = new Date();
@@ -99,7 +95,6 @@ export default function AIStudioUsageAnalytics() {
         if (entry) entry.credits += c.credits_used;
       });
 
-      // Top GPTs by conversations
       const gptConvCounts = new Map<string, number>();
       convs?.forEach(c => {
         gptConvCounts.set(c.gpt_id, (gptConvCounts.get(c.gpt_id) || 0) + 1);
@@ -125,7 +120,7 @@ export default function AIStudioUsageAnalytics() {
         totalGPTs: gptCount || 0,
         totalConversations: convs?.length || 0,
         totalMessages,
-        totalProjects: 0, // App builder projects tracked separately
+        totalProjects: 0,
         creditBalance: 0,
         creditsUsedToday,
         creditsUsedThisMonth,
@@ -150,137 +145,134 @@ export default function AIStudioUsageAnalytics() {
   const maxDaily = Math.max(...stats.dailyUsage.map(d => d.messages + d.credits), 1);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/ai-studio')} className="gap-1.5">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-          <div className="h-5 w-px bg-border" />
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-primary" />
-            <h1 className="text-sm font-semibold">Usage Analytics</h1>
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <AIStudioSubNav />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Page Header */}
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10">
+            <BarChart3 className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Usage Analytics</h1>
+            <p className="text-xs text-muted-foreground">Track your AI Studio activity and credit usage</p>
           </div>
         </div>
-      </header>
 
-      <ScrollArea className="h-[calc(100vh-56px)]">
-        <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {kpiCards.map((kpi, i) => (
-              <motion.div
-                key={kpi.label}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className={cn(
-                  'p-4 rounded-xl border border-border/50 bg-gradient-to-br',
-                  kpi.bg
-                )}
-              >
-                <kpi.icon className={cn('h-5 w-5 mb-2', kpi.color)} />
-                <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
-                <p className="text-[11px] text-muted-foreground">{kpi.label}</p>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Activity Chart */}
-          <div className="rounded-xl border border-border/50 bg-card p-5">
-            <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              Daily Activity (Last 14 Days)
-            </h3>
-            <div className="flex items-end gap-1 h-32">
-              {stats.dailyUsage.map((day, i) => {
-                const total = day.messages + day.credits;
-                const height = (total / maxDaily) * 100;
-                return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
-                    <div className="text-[8px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                      {total > 0 ? total : ''}
-                    </div>
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${Math.max(height, 2)}%` }}
-                      transition={{ delay: i * 0.03, type: 'spring', damping: 15 }}
-                      className="w-full rounded-sm bg-primary/30 hover:bg-primary/50 transition-colors min-h-[2px]"
-                    />
-                    <span className="text-[7px] text-muted-foreground truncate w-full text-center">
-                      {day.date.split(' ')[1]}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Top GPTs */}
-            <div className="rounded-xl border border-border/50 bg-card p-5">
-              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Bot className="h-4 w-4 text-primary" />
-                Top GPTs by Usage
-              </h3>
-              {stats.topGPTs.length > 0 ? (
-                <div className="space-y-2">
-                  {stats.topGPTs.map((gpt, i) => (
-                    <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                      <span className="text-xs text-muted-foreground w-5">{i + 1}.</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">{gpt.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{gpt.conversations} conversations</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground text-center py-6">No GPT usage data yet</p>
+        {/* KPI Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {kpiCards.map((kpi, i) => (
+            <motion.div
+              key={kpi.label}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className={cn(
+                'p-4 rounded-xl border border-border/50 bg-gradient-to-br',
+                kpi.bg
               )}
-            </div>
+            >
+              <kpi.icon className={cn('h-5 w-5 mb-2', kpi.color)} />
+              <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
+              <p className="text-[11px] text-muted-foreground">{kpi.label}</p>
+            </motion.div>
+          ))}
+        </div>
 
-            {/* Quick Actions */}
-            <div className="rounded-xl border border-border/50 bg-card p-5">
-              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Cpu className="h-4 w-4 text-primary" />
-                Quick Actions
-              </h3>
+        {/* Activity Chart */}
+        <div className="rounded-xl border border-border/50 bg-card p-5">
+          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary" />
+            Daily Activity (Last 14 Days)
+          </h3>
+          <div className="flex items-end gap-1 h-32">
+            {stats.dailyUsage.map((day, i) => {
+              const total = day.messages + day.credits;
+              const height = (total / maxDaily) * 100;
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+                  <div className="text-[8px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                    {total > 0 ? total : ''}
+                  </div>
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: `${Math.max(height, 2)}%` }}
+                    transition={{ delay: i * 0.03, type: 'spring', damping: 15 }}
+                    className="w-full rounded-sm bg-primary/30 hover:bg-primary/50 transition-colors min-h-[2px]"
+                  />
+                  <span className="text-[7px] text-muted-foreground truncate w-full text-center">
+                    {day.date.split(' ')[1]}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Top GPTs */}
+          <div className="rounded-xl border border-border/50 bg-card p-5">
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Bot className="h-4 w-4 text-primary" />
+              Top GPTs by Usage
+            </h3>
+            {stats.topGPTs.length > 0 ? (
               <div className="space-y-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2 text-xs"
-                  onClick={() => navigate('/ai-studio/app-builder')}
-                >
-                  <FileText className="h-3.5 w-3.5" />
-                  Open App Builder
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2 text-xs"
-                  onClick={() => navigate('/ai-studio/gpt-builder')}
-                >
-                  <Bot className="h-3.5 w-3.5" />
-                  Create New GPT
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2 text-xs"
-                  onClick={() => navigate('/ai-studio/projects')}
-                >
-                  <Activity className="h-3.5 w-3.5" />
-                  View Projects
-                </Button>
+                {stats.topGPTs.map((gpt, i) => (
+                  <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                    <span className="text-xs text-muted-foreground w-5">{i + 1}.</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-foreground truncate">{gpt.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{gpt.conversations} conversations</p>
+                    </div>
+                  </div>
+                ))}
               </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center py-6">No GPT usage data yet</p>
+            )}
+          </div>
+
+          {/* Quick Actions */}
+          <div className="rounded-xl border border-border/50 bg-card p-5">
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Cpu className="h-4 w-4 text-primary" />
+              Quick Actions
+            </h3>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start gap-2 text-xs"
+                onClick={() => navigate('/ai-studio/app-builder')}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Open App Builder
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start gap-2 text-xs"
+                onClick={() => navigate('/ai-studio/gpt-builder')}
+              >
+                <Bot className="h-3.5 w-3.5" />
+                Create New GPT
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start gap-2 text-xs"
+                onClick={() => navigate('/ai-studio/projects')}
+              >
+                <Activity className="h-3.5 w-3.5" />
+                View Projects
+              </Button>
             </div>
           </div>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
