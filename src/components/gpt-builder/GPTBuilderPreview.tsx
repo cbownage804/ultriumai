@@ -289,7 +289,32 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
                       }
                     >
                       {msg.role === 'assistant' ? (
-                        <div className="prose prose-sm max-w-none [&>p]:mb-1 [&>p:last-child]:mb-0" style={{ color: wt.assistant_bubble_text }}>
+                        <div
+                          className="prose prose-sm max-w-none
+                            [&>p]:mb-2.5 [&>p:last-child]:mb-0
+                            [&>h1]:text-base [&>h1]:font-bold [&>h1]:mb-2 [&>h1]:mt-3
+                            [&>h2]:text-sm [&>h2]:font-bold [&>h2]:mb-2 [&>h2]:mt-3
+                            [&>h3]:text-sm [&>h3]:font-semibold [&>h3]:mb-1.5 [&>h3]:mt-2.5
+                            [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:mb-2.5 [&>ul]:space-y-1
+                            [&>ol]:list-decimal [&>ol]:pl-4 [&>ol]:mb-2.5 [&>ol]:space-y-1
+                            [&_li]:text-sm [&_li>p]:mb-0
+                            [&>blockquote]:border-l-2 [&>blockquote]:pl-3 [&>blockquote]:italic [&>blockquote]:opacity-80
+                            [&>pre]:rounded-md [&>pre]:p-2.5 [&>pre]:text-xs [&>pre]:overflow-x-auto
+                            [&_code]:text-xs [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded
+                            [&>hr]:my-3 [&>hr]:opacity-20
+                            [&_strong]:font-semibold
+                            [&_a]:underline [&_a]:underline-offset-2"
+                          style={{
+                            color: wt.assistant_bubble_text,
+                            '--tw-prose-headings': wt.assistant_bubble_text,
+                            '--tw-prose-bold': wt.assistant_bubble_text,
+                            '--tw-prose-bullets': wt.assistant_bubble_text + 'aa',
+                            '--tw-prose-counters': wt.assistant_bubble_text + 'aa',
+                            '--tw-prose-code': wt.assistant_bubble_text,
+                            '--tw-prose-quotes': wt.assistant_bubble_text + 'cc',
+                            '--tw-prose-links': wt.assistant_bubble_text,
+                          } as React.CSSProperties}
+                        >
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
                       ) : (
