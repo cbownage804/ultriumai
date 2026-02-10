@@ -39,7 +39,6 @@ interface GPTItem {
   updated_at: string;
   created_at: string;
   avatar_url?: string | null;
-  is_published?: boolean;
 }
 
 interface UnifiedItem {
@@ -81,7 +80,7 @@ export default function AIStudioProjectsPage() {
           .eq('user_id', user.id)
           .order('updated_at', { ascending: false }),
         supabase.from('custom_gpts')
-          .select('id, name, updated_at, created_at, avatar_url, is_published')
+          .select('id, name, updated_at, created_at, avatar_url')
           .eq('user_id', user.id)
           .order('updated_at', { ascending: false }),
       ]);
