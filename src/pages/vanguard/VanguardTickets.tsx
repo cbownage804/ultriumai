@@ -6,12 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
@@ -37,6 +33,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { VanguardBreadcrumbs } from '@/components/vanguard/VanguardBreadcrumbs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { NewTicketDialog, TicketFormData } from '@/components/vanguard/helpdesk/NewTicketDialog';
 
 const priorityColors: Record<string, string> = {
   critical: 'bg-red-500/20 text-red-400 border-red-500/30',
@@ -224,41 +221,38 @@ export default function VanguardTickets() {
     }
   };
 
-  const handleCreateTicket = async () => {
-    if (!newTicket.title || !newTicket.customer || !user) {
+  const handleCreateTicket = async (formData: TicketFormData) => {
+    if (!formData.title || !formData.customer || !user) {
       toast.error('Please fill in required fields');
       return;
     }
 
-    setIsCreating(true);
     try {
-      // Generate ticket number
       const ticketNumber = `TKT-${Date.now().toString(36).toUpperCase()}`;
 
       const { error } = await supabase
         .from('tickets')
         .insert({
-          title: newTicket.title,
-          description: newTicket.description || 'No description provided',
-          priority: newTicket.priority,
-          status: 'open',
-          source: 'portal',
-          category: 'General',
+          title: formData.title,
+          description: formData.description || 'No description provided',
+          priority: formData.priority,
+          status: formData.status || 'open',
+          source: formData.source || 'manual',
+          category: formData.type || 'General',
           ticket_number: ticketNumber,
           user_id: user.id,
-          client_id: newTicket.customer,
+          client_id: formData.customer,
+          tags: formData.tags?.length > 0 ? formData.tags : null,
+          sla_due_at: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
         });
 
       if (error) throw error;
 
-      setNewTicket({ title: '', description: '', priority: 'medium', customer: '' });
       setIsCreateDialogOpen(false);
       toast.success(`Ticket ${ticketNumber} created successfully`);
       refetchTickets();
     } catch (err: any) {
       toast.error('Failed to create ticket', { description: err.message });
-    } finally {
-      setIsCreating(false);
     }
   };
 
@@ -731,75 +725,12 @@ export default function VanguardTickets() {
         </TabsContent>
       </Tabs>
 
-      {/* Create Ticket Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="bg-slate-900 border-cyan-500/20">
-          <DialogHeader>
-            <DialogTitle className="text-white">Create New Ticket</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label className="text-white/80">Title *</Label>
-              <Input
-                value={newTicket.title}
-                onChange={(e) => setNewTicket({ ...newTicket, title: e.target.value })}
-                placeholder="Brief description of the issue"
-                className="bg-black/40 border-cyan-500/20 text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-white/80">Customer *</Label>
-              <Select value={newTicket.customer} onValueChange={(v) => setNewTicket({ ...newTicket, customer: v })}>
-                <SelectTrigger className="bg-black/40 border-cyan-500/20 text-white">
-                  <SelectValue placeholder="Select customer" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-cyan-500/20">
-                  {clients.map(client => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.company_name}
-                    </SelectItem>
-                  ))}
-                  {clients.length === 0 && (
-                    <div className="p-2 text-sm text-white/40 text-center">No customers yet. Add one first.</div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-white/80">Priority</Label>
-              <Select value={newTicket.priority} onValueChange={(v) => setNewTicket({ ...newTicket, priority: v })}>
-                <SelectTrigger className="bg-black/40 border-cyan-500/20 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-cyan-500/20">
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-white/80">Description</Label>
-              <Textarea
-                value={newTicket.description}
-                onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
-                placeholder="Detailed description of the issue"
-                className="bg-black/40 border-cyan-500/20 text-white min-h-[100px]"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="border-cyan-500/20 text-white/80">
-              Cancel
-            </Button>
-            <Button onClick={handleCreateTicket} disabled={isCreating} className="bg-cyan-500 hover:bg-cyan-600 text-black">
-              {isCreating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Create Ticket
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Create Ticket Dialog - Full featured from Response module */}
+      <NewTicketDialog 
+        open={isCreateDialogOpen} 
+        onOpenChange={setIsCreateDialogOpen}
+        onSubmit={handleCreateTicket}
+      />
     </div>
   );
 }
