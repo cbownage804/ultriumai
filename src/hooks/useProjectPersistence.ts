@@ -49,6 +49,7 @@ export function useProjectPersistence() {
     branches?: any,
     activeBranch?: string,
     chatMessages?: any[],
+    extraSettings?: Record<string, any>,
   ) => {
     setIsSaving(true);
     try {
@@ -66,8 +67,15 @@ export function useProjectPersistence() {
         active_branch: activeBranch || 'main',
         last_saved_at: new Date().toISOString(),
       };
+      const settings: Record<string, any> = {};
       if (chatMessages) {
-        projectData.settings = { chatMessages: JSON.parse(JSON.stringify(chatMessages)) };
+        settings.chatMessages = JSON.parse(JSON.stringify(chatMessages));
+      }
+      if (extraSettings) {
+        Object.assign(settings, extraSettings);
+      }
+      if (Object.keys(settings).length > 0) {
+        projectData.settings = settings;
       }
 
       if (currentProjectId) {

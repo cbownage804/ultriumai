@@ -72,9 +72,10 @@ import { AIAutocompleteIndicator } from './AIAutocomplete';
 import { BuilderHelpCenter } from './BuilderHelpCenter';
 import { WelcomeOverlay } from './WelcomeOverlay';
 import { ConfirmDialog } from './ConfirmDialog';
+import { GPTConnectorPanel, type LinkedGPTConfig } from './GPTConnectorPanel';
 
 import {
-  Eye, Code, Pencil, Database, CreditCard, Key,
+  Eye, Code, Pencil, Database, CreditCard, Key, Bot,
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
   History, Variable, Image, Package, Columns, Keyboard, Rocket,
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen,
@@ -213,6 +214,8 @@ export function AIAppBuilderWorkspace() {
   const [showHelpCenter, setShowHelpCenter] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ title: string; description: string; onConfirm: () => void } | null>(null);
   const workspaceContainerRef = useRef<HTMLDivElement>(null);
+  const [showGPTConnector, setShowGPTConnector] = useState(false);
+  const [linkedGPT, setLinkedGPT] = useState<LinkedGPTConfig | null>(null);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
@@ -671,22 +674,24 @@ export function AIAppBuilderWorkspace() {
   const { captureAndUpload } = usePreviewCapture();
 
   const handleSave = useCallback(async () => {
-    const projectId = await saveProject(project.name, project.files, branches, activeBranch, messages);
+    const extraSettings: Record<string, any> = {};
+    if (linkedGPT) extraSettings.linkedGPT = linkedGPT;
+    const projectId = await saveProject(project.name, project.files, branches, activeBranch, messages, extraSettings);
     setDirtyFiles(new Set());
     clearDraft();
     toast.success('Project saved');
     // Capture thumbnail in background (non-blocking)
-    const html = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+    const html = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
     if (projectId && html) {
       captureAndUpload(html, projectId).catch(() => {});
     }
-  }, [saveProject, project.name, project.files, branches, activeBranch, messages, clearDraft, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, captureAndUpload]);
+  }, [saveProject, project.name, project.files, branches, activeBranch, messages, clearDraft, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, captureAndUpload, linkedGPT]);
 
   // Auto-capture thumbnail after generation completes
   const wasGeneratingRef = useRef(false);
   useEffect(() => {
     if (wasGeneratingRef.current && !isGenerating && project.files.length > 0 && currentProjectId) {
-      const html = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+      const html = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
       if (html) {
         setTimeout(() => {
           captureAndUpload(html, currentProjectId).catch(() => {});
@@ -705,12 +710,17 @@ export function AIAppBuilderWorkspace() {
       if (loaded.settings?.chatMessages) {
         setMessages(loaded.settings.chatMessages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
       }
+      if (loaded.settings?.linkedGPT) {
+        setLinkedGPT(loaded.settings.linkedGPT);
+      } else {
+        setLinkedGPT(null);
+      }
       toast.success(`Loaded "${loaded.name}"`);
     }
   }, [loadProject, setFiles, renameProject, setMessages]);
 
   const handlePublish = useCallback(async () => {
-    const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+    const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
     if (!compiledHTML) { toast.error('Nothing to publish'); return; }
     setBuildNotifications(prev => [{ id: crypto.randomUUID(), type: 'deploy' as const, title: 'Deploying to production...', timestamp: new Date(), read: false }, ...prev]);
     const url = await publishProject(project.name, compiledHTML);
@@ -757,7 +767,7 @@ export function AIAppBuilderWorkspace() {
     toast.success(`Renamed to ${newPath.split('/').pop()}`);
   }, [project.files, upsertFile, deleteFile]);
 
-  const liveCompiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+  const liveCompiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
   const [stableHTML, setStableHTML] = useState<string | null>(null);
 
   // Defer preview updates until build completes — keep old preview visible during generation
@@ -784,7 +794,7 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   // Close other panels when opening one
-  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity' | 'codeIntel' | 'componentLib' | 'testingSuite' | 'exportGuide' | 'helpCenter') => {
+  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity' | 'codeIntel' | 'componentLib' | 'testingSuite' | 'exportGuide' | 'helpCenter' | 'gptConnector') => {
     setShowVersionHistory(panel === 'history' ? !showVersionHistory : false);
     setShowEnvVars(panel === 'envVars' ? !showEnvVars : false);
     setShowAssets(panel === 'assets' ? !showAssets : false);
@@ -800,6 +810,7 @@ export function AIAppBuilderWorkspace() {
     setShowTestingSuite(panel === 'testingSuite' ? !showTestingSuite : false);
     setShowExportGuide(panel === 'exportGuide' ? !showExportGuide : false);
     setShowHelpCenter(panel === 'helpCenter' ? !showHelpCenter : false);
+    setShowGPTConnector(panel === 'gptConnector' ? !showGPTConnector : false);
   };
 
   // ─── Left sidebar icon bar items ───
@@ -813,6 +824,7 @@ export function AIAppBuilderWorkspace() {
     { id: 'knowledge', icon: Brain, label: 'Knowledge', show: true, active: showKnowledge, group: 'ai' },
     { id: 'codeIntel', icon: Sparkles, label: 'Code Intelligence', show: true, active: showCodeIntel, group: 'ai' },
     { id: 'componentLib', icon: Layers, label: 'Components', show: true, active: showComponentLib, group: 'ai' },
+    { id: 'gptConnector', icon: Bot, label: 'GPT Chat Widget', show: true, active: showGPTConnector, group: 'ai' },
     // ── Project ──
     { id: 'testingSuite', icon: Bug, label: 'Testing & Debug', show: true, active: showTestingSuite, group: 'project' },
     { id: 'envVars', icon: Variable, label: 'Env Variables', show: true, active: showEnvVars, group: 'project' },
@@ -1171,6 +1183,7 @@ export function AIAppBuilderWorkspace() {
                 <DeployPipelinePanel open={showDeployPipeline} onClose={() => setShowDeployPipeline(false)} onDeploy={handlePublish} publishedUrl={publishedUrl} isDeploying={isGenerating} projectName={project.name} onOpenDomainPanel={() => { setShowDeployPipeline(false); setShowDomainPanel(true); }} />
                 <ComponentPalette open={showComponentPalette} onClose={() => setShowComponentPalette(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); setRightTab('code'); } }} />
                 <TestingDebugSuite open={showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); toast.success('Test generated'); }} projectFiles={project.files} />
+                <GPTConnectorPanel open={showGPTConnector} onClose={() => setShowGPTConnector(false)} linkedGPT={linkedGPT} onLinkGPT={setLinkedGPT} onUnlinkGPT={() => setLinkedGPT(null)} />
                 {showPackages && (
                   <div className="w-64 border-r border-white/[0.06] bg-[#0d0d14] overflow-hidden">
                     <PackageManager packages={cdnPackages} onAddPackage={(pkg) => setCdnPackages(prev => [...prev, pkg])} onRemovePackage={(name) => setCdnPackages(prev => prev.filter(p => p.name !== name))} />
