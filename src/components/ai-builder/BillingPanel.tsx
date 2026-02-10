@@ -203,16 +203,37 @@ export function CreditsPill({ onClick }: { onClick: () => void }) {
   const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchCredits = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const c = await getUserCredits(user.id);
         setRemaining(c.remaining);
       }
     };
-    fetch();
-    const interval = setInterval(fetch, 60000);
-    return () => clearInterval(interval);
+    fetchCredits();
+    // Poll every 10 seconds for near-real-time updates after credit usage
+    const interval = setInterval(fetchCredits, 10000);
+
+    // Also listen to realtime changes on user_credits table
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        channel = supabase
+          .channel('credits-pill-sync')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'user_credits', filter: `user_id=eq.${user.id}` },
+            () => { fetchCredits(); }
+          )
+          .subscribe();
+      }
+    })();
+
+    return () => {
+      clearInterval(interval);
+      if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   if (remaining === null) return null;
