@@ -167,6 +167,23 @@ export function useVanguardCustomer(customerId: string | undefined): UseVanguard
     };
 
     fetchCustomerData();
+
+    // Subscribe to realtime changes on vanguard_agents for this customer
+    const channel = supabase
+      .channel(`customer-devices-${customerId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'vanguard_agents', filter: `client_id=eq.${customerId}` },
+        () => {
+          // Refetch when agents are inserted, updated, or deleted
+          setRefetchTrigger(prev => prev + 1);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, customerId, refetchTrigger]);
 
   const refetch = () => setRefetchTrigger(prev => prev + 1);
