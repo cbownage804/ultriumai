@@ -57,7 +57,7 @@ interface EnvironmentVariablesProps {
 
 export function EnvironmentVariables({ agentId, sendCommand }: EnvironmentVariablesProps) {
   const [variables, setVariables] = useState<EnvVariable[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [scope, setScope] = useState<'system' | 'user'>('system');
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -65,9 +65,7 @@ export function EnvironmentVariables({ agentId, sendCommand }: EnvironmentVariab
   const [newVar, setNewVar] = useState<{ name: string; value: string; scope: 'system' | 'user' }>({ name: '', value: '', scope: 'system' });
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadVariables();
-  }, [agentId]);
+  // No auto-load - user must click Refresh to avoid flooding the command queue
 
   const loadVariables = async () => {
     setIsLoading(true);

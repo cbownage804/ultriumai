@@ -65,7 +65,7 @@ interface ScheduledTasksManagerProps {
 
 export function ScheduledTasksManager({ agentId, sendCommand }: ScheduledTasksManagerProps) {
   const [tasks, setTasks] = useState<ScheduledTask[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -76,9 +76,7 @@ export function ScheduledTasksManager({ agentId, sendCommand }: ScheduledTasksMa
     time: '09:00',
   });
 
-  useEffect(() => {
-    loadTasks();
-  }, [agentId]);
+  // No auto-load - user must click Refresh to avoid flooding the command queue
 
   const loadTasks = async () => {
     setIsLoading(true);

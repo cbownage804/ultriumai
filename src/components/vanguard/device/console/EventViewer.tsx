@@ -90,10 +90,7 @@ export function EventViewer({ agentId, sendCommand }: EventViewerProps) {
     }
   };
 
-  // Auto-load on mount
-  useEffect(() => {
-    loadEvents();
-  }, [agentId]);
+  // No auto-load - user must click Refresh to avoid flooding the command queue
 
   const filteredEvents = events.filter(e => {
     const matchesSearch = e.message.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -51,14 +51,12 @@ interface CertificateManagerProps {
 
 export function CertificateManager({ agentId, sendCommand }: CertificateManagerProps) {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [store, setStore] = useState<'personal' | 'root' | 'ca' | 'trustedpeople'>('personal');
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
 
-  useEffect(() => {
-    loadCertificates();
-  }, [agentId]);
+  // No auto-load - user must click Refresh to avoid flooding the command queue
 
   const loadCertificates = async () => {
     setIsLoading(true);

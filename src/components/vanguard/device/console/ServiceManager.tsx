@@ -46,13 +46,11 @@ interface ServiceManagerProps {
 
 export function ServiceManager({ agentId, sendCommand }: ServiceManagerProps) {
   const [services, setServices] = useState<Service[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadServices();
-  }, [agentId]);
+  // No auto-load - user must click Refresh to avoid flooding the command queue
 
   const loadServices = async () => {
     setIsLoading(true);

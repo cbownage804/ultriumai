@@ -51,7 +51,7 @@ interface ProcessManagerProps {
 
 export function ProcessManager({ agentId, sendCommand }: ProcessManagerProps) {
   const [processes, setProcesses] = useState<ProcessInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof ProcessInfo; direction: 'asc' | 'desc' }>({ 
     key: 'cpu', 
@@ -59,11 +59,7 @@ export function ProcessManager({ agentId, sendCommand }: ProcessManagerProps) {
   });
   const [killingPids, setKillingPids] = useState<Set<number>>(new Set());
 
-  useEffect(() => {
-    loadProcesses();
-    // Don't auto-poll - sendCommand queues real commands to the agent
-    // Use manual refresh instead to avoid flooding the command queue
-  }, [agentId]);
+  // No auto-load on mount - user must click Refresh to avoid flooding the command queue
 
   const loadProcesses = async () => {
     try {

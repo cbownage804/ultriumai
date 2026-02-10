@@ -64,10 +64,7 @@ export function SoftwareInventory({ agentId, sendCommand }: SoftwareInventoryPro
   const [installing, setInstalling] = useState(false);
   const [uninstallingName, setUninstallingName] = useState<string | null>(null);
 
-  // Auto-load on mount
-  useEffect(() => {
-    loadSoftware();
-  }, [agentId]);
+  // No auto-load - user must click Refresh to avoid flooding the command queue
 
   const loadSoftware = async () => {
     setIsLoading(true);

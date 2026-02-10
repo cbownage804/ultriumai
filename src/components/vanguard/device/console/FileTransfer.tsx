@@ -61,9 +61,7 @@ export function FileTransfer({ agentId, sendCommand }: FileTransferProps) {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const { hasFeature, limits } = useVanguardLimits();
 
-  useEffect(() => {
-    loadDirectory(currentPath);
-  }, [agentId]);
+  // No auto-load - user must click Refresh to avoid flooding the command queue
 
   const loadDirectory = async (path: string) => {
     setIsLoading(true);

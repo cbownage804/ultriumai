@@ -61,7 +61,7 @@ interface FirewallRulesEditorProps {
 
 export function FirewallRulesEditor({ agentId, sendCommand }: FirewallRulesEditorProps) {
   const [rules, setRules] = useState<FirewallRule[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [direction, setDirection] = useState<'inbound' | 'outbound'>('inbound');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -78,9 +78,7 @@ export function FirewallRulesEditor({ agentId, sendCommand }: FirewallRulesEdito
     enabled: true,
   });
 
-  useEffect(() => {
-    loadRules();
-  }, [agentId]);
+  // No auto-load - user must click Refresh to avoid flooding the command queue
 
   const loadRules = async () => {
     setIsLoading(true);
