@@ -214,11 +214,11 @@ export function useProjectPersistence() {
   const scheduleAutoSave = useCallback((name: string, files: ProjectFile[]) => {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(() => {
-      if (currentProjectId && files.length > 0) {
+      if (files.length > 0) {
         saveProject(name, files);
       }
     }, 30000); // Auto-save every 30s after changes
-  }, [currentProjectId, saveProject]);
+  }, [saveProject]);
 
   useEffect(() => {
     return () => {
