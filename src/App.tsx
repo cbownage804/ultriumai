@@ -648,9 +648,9 @@ function AppRouter() {
         } />
         <Route path="/ai-studio/app-builder" element={
           <ProtectedRoute>
-            <SuspenseWrapper>
+            <Suspense fallback={<PageSkeleton variant="dashboard" />}>
               <AIAppBuilderWorkspacePage />
-            </SuspenseWrapper>
+            </Suspense>
           </ProtectedRoute>
         } />
         <Route path="/safetrack" element={<Navigate to="/vanguard/app/assets" replace />} />

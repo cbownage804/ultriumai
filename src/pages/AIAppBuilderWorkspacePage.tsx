@@ -2,7 +2,7 @@ import { AIAppBuilderWorkspace } from '@/components/ai-builder/AIAppBuilderWorks
 
 export default function AIAppBuilderWorkspacePage() {
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#09090b]">
+    <div className="fixed inset-0 overflow-hidden bg-[#09090b]" style={{ height: '100dvh' }}>
       <AIAppBuilderWorkspace />
     </div>
   );
