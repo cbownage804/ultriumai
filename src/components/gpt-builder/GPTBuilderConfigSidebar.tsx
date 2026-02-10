@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, Globe, Palette, Brain, Sparkles, MessageCircle, Plus, X, Target, ImageIcon, FileText } from 'lucide-react';
+import { GPTPromptScorer } from './GPTPromptScorer';
 
 interface GPTBuilderConfigSidebarProps {
   config: GPTConfig;
@@ -91,6 +92,11 @@ export function GPTBuilderConfigSidebar({ config, onChange }: GPTBuilderConfigSi
               </Select>
             </div>
           </div>
+
+          <Separator className="bg-white/[0.06]" />
+
+          {/* Prompt Score */}
+          <GPTPromptScorer config={config} />
 
           <Separator className="bg-white/[0.06]" />
 

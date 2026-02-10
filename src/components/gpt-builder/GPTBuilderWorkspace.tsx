@@ -8,18 +8,20 @@ import { GPTBuilderConfigSidebar } from './GPTBuilderConfigSidebar';
 import { GPTBuilderKnowledgePanel } from './GPTBuilderKnowledgePanel';
 import { GPTBuilderActionsPanel } from './GPTBuilderActionsPanel';
 import { GPTBuilderEmbedPanel } from './GPTBuilderEmbedPanel';
+import { GPTExportImportPanel } from './GPTExportImportPanel';
 import { GPTTemplatePickerModal } from './GPTTemplatePickerModal';
+import { GPTConfigIndicators } from './GPTConfigIndicators';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   ArrowLeft, Save, RotateCcw, Settings2, Eye, MessageSquare, Loader2,
-  BookOpen, Zap, Code2, Layers
+  BookOpen, Zap, Code2, Layers, FileJson, Copy
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-type SidePanel = 'config' | 'knowledge' | 'actions' | 'embed' | null;
+type SidePanel = 'config' | 'knowledge' | 'actions' | 'embed' | 'export' | null;
 
 interface GPTBuilderWorkspaceProps {
   editGptId?: string;
@@ -89,11 +91,38 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
     }
   };
 
+  const handleDuplicate = useCallback(async () => {
+    if (!config.name) { toast.error('Configure your GPT first'); return; }
+    const dupData = {
+      name: `${config.name} (Copy)`,
+      description: config.description,
+      system_prompt: config.system_prompt,
+      avatar_url: config.avatar_url,
+      starter_questions: config.starter_questions,
+      preferred_model: config.preferred_model,
+      enable_web_search: config.enable_web_search,
+      theme_color: config.theme_color,
+      placeholder_prompt: config.placeholder_prompt,
+      category: config.category,
+      features: config.features,
+    };
+    try {
+      const result = await createGPT(dupData);
+      if (result) {
+        toast.success(`Duplicated as "${dupData.name}"`);
+        navigate(`/ai-studio/gpt-builder/${result.id}`);
+      }
+    } catch {
+      toast.error('Failed to duplicate');
+    }
+  }, [config, createGPT, navigate]);
+
   const sidePanelButtons = [
     { id: 'config' as const, icon: Settings2, label: 'Config' },
     { id: 'knowledge' as const, icon: BookOpen, label: 'Knowledge' },
     { id: 'actions' as const, icon: Zap, label: 'Actions' },
     { id: 'embed' as const, icon: Code2, label: 'Embed' },
+    { id: 'export' as const, icon: FileJson, label: 'Export/Import' },
   ];
 
   const renderSidePanel = () => {
@@ -106,6 +135,8 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
         return <GPTBuilderActionsPanel config={config} onChange={updateConfig} onClose={() => setSidePanel(null)} />;
       case 'embed':
         return <GPTBuilderEmbedPanel config={config} onChange={updateConfig} onClose={() => setSidePanel(null)} gptId={savedGptId || undefined} />;
+      case 'export':
+        return <GPTExportImportPanel config={config} onChange={updateConfig} onClose={() => setSidePanel(null)} onDuplicate={handleDuplicate} />;
       default:
         return null;
     }
@@ -147,6 +178,9 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
               {isEditMode && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.06] text-white/40">Editing</span>
               )}
+            </div>
+            <div className="hidden lg:block ml-2">
+              <GPTConfigIndicators config={config} />
             </div>
           </div>
 
