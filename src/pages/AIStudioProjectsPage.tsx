@@ -6,8 +6,9 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
   Plus, Search, Globe, Trash2, Clock, Code2, LayoutGrid,
-  List, MoreHorizontal, FolderOpen, Sparkles, ArrowRight,
-  GitFork, ExternalLink, Loader2, Pencil, Copy, Check, X, Bot,
+  List, MoreHorizontal, FolderOpen, Sparkles, Bot,
+  Loader2, Pencil, Copy, ExternalLink, Star, CheckSquare,
+  Square, FileCode, GripVertical,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,9 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { ActivityFeed } from '@/components/ai-studio/projects/ActivityFeed';
+import { BulkActionsBar } from '@/components/ai-studio/projects/BulkActionsBar';
 
 interface Project {
   id: string;
@@ -51,11 +55,13 @@ interface UnifiedItem {
   is_published?: boolean;
   published_url?: string | null;
   files?: any[];
+  pinned?: boolean;
 }
 
 type ViewMode = 'grid' | 'list';
 type SortBy = 'updated' | 'created' | 'name';
 type FilterType = 'all' | 'app' | 'gpt';
+type StatusFilter = 'all' | 'draft' | 'deployed' | 'pinned';
 
 export default function AIStudioProjectsPage() {
   const navigate = useNavigate();
@@ -67,9 +73,25 @@ export default function AIStudioProjectsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortBy>('updated');
   const [filterType, setFilterType] = useState<FilterType>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [deleteTarget, setDeleteTarget] = useState<UnifiedItem | null>(null);
+  const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('ai-studio-pinned');
+      return new Set(saved ? JSON.parse(saved) : []);
+    } catch { return new Set(); }
+  });
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [customOrder, setCustomOrder] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('ai-studio-order');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
 
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
@@ -97,10 +119,38 @@ export default function AIStudioProjectsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Persist pins
+  useEffect(() => {
+    localStorage.setItem('ai-studio-pinned', JSON.stringify(Array.from(pinnedIds)));
+  }, [pinnedIds]);
+
+  // Persist order
+  useEffect(() => {
+    localStorage.setItem('ai-studio-order', JSON.stringify(customOrder));
+  }, [customOrder]);
+
+  const togglePin = (id: string) => {
+    setPinnedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   // Merge into unified list
   const unified: UnifiedItem[] = [
-    ...projects.map(p => ({ ...p, type: 'app' as const, thumbnail_url: p.thumbnail_url })),
-    ...gpts.map(g => ({ ...g, type: 'gpt' as const, thumbnail_url: g.avatar_url, files: undefined, published_url: null })),
+    ...projects.map(p => ({ ...p, type: 'app' as const, thumbnail_url: p.thumbnail_url, pinned: pinnedIds.has(p.id) })),
+    ...gpts.map(g => ({ ...g, type: 'gpt' as const, thumbnail_url: g.avatar_url, files: undefined, published_url: null, pinned: pinnedIds.has(g.id) })),
   ];
 
   const handleDelete = async () => {
@@ -119,6 +169,41 @@ export default function AIStudioProjectsPage() {
       toast.error('Failed to delete');
     } finally {
       setDeleteTarget(null);
+      setBulkDeleteMode(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleteMode(true);
+    const items = unified.filter(i => selectedIds.has(i.id));
+    const count = items.length;
+    setDeleteTarget({ id: 'bulk', name: `${count} items`, type: 'app', updated_at: '', created_at: '' });
+  };
+
+  const executeBulkDelete = async () => {
+    const items = unified.filter(i => selectedIds.has(i.id));
+    try {
+      const appIds = items.filter(i => i.type === 'app').map(i => i.id);
+      const gptIds = items.filter(i => i.type === 'gpt').map(i => i.id);
+
+      if (appIds.length > 0) {
+        const { error } = await supabase.from('builder_projects').delete().in('id', appIds);
+        if (error) throw error;
+        setProjects(prev => prev.filter(p => !appIds.includes(p.id)));
+      }
+      if (gptIds.length > 0) {
+        const { error } = await supabase.from('custom_gpts').delete().in('id', gptIds);
+        if (error) throw error;
+        setGpts(prev => prev.filter(g => !gptIds.includes(g.id)));
+      }
+      toast.success(`Deleted ${items.length} items`);
+      setSelectedIds(new Set());
+      setSelectionMode(false);
+    } catch {
+      toast.error('Failed to delete some items');
+    } finally {
+      setDeleteTarget(null);
+      setBulkDeleteMode(false);
     }
   };
 
@@ -162,7 +247,7 @@ export default function AIStudioProjectsPage() {
         const { data, error } = await supabase
           .from('custom_gpts')
           .insert({ ...rest, name: `${gpt.name} (copy)`, user_id: user.id, is_published: false })
-          .select('id, name, updated_at, created_at, avatar_url, is_published').single();
+          .select('id, name, updated_at, created_at, avatar_url').single();
         if (error) throw error;
         setGpts(prev => [data as unknown as GPTItem, ...prev]);
       }
@@ -174,8 +259,26 @@ export default function AIStudioProjectsPage() {
 
   const filtered = unified
     .filter(item => filterType === 'all' || item.type === filterType)
+    .filter(item => {
+      if (statusFilter === 'all') return true;
+      if (statusFilter === 'pinned') return item.pinned;
+      if (statusFilter === 'deployed') return item.is_published;
+      if (statusFilter === 'draft') return !item.is_published;
+      return true;
+    })
     .filter(item => !search || item.name.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
+      // Pinned items always first
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+
+      // Check custom order
+      const aOrder = customOrder.indexOf(`${a.type}-${a.id}`);
+      const bOrder = customOrder.indexOf(`${b.type}-${b.id}`);
+      if (aOrder !== -1 && bOrder !== -1) return aOrder - bOrder;
+      if (aOrder !== -1) return -1;
+      if (bOrder !== -1) return 1;
+
       if (sortBy === 'name') return a.name.localeCompare(b.name);
       if (sortBy === 'created') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
@@ -204,7 +307,17 @@ export default function AIStudioProjectsPage() {
     else navigate(`/ai-studio/gpt-builder/${item.id}`);
   };
 
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    const reordered = Array.from(filtered);
+    const [moved] = reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, moved);
+    setCustomOrder(reordered.map(i => `${i.type}-${i.id}`));
+  };
+
   const totalCount = projects.length + gpts.length;
+  const pinnedCount = unified.filter(i => i.pinned).length;
+  const deployedCount = unified.filter(i => i.is_published).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -220,9 +333,20 @@ export default function AIStudioProjectsPage() {
             </h1>
             <p className="text-muted-foreground mt-1.5">
               {totalCount} item{totalCount !== 1 ? 's' : ''} in your workspace
+              {pinnedCount > 0 && <span> · {pinnedCount} pinned</span>}
+              {deployedCount > 0 && <span> · {deployedCount} deployed</span>}
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setSelectionMode(!selectionMode); setSelectedIds(new Set()); }}
+              className={cn(selectionMode && "bg-primary/10 border-primary/30")}
+            >
+              <CheckSquare className="h-4 w-4 mr-1" />
+              Select
+            </Button>
             <Button
               onClick={() => navigate('/ai-studio/gpt-builder')}
               variant="outline"
@@ -242,8 +366,8 @@ export default function AIStudioProjectsPage() {
         </div>
 
         {/* Toolbar */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="relative flex-1 min-w-[200px] max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search projects & GPTs..."
@@ -267,6 +391,30 @@ export default function AIStudioProjectsPage() {
                 {f === 'all' && 'All'}
                 {f === 'app' && <><Code2 className="h-3 w-3" /> Apps</>}
                 {f === 'gpt' && <><Bot className="h-3 w-3" /> GPTs</>}
+              </button>
+            ))}
+          </div>
+
+          {/* Status filter */}
+          <div className="flex items-center gap-1 bg-card/50 border border-border/50 rounded-lg p-0.5">
+            {([
+              { key: 'all', label: 'All' },
+              { key: 'pinned', label: '★ Pinned', count: pinnedCount },
+              { key: 'deployed', label: 'Deployed', count: deployedCount },
+              { key: 'draft', label: 'Drafts' },
+            ] as { key: StatusFilter; label: string; count?: number }[]).map(s => (
+              <button
+                key={s.key}
+                onClick={() => setStatusFilter(s.key)}
+                className={cn(
+                  'h-8 px-3 rounded-md flex items-center gap-1 text-xs font-medium transition-colors',
+                  statusFilter === s.key ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {s.label}
+                {s.count !== undefined && s.count > 0 && (
+                  <span className="text-[10px] opacity-60">({s.count})</span>
+                )}
               </button>
             ))}
           </div>
@@ -303,6 +451,20 @@ export default function AIStudioProjectsPage() {
           </select>
         </div>
 
+        {/* Bulk actions bar */}
+        <BulkActionsBar
+          selectedCount={selectedIds.size}
+          totalCount={filtered.length}
+          onSelectAll={() => setSelectedIds(new Set(filtered.map(i => i.id)))}
+          onClearSelection={() => { setSelectedIds(new Set()); setSelectionMode(false); }}
+          onBulkDelete={handleBulkDelete}
+        />
+
+        {/* Activity Feed */}
+        {user?.id && !loading && totalCount > 0 && (
+          <ActivityFeed userId={user.id} />
+        )}
+
         {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center py-24">
@@ -336,140 +498,216 @@ export default function AIStudioProjectsPage() {
             ) : (
               <>
                 <Search className="h-10 w-10 text-muted-foreground/30 mb-4" />
-                <p className="text-muted-foreground">No items match "{search}"</p>
+                <p className="text-muted-foreground">No items match your filters</p>
               </>
             )}
           </div>
         ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" style={{ gridAutoRows: 'min-content' }}>
-            {/* New project card */}
-            <button
-              onClick={() => navigate('/ai-studio/app-builder')}
-              className="group h-[260px] rounded-xl border-2 border-dashed border-border/50 hover:border-primary/40 flex flex-col items-center justify-center gap-2 transition-all hover:bg-primary/[0.02]"
-            >
-              <div className="w-10 h-10 rounded-lg bg-primary/5 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-                <Plus className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-              </div>
-              <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">New project</span>
-            </button>
-
-            {filtered.map(item => (
-              <div
-                key={`${item.type}-${item.id}`}
-                onClick={() => openItem(item)}
-                className="group relative h-[260px] rounded-xl border border-border/50 bg-card/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 cursor-pointer transition-all overflow-hidden"
-              >
-                {/* Preview thumbnail */}
-                <div className="h-[190px] overflow-hidden relative">
-                  {item.type === 'app' && item.thumbnail_url ? (
-                    <img
-                      src={item.thumbnail_url}
-                      alt={`${item.name} preview`}
-                      className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className={cn(
-                      "w-full h-full flex items-center justify-center",
-                      item.type === 'app'
-                        ? "bg-gradient-to-br from-card via-muted/30 to-card"
-                        : "bg-gradient-to-br from-primary/10 to-muted/10"
-                    )}>
-                      {item.type === 'app' ? (
-                        <Code2 className="h-8 w-8 text-muted-foreground/20" />
-                      ) : (
-                        <Bot className="h-8 w-8 text-muted-foreground/20" />
-                      )}
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="projects-grid" direction="horizontal">
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
+                  style={{ gridAutoRows: 'min-content' }}
+                >
+                  {/* New project card */}
+                  <button
+                    onClick={() => navigate('/ai-studio/app-builder')}
+                    className="group h-[260px] rounded-xl border-2 border-dashed border-border/50 hover:border-primary/40 flex flex-col items-center justify-center gap-2 transition-all hover:bg-primary/[0.02]"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-primary/5 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                      <Plus className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
-                  )}
-                  <Badge className={cn(
-                    "absolute top-2 left-2 text-[10px] border-0",
-                    item.type === 'app' ? "bg-violet-500/80" : "bg-primary/80"
-                  )}>
-                    {item.type === 'app' ? 'App' : 'GPT'}
-                  </Badge>
-                </div>
+                    <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">New project</span>
+                  </button>
 
-                {/* Info */}
-                <div className="p-3 flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    {renamingId === item.id ? (
-                      <div className="flex items-center gap-1">
-                        <input
-                          value={renameValue}
-                          onChange={(e) => setRenameValue(e.target.value)}
-                          onBlur={() => handleRename(item, renameValue)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleRename(item, renameValue);
-                            if (e.key === 'Escape') setRenamingId(null);
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-sm font-medium bg-transparent border-b border-primary/50 outline-none w-full text-foreground"
-                          autoFocus
-                        />
-                      </div>
-                    ) : (
-                      <h3 className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                        {item.name || (item.type === 'app' ? 'Untitled Project' : 'Untitled GPT')}
-                      </h3>
-                    )}
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {formatTimeAgo(item.updated_at)}
-                      </span>
-                      {item.is_published && (
-                        <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-emerald-500/30 text-emerald-400">
-                          <Globe className="h-2.5 w-2.5 mr-0.5" />
-                          Live
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
+                  {filtered.map((item, index) => (
+                    <Draggable key={`${item.type}-${item.id}`} draggableId={`${item.type}-${item.id}`} index={index}>
+                      {(dragProvided, snapshot) => (
+                        <div
+                          ref={dragProvided.innerRef}
+                          {...dragProvided.draggableProps}
+                          className={cn(
+                            "group relative h-[260px] rounded-xl border bg-card/50 cursor-pointer transition-all overflow-hidden",
+                            snapshot.isDragging && "shadow-xl ring-2 ring-primary/30",
+                            selectedIds.has(item.id)
+                              ? "border-primary ring-2 ring-primary/20"
+                              : "border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
+                          )}
+                          onClick={() => selectionMode ? toggleSelect(item.id) : openItem(item)}
+                        >
+                          {/* Drag handle */}
+                          <div
+                            {...dragProvided.dragHandleProps}
+                            className="absolute top-2 right-9 z-10 h-6 w-6 rounded flex items-center justify-center text-muted-foreground/30 opacity-0 group-hover:opacity-100 hover:text-muted-foreground transition-all cursor-grab"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <GripVertical className="h-3.5 w-3.5" />
+                          </div>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <button className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted/50 transition-all">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-44">
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openItem(item); }}>
-                        <FolderOpen className="h-4 w-4 mr-2" /> Open
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setRenamingId(item.id); setRenameValue(item.name || ''); }}>
-                        <Pencil className="h-4 w-4 mr-2" /> Rename
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(item); }}>
-                        <Copy className="h-4 w-4 mr-2" /> Duplicate
-                      </DropdownMenuItem>
-                      {item.type === 'app' && item.published_url && (
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); window.open(item.published_url!, '_blank'); }}>
-                          <ExternalLink className="h-4 w-4 mr-2" /> View live
-                        </DropdownMenuItem>
+                          {/* Selection checkbox */}
+                          {selectionMode && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); toggleSelect(item.id); }}
+                              className="absolute top-2 right-2 z-20 h-6 w-6 rounded flex items-center justify-center bg-background/80 backdrop-blur-sm border border-border/50"
+                            >
+                              {selectedIds.has(item.id) ? (
+                                <CheckSquare className="h-4 w-4 text-primary" />
+                              ) : (
+                                <Square className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </button>
+                          )}
+
+                          {/* Pin button */}
+                          {!selectionMode && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); togglePin(item.id); }}
+                              className={cn(
+                                "absolute top-2 right-2 z-10 h-6 w-6 rounded flex items-center justify-center transition-all",
+                                item.pinned
+                                  ? "text-amber-400"
+                                  : "text-muted-foreground/50 opacity-0 group-hover:opacity-100 hover:text-amber-400"
+                              )}
+                            >
+                              <Star className={cn("h-3.5 w-3.5", item.pinned && "fill-current")} />
+                            </button>
+                          )}
+
+                          {/* Preview thumbnail */}
+                          <div className="h-[180px] overflow-hidden relative">
+                            {item.type === 'app' && item.thumbnail_url ? (
+                              <img
+                                src={item.thumbnail_url}
+                                alt={`${item.name} preview`}
+                                className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className={cn(
+                                "w-full h-full flex items-center justify-center",
+                                item.type === 'app'
+                                  ? "bg-gradient-to-br from-card via-muted/30 to-card"
+                                  : "bg-gradient-to-br from-primary/10 to-muted/10"
+                              )}>
+                                {item.type === 'app' ? (
+                                  <Code2 className="h-8 w-8 text-muted-foreground/20" />
+                                ) : (
+                                  <Bot className="h-8 w-8 text-muted-foreground/20" />
+                                )}
+                              </div>
+                            )}
+                            {/* Badges */}
+                            <div className="absolute top-2 left-2 flex items-center gap-1">
+                              <Badge className={cn(
+                                "text-[10px] border-0",
+                                item.type === 'app' ? "bg-violet-500/80" : "bg-primary/80"
+                              )}>
+                                {item.type === 'app' ? 'App' : 'GPT'}
+                              </Badge>
+                              {item.is_published && (
+                                <Badge className="text-[10px] border-0 bg-emerald-500/80">
+                                  <Globe className="h-2.5 w-2.5 mr-0.5" /> Live
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Info */}
+                          <div className="p-2.5 flex items-start justify-between gap-1">
+                            <div className="min-w-0 flex-1">
+                              {renamingId === item.id ? (
+                                <input
+                                  value={renameValue}
+                                  onChange={(e) => setRenameValue(e.target.value)}
+                                  onBlur={() => handleRename(item, renameValue)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleRename(item, renameValue);
+                                    if (e.key === 'Escape') setRenamingId(null);
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-xs font-medium bg-transparent border-b border-primary/50 outline-none w-full text-foreground"
+                                  autoFocus
+                                />
+                              ) : (
+                                <h3 className="text-xs font-medium truncate group-hover:text-primary transition-colors">
+                                  {item.pinned && <Star className="h-2.5 w-2.5 text-amber-400 fill-current inline mr-1" />}
+                                  {item.name || (item.type === 'app' ? 'Untitled Project' : 'Untitled GPT')}
+                                </h3>
+                              )}
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                                  <Clock className="h-2.5 w-2.5" />
+                                  {formatTimeAgo(item.updated_at)}
+                                </span>
+                                {item.type === 'app' && getFileCount(item.files) > 0 && (
+                                  <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                                    <FileCode className="h-2.5 w-2.5" />
+                                    {getFileCount(item.files)} files
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {!selectionMode && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <button className="h-6 w-6 rounded flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted/50 transition-all">
+                                    <MoreHorizontal className="h-3.5 w-3.5" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-44">
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openItem(item); }}>
+                                    <FolderOpen className="h-4 w-4 mr-2" /> Open
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setRenamingId(item.id); setRenameValue(item.name || ''); }}>
+                                    <Pencil className="h-4 w-4 mr-2" /> Rename
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(item); }}>
+                                    <Copy className="h-4 w-4 mr-2" /> Duplicate
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); togglePin(item.id); }}>
+                                    <Star className={cn("h-4 w-4 mr-2", item.pinned && "fill-current text-amber-400")} />
+                                    {item.pinned ? 'Unpin' : 'Pin to top'}
+                                  </DropdownMenuItem>
+                                  {item.type === 'app' && item.published_url && (
+                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); window.open(item.published_url!, '_blank'); }}>
+                                      <ExternalLink className="h-4 w-4 mr-2" /> View live
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(item); }}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" /> Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
+                        </div>
                       )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(item); }}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" /> Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
                 </div>
-              </div>
-            ))}
-          </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         ) : (
           /* List view */
           <div className="border border-border/50 rounded-xl overflow-hidden bg-card/30">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/50 text-xs text-muted-foreground">
+                  {selectionMode && <th className="w-10 px-3"></th>}
                   <th className="text-left font-medium px-4 py-3">Name</th>
                   <th className="text-left font-medium px-4 py-3 hidden sm:table-cell">Type</th>
                   <th className="text-left font-medium px-4 py-3 hidden md:table-cell">Status</th>
+                  <th className="text-left font-medium px-4 py-3 hidden lg:table-cell">Files</th>
                   <th className="text-left font-medium px-4 py-3">Modified</th>
                   <th className="w-10"></th>
                 </tr>
@@ -478,9 +716,23 @@ export default function AIStudioProjectsPage() {
                 {filtered.map(item => (
                   <tr
                     key={`${item.type}-${item.id}`}
-                    onClick={() => openItem(item)}
-                    className="border-b border-border/30 last:border-0 hover:bg-muted/20 cursor-pointer transition-colors group"
+                    onClick={() => selectionMode ? toggleSelect(item.id) : openItem(item)}
+                    className={cn(
+                      "border-b border-border/30 last:border-0 hover:bg-muted/20 cursor-pointer transition-colors group",
+                      selectedIds.has(item.id) && "bg-primary/5"
+                    )}
                   >
+                    {selectionMode && (
+                      <td className="px-3 py-3">
+                        <button onClick={(e) => { e.stopPropagation(); toggleSelect(item.id); }}>
+                          {selectedIds.has(item.id) ? (
+                            <CheckSquare className="h-4 w-4 text-primary" />
+                          ) : (
+                            <Square className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </button>
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className={cn(
@@ -495,24 +747,27 @@ export default function AIStudioProjectsPage() {
                             <Bot className="h-4 w-4 text-primary/50" />
                           )}
                         </div>
-                        {renamingId === item.id ? (
-                          <input
-                            value={renameValue}
-                            onChange={(e) => setRenameValue(e.target.value)}
-                            onBlur={() => handleRename(item, renameValue)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleRename(item, renameValue);
-                              if (e.key === 'Escape') setRenamingId(null);
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-sm font-medium bg-transparent border-b border-primary/50 outline-none text-foreground"
-                            autoFocus
-                          />
-                        ) : (
-                          <span className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                            {item.name || (item.type === 'app' ? 'Untitled Project' : 'Untitled GPT')}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {item.pinned && <Star className="h-3 w-3 text-amber-400 fill-current shrink-0" />}
+                          {renamingId === item.id ? (
+                            <input
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onBlur={() => handleRename(item, renameValue)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleRename(item, renameValue);
+                                if (e.key === 'Escape') setRenamingId(null);
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-sm font-medium bg-transparent border-b border-primary/50 outline-none text-foreground"
+                              autoFocus
+                            />
+                          ) : (
+                            <span className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                              {item.name || (item.type === 'app' ? 'Untitled Project' : 'Untitled GPT')}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
@@ -526,7 +781,7 @@ export default function AIStudioProjectsPage() {
                     <td className="px-4 py-3 hidden md:table-cell">
                       {item.is_published ? (
                         <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400">
-                          <Globe className="h-2.5 w-2.5 mr-1" /> Published
+                          <Globe className="h-2.5 w-2.5 mr-1" /> Deployed
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="text-[10px] border-border/50 text-muted-foreground">
@@ -534,40 +789,49 @@ export default function AIStudioProjectsPage() {
                         </Badge>
                       )}
                     </td>
+                    <td className="px-4 py-3 hidden lg:table-cell text-sm text-muted-foreground">
+                      {item.type === 'app' ? getFileCount(item.files) : '—'}
+                    </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">
                       {formatTimeAgo(item.updated_at)}
                     </td>
                     <td className="px-2 py-3">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <button className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted/50 transition-all">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openItem(item); }}>
-                            <FolderOpen className="h-4 w-4 mr-2" /> Open
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setRenamingId(item.id); setRenameValue(item.name || ''); }}>
-                            <Pencil className="h-4 w-4 mr-2" /> Rename
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(item); }}>
-                            <Copy className="h-4 w-4 mr-2" /> Duplicate
-                          </DropdownMenuItem>
-                          {item.type === 'app' && item.published_url && (
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); window.open(item.published_url!, '_blank'); }}>
-                              <ExternalLink className="h-4 w-4 mr-2" /> View live
+                      {!selectionMode && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <button className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted/50 transition-all">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openItem(item); }}>
+                              <FolderOpen className="h-4 w-4 mr-2" /> Open
                             </DropdownMenuItem>
-                          )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={(e) => { e.stopPropagation(); setDeleteTarget(item); }}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setRenamingId(item.id); setRenameValue(item.name || ''); }}>
+                              <Pencil className="h-4 w-4 mr-2" /> Rename
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(item); }}>
+                              <Copy className="h-4 w-4 mr-2" /> Duplicate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); togglePin(item.id); }}>
+                              <Star className={cn("h-4 w-4 mr-2", item.pinned && "fill-current text-amber-400")} />
+                              {item.pinned ? 'Unpin' : 'Pin to top'}
+                            </DropdownMenuItem>
+                            {item.type === 'app' && item.published_url && (
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); window.open(item.published_url!, '_blank'); }}>
+                                <ExternalLink className="h-4 w-4 mr-2" /> View live
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={(e) => { e.stopPropagation(); setDeleteTarget(item); }}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -581,14 +845,22 @@ export default function AIStudioProjectsPage() {
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {deleteTarget?.type === 'app' ? 'project' : 'GPT'}?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {bulkDeleteMode ? `Delete ${selectedIds.size} items?` : `Delete ${deleteTarget?.type === 'app' ? 'project' : 'GPT'}?`}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete <strong>{deleteTarget?.name}</strong>. This action cannot be undone.
+              {bulkDeleteMode
+                ? `This will permanently delete ${selectedIds.size} selected items. This action cannot be undone.`
+                : <>This will permanently delete <strong>{deleteTarget?.name}</strong>. This action cannot be undone.</>
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogCancel onClick={() => setBulkDeleteMode(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={bulkDeleteMode ? executeBulkDelete : handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
