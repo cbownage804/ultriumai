@@ -1,22 +1,146 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { GPTConfig } from '@/types/gptConfig';
-import { Bot, Send, Globe, Sparkles } from 'lucide-react';
+import { Bot, Send, Globe, Sparkles, RotateCcw, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import { toast } from 'sonner';
 
 interface GPTBuilderPreviewProps {
   config: GPTConfig;
 }
 
+interface PreviewMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
   const [previewInput, setPreviewInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<PreviewMessage[]>([]);
+  const [isResponding, setIsResponding] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const themeColor = config.theme_color || '#6366f1';
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  const handleSend = useCallback(async (text?: string) => {
+    const message = text || previewInput.trim();
+    if (!message || isResponding) return;
+    if (!config.system_prompt) {
+      toast.info('Configure a system prompt first via the chat panel');
+      return;
+    }
+
+    setPreviewInput('');
+    const userMsg: PreviewMessage = { id: crypto.randomUUID(), role: 'user', content: message };
+    setChatMessages(prev => [...prev, userMsg]);
+    setIsResponding(true);
+
+    const assistantId = crypto.randomUUID();
+    let assistantContent = '';
+
+    try {
+      abortRef.current = new AbortController();
+      const allMessages = [...chatMessages, userMsg].map(m => ({ role: m.role, content: m.content }));
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gpt-test-chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            messages: allMessages,
+            systemPrompt: config.system_prompt,
+          }),
+          signal: abortRef.current.signal,
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 429) { toast.error('Rate limited. Please wait.'); setIsResponding(false); return; }
+        if (response.status === 402) { toast.error('Credits exhausted.'); setIsResponding(false); return; }
+        throw new Error('Failed');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No body');
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let idx: number;
+        while ((idx = buffer.indexOf('\n')) !== -1) {
+          let line = buffer.slice(0, idx);
+          buffer = buffer.slice(idx + 1);
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (!line.startsWith('data: ')) continue;
+          const json = line.slice(6).trim();
+          if (json === '[DONE]') break;
+          try {
+            const parsed = JSON.parse(json);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              assistantContent += content;
+              setChatMessages(prev => {
+                const last = prev[prev.length - 1];
+                if (last?.id === assistantId) {
+                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
+                }
+                return [...prev, { id: assistantId, role: 'assistant', content: assistantContent }];
+              });
+            }
+          } catch {
+            buffer = line + '\n' + buffer;
+            break;
+          }
+        }
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        toast.error('Test chat failed');
+      }
+    } finally {
+      setIsResponding(false);
+      abortRef.current = null;
+    }
+  }, [previewInput, isResponding, config.system_prompt, chatMessages]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  };
+
+  const resetChat = () => {
+    abortRef.current?.abort();
+    setChatMessages([]);
+    setIsResponding(false);
+  };
+
+  const hasContent = config.welcome_message || config.starter_questions.length > 0 || chatMessages.length > 0;
 
   return (
     <div className="h-full flex flex-col bg-[#0a0a0c]">
       {/* Preview Header */}
-      <div className="h-10 shrink-0 flex items-center justify-center border-b border-white/[0.06] bg-white/[0.02]">
+      <div className="h-10 shrink-0 flex items-center justify-between px-4 border-b border-white/[0.06] bg-white/[0.02]">
         <span className="text-[10px] uppercase tracking-widest text-white/30 font-medium">Live Preview</span>
+        {chatMessages.length > 0 && (
+          <button onClick={resetChat} className="text-white/30 hover:text-white/60 transition-colors">
+            <RotateCcw className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
       {/* Phone Frame */}
@@ -29,7 +153,7 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
         >
           {/* Chat Header */}
           <div
-            className="px-5 py-4 flex items-center gap-3"
+            className="px-5 py-4 flex items-center gap-3 shrink-0"
             style={{ background: `linear-gradient(135deg, ${themeColor}20, transparent)` }}
           >
             <div
@@ -47,8 +171,8 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
                 {config.name || 'Your GPT'}
               </h3>
               <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                <span className="text-[11px] text-white/40">Online</span>
+                <span className={cn("h-1.5 w-1.5 rounded-full", isResponding ? "bg-amber-400 animate-pulse" : "bg-emerald-400")} />
+                <span className="text-[11px] text-white/40">{isResponding ? 'Typing...' : 'Online'}</span>
                 {config.enable_web_search && (
                   <>
                     <span className="text-white/20">·</span>
@@ -60,9 +184,9 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
           </div>
 
           {/* Chat Body */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-0">
             {/* Welcome Message */}
-            {config.welcome_message && (
+            {config.welcome_message && chatMessages.length === 0 && (
               <div className="flex gap-2.5">
                 <div
                   className="h-6 w-6 rounded-md flex items-center justify-center shrink-0 mt-0.5"
@@ -77,21 +201,82 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
             )}
 
             {/* Starter Questions */}
-            {config.starter_questions.length > 0 && (
+            {config.starter_questions.length > 0 && chatMessages.length === 0 && (
               <div className="space-y-1.5 pl-8">
                 {config.starter_questions.map((q, i) => (
-                  <div
+                  <button
                     key={i}
-                    className="px-3 py-2 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer"
+                    onClick={() => handleSend(q)}
+                    disabled={isResponding || !config.system_prompt}
+                    className="w-full text-left px-3 py-2 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <p className="text-[11px] text-white/50">{q}</p>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
 
+            {/* Chat Messages */}
+            <AnimatePresence mode="popLayout">
+              {chatMessages.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={cn('flex gap-2', msg.role === 'user' ? 'justify-end' : 'justify-start')}
+                >
+                  {msg.role === 'assistant' && (
+                    <div
+                      className="h-6 w-6 rounded-md flex items-center justify-center shrink-0 mt-0.5"
+                      style={{ backgroundColor: themeColor }}
+                    >
+                      <Bot className="h-3.5 w-3.5 text-white" />
+                    </div>
+                  )}
+                  <div
+                    className={cn(
+                      'max-w-[80%] rounded-2xl px-3 py-2 text-xs',
+                      msg.role === 'user'
+                        ? 'rounded-br-md text-white'
+                        : 'bg-white/[0.04] border border-white/[0.06] rounded-bl-md text-white/80'
+                    )}
+                    style={msg.role === 'user' ? { backgroundColor: themeColor } : undefined}
+                  >
+                    {msg.role === 'assistant' ? (
+                      <div className="prose prose-xs prose-invert max-w-none [&>p]:mb-1 [&>p:last-child]:mb-0">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                    )}
+                  </div>
+                  {msg.role === 'user' && (
+                    <div className="h-6 w-6 rounded-md bg-white/[0.06] flex items-center justify-center shrink-0 mt-0.5">
+                      <User className="h-3.5 w-3.5 text-white/40" />
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {/* Typing indicator */}
+            {isResponding && chatMessages[chatMessages.length - 1]?.role !== 'assistant' && (
+              <div className="flex gap-2">
+                <div className="h-6 w-6 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: themeColor }}>
+                  <Bot className="h-3.5 w-3.5 text-white animate-pulse" />
+                </div>
+                <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl rounded-bl-md px-3.5 py-2.5">
+                  <div className="flex gap-1">
+                    <span className="h-1.5 w-1.5 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="h-1.5 w-1.5 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="h-1.5 w-1.5 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Empty state */}
-            {!config.welcome_message && config.starter_questions.length === 0 && (
+            {!hasContent && (
               <div className="flex flex-col items-center justify-center h-full text-center px-6">
                 <div
                   className="h-12 w-12 rounded-2xl flex items-center justify-center mb-4 opacity-30"
@@ -100,7 +285,7 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
                   <Sparkles className="h-6 w-6 text-white" />
                 </div>
                 <p className="text-xs text-white/20 max-w-[200px]">
-                  Describe your GPT in the chat panel and watch the preview update live
+                  Describe your GPT in the chat panel, then test it here
                 </p>
               </div>
             )}
@@ -112,16 +297,19 @@ export function GPTBuilderPreview({ config }: GPTBuilderPreviewProps) {
               <input
                 value={previewInput}
                 onChange={(e) => setPreviewInput(e.target.value)}
-                placeholder={config.placeholder_prompt || 'Ask me anything...'}
+                onKeyDown={handleKeyDown}
+                placeholder={config.system_prompt ? (config.placeholder_prompt || 'Ask me anything...') : 'Configure system prompt first...'}
                 className="flex-1 bg-transparent text-xs text-white/70 placeholder:text-white/20 outline-none"
-                disabled
+                disabled={!config.system_prompt || isResponding}
               />
-              <div
-                className="h-7 w-7 rounded-lg flex items-center justify-center opacity-50"
+              <button
+                onClick={() => handleSend()}
+                disabled={!previewInput.trim() || isResponding || !config.system_prompt}
+                className="h-7 w-7 rounded-lg flex items-center justify-center transition-opacity disabled:opacity-30"
                 style={{ backgroundColor: themeColor }}
               >
                 <Send className="h-3.5 w-3.5 text-white" />
-              </div>
+              </button>
             </div>
             {config.description && (
               <p className="text-[10px] text-white/20 text-center mt-2 px-4 truncate">
