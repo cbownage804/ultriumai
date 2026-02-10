@@ -145,7 +145,7 @@ export function AIAppBuilderWorkspace() {
   const [vercelConfig, setVercelConfig] = useState<VercelConfig | null>(null);
   const [serviceKeys, setServiceKeys] = useState<ServiceKey[]>([]);
   const [envVars, setEnvVars] = useState<EnvVar[]>([]);
-  const [showFileTree, setShowFileTree] = useState(true);
+  const [showFileTree, setShowFileTree] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
@@ -163,7 +163,7 @@ export function AIAppBuilderWorkspace() {
   const { findReferencedFiles, bundleForBrowser } = useProjectBundler();
   const [remoteCursors, setRemoteCursors] = useState<RemoteCursor[]>([]);
   const channelRef = useRef<any>(null);
-  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
+  const [isChatCollapsed, setIsChatCollapsed] = useState(true);
   const [dirtyFiles, setDirtyFiles] = useState<Set<string>>(new Set());
   const [cursorPosition, setCursorPosition] = useState<{ line: number; column: number }>({ line: 1, column: 1 });
   const prevIsGeneratingRef = useRef(isGenerating);
