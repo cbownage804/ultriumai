@@ -29,7 +29,7 @@ const COMMANDS: CommandItem[] = [
 
   // AI Studio
   { id: "ai-studio", label: "AI Studio Dashboard", category: "AI Studio", icon: Sparkles, route: "/ai-studio", keywords: ["ai", "studio", "dashboard"] },
-  { id: "new-gpt", label: "Create New GPT", category: "AI Studio", icon: Bot, route: "/dashboard/gpt/build", keywords: ["new", "gpt", "create", "build", "assistant"] },
+  { id: "new-gpt", label: "Create New GPT", category: "AI Studio", icon: Bot, route: "/ai-studio/gpt-builder", keywords: ["new", "gpt", "create", "build", "assistant"] },
   { id: "app-builder", label: "App Builder", category: "AI Studio", icon: Code2, route: "/ai-studio/app-builder", keywords: ["app", "builder", "ide", "code"] },
   { id: "ai-agents", label: "AI Agents", category: "AI Studio", icon: Zap, route: "/ai-studio/agents", keywords: ["agents", "automation"] },
   { id: "workflows", label: "Workflows", category: "AI Studio", icon: Rocket, route: "/ai-studio/workflows", keywords: ["workflows", "canvas"] },

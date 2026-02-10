@@ -139,7 +139,7 @@ const Dashboard = () => {
     
     if (isProfilePage) return <Profile />;
     if (isHistoryPage) return <ConversationHistory />;
-    if (isCustomGPTBuildPage) return <div className="p-6"><CustomGPTBuild /></div>;
+    if (isCustomGPTBuildPage) { window.location.href = '/ai-studio/gpt-builder'; return null; }
     if (isCustomGPTPersonalizePage) return <div className="p-6"><CustomGPTPersonalize /></div>;
     if (isCustomGPTActionsPage) return <div className="p-6"><CustomGPTActions /></div>;
     if (isCustomGPTAskPage) return <div className="p-6"><CustomGPTAsk /></div>;

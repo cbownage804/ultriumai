@@ -17,7 +17,7 @@ interface CommandItem {
 
 const COMMANDS: CommandItem[] = [
   { id: "home", label: "AI Studio Home", category: "Navigate", icon: Home, route: "/ai-studio", keywords: ["home", "dashboard", "hub"] },
-  { id: "new-gpt", label: "Create New GPT", category: "Create", icon: Bot, route: "/dashboard/gpt/build", keywords: ["new", "gpt", "create", "build", "assistant"] },
+  { id: "new-gpt", label: "Create New GPT", category: "Create", icon: Bot, route: "/ai-studio/gpt-builder", keywords: ["new", "gpt", "create", "build", "assistant"] },
   { id: "app-builder", label: "Open App Builder", category: "Create", icon: Code2, route: "/ai-studio/app-builder", keywords: ["app", "builder", "ide", "code"] },
   { id: "new-agent", label: "Create AI Agent", category: "Create", icon: Zap, route: "/ai-studio/agents/builder", keywords: ["agent", "workflow", "automation"] },
   { id: "my-gpts", label: "My GPTs", category: "Navigate", icon: MessageSquare, route: "/dashboard/gpt", keywords: ["gpts", "assistants", "list"] },

@@ -61,7 +61,7 @@ export const GPTDashboard = () => {
             Manage and monitor your custom AI assistants
           </p>
         </div>
-        <Button onClick={() => navigate('/dashboard/gpt/build')}>
+        <Button onClick={() => navigate('/ai-studio/gpt-builder')}>
           <Plus className="h-4 w-4 mr-2" />
           Create New GPT
         </Button>
@@ -126,7 +126,7 @@ export const GPTDashboard = () => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/dashboard/gpt/build')}>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/ai-studio/gpt-builder')}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Plus className="h-5 w-5" />
@@ -179,7 +179,7 @@ export const GPTDashboard = () => {
               <p className="text-muted-foreground mb-4">
                 Create your first custom GPT to get started
               </p>
-              <Button onClick={() => navigate('/dashboard/gpt/build')}>
+              <Button onClick={() => navigate('/ai-studio/gpt-builder')}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create Your First GPT
               </Button>

@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 
 const QUICK_ACTIONS = [
-  { label: "Create a new GPT", icon: Rocket, route: "/dashboard/gpt/build" },
+  { label: "Create a new GPT", icon: Rocket, route: "/ai-studio/gpt-builder" },
   { label: "Browse Templates", icon: BookOpen, route: "/ai-studio/use-cases" },
   { label: "AI Agents", icon: Share2, route: "/ai-studio/agents" },
   { label: "App Builder", icon: Palette, route: "/ai-studio/app-builder" },
