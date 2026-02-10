@@ -363,3 +363,9 @@ verify_jwt = false
 
 [functions.org-member-notify]
 verify_jwt = false
+
+[functions.gpt-builder-chat]
+verify_jwt = false
+
+[functions.gpt-test-chat]
+verify_jwt = false
