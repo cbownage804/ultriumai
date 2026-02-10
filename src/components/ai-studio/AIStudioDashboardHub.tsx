@@ -11,7 +11,7 @@ import {
   Activity, ChevronRight, Layers,
   MessageSquare, Database, Globe, FileText,
   Layout, ShoppingCart, BarChart3, FileCode,
-  Zap, Plus,
+  Zap, Plus, Search, Star, Command,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { motion } from "framer-motion";
@@ -67,6 +67,19 @@ export const AIStudioDashboardHub = () => {
   const [activity, setActivity] = useState<{ id: string; label: string; detail: string; timestamp: string }[]>([]);
   const [totalProjects, setTotalProjects] = useState(0);
   const [totalGPTs, setTotalGPTs] = useState(0);
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('ai-studio-pinned') || '[]')); } catch { return new Set(); }
+  });
+
+  const togglePin = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPinnedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      localStorage.setItem('ai-studio-pinned', JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!user?.id) return;
@@ -152,10 +165,22 @@ export const AIStudioDashboardHub = () => {
             </span>
           </div>
         </div>
-        <Badge variant="outline" className="text-xs px-3 py-1.5 border-border/50">
-          <Activity className="h-3 w-3 mr-1.5" />
-          {credits.toLocaleString()} Credits
-        </Badge>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+            }}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border/50 bg-card/30 hover:bg-card/60 transition-colors text-xs text-muted-foreground"
+          >
+            <Search className="h-3 w-3" />
+            <span>Search</span>
+            <kbd className="ml-1 text-[10px] px-1 py-0.5 rounded bg-muted/30 border border-border/50 font-mono">⌘K</kbd>
+          </button>
+          <Badge variant="outline" className="text-xs px-3 py-1.5 border-border/50">
+            <Activity className="h-3 w-3 mr-1.5" />
+            {credits.toLocaleString()} Credits
+          </Badge>
+        </div>
       </motion.div>
 
       {/* ── Two Hero Cards ── */}
@@ -287,6 +312,12 @@ export const AIStudioDashboardHub = () => {
                     </div>
                   )}
                   <Badge className="absolute top-2 left-2 text-[10px] bg-violet-500/80 border-0">App</Badge>
+                  <button
+                    onClick={(e) => togglePin(p.id, e)}
+                    className="absolute top-2 right-2 h-6 w-6 rounded-md bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60"
+                  >
+                    <Star className={cn("h-3 w-3", pinnedIds.has(p.id) ? "text-amber-400 fill-amber-400" : "text-white/60")} />
+                  </button>
                 </div>
                 <div className="p-3">
                   <p className="font-medium text-sm truncate text-foreground">{p.name}</p>
@@ -310,6 +341,12 @@ export const AIStudioDashboardHub = () => {
                     <Bot className="h-6 w-6 text-muted-foreground/30" />
                   )}
                   <Badge className="absolute top-2 left-2 text-[10px] bg-primary/80 border-0">GPT</Badge>
+                  <button
+                    onClick={(e) => togglePin(g.id, e)}
+                    className="absolute top-2 right-2 h-6 w-6 rounded-md bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60"
+                  >
+                    <Star className={cn("h-3 w-3", pinnedIds.has(g.id) ? "text-amber-400 fill-amber-400" : "text-white/60")} />
+                  </button>
                 </div>
                 <div className="p-3">
                   <p className="font-medium text-sm truncate text-foreground">{g.name}</p>
