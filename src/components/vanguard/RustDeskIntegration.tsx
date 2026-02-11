@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { launchProtocolUrl } from '@/utils/launchProtocolUrl';
+import { launchProtocolWithFallback } from '@/utils/launchProtocolUrl';
 import { useAuth } from '@/hooks/useAuth';
 import {
   Monitor,
@@ -100,7 +100,16 @@ export const RustDeskIntegration: React.FC = () => {
       const rustdeskId = String(device.rustdesk_id || '').replace(/\D/g, '');
       const rustdeskUrl = `rustdesk://${rustdeskId}`;
 
-      launchProtocolUrl(rustdeskUrl);
+      launchProtocolWithFallback(rustdeskUrl, () => {
+        toast.warning("RustDesk didn't open", {
+          description: 'You may need to install RustDesk on this computer first.',
+          action: {
+            label: 'Download',
+            onClick: () => window.open('https://rustdesk.com/download', '_blank'),
+          },
+          duration: 10000,
+        });
+      });
       
       // Log the session attempt
       await (supabase

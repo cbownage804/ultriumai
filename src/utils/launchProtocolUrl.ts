@@ -29,3 +29,32 @@ export function launchProtocolUrl(url: string): void {
     window.location.href = url;
   }
 }
+
+/**
+ * Launch a protocol URL and show a fallback warning after a delay
+ * if the app didn't appear to open (page is still visible/focused).
+ * 
+ * @param url - The protocol URL to launch (e.g. rustdesk://123456)
+ * @param onPossibleFailure - Called after ~3s if the page is still focused,
+ *                            indicating the protocol handler likely didn't fire.
+ */
+export function launchProtocolWithFallback(
+  url: string,
+  onPossibleFailure: () => void,
+): void {
+  let blurred = false;
+
+  const onBlur = () => { blurred = true; };
+  window.addEventListener('blur', onBlur);
+
+  launchProtocolUrl(url);
+
+  // After 3 seconds, if the window never lost focus the protocol handler
+  // probably didn't launch an external app.
+  setTimeout(() => {
+    window.removeEventListener('blur', onBlur);
+    if (!blurred && document.visibilityState === 'visible') {
+      onPossibleFailure();
+    }
+  }, 3000);
+}
