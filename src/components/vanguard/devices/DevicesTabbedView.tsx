@@ -9,7 +9,14 @@ import { useVanguardAgents } from "@/hooks/useVanguardAgents";
 export function DevicesTabbedView() {
   const { agents, isLoading, refetch } = useVanguardAgents();
 
-  const managedAgents = agents.filter(a => a.agent_type !== 'pi_appliance');
+  const managedAgents = agents.filter(a => {
+    if (a.agent_type === 'pi_appliance') return false;
+    // Hide Linux/Ubuntu agents — they belong in Recon Units
+    const osInfo = (a.os_info || '').toLowerCase();
+    const osConfig = ((a.config as any)?.hardware?.os_name || '').toLowerCase();
+    if (osInfo.includes('linux') || osInfo.includes('ubuntu') || osConfig.includes('linux') || osConfig.includes('ubuntu')) return false;
+    return true;
+  });
 
   return (
     <div className="space-y-4">
