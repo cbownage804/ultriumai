@@ -1,35 +1,42 @@
 
 
-## Fix: C# Build Error in RustDeskInstaller.cs
+## Add "RustDesk Required" Notice for Technicians
 
-### Problem
-The GitHub Actions build fails with:
-> **Line 487**: A local or parameter named 'serviceOk' cannot be declared in this scope because that name is used in an enclosing local scope
+### What this does
+Adds a clear, persistent banner to the Remote Access areas so technicians know they must have RustDesk installed on their own computer before they can use the "Remote In" / "Connect" buttons. Includes a direct download link.
 
-In `TryInstallViaDirectDownloadAsync()`, the variable `serviceOk` is declared twice:
-- Line 487 (inside an `if (IsRustDeskInstalled())` block after MSI install)
-- Line 570 (at the method level after EXE fallback install)
+### Where the notice will appear
+1. **RemoteAccessPanel** (device detail page) -- a small info banner above the Connect button
+2. **RustDeskIntegration** (Remote Desktop page) -- a notice card at the top, before the device table
+3. **VanguardDeviceDetails** -- a small note near the "Remote In" button
 
-C# does not allow a variable in an inner block to shadow one in an enclosing scope within the same method.
+### What the banner will say
+Something like:
 
-There are also 3 null-dereference warnings at lines 701, 702, and 1597.
+> **RustDesk must be installed on this computer**
+> To remote into devices, you need RustDesk installed locally so your browser can launch it. [Download RustDesk](https://rustdesk.com/download)
 
-### Fix
+- Dismissible via localStorage so it doesn't annoy techs who already have it installed
+- Uses the existing `ModuleIntroBanner` component for consistency (orange accent, "Guide" badge)
 
-**1. Rename the inner `serviceOk` variables to avoid the scope conflict:**
+### Technical Details
 
-In `TryInstallViaDirectDownloadAsync()` (line 487), rename to `msiServiceOk`:
-```csharp
-var msiServiceOk = await EnsureRustDeskServiceInstalledAsync();
-if (msiServiceOk)
-```
+**Files to modify:**
 
-This also applies to the same pattern in `TryInstallViaWingetAsync()` (line 358) and `TryInstallViaChocolateyAsync()` (line 409) -- those may not currently error since they're in separate methods, but renaming them for consistency is good practice.
+1. **`src/components/vanguard/device/RemoteAccessPanel.tsx`**
+   - Import `ModuleIntroBanner` from the shared module instructions
+   - Add a `ModuleIntroBanner` at the top of `CardContent`, before the providers list, with:
+     - Title: "RustDesk Required on Your Computer"
+     - Description: "To use Remote In, RustDesk must be installed on the computer you're working from."
+     - Features: ["Download from rustdesk.com/download"]
+     - docsUrl pointing to `https://rustdesk.com/download`
+     - storageKey: `rustdesk-local-install-notice`
+     - accentColor: `orange`
 
-**2. Address the null-dereference warnings (lines 701, 702, 1597):**
+2. **`src/components/vanguard/RustDeskIntegration.tsx`**
+   - Add a similar `ModuleIntroBanner` at the top of the page (after the header, before the stats grid)
+   - Same messaging and download link
 
-Add null checks or use the null-conditional operator (`?.`) where the compiler flags possible null references. I'll inspect those lines during implementation and add appropriate guards.
-
-### Files to Modify
-- `VanguardAgent/Services/RustDeskInstaller.cs` -- rename shadowed variable, fix null warnings
+3. **`src/components/vanguard/VanguardDeviceDetails.tsx`**
+   - Add a small text note or `ModuleIntroBanner` near the "Remote In" button area so techs see the requirement in context
 
