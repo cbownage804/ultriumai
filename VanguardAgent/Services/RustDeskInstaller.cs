@@ -94,8 +94,8 @@ public class RustDeskInstaller
     /// </summary>
     private static readonly string[] ProperInstallPaths = new[]
     {
-        @"C:\Program Files (x86)\RustDesk\rustdesk.exe",
         @"C:\Program Files\RustDesk\rustdesk.exe",
+        @"C:\Program Files (x86)\RustDesk\rustdesk.exe",
     };
 
     /// <summary>
@@ -714,8 +714,8 @@ public class RustDeskInstaller
                 await CleanupPortableInstall();
 
                 // Last resort: copy the downloaded EXE to Program Files manually and register service
-                Console.WriteLine("[RustDesk] Attempting manual install to Program Files (x86)...");
-                var targetDir = @"C:\Program Files (x86)\RustDesk";
+                Console.WriteLine("[RustDesk] Attempting manual install to Program Files...");
+                var targetDir = @"C:\Program Files\RustDesk";
                 var targetExe = Path.Combine(targetDir, "rustdesk.exe");
                 try
                 {
