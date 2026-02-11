@@ -344,6 +344,7 @@ export function VanguardDeviceDetails() {
             description="To use Remote In, RustDesk must be installed on the computer you're working from."
             features={["Download from rustdesk.com"]}
             docsUrl="https://rustdesk.com/download"
+            docsLabel="Download RustDesk"
             storageKey="rustdesk-local-install-notice"
             accentColor="orange"
           />

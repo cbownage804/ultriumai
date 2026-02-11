@@ -220,6 +220,7 @@ export const RustDeskIntegration: React.FC = () => {
         description="To remote into devices, you need RustDesk installed on this computer so your browser can launch it."
         features={["Download from rustdesk.com"]}
         docsUrl="https://rustdesk.com/download"
+        docsLabel="Download RustDesk"
         storageKey="rustdesk-local-install-notice"
         accentColor="orange"
       />
