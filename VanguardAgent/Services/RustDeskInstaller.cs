@@ -680,6 +680,16 @@ public class RustDeskInstaller
 
             await WaitForFileUnlockAsync(exePath, maxWaitSeconds: 30);
 
+            // Check if an MSI-based RustDesk is already installed — if so, silently uninstall it first
+            // to prevent --silent-install from triggering an interactive uninstall dialog
+            var existingMsiProductCode = GetRustDeskMsiProductCode();
+            if (existingMsiProductCode != null)
+            {
+                Console.WriteLine($"[RustDesk] Existing MSI install detected (ProductCode: {existingMsiProductCode}). Removing silently first...");
+                await RunProcessAsync("msiexec.exe", $"/x {existingMsiProductCode} /qn /norestart", Environment.SystemDirectory, 120);
+                await Task.Delay(3000);
+            }
+            
             Console.WriteLine("[RustDesk] Running EXE silent install...");
             var (exeExit, exeStdout, exeStderr) = await RunProcessAsync(
                 fileName: exePath,
@@ -694,7 +704,7 @@ public class RustDeskInstaller
             if (exeExit != 0)
             {
                 Console.WriteLine($"[RustDesk] EXE install failed with exit code {exeExit}");
-                return false;
+                // Don't return false — fall through to manual install
             }
 
             Console.WriteLine("[RustDesk] EXE install completed successfully");
@@ -890,6 +900,48 @@ public class RustDeskInstaller
         }
     }
 
+    /// <summary>
+    /// Check if RustDesk was installed via MSI and return its product code for silent uninstall.
+    /// </summary>
+    private string? GetRustDeskMsiProductCode()
+    {
+        try
+        {
+            // Check the standard uninstall registry for MSI-based installs
+            var uninstallKeys = new[]
+            {
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+                @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+            };
+            
+            foreach (var keyPath in uninstallKeys)
+            {
+                using var baseKey = Registry.LocalMachine.OpenSubKey(keyPath);
+                if (baseKey == null) continue;
+                
+                foreach (var subKeyName in baseKey.GetSubKeyNames())
+                {
+                    using var subKey = baseKey.OpenSubKey(subKeyName);
+                    var displayName = subKey?.GetValue("DisplayName")?.ToString();
+                    if (displayName != null && displayName.Contains("RustDesk", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // The subkey name IS the product code for MSI installs (e.g., {GUID})
+                        if (subKeyName.StartsWith("{") && subKeyName.EndsWith("}"))
+                        {
+                            Console.WriteLine($"[RustDesk] Found MSI product code: {subKeyName}");
+                            return subKeyName;
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RustDesk] Error checking MSI product code: {ex.Message}");
+        }
+        return null;
+    }
+
     private static void CopyDirectoryRecursive(string sourceDir, string destDir)
     {
         Directory.CreateDirectory(destDir);
@@ -987,24 +1039,27 @@ public class RustDeskInstaller
                 return true;
             }
 
-            // Step 2: Try --silent-install first (registers service + starts it)
+            // Step 2: Create service directly via sc.exe (NEVER use --silent-install —
+            // it triggers interactive MSI uninstall dialogs when a previous install exists)
             if (!serviceExists)
             {
-                Console.WriteLine("[RustDesk] Running --silent-install to register service...");
-                var (siExit, siOut, siErr) = await RunProcessAsync(
-                    installedExe, "--silent-install", dir, 120);
-                Console.WriteLine($"[RustDesk] --silent-install exit={siExit} stdout={siOut?.Trim()} stderr={siErr?.Trim()}");
-
-                // Poll for up to 60 seconds for service to appear
-                Console.WriteLine("[RustDesk] Polling for service registration (up to 60s)...");
-                for (int i = 0; i < 12; i++)
+                Console.WriteLine("[RustDesk] Creating service directly via sc.exe (skipping --silent-install to avoid UI popups)...");
+                var binPath = $"\"{installedExe}\" --service";
+                var (createExit, createOut, createErr) = await RunProcessAsync(
+                    "sc.exe",
+                    $"create RustDesk binPath= \"{binPath}\" start= auto DisplayName= \"RustDesk Service\"",
+                    Environment.SystemDirectory, 30);
+                Console.WriteLine($"[RustDesk] sc create exit={createExit} out={createOut?.Trim()} err={createErr?.Trim()}");
+                
+                if (createExit == 0)
                 {
-                    await Task.Delay(5000);
-                    (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 10);
-                    serviceExists = scExit == 0 && scOut.Contains("RustDesk");
-                    serviceRunning = serviceExists && scOut.Contains("RUNNING");
-                    Console.WriteLine($"[RustDesk] Poll {i + 1}/12: exists={serviceExists}, running={serviceRunning}");
-                    if (serviceExists) break;
+                    serviceExists = true;
+                    // Set description
+                    await RunProcessAsync("sc.exe", "description RustDesk \"RustDesk remote desktop service\"", Environment.SystemDirectory, 10);
+                }
+                else
+                {
+                    Console.WriteLine("[RustDesk] sc create failed, trying --install-service as fallback...");
                 }
             }
 
