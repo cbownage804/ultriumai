@@ -35,6 +35,7 @@ import {
   getRustDeskConnectionUrl 
 } from "@/config/vanguardRemoteAccess";
 import { launchProtocolUrl } from "@/utils/launchProtocolUrl";
+import { ModuleIntroBanner } from "@/components/vanguard/shared/ModuleInstructions";
 
 interface RemoteAccessPanelProps {
   agentId: string;
@@ -288,6 +289,14 @@ export function RemoteAccessPanel({
         </Dialog>
       </CardHeader>
       <CardContent>
+        <ModuleIntroBanner
+          title="RustDesk Required on Your Computer"
+          description="To use Remote In, RustDesk must be installed on the computer you're working from so your browser can launch it."
+          features={["Download from rustdesk.com"]}
+          docsUrl="https://rustdesk.com/download"
+          storageKey="rustdesk-local-install-notice"
+          accentColor="orange"
+        />
         {!hasAnyProvider ? (
           <div className="text-center py-8 text-muted-foreground">
             <Monitor className="h-12 w-12 mx-auto mb-3 opacity-50" />

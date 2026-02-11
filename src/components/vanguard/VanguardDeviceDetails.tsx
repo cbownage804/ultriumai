@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getVanguardBasePath } from '@/utils/subdomain';
 import { launchProtocolUrl } from '@/utils/launchProtocolUrl';
 import { cn } from '@/lib/utils';
+import { ModuleIntroBanner } from '@/components/vanguard/shared/ModuleInstructions';
 
 import { AgentConsole } from './device/console/AgentConsole';
 import { RemoteAccessPanel } from './device/RemoteAccessPanel';
@@ -338,7 +339,15 @@ export function VanguardDeviceDetails() {
 
         {/* Scrollable Content */}
         <div ref={contentRef} className="flex-1 overflow-y-auto p-6 space-y-8">
-          
+          <ModuleIntroBanner
+            title="RustDesk Required on Your Computer"
+            description="To use Remote In, RustDesk must be installed on the computer you're working from."
+            features={["Download from rustdesk.com"]}
+            docsUrl="https://rustdesk.com/download"
+            storageKey="rustdesk-local-install-notice"
+            accentColor="orange"
+          />
+
           {/* Summary Section */}
           <div ref={setSectionRef('summary')} id="section-summary">
             <SectionHeader icon={Activity} title="Summary" />
