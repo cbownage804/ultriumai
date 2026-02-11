@@ -12087,6 +12087,86 @@ export type Database = {
           },
         ]
       }
+      meshcentral_msp_assignments: {
+        Row: {
+          assigned_at: string
+          id: string
+          is_active: boolean | null
+          mesh_group_id: string | null
+          mesh_group_name: string | null
+          msp_id: string
+          server_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          id?: string
+          is_active?: boolean | null
+          mesh_group_id?: string | null
+          mesh_group_name?: string | null
+          msp_id: string
+          server_id: string
+        }
+        Update: {
+          assigned_at?: string
+          id?: string
+          is_active?: boolean | null
+          mesh_group_id?: string | null
+          mesh_group_name?: string | null
+          msp_id?: string
+          server_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meshcentral_msp_assignments_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "meshcentral_servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meshcentral_servers: {
+        Row: {
+          admin_password_encrypted: string
+          admin_username: string
+          created_at: string
+          current_device_count: number | null
+          display_name: string
+          id: string
+          is_active: boolean | null
+          max_devices: number | null
+          region: string
+          server_url: string
+          updated_at: string
+        }
+        Insert: {
+          admin_password_encrypted: string
+          admin_username: string
+          created_at?: string
+          current_device_count?: number | null
+          display_name: string
+          id?: string
+          is_active?: boolean | null
+          max_devices?: number | null
+          region: string
+          server_url: string
+          updated_at?: string
+        }
+        Update: {
+          admin_password_encrypted?: string
+          admin_username?: string
+          created_at?: string
+          current_device_count?: number | null
+          display_name?: string
+          id?: string
+          is_active?: boolean | null
+          max_devices?: number | null
+          region?: string
+          server_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
