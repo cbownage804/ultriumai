@@ -878,7 +878,7 @@ public class RustDeskInstaller
             CopyDirectoryRecursive(dir, Path.Combine(destDir, Path.GetFileName(dir)));
     }
 
-
+    private async Task<(int ExitCode, string StdOut, string StdErr)> RunProcessAsync(
         string fileName,
         string arguments,
         string workingDirectory,
