@@ -12034,6 +12034,59 @@ export type Database = {
         }
         Relationships: []
       }
+      meshcentral_configs: {
+        Row: {
+          admin_password_encrypted: string
+          admin_username: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_verified_at: string | null
+          mesh_group_prefix: string | null
+          msp_id: string | null
+          server_url: string
+          updated_at: string
+          user_id: string
+          verification_status: string | null
+        }
+        Insert: {
+          admin_password_encrypted: string
+          admin_username: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_verified_at?: string | null
+          mesh_group_prefix?: string | null
+          msp_id?: string | null
+          server_url: string
+          updated_at?: string
+          user_id: string
+          verification_status?: string | null
+        }
+        Update: {
+          admin_password_encrypted?: string
+          admin_username?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_verified_at?: string | null
+          mesh_group_prefix?: string | null
+          msp_id?: string | null
+          server_url?: string
+          updated_at?: string
+          user_id?: string
+          verification_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meshcentral_configs_msp_id_fkey"
+            columns: ["msp_id"]
+            isOneToOne: false
+            referencedRelation: "msps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string

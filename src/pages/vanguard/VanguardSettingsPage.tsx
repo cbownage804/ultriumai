@@ -26,11 +26,12 @@ import {
   Building2,
   Globe,
   Mail,
-  Clock
+  Clock,
+  Monitor
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { WhiteLabelSettings } from '@/components/vanguard/settings/WhiteLabelSettings';
-
+import { MeshCentralSettings } from '@/components/vanguard/settings/MeshCentralSettings';
 export default function VanguardSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
@@ -96,6 +97,10 @@ export default function VanguardSettingsPage() {
           <TabsTrigger value="integrations" className="data-[state=active]:bg-cyan-500/20 text-white/80 data-[state=active]:text-white">
             <Zap className="h-4 w-4 mr-2" />
             Integrations
+          </TabsTrigger>
+          <TabsTrigger value="remote-access" className="data-[state=active]:bg-cyan-500/20 text-white/80 data-[state=active]:text-white">
+            <Monitor className="h-4 w-4 mr-2" />
+            Remote Access
           </TabsTrigger>
         </TabsList>
 
@@ -270,6 +275,11 @@ export default function VanguardSettingsPage() {
                 ))}
               </CardContent>
             </Card>
+          </motion.div>
+        </TabsContent>
+        <TabsContent value="remote-access" className="mt-6">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <MeshCentralSettings />
           </motion.div>
         </TabsContent>
       </Tabs>
