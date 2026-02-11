@@ -713,7 +713,8 @@ public class RustDeskInstaller
                 Console.WriteLine("[RustDesk] WARNING: EXE installed portably (not in Program Files). Cleaning up...");
                 await CleanupPortableInstall();
 
-                // Last resort: copy the downloaded EXE to Program Files manually and register service
+                // Last resort: copy the downloaded EXE to Program Files and manually register
+                // DO NOT use --silent-install here — it doesn't work under SYSTEM context
                 Console.WriteLine("[RustDesk] Attempting manual install to Program Files...");
                 var targetDir = @"C:\Program Files\RustDesk";
                 var targetExe = Path.Combine(targetDir, "rustdesk.exe");
@@ -723,13 +724,56 @@ public class RustDeskInstaller
                     File.Copy(exePath, targetExe, true);
                     Console.WriteLine($"[RustDesk] Copied EXE to {targetExe}");
 
-                    // Run --silent-install from the Program Files copy
-                    var (siExit, siOut, siErr) = await RunProcessAsync(targetExe, "--silent-install", targetDir, 120);
-                    Console.WriteLine($"[RustDesk] --silent-install from Program Files: exit={siExit}");
+                    // Step 1: Directly create the Windows service (skip --silent-install)
+                    var serviceBinPath = $"\"{targetExe}\" --service";
+                    Console.WriteLine($"[RustDesk] Creating service with binPath: {serviceBinPath}");
+                    
+                    var (createExit, createOut, createErr) = await RunProcessAsync(
+                        "sc.exe",
+                        $"create RustDesk binPath= \"{serviceBinPath}\" start= auto DisplayName= \"RustDesk Service\"",
+                        Environment.SystemDirectory, 30);
+                    Console.WriteLine($"[RustDesk] sc create: exit={createExit} out={createOut?.Trim()} err={createErr?.Trim()}");
+
+                    // Step 2: Set service description
+                    await RunProcessAsync("sc.exe",
+                        "description RustDesk \"RustDesk remote desktop service\"",
+                        Environment.SystemDirectory, 10);
+
+                    // Step 3: Start the service
+                    var (startExit, startOut, startErr) = await RunProcessAsync(
+                        "sc.exe", "start RustDesk", Environment.SystemDirectory, 30);
+                    Console.WriteLine($"[RustDesk] sc start: exit={startExit} out={startOut?.Trim()}");
                     await Task.Delay(5000);
 
-                    var serviceOk = await EnsureRustDeskServiceInstalledAsync();
-                    if (serviceOk)
+                    // Step 4: Add uninstall registry entry so Windows sees it as "installed"
+                    try
+                    {
+                        using var uninstallKey = Registry.LocalMachine.CreateSubKey(
+                            @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\RustDesk");
+                        if (uninstallKey != null)
+                        {
+                            uninstallKey.SetValue("DisplayName", "RustDesk");
+                            uninstallKey.SetValue("DisplayVersion", RUSTDESK_VERSION);
+                            uninstallKey.SetValue("Publisher", "Purslane Ltd.");
+                            uninstallKey.SetValue("InstallLocation", targetDir);
+                            uninstallKey.SetValue("DisplayIcon", targetExe);
+                            uninstallKey.SetValue("UninstallString", $"\"{targetExe}\" --uninstall");
+                            uninstallKey.SetValue("NoModify", 1, RegistryValueKind.DWord);
+                            uninstallKey.SetValue("NoRepair", 1, RegistryValueKind.DWord);
+                            Console.WriteLine("[RustDesk] Added uninstall registry entry");
+                        }
+                    }
+                    catch (Exception regEx)
+                    {
+                        Console.WriteLine($"[RustDesk] Registry entry warning: {regEx.Message}");
+                    }
+
+                    // Verify service is running
+                    var (scExit2, scOut2, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 10);
+                    var running = scExit2 == 0 && (scOut2?.Contains("RUNNING") ?? false);
+                    Console.WriteLine($"[RustDesk] Service running after manual install: {running}");
+
+                    if (running)
                     {
                         await ConfigureForVanguardAsync();
                         await VerifyUnattendedAccessConfigured();
