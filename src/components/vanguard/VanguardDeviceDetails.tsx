@@ -387,16 +387,25 @@ export function VanguardDeviceDetails() {
             </Card>
           </div>
 
-          {/* Console Section */}
+          {/* Console Section - lazy rendered to prevent command flooding */}
           <div ref={setSectionRef('console')} id="section-console">
             <SectionHeader icon={Terminal} title="Console" />
             <div className="mt-4">
-              <AgentConsole 
-                agentId={agent.id} 
-                deviceName={agent.name}
-                sendCommand={sendCommand}
-                currentMetrics={currentMetrics}
-              />
+              {activeSection === 'console' ? (
+                <AgentConsole 
+                  agentId={agent.id} 
+                  deviceName={agent.name}
+                  sendCommand={sendCommand}
+                  currentMetrics={currentMetrics}
+                />
+              ) : (
+                <Card>
+                  <CardContent className="flex items-center justify-center py-12 text-muted-foreground">
+                    <Terminal className="h-5 w-5 mr-2" />
+                    Click "Console" in the sidebar to load management tools
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
 
