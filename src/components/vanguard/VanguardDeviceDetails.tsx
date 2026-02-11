@@ -18,6 +18,7 @@ import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Line
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { getVanguardBasePath } from '@/utils/subdomain';
+import { launchProtocolUrl } from '@/utils/launchProtocolUrl';
 import { cn } from '@/lib/utils';
 
 import { AgentConsole } from './device/console/AgentConsole';
@@ -246,11 +247,7 @@ export function VanguardDeviceDetails() {
                 const rustdeskId = String(remoteAccess.rustdesk_id || '').replace(/\D/g, '');
                 const url = `rustdesk://${rustdeskId}`;
 
-                try {
-                  window.location.href = url;
-                } catch (e) {
-                  console.error('Failed to launch RustDesk:', e);
-                }
+                launchProtocolUrl(url);
 
                 // Fetch/copy unattended password in the background (no toast)
                 void (async () => {
