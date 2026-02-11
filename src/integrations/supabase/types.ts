@@ -27308,6 +27308,8 @@ export type Database = {
           last_heartbeat: string | null
           last_scan_at: string | null
           location: string | null
+          meshcentral_mesh_id: string | null
+          meshcentral_node_id: string | null
           ml_model_version: string | null
           name: string
           office_location_id: string | null
@@ -27343,6 +27345,8 @@ export type Database = {
           last_heartbeat?: string | null
           last_scan_at?: string | null
           location?: string | null
+          meshcentral_mesh_id?: string | null
+          meshcentral_node_id?: string | null
           ml_model_version?: string | null
           name: string
           office_location_id?: string | null
@@ -27378,6 +27382,8 @@ export type Database = {
           last_heartbeat?: string | null
           last_scan_at?: string | null
           location?: string | null
+          meshcentral_mesh_id?: string | null
+          meshcentral_node_id?: string | null
           ml_model_version?: string | null
           name?: string
           office_location_id?: string | null
