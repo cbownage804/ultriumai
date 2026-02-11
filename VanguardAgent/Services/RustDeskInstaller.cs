@@ -721,8 +721,30 @@ public class RustDeskInstaller
                 try
                 {
                     Directory.CreateDirectory(targetDir);
-                    File.Copy(exePath, targetExe, true);
-                    Console.WriteLine($"[RustDesk] Copied EXE to {targetExe}");
+                    
+                    // Copy ALL files from the source directory (DLLs, plugins, etc.)
+                    var sourceDir = Path.GetDirectoryName(exePath);
+                    if (sourceDir != null && Directory.Exists(sourceDir))
+                    {
+                        foreach (var file in Directory.GetFiles(sourceDir))
+                        {
+                            var destFile = Path.Combine(targetDir, Path.GetFileName(file));
+                            File.Copy(file, destFile, true);
+                        }
+                        // Also copy subdirectories (Flutter plugins, etc.)
+                        foreach (var dir in Directory.GetDirectories(sourceDir))
+                        {
+                            var destSubDir = Path.Combine(targetDir, Path.GetFileName(dir));
+                            CopyDirectoryRecursive(dir, destSubDir);
+                        }
+                        Console.WriteLine($"[RustDesk] Copied entire directory ({Directory.GetFiles(sourceDir).Length} files) to {targetDir}");
+                    }
+                    else
+                    {
+                        // Fallback: just copy the exe
+                        File.Copy(exePath, targetExe, true);
+                        Console.WriteLine($"[RustDesk] Copied EXE only to {targetExe}");
+                    }
 
                     // Step 1: Directly create the Windows service (skip --silent-install)
                     var serviceBinPath = $"\"{targetExe}\" --service";
@@ -847,7 +869,16 @@ public class RustDeskInstaller
         }
     }
 
-    private async Task<(int ExitCode, string StdOut, string StdErr)> RunProcessAsync(
+    private static void CopyDirectoryRecursive(string sourceDir, string destDir)
+    {
+        Directory.CreateDirectory(destDir);
+        foreach (var file in Directory.GetFiles(sourceDir))
+            File.Copy(file, Path.Combine(destDir, Path.GetFileName(file)), true);
+        foreach (var dir in Directory.GetDirectories(sourceDir))
+            CopyDirectoryRecursive(dir, Path.Combine(destDir, Path.GetFileName(dir)));
+    }
+
+
         string fileName,
         string arguments,
         string workingDirectory,
@@ -1368,6 +1399,7 @@ direct-access-port = ''
         Console.WriteLine($"[RustDesk] === Verification Result: {(allGood ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED")} ===");
         return allGood;
     }
+
 
 
     /// Only returns plain numeric IDs (6+ digits). Rejects encoded/base64 values.
