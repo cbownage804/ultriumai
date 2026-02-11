@@ -21,6 +21,7 @@ interface ModuleIntroBannerProps {
   features: string[];
   accentColor?: string; // e.g. 'teal', 'orange', 'blue', 'cyan', 'purple'
   docsUrl?: string;
+  docsLabel?: string; // custom label for the docs/download link
   dismissible?: boolean;
   storageKey?: string; // localStorage key to persist dismiss
 }
@@ -41,6 +42,7 @@ export function ModuleIntroBanner({
   features,
   accentColor = 'cyan',
   docsUrl,
+  docsLabel = 'View Documentation',
   dismissible = true,
   storageKey,
 }: ModuleIntroBannerProps) {
@@ -81,7 +83,7 @@ export function ModuleIntroBanner({
               <Button variant="link" size="sm" className={cn('mt-2 p-0 h-auto', styles.text)} asChild>
                 <a href={docsUrl} target="_blank" rel="noopener noreferrer">
                   <BookOpen className="h-3 w-3 mr-1" />
-                  View Documentation
+                  {docsLabel}
                 </a>
               </Button>
             )}
