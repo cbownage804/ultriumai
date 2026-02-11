@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { getVanguardBasePath } from '@/utils/subdomain';
 import { launchProtocolWithFallback } from '@/utils/launchProtocolUrl';
+import { openMeshCentralSession } from '@/config/vanguardMeshCentral';
 import { cn } from '@/lib/utils';
 import { ModuleIntroBanner } from '@/components/vanguard/shared/ModuleInstructions';
 
@@ -239,14 +240,66 @@ export function VanguardDeviceDetails() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {remoteAccess.rustdesk_id && (
+          {/* MeshCentral primary Remote In button */}
+          {(agent as any).meshcentral_node_id ? (
+            <Button
+              size="sm"
+              onClick={async () => {
+                const nodeId = (agent as any).meshcentral_node_id;
+                toast.info('Opening MeshCentral remote desktop...');
+                const success = await openMeshCentralSession(nodeId);
+                if (!success) {
+                  toast.error('MeshCentral not available', {
+                    description: 'Falling back to RustDesk if available.',
+                  });
+                  // Fallback to RustDesk
+                  if (remoteAccess.rustdesk_id) {
+                    const rustdeskId = String(remoteAccess.rustdesk_id || '').replace(/\D/g, '');
+                    const url = `rustdesk://${rustdeskId}`;
+                    try {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (session) {
+                        const response = await fetch(
+                          `${import.meta.env.VITE_SUPABASE_URL || 'https://nsyobmjpdpvesjwdphlh.supabase.co'}/functions/v1/vanguard-agent-api?action=get_rustdesk_password`,
+                          {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${session.access_token}`,
+                            },
+                            body: JSON.stringify({ agent_id: agent.id }),
+                          }
+                        );
+                        const data = await response.json();
+                        if (data?.password) {
+                          await navigator.clipboard.writeText(data.password);
+                          toast.success('Password copied — just paste when prompted', { duration: 5000 });
+                        }
+                      }
+                    } catch (err) {
+                      console.error('Failed to fetch/copy RustDesk password:', err);
+                    }
+                    launchProtocolWithFallback(url, () => {
+                      toast.warning("RustDesk didn't open", {
+                        description: 'Install RustDesk on this computer first.',
+                        action: { label: 'Download', onClick: () => window.open('https://rustdesk.com/download', '_blank') },
+                        duration: 10000,
+                      });
+                    });
+                  }
+                }
+              }}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+            >
+              <Monitor className="h-4 w-4" />
+              Remote In
+            </Button>
+          ) : remoteAccess.rustdesk_id ? (
             <Button
               size="sm"
               onClick={async () => {
                 const rustdeskId = String(remoteAccess.rustdesk_id || '').replace(/\D/g, '');
                 const url = `rustdesk://${rustdeskId}`;
-
-                // Fetch password FIRST, copy to clipboard, THEN launch protocol
                 try {
                   const { data: { session } } = await supabase.auth.getSession();
                   if (session) {
@@ -270,15 +323,10 @@ export function VanguardDeviceDetails() {
                 } catch (err) {
                   console.error('Failed to fetch/copy RustDesk password:', err);
                 }
-
-                // Now launch protocol handler
                 launchProtocolWithFallback(url, () => {
                   toast.warning("RustDesk didn't open", {
-                    description: 'You may need to install RustDesk on this computer first.',
-                    action: {
-                      label: 'Download',
-                      onClick: () => window.open('https://rustdesk.com/download', '_blank'),
-                    },
+                    description: 'Install RustDesk on this computer first.',
+                    action: { label: 'Download', onClick: () => window.open('https://rustdesk.com/download', '_blank') },
                     duration: 10000,
                   });
                 });
@@ -286,9 +334,9 @@ export function VanguardDeviceDetails() {
               className="bg-cyan-600 hover:bg-cyan-700 text-white gap-2"
             >
               <Monitor className="h-4 w-4" />
-              Remote In
+              Remote In (RustDesk)
             </Button>
-          )}
+          ) : null}
           <span className="text-sm text-slate-400 hidden md:block">
             {agent.ip_address || 'No IP'} • {agent.location || 'No location'}
           </span>
@@ -345,15 +393,18 @@ export function VanguardDeviceDetails() {
 
         {/* Scrollable Content */}
         <div ref={contentRef} className="flex-1 overflow-y-auto p-6 space-y-8">
-          <ModuleIntroBanner
-            title="RustDesk Required on Your Computer"
-            description="To use Remote In, RustDesk must be installed on the computer you're working from."
-            features={["Download from rustdesk.com"]}
-            docsUrl="https://rustdesk.com/download"
-            docsLabel="Download RustDesk"
-            storageKey="rustdesk-local-install-notice"
-            accentColor="orange"
-          />
+          {/* MeshCentral Setup Banner (replaces RustDesk banner) */}
+          {!(agent as any).meshcentral_node_id && (
+            <ModuleIntroBanner
+              title="MeshCentral Not Detected on This Device"
+              description="MeshCentral agent needs to be installed for zero-touch browser-based remote access. RustDesk is available as a backup."
+              features={["Browser-based — no client install needed", "Zero-touch unattended access"]}
+              docsUrl="https://meshcentral.com"
+              docsLabel="Learn about MeshCentral"
+              storageKey="meshcentral-setup-notice"
+              accentColor="green"
+            />
+          )}
 
           {/* Summary Section */}
           <div ref={setSectionRef('summary')} id="section-summary">
@@ -484,6 +535,7 @@ export function VanguardDeviceDetails() {
                 splashtopId={remoteAccess.splashtop_id}
                 anydeskId={remoteAccess.anydesk_id}
                 teamviewerId={remoteAccess.teamviewer_id}
+                meshcentralNodeId={(agent as any).meshcentral_node_id}
                 onUpdateIds={handleUpdateRemoteIds}
               />
             </div>
