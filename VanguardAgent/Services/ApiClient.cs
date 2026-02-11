@@ -141,7 +141,7 @@ public class ApiClient
         return null;
     }
 
-    public async Task<bool> SendHeartbeatAsync(HeartbeatPayload heartbeat, string? rustdeskId = null, string? rustdeskStatus = null)
+    public async Task<bool> SendHeartbeatAsync(HeartbeatPayload heartbeat, string? rustdeskId = null, string? rustdeskStatus = null, string? meshcentralNodeId = null, string? meshcentralMeshId = null)
     {
         try
         {
@@ -157,7 +157,9 @@ public class ApiClient
                 timestamp = heartbeat.Timestamp,
                 agent_version = "1.1.0",
                 rustdesk_id = rustdeskId,
-                rustdesk_status = rustdeskStatus
+                rustdesk_status = rustdeskStatus,
+                meshcentral_node_id = meshcentralNodeId,
+                meshcentral_mesh_id = meshcentralMeshId
             };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
             var response = await _http.PostAsync(Config.ApiEndpoint + "?action=heartbeat", content);
@@ -831,6 +833,13 @@ public class RegistrationResponse
     /// </summary>
     [JsonProperty("rustdesk_config")]
     public RustDeskDeployConfig? RustDeskConfig { get; set; }
+
+    /// <summary>
+    /// MeshCentral deployment configuration returned by server during registration.
+    /// When present, the agent should auto-install MeshAgent with these settings.
+    /// </summary>
+    [JsonProperty("meshcentral_config")]
+    public MeshCentralDeployConfig? MeshCentralConfig { get; set; }
 }
 
 /// <summary>
@@ -853,6 +862,25 @@ public class RustDeskDeployConfig
     [JsonProperty("version")]
     public string? Version { get; set; }
 }
+
+/// <summary>
+/// MeshCentral deployment configuration returned during agent registration
+/// </summary>
+public class MeshCentralDeployConfig
+{
+    [JsonProperty("deploy")]
+    public bool Deploy { get; set; }
+    
+    [JsonProperty("server_url")]
+    public string? ServerUrl { get; set; }
+    
+    [JsonProperty("mesh_url")]
+    public string? MeshUrl { get; set; }
+    
+    [JsonProperty("mesh_id")]
+    public string? MeshId { get; set; }
+}
+
 
 public class DeviceInfo
 {

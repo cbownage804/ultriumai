@@ -301,6 +301,15 @@ async function handleRegister(supabase: any, body: any) {
     }
   }
 
+  // Store MeshCentral node ID if provided during registration
+  if (body.meshcentral_node_id) {
+    agentData.meshcentral_node_id = body.meshcentral_node_id;
+    console.log(`[vanguard-agent-api] MeshCentral node ID set during registration: ${body.meshcentral_node_id}`);
+  }
+  if (body.meshcentral_mesh_id) {
+    agentData.meshcentral_mesh_id = body.meshcentral_mesh_id;
+  }
+
   // Include client_id if provided (for MSP client association)
   if (body.client_id) {
     agentData.client_id = body.client_id;
@@ -350,6 +359,62 @@ async function handleRegister(supabase: any, body: any) {
       version: '1.3.7',
     };
     console.log(`[vanguard-agent-api] RustDesk deploy config included for ${device_id}`);
+  }
+  
+  // Include MeshCentral deployment config
+  try {
+    // Look up MSP for this user
+    const { data: msp } = await supabase
+      .from('msps')
+      .select('id')
+      .eq('user_id', body.user_id)
+      .maybeSingle();
+    
+    if (msp) {
+      // Look up MeshCentral assignment for this MSP
+      const { data: assignment } = await supabase
+        .from('meshcentral_msp_assignments')
+        .select('mesh_group_id, meshcentral_servers(server_url)')
+        .eq('msp_id', msp.id)
+        .eq('is_active', true)
+        .maybeSingle();
+      
+      if (assignment?.meshcentral_servers) {
+        const serverUrl = (assignment.meshcentral_servers as any).server_url?.replace(/\/+$/, '');
+        // Convert HTTPS URL to WSS for MeshAgent
+        const wsUrl = serverUrl ? serverUrl.replace(/^https?:\/\//, 'wss://') : '';
+        response.meshcentral_config = {
+          deploy: true,
+          server_url: serverUrl,
+          mesh_url: wsUrl,
+          mesh_id: assignment.mesh_group_id,
+        };
+        console.log(`[vanguard-agent-api] MeshCentral deploy config included for ${device_id}: server=${serverUrl}, mesh=${assignment.mesh_group_id}`);
+      } else {
+        // Fallback: pick least-loaded server
+        const { data: fallbackServer } = await supabase
+          .from('meshcentral_servers')
+          .select('server_url')
+          .eq('is_active', true)
+          .order('current_device_count', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        
+        if (fallbackServer) {
+          const serverUrl = fallbackServer.server_url?.replace(/\/+$/, '');
+          const wsUrl = serverUrl ? serverUrl.replace(/^https?:\/\//, 'wss://') : '';
+          response.meshcentral_config = {
+            deploy: true,
+            server_url: serverUrl,
+            mesh_url: wsUrl,
+            mesh_id: '', // No specific group yet
+          };
+          console.log(`[vanguard-agent-api] MeshCentral fallback config for ${device_id}: ${serverUrl}`);
+        }
+      }
+    }
+  } catch (meshErr) {
+    console.warn(`[vanguard-agent-api] MeshCentral config lookup failed:`, meshErr);
   }
   
   return new Response(
@@ -460,6 +525,17 @@ async function handleHeartbeat(supabase: any, body: any, req?: Request) {
   if (rustdeskId) {
     updateData.rustdesk_id = rustdeskId;
     console.log(`[vanguard-agent-api] Heartbeat includes RustDesk ID: ${rustdeskId}`);
+  }
+  
+  // Update MeshCentral node ID if provided in heartbeat
+  const meshcentralNodeId = body.meshcentral_node_id;
+  if (meshcentralNodeId) {
+    updateData.meshcentral_node_id = meshcentralNodeId;
+    console.log(`[vanguard-agent-api] Heartbeat includes MeshCentral node ID: ${meshcentralNodeId}`);
+  }
+  const meshcentralMeshId = body.meshcentral_mesh_id;
+  if (meshcentralMeshId) {
+    updateData.meshcentral_mesh_id = meshcentralMeshId;
   }
   
   // Log RustDesk status for debugging
