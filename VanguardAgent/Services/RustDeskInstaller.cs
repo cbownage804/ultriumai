@@ -6,6 +6,7 @@
 
 using System.Diagnostics;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using Microsoft.Win32;
 
@@ -13,6 +14,13 @@ namespace VanguardAgent.Services;
 
 public class RustDeskInstaller
 {
+    // Suppress system error dialogs (missing DLL popups) when launching processes
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern uint SetErrorMode(uint uMode);
+    private const uint SEM_FAILCRITICALERRORS = 0x0001;
+    private const uint SEM_NOGPFAULTERRORBOX = 0x0002;
+    private const uint SEM_NOOPENFILEERRORBOX = 0x8000;
+
     private readonly ConfigService _configService;
     private readonly HttpClient _httpClient;
     
@@ -706,23 +714,34 @@ public class RustDeskInstaller
             }
             else if (IsRustDeskInstalled())
             {
-                // EXE installed portably (likely in SYSTEM profile) — clean up and retry MSI only
-                Console.WriteLine("[RustDesk] WARNING: EXE installed portably (not in Program Files). Cleaning up...");
-                await CleanupPortableInstall();
-
-                // Last resort: copy the downloaded EXE to Program Files and manually register
-                // DO NOT use --silent-install here — it doesn't work under SYSTEM context
-                Console.WriteLine("[RustDesk] Attempting manual install to Program Files...");
+                // EXE installed portably (likely in SYSTEM profile) — find where it actually extracted to
+                var portableExePath = FindRustDeskExePath();
+                Console.WriteLine($"[RustDesk] WARNING: EXE installed portably at: {portableExePath}. Relocating to Program Files...");
+                
+                // Get the directory where RustDesk actually extracted (with all DLLs)
+                var portableDir = portableExePath != null ? Path.GetDirectoryName(portableExePath) : null;
+                
+                // Last resort: copy the EXTRACTED files (not the installer) to Program Files
+                Console.WriteLine("[RustDesk] Relocating portable install to Program Files...");
                 var targetDir = @"C:\Program Files\RustDesk";
                 var targetExe = Path.Combine(targetDir, "rustdesk.exe");
                 try
                 {
+                    // Stop any running instances first
+                    await RunProcessAsync("taskkill.exe", "/F /IM rustdesk.exe", Environment.SystemDirectory, 15);
+                    await Task.Delay(2000);
+                    
                     Directory.CreateDirectory(targetDir);
                     
-                    // Copy ALL files from the source directory (DLLs, plugins, etc.)
-                    var sourceDir = Path.GetDirectoryName(exePath);
-                    if (sourceDir != null && Directory.Exists(sourceDir))
+                    // Copy from the PORTABLE install location (has all DLLs/plugins)
+                    // NOT from the download temp directory (which only has the installer)
+                    var sourceDir = portableDir;
+                    if (sourceDir != null && Directory.Exists(sourceDir) && File.Exists(Path.Combine(sourceDir, "rustdesk.exe")))
                     {
+                        // Verify the source has DLL files (not just the installer EXE)
+                        var dllCount = Directory.GetFiles(sourceDir, "*.dll").Length;
+                        Console.WriteLine($"[RustDesk] Source dir {sourceDir} has {dllCount} DLLs and rustdesk.exe");
+                        
                         foreach (var file in Directory.GetFiles(sourceDir))
                         {
                             var destFile = Path.Combine(targetDir, Path.GetFileName(file));
@@ -734,13 +753,18 @@ public class RustDeskInstaller
                             var destSubDir = Path.Combine(targetDir, Path.GetFileName(dir));
                             CopyDirectoryRecursive(dir, destSubDir);
                         }
-                        Console.WriteLine($"[RustDesk] Copied entire directory ({Directory.GetFiles(sourceDir).Length} files) to {targetDir}");
+                        Console.WriteLine($"[RustDesk] Relocated {Directory.GetFiles(sourceDir).Length} files + subdirs to {targetDir}");
                     }
                     else
                     {
-                        // Fallback: just copy the exe
-                        File.Copy(exePath, targetExe, true);
-                        Console.WriteLine($"[RustDesk] Copied EXE only to {targetExe}");
+                        Console.WriteLine("[RustDesk] Portable source dir missing or incomplete, cannot relocate");
+                        return false;
+                    }
+                    
+                    // Now clean up the old portable location
+                    if (portableDir != null && Directory.Exists(portableDir) && !portableDir.Contains("Program Files"))
+                    {
+                        try { Directory.Delete(portableDir, true); } catch { }
                     }
 
                     // Step 1: Directly create the Windows service (skip --silent-install)
@@ -892,10 +916,22 @@ public class RustDeskInstaller
                 WorkingDirectory = workingDirectory,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
+                // Suppress "missing DLL" system error dialogs
+                ErrorDialog = false,
             }
         };
 
-        process.Start();
+        // Suppress system error dialogs for this process (missing DLL, app crash, etc.)
+        var oldMode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
+        
+        try
+        {
+            process.Start();
+        }
+        finally
+        {
+            SetErrorMode(oldMode); // Restore for the parent process
+        }
 
         var stdoutTask = process.StandardOutput.ReadToEndAsync();
         var stderrTask = process.StandardError.ReadToEndAsync();
