@@ -352,11 +352,15 @@ public class RustDeskInstaller
             if (exit == 0)
             {
                 await Task.Delay(5000);
-                if (IsRustDeskInstalled())
+            if (IsRustDeskInstalled())
                 {
                     Console.WriteLine("[RustDesk] winget installation successful");
-                    await EnsureRustDeskServiceInstalledAsync();
-                    await ConfigureForVanguardAsync();
+                    var serviceOk = await EnsureRustDeskServiceInstalledAsync();
+                    if (serviceOk)
+                    {
+                        await ConfigureForVanguardAsync();
+                        await VerifyUnattendedAccessConfigured();
+                    }
                     return true;
                 }
             }
@@ -399,11 +403,15 @@ public class RustDeskInstaller
             if (exit == 0)
             {
                 await Task.Delay(5000);
-                if (IsRustDeskInstalled())
+            if (IsRustDeskInstalled())
                 {
                     Console.WriteLine("[RustDesk] Chocolatey installation successful");
-                    await EnsureRustDeskServiceInstalledAsync();
-                    await ConfigureForVanguardAsync();
+                    var serviceOk = await EnsureRustDeskServiceInstalledAsync();
+                    if (serviceOk)
+                    {
+                        await ConfigureForVanguardAsync();
+                        await VerifyUnattendedAccessConfigured();
+                    }
                     return true;
                 }
             }
@@ -476,8 +484,12 @@ public class RustDeskInstaller
 
                     if (IsRustDeskInstalled())
                     {
-                        await EnsureRustDeskServiceInstalledAsync();
-                        await ConfigureForVanguardAsync();
+                        var serviceOk = await EnsureRustDeskServiceInstalledAsync();
+                        if (serviceOk)
+                        {
+                            await ConfigureForVanguardAsync();
+                            await VerifyUnattendedAccessConfigured();
+                        }
                         return true;
                     }
                     else
@@ -555,8 +567,12 @@ public class RustDeskInstaller
                 return false;
             }
 
-            await EnsureRustDeskServiceInstalledAsync();
-            await ConfigureForVanguardAsync();
+            var serviceOk = await EnsureRustDeskServiceInstalledAsync();
+            if (serviceOk)
+            {
+                await ConfigureForVanguardAsync();
+                await VerifyUnattendedAccessConfigured();
+            }
             return true;
         }
         catch (Exception ex)
@@ -659,7 +675,12 @@ public class RustDeskInstaller
         return (process.HasExited ? process.ExitCode : -1, stdout, stderr);
     }
 
-    private async Task EnsureRustDeskServiceInstalledAsync()
+    /// <summary>
+    /// Ensure RustDesk is installed as a Windows service and running.
+    /// Returns true if the service is confirmed running.
+    /// Includes a 60-second polling loop and multiple fallback strategies.
+    /// </summary>
+    private async Task<bool> EnsureRustDeskServiceInstalledAsync()
     {
         try
         {
@@ -667,12 +688,13 @@ public class RustDeskInstaller
             if (string.IsNullOrEmpty(installedExe))
             {
                 Console.WriteLine("[RustDesk] Cannot install service: rustdesk.exe not found");
-                return;
+                return false;
             }
 
+            Console.WriteLine($"[RustDesk] Using installed exe for service setup: {installedExe}");
             var dir = Path.GetDirectoryName(installedExe) ?? Environment.CurrentDirectory;
 
-            // Step 1: Check if service already exists
+            // Step 1: Check if service already exists and is running
             var (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 10);
             Console.WriteLine($"[RustDesk] sc query RustDesk exit={scExit}, output={scOut?.Trim()}");
 
@@ -682,56 +704,86 @@ public class RustDeskInstaller
             if (serviceRunning)
             {
                 Console.WriteLine("[RustDesk] Service already running");
-                return;
+                return true;
             }
 
-            // Step 2: Try --install-service (RustDesk's built-in method)
-            Console.WriteLine("[RustDesk] Installing RustDesk service...");
-            var (exit, stdout, stderr) = await RunProcessAsync(
-                fileName: installedExe,
-                arguments: "--install-service",
-                workingDirectory: dir,
-                timeoutSeconds: 120
-            );
-            Console.WriteLine($"[RustDesk] --install-service exit={exit} stdout={stdout?.Trim()} stderr={stderr?.Trim()}");
-
-            // Wait for service to register
-            await Task.Delay(3000);
-
-            // Step 3: Verify service exists now
-            (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 10);
-            serviceExists = scExit == 0 && scOut.Contains("RustDesk");
-
+            // Step 2: Try --silent-install first (registers service + starts it)
             if (!serviceExists)
             {
-                // Fallback: create the service manually via sc.exe
-                Console.WriteLine("[RustDesk] Service not found after --install-service, creating manually via sc.exe...");
+                Console.WriteLine("[RustDesk] Running --silent-install to register service...");
+                var (siExit, siOut, siErr) = await RunProcessAsync(
+                    installedExe, "--silent-install", dir, 120);
+                Console.WriteLine($"[RustDesk] --silent-install exit={siExit} stdout={siOut?.Trim()} stderr={siErr?.Trim()}");
+
+                // Poll for up to 60 seconds for service to appear
+                Console.WriteLine("[RustDesk] Polling for service registration (up to 60s)...");
+                for (int i = 0; i < 12; i++)
+                {
+                    await Task.Delay(5000);
+                    (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 10);
+                    serviceExists = scExit == 0 && scOut.Contains("RustDesk");
+                    serviceRunning = serviceExists && scOut.Contains("RUNNING");
+                    Console.WriteLine($"[RustDesk] Poll {i + 1}/12: exists={serviceExists}, running={serviceRunning}");
+                    if (serviceExists) break;
+                }
+            }
+
+            // Step 3: If --silent-install didn't create the service, try --install-service
+            if (!serviceExists)
+            {
+                Console.WriteLine("[RustDesk] --silent-install did not register service, trying --install-service...");
+                var (exit, stdout, stderr) = await RunProcessAsync(
+                    installedExe, "--install-service", dir, 120);
+                Console.WriteLine($"[RustDesk] --install-service exit={exit} stdout={stdout?.Trim()} stderr={stderr?.Trim()}");
+                
+                await Task.Delay(5000);
+                (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 10);
+                serviceExists = scExit == 0 && scOut.Contains("RustDesk");
+            }
+
+            // Step 4: Final fallback - manually create service via sc.exe
+            if (!serviceExists)
+            {
+                Console.WriteLine("[RustDesk] Service still not found, creating manually via sc.exe...");
                 var binPath = $"\"{installedExe}\" --service";
                 var (createExit, createOut, createErr) = await RunProcessAsync(
                     "sc.exe",
                     $"create RustDesk binPath= {binPath} start= auto DisplayName= \"RustDesk Service\"",
-                    Environment.SystemDirectory,
-                    30
-                );
+                    Environment.SystemDirectory, 30);
                 Console.WriteLine($"[RustDesk] sc create exit={createExit} out={createOut?.Trim()} err={createErr?.Trim()}");
+                
+                if (createExit == 0)
+                {
+                    serviceExists = true;
+                }
             }
 
-            // Step 4: Start the service
-            Console.WriteLine("[RustDesk] Starting RustDesk service...");
-            var (startExit, startOut, startErr) = await RunProcessAsync(
-                "sc.exe", "start RustDesk", Environment.SystemDirectory, 30);
-            Console.WriteLine($"[RustDesk] sc start exit={startExit} out={startOut?.Trim()} err={startErr?.Trim()}");
+            // Step 5: Start the service if it exists but isn't running
+            if (serviceExists)
+            {
+                (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 10);
+                serviceRunning = scExit == 0 && scOut.Contains("RUNNING");
 
-            // Step 5: Verify it's actually running
-            await Task.Delay(5000);
-            (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 10);
-            serviceRunning = scExit == 0 && scOut.Contains("RUNNING");
-            Console.WriteLine($"[RustDesk] Service running after start: {serviceRunning}");
+                if (!serviceRunning)
+                {
+                    Console.WriteLine("[RustDesk] Starting RustDesk service...");
+                    var (startExit, startOut, startErr) = await RunProcessAsync(
+                        "sc.exe", "start RustDesk", Environment.SystemDirectory, 30);
+                    Console.WriteLine($"[RustDesk] sc start exit={startExit} out={startOut?.Trim()} err={startErr?.Trim()}");
+
+                    // Wait and verify it's running
+                    await Task.Delay(5000);
+                    (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 10);
+                    serviceRunning = scExit == 0 && scOut.Contains("RUNNING");
+                }
+            }
+
+            Console.WriteLine($"[RustDesk] Service setup result: exists={serviceExists}, running={serviceRunning}");
 
             if (!serviceRunning)
             {
-                // Last resort: just run rustdesk.exe directly to generate ID
-                Console.WriteLine("[RustDesk] Service failed to start, launching rustdesk.exe directly to generate ID...");
+                // Last resort: launch rustdesk.exe directly to at least generate an ID
+                Console.WriteLine("[RustDesk] WARNING: Service failed to start. Launching rustdesk.exe directly as fallback...");
                 _ = Task.Run(async () =>
                 {
                     try
@@ -742,12 +794,16 @@ public class RustDeskInstaller
                     }
                     catch { }
                 });
-                await Task.Delay(10000); // Give it time to initialize and generate ID
+                await Task.Delay(10000);
+                return false;
             }
+
+            return true;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[RustDesk] Service install error: {ex.Message}\n{ex.StackTrace}");
+            return false;
         }
     }
     /// <summary>
@@ -1011,7 +1067,91 @@ direct-access-port = ''
     }
 
     /// <summary>
-    /// Get the current RustDesk ID - exhaustive multi-strategy retrieval.
+    /// Verify that unattended access is fully configured: service running, approve-mode set, password applied.
+    /// Logs all findings for remote diagnostics.
+    /// </summary>
+    private async Task<bool> VerifyUnattendedAccessConfigured()
+    {
+        Console.WriteLine("[RustDesk] === Post-Install Verification ===");
+        var allGood = true;
+
+        // 1. Verify service exists and is running
+        var (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 10);
+        var serviceRunning = scExit == 0 && scOut.Contains("RUNNING");
+        Console.WriteLine($"[RustDesk] [Verify] Service running: {serviceRunning}");
+        if (!serviceRunning)
+        {
+            Console.WriteLine($"[RustDesk] [Verify] Service state: {scOut?.Trim()}");
+            allGood = false;
+        }
+
+        // 2. Verify RustDesk2.toml has approve-mode = 'password' in the service profile paths
+        var serviceConfigPaths = new[]
+        {
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk2.toml",
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Local\RustDesk\config\RustDesk2.toml",
+            @"C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk\config\RustDesk2.toml",
+            @"C:\Windows\System32\config\systemprofile\AppData\Local\RustDesk\config\RustDesk2.toml",
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RustDesk", "config", "RustDesk2.toml"),
+            @"C:\Program Files\RustDesk\config\RustDesk2.toml",
+        };
+
+        bool foundApproveMode = false;
+        bool foundVerificationMethod = false;
+        foreach (var configPath in serviceConfigPaths)
+        {
+            try
+            {
+                if (File.Exists(configPath))
+                {
+                    var content = File.ReadAllText(configPath);
+                    if (content.Contains("approve-mode") && content.Contains("password"))
+                    {
+                        foundApproveMode = true;
+                        Console.WriteLine($"[RustDesk] [Verify] approve-mode=password FOUND in {configPath}");
+                    }
+                    if (content.Contains("verification-method") && content.Contains("use-permanent-password"))
+                    {
+                        foundVerificationMethod = true;
+                        Console.WriteLine($"[RustDesk] [Verify] verification-method=use-permanent-password FOUND in {configPath}");
+                    }
+                }
+            }
+            catch { }
+        }
+
+        if (!foundApproveMode)
+        {
+            Console.WriteLine("[RustDesk] [Verify] WARNING: approve-mode='password' not found in any service profile config");
+            allGood = false;
+        }
+        if (!foundVerificationMethod)
+        {
+            Console.WriteLine("[RustDesk] [Verify] WARNING: verification-method='use-permanent-password' not found in any service profile config");
+            allGood = false;
+        }
+
+        // 3. Verify password is cached locally
+        var passwordCached = !string.IsNullOrEmpty(_unattendedPassword);
+        Console.WriteLine($"[RustDesk] [Verify] Unattended password cached: {passwordCached}");
+        if (!passwordCached)
+        {
+            allGood = false;
+        }
+
+        // 4. Get the RustDesk ID to confirm end-to-end
+        var rustDeskId = GetRustDeskId();
+        Console.WriteLine($"[RustDesk] [Verify] RustDesk ID: {rustDeskId ?? "NOT FOUND"}");
+        if (string.IsNullOrEmpty(rustDeskId))
+        {
+            allGood = false;
+        }
+
+        Console.WriteLine($"[RustDesk] === Verification Result: {(allGood ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED")} ===");
+        return allGood;
+    }
+
+
     /// Only returns plain numeric IDs (6+ digits). Rejects encoded/base64 values.
     /// </summary>
     public string? GetRustDeskId()
@@ -1384,13 +1524,14 @@ direct-access-port = ''
             Console.WriteLine("[RustDesk] Already installed");
             
             // Always ensure service is running
-            await EnsureRustDeskServiceInstalledAsync();
+            var serviceOk = await EnsureRustDeskServiceInstalledAsync();
             
             // Ensure it's configured for Vanguard relay (if relay is set up)
-            if (!IsConfiguredForVanguard() && _relayServers.Count > 0)
+            if (serviceOk && !IsConfiguredForVanguard() && _relayServers.Count > 0)
             {
                 Console.WriteLine("[RustDesk] Not configured for Vanguard, applying configuration...");
                 await ConfigureForVanguardAsync();
+                await VerifyUnattendedAccessConfigured();
             }
         }
 
