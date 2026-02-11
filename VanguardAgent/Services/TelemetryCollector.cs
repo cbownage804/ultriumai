@@ -196,6 +196,7 @@ public class TelemetryCollector
             {
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RustDesk", "config", "RustDesk.toml"),
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RustDesk", "config", "RustDesk.toml"),
+                @"C:\Program Files (x86)\RustDesk\RustDesk.toml",
                 @"C:\Program Files\RustDesk\RustDesk.toml",
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "rustdesk", "RustDesk.toml")
             };

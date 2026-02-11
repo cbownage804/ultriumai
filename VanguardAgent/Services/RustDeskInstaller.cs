@@ -94,8 +94,8 @@ public class RustDeskInstaller
     /// </summary>
     private static readonly string[] ProperInstallPaths = new[]
     {
-        @"C:\Program Files\RustDesk\rustdesk.exe",
         @"C:\Program Files (x86)\RustDesk\rustdesk.exe",
+        @"C:\Program Files\RustDesk\rustdesk.exe",
     };
 
     /// <summary>
@@ -714,8 +714,8 @@ public class RustDeskInstaller
                 await CleanupPortableInstall();
 
                 // Last resort: copy the downloaded EXE to Program Files manually and register service
-                Console.WriteLine("[RustDesk] Attempting manual install to Program Files...");
-                var targetDir = @"C:\Program Files\RustDesk";
+                Console.WriteLine("[RustDesk] Attempting manual install to Program Files (x86)...");
+                var targetDir = @"C:\Program Files (x86)\RustDesk";
                 var targetExe = Path.Combine(targetDir, "rustdesk.exe");
                 try
                 {
@@ -1035,6 +1035,7 @@ public class RustDeskInstaller
                 // User AppData - for per-user installs
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RustDesk", "config"),
                 // Program Files install location
+                @"C:\Program Files (x86)\RustDesk\config",
                 @"C:\Program Files\RustDesk\config",
                 // Service profile paths (RustDesk service runs as LocalService or SYSTEM)
                 @"C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config",
@@ -1265,6 +1266,7 @@ direct-access-port = ''
             @"C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk\config\RustDesk2.toml",
             @"C:\Windows\System32\config\systemprofile\AppData\Local\RustDesk\config\RustDesk2.toml",
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RustDesk", "config", "RustDesk2.toml"),
+            @"C:\Program Files (x86)\RustDesk\config\RustDesk2.toml",
             @"C:\Program Files\RustDesk\config\RustDesk2.toml",
         };
 
@@ -1356,6 +1358,8 @@ direct-access-port = ''
             @"C:\ProgramData\RustDesk\config\RustDesk2.toml",
             
             // Program Files install dir
+            @"C:\Program Files (x86)\RustDesk\RustDesk.toml",
+            @"C:\Program Files (x86)\RustDesk\RustDesk2.toml",
             @"C:\Program Files\RustDesk\RustDesk.toml",
             @"C:\Program Files\RustDesk\RustDesk2.toml",
             
@@ -1544,6 +1548,7 @@ direct-access-port = ''
         var searchDirs = new[]
         {
             @"C:\ProgramData\RustDesk",
+            @"C:\Program Files (x86)\RustDesk",
             @"C:\Program Files\RustDesk",
             @"C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk",
             @"C:\Windows\ServiceProfiles\LocalService\AppData\Local\RustDesk",
@@ -1737,6 +1742,7 @@ direct-access-port = ''
             // List config directories to see what exists
             var configDirs = new[] {
                 @"C:\ProgramData\RustDesk\config",
+                @"C:\Program Files (x86)\RustDesk",
                 @"C:\Program Files\RustDesk",
                 @"C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config",
             };
