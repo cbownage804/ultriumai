@@ -240,9 +240,35 @@ export function VanguardDeviceDetails() {
           {remoteAccess.rustdesk_id && (
             <Button
               size="sm"
-              onClick={() => {
+              onClick={async () => {
+                // Fetch and copy unattended password before launching
+                try {
+                  const { data: { session } } = await supabase.auth.getSession();
+                  if (session) {
+                    const response = await fetch(
+                      `${import.meta.env.VITE_SUPABASE_URL || 'https://nsyobmjpdpvesjwdphlh.supabase.co'}/functions/v1/vanguard-agent-api?action=get_rustdesk_password`,
+                      {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${session.access_token}`,
+                        },
+                        body: JSON.stringify({ agent_id: agent.id }),
+                      }
+                    );
+                    const data = await response.json();
+                    if (data.password) {
+                      await navigator.clipboard.writeText(data.password);
+                      toast.success("Password copied to clipboard — paste when prompted", {
+                        description: `Connecting to ${agent.name}...`,
+                        duration: 5000,
+                      });
+                    }
+                  }
+                } catch (err) {
+                  console.error('Failed to fetch RustDesk password:', err);
+                }
                 window.open(`rustdesk://${remoteAccess.rustdesk_id}`, "_blank");
-                toast.success(`Opening RustDesk...`, { description: `Connecting to ${agent.name}` });
               }}
               className="bg-cyan-600 hover:bg-cyan-700 text-white gap-2"
             >
