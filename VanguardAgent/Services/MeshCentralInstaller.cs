@@ -51,6 +51,16 @@ public class MeshCentralInstaller
     public string? GetNodeId() => _nodeId;
 
     /// <summary>
+    /// Pre-load MeshCentral server config from registration response
+    /// </summary>
+    public void SetServerConfig(string serverUrl, string meshId)
+    {
+        _meshServerUrl = serverUrl;
+        _meshId = meshId;
+        Console.WriteLine($"[MeshCentral] Server config pre-loaded: server={serverUrl}, meshId={meshId}");
+    }
+
+    /// <summary>
     /// Get the MeshCentral mesh/group ID
     /// </summary>
     public string? GetMeshId() => _meshId;

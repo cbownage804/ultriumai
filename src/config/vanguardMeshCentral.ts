@@ -12,14 +12,12 @@ const SUPABASE_URL = "https://nsyobmjpdpvesjwdphlh.supabase.co";
  * This is a lightweight check — the edge function will return 503 if not configured.
  */
 export function isMeshCentralConfigured(): boolean {
-  // MeshCentral config lives in edge function secrets.
-  // We always return true here and let the edge function handle the check.
   return true;
 }
 
 /**
  * Request a one-time MeshCentral remote desktop URL from the edge function.
- * Opens the remote desktop in a new browser tab — no client software needed.
+ * Automatically resolves the user's MSP to find the correct server.
  */
 export async function getMeshCentralDesktopUrl(
   nodeId: string
@@ -32,6 +30,19 @@ export async function getMeshCentralDesktopUrl(
     return { url: "", error: "Not authenticated" };
   }
 
+  // Look up MSP for the current user to route to the correct server
+  let mspId: string | undefined;
+  try {
+    const { data: msp } = await supabase
+      .from("msps")
+      .select("id")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+    mspId = msp?.id;
+  } catch (err) {
+    console.warn("Failed to look up MSP:", err);
+  }
+
   const response = await fetch(
     `${SUPABASE_URL}/functions/v1/vanguard-meshcentral-auth`,
     {
@@ -40,7 +51,7 @@ export async function getMeshCentralDesktopUrl(
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify({ node_id: nodeId }),
+      body: JSON.stringify({ node_id: nodeId, msp_id: mspId }),
     }
   );
 

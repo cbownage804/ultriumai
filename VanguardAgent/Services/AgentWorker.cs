@@ -16,6 +16,7 @@ public class AgentWorker : BackgroundService
     private readonly TelemetryCollector _telemetry;
     private readonly CommandExecutor _commandExecutor;
     private readonly RustDeskInstaller _rustDeskInstaller;
+    private readonly MeshCentralInstaller _meshCentralInstaller;
 
     private DateTime _lastHeartbeat = DateTime.MinValue;
     private DateTime _lastTelemetry = DateTime.MinValue;
@@ -26,7 +27,9 @@ public class AgentWorker : BackgroundService
     private bool _isRegistered = false;
     #pragma warning restore CS0414
     private bool _rustDeskSetupComplete = false;
+    private bool _meshCentralSetupComplete = false;
     private int _rustDeskSetupRunning = 0;
+    private int _meshCentralSetupRunning = 0;
 
     // Security telemetry interval (5 minutes by default)
     private const int SecurityTelemetryIntervalSeconds = 300;
@@ -47,7 +50,7 @@ public class AgentWorker : BackgroundService
         _telemetry = telemetry;
         _commandExecutor = commandExecutor;
         _rustDeskInstaller = new RustDeskInstaller(configService);
-    }
+        _meshCentralInstaller = new MeshCentralInstaller(configService);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -66,6 +69,19 @@ public class AgentWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "RustDesk setup failed with exception");
+            }
+        }, stoppingToken);
+
+        // Setup MeshCentral for primary remote access (non-blocking)
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await EnsureMeshCentralAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MeshCentral setup failed with exception");
             }
         }, stoppingToken);
 
@@ -123,6 +139,22 @@ public class AgentWorker : BackgroundService
                     }, stoppingToken);
                 }
 
+                // MeshCentral auto-retry every 60 seconds until successful
+                if (!_meshCentralSetupComplete && (now - _lastRustDeskRetry).TotalSeconds >= RustDeskRetryIntervalSeconds)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await EnsureMeshCentralAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "MeshCentral retry failed, will retry");
+                        }
+                    }, stoppingToken);
+                }
+
                 // Sleep for a bit before next loop
                 await Task.Delay(5000, stoppingToken);
             }
@@ -172,6 +204,17 @@ public class AgentWorker : BackgroundService
                 _rustDeskInstaller.SetRelayConfig(
                     response.RustDeskConfig.RelayServer, 
                     response.RustDeskConfig.PublicKey ?? "");
+            }
+
+            // If server returned MeshCentral config, pre-load it into the installer
+            if (response.MeshCentralConfig != null && response.MeshCentralConfig.Deploy &&
+                !string.IsNullOrEmpty(response.MeshCentralConfig.ServerUrl))
+            {
+                _logger.LogInformation("Server provided MeshCentral config during registration: {Server}", 
+                    response.MeshCentralConfig.ServerUrl);
+                _meshCentralInstaller.SetServerConfig(
+                    response.MeshCentralConfig.ServerUrl,
+                    response.MeshCentralConfig.MeshId ?? "");
             }
         }
         else
@@ -262,7 +305,68 @@ public class AgentWorker : BackgroundService
         }
     }
 
-    private async Task SendHeartbeatAsync()
+    /// <summary>
+    /// Ensure MeshCentral MeshAgent is installed and configured for primary remote access
+    /// </summary>
+    private async Task EnsureMeshCentralAsync()
+    {
+        if (_meshCentralSetupComplete) return;
+
+        if (Interlocked.Exchange(ref _meshCentralSetupRunning, 1) == 1)
+        {
+            _logger.LogDebug("MeshCentral setup already running, skipping this tick");
+            return;
+        }
+
+        try
+        {
+            _logger.LogInformation("Checking MeshCentral MeshAgent installation...");
+
+            var apiBaseUrl = _configService.Config.ApiEndpoint?.Replace("/vanguard-agent-api", "") ?? "";
+
+            var success = await _meshCentralInstaller.EnsureInstalledAndConfiguredAsync(apiBaseUrl);
+
+            if (success)
+            {
+                var nodeId = _meshCentralInstaller.GetNodeId();
+                _logger.LogInformation("MeshCentral setup complete. Node ID: {NodeId}", nodeId ?? "pending");
+
+                if (!string.IsNullOrEmpty(nodeId))
+                {
+                    _meshCentralSetupComplete = true;
+                    _logger.LogInformation("MeshCentral node ID will be reported in next heartbeat");
+                }
+                else
+                {
+                    // Schedule a delayed retry to read the node ID
+                    _ = Task.Run(async () =>
+                    {
+                        await Task.Delay(30000);
+                        await _meshCentralInstaller.ReadNodeIdFromAgent();
+                        var delayedNodeId = _meshCentralInstaller.GetNodeId();
+                        if (!string.IsNullOrEmpty(delayedNodeId))
+                        {
+                            _logger.LogInformation("MeshCentral node ID obtained after delay: {NodeId}", delayedNodeId);
+                            _meshCentralSetupComplete = true;
+                        }
+                    });
+                }
+            }
+            else
+            {
+                _logger.LogWarning("MeshCentral setup failed or not configured");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting up MeshCentral");
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _meshCentralSetupRunning, 0);
+        }
+    }
+
     {
         try
         {
@@ -293,12 +397,16 @@ public class AgentWorker : BackgroundService
                 rustdeskStatus = "installing";
             }
             
-            var success = await _api.SendHeartbeatAsync(heartbeat, rustdeskId, rustdeskStatus);
+            // Include MeshCentral node ID in heartbeat
+            var meshcentralNodeId = _meshCentralInstaller.GetNodeId();
+            var meshcentralMeshId = _meshCentralInstaller.GetMeshId();
+            
+            var success = await _api.SendHeartbeatAsync(heartbeat, rustdeskId, rustdeskStatus, meshcentralNodeId, meshcentralMeshId);
 
             if (success)
             {
-                _logger.LogDebug("Heartbeat sent: CPU={Cpu}%, RAM={Ram}%, RustDesk={Status}/{Id}", 
-                    heartbeat.CpuPercent, heartbeat.MemoryPercent, rustdeskStatus, rustdeskId ?? "none");
+                _logger.LogDebug("Heartbeat sent: CPU={Cpu}%, RAM={Ram}%, RustDesk={Status}/{Id}, MeshCentral={NodeId}", 
+                    heartbeat.CpuPercent, heartbeat.MemoryPercent, rustdeskStatus, rustdeskId ?? "none", meshcentralNodeId ?? "none");
             }
             else
             {
