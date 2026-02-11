@@ -1097,55 +1097,66 @@ public class RustDeskInstaller
             Console.WriteLine($"[RustDesk] Configuring for Vanguard relay: {primaryRelay.Server}" + 
                 (_failoverEnabled ? $" (failover to {_relayServers[1].Server})" : ""));
             
+            // Step 1: Stop the service FIRST so config files aren't regenerated during write
+            Console.WriteLine("[RustDesk] Stopping service before config write...");
+            await RunProcessAsync("sc.exe", "stop RustDesk", Environment.SystemDirectory, 15);
+            await Task.Delay(3000);
+            
+            // Step 2: Write config files while service is stopped
             var config = GenerateConfig();
+            var config2Content = GenerateConfig2();
+            WriteConfigToAllPaths(config, config2Content);
             
-            // Write to multiple config locations to ensure RustDesk finds it
-            var configDirs = new[]
-            {
-                // ProgramData - most reliable for service-based installs
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RustDesk", "config"),
-                // User AppData - for per-user installs
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RustDesk", "config"),
-                // Program Files install location
-                @"C:\Program Files (x86)\RustDesk\config",
-                @"C:\Program Files\RustDesk\config",
-                // Service profile paths (RustDesk service runs as LocalService or SYSTEM)
-                @"C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config",
-                @"C:\Windows\ServiceProfiles\LocalService\AppData\Local\RustDesk\config",
-                @"C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk\config",
-                @"C:\Windows\System32\config\systemprofile\AppData\Local\RustDesk\config",
-            };
-            
-            foreach (var configDir in configDirs)
-            {
-                try
-                {
-                    Directory.CreateDirectory(configDir);
-                    
-                    var configPath = Path.Combine(configDir, "RustDesk.toml");
-                    await File.WriteAllTextAsync(configPath, config);
-                    Console.WriteLine($"[RustDesk] Configuration written to {configPath}");
-                    
-                    // Also write to RustDesk2.toml for newer versions
-                    var config2Path = Path.Combine(configDir, "RustDesk2.toml");
-                    var config2Content = GenerateConfig2();
-                    await File.WriteAllTextAsync(config2Path, config2Content);
-                    Console.WriteLine($"[RustDesk] RustDesk2.toml written to {config2Path}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[RustDesk] Skipped {configDir}: {ex.Message}");
-                }
-            }
-            
-            // Set the permanent password via CLI (RustDesk ignores password in config files)
+            // Step 3: Set the permanent password via CLI (service must be stopped)
             if (!string.IsNullOrEmpty(_unattendedPassword))
             {
-                await SetPasswordViaCli(_unattendedPassword);
+                await SetPasswordViaCliInternal(_unattendedPassword);
             }
             
-            // Restart RustDesk service if running
-            await RestartRustDeskServiceAsync();
+            // Step 4: Start the service
+            Console.WriteLine("[RustDesk] Starting service after config...");
+            await RunProcessAsync("sc.exe", "start RustDesk", Environment.SystemDirectory, 15);
+            await Task.Delay(5000);
+            
+            // Step 5: CRITICAL — Re-verify config survived the service start.
+            // RustDesk may overwrite RustDesk2.toml on startup with defaults.
+            Console.WriteLine("[RustDesk] Verifying config survived service start...");
+            var configIntact = await IsApproveModePersisted();
+            
+            if (!configIntact)
+            {
+                Console.WriteLine("[RustDesk] WARNING: RustDesk overwrote approve-mode on startup! Re-applying...");
+                
+                // Stop again
+                await RunProcessAsync("sc.exe", "stop RustDesk", Environment.SystemDirectory, 15);
+                await Task.Delay(2000);
+                
+                // Re-write ONLY RustDesk2.toml (the security config)
+                WriteConfig2ToAllPaths(config2Content);
+                
+                // Start again
+                await RunProcessAsync("sc.exe", "start RustDesk", Environment.SystemDirectory, 15);
+                await Task.Delay(5000);
+                
+                // Final check
+                var finalCheck = await IsApproveModePersisted();
+                if (!finalCheck)
+                {
+                    Console.WriteLine("[RustDesk] CRITICAL: approve-mode still not persisted after 2nd attempt. " +
+                        "Trying --option approve-mode password CLI method...");
+                    await SetApproveModeViaCli();
+                    
+                    // Restart one more time
+                    await RunProcessAsync("sc.exe", "stop RustDesk", Environment.SystemDirectory, 15);
+                    await Task.Delay(2000);
+                    await RunProcessAsync("sc.exe", "start RustDesk", Environment.SystemDirectory, 15);
+                    await Task.Delay(3000);
+                }
+            }
+            else
+            {
+                Console.WriteLine("[RustDesk] Config survived service start — approve-mode=password confirmed");
+            }
             
             return true;
         }
@@ -1157,10 +1168,138 @@ public class RustDeskInstaller
     }
 
     /// <summary>
+    /// Check if approve-mode = 'password' is present in at least one service-accessible config path.
+    /// </summary>
+    private async Task<bool> IsApproveModePersisted()
+    {
+        var serviceConfigPaths = new[]
+        {
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk2.toml",
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Local\RustDesk\config\RustDesk2.toml",
+            @"C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk\config\RustDesk2.toml",
+            @"C:\Windows\System32\config\systemprofile\AppData\Local\RustDesk\config\RustDesk2.toml",
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RustDesk", "config", "RustDesk2.toml"),
+            @"C:\Program Files\RustDesk\config\RustDesk2.toml",
+        };
+
+        foreach (var configPath in serviceConfigPaths)
+        {
+            try
+            {
+                if (File.Exists(configPath))
+                {
+                    var content = await File.ReadAllTextAsync(configPath);
+                    if (content.Contains("approve-mode") && content.Contains("password"))
+                    {
+                        Console.WriteLine($"[RustDesk] approve-mode=password confirmed in {configPath}");
+                        return true;
+                    }
+                }
+            }
+            catch { }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Write RustDesk.toml and RustDesk2.toml to all known config directories.
+    /// </summary>
+    private void WriteConfigToAllPaths(string config, string config2Content)
+    {
+        var configDirs = GetAllConfigDirs();
+        foreach (var configDir in configDirs)
+        {
+            try
+            {
+                Directory.CreateDirectory(configDir);
+                
+                var configPath = Path.Combine(configDir, "RustDesk.toml");
+                File.WriteAllText(configPath, config);
+                Console.WriteLine($"[RustDesk] RustDesk.toml written to {configPath}");
+                
+                var config2Path = Path.Combine(configDir, "RustDesk2.toml");
+                File.WriteAllText(config2Path, config2Content);
+                Console.WriteLine($"[RustDesk] RustDesk2.toml written to {config2Path}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[RustDesk] Skipped {configDir}: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Write ONLY RustDesk2.toml (security settings) to all paths.
+    /// Used when RustDesk overwrites the file on startup.
+    /// </summary>
+    private void WriteConfig2ToAllPaths(string config2Content)
+    {
+        var configDirs = GetAllConfigDirs();
+        foreach (var configDir in configDirs)
+        {
+            try
+            {
+                Directory.CreateDirectory(configDir);
+                var config2Path = Path.Combine(configDir, "RustDesk2.toml");
+                File.WriteAllText(config2Path, config2Content);
+            }
+            catch { }
+        }
+        Console.WriteLine("[RustDesk] Re-wrote RustDesk2.toml to all paths");
+    }
+
+    /// <summary>
+    /// All config directories where RustDesk may look for its config files.
+    /// </summary>
+    private string[] GetAllConfigDirs()
+    {
+        return new[]
+        {
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RustDesk", "config"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RustDesk", "config"),
+            @"C:\Program Files (x86)\RustDesk\config",
+            @"C:\Program Files\RustDesk\config",
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config",
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Local\RustDesk\config",
+            @"C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk\config",
+            @"C:\Windows\System32\config\systemprofile\AppData\Local\RustDesk\config",
+        };
+    }
+
+    /// <summary>
+    /// Set approve-mode via RustDesk CLI --option flag (fallback for versions that support it).
+    /// </summary>
+    private async Task SetApproveModeViaCli()
+    {
+        var exePath = FindRustDeskExePath();
+        if (string.IsNullOrEmpty(exePath)) return;
+        
+        var dir = Path.GetDirectoryName(exePath) ?? Environment.CurrentDirectory;
+        
+        // Some RustDesk versions support --option to set config values
+        var (exit1, _, _) = await RunProcessAsync(exePath, "--option approve-mode password", dir, 15);
+        Console.WriteLine($"[RustDesk] --option approve-mode password: exit={exit1}");
+        
+        var (exit2, _, _) = await RunProcessAsync(exePath, "--option verification-method use-permanent-password", dir, 15);
+        Console.WriteLine($"[RustDesk] --option verification-method: exit={exit2}");
+    }
+
+    /// <summary>
     /// Set the RustDesk permanent password via CLI command.
     /// RustDesk does NOT read passwords from config files — the CLI is the only reliable method.
     /// </summary>
     private async Task SetPasswordViaCli(string password)
+    {
+        // Service should already be stopped by caller for clean config
+        await SetPasswordViaCliInternal(password);
+        // Caller handles service restart
+    }
+
+    /// <summary>
+    /// Internal: set password without managing service lifecycle.
+    /// Expects service to be STOPPED before calling.
+    /// </summary>
+    private async Task SetPasswordViaCliInternal(string password)
     {
         var exePath = FindRustDeskExePath();
         if (string.IsNullOrEmpty(exePath))
@@ -1172,10 +1311,6 @@ public class RustDeskInstaller
         try
         {
             var dir = Path.GetDirectoryName(exePath) ?? Environment.CurrentDirectory;
-            
-            // Stop service first so we can modify the password
-            await RunProcessAsync("sc.exe", "stop RustDesk", Environment.SystemDirectory, 15);
-            await Task.Delay(2000);
 
             // Set permanent password via CLI
             var (exit, stdout, stderr) = await RunProcessAsync(
@@ -1183,11 +1318,7 @@ public class RustDeskInstaller
             
             Console.WriteLine($"[RustDesk] Set password via CLI: exit={exit} stdout={stdout?.Trim()} stderr={stderr?.Trim()}");
 
-            if (exit == 0)
-            {
-                Console.WriteLine("[RustDesk] Permanent password set successfully via CLI");
-            }
-            else
+            if (exit != 0)
             {
                 Console.WriteLine($"[RustDesk] Password CLI returned exit code {exit}, trying alternative method...");
                 
@@ -1196,10 +1327,10 @@ public class RustDeskInstaller
                     exePath, $"--permanent-password \"{password}\"", dir, 30);
                 Console.WriteLine($"[RustDesk] Alternative password set: exit={exit2}");
             }
-
-            // Restart service
-            await RunProcessAsync("sc.exe", "start RustDesk", Environment.SystemDirectory, 15);
-            await Task.Delay(3000);
+            else
+            {
+                Console.WriteLine("[RustDesk] Permanent password set successfully via CLI");
+            }
         }
         catch (Exception ex)
         {
