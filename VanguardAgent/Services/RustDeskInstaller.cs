@@ -242,11 +242,8 @@ public class RustDeskInstaller
                 try
                 {
                     var dir = Path.GetDirectoryName(exePath);
-                    // Try --uninstall first
-                    await RunProcessAsync(exePath, "--uninstall", dir ?? Environment.SystemDirectory, 30);
-                    await Task.Delay(2000);
-                    
-                    // Force-remove directory if still there
+                    // Do NOT call --uninstall here — it triggers a Windows Installer UI dialog.
+                    // Just force-remove the directory directly.
                     if (dir != null && Directory.Exists(dir))
                     {
                         Directory.Delete(dir, true);
