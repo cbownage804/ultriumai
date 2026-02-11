@@ -39,6 +39,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ModuleIntroBanner } from '@/components/vanguard/shared/ModuleInstructions';
 
 interface Device {
   id: string;
@@ -212,6 +213,16 @@ export const RustDeskIntegration: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* RustDesk Local Install Notice */}
+      <ModuleIntroBanner
+        title="RustDesk Required on Your Computer"
+        description="To remote into devices, you need RustDesk installed on this computer so your browser can launch it."
+        features={["Download from rustdesk.com"]}
+        docsUrl="https://rustdesk.com/download"
+        storageKey="rustdesk-local-install-notice"
+        accentColor="orange"
+      />
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
