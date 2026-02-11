@@ -822,12 +822,20 @@ public class RustDeskInstaller
                     
                     // Also write to RustDesk2.toml for newer versions
                     var config2Path = Path.Combine(configDir, "RustDesk2.toml");
-                    await File.WriteAllTextAsync(config2Path, config);
+                    var config2Content = GenerateConfig2();
+                    await File.WriteAllTextAsync(config2Path, config2Content);
+                    Console.WriteLine($"[RustDesk] RustDesk2.toml written to {config2Path}");
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"[RustDesk] Skipped {configDir}: {ex.Message}");
                 }
+            }
+            
+            // Set the permanent password via CLI (RustDesk ignores password in config files)
+            if (!string.IsNullOrEmpty(_unattendedPassword))
+            {
+                await SetPasswordViaCli(_unattendedPassword);
             }
             
             // Restart RustDesk service if running
@@ -840,6 +848,72 @@ public class RustDeskInstaller
             Console.WriteLine($"[RustDesk] Configuration error: {ex.Message}");
             return false;
         }
+    }
+
+    /// <summary>
+    /// Set the RustDesk permanent password via CLI command.
+    /// RustDesk does NOT read passwords from config files — the CLI is the only reliable method.
+    /// </summary>
+    private async Task SetPasswordViaCli(string password)
+    {
+        var exePath = FindRustDeskExePath();
+        if (string.IsNullOrEmpty(exePath))
+        {
+            Console.WriteLine("[RustDesk] Cannot set password: rustdesk.exe not found");
+            return;
+        }
+
+        try
+        {
+            var dir = Path.GetDirectoryName(exePath) ?? Environment.CurrentDirectory;
+            
+            // Stop service first so we can modify the password
+            await RunProcessAsync("sc.exe", "stop RustDesk", Environment.SystemDirectory, 15);
+            await Task.Delay(2000);
+
+            // Set permanent password via CLI
+            var (exit, stdout, stderr) = await RunProcessAsync(
+                exePath, $"--password \"{password}\"", dir, 30);
+            
+            Console.WriteLine($"[RustDesk] Set password via CLI: exit={exit} stdout={stdout?.Trim()} stderr={stderr?.Trim()}");
+
+            if (exit == 0)
+            {
+                Console.WriteLine("[RustDesk] Permanent password set successfully via CLI");
+            }
+            else
+            {
+                Console.WriteLine($"[RustDesk] Password CLI returned exit code {exit}, trying alternative method...");
+                
+                // Alternative: try --permanent-password flag (some versions)
+                var (exit2, stdout2, stderr2) = await RunProcessAsync(
+                    exePath, $"--permanent-password \"{password}\"", dir, 30);
+                Console.WriteLine($"[RustDesk] Alternative password set: exit={exit2}");
+            }
+
+            // Restart service
+            await RunProcessAsync("sc.exe", "start RustDesk", Environment.SystemDirectory, 15);
+            await Task.Delay(3000);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RustDesk] Failed to set password via CLI: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Generate RustDesk2.toml with approve-mode settings for true unattended access
+    /// </summary>
+    private string GenerateConfig2()
+    {
+        // RustDesk2.toml controls security/approval settings
+        var config2 = @"[options]
+# Allow unattended access with password only — no click-to-approve dialog
+approve-mode = 'password'
+# Verification uses the permanent password set via CLI
+verification-method = 'use-permanent-password'
+";
+        return config2.Trim();
     }
 
     /// <summary>
@@ -878,13 +952,11 @@ allow-remote-config-modification = 'N'
 direct-access-port = ''
 ";
 
-        // Add permanent password for unattended access
+        // Note: permanent password is set via CLI (--password), NOT via config file.
+        // RustDesk ignores permanent-password in TOML config files.
         if (!string.IsNullOrEmpty(_unattendedPassword))
         {
-            // RustDesk uses 'permanent_password' in config
-            config += $"permanent-password = '{_unattendedPassword}'\n";
-            config += "allow-linux-headless = 'Y'\n";
-            Console.WriteLine("[RustDesk] Permanent password configured for unattended access");
+            Console.WriteLine("[RustDesk] Permanent password will be set via CLI after config write");
         }
 
         // Add failover-specific settings
