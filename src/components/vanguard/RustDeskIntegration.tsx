@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { launchProtocolUrl } from '@/utils/launchProtocolUrl';
 import { useAuth } from '@/hooks/useAuth';
 import {
   Monitor,
@@ -98,12 +99,7 @@ export const RustDeskIntegration: React.FC = () => {
       const rustdeskId = String(device.rustdesk_id || '').replace(/\D/g, '');
       const rustdeskUrl = `rustdesk://${rustdeskId}`;
 
-      // Launch MUST happen synchronously from the click handler.
-      try {
-        window.location.href = rustdeskUrl;
-      } catch (e) {
-        console.error('Failed to launch RustDesk:', e);
-      }
+      launchProtocolUrl(rustdeskUrl);
       
       // Log the session attempt
       await (supabase

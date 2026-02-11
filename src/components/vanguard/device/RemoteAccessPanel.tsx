@@ -34,6 +34,7 @@ import {
   isRemoteAccessConfigured,
   getRustDeskConnectionUrl 
 } from "@/config/vanguardRemoteAccess";
+import { launchProtocolUrl } from "@/utils/launchProtocolUrl";
 
 interface RemoteAccessPanelProps {
   agentId: string;
@@ -137,12 +138,7 @@ export function RemoteAccessPanel({
         ? `${providerConfig.protocol}${safeId}`
         : `rustdesk://${safeId}`;
 
-      // Launch MUST happen synchronously from the click handler.
-      try {
-        window.location.href = url;
-      } catch (e) {
-        console.error('Failed to open provider url:', e);
-      }
+      launchProtocolUrl(url);
 
       // Optional: for RustDesk, fetch/copy password in the background (no toast)
       if (provider === 'rustdesk') {
