@@ -268,12 +268,10 @@ export function VanguardDeviceDetails() {
                 } catch (err) {
                   console.error('Failed to fetch RustDesk password:', err);
                 }
-                // Use a hidden iframe to trigger the protocol handler without opening a blank tab
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                iframe.src = `rustdesk://${remoteAccess.rustdesk_id}`;
-                document.body.appendChild(iframe);
-                setTimeout(() => iframe.remove(), 3000);
+                // Use an anchor click to trigger the protocol handler
+                const a = document.createElement('a');
+                a.href = `rustdesk://${remoteAccess.rustdesk_id}`;
+                a.click();
               }}
               className="bg-cyan-600 hover:bg-cyan-700 text-white gap-2"
             >
