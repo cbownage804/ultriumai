@@ -240,11 +240,24 @@ export function VanguardDeviceDetails() {
           {remoteAccess.rustdesk_id && (
             <Button
               size="sm"
-              onClick={async () => {
-                // Fetch and copy unattended password before launching
+              onClick={() => {
+                // IMPORTANT: Launch MUST happen synchronously from the click handler,
+                // otherwise browsers will block the custom protocol handler.
+                const rustdeskId = String(remoteAccess.rustdesk_id || '').replace(/\D/g, '');
+                const url = `rustdesk://${rustdeskId}`;
+
                 try {
-                  const { data: { session } } = await supabase.auth.getSession();
-                  if (session) {
+                  window.location.href = url;
+                } catch (e) {
+                  console.error('Failed to launch RustDesk:', e);
+                }
+
+                // Fetch/copy unattended password in the background (no toast)
+                void (async () => {
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session) return;
+
                     const response = await fetch(
                       `${import.meta.env.VITE_SUPABASE_URL || 'https://nsyobmjpdpvesjwdphlh.supabase.co'}/functions/v1/vanguard-agent-api?action=get_rustdesk_password`,
                       {
@@ -256,22 +269,15 @@ export function VanguardDeviceDetails() {
                         body: JSON.stringify({ agent_id: agent.id }),
                       }
                     );
+
                     const data = await response.json();
-                    if (data.password) {
+                    if (data?.password) {
                       await navigator.clipboard.writeText(data.password);
-                      toast.success("Password copied to clipboard — paste when prompted", {
-                        description: `Connecting to ${agent.name}...`,
-                        duration: 5000,
-                      });
                     }
+                  } catch (err) {
+                    console.error('Failed to fetch/copy RustDesk password:', err);
                   }
-                } catch (err) {
-                  console.error('Failed to fetch RustDesk password:', err);
-                }
-                // Use an anchor click to trigger the protocol handler
-                const a = document.createElement('a');
-                a.href = `rustdesk://${remoteAccess.rustdesk_id}`;
-                a.click();
+                })();
               }}
               className="bg-cyan-600 hover:bg-cyan-700 text-white gap-2"
             >

@@ -126,38 +126,39 @@ export function RemoteAccessPanel({
     }
   };
 
-  const handleConnect = async (provider: string, id: string) => {
+  const handleConnect = (provider: string, id: string) => {
     setIsConnecting(provider);
-    
+
     try {
       const providerConfig = REMOTE_ACCESS_PROVIDERS[provider as keyof typeof REMOTE_ACCESS_PROVIDERS];
-      
-      // For RustDesk: auto-copy password to clipboard so user can paste it
+
+      const safeId = provider === 'rustdesk' ? String(id || '').replace(/\D/g, '') : id;
+      const url = providerConfig
+        ? `${providerConfig.protocol}${safeId}`
+        : `rustdesk://${safeId}`;
+
+      // Launch MUST happen synchronously from the click handler.
+      try {
+        window.location.href = url;
+      } catch (e) {
+        console.error('Failed to open provider url:', e);
+      }
+
+      // Optional: for RustDesk, fetch/copy password in the background (no toast)
       if (provider === 'rustdesk') {
-        const pw = rustdeskPassword || await fetchRustDeskPassword(true);
-        if (pw) {
-          await navigator.clipboard.writeText(pw);
-          toast.success("Password copied to clipboard — paste when prompted", {
-            description: `Connecting to ${deviceName}...`,
-            duration: 5000,
-          });
-        } else {
-          toast.info("No unattended password found — you may need to enter it manually");
-        }
+        void (async () => {
+          try {
+            const pw = rustdeskPassword || await fetchRustDeskPassword(true);
+            if (pw) await navigator.clipboard.writeText(pw);
+          } catch (err) {
+            console.error('Failed to fetch/copy RustDesk password:', err);
+          }
+        })();
       } else {
         toast.success(`Opening ${providerConfig?.name || provider}...`, {
           description: `Connecting to ${deviceName}`,
         });
       }
-
-      const url = providerConfig 
-        ? `${providerConfig.protocol}${id}`
-        : `rustdesk://${id}`;
-      
-      // Use an anchor click to trigger the protocol handler
-      const a = document.createElement('a');
-      a.href = url;
-      a.click();
     } catch (err) {
       toast.error(`Failed to open ${provider}`);
     } finally {
