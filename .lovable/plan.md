@@ -1,82 +1,35 @@
 
 
-## Fix: RustDesk Unattended Service Installation
+## Fix: C# Build Error in RustDeskInstaller.cs
 
 ### Problem
-The screenshot shows RustDesk running in **portable mode** (yellow "Install" banner visible, one-time password shown). This means:
-1. `--silent-install` either failed silently or didn't complete properly
-2. The permanent password was never applied (still showing one-time password)
-3. The `RustDesk2.toml` approve-mode settings are being ignored because there's no service context
+The GitHub Actions build fails with:
+> **Line 487**: A local or parameter named 'serviceOk' cannot be declared in this scope because that name is used in an enclosing local scope
 
-### Root Cause
-The current code runs `--silent-install` but doesn't verify it actually completed the service registration. RustDesk's `--silent-install` can silently fail if:
-- The installer process exits before the service is fully registered
-- The EXE was downloaded to a temp folder that gets cleaned up before installation finishes
-- UAC elevation wasn't properly inherited
+In `TryInstallViaDirectDownloadAsync()`, the variable `serviceOk` is declared twice:
+- Line 487 (inside an `if (IsRustDeskInstalled())` block after MSI install)
+- Line 570 (at the method level after EXE fallback install)
 
-### Solution
+C# does not allow a variable in an inner block to shadow one in an enclosing scope within the same method.
 
-**1. Fix the installation sequence in `RustDeskInstaller.cs`:**
+There are also 3 null-dereference warnings at lines 701, 702, and 1597.
 
-- After `--silent-install`, add a polling loop that waits up to 60 seconds for the RustDesk service to appear in `sc query`
-- If `--silent-install` doesn't produce a service, fall back to running `rustdesk.exe --install-service` explicitly
-- Add a final fallback: manually create the service via `sc.exe create` pointing to the installed-path RustDesk executable (not the temp download)
+### Fix
 
-**2. Fix the password and config timing:**
+**1. Rename the inner `serviceOk` variables to avoid the scope conflict:**
 
-- Move the password (`--password`) and config (`RustDesk2.toml`) steps to AFTER the service is confirmed running -- currently they can fire before the service exists
-- After setting the password, verify it took effect by checking if `RustDesk2.toml` contains `verification-method = 'use-permanent-password'` in the service profile path
-- Add a service restart after all config is written
-
-**3. Add post-install verification logging:**
-
-- Log the exact service state after installation (`sc query RustDesk`)
-- Log which config paths were successfully written
-- Log whether `--password` CLI returned success
-- Report the final RustDesk ID back to confirm end-to-end success
-
-### Technical Details
-
-Key changes to `VanguardAgent/Services/RustDeskInstaller.cs`:
-
-**a) `EnsureRustDeskServiceInstalledAsync()` -- add retry/verification loop:**
+In `TryInstallViaDirectDownloadAsync()` (line 487), rename to `msiServiceOk`:
 ```csharp
-// Poll for service registration after --silent-install
-for (int i = 0; i < 12; i++) // 60 seconds total
-{
-    await Task.Delay(5000);
-    var (sc, out, _) = await RunProcessAsync("sc.exe", "query RustDesk", ...);
-    if (sc == 0 && out.Contains("RustDesk")) break;
-}
+var msiServiceOk = await EnsureRustDeskServiceInstalledAsync();
+if (msiServiceOk)
 ```
 
-**b) Move config/password AFTER confirmed service start:**
-```csharp
-// In the main install flow:
-// 1. Download + --silent-install
-// 2. Poll until service exists (new)
-// 3. THEN configure relay + password + RustDesk2.toml
-// 4. Restart service
-// 5. Verify final state (new)
-```
+This also applies to the same pattern in `TryInstallViaWingetAsync()` (line 358) and `TryInstallViaChocolateyAsync()` (line 409) -- those may not currently error since they're in separate methods, but renaming them for consistency is good practice.
 
-**c) Use the INSTALLED exe path for `--password`, not the temp download path:**
-The current code uses `FindRustDeskExePath()` which is correct, but if RustDesk installed to `C:\Program Files\RustDesk\`, we need to make sure we're calling that copy -- not the temp EXE.
+**2. Address the null-dereference warnings (lines 701, 702, 1597):**
 
-**d) Add post-install verification method:**
-```csharp
-private async Task<bool> VerifyUnattendedAccessConfigured()
-{
-    // Check: service exists and running
-    // Check: RustDesk2.toml has approve-mode = 'password'
-    // Check: permanent password is set (not one-time)
-    // Log all findings for remote diagnostics
-}
-```
+Add null checks or use the null-conditional operator (`?.`) where the compiler flags possible null references. I'll inspect those lines during implementation and add appropriate guards.
 
 ### Files to Modify
-- `VanguardAgent/Services/RustDeskInstaller.cs` -- fix install sequence, add verification
-
-### After Implementation
-You'll need to rebuild the MSI and redeploy to a test device. The agent logs will now show exactly what happened at each step, making it easy to diagnose if anything still fails.
+- `VanguardAgent/Services/RustDeskInstaller.cs` -- rename shadowed variable, fix null warnings
 
