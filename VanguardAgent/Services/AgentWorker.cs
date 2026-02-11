@@ -51,6 +51,7 @@ public class AgentWorker : BackgroundService
         _commandExecutor = commandExecutor;
         _rustDeskInstaller = new RustDeskInstaller(configService);
         _meshCentralInstaller = new MeshCentralInstaller(configService);
+    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -367,6 +368,7 @@ public class AgentWorker : BackgroundService
         }
     }
 
+    private async Task SendHeartbeatAsync()
     {
         try
         {
