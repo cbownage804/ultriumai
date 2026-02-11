@@ -72,6 +72,12 @@ export function RemoteAccessPanel({
   const [showPassword, setShowPassword] = useState(false);
   const [loadingPassword, setLoadingPassword] = useState(false);
 
+  // Auto-fetch password when RustDesk is configured
+  useEffect(() => {
+    if (rustdeskId && agentId && !rustdeskPassword) {
+      fetchRustDeskPassword(true);
+    }
+  }, [rustdeskId, agentId]);
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setCopied(label);
@@ -79,14 +85,14 @@ export function RemoteAccessPanel({
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const fetchRustDeskPassword = async () => {
+  const fetchRustDeskPassword = async (silent = false) => {
     if (!agentId) return;
     
     setLoadingPassword(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Please log in to view password");
+        if (!silent) toast.error("Please log in to view password");
         return;
       }
 
@@ -105,13 +111,13 @@ export function RemoteAccessPanel({
       const data = await response.json();
       if (data.password) {
         setRustdeskPassword(data.password);
-        setShowPassword(true);
-      } else {
+        if (!silent) setShowPassword(true);
+      } else if (!silent) {
         toast.info("No unattended password configured yet");
       }
     } catch (err) {
       console.error('Failed to fetch password:', err);
-      toast.error("Failed to retrieve password");
+      if (!silent) toast.error("Failed to retrieve password");
     } finally {
       setLoadingPassword(false);
     }
@@ -122,14 +128,35 @@ export function RemoteAccessPanel({
     
     try {
       const providerConfig = REMOTE_ACCESS_PROVIDERS[provider as keyof typeof REMOTE_ACCESS_PROVIDERS];
+      
+      // For RustDesk: auto-copy password to clipboard so user can paste it
+      if (provider === 'rustdesk' && rustdeskPassword) {
+        await navigator.clipboard.writeText(rustdeskPassword);
+        toast.success("Password copied to clipboard — paste when prompted", {
+          description: `Connecting to ${deviceName}...`,
+          duration: 5000,
+        });
+      } else if (provider === 'rustdesk' && !rustdeskPassword) {
+        // Try fetching password first
+        await fetchRustDeskPassword(true);
+        if (rustdeskPassword) {
+          await navigator.clipboard.writeText(rustdeskPassword);
+          toast.success("Password copied to clipboard — paste when prompted", {
+            description: `Connecting to ${deviceName}...`,
+            duration: 5000,
+          });
+        }
+      } else {
+        toast.success(`Opening ${providerConfig?.name || provider}...`, {
+          description: `Connecting to ${deviceName}`,
+        });
+      }
+
       const url = providerConfig 
         ? `${providerConfig.protocol}${id}`
         : `rustdesk://${id}`;
       
       window.open(url, "_blank");
-      toast.success(`Opening ${providerConfig?.name || provider}...`, {
-        description: `Connecting to ${deviceName}`,
-      });
     } catch (err) {
       toast.error(`Failed to open ${provider}`);
     } finally {
@@ -351,7 +378,7 @@ export function RemoteAccessPanel({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={fetchRustDeskPassword}
+                            onClick={() => fetchRustDeskPassword()}
                             disabled={loadingPassword}
                           >
                             {loadingPassword ? (
