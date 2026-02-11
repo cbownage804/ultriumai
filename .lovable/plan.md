@@ -1,122 +1,82 @@
 
 
-# Codex-Style Autonomous Agent for AI App Builder
+## Fix: RustDesk Unattended Service Installation
 
-## Overview
+### Problem
+The screenshot shows RustDesk running in **portable mode** (yellow "Install" banner visible, one-time password shown). This means:
+1. `--silent-install` either failed silently or didn't complete properly
+2. The permanent password was never applied (still showing one-time password)
+3. The `RustDesk2.toml` approve-mode settings are being ignored because there's no service context
 
-Upgrade the existing Agent Mode in the AI App Builder from a simulated step tracker into a real autonomous coding agent with async task queuing, multi-file reasoning, self-correction loops, and background execution -- inspired by OpenAI Codex but built on top of the existing architecture.
+### Root Cause
+The current code runs `--silent-install` but doesn't verify it actually completed the service registration. RustDesk's `--silent-install` can silently fail if:
+- The installer process exits before the service is fully registered
+- The EXE was downloaded to a temp folder that gets cleaned up before installation finishes
+- UAC elevation wasn't properly inherited
 
-## What Changes
+### Solution
 
-### 1. Async Task Queue System
-- Users can submit multiple prompts that queue up and execute sequentially in the background
-- A task queue panel shows pending, running, and completed tasks with progress
-- Users can continue chatting or editing while tasks run
-- Tasks can be cancelled, reordered, or retried
+**1. Fix the installation sequence in `RustDeskInstaller.cs`:**
 
-### 2. Real Self-Correction Loop (Plan > Execute > Verify > Fix)
-- Replace the current simulated `useAgentMode` with actual AI-driven steps:
-  - **Plan**: Send the prompt to the AI with a "planning only" instruction, get back a structured plan (files to create/modify, approach)
-  - **Execute**: Send the plan + files to the AI for code generation (existing streaming flow)
-  - **Verify**: Inject generated code into the preview iframe and capture console errors automatically
-  - **Fix**: If errors are detected, automatically re-prompt the AI with the error context (up to 3 retries, leveraging the existing `useAutoErrorRecovery` hook)
-- Each step updates the AgentModePanel in real-time
+- After `--silent-install`, add a polling loop that waits up to 60 seconds for the RustDesk service to appear in `sc query`
+- If `--silent-install` doesn't produce a service, fall back to running `rustdesk.exe --install-service` explicitly
+- Add a final fallback: manually create the service via `sc.exe create` pointing to the installed-path RustDesk executable (not the temp download)
 
-### 3. Enhanced Agent Mode Panel
-- Expand the existing `AgentModePanel` to show:
-  - The task queue with status indicators
-  - Expandable step details (plan text, files modified, errors caught)
-  - Elapsed time per step
-  - A "Files Changed" summary with file paths
-  - Cancel/Retry buttons per task
+**2. Fix the password and config timing:**
 
-### 4. Multi-File Awareness in Planning
-- The planning step analyzes the full project file tree and identifies which files need changes
-- The execution step sends only relevant files as context (not the entire project) for efficiency
-- Changed files are highlighted in the file tree after completion
+- Move the password (`--password`) and config (`RustDesk2.toml`) steps to AFTER the service is confirmed running -- currently they can fire before the service exists
+- After setting the password, verify it took effect by checking if `RustDesk2.toml` contains `verification-method = 'use-permanent-password'` in the service profile path
+- Add a service restart after all config is written
 
-### 5. Background Execution with Notifications
-- Tasks run via the existing edge function (`ai-app-builder`) with the same streaming approach
-- On completion, a toast notification + build notification center entry is created
-- Users can click the notification to see the diff
+**3. Add post-install verification logging:**
 
-## Technical Details
+- Log the exact service state after installation (`sc query RustDesk`)
+- Log which config paths were successfully written
+- Log whether `--password` CLI returned success
+- Report the final RustDesk ID back to confirm end-to-end success
 
-### New/Modified Files
+### Technical Details
 
-**`src/hooks/useAgentMode.ts`** (major rewrite)
-- Add `AgentTask` type with queue position, prompt, status, results
-- Add `taskQueue` state array
-- Replace `simulateAgentExecution` with `executeAgentTask` that:
-  1. Calls AI with planning-mode system prompt to get a structured plan
-  2. Executes the plan via `sendMessage` (existing streaming)
-  3. Waits for preview errors via a `postMessage` listener on the iframe
-  4. If errors found, calls `sendMessage` again with error context (up to 3 retries)
-  5. Marks task complete and advances queue
-- Add `enqueueTask`, `cancelTask`, `retryTask`, `reorderQueue` methods
-- Add `processQueue` that auto-advances to next task when current completes
+Key changes to `VanguardAgent/Services/RustDeskInstaller.cs`:
 
-**`src/components/ai-builder/AgentModePanel.tsx`** (enhanced UI)
-- Show task queue list (not just current run steps)
-- Each task expandable to show its steps
-- Show elapsed time, files modified count, error count
-- Add queue management controls (cancel, retry, clear completed)
-
-**`src/hooks/useAgentMode.ts` -- Verification Logic**
-- After code generation completes and files are injected into preview:
-  - Listen for `__PREVIEW_ERROR__` messages from the iframe (already wired in ConsolePanel)
-  - Wait 2 seconds for errors to surface
-  - If errors detected, trigger fix step automatically
-  - If no errors after timeout, mark verify as done
-
-**`src/components/ai-builder/AIAppBuilderWorkspace.tsx`** (integration)
-- Wire the new `enqueueTask` to the chat panel's send handler when agent mode is active
-- Pass iframe ref to agent mode for error detection
-- Connect build notification center to agent task completions
-
-**`src/components/ai-builder/BuilderChatPanel.tsx`** (minor)
-- Add an "Agent Mode" toggle button in the input area
-- When active, submitted prompts go to the task queue instead of direct chat
-- Show a small queue indicator badge
-
-### Self-Correction Flow
-
-```text
-User Prompt
-    |
-    v
-[PLAN] -- AI analyzes project, returns structured plan
-    |
-    v
-[EXECUTE] -- AI generates/modifies code via streaming
-    |
-    v
-[VERIFY] -- Preview iframe loads, errors captured (2s window)
-    |
-    +---> No errors --> [DONE]
-    |
-    +---> Errors found --> [FIX] (re-prompt with error + code context)
-                              |
-                              v
-                           [VERIFY] again (up to 3 retries)
-                              |
-                              +---> Still failing --> Mark as "needs attention"
+**a) `EnsureRustDeskServiceInstalledAsync()` -- add retry/verification loop:**
+```csharp
+// Poll for service registration after --silent-install
+for (int i = 0; i < 12; i++) // 60 seconds total
+{
+    await Task.Delay(5000);
+    var (sc, out, _) = await RunProcessAsync("sc.exe", "query RustDesk", ...);
+    if (sc == 0 && out.Contains("RustDesk")) break;
+}
 ```
 
-### Edge Function Changes
-- No new edge functions needed -- the existing `ai-app-builder` function handles all AI calls
-- The planning step uses the same endpoint with a modified system prompt instruction ("return only a plan, no code yet")
+**b) Move config/password AFTER confirmed service start:**
+```csharp
+// In the main install flow:
+// 1. Download + --silent-install
+// 2. Poll until service exists (new)
+// 3. THEN configure relay + password + RustDesk2.toml
+// 4. Restart service
+// 5. Verify final state (new)
+```
 
-### What We Keep
-- Existing streaming infrastructure (`useStreamingPreview`, SSE parsing)
-- Existing error recovery hook (`useAutoErrorRecovery`) -- integrated into the verify/fix loop
-- Existing `AgentModePanel` component structure -- extended, not replaced
-- Existing `ConsolePanel` error capture via `postMessage`
-- Existing build notification system
+**c) Use the INSTALLED exe path for `--password`, not the temp download path:**
+The current code uses `FindRustDeskExePath()` which is correct, but if RustDesk installed to `C:\Program Files\RustDesk\`, we need to make sure we're calling that copy -- not the temp EXE.
 
-## Scope
-- ~6 files modified
-- No new dependencies needed
-- No database changes
-- No new edge functions
+**d) Add post-install verification method:**
+```csharp
+private async Task<bool> VerifyUnattendedAccessConfigured()
+{
+    // Check: service exists and running
+    // Check: RustDesk2.toml has approve-mode = 'password'
+    // Check: permanent password is set (not one-time)
+    // Log all findings for remote diagnostics
+}
+```
+
+### Files to Modify
+- `VanguardAgent/Services/RustDeskInstaller.cs` -- fix install sequence, add verification
+
+### After Implementation
+You'll need to rebuild the MSI and redeploy to a test device. The agent logs will now show exactly what happened at each step, making it easy to diagnose if anything still fails.
 
