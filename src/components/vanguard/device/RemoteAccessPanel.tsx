@@ -154,12 +154,10 @@ export function RemoteAccessPanel({
         ? `${providerConfig.protocol}${id}`
         : `rustdesk://${id}`;
       
-      // Use a hidden iframe to trigger protocol handler without opening a blank tab
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = url;
-      document.body.appendChild(iframe);
-      setTimeout(() => iframe.remove(), 3000);
+      // Use an anchor click to trigger the protocol handler
+      const a = document.createElement('a');
+      a.href = url;
+      a.click();
     } catch (err) {
       toast.error(`Failed to open ${provider}`);
     } finally {
