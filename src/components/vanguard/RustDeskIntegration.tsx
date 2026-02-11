@@ -98,7 +98,12 @@ export const RustDeskIntegration: React.FC = () => {
       const rustdeskUrl = `rustdesk://${device.rustdesk_id}`;
       
       // Try to open RustDesk
-      window.open(rustdeskUrl, '_blank');
+      // Use a hidden iframe to trigger the protocol handler without opening a blank tab
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = rustdeskUrl;
+      document.body.appendChild(iframe);
+      setTimeout(() => iframe.remove(), 3000);
       
       // Log the session attempt
       await (supabase
