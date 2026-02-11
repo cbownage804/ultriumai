@@ -808,6 +808,11 @@ public class RustDeskInstaller
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RustDesk", "config"),
                 // Program Files install location
                 @"C:\Program Files\RustDesk\config",
+                // Service profile paths (RustDesk service runs as LocalService or SYSTEM)
+                @"C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config",
+                @"C:\Windows\ServiceProfiles\LocalService\AppData\Local\RustDesk\config",
+                @"C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk\config",
+                @"C:\Windows\System32\config\systemprofile\AppData\Local\RustDesk\config",
             };
             
             foreach (var configDir in configDirs)
