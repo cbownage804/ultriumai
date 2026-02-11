@@ -128,7 +128,7 @@ export function RemoteAccessPanel({
     }
   };
 
-  const handleConnect = (provider: string, id: string) => {
+  const handleConnect = async (provider: string, id: string) => {
     setIsConnecting(provider);
 
     try {
@@ -139,7 +139,16 @@ export function RemoteAccessPanel({
         ? `${providerConfig.protocol}${safeId}`
         : `rustdesk://${safeId}`;
 
+      // For RustDesk: fetch password FIRST, copy to clipboard, THEN launch
       if (provider === 'rustdesk') {
+        const pwd = await fetchRustDeskPassword(true);
+        if (pwd) {
+          try {
+            await navigator.clipboard.writeText(pwd);
+            toast.success('Password copied — just paste when prompted', { duration: 5000 });
+          } catch { }
+        }
+
         launchProtocolWithFallback(url, () => {
           toast.warning("RustDesk didn't open", {
             description: 'You may need to install RustDesk on this computer first.',
@@ -152,19 +161,6 @@ export function RemoteAccessPanel({
         });
       } else {
         launchProtocolUrl(url);
-      }
-
-      // Optional: for RustDesk, fetch/copy password in the background (no toast)
-      if (provider === 'rustdesk') {
-        void (async () => {
-          try {
-            const pw = rustdeskPassword || await fetchRustDeskPassword(true);
-            if (pw) await navigator.clipboard.writeText(pw);
-          } catch (err) {
-            console.error('Failed to fetch/copy RustDesk password:', err);
-          }
-        })();
-      } else {
         toast.success(`Opening ${providerConfig?.name || provider}...`, {
           description: `Connecting to ${deviceName}`,
         });

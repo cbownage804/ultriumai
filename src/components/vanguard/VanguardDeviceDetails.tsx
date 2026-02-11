@@ -242,29 +242,14 @@ export function VanguardDeviceDetails() {
           {remoteAccess.rustdesk_id && (
             <Button
               size="sm"
-              onClick={() => {
-                // IMPORTANT: Launch MUST happen synchronously from the click handler,
-                // otherwise browsers will block the custom protocol handler.
+              onClick={async () => {
                 const rustdeskId = String(remoteAccess.rustdesk_id || '').replace(/\D/g, '');
                 const url = `rustdesk://${rustdeskId}`;
 
-                launchProtocolWithFallback(url, () => {
-                  toast.warning("RustDesk didn't open", {
-                    description: 'You may need to install RustDesk on this computer first.',
-                    action: {
-                      label: 'Download',
-                      onClick: () => window.open('https://rustdesk.com/download', '_blank'),
-                    },
-                    duration: 10000,
-                  });
-                });
-
-                // Fetch/copy unattended password in the background (no toast)
-                void (async () => {
-                  try {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (!session) return;
-
+                // Fetch password FIRST, copy to clipboard, THEN launch protocol
+                try {
+                  const { data: { session } } = await supabase.auth.getSession();
+                  if (session) {
                     const response = await fetch(
                       `${import.meta.env.VITE_SUPABASE_URL || 'https://nsyobmjpdpvesjwdphlh.supabase.co'}/functions/v1/vanguard-agent-api?action=get_rustdesk_password`,
                       {
@@ -276,15 +261,27 @@ export function VanguardDeviceDetails() {
                         body: JSON.stringify({ agent_id: agent.id }),
                       }
                     );
-
                     const data = await response.json();
                     if (data?.password) {
                       await navigator.clipboard.writeText(data.password);
+                      toast.success('Password copied — just paste when prompted', { duration: 5000 });
                     }
-                  } catch (err) {
-                    console.error('Failed to fetch/copy RustDesk password:', err);
                   }
-                })();
+                } catch (err) {
+                  console.error('Failed to fetch/copy RustDesk password:', err);
+                }
+
+                // Now launch protocol handler
+                launchProtocolWithFallback(url, () => {
+                  toast.warning("RustDesk didn't open", {
+                    description: 'You may need to install RustDesk on this computer first.',
+                    action: {
+                      label: 'Download',
+                      onClick: () => window.open('https://rustdesk.com/download', '_blank'),
+                    },
+                    duration: 10000,
+                  });
+                });
               }}
               className="bg-cyan-600 hover:bg-cyan-700 text-white gap-2"
             >
