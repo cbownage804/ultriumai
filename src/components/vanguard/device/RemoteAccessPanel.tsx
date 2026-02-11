@@ -34,7 +34,7 @@ import {
   isRemoteAccessConfigured,
   getRustDeskConnectionUrl 
 } from "@/config/vanguardRemoteAccess";
-import { launchProtocolUrl } from "@/utils/launchProtocolUrl";
+import { launchProtocolUrl, launchProtocolWithFallback } from "@/utils/launchProtocolUrl";
 import { ModuleIntroBanner } from "@/components/vanguard/shared/ModuleInstructions";
 
 interface RemoteAccessPanelProps {
@@ -139,7 +139,20 @@ export function RemoteAccessPanel({
         ? `${providerConfig.protocol}${safeId}`
         : `rustdesk://${safeId}`;
 
-      launchProtocolUrl(url);
+      if (provider === 'rustdesk') {
+        launchProtocolWithFallback(url, () => {
+          toast.warning("RustDesk didn't open", {
+            description: 'You may need to install RustDesk on this computer first.',
+            action: {
+              label: 'Download',
+              onClick: () => window.open('https://rustdesk.com/download', '_blank'),
+            },
+            duration: 10000,
+          });
+        });
+      } else {
+        launchProtocolUrl(url);
+      }
 
       // Optional: for RustDesk, fetch/copy password in the background (no toast)
       if (provider === 'rustdesk') {
