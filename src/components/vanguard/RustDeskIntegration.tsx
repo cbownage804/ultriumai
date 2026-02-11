@@ -95,13 +95,15 @@ export const RustDeskIntegration: React.FC = () => {
     try {
       // Open RustDesk client with the device ID
       // This uses the rustdesk:// protocol handler
-      const rustdeskUrl = `rustdesk://${device.rustdesk_id}`;
-      
-      // Try to open RustDesk
-      // Use an anchor click to trigger the protocol handler
-      const a = document.createElement('a');
-      a.href = rustdeskUrl;
-      a.click();
+      const rustdeskId = String(device.rustdesk_id || '').replace(/\D/g, '');
+      const rustdeskUrl = `rustdesk://${rustdeskId}`;
+
+      // Launch MUST happen synchronously from the click handler.
+      try {
+        window.location.href = rustdeskUrl;
+      } catch (e) {
+        console.error('Failed to launch RustDesk:', e);
+      }
       
       // Log the session attempt
       await (supabase
