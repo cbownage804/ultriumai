@@ -49,6 +49,7 @@ export function VanguardDeviceDetails() {
   const [isAsking, setIsAsking] = useState(false);
   const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
   const [activeSection, setActiveSection] = useState('summary');
+  const [consoleActivated, setConsoleActivated] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -79,6 +80,13 @@ export function VanguardDeviceDetails() {
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Latch console as activated once user navigates to it (stays mounted forever after)
+  useEffect(() => {
+    if (activeSection === 'console' && !consoleActivated) {
+      setConsoleActivated(true);
+    }
+  }, [activeSection, consoleActivated]);
 
   const scrollToSection = useCallback((id: string) => {
     const el = sectionRefs.current[id];
@@ -387,11 +395,11 @@ export function VanguardDeviceDetails() {
             </Card>
           </div>
 
-          {/* Console Section - lazy rendered to prevent command flooding */}
+          {/* Console Section - lazy rendered, once activated stays mounted */}
           <div ref={setSectionRef('console')} id="section-console">
             <SectionHeader icon={Terminal} title="Console" />
             <div className="mt-4">
-              {activeSection === 'console' ? (
+              {consoleActivated ? (
                 <AgentConsole 
                   agentId={agent.id} 
                   deviceName={agent.name}
