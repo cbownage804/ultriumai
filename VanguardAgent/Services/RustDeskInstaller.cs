@@ -89,39 +89,32 @@ public class RustDeskInstaller
     }
 
     /// <summary>
-    /// Get the installed RustDesk executable path (checks multiple locations)
+    /// Paths considered "proper" machine-wide installs (Program Files).
+    /// RustDesk in user/system profiles is a portable install and won't survive properly.
+    /// </summary>
+    private static readonly string[] ProperInstallPaths = new[]
+    {
+        @"C:\Program Files\RustDesk\rustdesk.exe",
+        @"C:\Program Files (x86)\RustDesk\rustdesk.exe",
+    };
+
+    /// <summary>
+    /// Get the installed RustDesk executable path (checks multiple locations).
+    /// Prefers Program Files paths first, then falls back to other locations.
     /// </summary>
     private string? FindRustDeskExePath()
     {
-        var installPaths = new[]
-        {
-            // Machine-wide installs
-            @"C:\Program Files\RustDesk\rustdesk.exe",
-            @"C:\Program Files (x86)\RustDesk\rustdesk.exe",
-
-            // Per-user installs
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RustDesk", "rustdesk.exe"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "RustDesk", "rustdesk.exe"),
-
-            // ProgramData (sometimes used by services)
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RustDesk", "rustdesk.exe"),
-            @"C:\ProgramData\RustDesk\rustdesk.exe",
-
-            // Service/System profiles (when installed/ran under SYSTEM or LocalService)
-            @"C:\Windows\System32\config\systemprofile\AppData\Local\RustDesk\rustdesk.exe",
-            @"C:\Windows\System32\config\systemprofile\AppData\Local\Programs\RustDesk\rustdesk.exe",
-            @"C:\Windows\ServiceProfiles\LocalService\AppData\Local\Programs\RustDesk\rustdesk.exe",
-        };
-
-        foreach (var path in installPaths)
+        // Check proper install paths first
+        foreach (var path in ProperInstallPaths)
         {
             if (File.Exists(path))
             {
+                Console.WriteLine($"[RustDesk] Found proper install at: {path}");
                 return path;
             }
         }
 
-        // Best-effort registry hint (MSI installs can be GUID-based; this is a fallback only)
+        // Registry hint (MSI installs use this)
         try
         {
             using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\RustDesk");
@@ -131,17 +124,74 @@ public class RustDeskInstaller
                 var candidate = Path.Combine(installLocation, "rustdesk.exe");
                 if (File.Exists(candidate))
                 {
+                    Console.WriteLine($"[RustDesk] Found install via registry: {candidate}");
                     return candidate;
                 }
             }
         }
         catch { }
 
+        // Fallback: per-user / system profile paths (these are typically portable installs)
+        var fallbackPaths = new[]
+        {
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RustDesk", "rustdesk.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "RustDesk", "rustdesk.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RustDesk", "rustdesk.exe"),
+            @"C:\ProgramData\RustDesk\rustdesk.exe",
+            @"C:\Windows\System32\config\systemprofile\AppData\Local\RustDesk\rustdesk.exe",
+            @"C:\Windows\System32\config\systemprofile\AppData\Local\Programs\RustDesk\rustdesk.exe",
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Local\Programs\RustDesk\rustdesk.exe",
+        };
+
+        foreach (var path in fallbackPaths)
+        {
+            if (File.Exists(path))
+            {
+                Console.WriteLine($"[RustDesk] Found PORTABLE/user-profile install at: {path}");
+                return path;
+            }
+        }
+
         return null;
     }
 
     /// <summary>
-    /// Check if RustDesk is installed and properly configured
+    /// Check if RustDesk is installed in a proper machine-wide location (Program Files).
+    /// Returns false for portable/user-profile installs.
+    /// </summary>
+    private bool IsProperlyInstalled()
+    {
+        foreach (var path in ProperInstallPaths)
+        {
+            if (File.Exists(path))
+            {
+                Console.WriteLine($"[RustDesk] Properly installed at: {path}");
+                return true;
+            }
+        }
+
+        // Also check registry for MSI-based installs
+        try
+        {
+            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\RustDesk");
+            var installLocation = key?.GetValue("InstallLocation")?.ToString();
+            if (!string.IsNullOrEmpty(installLocation))
+            {
+                var candidate = Path.Combine(installLocation, "rustdesk.exe");
+                if (File.Exists(candidate) && candidate.Contains("Program Files", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine($"[RustDesk] Properly installed (via registry): {candidate}");
+                    return true;
+                }
+            }
+        }
+        catch { }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Check if RustDesk exists anywhere (including portable installs)
     /// </summary>
     public bool IsRustDeskInstalled()
     {
@@ -153,6 +203,79 @@ public class RustDeskInstaller
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Kill all running RustDesk processes and remove portable installs from
+    /// user/system profile directories. This is necessary because running under
+    /// SYSTEM context, --silent-install often puts RustDesk in the SYSTEM profile
+    /// instead of Program Files, resulting in a non-functional portable install.
+    /// </summary>
+    private async Task CleanupPortableInstall()
+    {
+        Console.WriteLine("[RustDesk] Cleaning up portable/user-profile install...");
+
+        // 1. Kill all RustDesk processes
+        try
+        {
+            var (exit, _, _) = await RunProcessAsync("taskkill.exe", "/F /IM rustdesk.exe", Environment.SystemDirectory, 15);
+            Console.WriteLine($"[RustDesk] taskkill rustdesk.exe: exit={exit}");
+        }
+        catch { }
+        await Task.Delay(2000);
+
+        // 2. Try to uninstall via --uninstall first (cleans up properly)
+        var portablePaths = new[]
+        {
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RustDesk", "rustdesk.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "RustDesk", "rustdesk.exe"),
+            @"C:\Windows\System32\config\systemprofile\AppData\Local\RustDesk\rustdesk.exe",
+            @"C:\Windows\System32\config\systemprofile\AppData\Local\Programs\RustDesk\rustdesk.exe",
+            @"C:\Windows\ServiceProfiles\LocalService\AppData\Local\Programs\RustDesk\rustdesk.exe",
+        };
+
+        foreach (var exePath in portablePaths)
+        {
+            if (File.Exists(exePath))
+            {
+                Console.WriteLine($"[RustDesk] Removing portable install at: {exePath}");
+                try
+                {
+                    var dir = Path.GetDirectoryName(exePath);
+                    // Try --uninstall first
+                    await RunProcessAsync(exePath, "--uninstall", dir ?? Environment.SystemDirectory, 30);
+                    await Task.Delay(2000);
+                    
+                    // Force-remove directory if still there
+                    if (dir != null && Directory.Exists(dir))
+                    {
+                        Directory.Delete(dir, true);
+                        Console.WriteLine($"[RustDesk] Removed directory: {dir}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[RustDesk] Cleanup error for {exePath}: {ex.Message}");
+                }
+            }
+        }
+
+        // 3. Remove any lingering RustDesk service pointing to portable path
+        try
+        {
+            var (scExit, scOut, _) = await RunProcessAsync("sc.exe", "qc RustDesk", Environment.SystemDirectory, 10);
+            if (scExit == 0 && scOut != null && !scOut.Contains("Program Files", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("[RustDesk] Service points to non-Program Files path, removing...");
+                await RunProcessAsync("sc.exe", "stop RustDesk", Environment.SystemDirectory, 15);
+                await Task.Delay(2000);
+                await RunProcessAsync("sc.exe", "delete RustDesk", Environment.SystemDirectory, 15);
+                await Task.Delay(2000);
+            }
+        }
+        catch { }
+
+        Console.WriteLine("[RustDesk] Portable cleanup complete");
     }
 
     /// <summary>
@@ -308,16 +431,28 @@ public class RustDeskInstaller
     {
         Console.WriteLine("[RustDesk] Starting installation...");
 
+        // Pre-check: if a portable install exists (user/system profile), clean it up first.
+        // Under SYSTEM context, --silent-install often puts RustDesk in the wrong location.
+        if (IsRustDeskInstalled() && !IsProperlyInstalled())
+        {
+            Console.WriteLine("[RustDesk] Detected portable/user-profile install — cleaning up before proper install...");
+            await CleanupPortableInstall();
+        }
+
         // Method 1: Try winget first (most reliable on modern Windows)
         if (await TryInstallViaWingetAsync())
         {
-            return true;
+            if (IsProperlyInstalled()) return true;
+            Console.WriteLine("[RustDesk] winget succeeded but installed portably, cleaning up...");
+            await CleanupPortableInstall();
         }
 
         // Method 2: Try Chocolatey
         if (await TryInstallViaChocolateyAsync())
         {
-            return true;
+            if (IsProperlyInstalled()) return true;
+            Console.WriteLine("[RustDesk] choco succeeded but installed portably, cleaning up...");
+            await CleanupPortableInstall();
         }
 
         // Method 3: Direct MSI/EXE download as fallback
@@ -484,7 +619,7 @@ public class RustDeskInstaller
 
                     if (IsRustDeskInstalled())
                     {
-                    var msiServiceOk = await EnsureRustDeskServiceInstalledAsync();
+                        var msiServiceOk = await EnsureRustDeskServiceInstalledAsync();
                         if (msiServiceOk)
                         {
                             await ConfigureForVanguardAsync();
@@ -560,20 +695,57 @@ public class RustDeskInstaller
             Console.WriteLine("[RustDesk] EXE install completed successfully");
             await Task.Delay(5000);
 
-            // Critical: verify it actually installed
-            if (!IsRustDeskInstalled())
+            // Critical: verify it installed to Program Files (not portably)
+            if (IsProperlyInstalled())
+            {
+                Console.WriteLine("[RustDesk] EXE installed to Program Files — proper install confirmed");
+                var serviceOk = await EnsureRustDeskServiceInstalledAsync();
+                if (serviceOk)
+                {
+                    await ConfigureForVanguardAsync();
+                    await VerifyUnattendedAccessConfigured();
+                }
+                return true;
+            }
+            else if (IsRustDeskInstalled())
+            {
+                // EXE installed portably (likely in SYSTEM profile) — clean up and retry MSI only
+                Console.WriteLine("[RustDesk] WARNING: EXE installed portably (not in Program Files). Cleaning up...");
+                await CleanupPortableInstall();
+
+                // Last resort: copy the downloaded EXE to Program Files manually and register service
+                Console.WriteLine("[RustDesk] Attempting manual install to Program Files...");
+                var targetDir = @"C:\Program Files\RustDesk";
+                var targetExe = Path.Combine(targetDir, "rustdesk.exe");
+                try
+                {
+                    Directory.CreateDirectory(targetDir);
+                    File.Copy(exePath, targetExe, true);
+                    Console.WriteLine($"[RustDesk] Copied EXE to {targetExe}");
+
+                    // Run --silent-install from the Program Files copy
+                    var (siExit, siOut, siErr) = await RunProcessAsync(targetExe, "--silent-install", targetDir, 120);
+                    Console.WriteLine($"[RustDesk] --silent-install from Program Files: exit={siExit}");
+                    await Task.Delay(5000);
+
+                    var serviceOk = await EnsureRustDeskServiceInstalledAsync();
+                    if (serviceOk)
+                    {
+                        await ConfigureForVanguardAsync();
+                        await VerifyUnattendedAccessConfigured();
+                    }
+                    return true;
+                }
+                catch (Exception copyEx)
+                {
+                    Console.WriteLine($"[RustDesk] Manual install failed: {copyEx.Message}");
+                }
+            }
+            else
             {
                 Console.WriteLine("[RustDesk] EXE installer exited successfully but RustDesk was not detected");
-                return false;
             }
-
-            var serviceOk = await EnsureRustDeskServiceInstalledAsync();
-            if (serviceOk)
-            {
-                await ConfigureForVanguardAsync();
-                await VerifyUnattendedAccessConfigured();
-            }
-            return true;
+            return false;
         }
         catch (Exception ex)
         {
@@ -1503,8 +1675,36 @@ direct-access-port = ''
         var status = GetRelayStatus();
         Console.WriteLine($"[RustDesk] Relay status: {status.ServerCount} server(s), failover: {status.FailoverEnabled}");
         
-        // Check if already installed
-        if (!IsRustDeskInstalled())
+        // Check if already properly installed (in Program Files)
+        if (IsProperlyInstalled())
+        {
+            Console.WriteLine("[RustDesk] Already properly installed in Program Files");
+            
+            // Always ensure service is running
+            var serviceOk = await EnsureRustDeskServiceInstalledAsync();
+            
+            // Ensure it's configured for Vanguard relay (if relay is set up)
+            if (serviceOk && !IsConfiguredForVanguard() && _relayServers.Count > 0)
+            {
+                Console.WriteLine("[RustDesk] Not configured for Vanguard, applying configuration...");
+                await ConfigureForVanguardAsync();
+                await VerifyUnattendedAccessConfigured();
+            }
+        }
+        else if (IsRustDeskInstalled())
+        {
+            // Exists but in a portable location — clean up and reinstall properly
+            Console.WriteLine("[RustDesk] Found portable install, cleaning up and reinstalling properly...");
+            await CleanupPortableInstall();
+            
+            var installed = await InstallRustDeskAsync();
+            if (!installed)
+            {
+                Console.WriteLine("[RustDesk] REINSTALLATION FAILED after portable cleanup");
+                return (false, null);
+            }
+        }
+        else
         {
             Console.WriteLine("[RustDesk] Not installed, initiating installation...");
             var installed = await InstallRustDeskAsync();
@@ -1517,21 +1717,6 @@ direct-access-port = ''
                 var (whereExit, whereOut, _) = await RunProcessAsync("where.exe", "rustdesk", Environment.SystemDirectory, 5);
                 Console.WriteLine($"[RustDesk]   where rustdesk: exit={whereExit} output={whereOut?.Trim()}");
                 return (false, null);
-            }
-        }
-        else
-        {
-            Console.WriteLine("[RustDesk] Already installed");
-            
-            // Always ensure service is running
-            var serviceOk = await EnsureRustDeskServiceInstalledAsync();
-            
-            // Ensure it's configured for Vanguard relay (if relay is set up)
-            if (serviceOk && !IsConfiguredForVanguard() && _relayServers.Count > 0)
-            {
-                Console.WriteLine("[RustDesk] Not configured for Vanguard, applying configuration...");
-                await ConfigureForVanguardAsync();
-                await VerifyUnattendedAccessConfigured();
             }
         }
 
