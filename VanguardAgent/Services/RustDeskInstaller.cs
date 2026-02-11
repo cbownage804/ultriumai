@@ -1373,6 +1373,10 @@ public class RustDeskInstaller
         
         var (exit2, _, _) = await RunProcessAsync(exePath, "--option verification-method use-permanent-password", dir, 15);
         Console.WriteLine($"[RustDesk] --option verification-method: exit={exit2}");
+
+        // Hide the connection manager window so end users don't see it
+        var (exit3, _, _) = await RunProcessAsync(exePath, "--option allow-hide-cm Y", dir, 15);
+        Console.WriteLine($"[RustDesk] --option allow-hide-cm Y: exit={exit3}");
     }
 
     /// <summary>
@@ -1440,6 +1444,11 @@ public class RustDeskInstaller
 approve-mode = 'password'
 # Verification uses the permanent password set via CLI
 verification-method = 'use-permanent-password'
+# Hide the connection manager window on the client (no visible UI to end users)
+allow-hide-cm = 'Y'
+# Suppress the RustDesk tray icon on the client machine
+enable-lan-discovery = 'N'
+stop-rendezvous-service = 'N'
 ";
         return config2.Trim();
     }
