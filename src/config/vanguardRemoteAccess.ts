@@ -61,14 +61,25 @@ export function getRustDeskConnectionUrl(rustdeskId: string): string {
  * Supported remote access providers
  */
 export const REMOTE_ACCESS_PROVIDERS = {
+  meshcentral: {
+    id: 'meshcentral',
+    name: 'MeshCentral',
+    icon: '🌐',
+    color: 'bg-emerald-500',
+    description: 'Zero-touch browser remote desktop (Primary)',
+    protocol: 'https://',
+    isBuiltIn: true,
+    isPrimary: true,
+  },
   rustdesk: {
     id: 'rustdesk',
     name: 'RustDesk',
     icon: '🦀',
     color: 'bg-orange-500',
-    description: 'Built-in remote desktop (Vanguard-hosted)',
+    description: 'Backup remote desktop (Attended access)',
     protocol: 'rustdesk://',
     isBuiltIn: true,
+    isPrimary: false,
   },
   anydesk: {
     id: 'anydesk',
@@ -78,6 +89,7 @@ export const REMOTE_ACCESS_PROVIDERS = {
     description: 'Fast remote desktop',
     protocol: 'anydesk:',
     isBuiltIn: false,
+    isPrimary: false,
   },
   teamviewer: {
     id: 'teamviewer',
@@ -87,6 +99,7 @@ export const REMOTE_ACCESS_PROVIDERS = {
     description: 'Enterprise remote support',
     protocol: 'teamviewer10://control?device=',
     isBuiltIn: false,
+    isPrimary: false,
   },
   splashtop: {
     id: 'splashtop',
@@ -96,6 +109,7 @@ export const REMOTE_ACCESS_PROVIDERS = {
     description: 'Business remote access',
     protocol: 'splashtop://',
     isBuiltIn: false,
+    isPrimary: false,
   },
 } as const;
 

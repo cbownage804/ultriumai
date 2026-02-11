@@ -34,6 +34,7 @@ import {
   isRemoteAccessConfigured,
   getRustDeskConnectionUrl 
 } from "@/config/vanguardRemoteAccess";
+import { openMeshCentralSession } from "@/config/vanguardMeshCentral";
 import { launchProtocolUrl, launchProtocolWithFallback } from "@/utils/launchProtocolUrl";
 import { ModuleIntroBanner } from "@/components/vanguard/shared/ModuleInstructions";
 
@@ -44,6 +45,7 @@ interface RemoteAccessPanelProps {
   splashtopId?: string;
   anydeskId?: string;
   teamviewerId?: string;
+  meshcentralNodeId?: string;
   onUpdateIds: (ids: {
     rustdeskId?: string;
     splashtopId?: string;
@@ -59,6 +61,7 @@ export function RemoteAccessPanel({
   splashtopId,
   anydeskId,
   teamviewerId,
+  meshcentralNodeId,
   onUpdateIds,
 }: RemoteAccessPanelProps) {
   const [isConnecting, setIsConnecting] = useState<string | null>(null);
@@ -132,6 +135,20 @@ export function RemoteAccessPanel({
     setIsConnecting(provider);
 
     try {
+      // MeshCentral: open browser-based session (no client needed)
+      if (provider === 'meshcentral') {
+        toast.info('Opening MeshCentral remote desktop...');
+        const success = await openMeshCentralSession(id);
+        if (success) {
+          toast.success('MeshCentral session opened in new tab');
+        } else {
+          toast.error('MeshCentral not available', {
+            description: 'Check that MeshCentral server is configured.',
+          });
+        }
+        return;
+      }
+
       const providerConfig = REMOTE_ACCESS_PROVIDERS[provider as keyof typeof REMOTE_ACCESS_PROVIDERS];
 
       const safeId = provider === 'rustdesk' ? String(id || '').replace(/\D/g, '') : id;
@@ -187,8 +204,12 @@ export function RemoteAccessPanel({
     }
   };
 
-  // Build provider list with device IDs
+  // Build provider list with device IDs — MeshCentral first as primary
   const providers = [
+    ...(meshcentralNodeId ? [{
+      ...REMOTE_ACCESS_PROVIDERS.meshcentral,
+      deviceId: meshcentralNodeId,
+    }] : []),
     {
       ...REMOTE_ACCESS_PROVIDERS.rustdesk,
       deviceId: rustdeskId,
@@ -208,6 +229,7 @@ export function RemoteAccessPanel({
   ];
 
   const configuredProviders = providers.filter((p) => p.deviceId);
+  const hasMeshCentral = Boolean(meshcentralNodeId);
   const hasRustDesk = Boolean(rustdeskId);
   const hasAnyProvider = configuredProviders.length > 0;
 
@@ -218,10 +240,16 @@ export function RemoteAccessPanel({
           <CardTitle className="flex items-center gap-2">
             <Monitor className="h-5 w-5" />
             Remote Access
-            {hasRustDesk && (
-              <Badge variant="outline" className="ml-2 bg-green-500/10 text-green-600 border-green-500/30">
+            {hasMeshCentral && (
+              <Badge variant="outline" className="ml-2 bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
                 <Zap className="h-3 w-3 mr-1" />
-                Built-in
+                Zero-touch
+              </Badge>
+            )}
+            {!hasMeshCentral && hasRustDesk && (
+              <Badge variant="outline" className="ml-2 bg-orange-500/10 text-orange-600 border-orange-500/30">
+                <Zap className="h-3 w-3 mr-1" />
+                RustDesk
               </Badge>
             )}
           </CardTitle>
@@ -298,21 +326,34 @@ export function RemoteAccessPanel({
         </Dialog>
       </CardHeader>
       <CardContent>
-        <ModuleIntroBanner
-          title="RustDesk Required on Your Computer"
-          description="To use Remote In, RustDesk must be installed on the computer you're working from so your browser can launch it."
-          features={["Download from rustdesk.com"]}
-          docsUrl="https://rustdesk.com/download"
-          docsLabel="Download RustDesk"
-          storageKey="rustdesk-local-install-notice"
-          accentColor="orange"
-        />
+        {hasMeshCentral && (
+          <ModuleIntroBanner
+            title="MeshCentral — Zero-Touch Remote Access"
+            description="Click Connect to open a browser-based remote desktop session. No client software needed on your computer."
+            features={["Browser-based", "No passwords to paste", "Unattended access"]}
+            docsUrl="https://meshcentral.com"
+            docsLabel="About MeshCentral"
+            storageKey="meshcentral-primary-notice"
+            accentColor="green"
+          />
+        )}
+        {!hasMeshCentral && hasRustDesk && (
+          <ModuleIntroBanner
+            title="RustDesk Required on Your Computer"
+            description="To use Remote In, RustDesk must be installed on the computer you're working from."
+            features={["Download from rustdesk.com"]}
+            docsUrl="https://rustdesk.com/download"
+            docsLabel="Download RustDesk"
+            storageKey="rustdesk-local-install-notice"
+            accentColor="orange"
+          />
+        )}
         {!hasAnyProvider ? (
           <div className="text-center py-8 text-muted-foreground">
             <Monitor className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p className="text-sm">Waiting for RustDesk ID...</p>
+            <p className="text-sm">Waiting for agent setup...</p>
             <p className="text-xs mt-1">
-              The agent will auto-install RustDesk and report the ID
+              The agent will install MeshCentral (primary) and RustDesk (backup) automatically
             </p>
             <Button 
               variant="outline" 
@@ -324,7 +365,7 @@ export function RemoteAccessPanel({
             </Button>
           </div>
         ) : (
-          <Tabs defaultValue={hasRustDesk ? "rustdesk" : configuredProviders[0]?.id} className="w-full">
+          <Tabs defaultValue={hasMeshCentral ? "meshcentral" : hasRustDesk ? "rustdesk" : configuredProviders[0]?.id} className="w-full">
             <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${configuredProviders.length}, 1fr)` }}>
               {configuredProviders.map((provider) => (
                 <TabsTrigger key={provider.id} value={provider.id} className="text-xs">

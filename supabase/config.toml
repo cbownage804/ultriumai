@@ -369,3 +369,7 @@ verify_jwt = false
 
 [functions.gpt-test-chat]
 verify_jwt = false
+
+# MeshCentral Remote Access Auth (validates JWT in code)
+[functions.vanguard-meshcentral-auth]
+verify_jwt = false
