@@ -484,8 +484,8 @@ public class RustDeskInstaller
 
                     if (IsRustDeskInstalled())
                     {
-                        var serviceOk = await EnsureRustDeskServiceInstalledAsync();
-                        if (serviceOk)
+                    var msiServiceOk = await EnsureRustDeskServiceInstalledAsync();
+                        if (msiServiceOk)
                         {
                             await ConfigureForVanguardAsync();
                             await VerifyUnattendedAccessConfigured();
@@ -698,8 +698,8 @@ public class RustDeskInstaller
             var (scExit, scOut, _) = await RunProcessAsync("sc.exe", "query RustDesk", Environment.SystemDirectory, 10);
             Console.WriteLine($"[RustDesk] sc query RustDesk exit={scExit}, output={scOut?.Trim()}");
 
-            bool serviceExists = scExit == 0 && scOut.Contains("RustDesk");
-            bool serviceRunning = serviceExists && scOut.Contains("RUNNING");
+            bool serviceExists = scExit == 0 && (scOut?.Contains("RustDesk") ?? false);
+            bool serviceRunning = serviceExists && (scOut?.Contains("RUNNING") ?? false);
 
             if (serviceRunning)
             {
@@ -1594,7 +1594,7 @@ direct-access-port = ''
                 Console.WriteLine($"[RustDesk] Service status: {scOut?.Trim()}");
                 
                 // If service stopped, try starting it again
-                if (scExit == 0 && scOut.Contains("STOPPED"))
+                if (scExit == 0 && (scOut?.Contains("STOPPED") ?? false))
                 {
                     Console.WriteLine("[RustDesk] Service stopped, restarting...");
                     await RunProcessAsync("sc.exe", "start RustDesk", Environment.SystemDirectory, 10);
