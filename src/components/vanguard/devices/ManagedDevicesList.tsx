@@ -69,6 +69,7 @@ interface ManagedDevicesListProps {
 export function ManagedDevicesList({ agents, isLoading, onRefresh }: ManagedDevicesListProps) {
   const navigate = useNavigate();
   const basePath = getVanguardBasePath();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [aiSearchEnabled, setAiSearchEnabled] = useState(false);
@@ -162,6 +163,22 @@ export function ManagedDevicesList({ agents, isLoading, onRefresh }: ManagedDevi
     );
   };
 
+  const handleDeleteDevice = async () => {
+    if (!deletingId) return;
+    try {
+      const { error } = await supabase
+        .from('vanguard_agents')
+        .delete()
+        .eq('id', deletingId);
+      if (error) throw error;
+      toast.success('Device deleted');
+      setDeletingId(null);
+      onRefresh();
+    } catch (err: any) {
+      toast.error('Failed to delete device', { description: err.message });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -225,6 +242,7 @@ export function ManagedDevicesList({ agents, isLoading, onRefresh }: ManagedDevi
               isSelected={selectedDevices.includes(agent.id)}
               onSelect={() => toggleSelectDevice(agent.id)}
               onClick={() => navigate(`${basePath}/devices/${agent.id}`)}
+              onDelete={() => setDeletingId(agent.id)}
             />
           ))}
         </div>
@@ -297,8 +315,13 @@ export function ManagedDevicesList({ agents, isLoading, onRefresh }: ManagedDevi
                     </TableCell>
                   )}
                   <TableCell onClick={e => e.stopPropagation()}>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-cyan-400 hover:bg-cyan-500/20">
-                      <Zap className="h-4 w-4" />
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-7 w-7 p-0 text-red-400 hover:bg-red-500/20"
+                      onClick={() => setDeletingId(agent.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -307,6 +330,24 @@ export function ManagedDevicesList({ agents, isLoading, onRefresh }: ManagedDevi
           </Table>
         </Card>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Device?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this device and all its data. You'll need to reinstall the agent to re-enroll it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteDevice} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -316,11 +357,13 @@ function DeviceCard({
   isSelected,
   onSelect,
   onClick,
+  onDelete,
 }: {
   agent: VanguardAgent;
   isSelected: boolean;
   onSelect: () => void;
   onClick: () => void;
+  onDelete: () => void;
 }) {
   const lastHeartbeat = agent.last_heartbeat 
     ? formatDistanceToNow(new Date(agent.last_heartbeat), { addSuffix: true })
@@ -379,6 +422,14 @@ function DeviceCard({
             <span className="text-xs text-white/40">
               Last seen: {lastHeartbeat}
             </span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-7 w-7 p-0 text-red-400 hover:bg-red-500/20"
+              onClick={e => { e.stopPropagation(); onDelete(); }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </CardContent>
