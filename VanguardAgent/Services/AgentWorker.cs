@@ -268,17 +268,6 @@ public class AgentWorker : BackgroundService
             _logger.LogError(ex, "Error sending heartbeat");
         }
     }
-            }
-            else
-            {
-                _logger.LogWarning("Failed to send heartbeat");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error sending heartbeat");
-        }
-    }
 
     private async Task SendTelemetryAsync()
     {
