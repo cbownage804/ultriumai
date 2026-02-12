@@ -48,6 +48,7 @@ export default function VanguardSetup() {
   const [clients, setClients] = useState<MSPClient[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [loadingClients, setLoadingClients] = useState(true);
+  const [mspCompanyName, setMspCompanyName] = useState<string>('');
   
   // Download state
   const [isDownloading, setIsDownloading] = useState(false);
@@ -90,7 +91,7 @@ export default function VanguardSetup() {
       try {
         const { data: mspData, error: mspError } = await supabase
           .from('msps')
-          .select('id')
+          .select('id, company_name')
           .eq('user_id', user.id)
           .maybeSingle();
         
@@ -101,6 +102,8 @@ export default function VanguardSetup() {
           setLoadingClients(false);
           return;
         }
+        
+        setMspCompanyName(mspData.company_name || 'My Organization');
         
         const { data, error } = await supabase
           .from('msp_clients')
@@ -301,7 +304,7 @@ export default function VanguardSetup() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">
-                      <span className="text-muted-foreground">No client — personal use</span>
+                      <span className="text-muted-foreground">{mspCompanyName || 'My Organization'} (internal)</span>
                     </SelectItem>
                     {clients.map((client) => (
                       <SelectItem key={client.id} value={client.id}>
