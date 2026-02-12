@@ -7,8 +7,8 @@
  */
 
 export interface TierLimits {
-  /** Max concurrent RustDesk remote sessions */
-  rustdeskSessions: number;
+  /** Max concurrent remote sessions */
+  remoteSessions: number;
   /** Monthly file transfer allowance in GB */
   fileTransferGB: number;
   /** Audit log retention in months */
@@ -34,8 +34,8 @@ const UNLIMITED = Infinity;
 // ── MSP Plan Limits ──────────────────────────────────────────
 const MSP_LIMITS: Record<string, TierLimits> = {
   'msp-pro': {
-    rustdeskSessions: 2,
-    fileTransferGB: 0, // view only, no transfer
+    remoteSessions: 2,
+    fileTransferGB: 0,
     auditLogRetentionMonths: 1,
     customSupportAddresses: 5,
     customAssetTypes: 0,
@@ -46,7 +46,7 @@ const MSP_LIMITS: Record<string, TierLimits> = {
     networkDiscovery: false,
   },
   'msp-growth': {
-    rustdeskSessions: UNLIMITED,
+    remoteSessions: UNLIMITED,
     fileTransferGB: 15,
     auditLogRetentionMonths: 6,
     customSupportAddresses: 10,
@@ -58,7 +58,7 @@ const MSP_LIMITS: Record<string, TierLimits> = {
     networkDiscovery: false,
   },
   'msp-power': {
-    rustdeskSessions: UNLIMITED,
+    remoteSessions: UNLIMITED,
     fileTransferGB: 50,
     auditLogRetentionMonths: 12,
     customSupportAddresses: UNLIMITED,
@@ -70,9 +70,9 @@ const MSP_LIMITS: Record<string, TierLimits> = {
     networkDiscovery: false,
   },
   'msp-superpower': {
-    rustdeskSessions: UNLIMITED,
+    remoteSessions: UNLIMITED,
     fileTransferGB: UNLIMITED,
-    auditLogRetentionMonths: 84, // 7 years
+    auditLogRetentionMonths: 84,
     customSupportAddresses: UNLIMITED,
     customAssetTypes: UNLIMITED,
     customReports: UNLIMITED,
@@ -86,7 +86,7 @@ const MSP_LIMITS: Record<string, TierLimits> = {
 // ── IT Department Plan Limits ────────────────────────────────
 const IT_LIMITS: Record<string, TierLimits> = {
   'it-professional': {
-    rustdeskSessions: 2,
+    remoteSessions: 2,
     fileTransferGB: 15,
     auditLogRetentionMonths: 1,
     customSupportAddresses: 1,
@@ -98,7 +98,7 @@ const IT_LIMITS: Record<string, TierLimits> = {
     networkDiscovery: false,
   },
   'it-expert': {
-    rustdeskSessions: UNLIMITED,
+    remoteSessions: UNLIMITED,
     fileTransferGB: 50,
     auditLogRetentionMonths: 6,
     customSupportAddresses: 2,
@@ -110,7 +110,7 @@ const IT_LIMITS: Record<string, TierLimits> = {
     networkDiscovery: false,
   },
   'it-master': {
-    rustdeskSessions: UNLIMITED,
+    remoteSessions: UNLIMITED,
     fileTransferGB: 80,
     auditLogRetentionMonths: 12,
     customSupportAddresses: UNLIMITED,
@@ -122,9 +122,9 @@ const IT_LIMITS: Record<string, TierLimits> = {
     networkDiscovery: false,
   },
   'it-enterprise': {
-    rustdeskSessions: UNLIMITED,
+    remoteSessions: UNLIMITED,
     fileTransferGB: UNLIMITED,
-    auditLogRetentionMonths: 84, // 7 years
+    auditLogRetentionMonths: 84,
     customSupportAddresses: UNLIMITED,
     customAssetTypes: UNLIMITED,
     customReports: UNLIMITED,
@@ -137,7 +137,7 @@ const IT_LIMITS: Record<string, TierLimits> = {
 
 // ── Free / unsubscribed defaults ─────────────────────────────
 const FREE_LIMITS: TierLimits = {
-  rustdeskSessions: 0,
+  remoteSessions: 0,
   fileTransferGB: 0,
   auditLogRetentionMonths: 0,
   customSupportAddresses: 0,

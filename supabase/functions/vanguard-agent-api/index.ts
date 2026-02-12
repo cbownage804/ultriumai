@@ -34,7 +34,7 @@ serve(async (req) => {
     console.log(`[vanguard-agent-api] Action: ${action}, Device: ${body.device_id || 'N/A'}`);
 
     // Agent-side actions (require X-VANGUARD-KEY)
-    if (['register', 'heartbeat', 'scan_results', 'get_commands', 'command_response', 'security_telemetry', 'discovery_results', 'get_scanner_config', 'telemetry', 'update_rustdesk_id', 'xdr_threat', 'xdr_yara_match', 'xdr_memory_scan', 'xdr_script_analysis', 'xdr_get_rules', 'xdr_poll_actions', 'xdr_action_result'].includes(action)) {
+    if (['register', 'heartbeat', 'scan_results', 'get_commands', 'command_response', 'security_telemetry', 'discovery_results', 'get_scanner_config', 'telemetry', 'xdr_threat', 'xdr_yara_match', 'xdr_memory_scan', 'xdr_script_analysis', 'xdr_get_rules', 'xdr_poll_actions', 'xdr_action_result'].includes(action)) {
       if (agentKey !== VANGUARD_SECRET) {
         console.error('[vanguard-agent-api] Invalid agent key');
         return new Response(
@@ -62,8 +62,7 @@ serve(async (req) => {
           return await handleDiscoveryResults(supabase, body);
         case 'get_scanner_config':
           return await getScannerConfig(supabase, body);
-        case 'update_rustdesk_id':
-          return await handleUpdateRustDeskId(supabase, body);
+        // XDR/AV telemetry actions
         // XDR/AV telemetry actions
         case 'xdr_threat':
           return await handleXdrThreat(supabase, body);
@@ -83,7 +82,7 @@ serve(async (req) => {
     }
     
     // Dashboard-side actions (require JWT auth)
-    if (['ask', 'send_command', 'list_agents', 'get_metrics', 'delete_agent', 'set_scanner_role', 'list_scanners', 'list_discovered_devices', 'get_rustdesk_password'].includes(action)) {
+    if (['ask', 'send_command', 'list_agents', 'get_metrics', 'delete_agent', 'set_scanner_role', 'list_scanners', 'list_discovered_devices'].includes(action)) {
       if (!authHeader) {
         return new Response(
           JSON.stringify({ error: 'Authorization required' }),
@@ -119,8 +118,6 @@ serve(async (req) => {
           return await listScanners(supabase, user.id);
         case 'list_discovered_devices':
           return await listDiscoveredDevices(supabase, user.id, body);
-        case 'get_rustdesk_password':
-          return await getRustDeskPassword(supabase, user.id, body);
       }
     }
     
@@ -821,125 +818,8 @@ function formatSize(gb: number | undefined): string {
   return `${gb.toFixed(1)} GB`;
 }
 
-// Handle RustDesk ID update from agent
-async function handleUpdateRustDeskId(supabase: any, body: any) {
-  const { device_id, rustdesk_id } = body;
-  
-  const actualDeviceId = device_id || body.device_id;
-  
-  if (!actualDeviceId) {
-    return new Response(
-      JSON.stringify({ error: 'device_id is required' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-  
-  if (!rustdesk_id) {
-    return new Response(
-      JSON.stringify({ error: 'rustdesk_id is required' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-  
-  // Clean and validate: RustDesk IDs are numeric, typically 9 digits
-  const cleanId = String(rustdesk_id).replace(/\s+/g, '').trim();
-  if (!/^\d{6,}$/.test(cleanId)) {
-    console.warn(`[vanguard-agent-api] Rejected invalid RustDesk ID for ${actualDeviceId}: ${rustdesk_id}`);
-    return new Response(
-      JSON.stringify({ error: 'Invalid RustDesk ID format. Must be numeric (6+ digits).' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-  
-  // Update agent with clean RustDesk ID
-  const { error } = await supabase
-    .from('vanguard_agents')
-    .update({
-      rustdesk_id: cleanId,
-      updated_at: new Date().toISOString()
-    })
-    .eq('device_id', actualDeviceId);
-  
-  if (error) {
-    console.error('[vanguard-agent-api] Error updating RustDesk ID:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-  
-  console.log(`[vanguard-agent-api] Updated RustDesk ID for ${actualDeviceId}: ${cleanId}`);
-  
-  return new Response(
-    JSON.stringify({ status: 'ok', rustdesk_id: cleanId }),
-    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
 
-// Decrypt RustDesk password for technician access
-function decryptPassword(encrypted: string, key: string): string {
-  try {
-    const keyBytes = new TextEncoder().encode(key);
-    const encryptedBytes = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
-    const decrypted = new Uint8Array(encryptedBytes.length);
-    
-    for (let i = 0; i < encryptedBytes.length; i++) {
-      decrypted[i] = encryptedBytes[i] ^ keyBytes[i % keyBytes.length];
-    }
-    
-    return new TextDecoder().decode(decrypted);
-  } catch {
-    return '';
-  }
-}
 
-// Get RustDesk password for technician (dashboard action)
-async function getRustDeskPassword(supabase: any, userId: string, body: any) {
-  const { agent_id } = body;
-  
-  if (!agent_id) {
-    return new Response(
-      JSON.stringify({ error: 'agent_id is required' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-  
-  // Verify user owns this agent
-  const { data: agent, error } = await supabase
-    .from('vanguard_agents')
-    .select('id, rustdesk_id, rustdesk_password_encrypted')
-    .eq('id', agent_id)
-    .eq('user_id', userId)
-    .single();
-  
-  if (error || !agent) {
-    return new Response(
-      JSON.stringify({ error: 'Agent not found or access denied' }),
-      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-  
-  if (!agent.rustdesk_password_encrypted) {
-    return new Response(
-      JSON.stringify({ error: 'No password configured for this agent', password: null }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-  
-  // Decrypt the password
-  const encryptionKey = Deno.env.get('VANGUARD_AGENT_SECRET') || 'default-key';
-  const password = decryptPassword(agent.rustdesk_password_encrypted, encryptionKey);
-  
-  console.log(`[vanguard-agent-api] Password retrieved for agent ${agent_id} by user ${userId}`);
-  
-  return new Response(
-    JSON.stringify({ 
-      password,
-      rustdesk_id: agent.rustdesk_id 
-    }),
-    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
 
 
 async function handleScanResults(supabase: any, body: any) {

@@ -60,7 +60,7 @@ export function useVanguardLimits() {
 
   /** Human-readable limit labels */
   const LIMIT_LABELS: Record<string, string> = {
-    rustdeskSessions: 'concurrent remote sessions',
+    remoteSessions: 'concurrent remote sessions',
     fileTransferGB: 'GB of file transfer per month',
     auditLogRetentionMonths: 'months of audit log retention',
     customSupportAddresses: 'custom support addresses',

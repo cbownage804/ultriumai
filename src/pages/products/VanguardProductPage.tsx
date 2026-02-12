@@ -54,7 +54,7 @@ const VanguardProductPage = () => {
       capabilities: [
         "Endpoint and server monitoring",
         "Automated patch management with rollback",
-        "Built-in remote access via RustDesk",
+        "Built-in remote access via MeshCentral",
         "Fleet-wide software deployment"
       ],
       bestFor: "MSPs and IT teams that need proactive monitoring and operational control across all sites."

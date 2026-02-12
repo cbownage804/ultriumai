@@ -13,7 +13,7 @@ export interface RMMDevice {
   cpu_usage?: number | null;
   memory_usage?: number | null;
   disk_usage?: number | null;
-  rustdesk_id?: string | null;
+  
   last_logged_user?: string | null;
   agent_version?: string | null;
   customer_id?: string | null;
@@ -88,7 +88,6 @@ export const useRMMDevices = () => {
       ip_address: string;
       os_info?: string;
       device_type?: string;
-      rustdesk_id?: string;
     }) => {
       const { data, error } = await supabase
         .from('rmm_devices')
