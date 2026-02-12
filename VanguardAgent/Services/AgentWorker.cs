@@ -251,12 +251,26 @@ public class AgentWorker : BackgroundService
             var meshcentralNodeId = _meshCentralInstaller.GetNodeId();
             var meshcentralMeshId = _meshCentralInstaller.GetMeshId();
             
-            var success = await _api.SendHeartbeatAsync(heartbeat, meshcentralNodeId, meshcentralMeshId);
+            var response = await _api.SendHeartbeatAsync(heartbeat, meshcentralNodeId, meshcentralMeshId);
 
-            if (success)
+            if (response != null)
             {
                 _logger.LogDebug("Heartbeat sent: CPU={Cpu}%, RAM={Ram}%, MeshCentral={NodeId}", 
                     heartbeat.CpuPercent, heartbeat.MemoryPercent, meshcentralNodeId ?? "none");
+                
+                // If heartbeat response includes MeshCentral config and we haven't installed yet, trigger install
+                if (!_meshCentralSetupComplete && response.MeshCentralConfig != null && 
+                    response.MeshCentralConfig.Deploy && !string.IsNullOrEmpty(response.MeshCentralConfig.ServerUrl))
+                {
+                    _logger.LogInformation("Heartbeat includes MeshCentral deploy config: {Server}", 
+                        response.MeshCentralConfig.ServerUrl);
+                    _meshCentralInstaller.SetServerConfig(
+                        response.MeshCentralConfig.ServerUrl,
+                        response.MeshCentralConfig.MeshId ?? "");
+                    
+                    // Trigger MeshCentral installation in background
+                    _ = Task.Run(async () => await EnsureMeshCentralAsync());
+                }
             }
             else
             {

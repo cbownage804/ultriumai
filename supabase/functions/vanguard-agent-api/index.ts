@@ -482,10 +482,10 @@ async function handleHeartbeat(supabase: any, body: any, req?: Request) {
     disk_free: system.disk_root?.free,
   };
   
-  // Get agent by device_id
+  // Get agent by device_id (include user_id for MeshCentral config lookup)
   const { data: agent, error: agentError } = await supabase
     .from('vanguard_agents')
-    .select('id, config')
+    .select('id, config, user_id, meshcentral_node_id')
     .eq('device_id', device_id)
     .single();
   
@@ -602,8 +602,43 @@ async function handleHeartbeat(supabase: any, body: any, req?: Request) {
   
   console.log(`[vanguard-agent-api] Heartbeat from ${device_id}: CPU=${cpu_percent}%, MEM=${memory_percent}%, DISK=${disk_percent}%`);
   
+  // Build heartbeat response
+  const heartbeatResponse: Record<string, any> = { status: 'ok', received: { cpu_percent, memory_percent, disk_percent } };
+  
+  // If MeshCentral node ID is not yet reported, include deployment config so agent can install
+  if (!meshcentralNodeId && !agent.meshcentral_node_id && agent.user_id) {
+    try {
+      const { data: msp } = await supabase
+        .from('msps')
+        .select('id')
+        .eq('user_id', agent.user_id)
+        .maybeSingle();
+      
+      if (msp) {
+        const { data: assignment } = await supabase
+          .from('meshcentral_msp_assignments')
+          .select('mesh_group_id, meshcentral_servers(server_url)')
+          .eq('msp_id', msp.id)
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        if (assignment?.meshcentral_servers) {
+          const serverUrl = (assignment.meshcentral_servers as any).server_url?.replace(/\/+$/, '');
+          heartbeatResponse.meshcentral_config = {
+            deploy: true,
+            server_url: serverUrl,
+            mesh_id: assignment.mesh_group_id,
+          };
+          console.log(`[vanguard-agent-api] Heartbeat includes MeshCentral deploy config for ${device_id}: server=${serverUrl}`);
+        }
+      }
+    } catch (meshErr) {
+      console.warn(`[vanguard-agent-api] MeshCentral config lookup in heartbeat failed:`, meshErr);
+    }
+  }
+  
   return new Response(
-    JSON.stringify({ status: 'ok', received: { cpu_percent, memory_percent, disk_percent } }),
+    JSON.stringify(heartbeatResponse),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
 }
