@@ -240,7 +240,7 @@ export function VanguardDeviceDetails() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {/* MeshCentral primary Remote In button */}
+          {/* MeshCentral Remote In button */}
           {(agent as any).meshcentral_node_id ? (
             <Button
               size="sm"
@@ -249,44 +249,7 @@ export function VanguardDeviceDetails() {
                 toast.info('Opening MeshCentral remote desktop...');
                 const success = await openMeshCentralSession(nodeId);
                 if (!success) {
-                  toast.error('MeshCentral not available', {
-                    description: 'Falling back to RustDesk if available.',
-                  });
-                  // Fallback to RustDesk
-                  if (remoteAccess.rustdesk_id) {
-                    const rustdeskId = String(remoteAccess.rustdesk_id || '').replace(/\D/g, '');
-                    const url = `rustdesk://${rustdeskId}`;
-                    try {
-                      const { data: { session } } = await supabase.auth.getSession();
-                      if (session) {
-                        const response = await fetch(
-                          `${import.meta.env.VITE_SUPABASE_URL || 'https://nsyobmjpdpvesjwdphlh.supabase.co'}/functions/v1/vanguard-agent-api?action=get_rustdesk_password`,
-                          {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                              'Authorization': `Bearer ${session.access_token}`,
-                            },
-                            body: JSON.stringify({ agent_id: agent.id }),
-                          }
-                        );
-                        const data = await response.json();
-                        if (data?.password) {
-                          await navigator.clipboard.writeText(data.password);
-                          toast.success('Password copied — just paste when prompted', { duration: 5000 });
-                        }
-                      }
-                    } catch (err) {
-                      console.error('Failed to fetch/copy RustDesk password:', err);
-                    }
-                    launchProtocolWithFallback(url, () => {
-                      toast.warning("RustDesk didn't open", {
-                        description: 'Install RustDesk on this computer first.',
-                        action: { label: 'Download', onClick: () => window.open('https://rustdesk.com/download', '_blank') },
-                        duration: 10000,
-                      });
-                    });
-                  }
+                  toast.error('Failed to open MeshCentral session');
                 }
               }}
               className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
@@ -294,49 +257,17 @@ export function VanguardDeviceDetails() {
               <Monitor className="h-4 w-4" />
               Remote In
             </Button>
-          ) : remoteAccess.rustdesk_id ? (
+          ) : (
             <Button
               size="sm"
-              onClick={async () => {
-                const rustdeskId = String(remoteAccess.rustdesk_id || '').replace(/\D/g, '');
-                const url = `rustdesk://${rustdeskId}`;
-                try {
-                  const { data: { session } } = await supabase.auth.getSession();
-                  if (session) {
-                    const response = await fetch(
-                      `${import.meta.env.VITE_SUPABASE_URL || 'https://nsyobmjpdpvesjwdphlh.supabase.co'}/functions/v1/vanguard-agent-api?action=get_rustdesk_password`,
-                      {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${session.access_token}`,
-                        },
-                        body: JSON.stringify({ agent_id: agent.id }),
-                      }
-                    );
-                    const data = await response.json();
-                    if (data?.password) {
-                      await navigator.clipboard.writeText(data.password);
-                      toast.success('Password copied — just paste when prompted', { duration: 5000 });
-                    }
-                  }
-                } catch (err) {
-                  console.error('Failed to fetch/copy RustDesk password:', err);
-                }
-                launchProtocolWithFallback(url, () => {
-                  toast.warning("RustDesk didn't open", {
-                    description: 'Install RustDesk on this computer first.',
-                    action: { label: 'Download', onClick: () => window.open('https://rustdesk.com/download', '_blank') },
-                    duration: 10000,
-                  });
-                });
-              }}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white gap-2"
+              disabled
+              className="bg-slate-700 text-slate-400 gap-2 cursor-not-allowed"
+              title="MeshCentral agent not yet detected on this device"
             >
               <Monitor className="h-4 w-4" />
-              Remote In (RustDesk)
+              Remote In
             </Button>
-          ) : null}
+          )}
           <span className="text-sm text-slate-400 hidden md:block">
             {agent.ip_address || 'No IP'} • {agent.location || 'No location'}
           </span>
@@ -397,7 +328,7 @@ export function VanguardDeviceDetails() {
           {!(agent as any).meshcentral_node_id && (
             <ModuleIntroBanner
               title="MeshCentral Not Detected on This Device"
-              description="MeshCentral agent needs to be installed for zero-touch browser-based remote access. RustDesk is available as a backup."
+              description="MeshCentral agent needs to be installed for zero-touch browser-based remote access. Rebuild and redeploy the Vanguard agent to enable it."
               features={["Browser-based — no client install needed", "Zero-touch unattended access"]}
               docsUrl="https://meshcentral.com"
               docsLabel="Learn about MeshCentral"
