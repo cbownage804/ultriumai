@@ -140,7 +140,7 @@ public class ApiClient
         return null;
     }
 
-    public async Task<bool> SendHeartbeatAsync(HeartbeatPayload heartbeat, string? meshcentralNodeId = null, string? meshcentralMeshId = null)
+    public async Task<HeartbeatResponse?> SendHeartbeatAsync(HeartbeatPayload heartbeat, string? meshcentralNodeId = null, string? meshcentralMeshId = null)
     {
         try
         {
@@ -154,17 +154,30 @@ public class ApiClient
                 disk_percent = heartbeat.DiskPercent,
                 uptime_seconds = heartbeat.UptimeSeconds,
                 timestamp = heartbeat.Timestamp,
-                agent_version = "1.1.0",
+                agent_version = "1.2.0",
                 meshcentral_node_id = meshcentralNodeId,
                 meshcentral_mesh_id = meshcentralMeshId
             };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
             var response = await _http.PostAsync(Config.ApiEndpoint + "?action=heartbeat", content);
-            return response.IsSuccessStatusCode;
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    return JsonConvert.DeserializeObject<HeartbeatResponse>(json);
+                }
+                catch
+                {
+                    return new HeartbeatResponse { Status = "ok" };
+                }
+            }
+            return null;
         }
         catch
         {
-            return false;
+            return null;
         }
     }
 
@@ -826,6 +839,17 @@ public class MeshCentralDeployConfig
     public string? MeshId { get; set; }
 }
 
+/// <summary>
+/// Response from heartbeat endpoint — may include MeshCentral deployment config
+/// </summary>
+public class HeartbeatResponse
+{
+    [JsonProperty("status")]
+    public string? Status { get; set; }
+    
+    [JsonProperty("meshcentral_config")]
+    public MeshCentralDeployConfig? MeshCentralConfig { get; set; }
+}
 
 public class DeviceInfo
 {
