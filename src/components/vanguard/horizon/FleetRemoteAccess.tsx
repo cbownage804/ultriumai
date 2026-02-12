@@ -139,9 +139,9 @@ export function FleetRemoteAccess() {
   };
 
   const handleConnect = async (deviceId: string, type: string) => {
-    // Enforce concurrent RustDesk session limit
+    // Enforce concurrent session limit
     const activeSessions = sessions.filter(s => s.status === 'active').length;
-    if (!enforceLimit('rustdeskSessions', activeSessions)) return;
+    if (!enforceLimit('remoteSessions', activeSessions)) return;
 
     setIsConnecting(`${deviceId}-${type}`);
     const device = devices.find((d) => d.id === deviceId);

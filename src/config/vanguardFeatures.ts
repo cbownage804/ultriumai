@@ -259,9 +259,9 @@ export const VANGUARD_FEATURE_CATEGORIES: FeatureCategory[] = [
     color: 'blue',
     features: [
       {
-        id: 'rustdesk-integration',
-        name: 'RustDesk Integration',
-        description: 'Open-source remote desktop with built-in license for unlimited technician access.',
+        id: 'meshcentral-integration',
+        name: 'MeshCentral Integration',
+        description: 'Zero-touch browser-based remote desktop with unattended access.',
         icon: Monitor,
         route: '/vanguard/devices'
       },

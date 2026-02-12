@@ -139,11 +139,11 @@ export function VanguardDeviceDetails() {
   };
 
   const handleUpdateRemoteIds = async (ids: {
-    rustdeskId?: string; splashtopId?: string; anydeskId?: string; teamviewerId?: string;
+    splashtopId?: string; anydeskId?: string; teamviewerId?: string;
   }) => {
     await updateAgentConfig({
       remote_access: {
-        rustdesk_id: ids.rustdeskId, splashtop_id: ids.splashtopId,
+        splashtop_id: ids.splashtopId,
         anydesk_id: ids.anydeskId, teamviewer_id: ids.teamviewerId,
       },
     });
@@ -184,7 +184,6 @@ export function VanguardDeviceDetails() {
   }));
 
   const remoteAccess = {
-    rustdesk_id: agent.rustdesk_id || agent.config?.remote_access?.rustdesk_id,
     splashtop_id: agent.config?.remote_access?.splashtop_id,
     anydesk_id: agent.config?.remote_access?.anydesk_id,
     teamviewer_id: agent.config?.remote_access?.teamviewer_id,
@@ -462,7 +461,6 @@ export function VanguardDeviceDetails() {
               <RemoteAccessPanel
                 agentId={agent.id}
                 deviceName={agent.name}
-                rustdeskId={remoteAccess.rustdesk_id}
                 splashtopId={remoteAccess.splashtop_id}
                 anydeskId={remoteAccess.anydesk_id}
                 teamviewerId={remoteAccess.teamviewer_id}

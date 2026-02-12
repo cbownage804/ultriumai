@@ -1,5 +1,5 @@
 /**
- * Launch a custom protocol URL (e.g., rustdesk://, anydesk:, teamviewer10://)
+ * Launch a custom protocol URL (e.g., anydesk:, teamviewer10://, splashtop://)
  * 
  * This handles the tricky case of launching protocol handlers from inside
  * iframe-sandboxed environments (like Lovable preview). When inside an iframe,
@@ -34,7 +34,7 @@ export function launchProtocolUrl(url: string): void {
  * Launch a protocol URL and show a fallback warning after a delay
  * if the app didn't appear to open (page is still visible/focused).
  * 
- * @param url - The protocol URL to launch (e.g. rustdesk://123456)
+ * @param url - The protocol URL to launch (e.g. anydesk:123456)
  * @param onPossibleFailure - Called after ~3s if the page is still focused,
  *                            indicating the protocol handler likely didn't fire.
  */

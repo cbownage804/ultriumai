@@ -23,9 +23,6 @@ class AgentService: ObservableObject {
     private let config = AgentConfig.shared
     private let telemetryCollector = TelemetryCollector()
     private let commandExecutor = CommandExecutor()
-    private let rustDeskInstaller = RustDeskInstaller.shared
-    
-    @Published var rustDeskId: String?
     
     enum ConnectionStatus {
         case connected, disconnected, connecting
@@ -38,9 +35,6 @@ class AgentService: ObservableObject {
         // Initial registration
         Task {
             await register()
-            
-            // Setup RustDesk for remote access
-            await setupRustDesk()
         }
         
         // Start heartbeat timer (every 60 seconds)
@@ -72,40 +66,6 @@ class AgentService: ObservableObject {
         heartbeatTimer = nil
         telemetryTimer = nil
         commandPollTimer = nil
-    }
-    
-    // MARK: - RustDesk Setup
-    
-    private func setupRustDesk() async {
-        // Extract base URL from API endpoint
-        let apiBaseUrl = config.apiEndpoint
-            .replacingOccurrences(of: "/functions/v1/vanguard-agent-api", with: "")
-        
-        let (success, id) = await rustDeskInstaller.ensureInstalledAndConfigured(apiBaseUrl: apiBaseUrl)
-        
-        if success {
-            await MainActor.run {
-                self.rustDeskId = id
-            }
-            
-            // Report RustDesk ID to server if available
-            if let id = id {
-                await reportRustDeskId(id)
-            }
-        }
-    }
-    
-    private func reportRustDeskId(_ id: String) async {
-        let payload: [String: Any] = [
-            "rustdesk_id": id
-        ]
-        
-        do {
-            let _ = try await apiRequest(action: "update_rustdesk_id", payload: payload)
-            print("[RustDesk] Reported ID to server: \(id)")
-        } catch {
-            print("[RustDesk] Failed to report ID: \(error)")
-        }
     }
     
     // MARK: - API Calls

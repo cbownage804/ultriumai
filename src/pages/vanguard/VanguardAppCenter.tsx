@@ -17,7 +17,7 @@ import { getVanguardBasePath } from '@/utils/subdomain';
 const initialApps = [
   { id: '1', name: 'SafePass', description: 'Enterprise password manager for teams', icon: Lock, category: 'security', installed: true, rating: 4.9, installs: '10k+', route: '/safepass' },
   { id: '2', name: 'SafeScan', description: 'Vulnerability scanning & remediation', icon: Shield, category: 'security', installed: true, rating: 4.8, installs: '8k+', route: '/safescan' },
-  { id: '3', name: 'RustDesk', description: 'Remote desktop access solution', icon: Monitor, category: 'remote', installed: false, rating: 4.7, installs: '15k+', route: null },
+  { id: '3', name: 'MeshCentral', description: 'Zero-touch browser-based remote desktop', icon: Monitor, category: 'remote', installed: true, rating: 4.9, installs: '15k+', route: null },
   { id: '4', name: 'Backup Pro', description: 'Cloud backup and disaster recovery', icon: Cloud, category: 'backup', installed: true, rating: 4.6, installs: '12k+', route: '/backups' },
   { id: '5', name: 'SIEM Connect', description: 'Security event correlation engine', icon: Database, category: 'security', installed: false, rating: 4.5, installs: '5k+', route: '/siem' },
   { id: '6', name: 'Patch Manager', description: 'Automated patch deployment', icon: Zap, category: 'management', installed: true, rating: 4.8, installs: '20k+', route: '/patches' },

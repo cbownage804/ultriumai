@@ -163,7 +163,7 @@ export const AgentDeployment: React.FC = () => {
                 </Badge>
               </div>
               <CardDescription>
-                PowerShell-based agent with RustDesk integration, compliance scanning, and remote execution.
+                PowerShell-based agent with MeshCentral integration, compliance scanning, and remote execution.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -210,7 +210,7 @@ export const AgentDeployment: React.FC = () => {
                     'CIS Compliance Scanning',
                     'NIST 800-53 Checks',
                     'PCI-DSS Validation',
-                    'RustDesk Integration',
+                    'MeshCentral Integration',
                     'Remote PowerShell',
                     'Process Management',
                     'Service Control',
@@ -382,14 +382,14 @@ export const AgentDeployment: React.FC = () => {
               <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
             </a>
             <a
-              href="https://docs.vanguard.app/rustdesk-setup"
+              href="https://meshcentral.com"
               target="_blank"
               rel="noopener noreferrer"
               className="p-4 border rounded-lg hover:bg-muted transition-colors flex items-start gap-3"
             >
               <Monitor className="h-5 w-5 text-primary mt-0.5" />
               <div>
-                <h4 className="font-medium">RustDesk Setup</h4>
+                <h4 className="font-medium">MeshCentral Setup</h4>
                 <p className="text-sm text-muted-foreground">
                   Configure remote access
                 </p>
