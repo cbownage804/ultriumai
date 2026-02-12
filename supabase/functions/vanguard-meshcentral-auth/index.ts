@@ -6,6 +6,75 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/**
+ * Generate a MeshCentral login token using the loginTokenKey.
+ * Token format: AES-256-GCM encrypted cookie → base64url(iv + authTag + ciphertext)
+ * with +/ replaced by @$ and no = padding (MeshCentral convention).
+ */
+async function generateLoginToken(
+  loginTokenKeyHex: string,
+  username: string,
+  domain: string = ""
+): Promise<string> {
+  // The loginTokenKey is a hex string. First 32 bytes (64 hex chars) = AES key
+  const keyBytes = hexToBytes(loginTokenKeyHex.substring(0, 64));
+
+  // Build the cookie payload matching MeshCentral's encodeCookie format
+  const cookieData = JSON.stringify({
+    a: 3, // action type 3 = login token
+    u: `user/${domain}/${username}`,
+    time: Math.floor(Date.now() / 1000),
+    expire: Math.floor(Date.now() / 1000) + 300, // 5 min expiry
+  });
+
+  const encoder = new TextEncoder();
+  const plaintext = encoder.encode(cookieData);
+
+  // Generate random 12-byte IV
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+
+  // Import AES-256-GCM key
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyBytes,
+    { name: "AES-GCM" },
+    false,
+    ["encrypt"]
+  );
+
+  // Encrypt with AES-256-GCM (produces ciphertext + 16-byte auth tag appended)
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv, tagLength: 128 },
+    cryptoKey,
+    plaintext
+  );
+
+  const encryptedArray = new Uint8Array(encrypted);
+  // Web Crypto appends the auth tag at the end of the ciphertext
+  const ciphertext = encryptedArray.slice(0, encryptedArray.length - 16);
+  const authTag = encryptedArray.slice(encryptedArray.length - 16);
+
+  // MeshCentral token format: base64(iv + authTag + ciphertext) with custom alphabet
+  const combined = new Uint8Array(iv.length + authTag.length + ciphertext.length);
+  combined.set(iv, 0);
+  combined.set(authTag, iv.length);
+  combined.set(ciphertext, iv.length + authTag.length);
+
+  // Base64 encode then replace +/ with @$ and strip = padding
+  const base64 = btoa(String.fromCharCode(...combined));
+  const token = base64.replace(/\+/g, "@").replace(/\//g, "$").replace(/=+$/, "");
+
+  return token;
+}
+
+function hexToBytes(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  }
+  return bytes;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -105,34 +174,24 @@ Deno.serve(async (req) => {
 
     const baseUrl = server.server_url.replace(/\/+$/, "");
 
-    // Generate a login token via MeshCentral API
-    const tokenResponse = await fetch(`${baseUrl}/api/gettoken`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user: server.admin_username,
-        pass: server.admin_password_encrypted,
-        expire: 300,
-      }),
-    });
+    // Get the login token key (from server record or env fallback)
+    const loginTokenKey = server.login_token_key || Deno.env.get("MESHCENTRAL_LOGIN_KEY");
 
-    if (!tokenResponse.ok) {
-      const errText = await tokenResponse.text();
-      console.error("MeshCentral token request failed:", tokenResponse.status, errText);
+    if (!loginTokenKey) {
+      console.error("No MESHCENTRAL_LOGIN_KEY configured");
       return new Response(
-        JSON.stringify({ error: "Failed to generate remote access token", details: errText }),
-        {
-          status: 502,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        JSON.stringify({ error: "Remote access not configured", details: "Login token key not set" }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const tokenData = await tokenResponse.json();
-    const loginToken = tokenData.token || tokenData;
-    const remoteUrl = `${baseUrl}/login?token=${encodeURIComponent(
-      typeof loginToken === "string" ? loginToken : JSON.stringify(loginToken)
-    )}&gotonode=${encodeURIComponent(node_id)}&viewmode=12`;
+    // Generate login token locally using AES-256-GCM (no API call needed)
+    const adminUser = server.admin_username || Deno.env.get("MESHCENTRAL_ADMIN_USER") || "admin";
+    const loginToken = await generateLoginToken(loginTokenKey, adminUser);
+
+    console.log(`Generated MeshCentral login token for user ${user.id}, node ${node_id}`);
+
+    const remoteUrl = `${baseUrl}/?login=${encodeURIComponent(loginToken)}&gotonode=${encodeURIComponent(node_id)}&viewmode=12`;
 
     return new Response(
       JSON.stringify({
@@ -161,7 +220,6 @@ Deno.serve(async (req) => {
  * Provision a device group on MeshCentral for a new MSP and save the assignment.
  */
 async function provisionMspGroup(supabase: any, mspId: string, mspName: string) {
-  // 1. Pick the least-loaded server
   const { data: server, error: serverErr } = await supabase
     .from("meshcentral_servers")
     .select("*")
@@ -177,7 +235,6 @@ async function provisionMspGroup(supabase: any, mspId: string, mspName: string) 
 
   const baseUrl = server.server_url.replace(/\/+$/, "");
 
-  // 2. Authenticate with MeshCentral to get admin token
   let adminToken: string;
   try {
     const authRes = await fetch(`${baseUrl}/api/gettoken`, {
@@ -194,11 +251,9 @@ async function provisionMspGroup(supabase: any, mspId: string, mspName: string) 
     adminToken = typeof authData === "string" ? authData : authData.token || JSON.stringify(authData);
   } catch (e) {
     console.error("MeshCentral admin auth failed:", e);
-    // Still create the assignment without a real mesh group — can be synced later
     adminToken = "";
   }
 
-  // 3. Create a device group on MeshCentral
   let meshGroupId = `msp-${mspId.substring(0, 8)}`;
   if (adminToken) {
     try {
@@ -211,7 +266,7 @@ async function provisionMspGroup(supabase: any, mspId: string, mspName: string) 
         body: JSON.stringify({
           name: `Vanguard - ${mspName}`,
           desc: `Auto-provisioned device group for MSP ${mspName}`,
-          type: 2, // type 2 = agent-managed devices
+          type: 2,
         }),
       });
       if (createGroupRes.ok) {
@@ -226,7 +281,6 @@ async function provisionMspGroup(supabase: any, mspId: string, mspName: string) 
     }
   }
 
-  // 4. Save the assignment
   const { error: assignErr } = await supabase
     .from("meshcentral_msp_assignments")
     .insert({
@@ -241,7 +295,6 @@ async function provisionMspGroup(supabase: any, mspId: string, mspName: string) 
     return { error: "Failed to save assignment", details: assignErr.message };
   }
 
-  // 5. Increment device count
   await supabase
     .from("meshcentral_servers")
     .update({
@@ -260,7 +313,7 @@ async function getAssignedServer(supabase: any, mspId?: string) {
   if (mspId) {
     const { data: assignment } = await supabase
       .from("meshcentral_msp_assignments")
-      .select("server_id, mesh_group_id, meshcentral_servers(server_url, admin_username, admin_password_encrypted, region, display_name)")
+      .select("server_id, mesh_group_id, meshcentral_servers(server_url, admin_username, admin_password_encrypted, login_token_key, region, display_name)")
       .eq("msp_id", mspId)
       .eq("is_active", true)
       .maybeSingle();
@@ -270,10 +323,9 @@ async function getAssignedServer(supabase: any, mspId?: string) {
     }
   }
 
-  // Fallback: least-loaded active server
   const { data: defaultServer } = await supabase
     .from("meshcentral_servers")
-    .select("server_url, admin_username, admin_password_encrypted, region, display_name")
+    .select("server_url, admin_username, admin_password_encrypted, login_token_key, region, display_name")
     .eq("is_active", true)
     .order("current_device_count", { ascending: true })
     .limit(1)
@@ -291,6 +343,7 @@ async function getAssignedServer(supabase: any, mspId?: string) {
       server_url: meshUrl,
       admin_username: meshUser,
       admin_password_encrypted: meshPass,
+      login_token_key: Deno.env.get("MESHCENTRAL_LOGIN_KEY") || null,
       region: "default",
       display_name: "Default Server",
     };
