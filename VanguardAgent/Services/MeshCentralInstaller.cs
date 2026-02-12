@@ -38,7 +38,13 @@ public class MeshCentralInstaller
     public MeshCentralInstaller(ConfigService configService)
     {
         _configService = configService;
-        _httpClient = new HttpClient();
+        
+        // MeshCentral servers often use self-signed certs on raw IPs — bypass validation
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+        };
+        _httpClient = new HttpClient(handler);
         _httpClient.Timeout = TimeSpan.FromMinutes(10);
 
         // Load cached node ID
