@@ -103,8 +103,7 @@ public class ApiClient
                     bios_version = deviceInfo.BiosVersion,
                     video_card = deviceInfo.VideoCard,
                     sound_card = deviceInfo.SoundCard
-                },
-                rustdesk_id = deviceInfo.RustDeskId
+                }
             };
             
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
@@ -141,7 +140,7 @@ public class ApiClient
         return null;
     }
 
-    public async Task<bool> SendHeartbeatAsync(HeartbeatPayload heartbeat, string? rustdeskId = null, string? rustdeskStatus = null, string? meshcentralNodeId = null, string? meshcentralMeshId = null)
+    public async Task<bool> SendHeartbeatAsync(HeartbeatPayload heartbeat, string? meshcentralNodeId = null, string? meshcentralMeshId = null)
     {
         try
         {
@@ -156,8 +155,6 @@ public class ApiClient
                 uptime_seconds = heartbeat.UptimeSeconds,
                 timestamp = heartbeat.Timestamp,
                 agent_version = "1.1.0",
-                rustdesk_id = rustdeskId,
-                rustdesk_status = rustdeskStatus,
                 meshcentral_node_id = meshcentralNodeId,
                 meshcentral_mesh_id = meshcentralMeshId
             };
@@ -255,29 +252,6 @@ public class ApiClient
             };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
             var response = await _http.PostAsync(Config.ApiEndpoint, content);
-            return response.IsSuccessStatusCode;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Update the device's RustDesk ID
-    /// </summary>
-    public async Task<bool> UpdateDeviceRustDeskIdAsync(string rustDeskId)
-    {
-        try
-        {
-            SetHeaders();
-            var payload = new
-            {
-                device_id = Config.DeviceId,
-                rustdesk_id = rustDeskId
-            };
-            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
-            var response = await _http.PostAsync(Config.ApiEndpoint + "?action=update_rustdesk_id", content);
             return response.IsSuccessStatusCode;
         }
         catch
@@ -827,40 +801,11 @@ public class RegistrationResponse
     public string? Error { get; set; }
     
     /// <summary>
-    /// RustDesk relay configuration returned by server during registration.
-    /// When present, the agent should auto-configure RustDesk with these settings
-    /// instead of making a separate relay-config fetch.
-    /// </summary>
-    [JsonProperty("rustdesk_config")]
-    public RustDeskDeployConfig? RustDeskConfig { get; set; }
-
-    /// <summary>
     /// MeshCentral deployment configuration returned by server during registration.
     /// When present, the agent should auto-install MeshAgent with these settings.
     /// </summary>
     [JsonProperty("meshcentral_config")]
     public MeshCentralDeployConfig? MeshCentralConfig { get; set; }
-}
-
-/// <summary>
-/// RustDesk deployment configuration returned during agent registration
-/// </summary>
-public class RustDeskDeployConfig
-{
-    [JsonProperty("deploy")]
-    public bool Deploy { get; set; }
-    
-    [JsonProperty("relay_server")]
-    public string? RelayServer { get; set; }
-    
-    [JsonProperty("public_key")]
-    public string? PublicKey { get; set; }
-    
-    [JsonProperty("api_server")]
-    public string? ApiServer { get; set; }
-    
-    [JsonProperty("version")]
-    public string? Version { get; set; }
 }
 
 /// <summary>
@@ -950,11 +895,6 @@ public class DeviceInfo
     public string SoundCard { get; set; } = "";
 
     // Remote Access - Auto-detected
-    [JsonProperty("rustdesk_id")]
-    public string? RustDeskId { get; set; }
-
-    [JsonProperty("rustdesk_relay_server")]
-    public string? RustDeskRelayServer { get; set; }
 
     [JsonProperty("anydesk_id")]
     public string? AnyDeskId { get; set; }
