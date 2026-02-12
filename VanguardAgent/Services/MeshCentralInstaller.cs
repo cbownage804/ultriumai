@@ -1,7 +1,7 @@
 // =============================================================================
 // MeshCentral Agent Installer Service
 // Automatically installs and configures MeshAgent for zero-touch remote access
-// Primary remote access — RustDesk remains as backup for attended access
+// Primary remote access solution for Vanguard
 // =============================================================================
 
 using System.Diagnostics;
