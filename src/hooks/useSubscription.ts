@@ -81,13 +81,19 @@ export const useSubscription = () => {
             subscription_end: dbData.subscription_end
           });
         } else {
-          throw error;
+        throw error;
         }
       } catch (fallbackError) {
         console.error('Fallback also failed:', fallbackError);
+        // Don't block the UI — default to free tier so the page still loads
+        setSubscription({
+          subscribed: false,
+          subscription_tier: "free",
+          subscription_end: null,
+        });
         toast({
           title: "Error",
-          description: "Failed to check subscription status.",
+          description: "Failed to check subscription status. Some features may be limited.",
           variant: "destructive",
         });
       }
