@@ -103,9 +103,10 @@
     <Property Id="ENABLETRAY" Value="1" Secure="yes" />
 
     <!-- Custom action to update config.json with provided credentials -->
+    <!-- All properties are quoted so empty values don't shift subsequent arguments -->
     <CustomAction Id="UpdateConfig"
                   Directory="INSTALLFOLDER"
-                  ExeCommand="[INSTALLFOLDER]VanguardAgent.exe --register --user-id [USERID] --secret-key [SECRETKEY] --client-id [CLIENTID] --portal-key [PORTALKEY] --portal-name &quot;[PORTALNAME]&quot; --portal-url [PORTALURL] --show-portal 1"
+                  ExeCommand="[INSTALLFOLDER]VanguardAgent.exe --register --user-id &quot;[USERID]&quot; --secret-key &quot;[SECRETKEY]&quot; --client-id &quot;[CLIENTID]&quot; --portal-key &quot;[PORTALKEY]&quot; --portal-name &quot;[PORTALNAME]&quot; --portal-url &quot;[PORTALURL]&quot; --show-portal 1"
                   Execute="deferred"
                   Impersonate="no"
                   Return="ignore" />

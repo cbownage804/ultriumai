@@ -230,33 +230,53 @@ public class Program
         string? portalUrl = null;
         bool showPortal = true;
 
-        for (int i = 0; i < args.Length - 1; i++)
+        // Helper: get next arg value, skipping if it looks like another flag or is empty
+        string? GetArgValue(string[] a, int idx)
+        {
+            if (idx + 1 >= a.Length) return null;
+            var val = a[idx + 1].Trim('"'); // Strip quotes from msiexec properties
+            // If the "value" starts with "--", it's actually the next flag (empty value case)
+            if (val.StartsWith("--")) return null;
+            // If msiexec passed an empty property, skip it
+            if (string.IsNullOrWhiteSpace(val)) return null;
+            return val;
+        }
+
+        for (int i = 0; i < args.Length; i++)
         {
             switch (args[i])
             {
                 case "--user-id":
-                    userId = args[i + 1];
+                    userId = GetArgValue(args, i);
+                    if (userId != null) i++;
                     break;
                 case "--secret-key":
-                    secretKey = args[i + 1];
+                    secretKey = GetArgValue(args, i);
+                    if (secretKey != null) i++;
                     break;
                 case "--client-id":
-                    clientId = args[i + 1];
+                    clientId = GetArgValue(args, i);
+                    if (clientId != null) i++;
                     break;
                 case "--device-name":
-                    deviceName = args[i + 1];
+                    deviceName = GetArgValue(args, i);
+                    if (deviceName != null) i++;
                     break;
                 case "--portal-key":
-                    portalKey = args[i + 1];
+                    portalKey = GetArgValue(args, i);
+                    if (portalKey != null) i++;
                     break;
                 case "--portal-name":
-                    portalName = args[i + 1];
+                    portalName = GetArgValue(args, i);
+                    if (portalName != null) i++;
                     break;
                 case "--portal-url":
-                    portalUrl = args[i + 1];
+                    portalUrl = GetArgValue(args, i);
+                    if (portalUrl != null) i++;
                     break;
                 case "--show-portal":
-                    showPortal = args[i + 1] == "1" || args[i + 1].ToLower() == "true";
+                    var spVal = GetArgValue(args, i);
+                    if (spVal != null) { showPortal = spVal == "1" || spVal.ToLower() == "true"; i++; }
                     break;
             }
         }
