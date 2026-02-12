@@ -355,8 +355,18 @@ public class MeshCentralInstaller
     /// </summary>
     public async Task<bool> EnsureInstalledAndConfiguredAsync(string apiBaseUrl)
     {
-        // 1. Fetch config from server
-        var hasConfig = await FetchMeshConfigAsync(apiBaseUrl);
+        // 1. Use pre-loaded config from registration if available, otherwise fetch
+        var hasConfig = !string.IsNullOrEmpty(_meshServerUrl) && !string.IsNullOrEmpty(_meshId);
+        
+        if (hasConfig)
+        {
+            Console.WriteLine("[MeshCentral] Using pre-loaded config from registration");
+        }
+        else
+        {
+            hasConfig = await FetchMeshConfigAsync(apiBaseUrl);
+        }
+        
         if (!hasConfig)
         {
             Console.WriteLine("[MeshCentral] No MeshCentral config available — skipping install");
