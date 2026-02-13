@@ -1,34 +1,31 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutGrid, Shield, Brain, Cpu } from 'lucide-react';
+import { LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import vanguardLogo from '@/assets/vanguard-logo.png';
+import safesuiteLogo from '@/assets/safesuite-logo.png';
+import aiStudioLogo from '@/assets/ai-studio-logo.png';
 
 const apps = [
   {
     name: 'Vanguard',
-    description: 'RMM & Security',
-    icon: Shield,
+    logo: vanguardLogo,
     path: '/vanguard',
-    gradient: 'from-cyan-500 to-blue-600',
   },
   {
     name: 'SafeSuite',
-    description: 'Compliance & Tools',
-    icon: Cpu,
+    logo: safesuiteLogo,
     path: '/safesuite',
-    gradient: 'from-emerald-500 to-teal-600',
   },
   {
     name: 'AI Studio',
-    description: 'Build & Automate',
-    icon: Brain,
+    logo: aiStudioLogo,
     path: '/ai-studio',
-    gradient: 'from-purple-500 to-pink-600',
   },
 ];
 
@@ -57,8 +54,8 @@ export function AppSwitcher() {
               onClick={() => setOpen(false)}
               className="flex flex-col items-center gap-1.5 rounded-lg p-3 hover:bg-accent transition-colors text-center"
             >
-              <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${app.gradient} flex items-center justify-center shadow-sm`}>
-                <app.icon className="h-5 w-5 text-white" />
+              <div className="h-10 w-10 rounded-xl overflow-hidden flex items-center justify-center bg-muted/50">
+                <img src={app.logo} alt={app.name} className="h-9 w-9 object-contain" />
               </div>
               <span className="text-xs font-medium text-foreground leading-tight">{app.name}</span>
             </Link>
