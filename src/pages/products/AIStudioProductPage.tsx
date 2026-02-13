@@ -6,7 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { 
   ArrowRight, Building2, Users, Globe, Shield, BarChart3, 
   Palette, Lock, Zap, Check, Settings, Bot, FileText,
-  Eye, Database, Workflow, MessageSquare, Play
+  Eye, Database, Workflow, MessageSquare, Play, Code,
+  Smartphone, Layers, GitBranch, Image, Sparkles, Share2,
+  Globe2, BookOpen, Search, Key, PenTool, MonitorSmartphone,
+  Blocks, Cpu, Send, RefreshCw
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
@@ -195,16 +198,32 @@ const AIStudioProductPage = () => {
       <section className="py-16 px-4 border-b border-border/50">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl md:text-3xl font-bold mb-6">What is AI Studio?</h2>
-          <p className="text-lg text-muted-foreground leading-relaxed mb-8">
+          <p className="text-lg text-muted-foreground leading-relaxed">
             AI Studio is a <strong className="text-foreground">Business AI Control Plane</strong> that enables 
             organizations to deploy governed AI assistants at scale. Unlike consumer chatbots, AI Studio provides 
             the governance, visibility, and predictability that business operations require — from centralized 
             policy management to detailed usage analytics and white-label delivery.
           </p>
+        </div>
+      </section>
 
-          {/* App Builder Showcase */}
-          <div className="mb-10">
-            <Card className="bg-card/50 border-primary/30 hover:border-primary/50 transition-all overflow-hidden">
+      {/* App Builder Deep Dive */}
+      <section className="py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-primary/20 text-primary border-primary/30">
+              <Code className="h-3 w-3 mr-1" />
+              AI-Powered IDE
+            </Badge>
+            <h2 className="text-3xl font-bold mb-4">App Builder</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Build full web applications by chatting with AI. Describe what you want and watch it come to life — no coding required.
+            </p>
+          </div>
+
+          {/* App Builder Showcase Image */}
+          <div className="mb-12">
+            <Card className="bg-card/50 border-primary/30 overflow-hidden shadow-xl shadow-primary/10">
               <CardContent className="p-0">
                 <div className="relative rounded-t-lg overflow-hidden">
                   <img 
@@ -213,52 +232,108 @@ const AIStudioProductPage = () => {
                     className="w-full h-auto"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
-                </div>
-                <div className="p-6 text-center -mt-12 relative z-10">
-                  <Badge className="mb-3 bg-primary/20 text-primary border-primary/30">
-                    <Zap className="h-3 w-3 mr-1" />
-                    AI-Powered IDE
-                  </Badge>
-                  <h3 className="text-xl font-bold mb-2">App Builder</h3>
-                  <p className="text-muted-foreground text-sm mb-4 max-w-lg mx-auto">
-                    Build full web applications by chatting with AI. Describe what you want and watch it come to life — no coding required.
-                  </p>
-                  <Button className="bg-primary hover:bg-primary/90" asChild>
-                    <Link to="/ai-studio/app-builder">
-                      Start Building
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* GPT Builder + Custom CTA */}
-          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            <Card className="bg-card/50 border-primary/30 hover:border-primary/50 transition-all">
-              <CardContent className="p-6 text-center">
-                <div className="w-14 h-14 rounded-xl bg-violet-500/10 flex items-center justify-center mx-auto mb-4">
-                  <Bot className="h-7 w-7 text-violet-400" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">GPT Builder</h3>
-                <p className="text-muted-foreground text-sm mb-4">
-                  Create custom AI assistants trained on your data. Deploy as chatbots, embed on websites, or share via Teams.
-                </p>
-                <Button size="sm" className="bg-primary hover:bg-primary/90" asChild>
-                  <Link to="/ai-studio/gpt-builder">
-                    Create a GPT
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+          {/* App Builder Capabilities Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+            {[
+              { icon: MessageSquare, title: "Chat-to-Code", desc: "Describe what you want in plain English and the AI builds it — complete HTML, CSS, and JavaScript generated in seconds." },
+              { icon: Eye, title: "Live Preview", desc: "See your application update in real-time as the AI generates code. Instant visual feedback with hot-reload preview." },
+              { icon: Code, title: "Built-In Code Editor", desc: "Full Monaco-based code editor with syntax highlighting, IntelliSense, and AI-powered autocomplete suggestions." },
+              { icon: PenTool, title: "Visual Edit Mode", desc: "Click any element in the preview to modify it directly. Change text, colors, and layout without touching code." },
+              { icon: GitBranch, title: "Version History & Rollback", desc: "Every change is captured in a timeline. Browse snapshots and roll back to any previous version instantly." },
+              { icon: Blocks, title: "Component Marketplace", desc: "24+ draggable UI blocks — hero sections, pricing tables, forms, navigation bars, and more. Drag, drop, customize." },
+              { icon: Sparkles, title: "AI Autocomplete", desc: "Ghost-text code suggestions powered by AI. Write faster with intelligent completions for common patterns." },
+              { icon: RefreshCw, title: "Auto-Error Recovery", desc: "Autonomous error detection and self-correction. The AI catches preview errors and fixes them automatically (up to 3 retries)." },
+              { icon: Cpu, title: "Autonomous Agent Mode", desc: "Codex-inspired Plan → Execute → Verify → Fix loop. The AI plans multi-step tasks and executes them autonomously." },
+              { icon: MonitorSmartphone, title: "Responsive Testing", desc: "Preview your app on desktop, tablet, and mobile viewports. 3-tab mobile navigation for small-screen editing." },
+              { icon: Image, title: "AI Image Generation", desc: "Generate brand-accurate images directly in the builder. The AI matches your subject and style automatically." },
+              { icon: Share2, title: "One-Click Publishing", desc: "Deploy to a live URL instantly. Full-stack export to React + Vite for self-hosting, Docker-ready, or raw ZIP download." },
+            ].map((cap, i) => {
+              const Icon = cap.icon;
+              return (
+                <Card key={i} className="bg-card border-border/50 hover:border-primary/30 transition-all">
+                  <CardContent className="p-5">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="font-semibold mb-1.5">{cap.title}</h3>
+                    <p className="text-muted-foreground text-sm">{cap.desc}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          <div className="text-center">
+            <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
+              <Link to="/ai-studio/app-builder">
+                Try the App Builder
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
 
-      {/* Who It's For */}
+      {/* GPT Builder Deep Dive */}
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-violet-500/20 text-violet-400 border-violet-500/30">
+              <Bot className="h-3 w-3 mr-1" />
+              Custom AI Assistants
+            </Badge>
+            <h2 className="text-3xl font-bold mb-4">GPT Builder</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Create custom AI assistants trained on your data. Deploy as chatbots, embed on websites, or share via Microsoft Teams — fully branded and governed.
+            </p>
+          </div>
+
+          {/* GPT Builder Capabilities Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+            {[
+              { icon: Bot, title: "Custom Personas", desc: "Define your assistant's personality, expertise areas, communication style, and system prompt. Full control over how it responds." },
+              { icon: BookOpen, title: "Knowledge Sources", desc: "Train on your data — upload documents, paste text, or provide URLs. The assistant answers from your content, not generic data." },
+              { icon: Zap, title: "22+ Action Templates", desc: "Pre-built integrations for SafeSuite security scans, Slack/Teams notifications, web search, calendar, and structured data extraction." },
+              { icon: Search, title: "Live Web Search", desc: "Enable real-time web search powered by Perplexity. Your assistant can find current information and cite sources." },
+              { icon: Palette, title: "Full Widget Theming", desc: "Customize every color — backgrounds, bubbles, headers, input fields. Per-element control for pixel-perfect brand matching." },
+              { icon: Layers, title: "3 Embed Styles", desc: "Deploy as a floating Bubble, an Inline card panel, or a Full Page layout. Each adapts responsively to any screen size." },
+              { icon: Globe2, title: "Website Embed", desc: "One-line script tag generates a floating chat widget on any website. Configure allowed domains for security." },
+              { icon: Send, title: "Microsoft Teams Export", desc: "Export as a Teams app manifest (v1.16). Deploy your GPT directly into your organization's Microsoft Teams environment." },
+              { icon: Key, title: "API Access & Keys", desc: "Generate API keys with rate limits and permissions. Integrate your GPT programmatically into any application or workflow." },
+              { icon: MessageSquare, title: "Starter Questions", desc: "Configure welcome messages and pre-defined starter questions to guide users and showcase your assistant's capabilities." },
+              { icon: Shield, title: "Content Guardrails", desc: "System prompt enforcement, domain restrictions, and message limits per visitor. Prevent misuse and control costs." },
+              { icon: BarChart3, title: "Usage Analytics", desc: "Track conversations, credits consumed, and per-GPT performance. Real-time dashboards with burn-rate projections." },
+            ].map((cap, i) => {
+              const Icon = cap.icon;
+              return (
+                <Card key={i} className="bg-card border-border/50 hover:border-violet-500/30 transition-all">
+                  <CardContent className="p-5">
+                    <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center mb-3">
+                      <Icon className="h-5 w-5 text-violet-400" />
+                    </div>
+                    <h3 className="font-semibold mb-1.5">{cap.title}</h3>
+                    <p className="text-muted-foreground text-sm">{cap.desc}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          <div className="text-center">
+            <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
+              <Link to="/ai-studio/gpt-builder">
+                Create a GPT
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
