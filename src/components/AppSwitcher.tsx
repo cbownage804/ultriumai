@@ -44,20 +44,20 @@ export function AppSwitcher() {
           <LayoutGrid className="h-5 w-5 text-muted-foreground" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-64 p-3">
-        <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Apps</p>
-        <div className="grid grid-cols-3 gap-2">
+      <PopoverContent align="end" className="w-80 p-4">
+        <p className="text-xs font-medium text-muted-foreground mb-3 px-1">Apps</p>
+        <div className="grid grid-cols-3 gap-3">
           {apps.map((app) => (
             <Link
               key={app.name}
               to={app.path}
               onClick={() => setOpen(false)}
-              className="flex flex-col items-center gap-1.5 rounded-lg p-3 hover:bg-accent transition-colors text-center"
+              className="flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-accent transition-colors text-center"
             >
-              <div className="h-10 w-10 rounded-xl overflow-hidden flex items-center justify-center bg-muted/50">
-                <img src={app.logo} alt={app.name} className="h-9 w-9 object-contain" />
+              <div className="h-16 w-16 rounded-xl overflow-hidden flex items-center justify-center bg-muted/50">
+                <img src={app.logo} alt={app.name} className="h-14 w-14 object-contain" />
               </div>
-              <span className="text-xs font-medium text-foreground leading-tight">{app.name}</span>
+              <span className="text-sm font-medium text-foreground leading-tight">{app.name}</span>
             </Link>
           ))}
         </div>
