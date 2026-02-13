@@ -6,10 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { 
   ArrowRight, Building2, Users, Globe, Shield, BarChart3, 
   Palette, Lock, Zap, Check, Settings, Bot, FileText,
-  Eye, Database, Workflow, MessageSquare, Play, Code,
-  Smartphone, Layers, GitBranch, Image, Sparkles, Share2,
+  Eye, Code, Layers, GitBranch, Image, Sparkles, Share2,
   Globe2, BookOpen, Search, Key, PenTool, MonitorSmartphone,
-  Blocks, Cpu, Send, RefreshCw
+  Blocks, Cpu, Send, RefreshCw, MessageSquare, Play
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
@@ -21,82 +20,36 @@ import { ProductDemoWrapper } from "@/components/demos/ProductDemoWrapper";
 import { AIStudioProductDemo } from "@/components/demos/AIStudioProductDemo";
 
 const AIStudioProductPage = () => {
-  const audiences = [
+  const platformBenefits = [
     {
       icon: Building2,
-      title: "Managed Service Providers",
-      description: "Deliver white-labeled AI assistants to clients with predictable margins, usage visibility, and full governance. Create new recurring revenue streams with AI-as-a-Service."
+      title: "For MSPs & Agencies",
+      points: [
+        "Create new AI-as-a-Service revenue streams",
+        "Client-level usage tracking and billing visibility",
+        "White-label delivery with your branding",
+        "Predictable margins with capacity-based pricing"
+      ]
     },
     {
       icon: Users,
-      title: "Internal Business Teams",
-      description: "Deploy AI assistants for HR, IT, sales, and operations without shadow IT. Maintain enterprise-grade controls, audit trails, and centralized oversight."
+      title: "For Internal Teams",
+      points: [
+        "Eliminate shadow IT with governed AI deployment",
+        "Centralized control across all departments",
+        "Compliance-ready with full audit logging",
+        "Reduce support burden on IT and HR"
+      ]
     },
     {
       icon: Globe,
-      title: "Websites & Lead Generation",
-      description: "Embed intelligent chatbots that qualify leads, answer visitor questions, and provide 24/7 support—all governed by your brand guidelines and content policies."
-    }
-  ];
-
-  const capabilities = [
-    {
-      icon: Bot,
-      title: "Custom AI Assistants",
-      description: "Create purpose-built assistants powered by Google Gemini 3 and GPT-5. Train on your documentation, workflows, and brand voice for customer support, Q&A, or lead qualification."
-    },
-    {
-      icon: Zap,
-      title: "22+ Action Templates",
-      description: "Pre-built integrations for SafeSuite security, Slack/Teams notifications, calendar automation, web search, and structured data extraction. Connect AI to your business systems instantly."
-    },
-    {
-      icon: Shield,
-      title: "Enterprise Governance",
-      description: "Centralized policy controls with role-based access, content guardrails, and compliance-ready infrastructure. Every interaction logged and auditable."
-    },
-    {
-      icon: BarChart3,
-      title: "Capacity Analytics Dashboard",
-      description: "Track daily trends, per-assistant consumption, burn-rate projections, and days remaining. Credit-based system (1 credit = 1,000 tokens) with transparent pricing."
-    },
-    {
-      icon: Palette,
-      title: "Complete White-Labeling",
-      description: "Full customization of colors, logos, messaging, and domain. Deliver AI solutions under your brand with no UltriumAI branding visible to end users."
-    },
-    {
-      icon: Eye,
-      title: "Admin Analytics & Control",
-      description: "Track usage by client, department, or assistant. Monitor performance, manage deployments, and control access across your entire organization."
-    },
-    {
-      icon: Lock,
-      title: "Security by Design",
-      description: "SOC 2 aligned controls with encryption at rest and in transit. Role-based access controls, SSO integration, and comprehensive audit logging."
-    }
-  ];
-
-  const useCases = [
-    {
-      icon: MessageSquare,
-      title: "Customer Support Automation",
-      description: "Deploy AI assistants that handle tier-1 support inquiries, reducing ticket volume while maintaining quality and brand consistency."
-    },
-    {
-      icon: Database,
-      title: "Knowledge Base Q&A",
-      description: "Train assistants on internal documentation, policies, and procedures. Enable employees to get instant answers without searching through wikis."
-    },
-    {
-      icon: Workflow,
-      title: "Workflow Automation",
-      description: "Connect AI assistants to business systems via actions and integrations. Automate data lookups, ticket creation, and process handoffs."
-    },
-    {
-      icon: FileText,
-      title: "Document Analysis",
-      description: "Upload documents and enable assistants to answer questions about contracts, policies, technical documentation, and more."
+      title: "For Websites & Marketing",
+      points: [
+        "24/7 lead qualification and engagement",
+        "Brand-consistent messaging and guardrails",
+        "Analytics on visitor interactions and intent",
+        "Seamless handoff to sales teams"
+      ]
     }
   ];
 
@@ -110,36 +63,6 @@ const AIStudioProductPage = () => {
     "Train on your own data and documents with secure, private knowledge bases",
     "White-label ready — deliver under your brand with custom domains",
     "API access for custom integrations and workflow automation"
-  ];
-
-  const platformBenefits = [
-    {
-      title: "For MSPs & Agencies",
-      points: [
-        "Create new AI-as-a-Service revenue streams",
-        "Client-level usage tracking and billing visibility",
-        "White-label delivery with your branding",
-        "Predictable margins with capacity-based pricing"
-      ]
-    },
-    {
-      title: "For Internal Teams",
-      points: [
-        "Eliminate shadow IT with governed AI deployment",
-        "Centralized control across all departments",
-        "Compliance-ready with full audit logging",
-        "Reduce support burden on IT and HR"
-      ]
-    },
-    {
-      title: "For Websites & Marketing",
-      points: [
-        "24/7 lead qualification and engagement",
-        "Brand-consistent messaging and guardrails",
-        "Analytics on visitor interactions and intent",
-        "Seamless handoff to sales teams"
-      ]
-    }
   ];
 
   return (
@@ -196,7 +119,7 @@ const AIStudioProductPage = () => {
         </div>
       </section>
 
-      {/* What is AI Studio */}
+      {/* What is AI Studio + Dashboard */}
       <section className="py-16 px-4 border-b border-border/50">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
@@ -209,7 +132,6 @@ const AIStudioProductPage = () => {
             </p>
           </div>
           
-          {/* Dashboard Preview */}
           <Card className="bg-card/50 border-primary/20 overflow-hidden shadow-2xl shadow-primary/10">
             <CardContent className="p-0">
               <div className="relative rounded-lg overflow-hidden">
@@ -239,7 +161,6 @@ const AIStudioProductPage = () => {
             </p>
           </div>
 
-          {/* App Builder Showcase Image */}
           <div className="mb-12">
             <Card className="bg-card/50 border-primary/30 overflow-hidden shadow-xl shadow-primary/10">
               <CardContent className="p-0">
@@ -255,7 +176,6 @@ const AIStudioProductPage = () => {
             </Card>
           </div>
 
-          {/* App Builder Capabilities Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
             {[
               { icon: MessageSquare, title: "Chat-to-Code", desc: "Describe what you want in plain English and the AI builds it — complete HTML, CSS, and JavaScript generated in seconds." },
@@ -288,7 +208,7 @@ const AIStudioProductPage = () => {
 
           <div className="text-center">
             <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
-              <Link to="/ai-studio/app-builder">
+              <Link to="/auth?return=ai-studio/app-builder">
                 Try the App Builder
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
@@ -311,7 +231,6 @@ const AIStudioProductPage = () => {
             </p>
           </div>
 
-          {/* GPT Builder Showcase Image */}
           <div className="mb-12">
             <Card className="bg-card/50 border-violet-500/30 overflow-hidden shadow-xl shadow-violet-500/10">
               <CardContent className="p-0">
@@ -327,7 +246,6 @@ const AIStudioProductPage = () => {
             </Card>
           </div>
 
-          {/* GPT Builder Capabilities Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
             {[
               { icon: Bot, title: "Custom Personas", desc: "Define your assistant's personality, expertise areas, communication style, and system prompt. Full control over how it responds." },
@@ -360,7 +278,7 @@ const AIStudioProductPage = () => {
 
           <div className="text-center">
             <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
-              <Link to="/ai-studio/gpt-builder">
+              <Link to="/auth?return=ai-studio/gpt-builder">
                 Create a GPT
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
@@ -368,100 +286,9 @@ const AIStudioProductPage = () => {
           </div>
         </div>
       </section>
+
+      {/* Interactive Demo */}
       <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Who It's For</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              AI Studio serves organizations that need governance, predictability, and scale.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {audiences.map((audience, i) => {
-              const IconComponent = audience.icon;
-              return (
-                <Card key={i} className="bg-card/50 border-border/50 hover:border-primary/30 transition-all">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                      <IconComponent className="h-7 w-7 text-primary" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">{audience.title}</h3>
-                    <p className="text-muted-foreground text-sm">{audience.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Core Capabilities */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <Badge className="mb-4 bg-violet-500/20 text-violet-400 border-violet-500/30">
-              <Settings className="h-3 w-3 mr-1" />
-              Core Capabilities
-            </Badge>
-            <h2 className="text-3xl font-bold mb-4">What AI Studio Does</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              Everything you need to deploy AI at scale with confidence and control.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {capabilities.map((capability, i) => {
-              const IconComponent = capability.icon;
-              return (
-                <Card key={i} className="bg-card border-border/50 hover:border-primary/30 transition-all">
-                  <CardContent className="p-6">
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                      <IconComponent className="h-6 w-6 text-primary" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">{capability.title}</h3>
-                    <p className="text-muted-foreground text-sm">{capability.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Use Cases */}
-      <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Common Use Cases</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              AI Studio powers a wide range of business applications.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {useCases.map((useCase, i) => {
-              const IconComponent = useCase.icon;
-              return (
-                <Card key={i} className="bg-card/50 border-border/50">
-                  <CardContent className="p-6 flex gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <IconComponent className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">{useCase.title}</h3>
-                      <p className="text-muted-foreground text-sm">{useCase.description}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Interactive Demo Section */}
-      <section className="py-20 px-4 bg-muted/30">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <Badge className="mb-4 bg-primary/20 text-primary border-primary/30">
@@ -487,32 +314,38 @@ const AIStudioProductPage = () => {
         </div>
       </section>
 
-      {/* Platform Benefits by Audience */}
+      {/* Who It's For */}
       <section className="py-20 px-4 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">How AI Studio Fits Your Organization</h2>
+            <h2 className="text-3xl font-bold mb-4">Who AI Studio Is For</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
               Different organizations, same platform — tailored outcomes.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {platformBenefits.map((benefit, i) => (
-              <Card key={i} className="bg-card border-border/50">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">{benefit.title}</h3>
-                  <ul className="space-y-2">
-                    {benefit.points.map((point, j) => (
-                      <li key={j} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
+            {platformBenefits.map((benefit, i) => {
+              const IconComponent = benefit.icon;
+              return (
+                <Card key={i} className="bg-card/50 border-border/50 hover:border-primary/30 transition-all">
+                  <CardContent className="p-6">
+                    <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                      <IconComponent className="h-7 w-7 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-4 text-center">{benefit.title}</h3>
+                    <ul className="space-y-2">
+                      {benefit.points.map((point, j) => (
+                        <li key={j} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
