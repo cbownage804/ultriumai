@@ -150,7 +150,22 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-    const { logs, source, api_key, user_id } = body;
+    const { logs, api_key, user_id } = body;
+
+    // Sanitize source field
+    const stripHtml = (val: unknown, maxLen = 500): string => {
+      if (typeof val !== 'string') return '';
+      return val.replace(/<[^>]*>/g, '').substring(0, maxLen);
+    };
+    const source = stripHtml(body.source, 100);
+
+    // Validate required fields
+    if (!logs) {
+      return new Response(JSON.stringify({ error: 'logs field is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     console.log(`[SIEM Ingest] Received ${Array.isArray(logs) ? logs.length : 1} logs from source: ${source}`);
 
@@ -188,13 +203,18 @@ serve(async (req) => {
       // Extract hostname/source
       const hostname = parsed.hostname || parsed.host || parsed.source || source || 'unknown';
       
+      // Sanitize output fields before storage
+      const sanitizedTitle = stripHtml(message, 200);
+      const sanitizedDescription = stripHtml(message, 5000);
+      const sanitizedHostname = stripHtml(hostname, 100);
+
       processedLogs.push({
         user_id: user_id || null,
-        title: message.substring(0, 200),
-        description: message,
+        title: sanitizedTitle,
+        description: sanitizedDescription,
         severity,
         source_ip: parsed.src || parsed.sourceAddress || null,
-        affected_assets: [hostname],
+        affected_assets: [sanitizedHostname],
         raw_data: { format, parsed, raw: rawLog },
         created_at: parsed.timestamp || new Date().toISOString(),
       });

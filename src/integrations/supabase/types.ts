@@ -35373,6 +35373,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_vault_access: {
+        Args: { _user_id: string; _vault_id: string }
+        Returns: boolean
+      }
       increment_safepass_entry_usage: {
         Args: { entry_id: string }
         Returns: undefined
@@ -35415,6 +35419,10 @@ export type Database = {
       }
       owns_safepass_entry: {
         Args: { checking_user_id: string; entry_user_id: string }
+        Returns: boolean
+      }
+      owns_vault: {
+        Args: { _user_id: string; _vault_id: string }
         Returns: boolean
       }
       portal_user_can_view_ticket: {

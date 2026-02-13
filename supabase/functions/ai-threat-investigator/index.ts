@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,29 @@ serve(async (req) => {
   }
 
   try {
+    // Authenticate user
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid credentials' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { threat } = await req.json();
     
     if (!threat) {
@@ -20,12 +44,28 @@ serve(async (req) => {
       );
     }
 
+    // Sanitize threat fields
+    const sanitize = (val: unknown, maxLen = 500): string => {
+      if (typeof val !== 'string') return '';
+      return val.replace(/<[^>]*>/g, '').substring(0, maxLen);
+    };
+
+    const safeThreat = {
+      type: sanitize(threat.type, 50),
+      severity: sanitize(threat.severity, 20),
+      title: sanitize(threat.title, 200),
+      description: sanitize(threat.description, 2000),
+      source: sanitize(threat.source, 100),
+      timestamp: sanitize(threat.timestamp, 50),
+      status: sanitize(threat.status, 30),
+    };
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    console.log('[ai-threat-investigator] Analyzing threat:', threat.title);
+    console.log(`[ai-threat-investigator] User ${user.id} analyzing threat: ${safeThreat.title}`);
 
     const systemPrompt = `You are an elite cybersecurity analyst AI. Your role is to investigate security threats and provide actionable remediation guidance.
 
@@ -41,13 +81,13 @@ Be specific, technical, and actionable. Format your response clearly with header
 
     const userPrompt = `Investigate this security threat and provide comprehensive analysis:
 
-**Threat Type:** ${threat.type}
-**Severity:** ${threat.severity}
-**Title:** ${threat.title}
-**Description:** ${threat.description}
-**Source:** ${threat.source}
-**Detected At:** ${threat.timestamp}
-**Current Status:** ${threat.status}
+**Threat Type:** ${safeThreat.type}
+**Severity:** ${safeThreat.severity}
+**Title:** ${safeThreat.title}
+**Description:** ${safeThreat.description}
+**Source:** ${safeThreat.source}
+**Detected At:** ${safeThreat.timestamp}
+**Current Status:** ${safeThreat.status}
 
 Provide a detailed investigation report with remediation recommendations.`;
 
@@ -88,7 +128,7 @@ Provide a detailed investigation report with remediation recommendations.`;
     const data = await response.json();
     const analysis = data.choices?.[0]?.message?.content || 'Unable to generate analysis';
 
-    console.log('[ai-threat-investigator] Analysis complete for:', threat.title);
+    console.log('[ai-threat-investigator] Analysis complete for:', safeThreat.title);
 
     return new Response(
       JSON.stringify({ analysis }),
