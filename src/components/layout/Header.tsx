@@ -4,6 +4,7 @@ import { Home, Shield, Users, BarChart3 } from 'lucide-react';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { WhatsNewSidebar } from '@/components/changelog/WhatsNewSidebar';
+import { AppSwitcher } from '@/components/AppSwitcher';
 
 export const Header = () => {
   return (
@@ -44,6 +45,7 @@ export const Header = () => {
         </div>
 
         <div className="flex items-center gap-1.5">
+          <AppSwitcher />
           <WhatsNewSidebar />
           <NotificationCenter />
           <UserProfileDropdown />

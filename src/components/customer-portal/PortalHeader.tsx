@@ -7,6 +7,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Shield, LogOut, LayoutDashboard, Ticket } from 'lucide-react';
+import { AppSwitcher } from '@/components/AppSwitcher';
 import { toast } from 'sonner';
 import { usePortalSession } from '@/hooks/usePortalSession';
 import { usePortalBranding } from '@/contexts/PortalBrandingContext';
@@ -71,6 +72,7 @@ export function PortalHeader() {
           </div>
 
           <div className="flex items-center gap-3">
+            <AppSwitcher />
             <div className="hidden sm:flex items-center gap-2">
               <span className="text-sm text-white/60">{session.user.fullName}</span>
               <Badge 
