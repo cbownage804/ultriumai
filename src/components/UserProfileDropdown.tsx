@@ -2,6 +2,7 @@ import { User, Crown, Coins, LogOut, Settings, Building2, Bell, CreditCard, Gift
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useUserCredits } from '@/hooks/useUserCredits';
 import { useAccountType } from '@/hooks/useAccountType';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,11 +14,15 @@ import { useCreditThresholdPrompt, ContextualUpgradePrompt } from '@/components/
 
 const UserProfileDropdown = () => {
   const { user } = useAuth();
-  const { profile, credits, subscription, loading } = useUserProfile();
+  const { profile, subscription, loading } = useUserProfile();
+  const { totalRemaining, credits: userCredits, dailyRemaining, monthlyRemaining } = useUserCredits();
   const { isMSPOrMSSP, accountType } = useAccountType();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const creditThreshold = useCreditThresholdPrompt(credits?.credits_used || 0, credits?.credits_limit || 100);
+  const creditThreshold = useCreditThresholdPrompt(
+    (userCredits.daily_credits_used + userCredits.monthly_credits_used),
+    (userCredits.daily_credits_limit + userCredits.monthly_credits_limit + userCredits.bonus_credits)
+  );
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -36,9 +41,12 @@ const UserProfileDropdown = () => {
     navigate('/');
   };
 
+  const totalCapacity = userCredits.daily_credits_limit + userCredits.monthly_credits_limit + userCredits.bonus_credits;
+  
   const getCreditsPercentage = () => {
-    if (!credits) return 0;
-    return Math.min((credits.credits_used / credits.credits_limit) * 100, 100);
+    if (totalCapacity <= 0) return 0;
+    const used = totalCapacity - totalRemaining;
+    return Math.min((used / totalCapacity) * 100, 100);
   };
 
   const getCreditsColor = () => {
@@ -128,7 +136,7 @@ const UserProfileDropdown = () => {
                     <Coins className="h-3 w-3" /> Credits
                   </span>
                   <span className="text-xs font-medium text-foreground">
-                    {((credits?.credits_limit || 0) - (credits?.credits_used || 0)).toLocaleString()} left
+                    {totalRemaining.toLocaleString()} left
                   </span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-1.5">
