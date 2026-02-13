@@ -154,6 +154,38 @@ const VanguardProductPage = () => {
         "Knowledge base auto-generation"
       ],
       bestFor: "Teams that want to reduce manual effort and operate more intelligently at scale."
+    },
+    {
+      moduleId: "sentinel" as ModuleName,
+      name: "Vanguard Sentinel",
+      tagline: "SaaS Security & Cloud Posture",
+      description: "Monitors your Microsoft 365 and Google Workspace environments for misconfigurations, suspicious activity, and policy drift. Sentinel identifies shadow IT, risky app permissions, and compliance gaps across your cloud estate.",
+      color: "text-orange-400",
+      bgColor: "bg-orange-500/10",
+      borderColor: "border-orange-500/30",
+      capabilities: [
+        "M365 and Google Workspace security monitoring",
+        "Shadow IT and risky app detection",
+        "Configuration drift alerts",
+        "AI-powered triage and remediation"
+      ],
+      bestFor: "Organizations relying on cloud productivity suites that need visibility into SaaS risk."
+    },
+    {
+      moduleId: "comply" as ModuleName,
+      name: "Vanguard Comply",
+      tagline: "Compliance & Framework Management",
+      description: "Map your security controls to industry frameworks — SOC 2, HIPAA, PCI DSS, NIST, and more. Comply automates evidence collection, tracks control status, and generates audit-ready reports.",
+      color: "text-teal-400",
+      bgColor: "bg-teal-500/10",
+      borderColor: "border-teal-500/30",
+      capabilities: [
+        "Framework mapping (SOC 2, HIPAA, PCI, NIST)",
+        "Automated evidence collection",
+        "Control status tracking and gap analysis",
+        "Audit-ready report generation"
+      ],
+      bestFor: "MSPs and businesses preparing for audits or managing compliance across regulated industries."
     }
   ];
 
