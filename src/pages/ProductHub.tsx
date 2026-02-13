@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Sparkles, Lock, ArrowRight, Zap, LogOut, Settings } from 'lucide-react';
+import { AppSwitcher } from '@/components/AppSwitcher';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -268,6 +269,7 @@ export default function ProductHub() {
             <span className="font-bold text-xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">UltriumAI</span>
           </a>
           <div className="flex items-center gap-3" data-tour="hub-search">
+            <AppSwitcher />
             {isAdmin && (
               <Button variant="ghost" size="sm" onClick={() => navigate('/admin')} className="text-amber-500 hover:text-amber-400 hover:bg-amber-500/10">
                 <Settings className="h-4 w-4 mr-2" />
