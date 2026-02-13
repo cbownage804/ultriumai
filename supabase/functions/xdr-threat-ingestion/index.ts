@@ -73,16 +73,56 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const payload: ThreatPayload = await req.json()
-    console.log(`[xdr-threat-ingestion] Received ${payload.threat_type} threat from device ${payload.device_id}`)
+    const rawPayload = await req.json()
+
+    // Sanitize string fields to prevent XSS/injection
+    const stripHtml = (val: unknown, maxLen = 500): string => {
+      if (typeof val !== 'string') return '';
+      return val.replace(/<[^>]*>/g, '').substring(0, maxLen);
+    }
+
+    const payload: ThreatPayload = {
+      ...rawPayload,
+      device_id: stripHtml(rawPayload.device_id, 100),
+      threat_type: rawPayload.threat_type,
+      severity: rawPayload.severity,
+      title: stripHtml(rawPayload.title, 200),
+      description: stripHtml(rawPayload.description, 2000),
+      source_component: stripHtml(rawPayload.source_component, 100),
+      file_path: rawPayload.file_path ? stripHtml(rawPayload.file_path, 500) : undefined,
+      file_hash: rawPayload.file_hash ? stripHtml(rawPayload.file_hash, 128) : undefined,
+      file_name: rawPayload.file_name ? stripHtml(rawPayload.file_name, 255) : undefined,
+      process_name: rawPayload.process_name ? stripHtml(rawPayload.process_name, 255) : undefined,
+      command_line: rawPayload.command_line ? stripHtml(rawPayload.command_line, 1000) : undefined,
+      parent_process: rawPayload.parent_process ? stripHtml(rawPayload.parent_process, 255) : undefined,
+    }
 
     // Validate required fields
+    const validThreatTypes = ['malware', 'ransomware', 'behavioral', 'memory', 'script', 'network', 'ioc_match']
+    const validSeverities = ['low', 'medium', 'high', 'critical']
+
     if (!payload.device_id || !payload.threat_type || !payload.title) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
+        JSON.stringify({ error: 'Missing required fields: device_id, threat_type, title' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    if (!validThreatTypes.includes(payload.threat_type)) {
+      return new Response(
+        JSON.stringify({ error: `Invalid threat_type. Must be one of: ${validThreatTypes.join(', ')}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (!validSeverities.includes(payload.severity)) {
+      return new Response(
+        JSON.stringify({ error: `Invalid severity. Must be one of: ${validSeverities.join(', ')}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log(`[xdr-threat-ingestion] Received ${payload.threat_type} threat from device ${payload.device_id}`)
 
     // Get agent info
     const { data: agent } = await supabase
