@@ -194,12 +194,50 @@ const AIStudioProductPage = () => {
       <section className="py-16 px-4 border-b border-border/50">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl md:text-3xl font-bold mb-6">What is AI Studio?</h2>
-          <p className="text-lg text-muted-foreground leading-relaxed">
+          <p className="text-lg text-muted-foreground leading-relaxed mb-8">
             AI Studio is a <strong className="text-foreground">Business AI Control Plane</strong> that enables 
             organizations to deploy governed AI assistants at scale. Unlike consumer chatbots, AI Studio provides 
             the governance, visibility, and predictability that business operations require — from centralized 
             policy management to detailed usage analytics and white-label delivery.
           </p>
+
+          {/* Build It Yourself CTA */}
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            <Card className="bg-card/50 border-primary/30 hover:border-primary/50 transition-all">
+              <CardContent className="p-6 text-center">
+                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Zap className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">App Builder</h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  Build full web applications with our AI-powered IDE. Chat your ideas into reality — no coding required.
+                </p>
+                <Button size="sm" className="bg-primary hover:bg-primary/90" asChild>
+                  <Link to="/ai-studio/app-builder">
+                    Start Building
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+            <Card className="bg-card/50 border-primary/30 hover:border-primary/50 transition-all">
+              <CardContent className="p-6 text-center">
+                <div className="w-14 h-14 rounded-xl bg-violet-500/10 flex items-center justify-center mx-auto mb-4">
+                  <Bot className="h-7 w-7 text-violet-400" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">GPT Builder</h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  Create custom AI assistants trained on your data. Deploy as chatbots, embed on websites, or share via Teams.
+                </p>
+                <Button size="sm" className="bg-primary hover:bg-primary/90" asChild>
+                  <Link to="/ai-studio/gpt-builder">
+                    Create a GPT
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </section>
 
@@ -402,28 +440,44 @@ const AIStudioProductPage = () => {
         </div>
       </section>
 
-      {/* MSP CTA */}
+      {/* Custom Apps CTA */}
       <section className="py-20 px-4 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
           <Card className="bg-gradient-to-br from-card to-primary/10 border-primary/30">
             <CardContent className="p-10 text-center">
               <Building2 className="h-12 w-12 text-primary mx-auto mb-6" />
-              <h2 className="text-3xl font-bold mb-4">
+              <h2 className="text-2xl font-bold mb-4">
                 Are You an MSP?
               </h2>
-              <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
+              <p className="text-muted-foreground mb-8 text-sm">
                 Learn how AI Studio can become a profitable addition to your managed services portfolio 
                 with white-label delivery, predictable margins, and client-level visibility.
               </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
-                  <Link to="/ai-studio-for-msps">
-                    AI Studio for MSPs
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-              </div>
+              <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
+                <Link to="/ai-studio-for-msps">
+                  AI Studio for MSPs
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-card to-violet-500/10 border-violet-500/30">
+            <CardContent className="p-10 text-center">
+              <Settings className="h-12 w-12 text-violet-400 mx-auto mb-6" />
+              <h2 className="text-2xl font-bold mb-4">
+                Need a Custom App?
+              </h2>
+              <p className="text-muted-foreground mb-8 text-sm">
+                Have something specific in mind that goes beyond our builders? Our team can design and 
+                build bespoke applications tailored to your exact business requirements.
+              </p>
+              <Button size="lg" variant="outline" className="border-violet-500/30 hover:bg-violet-500/10" asChild>
+                <Link to="/contact">
+                  Contact Us
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </div>
