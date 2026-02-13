@@ -1,5 +1,4 @@
-import { useNavigate } from 'react-router-dom';
-import { Bot, Code2, ArrowRight, Sparkles } from 'lucide-react';
+import { Bot, Code2, ArrowRight, Sparkles, LogIn } from 'lucide-react';
 import aiStudioLogo from '@/assets/ai-studio-logo.png';
 
 interface MegaMenuProps {
@@ -11,23 +10,25 @@ const tools = [
     icon: Bot, 
     label: 'GPT Builder', 
     description: 'Build custom AI assistants with your data',
-    path: '/ai-studio/gpt-builder',
+    marketingPath: '/products/ai-studio',
+    appPath: '/ai-studio/gpt-builder',
     color: 'text-primary'
   },
   { 
     icon: Code2, 
     label: 'App Builder', 
     description: 'Generate full-stack apps with AI',
-    path: '/ai-studio/app-builder',
+    marketingPath: '/products/ai-studio',
+    appPath: '/ai-studio/app-builder',
     color: 'text-violet-400'
   },
 ];
 
 const quickStarts = [
-  { label: 'Customer Support Bot', path: '/ai-studio/gpt-builder?template=support' },
-  { label: 'Knowledge Base Q&A', path: '/ai-studio/gpt-builder?template=knowledge' },
-  { label: 'Website Lead Bot', path: '/ai-studio/gpt-builder?template=lead' },
-  { label: 'Dashboard App', path: '/ai-studio/app-builder' },
+  { label: 'Customer Support Bot', path: '/products/ai-studio' },
+  { label: 'Knowledge Base Q&A', path: '/products/ai-studio' },
+  { label: 'Website Lead Bot', path: '/products/ai-studio' },
+  { label: 'Dashboard App', path: '/products/ai-studio' },
 ];
 
 export function AIStudioMegaMenu({ onNavigate }: MegaMenuProps) {
@@ -44,7 +45,7 @@ export function AIStudioMegaMenu({ onNavigate }: MegaMenuProps) {
         {tools.map((tool) => (
           <button
             key={tool.label}
-            onClick={() => onNavigate(tool.path)}
+            onClick={() => onNavigate(tool.marketingPath)}
             className="group/tool flex items-start gap-3 w-full p-2.5 rounded-xl hover:bg-primary/10 border border-transparent hover:border-primary/20 transition-all text-left"
           >
             <div className="mt-0.5 shrink-0">
@@ -76,12 +77,18 @@ export function AIStudioMegaMenu({ onNavigate }: MegaMenuProps) {
             </button>
           ))}
         </div>
-        <div className="mt-4 pt-3 border-t border-border/30">
+        <div className="mt-4 pt-3 border-t border-border/30 space-y-2">
           <button
-            onClick={() => onNavigate('/ai-studio')}
+            onClick={() => onNavigate('/products/ai-studio')}
             className="w-full text-center text-xs font-semibold text-primary hover:text-primary/80 flex items-center justify-center gap-1 transition-colors"
           >
-            Open AI Studio <ArrowRight className="h-3 w-3" />
+            Learn More <ArrowRight className="h-3 w-3" />
+          </button>
+          <button
+            onClick={() => onNavigate('/auth?return=ai-studio')}
+            className="w-full text-center text-xs font-medium text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 transition-colors"
+          >
+            <LogIn className="h-3 w-3" /> Log in to Use
           </button>
         </div>
       </div>
