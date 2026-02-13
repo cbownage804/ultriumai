@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { safeWindowOpen } from "@/utils/security";
 import { devLog } from "@/lib/logger";
+import { resilientEdgeFn, resilientQuery } from "@/lib/supabaseResilience";
 
 export interface SubscriptionInfo {
   subscribed: boolean;
@@ -42,38 +43,41 @@ export const useSubscription = () => {
       setIsLoading(true);
       devLog.log('Checking subscription for user:', user.email);
       
-      const { data, error } = await supabase.functions.invoke('check-subscription', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+      const fallbackSub = { subscribed: false, subscription_tier: "free", subscription_end: null };
+      
+      // Edge function call with 12s timeout
+      const data = await resilientEdgeFn(
+        () => supabase.functions.invoke('check-subscription', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }),
+        null,
+        'check-subscription',
+        12000
+      );
 
-      if (error) throw error;
-      
-      devLog.log('Subscription data received:', data);
-      
-      // If subscription expired and trial period over, force to free tier
-      if (data.subscription_end && new Date(data.subscription_end) < now && isTrialExpired && !data.subscribed) {
-        setSubscription({
-          subscribed: false,
-          subscription_tier: "free",
-          subscription_end: null
-        });
+      if (data) {
+        devLog.log('Subscription data received:', data);
+        
+        if (data.subscription_end && new Date(data.subscription_end) < now && isTrialExpired && !data.subscribed) {
+          setSubscription(fallbackSub);
+        } else {
+          setSubscription(data);
+        }
       } else {
-        setSubscription(data);
-      }
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-      
-      // Fallback: try to get subscription data directly from database
-      try {
-        const { data: dbData, error: dbError } = await supabase
-          .from('subscribers')
-          .select('subscribed, subscription_tier, subscription_end')
-          .eq('email', user.email)
-          .single();
-          
-        if (!dbError && dbData) {
+        // Edge function failed/timed out — try DB fallback with 8s timeout
+        devLog.log('Edge function unavailable, trying DB fallback...');
+        const dbData = await resilientQuery(
+          supabase
+            .from('subscribers')
+            .select('subscribed, subscription_tier, subscription_end')
+            .eq('email', user.email!)
+            .single(),
+          null,
+          'subscribers-fallback',
+          8000
+        );
+
+        if (dbData) {
           devLog.log('Using database fallback:', dbData);
           setSubscription({
             subscribed: dbData.subscribed,
@@ -81,22 +85,22 @@ export const useSubscription = () => {
             subscription_end: dbData.subscription_end
           });
         } else {
-        throw error;
+          // Both failed — default to free so UI isn't blocked
+          setSubscription(fallbackSub);
+          toast({
+            title: "Connection issue",
+            description: "Subscription status unavailable. Some features may be limited.",
+            variant: "destructive",
+          });
         }
-      } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError);
-        // Don't block the UI — default to free tier so the page still loads
-        setSubscription({
-          subscribed: false,
-          subscription_tier: "free",
-          subscription_end: null,
-        });
-        toast({
-          title: "Error",
-          description: "Failed to check subscription status. Some features may be limited.",
-          variant: "destructive",
-        });
       }
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      setSubscription({
+        subscribed: false,
+        subscription_tier: "free",
+        subscription_end: null,
+      });
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { resilientEdgeFn } from '@/lib/supabaseResilience';
 
 export interface VanguardSubscriptionData {
   subscribed: boolean;
@@ -35,24 +36,28 @@ export const useVanguardSubscription = () => {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('vanguard-check-subscription');
+      const data = await resilientEdgeFn(
+        () => supabase.functions.invoke('vanguard-check-subscription'),
+        null,
+        'vanguard-check-subscription',
+        12000
+      );
 
-      if (error) {
-        console.error('Error checking Vanguard subscription:', error);
+      if (data) {
+        setSubscription({
+          subscribed: data.subscribed ?? false,
+          tier: data.tier ?? 'free',
+          seatCount: data.seat_count ?? 0,
+          addons: data.addons ?? [],
+          subscriptionEnd: data.subscription_end ?? null,
+          stripeSubscriptionId: data.stripe_subscription_id ?? null,
+          adminOverride: data.admin_override ?? false,
+          loading: false,
+        });
+      } else {
+        // Edge function failed — default to free, don't block UI
         setSubscription(prev => ({ ...prev, loading: false }));
-        return;
       }
-
-      setSubscription({
-        subscribed: data?.subscribed ?? false,
-        tier: data?.tier ?? 'free',
-        seatCount: data?.seat_count ?? 0,
-        addons: data?.addons ?? [],
-        subscriptionEnd: data?.subscription_end ?? null,
-        stripeSubscriptionId: data?.stripe_subscription_id ?? null,
-        adminOverride: data?.admin_override ?? false,
-        loading: false,
-      });
     } catch (error) {
       console.error('Error checking Vanguard subscription:', error);
       setSubscription(prev => ({ ...prev, loading: false }));
