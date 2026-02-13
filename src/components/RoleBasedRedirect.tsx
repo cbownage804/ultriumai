@@ -73,10 +73,17 @@ export const RoleBasedRedirect = () => {
   // Priority 2: Preview/localhost with return product - use local navigation
   const PRODUCT_URLS = getProductUrls();
   if (returnProduct && PRODUCT_URLS[returnProduct] === '') {
-    return <Navigate to={returnPath} replace />;
+    // Map return product to the correct local path
+    const productPaths: Record<string, string> = {
+      safesuite: '/safesuite/dashboard',
+      vanguard: '/vanguard/app/dashboard',
+      ai_studio: '/ai-studio',
+    };
+    const targetPath = productPaths[returnProduct] || returnPath;
+    return <Navigate to={targetPath} replace />;
   }
 
-  // Priority 3: Check for role-based redirects (MSP/Admin) - only if NOT returning from product
+  // Priority 3: Check for role-based redirects (includes smart product routing)
   if (shouldRedirectToRole() && !returnProduct) {
     const redirectPath = getRedirectPath();
     return <Navigate to={redirectPath} replace />;

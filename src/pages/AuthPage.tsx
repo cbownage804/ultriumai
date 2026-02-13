@@ -7,10 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ProductIntentPicker, type ProductIntent } from '@/components/auth/ProductIntentPicker';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
-import { Lock, Building, Users, Eye, EyeOff, Mail, Shield, User, Loader2 } from 'lucide-react';
+import { Lock, Eye, EyeOff, Mail, Shield, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AuthLoadingScreen } from '@/components/auth/AuthLoadingScreen';
 import { devLog } from '@/lib/logger';
@@ -31,8 +31,7 @@ const AuthPage = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [accountType, setAccountType] = useState('individual');
+  const [productInterests, setProductInterests] = useState<ProductIntent[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -127,10 +126,11 @@ const AuthPage = () => {
     setError('');
 
     try {
+      const primaryProduct = productInterests.length === 1 ? productInterests[0] : null;
       const metadata = {
         full_name: fullName,
-        company_name: companyName,
-        account_type: accountType,
+        product_interests: productInterests,
+        primary_product: primaryProduct,
       };
 
       const { error } = await signUp(email, password, metadata);
@@ -195,16 +195,6 @@ const AuthPage = () => {
     }
   };
 
-  const getAccountTypeIcon = () => {
-    switch (accountType) {
-      case 'business':
-        return <Building className="h-4 w-4" />;
-      case 'msp':
-        return <Users className="h-4 w-4" />;
-      default:
-        return <User className="h-4 w-4" />;
-    }
-  };
 
   // Determine branding based on return product
   const getBranding = () => {
@@ -260,22 +250,12 @@ const AuthPage = () => {
 
         <Card className="border-border/50 bg-card/80 backdrop-blur-sm shadow-2xl shadow-primary/5">
           <CardHeader>
-            {/* Vanguard is invite-only - no signup allowed */}
-            {returnProduct === 'vanguard' ? (
-              <div className="text-center">
-                <h2 className="text-lg font-semibold">Sign In</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Vanguard access is by invitation only
-                </p>
-              </div>
-            ) : (
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="signin">Sign In</TabsTrigger>
                   <TabsTrigger value="signup">Sign Up</TabsTrigger>
                 </TabsList>
               </Tabs>
-            )}
           </CardHeader>
 
           <CardContent>
@@ -297,8 +277,8 @@ const AuthPage = () => {
               </Alert>
             )}
 
-            {/* Sign In Form - Always shown for Vanguard, or when signin tab is active */}
-            {(returnProduct === 'vanguard' || activeTab === 'signin') && (
+            {/* Sign In Form */}
+            {activeTab === 'signin' && (
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -402,8 +382,8 @@ const AuthPage = () => {
               </form>
             )}
 
-            {/* Sign Up Form - Hidden for Vanguard */}
-            {returnProduct !== 'vanguard' && activeTab === 'signup' && (
+            {/* Sign Up Form */}
+            {activeTab === 'signup' && (
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-fullname">Full Name</Label>
@@ -431,52 +411,10 @@ const AuthPage = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="account-type">Account Type</Label>
-                  <Select value={accountType} onValueChange={setAccountType}>
-                    <SelectTrigger>
-                      <div className="flex items-center gap-2">
-                        {getAccountTypeIcon()}
-                        <SelectValue placeholder="Select account type" />
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="individual">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          Individual
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="business">
-                        <div className="flex items-center gap-2">
-                          <Building className="h-4 w-4" />
-                          Business
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="msp">
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4" />
-                          MSP / IT Provider
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {(accountType === 'business' || accountType === 'msp') && (
-                  <div className="space-y-2">
-                    <Label htmlFor="company-name">Company Name</Label>
-                    <Input
-                      id="company-name"
-                      type="text"
-                      placeholder="Your Company"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      required
-                      disabled={loading}
-                    />
-                  </div>
-                )}
+                <ProductIntentPicker
+                  selected={productInterests}
+                  onChange={setProductInterests}
+                />
 
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>

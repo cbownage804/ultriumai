@@ -12,7 +12,7 @@ const VanguardDevicesPage = lazy(() => import('@/pages/VanguardDevices'));
 const VanguardDeviceDetailPage = lazy(() => import('@/pages/VanguardDeviceDetail'));
 const VanguardPiDetail = lazy(() => import('@/pages/VanguardDeviceDetail'));
 const VanguardSetup = lazy(() => import('@/pages/VanguardSetup'));
-const VanguardAuthPage = lazy(() => import('@/pages/vanguard/VanguardAuthPage'));
+// VanguardAuthPage removed - unified auth at /auth
 const VanguardReports = lazy(() => import('@/pages/vanguard/VanguardReports'));
 const VanguardContracts = lazy(() => import('@/pages/vanguard/VanguardContracts'));
 const VanguardAITagging = lazy(() => import('@/pages/vanguard/VanguardAITagging'));
@@ -332,7 +332,7 @@ export const getVanguardProtectedRoutes = () => [
 // Export public routes (landing, auth - outside VanguardLayout)
 export const getVanguardPublicRoutes = () => [
   <Route key="vanguard-landing" path="/" element={<LazyPage component={VanguardProductPage} />} />,
-  <Route key="vanguard-auth" path="/auth" element={<LazyPage component={VanguardAuthPage} />} />,
+  <Route key="vanguard-auth" path="/auth" element={<Navigate to="/auth?return=vanguard" replace />} />,
   <Route key="vanguard-suite" path="/suite" element={<LazyPage component={VanguardSuite} />} />,
   <Route key="vanguard-trust" path="/trust" element={<LazyPage component={VanguardTrustCenter} />} />,
 ];
