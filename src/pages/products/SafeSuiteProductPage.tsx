@@ -139,7 +139,7 @@ const SafeSuiteProductPage = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-lg px-8" asChild>
-              <Link to="/auth">
+              <Link to="/auth?return=safesuite">
                 Start Free
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
@@ -496,7 +496,7 @@ const SafeSuiteProductPage = () => {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-lg px-8" asChild>
-                  <Link to="/auth">
+                  <Link to="/auth?return=safesuite">
                     Start Free
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
