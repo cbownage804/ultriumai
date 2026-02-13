@@ -139,11 +139,49 @@ const UserProfileDropdown = () => {
                     {totalRemaining.toLocaleString()} left
                   </span>
                 </div>
-                <div className="w-full bg-muted rounded-full h-1.5">
-                  <div
-                    className={`h-1.5 rounded-full transition-all duration-300 ${getCreditsColor()}`}
-                    style={{ width: `${getCreditsPercentage()}%` }}
-                  />
+                <div className="w-full bg-muted rounded-full h-2 flex overflow-hidden">
+                  {totalCapacity > 0 && (
+                    <>
+                      {dailyRemaining > 0 && (
+                        <div
+                          className="h-full bg-blue-500 transition-all duration-300"
+                          style={{ width: `${(dailyRemaining / totalCapacity) * 100}%` }}
+                        />
+                      )}
+                      {monthlyRemaining > 0 && (
+                        <div
+                          className="h-full bg-violet-500 transition-all duration-300"
+                          style={{ width: `${(monthlyRemaining / totalCapacity) * 100}%` }}
+                        />
+                      )}
+                      {userCredits.bonus_credits > 0 && (
+                        <div
+                          className="h-full bg-amber-500 transition-all duration-300"
+                          style={{ width: `${(userCredits.bonus_credits / totalCapacity) * 100}%` }}
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                  {dailyRemaining > 0 && (
+                    <span className="flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-blue-500 inline-block" />
+                      Daily
+                    </span>
+                  )}
+                  {monthlyRemaining > 0 && (
+                    <span className="flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-violet-500 inline-block" />
+                      Monthly
+                    </span>
+                  )}
+                  {userCredits.bonus_credits > 0 && (
+                    <span className="flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 inline-block" />
+                      Bonus
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
