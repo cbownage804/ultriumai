@@ -41,28 +41,28 @@ const Index = () => {
   }, [user, loading, navigate]);
   const mainFAQs = [
     {
-      question: "What is UltriumAI and what do you build?",
-      answer: "UltriumAI is an AI development agency that builds custom AI solutions for businesses. We offer two flagship products: AI Studio™ for building custom GPTs, and Vanguard™ for complete security operations. We also provide full-service custom AI development for enterprises."
+      question: "What is UltriumAI and what products do you offer?",
+      answer: "UltriumAI is a veteran-owned technology platform offering three products: SafeSuite for personal and small-business security (password management, dark web monitoring, threat scanning), Vanguard for MSPs and IT teams (RMM, helpdesk, XDR, compliance, and IT documentation), and AI Studio for building custom AI assistants and GPTs with no code required."
     },
     {
-      question: "What's the difference between AI Studio and custom development?",
-      answer: "AI Studio is our self-service platform where you can build custom GPTs in minutes with no code required. Custom development is our full-service option where our team builds, trains, and deploys sophisticated AI solutions tailored to your specific workflows and data."
+      question: "Which product is right for me?",
+      answer: "If you're an individual or small team looking to protect passwords and monitor for breaches, start with SafeSuite — it's free. If you're an MSP or IT department managing endpoints, tickets, and security operations, Vanguard replaces your entire tool stack. If you want to build AI chatbots or assistants for your business, AI Studio lets you do it in minutes."
     },
     {
-      question: "How secure are your AI solutions?",
-      answer: "Security is foundational to everything we build. All solutions include enterprise-grade encryption, data isolation, and compliance with major frameworks. Our Vanguard platform specifically provides AI-powered security operations with threat detection and autonomous response."
+      question: "How secure are your products?",
+      answer: "Security is foundational to everything we build. SafeSuite uses zero-knowledge encryption so we can never see your data. Vanguard provides enterprise-grade XDR, compliance automation, and full audit trails. AI Studio includes data isolation and API security. All products are built with security-first architecture."
     },
     {
-      question: "Can I white-label your AI solutions?",
-      answer: "Yes! Both AI Studio GPTs and custom-built solutions can be white-labeled with your branding. This is popular with agencies, MSPs, and enterprises who want to offer AI-powered services to their clients."
+      question: "Can I use multiple products together?",
+      answer: "Yes! All three products share a single account and billing hub. Sign up once and access any product from the Product Hub. Many MSPs use Vanguard for client operations, SafeSuite for their own team's credentials, and AI Studio for building client-facing AI assistants."
     },
     {
       question: "How quickly can I get started?",
-      answer: "With AI Studio, you can build and deploy your first custom GPT in under an hour. For custom development projects, our team typically delivers initial solutions within 2-4 weeks depending on complexity."
+      answer: "SafeSuite is free and takes under a minute to set up. AI Studio lets you build and deploy a custom GPT in under an hour. Vanguard offers a guided onboarding that gets your first endpoints monitored within 15 minutes."
     },
     {
       question: "What kind of support do you provide?",
-      answer: "We provide comprehensive support including 24/7 technical assistance, onboarding training, and ongoing optimization. Enterprise customers receive dedicated account management and custom training programs."
+      answer: "All products include built-in AI assistance and documentation. Paid plans include priority support. Vanguard Enterprise customers get dedicated account management, custom training, and SLA-backed support."
     }
   ];
 
@@ -113,8 +113,10 @@ const Index = () => {
             
             {/* Subtitle with better styling */}
             <p className="text-fluid-lg text-muted-foreground/90 max-w-3xl mx-auto leading-relaxed animate-[fade-in_0.9s_ease-out] px-4">
-              From intelligent GPTs to enterprise security platforms—UltriumAI creates AI tools that work the way your business works. 
-              <span className="text-foreground font-medium"> Built for Business. Secure by Design.</span>
+              Protect your digital life with <span className="text-emerald-400 font-medium">SafeSuite</span>. 
+              Run IT operations with <span className="text-cyan-400 font-medium">Vanguard</span>. 
+              Build custom AI with <span className="text-primary font-medium">AI Studio</span>.
+              <span className="text-foreground font-medium"> One platform, three powerful products.</span>
             </p>
 
             {/* Product Cards with Enhanced Effects */}
@@ -173,9 +175,9 @@ const Index = () => {
       <section className="py-12 sm:py-20 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-10 sm:mb-16">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">Our Flagship Products</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">Which Product Is Right for You?</h2>
             <p className="text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto px-2">
-              Three powerful platforms designed for different needs—all built with security at the core
+              Whether you're protecting personal passwords, managing IT for hundreds of clients, or building AI assistants — there's a product built exactly for you.
             </p>
           </div>
           
@@ -187,11 +189,11 @@ const Index = () => {
                   <img src={ultriumGPTLogo} alt="AI Studio" className="w-full h-full object-contain" />
                 </div>
                 <CardTitle className="text-xl sm:text-2xl">AI Studio™</CardTitle>
-                <CardDescription className="text-sm sm:text-base">Custom GPT Builder Platform</CardDescription>
+                <CardDescription className="text-sm sm:text-base">Build Custom AI Assistants — No Code Required</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
                 <p className="text-sm sm:text-base text-muted-foreground">
-                  Build intelligent AI assistants in minutes. Upload your knowledge, train your GPT, deploy anywhere.
+                  Create intelligent chatbots trained on your data in minutes. Perfect for customer support, lead capture, internal Q&A, and more.
                 </p>
                 <div className="space-y-2 sm:space-y-3">
                   <div className="flex items-center gap-2 sm:gap-3">
@@ -211,9 +213,10 @@ const Index = () => {
                     <span className="text-xs sm:text-sm">Full API access</span>
                   </div>
                 </div>
-                <Link to="/ai-studio">
+                <p className="text-xs text-muted-foreground italic">💡 Want to build AI chatbots for your business or clients? Start here.</p>
+                <Link to="/auth?return=ai-studio">
                   <Button className="w-full h-11 sm:h-10 touch-target tap-scale" size="lg">
-                    Start Building <ArrowRight className="ml-2 h-4 w-4" />
+                    Start Building Free <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </CardContent>
@@ -229,11 +232,11 @@ const Index = () => {
                   <img src={vanguardLogo} alt="Vanguard" className="w-full h-full object-contain" />
                 </div>
                 <CardTitle className="text-xl sm:text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Vanguard™</CardTitle>
-                <CardDescription className="text-sm sm:text-base">All-in-One Security AI Platform</CardDescription>
+                <CardDescription className="text-sm sm:text-base">Replace Your Entire MSP Stack</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
                 <p className="text-sm sm:text-base text-muted-foreground">
-                  Complete security operations with AI copilot. Now with honeypots, traffic analysis, continuous monitoring & agent mesh.
+                  RMM, helpdesk, XDR, compliance, documentation, and reporting — in one platform with AI built into every workflow.
                 </p>
                 <div className="space-y-2 sm:space-y-3">
                   <div className="flex items-center gap-2 sm:gap-3">
@@ -253,12 +256,13 @@ const Index = () => {
                     <span className="text-xs sm:text-sm">AI Security Copilot & Playbooks</span>
                   </div>
                 </div>
-                <Link to="/products/vanguard" className="w-full">
+                <p className="text-xs text-muted-foreground italic">💡 Need pentesting, RMM, helpdesk, or full IT operations? This is your platform.</p>
+                <Link to="/auth?return=vanguard" className="w-full">
                   <Button 
                     className="w-full h-11 sm:h-10 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0 touch-target tap-scale" 
                     size="lg"
                   >
-                    Explore Vanguard <ArrowRight className="ml-2 h-4 w-4" />
+                    Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </CardContent>
@@ -274,11 +278,11 @@ const Index = () => {
                   <img src={safesuiteLogo} alt="SafeSuite" className="w-full h-full object-contain" />
                 </div>
                 <CardTitle className="text-xl sm:text-2xl bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">SafeSuite™</CardTitle>
-                <CardDescription className="text-sm sm:text-base">Complete Personal Security</CardDescription>
+                <CardDescription className="text-sm sm:text-base">Protect Your Digital Life</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
                 <p className="text-sm sm:text-base text-muted-foreground">
-                  All-in-one security for individuals and small teams. Password manager, threat scanning, dark web monitoring & more.
+                  Password vault, dark web monitoring, threat scanning, and AI security advisor — for individuals, families, and small teams.
                 </p>
                 <div className="space-y-2 sm:space-y-3">
                   <div className="flex items-center gap-2 sm:gap-3">
@@ -298,12 +302,13 @@ const Index = () => {
                     <span className="text-xs sm:text-sm">SafeTrack Asset Management</span>
                   </div>
                 </div>
-                <Link to="/products/safesuite" className="w-full">
+                <p className="text-xs text-muted-foreground italic">💡 Individual or small business? Start here — it's free forever.</p>
+                <Link to="/auth?return=safesuite" className="w-full">
                   <Button 
                     className="w-full h-11 sm:h-10 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white border-0 touch-target tap-scale" 
                     size="lg"
                   >
-                    Try SafeSuite <ArrowRight className="ml-2 h-4 w-4" />
+                    Start Free <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </CardContent>

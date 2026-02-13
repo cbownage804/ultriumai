@@ -179,23 +179,31 @@ const VanguardProductPage = () => {
           </div>
           
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-foreground/60 bg-clip-text text-transparent leading-tight">
-            One platform for IT operations, security, and compliance.
+            Replace Your Entire MSP Stack
           </h1>
           
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4 leading-relaxed">
             Vanguard replaces the fragmented stack of tools your team manages today — 
             RMM, service desk, threat detection, documentation, compliance, and reporting — 
             with a single system that shares data, context, and intelligence across every workflow.
           </p>
+          <p className="text-muted-foreground max-w-2xl mx-auto mb-10">
+            Built for MSPs managing multiple clients and internal IT teams running their own operations.
+          </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="bg-gradient-to-r from-cyan-500 to-violet-600 hover:opacity-90" asChild>
-              <Link to="/contact">
-                Request a Demo
+              <Link to="/auth?return=vanguard">
+                Start Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
+              <Link to="/pricing/vanguard">
+                View Pricing
+              </Link>
+            </Button>
+            <Button size="lg" variant="ghost" asChild>
               <Link to="/contact">
                 Talk to Sales
               </Link>
@@ -540,19 +548,19 @@ const VanguardProductPage = () => {
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" className="bg-gradient-to-r from-cyan-500 to-violet-600 hover:opacity-90" asChild>
-                  <Link to="/contact">
-                    Request a Demo
+                  <Link to="/auth?return=vanguard">
+                    Start Free Trial
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
-                  <Link to="/contact">
-                    Talk to Sales
+                  <Link to="/pricing/vanguard">
+                    View Pricing
                   </Link>
                 </Button>
                 <Button size="lg" variant="ghost" asChild>
-                  <Link to="/pricing/vanguard">
-                    View Pricing
+                  <Link to="/contact">
+                    Talk to Sales
                   </Link>
                 </Button>
               </div>

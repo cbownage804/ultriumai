@@ -133,30 +133,24 @@ const ProductCard = ({
           ))}
         </ul>
         
-        <Button 
-          onClick={handleClick}
-          className={`w-full group/btn transition-all duration-300 ${hasAccess ? 'shadow-lg hover:shadow-xl' : ''}`}
-          variant={hasAccess ? "default" : "outline"}
-          disabled={!hasAccess && name === 'Vanguard'}
-          size="lg"
-        >
-          {hasAccess ? (
-            <>
-              Open {name}
-              <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
-            </>
-          ) : name === 'Vanguard' ? (
-            <>
-              <Lock className="mr-2 h-4 w-4" />
-              Invite Only
-            </>
-          ) : (
-            <>
-              <Sparkles className="mr-2 h-4 w-4" />
-              Get Started Free
-            </>
-          )}
-        </Button>
+          <Button 
+            onClick={handleClick}
+            className={`w-full group/btn transition-all duration-300 ${hasAccess ? 'shadow-lg hover:shadow-xl' : ''}`}
+            variant={hasAccess ? "default" : "outline"}
+            size="lg"
+          >
+            {hasAccess ? (
+              <>
+                Open {name}
+                <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Get Started Free
+              </>
+            )}
+          </Button>
       </CardContent>
     </Card>
   );
