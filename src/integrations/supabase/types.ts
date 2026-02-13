@@ -35402,7 +35402,7 @@ export type Database = {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
-      is_ultrium_employee: { Args: { _user_id: string }; Returns: boolean }
+      is_ultrium_employee: { Args: { _user_id?: string }; Returns: boolean }
       log_portal_activity: {
         Args: {
           p_activity_details?: Json
