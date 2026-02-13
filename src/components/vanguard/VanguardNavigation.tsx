@@ -51,6 +51,7 @@ import vanguardLogo from '@/assets/vanguard-logo.png';
 import { ModuleLogo, ModuleName } from './ModuleLogo';
 import { CollapsibleNavGroup, NavSubGroup } from './CollapsibleNavGroup';
 import { SitesNavSection } from './SitesNavSection';
+import { AppSwitcher } from '@/components/AppSwitcher';
 
 interface NavItem {
   title: string;
@@ -440,11 +441,14 @@ export function VanguardNavigation() {
             {isCollapsed ? (
               <Shield className="h-6 w-6 text-cyan-400 drop-shadow-[0_0_12px_rgba(6,182,212,0.5)]" />
             ) : (
-              <img 
-                src={vanguardLogo} 
-                alt="Vanguard" 
-                className="h-10 w-auto object-contain drop-shadow-[0_0_12px_rgba(168,85,247,0.3)]"
-              />
+              <div className="flex items-center justify-between w-full">
+                <img 
+                  src={vanguardLogo} 
+                  alt="Vanguard" 
+                  className="h-10 w-auto object-contain drop-shadow-[0_0_12px_rgba(168,85,247,0.3)]"
+                />
+                <AppSwitcher />
+              </div>
             )}
           </div>
 

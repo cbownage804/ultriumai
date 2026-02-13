@@ -42,6 +42,7 @@ import {
   HelpCircle,
   ArrowLeftFromLine
 } from 'lucide-react';
+import { AppSwitcher } from '@/components/AppSwitcher';
 import { HelpCenter } from '@/components/onboarding/HelpCenter';
 import { cn } from '@/lib/utils';
 import { FloatingSafeAssist } from '@/components/safeassist/FloatingSafeAssist';
@@ -519,6 +520,7 @@ function SafeSuiteLayoutInner() {
 
             {/* Help Center & User menu */}
             <div className="flex items-center gap-1 sm:gap-2">
+              <AppSwitcher />
               <HelpCenter />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
