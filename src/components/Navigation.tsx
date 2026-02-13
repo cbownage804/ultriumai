@@ -108,13 +108,13 @@ const Navigation = () => {
                 
                 {/* Mega-menu grid: Products + AI Studio tools */}
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr]">
-                  {/* Left — Core Products */}
+                  {/* Left — Core Products (marketing pages) */}
                   <div className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">Platforms</span>
                     
                     {/* SafeSuite */}
                     <button
-                      onClick={() => handleNavigation('/safesuite')}
+                      onClick={() => handleNavigation('/products/safesuite')}
                       className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/30 transition-all duration-200 text-left w-full"
                     >
                       <div className="shrink-0 w-10 h-10 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-emerald-500/20 overflow-hidden">
@@ -131,7 +131,7 @@ const Navigation = () => {
 
                     {/* Vanguard Suite */}
                     <button
-                      onClick={() => handleNavigation('/vanguard')}
+                      onClick={() => handleNavigation('/products/vanguard')}
                       className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/30 transition-all duration-200 text-left w-full"
                     >
                       <div className="shrink-0 w-10 h-10 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-cyan-500/20 overflow-hidden">
@@ -145,6 +145,23 @@ const Navigation = () => {
                         <p className="text-xs text-muted-foreground line-clamp-1">RMM, helpdesk, security & compliance</p>
                       </div>
                     </button>
+
+                    {/* AI Studio */}
+                    <button
+                      onClick={() => handleNavigation('/products/ai-studio')}
+                      className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all duration-200 text-left w-full"
+                    >
+                      <div className="shrink-0 w-10 h-10 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-primary/20 overflow-hidden">
+                        <img src={aiStudioLogo} alt="AI Studio" className="w-6 h-6 object-contain" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-sm text-foreground group-hover/item:text-primary transition-colors">AI Studio™</span>
+                          <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-1">App Builder, GPT Builder, custom AI</p>
+                      </div>
+                    </button>
                   </div>
 
                   {/* Right — AI Studio Mega Menu */}
@@ -156,10 +173,10 @@ const Navigation = () => {
                 {/* Footer CTA */}
                 <div className="px-5 py-3 bg-muted/30 border-t border-border/30 flex items-center justify-between">
                   <button
-                    onClick={() => handleNavigation('/ai-studio')}
+                    onClick={() => handleNavigation('/auth')}
                     className="text-xs font-medium text-foreground/60 hover:text-primary flex items-center gap-1 transition-colors"
                   >
-                    <Sparkles className="h-3 w-3" /> Open AI Studio
+                    <LogOut className="h-3 w-3 rotate-180" /> Log in to Apps
                   </button>
                   <button 
                     onClick={() => handleNavigation('/pricing')}
@@ -329,7 +346,7 @@ const Navigation = () => {
               </button>
               
               <button 
-                onClick={() => handleNavigationWithMenuClose('/vanguard')} 
+                onClick={() => handleNavigationWithMenuClose('/products/vanguard')} 
                 className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-cyan-500 hover:bg-muted/50 rounded-md"
               >
                 <div className="h-8 w-8 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
@@ -339,7 +356,7 @@ const Navigation = () => {
               </button>
               
               <button 
-                onClick={() => handleNavigationWithMenuClose('/safesuite')} 
+                onClick={() => handleNavigationWithMenuClose('/products/safesuite')} 
                 className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-emerald-500 hover:bg-muted/50 rounded-md"
               >
                 <div className="h-8 w-8 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
@@ -348,7 +365,7 @@ const Navigation = () => {
                 SafeSuite™
               </button>
               
-              <button onClick={() => handleNavigationWithMenuClose('/portfolio')} className="flex items-center gap-2 w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
+              <button onClick={() => handleNavigationWithMenuClose('/hub')} className="flex items-center gap-2 w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
                 <Package className="h-4 w-4" />
                 Products
               </button>
