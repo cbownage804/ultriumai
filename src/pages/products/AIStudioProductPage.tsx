@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
+import appBuilderShowcase from '@/assets/app-builder-showcase.png';
 import { SEOHead } from "@/components/SEOHead";
 import { ProductDemoWrapper } from "@/components/demos/ProductDemoWrapper";
 import { AIStudioProductDemo } from "@/components/demos/AIStudioProductDemo";
@@ -201,25 +202,41 @@ const AIStudioProductPage = () => {
             policy management to detailed usage analytics and white-label delivery.
           </p>
 
-          {/* Build It Yourself CTA */}
-          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            <Card className="bg-card/50 border-primary/30 hover:border-primary/50 transition-all">
-              <CardContent className="p-6 text-center">
-                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Zap className="h-7 w-7 text-primary" />
+          {/* App Builder Showcase */}
+          <div className="mb-10">
+            <Card className="bg-card/50 border-primary/30 hover:border-primary/50 transition-all overflow-hidden">
+              <CardContent className="p-0">
+                <div className="relative rounded-t-lg overflow-hidden">
+                  <img 
+                    src={appBuilderShowcase} 
+                    alt="AI Studio App Builder — build full web apps by chatting with AI" 
+                    className="w-full h-auto"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">App Builder</h3>
-                <p className="text-muted-foreground text-sm mb-4">
-                  Build full web applications with our AI-powered IDE. Chat your ideas into reality — no coding required.
-                </p>
-                <Button size="sm" className="bg-primary hover:bg-primary/90" asChild>
-                  <Link to="/ai-studio/app-builder">
-                    Start Building
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
+                <div className="p-6 text-center -mt-12 relative z-10">
+                  <Badge className="mb-3 bg-primary/20 text-primary border-primary/30">
+                    <Zap className="h-3 w-3 mr-1" />
+                    AI-Powered IDE
+                  </Badge>
+                  <h3 className="text-xl font-bold mb-2">App Builder</h3>
+                  <p className="text-muted-foreground text-sm mb-4 max-w-lg mx-auto">
+                    Build full web applications by chatting with AI. Describe what you want and watch it come to life — no coding required.
+                  </p>
+                  <Button className="bg-primary hover:bg-primary/90" asChild>
+                    <Link to="/ai-studio/app-builder">
+                      Start Building
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* GPT Builder + Custom CTA */}
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             <Card className="bg-card/50 border-primary/30 hover:border-primary/50 transition-all">
               <CardContent className="p-6 text-center">
                 <div className="w-14 h-14 rounded-xl bg-violet-500/10 flex items-center justify-center mx-auto mb-4">
