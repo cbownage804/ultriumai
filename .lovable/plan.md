@@ -1,102 +1,137 @@
 
 
-## MeshCentral as Primary Remote Access + RustDesk as Backup
+# Unified Auth, Smart Onboarding, and Marketing Refresh
 
-### Overview
-Add MeshCentral as the primary zero-touch remote access solution. MeshCentral runs entirely in the browser (no local install needed on the technician's side) and supports passing credentials programmatically. RustDesk stays as a backup for attended access scenarios.
+## Overview
 
-### How MeshCentral Works (for context)
-- You self-host a MeshCentral server (Node.js-based, single binary)
-- A lightweight MeshAgent is installed on endpoints (similar to current RustDesk agent install)
-- Technicians connect via a **web browser** -- no client software needed
-- The server handles authentication, so the "Remote In" button simply opens a URL like `https://mesh.yourdomain.com/#/device/NODEID` with the technician already logged in via token
-- True zero-touch: click button, see desktop. No passwords to paste.
+Consolidate the authentication experience into a single page, replace the confusing "Account Type" dropdown with a product picker that intelligently recommends the right product, and update sitewide marketing copy to clearly communicate what each product is for and who it serves.
 
-### What Changes
+## Phase 1: Unified Auth with Product Picker
 
-**1. Database -- new columns on `vanguard_agents`**
-- `meshcentral_node_id TEXT` -- the MeshCentral node ID reported by the agent
-- `meshcentral_mesh_id TEXT` -- the mesh/group the device belongs to
+### Remove Duplicate Auth
+- Delete `src/pages/vanguard/VanguardAuthPage.tsx`
+- Remove the `/vanguard/auth` route from `App.tsx` and `vanguardRoutes.tsx`
+- Add a redirect so `/vanguard/auth` maps to `/auth?return=vanguard` (no broken links)
 
-**2. New Edge Function: `vanguard-meshcentral-auth`**
-- Generates a short-lived MeshCentral login token for the current technician
-- Returns a URL like `https://mesh.yourdomain.com/login?token=XYZ&gotonode=NODEID&viewmode=desktop`
-- Uses the MeshCentral admin credentials stored as Supabase secrets (`MESHCENTRAL_URL`, `MESHCENTRAL_ADMIN_USER`, `MESHCENTRAL_ADMIN_PASS`)
+### Replace "Account Type" with Product Intent
+On the **Sign Up** tab of `/auth`, replace the Business/MSP/MSSP dropdown with a product recommendation step:
 
-**3. New config file: `src/config/vanguardMeshCentral.ts`**
-- Stores the MeshCentral server URL (similar to `vanguardRemoteAccess.ts`)
-- Helper functions: `isMeshCentralConfigured()`, `getMeshCentralDesktopUrl()`
-
-**4. Update `RemoteAccessPanel.tsx`**
-- Add MeshCentral as the first/default tab (primary)
-- "Connect" button for MeshCentral opens a new browser tab directly to the MeshCentral web console with auto-login token -- true zero-touch
-- RustDesk tab remains as "Backup / Attended Access"
-- Update the providers list and tab ordering
-
-**5. Update `VanguardDeviceDetails.tsx`**
-- "Remote In" button now defaults to MeshCentral (opens browser tab)
-- Falls back to RustDesk if MeshCentral node ID isn't available
-- Remove the password-clipboard logic from the primary flow
-
-**6. Update `RustDeskIntegration.tsx`**
-- Rename to something like "Remote Desktop" page
-- Show MeshCentral as primary with a device table
-- Keep RustDesk section below as "Backup Remote Access"
-
-**7. Update `vanguardRemoteAccess.ts`**
-- Add `meshcentral` to `REMOTE_ACCESS_PROVIDERS`
-
-**8. Update `.NET Agent: RustDeskInstaller.cs`** (or new `MeshCentralInstaller.cs`)
-- Add a new service class that downloads and installs MeshAgent
-- MeshAgent install is a single command: `meshagent -install -meshurl=wss://mesh.yourdomain.com -meshid=MESHID`
-- Reports the `meshcentral_node_id` back to Vanguard API on heartbeat
-- RustDesk installer remains unchanged (backup)
-
-**9. Update banners/notices**
-- Remove "RustDesk Required on Your Computer" banners since MeshCentral is browser-based
-- Add a setup guide banner if MeshCentral server isn't configured yet
-
-### Technical Details
-
-**Migration (DB):**
-```sql
-ALTER TABLE public.vanguard_agents 
-ADD COLUMN IF NOT EXISTS meshcentral_node_id TEXT,
-ADD COLUMN IF NOT EXISTS meshcentral_mesh_id TEXT;
+```text
++------------------------------------------+
+|  What brings you here?                   |
+|                                          |
+|  [ ] I want to protect my passwords,    |
+|      emails, and digital life            |
+|      --> SafeSuite (Recommended for      |
+|          individuals & small teams)      |
+|                                          |
+|  [ ] I need RMM, helpdesk, pentesting,  |
+|      or full IT operations               |
+|      --> Vanguard (For MSPs & IT teams) |
+|                                          |
+|  [ ] I want to build custom AI          |
+|      assistants for my business          |
+|      --> AI Studio                       |
+|                                          |
+|  Users can select ONE or MULTIPLE.       |
++------------------------------------------+
 ```
 
-**Edge Function (`vanguard-meshcentral-auth`):**
-- Accepts `{ node_id: string }` from authenticated technician
-- Calls MeshCentral API: `POST /api/gettoken` with admin creds to generate a short-lived user token
-- Returns `{ url: "https://mesh.server/login?token=...&gotonode=...&viewmode=12" }`
+- Single selection: user goes directly to that product dashboard after signup
+- Multiple selections: user goes to the Product Hub
+- Stored in `profiles.product_interests` (text array) and `profiles.primary_product` (text)
 
-**Remote In button flow:**
-1. Technician clicks "Remote In"
-2. Frontend calls `vanguard-meshcentral-auth` edge function with the device's `meshcentral_node_id`
-3. Edge function returns a one-time URL
-4. Frontend opens URL in new tab -- technician sees remote desktop immediately
+### Smart CTA Recommendations
+Add contextual recommendation badges:
+- "Are you a business or individual? We recommend **SafeSuite Enterprise**"
+- "Need pentesting, helpdesk, or full RMM? Try **Vanguard**"
+- "Want to build AI chatbots? Start with **AI Studio**"
 
-**Agent changes (summary):**
-- New `MeshCentralInstaller.cs` service: downloads MeshAgent MSI, runs silent install with mesh server URL and mesh ID
-- Heartbeat payload updated to include `meshcentral_node_id` (read from MeshAgent config file after install)
-- RustDesk install continues in parallel as fallback
+These appear as subtle helper text below each option.
 
-### File Summary
-| File | Action |
+## Phase 2: Smart Post-Login Routing
+
+Update `useRoleBasedRedirect` and `RoleBasedRedirect`:
+
+```text
+User logs in
+    |
+    v
+Has primary_product set?
+    |-- Yes --> Go to that product dashboard
+    |-- No --> Has product_interests?
+                |-- Single product --> Set as primary, go there
+                |-- Multiple --> Go to Hub
+                |-- None (legacy user) --> Go to Hub
+```
+
+MSP/Admin role-based routing stays unchanged (takes priority).
+
+## Phase 3: Unified Adaptive Onboarding
+
+Merge the three onboarding systems into one:
+
+- After signup + product selection, show only the onboarding steps relevant to the chosen product
+- **SafeSuite path**: Skip to dashboard (free tier auto-provisions), show in-app tooltips
+- **Vanguard path**: Show the existing 4-step Vanguard wizard (company setup, agent install, etc.)
+- **AI Studio path**: Show the existing GPT creation steps
+- All paths share the profile completion step (name, company)
+
+## Phase 4: Sitewide Marketing Updates
+
+### Homepage (`Index.tsx`)
+- Update hero subtitle: emphasize three clear audience segments
+- Add a "Which product is right for you?" quiz-style section below the product cards
+- Update FAQ answers to reference current capabilities
+
+### Product Hub (`ProductHub.tsx`)
+- Replace "Invite Only" on Vanguard with "Start Free Trial" or "View Plans" linking to `/pricing/vanguard`
+- Add smart recommendation banner: "Based on your profile, we recommend..." for users who haven't explored all products
+
+### Product Pages
+- **SafeSuite** (`SafeSuiteProductPage.tsx`): Emphasize individual-first messaging -- "Protect your digital life" with clear business tier upsell
+- **Vanguard** (`VanguardProductPage.tsx`): Lead with "Replace your entire MSP stack" positioning, clear module breakdown
+- **AI Studio** (`AIStudioProductPage.tsx`): Focus on "Build AI in minutes, no code required"
+
+### Navigation
+- Ensure all product CTAs route to `/auth?return=[product]` so new users get product-aware signup
+
+## Database Changes
+
+Add two columns to `profiles`:
+
+```text
+primary_product  text        (nullable) -- safesuite | vanguard | ai_studio
+product_interests text[]     (nullable) -- array of selected products
+```
+
+## Files Modified
+
+| File | Change |
 |------|--------|
-| `supabase/migrations/new.sql` | Add `meshcentral_node_id`, `meshcentral_mesh_id` columns |
-| `supabase/functions/vanguard-meshcentral-auth/index.ts` | New -- generates login token + URL |
-| `src/config/vanguardMeshCentral.ts` | New -- MeshCentral config constants |
-| `src/config/vanguardRemoteAccess.ts` | Add MeshCentral provider |
-| `src/components/vanguard/device/RemoteAccessPanel.tsx` | Add MeshCentral as primary tab |
-| `src/components/vanguard/VanguardDeviceDetails.tsx` | "Remote In" defaults to MeshCentral |
-| `src/components/vanguard/RustDeskIntegration.tsx` | Rename/restructure as unified Remote Desktop page |
-| `VanguardAgent/Services/MeshCentralInstaller.cs` | New -- MeshAgent install + config |
-| `VanguardAgent/Services/RustDeskInstaller.cs` | No changes (stays as backup) |
+| `src/pages/Auth.tsx` | Replace account type dropdown with product picker cards |
+| `src/hooks/useRoleBasedRedirect.tsx` | Add primary_product routing logic |
+| `src/components/RoleBasedRedirect.tsx` | Route based on primary_product |
+| `src/hooks/useOnboarding.ts` | Check product_interests for adaptive onboarding |
+| `src/components/OnboardingFlow.tsx` | Make steps product-aware |
+| `src/pages/ProductHub.tsx` | Replace "Invite Only" with actionable CTA, add recommendation banner |
+| `src/pages/Index.tsx` | Add "Which product?" section, update messaging |
+| `src/pages/products/VanguardProductPage.tsx` | Update CTAs to route through unified auth |
+| `src/pages/products/SafeSuiteProductPage.tsx` | Update CTAs to route through unified auth |
+| `src/App.tsx` | Remove `/vanguard/auth` route, add redirect |
+| `src/routes/vanguardRoutes.tsx` | Remove VanguardAuthPage from public routes |
 
-### Prerequisites (your side)
-1. Deploy a MeshCentral server (can run on a small VPS, Docker, or same server as RustDesk relay)
-2. Add Supabase secrets: `MESHCENTRAL_URL`, `MESHCENTRAL_ADMIN_USER`, `MESHCENTRAL_ADMIN_PASS`
-3. Create a mesh group in MeshCentral for Vanguard devices
-4. Rebuild the .NET agent MSI after adding `MeshCentralInstaller.cs`
+## Files Deleted
+
+| File | Reason |
+|------|--------|
+| `src/pages/vanguard/VanguardAuthPage.tsx` | Replaced by unified `/auth` |
+
+## What Stays the Same
+
+- All existing product access logic (`useProductAccess`)
+- Separate pricing pages per product
+- ProtectedRoute and session management
+- MSP/Admin role-based routing priority
+- Product Hub remains accessible at `/hub` as the multi-product dashboard
 
