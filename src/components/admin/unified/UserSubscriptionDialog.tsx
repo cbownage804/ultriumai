@@ -327,7 +327,9 @@ export const UserSubscriptionDialog = ({
           .upsert({
             user_id: user.user_id,
             tier: vanguardTier,
+            seat_count: 1,
             status: 'active',
+            admin_override: true,
             updated_at: new Date().toISOString()
           }, { onConflict: 'user_id' });
 
