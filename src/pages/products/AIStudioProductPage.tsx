@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
 import appBuilderShowcase from '@/assets/app-builder-showcase.png';
 import gptBuilderShowcase from '@/assets/gpt-builder-showcase.png';
+import aiStudioDashboard from '@/assets/ai-studio-dashboard-showcase.png';
 import { SEOHead } from "@/components/SEOHead";
 import { ProductDemoWrapper } from "@/components/demos/ProductDemoWrapper";
 import { AIStudioProductDemo } from "@/components/demos/AIStudioProductDemo";
@@ -197,14 +198,30 @@ const AIStudioProductPage = () => {
 
       {/* What is AI Studio */}
       <section className="py-16 px-4 border-b border-border/50">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6">What is AI Studio?</h2>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            AI Studio is a <strong className="text-foreground">Business AI Control Plane</strong> that enables 
-            organizations to deploy governed AI assistants at scale. Unlike consumer chatbots, AI Studio provides 
-            the governance, visibility, and predictability that business operations require — from centralized 
-            policy management to detailed usage analytics and white-label delivery.
-          </p>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6">What is AI Studio?</h2>
+            <p className="text-lg text-muted-foreground leading-relaxed max-w-4xl mx-auto">
+              AI Studio is a <strong className="text-foreground">Business AI Control Plane</strong> that enables 
+              organizations to deploy governed AI assistants at scale. Unlike consumer chatbots, AI Studio provides 
+              the governance, visibility, and predictability that business operations require — from centralized 
+              policy management to detailed usage analytics and white-label delivery.
+            </p>
+          </div>
+          
+          {/* Dashboard Preview */}
+          <Card className="bg-card/50 border-primary/20 overflow-hidden shadow-2xl shadow-primary/10">
+            <CardContent className="p-0">
+              <div className="relative rounded-lg overflow-hidden">
+                <img 
+                  src={aiStudioDashboard} 
+                  alt="AI Studio Dashboard — App Builder and GPT Builder hub with recent projects and templates" 
+                  className="w-full h-auto"
+                  loading="lazy"
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
