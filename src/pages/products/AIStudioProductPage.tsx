@@ -14,6 +14,7 @@ import {
 import { Link } from "react-router-dom";
 import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
 import appBuilderShowcase from '@/assets/app-builder-showcase.png';
+import gptBuilderShowcase from '@/assets/gpt-builder-showcase.png';
 import { SEOHead } from "@/components/SEOHead";
 import { ProductDemoWrapper } from "@/components/demos/ProductDemoWrapper";
 import { AIStudioProductDemo } from "@/components/demos/AIStudioProductDemo";
@@ -291,6 +292,22 @@ const AIStudioProductPage = () => {
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Create custom AI assistants trained on your data. Deploy as chatbots, embed on websites, or share via Microsoft Teams — fully branded and governed.
             </p>
+          </div>
+
+          {/* GPT Builder Showcase Image */}
+          <div className="mb-12">
+            <Card className="bg-card/50 border-violet-500/30 overflow-hidden shadow-xl shadow-violet-500/10">
+              <CardContent className="p-0">
+                <div className="relative rounded-t-lg overflow-hidden">
+                  <img 
+                    src={gptBuilderShowcase} 
+                    alt="AI Studio GPT Builder — create custom AI assistants with full configuration" 
+                    className="w-full h-auto"
+                    loading="lazy"
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* GPT Builder Capabilities Grid */}
