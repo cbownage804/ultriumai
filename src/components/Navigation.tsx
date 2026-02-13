@@ -3,6 +3,7 @@ import { Menu, LogOut, Phone, X, ChevronDown, Package, Shield, Cpu, Monitor, Hea
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { WhatsNewSidebar } from "@/components/changelog/WhatsNewSidebar";
 import { AIStudioMegaMenu } from "@/components/marketing/AIStudioMegaMenu";
+import { AppSwitcher } from "@/components/AppSwitcher";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -299,6 +300,7 @@ const Navigation = () => {
             
             {user ? (
               <div className="flex items-center gap-1.5">
+                <AppSwitcher />
                 <WhatsNewSidebar />
                 <NotificationCenter />
                 <ThemeToggle />
