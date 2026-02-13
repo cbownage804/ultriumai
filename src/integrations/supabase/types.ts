@@ -16832,6 +16832,8 @@ export type Database = {
           job_title: string | null
           onboarding_completed: boolean | null
           phone: string | null
+          primary_product: string | null
+          product_interests: string[] | null
           stripe_customer_id: string | null
           subscription_end_date: string | null
           subscription_status: string | null
@@ -16856,6 +16858,8 @@ export type Database = {
           job_title?: string | null
           onboarding_completed?: boolean | null
           phone?: string | null
+          primary_product?: string | null
+          product_interests?: string[] | null
           stripe_customer_id?: string | null
           subscription_end_date?: string | null
           subscription_status?: string | null
@@ -16880,6 +16884,8 @@ export type Database = {
           job_title?: string | null
           onboarding_completed?: boolean | null
           phone?: string | null
+          primary_product?: string | null
+          product_interests?: string[] | null
           stripe_customer_id?: string | null
           subscription_end_date?: string | null
           subscription_status?: string | null

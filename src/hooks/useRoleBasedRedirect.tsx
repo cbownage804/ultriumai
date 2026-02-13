@@ -8,6 +8,8 @@ export interface UserProfile {
   email: string;
   full_name?: string;
   company_name?: string;
+  primary_product?: string | null;
+  product_interests?: string[] | null;
 }
 
 export interface UserRole {
@@ -33,7 +35,7 @@ export const useRoleBasedRedirect = () => {
         // Fetch user profile - use user_id, not id
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, user_id, account_type, email, full_name, company_name')
+          .select('id, user_id, account_type, email, full_name, company_name, primary_product, product_interests')
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -42,7 +44,9 @@ export const useRoleBasedRedirect = () => {
         } else if (profileData) {
           setProfile({
             ...profileData,
-            id: profileData.user_id // Ensure id matches user.id for consistency
+            id: profileData.user_id,
+            primary_product: profileData.primary_product,
+            product_interests: profileData.product_interests,
           });
         }
 
@@ -67,6 +71,15 @@ export const useRoleBasedRedirect = () => {
     fetchUserData();
   }, [user]);
 
+  const getProductDashboard = (product: string): string => {
+    switch (product) {
+      case 'safesuite': return '/safesuite/dashboard';
+      case 'vanguard': return '/vanguard/app/dashboard';
+      case 'ai_studio': return '/ai-studio';
+      default: return '/hub';
+    }
+  };
+
   const getRedirectPath = () => {
     if (!profile || !user) return '/hub';
 
@@ -76,20 +89,23 @@ export const useRoleBasedRedirect = () => {
     const isUltriumAdmin = roles.some(role => role.role === 'ultrium_admin');
 
     // Admin users go to admin dashboard
-    if (isUltriumAdmin) {
-      return '/admin';
-    }
+    if (isUltriumAdmin) return '/admin';
 
     // MSP/MSSP users go to their respective dashboards
-    if (isMSPAdmin || profile.account_type === 'msp') {
-      return '/msp-control-center';
+    if (isMSPAdmin || profile.account_type === 'msp') return '/msp-control-center';
+    if (isMSSPAdmin || profile.account_type === 'mssp') return '/msp-control-center';
+
+    // Smart product routing: primary_product takes priority
+    if (profile.primary_product) {
+      return getProductDashboard(profile.primary_product);
     }
 
-    if (isMSSPAdmin || profile.account_type === 'mssp') {
-      return '/msp-control-center'; // For now, use same as MSP
+    // If single product interest, route directly there
+    if (profile.product_interests?.length === 1) {
+      return getProductDashboard(profile.product_interests[0]);
     }
 
-    // Regular users go to Product Hub to choose their product
+    // Multiple interests or legacy user → Hub
     return '/hub';
   };
 

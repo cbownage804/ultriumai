@@ -62,7 +62,7 @@ const VanguardDevices = lazy(() => import('@/pages/VanguardDevices'));
 const VanguardDeviceDetail = lazy(() => import('@/pages/VanguardDeviceDetail'));
 const VanguardSetup = lazy(() => import('@/pages/VanguardSetup'));
 const UltriumVanguard = lazy(() => import('@/pages/UltriumVanguard'));
-const VanguardAuthPage = lazy(() => import('@/pages/vanguard/VanguardAuthPage'));
+// VanguardAuthPage removed - unified auth at /auth
 
 // Lazy-loaded - MSP pages
 // MSP pages removed - redirects in routes
@@ -280,8 +280,8 @@ function AppRouter() {
         {/* Vanguard root redirects to the Vanguard dashboard */}
         <Route path="/vanguard" element={<Navigate to="/vanguard/app/dashboard" replace />} />
         
-        {/* Vanguard Auth Route */}
-        <Route path="/vanguard/auth" element={<SuspenseWrapper><VanguardAuthPage /></SuspenseWrapper>} />
+        {/* Vanguard Auth Route - redirect to unified auth */}
+        <Route path="/vanguard/auth" element={<Navigate to="/auth?return=vanguard" replace />} />
         
         {/* Vanguard Protected App Routes (inside layout) */}
         <Route path="/vanguard/app" element={<SuspenseWrapper><VanguardLayout /></SuspenseWrapper>}>

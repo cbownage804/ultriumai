@@ -5,16 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoleBasedRedirect } from '@/hooks/useRoleBasedRedirect';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Mail, Lock, User, Building2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { devLog } from '@/lib/logger';
-import type { AccountType } from '@/hooks/useAccountType';
+import { ProductIntentPicker, type ProductIntent } from '@/components/auth/ProductIntentPicker';
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
 import heroAuth from '@/assets/hero-auth.jpg';
 
@@ -22,8 +21,7 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [accountType, setAccountType] = useState<AccountType>('business');
-  const [companyName, setCompanyName] = useState('');
+  const [productInterests, setProductInterests] = useState<ProductIntent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -46,14 +44,15 @@ const Auth = () => {
     setError('');
 
     try {
+      const primaryProduct = productInterests.length === 1 ? productInterests[0] : null;
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
-            account_type: accountType,
-            company_name: companyName,
+            product_interests: productInterests,
+            primary_product: primaryProduct,
           }
         }
       });
@@ -339,36 +338,10 @@ const Auth = () => {
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="accountType" className="text-sm font-medium">Account Type</Label>
-                    <Select value={accountType} onValueChange={(value: AccountType) => setAccountType(value)}>
-                      <SelectTrigger className="h-11 sm:h-10 text-base sm:text-sm">
-                        <SelectValue placeholder="Select account type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="business" className="py-3 sm:py-2">Business</SelectItem>
-                        <SelectItem value="msp" className="py-3 sm:py-2">MSP (Managed Service Provider)</SelectItem>
-                        <SelectItem value="mssp" className="py-3 sm:py-2">MSSP (Managed Security Service Provider)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {(accountType === 'msp' || accountType === 'mssp') && (
-                    <div className="space-y-2">
-                      <Label htmlFor="companyName" className="text-sm font-medium">Company Name</Label>
-                      <div className="relative">
-                        <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="companyName"
-                          type="text"
-                          placeholder="Enter your company name"
-                          value={companyName}
-                          onChange={(e) => setCompanyName(e.target.value)}
-                          required
-                          className="h-11 sm:h-10 text-base sm:text-sm input-premium pl-10"
-                        />
-                      </div>
-                    </div>
-                  )}
+                  <ProductIntentPicker
+                    selected={productInterests}
+                    onChange={setProductInterests}
+                  />
                   <div className="space-y-2">
                     <Label htmlFor="signupPassword" className="text-sm font-medium">Password</Label>
                     <div className="relative">
