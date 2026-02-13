@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Info, AlertCircle, Wrench, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { resilientQuery } from '@/lib/supabaseResilience';
 
 interface StatusEntry {
   id: string;
@@ -29,14 +30,19 @@ export function SystemStatusBanner() {
 
   useEffect(() => {
     // Fetch active admin announcements as status entries
-    const fetch = async () => {
+    const fetchStatus = async () => {
       try {
         const now = new Date().toISOString();
-        const { data } = await supabase
-          .from('admin_announcements')
-          .select('id, title, message, severity, is_active, starts_at, expires_at')
-          .eq('is_active', true)
-          .lte('starts_at', now);
+        const data = await resilientQuery(
+          supabase
+            .from('admin_announcements')
+            .select('id, title, message, severity, is_active, starts_at, expires_at')
+            .eq('is_active', true)
+            .lte('starts_at', now),
+          [],
+          'system-status-banner',
+          5000 // 5s timeout — non-critical UI element
+        );
 
         const active = (data || []).filter(a =>
           !a.expires_at || new Date(a.expires_at) > new Date()
@@ -50,16 +56,16 @@ export function SystemStatusBanner() {
 
         setEntries(active);
       } catch (err) {
-        console.error('Failed to fetch status:', err);
+        // Silently fail — banner is non-essential
       }
     };
 
-    fetch();
+    fetchStatus();
 
     // Real-time subscription
     const channel = supabase
       .channel('system-status')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_announcements' }, () => { fetch(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_announcements' }, () => { fetchStatus(); })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };

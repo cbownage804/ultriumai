@@ -38,13 +38,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Get initial session FIRST before setting up listener
     // This prevents race conditions where the listener fires before initial session is set
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Use a timeout to prevent infinite loading when Supabase is down
+    let sessionTimeout: ReturnType<typeof setTimeout>;
+
+    const initSession = supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(sessionTimeout);
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Fetch user profile
-        supabase
+        // Fetch user profile with its own timeout
+        const profilePromise = supabase
           .from('profiles')
           .select('*')
           .eq('user_id', session.user.id)
@@ -52,10 +56,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .then(({ data: profileData }) => {
             setProfile(profileData);
           });
+        
+        // Don't let profile fetch block loading forever
+        Promise.race([
+          profilePromise,
+          new Promise(resolve => setTimeout(resolve, 8000))
+        ]).then(() => setLoading(false));
+        return;
       }
       
       setLoading(false);
+    }).catch((err) => {
+      clearTimeout(sessionTimeout);
+      devLog.warn('Auth session fetch failed, continuing as unauthenticated:', err);
+      setLoading(false);
     });
+
+    // Hard timeout: if getSession takes >10s, stop loading anyway
+    sessionTimeout = setTimeout(() => {
+      devLog.warn('Auth session fetch timed out after 10s — continuing as unauthenticated');
+      setLoading(false);
+    }, 10000);
 
     // Set up auth state listener AFTER getting initial session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
