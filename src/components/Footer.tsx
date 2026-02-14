@@ -108,10 +108,10 @@ const Footer = () => {
             </h4>
             <ul className="space-y-3">
               {[
-                { path: '/products', label: 'Portfolio' },
+                { path: '/products', label: 'Products' },
                 { path: '/pricing', label: 'Pricing' },
                 { path: '/contact', label: 'Contact' },
-                { path: '/about', label: 'About Us' },
+                { path: '/docs', label: 'Documentation' },
               ].map((link) => (
                 <li key={link.path}>
                   <button 
@@ -161,7 +161,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <p className="text-sm text-muted-foreground">
               © {currentYear} UltriumAI. Proudly developed by{' '}
-              <span className="text-foreground font-medium hover:text-primary transition-colors cursor-pointer" onClick={() => navigate('/about')}>Ultrium LLC</span>.
+              <span className="text-foreground font-medium hover:text-primary transition-colors cursor-pointer" onClick={() => navigate('/')}>Ultrium LLC</span>.
             </p>
             <div className="flex flex-wrap gap-6 text-sm">
               {[
