@@ -164,8 +164,11 @@ const AuthPage = () => {
     if (message.includes('user already registered') || message.includes('already been registered')) {
       return 'An account with this email already exists. Please sign in instead.';
     }
+    if (message.includes('password should be at least')) {
+      return error?.message || 'Password does not meet the minimum length requirement.';
+    }
     if (message.includes('password')) {
-      return 'Password must be at least 6 characters long.';
+      return error?.message || 'There was an issue with your password. Please try a different one.';
     }
     if (message.includes('rate limit')) {
       return 'Too many attempts. Please wait a moment and try again.';
