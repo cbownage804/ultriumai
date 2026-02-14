@@ -67,7 +67,7 @@ const tiers = [
 ];
 
 const process_steps = [
-  { step: '01', title: 'Discovery Call', description: 'We learn your goals, users, and requirements in a free 30-minute consultation.', icon: Phone },
+  { step: '01', title: 'Discovery Session', description: 'We learn your goals, users, and requirements in a free consultation.', icon: Phone },
   { step: '02', title: 'Proposal & Design', description: 'You receive a detailed scope, timeline, and interactive wireframes for approval.', icon: Code2 },
   { step: '03', title: 'Build & Iterate', description: 'Weekly demos keep you in the loop. We iterate until it\'s exactly right.', icon: Layers },
   { step: '04', title: 'Launch & Support', description: 'We deploy, monitor, and provide ongoing support so you can focus on growth.', icon: Rocket },
@@ -226,9 +226,8 @@ export default function CustomAppsPricing() {
               Schedule Free Consultation
               <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
-            <Button size="lg" variant="outline" onClick={() => window.open('tel:888-884-1410')}>
-              <Phone className="h-4 w-4 mr-1" />
-              888-884-1410
+            <Button size="lg" variant="outline" onClick={() => navigate('/contact')}>
+              Contact Us
             </Button>
           </div>
         </section>

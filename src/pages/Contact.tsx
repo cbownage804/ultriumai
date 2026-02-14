@@ -6,7 +6,7 @@ import { ContactFormFields } from "@/components/contact/ContactFormFields";
 import { ProductInterests } from "@/components/contact/ProductInterests";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Phone, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
@@ -21,7 +21,7 @@ const Contact = () => {
     handleProductInterestChange,
     handleSelectAllProducts,
     handleSubmit,
-    handleCallButton
+    
   } = useContactForm();
 
   return (
@@ -51,16 +51,10 @@ const Contact = () => {
                       onSelectAll={handleSelectAllProducts}
                     />
 
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      <Button type="submit" disabled={isSubmitting} className="flex-1">
-                        <Send className="h-4 w-4 mr-2" />
-                        {isSubmitting ? 'Sending...' : 'Send Message'}
-                      </Button>
-                      <Button type="button" variant="outline" onClick={handleCallButton}>
-                        <Phone className="h-4 w-4 mr-2" />
-                        Call Us
-                      </Button>
-                    </div>
+                    <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+                      <Send className="h-4 w-4 mr-2" />
+                      {isSubmitting ? 'Sending...' : 'Send Message'}
+                    </Button>
                   </form>
                 </CardContent>
               </Card>
