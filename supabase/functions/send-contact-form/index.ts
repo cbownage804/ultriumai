@@ -10,10 +10,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Rate limiting configuration
 const RATE_LIMIT_WINDOW_MINUTES = 15;
 const MAX_SUBMISSIONS_PER_WINDOW = 3;
-const MIN_FORM_FILL_TIME_MS = 3000; // 3 seconds minimum to fill form
+const MIN_FORM_FILL_TIME_MS = 3000;
 
 interface ContactFormData {
   firstName: string;
@@ -21,71 +20,54 @@ interface ContactFormData {
   email: string;
   phone?: string;
   company?: string;
-  businessType: string;
-  serviceProviderType?: string;
+  contactType?: string;
   businessSize?: string;
   industry?: string;
   projectType?: string;
-  productType: string;
-  whiteLabeled: string;
   message?: string;
   productInterests: string[];
-  // Anti-spam fields
   _honeypot?: string;
   _formLoadedAt?: number;
 }
 
 const getClientIP = (req: Request): string => {
-  // Check common headers for real IP (behind proxies/CDNs)
   const forwardedFor = req.headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    return forwardedFor.split(",")[0].trim();
-  }
+  if (forwardedFor) return forwardedFor.split(",")[0].trim();
   const realIP = req.headers.get("x-real-ip");
-  if (realIP) {
-    return realIP;
-  }
+  if (realIP) return realIP;
   const cfConnectingIP = req.headers.get("cf-connecting-ip");
-  if (cfConnectingIP) {
-    return cfConnectingIP;
-  }
+  if (cfConnectingIP) return cfConnectingIP;
   return "unknown";
 };
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   if (req.method !== "POST") {
-    return new Response("Method not allowed", { 
-      status: 405, 
-      headers: corsHeaders 
-    });
+    return new Response("Method not allowed", { status: 405, headers: corsHeaders });
   }
 
   try {
     const formData: ContactFormData = await req.json();
     const clientIP = getClientIP(req);
-    
     console.log("Received contact form submission from IP:", clientIP);
 
-    // === ANTI-SPAM CHECK 1: Honeypot field ===
+    // Honeypot check
     if (formData._honeypot && formData._honeypot.length > 0) {
-      console.log("Honeypot triggered - rejecting submission");
-      // Return success to not tip off bots, but don't send email
+      console.log("Honeypot triggered");
       return new Response(
         JSON.stringify({ success: true, message: "Thank you for your submission" }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // === ANTI-SPAM CHECK 2: Timing check ===
+    // Timing check
     if (formData._formLoadedAt) {
       const timeTaken = Date.now() - formData._formLoadedAt;
       if (timeTaken < MIN_FORM_FILL_TIME_MS) {
-        console.log(`Form filled too fast (${timeTaken}ms) - rejecting submission`);
+        console.log(`Form filled too fast (${timeTaken}ms)`);
         return new Response(
           JSON.stringify({ success: true, message: "Thank you for your submission" }),
           { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -93,46 +75,29 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // === ANTI-SPAM CHECK 3: Rate limiting ===
+    // Rate limiting
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Check recent submissions from this IP
     const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MINUTES * 60 * 1000).toISOString();
-    
     const { count, error: countError } = await supabase
       .from("contact_form_rate_limits")
       .select("*", { count: "exact", head: true })
       .eq("ip_address", clientIP)
       .gte("submitted_at", windowStart);
 
-    if (countError) {
-      console.error("Rate limit check error:", countError);
-      // Continue anyway - don't block legitimate users due to DB issues
-    } else if (count !== null && count >= MAX_SUBMISSIONS_PER_WINDOW) {
-      console.log(`Rate limit exceeded for IP ${clientIP}: ${count} submissions in ${RATE_LIMIT_WINDOW_MINUTES} minutes`);
+    if (!countError && count !== null && count >= MAX_SUBMISSIONS_PER_WINDOW) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Too many submissions. Please try again in a few minutes." 
-        }),
+        JSON.stringify({ success: false, error: "Too many submissions. Please try again in a few minutes." }),
         { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Record this submission for rate limiting
-    const { error: insertError } = await supabase
-      .from("contact_form_rate_limits")
-      .insert({ ip_address: clientIP });
+    await supabase.from("contact_form_rate_limits").insert({ ip_address: clientIP });
 
-    if (insertError) {
-      console.error("Failed to record rate limit:", insertError);
-      // Continue anyway
-    }
-
-    // === INPUT VALIDATION ===
+    // Validation
     if (!formData.firstName?.trim() || !formData.lastName?.trim() || !formData.email?.trim()) {
       return new Response(
         JSON.stringify({ success: false, error: "Name and email are required" }),
@@ -140,7 +105,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       return new Response(
@@ -149,7 +113,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // === SANITIZE INPUTS ===
+    // Sanitize
     const sanitize = (str: string | undefined): string => {
       if (!str) return "";
       return str
@@ -157,7 +121,7 @@ const handler = async (req: Request): Promise<Response> => {
         .replace(/javascript:/gi, "")
         .replace(/on\w+\s*=/gi, "")
         .trim()
-        .substring(0, 1000); // Limit length
+        .substring(0, 1000);
     };
 
     const sanitizedData = {
@@ -166,45 +130,27 @@ const handler = async (req: Request): Promise<Response> => {
       email: formData.email.trim().toLowerCase().substring(0, 255),
       phone: sanitize(formData.phone),
       company: sanitize(formData.company),
-      businessType: sanitize(formData.businessType),
-      serviceProviderType: sanitize(formData.serviceProviderType),
+      contactType: sanitize(formData.contactType),
       businessSize: sanitize(formData.businessSize),
       industry: sanitize(formData.industry),
       projectType: sanitize(formData.projectType),
-      productType: sanitize(formData.productType),
-      whiteLabeled: sanitize(formData.whiteLabeled),
       message: sanitize(formData.message)?.substring(0, 5000),
-      productInterests: Array.isArray(formData.productInterests) 
+      productInterests: Array.isArray(formData.productInterests)
         ? formData.productInterests.filter(id => typeof id === "string").slice(0, 20)
         : []
     };
 
-    console.log("Sanitized contact form data for:", sanitizedData.email);
+    // Product name mapping
+    const productNameMap: Record<string, string> = {
+      "vanguard": "Vanguard",
+      "safesuite": "SafeSuite",
+      "ai-studio": "AI Studio",
+      "custom-apps": "Custom App Development",
+    };
 
-    // Format the business type details
-    let businessTypeDetails = `Business Type: ${sanitizedData.businessType}`;
-    if (sanitizedData.businessType === "service-provider" && sanitizedData.serviceProviderType) {
-      businessTypeDetails += ` (${sanitizedData.serviceProviderType === "msp" ? "MSP - Managed Service Provider" : "MSSP - Managed Security Service Provider"})`;
-    } else if (sanitizedData.businessType === "business" && sanitizedData.businessSize) {
-      const sizeMap: Record<string, string> = {
-        "small": "Small Business",
-        "medium": "Medium Business", 
-        "enterprise": "Enterprise"
-      };
-      businessTypeDetails += ` (${sizeMap[sanitizedData.businessSize] || sanitizedData.businessSize})`;
-    }
-
-    // Format product interests
-    const productNames = [
-      { id: "ultriumgpt", name: "UltriumGPT Platform" },
-      { id: "safeemail", name: "SafeEmail™" },
-      { id: "safelink", name: "SafeLink™" },
-      { id: "safedoc", name: "SafeDoc™" },
-      { id: "safepass", name: "SafePass™" },
-      { id: "safenet", name: "SafeNet™" },
-      { id: "safecomp", name: "SafeComp™" },
-      { id: "safeweb", name: "SafeWeb™" }
-    ];
+    const contactTypeLabel = sanitizedData.contactType === "business" ? "Business" 
+      : sanitizedData.contactType === "msp" ? "MSP / Service Provider"
+      : "Individual";
 
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -216,27 +162,26 @@ const handler = async (req: Request): Promise<Response> => {
           <h3 style="color: #1f2937; margin-top: 0;">Contact Information</h3>
           <p><strong>Name:</strong> ${sanitizedData.firstName} ${sanitizedData.lastName}</p>
           <p><strong>Email:</strong> <a href="mailto:${sanitizedData.email}">${sanitizedData.email}</a></p>
-          ${sanitizedData.phone ? `<p><strong>Phone:</strong> <a href="tel:${sanitizedData.phone}">${sanitizedData.phone}</a></p>` : ""}
+          ${sanitizedData.phone ? `<p><strong>Phone:</strong> ${sanitizedData.phone}</p>` : ""}
           ${sanitizedData.company ? `<p><strong>Company:</strong> ${sanitizedData.company}</p>` : ""}
+          <p><strong>Contact Type:</strong> ${contactTypeLabel}</p>
         </div>
 
+        ${sanitizedData.businessSize || sanitizedData.industry || sanitizedData.projectType ? `
         <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #1f2937; margin-top: 0;">Business Details</h3>
-          <p><strong>${businessTypeDetails}</strong></p>
+          ${sanitizedData.businessSize ? `<p><strong>Business Size:</strong> ${sanitizedData.businessSize}</p>` : ""}
           ${sanitizedData.industry ? `<p><strong>Industry:</strong> ${sanitizedData.industry}</p>` : ""}
-          ${sanitizedData.projectType ? `<p><strong>Project Interest:</strong> ${sanitizedData.projectType}</p>` : ""}
+          ${sanitizedData.projectType ? `<p><strong>Project Type:</strong> ${sanitizedData.projectType}</p>` : ""}
         </div>
+        ` : ""}
 
         <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="color: #1f2937; margin-top: 0;">Solution Preferences</h3>
-          <p><strong>Product Type:</strong> ${sanitizedData.productType === "custom" ? "Custom Solution" : "Prebuilt Solution"}</p>
-          <p><strong>White Labeling:</strong> ${sanitizedData.whiteLabeled === "yes" ? "Yes, wants white-labeled solution" : "No, UltriumAI branding is fine"}</p>
-          <p><strong>Product Interests:</strong></p>
+          <h3 style="color: #1f2937; margin-top: 0;">Product Interests</h3>
           <ul style="margin-left: 20px;">
-            ${sanitizedData.productInterests.length > 0 
-              ? productNames
-                  .filter(p => sanitizedData.productInterests.includes(p.id))
-                  .map(p => `<li>${p.name}</li>`)
+            ${sanitizedData.productInterests.length > 0
+              ? sanitizedData.productInterests
+                  .map(id => `<li>${productNameMap[id] || id}</li>`)
                   .join("")
               : "<li><em>No specific products selected</em></li>"
             }
@@ -254,17 +199,11 @@ const handler = async (req: Request): Promise<Response> => {
           <p style="margin: 0; color: #6b7280; font-size: 14px;">
             📅 Submitted on ${new Date().toLocaleString("en-US", { 
               timeZone: "America/New_York",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              timeZoneName: "short"
+              year: "numeric", month: "long", day: "numeric",
+              hour: "2-digit", minute: "2-digit", timeZoneName: "short"
             })}
           </p>
-          <p style="margin: 5px 0 0 0; color: #9ca3af; font-size: 12px;">
-            IP: ${clientIP}
-          </p>
+          <p style="margin: 5px 0 0 0; color: #9ca3af; font-size: 12px;">IP: ${clientIP}</p>
         </div>
       </div>
     `;
@@ -273,13 +212,13 @@ const handler = async (req: Request): Promise<Response> => {
       from: "UltriumAI Support <support@send.ultriumai.com>",
       to: ["support@ultriumai.com"],
       replyTo: sanitizedData.email,
-      subject: `🚀 New Contact Form: ${sanitizedData.firstName} ${sanitizedData.lastName} - ${sanitizedData.businessType === "service-provider" ? "Service Provider" : "Business"} Inquiry`,
+      subject: `🚀 New Contact: ${sanitizedData.firstName} ${sanitizedData.lastName} - ${contactTypeLabel}`,
       html: emailHtml,
     });
 
     console.log("Email send response:", JSON.stringify(emailResponse, null, 2));
 
-    // === SAVE TO LEADS TABLE FOR ADMIN TRACKING ===
+    // Save to leads table
     const { error: leadError } = await supabase
       .from("leads")
       .insert({
@@ -288,13 +227,10 @@ const handler = async (req: Request): Promise<Response> => {
         email: sanitizedData.email,
         phone: sanitizedData.phone || null,
         company: sanitizedData.company || null,
-        business_type: sanitizedData.businessType,
-        service_provider_type: sanitizedData.serviceProviderType || null,
+        business_type: sanitizedData.contactType || null,
         business_size: sanitizedData.businessSize || null,
         industry: sanitizedData.industry || null,
         project_type: sanitizedData.projectType || null,
-        product_type: sanitizedData.productType,
-        white_labeled: sanitizedData.whiteLabeled,
         message: sanitizedData.message || null,
         product_interests: sanitizedData.productInterests,
         source: "contact_form",
@@ -303,48 +239,25 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (leadError) {
       console.error("Failed to save lead:", leadError);
-      // Don't fail the request, just log it
-    } else {
-      console.log("Lead saved successfully for:", sanitizedData.email);
     }
 
-    // Check if Resend returned an error
     if (emailResponse.error) {
       console.error("Resend API error:", emailResponse.error);
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: emailResponse.error.message || "Failed to send email via Resend"
-        }),
-        {
-          status: emailResponse.error.statusCode || 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        JSON.stringify({ success: false, error: emailResponse.error.message || "Failed to send email" }),
+        { status: emailResponse.error.statusCode || 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: "Contact form submitted successfully",
-        emailId: emailResponse.data?.id 
-      }), 
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      JSON.stringify({ success: true, message: "Contact form submitted successfully", emailId: emailResponse.data?.id }),
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
     console.error("Error in send-contact-form function:", error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message || "Failed to send contact form" 
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      JSON.stringify({ success: false, error: error.message || "Failed to send contact form" }),
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 };
