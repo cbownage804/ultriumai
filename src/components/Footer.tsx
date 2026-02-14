@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
 import aiStudioLogo from "@/assets/ai-studio-logo.png";
 import vanguardLogo from "@/assets/vanguard-logo.png";

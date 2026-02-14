@@ -57,8 +57,8 @@ export const CTAActions = {
   viewPricing: () => navigateToExternal('/pricing'),
   viewMSPPricing: () => navigateToExternal('/msp-pricing'),
   
-  // Phone
-  callSupport: () => navigateToExternal('tel:888-884-1410'),
+  // Email
+  contactSupport: () => navigateToExternal('mailto:support@ultriumai.com'),
 };
 
 /**

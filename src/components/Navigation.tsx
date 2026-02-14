@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, Phone, X, ChevronDown, Package, Shield, Cpu, Monitor, Headphones, Sparkles, ArrowRight, DollarSign, Code2, Layers } from "lucide-react";
+import { Menu, LogOut, X, ChevronDown, Package, Shield, Cpu, Monitor, Headphones, Sparkles, ArrowRight, DollarSign, Code2, Layers } from "lucide-react";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { WhatsNewSidebar } from "@/components/changelog/WhatsNewSidebar";
 import { AIStudioMegaMenu } from "@/components/marketing/AIStudioMegaMenu";
@@ -410,10 +410,6 @@ const Navigation = () => {
               )}
               
               <div className="pt-4 px-3 space-y-2">
-                <a href="tel:888-884-1410" className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Phone className="h-4 w-4" />
-                  888-884-1410
-                </a>
                 
                 {user ? (
                   <Button variant="outline" className="w-full" onClick={handleSignOut}>
