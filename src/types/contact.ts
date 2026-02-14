@@ -4,34 +4,28 @@ export interface ContactFormData {
   email: string;
   phone: string;
   company: string;
-  businessType: string;
-  serviceProviderType: string;
+  contactType: string; // 'individual' or 'business'
   businessSize: string;
   industry: string;
   projectType: string;
-  productType: string;
-  whiteLabeled: string;
   message: string;
   productInterests: string[];
   // Anti-spam fields (not shown to users)
-  _honeypot?: string; // Should always be empty
-  _formLoadedAt?: number; // Timestamp when form loaded
+  _honeypot?: string;
+  _formLoadedAt?: number;
 }
 
 export interface Product {
   id: string;
   name: string;
+  description?: string;
 }
 
 export const PRODUCTS: Product[] = [
-  { id: 'ultriumgpt', name: 'UltriumGPT Platform' },
-  { id: 'safeemail', name: 'SafeEmail™' },
-  { id: 'safelink', name: 'SafeLink™' },
-  { id: 'safedoc', name: 'SafeDoc™' },
-  { id: 'safepass', name: 'SafePass™' },
-  { id: 'safenet', name: 'SafeNet™' },
-  { id: 'safescore', name: 'SafeScore™' },
-  { id: 'safeweb', name: 'SafeWeb™' }
+  { id: 'vanguard', name: 'Vanguard', description: 'RMM, helpdesk, pentesting & IT operations' },
+  { id: 'safesuite', name: 'SafeSuite', description: 'Password manager, email security & digital protection' },
+  { id: 'ai-studio', name: 'AI Studio', description: 'Build custom AI assistants & GPTs' },
+  { id: 'custom-apps', name: 'Custom App Development', description: 'Bespoke AI-powered applications' },
 ];
 
 export const INITIAL_FORM_DATA: ContactFormData = {
@@ -40,13 +34,10 @@ export const INITIAL_FORM_DATA: ContactFormData = {
   email: '',
   phone: '',
   company: '',
-  businessType: '',
-  serviceProviderType: '',
+  contactType: '',
   businessSize: '',
   industry: '',
   projectType: '',
-  productType: '',
-  whiteLabeled: '',
   message: '',
   productInterests: [],
   _honeypot: '',
