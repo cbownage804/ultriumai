@@ -5,7 +5,6 @@ import { ContactFormData, INITIAL_FORM_DATA, PRODUCTS } from "@/types/contact";
 import { devLog } from "@/lib/logger";
 
 export const useContactForm = () => {
-  // Initialize with fresh timestamp each time form loads
   const [formData, setFormData] = useState<ContactFormData>({
     ...INITIAL_FORM_DATA,
     _formLoadedAt: Date.now()
@@ -17,13 +16,12 @@ export const useContactForm = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleBusinessTypeChange = (value: string) => {
+  const handleContactTypeChange = (value: string) => {
     setFormData(prev => ({
       ...prev,
-      businessType: value,
-      // Clear conditional fields when switching business type
-      serviceProviderType: '',
-      businessSize: ''
+      contactType: value,
+      company: value === 'individual' ? '' : prev.company,
+      businessSize: value === 'individual' ? '' : prev.businessSize,
     }));
   };
 
@@ -63,13 +61,11 @@ export const useContactForm = () => {
         description: "Thank you for your interest. We'll get back to you within 24 hours.",
       });
       
-      // Reset form with fresh timestamp
       setFormData({
         ...INITIAL_FORM_DATA,
         _formLoadedAt: Date.now()
       });
     } catch (error: any) {
-      // Handle rate limiting specifically
       if (error?.message?.includes('Too many submissions')) {
         toast({
           title: "Please slow down",
@@ -97,7 +93,7 @@ export const useContactForm = () => {
     formData,
     isSubmitting,
     handleInputChange,
-    handleBusinessTypeChange,
+    handleContactTypeChange,
     handleProductInterestChange,
     handleSelectAllProducts,
     handleSubmit,

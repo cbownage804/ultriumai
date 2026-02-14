@@ -17,7 +17,7 @@ const Contact = () => {
     formData,
     isSubmitting,
     handleInputChange,
-    handleBusinessTypeChange,
+    handleContactTypeChange,
     handleProductInterestChange,
     handleSelectAllProducts,
     handleSubmit,
@@ -42,7 +42,7 @@ const Contact = () => {
                     <ContactFormFields
                       formData={formData}
                       onInputChange={handleInputChange}
-                      onBusinessTypeChange={handleBusinessTypeChange}
+                      onContactTypeChange={handleContactTypeChange}
                     />
                     
                     <ProductInterests
