@@ -29,7 +29,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
       .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
       .card { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 40px; border: 1px solid #2a2a4a; }
       .logo { text-align: center; margin-bottom: 30px; }
-      .logo img { height: 48px; width: auto; }
+      .logo img { height: 48px; width: 48px; object-fit: contain; }
       .brand-name { color: #ffffff; font-size: 20px; font-weight: 700; margin-top: 12px; }
       .brand-tagline { color: #71717a; font-size: 12px; margin-top: 4px; }
       h1 { color: #ffffff; font-size: 24px; margin: 0 0 16px 0; }
@@ -244,16 +244,13 @@ const handler = async (req: Request): Promise<Response> => {
       userName = user.user_metadata?.full_name || user.user_metadata?.name;
       newEmail = user.new_email;
 
-      // Build the confirmation URL - route directly through ultriumai.app
-      // This avoids supabase.co URLs in emails (which trigger spam filters)
+      // Use Supabase's verify endpoint (server-side token verification)
+      // but redirect back to our domain after verification
       const tokenHash = email_data.token_hash;
       const type = email_data.email_action_type;
+      const redirectTo = "https://ultriumai.app/auth/callback";
       
-      // Determine the final redirect destination after verification
-      const redirectTo = email_data.redirect_to || "https://ultriumai.app/auth/callback";
-      
-      // Route through our own domain - Supabase JS client will verify the token client-side
-      actionUrl = `https://ultriumai.app/auth/confirm?token_hash=${tokenHash}&type=${type}&redirect_to=${encodeURIComponent(redirectTo)}`;
+      actionUrl = `https://nsyobmjpdpvesjwdphlh.supabase.co/auth/v1/verify?token=${tokenHash}&type=${type}&redirect_to=${encodeURIComponent(redirectTo)}`;
       
       console.log("Auth Hook - Email type:", emailType, "Email:", email, "Action URL:", actionUrl);
     } else {
