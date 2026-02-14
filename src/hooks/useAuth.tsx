@@ -136,27 +136,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, metadata = {}) => {
     try {
-      const origin = window.location.origin;
+      const hostname = window.location.hostname;
       const pathname = window.location.pathname;
       const searchParams = new URLSearchParams(window.location.search);
       const returnProduct = searchParams.get('return');
 
+      // Use production domain for email redirect URLs, not preview domains
+      const isProduction = hostname === 'ultriumai.com' || hostname === 'www.ultriumai.com' ||
+                           hostname === 'ultriumai.app' || hostname === 'www.ultriumai.app' ||
+                           hostname.endsWith('.ultriumai.com') || hostname.endsWith('.ultriumai.app');
+      const origin = isProduction ? 'https://ultriumai.app' : window.location.origin;
+
       // Ensure email confirmation links return to the correct dashboard for subdomains
       // and for prefixed product routes on the main domain.
-      let redirectPath = '/dashboard';
+      let redirectPath = '/auth/callback';
       if (isSafeSuiteDomain()) {
-        redirectPath = '/dashboard';
+        redirectPath = '/auth/callback';
       } else if (returnProduct === 'safesuite') {
-        // Unified auth page (/auth) needs to honor the return param
-        redirectPath = '/safesuite/dashboard';
+        redirectPath = '/auth/callback?return=safesuite';
       } else if (pathname.startsWith('/safesuite')) {
-        redirectPath = '/safesuite/dashboard';
+        redirectPath = '/auth/callback?return=safesuite';
       } else if (isVanguardDomain()) {
-        redirectPath = '/dashboard';
+        redirectPath = '/auth/callback';
       } else if (returnProduct === 'vanguard') {
-        redirectPath = '/vanguard/dashboard';
+        redirectPath = '/auth/callback?return=vanguard';
       } else if (pathname.startsWith('/vanguard')) {
-        redirectPath = '/vanguard/dashboard';
+        redirectPath = '/auth/callback?return=vanguard';
       }
 
       const redirectUrl = `${origin}${redirectPath}`;
