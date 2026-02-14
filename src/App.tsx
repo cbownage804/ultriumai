@@ -36,6 +36,7 @@ import { PageSkeleton, LoadingSpinner } from '@/components/ui/PageSkeleton';
 // Core pages (always loaded - small footprint)
 import AuthPage from '@/pages/AuthPage';
 import AuthCallback from '@/pages/AuthCallback';
+import AuthConfirm from '@/pages/AuthConfirm';
 import NotFound from '@/pages/NotFound';
 import LegacyVanguardRedirect from '@/routes/LegacyVanguardRedirect';
 
@@ -298,6 +299,7 @@ function AppRouter() {
         <Route path="/agent" element={<SuspenseWrapper><AgentComponent /></SuspenseWrapper>} />
         <Route path="/auth" element={user ? <RoleBasedRedirect /> : <AuthPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/auth/confirm" element={<AuthConfirm />} />
         <Route path="/hub" element={
           <ProtectedRoute>
             <SuspenseWrapper variant="cards">
