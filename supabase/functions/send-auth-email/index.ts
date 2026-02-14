@@ -244,13 +244,16 @@ const handler = async (req: Request): Promise<Response> => {
       userName = user.user_metadata?.full_name || user.user_metadata?.name;
       newEmail = user.new_email;
 
-      // Build the confirmation URL using the token_hash
-      const baseUrl = email_data.redirect_to || "https://ultriumai.app/safesuite/dashboard";
+      // Build the confirmation URL - route directly through ultriumai.app
+      // This avoids supabase.co URLs in emails (which trigger spam filters)
       const tokenHash = email_data.token_hash;
       const type = email_data.email_action_type;
       
-      // Construct the proper Supabase verification URL
-      actionUrl = `https://nsyobmjpdpvesjwdphlh.supabase.co/auth/v1/verify?token=${tokenHash}&type=${type}&redirect_to=${encodeURIComponent(baseUrl)}`;
+      // Determine the final redirect destination after verification
+      const redirectTo = email_data.redirect_to || "https://ultriumai.app/auth/callback";
+      
+      // Route through our own domain - Supabase JS client will verify the token client-side
+      actionUrl = `https://ultriumai.app/auth/confirm?token_hash=${tokenHash}&type=${type}&redirect_to=${encodeURIComponent(redirectTo)}`;
       
       console.log("Auth Hook - Email type:", emailType, "Email:", email, "Action URL:", actionUrl);
     } else {
