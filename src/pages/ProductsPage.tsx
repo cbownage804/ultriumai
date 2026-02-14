@@ -3,70 +3,63 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Shield, Wrench, MessageSquare, Key, Network, Search,
-  ArrowRight, Star, Zap
+  Shield, Wrench, Bot, Code2,
+  ArrowRight, Star, CheckCircle2
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
-const productCategories = [
+const products = [
   {
-    id: 'security',
-    name: 'Security Suite',
-    description: 'Enterprise XDR, SOC, SIEM, and threat intelligence platform',
-    icon: Shield,
-    color: 'from-red-500 to-orange-500',
-    bgColor: 'bg-red-500/10',
-    textColor: 'text-red-500',
-    href: '/products/security',
-    popular: true,
-    products: ['Threat Detection', 'SOC Operations', 'Pen Testing', 'SIEM', 'Threat Intel', 'UBA']
-  },
-  {
-    id: 'operations',
-    name: 'Operations Suite',
-    description: 'IT infrastructure management, patching, and monitoring',
+    id: 'vanguard',
+    name: 'Vanguard',
+    tagline: 'IT Operations & Security Platform',
+    description: 'Enterprise RMM, endpoint security, helpdesk, pentesting, compliance, and AI-powered SOC — unified for MSPs and IT teams.',
     icon: Wrench,
-    color: 'from-blue-500 to-cyan-500',
-    bgColor: 'bg-blue-500/10',
-    textColor: 'text-blue-500',
-    href: '/products/operations',
-    products: ['Patch Management', 'Backup Monitoring', 'Asset Inventory', 'Network Topology', 'SafeOps']
-  },
-  {
-    id: 'helpdesk',
-    name: 'SafeDesk™',
-    description: 'Intelligent ticketing with AI-powered automation',
-    icon: MessageSquare,
-    color: 'from-cyan-500 to-blue-500',
+    color: 'from-cyan-500 to-blue-600',
     bgColor: 'bg-cyan-500/10',
     textColor: 'text-cyan-500',
-    href: '/products/helpdesk',
-    products: ['AI Responses', 'Smart Routing', 'SLA Management', 'Knowledge Base', 'Multi-Channel']
+    href: '/products/vanguard',
+    popular: true,
+    capabilities: ['Remote Monitoring & Management', 'XDR & Endpoint Security', 'Helpdesk & Ticketing', 'Penetration Testing', 'Compliance & Documentation', 'AI Intelligence Suite'],
   },
   {
     id: 'safesuite',
-    name: 'SafeSuite™',
-    description: 'Complete security bundle: passwords, scanning, dark web, and assets',
+    name: 'SafeSuite',
+    tagline: 'Personal & Business Security Bundle',
+    description: 'Password management, email & URL scanning, dark web monitoring, asset tracking, and an AI security assistant — all in one suite.',
     icon: Shield,
     color: 'from-emerald-500 to-green-500',
     bgColor: 'bg-emerald-500/10',
     textColor: 'text-emerald-500',
-    href: '/safesuite/features',
+    href: '/safesuite',
     popular: true,
-    products: ['SafePass', 'SafeScan', 'SafeWeb', 'SafeTrack']
+    capabilities: ['Password Vault (SafePass)', 'Email & URL Scanner (SafeScan)', 'Dark Web Monitoring (SafeWeb)', 'Asset Tracking (SafeTrack)', 'AI Security Assistant (SafeAssist)'],
   },
   {
-    id: 'safenet',
-    name: 'SafeNet™',
-    description: 'Network discovery and vulnerability assessment',
-    icon: Network,
-    color: 'from-indigo-500 to-blue-500',
-    bgColor: 'bg-indigo-500/10',
-    textColor: 'text-indigo-500',
-    href: '/products/safenet',
-    products: ['Network Scanning', 'Asset Discovery', 'Vulnerability Detection', 'Topology Mapping']
-  }
+    id: 'ai-studio',
+    name: 'AI Studio',
+    tagline: 'Build Custom AI Assistants & Apps',
+    description: 'Create production-ready AI applications and custom GPTs with a no-code builder, knowledge sources, and team collaboration.',
+    icon: Bot,
+    color: 'from-violet-500 to-purple-600',
+    bgColor: 'bg-violet-500/10',
+    textColor: 'text-violet-500',
+    href: '/products/ai-studio',
+    capabilities: ['App Builder (Chat-to-Code)', 'Custom GPT Builder', 'Knowledge Base Integration', 'Team Collaboration', 'API & Embed Support'],
+  },
+  {
+    id: 'custom-apps',
+    name: 'Custom Apps',
+    tagline: 'Bespoke AI-Powered Solutions',
+    description: 'Work with our team to build tailored AI applications, integrations, and platforms designed specifically for your business needs.',
+    icon: Code2,
+    color: 'from-orange-500 to-red-500',
+    bgColor: 'bg-orange-500/10',
+    textColor: 'text-orange-500',
+    href: '/contact',
+    capabilities: ['Custom Development', 'AI Integration', 'White-Label Solutions', 'Dedicated Support'],
+  },
 ];
 
 export default function ProductsPage() {
@@ -79,25 +72,24 @@ export default function ProductsPage() {
           <div className="max-w-7xl mx-auto px-4 text-center">
             <Badge className="mb-4">
               <Star className="h-3 w-3 mr-1" />
-              Product Portfolio
+              Our Products
             </Badge>
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Complete Security & IT Operations Platform
+              Security, IT Operations & AI — Unified
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-              Enterprise-grade security, IT operations, and AI helpdesk—unified in one platform.
-              Choose individual products or bundle with the Vanguard Suite.
+              From enterprise IT management to personal digital security and custom AI solutions,
+              UltriumAI has the tools your organization needs.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Link to="/vanguard/suite">
-                <Button size="lg" className="bg-gradient-to-r from-cyan-500 to-purple-600">
-                  <Zap className="mr-2 h-4 w-4" />
-                  View Vanguard Suite
+              <Link to="/pricing">
+                <Button size="lg" variant="outline">
+                  View Pricing
                 </Button>
               </Link>
               <Link to="/contact">
                 <Button size="lg" variant="outline">
-                  Talk to Sales
+                  Contact Sales
                 </Button>
               </Link>
             </div>
@@ -107,66 +99,40 @@ export default function ProductsPage() {
         {/* Products Grid */}
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {productCategories.map((category) => (
-                <Card key={category.id} className="relative group hover:shadow-xl transition-all duration-300 overflow-hidden">
-                  {category.popular && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {products.map((product) => (
+                <Card key={product.id} className="relative group hover:shadow-xl transition-all duration-300 overflow-hidden">
+                  {product.popular && (
                     <div className="absolute top-4 right-4">
-                      <Badge className="bg-gradient-to-r from-red-500 to-orange-500 border-0">Most Popular</Badge>
+                      <Badge className="bg-gradient-to-r from-primary to-primary/80 border-0">Popular</Badge>
                     </div>
                   )}
                   <CardHeader>
-                    <div className={`w-14 h-14 rounded-xl ${category.bgColor} flex items-center justify-center mb-4`}>
-                      <category.icon className={`h-7 w-7 ${category.textColor}`} />
+                    <div className={`w-14 h-14 rounded-xl ${product.bgColor} flex items-center justify-center mb-4`}>
+                      <product.icon className={`h-7 w-7 ${product.textColor}`} />
                     </div>
-                    <CardTitle className="text-xl">{category.name}</CardTitle>
-                    <CardDescription>{category.description}</CardDescription>
+                    <CardTitle className="text-2xl">{product.name}</CardTitle>
+                    <p className={`text-sm font-medium ${product.textColor}`}>{product.tagline}</p>
+                    <CardDescription className="mt-2">{product.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex flex-wrap gap-1.5">
-                      {category.products.map((product, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          {product}
-                        </Badge>
+                    <ul className="space-y-2">
+                      {product.capabilities.map((cap, i) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <CheckCircle2 className={`h-4 w-4 flex-shrink-0 ${product.textColor}`} />
+                          {cap}
+                        </li>
                       ))}
-                    </div>
-                    <Link to={category.href} className="block">
-                      <Button className={`w-full bg-gradient-to-r ${category.color} text-white`}>
-                        Learn More
+                    </ul>
+                    <Link to={product.href} className="block pt-2">
+                      <Button className={`w-full bg-gradient-to-r ${product.color} text-white`}>
+                        {product.id === 'custom-apps' ? 'Get in Touch' : 'Learn More'}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </Link>
                   </CardContent>
                 </Card>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Bundle CTA */}
-        <section className="py-20 bg-gradient-to-br from-cyan-500/10 via-purple-500/5 to-background border-t">
-          <div className="max-w-4xl mx-auto px-4 text-center">
-            <Badge className="mb-4 bg-gradient-to-r from-cyan-500 to-purple-600 border-0">
-              <Zap className="h-3 w-3 mr-1" />
-              Best Value
-            </Badge>
-            <h2 className="text-3xl font-bold mb-4">Bundle Everything with Vanguard Suite</h2>
-            <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Get all products unified in a single platform with integrated AI SOC, 
-              unified dashboard, and significant savings over individual products.
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link to="/vanguard/suite">
-                <Button size="lg" className="bg-gradient-to-r from-cyan-500 to-purple-600">
-                  Configure Your Suite
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/vanguard/auth">
-                <Button size="lg" variant="outline">
-                  Start Free Trial
-                </Button>
-              </Link>
             </div>
           </div>
         </section>
