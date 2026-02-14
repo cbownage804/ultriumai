@@ -115,6 +115,7 @@ const Security = lazy(() => import('@/pages/Security'));
 const SecurityPolicy = lazy(() => import('@/pages/SecurityPolicy'));
 // Marketing pages removed
 const CreditsPurchase = lazy(() => import('@/pages/CreditsPurchase'));
+const Contact = lazy(() => import('@/pages/Contact'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const NotificationPreferencesPage = lazy(() => import('@/pages/NotificationPreferencesPage'));
 const InstallPage = lazy(() => import('@/pages/InstallPage'));
@@ -310,7 +311,7 @@ function AppRouter() {
         <Route path="/pricing/vanguard" element={<SuspenseWrapper variant="cards"><VanguardPricing /></SuspenseWrapper>} />
         <Route path="/pricing/custom-apps" element={<SuspenseWrapper variant="cards"><CustomAppsPricing /></SuspenseWrapper>} />
         <Route path="/msp-pricing" element={<Navigate to="/pricing/vanguard" replace />} />
-        <Route path="/contact" element={<Navigate to="/vanguard" replace />} />
+        <Route path="/contact" element={<SuspenseWrapper><Contact /></SuspenseWrapper>} />
         <Route path="/about" element={<Navigate to="/vanguard" replace />} />
         <Route path="/features" element={<Navigate to="/products" replace />} />
         <Route path="/credits" element={<SuspenseWrapper><CreditsPurchase /></SuspenseWrapper>} />
