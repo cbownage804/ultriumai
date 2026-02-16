@@ -1270,9 +1270,9 @@ export function AIAppBuilderWorkspace() {
                     {/* Main sidebar icons grouped */}
                     {(() => {
                       const groups = [
-                        { key: 'data', label: 'Data & Auth' },
-                        { key: 'ai', label: 'AI & Tools' },
-                        { key: 'project', label: 'Project' },
+                        { key: 'data', label: 'Data & Auth', color: 'text-emerald-400/70' },
+                        { key: 'ai', label: 'AI & Tools', color: 'text-fuchsia-400/70' },
+                        { key: 'project', label: 'Project', color: 'text-sky-400/70' },
                       ];
                       const visibleItems = sidebarIcons.filter(i => i.show);
                       return groups.map(group => {
@@ -1280,7 +1280,7 @@ export function AIAppBuilderWorkspace() {
                         if (groupItems.length === 0) return null;
                         return (
                           <div key={group.key}>
-                            {sidebarExpanded && <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 px-2 pt-3 pb-1 block">{group.label}</span>}
+                            {sidebarExpanded && <span className={cn("text-[10px] font-bold uppercase tracking-widest px-2 pt-3 pb-1 block", group.color)}>{group.label}</span>}
                             {!sidebarExpanded && <div className="h-px w-5 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent my-1 mx-auto" />}
                             {groupItems.map(item => (
                               <Tooltip key={item.id} delayDuration={sidebarExpanded ? 999999 : 300}>
@@ -1317,7 +1317,7 @@ export function AIAppBuilderWorkspace() {
 
                   {/* Bottom tools */}
                   <div className={cn("mt-auto flex flex-col gap-0.5 py-1.5 border-t border-white/[0.04]", sidebarExpanded ? "px-1.5" : "items-center px-0")}>
-                    {sidebarExpanded && <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 px-2 pt-1 pb-1 block">Tools</span>}
+                    {sidebarExpanded && <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/70 px-2 pt-1 pb-1 block">Tools</span>}
                     {[
                       { icon: Gauge, label: 'Performance', tooltip: 'Analyze bundle size and code complexity', active: showPerformanceProfiler, onClick: () => setShowPerformanceProfiler(!showPerformanceProfiler), color: 'text-emerald-400', activeColor: 'text-emerald-400 bg-emerald-500/10' },
                       { icon: History, label: 'Changelog', tooltip: 'See a timeline of changes made this session', active: showChangelog, onClick: () => setShowChangelog(!showChangelog), color: 'text-blue-400' },
