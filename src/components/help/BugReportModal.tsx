@@ -129,6 +129,32 @@ export function BugReportModal({ open, onOpenChange }: BugReportModalProps) {
 
       if (error) throw error;
 
+      // Send email notification to support
+      try {
+        await supabase.functions.invoke('send-email', {
+          body: {
+            to: 'support@ultriumai.com',
+            subject: `[Bug Report] ${priority.toUpperCase()}: ${title.trim()}`,
+            html: `
+              <h2>New Bug Report</h2>
+              <p><strong>Title:</strong> ${title.trim()}</p>
+              <p><strong>Priority:</strong> ${priority}</p>
+              <p><strong>Description:</strong> ${description.trim() || 'No description provided'}</p>
+              <hr />
+              <p><strong>Page:</strong> ${captured?.pageRoute || window.location.pathname}</p>
+              <p><strong>URL:</strong> ${captured?.pageUrl || window.location.href}</p>
+              <p><strong>Viewport:</strong> ${captured?.viewport || 'Unknown'}</p>
+              <p><strong>User:</strong> ${user.email || user.id}</p>
+              <p><strong>Submitted:</strong> ${new Date().toLocaleString()}</p>
+              ${screenshotUrl ? `<p><strong>Screenshot:</strong> <a href="${screenshotUrl}">View Screenshot</a></p>` : ''}
+            `,
+          },
+        });
+      } catch (emailErr) {
+        console.warn('Bug report email notification failed:', emailErr);
+        // Don't block submission if email fails
+      }
+
       setSubmitted(true);
       toast.success('Bug report submitted! Thank you for your feedback.');
       setTimeout(() => onOpenChange(false), 1500);
