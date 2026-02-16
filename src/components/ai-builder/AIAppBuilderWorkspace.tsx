@@ -529,7 +529,7 @@ export function AIAppBuilderWorkspace() {
   };
 
   const handleFixError = (errorPrompt: string) => {
-    sendMessage(errorPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel);
+    sendMessage(errorPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
   };
 
   const handleSmartFixError = useCallback((error: import('./ErrorConsole').PreviewError, context: string) => {
@@ -539,14 +539,14 @@ export function AIAppBuilderWorkspace() {
     setLastFixError(error.message);
     if (newCount > MAX_FIX_ATTEMPTS) { toast.error('Unable to auto-fix — try describing the issue differently.'); return; }
     const retryContext = newCount > 1 ? `\n\nThis is attempt ${newCount}/${MAX_FIX_ATTEMPTS}. Previous fix attempts did not resolve the issue. Please try a different approach.` : '';
-    sendMessage(`Fix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel);
+    sendMessage(`Fix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, fixAttemptCount, lastFixError]);
 
   // Auto-fix pipeline: automatically attempt to fix preview errors
   const handleAutoFixError = useCallback((error: import('./ErrorConsole').PreviewError) => {
     if (isGenerating || fixAttemptCount >= MAX_FIX_ATTEMPTS) return;
     autoRecovery.attemptRecovery(error, project.files, (prompt) => {
-      sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel);
+      sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
     });
   }, [isGenerating, fixAttemptCount, autoRecovery, project.files, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel]);
 

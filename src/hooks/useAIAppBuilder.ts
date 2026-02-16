@@ -164,12 +164,14 @@ export function useAIAppBuilder() {
     imageDataUrl?: string | null,
     model?: string,
     knowledgeContext?: string,
+    /** When true, skip credit deduction (used for auto-fix / self-correction) */
+    isAutoFix?: boolean,
   ) => {
     if (!input.trim() || isGenerating) return;
 
-    // Check credits before sending
-    const creditCost = mode === 'build' ? 3 : 1; // Build costs more than discuss
-    if (totalRemaining < creditCost) {
+    // Check credits before sending — but AUTO-FIX is always free
+    const creditCost = mode === 'build' ? 3 : 1;
+    if (!isAutoFix && totalRemaining < creditCost) {
       toast.error(`Insufficient credits. You need ${creditCost} but have ${totalRemaining}. Purchase more to continue.`);
       return;
     }
@@ -427,9 +429,10 @@ export function useAIAppBuilder() {
       const msgTokens = estimateTokens(input + fullContent);
       setTotalTokensUsed(prev => prev + msgTokens);
       
-      // Deduct credits after successful generation
-      await useCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
-
+      // Deduct credits after successful generation — but NOT for auto-fixes
+      if (!isAutoFix) {
+        await useCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
+      }
       // Add suggestions + file count + token estimate + filesSnapshot to the final assistant message
       const suggestions = generateSuggestions(fullContent, effectiveMode);
       const totalChanges = parsedFiles.length + deletions.length;
