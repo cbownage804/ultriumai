@@ -824,8 +824,51 @@ export function BuilderChatPanel({
 
       {/* Quick Actions + Context Indicator + Mode Toggle + Input */}
       <div className="p-3 border-t border-white/[0.06] shrink-0 space-y-2" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
-        {/* Quick action chips */}
+        {/* Slash command suggestions */}
+        {input.startsWith('/') && !isGenerating && (
+          <div className="flex flex-wrap gap-1">
+            {[
+              { cmd: '/landing', desc: 'Generate a landing page', icon: '🚀' },
+              { cmd: '/dashboard', desc: 'Create a dashboard', icon: '📊' },
+              { cmd: '/fix', desc: 'Fix the current error', icon: '🔧' },
+              { cmd: '/refactor', desc: 'Refactor the codebase', icon: '♻️' },
+              { cmd: '/responsive', desc: 'Make it responsive', icon: '📱' },
+              { cmd: '/dark-mode', desc: 'Add dark mode', icon: '🌙' },
+            ].filter(s => s.cmd.startsWith(input.toLowerCase()) || input === '/').map(s => (
+              <button
+                key={s.cmd}
+                onClick={() => { setInput(s.desc); setTimeout(() => textareaRef.current?.focus(), 50); }}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/60 hover:text-white/90 hover:bg-white/[0.08] transition-colors"
+              >
+                <span>{s.icon}</span>
+                <span className="font-mono text-white/30">{s.cmd}</span>
+                <span className="text-white/40">·</span>
+                <span>{s.desc}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
+        {/* Prompt suggestions for empty state */}
+        {messages.length === 0 && !input && (
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { label: 'Build a landing page', icon: '🚀' },
+              { label: 'Create a dashboard with charts', icon: '📊' },
+              { label: 'Design a pricing page', icon: '💰' },
+              { label: 'Make a contact form', icon: '📝' },
+            ].map(s => (
+              <button
+                key={s.label}
+                onClick={() => setInput(s.label)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11px] text-white/40 hover:text-white/70 hover:bg-white/[0.06] transition-colors"
+              >
+                <span>{s.icon}</span>
+                <span>{s.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Lovable-style input area with integrated mode toggle */}
         <div data-tour="chat-input" className="rounded-xl border border-white/[0.08] bg-white/[0.03] focus-within:border-cyan-500/30 transition-colors overflow-hidden">
