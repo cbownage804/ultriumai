@@ -50,8 +50,8 @@ export const AI_STUDIO_PLANS = {
   },
   enterprise: {
     name: 'Enterprise',
-    monthlyPrice: 49900, // $499/mo
-    annualPrice: 399900, // $3,999/yr (~$333/mo, save 33%)
+    monthlyPrice: 74900, // $749/mo
+    annualPrice: 599900, // $5,999/yr (~$500/mo, save 33%)
     credits: 5000,
     description: 'For large organizations',
     features: ['5,000 AI credits/mo', 'Unlimited everything', 'SSO & advanced security', 'Dedicated account manager', 'SLA guarantee', 'Credit rollover'],
