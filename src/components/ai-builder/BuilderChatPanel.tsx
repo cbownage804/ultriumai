@@ -13,7 +13,7 @@ import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
-import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, generateIntentSuggestions, analyzeConversationComplexity, detectCommunicationStyle } from './SupabaseConversational';
+import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, generateIntentSuggestions, analyzeConversationComplexity, detectCommunicationStyle, detectWebSearchIntent, detectURLCloneIntent } from './SupabaseConversational';
 import { StreamingText, StreamingCursor, ElapsedTimer } from './StreamingText';
 
 interface BuilderChatPanelProps {
@@ -895,8 +895,8 @@ export function BuilderChatPanel({
             {[
               { label: 'Build a landing page', icon: '🚀' },
               { label: 'Create a dashboard with charts', icon: '📊' },
-              { label: 'Design a pricing page', icon: '💰' },
-              { label: 'Make a contact form', icon: '📝' },
+              { label: 'Paste a screenshot to clone', icon: '👁️' },
+              { label: 'Search for best practices', icon: '🔍' },
             ].map(s => (
               <button
                 key={s.label}

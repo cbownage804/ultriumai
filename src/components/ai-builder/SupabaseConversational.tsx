@@ -1,7 +1,7 @@
-import { Database, Shield, FolderOpen, Zap, Table2, Lock, Users, Globe, CreditCard, Bell, RefreshCw, Search } from 'lucide-react';
+import { Database, Shield, FolderOpen, Zap, Table2, Lock, Users, Globe, CreditCard, Bell, RefreshCw, Search, Eye, Scan } from 'lucide-react';
 
 export interface SupabaseIntent {
-  type: 'database' | 'auth' | 'storage' | 'edge-function' | 'rls' | 'realtime' | 'payments';
+  type: 'database' | 'auth' | 'storage' | 'edge-function' | 'rls' | 'realtime' | 'payments' | 'web-search' | 'vision';
   action: string;
   description: string;
   icon: typeof Database;
@@ -38,6 +38,10 @@ const INTENT_SIGNALS: { signals: RegExp[]; intent: Omit<SupabaseIntent, 'confide
   { signals: [/\b(send\s*email|notification|sms|push\s*notification|alert|notify)\b/i, /\b(email\s*template|transactional\s*email)\b/i], intent: { type: 'edge-function', action: 'notification', description: 'Notifications', icon: Bell, color: 'text-cyan-400' }, weight: 0.9 },
   // Realtime
   { signals: [/\b(real.?time|live\s*update|live\s*data|subscription|broadcast|presence|collaborative|multiplayer)\b/i, /\b(live\s*chat|instant\s*update|sync)\b/i], intent: { type: 'realtime', action: 'realtime', description: 'Real-time sync', icon: RefreshCw, color: 'text-violet-400' }, weight: 1 },
+  // Web Search
+  { signals: [/\b(search|look\s*up|find|research|browse|google|latest|current|trending|news)\b/i, /\b(web\s*search|search\s*the\s*web|online)\b/i], intent: { type: 'web-search' as any, action: 'web_search', description: 'Web search', icon: Search, color: 'text-blue-400' }, weight: 0.7 },
+  // Visual Intelligence
+  { signals: [/\b(screenshot|image|photo|picture|look\s*at|analyze|replicate|clone\s*this|copy\s*this\s*design|ui\s*from|match\s*this)\b/i, /\b(pixel.?perfect|look\s*like|visual|design\s*from)\b/i], intent: { type: 'vision' as any, action: 'vision', description: 'Visual analysis', icon: Eye, color: 'text-pink-400' }, weight: 0.85 },
 ];
 
 /**
@@ -86,6 +90,8 @@ export function buildSupabaseContext(intents: SupabaseIntent[], hasSupabase: boo
     rls: `- RLS: Generate Row Level Security policies using auth.uid() for user-scoped access. Cover all operations (SELECT, INSERT, UPDATE, DELETE). Explain each policy in plain English.`,
     realtime: `- REALTIME: Set up Supabase Realtime subscriptions using supabase.channel("name").on("postgres_changes", ...).subscribe(). Include proper cleanup in useEffect, optimistic UI updates, and presence tracking if applicable.`,
     payments: `- PAYMENTS: Guide Stripe integration — create products/prices in Stripe dashboard, build pricing UI with plan comparison, generate checkout edge function using Stripe SDK, handle webhooks for subscription events.`,
+    'web-search': `- WEB SEARCH: The user wants information from the web integrated into the build. Use the knowledge to generate accurate, up-to-date code. Reference documentation links where relevant. If the user asks to "search" or "look up", provide factual answers with sources and then generate code incorporating that knowledge.`,
+    vision: `- VISUAL INTELLIGENCE: The user has provided a screenshot or image reference. Analyze the visual design carefully — extract the exact layout structure, color palette, typography, spacing, component hierarchy, and interaction patterns. Then generate pixel-accurate code that faithfully reproduces the design. Note specific details: border radii, shadows, gradients, icon styles, and responsive behavior visible in the image.`,
   };
 
   for (const intent of intents) {
@@ -152,6 +158,10 @@ export const SUPABASE_SLASH_COMMANDS = [
   { cmd: '/users', desc: 'User profiles system', icon: '👥', prompt: 'Create a user profiles system with avatars, display names, and user settings. Include the profiles table, RLS, and auto-creation trigger.' },
   { cmd: '/realtime', desc: 'Add live updates', icon: '🔄', prompt: 'Add real-time data syncing so changes appear instantly for all users. Use Supabase Realtime subscriptions.' },
   { cmd: '/payments', desc: 'Set up payments', icon: '💳', prompt: 'Set up Stripe payment integration with pricing page, checkout flow, and subscription management.' },
+  { cmd: '/search', desc: 'Search the web for docs & examples', icon: '🔍', prompt: 'Search the web for the latest documentation, code examples, and best practices relevant to what I\'m building. Then apply what you find to improve my app.' },
+  { cmd: '/vision', desc: 'Analyze a screenshot or design', icon: '👁️', prompt: 'Analyze the attached screenshot or image and recreate the UI design pixel-for-pixel. Extract colors, typography, layout, spacing, and component patterns from the image.' },
+  { cmd: '/clone', desc: 'Clone a website design', icon: '🧬', prompt: 'I want to clone the design of a website. I\'ll provide a screenshot or URL — analyze the layout, colors, typography, and component patterns, then generate a faithful reproduction.' },
+  { cmd: '/improve', desc: 'AI-powered UX review', icon: '🧠', prompt: 'Perform an AI-powered UX and design review of my current app. Identify issues with accessibility, visual hierarchy, spacing, color contrast, and interaction patterns. Then fix them.' },
 ];
 
 /**
@@ -314,11 +324,19 @@ export function generateProactiveSuggestions(
     if (!intentsUsed.includes('payments')) {
       suggestions.push('💳 Add payment processing');
     }
+    if (!intentsUsed.includes('web-search')) {
+      suggestions.push('🔍 Search web for best practices');
+    }
   }
 
   // Design enhancements
   if (currentFiles.length > 0 && !intentsUsed.includes('animation')) {
     suggestions.push('✨ Add animations & micro-interactions');
+  }
+
+  // Visual intelligence
+  if (currentFiles.length > 0) {
+    suggestions.push('👁️ Paste a screenshot to match');
   }
 
   // Performance
@@ -586,4 +604,111 @@ export function buildEnhancedErrorContext(error: { message: string; source?: str
   }
   sections.push('FIX: Diagnose root cause, not symptom. Explain what broke. Output only changed files.');
   return sections.join('\n');
+}
+
+// ═══════════════════════════════════════════
+// VISUAL INTELLIGENCE — Screenshot analysis context
+// ═══════════════════════════════════════════
+
+/**
+ * Build rich context for visual intelligence when user provides a screenshot.
+ * Instructs the AI to perform deep visual analysis before generating code.
+ */
+export function buildVisualIntelligenceContext(hasImage: boolean, userMessage: string): string {
+  if (!hasImage) return '';
+
+  const isClone = /\b(clone|replicate|copy|reproduce|match|pixel.?perfect|look\s*like|same\s*as)\b/i.test(userMessage);
+  const isAnalyze = /\b(analyze|review|critique|feedback|improve|what.s wrong|ux\s*review)\b/i.test(userMessage);
+
+  const sections: string[] = ['[VISUAL INTELLIGENCE MODE]'];
+
+  if (isClone) {
+    sections.push(`TASK: Faithfully reproduce this design in code.`);
+    sections.push(`EXTRACTION CHECKLIST:`);
+    sections.push(`1. LAYOUT: Grid structure, flex directions, container widths, breakpoints`);
+    sections.push(`2. COLORS: Extract exact hex/hsl values for backgrounds, text, borders, accents`);
+    sections.push(`3. TYPOGRAPHY: Font families, sizes, weights, line heights, letter spacing`);
+    sections.push(`4. SPACING: Padding, margins, gaps — use consistent spacing scale`);
+    sections.push(`5. COMPONENTS: Identify UI patterns (cards, buttons, inputs, navs, modals)`);
+    sections.push(`6. DEPTH: Shadows, borders, border-radii, gradients, overlays`);
+    sections.push(`7. ICONS: Identify icon style (outlined, filled, brand) and suggest Lucide equivalents`);
+    sections.push(`8. INTERACTIONS: Hover states, focus rings, transitions visible in the design`);
+    sections.push(`OUTPUT: Generate production-ready code using Tailwind CSS classes. Match the design exactly.`);
+  } else if (isAnalyze) {
+    sections.push(`TASK: Perform a thorough UX & design analysis of this screenshot.`);
+    sections.push(`REVIEW:`);
+    sections.push(`- Visual hierarchy: Is the most important content prominent?`);
+    sections.push(`- Color contrast: Does text meet WCAG AA (4.5:1 for body, 3:1 for large)?`);
+    sections.push(`- Spacing consistency: Are padding/margins following a system?`);
+    sections.push(`- Typography: Is font sizing hierarchical? Too many font sizes?`);
+    sections.push(`- Alignment: Are elements properly aligned on a grid?`);
+    sections.push(`- Touch targets: Are interactive elements ≥44px?`);
+    sections.push(`- Accessibility: Missing labels, alt text, focus indicators?`);
+    sections.push(`After the analysis, FIX the identified issues in the code.`);
+  } else {
+    sections.push(`TASK: Analyze this image and incorporate the design elements into the build.`);
+    sections.push(`Extract the overall aesthetic (dark/light, minimal/detailed, rounded/sharp), key colors, layout patterns, and generate code that matches the visual style.`);
+  }
+
+  return sections.join('\n');
+}
+
+/**
+ * Detect if a user message contains a web search intent and build search context.
+ * Returns search queries to prepend as knowledge context.
+ */
+export function detectWebSearchIntent(message: string): { shouldSearch: boolean; queries: string[] } {
+  const searchPatterns = [
+    /\b(?:search|look\s*up|find|google|research)\s+(?:for\s+)?["']?(.{5,80})["']?/i,
+    /\b(?:latest|newest|current|recent|2024|2025|2026)\s+(.{5,60})/i,
+    /\bhow\s+(?:to|do\s+(?:I|you))\s+(.{5,80})\??/i,
+    /\b(?:best\s+(?:practice|way|approach|library|framework))\s+(?:for\s+)?(.{5,60})/i,
+    /\b(?:docs|documentation|api\s*ref)\s+(?:for\s+)?(.{5,60})/i,
+  ];
+
+  const queries: string[] = [];
+  for (const pattern of searchPatterns) {
+    const match = message.match(pattern);
+    if (match && match[1]) {
+      queries.push(match[1].trim());
+    }
+  }
+
+  // Also check for explicit /search command
+  if (/^\/search\b/i.test(message.trim())) {
+    const query = message.replace(/^\/search\s*/i, '').trim();
+    if (query) queries.push(query);
+  }
+
+  return { shouldSearch: queries.length > 0, queries: [...new Set(queries)].slice(0, 3) };
+}
+
+/**
+ * Build context from web search results to inject into the AI prompt.
+ */
+export function buildWebSearchContext(searchResults: { query: string; snippets: string[] }[]): string {
+  if (searchResults.length === 0) return '';
+
+  const sections: string[] = ['[WEB SEARCH RESULTS — Use this knowledge to inform your response]'];
+  for (const result of searchResults) {
+    sections.push(`\nQuery: "${result.query}"`);
+    for (const snippet of result.snippets.slice(0, 3)) {
+      sections.push(`  • ${snippet.slice(0, 300)}`);
+    }
+  }
+  sections.push('\nUse these search results to generate accurate, up-to-date code. Cite sources where relevant.');
+  return sections.join('\n');
+}
+
+/**
+ * Detect if the user wants to analyze/clone from a URL (not just an image).
+ */
+export function detectURLCloneIntent(message: string): { hasURL: boolean; url: string | null } {
+  const urlMatch = message.match(/https?:\/\/[^\s]+/);
+  const cloneSignals = /\b(clone|replicate|copy|reproduce|like|same\s*as|inspired\s*by|based\s*on)\b/i;
+  
+  if (urlMatch && cloneSignals.test(message)) {
+    return { hasURL: true, url: urlMatch[0] };
+  }
+  return { hasURL: false, url: null };
 }

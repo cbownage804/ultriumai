@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import type { ProjectFile } from './useProjectFileSystem';
 import { useStreamingPreview } from './useStreamingPreview';
 import { useUserCredits } from './useUserCredits';
-import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory, buildErrorDiagnosisContext, analyzeConversationComplexity, generateProactiveSuggestions, compressConversationHistory, detectCommunicationStyle, extractUserPreferences, buildPreferencesContext, detectWorkflowIntent, buildEnhancedErrorContext } from '@/components/ai-builder/SupabaseConversational';
+import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory, buildErrorDiagnosisContext, analyzeConversationComplexity, generateProactiveSuggestions, compressConversationHistory, detectCommunicationStyle, extractUserPreferences, buildPreferencesContext, detectWorkflowIntent, buildEnhancedErrorContext, buildVisualIntelligenceContext, detectWebSearchIntent, buildWebSearchContext, detectURLCloneIntent } from '@/components/ai-builder/SupabaseConversational';
 
 export interface BuilderMessage {
   id: string;
@@ -283,6 +283,24 @@ export function useAIAppBuilder() {
     const workflow = detectWorkflowIntent(input);
     if (workflow) {
       apiMessages.push({ role: 'system', content: `[WORKFLOW DETECTED] The user has a multi-step request with ${workflow.steps.length} steps:\n${workflow.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\nExecute ALL steps in sequence in a single response. Show progress for each step.` });
+    }
+
+    // Inject visual intelligence context when images are attached
+    const visualContext = buildVisualIntelligenceContext(!!imageDataUrl, input);
+    if (visualContext) {
+      apiMessages.push({ role: 'system', content: visualContext });
+    }
+
+    // Detect web search intent and inject search guidance
+    const searchIntent = detectWebSearchIntent(input);
+    if (searchIntent.shouldSearch) {
+      apiMessages.push({ role: 'system', content: `[WEB SEARCH INTENT] The user wants current information about: ${searchIntent.queries.join(', ')}. Use your training knowledge to provide the most up-to-date, accurate information. Reference official documentation where possible. Then generate code incorporating that knowledge.` });
+    }
+
+    // Detect URL clone intent
+    const urlClone = detectURLCloneIntent(input);
+    if (urlClone.hasURL && urlClone.url) {
+      apiMessages.push({ role: 'system', content: `[URL CLONE] The user wants to clone/replicate the design from: ${urlClone.url}. Analyze the typical design patterns of this website and generate a faithful reproduction. Focus on layout structure, color scheme, typography, and component patterns.` });
     }
 
     // Smart conversation compression — keep recent messages intact, compress older ones
