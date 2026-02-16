@@ -13,7 +13,8 @@ import {
   Settings, 
   X,
   ChevronRight,
-  Keyboard
+  Keyboard,
+  Bug
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GuidedTourOverlay, useTourCompletion } from '@/components/tours/GuidedTourOverlay';
@@ -28,6 +29,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { KnowledgeBaseContent } from '@/components/knowledgebase/KnowledgeBaseContent';
+import { BugReportModal } from '@/components/help/BugReportModal';
 
 interface FloatingHelpButtonProps {
   className?: string;
@@ -62,6 +64,7 @@ export function FloatingHelpButton({ className }: FloatingHelpButtonProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showTour, setShowTour] = useState(false);
   const [showKB, setShowKB] = useState(false);
+  const [showBugReport, setShowBugReport] = useState(false);
 
   // Find matching tour for current route
   const currentTourId = useMemo(() => {
@@ -128,6 +131,16 @@ export function FloatingHelpButton({ className }: FloatingHelpButtonProps) {
       color: 'text-green-400',
       badge: !tourCompleted,
     }] : []),
+    {
+      id: 'bug',
+      label: 'Submit Bug',
+      icon: Bug,
+      action: () => {
+        setShowBugReport(true);
+        setIsExpanded(false);
+      },
+      color: 'text-red-400',
+    },
     {
       id: 'settings',
       label: 'Settings',
@@ -222,6 +235,9 @@ export function FloatingHelpButton({ className }: FloatingHelpButtonProps) {
           onComplete={() => setShowTour(false)}
         />
       )}
+
+      {/* Bug Report Modal */}
+      <BugReportModal open={showBugReport} onOpenChange={setShowBugReport} />
     </>
   );
 }
