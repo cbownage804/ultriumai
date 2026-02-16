@@ -2621,6 +2621,57 @@ export type Database = {
         }
         Relationships: []
       }
+      bug_reports: {
+        Row: {
+          console_errors: string | null
+          created_at: string
+          description: string | null
+          id: string
+          page_route: string | null
+          page_url: string | null
+          priority: string | null
+          screenshot_url: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+          viewport: string | null
+        }
+        Insert: {
+          console_errors?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          page_route?: string | null
+          page_url?: string | null
+          priority?: string | null
+          screenshot_url?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+          viewport?: string | null
+        }
+        Update: {
+          console_errors?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          page_route?: string | null
+          page_url?: string | null
+          priority?: string | null
+          screenshot_url?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+          viewport?: string | null
+        }
+        Relationships: []
+      }
       builder_projects: {
         Row: {
           active_branch: string
