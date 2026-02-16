@@ -1,105 +1,75 @@
 // AI Studio Credit System - Business AI Control Plane
 // Credits represent "AI capacity" in all user-facing contexts
-// Aligned with enterprise-grade AI agent pricing
 
-// Credit costs per action type
+// Credit costs per action type (INTERNAL ONLY - never expose publicly)
 export const CREDIT_RATES = {
-  APP_CHAT: 1,           // Discuss mode - lightweight Q&A
-  APP_BUILD: 3,          // Build mode - code generation
-  APP_REBUILD: 2,        // Iterate on existing code
-  GPT_CHAT: 2,           // Custom GPT conversation
-  GPT_TEST: 1,           // GPT test/preview chat
-  IMAGE_GENERATION: 10,  // AI image generation
-  BROWSER_TEST: 5,       // Automated browser testing
-  FILE_ANALYSIS: 3,      // Document/file processing
-  WEB_SEARCH: 2,         // Web search augmentation
+  APP_CHAT: 1,
+  APP_BUILD: 3,
+  APP_REBUILD: 2,
+  GPT_CHAT: 2,
+  GPT_TEST: 1,
+  IMAGE_GENERATION: 10,
+  BROWSER_TEST: 5,
+  FILE_ANALYSIS: 3,
+  WEB_SEARCH: 2,
 } as const;
 
 // GPT Credit Multipliers
 export const GPT_MULTIPLIERS = {
-  STANDARD: 1.0,      // Standard GPT
-  TOOL_ENABLED: 1.5,  // GPT with tools/actions
-  WEB_ENABLED: 2.0,   // GPT with web search
+  STANDARD: 1.0,
+  TOOL_ENABLED: 1.5,
+  WEB_ENABLED: 2.0,
 } as const;
 
-// AI Studio Plans - MSP / IT Firms (Resale-Focused)
-export const MSP_PLANS = {
-  msp_starter: {
-    name: 'MSP Starter',
-    price: 14900, // $149/mo
-    credits: 270,
-    description: 'Monthly AI capacity you can allocate across clients',
-    tagline: 'Turn AI into a managed service with full cost control.',
+// Simplified 4-tier pricing
+export const AI_STUDIO_PLANS = {
+  free: {
+    name: 'Free',
+    monthlyPrice: 0,
+    annualPrice: 0,
+    credits: 50,
+    description: 'Try AI Studio risk-free',
+    features: ['50 AI credits/mo', 'Unlimited GPTs', 'Basic features', 'Community support'],
   },
-  msp_pro: {
-    name: 'MSP Pro',
-    price: 47900, // $479/mo
-    credits: 875,
-    description: 'Scale with more capacity and advanced features',
-    tagline: 'Turn AI into a managed service with full cost control.',
+  basic: {
+    name: 'Basic',
+    monthlyPrice: 4900, // $49/mo
+    annualPrice: 39900, // $399/yr (~$33/mo, save 32%)
+    credits: 250,
+    description: 'For individuals and small projects',
+    features: ['250 AI credits/mo', 'Unlimited GPTs', 'Image generation', 'Web search', 'Email support'],
   },
-  msp_elite: {
-    name: 'MSP Elite',
-    price: 89900, // $899/mo
-    credits: 1600,
-    description: 'Enterprise-grade capacity for large client bases',
-    tagline: 'Turn AI into a managed service with full cost control.',
+  pro: {
+    name: 'Pro',
+    monthlyPrice: 14900, // $149/mo
+    annualPrice: 119900, // $1,199/yr (~$100/mo, save 33%)
+    credits: 1000,
+    description: 'For teams and growing businesses',
+    features: ['1,000 AI credits/mo', 'Unlimited GPTs', 'All AI capabilities', 'API access', 'Priority support', 'Custom branding'],
+    popular: true,
   },
-  platform_pro: {
-    name: 'Platform Pro',
-    price: 179900, // $1,799/mo
-    credits: 3250,
-    description: 'Maximum capacity for platform operators',
-    tagline: 'Turn AI into a managed service with full cost control.',
-  },
-} as const;
-
-// AI Studio Plans - Internal Business Teams
-export const TEAM_PLANS = {
-  team_basic: {
-    name: 'Team Basic',
-    price: 5900, // $59/mo
-    credits: 100,
-    description: 'Predictable monthly AI usage with no surprise costs',
-    hardStop: true,
-    tagline: "Your company's AI, trained on your data, with predictable usage.",
-  },
-  team_plus: {
-    name: 'Team Plus',
-    price: 23900, // $239/mo
-    credits: 425,
-    description: 'Extended capacity for growing teams',
-    hardStop: true,
-    tagline: "Your company's AI, trained on your data, with predictable usage.",
+  enterprise: {
+    name: 'Enterprise',
+    monthlyPrice: 49900, // $499/mo
+    annualPrice: 399900, // $3,999/yr (~$333/mo, save 33%)
+    credits: 5000,
+    description: 'For large organizations',
+    features: ['5,000 AI credits/mo', 'Unlimited everything', 'SSO & advanced security', 'Dedicated account manager', 'SLA guarantee', 'Credit rollover'],
   },
 } as const;
 
-// AI Studio Plans - Website / Embedded GPTs
-export const WEBSITE_PLANS = {
-  website_basic: {
-    name: 'Website Basic',
-    price: 3900, // $39/mo
-    credits: 70,
-    conversations: 250,
-    messagesPerVisitor: 5,
-    description: 'Designed for lead generation, not unlimited chat',
-    tagline: 'A smart website assistant without spam or runaway costs.',
-  },
-  website_pro: {
-    name: 'Website Pro',
-    price: 5900, // $59/mo
-    credits: 100,
-    conversations: 1000,
-    messagesPerVisitor: 5,
-    description: 'High-volume lead generation with controls',
-    tagline: 'A smart website assistant without spam or runaway costs.',
-  },
+// Credit top-up packs (one-time purchase)
+export const CREDIT_PACKS = {
+  small: { credits: 100, price: 2900, name: '100 Credits' },   // $29
+  medium: { credits: 300, price: 6900, name: '300 Credits' },   // $69
+  large: { credits: 750, price: 14900, name: '750 Credits' },   // $149
+  mega: { credits: 2000, price: 34900, name: '2,000 Credits' }, // $349
 } as const;
 
-// Overage pricing (MSP plans only)
+// Overage pricing (for plans that allow it)
 export const OVERAGE_PRICING = {
   CREDITS_PER_PACK: 50,
-  PRICE_PER_PACK: 2900, // $29 per 50 credits (~$0.58/credit)
+  PRICE_PER_PACK: 2900, // $29 per 50 credits
 } as const;
 
 // Usage types for ledger
@@ -117,9 +87,8 @@ export type UsageType =
 // Plan types
 export type PlanType = 
   | 'free'
-  | keyof typeof MSP_PLANS 
-  | keyof typeof TEAM_PLANS 
-  | keyof typeof WEBSITE_PLANS
+  | 'basic'
+  | 'pro'
   | 'enterprise';
 
 // Credit response from deduction
@@ -164,7 +133,6 @@ export function estimateCreditBurn(
   tokensUsed: number,
   multiplier: number = 1.0
 ): number {
-  // 1 credit = 1,000 tokens
   return (tokensUsed / 1000) * multiplier;
 }
 
