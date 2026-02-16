@@ -44,12 +44,12 @@ interface BuilderChatPanelProps {
 
 
 const STARTER_PROMPTS = [
-  { label: 'Landing Page', desc: 'Hero, features, testimonials, footer', icon: '🚀', border: 'hover:border-rose-500/30', glow: 'hover:shadow-rose-500/[0.06]', bg: 'hover:from-rose-500/[0.08] hover:to-orange-500/[0.04]' },
-  { label: 'Analytics Dashboard', desc: 'Cards, charts, activity feed', icon: '📊', border: 'hover:border-blue-500/30', glow: 'hover:shadow-blue-500/[0.06]', bg: 'hover:from-blue-500/[0.08] hover:to-cyan-500/[0.04]' },
-  { label: 'Task Board', desc: 'Kanban columns with drag & drop', icon: '✅', border: 'hover:border-emerald-500/30', glow: 'hover:shadow-emerald-500/[0.06]', bg: 'hover:from-emerald-500/[0.08] hover:to-teal-500/[0.04]' },
-  { label: 'E-commerce Store', desc: 'Product grid, filters, cart', icon: '🛒', border: 'hover:border-amber-500/30', glow: 'hover:shadow-amber-500/[0.06]', bg: 'hover:from-amber-500/[0.08] hover:to-yellow-500/[0.04]' },
-  { label: 'SaaS Settings', desc: 'Profile, billing, notifications', icon: '⚙️', border: 'hover:border-violet-500/30', glow: 'hover:shadow-violet-500/[0.06]', bg: 'hover:from-violet-500/[0.08] hover:to-purple-500/[0.04]' },
-  { label: 'Chat Interface', desc: 'AI chat with streaming responses', icon: '💬', border: 'hover:border-pink-500/30', glow: 'hover:shadow-pink-500/[0.06]', bg: 'hover:from-pink-500/[0.08] hover:to-fuchsia-500/[0.04]' },
+  { label: 'Landing Page', desc: 'Hero, features, testimonials, footer', icon: '🚀', color: 'border-rose-500/15 bg-rose-500/[0.04]', hover: 'hover:border-rose-500/30 hover:bg-rose-500/[0.08] hover:shadow-rose-500/10', iconBg: 'from-rose-500/10 to-orange-500/5 border-rose-500/15' },
+  { label: 'Analytics Dashboard', desc: 'Cards, charts, activity feed', icon: '📊', color: 'border-blue-500/15 bg-blue-500/[0.04]', hover: 'hover:border-blue-500/30 hover:bg-blue-500/[0.08] hover:shadow-blue-500/10', iconBg: 'from-blue-500/10 to-cyan-500/5 border-blue-500/15' },
+  { label: 'Task Board', desc: 'Kanban columns with drag & drop', icon: '✅', color: 'border-emerald-500/15 bg-emerald-500/[0.04]', hover: 'hover:border-emerald-500/30 hover:bg-emerald-500/[0.08] hover:shadow-emerald-500/10', iconBg: 'from-emerald-500/10 to-teal-500/5 border-emerald-500/15' },
+  { label: 'E-commerce Store', desc: 'Product grid, filters, cart', icon: '🛒', color: 'border-amber-500/15 bg-amber-500/[0.04]', hover: 'hover:border-amber-500/30 hover:bg-amber-500/[0.08] hover:shadow-amber-500/10', iconBg: 'from-amber-500/10 to-yellow-500/5 border-amber-500/15' },
+  { label: 'SaaS Settings', desc: 'Profile, billing, notifications', icon: '⚙️', color: 'border-violet-500/15 bg-violet-500/[0.04]', hover: 'hover:border-violet-500/30 hover:bg-violet-500/[0.08] hover:shadow-violet-500/10', iconBg: 'from-violet-500/10 to-purple-500/5 border-violet-500/15' },
+  { label: 'Chat Interface', desc: 'AI chat with streaming responses', icon: '💬', color: 'border-pink-500/15 bg-pink-500/[0.04]', hover: 'hover:border-pink-500/30 hover:bg-pink-500/[0.08] hover:shadow-pink-500/10', iconBg: 'from-pink-500/10 to-fuchsia-500/5 border-pink-500/15' },
 ];
 
 const THINKING_LABELS: Record<string, { icon: typeof Brain; label: string; color: string }> = {
@@ -686,10 +686,10 @@ export function BuilderChatPanel({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
                     onClick={() => onSend(`${prompt.label}: ${prompt.desc}`)}
-                    className={cn("w-full text-left px-3.5 py-3 rounded-xl border border-white/[0.06] bg-white/[0.015] hover:bg-gradient-to-r text-sm transition-all duration-300 group backdrop-blur-sm hover:shadow-lg", prompt.border, prompt.glow, prompt.bg)}
+                    className={cn("w-full text-left px-3.5 py-3 rounded-xl border text-sm transition-all duration-300 group backdrop-blur-sm hover:shadow-lg active:scale-[0.98]", prompt.color, prompt.hover)}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-base h-9 w-9 rounded-lg bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-white/[0.06] flex items-center justify-center group-hover:border-white/[0.12] group-hover:from-white/[0.06] group-hover:to-white/[0.03] transition-all duration-300 shrink-0 shadow-sm">{prompt.icon}</span>
+                      <span className={cn("text-base h-9 w-9 rounded-lg bg-gradient-to-br border flex items-center justify-center shrink-0 shadow-sm", prompt.iconBg)}>{prompt.icon}</span>
                       <div>
                         <div className="text-[13px] font-medium text-white/70 group-hover:text-white/95 transition-colors">{prompt.label}</div>
                         <div className="text-[11px] text-white/25 group-hover:text-white/45 transition-colors">{prompt.desc}</div>
