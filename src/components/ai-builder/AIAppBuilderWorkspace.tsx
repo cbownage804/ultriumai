@@ -80,6 +80,8 @@ import { SetupWizard } from './SetupWizard';
 import { SchemaDesigner } from './SchemaDesigner';
 import { OneClickDeploy } from './OneClickDeploy';
 import { EditHistoryTimeline } from './EditHistoryTimeline';
+import { detectSupabaseIntents, buildSupabaseContext } from './SupabaseConversational';
+import { MobilePWAInstall } from './MobilePWAInstall';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -513,9 +515,17 @@ export function AIAppBuilderWorkspace() {
     const contextPrefix = activeFile && rightTab === 'code' ? `[Currently viewing: ${activeFile.path}]\n` : '';
     const referencedFiles = findReferencedFiles(input, project.files);
     const contextHint = referencedFiles.length > 0 ? `[Auto-detected relevant files: ${referencedFiles.map(f => f.path).join(', ')}]\n` : '';
-    const knowledgeCtx = knowledge.customInstructions
-      ? `Custom instructions: ${knowledge.customInstructions}${knowledge.contextFiles.length > 0 ? '\n\nContext files:\n' + knowledge.contextFiles.map(f => `--- ${f.name} ---\n${f.content}`).join('\n\n') : ''}`
-      : undefined;
+    
+    // Detect Supabase intents and inject backend context
+    const supabaseIntents = detectSupabaseIntents(input);
+    const supabaseContext = buildSupabaseContext(supabaseIntents, !!supabaseConfig);
+    
+    const knowledgeCtx = [
+      knowledge.customInstructions || '',
+      knowledge.contextFiles.length > 0 ? '\n\nContext files:\n' + knowledge.contextFiles.map(f => `--- ${f.name} ---\n${f.content}`).join('\n\n') : '',
+      supabaseContext,
+    ].filter(Boolean).join('\n') || undefined;
+    
     const fullInput = contextPrefix + contextHint + input;
 
     // Build log tracking
@@ -1081,6 +1091,10 @@ export function AIAppBuilderWorkspace() {
                 <TooltipContent side="bottom" className="text-xs">View published site</TooltipContent>
               </Tooltip>
             )}
+
+            <div className="relative">
+              <MobilePWAInstall previewUrl={hostedPreviewUrl} publishedUrl={publishedUrl} />
+            </div>
 
             <Tooltip>
               <TooltipTrigger asChild>

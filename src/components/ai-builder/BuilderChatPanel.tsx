@@ -13,7 +13,7 @@ import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
-
+import { SUPABASE_SLASH_COMMANDS } from './SupabaseConversational';
 import { StreamingText, StreamingCursor, ElapsedTimer } from './StreamingText';
 
 interface BuilderChatPanelProps {
@@ -834,10 +834,11 @@ export function BuilderChatPanel({
               { cmd: '/refactor', desc: 'Refactor the codebase', icon: '♻️' },
               { cmd: '/responsive', desc: 'Make it responsive', icon: '📱' },
               { cmd: '/dark-mode', desc: 'Add dark mode', icon: '🌙' },
+              ...SUPABASE_SLASH_COMMANDS,
             ].filter(s => s.cmd.startsWith(input.toLowerCase()) || input === '/').map(s => (
               <button
                 key={s.cmd}
-                onClick={() => { setInput(s.desc); setTimeout(() => textareaRef.current?.focus(), 50); }}
+                onClick={() => { setInput('prompt' in s ? (s as any).prompt : s.desc); setTimeout(() => textareaRef.current?.focus(), 50); }}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/60 hover:text-white/90 hover:bg-white/[0.08] transition-colors"
               >
                 <span>{s.icon}</span>
