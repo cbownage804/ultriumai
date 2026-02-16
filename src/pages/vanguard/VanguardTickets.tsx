@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,6 +34,11 @@ import { VanguardBreadcrumbs } from '@/components/vanguard/VanguardBreadcrumbs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { NewTicketDialog, TicketFormData } from '@/components/vanguard/helpdesk/NewTicketDialog';
+import { CortexGatedSection } from '@/components/vanguard/CortexGatedSection';
+import { Sparkles, Brain, Route as RouteIcon } from 'lucide-react';
+
+const AITicketSummarizer = lazy(() => import('@/components/vanguard/cortex/AITicketSummarizer').then(m => ({ default: m.AITicketSummarizer })));
+const SmartTicketRouter = lazy(() => import('@/components/vanguard/cortex/SmartTicketRouter').then(m => ({ default: m.SmartTicketRouter })));
 
 const priorityColors: Record<string, string> = {
   critical: 'bg-red-500/20 text-red-400 border-red-500/30',
@@ -388,6 +393,20 @@ export default function VanguardTickets() {
           >
             Tickets ({dbTickets.length})
           </TabsTrigger>
+          <TabsTrigger 
+            value="ai-summarizer" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-violet-400 data-[state=active]:bg-transparent data-[state=active]:text-violet-400 px-4 py-2"
+          >
+            <Brain className="h-3.5 w-3.5 mr-1.5" />
+            AI Summarizer
+          </TabsTrigger>
+          <TabsTrigger 
+            value="smart-router" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-violet-400 data-[state=active]:bg-transparent data-[state=active]:text-violet-400 px-4 py-2"
+          >
+            <RouteIcon className="h-3.5 w-3.5 mr-1.5" />
+            Smart Router
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="tickets" className="mt-4 space-y-4">
@@ -722,6 +741,32 @@ export default function VanguardTickets() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Cortex AI - Ticket Summarizer */}
+        <TabsContent value="ai-summarizer" className="mt-4">
+          <CortexGatedSection
+            featureName="AI Ticket Summarizer"
+            description="Automatically summarize ticket threads, extract key details, and generate concise overviews — saving technicians time on every escalation."
+            icon={<Brain className="h-5 w-5 text-violet-400" />}
+          >
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-violet-400" /></div>}>
+              <AITicketSummarizer />
+            </Suspense>
+          </CortexGatedSection>
+        </TabsContent>
+
+        {/* Cortex AI - Smart Router */}
+        <TabsContent value="smart-router" className="mt-4">
+          <CortexGatedSection
+            featureName="Smart Ticket Router"
+            description="AI-powered ticket routing that matches tickets to the best technician based on skills, workload, and historical resolution patterns."
+            icon={<RouteIcon className="h-5 w-5 text-violet-400" />}
+          >
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-violet-400" /></div>}>
+              <SmartTicketRouter />
+            </Suspense>
+          </CortexGatedSection>
         </TabsContent>
       </Tabs>
 

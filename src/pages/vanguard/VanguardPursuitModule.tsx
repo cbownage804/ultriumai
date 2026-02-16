@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 import { ThreatHuntingPanel } from '@/components/vanguard/pursuit/ThreatHuntingPanel';
 import { IOCManagement } from '@/components/vanguard/pursuit/IOCManagement';
@@ -15,6 +15,10 @@ import { ResponseActionsPanel } from '@/components/vanguard/pursuit/ResponseActi
 import { AgentTestingPanel } from '@/components/vanguard/pursuit/AgentTestingPanel';
 import { PursuitDashboard } from '@/components/vanguard/pursuit/PursuitDashboard';
 import { CrossClientCorrelation } from '@/components/vanguard/pursuit/CrossClientCorrelation';
+import { CortexGatedSection } from '@/components/vanguard/CortexGatedSection';
+import { GitBranch, Loader2 } from 'lucide-react';
+
+const PatternDetectionEngine = lazy(() => import('@/components/vanguard/cortex/PatternDetectionEngine').then(m => ({ default: m.PatternDetectionEngine })));
 
 const moduleComponents: Record<string, React.ReactNode> = {
   'threat-hunting': <ThreatHuntingPanel />,
@@ -31,6 +35,17 @@ const moduleComponents: Record<string, React.ReactNode> = {
   'automation': <AutomationPoliciesPanel />,
   'response-actions': <ResponseActionsPanel />,
   'agent-testing': <AgentTestingPanel />,
+  'ai-patterns': (
+    <CortexGatedSection
+      featureName="AI Pattern Detection"
+      description="Detect recurring incident patterns, correlate alerts across clients, and surface root causes automatically."
+      icon={<GitBranch className="h-5 w-5 text-violet-400" />}
+    >
+      <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-violet-400" /></div>}>
+        <PatternDetectionEngine />
+      </Suspense>
+    </CortexGatedSection>
+  ),
 };
 
 export default function VanguardPursuitModule() {

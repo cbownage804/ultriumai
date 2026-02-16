@@ -3,7 +3,7 @@
  * Full IT Glue-style interface with vertical sidebar navigation
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,11 @@ import { AtlasRelatedItems } from '@/components/vanguard-atlas/AtlasRelatedItems
 import { AtlasActivityLog } from '@/components/vanguard-atlas/AtlasActivityLog';
 import { AtlasAISearch } from '@/components/vanguard-atlas/AtlasAISearch';
 import { AtlasAIDocGenerator } from '@/components/vanguard-atlas/AtlasAIDocGenerator';
+import { CortexGatedSection } from '@/components/vanguard/CortexGatedSection';
+import { Loader2 } from 'lucide-react';
+
+const KBArticleGenerator = lazy(() => import('@/components/vanguard/cortex/KBArticleGenerator').then(m => ({ default: m.KBArticleGenerator })));
+const ScreenRecordingKBGenerator = lazy(() => import('@/components/vanguard/cortex/ScreenRecordingKBGenerator').then(m => ({ default: m.ScreenRecordingKBGenerator })));
 
 export default function VanguardAtlas() {
   const [activeItem, setActiveItem] = useState('overview');
@@ -96,14 +101,18 @@ export default function VanguardAtlas() {
       },
     ];
 
-    if (aiItems.length > 0) {
-      groups.push({
-        id: 'ai',
-        label: 'AI Tools (Cortex)',
-        icon: Sparkles,
-        items: aiItems,
-      });
-    }
+    // Always show AI tools section — gating happens inline via CortexGatedSection
+    groups.push({
+      id: 'ai',
+      label: 'AI Tools (Cortex)',
+      icon: Sparkles,
+      items: [
+        ...(isFeatureEnabled('atlas-ai-search') ? [{ id: 'ai_search', label: 'AI Search & Q&A', icon: Search }] : []),
+        ...(isFeatureEnabled('atlas-doc-generator') ? [{ id: 'ai_doc_gen', label: 'AI Doc Generator', icon: Wand2 }] : []),
+        { id: 'cortex_kb', label: 'KB from Tickets', icon: Sparkles },
+        { id: 'cortex_screen_docs', label: 'Screen to Docs', icon: Wand2 },
+      ],
+    });
 
     groups.push({
       id: 'audit',
@@ -227,6 +236,30 @@ export default function VanguardAtlas() {
         return <AtlasAISearch organizationId={selectedOrg} />;
       case 'ai_doc_gen':
         return <AtlasAIDocGenerator organizationId={selectedOrg} onDocCreated={refetch} />;
+      case 'cortex_kb':
+        return (
+          <CortexGatedSection
+            featureName="KB Article Generator"
+            description="Automatically generate polished knowledge base articles from resolved tickets and incidents."
+            icon={<Sparkles className="h-5 w-5 text-violet-400" />}
+          >
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-violet-400" /></div>}>
+              <KBArticleGenerator />
+            </Suspense>
+          </CortexGatedSection>
+        );
+      case 'cortex_screen_docs':
+        return (
+          <CortexGatedSection
+            featureName="Screen to Docs"
+            description="Convert screen recordings and screenshots into structured, editable documentation automatically."
+            icon={<Wand2 className="h-5 w-5 text-violet-400" />}
+          >
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-violet-400" /></div>}>
+              <ScreenRecordingKBGenerator />
+            </Suspense>
+          </CortexGatedSection>
+        );
       default:
         return <OverviewDashboard stats={stats} isLoading={isLoading} onNavigate={setActiveItem} />;
     }
