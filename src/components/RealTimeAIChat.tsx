@@ -11,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Send, Bot, User, Loader2, Volume2, VolumeX } from 'lucide-react';
 import VoiceControls from './VoiceControls';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserCredits } from '@/hooks/useUserCredits';
+import { CREDIT_RATES } from '@/types/aiStudioCredits';
 import { CleanMarkdownRenderer } from '@/components/chat/CleanMarkdownRenderer';
 interface Message {
   id: string;
@@ -48,6 +50,7 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(false);
+  const { useCredits, totalRemaining } = useUserCredits();
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(() => {
     // Load saved voice from localStorage or default to Sarah
@@ -215,6 +218,11 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
   const sendMessage = async (messageContent?: string) => {
     const content = messageContent || input.trim();
     if (!content || isLoading || !user || !currentConversationId) return;
+
+    // Deduct credits before sending
+    const creditCost = CREDIT_RATES.APP_CHAT;
+    const credited = await useCredits(creditCost, 'AI Chat');
+    if (!credited) return; // Insufficient credits — toast shown by useCredits
 
     // Stop any currently playing audio when sending a new message
     stopCurrentAudio();
