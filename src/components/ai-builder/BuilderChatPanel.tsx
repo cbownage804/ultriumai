@@ -14,7 +14,7 @@ import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
 
-import { StreamingCursor } from './StreamingText';
+import { StreamingText, StreamingCursor, ElapsedTimer } from './StreamingText';
 
 interface BuilderChatPanelProps {
   messages: BuilderMessage[];
@@ -221,6 +221,7 @@ export function BuilderChatPanel({
           <div className="flex items-center gap-2">
             <Icon className={cn("h-3.5 w-3.5 animate-pulse", phase.color)} />
             <span className={cn("text-xs font-medium", phase.color)}>{phase.label}</span>
+            <ElapsedTimer isActive={isGenerating} />
           </div>
           <div className="flex gap-1 mt-1.5">
             {['analyzing', 'planning', 'writing'].map((step, i) => (
@@ -310,31 +311,35 @@ export function BuilderChatPanel({
         )}
 
         {text && (
-          <div className="prose prose-sm prose-invert max-w-none text-[13px] text-white/80 leading-relaxed [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:text-white/70 [&_strong]:text-white/95 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
-            <ReactMarkdown
-              components={{
-                code({ className, children, ...props }) {
-                  const isInline = !className;
-                  const codeStr = String(children).replace(/\n$/, '');
-                  if (isInline) {
-                    return <code className="bg-white/[0.08] rounded px-1 py-0.5 text-[12px] font-mono text-cyan-300/90" {...props}>{children}</code>;
-                  }
-                  return (
-                    <div className="relative group/code my-2">
-                      <div className="flex items-center justify-between px-3 py-1 bg-white/[0.04] border border-white/[0.06] rounded-t-lg">
-                        <span className="text-[9px] text-white/25 font-mono">{className?.replace('language-', '') || 'code'}</span>
-                        <CopyCodeButton text={codeStr} />
-                      </div>
-                      <pre className="!mt-0 !rounded-t-none border border-t-0 border-white/[0.06] !bg-black/30"><code className={className} {...props}>{children}</code></pre>
-                    </div>
-                  );
-                },
-              }}
-            >
-              {text}
-            </ReactMarkdown>
-            <StreamingCursor visible={isStreaming && !!text} />
-          </div>
+          <StreamingText content={text} isStreaming={isStreaming}>
+            {(displayedText) => (
+              <div className="prose prose-sm prose-invert max-w-none text-[13px] text-white/80 leading-relaxed [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:text-white/70 [&_strong]:text-white/95 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
+                <ReactMarkdown
+                  components={{
+                    code({ className, children, ...props }) {
+                      const isInline = !className;
+                      const codeStr = String(children).replace(/\n$/, '');
+                      if (isInline) {
+                        return <code className="bg-white/[0.08] rounded px-1 py-0.5 text-[12px] font-mono text-cyan-300/90" {...props}>{children}</code>;
+                      }
+                      return (
+                        <div className="relative group/code my-2">
+                          <div className="flex items-center justify-between px-3 py-1 bg-white/[0.04] border border-white/[0.06] rounded-t-lg">
+                            <span className="text-[9px] text-white/25 font-mono">{className?.replace('language-', '') || 'code'}</span>
+                            <CopyCodeButton text={codeStr} />
+                          </div>
+                          <pre className="!mt-0 !rounded-t-none border border-t-0 border-white/[0.06] !bg-black/30"><code className={className} {...props}>{children}</code></pre>
+                        </div>
+                      );
+                    },
+                  }}
+                >
+                  {displayedText}
+                </ReactMarkdown>
+                <StreamingCursor visible={isStreaming && !!displayedText} />
+              </div>
+            )}
+          </StreamingText>
         )}
         {isStreaming && !hasFiles && fileNames.length === 0 && !text && (
           <div className="flex items-center gap-2 text-white/50">
@@ -643,9 +648,13 @@ export function BuilderChatPanel({
             ))
           )}
 
-          {/* Thinking / typing indicator */}
+          {/* Thinking / typing indicator — only show when no content is streaming yet */}
           {isGenerating && thinkingPhase && renderThinkingIndicator()}
-          {isGenerating && !thinkingPhase && <TypingIndicator />}
+          {isGenerating && !thinkingPhase && (() => {
+            const lastMsg = messages[messages.length - 1];
+            const hasStreamingContent = lastMsg?.role === 'assistant' && lastMsg.content.length > 0;
+            return hasStreamingContent ? null : <TypingIndicator />;
+          })()}
         </div>
       </ScrollArea>
 
