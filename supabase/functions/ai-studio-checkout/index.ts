@@ -7,40 +7,35 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Stripe Product IDs for AI Studio plans
-const AI_STUDIO_PRODUCTS = {
-  basic: "prod_TzZJTYRaWGzhu2",
-  pro: "prod_TzZJLMfnYLLhS9",
-} as const;
-
-// Credit tier pricing (in cents) - must match CREDIT_TIERS in aiStudioCredits.ts
-const CREDIT_TIER_PRICING: Record<string, { credits: number; monthlyPrice: number; annualPrice: number }[]> = {
-  basic: [
-    { credits: 100, monthlyPrice: 2500, annualPrice: 20000 },
-    { credits: 200, monthlyPrice: 4500, annualPrice: 36000 },
-    { credits: 400, monthlyPrice: 7900, annualPrice: 63900 },
-    { credits: 800, monthlyPrice: 13900, annualPrice: 111900 },
-    { credits: 1200, monthlyPrice: 18900, annualPrice: 151900 },
-    { credits: 2000, monthlyPrice: 27900, annualPrice: 223900 },
-    { credits: 3000, monthlyPrice: 37900, annualPrice: 303900 },
-    { credits: 4000, monthlyPrice: 46900, annualPrice: 375900 },
-    { credits: 5000, monthlyPrice: 54900, annualPrice: 439900 },
-    { credits: 7500, monthlyPrice: 74900, annualPrice: 599900 },
-    { credits: 10000, monthlyPrice: 94900, annualPrice: 759900 },
-  ],
-  pro: [
-    { credits: 100, monthlyPrice: 5000, annualPrice: 40000 },
-    { credits: 200, monthlyPrice: 9000, annualPrice: 72000 },
-    { credits: 400, monthlyPrice: 15900, annualPrice: 127900 },
-    { credits: 800, monthlyPrice: 27900, annualPrice: 223900 },
-    { credits: 1200, monthlyPrice: 37900, annualPrice: 303900 },
-    { credits: 2000, monthlyPrice: 54900, annualPrice: 439900 },
-    { credits: 3000, monthlyPrice: 74900, annualPrice: 599900 },
-    { credits: 4000, monthlyPrice: 94900, annualPrice: 759900 },
-    { credits: 5000, monthlyPrice: 109900, annualPrice: 879900 },
-    { credits: 7500, monthlyPrice: 149900, annualPrice: 1199900 },
-    { credits: 10000, monthlyPrice: 189900, annualPrice: 1519900 },
-  ],
+// Fixed Stripe Price IDs for AI Studio subscription tiers
+// Structure: PLAN_PRICES[planId][credits][interval]
+const PLAN_PRICES: Record<string, Record<number, { monthly: string; annual: string }>> = {
+  basic: {
+    100:   { monthly: 'price_1T1aKwH1u6E0bsJTN17222wy', annual: 'price_1T1aLBH1u6E0bsJTjMxRuUtN' },
+    200:   { monthly: 'price_1T1aKxH1u6E0bsJT3NpuCqR8', annual: 'price_1T1aLCH1u6E0bsJTQ5uCmG6k' },
+    400:   { monthly: 'price_1T1aKyH1u6E0bsJT4BWLFzE1', annual: 'price_1T1aLDH1u6E0bsJTJFy1JwcR' },
+    800:   { monthly: 'price_1T1aKzH1u6E0bsJTKhNFMSKu', annual: 'price_1T1aLEH1u6E0bsJTvTpa3CRJ' },
+    1200:  { monthly: 'price_1T1aL0H1u6E0bsJTBSASRJ0q', annual: 'price_1T1aLFH1u6E0bsJTLHDLRsHj' },
+    2000:  { monthly: 'price_1T1aL2H1u6E0bsJT1SUgGkku', annual: 'price_1T1aLGH1u6E0bsJT6064ZrIO' },
+    3000:  { monthly: 'price_1T1aL2H1u6E0bsJTCf8qMQBo', annual: 'price_1T1aLHH1u6E0bsJTvdmGNI5m' },
+    4000:  { monthly: 'price_1T1aL3H1u6E0bsJTJX4xmzMt', annual: 'price_1T1aLIH1u6E0bsJTVTNXnYGm' },
+    5000:  { monthly: 'price_1T1aL4H1u6E0bsJTIEQ3YK2t', annual: 'price_1T1aLJH1u6E0bsJTSAOKu58n' },
+    7500:  { monthly: 'price_1T1aL6H1u6E0bsJTO8yBZe8E', annual: 'price_1T1aLKH1u6E0bsJTVpzhUDnm' },
+    10000: { monthly: 'price_1T1aL6H1u6E0bsJTiXBrMmPI', annual: 'price_1T1aLLH1u6E0bsJThmbV8AUB' },
+  },
+  pro: {
+    100:   { monthly: 'price_1T1aLPH1u6E0bsJTqfFONEkx', annual: 'price_1T1aLdH1u6E0bsJTykIrwE8X' },
+    200:   { monthly: 'price_1T1aLQH1u6E0bsJTojNtgdik', annual: 'price_1T1aLeH1u6E0bsJT1SHM5X6f' },
+    400:   { monthly: 'price_1T1aLRH1u6E0bsJTuv01TVk6', annual: 'price_1T1aLfH1u6E0bsJTCNIErKK6' },
+    800:   { monthly: 'price_1T1aLSH1u6E0bsJTc7DCy02X', annual: 'price_1T1aLgH1u6E0bsJTNxDNatS6' },
+    1200:  { monthly: 'price_1T1aLTH1u6E0bsJTS5uHZ2rW', annual: 'price_1T1aLhH1u6E0bsJTikQVDvmk' },
+    2000:  { monthly: 'price_1T1aLUH1u6E0bsJT0GACM9Kp', annual: 'price_1T1aLiH1u6E0bsJTbfXV8qx0' },
+    3000:  { monthly: 'price_1T1aLVH1u6E0bsJTs088aQQa', annual: 'price_1T1aLjH1u6E0bsJT6n878gYl' },
+    4000:  { monthly: 'price_1T1aLWH1u6E0bsJTwFnq6UG0', annual: 'price_1T1aLkH1u6E0bsJTQlN2wg7Y' },
+    5000:  { monthly: 'price_1T1aLXH1u6E0bsJTVC5iksmz', annual: 'price_1T1aLlH1u6E0bsJTHxqXP8Om' },
+    7500:  { monthly: 'price_1T1aLYH1u6E0bsJTkkZqNuby', annual: 'price_1T1aLmH1u6E0bsJTuDMa6uyV' },
+    10000: { monthly: 'price_1T1aLZH1u6E0bsJTRUqqHkOr', annual: 'price_1T1aLnH1u6E0bsJTHHc29LLY' },
+  },
 };
 
 // Credit Pack price IDs (one-time purchases)
@@ -101,51 +96,34 @@ serve(async (req) => {
     }
 
     const origin = req.headers.get("origin") || "https://ultriumai.lovable.app";
-    let lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+    let priceId: string;
     let mode: Stripe.Checkout.SessionCreateParams.Mode = "subscription";
     let subscriptionMetadata: Record<string, string> = {};
 
     // ── CREDIT PACK (one-time purchase) ──
     if (creditPack && CREDIT_PACK_PRICES[creditPack]) {
       const pack = CREDIT_PACK_PRICES[creditPack];
-      lineItems.push({ price: pack.priceId, quantity: 1 });
+      priceId = pack.priceId;
       mode = "payment";
       logStep("Credit pack checkout", { pack: creditPack, credits: pack.credits });
     }
     // ── SUBSCRIPTION PLAN ──
-    else if (planId && AI_STUDIO_PRODUCTS[planId as keyof typeof AI_STUDIO_PRODUCTS]) {
-      const productId = AI_STUDIO_PRODUCTS[planId as keyof typeof AI_STUDIO_PRODUCTS];
-      const tiers = CREDIT_TIER_PRICING[planId];
-      
-      if (!tiers) throw new Error(`Invalid plan: ${planId}`);
-      
-      // Find the matching tier by credits
-      const tier = tiers.find(t => t.credits === credits);
-      if (!tier) throw new Error(`Invalid credit amount ${credits} for plan ${planId}`);
+    else if (planId && PLAN_PRICES[planId] && credits) {
+      const tierPrices = PLAN_PRICES[planId][credits];
+      if (!tierPrices) throw new Error(`Invalid credit amount ${credits} for plan ${planId}`);
 
       const isAnnual = billingInterval === 'annual';
-      const unitAmount = isAnnual ? tier.annualPrice : tier.monthlyPrice;
-      const interval = isAnnual ? 'year' : 'month';
-
-      lineItems.push({
-        price_data: {
-          currency: 'usd',
-          product: productId,
-          unit_amount: unitAmount,
-          recurring: { interval },
-        },
-        quantity: 1,
-      });
+      priceId = isAnnual ? tierPrices.annual : tierPrices.monthly;
 
       subscriptionMetadata = {
         user_id: user.id,
         product: 'ai_studio',
         plan_id: planId,
-        credits: String(tier.credits),
+        credits: String(credits),
         billing_interval: billingInterval,
       };
 
-      logStep("Subscription checkout", { planId, credits: tier.credits, amount: unitAmount, interval });
+      logStep("Subscription checkout", { planId, credits, priceId, interval: billingInterval });
     } else {
       throw new Error("No valid plan or credit pack specified");
     }
@@ -153,7 +131,7 @@ serve(async (req) => {
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: lineItems,
+      line_items: [{ price: priceId, quantity: 1 }],
       mode,
       success_url: `${origin}/ai-studio?checkout=success&plan=${planId || creditPack}`,
       cancel_url: `${origin}/pricing/ai-studio?checkout=cancelled`,

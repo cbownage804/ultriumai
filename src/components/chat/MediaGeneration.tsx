@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Image, Video, Loader2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserCredits } from "@/hooks/useUserCredits";
+import { CREDIT_RATES } from "@/types/aiStudioCredits";
 
 interface MediaGenerationProps {
   onMediaGenerated: (mediaUrl: string, type: 'image' | 'video', prompt: string) => void;
@@ -21,6 +23,7 @@ const MediaGeneration = ({ onMediaGenerated, disabled }: MediaGenerationProps) =
   const [imageSize, setImageSize] = useState("1024x1024");
   const [imageQuality, setImageQuality] = useState("high");
   const { toast } = useToast();
+  const { useCredits } = useUserCredits();
 
   const generateImage = async () => {
     if (!prompt.trim()) {
@@ -33,6 +36,10 @@ const MediaGeneration = ({ onMediaGenerated, disabled }: MediaGenerationProps) =
     }
 
     try {
+      // Deduct credits before generating
+      const credited = await useCredits(CREDIT_RATES.IMAGE_GENERATION, 'Image generation');
+      if (!credited) return;
+
       setIsGeneratingImage(true);
       
       const { data, error } = await supabase.functions.invoke('image-generation', {
