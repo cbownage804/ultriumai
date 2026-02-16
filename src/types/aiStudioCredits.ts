@@ -1,6 +1,20 @@
 // AI Studio Credit System - Business AI Control Plane
 // Credits represent "AI capacity" in all user-facing contexts
 
+// Stripe Product IDs for AI Studio plans
+export const AI_STUDIO_STRIPE_PRODUCTS = {
+  basic: 'prod_TzZJTYRaWGzhu2',
+  pro: 'prod_TzZJLMfnYLLhS9',
+} as const;
+
+// Credit Pack Stripe Price IDs
+export const CREDIT_PACK_PRICE_IDS = {
+  small: 'price_1T1aAUH1u6E0bsJTlMIOXk7J',
+  medium: 'price_1T1aAVH1u6E0bsJTkhPh0YMY',
+  large: 'price_1T1aAWH1u6E0bsJT2YBT1aRQ',
+  mega: 'price_1T1aAXH1u6E0bsJT6GkPZLnn',
+} as const;
+
 // Credit costs per action type (INTERNAL ONLY - never expose publicly)
 export const CREDIT_RATES = {
   APP_CHAT: 1,

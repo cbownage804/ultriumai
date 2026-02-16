@@ -44,7 +44,6 @@ const VANGUARD_ADDON_PRODUCTS: Record<string, string> = {
   'prod_Tvm1BCKLECzk9L': 'comply',
   'prod_Tvm1pOuwM3afS1': 'cross-client-soc',
   'prod_Tvm1IMy0GKTI7u': 'atlas-docs',
-  
   'prod_Tvm1CcIDVjRGaW': 'ai-copilot',
   'prod_Tvm19bNlVCzSw2': 'network-discovery',
 };
@@ -53,6 +52,17 @@ const ALL_VANGUARD_PRODUCT_IDS = new Set([
   ...Object.keys(VANGUARD_PLAN_PRODUCTS),
   ...Object.keys(VANGUARD_ADDON_PRODUCTS),
 ]);
+
+// AI Studio product IDs
+const AI_STUDIO_PRODUCT_IDS = new Set([
+  'prod_TzZJTYRaWGzhu2', // AI Studio Basic
+  'prod_TzZJLMfnYLLhS9', // AI Studio Pro
+]);
+
+const AI_STUDIO_PRODUCT_TO_PLAN: Record<string, string> = {
+  'prod_TzZJTYRaWGzhu2': 'basic',
+  'prod_TzZJLMfnYLLhS9': 'pro',
+};
 
 // Org license price IDs → product + access_level
 const ORG_LICENSE_PRICE_MAP: Record<string, { product: string; access_level: string }> = {
@@ -70,6 +80,11 @@ const ORG_LICENSE_PRICE_MAP: Record<string, { product: string; access_level: str
 // Check if a subscription contains any Vanguard products
 const isVanguardSubscription = (items: Stripe.SubscriptionItem[]): boolean => {
   return items.some(item => ALL_VANGUARD_PRODUCT_IDS.has(item.price.product as string));
+};
+
+// Check if a subscription contains any AI Studio products
+const isAIStudioSubscription = (items: Stripe.SubscriptionItem[]): boolean => {
+  return items.some(item => AI_STUDIO_PRODUCT_IDS.has(item.price.product as string));
 };
 
 // Extract Vanguard tier + addons from subscription items
@@ -165,7 +180,7 @@ serve(async (req) => {
                 email: customer.email,
                 name: customer.name,
                 product: subscription?.metadata?.product || 'UltriumAI',
-                plan: subscription?.metadata?.plan_type || 'Premium',
+                plan: subscription?.metadata?.plan_type || subscription?.metadata?.plan_id || 'Premium',
                 amount: invoice.amount_paid,
                 currency: invoice.currency,
                 billingCycle: subscription?.items?.data[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly',
@@ -221,6 +236,67 @@ serve(async (req) => {
         break;
       }
 
+      case "checkout.session.completed": {
+        // Handle one-time credit pack purchases
+        const session = event.data.object as Stripe.Checkout.Session;
+        const sessionMetadata = session.metadata || {};
+        
+        if (sessionMetadata.product === 'ai_studio' && sessionMetadata.credit_pack && session.mode === 'payment') {
+          const customer = session.customer 
+            ? await stripe.customers.retrieve(session.customer as string) as Stripe.Customer
+            : null;
+          const email = customer?.email || session.customer_email;
+          
+          if (!email) {
+            logStep("No email for credit pack purchase");
+            break;
+          }
+
+          const { data: users } = await supabaseClient.auth.admin.listUsers();
+          const user = users.users.find(u => u.email === email);
+          
+          if (!user) {
+            logStep("No user found for credit pack purchase", { email });
+            break;
+          }
+
+          const creditsToAdd = parseInt(sessionMetadata.credits || '0', 10);
+          if (creditsToAdd > 0) {
+            // Add bonus credits to org_credits
+            const { error: creditError } = await supabaseClient.rpc('add_bonus_credits', {
+              p_user_id: user.id,
+              p_credits: creditsToAdd,
+            });
+
+            if (creditError) {
+              // Fallback: directly update credits_remaining
+              await supabaseClient
+                .from('org_credits')
+                .update({ 
+                  credits_remaining: supabaseClient.rpc('increment_credits', { 
+                    row_id: user.id, 
+                    amount: creditsToAdd 
+                  })
+                })
+                .eq('user_id', user.id);
+              
+              logStep("Credit pack added via fallback", { userId: user.id, credits: creditsToAdd });
+            } else {
+              logStep("Credit pack credits added", { userId: user.id, credits: creditsToAdd });
+            }
+
+            // Log to credit ledger
+            await supabaseClient.from('ai_credit_ledger').insert({
+              user_id: user.id,
+              credits_used: -creditsToAdd, // Negative = credits added
+              usage_type: 'chat', // Using existing type
+              description: `Credit pack purchase: ${creditsToAdd} credits`,
+            });
+          }
+        }
+        break;
+      }
+
       case "customer.subscription.created":
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
@@ -250,7 +326,6 @@ serve(async (req) => {
           const orgStart = new Date(subscription.current_period_start * 1000).toISOString();
 
           if (orgLicenseInfo) {
-            // Upsert the org_team_licenses row
             const { error: licError } = await supabaseClient
               .from('org_team_licenses')
               .upsert({
@@ -313,6 +388,71 @@ serve(async (req) => {
             tier: vTier,
             seats: seatCount,
             addons,
+            status: subscription.status,
+          });
+          break;
+        }
+
+        // ── AI STUDIO SUBSCRIPTION HANDLING ──
+        if (isAIStudioSubscription(subscription.items.data)) {
+          const productId = subscription.items.data[0]?.price.product as string;
+          const planType = AI_STUDIO_PRODUCT_TO_PLAN[productId] || subMetadata.plan_id || 'basic';
+          const creditAmount = parseInt(subMetadata.credits || '0', 10);
+          const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+          const subscriptionStart = new Date(subscription.current_period_start * 1000).toISOString();
+          const billingInterval = subscription.items.data[0]?.price.recurring?.interval || 'month';
+
+          // Map plan to access level
+          const accessLevel = planType === 'pro' ? 'pro' : 'basic';
+
+          // Provision credits in org_credits
+          if (subscription.status === 'active' && creditAmount > 0) {
+            await supabaseClient.from('org_credits').upsert({
+              user_id: user.id,
+              plan_type: planType,
+              monthly_credit_limit: creditAmount,
+              credits_remaining: creditAmount,
+              credits_used_this_period: 0,
+              credit_reset_date: subscriptionEnd,
+              overage_enabled: planType === 'pro',
+              overage_credits_used: 0,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'user_id' });
+
+            logStep("AI Studio credits provisioned", { 
+              userId: user.id, 
+              plan: planType, 
+              credits: creditAmount,
+              resetDate: subscriptionEnd,
+            });
+          }
+
+          // Update user_product_access
+          await supabaseClient.from('user_product_access').upsert({
+            user_id: user.id,
+            product: 'ai_studio',
+            access_level: subscription.status === 'active' ? accessLevel : 'free',
+            granted_at: new Date().toISOString(),
+            expires_at: subscription.status === 'active' ? subscriptionEnd : null,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id,product' });
+
+          // Also update subscribers table for backwards compatibility
+          await supabaseClient.from("subscribers").upsert({
+            email: customer.email,
+            stripe_customer_id: customer.id,
+            subscribed: subscription.status === "active",
+            subscription_tier: planType,
+            subscription_end: subscriptionEnd,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'email' });
+
+          logStep("AI Studio subscription synced", {
+            email: customer.email,
+            plan: planType,
+            credits: creditAmount,
+            accessLevel,
+            billing: billingInterval,
             status: subscription.status,
           });
           break;
@@ -405,7 +545,6 @@ serve(async (req) => {
             .update({ status: 'cancelled', expires_at: new Date().toISOString() })
             .eq('stripe_subscription_id', subscription.id);
 
-          // Revoke access for all assigned members
           const { data: license } = await supabaseClient
             .from('org_team_licenses')
             .select('id')
@@ -438,7 +577,6 @@ serve(async (req) => {
               }
             }
 
-            // Clean up assignments
             await supabaseClient
               .from('org_team_license_assignments')
               .delete()
@@ -471,6 +609,33 @@ serve(async (req) => {
             }, { onConflict: 'user_id,product' });
           }
           logStep("Vanguard subscription cancelled", { email: customer.email });
+          break;
+        }
+
+        // ── AI STUDIO CANCELLATION ──
+        if (isAIStudioSubscription(subscription.items.data)) {
+          if (user) {
+            // Reset to free tier credits
+            await supabaseClient.from('org_credits').upsert({
+              user_id: user.id,
+              plan_type: 'free',
+              monthly_credit_limit: 50,
+              credits_remaining: 50,
+              credits_used_this_period: 0,
+              overage_enabled: false,
+              overage_credits_used: 0,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'user_id' });
+
+            await supabaseClient.from('user_product_access').upsert({
+              user_id: user.id,
+              product: 'ai_studio',
+              access_level: 'free',
+              expires_at: null,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,product' });
+          }
+          logStep("AI Studio subscription cancelled", { email: customer.email });
           break;
         }
 
