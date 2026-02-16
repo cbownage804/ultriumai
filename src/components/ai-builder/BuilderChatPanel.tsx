@@ -258,58 +258,19 @@ export function BuilderChatPanel({
     const hasFiles = msg.filesGenerated && msg.filesGenerated > 0;
     const isBuildExpanded = expandedBuildMessages.has(msg.id);
     const totalFiles = hasFiles ? msg.filesGenerated! : fileNames.length;
+    const isCompleted = !isStreaming && (hasFiles || fileNames.length > 0);
 
     return (
-      <div className="space-y-2">
-        {/* Compact build summary - always shown */}
-        {(hasFiles || (fileNames.length > 0 && !isStreaming)) && (
-          <button
-            onClick={() => toggleBuildExpanded(msg.id)}
-            className="w-full flex items-center justify-between gap-2 text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] transition-colors group"
-          >
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-              <span className="text-white/70">
-                Generated {totalFiles} file{totalFiles > 1 ? 's' : ''}
-              </span>
-            </div>
-            <ChevronDown className={cn("h-3 w-3 text-white/30 transition-transform", isBuildExpanded && "rotate-180")} />
-          </button>
-        )}
-
-        {/* Expandable build details */}
-        {isBuildExpanded && (
-          <div className="space-y-1.5 pl-2 border-l border-white/[0.06]">
-            {fileNames.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {fileNames.map((name, i) => (
-                  <span key={i} className="inline-flex items-center gap-1 text-[10px] text-cyan-400/80 bg-cyan-500/10 rounded px-1.5 py-0.5 font-mono">
-                    <FileCode className="h-2.5 w-2.5" />
-                    {name}
-                  </span>
-                ))}
-              </div>
-            )}
-            {/* Code diff viewer for changed files */}
-            {!isStreaming && hasFiles && previousFiles.length > 0 && (
-              <div className="space-y-1.5 pt-1">
-                {latestFiles.slice(0, 3).map(file => {
-                  const prev = previousFiles.find(p => p.path === file.path);
-                  if (!prev) return null;
-                  return (
-                    <CodeDiffViewer
-                      key={file.path}
-                      oldContent={prev.content}
-                      newContent={file.content}
-                      fileName={file.path}
-                    />
-                  );
-                })}
-              </div>
-            )}
+      <div className="space-y-2.5">
+        {/* "Finished thinking" header for completed builds */}
+        {isCompleted && (
+          <div className="flex items-center gap-1.5 text-white/25 text-[11px]">
+            <Brain className="h-3 w-3" />
+            <span>Finished thinking</span>
           </div>
         )}
 
+        {/* Conversational text — shown before file cards like Lovable */}
         {text && (
           <StreamingText content={text} isStreaming={isStreaming}>
             {(displayedText) => (
@@ -341,6 +302,74 @@ export function BuilderChatPanel({
             )}
           </StreamingText>
         )}
+
+        {/* Inline file edit cards — Lovable style */}
+        {(hasFiles || fileNames.length > 0) && (
+          <div className="space-y-1">
+            {fileNames.map((name, i) => {
+              const shortName = name.split('/').pop() || name;
+              const isFileDone = !isStreaming || i < fileNames.length - 1 || hasFiles;
+              return (
+                <button
+                  key={i}
+                  onClick={() => toggleBuildExpanded(msg.id)}
+                  className="w-full flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] transition-colors group"
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {isFileDone ? (
+                      <div className="h-4 w-4 rounded-full bg-white/[0.04] flex items-center justify-center shrink-0">
+                        <Check className="h-2.5 w-2.5 text-white/40" />
+                      </div>
+                    ) : (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400 shrink-0" />
+                    )}
+                    <span className="text-white/50">Editing</span>
+                    <span className="font-mono text-[11px] text-white/70 bg-white/[0.04] rounded px-1.5 py-0.5 truncate">{shortName}</span>
+                  </div>
+                  <ChevronRight className="h-3 w-3 text-white/20 group-hover:text-white/40 shrink-0" />
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Expandable diff details */}
+        {isBuildExpanded && !isStreaming && hasFiles && previousFiles.length > 0 && (
+          <div className="space-y-1.5 pl-2 border-l border-white/[0.06]">
+            {latestFiles.slice(0, 3).map(file => {
+              const prev = previousFiles.find(p => p.path === file.path);
+              if (!prev) return null;
+              return (
+                <CodeDiffViewer
+                  key={file.path}
+                  oldContent={prev.content}
+                  newContent={file.content}
+                  fileName={file.path}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Task progress indicators */}
+        {(isStreaming || isCompleted) && fileNames.length > 0 && (
+          <div className="space-y-1 pt-1">
+            {isStreaming && !hasFiles && (
+              <div className="flex items-center gap-2 text-xs">
+                <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
+                <span className="text-white/50">Writing {fileNames.length} file{fileNames.length > 1 ? 's' : ''}...</span>
+              </div>
+            )}
+            {isCompleted && (
+              <div className="flex items-center gap-2 text-xs">
+                <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                <span className="text-white/40">Generated {totalFiles} file{totalFiles > 1 ? 's' : ''}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Empty streaming state */}
         {isStreaming && !hasFiles && fileNames.length === 0 && !text && (
           <div className="flex items-center gap-2 text-white/50">
             <div className="flex gap-0.5">
@@ -349,12 +378,6 @@ export function BuilderChatPanel({
               <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse [animation-delay:0.4s]" />
             </div>
             <span className="text-xs">Building your app...</span>
-          </div>
-        )}
-        {isStreaming && fileNames.length > 0 && !hasFiles && (
-          <div className="flex items-center gap-2 text-xs text-white/40">
-            <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
-            <span>Writing {fileNames.length} file{fileNames.length > 1 ? 's' : ''}...</span>
           </div>
         )}
 
