@@ -941,7 +941,7 @@ export function BuilderChatPanel({
         )}
 
         {/* Lovable-style input area with integrated mode toggle */}
-        <div data-tour="chat-input" className={cn("rounded-xl border bg-white/[0.04] transition-all overflow-hidden shadow-lg shadow-black/20", mode === 'build' ? "border-violet-500/25 focus-within:border-violet-500/40" : "border-cyan-500/25 focus-within:border-cyan-500/40")}>
+        <div data-tour="chat-input" className={cn("rounded-xl border bg-white/[0.05] transition-all overflow-hidden shadow-lg", mode === 'build' ? "border-violet-500/30 shadow-violet-500/5" : "border-cyan-500/30 shadow-cyan-500/5")}>
           <div className="flex items-end gap-2 px-3 py-2.5">
             {/* Image upload button */}
             <Tooltip>
@@ -996,7 +996,7 @@ export function BuilderChatPanel({
                   : messages.length === 0 ? 'Describe the app you want to build...' : 'Describe changes...'
               }
               rows={3}
-              className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/20 resize-none outline-none min-h-[72px] max-h-[200px] py-0.5"
+              className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/35 resize-none outline-none min-h-[72px] max-h-[200px] py-0.5"
             />
             {isGenerating ? (
               <button
@@ -1082,7 +1082,7 @@ export function BuilderChatPanel({
               )}
               {(() => {
                 const userMsgCount = messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length;
-                if (userMsgCount === 0) return <span className="text-[9px] text-white/15 font-mono">1 credit/msg</span>;
+                if (userMsgCount === 0) return <span className="text-[9px] text-white/40 font-mono flex items-center gap-1"><Zap className="h-2.5 w-2.5 text-amber-400/60" />1 credit/msg</span>;
                 const analysis = analyzeConversationComplexity(messages.map(m => ({ role: m.role, content: m.content })));
                 const userTexts = messages.filter(m => m.role === 'user').map(m => m.content);
                 const tone = detectCommunicationStyle(userTexts);
@@ -1090,7 +1090,7 @@ export function BuilderChatPanel({
                 return (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="text-[9px] text-white/15 font-mono cursor-default">
+                      <span className="text-[9px] text-white/40 font-mono cursor-default">
                         {toneEmoji} {userMsgCount} msg{userMsgCount > 1 ? 's' : ''} · {analysis.topicCount} topic{analysis.topicCount !== 1 ? 's' : ''}
                       </span>
                     </TooltipTrigger>
