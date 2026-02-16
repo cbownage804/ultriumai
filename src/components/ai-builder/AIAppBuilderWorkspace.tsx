@@ -1280,7 +1280,7 @@ export function AIAppBuilderWorkspace() {
                         if (groupItems.length === 0) return null;
                         return (
                           <div key={group.key}>
-                            {sidebarExpanded && <span className="text-[9px] font-semibold uppercase tracking-wider text-white/20 px-2 pt-2 pb-0.5 block">{group.label}</span>}
+                            {sidebarExpanded && <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 px-2 pt-3 pb-1 block">{group.label}</span>}
                             {!sidebarExpanded && <div className="h-px w-5 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent my-1 mx-auto" />}
                             {groupItems.map(item => (
                               <Tooltip key={item.id} delayDuration={sidebarExpanded ? 999999 : 300}>
@@ -1294,8 +1294,8 @@ export function AIAppBuilderWorkspace() {
                                       "rounded-md flex items-center gap-2 transition-all text-left",
                                       sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
                                       item.active
-                                        ? `${item.color} ${item.activeBg} shadow-[0_0_8px_rgba(6,182,212,0.15)]`
-                                        : `${item.color}/40 hover:${item.color}/70 hover:bg-white/[0.03]`
+                                        ? `${item.color} ${item.activeBg} border border-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]`
+                                        : "text-white/40 hover:text-white/70 hover:bg-white/[0.03]"
                                     )}
                                   >
                                     <item.icon className="h-3.5 w-3.5 shrink-0" />
@@ -1316,7 +1316,7 @@ export function AIAppBuilderWorkspace() {
 
                   {/* Bottom tools */}
                   <div className={cn("mt-auto flex flex-col gap-0.5 py-1.5 border-t border-white/[0.04]", sidebarExpanded ? "px-1.5" : "items-center px-0")}>
-                    {sidebarExpanded && <span className="text-[9px] font-semibold uppercase tracking-wider text-white/20 px-2 pt-0.5 pb-0.5">Tools</span>}
+                    {sidebarExpanded && <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 px-2 pt-1 pb-1 block">Tools</span>}
                     {[
                       { icon: Gauge, label: 'Performance', tooltip: 'Analyze bundle size and code complexity', active: showPerformanceProfiler, onClick: () => setShowPerformanceProfiler(!showPerformanceProfiler), color: 'text-emerald-400', activeColor: 'text-emerald-400 bg-emerald-500/10' },
                       { icon: History, label: 'Changelog', tooltip: 'See a timeline of changes made this session', active: showChangelog, onClick: () => setShowChangelog(!showChangelog), color: 'text-blue-400' },
@@ -1332,7 +1332,7 @@ export function AIAppBuilderWorkspace() {
                           <button onClick={item.onClick} className={cn(
                             "rounded-md flex items-center gap-2 transition-all text-left",
                             sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
-                            item.activeColor ? item.activeColor : item.active ? `${item.color} bg-white/[0.06]` : `${item.color}/40 hover:${item.color}/70 hover:bg-white/[0.03]`,
+                            item.active ? `${item.color} ${item.activeColor || 'bg-white/[0.06]'} border border-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]` : `text-white/40 hover:text-white/70 hover:bg-white/[0.03]`,
                             item.hoverColor || ''
                           )}>
                             <item.icon className="h-3.5 w-3.5 shrink-0" />
