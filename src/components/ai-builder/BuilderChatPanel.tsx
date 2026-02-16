@@ -252,6 +252,19 @@ export function BuilderChatPanel({
     });
   };
 
+  /** Extract plan steps from numbered list patterns in text */
+  const extractPlanSteps = (text: string, isStreaming: boolean, hasFiles: boolean): { step: number; label: string; status: 'pending' | 'active' | 'done' }[] | null => {
+    // Match patterns like "1. Create header" or "1. **Create header**"
+    const stepPattern = /^\d+\.\s+\*{0,2}(.+?)\*{0,2}$/gm;
+    const matches = [...text.matchAll(stepPattern)];
+    if (matches.length < 2) return null; // Need at least 2 steps to show as a plan
+    return matches.map((m, i) => ({
+      step: i + 1,
+      label: m[1].replace(/\*+/g, '').trim(),
+      status: hasFiles ? 'done' as const : isStreaming ? (i === matches.length - 1 ? 'active' as const : 'done' as const) : 'pending' as const,
+    }));
+  };
+
   const renderAssistantMessage = (msg: BuilderMessage, isLast: boolean) => {
     const { text, fileNames } = getDisplayContent(msg);
     const isStreaming = isGenerating && isLast;
@@ -259,6 +272,7 @@ export function BuilderChatPanel({
     const isBuildExpanded = expandedBuildMessages.has(msg.id);
     const totalFiles = hasFiles ? msg.filesGenerated! : fileNames.length;
     const isCompleted = !isStreaming && (hasFiles || fileNames.length > 0);
+    const planSteps = msg.planSteps || (text ? extractPlanSteps(text, isStreaming, !!hasFiles) : null);
 
     return (
       <div className="space-y-2.5">
@@ -301,6 +315,37 @@ export function BuilderChatPanel({
               </div>
             )}
           </StreamingText>
+        )}
+
+        {/* Step-by-step plan display */}
+        {planSteps && planSteps.length > 0 && (
+          <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+            <div className="px-3 py-1.5 border-b border-white/[0.04] flex items-center gap-1.5">
+              <Compass className="h-3 w-3 text-cyan-400/60" />
+              <span className="text-[10px] text-white/40 font-medium uppercase tracking-wider">Plan</span>
+            </div>
+            <div className="p-2 space-y-0.5">
+              {planSteps.map((step) => (
+                <div key={step.step} className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs">
+                  {step.status === 'done' ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                  ) : step.status === 'active' ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400 shrink-0" />
+                  ) : (
+                    <div className="h-3.5 w-3.5 rounded-full border border-white/10 shrink-0" />
+                  )}
+                  <span className={cn(
+                    "text-[12px]",
+                    step.status === 'done' ? 'text-white/50' :
+                    step.status === 'active' ? 'text-white/80 font-medium' :
+                    'text-white/30'
+                  )}>
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Inline file edit cards — Lovable style */}
@@ -366,6 +411,34 @@ export function BuilderChatPanel({
                 <span className="text-white/40">Generated {totalFiles} file{totalFiles > 1 ? 's' : ''}</span>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Inline error recovery — show runtime errors with Fix button */}
+        {msg.inlineError && !isStreaming && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/[0.06] border border-red-500/20 text-xs">
+            <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+            <span className="text-red-300/80 flex-1 truncate font-mono text-[11px]">{msg.inlineError.message}</span>
+            <button
+              onClick={() => onFixError(`Fix this runtime error in my app: "${msg.inlineError!.message}"${msg.inlineError!.source ? ` (in ${msg.inlineError!.source}${msg.inlineError!.line ? `:${msg.inlineError!.line}` : ''})` : ''}`)}
+              className="flex items-center gap-1 px-2 py-1 rounded-md bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 transition-colors shrink-0 font-medium"
+            >
+              <Wrench className="h-3 w-3" />
+              Fix this
+            </button>
+          </div>
+        )}
+
+        {/* Revert action for completed builds */}
+        {isCompleted && isLast && onRevertToMessage && msg.filesSnapshot && (
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              onClick={() => onRevertToMessage(msg.id)}
+              className="flex items-center gap-1.5 text-[11px] text-white/25 hover:text-amber-400 transition-colors px-2 py-1 rounded-md hover:bg-amber-500/[0.05]"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Undo changes
+            </button>
           </div>
         )}
 
