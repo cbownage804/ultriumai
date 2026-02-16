@@ -890,7 +890,6 @@ export function AIAppBuilderWorkspace() {
   const sidebarIcons = [
     // ── Data & Auth ──
     { id: 'database', icon: Database, label: 'Database', show: !!supabaseConfig, active: showDatabase || showDbExplorer, group: 'data' },
-    { id: 'schemaDesigner' as any, icon: Table2, label: 'Schema Designer', show: true, active: showSchemaDesigner, group: 'data' },
     { id: 'auth', icon: Shield, label: 'Auth', show: !!supabaseConfig, active: showAuth, group: 'data' },
     { id: 'storage', icon: FolderOpen, label: 'Storage', show: !!supabaseConfig, active: showStorage, group: 'data' },
     { id: 'edgeFunctions', icon: Zap, label: 'Edge Functions', show: true, active: showEdgeFunctions, group: 'data' },
