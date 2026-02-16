@@ -51,6 +51,7 @@ const AuthPage = () => {
   // Get return product and path from URL params
   const returnProduct = searchParams.get('return');
   const returnPath = searchParams.get('path') || '/dashboard';
+  const redirectParam = searchParams.get('redirect');
 
   const from = location.state?.from?.pathname || '/hub';
 
@@ -69,10 +70,15 @@ const AuthPage = () => {
         
         return () => clearTimeout(timer);
       }
+      // If a redirect param is provided, honor it
+      if (redirectParam) {
+        navigate(redirectParam, { replace: true });
+        return;
+      }
       // Otherwise navigate to the Product Hub (or original location)
       navigate(from === '/' ? '/hub' : from, { replace: true });
     }
-  }, [user, navigate, from, returnProduct, returnPath, redirecting]);
+  }, [user, navigate, from, returnProduct, returnPath, redirecting, redirectParam]);
 
   // Show loading state while redirecting to subdomain
   if (redirecting) {
