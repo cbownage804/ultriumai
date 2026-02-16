@@ -131,10 +131,10 @@ const AIStudioPricing = () => {
                   <span className="text-3xl font-bold">$149</span>
                   <span className="text-muted-foreground text-sm">/mo</span>
                 </div>
-                <p className="text-xs text-primary font-medium mb-4">3,000 AI credits included</p>
+                <p className="text-xs text-primary font-medium mb-4">270 AI credits included</p>
 
                 <div className="space-y-2 mb-6">
-                  {["3,000 AI credits/mo", "5 Custom GPTs", "Client allocation", "Image generation", "Per-client analytics"].map((f, i) => (
+                  {["270 AI credits/mo", "5 Custom GPTs", "Client allocation", "Image generation", "Per-client analytics"].map((f, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <Check className="h-3 w-3 text-primary flex-shrink-0" />
                       <span className="text-xs text-muted-foreground">{f}</span>
@@ -162,10 +162,10 @@ const AIStudioPricing = () => {
                   <span className="text-3xl font-bold text-primary">$479</span>
                   <span className="text-muted-foreground text-sm">/mo</span>
                 </div>
-                <p className="text-xs text-primary font-medium mb-4">10,000 AI credits included</p>
+                <p className="text-xs text-primary font-medium mb-4">875 AI credits included</p>
 
                 <div className="space-y-2 mb-6">
-                  {["10,000 AI credits/mo", "25 Custom GPTs", "Image gen + browser testing", "API & webhooks", "Priority support"].map((f, i) => (
+                  {["875 AI credits/mo", "25 Custom GPTs", "Image gen + browser testing", "API & webhooks", "Priority support"].map((f, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <Check className="h-3 w-3 text-primary flex-shrink-0" />
                       <span className="text-xs text-muted-foreground">{f}</span>
@@ -190,10 +190,10 @@ const AIStudioPricing = () => {
                   <span className="text-3xl font-bold">$899</span>
                   <span className="text-muted-foreground text-sm">/mo</span>
                 </div>
-                <p className="text-xs text-primary font-medium mb-4">18,000 AI credits included</p>
+                <p className="text-xs text-primary font-medium mb-4">1,600 AI credits included</p>
 
                 <div className="space-y-2 mb-6">
-                  {["18,000 AI credits/mo", "Unlimited GPTs", "Full agent capabilities", "Dedicated manager", "SLA guarantee"].map((f, i) => (
+                  {["1,600 AI credits/mo", "Unlimited GPTs", "Full agent capabilities", "Dedicated manager", "SLA guarantee"].map((f, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <Check className="h-3 w-3 text-primary flex-shrink-0" />
                       <span className="text-xs text-muted-foreground">{f}</span>
@@ -218,10 +218,10 @@ const AIStudioPricing = () => {
                   <span className="text-3xl font-bold">$1,799</span>
                   <span className="text-muted-foreground text-sm">/mo</span>
                 </div>
-                <p className="text-xs text-primary font-medium mb-4">35,000 AI credits included</p>
+                <p className="text-xs text-primary font-medium mb-4">3,250 AI credits included</p>
 
                 <div className="space-y-2 mb-6">
-                  {["35,000 AI credits/mo", "Everything in Elite", "Custom integrations", "Credit rollover", "24/7 support"].map((f, i) => (
+                  {["3,250 AI credits/mo", "Everything in Elite", "Custom integrations", "Credit rollover", "24/7 support"].map((f, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <Check className="h-3 w-3 text-primary flex-shrink-0" />
                       <span className="text-xs text-muted-foreground">{f}</span>
@@ -295,10 +295,10 @@ const AIStudioPricing = () => {
                   <span className="text-4xl font-bold text-violet-500">$59</span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
-                <p className="text-sm text-violet-500 font-medium mb-6">1,200 AI credits included</p>
+                <p className="text-sm text-violet-500 font-medium mb-6">100 AI credits included</p>
 
                 <div className="space-y-3 mb-8">
-                  {["1,200 AI credits/mo", "3 Custom GPTs", "5 team members", "Image generation", "Usage dashboard", "Email support"].map((f, i) => (
+                  {["100 AI credits/mo", "3 Custom GPTs", "5 team members", "Image generation", "Usage dashboard", "Email support"].map((f, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <Check className="h-4 w-4 text-violet-500 flex-shrink-0" />
                       <span className="text-sm text-muted-foreground">{f}</span>
@@ -323,10 +323,10 @@ const AIStudioPricing = () => {
                   <span className="text-4xl font-bold">$239</span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
-                <p className="text-sm text-violet-500 font-medium mb-6">5,000 AI credits included</p>
+                <p className="text-sm text-violet-500 font-medium mb-6">425 AI credits included</p>
 
                 <div className="space-y-3 mb-8">
-                  {["5,000 AI credits/mo", "10 Custom GPTs", "20 team members", "Image gen + browser testing", "Priority support", "API access"].map((f, i) => (
+                  {["425 AI credits/mo", "10 Custom GPTs", "20 team members", "Image gen + browser testing", "Priority support", "API access"].map((f, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <Check className="h-4 w-4 text-violet-500 flex-shrink-0" />
                       <span className="text-sm text-muted-foreground">{f}</span>
@@ -369,10 +369,10 @@ const AIStudioPricing = () => {
                   <span className="text-4xl font-bold">$39</span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
-                <p className="text-sm text-cyan-500 font-medium mb-6">800 AI credits · 250 conversations/mo</p>
+                <p className="text-sm text-cyan-500 font-medium mb-6">70 AI credits · 250 conversations/mo</p>
 
                 <div className="space-y-3 mb-8">
-                  {["800 AI credits/mo", "5 messages/visitor cap", "Lead capture forms", "Embed widget", "Basic analytics"].map((f, i) => (
+                  {["70 AI credits/mo", "5 messages/visitor cap", "Lead capture forms", "Embed widget", "Basic analytics"].map((f, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <Check className="h-4 w-4 text-cyan-500 flex-shrink-0" />
                       <span className="text-sm text-muted-foreground">{f}</span>
@@ -400,10 +400,10 @@ const AIStudioPricing = () => {
                   <span className="text-4xl font-bold text-cyan-500">$59</span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
-                <p className="text-sm text-cyan-500 font-medium mb-6">1,200 AI credits · 1,000 conversations/mo</p>
+                <p className="text-sm text-cyan-500 font-medium mb-6">100 AI credits · 1,000 conversations/mo</p>
 
                 <div className="space-y-3 mb-8">
-                  {["1,200 AI credits/mo", "5 messages/visitor cap", "Advanced lead forms", "Custom branding", "CRM integrations", "Priority support"].map((f, i) => (
+                  {["100 AI credits/mo", "5 messages/visitor cap", "Advanced lead forms", "Custom branding", "CRM integrations", "Priority support"].map((f, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <Check className="h-4 w-4 text-cyan-500 flex-shrink-0" />
                       <span className="text-sm text-muted-foreground">{f}</span>
