@@ -923,15 +923,15 @@ export function BuilderChatPanel({
         {messages.length === 0 && !input && (
           <div className="flex flex-wrap gap-1.5">
             {[
-              { label: 'Build a landing page', icon: '🚀' },
-              { label: 'Create a dashboard with charts', icon: '📊' },
-              { label: 'Paste a screenshot to clone', icon: '👁️' },
-              { label: 'Search for best practices', icon: '🔍' },
+              { label: 'Build a landing page', icon: '🚀', accent: 'border-rose-500/20 text-rose-300/70 hover:bg-rose-500/10 hover:border-rose-500/30' },
+              { label: 'Create a dashboard with charts', icon: '📊', accent: 'border-blue-500/20 text-blue-300/70 hover:bg-blue-500/10 hover:border-blue-500/30' },
+              { label: 'Paste a screenshot to clone', icon: '👁️', accent: 'border-violet-500/20 text-violet-300/70 hover:bg-violet-500/10 hover:border-violet-500/30' },
+              { label: 'Search for best practices', icon: '🔍', accent: 'border-amber-500/20 text-amber-300/70 hover:bg-amber-500/10 hover:border-amber-500/30' },
             ].map(s => (
               <button
                 key={s.label}
                 onClick={() => setInput(s.label)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11px] text-white/40 hover:text-white/70 hover:bg-white/[0.06] transition-colors"
+                className={cn("flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] transition-all", s.accent)}
               >
                 <span>{s.icon}</span>
                 <span>{s.label}</span>
@@ -941,7 +941,7 @@ export function BuilderChatPanel({
         )}
 
         {/* Lovable-style input area with integrated mode toggle */}
-        <div data-tour="chat-input" className="rounded-xl border border-white/[0.08] bg-white/[0.03] focus-within:border-cyan-500/30 transition-colors overflow-hidden">
+        <div data-tour="chat-input" className="rounded-xl border border-white/[0.10] bg-white/[0.04] focus-within:border-cyan-500/30 focus-within:bg-white/[0.05] transition-all overflow-hidden shadow-lg shadow-black/20">
           <div className="flex items-end gap-2 px-3 py-2.5">
             {/* Image upload button */}
             <Tooltip>
@@ -1026,10 +1026,10 @@ export function BuilderChatPanel({
               <button
                 onClick={() => onModeChange('discuss')}
                 className={cn(
-                  "flex items-center gap-1 text-[10px] px-2 py-1 rounded transition-all font-medium",
+                  "flex items-center gap-1 text-[10px] px-2.5 py-1 rounded transition-all font-medium",
                   mode === 'discuss'
-                    ? "bg-white/10 text-white/90"
-                    : "text-white/40 hover:text-white/60"
+                    ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/25"
+                    : "text-white/40 hover:text-white/60 border border-transparent"
                 )}
               >
                 <MessageCircle className="h-2.5 w-2.5" />
@@ -1038,10 +1038,10 @@ export function BuilderChatPanel({
               <button
                 onClick={() => onModeChange('build')}
                 className={cn(
-                  "flex items-center gap-1 text-[10px] px-2 py-1 rounded transition-all font-medium",
+                  "flex items-center gap-1 text-[10px] px-2.5 py-1 rounded transition-all font-medium",
                   mode === 'build'
-                    ? "bg-white/10 text-white/90"
-                    : "text-white/40 hover:text-white/60"
+                    ? "bg-violet-500/15 text-violet-300 border border-violet-500/25"
+                    : "text-white/40 hover:text-white/60 border border-transparent"
                 )}
               >
                 <Wand2 className="h-2.5 w-2.5" />
