@@ -44,12 +44,12 @@ interface BuilderChatPanelProps {
 
 
 const STARTER_PROMPTS = [
-  { label: 'Landing Page', desc: 'Hero, features, testimonials, footer', icon: '🚀' },
-  { label: 'Analytics Dashboard', desc: 'Cards, charts, activity feed', icon: '📊' },
-  { label: 'Task Board', desc: 'Kanban columns with drag & drop', icon: '✅' },
-  { label: 'E-commerce Store', desc: 'Product grid, filters, cart', icon: '🛒' },
-  { label: 'SaaS Settings', desc: 'Profile, billing, notifications', icon: '⚙️' },
-  { label: 'Chat Interface', desc: 'AI chat with streaming responses', icon: '💬' },
+  { label: 'Landing Page', desc: 'Hero, features, testimonials, footer', icon: '🚀', border: 'hover:border-rose-500/30', glow: 'hover:shadow-rose-500/[0.06]', bg: 'hover:from-rose-500/[0.08] hover:to-orange-500/[0.04]' },
+  { label: 'Analytics Dashboard', desc: 'Cards, charts, activity feed', icon: '📊', border: 'hover:border-blue-500/30', glow: 'hover:shadow-blue-500/[0.06]', bg: 'hover:from-blue-500/[0.08] hover:to-cyan-500/[0.04]' },
+  { label: 'Task Board', desc: 'Kanban columns with drag & drop', icon: '✅', border: 'hover:border-emerald-500/30', glow: 'hover:shadow-emerald-500/[0.06]', bg: 'hover:from-emerald-500/[0.08] hover:to-teal-500/[0.04]' },
+  { label: 'E-commerce Store', desc: 'Product grid, filters, cart', icon: '🛒', border: 'hover:border-amber-500/30', glow: 'hover:shadow-amber-500/[0.06]', bg: 'hover:from-amber-500/[0.08] hover:to-yellow-500/[0.04]' },
+  { label: 'SaaS Settings', desc: 'Profile, billing, notifications', icon: '⚙️', border: 'hover:border-violet-500/30', glow: 'hover:shadow-violet-500/[0.06]', bg: 'hover:from-violet-500/[0.08] hover:to-purple-500/[0.04]' },
+  { label: 'Chat Interface', desc: 'AI chat with streaming responses', icon: '💬', border: 'hover:border-pink-500/30', glow: 'hover:shadow-pink-500/[0.06]', bg: 'hover:from-pink-500/[0.08] hover:to-fuchsia-500/[0.04]' },
 ];
 
 const THINKING_LABELS: Record<string, { icon: typeof Brain; label: string; color: string }> = {
@@ -686,7 +686,7 @@ export function BuilderChatPanel({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
                     onClick={() => onSend(`${prompt.label}: ${prompt.desc}`)}
-                    className="w-full text-left px-3.5 py-3 rounded-xl border border-white/[0.06] hover:border-cyan-500/25 bg-white/[0.015] hover:bg-gradient-to-r hover:from-cyan-500/[0.06] hover:to-violet-500/[0.04] text-sm transition-all duration-300 group backdrop-blur-sm hover:shadow-lg hover:shadow-cyan-500/[0.04]"
+                    className={cn("w-full text-left px-3.5 py-3 rounded-xl border border-white/[0.06] bg-white/[0.015] hover:bg-gradient-to-r text-sm transition-all duration-300 group backdrop-blur-sm hover:shadow-lg", prompt.border, prompt.glow, prompt.bg)}
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-base h-9 w-9 rounded-lg bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-white/[0.06] flex items-center justify-center group-hover:border-white/[0.12] group-hover:from-white/[0.06] group-hover:to-white/[0.03] transition-all duration-300 shrink-0 shadow-sm">{prompt.icon}</span>
