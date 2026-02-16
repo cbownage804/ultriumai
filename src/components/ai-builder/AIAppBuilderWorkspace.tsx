@@ -80,7 +80,7 @@ import { SetupWizard } from './SetupWizard';
 import { SchemaDesigner } from './SchemaDesigner';
 import { OneClickDeploy } from './OneClickDeploy';
 import { EditHistoryTimeline } from './EditHistoryTimeline';
-import { detectSupabaseIntents, buildSupabaseContext } from './SupabaseConversational';
+import { detectSupabaseIntents, buildSupabaseContext, buildErrorDiagnosisContext, analyzeConversationComplexity } from './SupabaseConversational';
 import { MobilePWAInstall } from './MobilePWAInstall';
 
 import {
@@ -557,7 +557,8 @@ export function AIAppBuilderWorkspace() {
     setLastFixError(error.message);
     if (newCount > MAX_FIX_ATTEMPTS) { toast.error('Unable to auto-fix — try describing the issue differently.'); return; }
     const retryContext = newCount > 1 ? `\n\nThis is attempt ${newCount}/${MAX_FIX_ATTEMPTS}. Previous fix attempts did not resolve the issue. Please try a different approach.` : '';
-    sendMessage(`Fix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
+    const diagnosisContext = buildErrorDiagnosisContext({ message: error.message, source: error.source, line: error.line });
+    sendMessage(`${diagnosisContext}\n\nFix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, fixAttemptCount, lastFixError]);
 
   // Auto-fix pipeline: automatically attempt to fix preview errors

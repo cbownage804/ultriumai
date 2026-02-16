@@ -13,7 +13,7 @@ import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
-import { SUPABASE_SLASH_COMMANDS } from './SupabaseConversational';
+import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, generateIntentSuggestions, analyzeConversationComplexity } from './SupabaseConversational';
 import { StreamingText, StreamingCursor, ElapsedTimer } from './StreamingText';
 
 interface BuilderChatPanelProps {
@@ -520,7 +520,7 @@ export function BuilderChatPanel({
                   if (suggestion.includes('→')) {
                     onModeChange('build');
                   } else {
-                    onSend(suggestion);
+                    onSend(suggestion.replace(/^[^\w]*/, '')); // Strip leading emoji
                   }
                 }}
                 className="text-[11px] px-2.5 py-1 rounded-full border border-white/[0.08] text-white/50 hover:text-white/80 hover:border-cyan-500/30 hover:bg-cyan-500/[0.05] transition-all"
@@ -530,6 +530,33 @@ export function BuilderChatPanel({
             ))}
           </div>
         )}
+
+        {/* Detected backend intent chips — show when AI detects database/auth/storage needs */}
+        {!isStreaming && isLast && (() => {
+          const intents = detectSupabaseIntents(text);
+          const intentSuggestions = generateIntentSuggestions(intents);
+          if (intents.length === 0 || intentSuggestions.length === 0) return null;
+          return (
+            <div className="flex flex-wrap gap-1.5 pt-1.5">
+              {intents.map((intent, i) => {
+                const Icon = intent.icon;
+                return (
+                  <motion.div
+                    key={intent.type}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-[10px]"
+                  >
+                    <Icon className={cn("h-2.5 w-2.5", intent.color)} />
+                    <span className="text-white/40">{intent.description}</span>
+                    {intent.confidence > 0.8 && <span className="text-emerald-400/50">●</span>}
+                  </motion.div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
     );
   };
@@ -1011,11 +1038,23 @@ export function BuilderChatPanel({
                   </div>
                 </div>
               )}
-              <span className="text-[9px] text-white/15 font-mono">
-                {messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length > 0
-                  ? `${messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length} msg${messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length > 1 ? 's' : ''}`
-                  : '1 credit/msg'}
-              </span>
+              {(() => {
+                const userMsgCount = messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length;
+                if (userMsgCount === 0) return <span className="text-[9px] text-white/15 font-mono">1 credit/msg</span>;
+                const analysis = analyzeConversationComplexity(messages.map(m => ({ role: m.role, content: m.content })));
+                return (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-[9px] text-white/15 font-mono cursor-default">
+                        {userMsgCount} msg{userMsgCount > 1 ? 's' : ''} · {analysis.topicCount} topic{analysis.topicCount !== 1 ? 's' : ''}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs max-w-[200px]">
+                      {analysis.summary}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })()}
             </div>
           </div>
         </div>

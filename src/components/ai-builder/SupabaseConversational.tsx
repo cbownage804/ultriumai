@@ -203,3 +203,167 @@ export function generateIntentSuggestions(intents: SupabaseIntent[]): string[] {
 
   return suggestions.slice(0, 3);
 }
+
+/**
+ * Analyze error messages and build diagnostic context for the AI.
+ * Makes the AI much better at fixing runtime errors conversationally.
+ */
+export function buildErrorDiagnosisContext(error: { message: string; source?: string; line?: number }): string {
+  const sections: string[] = ['[ERROR DIAGNOSIS CONTEXT]'];
+  sections.push(`Error: ${error.message}`);
+  if (error.source) sections.push(`File: ${error.source}${error.line ? `:${error.line}` : ''}`);
+
+  // Classify error type for targeted fix
+  const msg = error.message.toLowerCase();
+  if (msg.includes('undefined') || msg.includes('null')) {
+    sections.push('Type: Null/undefined reference — check variable initialization, optional chaining, and data loading states.');
+  } else if (msg.includes('network') || msg.includes('fetch') || msg.includes('cors')) {
+    sections.push('Type: Network/CORS error — check API URLs, CORS headers, and auth tokens.');
+  } else if (msg.includes('syntax') || msg.includes('unexpected token')) {
+    sections.push('Type: Syntax error — check for missing brackets, unclosed strings, or malformed JSON.');
+  } else if (msg.includes('permission') || msg.includes('rls') || msg.includes('policy')) {
+    sections.push('Type: RLS/Permission error — check Row Level Security policies and auth state.');
+  } else if (msg.includes('type') || msg.includes('cannot read')) {
+    sections.push('Type: Type error — check data shapes, API response formats, and type assertions.');
+  }
+
+  sections.push('FIX RULES: Diagnose the root cause, not just the symptom. Explain what went wrong and why. Output only the changed files.');
+  return sections.join('\n');
+}
+
+/**
+ * Analyze the conversation to determine complexity and suggest mode switches.
+ */
+export function analyzeConversationComplexity(messages: { role: string; content: string }[]): {
+  depth: 'shallow' | 'medium' | 'deep';
+  topicCount: number;
+  shouldSuggestBuild: boolean;
+  shouldSuggestDiscuss: boolean;
+  summary: string;
+} {
+  const userMessages = messages.filter(m => m.role === 'user');
+  const assistantMessages = messages.filter(m => m.role === 'assistant');
+  
+  // Count unique topics
+  const topics = new Set<string>();
+  const allContent = messages.map(m => m.content.toLowerCase()).join(' ');
+  
+  const topicPatterns: [RegExp, string][] = [
+    [/\b(auth|login|signup|user)\b/, 'authentication'],
+    [/\b(table|database|schema|sql)\b/, 'database'],
+    [/\b(upload|storage|file|image|avatar)\b/, 'storage'],
+    [/\b(api|edge function|webhook|endpoint)\b/, 'api'],
+    [/\b(stripe|payment|billing|subscription)\b/, 'payments'],
+    [/\b(style|design|color|layout|responsive|css)\b/, 'design'],
+    [/\b(animation|transition|framer|motion)\b/, 'animation'],
+    [/\b(form|input|validation|submit)\b/, 'forms'],
+    [/\b(chart|graph|visualization|recharts)\b/, 'data-viz'],
+    [/\b(deploy|publish|host|domain)\b/, 'deployment'],
+    [/\b(test|debug|error|fix|bug)\b/, 'debugging'],
+    [/\b(real.?time|live|sync|subscription)\b/, 'realtime'],
+  ];
+  
+  for (const [pattern, topic] of topicPatterns) {
+    if (pattern.test(allContent)) topics.add(topic);
+  }
+
+  const depth = userMessages.length <= 3 ? 'shallow' : userMessages.length <= 10 ? 'medium' : 'deep';
+  
+  // Check if discussion has converged on a plan
+  const lastAssistant = assistantMessages[assistantMessages.length - 1]?.content.toLowerCase() || '';
+  const planSignals = ['here\'s what i\'d', 'i\'d recommend', 'here\'s the plan', 'let me build', 'i\'ll create', 'ready to build'];
+  const hasPlan = planSignals.some(s => lastAssistant.includes(s));
+  
+  // Check if user is asking conceptual questions
+  const lastUser = userMessages[userMessages.length - 1]?.content.toLowerCase() || '';
+  const discussSignals = /^(what|how|why|should|can|compare|explain|which)\b|\?$/;
+  const isDiscussing = discussSignals.test(lastUser);
+
+  return {
+    depth,
+    topicCount: topics.size,
+    shouldSuggestBuild: hasPlan && !lastUser.includes('build'),
+    shouldSuggestDiscuss: topics.size > 3 && depth === 'shallow',
+    summary: `${topics.size} topics (${[...topics].join(', ')}), ${userMessages.length} exchanges, ${depth} depth`,
+  };
+}
+
+/**
+ * Generate proactive capability suggestions based on what's been built.
+ * Shows users what they can do next without being asked.
+ */
+export function generateProactiveSuggestions(
+  currentFiles: string[],
+  intentsUsed: string[],
+  hasAuth: boolean,
+  hasDatabase: boolean
+): string[] {
+  const suggestions: string[] = [];
+
+  // Based on what exists, suggest logical next steps
+  if (currentFiles.some(f => f.includes('index.html'))) {
+    if (!hasAuth && !intentsUsed.includes('auth')) {
+      suggestions.push('🔐 Add user login & signup');
+    }
+    if (!hasDatabase && !intentsUsed.includes('database')) {
+      suggestions.push('🗄️ Connect to a database');
+    }
+    if (!currentFiles.some(f => f.includes('manifest') || f.includes('sw.'))) {
+      suggestions.push('📱 Make it a PWA');
+    }
+    if (!intentsUsed.includes('payments')) {
+      suggestions.push('💳 Add payment processing');
+    }
+  }
+
+  // Design enhancements
+  if (currentFiles.length > 0 && !intentsUsed.includes('animation')) {
+    suggestions.push('✨ Add animations & micro-interactions');
+  }
+
+  // Performance
+  if (currentFiles.length > 5) {
+    suggestions.push('⚡ Optimize performance & loading');
+  }
+
+  return suggestions.slice(0, 4);
+}
+
+/**
+ * Detect if the user is trying to have a multi-step workflow conversation.
+ * Returns structured workflow steps if detected.
+ */
+export function detectWorkflowIntent(message: string): { isWorkflow: boolean; steps: string[] } | null {
+  const workflowPatterns = [
+    /\b(first|then|after that|next|finally|step \d)\b/gi,
+    /\b(and also|plus|additionally|on top of that)\b/gi,
+    /\d+\.\s+/g,
+  ];
+
+  const matchCount = workflowPatterns.reduce((count, p) => {
+    const matches = message.match(p);
+    return count + (matches?.length || 0);
+  }, 0);
+
+  if (matchCount < 2) return null;
+
+  // Extract numbered steps
+  const numbered = [...message.matchAll(/(?:^|\n)\s*(\d+)[.)]\s*(.+)/gm)];
+  if (numbered.length >= 2) {
+    return {
+      isWorkflow: true,
+      steps: numbered.map(m => m[2].trim()),
+    };
+  }
+
+  // Extract "first...then..." style
+  const sequential = message.match(/(?:first|1st),?\s+(.+?)(?:\.|\n|then|,\s*(?:then|next|after))/i);
+  if (sequential) {
+    const parts = message.split(/(?:then|next|after that|finally|and then)/i).map(s => s.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      return { isWorkflow: true, steps: parts };
+    }
+  }
+
+  return null;
+}
