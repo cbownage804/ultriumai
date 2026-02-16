@@ -32670,11 +32670,14 @@ export type Database = {
           current_period_end: string | null
           current_period_start: string | null
           id: string
+          is_trial: boolean | null
           seat_count: number
           status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           tier: string
+          trial_ends_at: string | null
+          trial_started_at: string | null
           updated_at: string
           user_id: string
         }
@@ -32687,11 +32690,14 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          is_trial?: boolean | null
           seat_count?: number
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           tier?: string
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -32704,11 +32710,14 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          is_trial?: boolean | null
           seat_count?: number
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           tier?: string
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
           user_id?: string
         }

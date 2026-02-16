@@ -6,6 +6,7 @@ import { VanguardAccessGate } from './VanguardAccessGate';
 import { RealtimeNotificationCenter } from './RealtimeNotificationCenter';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { LanguageProvider } from '@/contexts/LanguageContext';
+import { VanguardTrialBanner } from './VanguardTrialBanner';
 
 import { CortexFeaturesProvider } from '@/hooks/useCortexFeatures';
 import { VanguardSubscriptionProvider } from '@/contexts/VanguardSubscriptionContext';
@@ -31,6 +32,8 @@ export function VanguardLayout() {
 
           {/* Main Content Area - offset for sidebar */}
           <div className="md:ml-56 transition-all duration-300 relative">
+            {/* Trial Banner */}
+            <VanguardTrialBanner />
             <main className="min-h-screen pt-12 md:pt-0">
               <Outlet />
             </main>
