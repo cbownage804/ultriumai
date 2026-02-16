@@ -13,28 +13,28 @@ export const GPT_MULTIPLIERS = {
 export const MSP_PLANS = {
   msp_starter: {
     name: 'MSP Starter',
-    price: 9900, // $99/mo
+    price: 12900, // $129/mo
     credits: 40000,
     description: 'Monthly AI capacity you can allocate across clients',
     tagline: 'Turn AI into a managed service with full cost control.',
   },
   msp_pro: {
     name: 'MSP Pro',
-    price: 24900, // $249/mo
+    price: 29900, // $299/mo
     credits: 150000,
     description: 'Scale with more capacity and advanced features',
     tagline: 'Turn AI into a managed service with full cost control.',
   },
   msp_elite: {
     name: 'MSP Elite',
-    price: 49900, // $499/mo
+    price: 59900, // $599/mo
     credits: 350000,
     description: 'Enterprise-grade capacity for large client bases',
     tagline: 'Turn AI into a managed service with full cost control.',
   },
   platform_pro: {
     name: 'Platform Pro',
-    price: 99900, // $999/mo
+    price: 119900, // $1,199/mo
     credits: 600000,
     description: 'Maximum capacity for platform operators',
     tagline: 'Turn AI into a managed service with full cost control.',
@@ -45,7 +45,7 @@ export const MSP_PLANS = {
 export const TEAM_PLANS = {
   team_basic: {
     name: 'Team Basic',
-    price: 4900, // $49/mo
+    price: 5900, // $59/mo
     credits: 15000,
     description: 'Predictable monthly AI usage with no surprise costs',
     hardStop: true,
@@ -53,7 +53,7 @@ export const TEAM_PLANS = {
   },
   team_plus: {
     name: 'Team Plus',
-    price: 14900, // $149/mo
+    price: 17900, // $179/mo
     credits: 75000,
     description: 'Extended capacity for growing teams',
     hardStop: true,
@@ -65,7 +65,7 @@ export const TEAM_PLANS = {
 export const WEBSITE_PLANS = {
   website_basic: {
     name: 'Website Basic',
-    price: 2900, // $29/mo
+    price: 3900, // $39/mo
     credits: 3000,
     conversations: 250,
     messagesPerVisitor: 5,
@@ -74,7 +74,7 @@ export const WEBSITE_PLANS = {
   },
   website_pro: {
     name: 'Website Pro',
-    price: 7900, // $79/mo
+    price: 9900, // $99/mo
     credits: 12000,
     conversations: 1000,
     messagesPerVisitor: 5,
@@ -86,7 +86,7 @@ export const WEBSITE_PLANS = {
 // Overage pricing (MSP plans only)
 export const OVERAGE_PRICING = {
   CREDITS_PER_PACK: 10000,
-  PRICE_PER_PACK: 1000, // $10 per 10,000 credits
+  PRICE_PER_PACK: 1500, // $15 per 10,000 credits
 } as const;
 
 // Usage types for ledger
