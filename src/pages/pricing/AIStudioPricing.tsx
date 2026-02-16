@@ -42,9 +42,9 @@ const AIStudioPricing = () => {
       try {
         // Get amount for tracking based on plan
         const planAmounts: Record<string, number> = {
-          msp_starter: 12900, msp_pro: 29900, msp_elite: 59900, platform_pro: 119900,
-          team_basic: 5900, team_plus: 17900,
-          website_basic: 3900, website_pro: 9900,
+          msp_starter: 14900, msp_pro: 47900, msp_elite: 89900, platform_pro: 179900,
+          team_basic: 5900, team_plus: 23900,
+          website_basic: 3900, website_pro: 5900,
         };
         trackCheckoutStart(planId, planAmounts[planId] || 0, 'ai_studio');
         
