@@ -535,14 +535,9 @@ export function AIAppBuilderWorkspace() {
     buildStartTimeRef.current = Date.now();
     buildLog.logBuildStart(input);
 
-    // Agent mode: enqueue task and process queue
+    // Agent mode: enqueue task and let the auto-process useEffect handle execution
     if (mode === 'build') {
-      const task = enqueueTask(input);
-      const extraArgs = [supabaseConfig, stripeConfig, serviceKeys, imageDataUrl, selectedModel, knowledgeCtx];
-      // Use setTimeout to allow state to settle before processing
-      setTimeout(() => {
-        executeAgentTask(task, sendMessage, project.files, extraArgs);
-      }, 50);
+      enqueueTask(input);
     } else {
       sendMessage(fullInput, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl, selectedModel, knowledgeCtx);
     }
