@@ -289,6 +289,68 @@ export const AIStudioDashboardHub = () => {
         </div>
       </motion.div>
 
+      {/* Credit Balance Card */}
+      <motion.div variants={fadeUp}>
+        <Card className="border-border/30 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 flex-shrink-0">
+                  <Zap className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-semibold text-foreground">AI Capacity</span>
+                    <span className="text-xs text-muted-foreground">
+                      {totalRemaining} credit{totalRemaining !== 1 ? 's' : ''} remaining
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 rounded-full bg-muted/30 overflow-hidden max-w-xs">
+                      <div className="flex h-full">
+                        {dailyRemaining > 0 && (
+                          <div
+                            className="h-full bg-blue-500 transition-all duration-500"
+                            style={{ width: `${(dailyRemaining / Math.max(totalRemaining, 1)) * 100}%` }}
+                          />
+                        )}
+                        {monthlyRemaining > 0 && (
+                          <div
+                            className="h-full bg-violet-500 transition-all duration-500"
+                            style={{ width: `${(monthlyRemaining / Math.max(totalRemaining, 1)) * 100}%` }}
+                          />
+                        )}
+                        {userCredits.bonus_credits > 0 && (
+                          <div
+                            className="h-full bg-amber-500 transition-all duration-500"
+                            style={{ width: `${(userCredits.bonus_credits / Math.max(totalRemaining, 1)) * 100}%` }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-shrink-0">
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" />{dailyRemaining} daily</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-violet-500" />{monthlyRemaining} monthly</span>
+                      {userCredits.bonus_credits > 0 && (
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" />{userCredits.bonus_credits} bonus</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => navigate('/pricing/ai-studio')}
+                className="flex-shrink-0"
+              >
+                <ArrowRight className="h-3.5 w-3.5 mr-1.5" />
+                Upgrade Plan
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* ── Two Hero Cards ── */}
       <motion.div variants={fadeUp} className="grid md:grid-cols-2 gap-6">
         {/* App Builder Card */}
