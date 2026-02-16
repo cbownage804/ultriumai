@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,10 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Clock, Crown, CreditCard, Calendar, TrendingUp } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AIStudioUpgradeModal } from '@/components/ai-studio/AIStudioUpgradeModal';
 
 export function SubscriptionStatus() {
   const { subscription, isLoading, openCustomerPortal } = useSubscription();
   const { user } = useAuth();
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -140,7 +143,7 @@ export function SubscriptionStatus() {
         {/* Action buttons */}
         <div className="flex gap-2 pt-2">
           {!subscription.subscribed || isSubscriptionExpired ? (
-            <Button className="flex-1" onClick={() => window.location.href = '/pricing/ai-studio'}>
+            <Button className="flex-1" onClick={() => setUpgradeModalOpen(true)}>
               <TrendingUp className="w-4 h-4 mr-2" />
               Upgrade Plan
             </Button>
@@ -151,13 +154,14 @@ export function SubscriptionStatus() {
             </Button>
           )}
           {isInTrial && (
-            <Button onClick={() => window.location.href = '/pricing/ai-studio'}>
+            <Button onClick={() => setUpgradeModalOpen(true)}>
               <Crown className="w-4 h-4 mr-2" />
               Subscribe Now
             </Button>
           )}
         </div>
       </CardContent>
+      <AIStudioUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
     </Card>
   );
 }
