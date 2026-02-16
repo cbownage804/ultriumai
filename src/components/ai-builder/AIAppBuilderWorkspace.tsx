@@ -907,26 +907,26 @@ export function AIAppBuilderWorkspace() {
   // ─── Left sidebar icon bar items ───
   const sidebarIcons = [
     // ── Data & Auth ──
-    { id: 'database', icon: Database, label: 'Database', show: !!supabaseConfig, active: showDatabase || showDbExplorer, group: 'data' },
-    { id: 'auth', icon: Shield, label: 'Auth', show: !!supabaseConfig, active: showAuth, group: 'data' },
-    { id: 'storage', icon: FolderOpen, label: 'Storage', show: !!supabaseConfig, active: showStorage, group: 'data' },
-    { id: 'edgeFunctions', icon: Zap, label: 'Edge Functions', show: true, active: showEdgeFunctions, group: 'data' },
+    { id: 'database', icon: Database, label: 'Database', tooltip: 'Browse and manage your database tables and records', show: !!supabaseConfig, active: showDatabase || showDbExplorer, group: 'data', color: 'text-emerald-400', activeBg: 'bg-emerald-500/10' },
+    { id: 'auth', icon: Shield, label: 'Auth', tooltip: 'Configure user authentication and login settings', show: !!supabaseConfig, active: showAuth, group: 'data', color: 'text-blue-400', activeBg: 'bg-blue-500/10' },
+    { id: 'storage', icon: FolderOpen, label: 'Storage', tooltip: 'Upload and manage files like images and documents', show: !!supabaseConfig, active: showStorage, group: 'data', color: 'text-amber-400', activeBg: 'bg-amber-500/10' },
+    { id: 'edgeFunctions', icon: Zap, label: 'Edge Functions', tooltip: 'Create serverless backend functions that run on the edge', show: true, active: showEdgeFunctions, group: 'data', color: 'text-yellow-400', activeBg: 'bg-yellow-500/10' },
     // ── AI & Intelligence ──
-    { id: 'knowledge', icon: Brain, label: 'Knowledge', show: true, active: showKnowledge, group: 'ai' },
-    { id: 'codeIntel', icon: Sparkles, label: 'Code Intelligence', show: true, active: showCodeIntel, group: 'ai' },
-    { id: 'componentLib', icon: Layers, label: 'Components', show: true, active: showComponentLib, group: 'ai' },
-    { id: 'gptConnector', icon: Bot, label: 'GPT Chat Widget', show: true, active: showGPTConnector, group: 'ai' },
+    { id: 'knowledge', icon: Brain, label: 'Knowledge', tooltip: 'Add custom instructions and context files to guide the AI', show: true, active: showKnowledge, group: 'ai', color: 'text-violet-400', activeBg: 'bg-violet-500/10' },
+    { id: 'codeIntel', icon: Sparkles, label: 'Code Intelligence', tooltip: 'AI-powered code suggestions and refactoring tips', show: true, active: showCodeIntel, group: 'ai', color: 'text-fuchsia-400', activeBg: 'bg-fuchsia-500/10' },
+    { id: 'componentLib', icon: Layers, label: 'Components', tooltip: 'Browse and insert pre-built UI components', show: true, active: showComponentLib, group: 'ai', color: 'text-indigo-400', activeBg: 'bg-indigo-500/10' },
+    { id: 'gptConnector', icon: Bot, label: 'GPT Chat Widget', tooltip: 'Embed your custom GPT as a chat widget in your app', show: true, active: showGPTConnector, group: 'ai', color: 'text-teal-400', activeBg: 'bg-teal-500/10' },
     // ── Project ──
-    { id: 'testingSuite', icon: Bug, label: 'Testing & Debug', show: true, active: showTestingSuite, group: 'project' },
-    { id: 'envVars', icon: Variable, label: 'Env Variables', show: true, active: showEnvVars, group: 'project' },
-    { id: 'assets', icon: Image, label: 'Assets', show: true, active: showAssets, group: 'project' },
-    { id: 'packages', icon: Package, label: 'Packages', show: true, active: showPackages, group: 'project' },
-    { id: 'history', icon: History, label: 'Version History', show: true, active: showVersionHistory, group: 'project' },
-    { id: 'activity', icon: Clock, label: 'Activity', show: true, active: showActivity, group: 'project' },
-    { id: 'exportGuide', icon: Rocket, label: 'Export & Deploy Guide', show: true, active: showExportGuide, group: 'project' },
-    { id: 'oneClickDeploy' as any, icon: Globe, label: 'One-Click Deploy', show: true, active: showOneClickDeploy, group: 'project' },
-    { id: 'helpCenter' as any, icon: BookOpen, label: 'Help Center', show: true, active: showHelpCenter, group: 'project' },
-    { id: 'setupWizard' as any, icon: Sparkles, label: 'Setup Guide', show: true, active: showSetupWizard, group: 'project' },
+    { id: 'testingSuite', icon: Bug, label: 'Testing & Debug', tooltip: 'Run tests and debug your application', show: true, active: showTestingSuite, group: 'project', color: 'text-red-400', activeBg: 'bg-red-500/10' },
+    { id: 'envVars', icon: Variable, label: 'Env Variables', tooltip: 'Manage secret keys and environment variables', show: true, active: showEnvVars, group: 'project', color: 'text-orange-400', activeBg: 'bg-orange-500/10' },
+    { id: 'assets', icon: Image, label: 'Assets', tooltip: 'Upload and manage images, icons, and media files', show: true, active: showAssets, group: 'project', color: 'text-pink-400', activeBg: 'bg-pink-500/10' },
+    { id: 'packages', icon: Package, label: 'Packages', tooltip: 'Add third-party libraries and CDN packages', show: true, active: showPackages, group: 'project', color: 'text-sky-400', activeBg: 'bg-sky-500/10' },
+    { id: 'history', icon: History, label: 'Version History', tooltip: 'View and restore previous versions of your project', show: true, active: showVersionHistory, group: 'project', color: 'text-slate-400', activeBg: 'bg-slate-500/10' },
+    { id: 'activity', icon: Clock, label: 'Activity', tooltip: 'See a log of all recent changes and actions', show: true, active: showActivity, group: 'project', color: 'text-zinc-400', activeBg: 'bg-zinc-500/10' },
+    { id: 'exportGuide', icon: Rocket, label: 'Export & Deploy', tooltip: 'Step-by-step guide to export or deploy your app', show: true, active: showExportGuide, group: 'project', color: 'text-cyan-400', activeBg: 'bg-cyan-500/10' },
+    { id: 'oneClickDeploy' as any, icon: Globe, label: 'One-Click Deploy', tooltip: 'Deploy to Vercel or Netlify with one click', show: true, active: showOneClickDeploy, group: 'project', color: 'text-emerald-400', activeBg: 'bg-emerald-500/10' },
+    { id: 'helpCenter' as any, icon: BookOpen, label: 'Help Center', tooltip: 'Documentation, tutorials, and getting started guides', show: true, active: showHelpCenter, group: 'project', color: 'text-blue-300', activeBg: 'bg-blue-500/10' },
+    { id: 'setupWizard' as any, icon: Sparkles, label: 'Setup Guide', tooltip: 'Guided setup for Supabase, Stripe, and integrations', show: true, active: showSetupWizard, group: 'project', color: 'text-violet-300', activeBg: 'bg-violet-500/10' },
   ] as const;
 
   return (
@@ -1247,21 +1247,21 @@ export function AIAppBuilderWorkspace() {
                     {/* Explorer section */}
                     {sidebarExpanded && <span className="text-[9px] font-semibold uppercase tracking-wider text-white/20 px-2 pt-1 pb-0.5">Explorer</span>}
                     {[
-                      { icon: FolderOpen, label: 'Files', active: showFileTree, onClick: () => setShowFileTree(!showFileTree) },
-                      { icon: Search, label: 'Search', active: showFileSearch, onClick: () => setShowFileSearch(!showFileSearch) },
+                      { icon: FolderOpen, label: 'Files', tooltip: 'Browse and manage your project files', active: showFileTree, onClick: () => setShowFileTree(!showFileTree), color: 'text-amber-400' },
+                      { icon: Search, label: 'Search', tooltip: 'Search across all files in your project', active: showFileSearch, onClick: () => setShowFileSearch(!showFileSearch), color: 'text-sky-400' },
                     ].map(item => (
                       <Tooltip key={item.label} delayDuration={sidebarExpanded ? 999999 : 300}>
                         <TooltipTrigger asChild>
                           <button onClick={item.onClick} className={cn(
                             "rounded-md flex items-center gap-2 transition-all text-left",
                             sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
-                            item.active ? "text-white/80 bg-white/[0.06]" : "text-white/25 hover:text-white/50 hover:bg-white/[0.03]"
+                            item.active ? `${item.color} bg-white/[0.06]` : `${item.color}/40 hover:${item.color}/70 hover:bg-white/[0.03]`
                           )}>
                             <item.icon className="h-3.5 w-3.5 shrink-0" />
                             {sidebarExpanded && <span className="text-[11px] truncate">{item.label}</span>}
                           </button>
                         </TooltipTrigger>
-                        {!sidebarExpanded && <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>}
+                        {!sidebarExpanded && <TooltipContent side="right" className="text-xs max-w-[200px]">{item.tooltip}</TooltipContent>}
                       </Tooltip>
                     ))}
 
@@ -1294,15 +1294,18 @@ export function AIAppBuilderWorkspace() {
                                       "rounded-md flex items-center gap-2 transition-all text-left",
                                       sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
                                       item.active
-                                        ? "text-cyan-400 bg-cyan-500/10 shadow-[0_0_8px_rgba(6,182,212,0.15)]"
-                                        : "text-white/25 hover:text-white/50 hover:bg-white/[0.03]"
+                                        ? `${item.color} ${item.activeBg} shadow-[0_0_8px_rgba(6,182,212,0.15)]`
+                                        : `${item.color}/40 hover:${item.color}/70 hover:bg-white/[0.03]`
                                     )}
                                   >
                                     <item.icon className="h-3.5 w-3.5 shrink-0" />
                                     {sidebarExpanded && <span className="text-[11px] truncate">{item.label}</span>}
                                   </motion.button>
                                 </TooltipTrigger>
-                                {!sidebarExpanded && <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>}
+                                {!sidebarExpanded && <TooltipContent side="right" className="text-xs max-w-[220px]">
+                                  <p className="font-medium">{item.label}</p>
+                                  <p className="text-white/60 mt-0.5">{item.tooltip}</p>
+                                </TooltipContent>}
                               </Tooltip>
                             ))}
                           </div>
@@ -1315,28 +1318,28 @@ export function AIAppBuilderWorkspace() {
                   <div className={cn("mt-auto flex flex-col gap-0.5 py-1.5 border-t border-white/[0.04]", sidebarExpanded ? "px-1.5" : "items-center px-0")}>
                     {sidebarExpanded && <span className="text-[9px] font-semibold uppercase tracking-wider text-white/20 px-2 pt-0.5 pb-0.5">Tools</span>}
                     {[
-                      { icon: Gauge, label: 'Performance', active: showPerformanceProfiler, onClick: () => setShowPerformanceProfiler(!showPerformanceProfiler), color: showPerformanceProfiler ? 'text-emerald-400 bg-emerald-500/10' : '' },
-                      { icon: History, label: 'Changelog', active: showChangelog, onClick: () => setShowChangelog(!showChangelog) },
-                      { icon: GitBranchIcon, label: 'Timeline', active: showTimeline, onClick: () => setShowTimeline(!showTimeline) },
-                      { icon: Terminal, label: 'Terminal', active: showTerminal, onClick: () => setShowTerminal(!showTerminal) },
-                      { icon: Globe, label: 'Domains', active: false, onClick: () => setShowDomainPanel(true) },
-                      { icon: Activity, label: 'Console', active: showConsole, onClick: () => setShowConsole(!showConsole) },
-                      { icon: Keyboard, label: 'Shortcuts', active: false, onClick: () => setShowShortcuts(true) },
-                      { icon: Bug, label: 'Report Bug', active: false, onClick: () => setShowBugReport(true), hoverColor: 'hover:text-amber-400/70 hover:bg-amber-500/10' },
+                      { icon: Gauge, label: 'Performance', tooltip: 'Analyze bundle size and code complexity', active: showPerformanceProfiler, onClick: () => setShowPerformanceProfiler(!showPerformanceProfiler), color: 'text-emerald-400', activeColor: 'text-emerald-400 bg-emerald-500/10' },
+                      { icon: History, label: 'Changelog', tooltip: 'See a timeline of changes made this session', active: showChangelog, onClick: () => setShowChangelog(!showChangelog), color: 'text-blue-400' },
+                      { icon: GitBranchIcon, label: 'Timeline', tooltip: 'Visual timeline of all project versions', active: showTimeline, onClick: () => setShowTimeline(!showTimeline), color: 'text-violet-400' },
+                      { icon: Terminal, label: 'Terminal', tooltip: 'Open a command-line terminal', active: showTerminal, onClick: () => setShowTerminal(!showTerminal), color: 'text-green-400' },
+                      { icon: Globe, label: 'Domains', tooltip: 'Connect a custom domain to your app', active: false, onClick: () => setShowDomainPanel(true), color: 'text-cyan-400' },
+                      { icon: Activity, label: 'Console', tooltip: 'View runtime logs and error output', active: showConsole, onClick: () => setShowConsole(!showConsole), color: 'text-amber-400' },
+                      { icon: Keyboard, label: 'Shortcuts', tooltip: 'View all keyboard shortcuts', active: false, onClick: () => setShowShortcuts(true), color: 'text-slate-400' },
+                      { icon: Bug, label: 'Report Bug', tooltip: 'Report an issue with the builder', active: false, onClick: () => setShowBugReport(true), color: 'text-red-400', hoverColor: 'hover:text-red-400/70 hover:bg-red-500/10' },
                     ].map(item => (
                       <Tooltip key={item.label} delayDuration={sidebarExpanded ? 999999 : 300}>
                         <TooltipTrigger asChild>
                           <button onClick={item.onClick} className={cn(
                             "rounded-md flex items-center gap-2 transition-all text-left",
                             sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
-                            item.color ? item.color : item.active ? "text-white/80 bg-white/[0.06]" : "text-white/25 hover:text-white/50 hover:bg-white/[0.03]",
+                            item.activeColor ? item.activeColor : item.active ? `${item.color} bg-white/[0.06]` : `${item.color}/40 hover:${item.color}/70 hover:bg-white/[0.03]`,
                             item.hoverColor || ''
                           )}>
                             <item.icon className="h-3.5 w-3.5 shrink-0" />
                             {sidebarExpanded && <span className="text-[11px] truncate">{item.label}</span>}
                           </button>
                         </TooltipTrigger>
-                        {!sidebarExpanded && <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>}
+                        {!sidebarExpanded && <TooltipContent side="right" className="text-xs max-w-[200px]">{item.tooltip}</TooltipContent>}
                       </Tooltip>
                     ))}
                   </div>
