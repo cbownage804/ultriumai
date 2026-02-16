@@ -76,6 +76,7 @@ import { BuilderHelpCenter } from './BuilderHelpCenter';
 import { WelcomeOverlay } from './WelcomeOverlay';
 import { ConfirmDialog } from './ConfirmDialog';
 import { GPTConnectorPanel, type LinkedGPTConfig } from './GPTConnectorPanel';
+import { SetupWizard } from './SetupWizard';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -223,6 +224,7 @@ export function AIAppBuilderWorkspace() {
   const [showPerformanceProfiler, setShowPerformanceProfiler] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
   const [changelogEntries, setChangelogEntries] = useState<ChangelogEntry[]>([]);
+  const [showSetupWizard, setShowSetupWizard] = useState(false);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
@@ -856,7 +858,7 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   // Close other panels when opening one
-  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity' | 'codeIntel' | 'componentLib' | 'testingSuite' | 'exportGuide' | 'helpCenter' | 'gptConnector') => {
+  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity' | 'codeIntel' | 'componentLib' | 'testingSuite' | 'exportGuide' | 'helpCenter' | 'gptConnector' | 'setupWizard') => {
     setShowVersionHistory(panel === 'history' ? !showVersionHistory : false);
     setShowEnvVars(panel === 'envVars' ? !showEnvVars : false);
     setShowAssets(panel === 'assets' ? !showAssets : false);
@@ -873,6 +875,7 @@ export function AIAppBuilderWorkspace() {
     setShowExportGuide(panel === 'exportGuide' ? !showExportGuide : false);
     setShowHelpCenter(panel === 'helpCenter' ? !showHelpCenter : false);
     setShowGPTConnector(panel === 'gptConnector' ? !showGPTConnector : false);
+    setShowSetupWizard(panel === 'setupWizard' ? !showSetupWizard : false);
   };
 
   // ─── Left sidebar icon bar items ───
@@ -896,6 +899,7 @@ export function AIAppBuilderWorkspace() {
     { id: 'activity', icon: Clock, label: 'Activity', show: true, active: showActivity, group: 'project' },
     { id: 'exportGuide', icon: Rocket, label: 'Export & Deploy Guide', show: true, active: showExportGuide, group: 'project' },
     { id: 'helpCenter' as any, icon: BookOpen, label: 'Help Center', show: true, active: showHelpCenter, group: 'project' },
+    { id: 'setupWizard' as any, icon: Sparkles, label: 'Setup Guide', show: true, active: showSetupWizard, group: 'project' },
   ] as const;
 
   return (
@@ -1281,6 +1285,18 @@ export function AIAppBuilderWorkspace() {
                 <ActivityFeed open={showActivity} onClose={() => setShowActivity(false)} entries={activityEntries} />
                 <ExportGuidePanel open={showExportGuide} onClose={() => setShowExportGuide(false)} />
                 <BuilderHelpCenter open={showHelpCenter} onClose={() => setShowHelpCenter(false)} />
+                <SetupWizard
+                  open={showSetupWizard}
+                  onClose={() => setShowSetupWizard(false)}
+                  supabaseConfig={supabaseConfig}
+                  stripeConfig={stripeConfig}
+                  envVars={envVars}
+                  onSupabaseChange={setSupabaseConfig}
+                  onStripeChange={setStripeConfig}
+                  onEnvVarsChange={setEnvVars}
+                  onOpenAuth={() => openPanel('auth')}
+                  onOpenDeploy={() => setShowDeployPipeline(true)}
+                />
                 <AICodeIntelligence open={showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); toast.success('Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => toast.success('Refreshed suggestions')} activeFilePath={project.activeFilePath} />
                 <DatabaseExplorer open={showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
                 <ComponentLibrary open={showComponentLib} onClose={() => setShowComponentLib(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); } }} onApplyTheme={() => {}} />
