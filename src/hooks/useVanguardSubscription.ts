@@ -12,6 +12,10 @@ export interface VanguardSubscriptionData {
   stripeSubscriptionId: string | null;
   adminOverride: boolean;
   loading: boolean;
+  isTrial: boolean;
+  trialEndsAt: string | null;
+  trialDaysRemaining: number | null;
+  trialEnded: boolean;
 }
 
 const DEFAULT_STATE: VanguardSubscriptionData = {
@@ -23,6 +27,10 @@ const DEFAULT_STATE: VanguardSubscriptionData = {
   stripeSubscriptionId: null,
   adminOverride: false,
   loading: true,
+  isTrial: false,
+  trialEndsAt: null,
+  trialDaysRemaining: null,
+  trialEnded: false,
 };
 
 export const useVanguardSubscription = () => {
@@ -53,6 +61,10 @@ export const useVanguardSubscription = () => {
           stripeSubscriptionId: data.stripe_subscription_id ?? null,
           adminOverride: data.admin_override ?? false,
           loading: false,
+          isTrial: data.is_trial ?? false,
+          trialEndsAt: data.trial_ends_at ?? null,
+          trialDaysRemaining: data.trial_days_remaining ?? null,
+          trialEnded: data.trial_ended ?? false,
         });
       } else {
         // Edge function failed — default to free, don't block UI
