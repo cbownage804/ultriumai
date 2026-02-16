@@ -62,6 +62,7 @@ const RealtimeMonitorTab = lazy(() => import('@/components/admin/unified/Realtim
 const PerformanceProfilerTab = lazy(() => import('@/components/admin/unified/PerformanceProfilerTab'));
 const AdminAnalyticsDashboard = lazy(() => import('@/components/admin/unified/AdminAnalyticsDashboard'));
 const UserSessionInsights = lazy(() => import('@/components/admin/unified/UserSessionInsights'));
+const BugReportsTab = lazy(() => import('@/components/admin/unified/BugReportsTab'));
 const TabLoader = () => (
   <div className="flex items-center justify-center py-12">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -80,6 +81,7 @@ const SIDEBAR_GROUPS = [
   ]},
   { label: 'Support', items: [
     { value: 'tickets', icon: Headset, label: 'Tickets' },
+    { value: 'bug-reports', icon: Bug, label: 'Bug Reports' },
     { value: 'accounts', icon: UserCog, label: 'Accounts' },
     { value: 'impersonate', icon: Eye, label: 'Impersonate' },
     { value: 'announcements', icon: MessageSquare, label: 'Announcements' },
@@ -142,6 +144,7 @@ const CONTENT_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<
   'all-users': AllUsersAdminTab,
   'roles': RoleManagementTab,
   'tickets': TicketOversightTab,
+  'bug-reports': BugReportsTab,
   'accounts': CustomerAccountsTab,
   'impersonate': UserImpersonationTab,
   'announcements': AnnouncementsTab,
