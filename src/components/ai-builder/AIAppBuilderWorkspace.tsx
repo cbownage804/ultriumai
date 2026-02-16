@@ -1293,9 +1293,10 @@ export function AIAppBuilderWorkspace() {
                                     className={cn(
                                       "rounded-md flex items-center gap-2 transition-all text-left",
                                       sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
+                                      item.color,
                                       item.active
-                                        ? `${item.color} ${item.activeBg} border border-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]`
-                                        : "text-white/40 hover:text-white/70 hover:bg-white/[0.03]"
+                                        ? `${item.activeBg} border border-white/[0.08]`
+                                        : "hover:bg-white/[0.03]"
                                     )}
                                   >
                                     <item.icon className="h-3.5 w-3.5 shrink-0" />
@@ -1332,7 +1333,8 @@ export function AIAppBuilderWorkspace() {
                           <button onClick={item.onClick} className={cn(
                             "rounded-md flex items-center gap-2 transition-all text-left",
                             sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
-                            item.active ? `${item.color} ${item.activeColor || 'bg-white/[0.06]'} border border-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]` : `text-white/40 hover:text-white/70 hover:bg-white/[0.03]`,
+                            item.color,
+                            item.active ? `${item.activeColor || 'bg-white/[0.06]'} border border-white/[0.08]` : 'hover:bg-white/[0.03]',
                             item.hoverColor || ''
                           )}>
                             <item.icon className="h-3.5 w-3.5 shrink-0" />
