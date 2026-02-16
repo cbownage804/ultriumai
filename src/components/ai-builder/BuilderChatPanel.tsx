@@ -641,53 +641,82 @@ export function BuilderChatPanel({
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-8 relative">
               {/* Ambient glow */}
-              <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[200px] rounded-full bg-gradient-to-br from-cyan-500/[0.04] to-violet-500/[0.03] blur-3xl pointer-events-none" />
+              <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[240px] rounded-full bg-gradient-to-br from-cyan-500/[0.06] to-violet-500/[0.04] blur-[80px] pointer-events-none" />
+              <div className="absolute bottom-1/3 right-1/4 w-[200px] h-[200px] rounded-full bg-violet-500/[0.03] blur-[60px] pointer-events-none" />
               
               {/* Hero empty state */}
-              <div className="text-center space-y-2.5 relative z-10">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-cyan-500/10 to-violet-500/10 border border-white/[0.06] mb-3">
-                  <Sparkles className="h-3 w-3 text-cyan-400/60" />
-                  <span className="text-[10px] text-white/40 font-medium">AI-Powered Builder</span>
-                </div>
-                <h3 className="font-semibold text-white/90 text-lg tracking-tight">What do you want to build?</h3>
-                <p className="text-xs text-white/30 max-w-[280px] mx-auto leading-relaxed">
+              <div className="text-center space-y-3 relative z-10">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/10 to-violet-500/10 border border-white/[0.08] mb-3 backdrop-blur-sm shadow-lg shadow-cyan-500/5"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-cyan-400/70" />
+                  <span className="text-[11px] text-white/50 font-medium tracking-wide">AI-Powered Builder</span>
+                </motion.div>
+                <motion.h3
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                  className="font-bold text-white/90 text-xl tracking-tight"
+                >
+                  What do you want to build?
+                </motion.h3>
+                <motion.p
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.2 }}
+                  className="text-[13px] text-white/30 max-w-[300px] mx-auto leading-relaxed"
+                >
                   Describe your app idea and I'll generate production-ready code with live preview.
-                </p>
+                </motion.p>
               </div>
 
-              <div className="w-full max-w-[320px] space-y-1.5 relative z-10">
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.25 }}
+                className="w-full max-w-[320px] space-y-1.5 relative z-10"
+              >
                 {STARTER_PROMPTS.map((prompt, i) => (
-                  <button
+                  <motion.button
                     key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
                     onClick={() => onSend(`${prompt.label}: ${prompt.desc}`)}
-                    className="w-full text-left px-3 py-2.5 rounded-xl border border-white/[0.06] hover:border-cyan-500/20 bg-white/[0.01] hover:bg-gradient-to-r hover:from-cyan-500/[0.04] hover:to-violet-500/[0.03] text-sm transition-all duration-200 group"
+                    className="w-full text-left px-3.5 py-3 rounded-xl border border-white/[0.06] hover:border-cyan-500/25 bg-white/[0.015] hover:bg-gradient-to-r hover:from-cyan-500/[0.06] hover:to-violet-500/[0.04] text-sm transition-all duration-300 group backdrop-blur-sm hover:shadow-lg hover:shadow-cyan-500/[0.04]"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-base h-8 w-8 rounded-lg bg-white/[0.03] border border-white/[0.04] flex items-center justify-center group-hover:border-white/[0.08] group-hover:bg-white/[0.05] transition-all shrink-0">{prompt.icon}</span>
+                      <span className="text-base h-9 w-9 rounded-lg bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-white/[0.06] flex items-center justify-center group-hover:border-white/[0.12] group-hover:from-white/[0.06] group-hover:to-white/[0.03] transition-all duration-300 shrink-0 shadow-sm">{prompt.icon}</span>
                       <div>
-                        <div className="text-[12px] font-medium text-white/70 group-hover:text-white/95 transition-colors">{prompt.label}</div>
-                        <div className="text-[10px] text-white/25 group-hover:text-white/40 transition-colors">{prompt.desc}</div>
+                        <div className="text-[13px] font-medium text-white/70 group-hover:text-white/95 transition-colors">{prompt.label}</div>
+                        <div className="text-[11px] text-white/25 group-hover:text-white/45 transition-colors">{prompt.desc}</div>
                       </div>
                     </div>
-                  </button>
+                  </motion.button>
                 ))}
 
                 {/* Browse templates */}
-                <button
+                <motion.button
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: 0.6 }}
                   onClick={onOpenTemplates}
-                  className="w-full text-left px-3 py-2.5 rounded-xl border border-dashed border-white/[0.08] hover:border-cyan-500/20 hover:bg-white/[0.02] text-sm transition-all duration-200 group mt-2"
+                  className="w-full text-left px-3.5 py-3 rounded-xl border border-dashed border-white/[0.08] hover:border-cyan-500/25 hover:bg-white/[0.02] text-sm transition-all duration-300 group mt-2 hover:shadow-lg hover:shadow-violet-500/[0.03]"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="h-8 w-8 rounded-lg bg-white/[0.02] border border-white/[0.04] flex items-center justify-center group-hover:border-white/[0.08] transition-all shrink-0">
-                      <LayoutGrid className="h-3.5 w-3.5 text-white/20 group-hover:text-white/50 transition-colors" />
+                    <span className="h-9 w-9 rounded-lg bg-white/[0.02] border border-white/[0.06] flex items-center justify-center group-hover:border-white/[0.10] transition-all duration-300 shrink-0">
+                      <LayoutGrid className="h-4 w-4 text-white/20 group-hover:text-white/55 transition-colors" />
                     </span>
                     <div>
-                      <div className="text-[12px] font-medium text-white/40 group-hover:text-white/65 transition-colors">Browse Templates</div>
-                      <div className="text-[10px] text-white/15 group-hover:text-white/30 transition-colors">Start from a pre-built template</div>
+                      <div className="text-[13px] font-medium text-white/40 group-hover:text-white/70 transition-colors">Browse Templates</div>
+                      <div className="text-[11px] text-white/15 group-hover:text-white/35 transition-colors">Start from a pre-built template</div>
                     </div>
                   </div>
-                </button>
-              </div>
+                </motion.button>
+              </motion.div>
             </div>
           ) : (
             messages.filter((msg) => {
@@ -980,13 +1009,13 @@ export function BuilderChatPanel({
                 onClick={handleSend}
                 disabled={!input.trim()}
                 className={cn(
-                  "h-7 w-7 rounded-lg flex items-center justify-center transition-all shrink-0",
+                  "h-8 w-8 rounded-lg flex items-center justify-center transition-all shrink-0",
                   input.trim()
-                    ? "bg-gradient-to-r from-cyan-500 to-cyan-400 text-black hover:opacity-90"
+                    ? "bg-gradient-to-br from-cyan-500 to-cyan-400 text-black hover:opacity-90 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40"
                     : "bg-white/5 text-white/20"
                 )}
               >
-                <Send className="h-3 w-3" />
+                <Send className="h-3.5 w-3.5" />
               </button>
             )}
           </div>

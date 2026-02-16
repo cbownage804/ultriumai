@@ -1015,24 +1015,24 @@ export function AIAppBuilderWorkspace() {
           </div>
 
           {/* CENTER: View tabs */}
-          <div className="hidden md:flex items-center gap-0.5 bg-white/[0.03] rounded-lg p-0.5 border border-white/[0.06]">
+          <div className="hidden md:flex items-center gap-0.5 bg-white/[0.04] rounded-lg p-0.5 border border-white/[0.07] shadow-inner shadow-black/20">
             <button
               onClick={() => setRightTab('preview')}
-              className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md transition-all font-medium", rightTab === 'preview' ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70")}
+              className={cn("flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-md transition-all font-medium", rightTab === 'preview' ? "bg-gradient-to-r from-white/[0.12] to-white/[0.08] text-white shadow-sm shadow-black/20" : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]")}
             >
               <Eye className="h-3.5 w-3.5" />
               Preview
             </button>
             <button
               onClick={() => setRightTab('code')}
-              className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md transition-all font-medium", rightTab === 'code' ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70")}
+              className={cn("flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-md transition-all font-medium", rightTab === 'code' ? "bg-gradient-to-r from-white/[0.12] to-white/[0.08] text-white shadow-sm shadow-black/20" : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]")}
             >
               <Code className="h-3.5 w-3.5" />
               Code
             </button>
             <button
               onClick={() => setRightTab('split')}
-              className={cn("flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md transition-all font-medium", rightTab === 'split' ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70")}
+              className={cn("flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-md transition-all font-medium", rightTab === 'split' ? "bg-gradient-to-r from-white/[0.12] to-white/[0.08] text-white shadow-sm shadow-black/20" : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]")}
             >
               <Columns className="h-3.5 w-3.5" />
               Split
@@ -1067,11 +1067,11 @@ export function AIAppBuilderWorkspace() {
               onClick={handlePublish}
               disabled={!hasFiles}
               className={cn(
-                "h-8 px-3.5 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-all",
+                "h-8 px-4 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all",
                 hasFiles
                   ? publishedUrl
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30"
-                    : "bg-gradient-to-r from-cyan-500 to-cyan-400 text-black hover:opacity-90"
+                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 shadow-sm shadow-emerald-500/10"
+                    : "bg-gradient-to-r from-cyan-500 to-cyan-400 text-black hover:opacity-90 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40"
                   : "bg-white/5 text-white/20 cursor-not-allowed"
               )}
             >
@@ -1224,7 +1224,7 @@ export function AIAppBuilderWorkspace() {
             <ResizablePanel defaultSize={72} minSize={50}>
               <div className="h-full flex">
                 {/* Lovable-style left icon sidebar */}
-                <div className="w-10 border-r border-white/[0.06] bg-[#09090b] hidden md:flex flex-col items-center py-2 gap-0.5 shrink-0">
+                <div className="w-10 border-r border-white/[0.06] bg-gradient-to-b from-[#09090b] via-[#0a0a12] to-[#09090b] hidden md:flex flex-col items-center py-2 gap-0.5 shrink-0">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button onClick={() => setShowFileTree(!showFileTree)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showFileTree ? "text-white/80 bg-white/[0.06]" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
@@ -1243,14 +1243,14 @@ export function AIAppBuilderWorkspace() {
                     <TooltipContent side="right" className="text-xs">Search (⌘⇧F)</TooltipContent>
                   </Tooltip>
 
-                  <div className="h-px w-4 bg-white/[0.06] my-1.5" />
+                  <div className="h-px w-5 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent my-1.5" />
 
                   {sidebarIcons.filter(i => i.show).map((item, idx, arr) => {
                     const prevGroup = idx > 0 ? arr[idx - 1].group : null;
                     const showDivider = prevGroup && prevGroup !== item.group;
                     return (
                       <div key={item.id}>
-                        {showDivider && <div className="h-px w-4 bg-white/[0.06] my-1.5 mx-auto" />}
+                        {showDivider && <div className="h-px w-5 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent my-1.5 mx-auto" />}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <motion.button
