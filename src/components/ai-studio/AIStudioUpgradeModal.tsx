@@ -1,144 +1,95 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, Building2, Users, Globe, Zap, ArrowRight, Sparkles } from "lucide-react";
-import { useSubscription } from "@/hooks/useSubscription";
+import { Check, Zap, ArrowRight, Sparkles, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { AI_STUDIO_PLANS, CREDIT_TIERS } from "@/types/aiStudioCredits";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 
 interface AIStudioUpgradeModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const mspPlans = [
-  {
-    id: 'msp_starter',
-    name: 'MSP Starter',
-    price: 99,
-    features: ['5 Custom GPTs', 'Client allocation', 'White-label branding', 'Per-client analytics'],
-    popular: false,
-  },
-  {
-    id: 'msp_pro',
-    name: 'MSP Pro',
-    price: 249,
-    features: ['25 Custom GPTs', 'Multi-client mgmt', 'API & webhooks', 'Priority support'],
-    popular: true,
-  },
-  {
-    id: 'msp_elite',
-    name: 'MSP Elite',
-    price: 499,
-    features: ['Unlimited GPTs', 'Unlimited clients', 'Dedicated manager', 'SLA guarantee'],
-    popular: false,
-  },
-];
-
-const teamPlans = [
-  {
-    id: 'team_basic',
-    name: 'Team Basic',
-    price: 49,
-    features: ['3 Custom GPTs', '5 team members', 'Knowledge base upload', 'Usage dashboard'],
-    popular: true,
-  },
-  {
-    id: 'team_plus',
-    name: 'Team Plus',
-    price: 149,
-    features: ['10 Custom GPTs', '20 team members', 'Priority support', 'API access'],
-    popular: false,
-  },
-];
-
-const websitePlans = [
-  {
-    id: 'website_basic',
-    name: 'Website Basic',
-    price: 29,
-    features: ['250 conversations/mo', '5 messages/visitor', 'Lead capture', 'Embed widget'],
-    popular: false,
-  },
-  {
-    id: 'website_pro',
-    name: 'Website Pro',
-    price: 79,
-    features: ['1,000 conversations/mo', '5 messages/visitor', 'Custom branding', 'CRM integrations'],
-    popular: true,
-  },
-];
-
 export function AIStudioUpgradeModal({ open, onOpenChange }: AIStudioUpgradeModalProps) {
-  const [selectedTab, setSelectedTab] = useState("team");
-  const [isLoading, setIsLoading] = useState<string | null>(null);
-  const { createCheckout } = useSubscription();
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [basicTier, setBasicTier] = useState(0);
+  const [proTier, setProTier] = useState(0);
+  const [basicAnnual, setBasicAnnual] = useState(false);
+  const [proAnnual, setProAnnual] = useState(false);
+  const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const handleSelectPlan = async (planId: string) => {
-    setIsLoading(planId);
-    try {
-      await createCheckout(planId, 'monthly');
+  const handleGetStarted = async (planId: string, tierIndex: number, annual: boolean) => {
+    if (!user) {
+      navigate('/auth?redirect=' + encodeURIComponent('/ai-studio'));
       onOpenChange(false);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to start checkout. Please try again.",
-        variant: "destructive",
+      return;
+    }
+
+    if (planId === 'enterprise') {
+      navigate('/contact');
+      onOpenChange(false);
+      return;
+    }
+
+    const tiers = CREDIT_TIERS[planId as keyof typeof CREDIT_TIERS];
+    if (!tiers) return;
+    const tier = tiers[tierIndex];
+
+    setCheckoutLoading(planId);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-studio-checkout', {
+        body: {
+          plan_id: planId,
+          credits: tier.credits,
+          billing_interval: annual ? 'annual' : 'monthly',
+        }
       });
+
+      if (error) throw error;
+      if (data?.upgraded) {
+        toast({ title: "Plan Upgraded!", description: data.message });
+        if (data.redirectUrl) window.location.href = data.redirectUrl;
+        onOpenChange(false);
+        return;
+      }
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        onOpenChange(false);
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      toast({ title: "Error", description: "Failed to start checkout. Please try again.", variant: "destructive" });
     } finally {
-      setIsLoading(null);
+      setCheckoutLoading(null);
     }
   };
 
-  const renderPlanCard = (plan: typeof mspPlans[0], color: string) => (
-    <Card 
-      key={plan.id} 
-      className={`relative transition-all ${plan.popular ? `border-2 border-${color}-500/50 shadow-lg` : 'border-border/50 hover:border-primary/30'}`}
-    >
-      {plan.popular && (
-        <Badge className={`absolute -top-2.5 left-1/2 -translate-x-1/2 bg-${color}-500 text-white text-[10px]`}>
-          Recommended
-        </Badge>
-      )}
-      <CardContent className="p-5">
-        <h3 className="font-bold mb-1">{plan.name}</h3>
-        <div className="mb-3">
-          <span className="text-2xl font-bold">${plan.price}</span>
-          <span className="text-muted-foreground text-sm">/mo</span>
-        </div>
-        <div className="space-y-1.5 mb-4">
-          {plan.features.map((f, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <Check className={`h-3 w-3 text-${color}-500 flex-shrink-0`} />
-              <span className="text-xs text-muted-foreground">{f}</span>
-            </div>
-          ))}
-        </div>
-        <Button 
-          size="sm" 
-          className={`w-full ${plan.popular ? '' : 'bg-muted hover:bg-muted/80 text-foreground'}`}
-          variant={plan.popular ? "default" : "secondary"}
-          onClick={() => handleSelectPlan(plan.id)}
-          disabled={isLoading !== null}
-        >
-          {isLoading === plan.id ? (
-            <span className="flex items-center gap-2">
-              <Zap className="h-3 w-3 animate-pulse" />
-              Processing...
-            </span>
-          ) : (
-            <>
-              Select Plan
-              <ArrowRight className="h-3 w-3 ml-1" />
-            </>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
-  );
+  const formatPrice = (cents: number, annual: boolean) => {
+    if (annual) return `$${Math.round(cents / 12 / 100)}`;
+    return `$${(cents / 100).toLocaleString()}`;
+  };
+
+  const getAnnualSavings = (monthlyPrice: number, annualPrice: number) => {
+    return Math.round((1 - annualPrice / (monthlyPrice * 12)) * 100);
+  };
+
+  const basicSelected = CREDIT_TIERS.basic[basicTier];
+  const proSelected = CREDIT_TIERS.pro[proTier];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -150,56 +101,138 @@ export function AIStudioUpgradeModal({ open, onOpenChange }: AIStudioUpgradeModa
             </div>
             <div>
               <DialogTitle>Upgrade AI Studio</DialogTitle>
-              <DialogDescription>
-                Choose the plan that fits your needs
-              </DialogDescription>
+              <DialogDescription>Choose the AI capacity that fits your needs</DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mt-4">
-          <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="team" className="gap-1.5 text-xs">
-              <Users className="h-3 w-3" />
-              Teams
-            </TabsTrigger>
-            <TabsTrigger value="msp" className="gap-1.5 text-xs">
-              <Building2 className="h-3 w-3" />
-              MSP / IT Firms
-            </TabsTrigger>
-            <TabsTrigger value="website" className="gap-1.5 text-xs">
-              <Globe className="h-3 w-3" />
-              Website
-            </TabsTrigger>
-          </TabsList>
+        <div className="grid md:grid-cols-2 gap-4 mt-4">
+          {/* Basic Plan */}
+          <Card className="border-primary/50 shadow-lg shadow-primary/10 relative">
+            <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px]">
+              Most Popular
+            </Badge>
+            <CardContent className="p-5">
+              <h3 className="font-bold text-lg mb-1">{AI_STUDIO_PLANS.basic.name}</h3>
+              <p className="text-xs text-muted-foreground mb-3">{AI_STUDIO_PLANS.basic.description}</p>
 
-          <TabsContent value="team" className="mt-4">
-            <p className="text-sm text-muted-foreground mb-4">
-              Your company's private AI with predictable usage.
-            </p>
-            <div className="grid md:grid-cols-2 gap-4">
-              {teamPlans.map(plan => renderPlanCard(plan, 'violet'))}
-            </div>
-          </TabsContent>
+              <div className="mb-2">
+                <span className="text-2xl font-bold text-primary">
+                  {formatPrice(basicAnnual ? basicSelected.annualPrice : basicSelected.monthlyPrice, basicAnnual)}
+                </span>
+                <span className="text-muted-foreground text-sm">/mo</span>
+              </div>
 
-          <TabsContent value="msp" className="mt-4">
-            <p className="text-sm text-muted-foreground mb-4">
-              Turn AI into a managed service for your clients.
-            </p>
-            <div className="grid md:grid-cols-3 gap-4">
-              {mspPlans.map(plan => renderPlanCard(plan, 'primary'))}
-            </div>
-          </TabsContent>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Switch checked={basicAnnual} onCheckedChange={setBasicAnnual} className="scale-75" />
+                  <span className="text-xs text-muted-foreground">Annual</span>
+                </div>
+                {basicAnnual && (
+                  <span className="text-xs text-emerald-500 font-medium">
+                    Save {getAnnualSavings(basicSelected.monthlyPrice, basicSelected.annualPrice)}%
+                  </span>
+                )}
+              </div>
 
-          <TabsContent value="website" className="mt-4">
-            <p className="text-sm text-muted-foreground mb-4">
-              Smart website assistant for lead generation.
-            </p>
-            <div className="grid md:grid-cols-2 gap-4">
-              {websitePlans.map(plan => renderPlanCard(plan, 'cyan'))}
-            </div>
-          </TabsContent>
-        </Tabs>
+              <Select value={String(basicTier)} onValueChange={(v) => setBasicTier(Number(v))}>
+                <SelectTrigger className="w-full bg-muted/50 border-border/50 mb-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-[200]">
+                  {CREDIT_TIERS.basic.map((tier, i) => (
+                    <SelectItem key={i} value={String(i)}>
+                      {tier.credits.toLocaleString()} credits / month
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="space-y-1.5 mb-4">
+                {AI_STUDIO_PLANS.basic.features.map((f, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Check className="h-3 w-3 text-primary flex-shrink-0" />
+                    <span className="text-xs text-muted-foreground">{f}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                className="w-full"
+                onClick={() => handleGetStarted('basic', basicTier, basicAnnual)}
+                disabled={checkoutLoading !== null}
+              >
+                {checkoutLoading === 'basic' ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>Get Started <ArrowRight className="h-3 w-3 ml-1" /></>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Pro Plan */}
+          <Card className="border-border/50 hover:border-primary/30 transition-all">
+            <CardContent className="p-5">
+              <h3 className="font-bold text-lg mb-1">{AI_STUDIO_PLANS.pro.name}</h3>
+              <p className="text-xs text-muted-foreground mb-3">{AI_STUDIO_PLANS.pro.description}</p>
+
+              <div className="mb-2">
+                <span className="text-2xl font-bold">
+                  {formatPrice(proAnnual ? proSelected.annualPrice : proSelected.monthlyPrice, proAnnual)}
+                </span>
+                <span className="text-muted-foreground text-sm">/mo</span>
+              </div>
+
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Switch checked={proAnnual} onCheckedChange={setProAnnual} className="scale-75" />
+                  <span className="text-xs text-muted-foreground">Annual</span>
+                </div>
+                {proAnnual && (
+                  <span className="text-xs text-emerald-500 font-medium">
+                    Save {getAnnualSavings(proSelected.monthlyPrice, proSelected.annualPrice)}%
+                  </span>
+                )}
+              </div>
+
+              <Select value={String(proTier)} onValueChange={(v) => setProTier(Number(v))}>
+                <SelectTrigger className="w-full bg-muted/50 border-border/50 mb-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-[200]">
+                  {CREDIT_TIERS.pro.map((tier, i) => (
+                    <SelectItem key={i} value={String(i)}>
+                      {tier.credits.toLocaleString()} credits / month
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="space-y-1.5 mb-4">
+                {AI_STUDIO_PLANS.pro.features.map((f, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Check className="h-3 w-3 text-primary flex-shrink-0" />
+                    <span className="text-xs text-muted-foreground">{f}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => handleGetStarted('pro', proTier, proAnnual)}
+                disabled={checkoutLoading !== null}
+              >
+                {checkoutLoading === 'pro' ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>Get Started <ArrowRight className="h-3 w-3 ml-1" /></>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="mt-4 pt-4 border-t text-center">
           <p className="text-xs text-muted-foreground">
