@@ -231,29 +231,16 @@ export function useAgentMode() {
 
       if (controller.signal.aborted) return;
 
-      // Build file tree summary for the planner
+      // Build file tree summary for context (no separate API call — just enrich the prompt)
       const fileTree = currentFiles.map(f => f.path).join('\n');
-      const planPrompt = `${PLANNING_SYSTEM_PROMPT}\n\nProject files:\n${fileTree}\n\nUser request: "${task.prompt}"`;
 
-      await sendMessage(planPrompt, currentFiles, ...extraArgs);
+      // Mark planning as done immediately (planning is embedded in the build prompt)
+      updateStep(planStepId, { status: 'done', detail: 'Plan ready', completedAt: Date.now() });
 
-      if (controller.signal.aborted) return;
-
-      // Try to extract structured plan from the AI response
-      // The AI might have responded in the messages — we parse what we can
-      let planDetail = 'Plan ready';
-      let filesToModify: string[] = [];
-
-      // We'll check for plan data in a moment, but mark step done
-      updateStep(planStepId, { status: 'done', detail: planDetail, completedAt: Date.now() });
-
-      // ─── Step 2: Execute ───
+      // ─── Step 2: Execute (single sendMessage call — plan + build combined) ───
       updateStep(execStepId, { status: 'running', startedAt: Date.now() });
 
-      // Send actual build prompt with context about the plan
-      const buildPrompt = filesToModify.length > 0
-        ? `${task.prompt}\n\n[Focus on these files: ${filesToModify.join(', ')}]`
-        : task.prompt;
+      const buildPrompt = `${task.prompt}\n\n[Project file tree:\n${fileTree}]`;
 
       await sendMessage(buildPrompt, currentFiles, ...extraArgs);
 
