@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import type { ProjectFile } from './useProjectFileSystem';
 import { useStreamingPreview } from './useStreamingPreview';
 import { useUserCredits } from './useUserCredits';
+import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory } from '@/components/ai-builder/SupabaseConversational';
 
 export interface BuilderMessage {
   id: string;
@@ -228,6 +229,22 @@ export function useAIAppBuilder() {
     // Prepend knowledge context if provided
     if (knowledgeContext) {
       apiMessages.push({ role: 'system', content: knowledgeContext });
+    }
+
+    // Inject conversational Supabase context based on intent detection
+    const detectedIntents = detectSupabaseIntents(input);
+    const hasSupabase = !!supabaseConfig;
+    const supabaseContext = buildSupabaseContext(detectedIntents, hasSupabase);
+    if (supabaseContext) {
+      apiMessages.push({ role: 'system', content: supabaseContext });
+    }
+
+    // Inject conversation memory for multi-turn coherence
+    const memoryContext = buildConversationMemory(
+      messages.map(m => ({ role: m.role, content: m.content }))
+    );
+    if (memoryContext) {
+      apiMessages.push({ role: 'system', content: memoryContext });
     }
 
     // Only include the last N messages to avoid token bloat
