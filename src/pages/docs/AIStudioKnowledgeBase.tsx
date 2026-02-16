@@ -355,12 +355,12 @@ Select the best model for your use case.
 - Most versatile model
 - Strong at following complex instructions
 - Good code generation
-- Higher token cost
+- Uses more AI capacity per interaction
 
 ### GPT-4o-mini (OpenAI)
-**Best for**: High-volume, cost-sensitive applications
+**Best for**: High-volume applications
 - Faster response times
-- Lower cost per token
+- More efficient AI capacity usage
 - Good for simple Q&A
 - Limited complex reasoning
 

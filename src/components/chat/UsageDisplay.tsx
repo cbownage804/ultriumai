@@ -34,36 +34,33 @@ export const UsageDisplay = ({ usage }: UsageDisplayProps) => {
         <div className="grid grid-cols-3 gap-3 text-xs">
           <div className="text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
-              <Zap className="h-3 w-3 text-blue-500" />
+              <Zap className="h-3 w-3 text-primary" />
               <span className="text-muted-foreground">Input</span>
             </div>
             <div className="font-medium">{usage.inputTokens.toLocaleString()}</div>
-            <div className="text-muted-foreground">${usage.inputCost.toFixed(6)}</div>
           </div>
           
           <div className="text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
-              <Clock className="h-3 w-3 text-green-500" />
+              <Clock className="h-3 w-3 text-primary" />
               <span className="text-muted-foreground">Output</span>
             </div>
             <div className="font-medium">{usage.outputTokens.toLocaleString()}</div>
-            <div className="text-muted-foreground">${usage.outputCost.toFixed(6)}</div>
           </div>
           
           <div className="text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
-              <DollarSign className="h-3 w-3 text-purple-500" />
+              <Zap className="h-3 w-3 text-primary" />
               <span className="text-muted-foreground">Total</span>
             </div>
             <div className="font-medium">{usage.totalTokens.toLocaleString()}</div>
-            <div className="text-muted-foreground font-medium">${usage.totalCost.toFixed(6)}</div>
           </div>
         </div>
         
         <div className="pt-2 border-t">
           <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">Cost per 1K tokens:</span>
-            <span className="font-medium">${(usage.totalCost * 1000 / usage.totalTokens).toFixed(4)}</span>
+            <span className="text-muted-foreground">AI capacity used:</span>
+            <span className="font-medium">{usage.totalTokens.toLocaleString()} tokens</span>
           </div>
         </div>
       </CardContent>
