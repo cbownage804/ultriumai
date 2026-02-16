@@ -13,7 +13,7 @@ import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
-import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, generateIntentSuggestions, analyzeConversationComplexity } from './SupabaseConversational';
+import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, generateIntentSuggestions, analyzeConversationComplexity, detectCommunicationStyle } from './SupabaseConversational';
 import { StreamingText, StreamingCursor, ElapsedTimer } from './StreamingText';
 
 interface BuilderChatPanelProps {
@@ -802,6 +802,18 @@ export function BuilderChatPanel({
                           <img src={msg.imageUrl} alt="Reference" className="rounded-lg max-h-32 mb-2 border border-white/10" />
                         )}
                         <p className="whitespace-pre-wrap text-[13px]">{msg.content}</p>
+                        {/* Workflow steps detected in user's message */}
+                        {msg.workflowSteps && msg.workflowSteps.length > 0 && (
+                          <div className="mt-2 space-y-0.5 pt-2 border-t border-white/10">
+                            <span className="text-[9px] text-white/30 uppercase tracking-wider font-medium">Multi-step workflow</span>
+                            {msg.workflowSteps.map((step, si) => (
+                              <div key={si} className="flex items-center gap-1.5 text-[11px] text-white/60">
+                                <span className="h-4 w-4 rounded-full bg-white/10 flex items-center justify-center text-[9px] font-mono shrink-0">{si + 1}</span>
+                                <span className="truncate">{step}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1042,15 +1054,21 @@ export function BuilderChatPanel({
                 const userMsgCount = messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length;
                 if (userMsgCount === 0) return <span className="text-[9px] text-white/15 font-mono">1 credit/msg</span>;
                 const analysis = analyzeConversationComplexity(messages.map(m => ({ role: m.role, content: m.content })));
+                const userTexts = messages.filter(m => m.role === 'user').map(m => m.content);
+                const tone = detectCommunicationStyle(userTexts);
+                const toneEmoji = { technical: '🔧', casual: '💬', concise: '⚡', detailed: '📝' }[tone.style];
                 return (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span className="text-[9px] text-white/15 font-mono cursor-default">
-                        {userMsgCount} msg{userMsgCount > 1 ? 's' : ''} · {analysis.topicCount} topic{analysis.topicCount !== 1 ? 's' : ''}
+                        {toneEmoji} {userMsgCount} msg{userMsgCount > 1 ? 's' : ''} · {analysis.topicCount} topic{analysis.topicCount !== 1 ? 's' : ''}
                       </span>
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="text-xs max-w-[200px]">
-                      {analysis.summary}
+                    <TooltipContent side="top" className="text-xs max-w-[220px]">
+                      <div className="space-y-1">
+                        <div>{analysis.summary}</div>
+                        <div className="text-white/40">Tone: {tone.style}</div>
+                      </div>
                     </TooltipContent>
                   </Tooltip>
                 );

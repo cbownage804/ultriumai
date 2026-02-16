@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import type { ProjectFile } from './useProjectFileSystem';
 import { useStreamingPreview } from './useStreamingPreview';
 import { useUserCredits } from './useUserCredits';
-import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory, buildErrorDiagnosisContext, analyzeConversationComplexity, generateProactiveSuggestions } from '@/components/ai-builder/SupabaseConversational';
+import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory, buildErrorDiagnosisContext, analyzeConversationComplexity, generateProactiveSuggestions, compressConversationHistory, detectCommunicationStyle, extractUserPreferences, buildPreferencesContext, detectWorkflowIntent, buildEnhancedErrorContext } from '@/components/ai-builder/SupabaseConversational';
 
 export interface BuilderMessage {
   id: string;
@@ -21,6 +21,8 @@ export interface BuilderMessage {
   inlineError?: { message: string; source?: string; line?: number };
   /** Whether files are pending user approval */
   pendingApproval?: boolean;
+  /** Workflow steps detected from user's multi-step request */
+  workflowSteps?: string[];
 }
 
 export type BuilderMode = 'build' | 'discuss';
@@ -227,6 +229,7 @@ export function useAIAppBuilder() {
       content: input,
       timestamp: new Date(),
       imageUrl: imageDataUrl || undefined,
+      workflowSteps: detectWorkflowIntent(input)?.steps,
     };
 
     setMessages(prev => [...prev, userMsg]);
@@ -262,11 +265,33 @@ export function useAIAppBuilder() {
       apiMessages.push({ role: 'system', content: memoryContext });
     }
 
-    // Only include the last N messages to avoid token bloat
-    const recentMessages = messages.slice(-MAX_CONTEXT_MESSAGES);
-    for (const m of recentMessages) {
+    // Inject adaptive tone based on user's communication style
+    const userTexts = messages.filter(m => m.role === 'user').map(m => m.content);
+    const { prompt: tonePrompt } = detectCommunicationStyle(userTexts);
+    if (tonePrompt) {
+      apiMessages.push({ role: 'system', content: tonePrompt });
+    }
+
+    // Inject learned user preferences
+    const prefs = extractUserPreferences(messages.map(m => ({ role: m.role, content: m.content })));
+    const prefsContext = buildPreferencesContext(prefs);
+    if (prefsContext) {
+      apiMessages.push({ role: 'system', content: prefsContext });
+    }
+
+    // Detect multi-step workflow and inject step context
+    const workflow = detectWorkflowIntent(input);
+    if (workflow) {
+      apiMessages.push({ role: 'system', content: `[WORKFLOW DETECTED] The user has a multi-step request with ${workflow.steps.length} steps:\n${workflow.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\nExecute ALL steps in sequence in a single response. Show progress for each step.` });
+    }
+
+    // Smart conversation compression — keep recent messages intact, compress older ones
+    const rawHistory = messages.map(m => ({ role: m.role, content: m.content }));
+    const compressedHistory = compressConversationHistory(rawHistory, 8, MAX_CONTEXT_MESSAGES);
+    
+    for (const m of compressedHistory) {
       // Strip file content from old assistant messages to save tokens
-      const content = m.role === 'assistant' && m !== recentMessages[recentMessages.length - 1]
+      const content = m.role === 'assistant'
         ? m.content.replace(/===FILE:[\s\S]*?(?====FILE:|$)/g, '[file content omitted]').slice(0, 500)
         : m.content;
       apiMessages.push({ role: m.role, content });

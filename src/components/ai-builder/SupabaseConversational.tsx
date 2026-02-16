@@ -367,3 +367,223 @@ export function detectWorkflowIntent(message: string): { isWorkflow: boolean; st
 
   return null;
 }
+
+// ═══════════════════════════════════════════
+// CONVERSATION COMPRESSION — Smart summarization for long conversations
+// ═══════════════════════════════════════════
+
+/**
+ * Compress old conversation messages to save tokens while preserving key context.
+ * Keeps recent messages intact, summarizes older ones into a compact digest.
+ */
+export function compressConversationHistory(
+  messages: { role: string; content: string }[],
+  keepRecent = 8,
+  maxOlderMessages = 20,
+): { role: string; content: string }[] {
+  if (messages.length <= keepRecent + 2) return messages;
+
+  const older = messages.slice(0, -keepRecent).slice(-maxOlderMessages);
+  const recent = messages.slice(-keepRecent);
+
+  // Extract key facts from older messages
+  const facts: string[] = [];
+  const decisionsSet = new Set<string>();
+  const errorsFixed: string[] = [];
+  const filesDiscussed = new Set<string>();
+
+  for (const msg of older) {
+    const c = msg.content;
+    // Track file mentions
+    const fileMatches = c.match(/===FILE:\s*(.+?)===/g);
+    if (fileMatches) fileMatches.forEach(m => filesDiscussed.add(m.replace(/===FILE:\s*|===/g, '').trim()));
+
+    // Track decisions
+    if (msg.role === 'assistant') {
+      const recs = c.match(/(?:I (?:recommend|suggest|chose|went with|used|built|created|added)|Choosing|Using|Going with)\s+(.{10,80}?)(?:\.|,|\n)/gi);
+      if (recs) recs.slice(0, 3).forEach(r => decisionsSet.add(r.trim()));
+    }
+
+    // Track errors fixed
+    const errorMatch = c.match(/(?:fix|fixed|resolved|error|bug)\s*:?\s*["']?(.{10,60})["']?/i);
+    if (errorMatch) errorsFixed.push(errorMatch[1].trim());
+
+    // Track user preferences / corrections
+    if (msg.role === 'user') {
+      const correction = c.match(/(?:no|not|don't|actually|instead|I (?:want|meant|prefer|need))\s+(.{10,80}?)(?:\.|$)/i);
+      if (correction) facts.push(`User preference: ${correction[1].trim()}`);
+    }
+  }
+
+  const summary: string[] = ['[CONVERSATION SUMMARY — older messages compressed]'];
+  if (filesDiscussed.size > 0) summary.push(`Files created/modified: ${[...filesDiscussed].join(', ')}`);
+  if (decisionsSet.size > 0) summary.push(`Key decisions: ${[...decisionsSet].slice(0, 5).join('; ')}`);
+  if (errorsFixed.length > 0) summary.push(`Errors fixed: ${errorsFixed.slice(0, 3).join('; ')}`);
+  if (facts.length > 0) summary.push(`User preferences: ${facts.slice(0, 4).join('; ')}`);
+  summary.push(`(${older.length} older messages compressed)`);
+
+  return [
+    { role: 'system', content: summary.join('\n') },
+    ...recent,
+  ];
+}
+
+// ═══════════════════════════════════════════
+// ADAPTIVE TONE — Match user's communication style
+// ═══════════════════════════════════════════
+
+export type CommunicationStyle = 'technical' | 'casual' | 'concise' | 'detailed';
+
+/**
+ * Detect the user's communication style from their messages.
+ * Returns a style hint to inject into the system prompt.
+ */
+export function detectCommunicationStyle(userMessages: string[]): { style: CommunicationStyle; prompt: string } {
+  if (userMessages.length < 2) return { style: 'casual', prompt: '' };
+
+  const avgLength = userMessages.reduce((sum, m) => sum + m.length, 0) / userMessages.length;
+  const allText = userMessages.join(' ').toLowerCase();
+
+  // Technical indicators
+  const techSignals = (allText.match(/\b(api|sql|rls|crud|endpoint|schema|hook|component|state|props|typescript|function|async|middleware)\b/gi) || []).length;
+  // Casual indicators
+  const casualSignals = (allText.match(/\b(lol|haha|cool|nice|awesome|btw|idk|tbh|thx|pls|gonna|wanna|yeah)\b/gi) || []).length;
+
+  let style: CommunicationStyle;
+  if (techSignals > userMessages.length * 1.5) {
+    style = 'technical';
+  } else if (casualSignals > userMessages.length * 0.5) {
+    style = 'casual';
+  } else if (avgLength < 30) {
+    style = 'concise';
+  } else if (avgLength > 150) {
+    style = 'detailed';
+  } else {
+    style = 'casual';
+  }
+
+  const prompts: Record<CommunicationStyle, string> = {
+    technical: '[TONE] The user communicates technically. Use precise terminology, show code snippets inline, reference specific APIs/patterns. Skip high-level explanations they already understand.',
+    casual: '[TONE] The user is casual. Be friendly, use clear language, explain technical choices simply. Emojis are fine. Keep things approachable.',
+    concise: '[TONE] The user is concise. Mirror their brevity. Short explanations, bullet points, less prose. Get to the point fast.',
+    detailed: '[TONE] The user likes detail. Provide thorough explanations, walk through your reasoning, explain trade-offs, and offer alternatives.',
+  };
+
+  return { style, prompt: prompts[style] };
+}
+
+// ═══════════════════════════════════════════
+// CORRECTION LEARNING — Remember user preferences
+// ═══════════════════════════════════════════
+
+export interface UserPreference {
+  category: string;
+  preference: string;
+  timestamp: number;
+}
+
+/**
+ * Extract user corrections and preferences from conversation.
+ * When a user says "no, I meant X" or "I prefer Y", capture it.
+ */
+export function extractUserPreferences(messages: { role: string; content: string }[]): UserPreference[] {
+  const prefs: UserPreference[] = [];
+  const now = Date.now();
+
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    if (msg.role !== 'user') continue;
+    const c = msg.content.toLowerCase();
+
+    // Correction patterns
+    const corrections = [
+      { pattern: /(?:no|not|don't|never)\s+(?:use|do|add|make|include)\s+(.+?)(?:\.|,|$)/i, cat: 'avoid' },
+      { pattern: /(?:always|prefer|I like|I want|use|keep)\s+(.+?)(?:\.|,|$)/i, cat: 'prefer' },
+      { pattern: /(?:instead|rather|switch to|change to|make it)\s+(.+?)(?:\.|,|$)/i, cat: 'style' },
+      { pattern: /(?:too\s+(?:much|many|big|small|dark|light|bright|complex|simple))\s*(.*)$/i, cat: 'feedback' },
+    ];
+
+    for (const { pattern, cat } of corrections) {
+      const match = c.match(pattern);
+      if (match) {
+        prefs.push({ category: cat, preference: match[1].trim().slice(0, 100), timestamp: now });
+      }
+    }
+  }
+
+  return prefs;
+}
+
+/**
+ * Build a preferences context string for the system prompt.
+ */
+export function buildPreferencesContext(prefs: UserPreference[]): string {
+  if (prefs.length === 0) return '';
+  const lines = ['[USER PREFERENCES — learned from conversation]'];
+  const avoids = prefs.filter(p => p.category === 'avoid');
+  const likes = prefs.filter(p => p.category === 'prefer');
+  const style = prefs.filter(p => p.category === 'style');
+  const feedback = prefs.filter(p => p.category === 'feedback');
+
+  if (avoids.length > 0) lines.push(`AVOID: ${avoids.map(p => p.preference).join(', ')}`);
+  if (likes.length > 0) lines.push(`PREFER: ${likes.map(p => p.preference).join(', ')}`);
+  if (style.length > 0) lines.push(`STYLE: ${style.map(p => p.preference).join(', ')}`);
+  if (feedback.length > 0) lines.push(`FEEDBACK: ${feedback.map(p => p.preference).join(', ')}`);
+  lines.push('Apply these preferences to all output without mentioning them explicitly.');
+  return lines.join('\n');
+}
+
+// ═══════════════════════════════════════════
+// ENHANCED ERROR DIAGNOSIS — More patterns
+// ═══════════════════════════════════════════
+
+/**
+ * Enhanced error classification with specific fix strategies.
+ * Goes beyond basic pattern matching to identify error families.
+ */
+export function classifyErrorFamily(errorMessage: string): {
+  family: string;
+  severity: 'low' | 'medium' | 'high';
+  strategy: string;
+  relatedPatterns: string[];
+} {
+  const msg = errorMessage.toLowerCase();
+
+  const families: { test: RegExp; family: string; severity: 'low' | 'medium' | 'high'; strategy: string; related: string[] }[] = [
+    { test: /cannot read propert|is not a function|undefined is not|null is not/i, family: 'null-reference', severity: 'high', strategy: 'Add null checks, optional chaining (?.), and verify data loading states. Check if the variable is initialized before access.', related: ['loading state', 'optional chaining', 'data fetching'] },
+    { test: /module not found|cannot find module|failed to resolve|import.*not found/i, family: 'import-error', severity: 'high', strategy: 'Check import paths, file existence, and case sensitivity. Verify the module is installed or the file exists at the specified path.', related: ['file paths', 'package installation', 'case sensitivity'] },
+    { test: /hydration|text content does not match|server.*client/i, family: 'hydration', severity: 'medium', strategy: 'Ensure server and client render identical HTML. Move dynamic content to useEffect or use suppressHydrationWarning for timestamps/random values.', related: ['SSR', 'useEffect', 'dynamic content'] },
+    { test: /maximum.*exceeded|call stack|too much recursion|infinite loop/i, family: 'infinite-loop', severity: 'high', strategy: 'Check for circular dependencies in useEffect, recursive function calls without base cases, or state updates that trigger re-renders in a loop.', related: ['useEffect deps', 'recursion', 'state loops'] },
+    { test: /cors|cross-origin|blocked by cors|access-control/i, family: 'cors', severity: 'medium', strategy: 'Add proper CORS headers to the API/edge function. Ensure Access-Control-Allow-Origin includes the requesting domain.', related: ['CORS headers', 'edge function', 'API proxy'] },
+    { test: /403|forbidden|permission denied|not authorized|rls|policy/i, family: 'auth-permission', severity: 'high', strategy: 'Check RLS policies, verify auth.uid() matches, ensure the user is authenticated, and review policy conditions for the operation type (SELECT/INSERT/UPDATE/DELETE).', related: ['RLS policies', 'auth state', 'permissions'] },
+    { test: /timeout|network error|failed to fetch|connection refused|econnrefused/i, family: 'network', severity: 'medium', strategy: 'Check API endpoint URLs, network connectivity, and server status. Add retry logic with exponential backoff. Verify the edge function is deployed.', related: ['retry logic', 'endpoint URL', 'deployment'] },
+    { test: /syntax error|unexpected token|unterminated|missing.*after/i, family: 'syntax', severity: 'high', strategy: 'Fix the syntax error at the indicated line. Check for missing brackets, unclosed strings, extra commas, or malformed template literals.', related: ['brackets', 'template literals', 'JSON parsing'] },
+    { test: /type.*is not assignable|argument.*not assignable|expected.*got/i, family: 'type-error', severity: 'low', strategy: 'Fix type mismatches. Check function signatures, prop types, and ensure data shapes match their TypeScript interfaces.', related: ['TypeScript', 'interfaces', 'type casting'] },
+    { test: /422|validation|invalid.*input|constraint|violates|duplicate key/i, family: 'validation', severity: 'medium', strategy: 'Check input validation, required fields, unique constraints, and data format requirements. Verify the request body matches the expected schema.', related: ['validation', 'constraints', 'input format'] },
+  ];
+
+  for (const f of families) {
+    if (f.test.test(msg)) {
+      return { family: f.family, severity: f.severity, strategy: f.strategy, relatedPatterns: f.related };
+    }
+  }
+
+  return { family: 'unknown', severity: 'medium', strategy: 'Analyze the error message, check the source file and line number, and fix the root cause.', relatedPatterns: [] };
+}
+
+/**
+ * Build an enhanced error diagnosis context using the error family classifier.
+ */
+export function buildEnhancedErrorContext(error: { message: string; source?: string; line?: number }): string {
+  const classification = classifyErrorFamily(error.message);
+  const sections: string[] = ['[ENHANCED ERROR DIAGNOSIS]'];
+  sections.push(`Error: ${error.message}`);
+  if (error.source) sections.push(`File: ${error.source}${error.line ? `:${error.line}` : ''}`);
+  sections.push(`Family: ${classification.family} (${classification.severity} severity)`);
+  sections.push(`Strategy: ${classification.strategy}`);
+  if (classification.relatedPatterns.length > 0) {
+    sections.push(`Check: ${classification.relatedPatterns.join(', ')}`);
+  }
+  sections.push('FIX: Diagnose root cause, not symptom. Explain what broke. Output only changed files.');
+  return sections.join('\n');
+}
