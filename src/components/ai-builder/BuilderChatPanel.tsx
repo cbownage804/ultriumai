@@ -941,7 +941,7 @@ export function BuilderChatPanel({
         )}
 
         {/* Lovable-style input area with integrated mode toggle */}
-        <div data-tour="chat-input" className="rounded-xl border border-white/[0.10] bg-white/[0.04] focus-within:border-cyan-500/30 focus-within:bg-white/[0.05] transition-all overflow-hidden shadow-lg shadow-black/20">
+        <div data-tour="chat-input" className={cn("rounded-xl border bg-white/[0.04] transition-all overflow-hidden shadow-lg shadow-black/20", mode === 'build' ? "border-violet-500/25 focus-within:border-violet-500/40" : "border-cyan-500/25 focus-within:border-cyan-500/40")}>
           <div className="flex items-end gap-2 px-3 py-2.5">
             {/* Image upload button */}
             <Tooltip>
