@@ -30,8 +30,8 @@ interface AgentModePanelProps {
 export function AgentModePanel({ run, taskQueue, onCancel, onCancelTask, onRetryTask, onClearCompleted }: AgentModePanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const hasContent = run || taskQueue.length > 0;
-  if (!hasContent) return null;
+  const hasActiveContent = run || taskQueue.some(t => ['queued', 'running'].includes(t.status));
+  if (!hasActiveContent) return null;
 
   const isRunning = run?.status === 'running' || taskQueue.some(t => t.status === 'running');
   const activeTask = taskQueue.find(t => t.status === 'running');
