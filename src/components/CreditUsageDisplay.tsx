@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useUserCredits } from '@/hooks/useUserCredits';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -5,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Zap, TrendingUp, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AIStudioUpgradeModal } from '@/components/ai-studio/AIStudioUpgradeModal';
 
 export function CreditUsageDisplay() {
   const { credits, isLoading, usagePercentage } = useUserCredits();
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -107,7 +110,7 @@ export function CreditUsageDisplay() {
           )}
           <Button 
             variant="outline" 
-            onClick={() => window.location.href = '/pricing/ai-studio'}
+            onClick={() => setUpgradeModalOpen(true)}
             className="flex-1"
           >
             <TrendingUp className="w-4 h-4 mr-2" />
@@ -115,6 +118,7 @@ export function CreditUsageDisplay() {
           </Button>
         </div>
       </CardContent>
+      <AIStudioUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
     </Card>
   );
 }

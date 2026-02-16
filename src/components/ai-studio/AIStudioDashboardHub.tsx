@@ -20,6 +20,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { AIStudioUpgradeModal } from "./AIStudioUpgradeModal";
 
 interface RecentProject {
   id: string;
@@ -75,6 +76,7 @@ export const AIStudioDashboardHub = () => {
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('ai-studio-pinned') || '[]')); } catch { return new Set(); }
   });
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   const togglePin = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -340,7 +342,7 @@ export const AIStudioDashboardHub = () => {
               </div>
               <Button
                 size="sm"
-                onClick={() => navigate('/pricing/ai-studio')}
+                onClick={() => setUpgradeModalOpen(true)}
                 className="flex-shrink-0"
               >
                 <ArrowRight className="h-3.5 w-3.5 mr-1.5" />
@@ -654,6 +656,7 @@ export const AIStudioDashboardHub = () => {
           </Collapsible>
         </motion.div>
       )}
+      <AIStudioUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
     </motion.div>
   );
 };
