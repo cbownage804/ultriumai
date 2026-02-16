@@ -9,6 +9,7 @@ import {
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from '@/hooks/useAIAppBuilder';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
@@ -1020,15 +1021,15 @@ export function BuilderChatPanel({
             )}
           </div>
           {/* Bottom bar: mode toggle + model selector */}
-          <div className="flex items-center justify-between px-3 py-1.5 border-t border-white/[0.04] bg-white/[0.01]">
+          <div className="flex items-center justify-between px-3 py-2 border-t border-white/[0.06] bg-white/[0.02]">
             <div data-tour="mode-toggle" className="flex items-center gap-0.5 bg-white/[0.03] rounded-md p-0.5">
               <button
                 onClick={() => onModeChange('discuss')}
                 className={cn(
                   "flex items-center gap-1 text-[10px] px-2 py-1 rounded transition-all font-medium",
                   mode === 'discuss'
-                    ? "bg-white/10 text-white/80"
-                    : "text-white/30 hover:text-white/50"
+                    ? "bg-white/10 text-white/90"
+                    : "text-white/40 hover:text-white/60"
                 )}
               >
                 <MessageCircle className="h-2.5 w-2.5" />
@@ -1039,8 +1040,8 @@ export function BuilderChatPanel({
                 className={cn(
                   "flex items-center gap-1 text-[10px] px-2 py-1 rounded transition-all font-medium",
                   mode === 'build'
-                    ? "bg-white/10 text-white/80"
-                    : "text-white/30 hover:text-white/50"
+                    ? "bg-white/10 text-white/90"
+                    : "text-white/40 hover:text-white/60"
                 )}
               >
                 <Wand2 className="h-2.5 w-2.5" />
@@ -1051,33 +1052,33 @@ export function BuilderChatPanel({
             <div className="flex items-center gap-2">
               {/* Model selector */}
               {onModelChange && (
-                <div className="relative group/model">
-                  <button className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white/50 transition-colors px-1.5 py-0.5 rounded hover:bg-white/[0.03]">
-                    <span>{AI_MODELS.find(m => m.id === selectedModel)?.icon || '⚡'}</span>
-                    <span>{AI_MODELS.find(m => m.id === selectedModel)?.label || 'Flash'}</span>
-                    <ChevronDown className="h-2.5 w-2.5" />
-                  </button>
-                  <div className="absolute bottom-full right-0 mb-1 hidden group-hover/model:block z-20">
-                    <div className="bg-[#0d0d14] border border-white/[0.08] rounded-lg p-1 shadow-xl min-w-[120px]">
-                      {AI_MODELS.map(m => (
-                        <button
-                          key={m.id}
-                          onClick={() => onModelChange(m.id)}
-                          className={cn(
-                            "w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[10px] transition-colors",
-                            selectedModel === m.id ? "bg-white/10 text-white/80" : "text-white/40 hover:text-white/70 hover:bg-white/[0.03]"
-                          )}
-                        >
-                          <span>{m.icon}</span>
-                          <div className="text-left">
-                            <div className="font-medium">{m.label}</div>
-                            <div className="text-[8px] text-white/20">{m.desc}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="flex items-center gap-1 text-[10px] text-white/50 hover:text-white/70 transition-colors px-1.5 py-1 rounded hover:bg-white/[0.05]">
+                      <span>{AI_MODELS.find(m => m.id === selectedModel)?.icon || '⚡'}</span>
+                      <span>{AI_MODELS.find(m => m.id === selectedModel)?.label || 'Flash'}</span>
+                      <ChevronDown className="h-2.5 w-2.5" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent side="top" align="end" className="w-[160px] p-1 bg-[#0d0d14] border-white/[0.10] shadow-xl z-50">
+                    {AI_MODELS.map(m => (
+                      <button
+                        key={m.id}
+                        onClick={() => onModelChange(m.id)}
+                        className={cn(
+                          "w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[10px] transition-colors",
+                          selectedModel === m.id ? "bg-white/10 text-white/90" : "text-white/50 hover:text-white/80 hover:bg-white/[0.05]"
+                        )}
+                      >
+                        <span>{m.icon}</span>
+                        <div className="text-left">
+                          <div className="font-medium">{m.label}</div>
+                          <div className="text-[8px] text-white/30">{m.desc}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </PopoverContent>
+                </Popover>
               )}
               {(() => {
                 const userMsgCount = messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length;
