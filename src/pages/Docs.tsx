@@ -158,7 +158,7 @@ const DOC_SECTIONS: DocSection[] = [
             id: "ai-studio-plans",
             title: "AI Studio Plans",
             content:
-              "AI Studio uses **AI Capacity Credits** (not tokens) across three market segments:\n\n### MSPs & IT Firms\n| Plan | Credits | Price |\n|------|---------|-------|\n| MSP Starter | 40,000 | $99/mo |\n| MSP Pro | 150,000 | $249/mo |\n| MSP Elite | 350,000 | $499/mo |\n| Platform Pro | 600,000 | $999/mo |\n\n### Internal Business Teams\n| Plan | Credits | Price |\n|------|---------|-------|\n| Team Basic | 15,000 | $49/mo |\n| Team Plus | 75,000 | $149/mo |\n\n### Website / Embedded AI\n| Plan | Credits | Price |\n|------|---------|-------|\n| Website Basic | 3,000 | $29/mo |\n| Website Pro | 12,000 | $79/mo |\n\nCredits do not roll over (except Enterprise). Hard stops at limits.",
+              "AI Studio uses **AI Capacity Credits** (not tokens) across three market segments:\n\n### MSPs & IT Firms\n| Plan | Credits | Price |\n|------|---------|-------|\n| MSP Starter | 40,000 | $129/mo |\n| MSP Pro | 150,000 | $299/mo |\n| MSP Elite | 350,000 | $599/mo |\n| Platform Pro | 600,000 | $1,199/mo |\n\n### Internal Business Teams\n| Plan | Credits | Price |\n|------|---------|-------|\n| Team Basic | 15,000 | $59/mo |\n| Team Plus | 75,000 | $179/mo |\n\n### Website / Embedded AI\n| Plan | Credits | Price |\n|------|---------|-------|\n| Website Basic | 3,000 | $39/mo |\n| Website Pro | 12,000 | $99/mo |\n\nCredits do not roll over (except Enterprise). Hard stops at limits.",
           },
           {
             id: "vanguard-plans",
