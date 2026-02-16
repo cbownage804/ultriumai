@@ -707,12 +707,12 @@ export function BuilderChatPanel({
                   className="w-full text-left px-3.5 py-3 rounded-xl border border-dashed border-white/[0.08] hover:border-cyan-500/25 hover:bg-white/[0.02] text-sm transition-all duration-300 group mt-2 hover:shadow-lg hover:shadow-violet-500/[0.03]"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="h-9 w-9 rounded-lg bg-white/[0.02] border border-white/[0.06] flex items-center justify-center group-hover:border-white/[0.10] transition-all duration-300 shrink-0">
-                      <LayoutGrid className="h-4 w-4 text-white/20 group-hover:text-white/55 transition-colors" />
+                    <span className="h-9 w-9 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center group-hover:border-cyan-500/20 transition-all duration-300 shrink-0">
+                      <LayoutGrid className="h-4 w-4 text-white/50 group-hover:text-cyan-400/80 transition-colors" />
                     </span>
                     <div>
-                      <div className="text-[13px] font-medium text-white/40 group-hover:text-white/70 transition-colors">Browse Templates</div>
-                      <div className="text-[11px] text-white/15 group-hover:text-white/35 transition-colors">Start from a pre-built template</div>
+                      <div className="text-[13px] font-medium text-white/70 group-hover:text-white transition-colors">Browse Templates</div>
+                      <div className="text-[11px] text-white/35 group-hover:text-white/55 transition-colors">Start from a pre-built template</div>
                     </div>
                   </div>
                 </motion.button>
