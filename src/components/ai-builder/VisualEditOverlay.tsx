@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Crosshair, Type, Palette, X, Check, Sparkles, Send, Loader2 } from 'lucide-react';
+import { Crosshair, Type, Palette, X, Check, Sparkles, Send, Loader2, Pipette } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ChromePicker } from 'react-color';
 
 interface VisualEditOverlayProps {
   isActive: boolean;
@@ -197,8 +198,8 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
         </div>
       )}
 
-      {/* Inline editor for text/color */}
-      {selectedElement && editMode && editMode !== 'ai' && (
+      {/* Inline editor for text */}
+      {selectedElement && editMode === 'text' && (
         <div
           className="fixed z-50 flex items-center gap-1 p-1 rounded-lg bg-[#0d0d14] border border-cyan-500/30 shadow-xl shadow-black/50"
           style={{
@@ -219,6 +220,53 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
           <button onClick={() => { setEditMode(null); setSelectedElement(null); }} className="h-6 w-6 rounded flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5">
             <X className="h-3 w-3" />
           </button>
+        </div>
+      )}
+
+      {/* Color picker with wheel and hex input */}
+      {selectedElement && editMode === 'color' && (
+        <div
+          className="fixed z-50 rounded-xl bg-[#0d0d14] border border-cyan-500/30 shadow-2xl shadow-black/60 overflow-hidden"
+          style={{
+            top: Math.min(selectedElement.rect.bottom + 8, window.innerHeight - 340),
+            left: Math.max(8, Math.min(selectedElement.rect.left, window.innerWidth - 260)),
+          }}
+        >
+          {/* Color wheel */}
+          <div className="[&_.chrome-picker]:!bg-[#0d0d14]! [&_.chrome-picker]:!shadow-none!">
+            <ChromePicker
+              color={editValue || '#ffffff'}
+              onChange={(color: any) => setEditValue(color.hex)}
+              onChangeComplete={(color: any) => setEditValue(color.hex)}
+              disableAlpha
+              styles={{
+                default: {
+                  picker: { background: '#0d0d14', boxShadow: 'none', border: 'none', width: '240px' } as any,
+                  body: { padding: '12px' } as any,
+                  saturation: { borderRadius: '8px' } as any,
+                  hue: { borderRadius: '4px' } as any,
+                },
+              }}
+            />
+          </div>
+
+          {/* Hex input + preview */}
+          <div className="px-3 py-2 border-t border-white/[0.06] flex items-center gap-2">
+            <div className="h-6 w-6 rounded-md border border-white/10 shrink-0" style={{ backgroundColor: editValue || '#ffffff' }} />
+            <input
+              value={editValue}
+              onChange={e => setEditValue(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && applyEdit()}
+              placeholder="#000000"
+              className="flex-1 h-6 px-2 text-[11px] bg-white/5 border border-white/[0.08] rounded text-white/80 outline-none focus:border-cyan-500/30 font-mono"
+            />
+            <button onClick={applyEdit} className="h-6 w-6 rounded flex items-center justify-center text-emerald-400 hover:bg-emerald-500/10">
+              <Check className="h-3 w-3" />
+            </button>
+            <button onClick={() => { setEditMode(null); setSelectedElement(null); }} className="h-6 w-6 rounded flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5">
+              <X className="h-3 w-3" />
+            </button>
+          </div>
         </div>
       )}
 

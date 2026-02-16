@@ -39,6 +39,7 @@ interface BuilderChatPanelProps {
   onModelChange?: (model: string) => void;
   onToggleVisualEdit?: () => void;
   isVisualEditActive?: boolean;
+  onOpenEditHistory?: () => void;
 }
 
 
@@ -138,7 +139,7 @@ export function BuilderChatPanel({
   totalTokensUsed, previousFiles, latestFiles,
   onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates, onFixError,
   onForkFromMessage, onRevertToMessage, selectedModel, onModelChange,
-  onToggleVisualEdit, isVisualEditActive,
+  onToggleVisualEdit, isVisualEditActive, onOpenEditHistory,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -206,32 +207,70 @@ export function BuilderChatPanel({
     }
   }, []);
 
+  const [thinkingCollapsed, setThinkingCollapsed] = useState<Record<string, boolean>>({});
+
   const renderThinkingIndicator = () => {
     if (!thinkingPhase) return null;
     const phase = THINKING_LABELS[thinkingPhase];
     if (!phase) return null;
     const Icon = phase.icon;
+    const phases = ['analyzing', 'planning', 'writing'] as const;
+    const currentIdx = phases.indexOf(thinkingPhase as any);
 
     return (
       <div className="flex gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
         <div className="h-6 w-6 rounded-md bg-gradient-to-br from-cyan-500/20 to-violet-500/20 flex items-center justify-center shrink-0 border border-white/[0.06]">
           <Loader2 className="h-3 w-3 text-cyan-400 animate-spin" />
         </div>
-        <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl px-3.5 py-2.5">
-          <div className="flex items-center gap-2">
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl px-3.5 py-2.5 w-full max-w-[280px]">
+          {/* Collapsible thinking header */}
+          <button
+            onClick={() => setThinkingCollapsed(prev => ({ ...prev, __active__: !prev.__active__ }))}
+            className="flex items-center gap-2 w-full"
+          >
+            <ChevronDown className={cn("h-2.5 w-2.5 text-white/20 transition-transform", thinkingCollapsed.__active__ && "-rotate-90")} />
             <Icon className={cn("h-3.5 w-3.5 animate-pulse", phase.color)} />
             <span className={cn("text-xs font-medium", phase.color)}>{phase.label}</span>
             <ElapsedTimer isActive={isGenerating} />
-          </div>
-          <div className="flex gap-1 mt-1.5">
-            {['analyzing', 'planning', 'writing'].map((step, i) => (
+          </button>
+
+          {/* Expanded thinking steps */}
+          {!thinkingCollapsed.__active__ && (
+            <div className="mt-2 space-y-1 pl-1">
+              {phases.map((step, i) => {
+                const stepPhase = THINKING_LABELS[step];
+                const StepIcon = stepPhase.icon;
+                const isDone = i < currentIdx;
+                const isActive = i === currentIdx;
+                return (
+                  <div key={step} className="flex items-center gap-2 py-0.5">
+                    {isDone ? (
+                      <CheckCircle2 className="h-3 w-3 text-emerald-400/60 shrink-0" />
+                    ) : isActive ? (
+                      <Loader2 className="h-3 w-3 animate-spin text-cyan-400 shrink-0" />
+                    ) : (
+                      <div className="h-3 w-3 rounded-full border border-white/10 shrink-0" />
+                    )}
+                    <span className={cn(
+                      "text-[11px]",
+                      isDone ? "text-white/30 line-through" : isActive ? "text-white/70" : "text-white/15"
+                    )}>
+                      {stepPhase.label.replace('...', '')}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Progress bar */}
+          <div className="flex gap-1 mt-2">
+            {phases.map((step, i) => (
               <div
                 key={step}
                 className={cn(
-                  "h-1 rounded-full transition-all duration-500",
-                  step === thinkingPhase ? 'w-8 bg-cyan-400' :
-                  ['analyzing', 'planning', 'writing'].indexOf(step) < ['analyzing', 'planning', 'writing'].indexOf(thinkingPhase)
-                    ? 'w-8 bg-cyan-400/30' : 'w-8 bg-white/5'
+                  "h-1 rounded-full transition-all duration-500 flex-1",
+                  i <= currentIdx ? 'bg-cyan-400' : 'bg-white/5'
                 )}
               />
             ))}
@@ -348,31 +387,45 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Inline file edit cards — Lovable style */}
+        {/* Inline file edit cards — Lovable style with progressive streaming */}
         {(hasFiles || fileNames.length > 0) && (
           <div className="space-y-1">
             {fileNames.map((name, i) => {
               const shortName = name.split('/').pop() || name;
               const isFileDone = !isStreaming || i < fileNames.length - 1 || hasFiles;
               return (
-                <button
+                <motion.button
                   key={i}
+                  initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: isStreaming ? i * 0.08 : 0, type: 'spring', stiffness: 400, damping: 25 }}
                   onClick={() => toggleBuildExpanded(msg.id)}
                   className="w-full flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] transition-colors group"
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     {isFileDone ? (
-                      <div className="h-4 w-4 rounded-full bg-white/[0.04] flex items-center justify-center shrink-0">
-                        <Check className="h-2.5 w-2.5 text-white/40" />
-                      </div>
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+                        className="h-4 w-4 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0"
+                      >
+                        <Check className="h-2.5 w-2.5 text-emerald-400" />
+                      </motion.div>
                     ) : (
                       <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400 shrink-0" />
                     )}
                     <span className="text-white/50">Editing</span>
                     <span className="font-mono text-[11px] text-white/70 bg-white/[0.04] rounded px-1.5 py-0.5 truncate">{shortName}</span>
                   </div>
+                  {isStreaming && !isFileDone && (
+                    <div className="flex gap-0.5 shrink-0">
+                      <div className="h-1 w-1 rounded-full bg-cyan-400 animate-pulse" />
+                      <div className="h-1 w-1 rounded-full bg-cyan-400 animate-pulse [animation-delay:150ms]" />
+                    </div>
+                  )}
                   <ChevronRight className="h-3 w-3 text-white/20 group-hover:text-white/40 shrink-0" />
-                </button>
+                </motion.button>
               );
             })}
           </div>
@@ -504,7 +557,7 @@ export function BuilderChatPanel({
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => setShowHistory(!showHistory)}
+                  onClick={() => onOpenEditHistory ? onOpenEditHistory() : setShowHistory(!showHistory)}
                   className={cn(
                     "h-6 w-6 rounded-md flex items-center justify-center transition-colors",
                     showHistory ? "text-cyan-400 bg-cyan-500/10" : "text-white/25 hover:text-white/50 hover:bg-white/5"
@@ -513,7 +566,7 @@ export function BuilderChatPanel({
                   <History className="h-3 w-3" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Version History</TooltipContent>
+              <TooltipContent side="bottom" className="text-xs">Edit History</TooltipContent>
             </Tooltip>
           )}
           {messages.length > 0 && (
