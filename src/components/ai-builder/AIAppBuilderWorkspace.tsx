@@ -77,6 +77,8 @@ import { WelcomeOverlay } from './WelcomeOverlay';
 import { ConfirmDialog } from './ConfirmDialog';
 import { GPTConnectorPanel, type LinkedGPTConfig } from './GPTConnectorPanel';
 import { SetupWizard } from './SetupWizard';
+import { SchemaDesigner } from './SchemaDesigner';
+import { OneClickDeploy } from './OneClickDeploy';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -84,6 +86,7 @@ import {
   History, Variable, Image, Package, Columns, Keyboard, Rocket,
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen, Gauge,
   Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
+  Table2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -225,6 +228,9 @@ export function AIAppBuilderWorkspace() {
   const [showChangelog, setShowChangelog] = useState(false);
   const [changelogEntries, setChangelogEntries] = useState<ChangelogEntry[]>([]);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
+  const [showSchemaDesigner, setShowSchemaDesigner] = useState(false);
+  const [showOneClickDeploy, setShowOneClickDeploy] = useState(false);
+  const [netlifyToken, setNetlifyToken] = useState<string | null>(null);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
@@ -858,7 +864,7 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   // Close other panels when opening one
-  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity' | 'codeIntel' | 'componentLib' | 'testingSuite' | 'exportGuide' | 'helpCenter' | 'gptConnector' | 'setupWizard') => {
+  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity' | 'codeIntel' | 'componentLib' | 'testingSuite' | 'exportGuide' | 'helpCenter' | 'gptConnector' | 'setupWizard' | 'schemaDesigner' | 'oneClickDeploy') => {
     setShowVersionHistory(panel === 'history' ? !showVersionHistory : false);
     setShowEnvVars(panel === 'envVars' ? !showEnvVars : false);
     setShowAssets(panel === 'assets' ? !showAssets : false);
@@ -876,12 +882,15 @@ export function AIAppBuilderWorkspace() {
     setShowHelpCenter(panel === 'helpCenter' ? !showHelpCenter : false);
     setShowGPTConnector(panel === 'gptConnector' ? !showGPTConnector : false);
     setShowSetupWizard(panel === 'setupWizard' ? !showSetupWizard : false);
+    setShowSchemaDesigner(panel === 'schemaDesigner' ? !showSchemaDesigner : false);
+    setShowOneClickDeploy(panel === 'oneClickDeploy' ? !showOneClickDeploy : false);
   };
 
   // ─── Left sidebar icon bar items ───
   const sidebarIcons = [
     // ── Data & Auth ──
     { id: 'database', icon: Database, label: 'Database', show: !!supabaseConfig, active: showDatabase || showDbExplorer, group: 'data' },
+    { id: 'schemaDesigner' as any, icon: Table2, label: 'Schema Designer', show: true, active: showSchemaDesigner, group: 'data' },
     { id: 'auth', icon: Shield, label: 'Auth', show: !!supabaseConfig, active: showAuth, group: 'data' },
     { id: 'storage', icon: FolderOpen, label: 'Storage', show: !!supabaseConfig, active: showStorage, group: 'data' },
     { id: 'edgeFunctions', icon: Zap, label: 'Edge Functions', show: true, active: showEdgeFunctions, group: 'data' },
@@ -898,6 +907,7 @@ export function AIAppBuilderWorkspace() {
     { id: 'history', icon: History, label: 'Version History', show: true, active: showVersionHistory, group: 'project' },
     { id: 'activity', icon: Clock, label: 'Activity', show: true, active: showActivity, group: 'project' },
     { id: 'exportGuide', icon: Rocket, label: 'Export & Deploy Guide', show: true, active: showExportGuide, group: 'project' },
+    { id: 'oneClickDeploy' as any, icon: Globe, label: 'One-Click Deploy', show: true, active: showOneClickDeploy, group: 'project' },
     { id: 'helpCenter' as any, icon: BookOpen, label: 'Help Center', show: true, active: showHelpCenter, group: 'project' },
     { id: 'setupWizard' as any, icon: Sparkles, label: 'Setup Guide', show: true, active: showSetupWizard, group: 'project' },
   ] as const;
@@ -1284,6 +1294,24 @@ export function AIAppBuilderWorkspace() {
                 </Suspense>
                 <ActivityFeed open={showActivity} onClose={() => setShowActivity(false)} entries={activityEntries} />
                 <ExportGuidePanel open={showExportGuide} onClose={() => setShowExportGuide(false)} />
+                <SchemaDesigner
+                  open={showSchemaDesigner}
+                  onClose={() => setShowSchemaDesigner(false)}
+                  onGenerateSQL={(sql) => { navigator.clipboard.writeText(sql); toast.success('SQL copied — paste into Supabase SQL editor'); }}
+                  onSendToChat={(msg) => { sendMessage(msg, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }}
+                />
+                <OneClickDeploy
+                  open={showOneClickDeploy}
+                  onClose={() => setShowOneClickDeploy(false)}
+                  projectName={project.name}
+                  files={project.files}
+                  vercelToken={vercelConfig?.token}
+                  netlifyToken={netlifyToken || undefined}
+                  onTokenSave={(provider, token) => {
+                    if (provider === 'vercel') setVercelConfig({ token });
+                    else setNetlifyToken(token);
+                  }}
+                />
                 <BuilderHelpCenter open={showHelpCenter} onClose={() => setShowHelpCenter(false)} />
                 <SetupWizard
                   open={showSetupWizard}
