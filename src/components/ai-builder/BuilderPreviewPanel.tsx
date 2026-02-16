@@ -11,6 +11,7 @@ import { VisualEditOverlay } from './VisualEditOverlay';
 import { ResponsivePreviewBar, type ViewportMode, getViewportWidth } from './ResponsivePreviewBar';
 import { SkeletonPreview } from './SkeletonPreview';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
+import previewBg from '@/assets/preview-placeholder-bg.jpg';
 
 interface BuilderPreviewPanelProps {
   html: string | null;
@@ -373,31 +374,30 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
         ) : isGenerating ? (
           <SkeletonPreview />
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-5 relative overflow-hidden">
-            {/* Ambient background glow */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-cyan-500/[0.03] via-violet-500/[0.02] to-transparent blur-3xl" />
-              <div className="absolute bottom-1/4 left-1/3 w-[200px] h-[200px] rounded-full bg-violet-500/[0.02] blur-3xl" />
-            </div>
-            <div className="relative z-10 space-y-5">
-              <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-500/10 via-violet-500/10 to-transparent border border-white/[0.06] flex items-center justify-center mx-auto shadow-lg shadow-cyan-500/[0.05] backdrop-blur-sm">
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-6 relative overflow-hidden">
+            {/* Background image */}
+            <img src={previewBg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/80 to-[#09090b]/40" />
+            
+            <div className="relative z-10 space-y-6">
+              <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-cyan-500/15 via-violet-500/15 to-transparent border border-white/[0.08] flex items-center justify-center mx-auto shadow-2xl shadow-cyan-500/10 backdrop-blur-md">
                 <div className="relative">
-                  <Activity className="h-8 w-8 text-cyan-400/30" />
+                  <Activity className="h-10 w-10 text-cyan-400/50" />
                   <div className="absolute inset-0 animate-ping">
-                    <Activity className="h-8 w-8 text-cyan-400/10" />
+                    <Activity className="h-10 w-10 text-cyan-400/10" />
                   </div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <h3 className="font-semibold text-white/50 text-base tracking-tight">Live Preview</h3>
-                <p className="text-xs text-white/20 max-w-[240px] mx-auto leading-relaxed">
+              <div className="space-y-3">
+                <h3 className="font-bold text-white/70 text-2xl tracking-tight">Live Preview</h3>
+                <p className="text-sm text-white/35 max-w-[300px] mx-auto leading-relaxed">
                   Describe what you want to build and watch your app come to life in real-time
                 </p>
               </div>
-              <div className="flex items-center gap-3 justify-center text-[10px] text-white/15">
-                <span className="flex items-center gap-1"><span className="h-1 w-1 rounded-full bg-cyan-400/40" /> Hot reload</span>
-                <span className="flex items-center gap-1"><span className="h-1 w-1 rounded-full bg-violet-400/40" /> Multi-file</span>
-                <span className="flex items-center gap-1"><span className="h-1 w-1 rounded-full bg-emerald-400/40" /> Responsive</span>
+              <div className="flex items-center gap-4 justify-center text-xs text-white/25">
+                <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-cyan-400/50" /> Hot reload</span>
+                <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-violet-400/50" /> Multi-file</span>
+                <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400/50" /> Responsive</span>
               </div>
             </div>
           </div>
