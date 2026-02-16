@@ -41,6 +41,18 @@ const FILE_DELIMITER = /^===FILE:\s*(.+?)===$/;
 
 const DELETE_DELIMITER = /^===DELETE:\s*(.+?)===$/;
 
+/** Detect conversational prose that should not be part of a code file */
+function isConversationalLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  // Common AI conversational markers that shouldn't be in code
+  const markers = [
+    /^(what'?s next|would you like|let me know|here'?s what|i('?ve| have)|shall i|want me to|feel free|happy to|hope this|this (should|will|creates?|adds?|implements?)|i (created|added|built|implemented|updated|fixed|modified))/i,
+    /^(##\s|🎉|👋|✅|🚀|💡|📝|🔧|Great|Perfect|Done|Now |Next |The app|Your app|I've |Here are)/,
+  ];
+  return markers.some(r => r.test(trimmed));
+}
+
 /** Parse the ===FILE: path=== and ===DELETE: path=== delimited format */
 export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; deletions: string[] } {
   const lines = raw.split('\n');
@@ -48,6 +60,7 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
   const deletions: string[] = [];
   let currentPath: string | null = null;
   let currentLines: string[] = [];
+  let blankLineStreak = 0;
 
   const flush = () => {
     if (currentPath) {
@@ -70,6 +83,7 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
       flush();
       currentPath = null;
       currentLines = [];
+      blankLineStreak = 0;
       deletions.push(deleteMatch[1].trim());
       continue;
     }
@@ -78,8 +92,22 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
       flush();
       currentPath = match[1].trim();
       currentLines = [];
+      blankLineStreak = 0;
     } else if (currentPath !== null) {
-      currentLines.push(line);
+      // Track blank lines — conversational text after 2+ blank lines signals end of file
+      if (!line.trim()) {
+        blankLineStreak++;
+        currentLines.push(line);
+      } else if (blankLineStreak >= 2 && isConversationalLine(line)) {
+        // End of file content — AI started talking
+        flush();
+        currentPath = null;
+        currentLines = [];
+        blankLineStreak = 0;
+      } else {
+        blankLineStreak = 0;
+        currentLines.push(line);
+      }
     }
   }
   flush();
