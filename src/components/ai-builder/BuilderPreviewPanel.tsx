@@ -344,7 +344,7 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
       )}
 
       {/* Preview */}
-      <div className="flex-1 min-h-0 flex items-stretch justify-center p-0">
+      <div className="flex-1 min-h-0 flex items-stretch justify-center">
         {html ? (
           <div
             className={cn(
@@ -374,11 +374,11 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
         ) : isGenerating ? (
           <SkeletonPreview />
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center relative overflow-hidden">
-            {/* Vibrant background image */}
-            <img src={previewBg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-50" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/60 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.08] via-transparent to-violet-500/[0.08]" />
+          <div className="flex flex-col items-center justify-center h-full w-full text-center relative overflow-hidden">
+            {/* Vibrant background image — full bleed */}
+            <img src={previewBg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a12]/90 via-[#0a0a12]/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.06] via-transparent to-violet-500/[0.06]" />
             
             <div className="relative z-10 space-y-8 px-6">
               {/* Glowing icon */}
