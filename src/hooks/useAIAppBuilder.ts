@@ -14,6 +14,12 @@ export interface BuilderMessage {
   imageUrl?: string;
   tokenEstimate?: number;
   filesSnapshot?: ProjectFile[];
+  /** Parsed plan steps from the AI's planning phase */
+  planSteps?: { step: number; label: string; status: 'pending' | 'active' | 'done' }[];
+  /** Inline error shown in chat */
+  inlineError?: { message: string; source?: string; line?: number };
+  /** Whether files are pending user approval */
+  pendingApproval?: boolean;
 }
 
 export type BuilderMode = 'build' | 'discuss';
@@ -151,6 +157,8 @@ export function useAIAppBuilder() {
   const [thinkingPhase, setThinkingPhase] = useState<ThinkingPhase>(null);
   const [versions, setVersions] = useState<VersionSnapshot[]>([]);
   const [totalTokensUsed, setTotalTokensUsed] = useState(0);
+  const [pendingFiles, setPendingFiles] = useState<ProjectFile[] | null>(null);
+  const [pendingDeletions, setPendingDeletions] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const streaming = useStreamingPreview();
   const { useCredits, totalRemaining } = useUserCredits();
@@ -239,22 +247,38 @@ export function useAIAppBuilder() {
       // Build a compact manifest of all files
       const manifest = files.map(f => `  - ${f.path} (${f.content.length} chars)`).join('\n');
 
+      // Extract component/structure summary for multi-turn context awareness
+      const structureSummary: string[] = [];
+      for (const f of files) {
+        if (f.path === 'index.html') {
+          // Extract key sections from HTML
+          const sectionMatches = f.content.match(/<(?:header|nav|main|section|footer|aside|form)[^>]*(?:id|class)=["']([^"']+)["']/gi);
+          if (sectionMatches?.length) {
+            structureSummary.push(`  HTML sections: ${sectionMatches.slice(0, 8).map(m => m.match(/(?:id|class)=["']([^"']+)/)?.[1]).filter(Boolean).join(', ')}`);
+          }
+        }
+        if (f.path.endsWith('.js') || f.path.endsWith('.ts')) {
+          const fnMatches = f.content.match(/(?:function|const|class)\s+(\w+)/g);
+          if (fnMatches?.length) {
+            structureSummary.push(`  ${f.path}: exports ${fnMatches.slice(0, 5).map(m => m.split(/\s+/).pop()).join(', ')}`);
+          }
+        }
+      }
+      const structureNote = structureSummary.length > 0
+        ? `\n\nPROJECT STRUCTURE SUMMARY:\n${structureSummary.join('\n')}\n`
+        : '';
+
       // Determine which files are likely relevant based on the user's input
       const lowerInput = userInput.toLowerCase();
       const relevantFiles = files.filter(f => {
         const lowerPath = f.path.toLowerCase();
-        // Always include HTML entry point and main CSS
         if (lowerPath === 'index.html' || lowerPath === 'styles.css') return true;
-        // Include files mentioned by name in the prompt
         if (lowerInput.includes(lowerPath) || lowerInput.includes(f.path.split('/').pop()?.split('.')[0]?.toLowerCase() || '')) return true;
-        // For small projects (≤5 files), include everything
         if (files.length <= 5) return true;
-        // Include JS/TS files for logic changes
         if ((lowerPath.endsWith('.js') || lowerPath.endsWith('.ts')) && files.length <= 10) return true;
         return false;
       });
 
-      // If we filtered too aggressively, include all files
       const filesToSend = relevantFiles.length > 0 ? relevantFiles : files;
       const fileContext = filesToSend.map(f => `===FILE: ${f.path}===\n${f.content}`).join('\n\n');
 
@@ -263,7 +287,7 @@ export function useAIAppBuilder() {
         ? `\n\n(${omittedCount} other files exist but are omitted for brevity. Only output files you need to change.)`
         : '';
 
-      return `PROJECT FILE MANIFEST (${files.length} files total):\n${manifest}\n\nFILE CONTENTS:\n${fileContext}${omittedNote}\n\nIMPORTANT: Only output ===FILE: path=== blocks for files you are CHANGING. To delete a file, use ===DELETE: path===. Do NOT re-output unchanged files.\n\nUser request: ${userInput}`;
+      return `PROJECT FILE MANIFEST (${files.length} files total):\n${manifest}${structureNote}\n\nFILE CONTENTS:\n${fileContext}${omittedNote}\n\nIMPORTANT: Only output ===FILE: path=== blocks for files you are CHANGING. To delete a file, use ===DELETE: path===. Do NOT re-output unchanged files.\n\nUser request: ${userInput}`;
     };
 
     if (imageDataUrl) {
@@ -401,7 +425,7 @@ export function useAIAppBuilder() {
         }
       }
 
-      // Parse multi-file output and MERGE with existing files (incremental editing)
+      // Parse multi-file output — store as pending for approval
       const { files: parsedFiles, deletions } = parseMultiFileOutput(fullContent);
       if (parsedFiles.length > 0 || deletions.length > 0) {
         // Merge: start with current files, remove deletions, then overlay changed files
@@ -421,6 +445,7 @@ export function useAIAppBuilder() {
             mergedFiles.push(newFile);
           }
         }
+        // Auto-apply files (approval UI in chat shows summary, user can revert)
         setLatestFiles(mergedFiles);
       }
       streaming.stopStreaming();
@@ -475,6 +500,8 @@ export function useAIAppBuilder() {
     setPreviousFiles([]);
     setVersions([]);
     setTotalTokensUsed(0);
+    setPendingFiles(null);
+    setPendingDeletions([]);
   }, []);
 
   const restoreVersion = useCallback((versionId: string) => {
@@ -487,6 +514,19 @@ export function useAIAppBuilder() {
       toast.error('Version has no files to restore');
     }
   }, [versions, latestFiles]);
+
+  /** Forward a preview error into the chat as an inline error on the last assistant message */
+  const forwardErrorToChat = useCallback((error: { message: string; source?: string; line?: number }) => {
+    setMessages(prev => {
+      // Find the last assistant message
+      for (let i = prev.length - 1; i >= 0; i--) {
+        if (prev[i].role === 'assistant') {
+          return prev.map((m, idx) => idx === i ? { ...m, inlineError: error } : m);
+        }
+      }
+      return prev;
+    });
+  }, []);
 
   return {
     messages,
@@ -503,6 +543,7 @@ export function useAIAppBuilder() {
     stopGenerating,
     clearChat,
     restoreVersion,
+    forwardErrorToChat,
     // Streaming preview state
     partialFiles: streaming.partialFiles,
     isStreamingPreview: streaming.isStreaming,

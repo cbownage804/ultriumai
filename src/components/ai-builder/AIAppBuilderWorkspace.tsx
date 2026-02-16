@@ -107,7 +107,7 @@ export function AIAppBuilderWorkspace() {
   const navigate = useNavigate();
   const {
     messages, setMessages, isGenerating, latestFiles, previousFiles, mode, setMode, thinkingPhase, versions,
-    totalTokensUsed, sendMessage, stopGenerating, clearChat, restoreVersion,
+    totalTokensUsed, sendMessage, stopGenerating, clearChat, restoreVersion, forwardErrorToChat,
     partialFiles, isStreamingPreview, completedFileCount,
   } = useAIAppBuilder();
 
@@ -550,11 +550,13 @@ export function AIAppBuilderWorkspace() {
 
   // Auto-fix pipeline: automatically attempt to fix preview errors
   const handleAutoFixError = useCallback((error: import('./ErrorConsole').PreviewError) => {
+    // Forward error to chat for inline display
+    forwardErrorToChat({ message: error.message, source: error.source, line: error.line });
     if (isGenerating || fixAttemptCount >= MAX_FIX_ATTEMPTS) return;
     autoRecovery.attemptRecovery(error, project.files, (prompt) => {
       sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
     });
-  }, [isGenerating, fixAttemptCount, autoRecovery, project.files, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel]);
+  }, [isGenerating, fixAttemptCount, autoRecovery, project.files, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel, forwardErrorToChat]);
 
   const handleForkFromMessage = useCallback(async (messageId: string) => {
     await saveProject(project.name, project.files, branches, activeBranch, messages);
