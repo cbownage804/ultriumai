@@ -55,7 +55,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <img src="${logoUrl}" alt="UltriumAI" />
+                <img src="${logoUrl}" alt="UltriumAI" width="48" height="48" style="height:48px;width:48px;object-fit:contain;" />
                 <div class="brand-name">UltriumAI</div>
                 <div class="brand-tagline">Your gateway to AI Studio, SafeSuite & Vanguard</div>
               </div>
@@ -87,7 +87,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <img src="${logoUrl}" alt="UltriumAI" />
+                <img src="${logoUrl}" alt="UltriumAI" width="48" height="48" style="height:48px;width:48px;object-fit:contain;" />
                 <div class="brand-name">UltriumAI</div>
                 <div class="brand-tagline">Your gateway to AI Studio, SafeSuite & Vanguard</div>
               </div>
@@ -119,7 +119,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <img src="${logoUrl}" alt="UltriumAI" />
+                <img src="${logoUrl}" alt="UltriumAI" width="48" height="48" style="height:48px;width:48px;object-fit:contain;" />
                 <div class="brand-name">UltriumAI</div>
                 <div class="brand-tagline">Your gateway to AI Studio, SafeSuite & Vanguard</div>
               </div>
@@ -150,7 +150,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <img src="${logoUrl}" alt="UltriumAI" />
+                <img src="${logoUrl}" alt="UltriumAI" width="48" height="48" style="height:48px;width:48px;object-fit:contain;" />
                 <div class="brand-name">UltriumAI</div>
                 <div class="brand-tagline">Your gateway to AI Studio, SafeSuite & Vanguard</div>
               </div>
