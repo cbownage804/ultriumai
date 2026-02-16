@@ -1,64 +1,61 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 
 interface StreamingTextProps {
   content: string;
   isStreaming: boolean;
-  speed?: number; // ms per character
+  speed?: number; // ms per character batch
   children: (displayedContent: string) => React.ReactNode;
 }
 
 /**
- * Token-by-token typewriter animation for streaming AI responses.
- * When isStreaming is true, it animates new content character by character.
- * When isStreaming is false, it shows the full content immediately.
+ * Smooth token-by-token typewriter for streaming AI responses.
+ * Catches up to real content naturally — fast when chunks arrive quickly,
+ * smooth when they're slow. Shows full content instantly when streaming ends.
  */
-export function StreamingText({ content, isStreaming, speed = 8, children }: StreamingTextProps) {
+export function StreamingText({ content, isStreaming, speed = 4, children }: StreamingTextProps) {
   const [displayedLength, setDisplayedLength] = useState(0);
-  const prevContentLenRef = useRef(0);
   const rafRef = useRef<number>(0);
   const lastTickRef = useRef(0);
+  const targetLenRef = useRef(0);
+
+  // Track target length
+  targetLenRef.current = content.length;
 
   useEffect(() => {
     if (!isStreaming) {
       // Show full content immediately when not streaming
       setDisplayedLength(content.length);
-      prevContentLenRef.current = content.length;
       return;
     }
 
-    // If new content arrived, animate from where we left off
     const animate = (timestamp: number) => {
       if (timestamp - lastTickRef.current >= speed) {
         lastTickRef.current = timestamp;
         setDisplayedLength(prev => {
-          if (prev >= content.length) return prev;
-          // Advance by 1-3 chars for natural feel
-          const step = Math.min(3, content.length - prev);
-          return prev + step;
+          if (prev >= targetLenRef.current) return prev;
+          // Dynamic step: catch up faster when far behind, slow when close
+          const gap = targetLenRef.current - prev;
+          const step = gap > 100 ? Math.ceil(gap * 0.3) : gap > 20 ? Math.ceil(gap * 0.15) : Math.max(1, Math.ceil(gap * 0.1));
+          return Math.min(prev + step, targetLenRef.current);
         });
       }
-
-      if (displayedLength < content.length) {
-        rafRef.current = requestAnimationFrame(animate);
-      }
+      rafRef.current = requestAnimationFrame(animate);
     };
 
     rafRef.current = requestAnimationFrame(animate);
-
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [content, isStreaming, speed, displayedLength]);
+  }, [isStreaming, speed, content]);
 
-  // When content grows (new tokens arrive), keep animating
+  // When streaming ends, snap to full content
   useEffect(() => {
-    if (isStreaming && content.length > prevContentLenRef.current) {
-      prevContentLenRef.current = content.length;
+    if (!isStreaming) {
+      setDisplayedLength(content.length);
     }
-  }, [content.length, isStreaming]);
+  }, [isStreaming, content.length]);
 
   const displayed = isStreaming ? content.slice(0, displayedLength) : content;
-
   return <>{children(displayed)}</>;
 }
 
@@ -68,6 +65,39 @@ export function StreamingText({ content, isStreaming, speed = 8, children }: Str
 export function StreamingCursor({ visible }: { visible: boolean }) {
   if (!visible) return null;
   return (
-    <span className="inline-block w-[2px] h-[1em] bg-cyan-400 ml-0.5 animate-pulse align-text-bottom" />
+    <span 
+      className="inline-block w-[2px] h-[1.1em] bg-cyan-400 ml-0.5 align-text-bottom rounded-full"
+      style={{ animation: 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}
+    />
+  );
+}
+
+/**
+ * Elapsed time counter for generation
+ */
+export function ElapsedTimer({ isActive }: { isActive: boolean }) {
+  const [elapsed, setElapsed] = useState(0);
+  const startRef = useRef(Date.now());
+
+  useEffect(() => {
+    if (!isActive) {
+      setElapsed(0);
+      return;
+    }
+    startRef.current = Date.now();
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isActive]);
+
+  if (!isActive || elapsed < 2) return null;
+
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+  const display = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+
+  return (
+    <span className="text-[9px] text-white/20 font-mono tabular-nums">{display}</span>
   );
 }
