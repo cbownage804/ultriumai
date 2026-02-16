@@ -59,14 +59,14 @@ interface UserSubscriptionDialogProps {
 // AI Studio tiers organized by segment
 const AI_STUDIO_TIERS = [
   { value: 'free', label: 'Free', group: 'Core' },
-  { value: 'msp_starter', label: 'MSP Starter ($129)', group: 'MSP' },
-  { value: 'msp_pro', label: 'MSP Pro ($299)', group: 'MSP' },
-  { value: 'msp_elite', label: 'MSP Elite ($599)', group: 'MSP' },
-  { value: 'platform_pro', label: 'Platform Pro ($1,199)', group: 'MSP' },
+  { value: 'msp_starter', label: 'MSP Starter ($149)', group: 'MSP' },
+  { value: 'msp_pro', label: 'MSP Pro ($479)', group: 'MSP' },
+  { value: 'msp_elite', label: 'MSP Elite ($899)', group: 'MSP' },
+  { value: 'platform_pro', label: 'Platform Pro ($1,799)', group: 'MSP' },
   { value: 'team_basic', label: 'Team Basic ($59)', group: 'Teams' },
-  { value: 'team_plus', label: 'Team Plus ($179)', group: 'Teams' },
+  { value: 'team_plus', label: 'Team Plus ($239)', group: 'Teams' },
   { value: 'website_basic', label: 'Website Basic ($39)', group: 'Website' },
-  { value: 'website_pro', label: 'Website Pro ($99)', group: 'Website' },
+  { value: 'website_pro', label: 'Website Pro ($59)', group: 'Website' },
   { value: 'enterprise', label: 'Enterprise (Custom)', group: 'Enterprise' },
 ];
 
