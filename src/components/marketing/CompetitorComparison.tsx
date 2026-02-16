@@ -50,7 +50,7 @@ const comparisons: Record<string, {
     usName: "UltriumGPT",
     competitors: ["ChatGPT Team", "Claude for Work"],
     features: [
-      { name: "Starting price", us: "$49/org", competitor1: "$25/user", competitor2: "$25/user" },
+      { name: "Starting price", us: "$59/team", competitor1: "$25/user", competitor2: "$25/user" },
       { name: "Custom AI training", us: true, competitor1: "Limited", competitor2: "Limited" },
       { name: "Knowledge base upload", us: true, competitor1: true, competitor2: true },
       { name: "White-label delivery", us: true, competitor1: false, competitor2: false },
