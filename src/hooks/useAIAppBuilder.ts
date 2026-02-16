@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import type { ProjectFile } from './useProjectFileSystem';
 import { useStreamingPreview } from './useStreamingPreview';
 import { useUserCredits } from './useUserCredits';
-import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory } from '@/components/ai-builder/SupabaseConversational';
+import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory, buildErrorDiagnosisContext, analyzeConversationComplexity, generateProactiveSuggestions } from '@/components/ai-builder/SupabaseConversational';
 
 export interface BuilderMessage {
   id: string;
@@ -94,12 +94,11 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
   return { files, deletions };
 }
 
-/** Generate contextual follow-up suggestions based on the response */
-function generateSuggestions(content: string, mode: BuilderMode): string[] {
+/** Generate contextual follow-up suggestions based on the response and conversation state */
+function generateSuggestions(content: string, mode: BuilderMode, messages: BuilderMessage[] = [], currentFiles: ProjectFile[] = []): string[] {
   if (mode === 'discuss') {
     const suggestions: string[] = [];
     const lowerContent = content.toLowerCase();
-    // Detect if the AI seems to have a solid plan
     const planSignals = ['here\'s what i\'d recommend', 'here\'s the plan', 'i\'d suggest', 'let me outline', 'for v1', 'here are the steps', 'the architecture', 'ready to'];
     const hasPlan = planSignals.some(signal => lowerContent.includes(signal));
     
@@ -108,20 +107,36 @@ function generateSuggestions(content: string, mode: BuilderMode): string[] {
       suggestions.push('Can we refine the design?');
       suggestions.push('What about edge cases?');
     } else {
+      // Analyze conversation to give smarter suggestions
+      const analysis = analyzeConversationComplexity(messages.map(m => ({ role: m.role, content: m.content })));
+      if (analysis.shouldSuggestBuild) {
+        suggestions.push('🚀 Let\'s start building!');
+      }
       suggestions.push('Tell me more about this');
       suggestions.push('What are the alternatives?');
-      suggestions.push('What about mobile layout?');
     }
-    return suggestions;
+    return suggestions.slice(0, 3);
   }
-  // Build mode — suggest refinements
+  
+  // Build mode — context-aware suggestions
   const suggestions: string[] = [];
   if (content.includes('===FILE:')) {
-    suggestions.push('Make it darker & more premium');
-    suggestions.push('Add smooth animations');
-    suggestions.push('Make it fully responsive');
+    // Use proactive suggestions based on what's been built
+    const fileNames = currentFiles.map(f => f.path);
+    const intentsUsed = detectSupabaseIntents(content).map(i => i.type);
+    const hasAuth = content.toLowerCase().includes('auth') || fileNames.some(f => f.includes('auth'));
+    const hasDb = content.toLowerCase().includes('supabase') || content.includes('CREATE TABLE');
+    
+    const proactive = generateProactiveSuggestions(fileNames, intentsUsed, hasAuth, hasDb);
+    if (proactive.length > 0) {
+      suggestions.push(...proactive);
+    } else {
+      suggestions.push('Make it darker & more premium');
+      suggestions.push('Add smooth animations');
+      suggestions.push('Make it fully responsive');
+    }
   }
-  return suggestions.slice(0, 3);
+  return suggestions.slice(0, 4);
 }
 
 /** Auto-detect whether a message is a build or discuss intent */
@@ -476,7 +491,7 @@ export function useAIAppBuilder() {
         await useCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
       }
       // Add suggestions + file count + token estimate + filesSnapshot to the final assistant message
-      const suggestions = generateSuggestions(fullContent, effectiveMode);
+      const suggestions = generateSuggestions(fullContent, effectiveMode, messages, currentFiles);
       const totalChanges = parsedFiles.length + deletions.length;
       const snapshot = totalChanges > 0 ? [...currentFiles, ...parsedFiles.filter(pf => !currentFiles.some(cf => cf.path === pf.path))] : [...currentFiles];
       setMessages(prev =>
