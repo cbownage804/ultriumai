@@ -82,6 +82,7 @@ import { OneClickDeploy } from './OneClickDeploy';
 import { EditHistoryTimeline } from './EditHistoryTimeline';
 import { detectSupabaseIntents, buildSupabaseContext, buildErrorDiagnosisContext, analyzeConversationComplexity } from './SupabaseConversational';
 import { MobilePWAInstall } from './MobilePWAInstall';
+import { BugReportModal } from '@/components/help/BugReportModal';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -235,6 +236,7 @@ export function AIAppBuilderWorkspace() {
   const [showOneClickDeploy, setShowOneClickDeploy] = useState(false);
   const [netlifyToken, setNetlifyToken] = useState<string | null>(null);
   const [showEditHistory, setShowEditHistory] = useState(false);
+  const [showBugReport, setShowBugReport] = useState(false);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
@@ -1329,6 +1331,14 @@ export function AIAppBuilderWorkspace() {
                       </TooltipTrigger>
                       <TooltipContent side="right" className="text-xs">Shortcuts (⌘/)</TooltipContent>
                     </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button onClick={() => setShowBugReport(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-amber-400/70 hover:bg-amber-500/10 transition-all">
+                          <Bug className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs">Report a Bug</TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
 
@@ -1537,6 +1547,7 @@ export function AIAppBuilderWorkspace() {
       <CustomDomainPanel isOpen={showDomainPanel} onClose={() => setShowDomainPanel(false)} previewUrl={previewSlug ? `https://${previewSlug}.apps.ultriumai.com` : hostedPreviewUrl} />
       <DiffReviewPanel isOpen={showDiffReview} onClose={() => setShowDiffReview(false)} changes={pendingDiffChanges} onApprove={() => { pendingDiffChanges.forEach(c => upsertFile(c.path, c.newContent)); setPendingDiffChanges([]); setShowDiffReview(false); toast.success('Changes applied'); }} onReject={() => { setPendingDiffChanges([]); setShowDiffReview(false); toast.info('Changes rejected'); }} onApproveFile={(path) => { const c = pendingDiffChanges.find(ch => ch.path === path); if (c) upsertFile(c.path, c.newContent); }} onRejectFile={() => {}} />
       <QuickFileSwitcher open={showQuickSwitcher} onOpenChange={setShowQuickSwitcher} files={project.files} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} />
+      <BugReportModal open={showBugReport} onOpenChange={setShowBugReport} />
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
