@@ -374,30 +374,43 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
         ) : isGenerating ? (
           <SkeletonPreview />
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-6 relative overflow-hidden">
-            {/* Background image */}
-            <img src={previewBg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/80 to-[#09090b]/40" />
+          <div className="flex flex-col items-center justify-center h-full text-center relative overflow-hidden">
+            {/* Vibrant background image */}
+            <img src={previewBg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-50" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.08] via-transparent to-violet-500/[0.08]" />
             
-            <div className="relative z-10 space-y-6">
-              <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-cyan-500/15 via-violet-500/15 to-transparent border border-white/[0.08] flex items-center justify-center mx-auto shadow-2xl shadow-cyan-500/10 backdrop-blur-md">
-                <div className="relative">
-                  <Activity className="h-10 w-10 text-cyan-400/50" />
-                  <div className="absolute inset-0 animate-ping">
-                    <Activity className="h-10 w-10 text-cyan-400/10" />
-                  </div>
+            <div className="relative z-10 space-y-8 px-6">
+              {/* Glowing icon */}
+              <div className="relative mx-auto w-fit">
+                <div className="absolute -inset-6 bg-cyan-500/20 rounded-full blur-2xl animate-pulse" />
+                <div className="absolute -inset-4 bg-violet-500/15 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1s' }} />
+                <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-500/30 via-violet-500/25 to-fuchsia-500/20 border border-cyan-400/20 flex items-center justify-center mx-auto shadow-2xl shadow-cyan-500/30 backdrop-blur-xl">
+                  <Activity className="h-9 w-9 text-cyan-300" />
                 </div>
               </div>
+              
+              {/* Title */}
               <div className="space-y-3">
-                <h3 className="font-bold text-white/70 text-2xl tracking-tight">Live Preview</h3>
-                <p className="text-sm text-white/35 max-w-[300px] mx-auto leading-relaxed">
+                <h3 className="font-bold text-3xl tracking-tight bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
+                  Live Preview
+                </h3>
+                <p className="text-base text-white/50 max-w-[340px] mx-auto leading-relaxed">
                   Describe what you want to build and watch your app come to life in real-time
                 </p>
               </div>
-              <div className="flex items-center gap-4 justify-center text-xs text-white/25">
-                <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-cyan-400/50" /> Hot reload</span>
-                <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-violet-400/50" /> Multi-file</span>
-                <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400/50" /> Responsive</span>
+              
+              {/* Feature pills */}
+              <div className="flex items-center gap-3 justify-center flex-wrap">
+                <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs font-medium backdrop-blur-sm">
+                  <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400" /> Hot reload
+                </span>
+                <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-medium backdrop-blur-sm">
+                  <span className="h-2 w-2 rounded-full bg-violet-400 shadow-sm shadow-violet-400" /> Multi-file
+                </span>
+                <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-medium backdrop-blur-sm">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400" /> Responsive
+                </span>
               </div>
             </div>
           </div>

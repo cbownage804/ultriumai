@@ -1014,29 +1014,32 @@ export function AIAppBuilderWorkspace() {
             )}
           </div>
 
-          {/* CENTER: View tabs */}
-          <div className="hidden md:flex items-center gap-0.5 bg-white/[0.04] rounded-lg p-0.5 border border-white/[0.07] shadow-inner shadow-black/20">
-            <button
-              onClick={() => setRightTab('preview')}
-              className={cn("flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-md transition-all font-medium", rightTab === 'preview' ? "bg-gradient-to-r from-white/[0.12] to-white/[0.08] text-white shadow-sm shadow-black/20" : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]")}
-            >
-              <Eye className="h-3.5 w-3.5" />
-              Preview
-            </button>
-            <button
-              onClick={() => setRightTab('code')}
-              className={cn("flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-md transition-all font-medium", rightTab === 'code' ? "bg-gradient-to-r from-white/[0.12] to-white/[0.08] text-white shadow-sm shadow-black/20" : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]")}
-            >
-              <Code className="h-3.5 w-3.5" />
-              Code
-            </button>
-            <button
-              onClick={() => setRightTab('split')}
-              className={cn("flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-md transition-all font-medium", rightTab === 'split' ? "bg-gradient-to-r from-white/[0.12] to-white/[0.08] text-white shadow-sm shadow-black/20" : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]")}
-            >
-              <Columns className="h-3.5 w-3.5" />
-              Split
-            </button>
+          {/* CENTER: View tabs + device picker */}
+          <div className="hidden md:flex items-center gap-2">
+            <div className="flex items-center gap-0.5 bg-white/[0.04] rounded-lg p-0.5 border border-white/[0.07] shadow-inner shadow-black/20">
+              <button
+                onClick={() => setRightTab('preview')}
+                className={cn("flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-md transition-all font-medium", rightTab === 'preview' ? "bg-gradient-to-r from-white/[0.12] to-white/[0.08] text-white shadow-sm shadow-black/20" : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]")}
+              >
+                <Eye className="h-3.5 w-3.5" />
+                Preview
+              </button>
+              <button
+                onClick={() => setRightTab('code')}
+                className={cn("flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-md transition-all font-medium", rightTab === 'code' ? "bg-gradient-to-r from-white/[0.12] to-white/[0.08] text-white shadow-sm shadow-black/20" : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]")}
+              >
+                <Code className="h-3.5 w-3.5" />
+                Code
+              </button>
+              <button
+                onClick={() => setRightTab('split')}
+                className={cn("flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-md transition-all font-medium", rightTab === 'split' ? "bg-gradient-to-r from-white/[0.12] to-white/[0.08] text-white shadow-sm shadow-black/20" : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]")}
+              >
+                <Columns className="h-3.5 w-3.5" />
+                Split
+              </button>
+            </div>
+            <ResponsivePreviewBar active={viewportMode} onChange={setViewportMode} />
           </div>
 
           {/* RIGHT: Actions */}
