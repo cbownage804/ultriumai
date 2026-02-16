@@ -90,7 +90,7 @@ import {
   History, Variable, Image, Package, Columns, Keyboard, Rocket,
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen, Gauge,
   Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
-  Table2,
+  Table2, ChevronsLeft, ChevronsRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -237,6 +237,7 @@ export function AIAppBuilderWorkspace() {
   const [netlifyToken, setNetlifyToken] = useState<string | null>(null);
   const [showEditHistory, setShowEditHistory] = useState(false);
   const [showBugReport, setShowBugReport] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
@@ -1226,122 +1227,118 @@ export function AIAppBuilderWorkspace() {
             {/* Right Panel */}
             <ResizablePanel defaultSize={72} minSize={50}>
               <div className="h-full flex">
-                {/* Lovable-style left icon sidebar */}
-                <div className="w-10 border-r border-white/[0.06] bg-gradient-to-b from-[#09090b] via-[#0a0a12] to-[#09090b] hidden md:flex flex-col items-center py-2 gap-0.5 shrink-0">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button onClick={() => setShowFileTree(!showFileTree)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showFileTree ? "text-white/80 bg-white/[0.06]" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
-                        <FolderOpen className="h-3.5 w-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="text-xs">Files</TooltipContent>
-                  </Tooltip>
+                {/* Expandable labeled sidebar */}
+                <div className={cn(
+                  "border-r border-white/[0.06] bg-gradient-to-b from-[#09090b] via-[#0a0a12] to-[#09090b] hidden md:flex flex-col shrink-0 transition-all duration-200 overflow-y-auto overflow-x-hidden",
+                  sidebarExpanded ? "w-44" : "w-10"
+                )}>
+                  {/* Collapse/Expand toggle */}
+                  <div className={cn("flex items-center shrink-0 h-8 border-b border-white/[0.04]", sidebarExpanded ? "justify-end px-2" : "justify-center")}>
+                    <button
+                      onClick={() => setSidebarExpanded(!sidebarExpanded)}
+                      className="h-6 w-6 rounded-md flex items-center justify-center text-white/25 hover:text-white/60 hover:bg-white/5 transition-colors"
+                      title={sidebarExpanded ? 'Collapse' : 'Expand'}
+                    >
+                      {sidebarExpanded ? <ChevronsLeft className="h-3.5 w-3.5" /> : <ChevronsRight className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
 
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button onClick={() => setShowFileSearch(!showFileSearch)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showFileSearch ? "text-white/80 bg-white/[0.06]" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
-                        <Search className="h-3.5 w-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="text-xs">Search (⌘⇧F)</TooltipContent>
-                  </Tooltip>
+                  <div className={cn("flex flex-col gap-0.5 py-1.5", sidebarExpanded ? "px-1.5" : "items-center px-0")}>
+                    {/* Explorer section */}
+                    {sidebarExpanded && <span className="text-[9px] font-semibold uppercase tracking-wider text-white/20 px-2 pt-1 pb-0.5">Explorer</span>}
+                    {[
+                      { icon: FolderOpen, label: 'Files', active: showFileTree, onClick: () => setShowFileTree(!showFileTree) },
+                      { icon: Search, label: 'Search', active: showFileSearch, onClick: () => setShowFileSearch(!showFileSearch) },
+                    ].map(item => (
+                      <Tooltip key={item.label} delayDuration={sidebarExpanded ? 999999 : 300}>
+                        <TooltipTrigger asChild>
+                          <button onClick={item.onClick} className={cn(
+                            "rounded-md flex items-center gap-2 transition-all text-left",
+                            sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
+                            item.active ? "text-white/80 bg-white/[0.06]" : "text-white/25 hover:text-white/50 hover:bg-white/[0.03]"
+                          )}>
+                            <item.icon className="h-3.5 w-3.5 shrink-0" />
+                            {sidebarExpanded && <span className="text-[11px] truncate">{item.label}</span>}
+                          </button>
+                        </TooltipTrigger>
+                        {!sidebarExpanded && <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>}
+                      </Tooltip>
+                    ))}
 
-                  <div className="h-px w-5 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent my-1.5" />
+                    <div className={cn("bg-gradient-to-r from-transparent via-white/[0.06] to-transparent my-1", sidebarExpanded ? "h-px mx-1" : "h-px w-5 mx-auto")} />
 
-                  {sidebarIcons.filter(i => i.show).map((item, idx, arr) => {
-                    const prevGroup = idx > 0 ? arr[idx - 1].group : null;
-                    const showDivider = prevGroup && prevGroup !== item.group;
-                    return (
-                      <div key={item.id}>
-                        {showDivider && <div className="h-px w-5 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent my-1.5 mx-auto" />}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <motion.button
-                              whileHover={{ scale: 1.12 }}
-                              whileTap={{ scale: 0.92 }}
-                              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                              onClick={() => openPanel(item.id as any)}
-                              className={cn(
-                                "h-7 w-7 rounded-md flex items-center justify-center transition-all",
-                                item.active
-                                  ? "text-cyan-400 bg-cyan-500/10 shadow-[0_0_8px_rgba(6,182,212,0.15)]"
-                                  : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]"
-                              )}
-                            >
-                              <item.icon className="h-3.5 w-3.5" />
-                            </motion.button>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>
-                        </Tooltip>
-                      </div>
-                    );
-                  })}
+                    {/* Main sidebar icons grouped */}
+                    {(() => {
+                      const groups = [
+                        { key: 'data', label: 'Data & Auth' },
+                        { key: 'ai', label: 'AI & Tools' },
+                        { key: 'project', label: 'Project' },
+                      ];
+                      const visibleItems = sidebarIcons.filter(i => i.show);
+                      return groups.map(group => {
+                        const groupItems = visibleItems.filter(i => i.group === group.key);
+                        if (groupItems.length === 0) return null;
+                        return (
+                          <div key={group.key}>
+                            {sidebarExpanded && <span className="text-[9px] font-semibold uppercase tracking-wider text-white/20 px-2 pt-2 pb-0.5 block">{group.label}</span>}
+                            {!sidebarExpanded && <div className="h-px w-5 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent my-1 mx-auto" />}
+                            {groupItems.map(item => (
+                              <Tooltip key={item.id} delayDuration={sidebarExpanded ? 999999 : 300}>
+                                <TooltipTrigger asChild>
+                                  <motion.button
+                                    whileHover={{ scale: sidebarExpanded ? 1 : 1.12 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                                    onClick={() => openPanel(item.id as any)}
+                                    className={cn(
+                                      "rounded-md flex items-center gap-2 transition-all text-left",
+                                      sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
+                                      item.active
+                                        ? "text-cyan-400 bg-cyan-500/10 shadow-[0_0_8px_rgba(6,182,212,0.15)]"
+                                        : "text-white/25 hover:text-white/50 hover:bg-white/[0.03]"
+                                    )}
+                                  >
+                                    <item.icon className="h-3.5 w-3.5 shrink-0" />
+                                    {sidebarExpanded && <span className="text-[11px] truncate">{item.label}</span>}
+                                  </motion.button>
+                                </TooltipTrigger>
+                                {!sidebarExpanded && <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>}
+                              </Tooltip>
+                            ))}
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
 
-                  <div className="mt-auto flex flex-col items-center gap-0.5">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button onClick={() => setShowPerformanceProfiler(!showPerformanceProfiler)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showPerformanceProfiler ? "text-emerald-400 bg-emerald-500/10" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
-                          <Gauge className="h-3.5 w-3.5" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="text-xs">Performance</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button onClick={() => setShowChangelog(!showChangelog)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showChangelog ? "text-cyan-400 bg-cyan-500/10" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
-                          <History className="h-3.5 w-3.5" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="text-xs">Changelog</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button onClick={() => setShowTimeline(!showTimeline)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showTimeline ? "text-white/80 bg-white/[0.06]" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
-                          <GitBranchIcon className="h-3.5 w-3.5" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="text-xs">Version Timeline</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button onClick={() => setShowTerminal(!showTerminal)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showTerminal ? "text-white/80 bg-white/[0.06]" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
-                          <Terminal className="h-3.5 w-3.5" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="text-xs">Terminal</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button onClick={() => setShowDomainPanel(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/45 hover:bg-white/[0.03] transition-all">
-                          <Globe className="h-3.5 w-3.5" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="text-xs">Domains</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button onClick={() => setShowConsole(!showConsole)} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all", showConsole ? "text-white/80 bg-white/[0.06]" : "text-white/20 hover:text-white/45 hover:bg-white/[0.03]")}>
-                          <Activity className="h-3.5 w-3.5" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="text-xs">Console</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button onClick={() => setShowShortcuts(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/45 hover:bg-white/[0.03] transition-all">
-                          <Keyboard className="h-3.5 w-3.5" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="text-xs">Shortcuts (⌘/)</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button onClick={() => setShowBugReport(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-amber-400/70 hover:bg-amber-500/10 transition-all">
-                          <Bug className="h-3.5 w-3.5" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="text-xs">Report a Bug</TooltipContent>
-                    </Tooltip>
+                  {/* Bottom tools */}
+                  <div className={cn("mt-auto flex flex-col gap-0.5 py-1.5 border-t border-white/[0.04]", sidebarExpanded ? "px-1.5" : "items-center px-0")}>
+                    {sidebarExpanded && <span className="text-[9px] font-semibold uppercase tracking-wider text-white/20 px-2 pt-0.5 pb-0.5">Tools</span>}
+                    {[
+                      { icon: Gauge, label: 'Performance', active: showPerformanceProfiler, onClick: () => setShowPerformanceProfiler(!showPerformanceProfiler), color: showPerformanceProfiler ? 'text-emerald-400 bg-emerald-500/10' : '' },
+                      { icon: History, label: 'Changelog', active: showChangelog, onClick: () => setShowChangelog(!showChangelog) },
+                      { icon: GitBranchIcon, label: 'Timeline', active: showTimeline, onClick: () => setShowTimeline(!showTimeline) },
+                      { icon: Terminal, label: 'Terminal', active: showTerminal, onClick: () => setShowTerminal(!showTerminal) },
+                      { icon: Globe, label: 'Domains', active: false, onClick: () => setShowDomainPanel(true) },
+                      { icon: Activity, label: 'Console', active: showConsole, onClick: () => setShowConsole(!showConsole) },
+                      { icon: Keyboard, label: 'Shortcuts', active: false, onClick: () => setShowShortcuts(true) },
+                      { icon: Bug, label: 'Report Bug', active: false, onClick: () => setShowBugReport(true), hoverColor: 'hover:text-amber-400/70 hover:bg-amber-500/10' },
+                    ].map(item => (
+                      <Tooltip key={item.label} delayDuration={sidebarExpanded ? 999999 : 300}>
+                        <TooltipTrigger asChild>
+                          <button onClick={item.onClick} className={cn(
+                            "rounded-md flex items-center gap-2 transition-all text-left",
+                            sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
+                            item.color ? item.color : item.active ? "text-white/80 bg-white/[0.06]" : "text-white/25 hover:text-white/50 hover:bg-white/[0.03]",
+                            item.hoverColor || ''
+                          )}>
+                            <item.icon className="h-3.5 w-3.5 shrink-0" />
+                            {sidebarExpanded && <span className="text-[11px] truncate">{item.label}</span>}
+                          </button>
+                        </TooltipTrigger>
+                        {!sidebarExpanded && <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>}
+                      </Tooltip>
+                    ))}
                   </div>
                 </div>
 
