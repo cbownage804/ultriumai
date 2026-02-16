@@ -21,40 +21,69 @@ export const GPT_MULTIPLIERS = {
   WEB_ENABLED: 2.0,
 } as const;
 
+// Credit tier options for dropdowns (price in cents)
+export const CREDIT_TIERS = {
+  basic: [
+    { credits: 100, monthlyPrice: 2500, annualPrice: 20000 },
+    { credits: 250, monthlyPrice: 4900, annualPrice: 39900 },
+    { credits: 500, monthlyPrice: 7900, annualPrice: 63900 },
+  ],
+  pro: [
+    { credits: 500, monthlyPrice: 9900, annualPrice: 79900 },
+    { credits: 1000, monthlyPrice: 14900, annualPrice: 119900 },
+    { credits: 2000, monthlyPrice: 24900, annualPrice: 199900 },
+  ],
+} as const;
+
 // Simplified 4-tier pricing
 export const AI_STUDIO_PLANS = {
   free: {
     name: 'Free',
+    description: 'Discover what AI Studio can do for you',
+    features: ['50 AI credits/mo', 'Unlimited GPTs', 'Public projects', 'Community support'],
+    credits: 50,
     monthlyPrice: 0,
     annualPrice: 0,
-    credits: 50,
-    description: 'Try AI Studio risk-free',
-    features: ['50 AI credits/mo', 'Unlimited GPTs', 'Basic features', 'Community support'],
   },
   basic: {
     name: 'Basic',
-    monthlyPrice: 4900, // $49/mo
-    annualPrice: 39900, // $399/yr (~$33/mo, save 32%)
-    credits: 250,
-    description: 'For individuals and small projects',
-    features: ['250 AI credits/mo', 'Unlimited GPTs', 'Image generation', 'Web search', 'Email support'],
+    description: 'For individuals building with AI in real time.',
+    features: [
+      'All features in Free, plus:',
+      'Image generation',
+      'Web search',
+      'Credit rollovers',
+      'On-demand credit top-ups',
+      'Custom domains',
+      'Email support',
+    ],
   },
   pro: {
     name: 'Pro',
-    monthlyPrice: 14900, // $149/mo
-    annualPrice: 119900, // $1,199/yr (~$100/mo, save 33%)
-    credits: 1000,
-    description: 'For teams and growing businesses',
-    features: ['1,000 AI credits/mo', 'Unlimited GPTs', 'All AI capabilities', 'API access', 'Priority support', 'Custom branding'],
+    description: 'Advanced controls and power features for growing teams.',
     popular: true,
+    features: [
+      'All features in Basic, plus:',
+      'API access',
+      'Priority support',
+      'Custom branding',
+      'Team workspace',
+      'Role-based access',
+      'Analytics dashboard',
+    ],
   },
   enterprise: {
     name: 'Enterprise',
-    monthlyPrice: 74900, // $749/mo
-    annualPrice: 599900, // $5,999/yr (~$500/mo, save 33%)
-    credits: 5000,
-    description: 'For large organizations',
-    features: ['5,000 AI credits/mo', 'Unlimited everything', 'SSO & advanced security', 'Dedicated account manager', 'SLA guarantee', 'Credit rollover'],
+    description: 'Built for large orgs needing flexibility, scale, and governance.',
+    features: [
+      'All features in Pro, plus:',
+      'Dedicated support',
+      'SSO & SCIM',
+      'SLA guarantee',
+      'Credit rollover',
+      'Onboarding services',
+      'Audit logs',
+    ],
   },
 } as const;
 
