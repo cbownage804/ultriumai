@@ -427,10 +427,10 @@ export function AIAppBuilderWorkspace() {
     }
   }, [partialFiles, isStreamingPreview]);
 
-  // Auto-save (cloud)
+  // Auto-save (cloud) — includes chat messages for persistence
   useEffect(() => {
-    if (project.files.length > 0) scheduleAutoSave(project.name, project.files);
-  }, [project.files, project.name, scheduleAutoSave]);
+    if (project.files.length > 0) scheduleAutoSave(project.name, project.files, messages);
+  }, [project.files, project.name, messages, scheduleAutoSave]);
 
   // Auto-save draft to localStorage (survives refresh)
   useEffect(() => {
