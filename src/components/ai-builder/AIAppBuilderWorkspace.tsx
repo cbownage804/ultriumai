@@ -76,6 +76,7 @@ import { useInlineErrorAnnotations } from './useInlineErrorAnnotations';
 import { usePromptMemory } from './usePromptMemory';
 import { useLighthouseAudit } from './useLighthouseAudit';
 import { useBundleSizeTracking } from './useBundleSizeTracking';
+import { useDeleteButtonAutoPatcher } from './useDeleteButtonAutoPatcher';
 import { DeployPipelinePanel } from './DeployPipelinePanel';
 import { ComponentPalette } from './ComponentPalette';
 import { PerformanceProfiler } from './PerformanceProfiler';
@@ -163,6 +164,7 @@ export function AIAppBuilderWorkspace() {
   const promptMemory = usePromptMemory();
   const lighthouseAudit = useLighthouseAudit(buildLog.addEntry);
   const bundleSize = useBundleSizeTracking(buildLog.addEntry);
+  const deleteAutoPatcher = useDeleteButtonAutoPatcher();
   const { saveDraft, saveDraftImmediate, loadDraft, clearDraft, hasDraft } = useDraftPersistence();
   const { previewUrl: hostedPreviewUrl, isUploading: isUploadingPreview, uploadPreview, clearPreviewTimer } = usePreviewHosting();
 
@@ -401,6 +403,13 @@ export function AIAppBuilderWorkspace() {
       );
       lighthouseAudit.runAudit(latestFiles);
       bundleSize.analyzeBundle(latestFiles);
+      // Auto-patch broken delete/remove buttons deterministically (zero credits)
+      const patchResult = deleteAutoPatcher.patchDeleteButtons(latestFiles);
+      if (patchResult.patched) {
+        patchResult.files.forEach(f => upsertFile(f.path, f.content));
+        buildLog.addEntry('info', `🔧 Auto-patched ${patchResult.fixes.length} delete/remove issue(s)`);
+        patchResult.fixes.forEach(fix => buildLog.addEntry('info', `  ✅ ${fix}`));
+      }
       // Auto-generate companion test files for new components
       const companions = fileScaffolding.generateCompanionFiles(latestFiles, project.files);
       if (companions.length > 0) {

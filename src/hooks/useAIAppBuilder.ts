@@ -260,9 +260,12 @@ export function useAIAppBuilder() {
   ) => {
     if (!input.trim() || isGenerating) return;
 
-    // Check credits before sending — but AUTO-FIX is always free
+    // Detect fix/retry requests — these should be free to avoid burning credits on repeated fixes
+    const isFixRequest = isAutoFix || /\b(fix|broken|doesn'?t work|not working|still broken|won'?t|can'?t|bug|error|issue|remove.*(button|doesn|broken|work)|delete.*(button|doesn|broken|work))\b/i.test(input);
+
+    // Check credits before sending — AUTO-FIX and fix requests are free
     const creditCost = mode === 'build' ? 3 : 1;
-    if (!isAutoFix && totalRemaining < creditCost) {
+    if (!isFixRequest && totalRemaining < creditCost) {
       toast.error(`Insufficient credits. You need ${creditCost} but have ${totalRemaining}. Purchase more to continue.`);
       return;
     }
@@ -595,8 +598,8 @@ export function useAIAppBuilder() {
       const msgTokens = estimateTokens(input + fullContent);
       setTotalTokensUsed(prev => prev + msgTokens);
       
-      // Deduct credits after successful generation — but NOT for auto-fixes
-      if (!isAutoFix) {
+      // Deduct credits after successful generation — but NOT for auto-fixes or fix requests
+      if (!isFixRequest) {
         await useCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
       }
       // Add suggestions + file count + token estimate + filesSnapshot to the final assistant message
