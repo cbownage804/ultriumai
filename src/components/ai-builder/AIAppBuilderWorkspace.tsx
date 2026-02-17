@@ -111,6 +111,8 @@ import { MultiFileSearchReplace } from './MultiFileSearchReplace';
 import { InBrowserTestRunner } from './InBrowserTestRunner';
 import { PluginMarketplace } from './PluginMarketplace';
 import { usePluginRegistry } from '@/hooks/usePluginRegistry';
+import { CollaborationPanel } from './CollaborationPanel';
+import { useCollaborationEngine } from '@/hooks/useCollaborationEngine';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -308,7 +310,8 @@ export function AIAppBuilderWorkspace() {
   const [showExtensions, setShowExtensions] = useState(false);
   const pluginRegistry = usePluginRegistry();
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
-
+  const [showCollaboration, setShowCollaboration] = useState(false);
+  const collaborationEngine = useCollaborationEngine(currentProjectId);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -1613,6 +1616,7 @@ export function AIAppBuilderWorkspace() {
                       { icon: Puzzle, label: 'Extensions', tooltip: 'Browse and install extensions', active: showExtensions, onClick: () => setShowExtensions(!showExtensions), color: 'text-violet-400', activeColor: 'text-violet-400 bg-violet-500/10' },
                       { icon: Play, label: 'Test Runner', tooltip: 'Auto-detect and run tests', active: showTestRunner, onClick: () => setShowTestRunner(!showTestRunner), color: 'text-green-400', activeColor: 'text-green-400 bg-green-500/10' },
                       { icon: Replace, label: 'Search & Replace', tooltip: 'Multi-file search and replace', active: showMultiSearch, onClick: () => setShowMultiSearch(!showMultiSearch), color: 'text-sky-400', activeColor: 'text-sky-400 bg-sky-500/10' },
+                      { icon: Users, label: 'Collaborate', tooltip: 'Real-time collaboration with teammates', active: showCollaboration, onClick: () => setShowCollaboration(!showCollaboration), color: 'text-cyan-400', activeColor: 'text-cyan-400 bg-cyan-500/10' },
                     ].map(item => (
                       <Tooltip key={item.label} delayDuration={sidebarExpanded ? 999999 : 300}>
                         <TooltipTrigger asChild>
@@ -1689,6 +1693,24 @@ export function AIAppBuilderWorkspace() {
                 <MultiFileSearchReplace open={showMultiSearch} onClose={() => setShowMultiSearch(false)} files={project.files} onReplaceInFiles={handleReplaceInFiles} onSelectFile={handleSetActiveFile} onSwitchToCode={() => setRightTab('code')} />
                 <InBrowserTestRunner open={showTestRunner} onClose={() => setShowTestRunner(false)} files={project.files} onGenerateTest={(filePath) => { sendMessage(`Generate unit tests for ${filePath}`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onSendToChat={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
                 <PluginMarketplace open={showExtensions} onClose={() => setShowExtensions(false)} catalogue={pluginRegistry.catalogue} installed={pluginRegistry.installed} onInstall={pluginRegistry.installPlugin} onUninstall={pluginRegistry.uninstallPlugin} onToggle={pluginRegistry.togglePlugin} onUpdateConfig={pluginRegistry.updatePluginConfig} />
+                <CollaborationPanel
+                  open={showCollaboration}
+                  onClose={() => setShowCollaboration(false)}
+                  isConnected={collaborationEngine.isConnected}
+                  participants={collaborationEngine.participants}
+                  messages={collaborationEngine.messages}
+                  awareness={collaborationEngine.awareness}
+                  localUserId={collaborationEngine.localUserId}
+                  followingUserId={collaborationEngine.followingUserId}
+                  onStartSession={collaborationEngine.startSession}
+                  onEndSession={collaborationEngine.endSession}
+                  onSendMessage={collaborationEngine.sendMessage}
+                  onFollowUser={collaborationEngine.followUser}
+                  onLockFile={collaborationEngine.lockFile}
+                  onUnlockFile={collaborationEngine.unlockFile}
+                  onNavigateToFile={(path) => { setActiveFile(path); setRightTab('code'); }}
+                  onAddSimulated={collaborationEngine.addSimulatedParticipant}
+                />
                 {showDesignSystem && (
                   <div className="w-72 border-r border-border overflow-hidden">
                     <DesignSystemPanel
