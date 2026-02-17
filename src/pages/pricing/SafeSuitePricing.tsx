@@ -132,7 +132,7 @@ const SafeSuitePricing = () => {
               </Badge>
               <CardContent className="p-8">
                 <h3 className="text-xl font-bold mb-2">Pro</h3>
-                <p className="text-muted-foreground text-sm mb-6">For individuals who need more</p>
+                <p className="text-muted-foreground text-sm mb-6">For individuals & small teams</p>
                 
                 <div className="mb-8">
                   <span className="text-4xl font-bold text-emerald-500">$9.99</span>
@@ -147,6 +147,9 @@ const SafeSuitePricing = () => {
                     "Priority dark web alerts",
                     "Secure file storage (1GB)",
                     "2FA authentication",
+                    "Up to 5 team members",
+                    "Shared password vaults",
+                    "Team activity feed",
                   ].map((feature, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
@@ -187,9 +190,10 @@ const SafeSuitePricing = () => {
                   {[
                     "Everything in Pro",
                     "Unlimited team members",
-                    "Shared password vaults",
-                    "Admin controls & audit logs",
+                    "Advanced admin controls",
+                    "Audit logs & compliance",
                     "SSO integration",
+                    "Role-based access control",
                     "Priority support",
                   ].map((feature, i) => (
                     <div key={i} className="flex items-center gap-3">
