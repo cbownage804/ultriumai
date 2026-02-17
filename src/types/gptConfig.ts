@@ -95,4 +95,5 @@ export interface GPTBuilderMessage {
   content: string;
   timestamp: Date;
   configUpdate?: Partial<GPTConfig>;
+  imageUrls?: string[];
 }

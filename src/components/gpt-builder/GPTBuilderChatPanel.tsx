@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface GPTBuilderChatPanelProps {
   messages: GPTBuilderMessage[];
   isGenerating: boolean;
-  onSend: (message: string) => void;
+  onSend: (message: string, imageDataUrls?: string[] | null) => void;
   onStop: () => void;
   config: GPTConfig;
 }
@@ -68,7 +68,7 @@ export function GPTBuilderChatPanel({ messages, isGenerating, onSend, onStop, co
 
   const handleSubmit = () => {
     if (!input.trim() || isGenerating) return;
-    onSend(input.trim());
+    onSend(input.trim(), imagePreviews.length > 0 ? imagePreviews : null);
     setInput('');
     setImagePreviews([]);
     if (textareaRef.current) {
@@ -163,7 +163,12 @@ export function GPTBuilderChatPanel({ messages, isGenerating, onSend, onStop, co
                         <ReactMarkdown>{msg.content}</ReactMarkdown>
                       </div>
                     ) : (
-                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                      <div>
+                        {msg.imageUrls?.map((url, i) => (
+                          <img key={i} src={url} alt={`Reference ${i + 1}`} className="rounded-lg max-h-32 mb-2 mr-2 border border-white/10 inline-block" />
+                        ))}
+                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                      </div>
                     )}
                   </div>
                   {msg.role === 'user' && (

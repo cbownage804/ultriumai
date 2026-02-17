@@ -117,7 +117,7 @@ export function useGPTBuilderChat(editGptId?: string, templateId?: string) {
     }
   }, [templateId, editGptId]);
 
-  const sendMessage = useCallback(async (userInput: string) => {
+  const sendMessage = useCallback(async (userInput: string, imageDataUrls?: string[] | null) => {
     if (!userInput.trim() || isGenerating) return;
 
     // Check credits before sending
@@ -131,6 +131,7 @@ export function useGPTBuilderChat(editGptId?: string, templateId?: string) {
       role: 'user',
       content: userInput,
       timestamp: new Date(),
+      imageUrls: imageDataUrls?.length ? imageDataUrls : undefined,
     };
 
     setMessages(prev => [...prev, userMsg]);
@@ -143,10 +144,19 @@ export function useGPTBuilderChat(editGptId?: string, templateId?: string) {
       abortRef.current = new AbortController();
 
       const configContext = JSON.stringify(config, null, 2);
-      const historyForAI = [...messages, userMsg].slice(-20).map(m => ({
-        role: m.role,
-        content: m.content,
-      }));
+      const historyForAI = [...messages, userMsg].slice(-20).map(m => {
+        // For user messages with images, build multimodal content
+        if (m.role === 'user' && m.imageUrls?.length) {
+          return {
+            role: m.role,
+            content: [
+              { type: 'text', text: m.content },
+              ...m.imageUrls.map(url => ({ type: 'image_url', image_url: { url } })),
+            ],
+          };
+        }
+        return { role: m.role, content: m.content };
+      });
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gpt-builder-chat`,
