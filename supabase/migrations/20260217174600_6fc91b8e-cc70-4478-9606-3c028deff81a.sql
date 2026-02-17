@@ -1,0 +1,1 @@
+UPDATE public.user_credits SET monthly_credits_used = 0 WHERE monthly_credits_used > monthly_credits_limit;
