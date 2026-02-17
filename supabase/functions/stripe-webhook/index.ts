@@ -145,7 +145,7 @@ serve(async (req) => {
     }
 
     const body = await req.text();
-    const event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    const event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     
     logStep("Event verified", { type: event.type, id: event.id });
 
@@ -419,6 +419,16 @@ serve(async (req) => {
               updated_at: new Date().toISOString(),
             }, { onConflict: 'user_id' });
 
+            // Also update user_credits so the frontend reflects the new plan
+            await supabaseClient.from('user_credits').upsert({
+              user_id: user.id,
+              monthly_credits_limit: creditAmount,
+              monthly_credits_used: 0,
+              monthly_reset_at: subscriptionEnd,
+              billing_period_start: subscriptionStart,
+              daily_credits_limit: 10,
+            } as Record<string, unknown>, { onConflict: 'user_id' });
+
             logStep("AI Studio credits provisioned", { 
               userId: user.id, 
               plan: planType, 
@@ -626,6 +636,15 @@ serve(async (req) => {
               overage_credits_used: 0,
               updated_at: new Date().toISOString(),
             }, { onConflict: 'user_id' });
+
+            // Reset user_credits to free tier
+            await supabaseClient.from('user_credits').upsert({
+              user_id: user.id,
+              monthly_credits_limit: 0,
+              monthly_credits_used: 0,
+              monthly_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+              daily_credits_limit: 10,
+            } as Record<string, unknown>, { onConflict: 'user_id' });
 
             await supabaseClient.from('user_product_access').upsert({
               user_id: user.id,
