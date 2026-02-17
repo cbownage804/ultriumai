@@ -77,6 +77,8 @@ import { usePromptMemory } from './usePromptMemory';
 import { useLighthouseAudit } from './useLighthouseAudit';
 import { useBundleSizeTracking } from './useBundleSizeTracking';
 import { useDeleteButtonAutoPatcher } from './useDeleteButtonAutoPatcher';
+import { usePromptPhasePlanner } from './usePromptPhasePlanner';
+import { PhasePlannerPanel } from './PhasePlannerPanel';
 import { DeployPipelinePanel } from './DeployPipelinePanel';
 import { ComponentPalette } from './ComponentPalette';
 import { PerformanceProfiler } from './PerformanceProfiler';
@@ -165,6 +167,7 @@ export function AIAppBuilderWorkspace() {
   const lighthouseAudit = useLighthouseAudit(buildLog.addEntry);
   const bundleSize = useBundleSizeTracking(buildLog.addEntry);
   const deleteAutoPatcher = useDeleteButtonAutoPatcher();
+  const phasePlanner = usePromptPhasePlanner();
   const { saveDraft, saveDraftImmediate, loadDraft, clearDraft, hasDraft } = useDraftPersistence();
   const { previewUrl: hostedPreviewUrl, isUploading: isUploadingPreview, uploadPreview, clearPreviewTimer } = usePreviewHosting();
 
@@ -586,6 +589,22 @@ export function AIAppBuilderWorkspace() {
   }, [project.files, canUndo, canRedo, showSettingsPanel, showFileSearch, showVersionHistory, showConsole, showEnvVars, showAssets, showPackages, showActivity, showBilling, showFileTree]);
 
   const handleSend = (input: string, imageDataUrls?: string[] | null) => {
+    // Phase planner: intercept large prompts and decompose into phases
+    const plan = phasePlanner.analyzePrompt(input);
+    if (plan) {
+      // Large prompt detected — show phase planner instead of sending directly
+      // Add a system message explaining the phases
+      const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** — ${p.description}`).join('\n');
+      const planMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant' as const,
+        content: `🚧 **This is a large project!** I've broken it into ${plan.phases.length} phases to save credits and ensure quality:\n\n${phaseList}\n\nClick **"Start Phase 1"** below to begin. Each phase builds on the last, and you can skip or cancel at any time.`,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'user', content: input, timestamp: new Date() }, planMessage]);
+      return;
+    }
+
     const contextPrefix = activeFile && rightTab === 'code' ? `[Currently viewing: ${activeFile.path}]\n` : '';
     const referencedFiles = findReferencedFiles(input, project.files);
     const contextHint = referencedFiles.length > 0 ? `[Auto-detected relevant files: ${referencedFiles.map(f => f.path).join(', ')}]\n` : '';
@@ -619,6 +638,32 @@ export function AIAppBuilderWorkspace() {
     }
     autoRecovery.resetRecovery();
   };
+
+  // Phase planner: handle proceeding to next phase
+  const handlePhaseAdvance = useCallback(() => {
+    const phasePrompt = phasePlanner.getCurrentPhasePrompt();
+    if (!phasePrompt) return;
+
+    const contextPrefix = activeFile && rightTab === 'code' ? `[Currently viewing: ${activeFile.path}]\n` : '';
+    const knowledgeCtx = [
+      knowledge.customInstructions || '',
+      selfReview.buildSelfReviewInstruction(),
+      promptMemory.buildMemoryContext(),
+    ].filter(Boolean).join('\n') || undefined;
+
+    const fullInput = contextPrefix + phasePrompt;
+
+    buildStartTimeRef.current = Date.now();
+    buildLog.logBuildStart(`Phase ${(phasePlanner.activePlan?.currentPhaseIndex || 0) + 1}`);
+
+    if (mode === 'build') {
+      enqueueTask(phasePrompt);
+    } else {
+      sendMessage(fullInput, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, knowledgeCtx);
+    }
+
+    phasePlanner.advancePhase();
+  }, [phasePlanner, activeFile, rightTab, knowledge, selfReview, promptMemory, mode, enqueueTask, sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, buildLog]);
 
   const getLastAIResponse = useCallback(() => {
     const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant');
@@ -1289,6 +1334,15 @@ export function AIAppBuilderWorkspace() {
                 </button>
                 {/* Agent mode step tracker */}
                 <AgentModePanel run={agentRun} taskQueue={agentTaskQueue} onCancel={cancelAgent} onCancelTask={cancelAgentTask} onRetryTask={retryAgentTask} onClearCompleted={clearAgentCompleted} onReorderQueue={reorderAgentQueue} />
+                {phasePlanner.activePlan && (
+                  <PhasePlannerPanel
+                    plan={phasePlanner.activePlan}
+                    onProceed={handlePhaseAdvance}
+                    onSkip={phasePlanner.skipPhase}
+                    onCancel={phasePlanner.cancelPlan}
+                    isGenerating={isGenerating}
+                  />
+                )}
                 <div className="flex-1 overflow-hidden">
                   <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} />
                 </div>
