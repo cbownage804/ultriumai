@@ -395,13 +395,12 @@ export function useAIAppBuilder() {
       const structureSummary: string[] = [];
       for (const f of files) {
         if (f.path === 'index.html') {
-          // Extract key sections from HTML
           const sectionMatches = f.content.match(/<(?:header|nav|main|section|footer|aside|form)[^>]*(?:id|class)=["']([^"']+)["']/gi);
           if (sectionMatches?.length) {
             structureSummary.push(`  HTML sections: ${sectionMatches.slice(0, 8).map(m => m.match(/(?:id|class)=["']([^"']+)/)?.[1]).filter(Boolean).join(', ')}`);
           }
         }
-        if (f.path.endsWith('.js') || f.path.endsWith('.ts')) {
+        if (f.path.endsWith('.js') || f.path.endsWith('.ts') || f.path.endsWith('.tsx')) {
           const fnMatches = f.content.match(/(?:function|const|class)\s+(\w+)/g);
           if (fnMatches?.length) {
             structureSummary.push(`  ${f.path}: exports ${fnMatches.slice(0, 5).map(m => m.split(/\s+/).pop()).join(', ')}`);
@@ -412,18 +411,63 @@ export function useAIAppBuilder() {
         ? `\n\nPROJECT STRUCTURE SUMMARY:\n${structureSummary.join('\n')}\n`
         : '';
 
-      // Determine which files are likely relevant based on the user's input
+      // ── Smart file context: score files by relevance ──
       const lowerInput = userInput.toLowerCase();
-      const relevantFiles = files.filter(f => {
+      const inputWords = lowerInput.split(/\s+/).filter(w => w.length > 2);
+
+      const scored = files.map(f => {
+        let score = 0;
         const lowerPath = f.path.toLowerCase();
-        if (lowerPath === 'index.html' || lowerPath === 'styles.css') return true;
-        if (lowerInput.includes(lowerPath) || lowerInput.includes(f.path.split('/').pop()?.split('.')[0]?.toLowerCase() || '')) return true;
-        if (files.length <= 5) return true;
-        if ((lowerPath.endsWith('.js') || lowerPath.endsWith('.ts')) && files.length <= 10) return true;
-        return false;
+        const fileName = f.path.split('/').pop()?.split('.')[0]?.toLowerCase() || '';
+
+        // Always include core files
+        if (lowerPath === 'index.html' || lowerPath === 'styles.css' || lowerPath === 'app.tsx') score += 10;
+
+        // Direct path mention in prompt
+        if (lowerInput.includes(lowerPath) || lowerInput.includes(fileName)) score += 8;
+
+        // Keyword match: file name words appear in prompt
+        const pathWords = lowerPath.replace(/[/._-]/g, ' ').split(/\s+/);
+        for (const pw of pathWords) {
+          if (pw.length > 2 && inputWords.some(iw => iw.includes(pw) || pw.includes(iw))) score += 3;
+        }
+
+        // Content relevance: check if file exports things mentioned in prompt
+        const exports = f.content.match(/(?:export\s+(?:default\s+)?(?:function|const|class|interface|type)\s+)(\w+)/g);
+        if (exports) {
+          for (const exp of exports) {
+            const name = exp.split(/\s+/).pop()?.toLowerCase() || '';
+            if (name.length > 2 && inputWords.some(iw => iw.includes(name) || name.includes(iw))) score += 5;
+          }
+        }
+
+        // Import graph: if a high-scored file imports this file, boost it
+        // (simplified: check if any file that scores >5 imports this file)
+        const importedByRelevant = files.some(other => {
+          if (other === f) return false;
+          const otherScore = lowerInput.includes(other.path.toLowerCase()) ? 8 : 0;
+          return otherScore > 5 && other.content.includes(fileName);
+        });
+        if (importedByRelevant) score += 4;
+
+        // Recently modified files (shorter content = likely newer/WIP)
+        if (f.content.length < 200 && f.content.length > 10) score += 1;
+
+        // Small projects: include everything
+        if (files.length <= 5) score += 10;
+        if (files.length <= 10 && (lowerPath.endsWith('.js') || lowerPath.endsWith('.ts') || lowerPath.endsWith('.tsx'))) score += 5;
+
+        return { file: f, score };
       });
 
-      const filesToSend = relevantFiles.length > 0 ? relevantFiles : files;
+      // Take files with score > 0, sorted by score, limited to top 15 for token efficiency
+      const MAX_FILES = 15;
+      const relevant = scored
+        .filter(s => s.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, MAX_FILES);
+
+      const filesToSend = relevant.length > 0 ? relevant.map(s => s.file) : files.slice(0, MAX_FILES);
       const fileContext = filesToSend.map(f => `===FILE: ${f.path}===\n${f.content}`).join('\n\n');
 
       const omittedCount = files.length - filesToSend.length;

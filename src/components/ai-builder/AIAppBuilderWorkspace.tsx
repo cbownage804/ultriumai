@@ -82,6 +82,9 @@ import { PhasePlannerPanel } from './PhasePlannerPanel';
 import { QuestionsCard } from './QuestionsCard';
 import { useBuilderQuestions } from './useBuilderQuestions';
 import { DeployPipelinePanel } from './DeployPipelinePanel';
+import { BuildAnalyticsPanel } from './BuildAnalyticsPanel';
+import { useOutputValidation } from './useOutputValidation';
+import { useBuildAnalytics } from '@/hooks/useBuildAnalytics';
 import { ComponentPalette } from './ComponentPalette';
 import { PerformanceProfiler } from './PerformanceProfiler';
 import { ChangelogPanel, type ChangelogEntry } from './ChangelogPanel';
@@ -105,7 +108,7 @@ import {
   History, Variable, Image, Package, Columns, Keyboard, Rocket,
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen, Gauge,
   Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
-  Table2, ChevronsLeft, ChevronsRight,
+  Table2, ChevronsLeft, ChevronsRight, BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -257,6 +260,9 @@ export function AIAppBuilderWorkspace() {
   const [showGPTConnector, setShowGPTConnector] = useState(false);
   const [linkedGPT, setLinkedGPT] = useState<LinkedGPTConfig | null>(null);
   const [showPerformanceProfiler, setShowPerformanceProfiler] = useState(false);
+  const [showBuildAnalytics, setShowBuildAnalytics] = useState(false);
+  const buildAnalytics = useBuildAnalytics();
+  const outputValidation = useOutputValidation();
   const [showChangelog, setShowChangelog] = useState(false);
   const [changelogEntries, setChangelogEntries] = useState<ChangelogEntry[]>([]);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
@@ -1518,6 +1524,7 @@ export function AIAppBuilderWorkspace() {
                     {sidebarExpanded && <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/70 px-2 pt-1 pb-1 block">Tools</span>}
                     {[
                       { icon: Gauge, label: 'Performance', tooltip: 'Analyze bundle size and code complexity', active: showPerformanceProfiler, onClick: () => setShowPerformanceProfiler(!showPerformanceProfiler), color: 'text-emerald-400', activeColor: 'text-emerald-400 bg-emerald-500/10' },
+                      { icon: BarChart3, label: 'Analytics', tooltip: 'Build analytics and credit usage', active: showBuildAnalytics, onClick: () => setShowBuildAnalytics(!showBuildAnalytics), color: 'text-amber-400', activeColor: 'text-amber-400 bg-amber-500/10' },
                       { icon: History, label: 'Changelog', tooltip: 'See a timeline of changes made this session', active: showChangelog, onClick: () => setShowChangelog(!showChangelog), color: 'text-blue-400' },
                       { icon: GitBranchIcon, label: 'Timeline', tooltip: 'Visual timeline of all project versions', active: showTimeline, onClick: () => setShowTimeline(!showTimeline), color: 'text-violet-400' },
                       { icon: Terminal, label: 'Terminal', tooltip: 'Open a command-line terminal', active: showTerminal, onClick: () => setShowTerminal(!showTerminal), color: 'text-green-400' },
@@ -1594,6 +1601,7 @@ export function AIAppBuilderWorkspace() {
                 <ComponentLibrary open={showComponentLib} onClose={() => setShowComponentLib(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); } }} onApplyTheme={() => {}} />
                 <DeployPipelinePanel open={showDeployPipeline} onClose={() => setShowDeployPipeline(false)} onDeploy={handlePublish} publishedUrl={publishedUrl} isDeploying={isGenerating} projectName={project.name} onOpenDomainPanel={() => { setShowDeployPipeline(false); setShowDomainPanel(true); }} />
                 <PerformanceProfiler open={showPerformanceProfiler} onClose={() => setShowPerformanceProfiler(false)} files={project.files} cdnPackages={cdnPackages} />
+                <BuildAnalyticsPanel open={showBuildAnalytics} onClose={() => setShowBuildAnalytics(false)} analytics={buildAnalytics.getAnalytics()} />
                 <ChangelogPanel open={showChangelog} onClose={() => setShowChangelog(false)} entries={changelogEntries} />
                 <TestingDebugSuite open={showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); toast.success('Test generated'); }} projectFiles={project.files} />
                 <GPTConnectorPanel open={showGPTConnector} onClose={() => setShowGPTConnector(false)} linkedGPT={linkedGPT} onLinkGPT={setLinkedGPT} onUnlinkGPT={() => setLinkedGPT(null)} />
