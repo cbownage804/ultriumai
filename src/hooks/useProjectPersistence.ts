@@ -219,11 +219,11 @@ export function useProjectPersistence() {
   }, [currentProjectId]);
 
   // Auto-save setup
-  const scheduleAutoSave = useCallback((name: string, files: ProjectFile[]) => {
+  const scheduleAutoSave = useCallback((name: string, files: ProjectFile[], chatMessages?: any[]) => {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(() => {
       if (files.length > 0) {
-        saveProject(name, files);
+        saveProject(name, files, undefined, undefined, chatMessages);
       }
     }, 30000); // Auto-save every 30s after changes
   }, [saveProject]);
