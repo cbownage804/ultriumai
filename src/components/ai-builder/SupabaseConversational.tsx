@@ -218,7 +218,12 @@ export function generateIntentSuggestions(intents: SupabaseIntent[]): string[] {
  * Analyze error messages and build diagnostic context for the AI.
  * Makes the AI much better at fixing runtime errors conversationally.
  */
-export function buildErrorDiagnosisContext(error: { message: string; source?: string; line?: number }): string {
+export function buildErrorDiagnosisContext(
+  error: { message: string; source?: string; line?: number },
+  projectFiles?: { path: string; content: string }[],
+  consoleErrors?: string[],
+  lastAIResponse?: string,
+): string {
   const sections: string[] = ['[ERROR DIAGNOSIS CONTEXT]'];
   sections.push(`Error: ${error.message}`);
   if (error.source) sections.push(`File: ${error.source}${error.line ? `:${error.line}` : ''}`);
@@ -237,7 +242,70 @@ export function buildErrorDiagnosisContext(error: { message: string; source?: st
     sections.push('Type: Type error — check data shapes, API response formats, and type assertions.');
   }
 
-  sections.push('FIX RULES: Diagnose the root cause, not just the symptom. Explain what went wrong and why. Output only the changed files.');
+  // Auto-inject the erroring file + related files
+  if (projectFiles && projectFiles.length > 0) {
+    // Find the primary error file
+    const errorFile = error.source
+      ? projectFiles.find(f => error.source?.includes(f.path))
+      : null;
+
+    if (errorFile) {
+      sections.push(`\n[PRIMARY ERROR FILE: ${errorFile.path}]`);
+      sections.push('```');
+      sections.push(errorFile.content);
+      sections.push('```');
+    }
+
+    // Find related files (files that import/reference the error file, or are imported by it)
+    const errorFileName = errorFile?.path || error.source || '';
+    const baseName = errorFileName.replace(/\.[^.]+$/, '').split('/').pop() || '';
+    if (baseName) {
+      const relatedFiles = projectFiles.filter(f => {
+        if (f.path === errorFile?.path) return false;
+        // Files that reference the error file
+        return f.content.includes(baseName) || 
+               (errorFile && errorFile.content.includes(f.path.replace(/\.[^.]+$/, '').split('/').pop() || '___'));
+      }).slice(0, 3); // Max 3 related files to avoid token overflow
+
+      if (relatedFiles.length > 0) {
+        sections.push('\n[RELATED FILES]');
+        for (const rf of relatedFiles) {
+          sections.push(`--- ${rf.path} ---`);
+          sections.push('```');
+          // Truncate large files to avoid token explosion
+          sections.push(rf.content.length > 3000 ? rf.content.slice(0, 3000) + '\n// ... (truncated)' : rf.content);
+          sections.push('```');
+        }
+      }
+    }
+
+    // If no specific file found, include all files (they're usually small in the builder)
+    if (!errorFile && projectFiles.length <= 6) {
+      sections.push('\n[ALL PROJECT FILES]');
+      for (const f of projectFiles) {
+        sections.push(`--- ${f.path} ---`);
+        sections.push('```');
+        sections.push(f.content.length > 3000 ? f.content.slice(0, 3000) + '\n// ... (truncated)' : f.content);
+        sections.push('```');
+      }
+    }
+  }
+
+  // Include recent console errors for additional context
+  if (consoleErrors && consoleErrors.length > 0) {
+    sections.push('\n[RECENT CONSOLE ERRORS]');
+    sections.push(consoleErrors.slice(-10).join('\n'));
+  }
+
+  // Include snippet of last AI response so it knows what it just generated
+  if (lastAIResponse) {
+    const trimmed = lastAIResponse.slice(0, 1500);
+    sections.push('\n[LAST AI GENERATION (what you just produced)]');
+    sections.push(trimmed);
+    if (lastAIResponse.length > 1500) sections.push('// ... (truncated)');
+  }
+
+  sections.push('\nFIX RULES: You MUST output a 🔍 Diagnosis block (Symptom, Root cause, Fix approach) BEFORE any code. Diagnose the root cause, not just the symptom. Output only the changed files.');
   return sections.join('\n');
 }
 

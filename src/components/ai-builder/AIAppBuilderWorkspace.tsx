@@ -565,9 +565,21 @@ export function AIAppBuilderWorkspace() {
     autoRecovery.resetRecovery();
   };
 
-  const handleFixError = (errorPrompt: string) => {
-    sendMessage(errorPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
-  };
+  const getLastAIResponse = useCallback(() => {
+    const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant');
+    return lastAssistant?.content || '';
+  }, [messages]);
+
+  const handleFixError = useCallback((errorPrompt: string) => {
+    // Enrich even simple fix requests with full project context
+    const diagnosisContext = buildErrorDiagnosisContext(
+      { message: errorPrompt },
+      project.files,
+      undefined,
+      getLastAIResponse(),
+    );
+    sendMessage(diagnosisContext, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
+  }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, getLastAIResponse]);
 
   const handleSmartFixError = useCallback((error: import('./ErrorConsole').PreviewError, context: string) => {
     const isSameError = lastFixError === error.message;
@@ -575,10 +587,15 @@ export function AIAppBuilderWorkspace() {
     setFixAttemptCount(newCount);
     setLastFixError(error.message);
     if (newCount > MAX_FIX_ATTEMPTS) { toast.error('Unable to auto-fix — try describing the issue differently.'); return; }
-    const retryContext = newCount > 1 ? `\n\nThis is attempt ${newCount}/${MAX_FIX_ATTEMPTS}. Previous fix attempts did not resolve the issue. Please try a different approach.` : '';
-    const diagnosisContext = buildErrorDiagnosisContext({ message: error.message, source: error.source, line: error.line });
+    const retryContext = newCount > 1 ? `\n\nThis is attempt ${newCount}/${MAX_FIX_ATTEMPTS}. Previous fix attempts did not resolve the issue. Try a COMPLETELY DIFFERENT approach — rewrite the broken function from scratch.` : '';
+    const diagnosisContext = buildErrorDiagnosisContext(
+      { message: error.message, source: error.source, line: error.line },
+      project.files,
+      undefined,
+      getLastAIResponse(),
+    );
     sendMessage(`${diagnosisContext}\n\nFix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
-  }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, fixAttemptCount, lastFixError]);
+  }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, fixAttemptCount, lastFixError, getLastAIResponse]);
 
   // Auto-fix pipeline: automatically attempt to fix preview errors
   const handleAutoFixError = useCallback((error: import('./ErrorConsole').PreviewError) => {
@@ -586,9 +603,16 @@ export function AIAppBuilderWorkspace() {
     forwardErrorToChat({ message: error.message, source: error.source, line: error.line });
     if (isGenerating || fixAttemptCount >= MAX_FIX_ATTEMPTS) return;
     autoRecovery.attemptRecovery(error, project.files, (prompt) => {
-      sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
+      // Enrich the auto-fix prompt with full context
+      const enrichedPrompt = buildErrorDiagnosisContext(
+        { message: error.message, source: error.source, line: error.line },
+        project.files,
+        undefined,
+        getLastAIResponse(),
+      ) + '\n\n' + prompt;
+      sendMessage(enrichedPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
     });
-  }, [isGenerating, fixAttemptCount, autoRecovery, project.files, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel, forwardErrorToChat]);
+  }, [isGenerating, fixAttemptCount, autoRecovery, project.files, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel, forwardErrorToChat, getLastAIResponse]);
 
   const handleForkFromMessage = useCallback(async (messageId: string) => {
     await saveProject(project.name, project.files, branches, activeBranch, messages);
