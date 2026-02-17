@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef, lazy, Suspense, useMemo } from 'react';
 import { useAIAppBuilder } from '@/hooks/useAIAppBuilder';
-import { useProjectFileSystem } from '@/hooks/useProjectFileSystem';
+import { useProjectFileSystem, type ProjectFile } from '@/hooks/useProjectFileSystem';
 import { useAgentMode } from '@/hooks/useAgentMode';
 import { useAutoErrorRecovery } from '@/hooks/useAutoErrorRecovery';
 import type { RemoteCursor } from './CodeEditor';
@@ -38,6 +38,10 @@ import { QuickFileSwitcher } from './QuickFileSwitcher';
 import { AssetManager, type ProjectAsset } from './AssetManager';
 import { PackageManager, type CDNPackage } from './PackageManager';
 import { useProjectBundler } from '@/hooks/useProjectBundler';
+import { useASTBundler } from '@/hooks/useASTBundler';
+import { useIncrementalCompiler } from '@/hooks/useIncrementalCompiler';
+import { useTypeScriptValidator } from '@/hooks/useTypeScriptValidator';
+import { useConflictResolver } from '@/hooks/useConflictResolver';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 import { OnboardingTour } from './OnboardingTour';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
@@ -206,7 +210,26 @@ export function AIAppBuilderWorkspace() {
   const [assets, setAssets] = useState<ProjectAsset[]>([]);
   const [showPackages, setShowPackages] = useState(false);
   const [cdnPackages, setCdnPackages] = useState<CDNPackage[]>([]);
-  const { findReferencedFiles, bundleForBrowser } = useProjectBundler();
+  const { findReferencedFiles } = useProjectBundler();
+  const astBundler = useASTBundler();
+  const incrementalCompiler = useIncrementalCompiler();
+  const tsValidator = useTypeScriptValidator();
+  const conflictResolver = useConflictResolver();
+
+  // Incremental bundler: uses AST bundler for per-file compilation + caching
+  const bundleForBrowser = useCallback((files: ProjectFile[]) => {
+    const result = incrementalCompiler.compileIncremental(
+      files,
+      (file) => {
+        const graph = astBundler.buildDependencyGraph([file]);
+        const node = graph.get(file.path);
+        if (!node) return file.content;
+        return `/* ═══ ${file.path} ═══ */\n(function() {\n"use strict";\n${astBundler.stripModuleSyntax(file.content, node)}\n})();`;
+      },
+      (f) => astBundler.topologicalSort(astBundler.buildDependencyGraph(f)).filter(p => f.some(file => file.path === p)),
+    );
+    return result.output;
+  }, [astBundler, incrementalCompiler]);
   const liveSync = useLivePreviewSync();
   const [remoteCursors, setRemoteCursors] = useState<RemoteCursor[]>([]);
   const channelRef = useRef<any>(null);
@@ -411,6 +434,18 @@ export function AIAppBuilderWorkspace() {
         read: false,
       }, ...prev].slice(0, 50));
       buildLog.logBuildComplete(latestFiles.length, duration);
+      // Run TypeScript validation before preview
+      const validationResult = tsValidator.validate(latestFiles);
+      if (validationResult.errorCount > 0) {
+        buildLog.addEntry('warning' as any, `⚠️ ${validationResult.errorCount} validation error(s), ${validationResult.warningCount} warning(s)`);
+        validationResult.diagnostics.filter(d => d.severity === 'error').slice(0, 5).forEach(d =>
+          buildLog.addEntry('warning' as any, `  ❌ ${d.file}:${d.line} — ${d.message}`)
+        );
+      } else if (validationResult.warningCount > 0) {
+        buildLog.addEntry('info', `✅ Validation passed with ${validationResult.warningCount} warning(s) (${validationResult.validationTimeMs}ms)`);
+      } else {
+        buildLog.addEntry('info', `✅ Validation passed (${validationResult.validationTimeMs}ms)`);
+      }
       // Run post-build smoke test + all quality checks
       const smokeResult = smokeTest.runSmokeTest(latestFiles);
       const conflictWarnings = conflictDetection.detectConflicts(latestFiles);
@@ -437,8 +472,9 @@ export function AIAppBuilderWorkspace() {
         companions.forEach(f => upsertFile(f.path, f.content));
         buildLog.addEntry('info', `🧪 Auto-generated ${companions.length} test file(s)`);
       }
-      // Mark preview as good for hot recovery
+      // Mark preview as good for hot recovery & update conflict resolver base snapshot
       hotRecovery.markAsGood([...project.files]);
+      conflictResolver.setBaseSnapshot([...project.files]);
       versionTimeline.addSnapshot(`AI: ${messages[messages.length - 2]?.content?.slice(0, 40) || 'generation'}`, [...project.files], 'ai-generation');
 
       // Auto-name project on first successful build
