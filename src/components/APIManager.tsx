@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Code, Key, Activity, BookOpen, Plus, Zap, Code2 } from "lucide-react";
+import { Code, Key, Activity, BookOpen, Plus, Zap, Code2, Globe } from "lucide-react";
 import { useApiKeys } from "@/hooks/useApiKeys";
 import { CreateApiKeyDialog } from "./apiManager/CreateApiKeyDialog";
 import { ApiKeyList } from "./apiManager/ApiKeyList";
@@ -11,6 +11,7 @@ import { ApiUsageDashboard } from "./apiManager/ApiUsageDashboard";
 import { ApiDocumentation } from "./apiManager/ApiDocumentation";
 import { APIPlayground } from "./apiManager/APIPlayground";
 import { SDKSnippets } from "./apiManager/SDKSnippets";
+import { APIBuilder } from "./apiManager/APIBuilder";
 
 const APIManager = () => {
   const { apiKeys, loading } = useApiKeys();
@@ -77,15 +78,19 @@ const APIManager = () => {
       </div>
 
       {/* Main Content */}
-      <Tabs defaultValue="playground" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+      <Tabs defaultValue="builder" className="w-full">
+        <TabsList className="grid w-full grid-cols-7">
+          <TabsTrigger value="builder" className="flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            Builder
+          </TabsTrigger>
           <TabsTrigger value="playground" className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
             Playground
           </TabsTrigger>
           <TabsTrigger value="keys" className="flex items-center gap-2">
             <Key className="h-4 w-4" />
-            API Keys
+            Keys
           </TabsTrigger>
           <TabsTrigger value="snippets" className="flex items-center gap-2">
             <Code2 className="h-4 w-4" />
@@ -104,6 +109,10 @@ const APIManager = () => {
             Examples
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="builder" className="space-y-4">
+          <APIBuilder />
+        </TabsContent>
 
         <TabsContent value="playground" className="space-y-4">
           <APIPlayground />

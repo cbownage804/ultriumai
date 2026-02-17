@@ -954,6 +954,129 @@ export type Database = {
         }
         Relationships: []
       }
+      api_endpoint_logs: {
+        Row: {
+          api_key_id: string | null
+          created_at: string
+          endpoint_id: string | null
+          error_message: string | null
+          id: string
+          ip_address: unknown
+          method: string
+          path: string
+          request_body: Json | null
+          response_time_ms: number | null
+          status_code: number
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string
+          endpoint_id?: string | null
+          error_message?: string | null
+          id?: string
+          ip_address?: unknown
+          method: string
+          path: string
+          request_body?: Json | null
+          response_time_ms?: number | null
+          status_code: number
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string
+          endpoint_id?: string | null
+          error_message?: string | null
+          id?: string
+          ip_address?: unknown
+          method?: string
+          path?: string
+          request_body?: Json | null
+          response_time_ms?: number | null
+          status_code?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_endpoint_logs_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_endpoint_logs_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "api_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_endpoints: {
+        Row: {
+          allowed_fields: string[] | null
+          allowed_methods: string[]
+          base_path: string
+          created_at: string
+          description: string | null
+          filter_config: Json | null
+          hidden_fields: string[] | null
+          id: string
+          is_active: boolean
+          name: string
+          pagination_config: Json | null
+          rate_limit_rpd: number | null
+          rate_limit_rpm: number | null
+          requires_auth: boolean
+          source_table: string
+          transform_config: Json | null
+          updated_at: string
+          user_id: string
+          webhook_url: string | null
+        }
+        Insert: {
+          allowed_fields?: string[] | null
+          allowed_methods?: string[]
+          base_path: string
+          created_at?: string
+          description?: string | null
+          filter_config?: Json | null
+          hidden_fields?: string[] | null
+          id?: string
+          is_active?: boolean
+          name: string
+          pagination_config?: Json | null
+          rate_limit_rpd?: number | null
+          rate_limit_rpm?: number | null
+          requires_auth?: boolean
+          source_table: string
+          transform_config?: Json | null
+          updated_at?: string
+          user_id: string
+          webhook_url?: string | null
+        }
+        Update: {
+          allowed_fields?: string[] | null
+          allowed_methods?: string[]
+          base_path?: string
+          created_at?: string
+          description?: string | null
+          filter_config?: Json | null
+          hidden_fields?: string[] | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          pagination_config?: Json | null
+          rate_limit_rpd?: number | null
+          rate_limit_rpm?: number | null
+          requires_auth?: boolean
+          source_table?: string
+          transform_config?: Json | null
+          updated_at?: string
+          user_id?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           created_at: string
