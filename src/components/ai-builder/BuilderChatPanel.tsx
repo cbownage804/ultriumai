@@ -115,6 +115,15 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
   return { text: text, fileNames };
 }
 
+/** Strip internal context (file manifests, file trees) from user messages for display */
+function getCleanUserContent(content: string): string {
+  // Remove "[Project file tree: ...]" blocks (from agent mode)
+  let clean = content.replace(/\n*\[Project file tree:\n[\s\S]*?\]\s*$/i, '');
+  // Remove "PROJECT FILE MANIFEST ..." and everything after (from buildFileContext)
+  clean = clean.replace(/\n*PROJECT FILE MANIFEST[\s\S]*$/i, '');
+  return clean.trim();
+}
+
 function isInternalMessage(content: string): boolean {
   return content.includes('PLANNING MODE') || 
     content.includes('Return ONLY valid JSON') || 
@@ -875,7 +884,7 @@ export function BuilderChatPanel({
                         {(msg.imageUrls || (msg.imageUrl ? [msg.imageUrl] : [])).map((url, i) => (
                           <img key={i} src={url} alt={`Reference ${i + 1}`} className="rounded-lg max-h-32 mb-2 mr-2 border border-white/10 inline-block" />
                         ))}
-                        <p className="whitespace-pre-wrap text-[13px]">{msg.content}</p>
+                        <p className="whitespace-pre-wrap text-[13px]">{getCleanUserContent(msg.content)}</p>
                         {/* Workflow steps detected in user's message */}
                         {msg.workflowSteps && msg.workflowSteps.length > 0 && (
                           <div className="mt-2 space-y-0.5 pt-2 border-t border-white/10">
