@@ -112,11 +112,11 @@ export const getUserCredits = async (userId: string) => {
     if (error) throw error;
 
     // Use new credit system: daily + monthly + bonus
-    const dailyRemaining = (data?.daily_credits_limit || 5) - (data?.daily_credits_used || 0);
+    const dailyRemaining = (data?.daily_credits_limit || 10) - (data?.daily_credits_used || 0);
     const monthlyRemaining = (data?.monthly_credits_limit || 0) - (data?.monthly_credits_used || 0);
     const bonusRemaining = data?.bonus_credits || 0;
     const totalRemaining = dailyRemaining + monthlyRemaining + bonusRemaining;
-    const totalLimit = (data?.daily_credits_limit || 5) + (data?.monthly_credits_limit || 0) + bonusRemaining;
+    const totalLimit = (data?.daily_credits_limit || 10) + (data?.monthly_credits_limit || 0) + bonusRemaining;
     const totalUsed = (data?.daily_credits_used || 0) + (data?.monthly_credits_used || 0);
 
     return {

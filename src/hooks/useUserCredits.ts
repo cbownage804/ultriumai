@@ -6,13 +6,13 @@ import { devLog } from "@/lib/logger";
 
 /**
  * Lovable-style credit system:
- * - Daily credits: 5 credits, reset daily at midnight UTC, don't roll over
+ * - Daily credits: 10 credits, reset daily at midnight UTC, don't roll over
  * - Monthly credits: Based on subscription tier, tied to billing period
  * - Bonus credits: Purchased credits that never expire
  */
 
 export interface UserCredits {
-  // Daily credits (5/day, reset daily, don't roll over)
+  // Daily credits (10/day, reset daily, don't roll over)
   daily_credits_used: number;
   daily_credits_limit: number;
   daily_reset_at: string;
@@ -64,7 +64,7 @@ const getNextMonth = () => {
 export const useUserCredits = () => {
   const [credits, setCredits] = useState<UserCredits>({
     daily_credits_used: 0,
-    daily_credits_limit: 5,
+    daily_credits_limit: 10,
     daily_reset_at: getNextMidnightUTC(),
     monthly_credits_used: 0,
     monthly_credits_limit: 0,
@@ -73,7 +73,7 @@ export const useUserCredits = () => {
     bonus_credits: 0,
     // Legacy
     credits_used: 0,
-    credits_limit: 5,
+    credits_limit: 10,
     reset_date: getNextMidnightUTC(),
     last_reset: getTodayMidnightUTC()
   });
@@ -159,16 +159,16 @@ export const useUserCredits = () => {
           .insert({
             user_id: user.id,
             daily_credits_used: 0,
-            daily_credits_limit: 5,
+            daily_credits_limit: 10,
             daily_reset_at: getNextMidnightUTC(),
             monthly_credits_used: 0,
-            monthly_credits_limit: 0, // Free tier gets no monthly credits
+            monthly_credits_limit: 0,
             monthly_reset_at: getNextMonth(),
             billing_period_start: getTodayMidnightUTC(),
             bonus_credits: 0,
             // Legacy fields
             credits_used: 0,
-            credits_limit: 5,
+            credits_limit: 10,
             reset_date: getNextMidnightUTC()
           } as Record<string, unknown>)
           .select()
@@ -180,7 +180,7 @@ export const useUserCredits = () => {
           const rawData = newData as Record<string, unknown>;
           setCredits({
             daily_credits_used: rawData.daily_credits_used as number || 0,
-            daily_credits_limit: rawData.daily_credits_limit as number || 5,
+            daily_credits_limit: rawData.daily_credits_limit as number || 10,
             daily_reset_at: rawData.daily_reset_at as string || getNextMidnightUTC(),
             monthly_credits_used: rawData.monthly_credits_used as number || 0,
             monthly_credits_limit: rawData.monthly_credits_limit as number || 0,
@@ -188,7 +188,7 @@ export const useUserCredits = () => {
             billing_period_start: rawData.billing_period_start as string || getTodayMidnightUTC(),
             bonus_credits: rawData.bonus_credits as number || 0,
             credits_used: (newData as { credits_used?: number }).credits_used || 0,
-            credits_limit: (newData as { credits_limit?: number }).credits_limit || 5,
+            credits_limit: (newData as { credits_limit?: number }).credits_limit || 10,
             reset_date: (newData as { reset_date?: string }).reset_date || getNextMidnightUTC(),
             last_reset: rawData.last_reset as string || getTodayMidnightUTC()
           });
@@ -203,7 +203,7 @@ export const useUserCredits = () => {
         
         setCredits({
           daily_credits_used: rawData.daily_credits_used as number || 0,
-          daily_credits_limit: rawData.daily_credits_limit as number || 5,
+          daily_credits_limit: rawData.daily_credits_limit as number || 10,
           daily_reset_at: rawData.daily_reset_at as string || getNextMidnightUTC(),
           monthly_credits_used: rawData.monthly_credits_used as number || 0,
           monthly_credits_limit: rawData.monthly_credits_limit as number || 0,
@@ -211,7 +211,7 @@ export const useUserCredits = () => {
           billing_period_start: rawData.billing_period_start as string || getTodayMidnightUTC(),
           bonus_credits: rawData.bonus_credits as number || 0,
           credits_used: (data as { credits_used?: number }).credits_used || 0,
-          credits_limit: (data as { credits_limit?: number }).credits_limit || 5,
+          credits_limit: (data as { credits_limit?: number }).credits_limit || 10,
           reset_date: (data as { reset_date?: string }).reset_date || getNextMidnightUTC(),
           last_reset: rawData.last_reset as string || getTodayMidnightUTC()
         });

@@ -70,8 +70,8 @@ export const AI_STUDIO_PLANS = {
   free: {
     name: 'Free',
     description: 'Discover what AI Studio can do for you',
-    features: ['50 AI credits/mo', 'Unlimited GPTs', 'Public projects', 'Community support'],
-    credits: 50,
+    features: ['10 daily AI credits', 'Unlimited GPTs', 'Public projects', 'Community support'],
+    credits: 10,
     monthlyPrice: 0,
     annualPrice: 0,
   },
