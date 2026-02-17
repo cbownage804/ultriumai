@@ -144,7 +144,7 @@ export function AIAppBuilderWorkspace() {
   const autoRecovery = useAutoErrorRecovery();
   const versionTimeline = useVersionTimeline();
   const buildLog = useBuildLog();
-  const { saveDraft, loadDraft, clearDraft, hasDraft } = useDraftPersistence();
+  const { saveDraft, saveDraftImmediate, loadDraft, clearDraft, hasDraft } = useDraftPersistence();
   const { previewUrl: hostedPreviewUrl, isUploading: isUploadingPreview, uploadPreview, clearPreviewTimer } = usePreviewHosting();
 
   const [rightTab, setRightTab] = useState<'preview' | 'code' | 'split'>('preview');
@@ -436,6 +436,27 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     saveDraft(project.name, project.files, messages);
   }, [project.files, project.name, messages, saveDraft]);
+
+  // Immediately persist draft when user switches tabs or navigates away
+  const latestRef = useRef({ name: project.name, files: project.files, messages });
+  latestRef.current = { name: project.name, files: project.files, messages };
+
+  useEffect(() => {
+    const flushDraft = () => saveDraftImmediate(latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') flushDraft();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('beforeunload', flushDraft);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('beforeunload', flushDraft);
+      flushDraft(); // also flush on unmount (route change)
+    };
+  }, [saveDraftImmediate]);
 
   // Auto-load project from URL ?project=<id> param
   const initialProjectId = searchParams.get('project');
