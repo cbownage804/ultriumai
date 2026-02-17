@@ -932,6 +932,22 @@ export function AIAppBuilderWorkspace() {
     wasGeneratingRef.current = isGenerating;
   }, [isGenerating, project.files.length, currentProjectId, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, captureAndUpload]);
 
+  // Auto-advance to next phase when generation completes and autoAdvance is on
+  useEffect(() => {
+    if (
+      wasGeneratingRef.current === false &&
+      !isGenerating &&
+      phasePlanner.activePlan?.autoAdvance &&
+      !phasePlanner.isComplete &&
+      phasePlanner.activePlan.currentPhaseIndex > 0
+    ) {
+      const timer = setTimeout(() => {
+        handlePhaseAdvance();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isGenerating, phasePlanner.activePlan?.autoAdvance, phasePlanner.activePlan?.currentPhaseIndex, phasePlanner.isComplete, handlePhaseAdvance]);
+
   const handleLoadProject = useCallback(async (projectId: string) => {
     const loaded = await loadProject(projectId);
     if (loaded) {
@@ -1341,6 +1357,11 @@ export function AIAppBuilderWorkspace() {
                     onSkip={phasePlanner.skipPhase}
                     onCancel={phasePlanner.cancelPlan}
                     isGenerating={isGenerating}
+                    onToggleAutoAdvance={phasePlanner.toggleAutoAdvance}
+                    onEditTitle={phasePlanner.editPhaseTitle}
+                    onRemovePhase={phasePlanner.removePhase}
+                    onReorder={phasePlanner.reorderPhases}
+                    totalEstimatedCredits={phasePlanner.totalEstimatedCredits}
                   />
                 )}
                 <div className="flex-1 overflow-hidden">
