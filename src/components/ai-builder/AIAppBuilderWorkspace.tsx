@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, useRef, lazy, Suspense, useMemo } from 'react';
 import { useAIAppBuilder } from '@/hooks/useAIAppBuilder';
 import { useProjectFileSystem } from '@/hooks/useProjectFileSystem';
 import { useAgentMode } from '@/hooks/useAgentMode';
@@ -101,6 +101,10 @@ import { EditHistoryTimeline } from './EditHistoryTimeline';
 import { detectSupabaseIntents, buildSupabaseContext, buildErrorDiagnosisContext, analyzeConversationComplexity } from './SupabaseConversational';
 import { MobilePWAInstall } from './MobilePWAInstall';
 import { BugReportModal } from '@/components/help/BugReportModal';
+import { EnhancedCommandPalette, type CommandAction } from './EnhancedCommandPalette';
+import { MultiFileSearchReplace } from './MultiFileSearchReplace';
+import { InBrowserTestRunner } from './InBrowserTestRunner';
+import { ExtensionSystem } from './ExtensionSystem';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -108,7 +112,7 @@ import {
   History, Variable, Image, Package, Columns, Keyboard, Rocket,
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen, Gauge,
   Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
-  Table2, ChevronsLeft, ChevronsRight, BarChart3,
+  Table2, ChevronsLeft, ChevronsRight, BarChart3, Puzzle, Play, Replace,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -272,6 +276,11 @@ export function AIAppBuilderWorkspace() {
   const [showEditHistory, setShowEditHistory] = useState(false);
   const [showBugReport, setShowBugReport] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [showEnhancedPalette, setShowEnhancedPalette] = useState(false);
+  const [showMultiSearch, setShowMultiSearch] = useState(false);
+  const [showTestRunner, setShowTestRunner] = useState(false);
+  const [showExtensions, setShowExtensions] = useState(false);
+  const [recentFiles, setRecentFiles] = useState<string[]>([]);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
@@ -1095,6 +1104,33 @@ export function AIAppBuilderWorkspace() {
     setShowOneClickDeploy(panel === 'oneClickDeploy' ? !showOneClickDeploy : false);
   };
 
+  // Track recent files
+  const handleSetActiveFile = useCallback((path: string) => {
+    setActiveFile(path);
+    setRecentFiles(prev => [path, ...prev.filter(p => p !== path)].slice(0, 10));
+  }, [setActiveFile]);
+
+  // Command palette actions
+  const commandActions = useMemo((): CommandAction[] => [
+    { id: 'preview', label: 'Switch to Preview', icon: Eye, category: 'view', shortcut: '⌘1', action: () => setRightTab('preview') },
+    { id: 'code', label: 'Switch to Code', icon: Code, category: 'view', shortcut: '⌘2', action: () => setRightTab('code') },
+    { id: 'split', label: 'Switch to Split View', icon: Columns, category: 'view', shortcut: '⌘3', action: () => setRightTab('split') },
+    { id: 'save', label: 'Save Project', icon: Settings, category: 'edit', shortcut: '⌘S', action: handleSave },
+    { id: 'undo', label: 'Undo', icon: Undo2, category: 'edit', shortcut: '⌘Z', action: handleUndo },
+    { id: 'redo', label: 'Redo', icon: Redo2, category: 'edit', shortcut: '⌘⇧Z', action: handleRedo },
+    { id: 'search', label: 'Multi-File Search & Replace', icon: Replace, category: 'edit', shortcut: '⌘⇧F', action: () => setShowMultiSearch(true), keywords: ['find', 'replace', 'search'] },
+    { id: 'test-runner', label: 'Open Test Runner', icon: Play, category: 'run', action: () => setShowTestRunner(true), keywords: ['test', 'run', 'jest', 'vitest'] },
+    { id: 'extensions', label: 'Extensions Marketplace', icon: Puzzle, category: 'panel', action: () => setShowExtensions(true), keywords: ['plugin', 'extension', 'marketplace'] },
+    { id: 'terminal', label: 'Toggle Terminal', icon: Terminal, category: 'panel', shortcut: '⌘`', action: () => setShowTerminal(t => !t) },
+    { id: 'files', label: 'Toggle File Tree', icon: FolderOpen, category: 'panel', action: () => setShowFileTree(t => !t) },
+    { id: 'publish', label: 'Publish App', icon: Rocket, category: 'deploy', action: handlePublish, keywords: ['deploy', 'publish'] },
+    { id: 'templates', label: 'Open Templates', icon: Layers, category: 'panel', action: () => setShowTemplates(true) },
+    { id: 'analytics', label: 'Build Analytics', icon: BarChart3, category: 'panel', action: () => setShowBuildAnalytics(true) },
+    { id: 'database', label: 'Database Panel', icon: Database, category: 'panel', action: () => openPanel('database'), keywords: ['supabase', 'db'] },
+    { id: 'console', label: 'Toggle Console', icon: Activity, category: 'panel', action: () => setShowConsole(c => !c) },
+    { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, category: 'panel', shortcut: '⌘/', action: () => setShowShortcuts(true) },
+  ], [handleSave, handleUndo, handleRedo, handlePublish, openPanel]);
+
   // ─── Left sidebar icon bar items ───
   const sidebarIcons = [
     // ── Data & Auth ──
@@ -1532,6 +1568,9 @@ export function AIAppBuilderWorkspace() {
                       { icon: Activity, label: 'Console', tooltip: 'View runtime logs and error output', active: showConsole, onClick: () => setShowConsole(!showConsole), color: 'text-amber-400' },
                       { icon: Keyboard, label: 'Shortcuts', tooltip: 'View all keyboard shortcuts', active: false, onClick: () => setShowShortcuts(true), color: 'text-slate-400' },
                       { icon: Bug, label: 'Report Bug', tooltip: 'Report an issue with the builder', active: false, onClick: () => setShowBugReport(true), color: 'text-red-400', hoverColor: 'hover:text-red-400/70 hover:bg-red-500/10' },
+                      { icon: Puzzle, label: 'Extensions', tooltip: 'Browse and install extensions', active: showExtensions, onClick: () => setShowExtensions(!showExtensions), color: 'text-violet-400', activeColor: 'text-violet-400 bg-violet-500/10' },
+                      { icon: Play, label: 'Test Runner', tooltip: 'Auto-detect and run tests', active: showTestRunner, onClick: () => setShowTestRunner(!showTestRunner), color: 'text-green-400', activeColor: 'text-green-400 bg-green-500/10' },
+                      { icon: Replace, label: 'Search & Replace', tooltip: 'Multi-file search and replace', active: showMultiSearch, onClick: () => setShowMultiSearch(!showMultiSearch), color: 'text-sky-400', activeColor: 'text-sky-400 bg-sky-500/10' },
                     ].map(item => (
                       <Tooltip key={item.label} delayDuration={sidebarExpanded ? 999999 : 300}>
                         <TooltipTrigger asChild>
@@ -1605,6 +1644,9 @@ export function AIAppBuilderWorkspace() {
                 <ChangelogPanel open={showChangelog} onClose={() => setShowChangelog(false)} entries={changelogEntries} />
                 <TestingDebugSuite open={showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); toast.success('Test generated'); }} projectFiles={project.files} />
                 <GPTConnectorPanel open={showGPTConnector} onClose={() => setShowGPTConnector(false)} linkedGPT={linkedGPT} onLinkGPT={setLinkedGPT} onUnlinkGPT={() => setLinkedGPT(null)} />
+                <MultiFileSearchReplace open={showMultiSearch} onClose={() => setShowMultiSearch(false)} files={project.files} onReplaceInFiles={handleReplaceInFiles} onSelectFile={handleSetActiveFile} onSwitchToCode={() => setRightTab('code')} />
+                <InBrowserTestRunner open={showTestRunner} onClose={() => setShowTestRunner(false)} files={project.files} onGenerateTest={(filePath) => { sendMessage(`Generate unit tests for ${filePath}`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onSendToChat={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
+                <ExtensionSystem open={showExtensions} onClose={() => setShowExtensions(false)} />
                 {showPackages && (
                   <div className="w-64 border-r border-white/[0.06] bg-[#0d0d14] overflow-hidden">
                     <PackageManager packages={cdnPackages} onAddPackage={(pkg) => setCdnPackages(prev => [...prev, pkg])} onRemovePackage={(name) => setCdnPackages(prev => prev.filter(p => p.name !== name))} />
@@ -1769,6 +1811,7 @@ export function AIAppBuilderWorkspace() {
       <DiffReviewPanel isOpen={showDiffReview} onClose={() => setShowDiffReview(false)} changes={pendingDiffChanges} onApprove={() => { pendingDiffChanges.forEach(c => upsertFile(c.path, c.newContent)); setPendingDiffChanges([]); setShowDiffReview(false); toast.success('Changes applied'); }} onReject={() => { setPendingDiffChanges([]); setShowDiffReview(false); toast.info('Changes rejected'); }} onApproveFile={(path) => { const c = pendingDiffChanges.find(ch => ch.path === path); if (c) upsertFile(c.path, c.newContent); }} onRejectFile={() => {}} />
       <QuickFileSwitcher open={showQuickSwitcher} onOpenChange={setShowQuickSwitcher} files={project.files} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} />
       <BugReportModal open={showBugReport} onOpenChange={setShowBugReport} />
+      <EnhancedCommandPalette open={showEnhancedPalette} onOpenChange={setShowEnhancedPalette} files={project.files} actions={commandActions} onSelectFile={(path) => { handleSetActiveFile(path); setRightTab('code'); }} recentFiles={recentFiles} />
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
