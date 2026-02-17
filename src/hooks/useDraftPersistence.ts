@@ -15,23 +15,34 @@ export interface DraftData {
 export function useDraftPersistence() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const writeDraft = useCallback((name: string, files: ProjectFile[], messages: any[]) => {
+    try {
+      const draft: DraftData = {
+        name,
+        files: files.map(f => ({ path: f.path, content: f.content, language: f.language })),
+        messages,
+        savedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      // localStorage full or unavailable — silently ignore
+    }
+  }, []);
+
   const saveDraft = useCallback((name: string, files: ProjectFile[], messages: any[]) => {
     if (files.length === 0 && messages.length === 0) return;
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
-      try {
-        const draft: DraftData = {
-          name,
-          files: files.map(f => ({ path: f.path, content: f.content, language: f.language })),
-          messages,
-          savedAt: new Date().toISOString(),
-        };
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-      } catch {
-        // localStorage full or unavailable — silently ignore
-      }
+      writeDraft(name, files, messages);
     }, DEBOUNCE_MS);
-  }, []);
+  }, [writeDraft]);
+
+  /** Save immediately — use on visibilitychange / beforeunload / unmount */
+  const saveDraftImmediate = useCallback((name: string, files: ProjectFile[], messages: any[]) => {
+    if (files.length === 0 && messages.length === 0) return;
+    if (timer.current) clearTimeout(timer.current);
+    writeDraft(name, files, messages);
+  }, [writeDraft]);
 
   const loadDraft = useCallback((): DraftData | null => {
     try {
@@ -64,5 +75,5 @@ export function useDraftPersistence() {
     };
   }, []);
 
-  return { saveDraft, loadDraft, clearDraft, hasDraft };
+  return { saveDraft, saveDraftImmediate, loadDraft, clearDraft, hasDraft };
 }
