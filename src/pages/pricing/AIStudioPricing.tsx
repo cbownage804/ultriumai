@@ -40,40 +40,12 @@ const AIStudioPricing = () => {
   }, [trackPricingView]);
 
   const handleGetStarted = async (planId?: string, tierIndex?: number, annual?: boolean) => {
-    if (!user) {
-      navigate('/auth?redirect=' + encodeURIComponent('/pricing/ai-studio'));
-      return;
-    }
-
-    if (planId && planId !== 'free' && planId !== 'enterprise') {
-      const tiers = CREDIT_TIERS[planId as keyof typeof CREDIT_TIERS];
-      const tier = tiers[tierIndex ?? 0];
-      const amount = annual ? tier.annualPrice : tier.monthlyPrice;
-      trackPlanSelect(planId, 'ai_studio');
-      trackCheckoutStart(planId, amount, 'ai_studio');
-      setCheckoutLoading(planId);
-
-      try {
-        const { data, error } = await supabase.functions.invoke('ai-studio-checkout', {
-          body: {
-            plan_id: planId,
-            credits: tier.credits,
-            billing_interval: annual ? 'annual' : 'monthly',
-          }
-        });
-
-        if (error) throw error;
-        if (data?.upgraded) {
-          toast.success(data.message || 'Plan upgraded successfully!');
-          if (data.redirectUrl) window.location.href = data.redirectUrl;
-          return;
-        }
-        if (data?.url) window.open(data.url, '_blank');
-      } catch (err) {
-        console.error('Checkout error:', err);
-        toast.error('Failed to start checkout');
-      } finally {
-        setCheckoutLoading(null);
+    // Free plan or no plan specified — go to AI Studio dashboard (auth if needed)
+    if (!planId || planId === 'free') {
+      if (!user) {
+        navigate('/auth?redirect=' + encodeURIComponent('/ai-studio'));
+      } else {
+        navigate('/ai-studio');
       }
       return;
     }
@@ -83,7 +55,41 @@ const AIStudioPricing = () => {
       return;
     }
 
-    navigate('/ai-studio');
+    // Paid plans — require auth first
+    if (!user) {
+      navigate('/auth?redirect=' + encodeURIComponent('/pricing/ai-studio'));
+      return;
+    }
+
+    const tiers = CREDIT_TIERS[planId as keyof typeof CREDIT_TIERS];
+    const tier = tiers[tierIndex ?? 0];
+    const amount = annual ? tier.annualPrice : tier.monthlyPrice;
+    trackPlanSelect(planId, 'ai_studio');
+    trackCheckoutStart(planId, amount, 'ai_studio');
+    setCheckoutLoading(planId);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-studio-checkout', {
+        body: {
+          plan_id: planId,
+          credits: tier.credits,
+          billing_interval: annual ? 'annual' : 'monthly',
+        }
+      });
+
+      if (error) throw error;
+      if (data?.upgraded) {
+        toast.success(data.message || 'Plan upgraded successfully!');
+        if (data.redirectUrl) window.location.href = data.redirectUrl;
+        return;
+      }
+      if (data?.url) window.open(data.url, '_blank');
+    } catch (err) {
+      console.error('Checkout error:', err);
+      toast.error('Failed to start checkout');
+    } finally {
+      setCheckoutLoading(null);
+    }
   };
 
   const handleBuyCredits = async (packId: string) => {
