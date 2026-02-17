@@ -494,6 +494,24 @@ export function BuilderChatPanel({
           </div>
         )}
 
+        {/* Conversational summary after completed builds — Lovable style */}
+        {isCompleted && !text && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="prose prose-sm prose-invert max-w-none text-[13px] text-white/60 leading-relaxed pt-1 [&_strong]:text-white/80"
+          >
+            <ReactMarkdown>
+              {totalFiles > 1
+                ? `I've updated **${totalFiles} files** with the changes you requested. The preview should reflect the updates — let me know if you'd like any tweaks!`
+                : fileNames[0]
+                  ? `I've updated **${fileNames[0].split('/').pop()}** with your changes. Check the preview and let me know if anything needs adjusting!`
+                  : `I've applied your changes to the project. Take a look at the preview and let me know how it looks!`}
+            </ReactMarkdown>
+          </motion.div>
+        )}
+
         {/* Inline error recovery — show runtime errors with Fix button */}
         {msg.inlineError && !isStreaming && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/[0.06] border border-red-500/20 text-xs">
