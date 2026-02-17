@@ -113,6 +113,8 @@ import { PluginMarketplace } from './PluginMarketplace';
 import { usePluginRegistry } from '@/hooks/usePluginRegistry';
 import { CollaborationPanel } from './CollaborationPanel';
 import { useCollaborationEngine } from '@/hooks/useCollaborationEngine';
+import { APIBuilderPanel } from './APIBuilderPanel';
+import { useAPIBuilder } from '@/hooks/useAPIBuilder';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -120,7 +122,7 @@ import {
   History, Variable, Image, Package, Columns, Keyboard, Rocket,
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen, Gauge,
   Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
-  Table2, ChevronsLeft, ChevronsRight, BarChart3, Puzzle, Play, Replace, Palette,
+  Table2, ChevronsLeft, ChevronsRight, BarChart3, Puzzle, Play, Replace, Palette, Server,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -312,6 +314,8 @@ export function AIAppBuilderWorkspace() {
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
   const [showCollaboration, setShowCollaboration] = useState(false);
   const collaborationEngine = useCollaborationEngine(currentProjectId);
+  const [showAPIBuilder, setShowAPIBuilder] = useState(false);
+  const apiBuilder = useAPIBuilder();
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -1617,6 +1621,7 @@ export function AIAppBuilderWorkspace() {
                       { icon: Play, label: 'Test Runner', tooltip: 'Auto-detect and run tests', active: showTestRunner, onClick: () => setShowTestRunner(!showTestRunner), color: 'text-green-400', activeColor: 'text-green-400 bg-green-500/10' },
                       { icon: Replace, label: 'Search & Replace', tooltip: 'Multi-file search and replace', active: showMultiSearch, onClick: () => setShowMultiSearch(!showMultiSearch), color: 'text-sky-400', activeColor: 'text-sky-400 bg-sky-500/10' },
                       { icon: Users, label: 'Collaborate', tooltip: 'Real-time collaboration with teammates', active: showCollaboration, onClick: () => setShowCollaboration(!showCollaboration), color: 'text-cyan-400', activeColor: 'text-cyan-400 bg-cyan-500/10' },
+                      { icon: Server, label: 'API Builder', tooltip: 'Design API endpoints with mock server', active: showAPIBuilder, onClick: () => setShowAPIBuilder(!showAPIBuilder), color: 'text-orange-400', activeColor: 'text-orange-400 bg-orange-500/10' },
                     ].map(item => (
                       <Tooltip key={item.label} delayDuration={sidebarExpanded ? 999999 : 300}>
                         <TooltipTrigger asChild>
@@ -1710,6 +1715,22 @@ export function AIAppBuilderWorkspace() {
                   onUnlockFile={collaborationEngine.unlockFile}
                   onNavigateToFile={(path) => { setActiveFile(path); setRightTab('code'); }}
                   onAddSimulated={collaborationEngine.addSimulatedParticipant}
+                />
+                <APIBuilderPanel
+                  open={showAPIBuilder}
+                  onClose={() => setShowAPIBuilder(false)}
+                  endpoints={apiBuilder.endpoints}
+                  requestLogs={apiBuilder.requestLogs}
+                  isMockServerRunning={apiBuilder.isMockServerRunning}
+                  allTags={apiBuilder.allTags}
+                  onAddEndpoint={apiBuilder.addEndpoint}
+                  onRemoveEndpoint={apiBuilder.removeEndpoint}
+                  onDuplicateEndpoint={apiBuilder.duplicateEndpoint}
+                  onLoadTemplates={apiBuilder.loadTemplates}
+                  onSimulateRequest={apiBuilder.simulateRequest}
+                  onToggleMockServer={apiBuilder.toggleMockServer}
+                  onExportOpenAPI={apiBuilder.exportOpenAPI}
+                  onClearLogs={apiBuilder.clearLogs}
                 />
                 {showDesignSystem && (
                   <div className="w-72 border-r border-border overflow-hidden">
