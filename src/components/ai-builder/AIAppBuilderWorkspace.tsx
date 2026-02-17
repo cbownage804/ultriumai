@@ -111,6 +111,8 @@ import { useAPIBuilder } from '@/hooks/useAPIBuilder';
 import { ShortcutsHint } from './ShortcutsHint';
 import { useProjectReview } from './useProjectReview';
 import { ProjectReviewPanel } from './ProjectReviewPanel';
+import { useSupabaseConnection } from '@/hooks/useSupabaseConnection';
+import { SupabaseIDEPanel } from './SupabaseIDEPanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -319,6 +321,8 @@ export function AIAppBuilderWorkspace() {
   const [showAPIBuilder, setShowAPIBuilder] = useState(false);
   const apiBuilder = useAPIBuilder();
   const projectReview = useProjectReview();
+  const supabaseConnection = useSupabaseConnection();
+  const [showSupabaseIDE, setShowSupabaseIDE] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -1186,6 +1190,7 @@ export function AIAppBuilderWorkspace() {
   const sidebarIcons = [
     // ── Data & Auth ──
     { id: 'database', icon: Database, label: 'Database', tooltip: 'Browse and manage your database tables and records', show: !!supabaseConfig, active: showDatabase || showDbExplorer, group: 'data', color: 'text-emerald-400', activeBg: 'bg-emerald-500/10' },
+    { id: 'supabaseIDE' as any, icon: Server, label: 'Supabase IDE', tooltip: 'Full Supabase IDE — schema browser, query runner, auth & storage', show: true, active: showSupabaseIDE, group: 'data', color: 'text-emerald-300', activeBg: 'bg-emerald-500/10' },
     { id: 'auth', icon: Shield, label: 'Auth', tooltip: 'Configure user authentication and login settings', show: !!supabaseConfig, active: showAuth, group: 'data', color: 'text-blue-400', activeBg: 'bg-blue-500/10' },
     { id: 'storage', icon: FolderOpen, label: 'Storage', tooltip: 'Upload and manage files like images and documents', show: !!supabaseConfig, active: showStorage, group: 'data', color: 'text-amber-400', activeBg: 'bg-amber-500/10' },
     { id: 'edgeFunctions', icon: Zap, label: 'Edge Functions', tooltip: 'Create serverless backend functions that run on the edge', show: true, active: showEdgeFunctions, group: 'data', color: 'text-yellow-400', activeBg: 'bg-yellow-500/10' },
@@ -1583,17 +1588,19 @@ export function AIAppBuilderWorkspace() {
                                     whileHover={{ scale: sidebarExpanded ? 1 : 1.12 }}
                                     whileTap={{ scale: 0.95 }}
                                     transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                                    onClick={() => {
-                                      if (item.id === 'review') {
-                                        if (projectReview.showPanel) {
-                                          projectReview.setShowPanel(false);
-                                        } else {
-                                          projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel));
-                                        }
-                                      } else {
-                                        openPanel(item.id as any);
-                                      }
-                                    }}
+                                     onClick={() => {
+                                       if (item.id === 'review') {
+                                         if (projectReview.showPanel) {
+                                           projectReview.setShowPanel(false);
+                                         } else {
+                                           projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel));
+                                         }
+                                       } else if (item.id === 'supabaseIDE') {
+                                         setShowSupabaseIDE(!showSupabaseIDE);
+                                       } else {
+                                         openPanel(item.id as any);
+                                       }
+                                     }}
                                     className={cn(
                                       "rounded-md flex items-center gap-2 transition-all text-left",
                                       sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
@@ -1722,6 +1729,7 @@ export function AIAppBuilderWorkspace() {
                     onGoToFile={(file, line) => { handleSetActiveFile(file); setRightTab('code'); }}
                   />
                 )}
+                <SupabaseIDEPanel open={showSupabaseIDE} onClose={() => setShowSupabaseIDE(false)} connection={supabaseConnection} onGenerateCode={(code, fileName) => { upsertFile(fileName, code); setRightTab('code'); setActiveFile(fileName); }} />
                 <MultiFileSearchReplace open={showMultiSearch} onClose={() => setShowMultiSearch(false)} files={project.files} onReplaceInFiles={handleReplaceInFiles} onSelectFile={handleSetActiveFile} onSwitchToCode={() => setRightTab('code')} />
                 <InBrowserTestRunner open={showTestRunner} onClose={() => setShowTestRunner(false)} files={project.files} onGenerateTest={(filePath) => { sendMessage(`Generate unit tests for ${filePath}`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onSendToChat={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
                 <PluginMarketplace open={showExtensions} onClose={() => setShowExtensions(false)} catalogue={pluginRegistry.catalogue} installed={pluginRegistry.installed} onInstall={pluginRegistry.installPlugin} onUninstall={pluginRegistry.uninstallPlugin} onToggle={pluginRegistry.togglePlugin} onUpdateConfig={pluginRegistry.updatePluginConfig} />
