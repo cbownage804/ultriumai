@@ -34,10 +34,15 @@ interface BuilderPreviewPanelProps {
   onAutoFixError?: (error: PreviewError) => void;
   /** External iframe ref for hot-patching */
   externalIframeRef?: React.RefObject<HTMLIFrameElement | null>;
+  /** External viewport mode control */
+  externalViewportMode?: ViewportMode;
+  onExternalViewportChange?: (mode: ViewportMode) => void;
 }
 
-export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef }: BuilderPreviewPanelProps) {
-  const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
+export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange }: BuilderPreviewPanelProps) {
+  const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
+  const viewportMode = externalViewportMode ?? internalViewportMode;
+  const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
