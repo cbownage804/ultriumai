@@ -4,7 +4,13 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, Lock, ArrowRight, Zap, LogOut, Settings } from 'lucide-react';
+import { Loader2, Sparkles, Lock, ArrowRight, Zap, LogOut, Settings, ChevronDown, Shield, Bot, Cpu } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { AppSwitcher } from '@/components/AppSwitcher';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -279,9 +285,28 @@ export default function ProductHub() {
             <Button variant="ghost" size="sm" onClick={() => navigate('/profile')} className="hover:bg-muted">
               Profile
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/pricing')} className="border-primary/30 hover:border-primary hover:bg-primary/5 transition-all">
-              Upgrade
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="border-primary/30 hover:border-primary hover:bg-primary/5 transition-all">
+                  Upgrade
+                  <ChevronDown className="h-3.5 w-3.5 ml-1.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-popover z-50">
+                <DropdownMenuItem onClick={() => navigate('/pricing/ai-studio')} className="cursor-pointer">
+                  <Bot className="h-4 w-4 mr-2 text-primary" />
+                  AI Studio
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/pricing/safesuite')} className="cursor-pointer">
+                  <Shield className="h-4 w-4 mr-2 text-emerald-500" />
+                  SafeSuite
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/pricing/vanguard')} className="cursor-pointer">
+                  <Cpu className="h-4 w-4 mr-2 text-cyan-500" />
+                  Vanguard
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="hover:text-destructive hover:bg-destructive/10">
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
