@@ -86,23 +86,18 @@ import { PhasePlannerPanel } from './PhasePlannerPanel';
 import { QuestionsCard } from './QuestionsCard';
 import { useBuilderQuestions } from './useBuilderQuestions';
 import { DeployPipelinePanel } from './DeployPipelinePanel';
-import { BuildAnalyticsPanel } from './BuildAnalyticsPanel';
 import { useOutputValidation } from './useOutputValidation';
 import { useBuildAnalytics } from '@/hooks/useBuildAnalytics';
 import { ComponentPalette } from './ComponentPalette';
-import { PerformanceProfiler } from './PerformanceProfiler';
 import { ChangelogPanel, type ChangelogEntry } from './ChangelogPanel';
-import { LiveCursors } from './LiveCursors';
 import { AIAutocompleteIndicator } from './AIAutocomplete';
 import { BuilderHelpCenter } from './BuilderHelpCenter';
 import { WelcomeOverlay } from './WelcomeOverlay';
 import { ConfirmDialog } from './ConfirmDialog';
 import { GPTConnectorPanel, type LinkedGPTConfig } from './GPTConnectorPanel';
 import { SetupWizard } from './SetupWizard';
-import { SchemaDesigner } from './SchemaDesigner';
 import { OneClickDeploy } from './OneClickDeploy';
 import { EditHistoryTimeline } from './EditHistoryTimeline';
-import { DesignSystemPanel } from './DesignSystemPanel';
 import { detectSupabaseIntents, buildSupabaseContext, buildErrorDiagnosisContext, analyzeConversationComplexity } from './SupabaseConversational';
 import { MobilePWAInstall } from './MobilePWAInstall';
 import { BugReportModal } from '@/components/help/BugReportModal';
@@ -111,10 +106,9 @@ import { MultiFileSearchReplace } from './MultiFileSearchReplace';
 import { InBrowserTestRunner } from './InBrowserTestRunner';
 import { PluginMarketplace } from './PluginMarketplace';
 import { usePluginRegistry } from '@/hooks/usePluginRegistry';
-import { CollaborationPanel } from './CollaborationPanel';
 import { useCollaborationEngine } from '@/hooks/useCollaborationEngine';
-import { APIBuilderPanel } from './APIBuilderPanel';
 import { useAPIBuilder } from '@/hooks/useAPIBuilder';
+import { ShortcutsHint } from './ShortcutsHint';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -135,6 +129,12 @@ const AuthConfigPanel = lazy(() => import('./AuthConfigPanel').then(m => ({ defa
 const KnowledgePanel = lazy(() => import('./KnowledgePanel').then(m => ({ default: m.KnowledgePanel })));
 const StorageBrowser = lazy(() => import('./StorageBrowser').then(m => ({ default: m.StorageBrowser })));
 const EdgeFunctionEditor = lazy(() => import('./EdgeFunctionEditor').then(m => ({ default: m.EdgeFunctionEditor })));
+const PerformanceProfilerLazy = lazy(() => import('./PerformanceProfiler').then(m => ({ default: m.PerformanceProfiler })));
+const BuildAnalyticsPanelLazy = lazy(() => import('./BuildAnalyticsPanel').then(m => ({ default: m.BuildAnalyticsPanel })));
+const SchemaDesignerLazy = lazy(() => import('./SchemaDesigner').then(m => ({ default: m.SchemaDesigner })));
+const DesignSystemPanelLazy = lazy(() => import('./DesignSystemPanel').then(m => ({ default: m.DesignSystemPanel })));
+const CollaborationPanelLazy = lazy(() => import('./CollaborationPanel').then(m => ({ default: m.CollaborationPanel })));
+const APIBuilderPanelLazy = lazy(() => import('./APIBuilderPanel').then(m => ({ default: m.APIBuilderPanel })));
 
 const PanelLoader = () => <div className="flex items-center justify-center h-full text-white/15 text-xs">Loading...</div>;
 
@@ -1208,8 +1208,9 @@ export function AIAppBuilderWorkspace() {
   return (
     <TooltipProvider delayDuration={300}>
       <div className="h-full w-full flex flex-col bg-[#09090b] overflow-hidden relative">
-      <WelcomeOverlay />
+      <WelcomeOverlay onQuickStart={(prompt) => handleSend(prompt)} />
       <OnboardingTour />
+      <ShortcutsHint />
       <ConfirmDialog
         open={!!confirmAction}
         onClose={() => setConfirmAction(null)}
@@ -1655,12 +1656,14 @@ export function AIAppBuilderWorkspace() {
                 </Suspense>
                 <ActivityFeed open={showActivity} onClose={() => setShowActivity(false)} entries={activityEntries} />
                 <ExportGuidePanel open={showExportGuide} onClose={() => setShowExportGuide(false)} />
-                <SchemaDesigner
-                  open={showSchemaDesigner}
-                  onClose={() => setShowSchemaDesigner(false)}
-                  onGenerateSQL={(sql) => { navigator.clipboard.writeText(sql); toast.success('SQL copied — paste into Supabase SQL editor'); }}
-                  onSendToChat={(msg) => { sendMessage(msg, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }}
-                />
+                <Suspense fallback={<PanelLoader />}>
+                  <SchemaDesignerLazy
+                    open={showSchemaDesigner}
+                    onClose={() => setShowSchemaDesigner(false)}
+                    onGenerateSQL={(sql) => { navigator.clipboard.writeText(sql); toast.success('SQL copied — paste into Supabase SQL editor'); }}
+                    onSendToChat={(msg) => { sendMessage(msg, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }}
+                  />
+                </Suspense>
                 <OneClickDeploy
                   open={showOneClickDeploy}
                   onClose={() => setShowOneClickDeploy(false)}
@@ -1690,58 +1693,64 @@ export function AIAppBuilderWorkspace() {
                 <DatabaseExplorer open={showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
                 <ComponentLibrary open={showComponentLib} onClose={() => setShowComponentLib(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); } }} onApplyTheme={() => {}} />
                 <DeployPipelinePanel open={showDeployPipeline} onClose={() => setShowDeployPipeline(false)} onDeploy={handlePublish} publishedUrl={publishedUrl} isDeploying={isGenerating} projectName={project.name} onOpenDomainPanel={() => { setShowDeployPipeline(false); setShowDomainPanel(true); }} />
-                <PerformanceProfiler open={showPerformanceProfiler} onClose={() => setShowPerformanceProfiler(false)} files={project.files} cdnPackages={cdnPackages} />
-                <BuildAnalyticsPanel open={showBuildAnalytics} onClose={() => setShowBuildAnalytics(false)} analytics={buildAnalytics.getAnalytics()} />
+                <Suspense fallback={<PanelLoader />}><PerformanceProfilerLazy open={showPerformanceProfiler} onClose={() => setShowPerformanceProfiler(false)} files={project.files} cdnPackages={cdnPackages} /></Suspense>
+                <Suspense fallback={<PanelLoader />}><BuildAnalyticsPanelLazy open={showBuildAnalytics} onClose={() => setShowBuildAnalytics(false)} analytics={buildAnalytics.getAnalytics()} /></Suspense>
                 <ChangelogPanel open={showChangelog} onClose={() => setShowChangelog(false)} entries={changelogEntries} />
                 <TestingDebugSuite open={showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); toast.success('Test generated'); }} projectFiles={project.files} />
                 <GPTConnectorPanel open={showGPTConnector} onClose={() => setShowGPTConnector(false)} linkedGPT={linkedGPT} onLinkGPT={setLinkedGPT} onUnlinkGPT={() => setLinkedGPT(null)} />
                 <MultiFileSearchReplace open={showMultiSearch} onClose={() => setShowMultiSearch(false)} files={project.files} onReplaceInFiles={handleReplaceInFiles} onSelectFile={handleSetActiveFile} onSwitchToCode={() => setRightTab('code')} />
                 <InBrowserTestRunner open={showTestRunner} onClose={() => setShowTestRunner(false)} files={project.files} onGenerateTest={(filePath) => { sendMessage(`Generate unit tests for ${filePath}`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onSendToChat={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
                 <PluginMarketplace open={showExtensions} onClose={() => setShowExtensions(false)} catalogue={pluginRegistry.catalogue} installed={pluginRegistry.installed} onInstall={pluginRegistry.installPlugin} onUninstall={pluginRegistry.uninstallPlugin} onToggle={pluginRegistry.togglePlugin} onUpdateConfig={pluginRegistry.updatePluginConfig} />
-                <CollaborationPanel
-                  open={showCollaboration}
-                  onClose={() => setShowCollaboration(false)}
-                  isConnected={collaborationEngine.isConnected}
-                  participants={collaborationEngine.participants}
-                  messages={collaborationEngine.messages}
-                  awareness={collaborationEngine.awareness}
-                  localUserId={collaborationEngine.localUserId}
-                  followingUserId={collaborationEngine.followingUserId}
-                  onStartSession={collaborationEngine.startSession}
-                  onEndSession={collaborationEngine.endSession}
-                  onSendMessage={collaborationEngine.sendMessage}
-                  onFollowUser={collaborationEngine.followUser}
-                  onLockFile={collaborationEngine.lockFile}
-                  onUnlockFile={collaborationEngine.unlockFile}
-                  onNavigateToFile={(path) => { setActiveFile(path); setRightTab('code'); }}
-                  onAddSimulated={collaborationEngine.addSimulatedParticipant}
-                />
-                <APIBuilderPanel
-                  open={showAPIBuilder}
-                  onClose={() => setShowAPIBuilder(false)}
-                  endpoints={apiBuilder.endpoints}
-                  requestLogs={apiBuilder.requestLogs}
-                  isMockServerRunning={apiBuilder.isMockServerRunning}
-                  allTags={apiBuilder.allTags}
-                  onAddEndpoint={apiBuilder.addEndpoint}
-                  onRemoveEndpoint={apiBuilder.removeEndpoint}
-                  onDuplicateEndpoint={apiBuilder.duplicateEndpoint}
-                  onLoadTemplates={apiBuilder.loadTemplates}
-                  onSimulateRequest={apiBuilder.simulateRequest}
-                  onToggleMockServer={apiBuilder.toggleMockServer}
-                  onExportOpenAPI={apiBuilder.exportOpenAPI}
-                  onClearLogs={apiBuilder.clearLogs}
-                />
+                <Suspense fallback={<PanelLoader />}>
+                  <CollaborationPanelLazy
+                    open={showCollaboration}
+                    onClose={() => setShowCollaboration(false)}
+                    isConnected={collaborationEngine.isConnected}
+                    participants={collaborationEngine.participants}
+                    messages={collaborationEngine.messages}
+                    awareness={collaborationEngine.awareness}
+                    localUserId={collaborationEngine.localUserId}
+                    followingUserId={collaborationEngine.followingUserId}
+                    onStartSession={collaborationEngine.startSession}
+                    onEndSession={collaborationEngine.endSession}
+                    onSendMessage={collaborationEngine.sendMessage}
+                    onFollowUser={collaborationEngine.followUser}
+                    onLockFile={collaborationEngine.lockFile}
+                    onUnlockFile={collaborationEngine.unlockFile}
+                    onNavigateToFile={(path) => { setActiveFile(path); setRightTab('code'); }}
+                    onAddSimulated={collaborationEngine.addSimulatedParticipant}
+                  />
+                </Suspense>
+                <Suspense fallback={<PanelLoader />}>
+                  <APIBuilderPanelLazy
+                    open={showAPIBuilder}
+                    onClose={() => setShowAPIBuilder(false)}
+                    endpoints={apiBuilder.endpoints}
+                    requestLogs={apiBuilder.requestLogs}
+                    isMockServerRunning={apiBuilder.isMockServerRunning}
+                    allTags={apiBuilder.allTags}
+                    onAddEndpoint={apiBuilder.addEndpoint}
+                    onRemoveEndpoint={apiBuilder.removeEndpoint}
+                    onDuplicateEndpoint={apiBuilder.duplicateEndpoint}
+                    onLoadTemplates={apiBuilder.loadTemplates}
+                    onSimulateRequest={apiBuilder.simulateRequest}
+                    onToggleMockServer={apiBuilder.toggleMockServer}
+                    onExportOpenAPI={apiBuilder.exportOpenAPI}
+                    onClearLogs={apiBuilder.clearLogs}
+                  />
+                </Suspense>
                 {showDesignSystem && (
                   <div className="w-72 border-r border-border overflow-hidden">
-                    <DesignSystemPanel
-                      onInjectCSS={(css) => {
-                        const existingCSS = project.files.find(f => f.path === 'design-tokens.css');
-                        upsertFile('design-tokens.css', css);
-                        if (!existingCSS) toast.success('Created design-tokens.css');
-                      }}
-                      onClose={() => setShowDesignSystem(false)}
-                    />
+                    <Suspense fallback={<PanelLoader />}>
+                      <DesignSystemPanelLazy
+                        onInjectCSS={(css) => {
+                          const existingCSS = project.files.find(f => f.path === 'design-tokens.css');
+                          upsertFile('design-tokens.css', css);
+                          if (!existingCSS) toast.success('Created design-tokens.css');
+                        }}
+                        onClose={() => setShowDesignSystem(false)}
+                      />
+                    </Suspense>
                   </div>
                 )}
                 {showPackages && (
