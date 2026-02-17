@@ -69,11 +69,37 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
 
   for (const line of lines) {
     const fileMatch = line.match(/^===FILE:\s*(.+?)===$/);
+    const deleteMatch = line.match(/^===DELETE:\s*(.+?)===$/);
     if (fileMatch) {
       insideFile = true;
       fileNames.push(fileMatch[1].trim());
+    } else if (deleteMatch) {
+      insideFile = true;
     } else if (insideFile) {
-      continue;
+      // Check if we've exited the file block — a blank line followed by conversational text
+      // or a new ===FILE: marker means we left the file section
+      if (!line.trim()) {
+        // Could be end of file — peek ahead by buffering blank lines
+        // For simplicity, just skip blank lines inside files
+        continue;
+      }
+      // If this line looks like conversational prose, switch back to text mode
+      const trimmed = line.trim();
+      const conversationalPatterns = [
+        /^(#{1,4}\s)/,                          // Markdown headings
+        /^(what'?s|would you|let me|here'?s|i('?ve| have)|shall|want me|feel free|happy to|hope this)/i,
+        /^(Great|Perfect|Done|Now |Next |The app|Your app|I've |Here are|Here is|Let me|I can|This )/i,
+        /^(🎉|👋|✅|🚀|💡|📝|🔧)/,
+        /^\*\*[\w\s]+\*\*[.:]/,                 // **Bold heading**:
+        /^\d+\.\s+\*\*[A-Z]/,                   // Numbered bold list
+        /^[-•]\s+\*\*[A-Z]/,                     // Bullet bold list
+        /^[-•]\s+[A-Z][a-z].*[:.]$/,             // Bullet prose
+      ];
+      if (conversationalPatterns.some(r => r.test(trimmed))) {
+        insideFile = false;
+        textLines.push(line);
+      }
+      // Otherwise still inside file content, skip
     } else {
       textLines.push(line);
     }
@@ -83,7 +109,6 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
   // Strip HTML code blocks
   text = text.replace(/```html\n?[\s\S]*?```/g, '').trim();
   // Hide raw JSON planning objects (approach, steps, filesToCreate, etc.)
-  // Check if content looks like a planning JSON (even if incomplete/streaming)
   if (/^\s*\{/.test(text) && /["'](?:approach|filesToCreate|steps|filesToModify|dependencies)["']\s*:/.test(text)) {
     text = '';
   }
