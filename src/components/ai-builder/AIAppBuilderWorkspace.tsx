@@ -1061,43 +1061,6 @@ export function AIAppBuilderWorkspace() {
 
             <div className="h-5 w-px bg-white/[0.06] mx-0.5" />
 
-            {/* Lovable-style Publish button */}
-            <button
-              onClick={handlePublish}
-              disabled={!hasFiles}
-              className={cn(
-                "h-8 px-4 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all",
-                hasFiles
-                  ? publishedUrl
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 shadow-sm shadow-emerald-500/10"
-                    : "bg-gradient-to-r from-cyan-500 to-cyan-400 text-black hover:opacity-90 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40"
-                  : "bg-white/5 text-white/20 cursor-not-allowed"
-              )}
-            >
-              <Rocket className="h-3.5 w-3.5" />
-              {publishedUrl ? 'Update' : 'Publish'}
-            </button>
-
-            {publishedUrl && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a
-                    href={publishedUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-8 w-8 rounded-lg flex items-center justify-center text-emerald-400/60 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
-                  >
-                    <Globe className="h-3.5 w-3.5" />
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">View published site</TooltipContent>
-              </Tooltip>
-            )}
-
-            <div className="relative">
-              <MobilePWAInstall previewUrl={hostedPreviewUrl} publishedUrl={publishedUrl} />
-            </div>
-
             <Tooltip>
               <TooltipTrigger asChild>
                 <button onClick={() => setShowDeployPipeline(!showDeployPipeline)} className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-colors", showDeployPipeline ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}>
