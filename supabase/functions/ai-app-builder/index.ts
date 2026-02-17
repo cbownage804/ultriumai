@@ -269,6 +269,42 @@ When users ask for multi-page apps (dashboards with sections, apps with settings
 - ALWAYS include a shared layout file (layout.js or layout.html) with the navigation shell
 - Navigation items should use data-route attributes and be styled with active states
 
+CRUD OPERATIONS — CRITICAL IMPLEMENTATION RULES:
+When building any app with data (recipes, tasks, notes, products, etc.), EVERY item MUST have fully working Create, Read, Update, AND Delete operations:
+
+DELETE / REMOVE — the most commonly broken operation. Follow this EXACT pattern:
+1. Every item card/row MUST have a working delete/remove button or menu option
+2. The delete handler MUST:
+   a. Remove the item from the data array using .filter(): items = items.filter(i => i.id !== targetId)
+   b. Re-render the UI immediately after removal
+   c. Update localStorage/persistence if used
+   d. Show a confirmation dialog BEFORE deleting (optional but recommended)
+3. COMMON BUGS TO AVOID:
+   - Button exists but has NO event listener attached — ALWAYS wire onclick/addEventListener
+   - Event listener references a function that doesn't exist — ALWAYS define the function BEFORE attaching
+   - Using splice() with wrong index — prefer .filter() which is safer
+   - Forgetting to re-render after state change — ALWAYS call the render function after mutation
+   - Event delegation not matching the correct element — use closest() or data-id attributes
+   - The delete button is inside a clickable card that navigates away — use e.stopPropagation()
+4. PATTERN TO FOLLOW:
+   \`\`\`javascript
+   function removeItem(id) {
+     if (!confirm('Are you sure you want to remove this?')) return;
+     items = items.filter(item => item.id !== id);
+     saveToStorage(); // if using localStorage
+     renderItems();   // ALWAYS re-render
+   }
+   // When creating buttons, ALWAYS attach the handler:
+   btn.onclick = (e) => { e.stopPropagation(); removeItem(item.id); };
+   \`\`\`
+
+EDIT / UPDATE operations must similarly:
+1. Populate a form/modal with the existing item data
+2. Save changes back to the data array
+3. Re-render the UI and persist
+
+When a user says "fix the remove button" or "delete doesn't work", the problem is ALWAYS one of the bugs listed above. Check ALL of them systematically.
+
 SELF-CORRECTION PROTOCOL:
 When you receive an error fix request, follow this diagnostic process:
 1. READ the error message carefully — identify the exact file, line, and error type
