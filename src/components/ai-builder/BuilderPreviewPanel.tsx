@@ -37,9 +37,11 @@ interface BuilderPreviewPanelProps {
   /** External viewport mode control */
   externalViewportMode?: ViewportMode;
   onExternalViewportChange?: (mode: ViewportMode) => void;
+  /** Called when user wants to regenerate after exhausted fix attempts */
+  onStartOver?: () => void;
 }
 
-export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
@@ -484,11 +486,11 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
         onClear={() => setErrors([])}
         onFixRequest={(err) => onFixError?.(`Fix this error in my app: "${err.message}"${err.source ? ` (in ${err.source}${err.line ? `:${err.line}` : ''})` : ''}`)}
         onSmartFixRequest={(err, ctx) => {
-          // Update fixAttempts in local state
           setErrors(prev => prev.map(e => e.id === err.id ? { ...e, fixAttempts: err.fixAttempts } : e));
           onSmartFixError?.(err, ctx);
         }}
         projectFiles={projectFiles}
+        onStartOver={onStartOver}
       />
     </div>
   );
