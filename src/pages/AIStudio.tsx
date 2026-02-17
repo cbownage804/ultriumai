@@ -37,33 +37,7 @@ const AIStudio = () => {
     return <Navigate to="/auth?redirect=/ai-studio" replace />;
   }
 
-  // No credits — show upgrade prompt (free users with 0 remaining)
-  if (totalRemaining <= 0) {
-    return (
-      <div className="min-h-screen bg-background pt-16">
-        <Navigation />
-        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader className="text-center">
-              <Zap className="h-12 w-12 mx-auto mb-4 text-primary" />
-              <CardTitle>Out of Credits</CardTitle>
-              <CardDescription>
-                You've used all your available credits. Upgrade your plan or purchase a credit pack to continue building.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button className="w-full" onClick={() => window.location.href = '/pricing/ai-studio'}>
-                View Plans & Pricing
-              </Button>
-              <Button variant="outline" className="w-full" onClick={() => window.location.href = '/dashboard'}>
-                Return to Dashboard
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  // Credits warning is now shown inline on the dashboard, not as a blocker
 
   return (
     <div className="min-h-screen bg-background pt-16">
