@@ -33,7 +33,7 @@ export const GPTBuilderPreview = forwardRef<GPTBuilderPreviewHandle, GPTBuilderP
   const [showAllStarters, setShowAllStarters] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const { useCredits, totalRemaining } = useUserCredits();
+  const { deductCredits, totalRemaining } = useUserCredits();
   const themeColor = config.theme_color || '#6366f1';
   const wt = useMemo(() => ({ ...DEFAULT_WIDGET_THEME, ...(config.widget_theme || {}) }), [config.widget_theme]);
   const userBubble = wt.user_bubble || themeColor;
@@ -139,8 +139,8 @@ export const GPTBuilderPreview = forwardRef<GPTBuilderPreviewHandle, GPTBuilderP
     }
 
     // Deduct 1 credit for test chat
-    await useCredits(1, 'GPT test chat');
-  }, [previewInput, isResponding, config.system_prompt, chatMessages, totalRemaining, useCredits]);
+    await deductCredits(1, 'GPT test chat');
+  }, [previewInput, isResponding, config.system_prompt, chatMessages, totalRemaining, deductCredits]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }

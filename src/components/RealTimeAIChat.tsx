@@ -50,7 +50,7 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(false);
-  const { useCredits, totalRemaining } = useUserCredits();
+  const { deductCredits, totalRemaining } = useUserCredits();
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(() => {
     // Load saved voice from localStorage or default to Sarah
@@ -221,8 +221,8 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
 
     // Deduct credits before sending
     const creditCost = CREDIT_RATES.APP_CHAT;
-    const credited = await useCredits(creditCost, 'AI Chat');
-    if (!credited) return; // Insufficient credits — toast shown by useCredits
+    const credited = await deductCredits(creditCost, 'AI Chat');
+    if (!credited) return; // Insufficient credits — toast shown by deductCredits
 
     // Stop any currently playing audio when sending a new message
     stopCurrentAudio();

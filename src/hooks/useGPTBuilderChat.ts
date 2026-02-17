@@ -55,7 +55,7 @@ export function useGPTBuilderChat(editGptId?: string, templateId?: string) {
   const [savedGptId, setSavedGptId] = useState<string | null>(editGptId || null);
   const abortRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
-  const { useCredits: deductCredits, totalRemaining } = useUserCredits();
+  const { deductCredits, totalRemaining } = useUserCredits();
 
   // Load existing GPT for editing
   useEffect(() => {
