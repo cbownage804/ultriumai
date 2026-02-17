@@ -46,15 +46,24 @@ const DELETE_DELIMITER = /^===DELETE:\s*(.+?)===$/;
 function isConversationalLine(line: string): boolean {
   const trimmed = line.trim();
   if (!trimmed) return false;
+
+  // Quick-exit: lines starting with valid code tokens are NOT conversational
+  if (/^[<{\/\[\]()@#.;:=!&|+\-*%?~`\\]/.test(trimmed)) return false;
+  if (/^(import |export |const |let |var |function |class |return |if |else |for |while |switch |case |try |catch |throw |new |type |interface |enum |async |await |from |default |module |require|<!DOCTYPE|<\?xml)/.test(trimmed)) return false;
+  if (/^(body|html|head|div|span|p|h[1-6]|ul|ol|li|a|img|input|button|form|table|tr|td|th|nav|header|footer|main|section|article|aside|meta|link|script|style|label|select|option|textarea)\b/.test(trimmed)) return false;
+
   // Common AI conversational markers that shouldn't be in code
   const markers = [
-    /^(what'?s next|would you like|let me know|here'?s what|i('?ve| have)|shall i|want me to|feel free|happy to|hope this|this (should|will|creates?|adds?|implements?)|i (created|added|built|implemented|updated|fixed|modified))/i,
-    /^(##\s|###\s|####\s|🎉|👋|✅|🚀|💡|📝|🔧|Great|Perfect|Done|Now |Next |The app|Your app|I've |Here are|Here is|Let me|I can)/,
-    /^\*\*[\w\s]+\*\*[.:]/,  // **Bold heading**: or **Bold heading**.
-    /^```[\w]*\s*$/,          // Opening/closing code fences (``` or ```markdown)
-    /^\d+\.\s+\*\*[A-Z]/,    // Numbered bold list items like "1. **Immersive Background**"
-    /^[-•]\s+\*\*[A-Z]/,     // Bullet bold list items
-    /^[-•]\s+[A-Z][a-z].*[:.]/, // Bullet prose items
+    /^(what'?s (next|changed|new|different|updated)|would you like|let me know|here'?s what|i('?ve| have)|shall i|want me to|feel free|happy to|hope this|this (should|will|creates?|adds?|implements?|includes?|features?|is a)|i (created|added|built|implemented|updated|fixed|modified|made|changed|replaced|removed|redesigned))/i,
+    /^(#{1,4}\s)/,            // Any markdown heading (# ## ### ####)
+    /^(🎉|👋|✅|🚀|💡|📝|🔧|⚡|🎨|🔥|💪|👆|👇|📌|🏗|✨|💫|🌟|⭐|🛠|📦|🧩|🔄|🔑|📋|🎯)/,
+    /^(Great|Perfect|Done|Now |Next |The app|Your app|I've |Here are|Here is|Let me|I can|This (update|change|version|adds|creates|implements|gives|provides|includes|features|is a|should)|That'?s |These |Those |Note:|Notice|Enjoy|Congrats|Awesome|Excellent|Wonderful|Looks like|As you can see|You'?ll |We'?ve |The (new|updated|modified|redesigned|improved))/,
+    /^\*\*[\w\s]+\*\*[.:]/,   // **Bold heading**: or **Bold heading**.
+    /^```[\w]*\s*$/,           // Opening/closing code fences (``` or ```markdown)
+    /^\d+\.\s+\*\*[A-Z]/,     // Numbered bold list items like "1. **Immersive Background**"
+    /^[-•]\s+\*\*[A-Z]/,      // Bullet bold list items
+    /^[-•]\s+[A-Z][a-z].*[:.]\s*$/,  // Bullet prose items ending with : or .
+    /^(Summary|Overview|Changes|Features|Improvements|Updates|Key (changes|features|updates)|What I (did|changed)|Here'?s (a|the) (summary|breakdown|overview))/i,
   ];
   return markers.some(r => r.test(trimmed));
 }
