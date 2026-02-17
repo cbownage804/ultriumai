@@ -49,7 +49,12 @@ function isConversationalLine(line: string): boolean {
   // Common AI conversational markers that shouldn't be in code
   const markers = [
     /^(what'?s next|would you like|let me know|here'?s what|i('?ve| have)|shall i|want me to|feel free|happy to|hope this|this (should|will|creates?|adds?|implements?)|i (created|added|built|implemented|updated|fixed|modified))/i,
-    /^(##\s|🎉|👋|✅|🚀|💡|📝|🔧|Great|Perfect|Done|Now |Next |The app|Your app|I've |Here are)/,
+    /^(##\s|###\s|####\s|🎉|👋|✅|🚀|💡|📝|🔧|Great|Perfect|Done|Now |Next |The app|Your app|I've |Here are|Here is|Let me|I can)/,
+    /^\*\*[\w\s]+\*\*[.:]/,  // **Bold heading**: or **Bold heading**.
+    /^```[\w]*\s*$/,          // Opening/closing code fences (``` or ```markdown)
+    /^\d+\.\s+\*\*[A-Z]/,    // Numbered bold list items like "1. **Immersive Background**"
+    /^[-•]\s+\*\*[A-Z]/,     // Bullet bold list items
+    /^[-•]\s+[A-Z][a-z].*[:.]/, // Bullet prose items
   ];
   return markers.some(r => r.test(trimmed));
 }
@@ -99,8 +104,8 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
       if (!line.trim()) {
         blankLineStreak++;
         currentLines.push(line);
-      } else if (blankLineStreak >= 2 && isConversationalLine(line)) {
-        // End of file content — AI started talking
+      } else if (blankLineStreak >= 1 && isConversationalLine(line)) {
+        // End of file content — AI started talking (even after 1 blank line)
         flush();
         currentPath = null;
         currentLines = [];
@@ -112,6 +117,28 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
     }
   }
   flush();
+
+  // Post-process: strip trailing conversational prose from the last file
+  // This catches cases where AI commentary is appended without blank line gaps
+  for (const file of files) {
+    const fileLines = file.content.split('\n');
+    let cutIndex = fileLines.length;
+    
+    // Scan from the end to find where conversational text starts
+    for (let i = fileLines.length - 1; i >= 0; i--) {
+      const line = fileLines[i].trim();
+      if (!line) { cutIndex = i; continue; }
+      if (isConversationalLine(fileLines[i])) {
+        cutIndex = i;
+      } else {
+        break;
+      }
+    }
+    
+    if (cutIndex < fileLines.length) {
+      file.content = fileLines.slice(0, cutIndex).join('\n').trim();
+    }
+  }
 
   if (files.length === 0 && deletions.length === 0) {
     const trimmed = raw.trim();
