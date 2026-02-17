@@ -373,3 +373,6 @@ verify_jwt = false
 # MeshCentral Remote Access Auth (validates JWT in code)
 [functions.vanguard-meshcentral-auth]
 verify_jwt = false
+
+[functions.slack-teams-notify]
+verify_jwt = true

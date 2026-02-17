@@ -7,6 +7,7 @@ import { RealtimeNotificationCenter } from './RealtimeNotificationCenter';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { VanguardTrialBanner } from './VanguardTrialBanner';
+import { MobileBottomNav } from './MobileBottomNav';
 
 import { CortexFeaturesProvider } from '@/hooks/useCortexFeatures';
 import { VanguardSubscriptionProvider } from '@/contexts/VanguardSubscriptionContext';
@@ -34,11 +35,13 @@ export function VanguardLayout() {
           <div className="md:ml-56 transition-all duration-300 relative">
             {/* Trial Banner */}
             <VanguardTrialBanner />
-            <main className="min-h-screen pt-12 md:pt-0">
+            <main className="min-h-screen pt-12 md:pt-0 pb-16 md:pb-0">
               <Outlet />
             </main>
           </div>
 
+          {/* Mobile Bottom Navigation */}
+          <MobileBottomNav />
 
           <Toaster />
         </div>
