@@ -144,10 +144,15 @@ export function useProjectBundler() {
   const bundleForBrowser = useCallback((files: ProjectFile[]): string => {
     const ordered = resolveImportOrder(files);
     return ordered.map(f => {
-      // Strip import lines and export keywords for simple browser compat
+      // Strip import/export statements for simple browser compat
       const cleaned = f.content
-        .replace(/^import\s+.*?from\s+['"][^'"]+['"];?\s*$/gm, '// [bundled import]')
+        // Multi-line imports: import { ... } from '...' or import ... from '...'
+        .replace(/^import\s[\s\S]*?from\s+['"][^'"]+['"];?\s*$/gm, '// [bundled import]')
+        // Side-effect imports: import '...' or import "..."
+        .replace(/^import\s+['"][^'"]+['"];?\s*$/gm, '// [bundled import]')
+        // Export default
         .replace(/^export\s+default\s+/gm, '')
+        // Named exports
         .replace(/^export\s+/gm, '');
       return `/* === ${f.path} === */\n(function() {\n${cleaned}\n})();`;
     }).join('\n\n');
