@@ -428,7 +428,7 @@ export function useAIAppBuilder() {
         ? `\n\n(${omittedCount} other files exist but are omitted for brevity. Only output files you need to change.)`
         : '';
 
-      return `PROJECT FILE MANIFEST (${files.length} files total):\n${manifest}${structureNote}\n\nFILE CONTENTS:\n${fileContext}${omittedNote}\n\nIMPORTANT: Only output ===FILE: path=== blocks for files you are CHANGING. To delete a file, use ===DELETE: path===. Do NOT re-output unchanged files.\n\nUser request: ${userInput}`;
+      return `PROJECT FILE MANIFEST (${files.length} files total):\n${manifest}${structureNote}\n\nFILE CONTENTS:\n${fileContext}${omittedNote}\n\nIMPORTANT: Only output ===FILE: path=== blocks for files you are CHANGING. To delete a file, use ===DELETE: path===. Do NOT re-output unchanged files.\n\nAFTER all ===FILE: blocks, write a brief 1-2 sentence conversational summary of what you changed and why — be friendly and helpful like a coding assistant. Example: "I've updated the header component with your new color scheme and added the mobile menu you asked for. Let me know if you'd like any tweaks!"\n\nUser request: ${userInput}`;
     };
 
     if (imageDataUrls?.length) {
