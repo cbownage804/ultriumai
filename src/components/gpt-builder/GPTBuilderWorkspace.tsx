@@ -13,12 +13,13 @@ import { GPTExportImportPanel } from './GPTExportImportPanel';
 import { GPTTemplatePickerModal } from './GPTTemplatePickerModal';
 import { GPTConfigIndicators } from './GPTConfigIndicators';
 import { useGPTPreviewCapture } from '@/hooks/useGPTPreviewCapture';
+import { GPTReviewPanel } from './GPTReviewPanel';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   ArrowLeft, Save, RotateCcw, Settings2, Eye, MessageSquare, Loader2,
-  BookOpen, Zap, Code2, Layers, FileJson, Copy, BarChart3
+  BookOpen, Zap, Code2, Layers, FileJson, Copy, BarChart3, ClipboardCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -39,6 +40,7 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
   const [isSaving, setIsSaving] = useState(false);
   const [sidePanel, setSidePanel] = useState<SidePanel>(null);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [showReview, setShowReview] = useState(false);
   const previewRef = useRef<GPTBuilderPreviewHandle>(null);
   const { captureGPTThumbnail } = useGPTPreviewCapture();
 
@@ -268,6 +270,20 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => setShowReview(true)}
+                  className="text-white/50 hover:text-white hover:bg-white/[0.06] h-8 px-2"
+                >
+                  <ClipboardCheck className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Review GPT</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setShowTemplatePicker(true)}
                   className="text-white/50 hover:text-white hover:bg-white/[0.06] h-8 px-2"
                 >
@@ -362,6 +378,7 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
           onOpenChange={setShowTemplatePicker}
           onSelect={handleApplyTemplate}
         />
+        <GPTReviewPanel open={showReview} onClose={() => setShowReview(false)} config={config} />
       </div>
     </TooltipProvider>
   );
