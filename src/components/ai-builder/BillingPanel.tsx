@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { getUserCredits } from '@/utils/creditUtils';
 import { CREDIT_COSTS } from '@/types/credits';
 import { supabase } from '@/integrations/supabase/client';
+import { AIStudioUpgradeModal } from '@/components/ai-studio/AIStudioUpgradeModal';
 
 interface CreditHistoryEntry {
   id: string;
@@ -22,6 +23,7 @@ export function BillingPanel({ isOpen, onClose }: BillingPanelProps) {
   const [history, setHistory] = useState<CreditHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [historyFilter, setHistoryFilter] = useState<'all' | 'today'>('all');
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -187,13 +189,14 @@ export function BillingPanel({ isOpen, onClose }: BillingPanelProps) {
 
             {/* Upgrade CTA */}
             <button
-              onClick={() => window.location.href = '/pricing/ai-studio'}
+              onClick={() => setUpgradeModalOpen(true)}
               className="w-full flex items-center justify-center gap-2 h-10 rounded-xl bg-gradient-to-r from-cyan-500/20 to-violet-500/20 border border-cyan-500/20 text-cyan-400 hover:from-cyan-500/30 hover:to-violet-500/30 transition-all text-xs font-medium"
             >
               <CreditCard className="h-3.5 w-3.5" />
               Upgrade Plan
               <ArrowUpRight className="h-3 w-3" />
             </button>
+            <AIStudioUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
           </div>
         )}
       </div>
