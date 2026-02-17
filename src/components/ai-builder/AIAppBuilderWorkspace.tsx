@@ -109,7 +109,8 @@ import { BugReportModal } from '@/components/help/BugReportModal';
 import { EnhancedCommandPalette, type CommandAction } from './EnhancedCommandPalette';
 import { MultiFileSearchReplace } from './MultiFileSearchReplace';
 import { InBrowserTestRunner } from './InBrowserTestRunner';
-import { ExtensionSystem } from './ExtensionSystem';
+import { PluginMarketplace } from './PluginMarketplace';
+import { usePluginRegistry } from '@/hooks/usePluginRegistry';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -305,6 +306,7 @@ export function AIAppBuilderWorkspace() {
   const [showMultiSearch, setShowMultiSearch] = useState(false);
   const [showTestRunner, setShowTestRunner] = useState(false);
   const [showExtensions, setShowExtensions] = useState(false);
+  const pluginRegistry = usePluginRegistry();
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
 
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
@@ -1686,7 +1688,7 @@ export function AIAppBuilderWorkspace() {
                 <GPTConnectorPanel open={showGPTConnector} onClose={() => setShowGPTConnector(false)} linkedGPT={linkedGPT} onLinkGPT={setLinkedGPT} onUnlinkGPT={() => setLinkedGPT(null)} />
                 <MultiFileSearchReplace open={showMultiSearch} onClose={() => setShowMultiSearch(false)} files={project.files} onReplaceInFiles={handleReplaceInFiles} onSelectFile={handleSetActiveFile} onSwitchToCode={() => setRightTab('code')} />
                 <InBrowserTestRunner open={showTestRunner} onClose={() => setShowTestRunner(false)} files={project.files} onGenerateTest={(filePath) => { sendMessage(`Generate unit tests for ${filePath}`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onSendToChat={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
-                <ExtensionSystem open={showExtensions} onClose={() => setShowExtensions(false)} />
+                <PluginMarketplace open={showExtensions} onClose={() => setShowExtensions(false)} catalogue={pluginRegistry.catalogue} installed={pluginRegistry.installed} onInstall={pluginRegistry.installPlugin} onUninstall={pluginRegistry.uninstallPlugin} onToggle={pluginRegistry.togglePlugin} onUpdateConfig={pluginRegistry.updatePluginConfig} />
                 {showDesignSystem && (
                   <div className="w-72 border-r border-border overflow-hidden">
                     <DesignSystemPanel
