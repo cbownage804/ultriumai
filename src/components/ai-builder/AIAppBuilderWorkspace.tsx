@@ -102,6 +102,7 @@ import { SetupWizard } from './SetupWizard';
 import { SchemaDesigner } from './SchemaDesigner';
 import { OneClickDeploy } from './OneClickDeploy';
 import { EditHistoryTimeline } from './EditHistoryTimeline';
+import { DesignSystemPanel } from './DesignSystemPanel';
 import { detectSupabaseIntents, buildSupabaseContext, buildErrorDiagnosisContext, analyzeConversationComplexity } from './SupabaseConversational';
 import { MobilePWAInstall } from './MobilePWAInstall';
 import { BugReportModal } from '@/components/help/BugReportModal';
@@ -116,7 +117,7 @@ import {
   History, Variable, Image, Package, Columns, Keyboard, Rocket,
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen, Gauge,
   Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
-  Table2, ChevronsLeft, ChevronsRight, BarChart3, Puzzle, Play, Replace,
+  Table2, ChevronsLeft, ChevronsRight, BarChart3, Puzzle, Play, Replace, Palette,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -288,6 +289,7 @@ export function AIAppBuilderWorkspace() {
   const [linkedGPT, setLinkedGPT] = useState<LinkedGPTConfig | null>(null);
   const [showPerformanceProfiler, setShowPerformanceProfiler] = useState(false);
   const [showBuildAnalytics, setShowBuildAnalytics] = useState(false);
+  const [showDesignSystem, setShowDesignSystem] = useState(false);
   const buildAnalytics = useBuildAnalytics();
   const outputValidation = useOutputValidation();
   const [showChangelog, setShowChangelog] = useState(false);
@@ -1118,7 +1120,7 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   // Close other panels when opening one
-  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity' | 'codeIntel' | 'componentLib' | 'testingSuite' | 'exportGuide' | 'helpCenter' | 'gptConnector' | 'setupWizard' | 'schemaDesigner' | 'oneClickDeploy') => {
+  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity' | 'codeIntel' | 'componentLib' | 'testingSuite' | 'exportGuide' | 'helpCenter' | 'gptConnector' | 'setupWizard' | 'schemaDesigner' | 'oneClickDeploy' | 'designSystem') => {
     setShowVersionHistory(panel === 'history' ? !showVersionHistory : false);
     setShowEnvVars(panel === 'envVars' ? !showEnvVars : false);
     setShowAssets(panel === 'assets' ? !showAssets : false);
@@ -1138,6 +1140,7 @@ export function AIAppBuilderWorkspace() {
     setShowSetupWizard(panel === 'setupWizard' ? !showSetupWizard : false);
     setShowSchemaDesigner(panel === 'schemaDesigner' ? !showSchemaDesigner : false);
     setShowOneClickDeploy(panel === 'oneClickDeploy' ? !showOneClickDeploy : false);
+    setShowDesignSystem(panel === 'designSystem' ? !showDesignSystem : false);
   };
 
   // Track recent files
@@ -1179,6 +1182,7 @@ export function AIAppBuilderWorkspace() {
     { id: 'codeIntel', icon: Sparkles, label: 'Code Intelligence', tooltip: 'AI-powered code suggestions and refactoring tips', show: true, active: showCodeIntel, group: 'ai', color: 'text-fuchsia-400', activeBg: 'bg-fuchsia-500/10' },
     { id: 'componentLib', icon: Layers, label: 'Components', tooltip: 'Browse and insert pre-built UI components', show: true, active: showComponentLib, group: 'ai', color: 'text-indigo-400', activeBg: 'bg-indigo-500/10' },
     { id: 'gptConnector', icon: Bot, label: 'GPT Chat Widget', tooltip: 'Embed your custom GPT as a chat widget in your app', show: true, active: showGPTConnector, group: 'ai', color: 'text-teal-400', activeBg: 'bg-teal-500/10' },
+    { id: 'designSystem' as any, icon: Palette, label: 'Design System', tooltip: 'Generate brand-aware design tokens, themes, and color palettes', show: true, active: showDesignSystem, group: 'ai', color: 'text-rose-400', activeBg: 'bg-rose-500/10' },
     // ── Project ──
     { id: 'testingSuite', icon: Bug, label: 'Testing & Debug', tooltip: 'Run tests and debug your application', show: true, active: showTestingSuite, group: 'project', color: 'text-red-400', activeBg: 'bg-red-500/10' },
     { id: 'envVars', icon: Variable, label: 'Env Variables', tooltip: 'Manage secret keys and environment variables', show: true, active: showEnvVars, group: 'project', color: 'text-orange-400', activeBg: 'bg-orange-500/10' },
@@ -1683,6 +1687,18 @@ export function AIAppBuilderWorkspace() {
                 <MultiFileSearchReplace open={showMultiSearch} onClose={() => setShowMultiSearch(false)} files={project.files} onReplaceInFiles={handleReplaceInFiles} onSelectFile={handleSetActiveFile} onSwitchToCode={() => setRightTab('code')} />
                 <InBrowserTestRunner open={showTestRunner} onClose={() => setShowTestRunner(false)} files={project.files} onGenerateTest={(filePath) => { sendMessage(`Generate unit tests for ${filePath}`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onSendToChat={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
                 <ExtensionSystem open={showExtensions} onClose={() => setShowExtensions(false)} />
+                {showDesignSystem && (
+                  <div className="w-72 border-r border-border overflow-hidden">
+                    <DesignSystemPanel
+                      onInjectCSS={(css) => {
+                        const existingCSS = project.files.find(f => f.path === 'design-tokens.css');
+                        upsertFile('design-tokens.css', css);
+                        if (!existingCSS) toast.success('Created design-tokens.css');
+                      }}
+                      onClose={() => setShowDesignSystem(false)}
+                    />
+                  </div>
+                )}
                 {showPackages && (
                   <div className="w-64 border-r border-white/[0.06] bg-[#0d0d14] overflow-hidden">
                     <PackageManager packages={cdnPackages} onAddPackage={(pkg) => setCdnPackages(prev => [...prev, pkg])} onRemovePackage={(name) => setCdnPackages(prev => prev.filter(p => p.name !== name))} />
