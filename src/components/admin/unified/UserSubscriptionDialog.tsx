@@ -134,12 +134,12 @@ export const UserSubscriptionDialog = ({
         const raw = data as Record<string, unknown>;
         setCreditInfo({
           daily_credits_used: (raw.daily_credits_used as number) || 0,
-          daily_credits_limit: (raw.daily_credits_limit as number) || 5,
+          daily_credits_limit: (raw.daily_credits_limit as number) || 10,
           monthly_credits_used: (raw.monthly_credits_used as number) || 0,
           monthly_credits_limit: (raw.monthly_credits_limit as number) || 0,
           bonus_credits: (raw.bonus_credits as number) || 0,
         });
-        setNewDailyLimit(String((raw.daily_credits_limit as number) || 5));
+        setNewDailyLimit(String((raw.daily_credits_limit as number) || 10));
         setNewMonthlyLimit(String((raw.monthly_credits_limit as number) || 0));
       } else {
         setCreditInfo(null);
