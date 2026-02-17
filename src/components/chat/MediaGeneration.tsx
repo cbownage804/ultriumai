@@ -23,7 +23,7 @@ const MediaGeneration = ({ onMediaGenerated, disabled }: MediaGenerationProps) =
   const [imageSize, setImageSize] = useState("1024x1024");
   const [imageQuality, setImageQuality] = useState("high");
   const { toast } = useToast();
-  const { useCredits } = useUserCredits();
+  const { deductCredits } = useUserCredits();
 
   const generateImage = async () => {
     if (!prompt.trim()) {
@@ -37,7 +37,7 @@ const MediaGeneration = ({ onMediaGenerated, disabled }: MediaGenerationProps) =
 
     try {
       // Deduct credits before generating
-      const credited = await useCredits(CREDIT_RATES.IMAGE_GENERATION, 'Image generation');
+      const credited = await deductCredits(CREDIT_RATES.IMAGE_GENERATION, 'Image generation');
       if (!credited) return;
 
       setIsGeneratingImage(true);

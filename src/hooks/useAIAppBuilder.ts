@@ -244,7 +244,7 @@ export function useAIAppBuilder() {
   const [pendingDeletions, setPendingDeletions] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const streaming = useStreamingPreview();
-  const { useCredits, totalRemaining } = useUserCredits();
+  const { deductCredits, totalRemaining } = useUserCredits();
 
   const sendMessage = useCallback(async (
     input: string,
@@ -644,7 +644,7 @@ export function useAIAppBuilder() {
       
       // Deduct credits after successful generation — but NOT for auto-fixes or fix requests
       if (!isFixRequest) {
-        await useCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
+        await deductCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
       }
       // Add suggestions + file count + token estimate + filesSnapshot to the final assistant message
       const suggestions = generateSuggestions(fullContent, effectiveMode, messages, currentFiles);
@@ -674,7 +674,7 @@ export function useAIAppBuilder() {
       clearTimeout(phaseTimer2);
       abortRef.current = null;
     }
-  }, [messages, isGenerating, mode, totalRemaining, useCredits]);
+  }, [messages, isGenerating, mode, totalRemaining, deductCredits]);
 
   const stopGenerating = useCallback(() => {
     abortRef.current?.abort();

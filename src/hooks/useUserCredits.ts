@@ -258,7 +258,7 @@ export const useUserCredits = () => {
    * 2. Monthly credits (subscription-based)
    * 3. Bonus credits (purchased, never expire)
    */
-  const useCredits = useCallback(async (amount: number, description: string = 'AI interaction') => {
+  const deductCredits = useCallback(async (amount: number, description: string = 'AI interaction') => {
     if (!user) return false;
     
     const dailyRemaining = credits.daily_credits_limit - credits.daily_credits_used;
@@ -451,7 +451,7 @@ export const useUserCredits = () => {
     history,
     isLoading,
     refreshCredits,
-    useCredits,
+    deductCredits,
     addBonusCredits,
     // New Lovable-style values
     dailyRemaining,

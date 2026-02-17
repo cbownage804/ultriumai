@@ -203,30 +203,7 @@ export function useTypeScriptValidator() {
         }
       }
 
-      // === Check 4: Duplicate function/variable declarations ===
-      const declRegex = /(?:function|const|let|var|class)\s+(\w+)/g;
-      const declarations = new Map<string, number[]>();
-      while ((match = declRegex.exec(file.content)) !== null) {
-        const name = match[1];
-        const line = file.content.slice(0, match.index).split('\n').length;
-        if (!declarations.has(name)) declarations.set(name, []);
-        declarations.get(name)!.push(line);
-      }
-
-      for (const [name, lines_arr] of declarations) {
-        if (lines_arr.length > 1 && !['i', 'j', 'k', 'e', 'err', 'error', 'match', 'result'].includes(name)) {
-          diagnostics.push({
-            id: crypto.randomUUID(),
-            file: file.path,
-            line: lines_arr[1],
-            column: 0,
-            message: `Duplicate identifier '${name}' (first declared at line ${lines_arr[0]})`,
-            severity: 'warning',
-            code: 'TS2300',
-            source: 'ts-validator',
-          });
-        }
-      }
+      // Note: Duplicate declaration check is handled by useOutputValidation
     }
 
     const result: ValidationResult = {
