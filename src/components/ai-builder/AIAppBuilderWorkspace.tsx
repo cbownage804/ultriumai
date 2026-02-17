@@ -109,6 +109,8 @@ import { usePluginRegistry } from '@/hooks/usePluginRegistry';
 import { useCollaborationEngine } from '@/hooks/useCollaborationEngine';
 import { useAPIBuilder } from '@/hooks/useAPIBuilder';
 import { ShortcutsHint } from './ShortcutsHint';
+import { useProjectReview } from './useProjectReview';
+import { ProjectReviewPanel } from './ProjectReviewPanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -116,7 +118,7 @@ import {
   History, Variable, Image, Package, Columns, Keyboard, Rocket,
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen, Gauge,
   Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
-  Table2, ChevronsLeft, ChevronsRight, BarChart3, Puzzle, Play, Replace, Palette, Server,
+  Table2, ChevronsLeft, ChevronsRight, BarChart3, Puzzle, Play, Replace, Palette, Server, ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -316,6 +318,7 @@ export function AIAppBuilderWorkspace() {
   const collaborationEngine = useCollaborationEngine(currentProjectId);
   const [showAPIBuilder, setShowAPIBuilder] = useState(false);
   const apiBuilder = useAPIBuilder();
+  const projectReview = useProjectReview();
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -1194,6 +1197,7 @@ export function AIAppBuilderWorkspace() {
     { id: 'designSystem' as any, icon: Palette, label: 'Design System', tooltip: 'Generate brand-aware design tokens, themes, and color palettes', show: true, active: showDesignSystem, group: 'ai', color: 'text-rose-400', activeBg: 'bg-rose-500/10' },
     // ── Project ──
     { id: 'testingSuite', icon: Bug, label: 'Testing & Debug', tooltip: 'Run tests and debug your application', show: true, active: showTestingSuite, group: 'project', color: 'text-red-400', activeBg: 'bg-red-500/10' },
+    { id: 'review' as any, icon: ClipboardCheck, label: 'Review Project', tooltip: 'AI-powered review of your entire project for errors and best practices', show: true, active: projectReview.showPanel, group: 'project', color: 'text-lime-400', activeBg: 'bg-lime-500/10' },
     { id: 'envVars', icon: Variable, label: 'Env Variables', tooltip: 'Manage secret keys and environment variables', show: true, active: showEnvVars, group: 'project', color: 'text-orange-400', activeBg: 'bg-orange-500/10' },
     { id: 'assets', icon: Image, label: 'Assets', tooltip: 'Upload and manage images, icons, and media files', show: true, active: showAssets, group: 'project', color: 'text-pink-400', activeBg: 'bg-pink-500/10' },
     { id: 'packages', icon: Package, label: 'Packages', tooltip: 'Add third-party libraries and CDN packages', show: true, active: showPackages, group: 'project', color: 'text-sky-400', activeBg: 'bg-sky-500/10' },
@@ -1579,7 +1583,17 @@ export function AIAppBuilderWorkspace() {
                                     whileHover={{ scale: sidebarExpanded ? 1 : 1.12 }}
                                     whileTap={{ scale: 0.95 }}
                                     transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                                    onClick={() => openPanel(item.id as any)}
+                                    onClick={() => {
+                                      if (item.id === 'review') {
+                                        if (projectReview.showPanel) {
+                                          projectReview.setShowPanel(false);
+                                        } else {
+                                          projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel));
+                                        }
+                                      } else {
+                                        openPanel(item.id as any);
+                                      }
+                                    }}
                                     className={cn(
                                       "rounded-md flex items-center gap-2 transition-all text-left",
                                       sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
@@ -1698,6 +1712,16 @@ export function AIAppBuilderWorkspace() {
                 <ChangelogPanel open={showChangelog} onClose={() => setShowChangelog(false)} entries={changelogEntries} />
                 <TestingDebugSuite open={showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); toast.success('Test generated'); }} projectFiles={project.files} />
                 <GPTConnectorPanel open={showGPTConnector} onClose={() => setShowGPTConnector(false)} linkedGPT={linkedGPT} onLinkGPT={setLinkedGPT} onUnlinkGPT={() => setLinkedGPT(null)} />
+                {projectReview.showPanel && (
+                  <ProjectReviewPanel
+                    isReviewing={projectReview.isReviewing}
+                    result={projectReview.result}
+                    onClose={() => projectReview.setShowPanel(false)}
+                    onRerun={() => projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel))}
+                    onDismiss={projectReview.dismissFinding}
+                    onGoToFile={(file, line) => { handleSetActiveFile(file); setRightTab('code'); }}
+                  />
+                )}
                 <MultiFileSearchReplace open={showMultiSearch} onClose={() => setShowMultiSearch(false)} files={project.files} onReplaceInFiles={handleReplaceInFiles} onSelectFile={handleSetActiveFile} onSwitchToCode={() => setRightTab('code')} />
                 <InBrowserTestRunner open={showTestRunner} onClose={() => setShowTestRunner(false)} files={project.files} onGenerateTest={(filePath) => { sendMessage(`Generate unit tests for ${filePath}`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onSendToChat={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
                 <PluginMarketplace open={showExtensions} onClose={() => setShowExtensions(false)} catalogue={pluginRegistry.catalogue} installed={pluginRegistry.installed} onInstall={pluginRegistry.installPlugin} onUninstall={pluginRegistry.uninstallPlugin} onToggle={pluginRegistry.togglePlugin} onUpdateConfig={pluginRegistry.updatePluginConfig} />
