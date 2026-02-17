@@ -376,3 +376,7 @@ verify_jwt = false
 
 [functions.slack-teams-notify]
 verify_jwt = false
+
+# No-Code API Gateway (validates API keys in code)
+[functions.api-gateway]
+verify_jwt = false
