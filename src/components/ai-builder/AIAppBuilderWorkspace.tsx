@@ -514,7 +514,7 @@ export function AIAppBuilderWorkspace() {
     return () => window.removeEventListener('keydown', handler);
   }, [project.files, canUndo, canRedo, showSettingsPanel, showFileSearch, showVersionHistory, showConsole, showEnvVars, showAssets, showPackages, showActivity, showBilling, showFileTree]);
 
-  const handleSend = (input: string, imageDataUrl?: string | null) => {
+  const handleSend = (input: string, imageDataUrls?: string[] | null) => {
     const contextPrefix = activeFile && rightTab === 'code' ? `[Currently viewing: ${activeFile.path}]\n` : '';
     const referencedFiles = findReferencedFiles(input, project.files);
     const contextHint = referencedFiles.length > 0 ? `[Auto-detected relevant files: ${referencedFiles.map(f => f.path).join(', ')}]\n` : '';
@@ -539,7 +539,7 @@ export function AIAppBuilderWorkspace() {
     if (mode === 'build') {
       enqueueTask(input);
     } else {
-      sendMessage(fullInput, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrl, selectedModel, knowledgeCtx);
+      sendMessage(fullInput, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrls, selectedModel, knowledgeCtx);
     }
     autoRecovery.resetRecovery();
   };

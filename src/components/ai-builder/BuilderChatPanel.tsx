@@ -28,7 +28,7 @@ interface BuilderChatPanelProps {
   previousFiles: ProjectFile[];
   latestFiles: ProjectFile[];
   onModeChange: (mode: BuilderMode) => void;
-  onSend: (message: string, imageDataUrl?: string | null) => void;
+  onSend: (message: string, imageDataUrls?: string[] | null) => void;
   onStop: () => void;
   onClear: () => void;
   onRestoreVersion: (id: string) => void;
@@ -143,7 +143,7 @@ export function BuilderChatPanel({
   onToggleVisualEdit, isVisualEditActive, onOpenEditHistory,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
   const [editInput, setEditInput] = useState('');
@@ -165,9 +165,9 @@ export function BuilderChatPanel({
 
   const handleSend = () => {
     if (!input.trim() || isGenerating) return;
-    onSend(input.trim(), imagePreview);
+    onSend(input.trim(), imagePreviews.length > 0 ? imagePreviews : null);
     setInput('');
-    setImagePreview(null);
+    setImagePreviews([]);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
@@ -179,14 +179,16 @@ export function BuilderChatPanel({
   };
 
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setImagePreview(ev.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach(file => {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setImagePreviews(prev => [...prev, ev.target?.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
     e.target.value = '';
   }, []);
 
@@ -200,10 +202,9 @@ export function BuilderChatPanel({
         if (!file) continue;
         const reader = new FileReader();
         reader.onload = (ev) => {
-          setImagePreview(ev.target?.result as string);
+          setImagePreviews(prev => [...prev, ev.target?.result as string]);
         };
         reader.readAsDataURL(file);
-        break;
       }
     }
   }, []);
@@ -828,9 +829,9 @@ export function BuilderChatPanel({
                       renderAssistantMessage(msg, idx === filteredArr.length - 1)
                     ) : (
                       <div>
-                        {msg.imageUrl && (
-                          <img src={msg.imageUrl} alt="Reference" className="rounded-lg max-h-32 mb-2 border border-white/10" />
-                        )}
+                        {(msg.imageUrls || (msg.imageUrl ? [msg.imageUrl] : [])).map((url, i) => (
+                          <img key={i} src={url} alt={`Reference ${i + 1}`} className="rounded-lg max-h-32 mb-2 mr-2 border border-white/10 inline-block" />
+                        ))}
                         <p className="whitespace-pre-wrap text-[13px]">{msg.content}</p>
                         {/* Workflow steps detected in user's message */}
                         {msg.workflowSteps && msg.workflowSteps.length > 0 && (
@@ -876,18 +877,20 @@ export function BuilderChatPanel({
         </div>
       </ScrollArea>
 
-      {/* Image preview */}
-      {imagePreview && (
-        <div className="px-3 pt-2 shrink-0">
-          <div className="relative inline-block">
-            <img src={imagePreview} alt="Upload preview" className="h-16 rounded-lg border border-white/10" />
-            <button
-              onClick={() => setImagePreview(null)}
-              className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500/80 text-white flex items-center justify-center hover:bg-red-500 transition-colors"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
+      {/* Image previews */}
+      {imagePreviews.length > 0 && (
+        <div className="px-3 pt-2 shrink-0 flex flex-wrap gap-2">
+          {imagePreviews.map((img, i) => (
+            <div key={i} className="relative inline-block group">
+              <img src={img} alt={`Upload preview ${i + 1}`} className="h-16 rounded-lg border border-white/10" />
+              <button
+                onClick={() => setImagePreviews(prev => prev.filter((_, idx) => idx !== i))}
+                className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -959,6 +962,7 @@ export function BuilderChatPanel({
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              multiple
               onChange={handleImageUpload}
               className="hidden"
             />

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { GPTBuilderMessage, GPTConfig } from '@/types/gptConfig';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Square, Bot, User, Sparkles, X, ImageIcon } from 'lucide-react';
+import { Send, Square, Bot, User, Sparkles, X, ImagePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,9 +24,24 @@ const SUGGESTIONS = [
 
 export function GPTBuilderChatPanel({ messages, isGenerating, onSend, onStop, config }: GPTBuilderChatPanelProps) {
   const [input, setInput] = useState('');
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach(file => {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setImagePreviews(prev => [...prev, ev.target?.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  }, []);
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     const items = e.clipboardData?.items;
@@ -38,10 +53,9 @@ export function GPTBuilderChatPanel({ messages, isGenerating, onSend, onStop, co
         if (!file) continue;
         const reader = new FileReader();
         reader.onload = (ev) => {
-          setImagePreview(ev.target?.result as string);
+          setImagePreviews(prev => [...prev, ev.target?.result as string]);
         };
         reader.readAsDataURL(file);
-        break;
       }
     }
   }, []);
@@ -56,7 +70,7 @@ export function GPTBuilderChatPanel({ messages, isGenerating, onSend, onStop, co
     if (!input.trim() || isGenerating) return;
     onSend(input.trim());
     setInput('');
-    setImagePreview(null);
+    setImagePreviews([]);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -188,21 +202,38 @@ export function GPTBuilderChatPanel({ messages, isGenerating, onSend, onStop, co
 
       {/* Input */}
       <div className="shrink-0 border-t border-white/[0.06] p-3">
-        {imagePreview && (
-          <div className="flex items-center gap-2 mb-2 max-w-3xl mx-auto">
-            <div className="relative group">
-              <img src={imagePreview} alt="Pasted" className="h-16 w-16 rounded-lg object-cover border border-white/[0.08]" />
-              <button
-                onClick={() => setImagePreview(null)}
-                className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-            <span className="text-xs text-white/40">Image pasted</span>
+        {imagePreviews.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mb-2 max-w-3xl mx-auto">
+            {imagePreviews.map((img, i) => (
+              <div key={i} className="relative group">
+                <img src={img} alt={`Pasted ${i + 1}`} className="h-16 w-16 rounded-lg object-cover border border-white/[0.08]" />
+                <button
+                  onClick={() => setImagePreviews(prev => prev.filter((_, idx) => idx !== i))}
+                  className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            <span className="text-xs text-white/40">{imagePreviews.length} image{imagePreviews.length > 1 ? 's' : ''} attached</span>
           </div>
         )}
         <div className="relative flex items-end gap-2 max-w-3xl mx-auto">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="h-8 w-8 rounded-lg flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors shrink-0 mb-0.5"
+            title="Upload reference images"
+          >
+            <ImagePlus className="h-4 w-4" />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageUpload}
+            className="hidden"
+          />
           <Textarea
             ref={textareaRef}
             value={input}
