@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Code, Key, Activity, BookOpen, Plus } from "lucide-react";
+import { Code, Key, Activity, BookOpen, Plus, Zap, Code2 } from "lucide-react";
 import { useApiKeys } from "@/hooks/useApiKeys";
 import { CreateApiKeyDialog } from "./apiManager/CreateApiKeyDialog";
 import { ApiKeyList } from "./apiManager/ApiKeyList";
 import { ApiUsageDashboard } from "./apiManager/ApiUsageDashboard";
 import { ApiDocumentation } from "./apiManager/ApiDocumentation";
+import { APIPlayground } from "./apiManager/APIPlayground";
+import { SDKSnippets } from "./apiManager/SDKSnippets";
 
 const APIManager = () => {
   const { apiKeys, loading } = useApiKeys();
@@ -21,9 +23,9 @@ const APIManager = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">API Management</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Developer Portal</h2>
           <p className="text-muted-foreground">
-            Manage your API keys, monitor usage, and view documentation
+            API keys, playground, SDK snippets, usage analytics & documentation
           </p>
         </div>
         <Button onClick={() => setShowCreateDialog(true)}>
@@ -75,11 +77,19 @@ const APIManager = () => {
       </div>
 
       {/* Main Content */}
-      <Tabs defaultValue="keys" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="playground" className="w-full">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="playground" className="flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            Playground
+          </TabsTrigger>
           <TabsTrigger value="keys" className="flex items-center gap-2">
             <Key className="h-4 w-4" />
             API Keys
+          </TabsTrigger>
+          <TabsTrigger value="snippets" className="flex items-center gap-2">
+            <Code2 className="h-4 w-4" />
+            SDKs
           </TabsTrigger>
           <TabsTrigger value="usage" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
@@ -87,7 +97,7 @@ const APIManager = () => {
           </TabsTrigger>
           <TabsTrigger value="docs" className="flex items-center gap-2">
             <BookOpen className="h-4 w-4" />
-            Documentation
+            Docs
           </TabsTrigger>
           <TabsTrigger value="examples" className="flex items-center gap-2">
             <Code className="h-4 w-4" />
@@ -95,8 +105,16 @@ const APIManager = () => {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="playground" className="space-y-4">
+          <APIPlayground />
+        </TabsContent>
+
         <TabsContent value="keys" className="space-y-4">
           <ApiKeyList />
+        </TabsContent>
+
+        <TabsContent value="snippets" className="space-y-4">
+          <SDKSnippets />
         </TabsContent>
 
         <TabsContent value="usage" className="space-y-4">
