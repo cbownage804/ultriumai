@@ -68,6 +68,14 @@ import { SplitEditorPane } from './SplitEditorPane';
 import { usePostBuildSmokeTest } from './usePostBuildSmokeTest';
 import { useVersionTimeline } from '@/hooks/useVersionTimeline';
 import { useBuildLog } from '@/hooks/useBuildLog';
+import { useHotModuleRecovery } from './useHotModuleRecovery';
+import { useSelfReviewPass } from './useSelfReviewPass';
+import { useDependencyConflictDetection } from './useDependencyConflictDetection';
+import { useSmartFileScaffolding } from './useSmartFileScaffolding';
+import { useInlineErrorAnnotations } from './useInlineErrorAnnotations';
+import { usePromptMemory } from './usePromptMemory';
+import { useLighthouseAudit } from './useLighthouseAudit';
+import { useBundleSizeTracking } from './useBundleSizeTracking';
 import { DeployPipelinePanel } from './DeployPipelinePanel';
 import { ComponentPalette } from './ComponentPalette';
 import { PerformanceProfiler } from './PerformanceProfiler';
@@ -147,6 +155,14 @@ export function AIAppBuilderWorkspace() {
   const versionTimeline = useVersionTimeline();
   const buildLog = useBuildLog();
   const smokeTest = usePostBuildSmokeTest(buildLog.addEntry);
+  const hotRecovery = useHotModuleRecovery(buildLog.addEntry);
+  const selfReview = useSelfReviewPass();
+  const conflictDetection = useDependencyConflictDetection();
+  const fileScaffolding = useSmartFileScaffolding();
+  const errorAnnotations = useInlineErrorAnnotations();
+  const promptMemory = usePromptMemory();
+  const lighthouseAudit = useLighthouseAudit(buildLog.addEntry);
+  const bundleSize = useBundleSizeTracking(buildLog.addEntry);
   const { saveDraft, saveDraftImmediate, loadDraft, clearDraft, hasDraft } = useDraftPersistence();
   const { previewUrl: hostedPreviewUrl, isUploading: isUploadingPreview, uploadPreview, clearPreviewTimer } = usePreviewHosting();
 
@@ -372,8 +388,27 @@ export function AIAppBuilderWorkspace() {
         read: false,
       }, ...prev].slice(0, 50));
       buildLog.logBuildComplete(latestFiles.length, duration);
-      // Run post-build smoke test
-      smokeTest.runSmokeTest(latestFiles);
+      // Run post-build smoke test + all quality checks
+      const smokeResult = smokeTest.runSmokeTest(latestFiles);
+      const conflictWarnings = conflictDetection.detectConflicts(latestFiles);
+      if (conflictWarnings.length > 0) {
+        buildLog.addEntry('warning' as any, `🔗 ${conflictWarnings.length} dependency conflict(s) detected`);
+        conflictWarnings.slice(0, 3).forEach(w => buildLog.addEntry('info', `  ⚠ ${w.message}`));
+      }
+      errorAnnotations.updateAnnotations(
+        [...smokeResult.warnings, ...conflictWarnings],
+        smokeResult.errors
+      );
+      lighthouseAudit.runAudit(latestFiles);
+      bundleSize.analyzeBundle(latestFiles);
+      // Auto-generate companion test files for new components
+      const companions = fileScaffolding.generateCompanionFiles(latestFiles, project.files);
+      if (companions.length > 0) {
+        companions.forEach(f => upsertFile(f.path, f.content));
+        buildLog.addEntry('info', `🧪 Auto-generated ${companions.length} test file(s)`);
+      }
+      // Mark preview as good for hot recovery
+      hotRecovery.markAsGood([...project.files]);
       versionTimeline.addSnapshot(`AI: ${messages[messages.length - 2]?.content?.slice(0, 40) || 'generation'}`, [...project.files], 'ai-generation');
 
       // Auto-name project on first successful build
@@ -550,10 +585,15 @@ export function AIAppBuilderWorkspace() {
     const supabaseIntents = detectSupabaseIntents(input);
     const supabaseContext = buildSupabaseContext(supabaseIntents, !!supabaseConfig);
     
+    // Process prompt memory (detect user corrections)
+    promptMemory.processUserMessage(input);
+
     const knowledgeCtx = [
       knowledge.customInstructions || '',
       knowledge.contextFiles.length > 0 ? '\n\nContext files:\n' + knowledge.contextFiles.map(f => `--- ${f.name} ---\n${f.content}`).join('\n\n') : '',
       supabaseContext,
+      selfReview.buildSelfReviewInstruction(),
+      promptMemory.buildMemoryContext(),
     ].filter(Boolean).join('\n') || undefined;
     
     const fullInput = contextPrefix + contextHint + input;
@@ -603,13 +643,20 @@ export function AIAppBuilderWorkspace() {
     sendMessage(`${diagnosisContext}\n\nFix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, fixAttemptCount, lastFixError, getLastAIResponse]);
 
-  // Auto-fix pipeline: automatically attempt to fix preview errors
+  // Auto-fix pipeline: automatically attempt to fix preview errors (with hot recovery)
   const handleAutoFixError = useCallback((error: import('./ErrorConsole').PreviewError) => {
     // Forward error to chat for inline display
     forwardErrorToChat({ message: error.message, source: error.source, line: error.line });
+    // Hot Module Recovery: check if we should rollback instead of fix
+    const rollbackFiles = hotRecovery.reportCrash(error.message);
+    if (rollbackFiles) {
+      pushUndo('Before hot recovery rollback', project.files);
+      setFiles(rollbackFiles);
+      toast.info('Auto-rolled back to last working state');
+      return;
+    }
     if (isGenerating || fixAttemptCount >= MAX_FIX_ATTEMPTS) return;
     autoRecovery.attemptRecovery(error, project.files, (prompt) => {
-      // Enrich the auto-fix prompt with full context
       const enrichedPrompt = buildErrorDiagnosisContext(
         { message: error.message, source: error.source, line: error.line },
         project.files,
