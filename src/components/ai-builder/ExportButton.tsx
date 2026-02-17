@@ -38,6 +38,8 @@ export function ExportButton({
         raw: 'Project files downloaded!',
         docker: 'Docker-ready project downloaded!',
         fullstack: 'Full-stack project downloaded! Check README.md for setup instructions.',
+        pwa: 'PWA project downloaded! See PWA_INSTALL_GUIDE.md',
+        capacitor: 'Mobile project downloaded! See MOBILE_SETUP_GUIDE.md',
       };
       toast.success(messages[mode]);
     } catch (e) {

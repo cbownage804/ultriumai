@@ -8,7 +8,7 @@ const slugify = (name: string) =>
 
 // ── Export Modes ───────────────────────────────────────────
 
-export type ExportMode = 'raw' | 'docker' | 'fullstack';
+export type ExportMode = 'raw' | 'docker' | 'fullstack' | 'pwa' | 'capacitor';
 
 export interface EdgeFunctionMeta {
   name: string;
@@ -1231,6 +1231,310 @@ Then open http://localhost:8080
   return files;
 }
 
+// ── PWA Export Files ──────────────────────────────────────
+function getPWAFiles(projectName: string, userFiles: ProjectFile[], ctx: ExportContext): Record<string, string> {
+  const baseFiles = getFullStackFiles(projectName, userFiles, ctx);
+  const slug = slugify(projectName);
+
+  // manifest.json
+  baseFiles['public/manifest.json'] = JSON.stringify({
+    name: projectName,
+    short_name: slug,
+    description: `${projectName} — Built with UltriumAI`,
+    start_url: '/',
+    display: 'standalone',
+    background_color: '#09090b',
+    theme_color: '#06b6d4',
+    orientation: 'portrait-primary',
+    icons: [
+      { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+      { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+    ],
+    screenshots: [
+      { src: '/icons/screenshot-wide.png', sizes: '1280x720', type: 'image/png', form_factor: 'wide' },
+      { src: '/icons/screenshot-narrow.png', sizes: '390x844', type: 'image/png', form_factor: 'narrow' },
+    ],
+  }, null, 2);
+
+  // Service worker
+  baseFiles['public/sw.js'] = `const CACHE_NAME = '${slug}-v1';
+const ASSETS = ['/', '/index.html'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', e => {
+  // Never cache OAuth redirects
+  if (e.request.url.includes('/~oauth')) return;
+  
+  // Network-first for navigations
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // Cache-first for assets
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request))
+  );
+});
+`;
+
+  // Update index.html with PWA meta tags and SW registration
+  if (baseFiles['index.html']) {
+    baseFiles['index.html'] = baseFiles['index.html'].replace(
+      '</head>',
+      `    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#06b6d4" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="${projectName}" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  </head>`
+    );
+    baseFiles['index.html'] = baseFiles['index.html'].replace(
+      '</body>',
+      `    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
+      }
+    </script>
+  </body>`
+    );
+  }
+
+  // PWA install guide
+  baseFiles['PWA_INSTALL_GUIDE.md'] = `# ${projectName} — PWA Install Guide
+
+## How Users Install Your App
+
+### On iPhone / iPad (Safari)
+1. Open your app URL in Safari
+2. Tap the **Share** button (square with arrow)
+3. Scroll down and tap **"Add to Home Screen"**
+4. Tap **Add**
+
+### On Android (Chrome)
+1. Open your app URL in Chrome
+2. Tap the **three-dot menu** (⋮)
+3. Tap **"Install app"** or **"Add to Home Screen"**
+4. Tap **Install**
+
+### On Desktop (Chrome / Edge)
+1. Open your app URL
+2. Click the **install icon** in the address bar
+3. Click **Install**
+
+## What You Get
+- ✅ Home screen icon (looks like a real app)
+- ✅ Full-screen experience (no browser UI)
+- ✅ Works offline
+- ✅ Fast loading via cache
+
+## Icons
+Replace the placeholder icons in \`public/icons/\` with your own:
+- \`icon-192.png\` — 192×192px (required)
+- \`icon-512.png\` — 512×512px (required)
+
+Use a tool like [maskable.app](https://maskable.app) to create maskable icons.
+`;
+
+  return baseFiles;
+}
+
+// ── Capacitor Export Files ──────────────────────────────────
+function getCapacitorFiles(projectName: string, userFiles: ProjectFile[], ctx: ExportContext): Record<string, string> {
+  const baseFiles = getFullStackFiles(projectName, userFiles, ctx);
+  const slug = slugify(projectName);
+  const appId = `com.${slug.replace(/-/g, '')}.app`;
+
+  // capacitor.config.ts
+  baseFiles['capacitor.config.ts'] = `import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: '${appId}',
+  appName: '${projectName}',
+  webDir: 'dist',
+  bundledWebRuntime: false,
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 2000,
+      backgroundColor: '#09090b',
+      showSpinner: false,
+    },
+    StatusBar: {
+      style: 'DARK',
+      backgroundColor: '#09090b',
+    },
+  },
+};
+
+export default config;
+`;
+
+  // Update package.json to include Capacitor deps
+  if (baseFiles['package.json']) {
+    try {
+      const pkg = JSON.parse(baseFiles['package.json']);
+      pkg.dependencies = {
+        ...pkg.dependencies,
+        '@capacitor/core': '^7.0.0',
+        '@capacitor/ios': '^7.0.0',
+        '@capacitor/android': '^7.0.0',
+        '@capacitor/splash-screen': '^7.0.0',
+        '@capacitor/status-bar': '^7.0.0',
+        '@capacitor/haptics': '^7.0.0',
+      };
+      pkg.devDependencies = {
+        ...pkg.devDependencies,
+        '@capacitor/cli': '^7.0.0',
+      };
+      pkg.scripts = {
+        ...pkg.scripts,
+        'cap:sync': 'npx cap sync',
+        'cap:run:ios': 'npx cap run ios',
+        'cap:run:android': 'npx cap run android',
+        'cap:open:ios': 'npx cap open ios',
+        'cap:open:android': 'npx cap open android',
+      };
+      baseFiles['package.json'] = JSON.stringify(pkg, null, 2);
+    } catch {}
+  }
+
+  // Update viewport for mobile
+  if (baseFiles['index.html']) {
+    baseFiles['index.html'] = baseFiles['index.html'].replace(
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0" />',
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />'
+    );
+  }
+
+  // .gitignore update
+  if (baseFiles['.gitignore']) {
+    baseFiles['.gitignore'] += `\n# Capacitor\nios/\nandroid/\n`;
+  }
+
+  // Capacitor setup guide
+  baseFiles['MOBILE_SETUP_GUIDE.md'] = `# ${projectName} — Mobile App Setup Guide
+
+## Prerequisites
+
+- **Node.js 18+** and **npm**
+- **For iOS:** macOS with Xcode 15+ installed
+- **For Android:** Android Studio with SDK installed
+
+## Step-by-Step Setup
+
+### 1. Install Dependencies
+\`\`\`bash
+npm install
+\`\`\`
+
+### 2. Build the Web App
+\`\`\`bash
+npm run build
+\`\`\`
+
+### 3. Add Mobile Platforms
+\`\`\`bash
+# Add iOS (requires macOS + Xcode)
+npx cap add ios
+
+# Add Android (requires Android Studio)
+npx cap add android
+\`\`\`
+
+### 4. Sync Web Code to Native Projects
+\`\`\`bash
+npx cap sync
+\`\`\`
+
+### 5. Run on Device / Emulator
+
+**iOS:**
+\`\`\`bash
+npx cap run ios
+# Or open in Xcode:
+npx cap open ios
+\`\`\`
+
+**Android:**
+\`\`\`bash
+npx cap run android
+# Or open in Android Studio:
+npx cap open android
+\`\`\`
+
+## App Icons & Splash Screens
+
+Replace the default icons in the native projects:
+
+### iOS
+- Open \`ios/App/App/Assets.xcassets/AppIcon.appiconset/\`
+- Replace icons with your own (1024×1024 master icon recommended)
+- Use [appicon.co](https://www.appicon.co/) to generate all sizes
+
+### Android
+- Open \`android/app/src/main/res/\`
+- Replace icons in \`mipmap-*\` folders
+- Use Android Studio → Image Asset Studio for generation
+
+## Publishing to App Stores
+
+### Apple App Store
+1. Open the project in Xcode: \`npx cap open ios\`
+2. Set your Team & Bundle ID in Signing & Capabilities
+3. Archive the app: Product → Archive
+4. Upload via App Store Connect
+
+### Google Play Store
+1. Open in Android Studio: \`npx cap open android\`
+2. Build a signed AAB: Build → Generate Signed Bundle
+3. Upload to Google Play Console
+
+## Development Workflow
+
+After making changes in your web code:
+\`\`\`bash
+npm run build
+npx cap sync
+npx cap run ios   # or android
+\`\`\`
+
+## Capacitor Config
+
+Edit \`capacitor.config.ts\` to customize:
+- **appId**: Your unique app identifier (e.g., \`com.yourcompany.appname\`)
+- **appName**: Display name on the device
+- **plugins**: Configure splash screen, status bar, etc.
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| "No provisioning profile" (iOS) | Set up an Apple Developer account & create a profile in Xcode |
+| White screen on device | Run \`npm run build && npx cap sync\` to sync latest code |
+| Plugin not found | Run \`npx cap sync\` after installing new Capacitor plugins |
+| Build fails on Android | Ensure Android SDK and build tools are up to date |
+`;
+
+  return baseFiles;
+}
+
 export async function exportProject(
   projectName: string,
   files: ProjectFile[],
@@ -1257,7 +1561,22 @@ export async function exportProject(
     for (const [path, content] of Object.entries(fullStackFiles)) {
       zip.file(path, content);
     }
-    // Also include original source files
+    for (const file of files) {
+      zip.file(`src/original/${file.path}`, file.content);
+    }
+  } else if (mode === 'pwa') {
+    const pwaFiles = getPWAFiles(projectName, files, ctx);
+    for (const [path, content] of Object.entries(pwaFiles)) {
+      zip.file(path, content);
+    }
+    for (const file of files) {
+      zip.file(`src/original/${file.path}`, file.content);
+    }
+  } else if (mode === 'capacitor') {
+    const capFiles = getCapacitorFiles(projectName, files, ctx);
+    for (const [path, content] of Object.entries(capFiles)) {
+      zip.file(path, content);
+    }
     for (const file of files) {
       zip.file(`src/original/${file.path}`, file.content);
     }
@@ -1267,7 +1586,7 @@ export async function exportProject(
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  const suffixMap: Record<ExportMode, string> = { raw: '', docker: '-docker', fullstack: '-fullstack' };
+  const suffixMap: Record<ExportMode, string> = { raw: '', docker: '-docker', fullstack: '-fullstack', pwa: '-pwa', capacitor: '-mobile' };
   a.download = `${slug}${suffixMap[mode]}.zip`;
   a.click();
   URL.revokeObjectURL(url);
