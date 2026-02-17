@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Rocket, Globe, Copy, CheckCircle, Loader2, ExternalLink, Link2, Eye, ArrowRight, AlertCircle, RefreshCw, Download, FileArchive, Container } from 'lucide-react';
+import { Rocket, Globe, Copy, CheckCircle, Loader2, ExternalLink, Link2, Eye, ArrowRight, AlertCircle, RefreshCw, Download, FileArchive, Container, Smartphone, Wifi } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
@@ -48,7 +48,7 @@ export function DeployDialog({
   const [copied, setCopied] = useState(false);
   const [copiedPreview, setCopiedPreview] = useState(false);
   const [customSubdomain, setCustomSubdomain] = useState('');
-  const [step, setStep] = useState<'preview' | 'production'>(publishedUrl ? 'production' : 'preview');
+  const [step, setStep] = useState<'preview' | 'production' | 'mobile'>(publishedUrl ? 'production' : 'preview');
   const [deployStep, setDeployStep] = useState(-1);
   const [deployComplete, setDeployComplete] = useState(false);
 
@@ -97,6 +97,8 @@ export function DeployDialog({
         raw: 'Project files downloaded!',
         docker: 'Docker-ready project downloaded!',
         fullstack: 'Full-stack project downloaded!',
+        pwa: 'PWA project downloaded! See PWA_INSTALL_GUIDE.md',
+        capacitor: 'Mobile project downloaded! See MOBILE_SETUP_GUIDE.md',
       };
       toast.success(msgs[mode]);
     } catch (e) {
@@ -143,6 +145,9 @@ export function DeployDialog({
               <Globe className="h-3 w-3" />Production
               {publishedUrl && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
             </button>
+            <button onClick={() => setStep('mobile')} className={cn("flex-1 flex items-center justify-center gap-1.5 text-[11px] py-1.5 rounded-md transition-all font-medium", step === 'mobile' ? "bg-white/10 text-white/80" : "text-white/30 hover:text-white/50")}>
+              <Smartphone className="h-3 w-3" />Mobile
+            </button>
           </div>
         </div>
 
@@ -173,6 +178,80 @@ export function DeployDialog({
                 <Button onClick={() => setStep('production')} className="w-full bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600 text-white border-0">
                   <ArrowRight className="h-3.5 w-3.5 mr-1.5" />Go to Production Publish
                 </Button>
+              </>
+            ) : step === 'mobile' ? (
+              <>
+                {/* Mobile Export Header */}
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                  <div className="h-10 w-10 shrink-0 rounded-lg flex items-center justify-center bg-violet-500/10">
+                    <Smartphone className="h-5 w-5 text-violet-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white/80">Mobile App Export</p>
+                    <p className="text-[11px] text-white/30 mt-0.5">Deploy to App Store & Google Play</p>
+                  </div>
+                </div>
+
+                {/* PWA Option */}
+                <button
+                  onClick={() => handleExport('pwa')}
+                  className="w-full flex items-start gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-cyan-500/20 transition-all text-left"
+                >
+                  <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-cyan-500/10 mt-0.5">
+                    <Wifi className="h-4 w-4 text-cyan-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-medium text-white/80">Installable Web App (PWA)</p>
+                      <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-[8px] px-1.5 py-0">Quick</Badge>
+                    </div>
+                    <p className="text-[10px] text-white/30 mt-1 leading-relaxed">
+                      Install directly from browser — no app store needed. Works on all phones, offline support, home screen icon.
+                    </p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {['All Devices', 'No Store Required', 'Offline Support', 'Auto Updates'].map(tag => (
+                        <span key={tag} className="text-[8px] px-1.5 py-0.5 rounded bg-white/[0.04] text-white/25">{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                </button>
+
+                {/* Capacitor Option */}
+                <button
+                  onClick={() => handleExport('capacitor')}
+                  className="w-full flex items-start gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-violet-500/20 transition-all text-left"
+                >
+                  <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-violet-500/10 mt-0.5">
+                    <Smartphone className="h-4 w-4 text-violet-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-medium text-white/80">Native App (Capacitor)</p>
+                      <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/20 text-[8px] px-1.5 py-0">Pro</Badge>
+                    </div>
+                    <p className="text-[10px] text-white/30 mt-1 leading-relaxed">
+                      Publish to Apple App Store & Google Play. Full native access — camera, push notifications, sensors.
+                    </p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {['App Store', 'Google Play', 'Native APIs', 'Push Notifications'].map(tag => (
+                        <span key={tag} className="text-[8px] px-1.5 py-0.5 rounded bg-white/[0.04] text-white/25">{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                </button>
+
+                {/* Requirements Note */}
+                <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="text-[10px] text-amber-400/60 space-y-1">
+                      <p className="font-medium text-amber-400/80">Native App Requirements</p>
+                      <p>iOS: macOS + Xcode 15+ + Apple Developer Account ($99/yr)</p>
+                      <p>Android: Android Studio + Google Play Console ($25 one-time)</p>
+                      <p>The exported ZIP includes a full setup guide.</p>
+                    </div>
+                  </div>
+                </div>
               </>
             ) : (
               <>
