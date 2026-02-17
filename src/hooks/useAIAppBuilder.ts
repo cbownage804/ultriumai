@@ -13,6 +13,7 @@ export interface BuilderMessage {
   timestamp: Date;
   suggestions?: string[];
   imageUrl?: string;
+  imageUrls?: string[];
   tokenEstimate?: number;
   filesSnapshot?: ProjectFile[];
   /** Parsed plan steps from the AI's planning phase */
@@ -215,7 +216,7 @@ export function useAIAppBuilder() {
     supabaseConfig?: { url: string; anonKey: string } | null,
     stripeConfig?: { publishableKey: string } | null,
     serviceKeys?: { id: string; serviceId: string; apiKey: string }[],
-    imageDataUrl?: string | null,
+    imageDataUrls?: string[] | null,
     model?: string,
     knowledgeContext?: string,
     /** When true, skip credit deduction (used for auto-fix / self-correction) */
@@ -256,7 +257,8 @@ export function useAIAppBuilder() {
       role: 'user',
       content: input,
       timestamp: new Date(),
-      imageUrl: imageDataUrl || undefined,
+      imageUrl: imageDataUrls?.[0] || undefined,
+      imageUrls: imageDataUrls?.length ? imageDataUrls : undefined,
       workflowSteps: detectWorkflowIntent(input)?.steps,
     };
 
@@ -314,7 +316,7 @@ export function useAIAppBuilder() {
     }
 
     // Inject visual intelligence context when images are attached
-    const visualContext = buildVisualIntelligenceContext(!!imageDataUrl, input);
+    const visualContext = buildVisualIntelligenceContext(!!(imageDataUrls?.length), input);
     if (visualContext) {
       apiMessages.push({ role: 'system', content: visualContext });
     }
@@ -393,10 +395,10 @@ export function useAIAppBuilder() {
       return `PROJECT FILE MANIFEST (${files.length} files total):\n${manifest}${structureNote}\n\nFILE CONTENTS:\n${fileContext}${omittedNote}\n\nIMPORTANT: Only output ===FILE: path=== blocks for files you are CHANGING. To delete a file, use ===DELETE: path===. Do NOT re-output unchanged files.\n\nUser request: ${userInput}`;
     };
 
-    if (imageDataUrl) {
+    if (imageDataUrls?.length) {
       const userContent: any[] = [
         { type: 'text', text: buildFileContext(currentFiles, input) },
-        { type: 'image_url', image_url: { url: imageDataUrl } },
+        ...imageDataUrls.map(url => ({ type: 'image_url', image_url: { url } })),
       ];
       apiMessages.push({ role: 'user', content: userContent });
     } else {
