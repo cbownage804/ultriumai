@@ -63,7 +63,9 @@ import { AgentModePanel } from './AgentModePanel';
 import { ResponsivePreviewBar, type ViewportMode, getViewportWidth } from './ResponsivePreviewBar';
 import { BuildLogPanel } from './BuildLogPanel';
 import { VersionTimelineSlider } from './VersionTimelineSlider';
+import { VersionDiffViewer } from './VersionDiffViewer';
 import { SplitEditorPane } from './SplitEditorPane';
+import { usePostBuildSmokeTest } from './usePostBuildSmokeTest';
 import { useVersionTimeline } from '@/hooks/useVersionTimeline';
 import { useBuildLog } from '@/hooks/useBuildLog';
 import { DeployPipelinePanel } from './DeployPipelinePanel';
@@ -144,6 +146,7 @@ export function AIAppBuilderWorkspace() {
   const autoRecovery = useAutoErrorRecovery();
   const versionTimeline = useVersionTimeline();
   const buildLog = useBuildLog();
+  const smokeTest = usePostBuildSmokeTest(buildLog.addEntry);
   const { saveDraft, saveDraftImmediate, loadDraft, clearDraft, hasDraft } = useDraftPersistence();
   const { previewUrl: hostedPreviewUrl, isUploading: isUploadingPreview, uploadPreview, clearPreviewTimer } = usePreviewHosting();
 
@@ -218,6 +221,7 @@ export function AIAppBuilderWorkspace() {
   const previewIframeRef = useRef<HTMLIFrameElement>(null);
   const [showBuildLog, setShowBuildLog] = useState(true);
   const [showTimeline, setShowTimeline] = useState(false);
+  const [showDiffViewer, setShowDiffViewer] = useState(false);
   const [splitRightFile, setSplitRightFile] = useState<string | null>(null);
   const buildStartTimeRef = useRef<number>(0);
   const [showDeployPipeline, setShowDeployPipeline] = useState(false);
@@ -368,6 +372,8 @@ export function AIAppBuilderWorkspace() {
         read: false,
       }, ...prev].slice(0, 50));
       buildLog.logBuildComplete(latestFiles.length, duration);
+      // Run post-build smoke test
+      smokeTest.runSmokeTest(latestFiles);
       versionTimeline.addSnapshot(`AI: ${messages[messages.length - 2]?.content?.slice(0, 40) || 'generation'}`, [...project.files], 'ai-generation');
 
       // Auto-name project on first successful build
@@ -1491,7 +1497,7 @@ export function AIAppBuilderWorkspace() {
                         </div>
                       )}
                       {showTimeline && versionTimeline.totalSnapshots > 0 && (
-                        <div className="shrink-0">
+                        <div className="shrink-0 space-y-1">
                           <VersionTimelineSlider
                             snapshots={versionTimeline.snapshots}
                             currentIndex={versionTimeline.currentIndex}
@@ -1499,9 +1505,19 @@ export function AIAppBuilderWorkspace() {
                               const files = versionTimeline.navigateToSnapshot(idx);
                               if (files) setFiles(files);
                             }}
-                            onExit={() => { versionTimeline.exitHistoryPreview(); setShowTimeline(false); }}
+                            onExit={() => { versionTimeline.exitHistoryPreview(); setShowTimeline(false); setShowDiffViewer(false); }}
                             getDiff={versionTimeline.getSnapshotDiff}
+                            onToggleDiff={() => setShowDiffViewer(v => !v)}
+                            showDiff={showDiffViewer}
                           />
+                          {showDiffViewer && versionTimeline.currentIndex > 0 && (
+                            <VersionDiffViewer
+                              prevSnapshot={versionTimeline.snapshots[versionTimeline.currentIndex - 1] ?? null}
+                              currSnapshot={versionTimeline.snapshots[versionTimeline.currentIndex]}
+                              diff={versionTimeline.getSnapshotDiff(versionTimeline.currentIndex)}
+                              onClose={() => setShowDiffViewer(false)}
+                            />
+                          )}
                         </div>
                       )}
                       {showConsole && (
