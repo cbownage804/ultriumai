@@ -117,6 +117,10 @@ import { GitHubPanel } from './GitHubPanel';
 import { DatabaseMigrationPanel } from './DatabaseMigrationPanel';
 import { EdgeFunctionEditorPanel } from './EdgeFunctionEditorPanel';
 import { BuildWorkflowPanel } from './BuildWorkflowPanel';
+import { PreviewDevToolsPanel } from './PreviewDevToolsPanel';
+import { VisualEditToolbar } from './VisualEditToolbar';
+import { NPMPackageManagerPanel } from './NPMPackageManagerPanel';
+import { PublishPanel } from './PublishPanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -332,6 +336,10 @@ export function AIAppBuilderWorkspace() {
   const [showMigrationPanel, setShowMigrationPanel] = useState(false);
   const [showEdgeFnEditor, setShowEdgeFnEditor] = useState(false);
   const [showBuildWorkflow, setShowBuildWorkflow] = useState(false);
+  const [showDevTools, setShowDevTools] = useState(false);
+  const [showNPMManager, setShowNPMManager] = useState(false);
+  const [showPublishPanel, setShowPublishPanel] = useState(false);
+  const [installedPackages, setInstalledPackages] = useState<{ name: string; version: string; description?: string; isDevDep?: boolean }[]>([]);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -1226,6 +1234,8 @@ export function AIAppBuilderWorkspace() {
     { id: 'oneClickDeploy' as any, icon: Globe, label: 'One-Click Deploy', tooltip: 'Deploy to Vercel or Netlify with one click', show: true, active: showOneClickDeploy, group: 'project', color: 'text-emerald-400', activeBg: 'bg-emerald-500/10' },
     { id: 'helpCenter' as any, icon: BookOpen, label: 'Help Center', tooltip: 'Documentation, tutorials, and getting started guides', show: true, active: showHelpCenter, group: 'project', color: 'text-blue-300', activeBg: 'bg-blue-500/10' },
     { id: 'setupWizard' as any, icon: Sparkles, label: 'Setup Guide', tooltip: 'Guided setup for Supabase, Stripe, and integrations', show: true, active: showSetupWizard, group: 'project', color: 'text-violet-300', activeBg: 'bg-violet-500/10' },
+    { id: 'npmManager' as any, icon: Package, label: 'NPM Packages', tooltip: 'Search, install, and uninstall npm packages', show: true, active: showNPMManager, group: 'project', color: 'text-sky-300', activeBg: 'bg-sky-500/10' },
+    { id: 'devtools' as any, icon: Activity, label: 'DevTools', tooltip: 'Console logs and network inspector from preview', show: true, active: showDevTools, group: 'project', color: 'text-amber-300', activeBg: 'bg-amber-500/10' },
   ] as const;
 
   return (
@@ -1368,11 +1378,12 @@ export function AIAppBuilderWorkspace() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <button onClick={() => setShowDeployPipeline(!showDeployPipeline)} className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-colors", showDeployPipeline ? "text-cyan-400 bg-cyan-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5")}>
-                  <Settings className="h-3.5 w-3.5" />
+                <button onClick={() => setShowPublishPanel(true)} className={cn("h-8 px-3 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-colors", publishedUrl ? "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25" : "bg-cyan-500/15 text-cyan-400 hover:bg-cyan-500/25")}>
+                  <Rocket className="h-3.5 w-3.5" />
+                  {publishedUrl ? 'Update' : 'Publish'}
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Deploy Settings</TooltipContent>
+              <TooltipContent side="bottom" className="text-xs">Publish & Deploy</TooltipContent>
             </Tooltip>
 
             <DeployDialog
@@ -1620,6 +1631,10 @@ export function AIAppBuilderWorkspace() {
                                          setShowEdgeFnEditor(!showEdgeFnEditor);
                                        } else if (item.id === 'buildWorkflow') {
                                          setShowBuildWorkflow(!showBuildWorkflow);
+                                       } else if (item.id === 'npmManager') {
+                                         setShowNPMManager(!showNPMManager);
+                                       } else if (item.id === 'devtools') {
+                                         setShowDevTools(!showDevTools);
                                        } else {
                                          openPanel(item.id as any);
                                        }
@@ -1817,6 +1832,21 @@ export function AIAppBuilderWorkspace() {
                     <PackageManager packages={cdnPackages} onAddPackage={(pkg) => setCdnPackages(prev => [...prev, pkg])} onRemovePackage={(name) => setCdnPackages(prev => prev.filter(p => p.name !== name))} />
                   </div>
                 )}
+                {showNPMManager && (
+                  <NPMPackageManagerPanel
+                    open={showNPMManager}
+                    onClose={() => setShowNPMManager(false)}
+                    installedPackages={installedPackages}
+                    onInstall={(name, version) => setInstalledPackages(prev => [...prev, { name, version: version || 'latest' }])}
+                    onUninstall={(name) => setInstalledPackages(prev => prev.filter(p => p.name !== name))}
+                    onUpdateVersion={(name, version) => setInstalledPackages(prev => prev.map(p => p.name === name ? { ...p, version } : p))}
+                  />
+                )}
+                {showDevTools && (
+                  <div className="w-80 border-r border-white/[0.06] overflow-hidden">
+                    <PreviewDevToolsPanel open={showDevTools} onClose={() => setShowDevTools(false)} iframeRef={previewIframeRef} />
+                  </div>
+                )}
 
                 <div className="flex-1 flex flex-col overflow-hidden">
                   {/* File tab bar (code/split only) */}
@@ -1973,6 +2003,7 @@ export function AIAppBuilderWorkspace() {
       <ProjectShareDialog isOpen={showShareDialog} onClose={() => setShowShareDialog(false)} projectName={project.name} collaborators={collaborators} onInvite={(email, role) => setCollaborators(prev => [...prev, { id: crypto.randomUUID(), email, role, avatarColor: ['#06b6d4','#8b5cf6','#f43f5e','#22c55e'][prev.length % 4], joinedAt: new Date() }])} onChangeRole={(id, role) => setCollaborators(prev => prev.map(c => c.id === id ? { ...c, role } : c))} onRemove={(id) => setCollaborators(prev => prev.filter(c => c.id !== id))} />
       <SEOEditor isOpen={showSEOEditor} onClose={() => setShowSEOEditor(false)} files={project.files} onUpdateFile={upsertFile} />
       <CustomDomainPanel isOpen={showDomainPanel} onClose={() => setShowDomainPanel(false)} previewUrl={previewSlug ? `https://${previewSlug}.apps.ultriumai.com` : hostedPreviewUrl} />
+      <PublishPanel open={showPublishPanel} onClose={() => setShowPublishPanel(false)} publishedUrl={publishedUrl} previewUrl={previewSlug ? `https://${previewSlug}.apps.ultriumai.com` : hostedPreviewUrl} projectName={project.name} hasFiles={hasFiles} onPublish={handlePublish} />
       <DiffReviewPanel isOpen={showDiffReview} onClose={() => setShowDiffReview(false)} changes={pendingDiffChanges} onApprove={() => { pendingDiffChanges.forEach(c => upsertFile(c.path, c.newContent)); setPendingDiffChanges([]); setShowDiffReview(false); toast.success('Changes applied'); }} onReject={() => { setPendingDiffChanges([]); setShowDiffReview(false); toast.info('Changes rejected'); }} onApproveFile={(path) => { const c = pendingDiffChanges.find(ch => ch.path === path); if (c) upsertFile(c.path, c.newContent); }} onRejectFile={() => {}} />
       <QuickFileSwitcher open={showQuickSwitcher} onOpenChange={setShowQuickSwitcher} files={project.files} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} />
       <BugReportModal open={showBugReport} onOpenChange={setShowBugReport} />
