@@ -15,6 +15,7 @@ import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
 import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, generateIntentSuggestions, analyzeConversationComplexity, detectCommunicationStyle, detectWebSearchIntent, detectURLCloneIntent } from './SupabaseConversational';
+import { StarterTemplatePicker } from './StarterTemplatePicker';
 import { StreamingText, StreamingCursor, ElapsedTimer } from './StreamingText';
 
 interface BuilderChatPanelProps {
@@ -41,6 +42,7 @@ interface BuilderChatPanelProps {
   onToggleVisualEdit?: () => void;
   isVisualEditActive?: boolean;
   onOpenEditHistory?: () => void;
+  onSelectStarterTemplate?: (template: import('./AppStarterTemplates').AppStarterTemplate) => void;
 }
 
 
@@ -174,11 +176,12 @@ export function BuilderChatPanel({
   totalTokensUsed, previousFiles, latestFiles,
   onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates, onFixError,
   onForkFromMessage, onRevertToMessage, selectedModel, onModelChange,
-  onToggleVisualEdit, isVisualEditActive, onOpenEditHistory,
+  onToggleVisualEdit, isVisualEditActive, onOpenEditHistory, onSelectStarterTemplate,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
   const [editInput, setEditInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -752,24 +755,35 @@ export function BuilderChatPanel({
                   </motion.button>
                 ))}
 
-                {/* Browse templates */}
+                {/* Browse templates / Starter templates */}
                 <motion.button
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3, delay: 0.6 }}
-                  onClick={onOpenTemplates}
-                  className="w-full text-left px-3.5 py-3 rounded-xl border border-dashed border-white/[0.08] hover:border-cyan-500/25 hover:bg-white/[0.02] text-sm transition-all duration-300 group mt-2 hover:shadow-lg hover:shadow-violet-500/[0.03]"
+                  onClick={() => setShowTemplatePicker(!showTemplatePicker)}
+                  className={cn("w-full text-left px-3.5 py-3 rounded-xl border border-dashed text-sm transition-all duration-300 group mt-2", showTemplatePicker ? "border-cyan-500/30 bg-cyan-500/[0.06]" : "border-white/[0.08] hover:border-cyan-500/25 hover:bg-white/[0.02] hover:shadow-lg hover:shadow-violet-500/[0.03]")}
                 >
                   <div className="flex items-center gap-3">
                     <span className="h-9 w-9 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center group-hover:border-cyan-500/20 transition-all duration-300 shrink-0">
                       <LayoutGrid className="h-4 w-4 text-white/50 group-hover:text-cyan-400/80 transition-colors" />
                     </span>
                     <div>
-                      <div className="text-[13px] font-medium text-white/70 group-hover:text-white transition-colors">Browse Templates</div>
-                      <div className="text-[11px] text-white/35 group-hover:text-white/55 transition-colors">Start from a pre-built template</div>
+                      <div className="text-[13px] font-medium text-white/70 group-hover:text-white transition-colors">Start from a Template</div>
+                      <div className="text-[11px] text-white/35 group-hover:text-white/55 transition-colors">Pre-tested app foundations the AI extends</div>
                     </div>
                   </div>
                 </motion.button>
+
+                {showTemplatePicker && onSelectStarterTemplate && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden mt-2"
+                  >
+                    <StarterTemplatePicker onSelect={(t) => { onSelectStarterTemplate(t); setShowTemplatePicker(false); }} />
+                  </motion.div>
+                )}
               </motion.div>
             </div>
           ) : (
