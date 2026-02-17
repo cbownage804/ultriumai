@@ -489,7 +489,7 @@ export function AIAppBuilderWorkspace() {
       if (draft.messages.length > 0) {
         setMessages(draft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
       }
-      toast.success('Restored your unsaved draft', { description: `Saved ${new Date(draft.savedAt).toLocaleTimeString()}` });
+      // Silent restore — no toast so it feels seamless when returning to the tab
     }
   }, []); // intentionally run once on mount
 
