@@ -113,6 +113,10 @@ import { useProjectReview } from './useProjectReview';
 import { ProjectReviewPanel } from './ProjectReviewPanel';
 import { useSupabaseConnection } from '@/hooks/useSupabaseConnection';
 import { SupabaseIDEPanel } from './SupabaseIDEPanel';
+import { GitHubPanel } from './GitHubPanel';
+import { DatabaseMigrationPanel } from './DatabaseMigrationPanel';
+import { EdgeFunctionEditorPanel } from './EdgeFunctionEditorPanel';
+import { BuildWorkflowPanel } from './BuildWorkflowPanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -121,6 +125,7 @@ import {
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen, Gauge,
   Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
   Table2, ChevronsLeft, ChevronsRight, BarChart3, Puzzle, Play, Replace, Palette, Server, ClipboardCheck,
+  Github, Hammer, FileCode,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -323,6 +328,10 @@ export function AIAppBuilderWorkspace() {
   const projectReview = useProjectReview();
   const supabaseConnection = useSupabaseConnection();
   const [showSupabaseIDE, setShowSupabaseIDE] = useState(false);
+  const [showGitHubPanel, setShowGitHubPanel] = useState(false);
+  const [showMigrationPanel, setShowMigrationPanel] = useState(false);
+  const [showEdgeFnEditor, setShowEdgeFnEditor] = useState(false);
+  const [showBuildWorkflow, setShowBuildWorkflow] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -1194,6 +1203,11 @@ export function AIAppBuilderWorkspace() {
     { id: 'auth', icon: Shield, label: 'Auth', tooltip: 'Configure user authentication and login settings', show: !!supabaseConfig, active: showAuth, group: 'data', color: 'text-blue-400', activeBg: 'bg-blue-500/10' },
     { id: 'storage', icon: FolderOpen, label: 'Storage', tooltip: 'Upload and manage files like images and documents', show: !!supabaseConfig, active: showStorage, group: 'data', color: 'text-amber-400', activeBg: 'bg-amber-500/10' },
     { id: 'edgeFunctions', icon: Zap, label: 'Edge Functions', tooltip: 'Create serverless backend functions that run on the edge', show: true, active: showEdgeFunctions, group: 'data', color: 'text-yellow-400', activeBg: 'bg-yellow-500/10' },
+    { id: 'migrationPanel' as any, icon: FileCode, label: 'Migrations', tooltip: 'Write and apply database migrations with a full SQL editor', show: true, active: showMigrationPanel, group: 'data', color: 'text-cyan-400', activeBg: 'bg-cyan-500/10' },
+    { id: 'edgeFnEditor' as any, icon: Terminal, label: 'Edge Editor', tooltip: 'Write, edit and test edge functions with live deploy', show: true, active: showEdgeFnEditor, group: 'data', color: 'text-yellow-300', activeBg: 'bg-yellow-500/10' },
+    // ── DevOps ──
+    { id: 'githubPanel' as any, icon: Github, label: 'GitHub', tooltip: 'Full GitHub integration — push, pull, branches, PRs', show: true, active: showGitHubPanel, group: 'devops', color: 'text-white/70', activeBg: 'bg-white/10' },
+    { id: 'buildWorkflow' as any, icon: Hammer, label: 'Build Workflows', tooltip: 'Trigger GitHub Actions, download EXE/MSI artifacts', show: true, active: showBuildWorkflow, group: 'devops', color: 'text-orange-400', activeBg: 'bg-orange-500/10' },
     // ── AI & Intelligence ──
     { id: 'knowledge', icon: Brain, label: 'Knowledge', tooltip: 'Add custom instructions and context files to guide the AI', show: true, active: showKnowledge, group: 'ai', color: 'text-violet-400', activeBg: 'bg-violet-500/10' },
     { id: 'codeIntel', icon: Sparkles, label: 'Code Intelligence', tooltip: 'AI-powered code suggestions and refactoring tips', show: true, active: showCodeIntel, group: 'ai', color: 'text-fuchsia-400', activeBg: 'bg-fuchsia-500/10' },
@@ -1570,6 +1584,7 @@ export function AIAppBuilderWorkspace() {
                     {(() => {
                       const groups = [
                         { key: 'data', label: 'Data & Auth', color: 'text-emerald-400/70' },
+                        { key: 'devops', label: 'DevOps', color: 'text-orange-400/70' },
                         { key: 'ai', label: 'AI & Tools', color: 'text-fuchsia-400/70' },
                         { key: 'project', label: 'Project', color: 'text-sky-400/70' },
                       ];
@@ -1597,6 +1612,14 @@ export function AIAppBuilderWorkspace() {
                                          }
                                        } else if (item.id === 'supabaseIDE') {
                                          setShowSupabaseIDE(!showSupabaseIDE);
+                                       } else if (item.id === 'githubPanel') {
+                                         setShowGitHubPanel(!showGitHubPanel);
+                                       } else if (item.id === 'migrationPanel') {
+                                         setShowMigrationPanel(!showMigrationPanel);
+                                       } else if (item.id === 'edgeFnEditor') {
+                                         setShowEdgeFnEditor(!showEdgeFnEditor);
+                                       } else if (item.id === 'buildWorkflow') {
+                                         setShowBuildWorkflow(!showBuildWorkflow);
                                        } else {
                                          openPanel(item.id as any);
                                        }
@@ -1730,6 +1753,10 @@ export function AIAppBuilderWorkspace() {
                   />
                 )}
                 <SupabaseIDEPanel open={showSupabaseIDE} onClose={() => setShowSupabaseIDE(false)} connection={supabaseConnection} onGenerateCode={(code, fileName) => { upsertFile(fileName, code); setRightTab('code'); setActiveFile(fileName); }} />
+                <GitHubPanel open={showGitHubPanel} onClose={() => setShowGitHubPanel(false)} projectName={project.name} files={project.files} onFilesImported={(imported) => { imported.forEach(f => upsertFile(f.path, f.content)); }} />
+                <DatabaseMigrationPanel open={showMigrationPanel} onClose={() => setShowMigrationPanel(false)} connection={supabaseConnection} onGenerateCode={(code, fileName) => { upsertFile(fileName, code); setRightTab('code'); setActiveFile(fileName); }} />
+                <EdgeFunctionEditorPanel open={showEdgeFnEditor} onClose={() => setShowEdgeFnEditor(false)} files={project.files} onUpsertFile={upsertFile} supabaseUrl={supabaseConnection.config?.url || supabaseConfig?.url} supabaseKey={supabaseConnection.config?.anonKey || supabaseConfig?.anonKey} />
+                <BuildWorkflowPanel open={showBuildWorkflow} onClose={() => setShowBuildWorkflow(false)} githubToken={localStorage.getItem('app-builder-github-pat') || undefined} githubRepo={localStorage.getItem('app-builder-github-repo') || undefined} />
                 <MultiFileSearchReplace open={showMultiSearch} onClose={() => setShowMultiSearch(false)} files={project.files} onReplaceInFiles={handleReplaceInFiles} onSelectFile={handleSetActiveFile} onSwitchToCode={() => setRightTab('code')} />
                 <InBrowserTestRunner open={showTestRunner} onClose={() => setShowTestRunner(false)} files={project.files} onGenerateTest={(filePath) => { sendMessage(`Generate unit tests for ${filePath}`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onSendToChat={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
                 <PluginMarketplace open={showExtensions} onClose={() => setShowExtensions(false)} catalogue={pluginRegistry.catalogue} installed={pluginRegistry.installed} onInstall={pluginRegistry.installPlugin} onUninstall={pluginRegistry.uninstallPlugin} onToggle={pluginRegistry.togglePlugin} onUpdateConfig={pluginRegistry.updatePluginConfig} />
