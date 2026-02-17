@@ -8,9 +8,11 @@ interface VersionTimelineSliderProps {
   onNavigate: (index: number) => void;
   onExit: () => void;
   getDiff: (index: number) => { added: string[]; removed: string[]; modified: string[] };
+  onToggleDiff?: () => void;
+  showDiff?: boolean;
 }
 
-export function VersionTimelineSlider({ snapshots, currentIndex, onNavigate, onExit, getDiff }: VersionTimelineSliderProps) {
+export function VersionTimelineSlider({ snapshots, currentIndex, onNavigate, onExit, getDiff, onToggleDiff, showDiff }: VersionTimelineSliderProps) {
   if (snapshots.length === 0) return null;
 
   const current = snapshots[currentIndex] || snapshots[snapshots.length - 1];
@@ -26,11 +28,23 @@ export function VersionTimelineSlider({ snapshots, currentIndex, onNavigate, onE
           <span className="text-[11px] font-medium text-white/60">Version Timeline</span>
           <span className="text-[9px] text-white/20 font-mono">{currentIndex + 1} / {snapshots.length}</span>
         </div>
-        <button onClick={onExit} className="h-5 w-5 rounded flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors">
-          <X className="h-3 w-3" />
-        </button>
+        <div className="flex items-center gap-1">
+          {onToggleDiff && currentIndex > 0 && (
+            <button
+              onClick={onToggleDiff}
+              className={cn("h-5 px-1.5 rounded text-[9px] font-medium flex items-center gap-1 transition-colors",
+                showDiff ? "bg-cyan-500/15 text-cyan-400" : "text-white/30 hover:text-white/50 hover:bg-white/5"
+              )}
+            >
+              <FileCode className="h-2.5 w-2.5" />
+              Diff
+            </button>
+          )}
+          <button onClick={onExit} className="h-5 w-5 rounded flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors">
+            <X className="h-3 w-3" />
+          </button>
+        </div>
       </div>
-
       {/* Slider */}
       <div className="flex items-center gap-2">
         <button
