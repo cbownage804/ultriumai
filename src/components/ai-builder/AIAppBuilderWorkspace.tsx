@@ -79,6 +79,8 @@ import { useBundleSizeTracking } from './useBundleSizeTracking';
 import { useDeleteButtonAutoPatcher } from './useDeleteButtonAutoPatcher';
 import { usePromptPhasePlanner } from './usePromptPhasePlanner';
 import { PhasePlannerPanel } from './PhasePlannerPanel';
+import { QuestionsCard } from './QuestionsCard';
+import { useBuilderQuestions } from './useBuilderQuestions';
 import { DeployPipelinePanel } from './DeployPipelinePanel';
 import { ComponentPalette } from './ComponentPalette';
 import { PerformanceProfiler } from './PerformanceProfiler';
@@ -168,6 +170,7 @@ export function AIAppBuilderWorkspace() {
   const bundleSize = useBundleSizeTracking(buildLog.addEntry);
   const deleteAutoPatcher = useDeleteButtonAutoPatcher();
   const phasePlanner = usePromptPhasePlanner();
+  const builderQuestions = useBuilderQuestions();
   const { saveDraft, saveDraftImmediate, loadDraft, clearDraft, hasDraft } = useDraftPersistence();
   const { previewUrl: hostedPreviewUrl, isUploading: isUploadingPreview, uploadPreview, clearPreviewTimer } = usePreviewHosting();
 
@@ -589,11 +592,21 @@ export function AIAppBuilderWorkspace() {
   }, [project.files, canUndo, canRedo, showSettingsPanel, showFileSearch, showVersionHistory, showConsole, showEnvVars, showAssets, showPackages, showActivity, showBilling, showFileTree]);
 
   const handleSend = (input: string, imageDataUrls?: string[] | null) => {
+    // Questions: intercept large prompts and ask clarifying questions first
+    const pendingQ = builderQuestions.analyzeForQuestions(input);
+    if (pendingQ) {
+      // Show the user's message and a system message explaining the questions
+      setMessages(prev => [
+        ...prev,
+        { id: crypto.randomUUID(), role: 'user', content: input, timestamp: new Date() },
+        { id: crypto.randomUUID(), role: 'assistant', content: '🤔 Before I start, I have a few questions to make sure I build exactly what you want:', timestamp: new Date() },
+      ]);
+      return;
+    }
+
     // Phase planner: intercept large prompts and decompose into phases
     const plan = phasePlanner.analyzePrompt(input);
     if (plan) {
-      // Large prompt detected — show phase planner instead of sending directly
-      // Add a system message explaining the phases
       const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** — ${p.description}`).join('\n');
       const planMessage = {
         id: crypto.randomUUID(),
@@ -1362,6 +1375,42 @@ export function AIAppBuilderWorkspace() {
                     onRemovePhase={phasePlanner.removePhase}
                     onReorder={phasePlanner.reorderPhases}
                     totalEstimatedCredits={phasePlanner.totalEstimatedCredits}
+                  />
+                )}
+                {builderQuestions.pending && (
+                  <QuestionsCard
+                    questions={builderQuestions.pending.questions}
+                    onSubmit={(answers) => {
+                      const enriched = builderQuestions.buildEnrichedPrompt(builderQuestions.pending!.context, answers);
+                      // Now run through phase planner with the enriched prompt
+                      const plan = phasePlanner.analyzePrompt(enriched);
+                      if (plan) {
+                        const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** — ${p.description}`).join('\n');
+                        setMessages(prev => [...prev, {
+                          id: crypto.randomUUID(), role: 'assistant' as const,
+                          content: `✅ Got it! I've broken this into ${plan.phases.length} phases:\n\n${phaseList}\n\nClick **"Start Phase 1"** below to begin.`,
+                          timestamp: new Date(),
+                        }]);
+                      } else {
+                        handleSend(enriched);
+                      }
+                    }}
+                    onSkip={() => {
+                      const ctx = builderQuestions.pending?.context || '';
+                      builderQuestions.dismiss();
+                      // Skip questions, go straight to phase planner
+                      const plan = phasePlanner.analyzePrompt(ctx);
+                      if (plan) {
+                        const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** — ${p.description}`).join('\n');
+                        setMessages(prev => [...prev, {
+                          id: crypto.randomUUID(), role: 'assistant' as const,
+                          content: `🚧 **This is a large project!** I've broken it into ${plan.phases.length} phases:\n\n${phaseList}\n\nClick **"Start Phase 1"** below to begin.`,
+                          timestamp: new Date(),
+                        }]);
+                      } else {
+                        handleSend(ctx);
+                      }
+                    }}
                   />
                 )}
                 <div className="flex-1 overflow-hidden">
