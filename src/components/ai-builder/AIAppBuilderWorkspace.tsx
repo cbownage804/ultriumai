@@ -653,7 +653,10 @@ export function AIAppBuilderWorkspace() {
   }, [isNewProject]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-upload preview to Supabase Storage for live hosting
-  const compiledForHosting = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+  const compiledForHosting = useMemo(
+    () => getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser),
+    [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser]
+  );
   useEffect(() => {
     if (previewSlug && compiledForHosting) {
       uploadPreview(previewSlug, compiledForHosting);
@@ -1123,7 +1126,10 @@ export function AIAppBuilderWorkspace() {
     toast.success(`Renamed to ${newPath.split('/').pop()}`);
   }, [project.files, upsertFile, deleteFile]);
 
-  const liveCompiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+  const liveCompiledHTML = useMemo(
+    () => getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT),
+    [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT]
+  );
   const [stableHTML, setStableHTML] = useState<string | null>(null);
 
   // Defer preview updates until build completes — but allow CSS hot-patches through immediately
