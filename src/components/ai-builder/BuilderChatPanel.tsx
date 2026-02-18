@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from '@/hooks/useAIAppBuilder';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
@@ -456,14 +457,11 @@ export function BuilderChatPanel({
               )}
             </div>
 
-            {/* Card footer tabs */}
+            {/* Card footer tabs — Details opens modal */}
             <div className="flex border-t border-white/[0.08]">
               <button
                 onClick={() => toggleBuildExpanded(msg.id)}
-                className={cn(
-                  "flex-1 text-center text-[12px] py-2.5 font-medium transition-colors",
-                  isBuildExpanded ? "text-white/70 bg-white/[0.03]" : "text-white/40 hover:text-white/60"
-                )}
+                className="flex-1 text-center text-[12px] py-2.5 font-medium text-white/40 hover:text-white/60 transition-colors"
               >
                 Details
               </button>
@@ -480,22 +478,43 @@ export function BuilderChatPanel({
           </motion.div>
         )}
 
-        {/* Expandable diff details */}
-        {isBuildExpanded && !isStreaming && hasFiles && previousFiles.length > 0 && (
-          <div className="space-y-1.5 pl-2 border-l border-white/[0.06]">
-            {latestFiles.slice(0, 3).map(file => {
-              const prev = previousFiles.find(p => p.path === file.path);
-              if (!prev) return null;
-              return (
-                <CodeDiffViewer
-                  key={file.path}
-                  oldContent={prev.content}
-                  newContent={file.content}
-                  fileName={file.path}
-                />
-              );
-            })}
-          </div>
+        {/* Details modal — full-screen overlay */}
+        {isBuildExpanded && (
+          <Dialog open={true} onOpenChange={() => toggleBuildExpanded(msg.id)}>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-[#0c0c10] border-white/[0.1] text-white">
+              <DialogHeader>
+                <DialogTitle className="text-sm font-medium text-white/80">
+                  {totalFiles > 1 ? `Changes — ${totalFiles} files` : fileNames[0] || 'Code changes'}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-2">
+                <div className="space-y-1">
+                  {fileNames.map((name, i) => (
+                    <div key={i} className="flex items-center gap-2 py-1 px-2 rounded-md hover:bg-white/[0.03]">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      <span className="text-[13px] text-white/60 font-mono truncate">{name}</span>
+                    </div>
+                  ))}
+                </div>
+                {!isStreaming && hasFiles && previousFiles.length > 0 && (
+                  <div className="space-y-3 border-t border-white/[0.08] pt-4">
+                    {latestFiles.map(file => {
+                      const prev = previousFiles.find(p => p.path === file.path);
+                      if (!prev) return null;
+                      return (
+                        <CodeDiffViewer
+                          key={file.path}
+                          oldContent={prev.content}
+                          newContent={file.content}
+                          fileName={file.path}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
 
         {/* Main prose content — clean, no border */}
