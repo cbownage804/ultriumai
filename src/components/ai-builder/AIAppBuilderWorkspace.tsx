@@ -1228,139 +1228,162 @@ export function AIAppBuilderWorkspace() {
         variant="danger"
       />
         {/* ── Top Bar — Lovable-style ── */}
-        <div className="flex items-center justify-between px-2 h-12 border-b border-white/[0.06] bg-[#09090b] shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-          {/* LEFT: Back + Project name */}
-          <div className="flex items-center gap-1.5 min-w-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={() => navigate('/ai-studio')} className="h-8 w-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors shrink-0">
-                  <ArrowLeft className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Back to AI Studio</TooltipContent>
-            </Tooltip>
+        <div className="flex items-center justify-between px-2 h-11 border-b border-white/[0.06] bg-[#0c0c0c] shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+          {/* LEFT: Logo + Project name dropdown */}
+          <div className="flex items-center gap-2 min-w-0">
+            {/* App logo/icon */}
+            <button onClick={() => navigate('/ai-studio')} className="shrink-0 flex items-center justify-center h-7 w-7">
+              <div className="h-5 w-5 rounded-md bg-gradient-to-br from-orange-500 to-red-500" />
+            </button>
 
-            <div className="h-4 w-px bg-white/[0.06]" />
-
-            <div className="flex items-center gap-1.5 min-w-0">
-              <div className={cn(
-                "h-2 w-2 rounded-full shrink-0 transition-colors",
-                isGenerating ? "bg-amber-400 animate-pulse" : hasFiles ? "bg-emerald-400" : "bg-white/20"
-              )} />
-              {isEditingName ? (
-                <Input
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  onBlur={handleRename}
-                  onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-                  className="h-7 w-48 text-sm bg-white/5 border-white/10 text-white"
-                  autoFocus
-                />
-              ) : (
-                <ProjectDropdownMenu
-                  projectName={project.name}
-                  isGenerating={isGenerating}
-                  hasFiles={hasFiles}
-                  onRename={() => { setEditName(project.name); setIsEditingName(true); }}
-                  onOpenSettings={() => setShowSettingsPanel(true)}
-                  onPublish={() => setShowPublishPanel(true)}
-                  onOpenBilling={() => setShowBilling(true)}
-                />
-              )}
-            </div>
-
-            <BranchManager
-              branches={branches}
-              activeBranch={activeBranch}
-              activeBranchName={activeBranchName}
-              onCreateBranch={handleCreateBranch}
-              onSwitchBranch={handleSwitchBranch}
-              onMergeBranch={handleMergeBranch}
-              onDeleteBranch={deleteBranch}
-            />
-
-            {hasFiles && (
-              <div className="hidden md:flex items-center gap-0.5 ml-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={handleUndo} disabled={!canUndo} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", canUndo ? "text-white/30 hover:text-white/60 hover:bg-white/5" : "text-white/10")}>
-                      <Undo2 className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs">Undo (⌘Z)</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={handleRedo} disabled={!canRedo} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", canRedo ? "text-white/30 hover:text-white/60 hover:bg-white/5" : "text-white/10")}>
-                      <Redo2 className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs">Redo (⌘⇧Z)</TooltipContent>
-                </Tooltip>
-              </div>
+            {isEditingName ? (
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                onBlur={handleRename}
+                onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+                className="h-7 w-48 text-sm bg-white/5 border-white/10 text-white"
+                autoFocus
+              />
+            ) : (
+              <ProjectDropdownMenu
+                projectName={project.name}
+                isGenerating={isGenerating}
+                hasFiles={hasFiles}
+                onRename={() => { setEditName(project.name); setIsEditingName(true); }}
+                onOpenSettings={() => setShowSettingsPanel(true)}
+                onPublish={() => setShowPublishPanel(true)}
+                onOpenBilling={() => setShowBilling(true)}
+              />
             )}
-          </div>
 
-          {/* CENTER: View tabs + device picker */}
-          <div className="hidden md:flex items-center gap-2">
-            <div className="flex items-center gap-0.5 bg-white/[0.04] rounded-lg p-0.5 border border-white/[0.07] shadow-inner shadow-black/20">
-              <button
-                onClick={() => setRightTab('preview')}
-                className={cn("flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-md transition-all font-medium", rightTab === 'preview' ? "bg-gradient-to-r from-white/[0.12] to-white/[0.08] text-white shadow-sm shadow-black/20" : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]")}
-              >
-                <Eye className="h-3.5 w-3.5" />
-                Preview
-              </button>
-              <button
-                onClick={() => setRightTab('code')}
-                className={cn("flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-md transition-all font-medium", rightTab === 'code' ? "bg-gradient-to-r from-white/[0.12] to-white/[0.08] text-white shadow-sm shadow-black/20" : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]")}
-              >
-                <Code className="h-3.5 w-3.5" />
-                Code
-              </button>
-              <button
-                onClick={() => setRightTab('split')}
-                className={cn("flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-md transition-all font-medium", rightTab === 'split' ? "bg-gradient-to-r from-white/[0.12] to-white/[0.08] text-white shadow-sm shadow-black/20" : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]")}
-              >
-                <Columns className="h-3.5 w-3.5" />
-                Split
-              </button>
+            {/* Undo/Redo + History icons */}
+            <div className="hidden md:flex items-center gap-0.5 ml-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button onClick={() => setShowVersionHistory(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                    <History className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">Version History</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button onClick={() => setRightTab('split')} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", rightTab === 'split' ? "text-white/60 bg-white/5" : "text-white/30 hover:text-white/60 hover:bg-white/5")}>
+                    <Columns className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">Split View</TooltipContent>
+              </Tooltip>
             </div>
-            <ResponsivePreviewBar active={viewportMode} onChange={setViewportMode} />
           </div>
 
-          {/* RIGHT: Actions */}
-          <div className="flex items-center gap-1">
-            <CollaboratorAvatars collaborators={collaborators} onClick={() => setShowShareDialog(true)} />
-            <CollaborativePresence projectId={currentProjectId} />
-            <CreditsPill onClick={() => setShowBilling(true)} />
+          {/* CENTER: View tabs + tool icons */}
+          <div className="hidden md:flex items-center gap-1">
+            {/* Preview pill (primary action) */}
+            <button
+              onClick={() => setRightTab('preview')}
+              className={cn(
+                "flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium transition-all border",
+                rightTab === 'preview'
+                  ? "bg-white text-black border-white/20 shadow-sm"
+                  : "text-white/50 border-transparent hover:text-white/70 hover:bg-white/[0.04]"
+              )}
+            >
+              <Eye className="h-3.5 w-3.5" />
+              Preview
+            </button>
 
-            <BuildNotificationCenter
-              notifications={buildNotifications}
-              onMarkRead={(id) => setBuildNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))}
-              onClear={() => setBuildNotifications([])}
-            />
+            {/* Divider */}
+            <div className="h-4 w-px bg-white/[0.08] mx-0.5" />
 
+            {/* Tool icons row */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <button onClick={() => setShowShareDialog(true)} className="h-8 w-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
-                  <Users className="h-4 w-4" />
+                <button onClick={() => setShowSupabaseIDE(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                  <Database className="h-3.5 w-3.5" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Share</TooltipContent>
+              <TooltipContent side="bottom" className="text-xs">Supabase</TooltipContent>
             </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={() => setRightTab('code')} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", rightTab === 'code' ? "text-white/60 bg-white/5" : "text-white/30 hover:text-white/60 hover:bg-white/5")}>
+                  <Code className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Code Editor</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={() => setShowTerminal(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                  <Terminal className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Terminal</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={() => setShowCommandPalette(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                  <BarChart3 className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">More Tools (⌘K)</TooltipContent>
+            </Tooltip>
+          </div>
+
+          {/* RIGHT: URL bar + actions */}
+          <div className="flex items-center gap-1.5">
+            {/* URL bar */}
+            <div className="hidden lg:flex items-center gap-1.5 h-7 px-2.5 rounded-md bg-white/[0.04] border border-white/[0.07] text-white/30 text-xs min-w-[180px]">
+              <Globe className="h-3 w-3 shrink-0" />
+              <span className="truncate">/ai-studio/app-builder</span>
+            </div>
+
+            {/* Expand + Refresh */}
+            <div className="hidden md:flex items-center gap-0.5">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="h-7 w-7 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors">
+                    <Zap className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">Expand</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button onClick={() => { /* refresh preview */ }} className="h-7 w-7 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors">
+                    <Redo2 className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">Refresh</TooltipContent>
+              </Tooltip>
+            </div>
 
             <div className="h-5 w-px bg-white/[0.06] mx-0.5" />
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={() => setShowPublishPanel(true)} className={cn("h-8 px-3 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-colors", publishedUrl ? "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25" : "bg-cyan-500/15 text-cyan-400 hover:bg-cyan-500/25")}>
-                  <Rocket className="h-3.5 w-3.5" />
-                  {publishedUrl ? 'Update' : 'Publish'}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Publish & Deploy</TooltipContent>
-            </Tooltip>
+            {/* Share button */}
+            <button
+              onClick={() => setShowShareDialog(true)}
+              className="h-7 px-3 rounded-full flex items-center gap-1.5 text-xs font-medium bg-white/[0.06] text-white/60 hover:text-white hover:bg-white/[0.1] transition-colors border border-white/[0.07]"
+            >
+              <Users className="h-3.5 w-3.5" />
+              Share
+            </button>
+
+            {/* Publish button */}
+            <button
+              onClick={() => setShowPublishPanel(true)}
+              className={cn(
+                "h-7 px-3 rounded-full flex items-center gap-1.5 text-xs font-medium transition-colors",
+                publishedUrl
+                  ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                  : "bg-white text-black hover:bg-white/90"
+              )}
+            >
+              <Rocket className="h-3.5 w-3.5" />
+              Publish
+            </button>
 
             <DeployDialog
               onPublish={handlePublish}
@@ -1376,33 +1399,11 @@ export function AIAppBuilderWorkspace() {
               cdnPackages={cdnPackages}
               edgeFunctions={edgeFunctions}
             />
-
-            <ProjectManager
-              savedProjects={savedProjects}
-              currentProjectId={currentProjectId}
-              isSaving={isSaving}
-              isLoading={isLoading}
-              lastSaved={lastSaved}
-              isPublished={!!publishedUrl}
-              publishedUrl={publishedUrl}
-              onSave={handleSave}
-              onLoad={handleLoadProject}
-              onDelete={deleteProject}
-              onPublish={handlePublish}
-              onLoadProjects={loadProjects}
-              onRemix={handleRemix}
-            />
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={() => setShowSettingsPanel(true)} className="h-8 w-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
-                  <Settings className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Settings</TooltipContent>
-            </Tooltip>
           </div>
         </div>
+
+        {/* Orange accent line under header */}
+        <div className="h-[2px] bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 shrink-0" />
 
         {/* Mobile tab switcher */}
         {isMobile && (
