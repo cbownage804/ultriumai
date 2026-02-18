@@ -162,7 +162,7 @@ export function AIAppBuilderWorkspace() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const {
-    messages, setMessages, isGenerating, latestFiles, previousFiles, mode, setMode, thinkingPhase, versions,
+    messages, setMessages, isGenerating, latestFiles, previousFiles, mode, setMode, thinkingPhase, versions, setVersions,
     totalTokensUsed, sendMessage, stopGenerating, clearChat, restoreVersion, forwardErrorToChat,
     partialFiles, isStreamingPreview, completedFileCount,
   } = useAIAppBuilder();
@@ -579,10 +579,10 @@ export function AIAppBuilderWorkspace() {
     }
   }, [partialFiles, isStreamingPreview]);
 
-  // Auto-save (cloud) — includes chat messages for persistence
+  // Auto-save (cloud) — includes chat messages + versions for persistence
   useEffect(() => {
-    if (project.files.length > 0) scheduleAutoSave(project.name, project.files, messages);
-  }, [project.files, project.name, messages, scheduleAutoSave]);
+    if (project.files.length > 0) scheduleAutoSave(project.name, project.files, messages, { versions });
+  }, [project.files, project.name, messages, versions, scheduleAutoSave]);
 
   // Auto-save draft to localStorage (survives refresh)
   useEffect(() => {
@@ -624,6 +624,9 @@ export function AIAppBuilderWorkspace() {
         if (loaded.published_url) setPublishedUrl(loaded.published_url);
         if (loaded.settings?.chatMessages) {
           setMessages(loaded.settings.chatMessages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+        }
+        if (loaded.settings?.versions) {
+          setVersions(loaded.settings.versions.map((v: any) => ({ ...v, timestamp: new Date(v.timestamp) })));
         }
       }
     })();
@@ -1018,7 +1021,7 @@ export function AIAppBuilderWorkspace() {
   const { captureAndUpload } = usePreviewCapture();
 
   const handleSave = useCallback(async () => {
-    const extraSettings: Record<string, any> = {};
+    const extraSettings: Record<string, any> = { versions };
     if (linkedGPT) extraSettings.linkedGPT = linkedGPT;
     const projectId = await saveProject(project.name, project.files, branches, activeBranch, messages, extraSettings);
     setDirtyFiles(new Set());
@@ -1070,6 +1073,9 @@ export function AIAppBuilderWorkspace() {
       if (loaded.settings?.chatMessages) {
         setMessages(loaded.settings.chatMessages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
       }
+      if (loaded.settings?.versions) {
+        setVersions(loaded.settings.versions.map((v: any) => ({ ...v, timestamp: new Date(v.timestamp) })));
+      }
       if (loaded.settings?.linkedGPT) {
         setLinkedGPT(loaded.settings.linkedGPT);
       } else {
@@ -1077,7 +1083,7 @@ export function AIAppBuilderWorkspace() {
       }
       toast.success(`Loaded "${loaded.name}"`);
     }
-  }, [loadProject, setFiles, renameProject, setMessages]);
+  }, [loadProject, setFiles, renameProject, setMessages, setVersions]);
 
   const handlePublish = useCallback(async () => {
     const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
