@@ -933,9 +933,38 @@ export function AIAppBuilderWorkspace() {
       let changed = false;
 
       if (property === 'replaceWithImage') {
-        // Replace the selected element with an <img> tag using the data URL
+        // Directly inject the image into source files instead of sending huge base64 to AI chat
+        const imgTag = `<img src="${value}" alt="Image" style="max-width:100%;height:auto;" />`;
+        
+        // Update iframe directly for instant visual feedback
+        const iframe = document.querySelector('iframe');
+        const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+        if (iframeDoc) {
+          const el = iframeDoc.querySelector(selector) as HTMLElement;
+          if (el) el.outerHTML = imgTag;
+        }
+
+        // Persist: find and replace the element in source HTML files
+        for (const f of htmlFiles) {
+          // Try to find the element by parsing the selector's tag
+          const parts = selector.split(' > ');
+          const lastPart = parts[parts.length - 1]?.replace(/:nth-child\(\d+\)/, '') || '';
+          if (lastPart) {
+            // Simple regex to find the element — works for common cases
+            const tagRegex = new RegExp(`<${lastPart}[^>]*>[^<]*</${lastPart}>`, 'i');
+            const match = f.content.match(tagRegex);
+            if (match) {
+              const newContent = f.content.replace(match[0], imgTag);
+              if (newContent !== f.content) {
+                upsertFile(f.path, newContent);
+                return;
+              }
+            }
+          }
+        }
+        // Fallback: ask AI with a short prompt (no data URL in message)
         sendMessage(
-          `Apply this visual edit to the source file. Replace the element matching selector "${selector}" with an <img> tag using this exact data URL as the src attribute: ${value}\n\nKeep the same sizing/position. Use: <img src="${value}" alt="Image" style="max-width:100%;height:auto;" />`,
+          `Replace the element at "${selector}" with this image tag in the HTML source: ${imgTag}`,
           project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel
         );
         return;
