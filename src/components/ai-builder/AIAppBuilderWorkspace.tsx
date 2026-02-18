@@ -690,17 +690,18 @@ export function AIAppBuilderWorkspace() {
     return () => window.removeEventListener('keydown', handler);
   }, [project.files, canUndo, canRedo, showSettingsPanel, showFileSearch, showVersionHistory, showConsole, showEnvVars, showAssets, showPackages, showActivity, showBilling, showFileTree]);
 
-  const handleSend = (input: string, imageDataUrls?: string[] | null) => {
+  const handleSend = (input: string, imageDataUrls?: string[] | null, skipQuestions?: boolean) => {
     // Questions: intercept large prompts and ask clarifying questions first
-    const pendingQ = builderQuestions.analyzeForQuestions(input);
-    if (pendingQ) {
-      // Show the user's message and a system message explaining the questions
-      setMessages(prev => [
-        ...prev,
-        { id: crypto.randomUUID(), role: 'user', content: input, timestamp: new Date() },
-        { id: crypto.randomUUID(), role: 'assistant', content: '🤔 Before I start, I have a few questions to make sure I build exactly what you want:', timestamp: new Date() },
-      ]);
-      return;
+    if (!skipQuestions) {
+      const pendingQ = builderQuestions.analyzeForQuestions(input);
+      if (pendingQ) {
+        setMessages(prev => [
+          ...prev,
+          { id: crypto.randomUUID(), role: 'user', content: input, timestamp: new Date() },
+          { id: crypto.randomUUID(), role: 'assistant', content: '🤔 Before I start, I have a few questions to make sure I build exactly what you want:', timestamp: new Date() },
+        ]);
+        return;
+      }
     }
 
     // Phase planner: intercept large prompts and decompose into phases
@@ -1507,7 +1508,7 @@ export function AIAppBuilderWorkspace() {
                               timestamp: new Date(),
                             }]);
                           } else {
-                            handleSend(enriched);
+                            handleSend(enriched, null, true);
                           }
                         }}
                         onSkip={() => {
@@ -1522,7 +1523,7 @@ export function AIAppBuilderWorkspace() {
                               timestamp: new Date(),
                             }]);
                           } else {
-                            handleSend(ctx);
+                            handleSend(ctx, null, true);
                           }
                         }}
                       />
