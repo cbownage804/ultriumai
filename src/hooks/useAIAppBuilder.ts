@@ -416,7 +416,7 @@ export function useAIAppBuilder() {
       // Strip file content from old assistant messages to save tokens
       const content = m.role === 'assistant'
         ? m.content.replace(/===FILE:[\s\S]*?(?====FILE:|$)/g, '[file content omitted]').slice(0, 500)
-        : m.content;
+        : m.content.slice(0, 2000); // Also cap user messages in history
       apiMessages.push({ role: m.role, content });
     }
 
@@ -496,15 +496,21 @@ export function useAIAppBuilder() {
         return { file: f, score };
       });
 
-      // Take files with score > 0, sorted by score, limited to top 15 for token efficiency
-      const MAX_FILES = 15;
+      // Take files with score > 0, sorted by score, limited to top 12 for token efficiency
+      const MAX_FILES = 12;
+      const MAX_FILE_CHARS = 15000; // Cap individual file content
       const relevant = scored
         .filter(s => s.score > 0)
         .sort((a, b) => b.score - a.score)
         .slice(0, MAX_FILES);
 
       const filesToSend = relevant.length > 0 ? relevant.map(s => s.file) : files.slice(0, MAX_FILES);
-      const fileContext = filesToSend.map(f => `===FILE: ${f.path}===\n${f.content}`).join('\n\n');
+      const fileContext = filesToSend.map(f => {
+        const content = f.content.length > MAX_FILE_CHARS
+          ? f.content.slice(0, MAX_FILE_CHARS) + '\n/* ... truncated ... */'
+          : f.content;
+        return `===FILE: ${f.path}===\n${content}`;
+      }).join('\n\n');
 
       const omittedCount = files.length - filesToSend.length;
       const omittedNote = omittedCount > 0
@@ -560,18 +566,57 @@ export function useAIAppBuilder() {
 
       // CRITICAL: Also pass the raw data URLs as text so the AI can embed them in code.
       // Vision models can "see" the image but cannot extract the data URL string from the image_url block.
+      // BUT: cap data URL size to prevent token overflow (max ~50KB per image = ~67K chars base64)
+      const MAX_DATA_URL_SIZE = 50000;
       const isLogoIntent = /\b(logo|icon|favicon|brand|nav\s*bar|header|footer)\b/i.test(input)
         || /\b(use\s*(this|it|that|the\s*attach))/i.test(input);
       if (rasterUrls.length > 0 && isLogoIntent) {
-        const dataUrlRef = rasterUrls.map((url, i) =>
-          `[EMBEDDABLE DATA URL FOR IMAGE ${i + 1}] — Copy this EXACT string into <img src="...">:\n${url}`
-        ).join('\n\n');
+        const dataUrlRef = rasterUrls.map((url, i) => {
+          if (url.length > MAX_DATA_URL_SIZE) {
+            return `[EMBEDDABLE DATA URL FOR IMAGE ${i + 1}] — Image is too large to embed inline (${Math.round(url.length / 1024)}KB). The image is visible in the image_url block above — use a placeholder <img> with a TODO comment to replace with a hosted URL.`;
+          }
+          return `[EMBEDDABLE DATA URL FOR IMAGE ${i + 1}] — Copy this EXACT string into <img src="...">:\n${url}`;
+        }).join('\n\n');
         userContent.push({ type: 'text', text: dataUrlRef });
       }
 
       apiMessages.push({ role: 'user', content: userContent });
     } else {
       apiMessages.push({ role: 'user', content: buildFileContext(currentFiles, input) });
+    }
+
+    // ── Token budget enforcement ──
+    // Rough estimate: 1 token ≈ 4 chars. Gemini limit is 1M tokens ≈ 4M chars.
+    // Leave headroom for system prompt on edge function side (~100K chars).
+    const MAX_PAYLOAD_CHARS = 3_500_000;
+    const estimateChars = (msg: any): number => {
+      if (typeof msg.content === 'string') return msg.content.length;
+      if (Array.isArray(msg.content)) {
+        return msg.content.reduce((sum: number, block: any) => {
+          if (block.type === 'text') return sum + (block.text?.length || 0);
+          if (block.type === 'image_url') return sum + Math.min(block.image_url?.url?.length || 0, 100000);
+          return sum;
+        }, 0);
+      }
+      return 0;
+    };
+    let totalChars = apiMessages.reduce((sum, m) => sum + estimateChars(m), 0);
+
+    // If over budget, aggressively trim: remove older history messages first
+    while (totalChars > MAX_PAYLOAD_CHARS && apiMessages.length > 2) {
+      // Find the first non-system, non-last message to remove
+      const removeIdx = apiMessages.findIndex((m, i) => i > 0 && i < apiMessages.length - 1 && m.role !== 'system');
+      if (removeIdx === -1) break;
+      totalChars -= estimateChars(apiMessages[removeIdx]);
+      apiMessages.splice(removeIdx, 1);
+    }
+
+    // If STILL over budget, truncate file contents in the last user message
+    if (totalChars > MAX_PAYLOAD_CHARS) {
+      const lastMsg = apiMessages[apiMessages.length - 1];
+      if (typeof lastMsg.content === 'string' && lastMsg.content.length > 500000) {
+        lastMsg.content = lastMsg.content.slice(0, 500000) + '\n\n[TRUNCATED: Project too large. Only partial file content included. Focus on files mentioned in the user request.]';
+      }
     }
 
     const controller = new AbortController();
@@ -599,7 +644,14 @@ export function useAIAppBuilder() {
 
       if (!resp.ok) {
         const errData = await resp.json().catch(() => ({ error: 'Unknown error' }));
-        if (resp.status === 429) {
+        if (resp.status === 400) {
+          const errorMsg = errData?.error || '';
+          if (errorMsg.includes('token') || errorMsg.includes('too large') || errorMsg.includes('exceeds')) {
+            toast.error('Your project is too large for a single prompt. Try a more specific request targeting fewer files.', { duration: 8000 });
+          } else {
+            toast.error('Invalid request — ' + (errorMsg || 'please simplify your prompt and try again.'), { duration: 6000 });
+          }
+        } else if (resp.status === 429) {
           toast.error('Rate limited — please wait 30 seconds and try again.', { duration: 6000 });
         } else if (resp.status === 402) {
           toast.error('AI credits exhausted. Purchase more credits to continue building.', {

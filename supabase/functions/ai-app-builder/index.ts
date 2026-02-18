@@ -740,6 +740,14 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      if (response.status === 400) {
+        const errorText = await response.text();
+        console.error("AI gateway error:", response.status, errorText);
+        const parsed = JSON.parse(errorText).error?.message || 'Request too large';
+        return new Response(JSON.stringify({ error: parsed }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
       return new Response(JSON.stringify({ error: "AI service error" }), {
