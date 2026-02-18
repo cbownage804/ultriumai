@@ -116,8 +116,12 @@ document.addEventListener('click', function(e) {
   if (href.startsWith('javascript:') || href.startsWith('blob:') || href.startsWith('data:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
   if (href.startsWith('#')) {
     e.preventDefault();
-    var target = document.querySelector(href);
-    if (target) target.scrollIntoView({ behavior: 'smooth' });
+    if (href.length > 1) {
+      try {
+        var target = document.querySelector(href);
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      } catch(err) {}
+    }
     return;
   }
   e.preventDefault();
