@@ -284,7 +284,16 @@ export function BuilderChatPanel({
     const files = e.target.files;
     if (!files) return;
     Array.from(files).forEach(file => {
-      if (!file.type.startsWith('image/')) return;
+      // Support both images and other file types
+      if (!file.type.startsWith('image/')) {
+        // For non-image files, still read as data URL so the AI can see the content
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setImagePreviews(prev => [...prev, ev.target?.result as string]);
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (ev) => {
         setImagePreviews(prev => [...prev, ev.target?.result as string]);
