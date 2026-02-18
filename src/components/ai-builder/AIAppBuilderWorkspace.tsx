@@ -124,6 +124,7 @@ import { PublishPanel } from './PublishPanel';
 import { AIImageGenPanel } from './AIImageGenPanel';
 import { SymbolSearchPanel } from './SymbolSearchPanel';
 import { SecretsManagerPanel } from './SecretsManagerPanel';
+import { ProjectDropdownMenu } from './ProjectDropdownMenu';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -1256,13 +1257,15 @@ export function AIAppBuilderWorkspace() {
                   autoFocus
                 />
               ) : (
-                <button
-                  onClick={() => { setEditName(project.name); setIsEditingName(true); }}
-                  className="flex items-center gap-1 text-sm font-medium text-white/80 hover:text-white transition-colors truncate max-w-[200px]"
-                >
-                  {project.name}
-                  <ChevronDown className="h-3 w-3 text-white/30 shrink-0" />
-                </button>
+                <ProjectDropdownMenu
+                  projectName={project.name}
+                  isGenerating={isGenerating}
+                  hasFiles={hasFiles}
+                  onRename={() => { setEditName(project.name); setIsEditingName(true); }}
+                  onOpenSettings={() => setShowSettingsPanel(true)}
+                  onPublish={() => setShowPublishPanel(true)}
+                  onOpenBilling={() => setShowBilling(true)}
+                />
               )}
             </div>
 
