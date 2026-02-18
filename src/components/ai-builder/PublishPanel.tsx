@@ -274,8 +274,8 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
                         <div className="mt-2 p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
                           <p className="text-[10px] text-amber-400/80 font-medium mb-1">DNS Configuration Required</p>
                           <div className="space-y-1 text-[10px] text-white/40 font-mono">
-                            <div>A Record → @ → 185.158.133.1</div>
-                            <div>A Record → www → 185.158.133.1</div>
+                            <div>A Record → @ → 159.203.128.171</div>
+                            <div>A Record → www → 159.203.128.171</div>
                             <div>TXT → _verify → {domain.id.slice(0, 12)}</div>
                           </div>
                         </div>
