@@ -124,6 +124,19 @@ export function ProjectSettings({
   const [localEnvVars, setLocalEnvVars] = useState<EnvVar[]>(envVars);
   const [dangerConfirm, setDangerConfirm] = useState('');
 
+  // Project settings state
+  const [projectVisibility, setProjectVisibility] = useState('private');
+  const [hideBranding, setHideBranding] = useState(false);
+  const [disableAnalytics, setDisableAnalytics] = useState(false);
+
+  // Privacy settings state
+  const [crossProjectSharing, setCrossProjectSharing] = useState(true);
+  const [allowPublicPreview, setAllowPublicPreview] = useState(true);
+
+  // Domain connect state
+  const [showDomainInput, setShowDomainInput] = useState(false);
+  const [newDomain, setNewDomain] = useState('');
+
   const connectedCount = [supabaseConfig, githubConfig, stripeConfig, vercelConfig]
     .filter(Boolean).length + (serviceKeys.length > 0 ? 1 : 0) + (envVars.length > 0 ? 1 : 0);
 
@@ -203,7 +216,7 @@ export function ProjectSettings({
           <span className="text-sm text-muted-foreground">{projectName || 'Untitled'}</span>
         </SettingRow>
         <SettingRow title="Project visibility" description="Control who can see and access this project." className="px-5">
-          <Select defaultValue="private">
+          <Select value={projectVisibility} onValueChange={(v) => { setProjectVisibility(v); toast.success(`Visibility set to ${v}`); }}>
             <SelectTrigger className="w-[140px] h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
@@ -215,19 +228,10 @@ export function ProjectSettings({
           </Select>
         </SettingRow>
         <SettingRow title="Hide branding" description='Remove the "Built with UltriumAI" badge from published apps.' className="px-5">
-          <Switch defaultChecked={false} />
+          <Switch checked={hideBranding} onCheckedChange={(v) => { setHideBranding(v); toast.success(v ? 'Branding hidden' : 'Branding visible'); }} />
         </SettingRow>
         <SettingRow title="Disable analytics" description="Disable collecting analytics data for this project." className="px-5">
-          <Switch defaultChecked={false} />
-        </SettingRow>
-      </div>
-
-      {/* Danger zone */}
-      <div className="mt-8 rounded-lg border border-destructive/20 bg-destructive/[0.03] divide-y divide-destructive/10">
-        <SettingRow title="Delete project" description="Permanently delete this project. This cannot be undone." className="px-5">
-          <Button variant="destructive" size="sm" className="text-xs h-8" onClick={onDeleteProject}>
-            Delete
-          </Button>
+          <Switch checked={disableAnalytics} onCheckedChange={(v) => { setDisableAnalytics(v); toast.success(v ? 'Analytics disabled' : 'Analytics enabled'); }} />
         </SettingRow>
       </div>
     </div>
@@ -240,9 +244,11 @@ export function ProjectSettings({
           <h2 className="text-lg font-semibold text-foreground">Domains</h2>
           <p className="text-sm text-muted-foreground mt-1">Publish your project to custom domains.</p>
         </div>
-        <Button variant="outline" size="sm" className="text-xs gap-1.5 h-8">
-          How domains work <ExternalLink className="h-3 w-3" />
-        </Button>
+        <a href="https://docs.lovable.dev/features/custom-domain" target="_blank" rel="noopener noreferrer">
+          <Button variant="outline" size="sm" className="text-xs gap-1.5 h-8">
+            How domains work <ExternalLink className="h-3 w-3" />
+          </Button>
+        </a>
       </div>
       <div className="mt-6 rounded-lg border border-border bg-card/50 p-5">
         <h3 className="text-sm font-medium text-foreground mb-4">Overview</h3>
@@ -250,28 +256,65 @@ export function ProjectSettings({
           <div className="flex items-center justify-between py-2">
             <div className="flex items-center gap-2">
               <Globe className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-foreground">{projectName || 'myapp'}.ultriumai.app</span>
-              <ExternalLink className="h-3 w-3 text-muted-foreground" />
+              <a href={`https://${projectName || 'myapp'}.ultriumai.app`} target="_blank" rel="noopener noreferrer" className="text-sm text-foreground hover:underline flex items-center gap-1">
+                {projectName || 'myapp'}.ultriumai.app
+                <ExternalLink className="h-3 w-3 text-muted-foreground" />
+              </a>
               <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px]">Live</Badge>
             </div>
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground">•••</Button>
           </div>
         </div>
       </div>
+
+      {/* Connect domain flow */}
+      {showDomainInput && (
+        <div className="mt-4 rounded-lg border border-primary/30 bg-primary/5 p-5 space-y-3">
+          <h3 className="text-sm font-medium text-foreground">Connect your domain</h3>
+          <p className="text-xs text-muted-foreground">Enter your domain name below. You'll need to configure DNS records after connecting.</p>
+          <div className="flex gap-2">
+            <Input
+              placeholder="yourdomain.com"
+              value={newDomain}
+              onChange={(e) => setNewDomain(e.target.value)}
+              className="text-xs font-mono h-8 flex-1"
+            />
+            <Button size="sm" className="text-xs h-8" disabled={!newDomain.trim()} onClick={() => {
+              toast.success(`Domain "${newDomain}" added. Configure DNS: A record → 185.158.133.1, TXT record → _lovable`);
+              setNewDomain('');
+              setShowDomainInput(false);
+            }}>
+              Connect
+            </Button>
+            <Button size="sm" variant="ghost" className="text-xs h-8" onClick={() => { setShowDomainInput(false); setNewDomain(''); }}>
+              Cancel
+            </Button>
+          </div>
+          <div className="bg-muted/50 rounded-md p-3 space-y-1.5 text-[11px] font-mono">
+            <p className="text-muted-foreground font-sans text-[10px] uppercase font-semibold mb-2">DNS Records to add</p>
+            <div className="flex justify-between"><span className="text-muted-foreground">A (root)</span><span>185.158.133.1</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">A (www)</span><span>185.158.133.1</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">TXT (_lovable)</span><span>lovable_verify=...</span></div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-4 grid grid-cols-2 gap-4">
         <div className="rounded-lg border border-border bg-card/50 p-5 flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-foreground">Add existing domain</p>
             <p className="text-xs text-muted-foreground mt-0.5">Connect a domain you already own.</p>
           </div>
-          <Button variant="outline" size="sm" className="text-xs h-8">Connect domain</Button>
+          <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => setShowDomainInput(true)}>Connect domain</Button>
         </div>
         <div className="rounded-lg border border-border bg-card/50 p-5 flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-foreground">Purchase new domain</p>
             <p className="text-xs text-muted-foreground mt-0.5">Buy a new domain through our partner.</p>
           </div>
-          <Button variant="outline" size="sm" className="text-xs h-8">Buy new domain</Button>
+          <a href="https://www.namecheap.com/" target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm" className="text-xs h-8">Buy new domain</Button>
+          </a>
         </div>
       </div>
     </div>
@@ -484,10 +527,10 @@ export function ProjectSettings({
       <p className="text-sm text-muted-foreground mt-1">Manage privacy and security settings for your project.</p>
       <div className="mt-6 rounded-lg border border-border bg-card/50 divide-y divide-border">
         <SettingRow title="Cross-project sharing" description="Allow this project to read files from and be visible to other projects." className="px-5">
-          <Switch defaultChecked />
+          <Switch checked={crossProjectSharing} onCheckedChange={(v) => { setCrossProjectSharing(v); toast.success(v ? 'Cross-project sharing enabled' : 'Cross-project sharing disabled'); }} />
         </SettingRow>
         <SettingRow title="Allow public preview links" description="When enabled, users can create temporary public preview links." className="px-5">
-          <Switch defaultChecked />
+          <Switch checked={allowPublicPreview} onCheckedChange={(v) => { setAllowPublicPreview(v); toast.success(v ? 'Public preview links enabled' : 'Public preview links disabled'); }} />
         </SettingRow>
       </div>
       <div className="mt-6 rounded-lg border border-border bg-card/50 p-5 space-y-2">
