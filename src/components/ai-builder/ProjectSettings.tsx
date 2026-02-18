@@ -244,7 +244,7 @@ export function ProjectSettings({
           <h2 className="text-lg font-semibold text-foreground">Domains</h2>
           <p className="text-sm text-muted-foreground mt-1">Publish your project to custom domains.</p>
         </div>
-        <a href="https://docs.lovable.dev/features/custom-domain" target="_blank" rel="noopener noreferrer">
+        <a href="https://ultriumai.com/help/domains" target="_blank" rel="noopener noreferrer">
           <Button variant="outline" size="sm" className="text-xs gap-1.5 h-8">
             How domains work <ExternalLink className="h-3 w-3" />
           </Button>

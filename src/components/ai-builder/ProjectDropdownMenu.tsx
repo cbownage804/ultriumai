@@ -211,7 +211,7 @@ export function ProjectDropdownMenu({
 
         {/* Help */}
         <DropdownMenuItem
-          onClick={() => window.open('https://docs.lovable.dev', '_blank')}
+          onClick={() => window.open('https://ultriumai.com/help', '_blank')}
           className="gap-2.5 text-white/70 hover:text-white cursor-pointer px-2.5 py-2"
         >
           <ExternalLink className="h-4 w-4" />
