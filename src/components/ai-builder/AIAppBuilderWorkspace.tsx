@@ -133,7 +133,7 @@ import {
   PanelLeftClose, PanelLeftOpen, Activity, Undo2, Redo2, Search,
   History, Variable, Image, Package, Columns, Keyboard, Rocket,
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen, Gauge,
-  Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
+  Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon, RefreshCw,
   Table2, ChevronsLeft, ChevronsRight, BarChart3, Puzzle, Play, Replace, Palette, Server, ClipboardCheck,
   Github, Hammer, FileCode, ImagePlus,
 } from 'lucide-react';
@@ -1364,7 +1364,7 @@ export function AIAppBuilderWorkspace() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button onClick={() => { /* refresh preview */ }} className="h-7 w-7 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors">
-                    <Redo2 className="h-3.5 w-3.5" />
+                    <RefreshCw className="h-3.5 w-3.5" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="text-xs">Refresh</TooltipContent>
