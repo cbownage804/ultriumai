@@ -401,9 +401,10 @@ export function useAIAppBuilder() {
         apiMessages.push({ role: 'system', content: `[URL CLONE] The user wants to clone/replicate the design from: ${urlClone.url}. Analyze the typical design patterns of this website and generate a faithful reproduction. Focus on layout structure, color scheme, typography, and component patterns.` });
       }
 
-      // If images are also attached, add explicit priority instructions
+      // If images are also attached, add explicit priority instructions WITH the actual data URLs
       if (imageDataUrls?.length) {
-        apiMessages.push({ role: 'system', content: `[ASSET PRIORITY] The user has uploaded image(s) alongside a URL. Use the UPLOADED IMAGE as the logo/branding asset. Use the SCRAPED CONTENT for the site's text and data. Do NOT generate a placeholder logo — the user provided one.` });
+        const logoUrls = imageDataUrls.map((url, i) => `IMAGE_${i + 1}_DATA_URL: ${url}`).join('\n');
+        apiMessages.push({ role: 'system', content: `[ASSET PRIORITY — CRITICAL]\nThe user has uploaded ${imageDataUrls.length} image(s) to use as the logo/branding.\n\nYou MUST embed the uploaded image in the navbar and footer using the exact data URL below.\nDo NOT use a text placeholder like "Glenn's Body Shop Logo" — use an <img> tag with this src:\n\n${logoUrls}\n\nExample usage:\n<img src="${imageDataUrls[0]}" alt="Logo" style="height:48px;" />\n\nUse the SCRAPED CONTENT for the site's text and data. The uploaded image is ONLY for the logo.` });
       }
     }
 
@@ -555,6 +556,17 @@ export function useAIAppBuilder() {
       // Send raster images as image_url blocks (these work with vision models)
       for (const url of rasterUrls) {
         userContent.push({ type: 'image_url', image_url: { url } });
+      }
+
+      // CRITICAL: Also pass the raw data URLs as text so the AI can embed them in code.
+      // Vision models can "see" the image but cannot extract the data URL string from the image_url block.
+      const isLogoIntent = /\b(logo|icon|favicon|brand|nav\s*bar|header|footer)\b/i.test(input)
+        || /\b(use\s*(this|it|that|the\s*attach))/i.test(input);
+      if (rasterUrls.length > 0 && isLogoIntent) {
+        const dataUrlRef = rasterUrls.map((url, i) =>
+          `[EMBEDDABLE DATA URL FOR IMAGE ${i + 1}] — Copy this EXACT string into <img src="...">:\n${url}`
+        ).join('\n\n');
+        userContent.push({ type: 'text', text: dataUrlRef });
       }
 
       apiMessages.push({ role: 'user', content: userContent });
