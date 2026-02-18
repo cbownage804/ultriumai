@@ -122,6 +122,7 @@ import { VisualEditToolbar } from './VisualEditToolbar';
 import { NPMPackageManagerPanel } from './NPMPackageManagerPanel';
 import { PublishPanel } from './PublishPanel';
 import { AIImageGenPanel } from './AIImageGenPanel';
+import ultriumLogo from '@/assets/ultrium-ai-logo.png';
 import { SymbolSearchPanel } from './SymbolSearchPanel';
 import { SecretsManagerPanel } from './SecretsManagerPanel';
 import { ProjectDropdownMenu } from './ProjectDropdownMenu';
@@ -1234,7 +1235,7 @@ export function AIAppBuilderWorkspace() {
           <div className="flex items-center gap-2 min-w-0">
             {/* App logo/icon */}
             <button onClick={() => navigate('/ai-studio')} className="shrink-0 flex items-center justify-center h-7 w-7">
-              <div className="h-5 w-5 rounded-md bg-gradient-to-br from-orange-500 to-red-500" />
+              <img src={ultriumLogo} alt="UltriumAI" className="h-6 w-6 rounded-md object-contain" />
             </button>
 
             {isEditingName ? (
@@ -1398,7 +1399,7 @@ export function AIAppBuilderWorkspace() {
         </div>
 
         {/* Orange accent line under header */}
-        <div className="h-[2px] bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 shrink-0" />
+        <div className="h-[2px] bg-gradient-to-r from-violet-500 via-purple-500 to-violet-500 shrink-0" />
 
         {/* Mobile tab switcher */}
         {isMobile && (
