@@ -372,8 +372,8 @@ export function BuilderChatPanel({
     const files = e.target.files;
     if (!files) return;
     Array.from(files).forEach(async (file) => {
-      // Support both images and other file types
-      if (!file.type.startsWith('image/')) {
+      // Support both images and other file types; SVGs can't be reliably canvas-compressed
+      if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
         const reader = new FileReader();
         reader.onload = (ev) => {
           setImagePreviews(prev => [...prev, ev.target?.result as string]);
@@ -381,7 +381,7 @@ export function BuilderChatPanel({
         reader.readAsDataURL(file);
         return;
       }
-      // Compress images to prevent network errors from oversized payloads
+      // Compress raster images to prevent network errors from oversized payloads
       const compressed = await compressImage(file);
       setImagePreviews(prev => [...prev, compressed]);
     });
