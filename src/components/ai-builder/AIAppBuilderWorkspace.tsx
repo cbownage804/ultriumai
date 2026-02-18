@@ -125,6 +125,7 @@ import { AIImageGenPanel } from './AIImageGenPanel';
 import { SymbolSearchPanel } from './SymbolSearchPanel';
 import { SecretsManagerPanel } from './SecretsManagerPanel';
 import { ProjectDropdownMenu } from './ProjectDropdownMenu';
+import { ToolbarPanelsDropdown } from './ToolbarPanelsDropdown';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -1322,14 +1323,23 @@ export function AIAppBuilderWorkspace() {
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">Terminal</TooltipContent>
             </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={() => setShowCommandPalette(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
-                  <BarChart3 className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">More Tools (⌘K)</TooltipContent>
-            </Tooltip>
+
+            {/* Divider */}
+            <div className="h-4 w-px bg-white/[0.08] mx-0.5" />
+
+            {/* Panels dropdown (Analytics, Cloud, Code, Design, Security, Speed) */}
+            <ToolbarPanelsDropdown
+              onOpenPanel={(panelId) => {
+                switch (panelId) {
+                  case 'analytics': setShowBuildAnalytics(true); break;
+                  case 'cloud': setShowSupabaseIDE(true); break;
+                  case 'code': setRightTab('code'); break;
+                  case 'design': setShowDesignSystem(true); break;
+                  case 'security': setShowTestingSuite(true); break;
+                  case 'speed': setShowPerformanceProfiler(true); break;
+                }
+              }}
+            />
           </div>
 
           {/* RIGHT: URL bar + actions */}
