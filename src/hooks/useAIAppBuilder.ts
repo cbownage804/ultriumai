@@ -480,10 +480,49 @@ export function useAIAppBuilder() {
     };
 
     if (imageDataUrls?.length) {
+      // Separate SVG data URLs from raster images.
+      // Vision models can't process SVG data URLs — decode them to raw SVG
+      // source and inject as a text block so the AI can embed it directly.
+      const rasterUrls: string[] = [];
+      const svgTextBlocks: string[] = [];
+
+      for (const url of imageDataUrls) {
+        if (url.startsWith('data:image/svg+xml')) {
+          try {
+            // Decode the SVG from the data URL (base64 or URI-encoded)
+            let svgSource: string;
+            if (url.includes(';base64,')) {
+              svgSource = atob(url.split(';base64,')[1]);
+            } else {
+              svgSource = decodeURIComponent(url.split(',').slice(1).join(','));
+            }
+            svgTextBlocks.push(svgSource);
+          } catch {
+            // Fallback: send as-is if decode fails
+            rasterUrls.push(url);
+          }
+        } else {
+          rasterUrls.push(url);
+        }
+      }
+
       const userContent: any[] = [
         { type: 'text', text: buildFileContext(currentFiles, input) },
-        ...imageDataUrls.map(url => ({ type: 'image_url', image_url: { url } })),
       ];
+
+      // Inject decoded SVGs as text blocks so the AI can use them directly
+      if (svgTextBlocks.length > 0) {
+        const svgContext = svgTextBlocks.map((svg, i) =>
+          `[UPLOADED SVG IMAGE ${i + 1}] — Use this SVG source directly as an <img> src (via data URL) or inline the SVG markup:\n\`\`\`svg\n${svg}\n\`\`\``
+        ).join('\n\n');
+        userContent.push({ type: 'text', text: svgContext });
+      }
+
+      // Send raster images as image_url blocks (these work with vision models)
+      for (const url of rasterUrls) {
+        userContent.push({ type: 'image_url', image_url: { url } });
+      }
+
       apiMessages.push({ role: 'user', content: userContent });
     } else {
       apiMessages.push({ role: 'user', content: buildFileContext(currentFiles, input) });
