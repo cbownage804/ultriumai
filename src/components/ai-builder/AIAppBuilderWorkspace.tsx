@@ -934,7 +934,7 @@ export function AIAppBuilderWorkspace() {
 
       if (property === 'replaceWithImage') {
         // Directly inject the image into source files instead of sending huge base64 to AI chat
-        const imgTag = `<img src="${value}" alt="Image" style="max-width:100%;height:auto;" />`;
+        const imgTag = `<img src="${value}" alt="Image" style="max-width:200px;height:auto;" />`;
         
         // Update iframe directly for instant visual feedback
         const iframe = document.querySelector('iframe');
@@ -968,8 +968,15 @@ export function AIAppBuilderWorkspace() {
           project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel
         );
         return;
+      } else if (property === 'resize') {
+        const [w, h] = value.split('x');
+        const style = `${w ? `width:${w}px;` : ''}${h ? `height:${h}px;` : ''}object-fit:contain;`;
+        sendMessage(
+          `Apply this visual edit: resize the element at selector "${selector}" to ${w ? `width ${w}px` : ''}${w && h ? ' and ' : ''}${h ? `height ${h}px` : ''}. Add inline style: style="${style}" to the element.`,
+          project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel
+        );
+        return;
       } else if (property === 'text') {
-        // Use the AI to apply text changes by sending as an edit request
         sendMessage(
           `Apply this visual edit to the source file. Change the text content of the element matching selector "${selector}" to: "${value}". Only update the text, keep everything else the same.`,
           project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel

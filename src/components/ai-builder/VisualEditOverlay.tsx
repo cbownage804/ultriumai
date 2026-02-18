@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Crosshair, Type, Palette, X, Check, Sparkles, Send, Loader2, Pipette, Paperclip, ImagePlus } from 'lucide-react';
+import { Crosshair, Type, Palette, X, Check, Sparkles, Send, Loader2, Pipette, Paperclip, ImagePlus, Maximize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChromePicker } from 'react-color';
 
@@ -21,7 +21,9 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
     outerHTML: string;
     parentHTML: string;
   } | null>(null);
-  const [editMode, setEditMode] = useState<'text' | 'color' | 'ai' | null>(null);
+  const [editMode, setEditMode] = useState<'text' | 'color' | 'ai' | 'resize' | null>(null);
+  const [resizeW, setResizeW] = useState('');
+  const [resizeH, setResizeH] = useState('');
   const [editValue, setEditValue] = useState('');
   const [aiPrompt, setAIPrompt] = useState('');
   const [aiImagePreview, setAIImagePreview] = useState<string | null>(null);
@@ -133,7 +135,7 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
   }, [isActive, iframeRef]);
 
   const applyEdit = useCallback(() => {
-    if (!selectedElement || !editMode || (editMode !== 'ai' && !editValue)) return;
+    if (!selectedElement || !editMode) return;
 
     if (editMode === 'ai') {
       if (!aiPrompt.trim() || !onAIEditRequest) return;
@@ -146,6 +148,30 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
       setAIImagePreview(null);
       return;
     }
+
+    if (editMode === 'resize') {
+      const w = resizeW.trim();
+      const h = resizeH.trim();
+      if (!w && !h) return;
+      const style = `${w ? `width:${w}px;` : ''}${h ? `height:${h}px;` : ''}object-fit:contain;`;
+      // Apply to iframe
+      const iframe = iframeRef.current;
+      const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+      if (iframeDoc) {
+        const el = iframeDoc.querySelector(selectedElement.selector) as HTMLElement;
+        if (el) {
+          if (w) el.style.width = `${w}px`;
+          if (h) el.style.height = `${h}px`;
+          el.style.objectFit = 'contain';
+        }
+      }
+      onEditApply(selectedElement.selector, 'resize', `${w}x${h}`);
+      setEditMode(null);
+      setSelectedElement(null);
+      return;
+    }
+
+    if (!editValue) return;
 
     const iframe = iframeRef.current;
     const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
@@ -163,7 +189,7 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
     onEditApply(selectedElement.selector, editMode, editValue);
     setEditMode(null);
     setSelectedElement(null);
-  }, [selectedElement, editMode, editValue, aiPrompt, iframeRef, onEditApply, onAIEditRequest]);
+  }, [selectedElement, editMode, editValue, aiPrompt, aiImagePreview, resizeW, resizeH, iframeRef, onEditApply, onAIEditRequest]);
 
   // Focus AI input when mode switches
   useEffect(() => {
@@ -227,12 +253,69 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
           >
             <Palette className="h-2.5 w-2.5" /> Color
           </button>
+          {selectedElement.tagName === 'IMG' && (
+            <button
+              onClick={() => {
+                setEditMode('resize');
+                // Pre-fill with current dimensions
+                const iframe = iframeRef.current;
+                const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+                if (iframeDoc) {
+                  const el = iframeDoc.querySelector(selectedElement.selector) as HTMLImageElement;
+                  if (el) {
+                    setResizeW(String(el.offsetWidth));
+                    setResizeH(String(el.offsetHeight));
+                  }
+                }
+              }}
+              className="h-6 px-2 rounded flex items-center gap-1 text-[10px] text-cyan-400/80 hover:text-cyan-400 hover:bg-cyan-500/10"
+            >
+              <Maximize2 className="h-2.5 w-2.5" /> Resize
+            </button>
+          )}
           <div className="h-3 w-px bg-white/[0.06]" />
           <button
             onClick={() => setEditMode('ai')}
             className="h-6 px-2 rounded flex items-center gap-1 text-[10px] text-violet-400/80 hover:text-violet-400 hover:bg-violet-500/10"
           >
             <Sparkles className="h-2.5 w-2.5" /> AI Edit
+          </button>
+        </div>
+      )}
+
+      {/* Resize editor for images */}
+      {selectedElement && editMode === 'resize' && (
+        <div
+          className="fixed z-50 flex items-center gap-1.5 p-2 rounded-lg bg-[#0d0d14] border border-cyan-500/30 shadow-xl shadow-black/50"
+          style={{
+            top: Math.min(selectedElement.rect.bottom + 8, window.innerHeight - 50),
+            left: Math.max(8, Math.min(selectedElement.rect.left, window.innerWidth - 320)),
+          }}
+        >
+          <Maximize2 className="h-3 w-3 text-cyan-400/60 shrink-0" />
+          <div className="flex items-center gap-1">
+            <input
+              value={resizeW}
+              onChange={e => setResizeW(e.target.value.replace(/\D/g, ''))}
+              placeholder="W"
+              className="h-6 w-14 px-1.5 text-[11px] bg-white/5 border border-white/[0.08] rounded text-white/80 outline-none focus:border-cyan-500/30 text-center font-mono"
+              autoFocus
+            />
+            <span className="text-[9px] text-white/20">×</span>
+            <input
+              value={resizeH}
+              onChange={e => setResizeH(e.target.value.replace(/\D/g, ''))}
+              placeholder="H"
+              onKeyDown={e => e.key === 'Enter' && applyEdit()}
+              className="h-6 w-14 px-1.5 text-[11px] bg-white/5 border border-white/[0.08] rounded text-white/80 outline-none focus:border-cyan-500/30 text-center font-mono"
+            />
+            <span className="text-[8px] text-white/20">px</span>
+          </div>
+          <button onClick={applyEdit} className="h-6 w-6 rounded flex items-center justify-center text-emerald-400 hover:bg-emerald-500/10">
+            <Check className="h-3 w-3" />
+          </button>
+          <button onClick={() => { setEditMode(null); setSelectedElement(null); }} className="h-6 w-6 rounded flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5">
+            <X className="h-3 w-3" />
           </button>
         </div>
       )}
