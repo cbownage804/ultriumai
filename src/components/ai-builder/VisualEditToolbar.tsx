@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { X, Type, Palette, MousePointer2, Move, Undo2, Check, Bold, Italic, AlignLeft, AlignCenter, AlignRight, Maximize2 } from 'lucide-react';
+import { X, Type, Palette, MousePointer2, Move, Check, ImagePlus, Paperclip } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -32,13 +32,16 @@ interface VisualEditToolbarProps {
 
 export function VisualEditToolbar({ active, onToggle, iframeRef, onEditRequest, onDirectEdit }: VisualEditToolbarProps) {
   const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(null);
-  const [editMode, setEditMode] = useState<'select' | 'text' | 'style' | 'prompt'>('select');
+  const [editMode, setEditMode] = useState<'select' | 'text' | 'style' | 'image' | 'prompt'>('select');
   const [editText, setEditText] = useState('');
   const [editColor, setEditColor] = useState('');
   const [editBgColor, setEditBgColor] = useState('');
   const [editFontSize, setEditFontSize] = useState('');
   const [promptText, setPromptText] = useState('');
   const [highlightRect, setHighlightRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [promptImagePreview, setPromptImagePreview] = useState<string | null>(null);
+  const imgInputRef = useRef<HTMLInputElement>(null);
+  const promptImgInputRef = useRef<HTMLInputElement>(null);
 
   // Listen for element selection from iframe
   useEffect(() => {
@@ -177,17 +180,68 @@ export function VisualEditToolbar({ active, onToggle, iframeRef, onEditRequest, 
     toast.success('Color updated');
   }, [selectedElement, editColor, onDirectEdit]);
 
+  // Handle image upload for replacing selected element
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedElement) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image too large (max 5MB)');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      // Replace the selected element with an <img> tag using the data URL
+      onDirectEdit(selectedElement.selector, 'replaceWithImage', dataUrl);
+      toast.success('Element replaced with image');
+    };
+    reader.readAsDataURL(file);
+    // Reset input
+    if (imgInputRef.current) imgInputRef.current.value = '';
+  }, [selectedElement, onDirectEdit]);
+
+  // Handle image attachment for AI Edit prompt
+  const handlePromptImageAttach = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image too large (max 5MB)');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPromptImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    if (promptImgInputRef.current) promptImgInputRef.current.value = '';
+  }, []);
+
   const applyPrompt = useCallback(() => {
     if (!selectedElement || !promptText.trim()) return;
-    onEditRequest(selectedElement.selector, selectedElement.outerHTML, promptText);
+    // If an image is attached, include it in the prompt context
+    const fullPrompt = promptImagePreview
+      ? `${promptText}\n\n[ATTACHED IMAGE DATA URL — use this as the image source]: ${promptImagePreview}`
+      : promptText;
+    onEditRequest(selectedElement.selector, selectedElement.outerHTML, fullPrompt);
     setPromptText('');
+    setPromptImagePreview(null);
     toast.success('Edit request sent to AI');
-  }, [selectedElement, promptText, onEditRequest]);
+  }, [selectedElement, promptText, promptImagePreview, onEditRequest]);
 
   if (!active) return null;
 
+  // Hidden file inputs
+  const fileInputs = (
+    <>
+      <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+      <input ref={promptImgInputRef} type="file" accept="image/*" className="hidden" onChange={handlePromptImageAttach} />
+    </>
+  );
+
   return (
     <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2">
+      {fileInputs}
+
       {/* Floating toolbar */}
       <div className="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-black/90 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/50">
         <div className="flex items-center gap-0.5 mr-2">
@@ -201,26 +255,41 @@ export function VisualEditToolbar({ active, onToggle, iframeRef, onEditRequest, 
           <span className="text-[10px] text-white/30 px-2">Click an element to select it</span>
         ) : (
           <>
+            {/* Img button — replace element with image */}
+            <button
+              onClick={() => setEditMode('image')}
+              className={cn("h-7 px-2 rounded-lg flex items-center gap-1 transition-colors text-[10px] font-medium", editMode === 'image' ? 'bg-emerald-500/20 text-emerald-400' : 'text-white/40 hover:text-white/70 hover:bg-white/10')}
+              title="Replace with image"
+            >
+              <ImagePlus className="h-3.5 w-3.5" />
+              <span>Img</span>
+            </button>
+            {/* Text button */}
             <button
               onClick={() => setEditMode('text')}
-              className={cn("h-7 w-7 rounded-lg flex items-center justify-center transition-colors", editMode === 'text' ? 'bg-cyan-500/20 text-cyan-400' : 'text-white/40 hover:text-white/70 hover:bg-white/10')}
+              className={cn("h-7 px-2 rounded-lg flex items-center gap-1 transition-colors text-[10px] font-medium", editMode === 'text' ? 'bg-cyan-500/20 text-cyan-400' : 'text-white/40 hover:text-white/70 hover:bg-white/10')}
               title="Edit text"
             >
               <Type className="h-3.5 w-3.5" />
+              <span>Text</span>
             </button>
+            {/* Color button */}
             <button
               onClick={() => setEditMode('style')}
-              className={cn("h-7 w-7 rounded-lg flex items-center justify-center transition-colors", editMode === 'style' ? 'bg-cyan-500/20 text-cyan-400' : 'text-white/40 hover:text-white/70 hover:bg-white/10')}
+              className={cn("h-7 px-2 rounded-lg flex items-center gap-1 transition-colors text-[10px] font-medium", editMode === 'style' ? 'bg-cyan-500/20 text-cyan-400' : 'text-white/40 hover:text-white/70 hover:bg-white/10')}
               title="Edit styles"
             >
               <Palette className="h-3.5 w-3.5" />
+              <span>Color</span>
             </button>
+            {/* AI Edit button */}
             <button
               onClick={() => setEditMode('prompt')}
-              className={cn("h-7 w-7 rounded-lg flex items-center justify-center transition-colors", editMode === 'prompt' ? 'bg-cyan-500/20 text-cyan-400' : 'text-white/40 hover:text-white/70 hover:bg-white/10')}
+              className={cn("h-7 px-2 rounded-lg flex items-center gap-1 transition-colors text-[10px] font-medium", editMode === 'prompt' ? 'bg-violet-500/20 text-violet-400' : 'text-white/40 hover:text-white/70 hover:bg-white/10')}
               title="AI prompt"
             >
               <Move className="h-3.5 w-3.5" />
+              <span>AI Edit</span>
             </button>
 
             <div className="h-4 w-px bg-white/10" />
@@ -234,7 +303,20 @@ export function VisualEditToolbar({ active, onToggle, iframeRef, onEditRequest, 
         </button>
       </div>
 
-      {/* Edit panel */}
+      {/* Image replacement panel */}
+      {selectedElement && editMode === 'image' && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/90 backdrop-blur-xl border border-white/10 shadow-2xl max-w-md w-full">
+          <button
+            onClick={() => imgInputRef.current?.click()}
+            className="flex-1 h-8 rounded-lg border-2 border-dashed border-white/10 hover:border-emerald-500/30 text-[11px] text-white/40 hover:text-emerald-400 transition-colors flex items-center justify-center gap-1.5"
+          >
+            <ImagePlus className="h-3.5 w-3.5" />
+            Choose image to replace this element
+          </button>
+        </div>
+      )}
+
+      {/* Text edit panel */}
       {selectedElement && editMode === 'text' && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/90 backdrop-blur-xl border border-white/10 shadow-2xl max-w-md w-full">
           <input
@@ -250,6 +332,7 @@ export function VisualEditToolbar({ active, onToggle, iframeRef, onEditRequest, 
         </div>
       )}
 
+      {/* Style edit panel */}
       {selectedElement && editMode === 'style' && (
         <div className="flex flex-col gap-2 px-3 py-2.5 rounded-xl bg-black/90 backdrop-blur-xl border border-white/10 shadow-2xl w-72">
           <div className="flex items-center gap-2">
@@ -278,18 +361,47 @@ export function VisualEditToolbar({ active, onToggle, iframeRef, onEditRequest, 
         </div>
       )}
 
+      {/* AI Edit prompt panel — with image attachment */}
       {selectedElement && editMode === 'prompt' && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/90 backdrop-blur-xl border border-white/10 shadow-2xl max-w-lg w-full">
-          <input
-            value={promptText}
-            onChange={e => setPromptText(e.target.value)}
-            className="flex-1 h-7 px-2 text-[12px] bg-white/[0.06] border border-white/[0.08] rounded-lg text-white/80 placeholder:text-white/20 outline-none focus:border-violet-500/40"
-            placeholder="Describe the change you want..."
-            onKeyDown={e => e.key === 'Enter' && applyPrompt()}
-          />
-          <button onClick={applyPrompt} className="h-7 px-3 rounded-lg bg-violet-500/20 text-violet-400 text-[11px] font-medium hover:bg-violet-500/30 transition-colors flex items-center gap-1">
-            AI Edit
-          </button>
+        <div className="flex flex-col gap-2 px-3 py-2 rounded-xl bg-black/90 backdrop-blur-xl border border-white/10 shadow-2xl max-w-lg w-full">
+          {/* Attached image preview */}
+          {promptImagePreview && (
+            <div className="flex items-center gap-2 p-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06]">
+              <img src={promptImagePreview} alt="Attached" className="h-8 w-8 rounded object-cover" />
+              <span className="text-[10px] text-white/40 flex-1">Image attached</span>
+              <button
+                onClick={() => setPromptImagePreview(null)}
+                className="h-5 w-5 rounded flex items-center justify-center text-white/20 hover:text-red-400 transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            {/* Attach image button */}
+            <button
+              onClick={() => promptImgInputRef.current?.click()}
+              className={cn(
+                "h-7 w-7 rounded-lg flex items-center justify-center transition-colors shrink-0",
+                promptImagePreview
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "text-white/30 hover:text-white/60 hover:bg-white/10"
+              )}
+              title="Attach image for context"
+            >
+              <Paperclip className="h-3.5 w-3.5" />
+            </button>
+            <input
+              value={promptText}
+              onChange={e => setPromptText(e.target.value)}
+              className="flex-1 h-7 px-2 text-[12px] bg-white/[0.06] border border-white/[0.08] rounded-lg text-white/80 placeholder:text-white/20 outline-none focus:border-violet-500/40"
+              placeholder="Describe the change you want..."
+              onKeyDown={e => e.key === 'Enter' && applyPrompt()}
+            />
+            <button onClick={applyPrompt} className="h-7 px-3 rounded-lg bg-violet-500/20 text-violet-400 text-[11px] font-medium hover:bg-violet-500/30 transition-colors flex items-center gap-1">
+              AI Edit
+            </button>
+          </div>
         </div>
       )}
     </div>
