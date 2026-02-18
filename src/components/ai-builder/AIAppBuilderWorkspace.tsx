@@ -121,6 +121,9 @@ import { PreviewDevToolsPanel } from './PreviewDevToolsPanel';
 import { VisualEditToolbar } from './VisualEditToolbar';
 import { NPMPackageManagerPanel } from './NPMPackageManagerPanel';
 import { PublishPanel } from './PublishPanel';
+import { AIImageGenPanel } from './AIImageGenPanel';
+import { SymbolSearchPanel } from './SymbolSearchPanel';
+import { SecretsManagerPanel } from './SecretsManagerPanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -129,7 +132,7 @@ import {
   Shield, Brain, FolderOpen, Zap, Clock, Globe, Users, BookOpen, Gauge,
   Settings, ChevronDown, ArrowLeft, Sparkles, Layers, Bug, Terminal, GitBranch as GitBranchIcon,
   Table2, ChevronsLeft, ChevronsRight, BarChart3, Puzzle, Play, Replace, Palette, Server, ClipboardCheck,
-  Github, Hammer, FileCode,
+  Github, Hammer, FileCode, ImagePlus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -340,6 +343,9 @@ export function AIAppBuilderWorkspace() {
   const [showNPMManager, setShowNPMManager] = useState(false);
   const [showPublishPanel, setShowPublishPanel] = useState(false);
   const [installedPackages, setInstalledPackages] = useState<{ name: string; version: string; description?: string; isDevDep?: boolean }[]>([]);
+  const [showImageGen, setShowImageGen] = useState(false);
+  const [showSymbolSearch, setShowSymbolSearch] = useState(false);
+  const [showSecretsManager, setShowSecretsManager] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -1216,12 +1222,14 @@ export function AIAppBuilderWorkspace() {
     // ── DevOps ──
     { id: 'githubPanel' as any, icon: Github, label: 'GitHub', tooltip: 'Full GitHub integration — push, pull, branches, PRs', show: true, active: showGitHubPanel, group: 'devops', color: 'text-white/70', activeBg: 'bg-white/10' },
     { id: 'buildWorkflow' as any, icon: Hammer, label: 'Build Workflows', tooltip: 'Trigger GitHub Actions, download EXE/MSI artifacts', show: true, active: showBuildWorkflow, group: 'devops', color: 'text-orange-400', activeBg: 'bg-orange-500/10' },
+    { id: 'secretsManager' as any, icon: Key, label: 'Secrets', tooltip: 'Manage encrypted secrets and environment variables per environment', show: true, active: showSecretsManager, group: 'devops', color: 'text-amber-400', activeBg: 'bg-amber-500/10' },
     // ── AI & Intelligence ──
     { id: 'knowledge', icon: Brain, label: 'Knowledge', tooltip: 'Add custom instructions and context files to guide the AI', show: true, active: showKnowledge, group: 'ai', color: 'text-violet-400', activeBg: 'bg-violet-500/10' },
     { id: 'codeIntel', icon: Sparkles, label: 'Code Intelligence', tooltip: 'AI-powered code suggestions and refactoring tips', show: true, active: showCodeIntel, group: 'ai', color: 'text-fuchsia-400', activeBg: 'bg-fuchsia-500/10' },
     { id: 'componentLib', icon: Layers, label: 'Components', tooltip: 'Browse and insert pre-built UI components', show: true, active: showComponentLib, group: 'ai', color: 'text-indigo-400', activeBg: 'bg-indigo-500/10' },
     { id: 'gptConnector', icon: Bot, label: 'GPT Chat Widget', tooltip: 'Embed your custom GPT as a chat widget in your app', show: true, active: showGPTConnector, group: 'ai', color: 'text-teal-400', activeBg: 'bg-teal-500/10' },
     { id: 'designSystem' as any, icon: Palette, label: 'Design System', tooltip: 'Generate brand-aware design tokens, themes, and color palettes', show: true, active: showDesignSystem, group: 'ai', color: 'text-rose-400', activeBg: 'bg-rose-500/10' },
+    { id: 'imageGen' as any, icon: ImagePlus, label: 'AI Image Gen', tooltip: 'Generate images from text prompts using AI', show: true, active: showImageGen, group: 'ai', color: 'text-pink-400', activeBg: 'bg-pink-500/10' },
     // ── Project ──
     { id: 'testingSuite', icon: Bug, label: 'Testing & Debug', tooltip: 'Run tests and debug your application', show: true, active: showTestingSuite, group: 'project', color: 'text-red-400', activeBg: 'bg-red-500/10' },
     { id: 'review' as any, icon: ClipboardCheck, label: 'Review Project', tooltip: 'AI-powered review of your entire project for errors and best practices', show: true, active: projectReview.showPanel, group: 'project', color: 'text-lime-400', activeBg: 'bg-lime-500/10' },
@@ -1573,6 +1581,7 @@ export function AIAppBuilderWorkspace() {
                     {[
                       { icon: FolderOpen, label: 'Files', tooltip: 'Browse and manage your project files', active: showFileTree, onClick: () => setShowFileTree(!showFileTree), color: 'text-amber-400' },
                       { icon: Search, label: 'Search', tooltip: 'Search across all files in your project', active: showFileSearch, onClick: () => setShowFileSearch(!showFileSearch), color: 'text-sky-400' },
+                      { icon: Search, label: 'Symbols', tooltip: 'Search functions, classes, types across project (Go-to-Definition)', active: showSymbolSearch, onClick: () => setShowSymbolSearch(!showSymbolSearch), color: 'text-cyan-400' },
                     ].map(item => (
                       <Tooltip key={item.label} delayDuration={sidebarExpanded ? 999999 : 300}>
                         <TooltipTrigger asChild>
@@ -1633,9 +1642,13 @@ export function AIAppBuilderWorkspace() {
                                          setShowBuildWorkflow(!showBuildWorkflow);
                                        } else if (item.id === 'npmManager') {
                                          setShowNPMManager(!showNPMManager);
-                                       } else if (item.id === 'devtools') {
-                                         setShowDevTools(!showDevTools);
-                                       } else {
+                                        } else if (item.id === 'devtools') {
+                                          setShowDevTools(!showDevTools);
+                                        } else if (item.id === 'imageGen') {
+                                          setShowImageGen(!showImageGen);
+                                        } else if (item.id === 'secretsManager') {
+                                          setShowSecretsManager(!showSecretsManager);
+                                        } else {
                                          openPanel(item.id as any);
                                        }
                                      }}
@@ -1847,6 +1860,14 @@ export function AIAppBuilderWorkspace() {
                     <PreviewDevToolsPanel open={showDevTools} onClose={() => setShowDevTools(false)} iframeRef={previewIframeRef} />
                   </div>
                 )}
+                {showSymbolSearch && (
+                  <SymbolSearchPanel
+                    open={showSymbolSearch}
+                    onClose={() => setShowSymbolSearch(false)}
+                    files={project.files}
+                    onNavigate={(file, line) => { setActiveFile(file); setRightTab('code'); }}
+                  />
+                )}
 
                 <div className="flex-1 flex flex-col overflow-hidden">
                   {/* File tab bar (code/split only) */}
@@ -2007,6 +2028,8 @@ export function AIAppBuilderWorkspace() {
       <DiffReviewPanel isOpen={showDiffReview} onClose={() => setShowDiffReview(false)} changes={pendingDiffChanges} onApprove={() => { pendingDiffChanges.forEach(c => upsertFile(c.path, c.newContent)); setPendingDiffChanges([]); setShowDiffReview(false); toast.success('Changes applied'); }} onReject={() => { setPendingDiffChanges([]); setShowDiffReview(false); toast.info('Changes rejected'); }} onApproveFile={(path) => { const c = pendingDiffChanges.find(ch => ch.path === path); if (c) upsertFile(c.path, c.newContent); }} onRejectFile={() => {}} />
       <QuickFileSwitcher open={showQuickSwitcher} onOpenChange={setShowQuickSwitcher} files={project.files} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} />
       <BugReportModal open={showBugReport} onOpenChange={setShowBugReport} />
+      <AIImageGenPanel open={showImageGen} onClose={() => setShowImageGen(false)} onInsertAsAsset={(name, url) => { setAssets(prev => [...prev, { id: crypto.randomUUID(), name, type: 'image' as const, dataUrl: url, size: 0, createdAt: new Date() } as any]); }} />
+      <SecretsManagerPanel open={showSecretsManager} onClose={() => setShowSecretsManager(false)} onSecretsChange={(secrets) => setEnvVars(prev => { const secretKeys = new Set(secrets.map(s => s.key)); const kept = prev.filter(p => !secretKeys.has(p.key)); return [...kept, ...secrets]; })} />
       <EnhancedCommandPalette open={showEnhancedPalette} onOpenChange={setShowEnhancedPalette} files={project.files} actions={commandActions} onSelectFile={(path) => { handleSetActiveFile(path); setRightTab('code'); }} recentFiles={recentFiles} />
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
