@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Crosshair, Type, Palette, X, Check, Sparkles, Send, Loader2, Pipette } from 'lucide-react';
+import { Crosshair, Type, Palette, X, Check, Sparkles, Send, Loader2, Pipette, Paperclip } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChromePicker } from 'react-color';
 
@@ -24,7 +24,19 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
   const [editMode, setEditMode] = useState<'text' | 'color' | 'ai' | null>(null);
   const [editValue, setEditValue] = useState('');
   const [aiPrompt, setAIPrompt] = useState('');
+  const [aiImagePreview, setAIImagePreview] = useState<string | null>(null);
   const aiInputRef = useRef<HTMLInputElement>(null);
+  const aiImgInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAIImageAttach = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    const reader = new FileReader();
+    reader.onload = () => setAIImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+    if (aiImgInputRef.current) aiImgInputRef.current.value = '';
+  }, []);
 
   useEffect(() => {
     if (!isActive || !iframeRef.current) return;
@@ -109,9 +121,13 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
 
     if (editMode === 'ai') {
       if (!aiPrompt.trim() || !onAIEditRequest) return;
-      onAIEditRequest(selectedElement.selector, selectedElement.outerHTML, aiPrompt);
+      const fullPrompt = aiImagePreview
+        ? `${aiPrompt}\n\n[ATTACHED IMAGE DATA URL — use this as the image source]: ${aiImagePreview}`
+        : aiPrompt;
+      onAIEditRequest(selectedElement.selector, selectedElement.outerHTML, fullPrompt);
       setEditMode(null);
       setSelectedElement(null);
+      setAIImagePreview(null);
       return;
     }
 
@@ -275,15 +291,35 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
         <div
           className="fixed z-50 flex flex-col gap-1.5 p-2 rounded-lg bg-[#0d0d14] border border-violet-500/30 shadow-xl shadow-black/50 w-72"
           style={{
-            top: Math.min(selectedElement.rect.bottom + 8, window.innerHeight - 80),
+            top: Math.min(selectedElement.rect.bottom + 8, window.innerHeight - 100),
             left: Math.max(8, Math.min(selectedElement.rect.left, window.innerWidth - 300)),
           }}
         >
+          <input ref={aiImgInputRef} type="file" accept="image/*" className="hidden" onChange={handleAIImageAttach} />
           <div className="flex items-center gap-1.5 text-[9px] text-violet-400/60">
             <Sparkles className="h-2.5 w-2.5" />
             <span>Describe what you want to change</span>
           </div>
+          {aiImagePreview && (
+            <div className="flex items-center gap-2 p-1.5 rounded bg-white/[0.04] border border-white/[0.06]">
+              <img src={aiImagePreview} alt="Attached" className="h-7 w-7 rounded object-cover" />
+              <span className="text-[9px] text-white/40 flex-1 truncate">Image attached</span>
+              <button onClick={() => setAIImagePreview(null)} className="h-5 w-5 rounded flex items-center justify-center text-white/20 hover:text-red-400">
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => aiImgInputRef.current?.click()}
+              className={cn(
+                "h-7 w-7 rounded flex items-center justify-center transition-colors shrink-0",
+                aiImagePreview ? "text-emerald-400 bg-emerald-500/10" : "text-white/30 hover:text-white/60 hover:bg-white/5"
+              )}
+              title="Attach image"
+            >
+              <Paperclip className="h-3 w-3" />
+            </button>
             <input
               ref={aiInputRef}
               value={aiPrompt}
@@ -300,7 +336,7 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
             >
               {isProcessingAIEdit ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
             </button>
-            <button onClick={() => { setEditMode(null); setSelectedElement(null); }} className="h-7 w-7 rounded flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5">
+            <button onClick={() => { setEditMode(null); setSelectedElement(null); setAIImagePreview(null); }} className="h-7 w-7 rounded flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5">
               <X className="h-3 w-3" />
             </button>
           </div>
