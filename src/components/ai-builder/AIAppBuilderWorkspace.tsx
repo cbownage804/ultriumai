@@ -122,7 +122,7 @@ import { VisualEditToolbar } from './VisualEditToolbar';
 import { NPMPackageManagerPanel } from './NPMPackageManagerPanel';
 import { PublishPanel } from './PublishPanel';
 import { AIImageGenPanel } from './AIImageGenPanel';
-import ultriumLogo from '@/assets/ultrium-ai-logo.png';
+const ultriumLogo = '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png';
 import { SymbolSearchPanel } from './SymbolSearchPanel';
 import { SecretsManagerPanel } from './SecretsManagerPanel';
 import { ProjectDropdownMenu } from './ProjectDropdownMenu';
