@@ -330,13 +330,46 @@ export function BuilderChatPanel({
     }
   };
 
+  // Compress an image file to max 1200px and JPEG quality 0.8 to avoid oversized payloads
+  const compressImage = useCallback((file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const MAX = 1200;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          const ratio = Math.min(MAX / width, MAX / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, width, height);
+        // Use JPEG for photos, PNG for small/transparent images
+        const isPng = file.type === 'image/png' && file.size < 200_000;
+        resolve(canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', 0.8));
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        // Fallback: read as-is
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target?.result as string);
+        reader.readAsDataURL(file);
+      };
+      img.src = url;
+    });
+  }, []);
+
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    Array.from(files).forEach(file => {
+    Array.from(files).forEach(async (file) => {
       // Support both images and other file types
       if (!file.type.startsWith('image/')) {
-        // For non-image files, still read as data URL so the AI can see the content
         const reader = new FileReader();
         reader.onload = (ev) => {
           setImagePreviews(prev => [...prev, ev.target?.result as string]);
@@ -344,14 +377,12 @@ export function BuilderChatPanel({
         reader.readAsDataURL(file);
         return;
       }
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setImagePreviews(prev => [...prev, ev.target?.result as string]);
-      };
-      reader.readAsDataURL(file);
+      // Compress images to prevent network errors from oversized payloads
+      const compressed = await compressImage(file);
+      setImagePreviews(prev => [...prev, compressed]);
     });
     e.target.value = '';
-  }, []);
+  }, [compressImage]);
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     const items = e.clipboardData?.items;
@@ -361,14 +392,12 @@ export function BuilderChatPanel({
         e.preventDefault();
         const file = item.getAsFile();
         if (!file) continue;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          setImagePreviews(prev => [...prev, ev.target?.result as string]);
-        };
-        reader.readAsDataURL(file);
+        compressImage(file).then(compressed => {
+          setImagePreviews(prev => [...prev, compressed]);
+        });
       }
     }
-  }, []);
+  }, [compressImage]);
 
   const [thinkingCollapsed, setThinkingCollapsed] = useState<Record<string, boolean>>({});
 
