@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Crosshair, Type, Palette, X, Check, Sparkles, Send, Loader2, Pipette, Paperclip } from 'lucide-react';
+import { Crosshair, Type, Palette, X, Check, Sparkles, Send, Loader2, Pipette, Paperclip, ImagePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChromePicker } from 'react-color';
 
@@ -27,6 +27,7 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
   const [aiImagePreview, setAIImagePreview] = useState<string | null>(null);
   const aiInputRef = useRef<HTMLInputElement>(null);
   const aiImgInputRef = useRef<HTMLInputElement>(null);
+  const imgReplaceInputRef = useRef<HTMLInputElement>(null);
 
   const handleAIImageAttach = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -37,6 +38,21 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
     reader.readAsDataURL(file);
     if (aiImgInputRef.current) aiImgInputRef.current.value = '';
   }, []);
+
+  const handleImgReplace = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedElement) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      onEditApply(selectedElement.selector, 'replaceWithImage', dataUrl);
+      setEditMode(null);
+      setSelectedElement(null);
+    };
+    reader.readAsDataURL(file);
+    if (imgReplaceInputRef.current) imgReplaceInputRef.current.value = '';
+  }, [selectedElement, onEditApply]);
 
   useEffect(() => {
     if (!isActive || !iframeRef.current) return;
@@ -190,8 +206,15 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
             left: Math.max(8, Math.min(selectedElement.rect.left, window.innerWidth - 280)),
           }}
         >
+          <input ref={imgReplaceInputRef} type="file" accept="image/*" className="hidden" onChange={handleImgReplace} />
           <span className="text-[9px] text-white/30 px-1.5 font-mono">{selectedElement.tagName}</span>
           <div className="h-3 w-px bg-white/[0.06]" />
+          <button
+            onClick={() => imgReplaceInputRef.current?.click()}
+            className="h-6 px-2 rounded flex items-center gap-1 text-[10px] text-white/50 hover:text-white/80 hover:bg-white/5"
+          >
+            <ImagePlus className="h-2.5 w-2.5" /> Img
+          </button>
           <button
             onClick={() => setEditMode('text')}
             className="h-6 px-2 rounded flex items-center gap-1 text-[10px] text-white/50 hover:text-white/80 hover:bg-white/5"
