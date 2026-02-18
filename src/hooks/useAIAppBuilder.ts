@@ -267,6 +267,7 @@ export function useAIAppBuilder() {
     const creditCost = mode === 'build' ? 3 : 1;
     if (!isFixRequest && totalRemaining < creditCost) {
       toast.error(`Insufficient credits. You need ${creditCost} but have ${totalRemaining}. Purchase more to continue.`);
+      toast.success('Agent task completed', { duration: 4000 });
       return;
     }
 
