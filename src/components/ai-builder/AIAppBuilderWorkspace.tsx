@@ -1209,41 +1209,15 @@ export function AIAppBuilderWorkspace() {
     { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, category: 'panel', shortcut: '⌘/', action: () => setShowShortcuts(true) },
   ], [handleSave, handleUndo, handleRedo, handlePublish, openPanel]);
 
-  // ─── Left sidebar icon bar items ───
+  // ─── Left sidebar icon bar items (Lovable-style minimal) ───
+  // Only essential items visible; everything else is in ⌘K command palette
   const sidebarIcons = [
-    // ── Data & Auth ──
-    { id: 'database', icon: Database, label: 'Database', tooltip: 'Browse and manage your database tables and records', show: !!supabaseConfig, active: showDatabase || showDbExplorer, group: 'data', color: 'text-emerald-400', activeBg: 'bg-emerald-500/10' },
-    { id: 'supabaseIDE' as any, icon: Server, label: 'Supabase IDE', tooltip: 'Full Supabase IDE — schema browser, query runner, auth & storage', show: true, active: showSupabaseIDE, group: 'data', color: 'text-emerald-300', activeBg: 'bg-emerald-500/10' },
-    { id: 'auth', icon: Shield, label: 'Auth', tooltip: 'Configure user authentication and login settings', show: !!supabaseConfig, active: showAuth, group: 'data', color: 'text-blue-400', activeBg: 'bg-blue-500/10' },
-    { id: 'storage', icon: FolderOpen, label: 'Storage', tooltip: 'Upload and manage files like images and documents', show: !!supabaseConfig, active: showStorage, group: 'data', color: 'text-amber-400', activeBg: 'bg-amber-500/10' },
-    { id: 'edgeFunctions', icon: Zap, label: 'Edge Functions', tooltip: 'Create serverless backend functions that run on the edge', show: true, active: showEdgeFunctions, group: 'data', color: 'text-yellow-400', activeBg: 'bg-yellow-500/10' },
-    { id: 'migrationPanel' as any, icon: FileCode, label: 'Migrations', tooltip: 'Write and apply database migrations with a full SQL editor', show: true, active: showMigrationPanel, group: 'data', color: 'text-cyan-400', activeBg: 'bg-cyan-500/10' },
-    { id: 'edgeFnEditor' as any, icon: Terminal, label: 'Edge Editor', tooltip: 'Write, edit and test edge functions with live deploy', show: true, active: showEdgeFnEditor, group: 'data', color: 'text-yellow-300', activeBg: 'bg-yellow-500/10' },
-    // ── DevOps ──
-    { id: 'githubPanel' as any, icon: Github, label: 'GitHub', tooltip: 'Full GitHub integration — push, pull, branches, PRs', show: true, active: showGitHubPanel, group: 'devops', color: 'text-white/70', activeBg: 'bg-white/10' },
-    { id: 'buildWorkflow' as any, icon: Hammer, label: 'Build Workflows', tooltip: 'Trigger GitHub Actions, download EXE/MSI artifacts', show: true, active: showBuildWorkflow, group: 'devops', color: 'text-orange-400', activeBg: 'bg-orange-500/10' },
-    { id: 'secretsManager' as any, icon: Key, label: 'Secrets', tooltip: 'Manage encrypted secrets and environment variables per environment', show: true, active: showSecretsManager, group: 'devops', color: 'text-amber-400', activeBg: 'bg-amber-500/10' },
-    // ── AI & Intelligence ──
-    { id: 'knowledge', icon: Brain, label: 'Knowledge', tooltip: 'Add custom instructions and context files to guide the AI', show: true, active: showKnowledge, group: 'ai', color: 'text-violet-400', activeBg: 'bg-violet-500/10' },
-    { id: 'codeIntel', icon: Sparkles, label: 'Code Intelligence', tooltip: 'AI-powered code suggestions and refactoring tips', show: true, active: showCodeIntel, group: 'ai', color: 'text-fuchsia-400', activeBg: 'bg-fuchsia-500/10' },
-    { id: 'componentLib', icon: Layers, label: 'Components', tooltip: 'Browse and insert pre-built UI components', show: true, active: showComponentLib, group: 'ai', color: 'text-indigo-400', activeBg: 'bg-indigo-500/10' },
-    { id: 'gptConnector', icon: Bot, label: 'GPT Chat Widget', tooltip: 'Embed your custom GPT as a chat widget in your app', show: true, active: showGPTConnector, group: 'ai', color: 'text-teal-400', activeBg: 'bg-teal-500/10' },
-    { id: 'designSystem' as any, icon: Palette, label: 'Design System', tooltip: 'Generate brand-aware design tokens, themes, and color palettes', show: true, active: showDesignSystem, group: 'ai', color: 'text-rose-400', activeBg: 'bg-rose-500/10' },
-    { id: 'imageGen' as any, icon: ImagePlus, label: 'AI Image Gen', tooltip: 'Generate images from text prompts using AI', show: true, active: showImageGen, group: 'ai', color: 'text-pink-400', activeBg: 'bg-pink-500/10' },
-    // ── Project ──
-    { id: 'testingSuite', icon: Bug, label: 'Testing & Debug', tooltip: 'Run tests and debug your application', show: true, active: showTestingSuite, group: 'project', color: 'text-red-400', activeBg: 'bg-red-500/10' },
-    { id: 'review' as any, icon: ClipboardCheck, label: 'Review Project', tooltip: 'AI-powered review of your entire project for errors and best practices', show: true, active: projectReview.showPanel, group: 'project', color: 'text-lime-400', activeBg: 'bg-lime-500/10' },
-    { id: 'envVars', icon: Variable, label: 'Env Variables', tooltip: 'Manage secret keys and environment variables', show: true, active: showEnvVars, group: 'project', color: 'text-orange-400', activeBg: 'bg-orange-500/10' },
-    { id: 'assets', icon: Image, label: 'Assets', tooltip: 'Upload and manage images, icons, and media files', show: true, active: showAssets, group: 'project', color: 'text-pink-400', activeBg: 'bg-pink-500/10' },
-    { id: 'packages', icon: Package, label: 'Packages', tooltip: 'Add third-party libraries and CDN packages', show: true, active: showPackages, group: 'project', color: 'text-sky-400', activeBg: 'bg-sky-500/10' },
-    { id: 'history', icon: History, label: 'Version History', tooltip: 'View and restore previous versions of your project', show: true, active: showVersionHistory, group: 'project', color: 'text-slate-400', activeBg: 'bg-slate-500/10' },
-    { id: 'activity', icon: Clock, label: 'Activity', tooltip: 'See a log of all recent changes and actions', show: true, active: showActivity, group: 'project', color: 'text-zinc-400', activeBg: 'bg-zinc-500/10' },
-    { id: 'exportGuide', icon: Rocket, label: 'Export & Deploy', tooltip: 'Step-by-step guide to export or deploy your app', show: true, active: showExportGuide, group: 'project', color: 'text-cyan-400', activeBg: 'bg-cyan-500/10' },
-    { id: 'oneClickDeploy' as any, icon: Globe, label: 'One-Click Deploy', tooltip: 'Deploy to Vercel or Netlify with one click', show: true, active: showOneClickDeploy, group: 'project', color: 'text-emerald-400', activeBg: 'bg-emerald-500/10' },
-    { id: 'helpCenter' as any, icon: BookOpen, label: 'Help Center', tooltip: 'Documentation, tutorials, and getting started guides', show: true, active: showHelpCenter, group: 'project', color: 'text-blue-300', activeBg: 'bg-blue-500/10' },
-    { id: 'setupWizard' as any, icon: Sparkles, label: 'Setup Guide', tooltip: 'Guided setup for Supabase, Stripe, and integrations', show: true, active: showSetupWizard, group: 'project', color: 'text-violet-300', activeBg: 'bg-violet-500/10' },
-    { id: 'npmManager' as any, icon: Package, label: 'NPM Packages', tooltip: 'Search, install, and uninstall npm packages', show: true, active: showNPMManager, group: 'project', color: 'text-sky-300', activeBg: 'bg-sky-500/10' },
-    { id: 'devtools' as any, icon: Activity, label: 'DevTools', tooltip: 'Console logs and network inspector from preview', show: true, active: showDevTools, group: 'project', color: 'text-amber-300', activeBg: 'bg-amber-500/10' },
+    { id: 'supabaseIDE' as any, icon: Database, label: 'Cloud', tooltip: 'Database, auth, storage & edge functions', active: showSupabaseIDE || showDatabase || showAuth || showStorage || showEdgeFunctions, onClick: () => setShowSupabaseIDE(!showSupabaseIDE) },
+    { id: 'githubPanel' as any, icon: Github, label: 'GitHub', tooltip: 'Push, pull, branches & PRs', active: showGitHubPanel, onClick: () => setShowGitHubPanel(!showGitHubPanel) },
+    { id: 'packages', icon: Package, label: 'Packages', tooltip: 'Manage dependencies', active: showPackages || showNPMManager, onClick: () => { setShowNPMManager(!showNPMManager); } },
+    { id: 'history', icon: History, label: 'History', tooltip: 'Version history', active: showVersionHistory, onClick: () => openPanel('history') },
+    { id: 'secretsManager' as any, icon: Key, label: 'Secrets', tooltip: 'Environment variables & secrets', active: showSecretsManager || showEnvVars, onClick: () => setShowSecretsManager(!showSecretsManager) },
+    { id: 'knowledge', icon: Brain, label: 'Knowledge', tooltip: 'Custom instructions for the AI', active: showKnowledge, onClick: () => openPanel('knowledge') },
   ] as const;
 
   return (
@@ -1600,118 +1574,58 @@ export function AIAppBuilderWorkspace() {
 
                     <div className={cn("bg-gradient-to-r from-transparent via-white/[0.06] to-transparent my-1", sidebarExpanded ? "h-px mx-1" : "h-px w-5 mx-auto")} />
 
-                    {/* Main sidebar icons grouped */}
-                    {(() => {
-                      const groups = [
-                        { key: 'data', label: 'Data & Auth', color: 'text-emerald-400/70' },
-                        { key: 'devops', label: 'DevOps', color: 'text-orange-400/70' },
-                        { key: 'ai', label: 'AI & Tools', color: 'text-fuchsia-400/70' },
-                        { key: 'project', label: 'Project', color: 'text-sky-400/70' },
-                      ];
-                      const visibleItems = sidebarIcons.filter(i => i.show);
-                      return groups.map(group => {
-                        const groupItems = visibleItems.filter(i => i.group === group.key);
-                        if (groupItems.length === 0) return null;
-                        return (
-                          <div key={group.key}>
-                            {sidebarExpanded && <span className={cn("text-[10px] font-bold uppercase tracking-widest px-2 pt-3 pb-1 block", group.color)}>{group.label}</span>}
-                            {!sidebarExpanded && <div className="h-px w-5 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent my-1 mx-auto" />}
-                            {groupItems.map(item => (
-                              <Tooltip key={item.id} delayDuration={sidebarExpanded ? 999999 : 300}>
-                                <TooltipTrigger asChild>
-                                  <motion.button
-                                    whileHover={{ scale: sidebarExpanded ? 1 : 1.12 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                                     onClick={() => {
-                                       if (item.id === 'review') {
-                                         if (projectReview.showPanel) {
-                                           projectReview.setShowPanel(false);
-                                         } else {
-                                           projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel));
-                                         }
-                                       } else if (item.id === 'supabaseIDE') {
-                                         setShowSupabaseIDE(!showSupabaseIDE);
-                                       } else if (item.id === 'githubPanel') {
-                                         setShowGitHubPanel(!showGitHubPanel);
-                                       } else if (item.id === 'migrationPanel') {
-                                         setShowMigrationPanel(!showMigrationPanel);
-                                       } else if (item.id === 'edgeFnEditor') {
-                                         setShowEdgeFnEditor(!showEdgeFnEditor);
-                                       } else if (item.id === 'buildWorkflow') {
-                                         setShowBuildWorkflow(!showBuildWorkflow);
-                                       } else if (item.id === 'npmManager') {
-                                         setShowNPMManager(!showNPMManager);
-                                        } else if (item.id === 'devtools') {
-                                          setShowDevTools(!showDevTools);
-                                        } else if (item.id === 'imageGen') {
-                                          setShowImageGen(!showImageGen);
-                                        } else if (item.id === 'secretsManager') {
-                                          setShowSecretsManager(!showSecretsManager);
-                                        } else {
-                                         openPanel(item.id as any);
-                                       }
-                                     }}
-                                    className={cn(
-                                      "rounded-md flex items-center gap-2 transition-all text-left",
-                                      sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
-                                      item.color,
-                                      item.active
-                                        ? `${item.activeBg} border border-white/[0.08]`
-                                        : "hover:bg-white/[0.03]"
-                                    )}
-                                  >
-                                    <item.icon className="h-3.5 w-3.5 shrink-0" />
-                                    {sidebarExpanded && <span className="text-[11px] truncate">{item.label}</span>}
-                                  </motion.button>
-                                </TooltipTrigger>
-                                {!sidebarExpanded && <TooltipContent side="right" className="text-xs max-w-[220px]">
-                                  <p className="font-medium">{item.label}</p>
-                                  <p className="text-white/60 mt-0.5">{item.tooltip}</p>
-                                </TooltipContent>}
-                              </Tooltip>
-                            ))}
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-
-                  {/* Bottom tools */}
-                  <div className={cn("mt-auto flex flex-col gap-0.5 py-1.5 border-t border-white/[0.04]", sidebarExpanded ? "px-1.5" : "items-center px-0")}>
-                    {sidebarExpanded && <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/70 px-2 pt-1 pb-1 block">Tools</span>}
-                    {[
-                      { icon: Gauge, label: 'Performance', tooltip: 'Analyze bundle size and code complexity', active: showPerformanceProfiler, onClick: () => setShowPerformanceProfiler(!showPerformanceProfiler), color: 'text-emerald-400', activeColor: 'text-emerald-400 bg-emerald-500/10' },
-                      { icon: BarChart3, label: 'Analytics', tooltip: 'Build analytics and credit usage', active: showBuildAnalytics, onClick: () => setShowBuildAnalytics(!showBuildAnalytics), color: 'text-amber-400', activeColor: 'text-amber-400 bg-amber-500/10' },
-                      { icon: History, label: 'Changelog', tooltip: 'See a timeline of changes made this session', active: showChangelog, onClick: () => setShowChangelog(!showChangelog), color: 'text-blue-400' },
-                      { icon: GitBranchIcon, label: 'Timeline', tooltip: 'Visual timeline of all project versions', active: showTimeline, onClick: () => setShowTimeline(!showTimeline), color: 'text-violet-400' },
-                      { icon: Terminal, label: 'Terminal', tooltip: 'Open a command-line terminal', active: showTerminal, onClick: () => setShowTerminal(!showTerminal), color: 'text-green-400' },
-                      { icon: Globe, label: 'Domains', tooltip: 'Connect a custom domain to your app', active: false, onClick: () => setShowDomainPanel(true), color: 'text-cyan-400' },
-                      { icon: Activity, label: 'Console', tooltip: 'View runtime logs and error output', active: showConsole, onClick: () => setShowConsole(!showConsole), color: 'text-amber-400' },
-                      { icon: Keyboard, label: 'Shortcuts', tooltip: 'View all keyboard shortcuts', active: false, onClick: () => setShowShortcuts(true), color: 'text-slate-400' },
-                      { icon: Bug, label: 'Report Bug', tooltip: 'Report an issue with the builder', active: false, onClick: () => setShowBugReport(true), color: 'text-red-400', hoverColor: 'hover:text-red-400/70 hover:bg-red-500/10' },
-                      { icon: Puzzle, label: 'Extensions', tooltip: 'Browse and install extensions', active: showExtensions, onClick: () => setShowExtensions(!showExtensions), color: 'text-violet-400', activeColor: 'text-violet-400 bg-violet-500/10' },
-                      { icon: Play, label: 'Test Runner', tooltip: 'Auto-detect and run tests', active: showTestRunner, onClick: () => setShowTestRunner(!showTestRunner), color: 'text-green-400', activeColor: 'text-green-400 bg-green-500/10' },
-                      { icon: Replace, label: 'Search & Replace', tooltip: 'Multi-file search and replace', active: showMultiSearch, onClick: () => setShowMultiSearch(!showMultiSearch), color: 'text-sky-400', activeColor: 'text-sky-400 bg-sky-500/10' },
-                      { icon: Users, label: 'Collaborate', tooltip: 'Real-time collaboration with teammates', active: showCollaboration, onClick: () => setShowCollaboration(!showCollaboration), color: 'text-cyan-400', activeColor: 'text-cyan-400 bg-cyan-500/10' },
-                      { icon: Server, label: 'API Builder', tooltip: 'Design API endpoints with mock server', active: showAPIBuilder, onClick: () => setShowAPIBuilder(!showAPIBuilder), color: 'text-orange-400', activeColor: 'text-orange-400 bg-orange-500/10' },
-                    ].map(item => (
-                      <Tooltip key={item.label} delayDuration={sidebarExpanded ? 999999 : 300}>
+                    {/* Main sidebar icons — minimal Lovable-style */}
+                    {sidebarIcons.map(item => (
+                      <Tooltip key={item.id} delayDuration={sidebarExpanded ? 999999 : 300}>
                         <TooltipTrigger asChild>
-                          <button onClick={item.onClick} className={cn(
-                            "rounded-md flex items-center gap-2 transition-all text-left",
-                            sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
-                            item.color,
-                            item.active ? `${item.activeColor || 'bg-white/[0.06]'} border border-white/[0.08]` : 'hover:bg-white/[0.03]',
-                            item.hoverColor || ''
-                          )}>
+                          <button
+                            onClick={item.onClick}
+                            className={cn(
+                              "rounded-md flex items-center gap-2 transition-all text-left",
+                              sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
+                              item.active
+                                ? "text-white/90 bg-white/[0.08] border border-white/[0.08]"
+                                : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]"
+                            )}
+                          >
                             <item.icon className="h-3.5 w-3.5 shrink-0" />
                             {sidebarExpanded && <span className="text-[11px] truncate">{item.label}</span>}
                           </button>
                         </TooltipTrigger>
-                        {!sidebarExpanded && <TooltipContent side="right" className="text-xs max-w-[200px]">{item.tooltip}</TooltipContent>}
+                        {!sidebarExpanded && <TooltipContent side="right" className="text-xs max-w-[220px]">
+                          <p className="font-medium">{item.label}</p>
+                          <p className="text-white/60 mt-0.5">{item.tooltip}</p>
+                        </TooltipContent>}
                       </Tooltip>
                     ))}
+                  </div>
+
+                  {/* Bottom: ⌘K hint + Settings */}
+                  <div className={cn("mt-auto flex flex-col gap-0.5 py-2 border-t border-white/[0.04]", sidebarExpanded ? "px-1.5" : "items-center px-0")}>
+                    <Tooltip delayDuration={sidebarExpanded ? 999999 : 300}>
+                      <TooltipTrigger asChild>
+                        <button onClick={() => setShowCommandPalette(true)} className={cn(
+                          "rounded-md flex items-center gap-2 transition-all text-left text-white/30 hover:text-white/60 hover:bg-white/[0.04]",
+                          sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center"
+                        )}>
+                          <Search className="h-3.5 w-3.5 shrink-0" />
+                          {sidebarExpanded && <span className="text-[11px] truncate">All Tools <kbd className="ml-auto text-[9px] text-white/20 bg-white/5 rounded px-1 py-0.5 font-mono">⌘K</kbd></span>}
+                        </button>
+                      </TooltipTrigger>
+                      {!sidebarExpanded && <TooltipContent side="right" className="text-xs">All Tools (⌘K)</TooltipContent>}
+                    </Tooltip>
+                    <Tooltip delayDuration={sidebarExpanded ? 999999 : 300}>
+                      <TooltipTrigger asChild>
+                        <button onClick={() => setShowSettingsPanel(true)} className={cn(
+                          "rounded-md flex items-center gap-2 transition-all text-left text-white/30 hover:text-white/60 hover:bg-white/[0.04]",
+                          sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center"
+                        )}>
+                          <Settings className="h-3.5 w-3.5 shrink-0" />
+                          {sidebarExpanded && <span className="text-[11px] truncate">Settings</span>}
+                        </button>
+                      </TooltipTrigger>
+                      {!sidebarExpanded && <TooltipContent side="right" className="text-xs">Settings</TooltipContent>}
+                    </Tooltip>
                   </div>
                 </div>
 
