@@ -655,10 +655,26 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
     if (brandingContext) {
       const lastIdx = enrichedMessages.length - 1;
       if (enrichedMessages[lastIdx]?.role === 'user') {
-        enrichedMessages[lastIdx] = {
-          ...enrichedMessages[lastIdx],
-          content: enrichedMessages[lastIdx].content + brandingContext,
-        };
+        const lastContent = enrichedMessages[lastIdx].content;
+        // Handle both string and multimodal array content
+        if (typeof lastContent === 'string') {
+          enrichedMessages[lastIdx] = {
+            ...enrichedMessages[lastIdx],
+            content: lastContent + brandingContext,
+          };
+        } else if (Array.isArray(lastContent)) {
+          // Find the text block and append branding context to it
+          const enrichedContent = lastContent.map((block: any) => {
+            if (block.type === 'text') {
+              return { ...block, text: block.text + brandingContext };
+            }
+            return block;
+          });
+          enrichedMessages[lastIdx] = {
+            ...enrichedMessages[lastIdx],
+            content: enrichedContent,
+          };
+        }
       }
     }
 
