@@ -675,6 +675,15 @@ export function useAIAppBuilder() {
         }
         // Auto-apply files (approval UI in chat shows summary, user can revert)
         setLatestFiles(mergedFiles);
+
+        // Save version snapshot after successful generation
+        setVersions(prev => [...prev, {
+          id: crypto.randomUUID(),
+          label: `AI: ${input.slice(0, 40)}${input.length > 40 ? '...' : ''}`,
+          files: [...mergedFiles],
+          timestamp: new Date(),
+          messageId: '',
+        }]);
       }
       streaming.stopStreaming();
 
