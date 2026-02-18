@@ -1,137 +1,78 @@
 
 
-# Unified Auth, Smart Onboarding, and Marketing Refresh
+# Fix: Make "Browse URL + Use Image as Logo" Work Flawlessly
 
-## Overview
+## Problem
 
-Consolidate the authentication experience into a single page, replace the confusing "Account Type" dropdown with a product picker that intelligently recommends the right product, and update sitewide marketing copy to clearly communicate what each product is for and who it serves.
+When you tell the App Builder something like *"browse to glennsbodyshop.net and copy the data and make it better, use the attached image as the logo"*, it fails because:
 
-## Phase 1: Unified Auth with Product Picker
+1. **The AI cannot browse the internet.** The system detects the URL and tells the AI "clone glennsbodyshop.net" -- but the AI model has zero internet access. It just guesses what the site looks like and generates something wrong or crashes.
+2. **No pre-scraping step exists.** The `firecrawl-scrape` edge function is deployed and works, but nothing in the App Builder actually calls it before sending the prompt to the AI. The scraping instruction is only in the system prompt for *generated app code*, not for the builder itself.
 
-### Remove Duplicate Auth
-- Delete `src/pages/vanguard/VanguardAuthPage.tsx`
-- Remove the `/vanguard/auth` route from `App.tsx` and `vanguardRoutes.tsx`
-- Add a redirect so `/vanguard/auth` maps to `/auth?return=vanguard` (no broken links)
+## Solution
 
-### Replace "Account Type" with Product Intent
-On the **Sign Up** tab of `/auth`, replace the Business/MSP/MSSP dropdown with a product recommendation step:
+Add a **pre-scrape step** in `useAIAppBuilder.ts` so that when a URL is detected in your message, the builder automatically fetches the website content via `firecrawl-scrape` and injects it into the AI prompt as real data.
 
-```text
-+------------------------------------------+
-|  What brings you here?                   |
-|                                          |
-|  [ ] I want to protect my passwords,    |
-|      emails, and digital life            |
-|      --> SafeSuite (Recommended for      |
-|          individuals & small teams)      |
-|                                          |
-|  [ ] I need RMM, helpdesk, pentesting,  |
-|      or full IT operations               |
-|      --> Vanguard (For MSPs & IT teams) |
-|                                          |
-|  [ ] I want to build custom AI          |
-|      assistants for my business          |
-|      --> AI Studio                       |
-|                                          |
-|  Users can select ONE or MULTIPLE.       |
-+------------------------------------------+
-```
+## Changes
 
-- Single selection: user goes directly to that product dashboard after signup
-- Multiple selections: user goes to the Product Hub
-- Stored in `profiles.product_interests` (text array) and `profiles.primary_product` (text)
+### 1. `src/hooks/useAIAppBuilder.ts` -- Add URL pre-scraping
 
-### Smart CTA Recommendations
-Add contextual recommendation badges:
-- "Are you a business or individual? We recommend **SafeSuite Enterprise**"
-- "Need pentesting, helpdesk, or full RMM? Try **Vanguard**"
-- "Want to build AI chatbots? Start with **AI Studio**"
+Before sending the message to the AI model:
 
-These appear as subtle helper text below each option.
+- Detect any URL in the user's input (using the existing `detectURLCloneIntent` or a broader URL regex that also catches "browse to X" patterns without requiring clone keywords)
+- Call the `firecrawl-scrape` edge function to fetch the site's markdown content and metadata (title, description, etc.)
+- Inject the scraped content as a system message: `[SCRAPED WEBSITE CONTENT from glennsbodyshop.net] Title: ... \n Content: ...`
+- This gives the AI the real text, structure, and data from the site to work with
+- If scraping fails (timeout, blocked, etc.), show a toast warning and proceed without it rather than crashing
 
-## Phase 2: Smart Post-Login Routing
+### 2. `src/components/ai-builder/SupabaseConversational.tsx` -- Broaden URL detection
 
-Update `useRoleBasedRedirect` and `RoleBasedRedirect`:
+Update `detectURLCloneIntent` to also detect:
+- "browse to [domain]" (no https:// prefix)
+- "go to [domain]"
+- "check out [domain]"
+- Plain domain names like "glennsbodyshop.net" without explicit clone keywords
+- Any URL mentioned alongside "copy", "data", "content", "scrape", "browse"
+
+Currently it only triggers on `https?://` URLs with clone-specific keywords. The user's message says "browse to glennsbodyshop.net" which has no `https://` prefix and uses "copy" which does match, but the URL regex fails on bare domains.
+
+### 3. `src/hooks/useAIAppBuilder.ts` -- Better image-as-logo handling
+
+The visual intelligence context already detects "use as logo" intent correctly. The main issue is that when combined with URL scraping + image, the AI gets overwhelmed. The fix will:
+- Separate the scrape context and asset context into clearly labeled blocks
+- Add explicit priority instructions: "Use the UPLOADED IMAGE as the logo. Use the SCRAPED CONTENT for the site data/text. Do NOT generate a logo -- the user provided one."
+
+## Technical Details
 
 ```text
-User logs in
-    |
-    v
-Has primary_product set?
-    |-- Yes --> Go to that product dashboard
-    |-- No --> Has product_interests?
-                |-- Single product --> Set as primary, go there
-                |-- Multiple --> Go to Hub
-                |-- None (legacy user) --> Go to Hub
+User message flow (before):
+  "browse to site.com, use this as logo" + image
+       |
+       v
+  detectURLCloneIntent --> system msg: "clone site.com"  (AI has NO site data)
+  buildVisualIntelligence --> system msg: "use image as logo"
+       |
+       v
+  AI hallucinates site content --> broken/wrong output
+
+User message flow (after):
+  "browse to site.com, use this as logo" + image
+       |
+       v
+  detectURLCloneIntent --> found URL "site.com"
+       |
+       v
+  fetch firecrawl-scrape("https://site.com") --> real markdown content
+       |
+       v
+  system msg: "[SCRAPED CONTENT] Title: Glenn's Body Shop..."  (REAL data)
+  system msg: "[ASSET] Use uploaded image as the logo"
+       |
+       v
+  AI builds site with real data + real logo --> correct output
 ```
 
-MSP/Admin role-based routing stays unchanged (takes priority).
-
-## Phase 3: Unified Adaptive Onboarding
-
-Merge the three onboarding systems into one:
-
-- After signup + product selection, show only the onboarding steps relevant to the chosen product
-- **SafeSuite path**: Skip to dashboard (free tier auto-provisions), show in-app tooltips
-- **Vanguard path**: Show the existing 4-step Vanguard wizard (company setup, agent install, etc.)
-- **AI Studio path**: Show the existing GPT creation steps
-- All paths share the profile completion step (name, company)
-
-## Phase 4: Sitewide Marketing Updates
-
-### Homepage (`Index.tsx`)
-- Update hero subtitle: emphasize three clear audience segments
-- Add a "Which product is right for you?" quiz-style section below the product cards
-- Update FAQ answers to reference current capabilities
-
-### Product Hub (`ProductHub.tsx`)
-- Replace "Invite Only" on Vanguard with "Start Free Trial" or "View Plans" linking to `/pricing/vanguard`
-- Add smart recommendation banner: "Based on your profile, we recommend..." for users who haven't explored all products
-
-### Product Pages
-- **SafeSuite** (`SafeSuiteProductPage.tsx`): Emphasize individual-first messaging -- "Protect your digital life" with clear business tier upsell
-- **Vanguard** (`VanguardProductPage.tsx`): Lead with "Replace your entire MSP stack" positioning, clear module breakdown
-- **AI Studio** (`AIStudioProductPage.tsx`): Focus on "Build AI in minutes, no code required"
-
-### Navigation
-- Ensure all product CTAs route to `/auth?return=[product]` so new users get product-aware signup
-
-## Database Changes
-
-Add two columns to `profiles`:
-
-```text
-primary_product  text        (nullable) -- safesuite | vanguard | ai_studio
-product_interests text[]     (nullable) -- array of selected products
-```
-
-## Files Modified
-
-| File | Change |
-|------|--------|
-| `src/pages/Auth.tsx` | Replace account type dropdown with product picker cards |
-| `src/hooks/useRoleBasedRedirect.tsx` | Add primary_product routing logic |
-| `src/components/RoleBasedRedirect.tsx` | Route based on primary_product |
-| `src/hooks/useOnboarding.ts` | Check product_interests for adaptive onboarding |
-| `src/components/OnboardingFlow.tsx` | Make steps product-aware |
-| `src/pages/ProductHub.tsx` | Replace "Invite Only" with actionable CTA, add recommendation banner |
-| `src/pages/Index.tsx` | Add "Which product?" section, update messaging |
-| `src/pages/products/VanguardProductPage.tsx` | Update CTAs to route through unified auth |
-| `src/pages/products/SafeSuiteProductPage.tsx` | Update CTAs to route through unified auth |
-| `src/App.tsx` | Remove `/vanguard/auth` route, add redirect |
-| `src/routes/vanguardRoutes.tsx` | Remove VanguardAuthPage from public routes |
-
-## Files Deleted
-
-| File | Reason |
-|------|--------|
-| `src/pages/vanguard/VanguardAuthPage.tsx` | Replaced by unified `/auth` |
-
-## What Stays the Same
-
-- All existing product access logic (`useProductAccess`)
-- Separate pricing pages per product
-- ProtectedRoute and session management
-- MSP/Admin role-based routing priority
-- Product Hub remains accessible at `/hub` as the multi-product dashboard
+### Files to modify:
+- `src/hooks/useAIAppBuilder.ts` -- Add async pre-scrape before AI call
+- `src/components/ai-builder/SupabaseConversational.tsx` -- Broaden URL detection to handle bare domains and "browse to" patterns
 
