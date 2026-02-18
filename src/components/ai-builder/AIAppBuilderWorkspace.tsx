@@ -122,6 +122,7 @@ import { VisualEditToolbar } from './VisualEditToolbar';
 import { NPMPackageManagerPanel } from './NPMPackageManagerPanel';
 import { PublishPanel } from './PublishPanel';
 import { AIImageGenPanel } from './AIImageGenPanel';
+import { HeaderCreditsIndicator } from './HeaderCreditsIndicator';
 const ultriumLogo = '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png';
 import { SymbolSearchPanel } from './SymbolSearchPanel';
 import { SecretsManagerPanel } from './SecretsManagerPanel';
@@ -1373,12 +1374,17 @@ export function AIAppBuilderWorkspace() {
 
             <div className="h-5 w-px bg-white/[0.06] mx-0.5" />
 
+            {/* Credits indicator */}
+            <HeaderCreditsIndicator onOpenBilling={() => setShowBilling(true)} />
+
+            <div className="h-5 w-px bg-white/[0.06] mx-0.5" />
+
             {/* Share button */}
             <button
               onClick={() => setShowShareDialog(true)}
-              className="h-7 px-3 rounded-full flex items-center gap-1.5 text-xs font-medium bg-white/[0.06] text-white/60 hover:text-white hover:bg-white/[0.1] transition-colors border border-white/[0.07]"
+              className="h-6 px-2 rounded-md flex items-center gap-1 text-[11px] font-medium text-white/40 hover:text-white/70 hover:bg-white/[0.06] transition-colors"
             >
-              <Users className="h-3.5 w-3.5" />
+              <Users className="h-3 w-3" />
               Share
             </button>
 
@@ -1386,13 +1392,13 @@ export function AIAppBuilderWorkspace() {
             <button
               onClick={() => setShowPublishPanel(true)}
               className={cn(
-                "h-7 px-3 rounded-full flex items-center gap-1.5 text-xs font-medium transition-colors",
+                "h-6 px-2.5 rounded-md flex items-center gap-1 text-[11px] font-medium transition-colors",
                 publishedUrl
-                  ? "bg-emerald-500 text-white hover:bg-emerald-600"
-                  : "bg-white text-black hover:bg-white/90"
+                  ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30"
+                  : "bg-white/[0.08] text-white/60 hover:text-white hover:bg-white/[0.12] border border-white/[0.08]"
               )}
             >
-              <Rocket className="h-3.5 w-3.5" />
+              <Rocket className="h-3 w-3" />
               Publish
             </button>
           </div>
