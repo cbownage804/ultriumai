@@ -4,7 +4,7 @@ import {
   Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
   Zap, MessageCircle, Wand2, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
   LayoutGrid, Wrench, AlertTriangle, Copy, RotateCcw, Pencil, GitFork, ChevronDown, Check,
-  Crosshair, ClipboardCheck,
+  Crosshair, ClipboardCheck, ThumbsUp, ThumbsDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -359,35 +359,125 @@ export function BuilderChatPanel({
       ? text.replace(/^\d+\.\s+\*{0,2}.+?\*{0,2}$/gm, '').replace(/\n{3,}/g, '\n\n').trim()
       : text;
 
+    // Calculate elapsed time for "Thought for Xs" display
+    const elapsedSeconds = msg.timestamp ? Math.round((Date.now() - msg.timestamp.getTime()) / 1000) : 0;
+    const thoughtTime = elapsedSeconds > 0 && elapsedSeconds < 600 ? `${elapsedSeconds}s` : '';
+
+    // Extract first line as intro text (before numbered list or task card)
+    const lines = displayText.split('\n').filter(l => l.trim());
+    const introLine = lines.length > 0 && !lines[0].match(/^\d+\./) ? lines[0] : '';
+    const bodyText = introLine ? displayText.replace(introLine, '').trim() : displayText;
+
     return (
-      <div className="space-y-2">
-        {/* Collapsible "Finished thinking" — Lovable style */}
-        {isCompleted && (
+      <div className="space-y-3">
+        {/* "Thought for Xs" — Lovable style collapsible */}
+        {(isCompleted || isStreaming) && (
           <button
             onClick={() => setThinkingCollapsed(prev => ({ ...prev, [msg.id]: !isThinkingCollapsed }))}
-            className="flex items-center gap-1.5 text-white/30 text-[11px] hover:text-white/50 transition-colors group/think"
+            className="flex items-center gap-1.5 text-white/30 text-[13px] hover:text-white/50 transition-colors"
           >
-            <ChevronDown className={cn("h-2.5 w-2.5 transition-transform", isThinkingCollapsed && "-rotate-90")} />
-            <Brain className="h-3 w-3" />
-            <span>Finished thinking</span>
+            <ChevronDown className={cn("h-3 w-3 transition-transform", isThinkingCollapsed && "-rotate-90")} />
+            <span>{isStreaming ? 'Thinking...' : `Thought for ${thoughtTime || 'a moment'}`}</span>
           </button>
         )}
 
-        {/* Conversational text — only shown when thinking is expanded (or no files) */}
-        {displayText && (!isCompleted || !isThinkingCollapsed) && (
-          <StreamingText content={displayText} isStreaming={isStreaming}>
-            {(displayedText) => (
+        {/* Collapsed thinking content */}
+        {!isThinkingCollapsed && introLine && (
+          <p className="text-[13px] text-white/50 leading-relaxed">{introLine}</p>
+        )}
+
+        {/* Task card — Lovable style bordered card */}
+        {(hasFiles || fileNames.length > 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl border border-white/[0.1] overflow-hidden"
+          >
+            {/* Card header */}
+            <div className="px-4 py-3 flex items-center justify-between">
+              <span className="text-[13px] font-medium text-white/80">
+                {totalFiles > 1 ? `Updated ${totalFiles} files` : fileNames[0]?.split('/').pop() || 'Code changes'}
+              </span>
+              <button className="text-white/20 hover:text-white/50 transition-colors">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+              </button>
+            </div>
+
+            {/* File list inside card */}
+            <div className="px-4 pb-2 space-y-1">
+              {fileNames.slice(0, 4).map((name, i) => {
+                const shortName = name.split('/').pop() || name;
+                const isFileDone = !isStreaming || i < fileNames.length - 1 || hasFiles;
+                return (
+                  <div key={i} className="flex items-center gap-2 py-1">
+                    {isFileDone ? (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                    ) : (
+                      <Loader2 className="h-4 w-4 animate-spin text-cyan-400 shrink-0" />
+                    )}
+                    <span className="text-[13px] text-white/60 truncate">{shortName}</span>
+                  </div>
+                );
+              })}
+              {fileNames.length > 4 && (
+                <span className="text-[11px] text-white/30 pl-6">+{fileNames.length - 4} more</span>
+              )}
+            </div>
+
+            {/* Card footer tabs */}
+            <div className="flex border-t border-white/[0.08]">
+              <button
+                onClick={() => toggleBuildExpanded(msg.id)}
+                className={cn(
+                  "flex-1 text-center text-[12px] py-2.5 font-medium transition-colors",
+                  isBuildExpanded ? "text-white/70 bg-white/[0.03]" : "text-white/40 hover:text-white/60"
+                )}
+              >
+                Details
+              </button>
+              <div className="w-px bg-white/[0.08]" />
               <div className={cn(
-                "prose prose-sm prose-invert max-w-none text-[13px] text-white/80 leading-relaxed [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:text-white/70 [&_strong]:text-white/95 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm",
-                isCompleted && "border-l-2 border-white/[0.06] pl-3 ml-0.5"
+                "flex-1 text-center text-[12px] py-2.5 font-medium",
+                isStreaming
+                  ? "text-cyan-400 bg-cyan-500/[0.06]"
+                  : "text-emerald-400/70 bg-emerald-500/[0.04]"
               )}>
+                {isStreaming ? 'Loading preview...' : 'Preview ready'}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Expandable diff details */}
+        {isBuildExpanded && !isStreaming && hasFiles && previousFiles.length > 0 && (
+          <div className="space-y-1.5 pl-2 border-l border-white/[0.06]">
+            {latestFiles.slice(0, 3).map(file => {
+              const prev = previousFiles.find(p => p.path === file.path);
+              if (!prev) return null;
+              return (
+                <CodeDiffViewer
+                  key={file.path}
+                  oldContent={prev.content}
+                  newContent={file.content}
+                  fileName={file.path}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Main prose content — clean, no border */}
+        {displayText && (
+          <StreamingText content={isCompleted ? bodyText || displayText : displayText} isStreaming={isStreaming}>
+            {(displayedText) => (
+              <div className="prose prose-sm prose-invert max-w-none text-[13px] text-white/70 leading-relaxed [&_p]:mb-3 [&_ul]:mb-3 [&_ol]:mb-3 [&_ol]:space-y-2 [&_ul]:space-y-1 [&_li]:text-white/60 [&_strong]:text-white/90 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_ol>li]:pl-1">
                 <ReactMarkdown
                   components={{
                     code({ className, children, ...props }) {
                       const isInline = !className;
                       const codeStr = String(children).replace(/\n$/, '');
                       if (isInline) {
-                        return <code className="bg-white/[0.08] rounded px-1 py-0.5 text-[12px] font-mono text-cyan-300/90" {...props}>{children}</code>;
+                        return <code className="bg-white/[0.08] rounded px-1.5 py-0.5 text-[12px] font-mono text-cyan-300/80" {...props}>{children}</code>;
                       }
                       return (
                         <div className="relative group/code my-2">
@@ -409,86 +499,19 @@ export function BuilderChatPanel({
           </StreamingText>
         )}
 
-        {/* Inline file edit cards — clean Lovable style */}
-        {(hasFiles || fileNames.length > 0) && (
-          <div className="space-y-1">
-            {fileNames.map((name, i) => {
-              const shortName = name.split('/').pop() || name;
-              const isFileDone = !isStreaming || i < fileNames.length - 1 || hasFiles;
-              return (
-                <motion.button
-                  key={i}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: isStreaming ? i * 0.06 : 0, type: 'spring', stiffness: 400, damping: 25 }}
-                  onClick={() => toggleBuildExpanded(msg.id)}
-                  className="w-full flex items-center gap-2.5 text-xs px-3 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] transition-colors group"
-                >
-                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                    {isFileDone ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <Loader2 className="h-4 w-4 animate-spin text-cyan-400 shrink-0" />
-                    )}
-                    <span className="text-white/50 text-[12px]">Editing</span>
-                    <code className="text-[11px] text-white/70 bg-white/[0.06] rounded px-1.5 py-0.5 font-mono truncate">{shortName}</code>
-                  </div>
-                  <ChevronRight className="h-3.5 w-3.5 text-white/15 group-hover:text-white/30 shrink-0" />
-                </motion.button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Expandable diff details */}
-        {isBuildExpanded && !isStreaming && hasFiles && previousFiles.length > 0 && (
-          <div className="space-y-1.5 pl-2 border-l border-white/[0.06]">
-            {latestFiles.slice(0, 3).map(file => {
-              const prev = previousFiles.find(p => p.path === file.path);
-              if (!prev) return null;
-              return (
-                <CodeDiffViewer
-                  key={file.path}
-                  oldContent={prev.content}
-                  newContent={file.content}
-                  fileName={file.path}
-                />
-              );
-            })}
-          </div>
-        )}
-
-        {/* Completion summary */}
-        {isCompleted && (
-          <div className="flex items-center gap-2 text-xs">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-            <span className="text-white/40">Generated {totalFiles} file{totalFiles > 1 ? 's' : ''}</span>
-          </div>
-        )}
-
-        {/* Streaming progress */}
-        {isStreaming && !hasFiles && fileNames.length > 0 && (
-          <div className="flex items-center gap-2 text-xs">
-            <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
-            <span className="text-white/40">Writing {fileNames.length} file{fileNames.length > 1 ? 's' : ''}...</span>
-          </div>
-        )}
-
         {/* Conversational summary after completed builds — when no thinking text */}
         {isCompleted && !text && (
           <motion.div
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="prose prose-sm prose-invert max-w-none text-[13px] text-white/60 leading-relaxed [&_strong]:text-white/80"
+            className="text-[13px] text-white/60 leading-relaxed"
           >
-            <ReactMarkdown>
-              {totalFiles > 1
-                ? `I've updated **${totalFiles} files** with the changes you requested. The preview should reflect the updates — let me know if you'd like any tweaks!`
-                : fileNames[0]
-                  ? `I've updated **${fileNames[0].split('/').pop()}** with your changes. Check the preview and let me know if anything needs adjusting!`
-                  : `I've applied your changes to the project. Take a look at the preview and let me know how it looks!`}
-            </ReactMarkdown>
+            {totalFiles > 1
+              ? `I've updated ${totalFiles} files with the changes you requested. The preview should reflect the updates — let me know if you'd like any tweaks!`
+              : fileNames[0]
+                ? `I've updated ${fileNames[0].split('/').pop()} with your changes. Check the preview and let me know if anything needs adjusting!`
+                : `I've applied your changes to the project. Take a look at the preview and let me know how it looks!`}
           </motion.div>
         )}
 
@@ -507,16 +530,51 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Undo action */}
-        {isCompleted && isLast && onRevertToMessage && msg.filesSnapshot && (
-          <div className="flex items-center gap-2">
+        {/* Bottom action bar — Lovable style */}
+        {isCompleted && (
+          <div className="flex items-center gap-1 pt-1">
+            {onRevertToMessage && msg.filesSnapshot && isLast && (
+              <button
+                onClick={() => onRevertToMessage(msg.id)}
+                className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
+                title="Undo changes"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+              </button>
+            )}
             <button
-              onClick={() => onRevertToMessage(msg.id)}
-              className="flex items-center gap-1.5 text-[11px] text-white/25 hover:text-amber-400 transition-colors px-2 py-1 rounded-md hover:bg-amber-500/[0.05]"
+              className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
+              title="Helpful"
             >
-              <RotateCcw className="h-3 w-3" />
-              Undo changes
+              <ThumbsUp className="h-3.5 w-3.5" />
             </button>
+            <button
+              className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
+              title="Not helpful"
+            >
+              <ThumbsDown className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => navigator.clipboard.writeText(msg.content)}
+              className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
+              title="Copy"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+            <button
+              className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
+              title="More"
+            >
+              <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+            </button>
+          </div>
+        )}
+
+        {/* Streaming progress */}
+        {isStreaming && !hasFiles && fileNames.length > 0 && (
+          <div className="flex items-center gap-2 text-xs">
+            <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
+            <span className="text-white/40">Writing {fileNames.length} file{fileNames.length > 1 ? 's' : ''}...</span>
           </div>
         )}
 
@@ -534,7 +592,7 @@ export function BuilderChatPanel({
 
         {/* Follow-up suggestion chips */}
         {!isStreaming && isLast && msg.suggestions && msg.suggestions.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.04] mt-2">
+          <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.04] mt-1">
             {msg.suggestions.map((suggestion, i) => (
               <motion.button
                 key={i}
