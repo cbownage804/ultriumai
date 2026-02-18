@@ -298,6 +298,7 @@ export function BuilderChatPanel({
   const [showHistory, setShowHistory] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [plusMenuOpen, setPlusMenuOpen] = useState(false);
   const [editInput, setEditInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -330,7 +331,7 @@ export function BuilderChatPanel({
     }
   };
 
-  // Compress an image file to max 1200px and JPEG quality 0.8 to avoid oversized payloads
+  // Compress an image file to max 1200px to avoid oversized payloads
   const compressImage = useCallback((file: File): Promise<string> => {
     return new Promise((resolve) => {
       const img = new window.Image();
@@ -348,14 +349,17 @@ export function BuilderChatPanel({
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d')!;
+        // Preserve transparency for PNGs by not filling background
+        const keepPng = file.type === 'image/png';
+        if (!keepPng) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+        }
         ctx.drawImage(img, 0, 0, width, height);
-        // Use JPEG for photos, PNG for small/transparent images
-        const isPng = file.type === 'image/png' && file.size < 200_000;
-        resolve(canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', 0.8));
+        resolve(canvas.toDataURL(keepPng ? 'image/png' : 'image/jpeg', 0.8));
       };
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        // Fallback: read as-is
         const reader = new FileReader();
         reader.onload = (ev) => resolve(ev.target?.result as string);
         reader.readAsDataURL(file);
@@ -1104,7 +1108,7 @@ export function BuilderChatPanel({
         <div data-tour="chat-input" className={cn("rounded-xl border bg-white/[0.05] transition-all overflow-hidden shadow-lg focus-within:ring-2 focus-within:ring-offset-0", mode === 'build' ? "border-violet-500/30 shadow-violet-500/5 focus-within:ring-violet-500/40 focus-within:border-violet-500/50" : "border-teal-500/30 shadow-teal-500/5 focus-within:ring-teal-500/40 focus-within:border-teal-500/50")}>
           <div className="flex items-end gap-2 px-3 py-2.5">
             {/* Lovable-style Plus menu */}
-            <Popover>
+            <Popover open={plusMenuOpen} onOpenChange={setPlusMenuOpen}>
               <PopoverTrigger asChild>
                 <button
                   className="h-7 w-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors shrink-0"
@@ -1114,21 +1118,21 @@ export function BuilderChatPanel({
               </PopoverTrigger>
               <PopoverContent side="top" align="start" className="w-48 p-1 bg-[#1a1a22] border-white/[0.1] shadow-xl">
                 <button
-                  onClick={() => { /* screenshot placeholder */ }}
+                  onClick={() => { setPlusMenuOpen(false); /* screenshot placeholder */ }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
                 >
                   <Camera className="h-4 w-4 text-white/40" />
                   Take a screenshot
                 </button>
                 <button
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => { setPlusMenuOpen(false); fileInputRef.current?.click(); }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
                 >
                   <AtSign className="h-4 w-4 text-white/40" />
                   Add reference
                 </button>
                 <button
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => { setPlusMenuOpen(false); fileInputRef.current?.click(); }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
                 >
                   <Paperclip className="h-4 w-4 text-white/40" />
