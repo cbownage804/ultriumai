@@ -1347,7 +1347,7 @@ export function AIAppBuilderWorkspace() {
             {/* URL bar */}
             <div className="hidden lg:flex items-center gap-1.5 h-7 px-2.5 rounded-md bg-white/[0.04] border border-white/[0.07] text-white/30 text-xs min-w-[180px]">
               <Globe className="h-3 w-3 shrink-0" />
-              <span className="truncate">{window.location.pathname}{window.location.search}</span>
+              <span className="truncate">/</span>
             </div>
 
             {/* Expand + Refresh */}
