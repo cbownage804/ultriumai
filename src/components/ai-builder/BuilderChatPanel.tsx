@@ -109,12 +109,44 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
   }
 
   let text = textLines.join('\n').trim();
-  // Strip HTML code blocks
-  text = text.replace(/```html\n?[\s\S]*?```/g, '').trim();
+  // Strip code blocks (html, css, js, etc.)
+  text = text.replace(/```[\w]*\n?[\s\S]*?```/g, '').trim();
   // Hide raw JSON planning objects (approach, steps, filesToCreate, etc.)
   if (/^\s*\{/.test(text) && /["'](?:approach|filesToCreate|steps|filesToModify|dependencies)["']\s*:/.test(text)) {
     text = '';
   }
+  // Strip noisy AI meta-sections that leak through
+  text = text
+    // Remove "Strategic Plan:" / "🏗️ Strategic Plan:" sections up to next heading or end
+    .replace(/(?:#{1,4}\s*)?(?:🏗️\s*)?Strategic Plan:[\s\S]*?(?=\n#{1,4}\s|\n\*{1,2}✨|$)/gi, '')
+    // Remove "Design Decisions I made for you:" sections
+    .replace(/(?:#{1,4}\s*)?(?:\*{0,2})?✨?\s*Design Decisions[^:]*:[\s\S]*?(?=\n#{1,4}\s|$)/gi, '')
+    // Remove "What's next?" sections
+    .replace(/(?:\*{0,2})?What'?s next\??\*{0,2}[\s\S]*$/gi, '')
+    // Remove "Note for Scalability" callouts
+    .replace(/💡\s*Note for Scalability[^\n]*/gi, '')
+    // Remove stray comment markers
+    .replace(/^\s*\*\/\s*$/gm, '')
+    .replace(/^\s*\/\*[\s\S]*?\*\/\s*$/gm, '')
+    // Remove "FIX RULES:" diagnostic blocks
+    .replace(/FIX RULES:[\s\S]*$/gi, '')
+    // Remove "🔍 Diagnosis:" blocks
+    .replace(/(?:\*{0,2})?🔍\s*Diagnosis:?\*{0,2}[\s\S]*?(?=\n===FILE|\n#{1,4}\s[^D]|$)/gi, '')
+    // Remove "Symptom:", "Root cause:", "Fix approach:" lines
+    .replace(/^[-•*]\s*\*{0,2}(?:Symptom|Root cause|Fix approach|Files affected)\*{0,2}\s*:.*$/gm, '')
+    // Remove raw ===FILE: / ===DELETE: markers that weren't caught
+    .replace(/^===(?:FILE|DELETE):.*===$/gm, '')
+    // Remove "Auto-fix error" lines
+    .replace(/^Auto-fix error.*$/gm, '')
+    // Remove "This is auto-fix attempt" lines
+    .replace(/^This is auto-fix attempt.*$/gm, '')
+    // Remove "Return the corrected file" lines
+    .replace(/^Return the corrected file.*$/gm, '')
+    // Remove "Multi-step workflow" headings
+    .replace(/^Multi-step workflow$/gm, '')
+    // Clean up excessive newlines
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
   return { text: text, fileNames };
 }
 
