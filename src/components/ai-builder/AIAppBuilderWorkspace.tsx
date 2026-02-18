@@ -1234,8 +1234,8 @@ export function AIAppBuilderWorkspace() {
           {/* LEFT: Logo + Project name dropdown */}
           <div className="flex items-center gap-2 min-w-0">
             {/* App logo/icon */}
-            <button onClick={() => navigate('/ai-studio')} className="shrink-0 flex items-center justify-center h-7 w-7">
-              <img src={ultriumLogo} alt="UltriumAI" className="h-6 w-6 rounded-md object-contain" />
+            <button onClick={() => navigate('/ai-studio')} className="shrink-0 flex items-center justify-center h-8 w-8">
+              <img src={ultriumLogo} alt="UltriumAI" className="h-8 w-8 rounded-md object-contain" />
             </button>
 
             {isEditingName ? (
