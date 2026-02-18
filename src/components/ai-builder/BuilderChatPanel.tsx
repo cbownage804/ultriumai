@@ -4,12 +4,16 @@ import {
   Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
   Zap, MessageCircle, Wand2, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
   LayoutGrid, Wrench, AlertTriangle, Copy, RotateCcw, Pencil, GitFork, ChevronDown, Check,
-  Crosshair, ClipboardCheck, ThumbsUp, ThumbsDown, Plus, Camera, Paperclip, AtSign,
+  Crosshair, ClipboardCheck, ThumbsUp, ThumbsDown, Plus, Camera, Paperclip, AtSign, ExternalLink, Clock, Coins, Link,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from '@/hooks/useAIAppBuilder';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
@@ -718,12 +722,43 @@ export function BuilderChatPanel({
             >
               <Copy className="h-3.5 w-3.5" />
             </button>
-            <button
-              className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
-              title="More"
-            >
-              <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
+                  title="More"
+                >
+                  <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" sideOffset={6} className="w-52 bg-[#0f0f14] border-white/10 p-1">
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href + '#msg-' + msg.id);
+                    toast.success('Message link copied');
+                  }}
+                  className="gap-2.5 text-white/70 hover:text-white cursor-pointer px-2.5 py-2"
+                >
+                  <Link className="h-4 w-4" />
+                  Copy message link
+                  <ExternalLink className="h-3 w-3 ml-auto text-white/20" />
+                </DropdownMenuItem>
+                {msg.filesSnapshot && (
+                  <DropdownMenuItem
+                    className="gap-2.5 text-white/70 hover:text-white cursor-pointer px-2.5 py-2"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Preview
+                    <ExternalLink className="h-3 w-3 ml-auto text-white/20" />
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator className="bg-white/[0.06] my-1" />
+                <div className="flex items-center justify-between px-2.5 py-2 text-sm text-white/50">
+                  <span className="flex items-center gap-2.5"><Coins className="h-4 w-4" />Credits used</span>
+                  <span className="text-white/70">1</span>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         )}
 
