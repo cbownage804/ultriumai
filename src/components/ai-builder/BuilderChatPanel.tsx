@@ -351,28 +351,36 @@ export function BuilderChatPanel({
     const isBuildExpanded = expandedBuildMessages.has(msg.id);
     const totalFiles = hasFiles ? msg.filesGenerated! : fileNames.length;
     const isCompleted = !isStreaming && (hasFiles || fileNames.length > 0);
-    const planSteps = msg.planSteps || (text ? extractPlanSteps(text, isStreaming, !!hasFiles) : null);
+    const isThinkingCollapsed = thinkingCollapsed[msg.id] ?? true;
 
-    // Strip plan steps from displayed text to avoid duplication with the Plan card
+    // Clean display text — strip plan step duplicates
+    const planSteps = msg.planSteps || (text ? extractPlanSteps(text, isStreaming, !!hasFiles) : null);
     const displayText = planSteps && planSteps.length > 0
       ? text.replace(/^\d+\.\s+\*{0,2}.+?\*{0,2}$/gm, '').replace(/\n{3,}/g, '\n\n').trim()
       : text;
 
     return (
-      <div className="space-y-2.5">
-        {/* "Finished thinking" header for completed builds */}
+      <div className="space-y-2">
+        {/* Collapsible "Finished thinking" — Lovable style */}
         {isCompleted && (
-          <div className="flex items-center gap-1.5 text-white/25 text-[11px]">
+          <button
+            onClick={() => setThinkingCollapsed(prev => ({ ...prev, [msg.id]: !isThinkingCollapsed }))}
+            className="flex items-center gap-1.5 text-white/30 text-[11px] hover:text-white/50 transition-colors group/think"
+          >
+            <ChevronDown className={cn("h-2.5 w-2.5 transition-transform", isThinkingCollapsed && "-rotate-90")} />
             <Brain className="h-3 w-3" />
             <span>Finished thinking</span>
-          </div>
+          </button>
         )}
 
-        {/* Conversational text — shown before file cards like Lovable */}
-        {displayText && (
+        {/* Conversational text — only shown when thinking is expanded (or no files) */}
+        {displayText && (!isCompleted || !isThinkingCollapsed) && (
           <StreamingText content={displayText} isStreaming={isStreaming}>
             {(displayedText) => (
-              <div className="prose prose-sm prose-invert max-w-none text-[13px] text-white/80 leading-relaxed [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:text-white/70 [&_strong]:text-white/95 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
+              <div className={cn(
+                "prose prose-sm prose-invert max-w-none text-[13px] text-white/80 leading-relaxed [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:text-white/70 [&_strong]:text-white/95 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm",
+                isCompleted && "border-l-2 border-white/[0.06] pl-3 ml-0.5"
+              )}>
                 <ReactMarkdown
                   components={{
                     code({ className, children, ...props }) {
@@ -401,38 +409,7 @@ export function BuilderChatPanel({
           </StreamingText>
         )}
 
-        {/* Step-by-step plan display */}
-        {planSteps && planSteps.length > 0 && (
-          <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] overflow-hidden">
-            <div className="px-3 py-1.5 border-b border-white/[0.04] flex items-center gap-1.5">
-              <Compass className="h-3 w-3 text-cyan-400/60" />
-              <span className="text-[10px] text-white/40 font-medium uppercase tracking-wider">Plan</span>
-            </div>
-            <div className="p-2 space-y-0.5">
-              {planSteps.map((step) => (
-                <div key={step.step} className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs">
-                  {step.status === 'done' ? (
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                  ) : step.status === 'active' ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400 shrink-0" />
-                  ) : (
-                    <div className="h-3.5 w-3.5 rounded-full border border-white/10 shrink-0" />
-                  )}
-                  <span className={cn(
-                    "text-[12px]",
-                    step.status === 'done' ? 'text-white/50' :
-                    step.status === 'active' ? 'text-white/80 font-medium' :
-                    'text-white/30'
-                  )}>
-                    {step.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Inline file edit cards — Lovable style with progressive streaming */}
+        {/* Inline file edit cards — clean Lovable style */}
         {(hasFiles || fileNames.length > 0) && (
           <div className="space-y-1">
             {fileNames.map((name, i) => {
@@ -441,35 +418,22 @@ export function BuilderChatPanel({
               return (
                 <motion.button
                   key={i}
-                  initial={{ opacity: 0, y: 6, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ delay: isStreaming ? i * 0.08 : 0, type: 'spring', stiffness: 400, damping: 25 }}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: isStreaming ? i * 0.06 : 0, type: 'spring', stiffness: 400, damping: 25 }}
                   onClick={() => toggleBuildExpanded(msg.id)}
-                  className="w-full flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] transition-colors group"
+                  className="w-full flex items-center gap-2.5 text-xs px-3 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] transition-colors group"
                 >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
                     {isFileDone ? (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-                        className="h-4 w-4 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0"
-                      >
-                        <Check className="h-2.5 w-2.5 text-emerald-400" />
-                      </motion.div>
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                     ) : (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400 shrink-0" />
+                      <Loader2 className="h-4 w-4 animate-spin text-cyan-400 shrink-0" />
                     )}
-                    <span className="text-white/50">Editing</span>
-                    <span className="font-mono text-[11px] text-white/70 bg-white/[0.04] rounded px-1.5 py-0.5 truncate">{shortName}</span>
+                    <span className="text-white/50 text-[12px]">Editing</span>
+                    <code className="text-[11px] text-white/70 bg-white/[0.06] rounded px-1.5 py-0.5 font-mono truncate">{shortName}</code>
                   </div>
-                  {isStreaming && !isFileDone && (
-                    <div className="flex gap-0.5 shrink-0">
-                      <div className="h-1 w-1 rounded-full bg-cyan-400 animate-pulse" />
-                      <div className="h-1 w-1 rounded-full bg-cyan-400 animate-pulse [animation-delay:150ms]" />
-                    </div>
-                  )}
-                  <ChevronRight className="h-3 w-3 text-white/20 group-hover:text-white/40 shrink-0" />
+                  <ChevronRight className="h-3.5 w-3.5 text-white/15 group-hover:text-white/30 shrink-0" />
                 </motion.button>
               );
             })}
@@ -494,31 +458,29 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Task progress indicators */}
-        {(isStreaming || isCompleted) && fileNames.length > 0 && (
-          <div className="space-y-1 pt-1">
-            {isStreaming && !hasFiles && (
-              <div className="flex items-center gap-2 text-xs">
-                <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
-                <span className="text-white/50">Writing {fileNames.length} file{fileNames.length > 1 ? 's' : ''}...</span>
-              </div>
-            )}
-            {isCompleted && (
-              <div className="flex items-center gap-2 text-xs">
-                <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                <span className="text-white/40">Generated {totalFiles} file{totalFiles > 1 ? 's' : ''}</span>
-              </div>
-            )}
+        {/* Completion summary */}
+        {isCompleted && (
+          <div className="flex items-center gap-2 text-xs">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+            <span className="text-white/40">Generated {totalFiles} file{totalFiles > 1 ? 's' : ''}</span>
           </div>
         )}
 
-        {/* Conversational summary after completed builds — Lovable style */}
+        {/* Streaming progress */}
+        {isStreaming && !hasFiles && fileNames.length > 0 && (
+          <div className="flex items-center gap-2 text-xs">
+            <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
+            <span className="text-white/40">Writing {fileNames.length} file{fileNames.length > 1 ? 's' : ''}...</span>
+          </div>
+        )}
+
+        {/* Conversational summary after completed builds — when no thinking text */}
         {isCompleted && !text && (
           <motion.div
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="prose prose-sm prose-invert max-w-none text-[13px] text-white/60 leading-relaxed pt-1 [&_strong]:text-white/80"
+            className="prose prose-sm prose-invert max-w-none text-[13px] text-white/60 leading-relaxed [&_strong]:text-white/80"
           >
             <ReactMarkdown>
               {totalFiles > 1
@@ -530,7 +492,7 @@ export function BuilderChatPanel({
           </motion.div>
         )}
 
-        {/* Inline error recovery — show runtime errors with Fix button */}
+        {/* Inline error recovery */}
         {msg.inlineError && !isStreaming && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/[0.06] border border-red-500/20 text-xs">
             <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
@@ -545,9 +507,9 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Revert action for completed builds */}
+        {/* Undo action */}
         {isCompleted && isLast && onRevertToMessage && msg.filesSnapshot && (
-          <div className="flex items-center gap-2 pt-1">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => onRevertToMessage(msg.id)}
               className="flex items-center gap-1.5 text-[11px] text-white/25 hover:text-amber-400 transition-colors px-2 py-1 rounded-md hover:bg-amber-500/[0.05]"
@@ -572,7 +534,7 @@ export function BuilderChatPanel({
 
         {/* Follow-up suggestion chips */}
         {!isStreaming && isLast && msg.suggestions && msg.suggestions.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.04] mt-3">
+          <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.04] mt-2">
             {msg.suggestions.map((suggestion, i) => (
               <motion.button
                 key={i}
@@ -583,7 +545,7 @@ export function BuilderChatPanel({
                   if (suggestion.includes('→')) {
                     onModeChange('build');
                   } else {
-                    onSend(suggestion.replace(/^[^\w]*/, '')); // Strip leading emoji
+                    onSend(suggestion.replace(/^[^\w]*/, ''));
                   }
                 }}
                 className="text-[11px] px-2.5 py-1 rounded-full border border-white/[0.08] text-white/50 hover:text-white/80 hover:border-cyan-500/30 hover:bg-cyan-500/[0.05] transition-all"
@@ -594,7 +556,7 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Detected backend intent chips — show when AI detects database/auth/storage needs */}
+        {/* Backend intent chips */}
         {!isStreaming && isLast && (() => {
           const intents = detectSupabaseIntents(text);
           const intentSuggestions = generateIntentSuggestions(intents);
