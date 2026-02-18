@@ -7,7 +7,7 @@ import {
   Crosshair, ClipboardCheck, ThumbsUp, ThumbsDown, Plus, Camera, Paperclip, AtSign,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -18,6 +18,56 @@ import { CodeDiffViewer } from './CodeDiffViewer';
 import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, generateIntentSuggestions, analyzeConversationComplexity, detectCommunicationStyle, detectWebSearchIntent, detectURLCloneIntent } from './SupabaseConversational';
 import { StarterTemplatePicker } from './StarterTemplatePicker';
 import { StreamingText, StreamingCursor, ElapsedTimer } from './StreamingText';
+
+/** Small component to avoid hooks-in-render violation */
+function SuggestionChips({ suggestions, onSend, onModeChange }: { suggestions: string[]; onSend: (msg: string) => void; onModeChange: (mode: BuilderMode) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      {!open && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-1.5 mt-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-white/[0.08] text-white/40 hover:text-white/70 hover:border-cyan-500/30 hover:bg-cyan-500/[0.05] transition-all w-fit"
+        >
+          <Sparkles className="h-3 w-3" />
+          Suggestions
+        </motion.button>
+      )}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.04] mt-1 overflow-hidden"
+          >
+            {suggestions.map((suggestion, i) => (
+              <motion.button
+                key={i}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.07, type: 'spring', stiffness: 300, damping: 20 }}
+                onClick={() => {
+                  if (suggestion.includes('→')) {
+                    onModeChange('build');
+                  } else {
+                    onSend(suggestion.replace(/^[^\w]*/, ''));
+                  }
+                }}
+                className="text-[11px] px-2.5 py-1 rounded-full border border-white/[0.08] text-white/50 hover:text-white/80 hover:border-cyan-500/30 hover:bg-cyan-500/[0.05] transition-all"
+              >
+                {suggestion}
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
 
 interface BuilderChatPanelProps {
   messages: BuilderMessage[];
@@ -678,28 +728,13 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Follow-up suggestion chips */}
+        {/* Follow-up suggestion chips — toggled via button */}
         {!isStreaming && isLast && msg.suggestions && msg.suggestions.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.04] mt-1">
-            {msg.suggestions.map((suggestion, i) => (
-              <motion.button
-                key={i}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.07, type: 'spring', stiffness: 300, damping: 20 }}
-                onClick={() => {
-                  if (suggestion.includes('→')) {
-                    onModeChange('build');
-                  } else {
-                    onSend(suggestion.replace(/^[^\w]*/, ''));
-                  }
-                }}
-                className="text-[11px] px-2.5 py-1 rounded-full border border-white/[0.08] text-white/50 hover:text-white/80 hover:border-cyan-500/30 hover:bg-cyan-500/[0.05] transition-all"
-              >
-                {suggestion}
-              </motion.button>
-            ))}
-          </div>
+          <SuggestionChips
+            suggestions={msg.suggestions}
+            onSend={onSend}
+            onModeChange={onModeChange}
+          />
         )}
 
         {/* Backend intent chips */}
