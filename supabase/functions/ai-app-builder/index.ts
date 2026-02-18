@@ -689,6 +689,33 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
       }
     }
 
+    // Sanitize messages: convert unsupported image types (SVG) to text descriptions
+    const sanitizedMessages = enrichedMessages.map((msg: any) => {
+      if (!Array.isArray(msg.content)) return msg;
+      const sanitizedContent = msg.content.map((block: any) => {
+        if (block.type === 'image_url' && block.image_url?.url) {
+          const url = block.image_url.url;
+          // Check for SVG mime type in data URLs
+          if (url.startsWith('data:image/svg+xml')) {
+            // Convert SVG data URL to text block so the AI can still understand it
+            try {
+              const base64Part = url.split(',')[1];
+              const svgText = atob(base64Part);
+              return { type: 'text', text: `[User attached an SVG image. SVG source:\n${svgText.slice(0, 2000)}]` };
+            } catch {
+              return { type: 'text', text: '[User attached an SVG image that could not be decoded]' };
+            }
+          }
+          // Also check URL extension
+          if (url.endsWith('.svg') || url.includes('.svg?')) {
+            return { type: 'text', text: `[User attached an SVG image from URL: ${url}]` };
+          }
+        }
+        return block;
+      });
+      return { ...msg, content: sanitizedContent };
+    });
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -697,7 +724,7 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
       },
       body: JSON.stringify({
         model: model || "google/gemini-3-pro-preview",
-        messages: [{ role: "system", content: systemPrompt }, ...enrichedMessages],
+        messages: [{ role: "system", content: systemPrompt }, ...sanitizedMessages],
         stream,
       }),
     });
