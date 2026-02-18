@@ -775,6 +775,7 @@ export function useAIAppBuilder() {
     setMode,
     thinkingPhase,
     versions,
+    setVersions,
     totalTokensUsed,
     sendMessage,
     stopGenerating,
