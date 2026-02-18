@@ -21,7 +21,8 @@ const REGISTRAR_MAP: Array<{
     instructions: [
       'Go to GoDaddy DNS Management for your domain',
       'Click "Add New Record"',
-      'Add a CNAME record: Name = your subdomain (or @), Value = apps.ultriumai.com',
+      'Add an A record: Name = @ (root domain), Value = 185.158.133.1',
+      'Add an A record: Name = www, Value = 185.158.133.1',
       'Add a TXT record: Name = _ultriumai, Value = (shown below)',
       'Save changes and wait for propagation',
     ],
@@ -35,9 +36,9 @@ const REGISTRAR_MAP: Array<{
     instructions: [
       'Go to Cloudflare Dashboard → select your domain → DNS → Records',
       'Click "Add Record"',
-      'Add a CNAME record: Name = @ (or subdomain), Target = apps.ultriumai.com, Proxy status = DNS only (gray cloud)',
+      'Add an A record: Name = @ (root domain), Content = 185.158.133.1, Proxy status = DNS only (gray cloud)',
+      'Add an A record: Name = www, Content = 185.158.133.1, Proxy status = DNS only (gray cloud)',
       'Add a TXT record: Name = _ultriumai, Content = (shown below)',
-      'Important: Set the CNAME proxy status to "DNS only" (gray cloud) for proper routing',
     ],
   },
   {
@@ -49,9 +50,9 @@ const REGISTRAR_MAP: Array<{
     instructions: [
       'Go to Namecheap Dashboard → Domain List → Manage',
       'Click "Advanced DNS" tab',
-      'Add a CNAME record: Host = @ (or subdomain), Value = apps.ultriumai.com',
+      'Add an A record: Host = @, Value = 185.158.133.1',
+      'Add an A record: Host = www, Value = 185.158.133.1',
       'Add a TXT record: Host = _ultriumai, Value = (shown below)',
-      'For root domain, you may need to use URL Redirect instead of CNAME',
     ],
   },
   {
@@ -63,7 +64,8 @@ const REGISTRAR_MAP: Array<{
     instructions: [
       'Go to Squarespace Domains (formerly Google Domains)',
       'Select your domain → DNS → Custom Records',
-      'Add a CNAME record pointing to apps.ultriumai.com',
+      'Add an A record: Host = @, Data = 185.158.133.1',
+      'Add an A record: Host = www, Data = 185.158.133.1',
       'Add a TXT record: Host = _ultriumai, Value = (shown below)',
     ],
   },
@@ -75,7 +77,8 @@ const REGISTRAR_MAP: Array<{
     dnsUrl: 'https://www.name.com/account/domain',
     instructions: [
       'Go to Name.com → My Domains → select domain → DNS Records',
-      'Add a CNAME record pointing to apps.ultriumai.com',
+      'Add an A record: Host = @, Answer = 185.158.133.1',
+      'Add an A record: Host = www, Answer = 185.158.133.1',
       'Add a TXT record: Host = _ultriumai, Value = (shown below)',
     ],
   },
@@ -87,7 +90,8 @@ const REGISTRAR_MAP: Array<{
     dnsUrl: 'https://www.hover.com/control_panel/domain',
     instructions: [
       'Go to Hover → Domain → DNS tab',
-      'Add a CNAME record pointing to apps.ultriumai.com',
+      'Add an A record: Host = @, Value = 185.158.133.1',
+      'Add an A record: Host = www, Value = 185.158.133.1',
       'Add a TXT record: Host = _ultriumai, Value = (shown below)',
     ],
   },
@@ -100,7 +104,8 @@ const REGISTRAR_MAP: Array<{
     instructions: [
       'Go to AWS Route 53 → Hosted Zones → select your domain',
       'Click "Create Record"',
-      'Add a CNAME record: Name = @ or subdomain, Value = apps.ultriumai.com',
+      'Add an A record: Name = @ (root domain), Value = 185.158.133.1',
+      'Add an A record: Name = www, Value = 185.158.133.1',
       'Add a TXT record: Name = _ultriumai, Value = (shown below)',
     ],
   },
@@ -113,7 +118,8 @@ const REGISTRAR_MAP: Array<{
     instructions: [
       'Go to Vercel Dashboard → Settings → Domains',
       'Select your domain → DNS Records',
-      'Add a CNAME record pointing to apps.ultriumai.com',
+      'Add an A record: Host = @, Value = 185.158.133.1',
+      'Add an A record: Host = www, Value = 185.158.133.1',
       'Add a TXT record: Name = _ultriumai, Value = (shown below)',
     ],
   },
@@ -125,7 +131,8 @@ const REGISTRAR_MAP: Array<{
     dnsUrl: 'https://app.netlify.com/teams',
     instructions: [
       'Go to Netlify → Domains → select your domain',
-      'Add a CNAME record pointing to apps.ultriumai.com',
+      'Add an A record: Host = @, Value = 185.158.133.1',
+      'Add an A record: Host = www, Value = 185.158.133.1',
       'Add a TXT record: Name = _ultriumai, Value = (shown below)',
     ],
   },
