@@ -27,6 +27,7 @@ export type AgentRun = {
 export type AgentTask = {
   id: string;
   prompt: string;
+  imageDataUrls?: string[] | null;
   status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
   run: AgentRun | null;
   createdAt: Date;
@@ -341,10 +342,11 @@ export function useAgentMode() {
   }, [updateStep, completeRun, waitForPreviewErrors, emitNotification]);
 
   // Enqueue a new task
-  const enqueueTask = useCallback((prompt: string): AgentTask => {
+  const enqueueTask = useCallback((prompt: string, imageDataUrls?: string[] | null): AgentTask => {
     const task: AgentTask = {
       id: crypto.randomUUID(),
       prompt,
+      imageDataUrls,
       status: 'queued',
       run: null,
       createdAt: new Date(),

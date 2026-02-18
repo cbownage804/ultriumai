@@ -442,7 +442,7 @@ export function AIAppBuilderWorkspace() {
     if (isAgentRunning) return;
     const next = getNextQueuedTask();
     if (!next) return;
-    const extraArgs = [supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, knowledge.customInstructions || undefined];
+    const extraArgs = [supabaseConfig, stripeConfig, serviceKeys, next.imageDataUrls || null, selectedModel, knowledge.customInstructions || undefined];
     executeAgentTask(next, sendMessage, project.files, extraArgs);
   }, [isAgentRunning, getNextQueuedTask, executeAgentTask, sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, knowledge]);
 
@@ -745,7 +745,7 @@ export function AIAppBuilderWorkspace() {
 
     // Agent mode: enqueue task and let the auto-process useEffect handle execution
     if (mode === 'build') {
-      enqueueTask(input);
+      enqueueTask(input, imageDataUrls);
     } else {
       sendMessage(fullInput, project.files, supabaseConfig, stripeConfig, serviceKeys, imageDataUrls, selectedModel, knowledgeCtx);
     }
