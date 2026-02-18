@@ -353,6 +353,11 @@ export function BuilderChatPanel({
     const isCompleted = !isStreaming && (hasFiles || fileNames.length > 0);
     const planSteps = msg.planSteps || (text ? extractPlanSteps(text, isStreaming, !!hasFiles) : null);
 
+    // Strip plan steps from displayed text to avoid duplication with the Plan card
+    const displayText = planSteps && planSteps.length > 0
+      ? text.replace(/^\d+\.\s+\*{0,2}.+?\*{0,2}$/gm, '').replace(/\n{3,}/g, '\n\n').trim()
+      : text;
+
     return (
       <div className="space-y-2.5">
         {/* "Finished thinking" header for completed builds */}
@@ -364,8 +369,8 @@ export function BuilderChatPanel({
         )}
 
         {/* Conversational text — shown before file cards like Lovable */}
-        {text && (
-          <StreamingText content={text} isStreaming={isStreaming}>
+        {displayText && (
+          <StreamingText content={displayText} isStreaming={isStreaming}>
             {(displayedText) => (
               <div className="prose prose-sm prose-invert max-w-none text-[13px] text-white/80 leading-relaxed [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:text-white/70 [&_strong]:text-white/95 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
                 <ReactMarkdown
