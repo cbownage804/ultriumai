@@ -565,7 +565,7 @@ export function ProjectSettings({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-4xl max-h-[85vh] p-0 gap-0 overflow-hidden z-[60]" onCloseAutoFocus={(e) => e.preventDefault()}>
+      <DialogContent className="sm:max-w-4xl max-h-[85vh] p-0 gap-0 overflow-hidden z-[60] [&>button[class*='absolute']]:hidden" onCloseAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader className="sr-only">
           <DialogTitle>Project Settings</DialogTitle>
           <DialogDescription>Configure your project settings and integrations.</DialogDescription>
