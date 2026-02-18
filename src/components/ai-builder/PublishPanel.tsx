@@ -1,7 +1,11 @@
 import { useState, useCallback } from 'react';
-import { X, Globe, Rocket, Check, Copy, ExternalLink, Loader2, RefreshCw, Trash2, Plus, Shield, AlertCircle } from 'lucide-react';
+import { X, Globe, Rocket, Check, Copy, ExternalLink, Loader2, RefreshCw, Trash2, Plus, Shield, AlertCircle, Download, FileArchive, Container, Smartphone, Wifi, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { exportProject, type ExportMode, type ExportContext, type EdgeFunctionMeta } from './exportProject';
+import type { ProjectFile } from '@/hooks/useProjectFileSystem';
+import type { SupabaseConfig, StripeConfig, ServiceKey, EnvVar } from './ProjectSettings';
 
 interface CustomDomain {
   id: string;
@@ -31,15 +35,26 @@ interface PublishPanelProps {
   hasFiles: boolean;
   onPublish: () => Promise<void>;
   onUnpublish?: () => void;
+  files?: ProjectFile[];
+  supabaseConfig?: SupabaseConfig | null;
+  stripeConfig?: StripeConfig | null;
+  serviceKeys?: ServiceKey[];
+  envVars?: EnvVar[];
+  cdnPackages?: Array<{ name: string; version: string }>;
+  edgeFunctions?: EdgeFunctionMeta[];
+  storageBuckets?: string[];
+  authProviders?: string[];
 }
 
-export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectName, hasFiles, onPublish, onUnpublish }: PublishPanelProps) {
+export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectName, hasFiles, onPublish, onUnpublish, files = [], supabaseConfig, stripeConfig, serviceKeys, envVars, cdnPackages, edgeFunctions, storageBuckets, authProviders }: PublishPanelProps) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [customDomains, setCustomDomains] = useState<CustomDomain[]>([]);
   const [deployHistory, setDeployHistory] = useState<DeployHistory[]>([]);
   const [newDomain, setNewDomain] = useState('');
   const [showAddDomain, setShowAddDomain] = useState(false);
-  const [activeSection, setActiveSection] = useState<'deploy' | 'domains' | 'history'>('deploy');
+  const [activeSection, setActiveSection] = useState<'deploy' | 'export' | 'domains' | 'history'>('deploy');
+
+  const hasIntegrations = !!(supabaseConfig || stripeConfig || (serviceKeys && serviceKeys.length > 0));
 
   const handlePublish = useCallback(async () => {
     setIsPublishing(true);
@@ -96,6 +111,24 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
     toast.success('Copied to clipboard');
   };
 
+  const handleExport = async (mode: ExportMode) => {
+    try {
+      const ctx: ExportContext = { supabaseConfig, stripeConfig, serviceKeys, envVars, cdnPackages, edgeFunctions, storageBuckets, authProviders };
+      await exportProject(projectName, files, mode, ctx);
+      const msgs: Record<ExportMode, string> = {
+        raw: 'Project files downloaded!',
+        docker: 'Docker-ready project downloaded!',
+        fullstack: 'Full-stack project downloaded!',
+        pwa: 'PWA project downloaded! See PWA_INSTALL_GUIDE.md',
+        capacitor: 'Mobile project downloaded! See MOBILE_SETUP_GUIDE.md',
+      };
+      toast.success(msgs[mode]);
+    } catch (e) {
+      console.error('Export error:', e);
+      toast.error('Failed to export project');
+    }
+  };
+
   const statusBadge = (status: CustomDomain['status']) => {
     const map: Record<string, { label: string; color: string }> = {
       active: { label: 'Active', color: 'bg-emerald-500/20 text-emerald-400' },
@@ -130,9 +163,9 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
 
         {/* Navigation */}
         <div className="flex border-b border-white/[0.06] shrink-0">
-          {(['deploy', 'domains', 'history'] as const).map(section => (
+          {(['deploy', 'export', 'domains', 'history'] as const).map(section => (
             <button key={section} onClick={() => setActiveSection(section)} className={cn("flex-1 py-2.5 text-[11px] font-medium transition-colors border-b-2 capitalize", activeSection === section ? 'text-white/80 border-cyan-500' : 'text-white/35 border-transparent hover:text-white/55')}>
-              {section === 'deploy' ? '🚀 Deploy' : section === 'domains' ? '🌐 Domains' : '📋 History'}
+              {section === 'deploy' ? '🚀 Deploy' : section === 'export' ? '📦 Export' : section === 'domains' ? '🌐 Domains' : '📋 History'}
             </button>
           ))}
         </div>
@@ -210,6 +243,107 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
               {!hasFiles && (
                 <p className="text-[11px] text-white/25 text-center">Generate some code first to publish</p>
               )}
+            </div>
+          )}
+
+          {/* Export Section */}
+          {activeSection === 'export' && (
+            <div className="p-5 space-y-3">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="h-10 w-10 shrink-0 rounded-lg flex items-center justify-center bg-cyan-500/10">
+                  <Package className="h-5 w-5 text-cyan-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white/80">Export Project</p>
+                  <p className="text-[11px] text-white/30 mt-0.5">Download for self-hosting, Docker, or cloud deploy</p>
+                </div>
+              </div>
+
+              {/* Full-Stack Export */}
+              {hasIntegrations && (
+                <button onClick={() => handleExport('fullstack')} className="w-full flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-cyan-500/20 transition-all text-left">
+                  <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-cyan-500/10 mt-0.5">
+                    <Rocket className="h-4 w-4 text-cyan-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-medium text-white/80">Full-Stack Export</p>
+                      <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-[8px] px-1.5 py-0">Recommended</Badge>
+                    </div>
+                    <p className="text-[10px] text-white/30 mt-1">Includes .env, Supabase config, dependencies & setup guide</p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {['Supabase', 'Edge Functions', 'Auth', '.env'].map(tag => (
+                        <span key={tag} className="text-[8px] px-1.5 py-0.5 rounded bg-white/[0.04] text-white/25">{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                </button>
+              )}
+
+              {/* Docker Export */}
+              <button onClick={() => handleExport('docker')} className="w-full flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.1] transition-all text-left">
+                <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-blue-500/10 mt-0.5">
+                  <Container className="h-4 w-4 text-blue-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-medium text-white/80">Docker-Ready</p>
+                    <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[8px] px-1.5 py-0">Self-Host</Badge>
+                  </div>
+                  <p className="text-[10px] text-white/30 mt-1">React + Vite + Dockerfile + nginx config. Deploy anywhere.</p>
+                </div>
+              </button>
+
+              {/* ZIP Export */}
+              <button onClick={() => handleExport('raw')} className="w-full flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.1] transition-all text-left">
+                <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-white/5 mt-0.5">
+                  <FileArchive className="h-4 w-4 text-white/40" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-white/80">Download as ZIP</p>
+                  <p className="text-[10px] text-white/30 mt-1">Raw project source files. Deploy to Vercel, Netlify, or any static host.</p>
+                </div>
+              </button>
+
+              {/* Mobile Exports */}
+              <div className="pt-2 border-t border-white/[0.06]">
+                <span className="text-[10px] text-white/25 uppercase tracking-wider font-medium">Mobile</span>
+              </div>
+
+              <button onClick={() => handleExport('pwa')} className="w-full flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-cyan-500/20 transition-all text-left">
+                <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-cyan-500/10 mt-0.5">
+                  <Wifi className="h-4 w-4 text-cyan-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-white/80">Installable Web App (PWA)</p>
+                  <p className="text-[10px] text-white/30 mt-1">Install from browser — works offline, no app store required.</p>
+                </div>
+              </button>
+
+              <button onClick={() => handleExport('capacitor')} className="w-full flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-violet-500/20 transition-all text-left">
+                <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-violet-500/10 mt-0.5">
+                  <Smartphone className="h-4 w-4 text-violet-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-medium text-white/80">Native App (Capacitor)</p>
+                    <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/20 text-[8px] px-1.5 py-0">Pro</Badge>
+                  </div>
+                  <p className="text-[10px] text-white/30 mt-1">Apple App Store & Google Play with native API access.</p>
+                </div>
+              </button>
+
+              {/* One-Click Deploy */}
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <span className="text-[10px] text-white/25 uppercase tracking-wider font-medium">One-Click Deploy</span>
+                <div className="flex gap-2 mt-2">
+                  {['Vercel', 'Netlify', 'Railway'].map(p => (
+                    <button key={p} className="flex-1 text-[10px] py-2 rounded-md bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] text-white/40 hover:text-white/70 transition-all">
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
