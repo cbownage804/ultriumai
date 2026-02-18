@@ -1289,8 +1289,8 @@ export function AIAppBuilderWorkspace() {
               className={cn(
                 "flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium transition-all border",
                 rightTab === 'preview'
-                  ? "bg-white text-black border-white/20 shadow-sm"
-                  : "text-white/50 border-transparent hover:text-white/70 hover:bg-white/[0.04]"
+                  ? "bg-violet-500/20 text-violet-300 border-violet-500/30 shadow-sm shadow-violet-500/10"
+                  : "text-white/50 border-transparent hover:text-violet-300/70 hover:bg-violet-500/[0.08]"
               )}
             >
               <Eye className="h-3.5 w-3.5" />
@@ -1382,7 +1382,7 @@ export function AIAppBuilderWorkspace() {
             {/* Share button */}
             <button
               onClick={() => setShowShareDialog(true)}
-              className="h-6 px-2 rounded-md flex items-center gap-1 text-[11px] font-medium text-white/40 hover:text-white/70 hover:bg-white/[0.06] transition-colors"
+              className="h-6 px-2 rounded-md flex items-center gap-1 text-[11px] font-medium text-cyan-400/60 hover:text-cyan-300 hover:bg-cyan-500/[0.08] transition-colors"
             >
               <Users className="h-3 w-3" />
               Share
@@ -1395,7 +1395,7 @@ export function AIAppBuilderWorkspace() {
                 "h-6 px-2.5 rounded-md flex items-center gap-1 text-[11px] font-medium transition-colors",
                 publishedUrl
                   ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30"
-                  : "bg-white/[0.08] text-white/60 hover:text-white hover:bg-white/[0.12] border border-white/[0.08]"
+                  : "bg-violet-500/15 text-violet-300/80 hover:text-violet-200 hover:bg-violet-500/25 border border-violet-500/20"
               )}
             >
               <Rocket className="h-3 w-3" />
