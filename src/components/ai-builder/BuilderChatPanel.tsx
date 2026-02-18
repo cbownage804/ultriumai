@@ -4,7 +4,7 @@ import {
   Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
   Zap, MessageCircle, Wand2, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
   LayoutGrid, Wrench, AlertTriangle, Copy, RotateCcw, Pencil, GitFork, ChevronDown, Check,
-  Crosshair,
+  Crosshair, ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -43,6 +43,7 @@ interface BuilderChatPanelProps {
   isVisualEditActive?: boolean;
   onOpenEditHistory?: () => void;
   onSelectStarterTemplate?: (template: import('./AppStarterTemplates').AppStarterTemplate) => void;
+  onReview?: () => void;
 }
 
 
@@ -176,7 +177,7 @@ export function BuilderChatPanel({
   totalTokensUsed, previousFiles, latestFiles,
   onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates, onFixError,
   onForkFromMessage, onRevertToMessage, selectedModel, onModelChange,
-  onToggleVisualEdit, isVisualEditActive, onOpenEditHistory, onSelectStarterTemplate,
+  onToggleVisualEdit, isVisualEditActive, onOpenEditHistory, onSelectStarterTemplate, onReview,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -1093,30 +1094,54 @@ export function BuilderChatPanel({
           {/* Bottom bar: mode toggle + model selector */}
           <div className="flex items-center justify-between px-3 py-2 border-t border-white/[0.06] bg-white/[0.02]">
             <div data-tour="mode-toggle" className="flex items-center gap-0.5 bg-white/[0.03] rounded-md p-0.5">
-              <button
-                onClick={() => onModeChange('discuss')}
-                className={cn(
-                  "flex items-center gap-1 text-[10px] px-2.5 py-1 rounded transition-all font-medium",
-                  mode === 'discuss'
-                    ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/25"
-                    : "text-white/40 hover:text-white/60 border border-transparent"
-                )}
-              >
-                <MessageCircle className="h-2.5 w-2.5" />
-                Chat
-              </button>
-              <button
-                onClick={() => onModeChange('build')}
-                className={cn(
-                  "flex items-center gap-1 text-[10px] px-2.5 py-1 rounded transition-all font-medium",
-                  mode === 'build'
-                    ? "bg-violet-500/15 text-violet-300 border border-violet-500/25"
-                    : "text-white/40 hover:text-white/60 border border-transparent"
-                )}
-              >
-                <Wand2 className="h-2.5 w-2.5" />
-                Build
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => onModeChange('discuss')}
+                    className={cn(
+                      "flex items-center gap-1 text-[10px] px-2.5 py-1 rounded transition-all font-medium",
+                      mode === 'discuss'
+                        ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/25"
+                        : "text-white/40 hover:text-white/60 border border-transparent"
+                    )}
+                  >
+                    <MessageCircle className="h-2.5 w-2.5" />
+                    Chat
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs max-w-[180px]">Discuss ideas, ask questions, and plan your project without generating code</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => onModeChange('build')}
+                    className={cn(
+                      "flex items-center gap-1 text-[10px] px-2.5 py-1 rounded transition-all font-medium",
+                      mode === 'build'
+                        ? "bg-violet-500/15 text-violet-300 border border-violet-500/25"
+                        : "text-white/40 hover:text-white/60 border border-transparent"
+                    )}
+                  >
+                    <Wand2 className="h-2.5 w-2.5" />
+                    Build
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs max-w-[180px]">Generate and modify code with the AI agent to build your app</TooltipContent>
+              </Tooltip>
+              {onReview && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={onReview}
+                      className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded transition-all font-medium text-white/40 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/25"
+                    >
+                      <ClipboardCheck className="h-2.5 w-2.5" />
+                      Review
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs max-w-[180px]">Run a health check to find bugs, accessibility issues, and best-practice violations</TooltipContent>
+                </Tooltip>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
