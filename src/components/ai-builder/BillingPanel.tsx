@@ -204,34 +204,36 @@ export function BillingPanel({ isOpen, onClose }: BillingPanelProps) {
   );
 }
 
-/** Compact credit pill for the top bar */
+/** Compact credit pill for the top bar — segmented daily/monthly/bonus */
 export function CreditsPill({ onClick }: { onClick: () => void }) {
-  const [remaining, setRemaining] = useState<number | null>(null);
+  const [credits, setCredits] = useState<{ daily: number; monthly: number; bonus: number; total: number; limit: number } | null>(null);
 
   useEffect(() => {
     const fetchCredits = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const c = await getUserCredits(user.id);
-        setRemaining(c.remaining);
-      }
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('user_credits')
+        .select('daily_credits_used, daily_credits_limit, monthly_credits_used, monthly_credits_limit, bonus_credits')
+        .eq('user_id', user.id)
+        .single();
+      if (error || !data) return;
+      const daily = Math.max(0, (data.daily_credits_limit || 10) - (data.daily_credits_used || 0));
+      const monthly = Math.max(0, (data.monthly_credits_limit || 0) - (data.monthly_credits_used || 0));
+      const bonus = Math.max(0, data.bonus_credits || 0);
+      const limit = (data.daily_credits_limit || 10) + (data.monthly_credits_limit || 0) + Math.max(0, data.bonus_credits || 0);
+      setCredits({ daily, monthly, bonus, total: daily + monthly + bonus, limit: Math.max(limit, 1) });
     };
     fetchCredits();
-    // Poll every 10 seconds for near-real-time updates after credit usage
     const interval = setInterval(fetchCredits, 10000);
 
-    // Also listen to realtime changes on user_credits table
     let channel: ReturnType<typeof supabase.channel> | null = null;
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         channel = supabase
           .channel('credits-pill-sync')
-          .on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'user_credits', filter: `user_id=eq.${user.id}` },
-            () => { fetchCredits(); }
-          )
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'user_credits', filter: `user_id=eq.${user.id}` }, () => fetchCredits())
           .subscribe();
       }
     })();
@@ -242,24 +244,49 @@ export function CreditsPill({ onClick }: { onClick: () => void }) {
     };
   }, []);
 
-  if (remaining === null) return null;
-  const isLow = remaining < 50;
-  const isCritical = remaining < 10;
+  if (!credits) return null;
+  const { daily, monthly, bonus, total, limit } = credits;
+  const isCritical = total < 10;
+  const isLow = total < 50;
+
+  // Segment widths as percentages of the bar
+  const dailyPct = (daily / limit) * 100;
+  const monthlyPct = (monthly / limit) * 100;
+  const bonusPct = (bonus / limit) * 100;
 
   return (
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border transition-colors",
+        "flex items-center gap-1.5 h-6 px-2 rounded-full text-[10px] font-medium border transition-colors group relative",
         isCritical
           ? "text-red-400 border-red-500/20 bg-red-500/10 hover:bg-red-500/15 animate-pulse"
           : isLow
           ? "text-amber-400 border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/15"
-          : "text-amber-400/80 border-amber-500/15 bg-amber-500/10 hover:bg-amber-500/15"
+          : "text-white/70 border-white/10 bg-white/[0.04] hover:bg-white/[0.06]"
       )}
     >
-      <Zap className="h-2.5 w-2.5" />
-      {remaining.toLocaleString()}
+      <Zap className="h-2.5 w-2.5 shrink-0" />
+      {/* Segmented progress bar */}
+      <div className="w-14 h-1.5 rounded-full bg-white/[0.06] overflow-hidden flex">
+        {dailyPct > 0 && (
+          <div className="h-full bg-blue-500 rounded-l-full" style={{ width: `${dailyPct}%` }} />
+        )}
+        {monthlyPct > 0 && (
+          <div className="h-full bg-violet-500" style={{ width: `${monthlyPct}%` }} />
+        )}
+        {bonusPct > 0 && (
+          <div className="h-full bg-amber-500 rounded-r-full" style={{ width: `${bonusPct}%` }} />
+        )}
+      </div>
+      <span>{total.toLocaleString()}</span>
+
+      {/* Tooltip on hover */}
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-lg bg-[#0c0c10] border border-white/10 text-[9px] text-white/60 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 space-y-0.5">
+        <div className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" /><span>Daily: {daily}</span></div>
+        <div className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-violet-500" /><span>Monthly: {monthly}</span></div>
+        {bonus > 0 && <div className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-amber-500" /><span>Bonus: {bonus}</span></div>}
+      </div>
     </button>
   );
 }
