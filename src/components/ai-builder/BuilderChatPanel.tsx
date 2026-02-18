@@ -426,14 +426,11 @@ export function BuilderChatPanel({
             animate={{ opacity: 1, y: 0 }}
             className="rounded-xl border border-white/[0.1] overflow-hidden"
           >
-            {/* Card header */}
-            <div className="px-4 py-3 flex items-center justify-between">
+            {/* Card header — clean, no bookmark */}
+            <div className="px-4 py-3">
               <span className="text-[13px] font-medium text-white/80">
                 {totalFiles > 1 ? `Updated ${totalFiles} files` : fileNames[0]?.split('/').pop() || 'Code changes'}
               </span>
-              <button className="text-white/20 hover:text-white/50 transition-colors">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
-              </button>
             </div>
 
             {/* File list inside card */}
@@ -881,66 +878,11 @@ export function BuilderChatPanel({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, delay: idx === filteredArr.length - 1 ? 0.05 : 0 }}
                 className={cn(
-                  'flex gap-2.5 group/msg relative',
-                  msg.role === 'user' ? 'justify-end' : 'justify-start'
+                  'group/msg relative',
+                  msg.role === 'user' ? 'flex justify-end' : ''
                 )}
               >
-                {msg.role === 'assistant' && (
-                  <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-cyan-500/20 to-violet-500/20 flex items-center justify-center shrink-0 mt-0.5 border border-white/[0.08] shadow-sm shadow-cyan-500/5">
-                    <Bot className="h-3.5 w-3.5 text-cyan-400" />
-                  </div>
-                )}
-                <div className="relative max-w-[88%]">
-                  {/* Hover actions */}
-                  <div className={cn(
-                    "absolute -top-6 flex items-center gap-0.5 opacity-0 group-hover/msg:opacity-100 transition-opacity z-10 bg-[#0d0d14]/90 backdrop-blur-sm rounded-md border border-white/[0.06] px-0.5 py-0.5",
-                    msg.role === 'user' ? 'right-0' : 'left-0'
-                  )}>
-                    <button
-                      onClick={() => navigator.clipboard.writeText(msg.content)}
-                      className="h-5 w-5 rounded flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors"
-                      title="Copy"
-                    >
-                      <Copy className="h-2.5 w-2.5" />
-                    </button>
-                    {msg.role === 'assistant' && onForkFromMessage && (
-                      <button
-                        onClick={() => onForkFromMessage(msg.id)}
-                        className="h-5 w-5 rounded flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors"
-                        title="Fork from here"
-                      >
-                        <GitFork className="h-2.5 w-2.5" />
-                      </button>
-                    )}
-                    {msg.role === 'assistant' && onRevertToMessage && msg.filesSnapshot && (
-                      <button
-                        onClick={() => onRevertToMessage(msg.id)}
-                        className="h-5 w-5 rounded flex items-center justify-center text-white/30 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
-                        title="Revert to here"
-                      >
-                        <RotateCcw className="h-2.5 w-2.5" />
-                      </button>
-                    )}
-                    {msg.role === 'user' && (
-                      <>
-                        <button
-                          onClick={() => onSend(msg.content)}
-                          className="h-5 w-5 rounded flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors"
-                          title="Retry"
-                        >
-                          <RotateCcw className="h-2.5 w-2.5" />
-                        </button>
-                        <button
-                          onClick={() => { setEditingMsgId(msg.id); setEditInput(msg.content); }}
-                          className="h-5 w-5 rounded flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors"
-                          title="Edit"
-                        >
-                          <Pencil className="h-2.5 w-2.5" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-
+                <div className="relative max-w-[90%]">
                   {editingMsgId === msg.id ? (
                     <div className="bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 space-y-2">
                       <textarea
@@ -962,10 +904,9 @@ export function BuilderChatPanel({
                   ) : (
                   <div
                     className={cn(
-                      'rounded-2xl px-3.5 py-2.5',
                       msg.role === 'user'
-                        ? 'bg-gradient-to-br from-cyan-600/80 to-cyan-500/70 text-white text-[13px] shadow-sm shadow-cyan-500/10'
-                        : 'bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm'
+                        ? 'rounded-2xl px-3.5 py-2.5 bg-white/[0.08] text-white/90 text-[13px]'
+                        : ''
                     )}
                   >
                     {msg.role === 'assistant' ? (
@@ -976,23 +917,11 @@ export function BuilderChatPanel({
                           <img key={i} src={url} alt={`Reference ${i + 1}`} className="rounded-lg max-h-32 mb-2 mr-2 border border-white/10 inline-block" />
                         ))}
                         <p className="whitespace-pre-wrap text-[13px]">{getCleanUserContent(msg.content)}</p>
-                        {/* Workflow steps detected in user's message */}
-                        {msg.workflowSteps && msg.workflowSteps.length > 0 && (
-                          <div className="mt-2 space-y-0.5 pt-2 border-t border-white/10">
-                            <span className="text-[9px] text-white/30 uppercase tracking-wider font-medium">Multi-step workflow</span>
-                            {msg.workflowSteps.map((step, si) => (
-                              <div key={si} className="flex items-center gap-1.5 text-[11px] text-white/60">
-                                <span className="h-4 w-4 rounded-full bg-white/10 flex items-center justify-center text-[9px] font-mono shrink-0">{si + 1}</span>
-                                <span className="truncate">{step}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
                   )}
-                  {/* Timestamp */}
+                  {/* Timestamp — show on hover */}
                   <div className={cn(
                     "text-[9px] text-white/15 mt-1 opacity-0 group-hover/msg:opacity-100 transition-opacity",
                     msg.role === 'user' ? 'text-right' : 'text-left'
@@ -1001,11 +930,6 @@ export function BuilderChatPanel({
                     {msg.tokenEstimate && ` · ~${msg.tokenEstimate} tokens`}
                   </div>
                 </div>
-                {msg.role === 'user' && (
-                  <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-white/[0.06] to-white/[0.02] flex items-center justify-center shrink-0 mt-0.5 border border-white/[0.08]">
-                    <User className="h-3.5 w-3.5 text-white/50" />
-                  </div>
-                )}
               </motion.div>
             ))
           )}
