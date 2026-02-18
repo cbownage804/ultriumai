@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Rocket, Globe, Copy, CheckCircle, Loader2, ExternalLink, Link2, Eye, ArrowRight, AlertCircle, RefreshCw, Download, FileArchive, Container, Smartphone, Wifi } from 'lucide-react';
+import { Rocket, Globe, Copy, CheckCircle, Loader2, ExternalLink, Link2, Eye, ArrowRight, AlertCircle, RefreshCw, Download, FileArchive, Container, Smartphone, Wifi, Package } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
@@ -18,7 +18,6 @@ interface DeployDialogProps {
   hasFiles: boolean;
   isPublishing?: boolean;
   previewSlug?: string;
-  // Export props
   projectName?: string;
   files?: ProjectFile[];
   supabaseConfig?: SupabaseConfig | null;
@@ -29,6 +28,7 @@ interface DeployDialogProps {
   edgeFunctions?: EdgeFunctionMeta[];
   storageBuckets?: string[];
   authProviders?: string[];
+  onOpenDomainPanel?: () => void;
 }
 
 const DEPLOY_STEPS = [
@@ -38,17 +38,20 @@ const DEPLOY_STEPS = [
   { label: 'Configuring DNS', duration: 400 },
 ];
 
+type TabId = 'preview' | 'production' | 'export' | 'mobile';
+
 export function DeployDialog({
   onPublish, publishedUrl, hasFiles, isPublishing, previewSlug,
   projectName = 'project', files = [], supabaseConfig, stripeConfig,
   serviceKeys, envVars, cdnPackages, edgeFunctions, storageBuckets, authProviders,
+  onOpenDomainPanel,
 }: DeployDialogProps) {
   const [open, setOpen] = useState(false);
   const [deploying, setDeploying] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedPreview, setCopiedPreview] = useState(false);
   const [customSubdomain, setCustomSubdomain] = useState('');
-  const [step, setStep] = useState<'preview' | 'production' | 'mobile'>(publishedUrl ? 'production' : 'preview');
+  const [step, setStep] = useState<TabId>(publishedUrl ? 'production' : 'preview');
   const [deployStep, setDeployStep] = useState(-1);
   const [deployComplete, setDeployComplete] = useState(false);
 
@@ -107,6 +110,13 @@ export function DeployDialog({
     }
   };
 
+  const tabs: { id: TabId; label: string; icon: React.ElementType; badge?: boolean }[] = [
+    { id: 'preview', label: 'Preview', icon: Eye },
+    { id: 'production', label: 'Publish', icon: Globe, badge: !!publishedUrl },
+    { id: 'export', label: 'Export', icon: Download },
+    { id: 'mobile', label: 'Mobile', icon: Smartphone },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -136,24 +146,20 @@ export function DeployDialog({
         </DialogHeader>
 
         <div className="px-5 pt-3 shrink-0">
-          {/* Step tabs */}
-          <div className="flex gap-1 p-0.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-            <button onClick={() => setStep('preview')} className={cn("flex-1 flex items-center justify-center gap-1.5 text-[11px] py-1.5 rounded-md transition-all font-medium", step === 'preview' ? "bg-white/10 text-white/80" : "text-white/30 hover:text-white/50")}>
-              <Eye className="h-3 w-3" />Preview
-            </button>
-            <button onClick={() => setStep('production')} className={cn("flex-1 flex items-center justify-center gap-1.5 text-[11px] py-1.5 rounded-md transition-all font-medium", step === 'production' ? "bg-white/10 text-white/80" : "text-white/30 hover:text-white/50")}>
-              <Globe className="h-3 w-3" />Production
-              {publishedUrl && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
-            </button>
-            <button onClick={() => setStep('mobile')} className={cn("flex-1 flex items-center justify-center gap-1.5 text-[11px] py-1.5 rounded-md transition-all font-medium", step === 'mobile' ? "bg-white/10 text-white/80" : "text-white/30 hover:text-white/50")}>
-              <Smartphone className="h-3 w-3" />Mobile
-            </button>
+          <div className="flex gap-0.5 p-0.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+            {tabs.map(t => (
+              <button key={t.id} onClick={() => setStep(t.id)} className={cn("flex-1 flex items-center justify-center gap-1.5 text-[10px] py-1.5 rounded-md transition-all font-medium", step === t.id ? "bg-white/10 text-white/80" : "text-white/30 hover:text-white/50")}>
+                <t.icon className="h-3 w-3" />{t.label}
+                {t.badge && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
+              </button>
+            ))}
           </div>
         </div>
 
         <ScrollArea className="flex-1 min-h-0">
           <div className="px-5 py-3 space-y-4">
-            {step === 'preview' ? (
+            {/* ──── PREVIEW ──── */}
+            {step === 'preview' && (
               <>
                 <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                   <div className="flex items-center gap-2 mb-2">
@@ -179,9 +185,89 @@ export function DeployDialog({
                   <ArrowRight className="h-3.5 w-3.5 mr-1.5" />Go to Production Publish
                 </Button>
               </>
-            ) : step === 'mobile' ? (
+            )}
+
+            {/* ──── EXPORT ──── */}
+            {step === 'export' && (
               <>
-                {/* Mobile Export Header */}
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                  <div className="h-10 w-10 shrink-0 rounded-lg flex items-center justify-center bg-cyan-500/10">
+                    <Package className="h-5 w-5 text-cyan-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white/80">Export Project</p>
+                    <p className="text-[11px] text-white/30 mt-0.5">Download for self-hosting, Docker, or cloud deploy</p>
+                  </div>
+                </div>
+
+                {/* Full-Stack Export */}
+                {hasIntegrations && (
+                  <button onClick={() => handleExport('fullstack')} className="w-full flex items-start gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-cyan-500/20 transition-all text-left">
+                    <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-cyan-500/10 mt-0.5">
+                      <Rocket className="h-4 w-4 text-cyan-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-medium text-white/80">Full-Stack Export</p>
+                        <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-[8px] px-1.5 py-0">Recommended</Badge>
+                      </div>
+                      <p className="text-[10px] text-white/30 mt-1">Includes .env, Supabase config, dependencies & setup guide</p>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {['Supabase', 'Edge Functions', 'Auth', '.env'].map(tag => (
+                          <span key={tag} className="text-[8px] px-1.5 py-0.5 rounded bg-white/[0.04] text-white/25">{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </button>
+                )}
+
+                {/* Docker Export */}
+                <button onClick={() => handleExport('docker')} className="w-full flex items-start gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.1] transition-all text-left">
+                  <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-blue-500/10 mt-0.5">
+                    <Container className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-medium text-white/80">Docker-Ready</p>
+                      <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[8px] px-1.5 py-0">Self-Host</Badge>
+                    </div>
+                    <p className="text-[10px] text-white/30 mt-1">React + Vite + Dockerfile + nginx config. Deploy anywhere.</p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {['Dockerfile', 'nginx', 'docker-compose', 'Multi-stage'].map(tag => (
+                        <span key={tag} className="text-[8px] px-1.5 py-0.5 rounded bg-white/[0.04] text-white/25">{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                </button>
+
+                {/* ZIP Export */}
+                <button onClick={() => handleExport('raw')} className="w-full flex items-start gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.1] transition-all text-left">
+                  <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-white/5 mt-0.5">
+                    <FileArchive className="h-4 w-4 text-white/40" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-white/80">Download as ZIP</p>
+                    <p className="text-[10px] text-white/30 mt-1">Raw project source files. Deploy to Vercel, Netlify, or any static host.</p>
+                  </div>
+                </button>
+
+                {/* One-Click Deploy Links */}
+                <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                  <span className="text-[10px] text-white/30 uppercase tracking-wider">One-Click Deploy</span>
+                  <div className="flex gap-2 mt-2">
+                    {['Vercel', 'Netlify', 'Railway'].map(p => (
+                      <button key={p} className="flex-1 text-[10px] py-2 rounded-md bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] text-white/40 hover:text-white/70 transition-all">
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ──── MOBILE ──── */}
+            {step === 'mobile' && (
+              <>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                   <div className="h-10 w-10 shrink-0 rounded-lg flex items-center justify-center bg-violet-500/10">
                     <Smartphone className="h-5 w-5 text-violet-400" />
@@ -192,11 +278,8 @@ export function DeployDialog({
                   </div>
                 </div>
 
-                {/* PWA Option */}
-                <button
-                  onClick={() => handleExport('pwa')}
-                  className="w-full flex items-start gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-cyan-500/20 transition-all text-left"
-                >
+                {/* PWA */}
+                <button onClick={() => handleExport('pwa')} className="w-full flex items-start gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-cyan-500/20 transition-all text-left">
                   <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-cyan-500/10 mt-0.5">
                     <Wifi className="h-4 w-4 text-cyan-400" />
                   </div>
@@ -205,9 +288,7 @@ export function DeployDialog({
                       <p className="text-xs font-medium text-white/80">Installable Web App (PWA)</p>
                       <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-[8px] px-1.5 py-0">Quick</Badge>
                     </div>
-                    <p className="text-[10px] text-white/30 mt-1 leading-relaxed">
-                      Install directly from browser — no app store needed. Works on all phones, offline support, home screen icon.
-                    </p>
+                    <p className="text-[10px] text-white/30 mt-1 leading-relaxed">Install from browser — no app store. Works offline, home screen icon.</p>
                     <div className="flex flex-wrap gap-1 mt-2">
                       {['All Devices', 'No Store Required', 'Offline Support', 'Auto Updates'].map(tag => (
                         <span key={tag} className="text-[8px] px-1.5 py-0.5 rounded bg-white/[0.04] text-white/25">{tag}</span>
@@ -216,11 +297,8 @@ export function DeployDialog({
                   </div>
                 </button>
 
-                {/* Capacitor Option */}
-                <button
-                  onClick={() => handleExport('capacitor')}
-                  className="w-full flex items-start gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-violet-500/20 transition-all text-left"
-                >
+                {/* Capacitor */}
+                <button onClick={() => handleExport('capacitor')} className="w-full flex items-start gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-violet-500/20 transition-all text-left">
                   <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-violet-500/10 mt-0.5">
                     <Smartphone className="h-4 w-4 text-violet-400" />
                   </div>
@@ -229,9 +307,7 @@ export function DeployDialog({
                       <p className="text-xs font-medium text-white/80">Native App (Capacitor)</p>
                       <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/20 text-[8px] px-1.5 py-0">Pro</Badge>
                     </div>
-                    <p className="text-[10px] text-white/30 mt-1 leading-relaxed">
-                      Publish to Apple App Store & Google Play. Full native access — camera, push notifications, sensors.
-                    </p>
+                    <p className="text-[10px] text-white/30 mt-1 leading-relaxed">Apple App Store & Google Play. Full native access — camera, push notifications.</p>
                     <div className="flex flex-wrap gap-1 mt-2">
                       {['App Store', 'Google Play', 'Native APIs', 'Push Notifications'].map(tag => (
                         <span key={tag} className="text-[8px] px-1.5 py-0.5 rounded bg-white/[0.04] text-white/25">{tag}</span>
@@ -240,33 +316,31 @@ export function DeployDialog({
                   </div>
                 </button>
 
-                {/* Requirements Note */}
                 <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10">
                   <div className="flex items-start gap-2">
                     <AlertCircle className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
                     <div className="text-[10px] text-amber-400/60 space-y-1">
                       <p className="font-medium text-amber-400/80">Native App Requirements</p>
-                      <p>iOS: macOS + Xcode 15+ + Apple Developer Account ($99/yr)</p>
-                      <p>Android: Android Studio + Google Play Console ($25 one-time)</p>
-                      <p>The exported ZIP includes a full setup guide.</p>
+                      <p>iOS: macOS + Xcode 15+ + Apple Developer ($99/yr)</p>
+                      <p>Android: Android Studio + Google Play Console ($25)</p>
                     </div>
                   </div>
                 </div>
               </>
-            ) : (
+            )}
+
+            {/* ──── PRODUCTION ──── */}
+            {step === 'production' && (
               <>
-                {/* Deploy progress indicator */}
                 {deploying && (
                   <div className="p-3 rounded-lg bg-white/[0.03] border border-cyan-500/20 space-y-2">
                     <div className="flex items-center gap-2 text-xs text-cyan-400 font-medium">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Deploying...
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />Deploying...
                     </div>
                     <div className="space-y-1.5">
                       {DEPLOY_STEPS.map((s, i) => (
                         <div key={i} className="flex items-center gap-2 text-[11px]">
-                          <div className={cn(
-                            "h-4 w-4 rounded-full shrink-0 flex items-center justify-center transition-all duration-300",
+                          <div className={cn("h-4 w-4 rounded-full shrink-0 flex items-center justify-center transition-all duration-300",
                             i < deployStep ? "bg-emerald-500/10 text-emerald-400" :
                             i === deployStep ? "bg-cyan-500/10 text-cyan-400" : "bg-white/[0.03] text-white/15"
                           )}>
@@ -274,8 +348,7 @@ export function DeployDialog({
                              i === deployStep ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> :
                              <span className="h-1 w-1 rounded-full bg-current" />}
                           </div>
-                          <span className={cn(
-                            "transition-colors",
+                          <span className={cn("transition-colors",
                             i < deployStep ? "text-emerald-400/60" :
                             i === deployStep ? "text-white/70" : "text-white/20"
                           )}>{s.label}</span>
@@ -283,17 +356,14 @@ export function DeployDialog({
                       ))}
                     </div>
                     <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden mt-1">
-                      <div
-                        className="h-full bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(((deployStep + 1) / DEPLOY_STEPS.length) * 100, 100)}%` }}
-                      />
+                      <div className="h-full bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full transition-all duration-500" style={{ width: `${Math.min(((deployStep + 1) / DEPLOY_STEPS.length) * 100, 100)}%` }} />
                     </div>
                   </div>
                 )}
 
                 {!deploying && (
                   <>
-                    {/* Production Status */}
+                    {/* Status */}
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                       <div className={cn("h-10 w-10 shrink-0 rounded-lg flex items-center justify-center", publishedUrl ? "bg-emerald-500/10" : "bg-white/5")}>
                         {publishedUrl ? <Globe className="h-5 w-5 text-emerald-400" /> : <Rocket className="h-5 w-5 text-white/30" />}
@@ -333,49 +403,22 @@ export function DeployDialog({
                       </div>
                     )}
 
-                    {/* Export Options */}
-                    <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Download className="h-3 w-3 text-white/40 shrink-0" />
-                        <span className="text-[11px] text-white/40">Export Project</span>
+                    {/* Custom Domain Link */}
+                    <button
+                      onClick={() => { setOpen(false); onOpenDomainPanel?.(); }}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-violet-500/20 transition-all text-left"
+                    >
+                      <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-violet-500/10">
+                        <Globe className="h-4 w-4 text-violet-400" />
                       </div>
-                      <div className="space-y-1.5">
-                        {hasIntegrations && (
-                          <button
-                            onClick={() => handleExport('fullstack')}
-                            className="w-full flex items-center gap-2.5 p-2 rounded-md bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] hover:border-cyan-500/20 transition-all text-left"
-                          >
-                            <Rocket className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
-                            <div className="min-w-0">
-                              <p className="text-[11px] font-medium text-white/70">Full-Stack Export</p>
-                              <p className="text-[9px] text-white/25 truncate">Includes .env, Supabase, deps & setup guide</p>
-                            </div>
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleExport('docker')}
-                          className="w-full flex items-center gap-2.5 p-2 rounded-md bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] hover:border-white/[0.1] transition-all text-left"
-                        >
-                          <Container className="h-3.5 w-3.5 text-white/40 shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-medium text-white/70">Docker-Ready Export</p>
-                            <p className="text-[9px] text-white/25 truncate">React + Vite + Dockerfile + nginx</p>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => handleExport('raw')}
-                          className="w-full flex items-center gap-2.5 p-2 rounded-md bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] hover:border-white/[0.1] transition-all text-left"
-                        >
-                          <FileArchive className="h-3.5 w-3.5 text-white/40 shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-medium text-white/70">Download as ZIP</p>
-                            <p className="text-[9px] text-white/25 truncate">Raw project files only</p>
-                          </div>
-                        </button>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-white/80">Custom Domain</p>
+                        <p className="text-[10px] text-white/30">Connect your own domain with automatic SSL</p>
                       </div>
-                    </div>
+                      <ArrowRight className="h-3.5 w-3.5 text-white/20" />
+                    </button>
 
-                    {/* Deploy checklist */}
+                    {/* Checklist */}
                     <div className="space-y-2">
                       <p className="text-[10px] text-white/30 uppercase tracking-wider">Checklist</p>
                       {[
@@ -390,19 +433,6 @@ export function DeployDialog({
                           <span className={cn("text-white/50", !item.ok && "text-red-400/70")}>{item.label}</span>
                         </div>
                       ))}
-                    </div>
-
-                    {/* Custom Domain */}
-                    <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Globe className="h-3 w-3 text-white/40 shrink-0" />
-                        <span className="text-[11px] text-white/40">Custom Domain</span>
-                      </div>
-                      <input placeholder="app.yourdomain.com" className="w-full h-7 px-2 text-[11px] bg-white/5 border border-white/[0.08] rounded text-white/80 outline-none focus:border-cyan-500/30 font-mono placeholder:text-white/15 mb-2" />
-                      <div className="text-[9px] text-white/20 space-y-1">
-                        <p className="flex items-start gap-1"><AlertCircle className="h-2.5 w-2.5 shrink-0 mt-0.5" /> <span>Add a CNAME record pointing to <code className="text-cyan-400/60 break-all">cname.apps.ultriumai.com</code></span></p>
-                        <p>DNS propagation may take up to 48 hours.</p>
-                      </div>
                     </div>
                   </>
                 )}
