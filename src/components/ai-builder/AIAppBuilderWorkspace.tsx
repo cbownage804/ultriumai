@@ -932,7 +932,14 @@ export function AIAppBuilderWorkspace() {
       let updated = file.content;
       let changed = false;
 
-      if (property === 'text') {
+      if (property === 'replaceWithImage') {
+        // Replace the selected element with an <img> tag using the data URL
+        sendMessage(
+          `Apply this visual edit to the source file. Replace the element matching selector "${selector}" with an <img> tag using this exact data URL as the src attribute: ${value}\n\nKeep the same sizing/position. Use: <img src="${value}" alt="Image" style="max-width:100%;height:auto;" />`,
+          project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel
+        );
+        return;
+      } else if (property === 'text') {
         // Use the AI to apply text changes by sending as an edit request
         sendMessage(
           `Apply this visual edit to the source file. Change the text content of the element matching selector "${selector}" to: "${value}". Only update the text, keep everything else the same.`,
