@@ -491,11 +491,22 @@ Supports text generation, image classification, translation, and more.`,
 };
 
 /** Extract URLs from the last user message */
-function extractUrls(messages: { role: string; content: string }[]): string[] {
+function extractUrls(messages: { role: string; content: any }[]): string[] {
   const lastUser = [...messages].reverse().find(m => m.role === 'user');
   if (!lastUser) return [];
+  // Handle multimodal content (array of blocks) vs plain string
+  let textContent = '';
+  if (typeof lastUser.content === 'string') {
+    textContent = lastUser.content;
+  } else if (Array.isArray(lastUser.content)) {
+    textContent = lastUser.content
+      .filter((b: any) => b.type === 'text')
+      .map((b: any) => b.text)
+      .join(' ');
+  }
+  if (!textContent) return [];
   const urlRegex = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+(?:\.[a-zA-Z]{2,})+)(?:\/[^\s)]*)?/gi;
-  const matches = lastUser.content.match(urlRegex) || [];
+  const matches = textContent.match(urlRegex) || [];
   return matches.map(u => u.startsWith('http') ? u : `https://${u}`);
 }
 
