@@ -123,7 +123,7 @@ import { NPMPackageManagerPanel } from './NPMPackageManagerPanel';
 import { PublishPanel } from './PublishPanel';
 import { AIImageGenPanel } from './AIImageGenPanel';
 import { HeaderCreditsIndicator } from './HeaderCreditsIndicator';
-import ultriumLogo from '@/assets/app-builder-logo.svg';
+import ultriumLogo from '@/assets/ultrium-ai-logo.png';
 import { SymbolSearchPanel } from './SymbolSearchPanel';
 import { SecretsManagerPanel } from './SecretsManagerPanel';
 import { ProjectDropdownMenu } from './ProjectDropdownMenu';
