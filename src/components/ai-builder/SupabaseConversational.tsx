@@ -687,10 +687,24 @@ export function buildVisualIntelligenceContext(hasImage: boolean, userMessage: s
 
   const isClone = /\b(clone|replicate|copy|reproduce|match|pixel.?perfect|look\s*like|same\s*as)\b/i.test(userMessage);
   const isAnalyze = /\b(analyze|review|critique|feedback|improve|what.s wrong|ux\s*review)\b/i.test(userMessage);
+  const isUseAsAsset = /\b(use\s*(this|it|that)\s*(as|for)\s*(the\s*)?(logo|icon|favicon|image|background|banner|hero|avatar|brand))\b/i.test(userMessage)
+    || /\b((?:this|here)\s*(?:is|as)\s*(?:the|my|our)\s*(logo|icon|image|brand))\b/i.test(userMessage)
+    || /\b(logo|icon|favicon|brand\s*image|header\s*image)\b/i.test(userMessage);
 
   const sections: string[] = ['[VISUAL INTELLIGENCE MODE]'];
 
-  if (isClone) {
+  if (isUseAsAsset) {
+    sections.push(`TASK: The user has uploaded an image to USE DIRECTLY as an asset (logo, icon, background, etc.) in the project.`);
+    sections.push(`CRITICAL INSTRUCTIONS:`);
+    sections.push(`1. The uploaded image is provided as a data URL in the message content.`);
+    sections.push(`2. You MUST use the EXACT data URL from the image_url content block as the src attribute for the <img> tag or as a CSS background-image.`);
+    sections.push(`3. Do NOT ignore the image. Do NOT use a placeholder or text instead.`);
+    sections.push(`4. Identify from the user's message WHERE to place the image (e.g., navbar logo, hero section, favicon).`);
+    sections.push(`5. Set appropriate sizing (e.g., h-10 w-auto for a navbar logo, h-16 for a hero logo).`);
+    sections.push(`6. The data URL starts with "data:image/" — copy it exactly into the src="" attribute.`);
+    sections.push(`7. If the image is an SVG data URL, you can also inline the SVG markup if it's short enough.`);
+    sections.push(`EXAMPLE: <img src="data:image/png;base64,..." alt="Logo" class="h-10 w-auto">`);
+  } else if (isClone) {
     sections.push(`TASK: Faithfully reproduce this design in code.`);
     sections.push(`EXTRACTION CHECKLIST:`);
     sections.push(`1. LAYOUT: Grid structure, flex directions, container widths, breakpoints`);
@@ -715,6 +729,7 @@ export function buildVisualIntelligenceContext(hasImage: boolean, userMessage: s
     sections.push(`After the analysis, FIX the identified issues in the code.`);
   } else {
     sections.push(`TASK: Analyze this image and incorporate the design elements into the build.`);
+    sections.push(`If the user seems to want this image USED in the project (as a logo, background, etc.), embed the data URL directly as an <img> src or CSS background.`);
     sections.push(`Extract the overall aesthetic (dark/light, minimal/detailed, rounded/sharp), key colors, layout patterns, and generate code that matches the visual style.`);
   }
 
