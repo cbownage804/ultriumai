@@ -1850,6 +1850,7 @@ export function AIAppBuilderWorkspace() {
           serviceKeys={serviceKeys}
           envVars={envVars}
           projectName={project.name}
+          projectSlug={previewSlug}
           open={showSettingsPanel}
           onOpenChange={setShowSettingsPanel}
           onSupabaseChange={setSupabaseConfig}

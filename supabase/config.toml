@@ -380,3 +380,7 @@ verify_jwt = false
 # No-Code API Gateway (validates API keys in code)
 [functions.api-gateway]
 verify_jwt = false
+
+# Domain verification (requires auth)
+[functions.verify-domain]
+verify_jwt = false

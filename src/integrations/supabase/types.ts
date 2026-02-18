@@ -1199,6 +1199,111 @@ export type Database = {
           },
         ]
       }
+      app_builder_domains: {
+        Row: {
+          created_at: string
+          domain: string
+          id: string
+          is_primary: boolean | null
+          project_slug: string
+          ssl_status: string | null
+          status: string
+          txt_record: string | null
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          id?: string
+          is_primary?: boolean | null
+          project_slug: string
+          ssl_status?: string | null
+          status?: string
+          txt_record?: string | null
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          id?: string
+          is_primary?: boolean | null
+          project_slug?: string
+          ssl_status?: string | null
+          status?: string
+          txt_record?: string | null
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
+      app_builder_project_settings: {
+        Row: {
+          allow_public_preview: boolean | null
+          created_at: string
+          cross_project_sharing: boolean | null
+          disable_analytics: boolean | null
+          env_vars: Json | null
+          github_token: string | null
+          hide_branding: boolean | null
+          id: string
+          project_name: string | null
+          project_slug: string
+          service_keys: Json | null
+          stripe_publishable_key: string | null
+          supabase_anon_key: string | null
+          supabase_url: string | null
+          updated_at: string
+          user_id: string
+          vercel_token: string | null
+          visibility: string | null
+        }
+        Insert: {
+          allow_public_preview?: boolean | null
+          created_at?: string
+          cross_project_sharing?: boolean | null
+          disable_analytics?: boolean | null
+          env_vars?: Json | null
+          github_token?: string | null
+          hide_branding?: boolean | null
+          id?: string
+          project_name?: string | null
+          project_slug: string
+          service_keys?: Json | null
+          stripe_publishable_key?: string | null
+          supabase_anon_key?: string | null
+          supabase_url?: string | null
+          updated_at?: string
+          user_id: string
+          vercel_token?: string | null
+          visibility?: string | null
+        }
+        Update: {
+          allow_public_preview?: boolean | null
+          created_at?: string
+          cross_project_sharing?: boolean | null
+          disable_analytics?: boolean | null
+          env_vars?: Json | null
+          github_token?: string | null
+          hide_branding?: boolean | null
+          id?: string
+          project_name?: string | null
+          project_slug?: string
+          service_keys?: Json | null
+          stripe_publishable_key?: string | null
+          supabase_anon_key?: string | null
+          supabase_url?: string | null
+          updated_at?: string
+          user_id?: string
+          vercel_token?: string | null
+          visibility?: string | null
+        }
+        Relationships: []
+      }
       application_crashes: {
         Row: {
           agent_id: string | null

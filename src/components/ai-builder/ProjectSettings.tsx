@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -12,10 +12,11 @@ import { Separator } from '@/components/ui/separator';
 import {
   Database, Github, Settings, CheckCircle2, XCircle, ExternalLink,
   CreditCard, Rocket, Key, Sparkles, Plus, Trash2, AlertTriangle,
-  ChevronLeft, Globe, Shield, Info, Wrench, Box,
+  ChevronLeft, Globe, Shield, Info, Wrench, Box, Copy, RefreshCw, Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useProjectSettings, type DomainEntry } from '@/hooks/useProjectSettings';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -74,6 +75,7 @@ interface ProjectSettingsProps {
   serviceKeys: ServiceKey[];
   envVars: EnvVar[];
   projectName?: string;
+  projectSlug?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onSupabaseChange: (config: SupabaseConfig | null) => void;
@@ -106,10 +108,26 @@ function SettingRow({ title, description, children, className }: {
 
 export function ProjectSettings({
   supabaseConfig, githubConfig, stripeConfig, vercelConfig, serviceKeys, envVars, projectName,
+  projectSlug: externalSlug,
   open: controlledOpen, onOpenChange: controlledOnOpenChange,
   onSupabaseChange, onGithubChange, onStripeChange, onVercelChange, onServiceKeysChange, onEnvVarsChange,
   onDeleteProject, onResetProject,
 }: ProjectSettingsProps) {
+  const projectSlug = externalSlug || (projectName || 'untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30);
+  
+  // Persistence hook
+  const {
+    settings: persistedSettings,
+    domains: persistedDomains,
+    isLoading: isLoadingSettings,
+    isSaving,
+    saveSettings,
+    addDomain: addDomainToDb,
+    removeDomain: removeDomainFromDb,
+    setPrimaryDomain,
+    verifyDomain,
+  } = useProjectSettings(projectSlug);
+
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = controlledOnOpenChange || setInternalOpen;
@@ -124,7 +142,7 @@ export function ProjectSettings({
   const [localEnvVars, setLocalEnvVars] = useState<EnvVar[]>(envVars);
   const [dangerConfirm, setDangerConfirm] = useState('');
 
-  // Project settings state
+  // Project settings state - initialized from persisted data
   const [projectVisibility, setProjectVisibility] = useState('private');
   const [hideBranding, setHideBranding] = useState(false);
   const [disableAnalytics, setDisableAnalytics] = useState(false);
@@ -136,26 +154,52 @@ export function ProjectSettings({
   // Domain connect state
   const [showDomainInput, setShowDomainInput] = useState(false);
   const [newDomain, setNewDomain] = useState('');
+  const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  // Sync persisted settings into local state when loaded
+  useEffect(() => {
+    if (!isLoadingSettings && persistedSettings) {
+      setProjectVisibility(persistedSettings.visibility || 'private');
+      setHideBranding(persistedSettings.hide_branding);
+      setDisableAnalytics(persistedSettings.disable_analytics);
+      setCrossProjectSharing(persistedSettings.cross_project_sharing);
+      setAllowPublicPreview(persistedSettings.allow_public_preview);
+      if (persistedSettings.supabase_url) { setSbUrl(persistedSettings.supabase_url); setSbKey(persistedSettings.supabase_anon_key); }
+      if (persistedSettings.github_token) setGhToken(persistedSettings.github_token);
+      if (persistedSettings.stripe_publishable_key) setStripeKey(persistedSettings.stripe_publishable_key);
+      if (persistedSettings.vercel_token) setVercelToken(persistedSettings.vercel_token);
+      if (persistedSettings.service_keys?.length) setLocalServiceKeys(persistedSettings.service_keys);
+      if (persistedSettings.env_vars?.length) setLocalEnvVars(persistedSettings.env_vars);
+    }
+  }, [isLoadingSettings, persistedSettings]);
 
   const connectedCount = [supabaseConfig, githubConfig, stripeConfig, vercelConfig]
     .filter(Boolean).length + (serviceKeys.length > 0 ? 1 : 0) + (envVars.length > 0 ? 1 : 0);
 
-  // Handlers
+  // Handlers — persist to DB + update parent state
   const handleSaveSupabase = () => {
-    if (sbUrl.trim() && sbKey.trim()) { onSupabaseChange({ url: sbUrl.trim(), anonKey: sbKey.trim() }); toast.success('Supabase connected'); }
-    else { onSupabaseChange(null); toast.info('Supabase disconnected'); }
+    if (sbUrl.trim() && sbKey.trim()) {
+      onSupabaseChange({ url: sbUrl.trim(), anonKey: sbKey.trim() });
+      saveSettings({ supabase_url: sbUrl.trim(), supabase_anon_key: sbKey.trim() });
+      toast.success('Supabase connected');
+    } else {
+      onSupabaseChange(null);
+      saveSettings({ supabase_url: '', supabase_anon_key: '' });
+      toast.info('Supabase disconnected');
+    }
   };
   const handleSaveGithub = () => {
-    if (ghToken.trim()) { onGithubChange({ token: ghToken.trim() }); toast.success('GitHub token saved'); }
-    else { onGithubChange(null); toast.info('GitHub disconnected'); }
+    if (ghToken.trim()) { onGithubChange({ token: ghToken.trim() }); saveSettings({ github_token: ghToken.trim() }); toast.success('GitHub token saved'); }
+    else { onGithubChange(null); saveSettings({ github_token: '' }); toast.info('GitHub disconnected'); }
   };
   const handleSaveStripe = () => {
-    if (stripeKey.trim()) { onStripeChange({ publishableKey: stripeKey.trim() }); toast.success('Stripe connected'); }
-    else { onStripeChange(null); toast.info('Stripe disconnected'); }
+    if (stripeKey.trim()) { onStripeChange({ publishableKey: stripeKey.trim() }); saveSettings({ stripe_publishable_key: stripeKey.trim() }); toast.success('Stripe connected'); }
+    else { onStripeChange(null); saveSettings({ stripe_publishable_key: '' }); toast.info('Stripe disconnected'); }
   };
   const handleSaveVercel = () => {
-    if (vercelToken.trim()) { onVercelChange({ token: vercelToken.trim() }); toast.success('Vercel token saved'); }
-    else { onVercelChange(null); toast.info('Vercel disconnected'); }
+    if (vercelToken.trim()) { onVercelChange({ token: vercelToken.trim() }); saveSettings({ vercel_token: vercelToken.trim() }); toast.success('Vercel token saved'); }
+    else { onVercelChange(null); saveSettings({ vercel_token: '' }); toast.info('Vercel disconnected'); }
   };
   const addServiceKey = () => setLocalServiceKeys(prev => [...prev, { id: crypto.randomUUID(), serviceId: '', apiKey: '' }]);
   const removeServiceKey = (id: string) => setLocalServiceKeys(prev => prev.filter(k => k.id !== id));
@@ -165,6 +209,7 @@ export function ProjectSettings({
   const saveServiceKeys = () => {
     const valid = localServiceKeys.filter(k => k.serviceId && k.apiKey.trim());
     onServiceKeysChange(valid);
+    saveSettings({ service_keys: valid });
     toast.success(`${valid.length} service key${valid.length !== 1 ? 's' : ''} saved`);
   };
   const addEnvVar = () => setLocalEnvVars(prev => [...prev, { key: '', value: '' }]);
@@ -175,6 +220,7 @@ export function ProjectSettings({
   const saveEnvVars = () => {
     const valid = localEnvVars.filter(v => v.key.trim());
     onEnvVarsChange(valid);
+    saveSettings({ env_vars: valid });
     toast.success(`${valid.length} env var${valid.length !== 1 ? 's' : ''} saved`);
   };
   const usedServiceIds = localServiceKeys.map(k => k.serviceId).filter(Boolean);
@@ -216,7 +262,7 @@ export function ProjectSettings({
           <span className="text-sm text-muted-foreground">{projectName || 'Untitled'}</span>
         </SettingRow>
         <SettingRow title="Project visibility" description="Control who can see and access this project." className="px-5">
-          <Select value={projectVisibility} onValueChange={(v) => { setProjectVisibility(v); toast.success(`Visibility set to ${v}`); }}>
+          <Select value={projectVisibility} onValueChange={(v) => { setProjectVisibility(v); saveSettings({ visibility: v }); toast.success(`Visibility set to ${v}`); }}>
             <SelectTrigger className="w-[140px] h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
@@ -228,14 +274,45 @@ export function ProjectSettings({
           </Select>
         </SettingRow>
         <SettingRow title="Hide branding" description='Remove the "Built with UltriumAI" badge from published apps.' className="px-5">
-          <Switch checked={hideBranding} onCheckedChange={(v) => { setHideBranding(v); toast.success(v ? 'Branding hidden' : 'Branding visible'); }} />
+          <Switch checked={hideBranding} onCheckedChange={(v) => { setHideBranding(v); saveSettings({ hide_branding: v }); toast.success(v ? 'Branding hidden' : 'Branding visible'); }} />
         </SettingRow>
         <SettingRow title="Disable analytics" description="Disable collecting analytics data for this project." className="px-5">
-          <Switch checked={disableAnalytics} onCheckedChange={(v) => { setDisableAnalytics(v); toast.success(v ? 'Analytics disabled' : 'Analytics enabled'); }} />
+          <Switch checked={disableAnalytics} onCheckedChange={(v) => { setDisableAnalytics(v); saveSettings({ disable_analytics: v }); toast.success(v ? 'Analytics disabled' : 'Analytics enabled'); }} />
         </SettingRow>
       </div>
     </div>
   );
+
+  const selectedDomain = persistedDomains.find(d => d.id === selectedDomainId) || null;
+
+  const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
+    verifying: { label: 'Verifying DNS', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
+    setting_up: { label: 'Setting up SSL', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+    active: { label: 'Active', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+    failed: { label: 'Failed', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
+    offline: { label: 'Offline', color: 'text-muted-foreground', bg: 'bg-muted/50', border: 'border-border' },
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard');
+  };
+
+  const handleConnectDomain = async () => {
+    if (!newDomain.trim()) return;
+    const entry = await addDomainToDb(newDomain);
+    if (entry) {
+      setSelectedDomainId(entry.id);
+      setNewDomain('');
+      setShowDomainInput(false);
+    }
+  };
+
+  const handleVerifyDomain = async (domainId: string) => {
+    setIsVerifying(true);
+    await verifyDomain(domainId);
+    setIsVerifying(false);
+  };
 
   const renderDomains = () => (
     <div>
@@ -244,28 +321,174 @@ export function ProjectSettings({
           <h2 className="text-lg font-semibold text-foreground">Domains</h2>
           <p className="text-sm text-muted-foreground mt-1">Publish your project to custom domains.</p>
         </div>
-        <a href="https://ultriumai.com/help/domains" target="_blank" rel="noopener noreferrer">
+        <a href="https://docs.lovable.dev/features/custom-domain" target="_blank" rel="noopener noreferrer">
           <Button variant="outline" size="sm" className="text-xs gap-1.5 h-8">
             How domains work <ExternalLink className="h-3 w-3" />
           </Button>
         </a>
       </div>
+
+      {/* Default domain overview */}
       <div className="mt-6 rounded-lg border border-border bg-card/50 p-5">
         <h3 className="text-sm font-medium text-foreground mb-4">Overview</h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between py-2">
             <div className="flex items-center gap-2">
               <Globe className="h-4 w-4 text-muted-foreground" />
-              <a href={`https://${projectName || 'myapp'}.ultriumai.app`} target="_blank" rel="noopener noreferrer" className="text-sm text-foreground hover:underline flex items-center gap-1">
-                {projectName || 'myapp'}.ultriumai.app
+              <a href={`https://${projectSlug}.apps.ultriumai.com`} target="_blank" rel="noopener noreferrer" className="text-sm text-foreground hover:underline flex items-center gap-1">
+                {projectSlug}.apps.ultriumai.com
                 <ExternalLink className="h-3 w-3 text-muted-foreground" />
               </a>
               <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px]">Live</Badge>
             </div>
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground">•••</Button>
           </div>
         </div>
       </div>
+
+      {/* Connected Domains from DB */}
+      {persistedDomains.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Connected Domains</span>
+            <span className="text-[10px] text-muted-foreground">{persistedDomains.length} domain{persistedDomains.length !== 1 ? 's' : ''}</span>
+          </div>
+          {persistedDomains.map(d => {
+            const sc = STATUS_CONFIG[d.status] || STATUS_CONFIG.offline;
+            return (
+              <button
+                key={d.id}
+                onClick={() => setSelectedDomainId(selectedDomainId === d.id ? null : d.id)}
+                className={cn(
+                  "w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left",
+                  selectedDomainId === d.id
+                    ? "bg-primary/5 border-primary/20"
+                    : "bg-card/50 border-border hover:border-primary/10"
+                )}
+              >
+                <div className={cn("h-2 w-2 rounded-full shrink-0",
+                  d.status === 'active' ? 'bg-emerald-400' :
+                  d.status === 'verifying' ? 'bg-amber-400 animate-pulse' :
+                  d.status === 'setting_up' ? 'bg-blue-400 animate-pulse' : 'bg-red-400'
+                )} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-foreground truncate">{d.domain}</span>
+                    {d.is_primary && <Badge variant="secondary" className="text-[8px] px-1.5 py-0">Primary</Badge>}
+                  </div>
+                </div>
+                <Badge className={cn("text-[8px] px-1.5 py-0", sc.bg, sc.color, sc.border)}>{sc.label}</Badge>
+                {d.ssl_status === 'active' && <Shield className="h-3 w-3 text-emerald-400/50" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Selected domain detail panel */}
+      {selectedDomain && (
+        <div className="mt-4 rounded-lg border border-border bg-card/50 p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground">{selectedDomain.domain}</h3>
+            <div className="flex items-center gap-1">
+              {!selectedDomain.is_primary && selectedDomain.status === 'active' && (
+                <Button size="sm" variant="ghost" onClick={() => setPrimaryDomain(selectedDomain.id)} className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground">
+                  Set Primary
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" onClick={() => { removeDomainFromDb(selectedDomain.id); setSelectedDomainId(null); }} className="h-6 w-6 p-0 text-destructive/50 hover:text-destructive hover:bg-destructive/10">
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+
+          {/* DNS Records */}
+          <div className="space-y-2">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Required DNS Records</span>
+            
+            {/* TXT Verification */}
+            <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] text-muted-foreground uppercase">TXT Record (Verification)</span>
+                {selectedDomain.status !== 'verifying' && (
+                  <span className="text-[8px] text-emerald-400 flex items-center gap-1"><CheckCircle2 className="h-2.5 w-2.5" />Verified</span>
+                )}
+              </div>
+              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[10px]">
+                <span className="text-muted-foreground">Name</span>
+                <div className="flex items-center gap-1">
+                  <code className="text-foreground/70 font-mono">_ultriumai</code>
+                  <button onClick={() => copyToClipboard('_ultriumai')} className="text-muted-foreground/40 hover:text-foreground"><Copy className="h-2.5 w-2.5" /></button>
+                </div>
+                <span className="text-muted-foreground">Value</span>
+                <div className="flex items-center gap-1">
+                  <code className="text-primary/70 font-mono truncate">{selectedDomain.txt_record}</code>
+                  <button onClick={() => copyToClipboard(selectedDomain.txt_record)} className="text-muted-foreground/40 hover:text-foreground shrink-0"><Copy className="h-2.5 w-2.5" /></button>
+                </div>
+              </div>
+            </div>
+
+            {/* A Record - Root */}
+            <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-1.5">
+              <span className="text-[9px] text-muted-foreground uppercase">A Record (Root Domain)</span>
+              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[10px]">
+                <span className="text-muted-foreground">Name</span>
+                <div className="flex items-center gap-1">
+                  <code className="text-foreground/70 font-mono">@</code>
+                  <button onClick={() => copyToClipboard('@')} className="text-muted-foreground/40 hover:text-foreground"><Copy className="h-2.5 w-2.5" /></button>
+                </div>
+                <span className="text-muted-foreground">Value</span>
+                <div className="flex items-center gap-1">
+                  <code className="text-primary/70 font-mono">185.158.133.1</code>
+                  <button onClick={() => copyToClipboard('185.158.133.1')} className="text-muted-foreground/40 hover:text-foreground"><Copy className="h-2.5 w-2.5" /></button>
+                </div>
+              </div>
+            </div>
+
+            {/* A Record - WWW */}
+            <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-1.5">
+              <span className="text-[9px] text-muted-foreground uppercase">A Record (www subdomain)</span>
+              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[10px]">
+                <span className="text-muted-foreground">Name</span>
+                <div className="flex items-center gap-1">
+                  <code className="text-foreground/70 font-mono">www</code>
+                  <button onClick={() => copyToClipboard('www')} className="text-muted-foreground/40 hover:text-foreground"><Copy className="h-2.5 w-2.5" /></button>
+                </div>
+                <span className="text-muted-foreground">Value</span>
+                <div className="flex items-center gap-1">
+                  <code className="text-primary/70 font-mono">185.158.133.1</code>
+                  <button onClick={() => copyToClipboard('185.158.133.1')} className="text-muted-foreground/40 hover:text-foreground"><Copy className="h-2.5 w-2.5" /></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SSL Status */}
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border border-border">
+            <Shield className={cn("h-3.5 w-3.5", selectedDomain.ssl_status === 'active' ? 'text-emerald-400' : 'text-muted-foreground/30')} />
+            <span className="text-[10px] text-muted-foreground flex-1">SSL Certificate</span>
+            <Badge className={cn("text-[8px]",
+              selectedDomain.ssl_status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+              selectedDomain.ssl_status === 'provisioning' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+              'bg-muted/50 text-muted-foreground border-border'
+            )}>
+              {selectedDomain.ssl_status === 'active' ? 'Active' : selectedDomain.ssl_status === 'provisioning' ? 'Provisioning...' : 'Pending verification'}
+            </Badge>
+          </div>
+
+          {/* Verify Button */}
+          {selectedDomain.status === 'verifying' && (
+            <Button onClick={() => handleVerifyDomain(selectedDomain.id)} disabled={isVerifying} className="w-full text-xs">
+              {isVerifying ? <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-1.5" />}
+              {isVerifying ? 'Checking DNS...' : 'Verify DNS Records'}
+            </Button>
+          )}
+
+          <p className="text-[9px] text-muted-foreground/60 flex items-start gap-1.5">
+            <Info className="h-3 w-3 shrink-0 mt-0.5" />
+            DNS changes can take up to 48 hours to propagate. SSL is automatically provisioned once DNS is verified.
+          </p>
+        </div>
+      )}
 
       {/* Connect domain flow */}
       {showDomainInput && (
@@ -276,14 +499,12 @@ export function ProjectSettings({
             <Input
               placeholder="yourdomain.com"
               value={newDomain}
-              onChange={(e) => setNewDomain(e.target.value)}
+              onChange={(e) => setNewDomain(e.target.value.toLowerCase())}
               className="text-xs font-mono h-8 flex-1"
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && handleConnectDomain()}
             />
-            <Button size="sm" className="text-xs h-8" disabled={!newDomain.trim()} onClick={() => {
-              toast.success(`Domain "${newDomain}" added. Configure DNS: A record → 185.158.133.1, TXT record → _lovable`);
-              setNewDomain('');
-              setShowDomainInput(false);
-            }}>
+            <Button size="sm" className="text-xs h-8" disabled={!newDomain.trim()} onClick={handleConnectDomain}>
               Connect
             </Button>
             <Button size="sm" variant="ghost" className="text-xs h-8" onClick={() => { setShowDomainInput(false); setNewDomain(''); }}>
@@ -294,7 +515,7 @@ export function ProjectSettings({
             <p className="text-muted-foreground font-sans text-[10px] uppercase font-semibold mb-2">DNS Records to add</p>
             <div className="flex justify-between"><span className="text-muted-foreground">A (root)</span><span>185.158.133.1</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">A (www)</span><span>185.158.133.1</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">TXT (_lovable)</span><span>lovable_verify=...</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">TXT (_ultriumai)</span><span className="text-muted-foreground/60">Generated after connect</span></div>
           </div>
         </div>
       )}
@@ -527,10 +748,10 @@ export function ProjectSettings({
       <p className="text-sm text-muted-foreground mt-1">Manage privacy and security settings for your project.</p>
       <div className="mt-6 rounded-lg border border-border bg-card/50 divide-y divide-border">
         <SettingRow title="Cross-project sharing" description="Allow this project to read files from and be visible to other projects." className="px-5">
-          <Switch checked={crossProjectSharing} onCheckedChange={(v) => { setCrossProjectSharing(v); toast.success(v ? 'Cross-project sharing enabled' : 'Cross-project sharing disabled'); }} />
+          <Switch checked={crossProjectSharing} onCheckedChange={(v) => { setCrossProjectSharing(v); saveSettings({ cross_project_sharing: v }); toast.success(v ? 'Cross-project sharing enabled' : 'Cross-project sharing disabled'); }} />
         </SettingRow>
         <SettingRow title="Allow public preview links" description="When enabled, users can create temporary public preview links." className="px-5">
-          <Switch checked={allowPublicPreview} onCheckedChange={(v) => { setAllowPublicPreview(v); toast.success(v ? 'Public preview links enabled' : 'Public preview links disabled'); }} />
+          <Switch checked={allowPublicPreview} onCheckedChange={(v) => { setAllowPublicPreview(v); saveSettings({ allow_public_preview: v }); toast.success(v ? 'Public preview links enabled' : 'Public preview links disabled'); }} />
         </SettingRow>
       </div>
       <div className="mt-6 rounded-lg border border-border bg-card/50 p-5 space-y-2">
