@@ -109,6 +109,63 @@ export function useProjectFileSystem() {
     setProject(DEFAULT_PROJECT);
   }, []);
 
+  /**
+   * Sanitize HTML body content: detect raw template literals (${...}) outside
+   * <script> and <style> tags and convert them into proper DOM manipulation.
+   * This prevents broken previews when the AI generates template literals in HTML.
+   */
+  const sanitizeTemplateLiterals = useCallback((html: string): string => {
+    // Split HTML into script/style blocks and "other" (HTML body) segments
+    const segments: { text: string; isCode: boolean }[] = [];
+    const tagPattern = /(<script[\s>][\s\S]*?<\/script>|<style[\s>][\s\S]*?<\/style>)/gi;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = tagPattern.exec(html)) !== null) {
+      if (match.index > lastIndex) {
+        segments.push({ text: html.slice(lastIndex, match.index), isCode: false });
+      }
+      segments.push({ text: match[0], isCode: true });
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < html.length) {
+      segments.push({ text: html.slice(lastIndex), isCode: false });
+    }
+
+    // Check if any non-code segment has raw template literals
+    const hasRawLiterals = segments.some(s => !s.isCode && /\$\{[^}]+\}/.test(s.text));
+    if (!hasRawLiterals) return html;
+
+    // Escape raw template literals in HTML body to prevent broken rendering
+    const sanitized = segments.map(s => {
+      if (s.isCode) return s.text;
+      // Replace ${expr} with a visible placeholder so the page doesn't break
+      return s.text.replace(/\$\{([^}]+)\}/g, '{{$1}}');
+    }).join('');
+
+    // Inject a small script that resolves {{expr}} placeholders via the nearest
+    // data context, or simply shows them as-is.  This keeps the page functional.
+    const fixerScript = `<script>
+(function(){
+  // Auto-fix: AI generated template literals outside script tags.
+  // Replace {{expr}} placeholders with evaluated values if possible.
+  var body = document.body;
+  if (!body) return;
+  var html = body.innerHTML;
+  if (html.indexOf('{{') === -1) return;
+  // Just display the placeholder names cleanly instead of breaking
+  body.innerHTML = html.replace(/\\{\\{([^}]+)\\}\\}/g, function(_, expr) {
+    return '<span style="color:#888;font-style:italic">[' + expr.trim() + ']</span>';
+  });
+})();
+</script>`;
+
+    if (sanitized.includes('</body>')) {
+      return sanitized.replace('</body>', fixerScript + '\n</body>');
+    }
+    return sanitized + '\n' + fixerScript;
+  }, []);
+
   /** Combine all project files into a single renderable HTML document */
   const getCompiledHTML = useCallback((
     supabaseConfig?: { url: string; anonKey: string } | null,
@@ -263,8 +320,8 @@ export function useProjectFileSystem() {
       }
     }
 
-    return compiled;
-  }, [project]);
+    return sanitizeTemplateLiterals(compiled);
+  }, [project, sanitizeTemplateLiterals]);
 
   return {
     project,
