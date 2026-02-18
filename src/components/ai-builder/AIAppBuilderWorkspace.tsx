@@ -1488,44 +1488,46 @@ export function AIAppBuilderWorkspace() {
                     totalEstimatedCredits={phasePlanner.totalEstimatedCredits}
                   />
                 )}
-                {builderQuestions.pending && (
-                  <QuestionsCard
-                    questions={builderQuestions.pending.questions}
-                    onSubmit={(answers) => {
-                      const enriched = builderQuestions.buildEnrichedPrompt(builderQuestions.pending!.context, answers);
-                      // Now run through phase planner with the enriched prompt
-                      const plan = phasePlanner.analyzePrompt(enriched);
-                      if (plan) {
-                        const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** — ${p.description}`).join('\n');
-                        setMessages(prev => [...prev, {
-                          id: crypto.randomUUID(), role: 'assistant' as const,
-                          content: `✅ Got it! I've broken this into ${plan.phases.length} phases:\n\n${phaseList}\n\nClick **"Start Phase 1"** below to begin.`,
-                          timestamp: new Date(),
-                        }]);
-                      } else {
-                        handleSend(enriched);
-                      }
-                    }}
-                    onSkip={() => {
-                      const ctx = builderQuestions.pending?.context || '';
-                      builderQuestions.dismiss();
-                      // Skip questions, go straight to phase planner
-                      const plan = phasePlanner.analyzePrompt(ctx);
-                      if (plan) {
-                        const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** — ${p.description}`).join('\n');
-                        setMessages(prev => [...prev, {
-                          id: crypto.randomUUID(), role: 'assistant' as const,
-                          content: `🚧 **This is a large project!** I've broken it into ${plan.phases.length} phases:\n\n${phaseList}\n\nClick **"Start Phase 1"** below to begin.`,
-                          timestamp: new Date(),
-                        }]);
-                      } else {
-                        handleSend(ctx);
-                      }
-                    }}
-                  />
-                )}
-                <div className="flex-1 overflow-hidden">
-                  <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} />
+                <div className="flex-1 overflow-hidden flex flex-col">
+                  <div className="flex-1 overflow-hidden">
+                    <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} />
+                  </div>
+                  {builderQuestions.pending && (
+                    <div className="border-t border-white/[0.06] bg-[#0d0d0f]">
+                      <QuestionsCard
+                        questions={builderQuestions.pending.questions}
+                        onSubmit={(answers) => {
+                          const enriched = builderQuestions.buildEnrichedPrompt(builderQuestions.pending!.context, answers);
+                          const plan = phasePlanner.analyzePrompt(enriched);
+                          if (plan) {
+                            const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** — ${p.description}`).join('\n');
+                            setMessages(prev => [...prev, {
+                              id: crypto.randomUUID(), role: 'assistant' as const,
+                              content: `✅ Got it! I've broken this into ${plan.phases.length} phases:\n\n${phaseList}\n\nClick **"Start Phase 1"** below to begin.`,
+                              timestamp: new Date(),
+                            }]);
+                          } else {
+                            handleSend(enriched);
+                          }
+                        }}
+                        onSkip={() => {
+                          const ctx = builderQuestions.pending?.context || '';
+                          builderQuestions.dismiss();
+                          const plan = phasePlanner.analyzePrompt(ctx);
+                          if (plan) {
+                            const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** — ${p.description}`).join('\n');
+                            setMessages(prev => [...prev, {
+                              id: crypto.randomUUID(), role: 'assistant' as const,
+                              content: `🚧 **This is a large project!** I've broken it into ${plan.phases.length} phases:\n\n${phaseList}\n\nClick **"Start Phase 1"** below to begin.`,
+                              timestamp: new Date(),
+                            }]);
+                          } else {
+                            handleSend(ctx);
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </ResizablePanel>

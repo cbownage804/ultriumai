@@ -62,7 +62,7 @@ function generateQuestions(prompt: string): Question[] {
 
   // ── Gate: Don't ask questions for simple/short prompts ──
   // Short prompts are clear enough. Only ask for substantial, ambiguous ones.
-  if (len < 400 || wordCount < 50) return [];
+  if (len < 800 || wordCount < 100) return [];
 
   // If the user already gave very specific instructions (detailed spec),
   // don't bombard them with questions they already answered.
