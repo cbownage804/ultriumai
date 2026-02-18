@@ -3,7 +3,7 @@
  * Includes: navigation, settings, appearance (theme), help
  */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
@@ -16,13 +16,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  ArrowLeft, Settings, Star, Pencil, Rocket,
-  Sun, Moon, Monitor, ExternalLink, Gift, ChevronDown, Check, HelpCircle,
+  ArrowLeft, Settings, Heart, Pencil, Rocket,
+  Sun, Moon, Monitor, ExternalLink, ChevronDown, Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
-// Simple icon since CircleHalf doesn't exist in lucide
+// Half-circle appearance icon
 const AppearanceIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
     <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
@@ -38,8 +38,6 @@ interface ProjectDropdownMenuProps {
   onOpenSettings: () => void;
   onPublish: () => void;
   onOpenBilling: () => void;
-  onStar?: () => void;
-  isStarred?: boolean;
 }
 
 type ThemeChoice = 'light' | 'dark' | 'system';
@@ -52,15 +50,17 @@ export function ProjectDropdownMenu({
   onOpenSettings,
   onPublish,
   onOpenBilling,
-  onStar,
-  isStarred = false,
 }: ProjectDropdownMenuProps) {
   const navigate = useNavigate();
   const [theme, setTheme] = useState<ThemeChoice>(() => {
     return (localStorage.getItem('app-builder-theme') as ThemeChoice) || 'system';
   });
+  const [isFavorited, setIsFavorited] = useState(() => {
+    const favs = JSON.parse(localStorage.getItem('app-builder-favorites') || '[]');
+    return favs.includes(projectName);
+  });
 
-  const handleThemeChange = (newTheme: ThemeChoice) => {
+  const handleThemeChange = useCallback((newTheme: ThemeChoice) => {
     setTheme(newTheme);
     localStorage.setItem('app-builder-theme', newTheme);
 
@@ -72,7 +72,22 @@ export function ProjectDropdownMenu({
       root.classList.add('light');
       root.classList.remove('dark');
     }
-  };
+  }, []);
+
+  const handleToggleFavorite = useCallback(() => {
+    const favs: string[] = JSON.parse(localStorage.getItem('app-builder-favorites') || '[]');
+    let updated: string[];
+    if (favs.includes(projectName)) {
+      updated = favs.filter(f => f !== projectName);
+      setIsFavorited(false);
+      toast.success('Removed from favorites');
+    } else {
+      updated = [...favs, projectName];
+      setIsFavorited(true);
+      toast.success('Added to favorites');
+    }
+    localStorage.setItem('app-builder-favorites', JSON.stringify(updated));
+  }, [projectName]);
 
   return (
     <DropdownMenu>
@@ -141,32 +156,15 @@ export function ProjectDropdownMenu({
         >
           <Rocket className="h-4 w-4" />
           Publish
-          {!hasFiles && (
-            <Badge variant="secondary" className="ml-auto text-[9px] px-1.5 py-0 bg-white/[0.06] text-white/30 border-0">
-              New
-            </Badge>
-          )}
         </DropdownMenuItem>
 
-        {/* Star */}
+        {/* Add to Favorites */}
         <DropdownMenuItem
-          onClick={onStar}
+          onClick={handleToggleFavorite}
           className="gap-2.5 text-white/70 hover:text-white cursor-pointer px-2.5 py-2"
         >
-          <Star className={cn("h-4 w-4", isStarred && "fill-amber-400 text-amber-400")} />
-          {isStarred ? 'Unstar project' : 'Star project'}
-        </DropdownMenuItem>
-
-        {/* Bonuses */}
-        <DropdownMenuItem
-          onClick={onOpenBilling}
-          className="gap-2.5 text-white/70 hover:text-white cursor-pointer px-2.5 py-2"
-        >
-          <Gift className="h-4 w-4" />
-          Bonuses
-          <Badge variant="secondary" className="ml-auto text-[9px] px-1.5 py-0 bg-cyan-500/15 text-cyan-400 border-0">
-            New
-          </Badge>
+          <Heart className={cn("h-4 w-4", isFavorited && "fill-red-400 text-red-400")} />
+          {isFavorited ? 'Remove from Favorites' : 'Add Project To Favorites'}
         </DropdownMenuItem>
 
         <DropdownMenuSeparator className="bg-white/[0.06] my-1" />
