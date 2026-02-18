@@ -608,7 +608,7 @@ export function ProjectSettings({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-4xl max-h-[85vh] p-0 gap-0 overflow-hidden z-[60] bg-[#0c0c10] border-white/10" onCloseAutoFocus={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+      <DialogContent className="sm:max-w-4xl max-h-[85vh] p-0 gap-0 overflow-hidden z-[101] bg-[#0c0c10] border-white/10" onCloseAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader className="sr-only">
           <DialogTitle>Project Settings</DialogTitle>
           <DialogDescription>Configure your project settings and integrations.</DialogDescription>
