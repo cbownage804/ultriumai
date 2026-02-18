@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { X, Globe, Rocket, Check, Copy, ExternalLink, Loader2, RefreshCw, Trash2, Plus, Shield, AlertCircle, Download, FileArchive, Container, Smartphone, Wifi, Package } from 'lucide-react';
+import { X, Globe, Rocket, Check, Copy, ExternalLink, Loader2, RefreshCw, Trash2, Plus, Shield, AlertCircle, Download, FileArchive, Container, Smartphone, Wifi, Package, ChevronLeft, Pencil, Users, FileText, Link } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +53,10 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
   const [newDomain, setNewDomain] = useState('');
   const [showAddDomain, setShowAddDomain] = useState(false);
   const [activeSection, setActiveSection] = useState<'deploy' | 'export' | 'domains' | 'history'>('deploy');
+  const [showEditSettings, setShowEditSettings] = useState(false);
+  const [accessMode, setAccessMode] = useState<'public' | 'password'>('public');
+  const [siteTitle, setSiteTitle] = useState(projectName);
+  const [siteDescription, setSiteDescription] = useState('');
 
   const hasIntegrations = !!(supabaseConfig || stripeConfig || (serviceKeys && serviceKeys.length > 0));
 
@@ -172,7 +176,7 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
 
         <div className="flex-1 overflow-y-auto">
           {/* Deploy Section */}
-          {activeSection === 'deploy' && (
+          {activeSection === 'deploy' && !showEditSettings && (
             <div className="p-5 space-y-4">
               {/* Current status */}
               <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
@@ -240,9 +244,159 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
                 )}
               </button>
 
+              {/* Edit Settings button */}
+              <button
+                onClick={() => setShowEditSettings(true)}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-colors group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Pencil className="h-3.5 w-3.5 text-white/40 group-hover:text-white/60" />
+                  <span className="text-[12px] font-medium text-white/60 group-hover:text-white/80">Edit publish settings</span>
+                </div>
+                <ChevronLeft className="h-3.5 w-3.5 text-white/20 rotate-180" />
+              </button>
+
               {!hasFiles && (
                 <p className="text-[11px] text-white/25 text-center">Generate some code first to publish</p>
               )}
+            </div>
+          )}
+
+          {/* Edit Settings Sub-view */}
+          {activeSection === 'deploy' && showEditSettings && (
+            <div className="p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-white/90">Edit settings</h3>
+                  <p className="text-[11px] text-white/35">Update your publish settings</p>
+                </div>
+              </div>
+
+              {/* URL */}
+              <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-3">
+                <div className="h-9 w-9 shrink-0 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <Link className="h-4 w-4 text-emerald-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-medium text-white/80">URL</p>
+                    {publishedUrl && <Check className="h-3 w-3 text-emerald-400" />}
+                  </div>
+                  <p className="text-[11px] text-white/35 font-mono truncate mt-0.5">
+                    {publishedUrl || previewUrl || `${projectName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.apps.ultriumai.com`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    const url = publishedUrl || previewUrl;
+                    if (url) copyUrl(url);
+                  }}
+                  className="h-7 w-7 rounded-lg flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              {/* Website access */}
+              <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 shrink-0 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <Users className="h-4 w-4 text-emerald-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs font-medium text-white/80">Website access</p>
+                      <Check className="h-3 w-3 text-emerald-400" />
+                    </div>
+                    <p className="text-[11px] text-white/35 mt-0.5">
+                      {accessMode === 'public' ? 'Anyone with the link' : 'Password protected'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2 pl-12">
+                  <button
+                    onClick={() => setAccessMode('public')}
+                    className={cn(
+                      "text-[10px] px-3 py-1.5 rounded-lg font-medium transition-all",
+                      accessMode === 'public'
+                        ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30"
+                        : "bg-white/[0.03] text-white/30 border border-white/[0.06] hover:text-white/50"
+                    )}
+                  >
+                    Public
+                  </button>
+                  <button
+                    onClick={() => setAccessMode('password')}
+                    className={cn(
+                      "text-[10px] px-3 py-1.5 rounded-lg font-medium transition-all",
+                      accessMode === 'password'
+                        ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30"
+                        : "bg-white/[0.03] text-white/30 border border-white/[0.06] hover:text-white/50"
+                    )}
+                  >
+                    Password
+                  </button>
+                </div>
+              </div>
+
+              {/* Website info */}
+              <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 shrink-0 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <FileText className="h-4 w-4 text-emerald-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs font-medium text-white/80">Website info</p>
+                      <Check className="h-3 w-3 text-emerald-400" />
+                    </div>
+                    <p className="text-[11px] text-white/35 mt-0.5 truncate">
+                      {siteTitle}{siteDescription ? ` - ${siteDescription}` : ''}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2 pl-12">
+                  <div>
+                    <label className="text-[10px] text-white/30 mb-1 block">Title</label>
+                    <input
+                      value={siteTitle}
+                      onChange={e => setSiteTitle(e.target.value)}
+                      className="w-full h-8 px-3 text-[12px] bg-white/[0.04] border border-white/[0.08] rounded-lg text-white/70 placeholder:text-white/20 outline-none focus:border-cyan-500/40"
+                      placeholder="Website title"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-white/30 mb-1 block">Description</label>
+                    <textarea
+                      value={siteDescription}
+                      onChange={e => setSiteDescription(e.target.value)}
+                      rows={2}
+                      className="w-full px-3 py-2 text-[12px] bg-white/[0.04] border border-white/[0.08] rounded-lg text-white/70 placeholder:text-white/20 outline-none focus:border-cyan-500/40 resize-none"
+                      placeholder="Brief site description for SEO"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer: Back + Save */}
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  onClick={() => setShowEditSettings(false)}
+                  className="flex items-center gap-1.5 text-[12px] text-white/40 hover:text-white/70 transition-colors"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  Back
+                </button>
+                <button
+                  onClick={() => {
+                    toast.success('Settings saved');
+                    setShowEditSettings(false);
+                  }}
+                  className="h-8 px-5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-[12px] font-medium hover:from-cyan-400 hover:to-blue-500 transition-all"
+                >
+                  Save changes
+                </button>
+              </div>
             </div>
           )}
 
