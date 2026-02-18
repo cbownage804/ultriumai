@@ -4,7 +4,7 @@ import {
   Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
   Zap, MessageCircle, Wand2, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
   LayoutGrid, Wrench, AlertTriangle, Copy, RotateCcw, Pencil, GitFork, ChevronDown, Check,
-  Crosshair, ClipboardCheck, ThumbsUp, ThumbsDown,
+  Crosshair, ClipboardCheck, ThumbsUp, ThumbsDown, Plus, Camera, Paperclip, AtSign,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -1044,22 +1044,43 @@ export function BuilderChatPanel({
         {/* Lovable-style input area with integrated mode toggle */}
         <div data-tour="chat-input" className={cn("rounded-xl border bg-white/[0.05] transition-all overflow-hidden shadow-lg focus-within:ring-2 focus-within:ring-offset-0", mode === 'build' ? "border-violet-500/30 shadow-violet-500/5 focus-within:ring-violet-500/40 focus-within:border-violet-500/50" : "border-teal-500/30 shadow-teal-500/5 focus-within:ring-teal-500/40 focus-within:border-teal-500/50")}>
           <div className="flex items-end gap-2 px-3 py-2.5">
-            {/* Image upload button */}
-            <Tooltip>
-              <TooltipTrigger asChild>
+            {/* Lovable-style Plus menu */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className="h-7 w-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors shrink-0"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="top" align="start" className="w-48 p-1 bg-[#1a1a22] border-white/[0.1] shadow-xl">
+                <button
+                  onClick={() => { /* screenshot placeholder */ }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
+                >
+                  <Camera className="h-4 w-4 text-white/40" />
+                  Take a screenshot
+                </button>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors shrink-0"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
                 >
-                  <ImagePlus className="h-3.5 w-3.5" />
+                  <AtSign className="h-4 w-4 text-white/40" />
+                  Add reference
                 </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs">Upload reference image</TooltipContent>
-            </Tooltip>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
+                >
+                  <Paperclip className="h-4 w-4 text-white/40" />
+                  Attach
+                </button>
+              </PopoverContent>
+            </Popover>
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,.pdf,.txt,.md,.json,.csv,.html,.css,.js,.ts,.tsx,.jsx"
               multiple
               onChange={handleImageUpload}
               className="hidden"
