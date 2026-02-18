@@ -5,9 +5,18 @@ const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
 Deno.serve(async (req) => {
   const url = new URL(req.url)
-
   const host = req.headers.get('host') || ''
-  const slug = extractSlug(host, url)
+
+  // Try slug from subdomain first (e.g. my-app.apps.ultriumai.com)
+  let slug = extractSlug(host, url)
+
+  // If no slug from subdomain, try custom domain lookup
+  if (!slug) {
+    const customSlug = await resolveCustomDomain(host)
+    if (customSlug) {
+      slug = customSlug
+    }
+  }
 
   if (!slug) {
     return new Response('<!DOCTYPE html><html><body><h1>UltriumAI App Hosting</h1><p>Visit <code>your-app.apps.ultriumai.com</code> to see your app.</p></body></html>', {
@@ -32,11 +41,7 @@ Deno.serve(async (req) => {
     let htmlContent: string | null = null
 
     for (const userDir of (userDirs || [])) {
-      // Folders have id: null
       if (userDir.id === null && userDir.name) {
-        // Try both path patterns:
-        // New: {userId}/previews/{slug}/index.html
-        // Legacy: {userId}/{slug}/index.html
         const paths = [
           `${userDir.name}/previews/${slug}/index.html`,
           `${userDir.name}/${slug}/index.html`,
@@ -78,6 +83,40 @@ Deno.serve(async (req) => {
     return errorPage(500, 'Internal server error')
   }
 })
+
+/** Resolve a custom domain (e.g. myapp.example.com) to a project slug via the DB */
+async function resolveCustomDomain(host: string): Promise<string | null> {
+  if (!host) return null
+  // Skip our own infrastructure domains
+  if (host.endsWith('.ultriumai.com') || host.endsWith('.ultriumai.app') || host.endsWith('.supabase.co')) {
+    return null
+  }
+
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    const { data, error } = await supabase
+      .from('app_builder_domains')
+      .select('project_slug')
+      .eq('domain', host.toLowerCase())
+      .eq('status', 'active')
+      .limit(1)
+      .maybeSingle()
+
+    if (error) {
+      console.error('Custom domain lookup error:', error)
+      return null
+    }
+
+    if (data?.project_slug) {
+      console.log(`[serve-preview] Custom domain ${host} → slug ${data.project_slug}`)
+      return data.project_slug
+    }
+  } catch (err) {
+    console.error('Custom domain resolution failed:', err)
+  }
+
+  return null
+}
 
 function extractSlug(host: string, url: URL): string | null {
   if (host.endsWith('.apps.ultriumai.com')) {
