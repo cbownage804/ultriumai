@@ -122,6 +122,8 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
     .replace(/(?:#{1,4}\s*)?(?:🏗️\s*)?Strategic Plan:[\s\S]*?(?=\n#{1,4}\s|\n\*{1,2}✨|$)/gi, '')
     // Remove "Design Decisions I made for you:" sections
     .replace(/(?:#{1,4}\s*)?(?:\*{0,2})?✨?\s*Design Decisions[^:]*:[\s\S]*?(?=\n#{1,4}\s|$)/gi, '')
+    // Remove "Key Decisions Made:" sections
+    .replace(/(?:#{1,4}\s*)?(?:\*{0,2})?(?:Key|✨)\s*(?:Design\s*)?Decisions?\s*(?:Made|I made)?[^:]*:[\s\S]*?(?=\n#{1,4}\s[^KD]|$)/gi, '')
     // Remove "What's next?" sections
     .replace(/(?:\*{0,2})?What'?s next\??\*{0,2}[\s\S]*$/gi, '')
     // Remove "Note for Scalability" callouts
@@ -137,26 +139,55 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
     .replace(/^[-•*]\s*\*{0,2}(?:Symptom|Root cause|Fix approach|Files affected)\*{0,2}\s*:.*$/gm, '')
     // Remove raw ===FILE: / ===DELETE: markers that weren't caught
     .replace(/^===(?:FILE|DELETE):.*===$/gm, '')
-    // Remove "Auto-fix error" lines
-    .replace(/^Auto-fix error.*$/gm, '')
+    // Remove "Auto-fix error" lines and everything after
+    .replace(/Auto-fix error[\s\S]*$/gi, '')
     // Remove "This is auto-fix attempt" lines
     .replace(/^This is auto-fix attempt.*$/gm, '')
     // Remove "Return the corrected file" lines
     .replace(/^Return the corrected file.*$/gm, '')
     // Remove "Multi-step workflow" headings
     .replace(/^Multi-step workflow$/gm, '')
+    // Remove "[ERROR DIAGNOSIS CONTEXT]" blocks that leak into assistant
+    .replace(/\[ERROR DIAGNOSIS CONTEXT\][\s\S]*$/gi, '')
+    // Remove "[ALL PROJECT FILES]" blocks
+    .replace(/\[ALL PROJECT FILES\][\s\S]*$/gi, '')
+    // Remove "[LAST AI GENERATION" blocks
+    .replace(/\[LAST AI GENERATION[\s\S]*$/gi, '')
+    // Remove "I've included:" orphan lines
+    .replace(/^I'?ve included:\s*$/gm, '')
+    // Remove "Source: about:srcdoc" lines
+    .replace(/^Source:\s*about:srcdoc.*$/gm, '')
     // Clean up excessive newlines
     .replace(/\n{3,}/g, '\n\n')
     .trim();
   return { text: text, fileNames };
 }
 
-/** Strip internal context (file manifests, file trees) from user messages for display */
+/** Strip internal context (file manifests, file trees, error diagnosis, auto-fix) from user messages for display */
 function getCleanUserContent(content: string): string {
+  let clean = content;
   // Remove "[Project file tree: ...]" blocks (from agent mode)
-  let clean = content.replace(/\n*\[Project file tree:\n[\s\S]*?\]\s*$/i, '');
-  // Remove "PROJECT FILE MANIFEST ..." and everything after (from buildFileContext)
+  clean = clean.replace(/\n*\[Project file tree:\n[\s\S]*?\]\s*$/i, '');
+  // Remove "PROJECT FILE MANIFEST ..." and everything after
   clean = clean.replace(/\n*PROJECT FILE MANIFEST[\s\S]*$/i, '');
+  // Remove "[ERROR DIAGNOSIS CONTEXT]" and everything after
+  clean = clean.replace(/\n*\[ERROR DIAGNOSIS CONTEXT\][\s\S]*$/i, '');
+  // Remove "[ALL PROJECT FILES]" and everything after
+  clean = clean.replace(/\n*\[ALL PROJECT FILES\][\s\S]*$/i, '');
+  // Remove "[LAST AI GENERATION ...]" and everything after
+  clean = clean.replace(/\n*\[LAST AI GENERATION[\s\S]*$/i, '');
+  // Remove "FIX RULES:" and everything after
+  clean = clean.replace(/\n*FIX RULES:[\s\S]*$/i, '');
+  // Remove "Auto-fix error:" blocks
+  clean = clean.replace(/\n*Auto-fix error[:\s][\s\S]*$/i, '');
+  // Remove "Return the corrected file(s)." lines
+  clean = clean.replace(/\n*Return the corrected file.*$/gim, '');
+  // Remove "This is auto-fix attempt" lines
+  clean = clean.replace(/\n*This is auto-fix attempt.*$/gim, '');
+  // Remove "Source: about:srcdoc" lines
+  clean = clean.replace(/\n*Source:\s*about:srcdoc.*$/gim, '');
+  // Remove "Multi-step workflow" and numbered steps after it
+  clean = clean.replace(/\n*Multi-step workflow\n?(?:\d+.*\n?)*/gi, '');
   return clean.trim();
 }
 
