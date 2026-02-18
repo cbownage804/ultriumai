@@ -266,9 +266,9 @@ export function useAIAppBuilder() {
     // Check credits before sending — AUTO-FIX and fix requests are free
     const creditCost = mode === 'build' ? 3 : 1;
     if (!isFixRequest && totalRemaining < creditCost) {
-      toast.error(`Insufficient credits. You need ${creditCost} but have ${totalRemaining}. Purchase more to continue.`);
-      toast.success('Agent task completed', { duration: 4000 });
-      return;
+      const errMsg = `Insufficient credits. You need ${creditCost} but have ${totalRemaining}. Purchase more to continue.`;
+      toast.error(errMsg);
+      throw new Error(errMsg);
     }
 
     // Auto-detect intent and switch mode
