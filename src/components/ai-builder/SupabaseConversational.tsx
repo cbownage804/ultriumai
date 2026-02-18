@@ -785,13 +785,36 @@ export function buildWebSearchContext(searchResults: { query: string; snippets: 
 
 /**
  * Detect if the user wants to analyze/clone from a URL (not just an image).
+ * Handles full URLs (https://...), bare domains (site.com), and "browse to X" patterns.
  */
 export function detectURLCloneIntent(message: string): { hasURL: boolean; url: string | null } {
-  const urlMatch = message.match(/https?:\/\/[^\s]+/);
-  const cloneSignals = /\b(clone|replicate|copy|reproduce|like|same\s*as|inspired\s*by|based\s*on)\b/i;
-  
-  if (urlMatch && cloneSignals.test(message)) {
-    return { hasURL: true, url: urlMatch[0] };
+  // 1. Match full URLs first
+  const fullUrlMatch = message.match(/https?:\/\/[^\s,]+/);
+  if (fullUrlMatch) {
+    // Any full URL with clone/copy/browse signals → match
+    const signals = /\b(clone|replicate|copy|reproduce|like|same\s*as|inspired\s*by|based\s*on|browse|go\s*to|check\s*out|visit|scrape|data|content|look\s*at|make\s*it\s*better)\b/i;
+    if (signals.test(message)) {
+      return { hasURL: true, url: fullUrlMatch[0] };
+    }
   }
+
+  // 2. Match bare domains: "browse to glennsbodyshop.net", "go to example.com"
+  const bareDomainPatterns = [
+    /\b(?:browse\s+(?:to\s+)?|go\s+to\s+|check\s+out\s+|visit\s+|scrape\s+|look\s+at\s+)([a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?(?:\/[^\s,]*)?)/i,
+    // Bare domain mentioned alongside action words
+    /\b([a-zA-Z0-9][-a-zA-Z0-9]*\.(?:com|net|org|io|dev|co|app|site|web|biz|info|me|us|uk|ca|au)(?:\.[a-zA-Z]{2,})?(?:\/[^\s,]*)?)\b/i,
+  ];
+
+  for (const pattern of bareDomainPatterns) {
+    const match = message.match(pattern);
+    if (match?.[1]) {
+      const domain = match[1].replace(/[.,;!?)]+$/, ''); // strip trailing punctuation
+      const signals = /\b(clone|replicate|copy|reproduce|like|same\s*as|inspired\s*by|based\s*on|browse|go\s*to|check\s*out|visit|scrape|data|content|look\s*at|make\s*it\s*better|use\s*(?:the|this)|build|create|make)\b/i;
+      if (signals.test(message)) {
+        return { hasURL: true, url: `https://${domain}` };
+      }
+    }
+  }
+
   return { hasURL: false, url: null };
 }

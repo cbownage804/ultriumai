@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import type { ProjectFile } from './useProjectFileSystem';
 import { useStreamingPreview } from './useStreamingPreview';
 import { useUserCredits } from './useUserCredits';
@@ -367,10 +368,43 @@ export function useAIAppBuilder() {
       apiMessages.push({ role: 'system', content: `[WEB SEARCH INTENT] The user wants current information about: ${searchIntent.queries.join(', ')}. Use your training knowledge to provide the most up-to-date, accurate information. Reference official documentation where possible. Then generate code incorporating that knowledge.` });
     }
 
-    // Detect URL clone intent
+    // Detect URL clone intent and pre-scrape the website content
     const urlClone = detectURLCloneIntent(input);
+    let scrapedContent: string | null = null;
     if (urlClone.hasURL && urlClone.url) {
-      apiMessages.push({ role: 'system', content: `[URL CLONE] The user wants to clone/replicate the design from: ${urlClone.url}. Analyze the typical design patterns of this website and generate a faithful reproduction. Focus on layout structure, color scheme, typography, and component patterns.` });
+      toast.info('Scraping website content...', { duration: 3000 });
+      try {
+        const { data, error } = await supabase.functions.invoke('firecrawl-scrape', {
+          body: {
+            url: urlClone.url,
+            options: { formats: ['markdown'], onlyMainContent: true },
+          },
+        });
+        if (!error && data?.success !== false) {
+          const md = data?.data?.markdown || data?.markdown || '';
+          const title = data?.data?.metadata?.title || data?.metadata?.title || '';
+          const description = data?.data?.metadata?.description || data?.metadata?.description || '';
+          if (md) {
+            scrapedContent = `[SCRAPED WEBSITE CONTENT from ${urlClone.url}]\nTitle: ${title}\nDescription: ${description}\n\nContent:\n${md.slice(0, 12000)}`;
+            toast.success('Website content loaded!');
+          }
+        }
+      } catch (scrapeErr) {
+        console.warn('Pre-scrape failed:', scrapeErr);
+        toast.warning('Could not scrape website — AI will use its best knowledge instead.');
+      }
+
+      if (scrapedContent) {
+        apiMessages.push({ role: 'system', content: scrapedContent });
+        apiMessages.push({ role: 'system', content: `[SCRAPE INSTRUCTIONS] Use the SCRAPED WEBSITE CONTENT above as the real data for this website. Reproduce the site structure, text, and content faithfully. Do NOT hallucinate or guess the site content — it is provided above.` });
+      } else {
+        apiMessages.push({ role: 'system', content: `[URL CLONE] The user wants to clone/replicate the design from: ${urlClone.url}. Analyze the typical design patterns of this website and generate a faithful reproduction. Focus on layout structure, color scheme, typography, and component patterns.` });
+      }
+
+      // If images are also attached, add explicit priority instructions
+      if (imageDataUrls?.length) {
+        apiMessages.push({ role: 'system', content: `[ASSET PRIORITY] The user has uploaded image(s) alongside a URL. Use the UPLOADED IMAGE as the logo/branding asset. Use the SCRAPED CONTENT for the site's text and data. Do NOT generate a placeholder logo — the user provided one.` });
+      }
     }
 
     // Smart conversation compression — keep recent messages intact, compress older ones
