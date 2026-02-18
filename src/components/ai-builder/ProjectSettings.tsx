@@ -512,22 +512,20 @@ export function ProjectSettings({
               </div>
             </div>
 
-            {/* CNAME Record */}
+            {/* A Record */}
             <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-1.5">
-              <span className="text-[9px] text-muted-foreground uppercase">CNAME Record (Points to UltriumAI)</span>
+              <span className="text-[9px] text-muted-foreground uppercase">A Record (Points to UltriumAI)</span>
               <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[10px]">
                 <span className="text-muted-foreground">Name</span>
-                <div className="flex items-center gap-1">
-                  <code className="text-foreground/70 font-mono">@ <span className="text-muted-foreground/50">(or your subdomain)</span></code>
-                </div>
+                <code className="text-foreground/70 font-mono">@ <span className="text-muted-foreground/50">(root domain)</span></code>
                 <span className="text-muted-foreground">Value</span>
                 <div className="flex items-center gap-1">
-                  <code className="text-primary/70 font-mono">apps.ultriumai.com</code>
-                  <button onClick={() => copyToClipboard('apps.ultriumai.com')} className="text-muted-foreground/40 hover:text-foreground"><Copy className="h-2.5 w-2.5" /></button>
+                  <code className="text-primary/70 font-mono">185.158.133.1</code>
+                  <button onClick={() => copyToClipboard('185.158.133.1')} className="text-muted-foreground/40 hover:text-foreground"><Copy className="h-2.5 w-2.5" /></button>
                 </div>
               </div>
               <p className="text-[9px] text-muted-foreground/60 mt-1">
-                💡 Some providers don't support CNAME on root domains. Use an A record pointing to <code className="font-mono">185.158.133.1</code> as a fallback.
+                💡 Also add an A record for <code className="font-mono">www</code> pointing to <code className="font-mono">185.158.133.1</code>
               </p>
             </div>
           </div>
@@ -583,9 +581,8 @@ export function ProjectSettings({
           </div>
           <div className="bg-muted/50 rounded-md p-3 space-y-1.5 text-[11px] font-mono">
             <p className="text-muted-foreground font-sans text-[10px] uppercase font-semibold mb-2">DNS Records to add</p>
-            <div className="flex justify-between"><span className="text-muted-foreground">CNAME</span><span>apps.ultriumai.com</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">A (@ and www)</span><span>185.158.133.1</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">TXT (_ultriumai)</span><span className="text-muted-foreground/60">Generated after connect</span></div>
-            <p className="text-[9px] text-muted-foreground/50 font-sans mt-1">If CNAME on root isn't supported, use A record → 185.158.133.1</p>
           </div>
         </div>
       )}

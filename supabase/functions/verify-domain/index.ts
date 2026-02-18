@@ -44,58 +44,36 @@ Deno.serve(async (req) => {
       console.error('[verify-domain] TXT lookup failed:', dnsErr);
     }
 
-    // Check CNAME record points to apps.ultriumai.com
-    let cnameOk = false;
+    // Check A record points to 185.158.133.1
+    let aRecordOk = false;
     try {
-      const cnameRes = await fetch(
-        `https://cloudflare-dns.com/dns-query?name=${domain}&type=CNAME`,
+      const aRes = await fetch(
+        `https://cloudflare-dns.com/dns-query?name=${domain}&type=A`,
         { headers: { 'Accept': 'application/dns-json' } }
       );
-      const cnameData = await cnameRes.json();
-      if (cnameData.Answer) {
-        cnameOk = cnameData.Answer.some((a: any) => {
-          const val = (a.data || '').replace(/\.$/, '').toLowerCase();
-          return val === 'apps.ultriumai.com';
-        });
+      const aData = await aRes.json();
+      if (aData.Answer) {
+        aRecordOk = aData.Answer.some((a: any) => a.data === '185.158.133.1');
       }
-      console.log(`[verify-domain] CNAME check: ok=${cnameOk}`);
-    } catch (cnameErr) {
-      console.error('[verify-domain] CNAME lookup failed:', cnameErr);
+      console.log(`[verify-domain] A record check: ok=${aRecordOk}`);
+    } catch (aErr) {
+      console.error('[verify-domain] A record lookup failed:', aErr);
     }
 
-    // Also accept A record pointing to 185.158.133.1 as fallback
-    let aRecordOk = false;
-    if (!cnameOk) {
-      try {
-        const aRes = await fetch(
-          `https://cloudflare-dns.com/dns-query?name=${domain}&type=A`,
-          { headers: { 'Accept': 'application/dns-json' } }
-        );
-        const aData = await aRes.json();
-        if (aData.Answer) {
-          aRecordOk = aData.Answer.some((a: any) => a.data === '185.158.133.1');
-        }
-        console.log(`[verify-domain] A record fallback check: ok=${aRecordOk}`);
-      } catch (aErr) {
-        console.error('[verify-domain] A record lookup failed:', aErr);
-      }
-    }
-
-    const dnsPointingCorrectly = cnameOk || aRecordOk;
+    const dnsPointingCorrectly = aRecordOk;
     const verified = txtVerified && dnsPointingCorrectly;
 
     return new Response(
       JSON.stringify({
         verified,
         txtVerified,
-        cnameOk,
         aRecordOk,
         domain,
         message: verified
           ? 'Domain verified successfully!'
           : !txtVerified
             ? 'TXT record not found. DNS propagation can take up to 48 hours.'
-            : 'CNAME/A record not pointing to apps.ultriumai.com. Please check your DNS settings.',
+            : 'A record not pointing to 185.158.133.1. Please check your DNS settings.',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
