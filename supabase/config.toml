@@ -384,3 +384,7 @@ verify_jwt = false
 # Domain verification (requires auth)
 [functions.verify-domain]
 verify_jwt = false
+
+# Domain registrar detection (public)
+[functions.detect-registrar]
+verify_jwt = false

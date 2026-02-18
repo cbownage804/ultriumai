@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import { useProjectSettings, type DomainEntry } from '@/hooks/useProjectSettings';
 
 // ── Types ──────────────────────────────────────────────
@@ -156,6 +157,11 @@ export function ProjectSettings({
   const [newDomain, setNewDomain] = useState('');
   const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [detectedRegistrar, setDetectedRegistrar] = useState<{
+    name: string; id: string; icon: string; dnsUrl: string; instructions: string[];
+  } | null>(null);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [registrarDetected, setRegistrarDetected] = useState(false);
 
   // Sync persisted settings into local state when loaded
   useEffect(() => {
@@ -300,6 +306,25 @@ export function ProjectSettings({
 
   const handleConnectDomain = async () => {
     if (!newDomain.trim()) return;
+    // Detect registrar first
+    setIsDetecting(true);
+    try {
+      const { data } = await supabase.functions.invoke('detect-registrar', {
+        body: { domain: newDomain.trim() },
+      });
+      if (data?.registrar) {
+        setDetectedRegistrar(data.registrar);
+      } else {
+        setDetectedRegistrar(null);
+      }
+      setRegistrarDetected(true);
+    } catch {
+      setDetectedRegistrar(null);
+      setRegistrarDetected(true);
+    } finally {
+      setIsDetecting(false);
+    }
+
     const entry = await addDomainToDb(newDomain);
     if (entry) {
       setSelectedDomainId(entry.id);
@@ -312,6 +337,26 @@ export function ProjectSettings({
     setIsVerifying(true);
     await verifyDomain(domainId);
     setIsVerifying(false);
+  };
+
+  const handleDetectRegistrar = async (domain: string) => {
+    setIsDetecting(true);
+    try {
+      const { data } = await supabase.functions.invoke('detect-registrar', {
+        body: { domain },
+      });
+      if (data?.registrar) {
+        setDetectedRegistrar(data.registrar);
+      } else {
+        setDetectedRegistrar(null);
+      }
+      setRegistrarDetected(true);
+    } catch {
+      setDetectedRegistrar(null);
+      setRegistrarDetected(true);
+    } finally {
+      setIsDetecting(false);
+    }
   };
 
   const renderDomains = () => (
@@ -401,6 +446,46 @@ export function ProjectSettings({
             </div>
           </div>
 
+          {/* Registrar detection */}
+          {!registrarDetected && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs"
+              onClick={() => handleDetectRegistrar(selectedDomain.domain)}
+              disabled={isDetecting}
+            >
+              {isDetecting ? <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> : <Globe className="h-3 w-3 mr-1.5" />}
+              {isDetecting ? 'Detecting provider...' : 'Detect DNS Provider'}
+            </Button>
+          )}
+
+          {registrarDetected && detectedRegistrar && (
+            <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-base">{detectedRegistrar.icon}</span>
+                <span className="text-xs font-semibold text-foreground">{detectedRegistrar.name} detected</span>
+                <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[8px]">Auto-detected</Badge>
+              </div>
+              <ol className="space-y-1 text-[10px] text-muted-foreground list-decimal list-inside">
+                {detectedRegistrar.instructions.map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
+              </ol>
+              <a href={detectedRegistrar.dnsUrl} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm" className="w-full text-xs h-7 mt-1 gap-1.5">
+                  Open {detectedRegistrar.name} DNS Settings <ExternalLink className="h-3 w-3" />
+                </Button>
+              </a>
+            </div>
+          )}
+
+          {registrarDetected && !detectedRegistrar && (
+            <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-1.5">
+              <span className="text-[10px] text-muted-foreground">Could not auto-detect your DNS provider. Follow the generic instructions below to configure your domain.</span>
+            </div>
+          )}
+
           {/* DNS Records */}
           <div className="space-y-2">
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Required DNS Records</span>
@@ -427,38 +512,23 @@ export function ProjectSettings({
               </div>
             </div>
 
-            {/* A Record - Root */}
+            {/* CNAME Record */}
             <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-1.5">
-              <span className="text-[9px] text-muted-foreground uppercase">A Record (Root Domain)</span>
+              <span className="text-[9px] text-muted-foreground uppercase">CNAME Record (Points to UltriumAI)</span>
               <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[10px]">
                 <span className="text-muted-foreground">Name</span>
                 <div className="flex items-center gap-1">
-                  <code className="text-foreground/70 font-mono">@</code>
-                  <button onClick={() => copyToClipboard('@')} className="text-muted-foreground/40 hover:text-foreground"><Copy className="h-2.5 w-2.5" /></button>
+                  <code className="text-foreground/70 font-mono">@ <span className="text-muted-foreground/50">(or your subdomain)</span></code>
                 </div>
                 <span className="text-muted-foreground">Value</span>
                 <div className="flex items-center gap-1">
-                  <code className="text-primary/70 font-mono">185.158.133.1</code>
-                  <button onClick={() => copyToClipboard('185.158.133.1')} className="text-muted-foreground/40 hover:text-foreground"><Copy className="h-2.5 w-2.5" /></button>
+                  <code className="text-primary/70 font-mono">apps.ultriumai.com</code>
+                  <button onClick={() => copyToClipboard('apps.ultriumai.com')} className="text-muted-foreground/40 hover:text-foreground"><Copy className="h-2.5 w-2.5" /></button>
                 </div>
               </div>
-            </div>
-
-            {/* A Record - WWW */}
-            <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-1.5">
-              <span className="text-[9px] text-muted-foreground uppercase">A Record (www subdomain)</span>
-              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[10px]">
-                <span className="text-muted-foreground">Name</span>
-                <div className="flex items-center gap-1">
-                  <code className="text-foreground/70 font-mono">www</code>
-                  <button onClick={() => copyToClipboard('www')} className="text-muted-foreground/40 hover:text-foreground"><Copy className="h-2.5 w-2.5" /></button>
-                </div>
-                <span className="text-muted-foreground">Value</span>
-                <div className="flex items-center gap-1">
-                  <code className="text-primary/70 font-mono">185.158.133.1</code>
-                  <button onClick={() => copyToClipboard('185.158.133.1')} className="text-muted-foreground/40 hover:text-foreground"><Copy className="h-2.5 w-2.5" /></button>
-                </div>
-              </div>
+              <p className="text-[9px] text-muted-foreground/60 mt-1">
+                💡 Some providers don't support CNAME on root domains. Use an A record pointing to <code className="font-mono">185.158.133.1</code> as a fallback.
+              </p>
             </div>
           </div>
 
@@ -513,9 +583,9 @@ export function ProjectSettings({
           </div>
           <div className="bg-muted/50 rounded-md p-3 space-y-1.5 text-[11px] font-mono">
             <p className="text-muted-foreground font-sans text-[10px] uppercase font-semibold mb-2">DNS Records to add</p>
-            <div className="flex justify-between"><span className="text-muted-foreground">A (root)</span><span>185.158.133.1</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">A (www)</span><span>185.158.133.1</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">CNAME</span><span>apps.ultriumai.com</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">TXT (_ultriumai)</span><span className="text-muted-foreground/60">Generated after connect</span></div>
+            <p className="text-[9px] text-muted-foreground/50 font-sans mt-1">If CNAME on root isn't supported, use A record → 185.158.133.1</p>
           </div>
         </div>
       )}
