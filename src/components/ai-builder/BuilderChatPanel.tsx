@@ -1011,7 +1011,7 @@ export function BuilderChatPanel({
         )}
 
         {/* Lovable-style input area with integrated mode toggle */}
-        <div data-tour="chat-input" className={cn("rounded-xl border bg-white/[0.05] transition-all overflow-hidden shadow-lg focus-within:ring-2 focus-within:ring-offset-0", mode === 'build' ? "border-violet-500/30 shadow-violet-500/5 focus-within:ring-violet-500/40 focus-within:border-violet-500/50" : "border-cyan-500/30 shadow-cyan-500/5 focus-within:ring-cyan-500/40 focus-within:border-cyan-500/50")}>
+        <div data-tour="chat-input" className={cn("rounded-xl border bg-white/[0.05] transition-all overflow-hidden shadow-lg focus-within:ring-2 focus-within:ring-offset-0", mode === 'build' ? "border-violet-500/30 shadow-violet-500/5 focus-within:ring-violet-500/40 focus-within:border-violet-500/50" : "border-teal-500/30 shadow-teal-500/5 focus-within:ring-teal-500/40 focus-within:border-teal-500/50")}>
           <div className="flex items-end gap-2 px-3 py-2.5">
             {/* Image upload button */}
             <Tooltip>
@@ -1083,7 +1083,9 @@ export function BuilderChatPanel({
                 className={cn(
                   "h-8 w-8 rounded-lg flex items-center justify-center transition-all shrink-0",
                   input.trim()
-                    ? "bg-gradient-to-br from-cyan-500 to-cyan-400 text-black hover:opacity-90 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40"
+                    ? mode === 'build'
+                      ? "bg-gradient-to-br from-violet-500 to-violet-400 text-white hover:opacity-90 shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
+                      : "bg-gradient-to-br from-cyan-500 to-cyan-400 text-black hover:opacity-90 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40"
                     : "bg-white/5 text-white/20"
                 )}
               >
