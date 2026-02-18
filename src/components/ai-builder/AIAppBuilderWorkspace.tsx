@@ -1209,16 +1209,7 @@ export function AIAppBuilderWorkspace() {
     { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, category: 'panel', shortcut: '⌘/', action: () => setShowShortcuts(true) },
   ], [handleSave, handleUndo, handleRedo, handlePublish, openPanel]);
 
-  // ─── Left sidebar icon bar items (Lovable-style minimal) ───
-  // Only essential items visible; everything else is in ⌘K command palette
-  const sidebarIcons = [
-    { id: 'supabaseIDE' as any, icon: Database, label: 'Cloud', tooltip: 'Database, auth, storage & edge functions', active: showSupabaseIDE || showDatabase || showAuth || showStorage || showEdgeFunctions, onClick: () => setShowSupabaseIDE(!showSupabaseIDE) },
-    { id: 'githubPanel' as any, icon: Github, label: 'GitHub', tooltip: 'Push, pull, branches & PRs', active: showGitHubPanel, onClick: () => setShowGitHubPanel(!showGitHubPanel) },
-    { id: 'packages', icon: Package, label: 'Packages', tooltip: 'Manage dependencies', active: showPackages || showNPMManager, onClick: () => { setShowNPMManager(!showNPMManager); } },
-    { id: 'history', icon: History, label: 'History', tooltip: 'Version history', active: showVersionHistory, onClick: () => openPanel('history') },
-    { id: 'secretsManager' as any, icon: Key, label: 'Secrets', tooltip: 'Environment variables & secrets', active: showSecretsManager || showEnvVars, onClick: () => setShowSecretsManager(!showSecretsManager) },
-    { id: 'knowledge', icon: Brain, label: 'Knowledge', tooltip: 'Custom instructions for the AI', active: showKnowledge, onClick: () => openPanel('knowledge') },
-  ] as const;
+  // Sidebar removed — all tools accessible via ⌘K command palette (Lovable-style)
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -1533,101 +1524,6 @@ export function AIAppBuilderWorkspace() {
             {/* Right Panel */}
             <ResizablePanel defaultSize={72} minSize={50}>
               <div className="h-full flex">
-                {/* Expandable labeled sidebar */}
-                <div className={cn(
-                  "border-r border-white/[0.06] bg-gradient-to-b from-[#09090b] via-[#0a0a12] to-[#09090b] hidden md:flex flex-col shrink-0 transition-all duration-200 overflow-y-auto overflow-x-hidden",
-                  sidebarExpanded ? "w-44" : "w-10"
-                )}>
-                  {/* Collapse/Expand toggle */}
-                  <div className={cn("flex items-center shrink-0 h-8 border-b border-white/[0.04]", sidebarExpanded ? "justify-end px-2" : "justify-center")}>
-                    <button
-                      onClick={() => setSidebarExpanded(!sidebarExpanded)}
-                      className="h-6 w-6 rounded-md flex items-center justify-center text-white/25 hover:text-white/60 hover:bg-white/5 transition-colors"
-                      title={sidebarExpanded ? 'Collapse' : 'Expand'}
-                    >
-                      {sidebarExpanded ? <ChevronsLeft className="h-3.5 w-3.5" /> : <ChevronsRight className="h-3.5 w-3.5" />}
-                    </button>
-                  </div>
-
-                  <div className={cn("flex flex-col gap-0.5 py-1.5", sidebarExpanded ? "px-1.5" : "items-center px-0")}>
-                    {/* Explorer section */}
-                    {sidebarExpanded && <span className="text-[9px] font-semibold uppercase tracking-wider text-white/20 px-2 pt-1 pb-0.5">Explorer</span>}
-                    {[
-                      { icon: FolderOpen, label: 'Files', tooltip: 'Browse and manage your project files', active: showFileTree, onClick: () => setShowFileTree(!showFileTree), color: 'text-amber-400' },
-                      { icon: Search, label: 'Search', tooltip: 'Search across all files in your project', active: showFileSearch, onClick: () => setShowFileSearch(!showFileSearch), color: 'text-sky-400' },
-                      { icon: Search, label: 'Symbols', tooltip: 'Search functions, classes, types across project (Go-to-Definition)', active: showSymbolSearch, onClick: () => setShowSymbolSearch(!showSymbolSearch), color: 'text-cyan-400' },
-                    ].map(item => (
-                      <Tooltip key={item.label} delayDuration={sidebarExpanded ? 999999 : 300}>
-                        <TooltipTrigger asChild>
-                          <button onClick={item.onClick} className={cn(
-                            "rounded-md flex items-center gap-2 transition-all text-left",
-                            sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
-                            item.active ? `${item.color} bg-white/[0.06]` : `${item.color}/40 hover:${item.color}/70 hover:bg-white/[0.03]`
-                          )}>
-                            <item.icon className="h-3.5 w-3.5 shrink-0" />
-                            {sidebarExpanded && <span className="text-[11px] truncate">{item.label}</span>}
-                          </button>
-                        </TooltipTrigger>
-                        {!sidebarExpanded && <TooltipContent side="right" className="text-xs max-w-[200px]">{item.tooltip}</TooltipContent>}
-                      </Tooltip>
-                    ))}
-
-                    <div className={cn("bg-gradient-to-r from-transparent via-white/[0.06] to-transparent my-1", sidebarExpanded ? "h-px mx-1" : "h-px w-5 mx-auto")} />
-
-                    {/* Main sidebar icons — minimal Lovable-style */}
-                    {sidebarIcons.map(item => (
-                      <Tooltip key={item.id} delayDuration={sidebarExpanded ? 999999 : 300}>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={item.onClick}
-                            className={cn(
-                              "rounded-md flex items-center gap-2 transition-all text-left",
-                              sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center",
-                              item.active
-                                ? "text-white/90 bg-white/[0.08] border border-white/[0.08]"
-                                : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]"
-                            )}
-                          >
-                            <item.icon className="h-3.5 w-3.5 shrink-0" />
-                            {sidebarExpanded && <span className="text-[11px] truncate">{item.label}</span>}
-                          </button>
-                        </TooltipTrigger>
-                        {!sidebarExpanded && <TooltipContent side="right" className="text-xs max-w-[220px]">
-                          <p className="font-medium">{item.label}</p>
-                          <p className="text-white/60 mt-0.5">{item.tooltip}</p>
-                        </TooltipContent>}
-                      </Tooltip>
-                    ))}
-                  </div>
-
-                  {/* Bottom: ⌘K hint + Settings */}
-                  <div className={cn("mt-auto flex flex-col gap-0.5 py-2 border-t border-white/[0.04]", sidebarExpanded ? "px-1.5" : "items-center px-0")}>
-                    <Tooltip delayDuration={sidebarExpanded ? 999999 : 300}>
-                      <TooltipTrigger asChild>
-                        <button onClick={() => setShowCommandPalette(true)} className={cn(
-                          "rounded-md flex items-center gap-2 transition-all text-left text-white/30 hover:text-white/60 hover:bg-white/[0.04]",
-                          sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center"
-                        )}>
-                          <Search className="h-3.5 w-3.5 shrink-0" />
-                          {sidebarExpanded && <span className="text-[11px] truncate">All Tools <kbd className="ml-auto text-[9px] text-white/20 bg-white/5 rounded px-1 py-0.5 font-mono">⌘K</kbd></span>}
-                        </button>
-                      </TooltipTrigger>
-                      {!sidebarExpanded && <TooltipContent side="right" className="text-xs">All Tools (⌘K)</TooltipContent>}
-                    </Tooltip>
-                    <Tooltip delayDuration={sidebarExpanded ? 999999 : 300}>
-                      <TooltipTrigger asChild>
-                        <button onClick={() => setShowSettingsPanel(true)} className={cn(
-                          "rounded-md flex items-center gap-2 transition-all text-left text-white/30 hover:text-white/60 hover:bg-white/[0.04]",
-                          sidebarExpanded ? "h-7 px-2 w-full" : "h-7 w-7 justify-center"
-                        )}>
-                          <Settings className="h-3.5 w-3.5 shrink-0" />
-                          {sidebarExpanded && <span className="text-[11px] truncate">Settings</span>}
-                        </button>
-                      </TooltipTrigger>
-                      {!sidebarExpanded && <TooltipContent side="right" className="text-xs">Settings</TooltipContent>}
-                    </Tooltip>
-                  </div>
-                </div>
 
                 {/* Side panels */}
                 <VersionHistoryPanel versions={versions} currentFiles={project.files} onRestore={restoreVersion} onClose={() => setShowVersionHistory(false)} open={showVersionHistory} activeBranchName={activeBranchName} />
