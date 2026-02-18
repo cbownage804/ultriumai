@@ -604,8 +604,8 @@ export function BuilderChatPanel({
           </Dialog>
         )}
 
-        {/* Main prose content — clean, no border */}
-        {displayText && (
+        {/* Main prose content — only show when no files were generated (discuss mode) or still streaming */}
+        {displayText && (!isCompleted || !hasFiles && fileNames.length === 0) && (
           <StreamingText content={isCompleted ? bodyText || displayText : displayText} isStreaming={isStreaming}>
             {(displayedText) => (
               <div className="prose prose-sm prose-invert max-w-none text-[13px] text-white/70 leading-relaxed [&_p]:mb-3 [&_ul]:mb-3 [&_ol]:mb-3 [&_ol]:space-y-2 [&_ul]:space-y-1 [&_li]:text-white/60 [&_strong]:text-white/90 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_ol>li]:pl-1">
@@ -637,21 +637,7 @@ export function BuilderChatPanel({
           </StreamingText>
         )}
 
-        {/* Conversational summary after completed builds — when no thinking text */}
-        {isCompleted && !text && (
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-[13px] text-white/60 leading-relaxed"
-          >
-            {totalFiles > 1
-              ? `I've updated ${totalFiles} files with the changes you requested. The preview should reflect the updates — let me know if you'd like any tweaks!`
-              : fileNames[0]
-                ? `I've updated ${fileNames[0].split('/').pop()} with your changes. Check the preview and let me know if anything needs adjusting!`
-                : `I've applied your changes to the project. Take a look at the preview and let me know how it looks!`}
-          </motion.div>
-        )}
+        {/* Removed: conversational summary text — task card is sufficient */}
 
         {/* Inline error recovery */}
         {msg.inlineError && !isStreaming && (
