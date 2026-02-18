@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       );
       const aData = await aRes.json();
       if (aData.Answer) {
-        aRecordOk = aData.Answer.some((a: any) => a.data === '185.158.133.1');
+        aRecordOk = aData.Answer.some((a: any) => a.data === '159.203.128.171');
       }
       console.log(`[verify-domain] A record check: ok=${aRecordOk}`);
     } catch (aErr) {
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
           ? 'Domain verified successfully!'
           : !txtVerified
             ? 'TXT record not found. DNS propagation can take up to 48 hours.'
-            : 'A record not pointing to 185.158.133.1. Please check your DNS settings.',
+            : 'A record not pointing to 159.203.128.171. Please check your DNS settings.',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

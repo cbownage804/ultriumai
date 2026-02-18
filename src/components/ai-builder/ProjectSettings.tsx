@@ -520,12 +520,12 @@ export function ProjectSettings({
                 <code className="text-foreground/70 font-mono">@ <span className="text-muted-foreground/50">(root domain)</span></code>
                 <span className="text-muted-foreground">Value</span>
                 <div className="flex items-center gap-1">
-                  <code className="text-primary/70 font-mono">185.158.133.1</code>
-                  <button onClick={() => copyToClipboard('185.158.133.1')} className="text-muted-foreground/40 hover:text-foreground"><Copy className="h-2.5 w-2.5" /></button>
+                  <code className="text-primary/70 font-mono">159.203.128.171</code>
+                  <button onClick={() => copyToClipboard('159.203.128.171')} className="text-muted-foreground/40 hover:text-foreground"><Copy className="h-2.5 w-2.5" /></button>
                 </div>
               </div>
               <p className="text-[9px] text-muted-foreground/60 mt-1">
-                💡 Also add an A record for <code className="font-mono">www</code> pointing to <code className="font-mono">185.158.133.1</code>
+                💡 Also add an A record for <code className="font-mono">www</code> pointing to <code className="font-mono">159.203.128.171</code>
               </p>
             </div>
           </div>
@@ -581,7 +581,7 @@ export function ProjectSettings({
           </div>
           <div className="bg-muted/50 rounded-md p-3 space-y-1.5 text-[11px] font-mono">
             <p className="text-muted-foreground font-sans text-[10px] uppercase font-semibold mb-2">DNS Records to add</p>
-            <div className="flex justify-between"><span className="text-muted-foreground">A (@ and www)</span><span>185.158.133.1</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">A (@ and www)</span><span>159.203.128.171</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">TXT (_ultriumai)</span><span className="text-muted-foreground/60">Generated after connect</span></div>
           </div>
         </div>
