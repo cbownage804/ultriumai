@@ -608,14 +608,14 @@ export function ProjectSettings({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-4xl max-h-[85vh] p-0 gap-0 overflow-hidden z-[60] [&>button[class*='absolute']]:hidden" onCloseAutoFocus={(e) => e.preventDefault()}>
+      <DialogContent className="sm:max-w-4xl max-h-[85vh] p-0 gap-0 overflow-hidden z-[60] [&>button[class*='absolute']]:hidden bg-[#0c0c10] border-white/10" onCloseAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader className="sr-only">
           <DialogTitle>Project Settings</DialogTitle>
           <DialogDescription>Configure your project settings and integrations.</DialogDescription>
         </DialogHeader>
         <div className="flex h-[75vh]">
           {/* ── Left Sidebar ── */}
-          <div className="w-[200px] shrink-0 border-r border-border bg-card/30 flex flex-col">
+          <div className="w-[200px] shrink-0 border-r border-white/[0.06] bg-[#0e0e13] flex flex-col">
             <div className="p-3 border-b border-border">
               <button
                 onClick={() => setOpen(false)}
