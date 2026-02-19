@@ -1,171 +1,134 @@
 
+# 50 Additional Fully Operational Features (Sprints U-AD, Phases 204-253)
 
-# Next 50 Phases (154–203): AI App Builder Ultra Expansion
+Each feature follows the established pattern: a **hook** with real logic operating on project files, a **lazy-loaded panel** with interactive UI, **state wiring** in the workspace, and **command palette** registration so every feature is discoverable via Cmd+K.
 
-## Sprint K: AI-Powered Intelligence (Phases 154–158)
-
-1. **Phase 154 — AI Code Refactoring Agent**: Automated detection of code smells (long functions, deep nesting, duplicated logic) with one-click AI-powered refactoring that preserves behavior.
-
-2. **Phase 155 — Natural Language to Regex**: A panel where users describe patterns in plain English and get tested regex with live match highlighting against sample text.
-
-3. **Phase 156 — AI Commit Message Generator**: Analyzes file diffs and generates conventional commit messages (feat/fix/refactor) with scope and description.
-
-4. **Phase 157 — Smart Auto-Import**: Detects undefined symbols in the editor and suggests/auto-inserts import statements from project files or npm packages.
-
-5. **Phase 158 — AI Documentation Writer**: Generates JSDoc comments, README sections, and API docs from code analysis with configurable verbosity levels.
+"Fully operational" means each hook works against real project data (files, config, state) — not placeholder stubs. For example, the Regex Playground will live-test patterns with highlighting, the Table Generator will produce complete TanStack Table code, and the Audit Trail will track actual file changes.
 
 ---
 
-## Sprint L: Real-Time & Multiplayer (Phases 159–163)
+## Sprint U -- Data & State Management (204-208)
 
-6. **Phase 159 — Real-Time Co-Editing (CRDT)**: Conflict-free replicated data type engine for simultaneous multi-user editing with cursor awareness.
+1. **State Machine Designer** -- Visual FSM builder generates typed XState-compatible machine configs from user-defined states/transitions. Exports `createMachine()` code.
+2. **Data Validation Studio** -- Build Zod schemas visually (field name, type, constraints). Generates `.ts` validation files and auto-wires to React Hook Form resolvers.
+3. **Cache Strategy Manager** -- Configure per-route caching (SWR, TTL, stale-while-revalidate). Generates TanStack Query `queryOptions` with custom `staleTime`/`gcTime`.
+4. **Reactive Store Builder** -- Design Zustand slices visually (state shape, actions, selectors). Generates typed store files with persist middleware config.
+5. **Data Migration Wizard** -- Step-by-step SQL migration script generator with up/down migrations, dry-run preview, and rollback SQL. Scans existing schema types file.
 
-7. **Phase 160 — Voice Chat Integration**: WebRTC-based voice channels for team collaboration while building, with push-to-talk and mute controls.
+## Sprint V -- Developer Experience (209-213)
 
-8. **Phase 161 — Screen Share in Preview**: Allow collaborators to share their preview window with annotation tools for design feedback.
+6. **Regex Playground** -- Live regex tester with match highlighting, capture groups, and a library of 30+ common patterns (email, URL, IP, etc.). Tests against user-provided sample text in real-time.
+7. **JSON/YAML Converter** -- Bi-directional converter between JSON, YAML, TOML, ENV. Paste input, get formatted output with syntax validation and copy-to-clipboard.
+8. **Color Contrast Checker** -- WCAG AA/AAA contrast ratio calculator. Input foreground/background colors, get pass/fail results and auto-suggested alternatives that pass.
+9. **Tailwind Class Sorter** -- Scans project `.tsx` files for `className` props and reorders Tailwind classes following the official sort order. Applies fixes via `upsertFile`.
+10. **Markdown Preview** -- Split-pane markdown editor with GFM support (tables, task lists, code blocks). Live preview with syntax highlighting. Export to HTML string.
 
-9. **Phase 162 — Live Code Reactions**: Emoji reactions and inline annotations that appear in real-time on specific code lines during pair programming.
+## Sprint W -- Communication (214-218)
 
-10. **Phase 163 — Collaborative Whiteboard**: A shared canvas for sketching UI wireframes, flowcharts, and architecture diagrams alongside the editor.
+11. **Toast Designer** -- Visual toast notification configurator (position, duration, style, action buttons). Generates Sonner `toast()` call code ready to paste.
+12. **Notification Center Generator** -- Generates a complete notification dropdown component with read/unread state, filtering by type, and Supabase realtime subscription code.
+13. **Chat Widget Builder** -- Configure an embeddable chat widget (theme, position, auto-replies). Generates a self-contained React component with WebSocket placeholder.
+14. **Email Sequence Builder** -- Visual drip campaign designer with delay nodes and conditions. Generates edge function code for Resend API integration.
+15. **SMS Template Manager** -- Template builder with `{{variable}}` interpolation preview. Generates Twilio-compatible edge function code.
 
----
+## Sprint X -- Advanced UI Patterns (219-223)
 
-## Sprint M: Testing & Quality (Phases 164–168)
+16. **Onboarding Flow Builder** -- Multi-step wizard designer with progress bar, skip logic, and localStorage persistence. Generates a complete `OnboardingWizard.tsx` component.
+17. **Modal/Dialog Composer** -- Configure modal content (title, body, actions, variant: alert/confirm/form). Generates Radix Dialog component code.
+18. **Table/DataGrid Generator** -- Define columns (name, type, sortable, filterable). Generates a full TanStack Table component with pagination, sorting, and row selection.
+19. **Kanban Board Generator** -- Configure columns and card fields. Generates a `@hello-pangea/dnd` Kanban board component with drag-and-drop and state management.
+20. **Timeline/Activity Feed Generator** -- Configure event types and display format. Generates a vertical timeline component with filtering and infinite scroll skeleton.
 
-11. **Phase 164 — Visual Regression Testing**: Automated screenshot comparison between builds to detect unintended UI changes with diff highlighting.
+## Sprint Y -- DevOps & Infrastructure (224-228)
 
-12. **Phase 165 — Accessibility Score Dashboard**: Real-time WCAG compliance scoring with actionable fix suggestions (contrast, ARIA labels, keyboard nav).
+21. **Docker Compose Generator** -- Configure services (app, DB, Redis, nginx). Generates `docker-compose.yml` and `Dockerfile` with multi-stage builds.
+22. **Kubernetes Manifest Generator** -- Configure deployment (replicas, resources, probes). Generates K8s YAML for Deployment, Service, and Ingress.
+23. **CI/CD Pipeline Designer** -- Visual pipeline builder for GitHub Actions. Configure stages (lint, test, build, deploy) with dependency arrows. Generates `.github/workflows/*.yml`.
+24. **Structured Logger Generator** -- Configure log levels, transports (console, file, HTTP). Generates a Pino/Winston-style logger utility with structured JSON output.
+25. **Health Check Generator** -- Configure dependency checks (DB ping, external API, Redis). Generates a `/health` edge function with status aggregation.
 
-13. **Phase 166 — Code Coverage Visualizer**: Overlay coverage data on the editor gutter showing tested vs untested lines with percentage badges.
+## Sprint Z -- Auth & Access (229-233)
 
-14. **Phase 167 — Mutation Testing Engine**: Automatically mutates code (flip operators, remove lines) to verify test suite strength and find weak spots.
+26. **OAuth Provider Setup** -- Step-by-step wizard for Google/GitHub/Discord OAuth. Generates Supabase auth config code and callback handler components.
+27. **MFA/2FA Flow Generator** -- TOTP enrollment flow with QR code generation (using existing `qrcode` package). Generates enrollment + verification components.
+28. **Session Manager** -- Configure session duration, idle timeout, refresh rotation. Generates session management middleware and auto-logout component.
+29. **API Key Management** -- Generate API key creation/rotation UI. Generates hashed key storage schema, validation middleware, and management dashboard component.
+30. **Permission Matrix Builder** -- Visual role-permission grid editor. Generates RLS policy SQL and frontend `usePermission()` guard hook.
 
-15. **Phase 168 — Load Testing Simulator**: Configurable virtual user simulation against deployed endpoints with response time charts and bottleneck detection.
+## Sprint AA -- Content & Media (234-238)
 
----
+31. **Rich Text Config** -- TipTap editor configuration builder. Select extensions (bold, italic, link, image, table, task list) from the installed TipTap packages. Generates configured editor component.
+32. **File Preview Generator** -- Configure supported file types. Generates preview components for images, PDF (via iframe), code (via Monaco), and audio/video (native HTML5).
+33. **Avatar Generator** -- Configure avatar component with initials fallback, upload support, and size variants. Generates component using Radix Avatar.
+34. **Carousel Builder** -- Configure slides, autoplay, indicators. Generates Embla Carousel component (already installed) with proper config.
+35. **Gallery/Lightbox Generator** -- Configure grid layout, columns, gap. Generates responsive image gallery with keyboard-navigable lightbox overlay.
 
-## Sprint N: Advanced UI Building (Phases 169–173)
+## Sprint AB -- Search & Discovery (239-243)
 
-16. **Phase 169 — Drag-and-Drop Page Builder**: Visual WYSIWYG layout editor with a component tray (hero, cards, forms, navbars) that generates clean React/Tailwind code.
+36. **Full-Text Search Setup** -- Generates Supabase `tsvector` column migration SQL, GIN index, and a `SearchBar.tsx` component with debounced search.
+37. **Faceted Filter Builder** -- Define filter facets (checkbox groups, ranges, date pickers). Generates a sidebar filter component with URL-synced state via `useSearchParams`.
+38. **Autocomplete Generator** -- Configure data source and display. Generates a Combobox component using `cmdk` (already installed) with async loading and keyboard nav.
+39. **Tag/Category System** -- Define tag schema. Generates tag input component, polymorphic tags table migration SQL, and filter queries.
+40. **SEO Meta Generator** -- Scans project routes. Generates per-page `<Helmet>` meta tags, Open Graph tags, and a `sitemap.xml` builder utility.
 
-17. **Phase 170 — Theme Studio**: Live theme editor with CSS variable manipulation, dark/light mode preview, and exportable design token files.
+## Sprint AC -- Monitoring & Observability (244-248)
 
-18. **Phase 171 — Form Builder with Validation**: Visual form designer that generates React Hook Form + Zod schemas with conditional fields and multi-step wizards.
+41. **Custom KPI Dashboard** -- Define KPI cards (label, value source, format, trend). Generates a dashboard component with sparkline charts using Recharts (installed).
+42. **Alerting Rules Engine** -- Configure threshold alerts (metric > value for N minutes). Generates edge function with webhook/email notification dispatch.
+43. **Audit Trail Generator** -- Hooks into `upsertFile`/`deleteFile` to track who changed what. Generates audit log component with before/after diff display.
+44. **Click Heatmap Overlay** -- Generates a click tracking script that records coordinates and a heatmap visualization overlay component using canvas.
+45. **Budget/Cost Monitor** -- Configure API usage budgets. Generates a cost tracking dashboard component with budget alerts and usage charts.
 
-19. **Phase 172 — Chart/Dashboard Builder**: Drag-and-drop dashboard composer with Recharts widgets (bar, line, pie, area) bound to data sources.
+## Sprint AD -- Final Polish (249-253)
 
-20. **Phase 173 — Layout Grid System**: Visual CSS Grid and Flexbox editor with drag-to-resize areas, gap controls, and responsive breakpoint overrides.
-
----
-
-## Sprint O: Data & Integration (Phases 174–178)
-
-21. **Phase 174 — GraphQL Playground**: In-builder GraphQL query editor with schema introspection, auto-complete, and response visualization.
-
-22. **Phase 175 — CSV/JSON Import Wizard**: Upload data files and auto-generate database tables, seed scripts, and CRUD interfaces from the data shape.
-
-23. **Phase 176 — OAuth Provider Manager**: Visual configuration for Google, GitHub, Discord, and Apple OAuth with callback URL management and token refresh logic.
-
-24. **Phase 177 — Realtime Subscription Builder**: Visual tool for configuring Supabase Realtime channels with filters, presence tracking, and broadcast events.
-
-25. **Phase 178 — Data Migration Toolkit**: Schema diff tool between environments with forward/rollback SQL generation and dry-run previews.
-
----
-
-## Sprint P: Developer Experience (Phases 179–183)
-
-26. **Phase 179 — Interactive Tutorial Creator**: Build step-by-step guided tutorials within projects using highlight overlays and progressive disclosure.
-
-27. **Phase 180 — Code Playground / Scratchpad**: Isolated sandbox for experimenting with code snippets without affecting the main project, with instant preview.
-
-28. **Phase 181 — Custom Linting Rules**: Visual rule builder for project-specific ESLint rules with auto-fix actions and severity configuration.
-
-29. **Phase 182 — Dependency Graph Visualizer**: Interactive force-directed graph showing file imports/exports with click-to-navigate and circular dependency detection.
-
-30. **Phase 183 — Git Blame Timeline**: Line-by-line authorship view showing who changed what and when, with clickable links to the originating prompt/commit.
-
----
-
-## Sprint Q: Deployment & Hosting (Phases 184–188)
-
-31. **Phase 184 — Multi-Region Deploy**: Deploy to multiple geographic regions with latency-based routing configuration and health checks.
-
-32. **Phase 185 — Feature Flag System**: Toggle features on/off per environment or user segment with percentage rollouts and A/B assignment.
-
-33. **Phase 186 — Canary Deployment Manager**: Gradual traffic shifting between old and new versions with automatic rollback on error rate spikes.
-
-34. **Phase 187 — Static Site Generator Mode**: Export the project as a fully static site (SSG) with pre-rendered HTML for maximum performance.
-
-35. **Phase 188 — Docker Export**: Generate Dockerfile and docker-compose.yml for self-hosted deployment with nginx config and SSL setup.
+46. **Changelog Auto-Generator** -- Parses version history entries to generate a formatted changelog (Markdown or HTML) with semantic version bumps.
+47. **README Generator** -- Scans project files to auto-generate README.md with tech stack badges, setup instructions, file structure, and API documentation.
+48. **License Picker** -- Select from MIT, Apache 2.0, GPL 3.0, BSD. Fills in project name and year. Generates LICENSE file.
+49. **OpenAPI Spec Generator** -- Scans edge functions to generate OpenAPI 3.0 JSON spec with paths, parameters, and response schemas.
+50. **Project Health Score** -- Aggregates existing metrics (security audit score, perf score, test count, a11y score, code smell count) into a single composite dashboard with letter grade.
 
 ---
 
-## Sprint R: Monetization & Business (Phases 189–193)
+## Technical Implementation Details
 
-36. **Phase 189 — Stripe Subscription Builder**: Visual tool to configure pricing tables, checkout flows, and customer portal with generated webhook handlers.
-
-37. **Phase 190 — Paywall Component Generator**: Create gated content components with plan-based access control and upgrade prompts.
-
-38. **Phase 191 — Invoice PDF Generator**: Build customizable invoice templates with dynamic data binding and PDF export via jsPDF.
-
-39. **Phase 192 — Usage Metering Dashboard**: Track and display API usage, storage consumption, and compute hours with billing threshold alerts.
-
-40. **Phase 193 — Affiliate/Referral System**: Generate referral link tracking, reward tiers, and dashboard components for viral growth.
-
----
-
-## Sprint S: Mobile & Cross-Platform (Phases 194–198)
-
-41. **Phase 194 — Native App Wrapper (Capacitor)**: One-click Capacitor project export with app icon generation, splash screens, and platform configs for iOS/Android.
-
-42. **Phase 195 — Push Notification Designer**: Visual notification composer with scheduling, segmentation, and Capacitor Push Notifications integration.
-
-43. **Phase 196 — Offline-First Mode**: Service worker generation with IndexedDB sync queues, conflict resolution, and online/offline status indicators.
-
-44. **Phase 197 — Gesture Handler Builder**: Configure swipe, pinch, and long-press interactions for mobile with visual gesture mapping and Framer Motion presets.
-
-45. **Phase 198 — App Store Asset Generator**: Auto-generate App Store screenshots, feature graphics, and metadata descriptions from the running app.
-
----
-
-## Sprint T: AI & Automation (Phases 199–203)
-
-46. **Phase 199 — AI Design-to-Code (Screenshot)**: Upload a screenshot or mockup image and generate matching React/Tailwind components using vision AI.
-
-47. **Phase 200 — Autonomous Build Agent**: A fully hands-off mode where the AI builds an entire app from a single prompt, creating phases, executing them, testing, and self-correcting automatically.
-
-48. **Phase 201 — AI Performance Optimizer**: Analyzes bundle size, render cycles, and network waterfalls, then applies optimizations (lazy loading, memoization, code splitting) automatically.
-
-49. **Phase 202 — Natural Language Database Queries**: Type questions like "show me all users who signed up last week" and get live query results with auto-generated Supabase client code.
-
-50. **Phase 203 — AI App Cloner**: Paste any public website URL and the AI reverse-engineers the layout, components, and styling into a clean React/Tailwind project.
-
----
-
-## Technical Approach
-
-Each phase follows the established pattern:
-- A custom React hook (`useXxx.ts`) encapsulating all state and logic
-- A corresponding panel component (`XxxPanel.tsx`) for the UI
-- Integration into `AIAppBuilderWorkspace.tsx` via the panel manager
-- Implementation in batches of 10 phases (5 sprints of 2 each)
-
-## Implementation Order
-
-Sprints are ordered by user impact and dependency:
-
+### File Structure (per feature)
 ```text
-Sprint K (AI Intelligence)     -- Phases 154-158
-Sprint L (Real-Time)           -- Phases 159-163
-Sprint M (Testing & Quality)   -- Phases 164-168
-Sprint N (Advanced UI)         -- Phases 169-173
-Sprint O (Data & Integration)  -- Phases 174-178
-Sprint P (Developer Experience)-- Phases 179-183
-Sprint Q (Deployment)          -- Phases 184-188
-Sprint R (Monetization)        -- Phases 189-193
-Sprint S (Mobile)              -- Phases 194-198
-Sprint T (AI & Automation)     -- Phases 199-203
+src/hooks/use[Feature].ts          -- Hook with state + real logic
+src/components/ai-builder/[Feature]Panel.tsx  -- UI panel
 ```
 
-Each sprint produces 5 hooks + 5 panels. Total: 50 hooks, 50 panels, integrated into the workspace.
+### Workspace Integration (AIAppBuilderWorkspace.tsx)
+For each feature:
+1. Import hook (eager -- hooks are lightweight)
+2. Add `const [showX, setShowX] = useState(false)`
+3. Instantiate hook: `const x = useX()`
+4. Add panel render with conditional: `{showX && <XPanel ... onClose={() => setShowX(false)} />}`
+5. Wire `onInsertCode` to: `(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }`
 
+### Lazy Loading (lazyPanels.ts)
+All 50 panels added via the existing `lz()` helper pattern to keep bundle size manageable.
+
+### Command Palette Registration
+All 50 features added to `commandActions` array with descriptive labels, icons, and keyword aliases for discoverability via Cmd+K.
+
+### "Fully Operational" Guarantees
+- Hooks that scan files (Tailwind Sorter, README Generator, OpenAPI Generator, Health Score) receive `project.files` and produce real results
+- Hooks that generate code (Table Generator, Kanban Builder, etc.) output complete, copy-paste-ready React components using installed dependencies
+- Hooks that produce migrations (Full-Text Search, Tag System) output valid Supabase SQL
+- All panels wire `onInsertCode` to write generated output into the active file
+- Panels that need project context (file list, config) receive it as props from the workspace
+
+### Implementation Order
+10 batches of 5, each batch in a single message:
+1. Sprint U (204-208) -- 5 hooks + 5 panels + workspace wiring
+2. Sprint V (209-213)
+3. Sprint W (214-218)
+4. Sprint X (219-223)
+5. Sprint Y (224-228)
+6. Sprint Z (229-233)
+7. Sprint AA (234-238)
+8. Sprint AB (239-243)
+9. Sprint AC (244-248)
+10. Sprint AD (249-253)
+
+Each batch updates `lazyPanels.ts`, `AIAppBuilderWorkspace.tsx`, and the `commandActions` array.
