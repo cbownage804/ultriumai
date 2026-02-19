@@ -228,6 +228,16 @@ import { useCSPGenerator } from '@/hooks/useCSPGenerator';
 import { useGDPRCompliance } from '@/hooks/useGDPRCompliance';
 import { useRateLimiter } from '@/hooks/useRateLimiter';
 import { useSecretRotation } from '@/hooks/useSecretRotation';
+import { useCLICompanion } from '@/hooks/useCLICompanion';
+import { useGitHubActionsGenerator } from '@/hooks/useGitHubActionsGenerator';
+import { useSlackDiscordBot } from '@/hooks/useSlackDiscordBot';
+import { useWhiteLabelExport } from '@/hooks/useWhiteLabelExport';
+import { usePluginSDK } from '@/hooks/usePluginSDK';
+import { CLICompanionPanel } from './CLICompanionPanel';
+import { GitHubActionsPanel } from './GitHubActionsPanel';
+import { SlackDiscordPanel } from './SlackDiscordPanel';
+import { WhiteLabelPanel } from './WhiteLabelPanel';
+import { PluginSDKPanel } from './PluginSDKPanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -562,6 +572,16 @@ export function AIAppBuilderWorkspace() {
   const [showGDPR, setShowGDPR] = useState(false);
   const [showRateLimiter, setShowRateLimiter] = useState(false);
   const [showSecretRotation, setShowSecretRotation] = useState(false);
+  const cliCompanion = useCLICompanion();
+  const githubActionsGen = useGitHubActionsGenerator();
+  const slackDiscordBot = useSlackDiscordBot();
+  const whiteLabelExport = useWhiteLabelExport();
+  const pluginSDK = usePluginSDK();
+  const [showCLICompanion, setShowCLICompanion] = useState(false);
+  const [showGHActions, setShowGHActions] = useState(false);
+  const [showSlackDiscord, setShowSlackDiscord] = useState(false);
+  const [showWhiteLabel, setShowWhiteLabel] = useState(false);
+  const [showPluginSDK, setShowPluginSDK] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2314,6 +2334,11 @@ export function AIAppBuilderWorkspace() {
       <GDPRPanel open={showGDPR} onClose={() => setShowGDPR(false)} components={gdprCompliance.components} companyName={gdprCompliance.companyName} contactEmail={gdprCompliance.contactEmail} onSetCompanyName={gdprCompliance.setCompanyName} onSetContactEmail={gdprCompliance.setContactEmail} onGenerateAll={gdprCompliance.generateAll} onInsertCode={(code, name) => upsertFile(`src/components/${name}`, code)} />
       <RateLimiterPanel open={showRateLimiter} onClose={() => setShowRateLimiter(false)} rules={rateLimiter.rules} onAdd={rateLimiter.addRule} onUpdate={rateLimiter.updateRule} onRemove={rateLimiter.removeRule} onToggle={rateLimiter.toggleRule} onGenerateMiddleware={rateLimiter.generateMiddleware} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />
       <SecretRotationPanel open={showSecretRotation} onClose={() => setShowSecretRotation(false)} secrets={secretRotation.secrets} onAdd={secretRotation.addSecret} onMarkRotated={secretRotation.markRotated} onRemove={secretRotation.removeSecret} expiredCount={secretRotation.getExpiredSecrets().length} warningCount={secretRotation.getWarningSecrets().length} />
+      {showCLICompanion && <CLICompanionPanel config={cliCompanion.config} setConfig={cliCompanion.setConfig} files={project.files} onGenerateBundle={cliCompanion.generateProjectBundle} onAddScript={cliCompanion.addScript} onRemoveScript={cliCompanion.removeScript} onClose={() => setShowCLICompanion(false)} />}
+      {showGHActions && <GitHubActionsPanel workflows={githubActionsGen.workflows} onAddWorkflow={githubActionsGen.addWorkflow} onRemoveWorkflow={githubActionsGen.removeWorkflow} onToggleStep={githubActionsGen.toggleStep} onGenerateYAML={githubActionsGen.generateYAML} onClose={() => setShowGHActions(false)} />}
+      {showSlackDiscord && <SlackDiscordPanel bots={slackDiscordBot.bots} logs={slackDiscordBot.logs} eventLabels={slackDiscordBot.EVENT_LABELS} onAddBot={slackDiscordBot.addBot} onRemoveBot={slackDiscordBot.removeBot} onToggleEvent={slackDiscordBot.toggleEvent} onGenerateCode={slackDiscordBot.generateEdgeFunctionCode} onTestNotification={slackDiscordBot.sendTestNotification} onClose={() => setShowSlackDiscord(false)} />}
+      {showWhiteLabel && <WhiteLabelPanel config={whiteLabelExport.config} setConfig={whiteLabelExport.setConfig} files={project.files} onApply={whiteLabelExport.applyWhiteLabel} onPreview={whiteLabelExport.previewChanges} onGenerateCSS={whiteLabelExport.generateBrandCSS} onClose={() => setShowWhiteLabel(false)} />}
+      {showPluginSDK && <PluginSDKPanel plugins={pluginSDK.plugins} templates={pluginSDK.templates} activeTemplate={pluginSDK.activeTemplate} onSetActiveTemplate={pluginSDK.setActiveTemplate} onCreatePlugin={pluginSDK.createPlugin} onDeletePlugin={pluginSDK.deletePlugin} onPublishPlugin={pluginSDK.publishPlugin} onGenerateTypes={pluginSDK.generateSDKTypes} onClose={() => setShowPluginSDK(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
