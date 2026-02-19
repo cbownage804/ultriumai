@@ -238,6 +238,16 @@ import { GitHubActionsPanel } from './GitHubActionsPanel';
 import { SlackDiscordPanel } from './SlackDiscordPanel';
 import { WhiteLabelPanel } from './WhiteLabelPanel';
 import { PluginSDKPanel } from './PluginSDKPanel';
+import { useAIRefactoring } from '@/hooks/useAIRefactoring';
+import { useNLToRegex } from '@/hooks/useNLToRegex';
+import { useAICommitMessages } from '@/hooks/useAICommitMessages';
+import { useSmartAutoImport } from '@/hooks/useSmartAutoImport';
+import { useAIDocWriter } from '@/hooks/useAIDocWriter';
+import { AIRefactoringPanel } from './AIRefactoringPanel';
+import { NLRegexPanel } from './NLRegexPanel';
+import { CommitMessagePanel } from './CommitMessagePanel';
+import { AutoImportPanel } from './AutoImportPanel';
+import { AIDocWriterPanel } from './AIDocWriterPanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -582,6 +592,17 @@ export function AIAppBuilderWorkspace() {
   const [showSlackDiscord, setShowSlackDiscord] = useState(false);
   const [showWhiteLabel, setShowWhiteLabel] = useState(false);
   const [showPluginSDK, setShowPluginSDK] = useState(false);
+  // Sprint K: AI Intelligence (Phases 154-158)
+  const aiRefactoring = useAIRefactoring();
+  const nlToRegex = useNLToRegex();
+  const aiCommitMessages = useAICommitMessages();
+  const smartAutoImport = useSmartAutoImport();
+  const aiDocWriter = useAIDocWriter();
+  const [showRefactoring, setShowRefactoring] = useState(false);
+  const [showNLRegex, setShowNLRegex] = useState(false);
+  const [showCommitMsg, setShowCommitMsg] = useState(false);
+  const [showAutoImport, setShowAutoImport] = useState(false);
+  const [showDocWriter, setShowDocWriter] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2339,6 +2360,11 @@ export function AIAppBuilderWorkspace() {
       {showSlackDiscord && <SlackDiscordPanel bots={slackDiscordBot.bots} logs={slackDiscordBot.logs} eventLabels={slackDiscordBot.EVENT_LABELS} onAddBot={slackDiscordBot.addBot} onRemoveBot={slackDiscordBot.removeBot} onToggleEvent={slackDiscordBot.toggleEvent} onGenerateCode={slackDiscordBot.generateEdgeFunctionCode} onTestNotification={slackDiscordBot.sendTestNotification} onClose={() => setShowSlackDiscord(false)} />}
       {showWhiteLabel && <WhiteLabelPanel config={whiteLabelExport.config} setConfig={whiteLabelExport.setConfig} files={project.files} onApply={whiteLabelExport.applyWhiteLabel} onPreview={whiteLabelExport.previewChanges} onGenerateCSS={whiteLabelExport.generateBrandCSS} onClose={() => setShowWhiteLabel(false)} />}
       {showPluginSDK && <PluginSDKPanel plugins={pluginSDK.plugins} templates={pluginSDK.templates} activeTemplate={pluginSDK.activeTemplate} onSetActiveTemplate={pluginSDK.setActiveTemplate} onCreatePlugin={pluginSDK.createPlugin} onDeletePlugin={pluginSDK.deletePlugin} onPublishPlugin={pluginSDK.publishPlugin} onGenerateTypes={pluginSDK.generateSDKTypes} onClose={() => setShowPluginSDK(false)} />}
+      {showRefactoring && <AIRefactoringPanel suggestions={aiRefactoring.suggestions} isAnalyzing={aiRefactoring.isAnalyzing} stats={aiRefactoring.stats} onAnalyze={() => aiRefactoring.analyzeProject(project.files)} onApplyRefactor={(s) => { sendMessage(s.suggestedPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); aiRefactoring.markApplied(s.id); }} onDismiss={aiRefactoring.dismissSuggestion} onClearAll={aiRefactoring.clearAll} onClose={() => setShowRefactoring(false)} />}
+      {showNLRegex && <NLRegexPanel entries={nlToRegex.entries} currentPattern={nlToRegex.currentPattern} currentFlags={nlToRegex.currentFlags} testInput={nlToRegex.testInput} commonPatterns={nlToRegex.commonPatterns} onSetPattern={nlToRegex.setCurrentPattern} onSetFlags={nlToRegex.setCurrentFlags} onSetTestInput={nlToRegex.setTestInput} onAddEntry={nlToRegex.addEntry} onQuickMatch={nlToRegex.quickMatch} onSendToAI={(p) => sendMessage(p, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} onClose={() => setShowNLRegex(false)} />}
+      {showCommitMsg && <CommitMessagePanel messages={aiCommitMessages.messages} diffs={aiCommitMessages.currentDiffs} typeLabels={aiCommitMessages.typeLabels} onGenerate={() => { const diffs = aiCommitMessages.computeDiffs(previousFiles || [], project.files); aiCommitMessages.generateLocal(diffs); }} onGenerateAI={(p) => sendMessage(p, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} onClear={aiCommitMessages.clearHistory} onClose={() => setShowCommitMsg(false)} />}
+      {showAutoImport && <AutoImportPanel suggestions={smartAutoImport.suggestions} onApply={(s) => { const file = project.files.find(f => f.path === s.filePath); if (file) { const updated = smartAutoImport.applyImport(file.content, s.importStatement); upsertFile(s.filePath, updated); } }} onAnalyze={() => { const af = activeFile ? project.files.find(f => f.path === activeFile.path) : null; if (af) smartAutoImport.analyzeFile(af.content, af.path, project.files); }} onClear={smartAutoImport.clearSuggestions} onClose={() => setShowAutoImport(false)} />}
+      {showDocWriter && <AIDocWriterPanel results={aiDocWriter.results} verbosity={aiDocWriter.verbosity} onSetVerbosity={aiDocWriter.setVerbosity} onGenerateJSDoc={() => { const af = activeFile ? project.files.find(f => f.path === activeFile.path) : null; if (af) sendMessage(aiDocWriter.buildJSDocPrompt(af, aiDocWriter.verbosity), project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onGenerateReadme={() => sendMessage(aiDocWriter.buildReadmePrompt(project.files, project.name, aiDocWriter.verbosity), project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} onGenerateAPIDoc={() => { const af = activeFile ? project.files.find(f => f.path === activeFile.path) : null; if (af) sendMessage(aiDocWriter.buildAPIDocPrompt(af, aiDocWriter.verbosity), project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onGenerateComponentDoc={() => { const af = activeFile ? project.files.find(f => f.path === activeFile.path) : null; if (af) sendMessage(aiDocWriter.buildComponentDocPrompt(af, aiDocWriter.verbosity), project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onClose={() => setShowDocWriter(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
