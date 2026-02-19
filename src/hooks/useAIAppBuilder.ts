@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { ProjectFile } from './useProjectFileSystem';
 import { useStreamingPreview } from './useStreamingPreview';
 import { useUserCredits } from './useUserCredits';
+import { useContextBudget } from './useContextBudget';
 import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory, buildErrorDiagnosisContext, analyzeConversationComplexity, generateProactiveSuggestions, compressConversationHistory, detectCommunicationStyle, extractUserPreferences, buildPreferencesContext, detectWorkflowIntent, buildEnhancedErrorContext, buildVisualIntelligenceContext, detectWebSearchIntent, buildWebSearchContext, detectURLCloneIntent, buildFileManifest, calculateContextBudget, type ContextBudgetInfo } from '@/components/ai-builder/SupabaseConversational';
 import { parseMigrationBlocks, stripMigrationBlocks, type MigrationBlock } from '@/components/ai-builder/MigrationApprovalCard';
 import { parseEdgeFunctionBlocks, stripEdgeFunctionBlocks, type EdgeFunctionBlock } from '@/components/ai-builder/EdgeFunctionCard';
@@ -679,6 +680,7 @@ export function useAIAppBuilder() {
   const abortRef = useRef<AbortController | null>(null);
   const streaming = useStreamingPreview();
   const { deductCredits, totalRemaining } = useUserCredits();
+  const { trimForContext } = useContextBudget({ maxChars: 120_000 });
 
   const sendMessage = useCallback(async (
     input: string,
