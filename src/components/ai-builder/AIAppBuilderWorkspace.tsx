@@ -100,6 +100,7 @@ import { SetupWizard } from './SetupWizard';
 import { OneClickDeploy } from './OneClickDeploy';
 import { EditHistoryTimeline } from './EditHistoryTimeline';
 import { detectSupabaseIntents, buildSupabaseContext, buildErrorDiagnosisContext, analyzeConversationComplexity } from './SupabaseConversational';
+import { buildAuthTemplate } from './authTemplates';
 import { MobilePWAInstall } from './MobilePWAInstall';
 import { BugReportModal } from '@/components/help/BugReportModal';
 import { EnhancedCommandPalette, type CommandAction } from './EnhancedCommandPalette';
@@ -951,9 +952,26 @@ export function AIAppBuilderWorkspace() {
   }, [pushUndo, project.files, setFiles, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel]);
 
   const handleGenerateAuthPages = useCallback((providers: string[]) => {
-    const prompt = `Generate authentication pages for my app with the following providers: ${providers.join(', ')}. Include login, signup, and password reset pages. Use the connected Supabase auth.`;
-    sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel);
-  }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel]);
+    const isReact = project.files.some(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx'));
+    const template = buildAuthTemplate(providers, isReact);
+
+    // Inject auth template files into the project
+    pushUndo('Before auth template', project.files);
+    const updatedFiles = [...project.files];
+    for (const tFile of template.files) {
+      const existing = updatedFiles.findIndex(f => f.path === tFile.path);
+      if (existing >= 0) {
+        updatedFiles[existing] = { ...updatedFiles[existing], content: tFile.content };
+      } else {
+        updatedFiles.push({ path: tFile.path, content: tFile.content, language: tFile.path.endsWith('.tsx') ? 'typescript' : 'javascript' });
+      }
+    }
+    setFiles(updatedFiles);
+
+    // Send message with auth context so the AI knows auth is wired
+    const prompt = `I've injected a complete authentication system with ${providers.join(', ')} providers. ${template.aiContext}\n\nThe auth files are: ${template.files.map(f => f.path).join(', ')}. Please integrate these into the existing app — register the auth routes in the router, wrap protected pages, and add a logout button to the navigation. Preserve all existing functionality.`;
+    sendMessage(prompt, updatedFiles, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel);
+  }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, pushUndo, setFiles]);
 
   const handleCreateEdgeFunction = useCallback((name: string) => {
     const template = `// Deno edge function: ${name}\nimport { serve } from "https://deno.land/std@0.168.0/http/server.ts";\n\nconst corsHeaders = {\n  "Access-Control-Allow-Origin": "*",\n  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",\n};\n\nserve(async (req) => {\n  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });\n\n  try {\n    const body = await req.json();\n    return new Response(JSON.stringify({ message: "Hello from ${name}", data: body }), {\n      headers: { ...corsHeaders, "Content-Type": "application/json" },\n    });\n  } catch (e) {\n    return new Response(JSON.stringify({ error: e.message }), {\n      status: 500,\n      headers: { ...corsHeaders, "Content-Type": "application/json" },\n    });\n  }\n});`;
