@@ -41,7 +41,7 @@ This is a phased roadmap to bring your AI App Builder to full parity with Lovabl
 
 ---
 
-## Phase 1: Bulletproof Preview & Error Recovery
+## Phase 1: Bulletproof Preview & Error Recovery ✅ DONE
 **Goal:** Make the preview never crash and automatically recover from bad AI output.
 
 ### 1A. Sandboxed Preview with Error Boundary
@@ -126,7 +126,7 @@ This is a phased roadmap to bring your AI App Builder to full parity with Lovabl
 
 ---
 
-## Phase 4: Real Error Capture from Preview
+## Phase 4: Real Error Capture from Preview ✅ DONE
 **Goal:** Capture console errors, network failures, and rendering issues from the preview iframe reliably.
 
 ### 4A. Injected Console Interceptor
