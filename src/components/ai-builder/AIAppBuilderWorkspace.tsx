@@ -312,6 +312,17 @@ import { FeatureFlagsPanel } from './FeatureFlagsPanel';
 import { CanaryDeployPanel } from './CanaryDeployPanel';
 import { SSGPanel } from './SSGPanel';
 import { DockerExportPanel } from './DockerExportPanel';
+// Sprint R: Monetization & Business (Phases 189-193)
+import { useSubscriptionManager } from '@/hooks/useSubscriptionManager';
+import { useInvoiceGenerator } from '@/hooks/useInvoiceGenerator';
+import { useUsageMetering } from '@/hooks/useUsageMetering';
+import { useAffiliateTracking } from '@/hooks/useAffiliateTracking';
+import { useRevenueDashboard } from '@/hooks/useRevenueDashboard';
+import { SubscriptionManagerPanel } from './SubscriptionManagerPanel';
+import { InvoiceGeneratorPanel } from './InvoiceGeneratorPanel';
+import { UsageMeteringPanel } from './UsageMeteringPanel';
+import { AffiliateTrackingPanel } from './AffiliateTrackingPanel';
+import { RevenueDashboardPanel } from './RevenueDashboardPanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -733,6 +744,17 @@ export function AIAppBuilderWorkspace() {
   const [showCanaryDeploy, setShowCanaryDeploy] = useState(false);
   const [showSSG, setShowSSG] = useState(false);
   const [showDockerExport, setShowDockerExport] = useState(false);
+  // Sprint R: Monetization & Business (Phases 189-193)
+  const subscriptionMgr = useSubscriptionManager();
+  const invoiceGen = useInvoiceGenerator();
+  const usageMetering = useUsageMetering();
+  const affiliateTracking = useAffiliateTracking();
+  const revenueDashboard = useRevenueDashboard();
+  const [showSubscriptions, setShowSubscriptions] = useState(false);
+  const [showInvoices, setShowInvoices] = useState(false);
+  const [showUsageMetering, setShowUsageMetering] = useState(false);
+  const [showAffiliates, setShowAffiliates] = useState(false);
+  const [showRevenue, setShowRevenue] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2527,6 +2549,12 @@ export function AIAppBuilderWorkspace() {
       {showCanaryDeploy && <CanaryDeployPanel deployments={canaryDeploy.deployments} metrics={canaryDeploy.metrics} activeDeploymentId={canaryDeploy.activeDeploymentId} setActiveDeploymentId={canaryDeploy.setActiveDeploymentId} getActiveDeployment={canaryDeploy.getActiveDeployment} createDeployment={canaryDeploy.createDeployment} updateDeployment={canaryDeploy.updateDeployment} startRollout={canaryDeploy.startRollout} advanceCanary={canaryDeploy.advanceCanary} rollback={canaryDeploy.rollback} shouldAutoRollback={canaryDeploy.shouldAutoRollback} onClose={() => setShowCanaryDeploy(false)} />}
       {showSSG && <SSGPanel pages={ssgGenerator.pages} config={ssgGenerator.config} setConfig={ssgGenerator.setConfig} isGenerating={ssgGenerator.isGenerating} addPage={ssgGenerator.addPage} updatePage={ssgGenerator.updatePage} removePage={ssgGenerator.removePage} generateAll={ssgGenerator.generateAll} generateSitemap={ssgGenerator.generateSitemap} generateBuildScript={ssgGenerator.generateBuildScript} getStats={ssgGenerator.getStats} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowSSG(false)} />}
       {showDockerExport && <DockerExportPanel config={dockerExport.config} setConfig={dockerExport.setConfig} services={dockerExport.services} addEnvVar={dockerExport.addEnvVar} removeEnvVar={dockerExport.removeEnvVar} addService={dockerExport.addService} removeService={dockerExport.removeService} generateDockerfile={dockerExport.generateDockerfile} generateDockerCompose={dockerExport.generateDockerCompose} generateNginxConf={dockerExport.generateNginxConf} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowDockerExport(false)} />}
+      {/* Sprint R: Monetization & Business */}
+      {showSubscriptions && <SubscriptionManagerPanel open={showSubscriptions} onClose={() => setShowSubscriptions(false)} plans={subscriptionMgr.plans} activePlanId={subscriptionMgr.activePlanId} setActivePlanId={subscriptionMgr.setActivePlanId} getActivePlan={subscriptionMgr.getActivePlan} stats={subscriptionMgr.getStats()} createPlan={subscriptionMgr.createPlan} updatePlan={subscriptionMgr.updatePlan} removePlan={subscriptionMgr.removePlan} addFeature={subscriptionMgr.addFeature} removeFeature={subscriptionMgr.removeFeature} generatePricingPage={subscriptionMgr.generatePricingPage} generateWebhookHandler={subscriptionMgr.generateWebhookHandler} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
+      {showInvoices && <InvoiceGeneratorPanel open={showInvoices} onClose={() => setShowInvoices(false)} invoices={invoiceGen.invoices} activeInvoiceId={invoiceGen.activeInvoiceId} setActiveInvoiceId={invoiceGen.setActiveInvoiceId} getActiveInvoice={invoiceGen.getActiveInvoice} createInvoice={invoiceGen.createInvoice} updateInvoice={invoiceGen.updateInvoice} removeInvoice={invoiceGen.removeInvoice} addItem={invoiceGen.addItem} removeItem={invoiceGen.removeItem} calculateTotal={invoiceGen.calculateTotal} generateInvoiceComponent={invoiceGen.generateInvoiceComponent} generatePDFExport={invoiceGen.generatePDFExport} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
+      {showUsageMetering && <UsageMeteringPanel open={showUsageMetering} onClose={() => setShowUsageMetering(false)} meters={usageMetering.meters} activeMeterId={usageMetering.activeMeterId} setActiveMeterId={usageMetering.setActiveMeterId} getActiveMeter={usageMetering.getActiveMeter} UNIT_PRESETS={usageMetering.UNIT_PRESETS} createMeter={usageMetering.createMeter} updateMeter={usageMetering.updateMeter} removeMeter={usageMetering.removeMeter} recordUsage={usageMetering.recordUsage} getMeterUsagePercent={usageMetering.getMeterUsagePercent} calculateOverage={usageMetering.calculateOverage} generateMeteringMiddleware={usageMetering.generateMeteringMiddleware} generateUsageDashboard={usageMetering.generateUsageDashboard} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
+      {showAffiliates && <AffiliateTrackingPanel open={showAffiliates} onClose={() => setShowAffiliates(false)} affiliates={affiliateTracking.affiliates} referrals={affiliateTracking.referrals} activeAffiliateId={affiliateTracking.activeAffiliateId} setActiveAffiliateId={affiliateTracking.setActiveAffiliateId} getActiveAffiliate={affiliateTracking.getActiveAffiliate} defaultCommission={affiliateTracking.defaultCommission} setDefaultCommission={affiliateTracking.setDefaultCommission} stats={affiliateTracking.getStats()} createAffiliate={affiliateTracking.createAffiliate} updateAffiliate={affiliateTracking.updateAffiliate} removeAffiliate={affiliateTracking.removeAffiliate} addReferral={affiliateTracking.addReferral} generateTrackingScript={affiliateTracking.generateTrackingScript} generateAffiliateDashboard={affiliateTracking.generateAffiliateDashboard} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
+      {showRevenue && <RevenueDashboardPanel open={showRevenue} onClose={() => setShowRevenue(false)} entries={revenueDashboard.entries} dateRange={revenueDashboard.dateRange} setDateRange={revenueDashboard.setDateRange} metrics={revenueDashboard.getMetrics()} revenueBySource={revenueDashboard.getRevenueBySource()} dailyRevenue={revenueDashboard.getDailyRevenue()} seedDemoData={revenueDashboard.seedDemoData} generateDashboardComponent={revenueDashboard.generateDashboardComponent} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
