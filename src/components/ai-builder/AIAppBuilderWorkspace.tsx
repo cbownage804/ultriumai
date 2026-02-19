@@ -223,6 +223,8 @@ import {
   GestureBuilderPanel, AppStoreAssetsPanel,
   CodeTranslatorPanel, SmartScaffoldingPanel, WorkflowAutomationPanel,
   PerfOptimizerPanel, SecurityAuditorPanel,
+  StateMachinePanel, DataValidationPanel, CacheStrategyPanel,
+  ReactiveStorePanel, DataMigrationPanel,
   DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
   EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
   BuildAnalyticsPanel as BuildAnalyticsPanelLazy,
