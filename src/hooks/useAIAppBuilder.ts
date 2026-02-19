@@ -1503,6 +1503,32 @@ export function useAIAppBuilder() {
 
         // All retries failed or not retryable — use smart error classifier
         const classified = classifyError(resp.status, errMsg);
+
+        // ── Payload too large: trigger phase planner fallback instead of showing error ──
+        if (classified.category === 'payload_too_large') {
+          // Find the original user prompt from the last user message
+          const lastUserContent = apiMessages[apiMessages.length - 1]?.content;
+          const originalPrompt = typeof lastUserContent === 'string'
+            ? lastUserContent
+            : Array.isArray(lastUserContent)
+            ? lastUserContent.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('\n')
+            : input;
+          window.dispatchEvent(new CustomEvent('phase-planner-fallback', { detail: { prompt: originalPrompt } }));
+          setMessages(prev => [
+            ...prev,
+            {
+              id: crypto.randomUUID(), role: 'assistant' as const,
+              content: `🚧 **This project is too large for a single request.** I'm breaking it into phases so we can build it step by step.`,
+              timestamp: new Date(),
+            },
+          ]);
+          setIsGenerating(false);
+          setThinkingPhase(null);
+          clearTimeout(phaseTimer1);
+          clearTimeout(phaseTimer2);
+          return;
+        }
+
         if (classified.category === 'credits') {
           toast.error(`${classified.userMessage} ${classified.suggestion}`, {
             duration: 8000,

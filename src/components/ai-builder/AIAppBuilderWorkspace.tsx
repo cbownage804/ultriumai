@@ -1324,11 +1324,12 @@ export function AIAppBuilderWorkspace() {
     // Phase planner: intercept large prompts and decompose into phases
     const plan = phasePlanner.analyzePrompt(input);
     if (plan) {
-      const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** — ${p.description}`).join('\n');
+      const totalCredits = plan.phases.reduce((sum, p) => sum + p.estimatedCredits, 0);
+      const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** (~${p.estimatedCredits} credits) — ${p.description}`).join('\n');
       const planMessage = {
         id: crypto.randomUUID(),
         role: 'assistant' as const,
-        content: `🚧 **This is a large project!** I've broken it into ${plan.phases.length} phases to save credits and ensure quality:\n\n${phaseList}\n\nClick **"Start Phase 1"** below to begin. Each phase builds on the last, and you can skip or cancel at any time.`,
+        content: `🚧 **This is a large project!** I've broken it into ${plan.phases.length} phases (~${totalCredits} credits total):\n\n${phaseList}\n\nClick **"Start Phase 1"** below to begin. Each phase builds on the last, and you can skip or cancel at any time.`,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'user', content: input, timestamp: new Date() }, planMessage]);
@@ -1737,6 +1738,30 @@ export function AIAppBuilderWorkspace() {
       return () => clearTimeout(timer);
     }
   }, [isGenerating, phasePlanner.activePlan?.autoAdvance, phasePlanner.activePlan?.currentPhaseIndex, phasePlanner.isComplete, handlePhaseAdvance]);
+
+  // Listen for payload_too_large fallback → force-trigger phase planner
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const prompt = (e as CustomEvent).detail?.prompt;
+      if (!prompt) return;
+      const plan = phasePlanner.forceAnalyzePrompt(prompt);
+      if (plan) {
+        const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** (~${p.estimatedCredits} credits) — ${p.description}`).join('\n');
+        const totalCredits = plan.phases.reduce((sum, p) => sum + p.estimatedCredits, 0);
+        setMessages(prev => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: 'assistant' as const,
+            content: `📋 **Phase Plan** (${plan.phases.length} phases, ~${totalCredits} credits total):\n\n${phaseList}\n\nClick **"Start Phase 1"** below to begin.`,
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    };
+    window.addEventListener('phase-planner-fallback', handler);
+    return () => window.removeEventListener('phase-planner-fallback', handler);
+  }, [phasePlanner.forceAnalyzePrompt, setMessages]);
 
   const handleLoadProject = useCallback(async (projectId: string) => {
     const loaded = await loadProject(projectId);
