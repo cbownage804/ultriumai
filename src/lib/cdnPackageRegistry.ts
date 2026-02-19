@@ -36,6 +36,11 @@ export const DEFAULT_PACKAGES: CDNPackageEntry[] = [
   { name: 'uuid', version: '11.0.5', cdnUrl: `${ESM_SH}/uuid@11.0.5` },
   { name: 'lodash-es', version: '4.17.21', cdnUrl: `${ESM_SH}/lodash-es@4.17.21` },
   { name: 'dayjs', version: '1.11.13', cdnUrl: `${ESM_SH}/dayjs@1.11.13` },
+  // Phase 74: Commonly used utility packages for cn() pattern
+  { name: '@radix-ui/react-slot', version: '1.1.0', cdnUrl: `${ESM_SH}/@radix-ui/react-slot@1.1.0?external=react`, peerDeps: ['react'] },
+  { name: '@radix-ui/react-icons', version: '1.3.2', cdnUrl: `${ESM_SH}/@radix-ui/react-icons@1.3.2?external=react`, peerDeps: ['react'] },
+  { name: 'react-hot-toast', version: '2.4.1', cdnUrl: `${ESM_SH}/react-hot-toast@2.4.1?external=react,react-dom`, peerDeps: ['react', 'react-dom'] },
+  { name: 'cmdk', version: '1.0.0', cdnUrl: `${ESM_SH}/cmdk@1.0.0?external=react,react-dom`, peerDeps: ['react', 'react-dom'] },
 ];
 
 /** Build a lookup map from package name to CDN entry */

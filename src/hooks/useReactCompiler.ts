@@ -73,10 +73,49 @@ export function useReactCompiler() {
    */
   const stripTypeAnnotations = useCallback((code: string): string => {
     let result = code;
-    // Remove interface/type/enum declarations (multi-line)
-    result = result.replace(/^(?:export\s+)?(?:interface|type|enum)\s+\w+[\s\S]*?^\}/gm, '');
-    // Remove single-line type aliases
-    result = result.replace(/^(?:export\s+)?type\s+\w+\s*=\s*[^;]+;/gm, '');
+
+    // Phase 73: Bracket-depth counter for interface/type/enum removal
+    // Prevents accidentally stripping function bodies that follow an interface
+    const lines = result.split('\n');
+    const outputLines: string[] = [];
+    let stripping = false;
+    let braceDepth = 0;
+
+    for (const line of lines) {
+      if (!stripping) {
+        // Detect start of interface/type-with-body/enum declaration
+        if (/^(?:export\s+)?(?:interface|enum)\s+\w+/.test(line.trim()) || 
+            /^(?:export\s+)?type\s+\w+\s*=\s*\{/.test(line.trim())) {
+          stripping = true;
+          braceDepth = 0;
+          // Count braces on this line
+          for (const ch of line) {
+            if (ch === '{') braceDepth++;
+            if (ch === '}') braceDepth--;
+          }
+          // If braces balanced on this line, it's a single-line declaration
+          if (braceDepth <= 0) {
+            stripping = false;
+          }
+          continue; // skip this line
+        }
+        outputLines.push(line);
+      } else {
+        // Inside a multi-line type declaration — count braces
+        for (const ch of line) {
+          if (ch === '{') braceDepth++;
+          if (ch === '}') braceDepth--;
+        }
+        if (braceDepth <= 0) {
+          stripping = false;
+        }
+        // skip this line (part of type declaration)
+      }
+    }
+    result = outputLines.join('\n');
+
+    // Remove single-line type aliases: type X = string | number;
+    result = result.replace(/^(?:export\s+)?type\s+\w+\s*=\s*[^;{]+;/gm, '');
     // Remove : Type annotations from parameters and variables (simplified)
     result = result.replace(/: (?:React\.(?:FC|ReactNode|MouseEvent|ChangeEvent|FormEvent|CSSProperties|RefObject)(?:<[^>]+>)?|string|number|boolean|void|any|null|undefined|never|unknown|object|Record<[^>]+>|Array<[^>]+>|\w+(?:\[\])?(?:\s*\|\s*\w+(?:\[\])?)*)/g, '');
     // Remove generic type parameters from function/component declarations
@@ -167,6 +206,19 @@ export function useReactCompiler() {
     code = code.replace(/^import\s+['"][^'"]+['"];?\s*$/gm, '');
 
     // Step 3: Transform exports into module registration
+
+    // Phase 71: Handle anonymous default exports FIRST
+    // export default () => ... → const __DefaultExport = () => ...
+    code = code.replace(
+      /^export\s+default\s+((?:\([^)]*\)|[a-zA-Z_$]\w*)\s*=>)/gm,
+      'const __DefaultExport = $1'
+    );
+    // export default function( → const __DefaultExport = function(
+    code = code.replace(
+      /^export\s+default\s+function\s*\(/gm,
+      'const __DefaultExport = function('
+    );
+
     // export default X → __modules['path'].default = X;
     code = code.replace(
       /^export\s+default\s+(?:function\s+(\w+)|class\s+(\w+)|(\w+))/gm,
@@ -192,8 +244,11 @@ export function useReactCompiler() {
     );
 
     // Build module registration
+    // Phase 71: Check for anonymous default export (__DefaultExport) or named default
     const defaultMatch = file.content.match(/export\s+default\s+(?:function\s+|class\s+)?(\w+)/);
-    const defaultExport = defaultMatch?.[1];
+    const hasAnonymousDefault = /export\s+default\s+(?:\([^)]*\)|[a-zA-Z_$]\w*)\s*=>/.test(file.content) ||
+                                 /export\s+default\s+function\s*\(/.test(file.content);
+    const defaultExport = hasAnonymousDefault ? '__DefaultExport' : defaultMatch?.[1];
     const registration: string[] = [];
     if (defaultExport) {
       registration.push(`__modules['${file.path}'] = __modules['${file.path}'] || {};`);
@@ -389,7 +444,7 @@ try {
   <!-- Phase 68: Import map with data: shims so await import('react') returns UMD globals -->
   <script type="importmap">{
     "imports": {
-      "react": "data:text/javascript,const R=window.React;export default R;export const{useState,useEffect,useCallback,useMemo,useRef,useContext,createContext,memo,forwardRef,Fragment,useReducer,useLayoutEffect,Children,cloneElement,isValidElement,createElement,Suspense,lazy,StrictMode,useId,useSyncExternalStore,useTransition,useDeferredValue}=R;",
+      "react": "data:text/javascript,const R=window.React;export default R;export const{useState,useEffect,useCallback,useMemo,useRef,useContext,createContext,memo,forwardRef,Fragment,useReducer,useLayoutEffect,Children,cloneElement,isValidElement,createElement,Suspense,lazy,StrictMode,useId,useSyncExternalStore,useTransition,useDeferredValue,startTransition,use,useOptimistic,useActionState,useFormStatus,cache,createRef,PureComponent,Component}=R;for(const __k in R)if(!({useState:1,useEffect:1,useCallback:1,useMemo:1,useRef:1,useContext:1,createContext:1,memo:1,forwardRef:1,Fragment:1,useReducer:1,useLayoutEffect:1,Children:1,cloneElement:1,isValidElement:1,createElement:1,Suspense:1,lazy:1,StrictMode:1,useId:1,useSyncExternalStore:1,useTransition:1,useDeferredValue:1,startTransition:1,use:1,useOptimistic:1,useActionState:1,useFormStatus:1,cache:1,createRef:1,PureComponent:1,Component:1,default:1}[__k])&&R[__k]!==undefined)try{Object.defineProperty(exports,__k,{get:()=>R[__k],enumerable:true})}catch(e){}",
       "react/jsx-runtime": "data:text/javascript,const R=window.React;export const jsx=R.createElement;export const jsxs=R.createElement;export const Fragment=R.Fragment;",
       "react-dom": "data:text/javascript,const RD=window.ReactDOM;export default RD;export const{createRoot,createPortal,flushSync}=RD;",
       "react-dom/client": "data:text/javascript,export const{createRoot}=window.ReactDOM;",
