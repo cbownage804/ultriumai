@@ -1,126 +1,134 @@
 
-# AI App Builder - Production Parity Audit & Remediation Plan
 
-## Current State
+# Production Parity Sweep -- Remaining Gaps & Remediation
 
-The 253-phase feature roadmap (Sprints A-AD) is code-complete: all hooks are instantiated, all panels are lazy-loaded and rendered. However, there are critical **discoverability, UX, and structural gaps** that prevent production readiness.
+## Summary of Current State
+
+The previous parity work (Phases 1-5) established the Panel Registry, ToolbarPanelsDropdown mega-menu, `panelSetters` map, and `commandActions` auto-generation. WorkspaceTopBar, WorkspaceBottomBar, and WorkspaceStatusBar were created. However, several critical integration issues remain that prevent true production readiness.
 
 ---
 
 ## Gap Analysis
 
-### 1. Command Palette Only Has ~20 Actions (of 150+ panels)
+### 1. Cmd+K Opens the Wrong Command Palette
 
-The `commandActions` array (the primary way to access tools, since the sidebar was removed) only registers about 20 actions. **All 130+ panels from Sprints E through AD are unreachable via Cmd+K.** Users have no way to discover or open Docker Compose, Kubernetes, OAuth Setup, MFA, KPI Dashboard, Full-Text Search, Permission Matrix, Audit Trail, etc., unless they know an internal state setter name.
+`Cmd+K` (line 1280) toggles `showCommandPalette`, which opens the **basic** `CommandPalette` component (line 2778) -- NOT the `EnhancedCommandPalette` that has all 150+ registry actions. The `EnhancedCommandPalette` is wired to `showEnhancedPalette` and has its own duplicate `Cmd+K` listener (line 47-54 of `EnhancedCommandPalette.tsx`), causing a conflict where both palettes fight over the same shortcut.
 
-**Fix:** Register every panel as a command action with appropriate category, icon, and keywords.
+**Fix:** Remove the old `CommandPalette`, wire `Cmd+K` to only open `EnhancedCommandPalette`, and remove the duplicate listener from inside the component.
 
-### 2. Toolbar Panels Dropdown Only Has 6 Generic Items
+### 2. PanelErrorBoundary Only Wraps 4 of 150+ Panels
 
-The `ToolbarPanelsDropdown` component has a hardcoded list of 6 generic categories (Analytics, Cloud, Code, Design, Security, Speed). It needs to be expanded into a categorized mega-menu or searchable panel picker that exposes all 150+ tools.
+Currently, only Database Tools, Schema Designer, Performance Profiler, and Build Analytics have `<PanelErrorBoundary>` wrappers. The remaining ~146 panels (including all Sprint W-AD panels) are rendered as bare conditionals (`{showX && <PanelX />}`) with no error isolation. If any one of those panels throws, the entire workspace crashes.
 
-**Fix:** Replace the 6-item dropdown with a categorized panel registry that groups all tools by sprint/domain (DevOps, Auth, Search, Monitoring, etc.).
+**Fix:** Wrap every panel render in `<PanelErrorBoundary>`. For efficiency, create a `<SafePanel>` helper that combines error boundary + Suspense in one wrapper.
 
-### 3. No Panel Registry / Manifest
+### 3. WorkspaceTopBar Created But Not Integrated
 
-Panels are opened via ~80+ individual `useState` booleans (`showDockerCompose`, `showK8s`, etc.). There is no central registry mapping panel IDs to their open/close functions. This makes it impossible to programmatically list, search, or batch-manage panels.
+`WorkspaceTopBar.tsx` was created (264 lines) but the workspace still renders its own inline header JSX (lines ~2130-2270). The component is never used.
 
-**Fix:** Create a `usePanelRegistry` hook that consolidates all panel visibility states into a single `Map<string, { open, setOpen, label, icon, category, keywords }>`. The command palette and toolbar dropdown would consume this registry.
+**Fix:** Replace the inline header block in `AIAppBuilderWorkspace.tsx` with `<WorkspaceTopBar />`, passing the required props.
 
-### 4. Missing Error Boundaries Around Lazy Panels
+### 4. Workspace Still ~2964 Lines (Target Was 500)
 
-All 150+ panels are lazy-loaded but wrapped only in a generic `<Suspense fallback={<PanelLoader />}>`. If any panel throws during render, the entire workspace crashes. Production apps need per-panel error boundaries.
+Despite creating sub-components, the workspace file hasn't shrunk. The decomposition was never applied -- WorkspaceBottomBar and WorkspaceStatusBar are imported and used, but WorkspaceTopBar is not, and the massive panel render block (lines 2766-2964, ~200 lines of panel instantiation) was never extracted.
 
-**Fix:** Create a `<PanelErrorBoundary>` wrapper that catches errors per-panel and shows a "Panel failed to load" fallback with a retry button.
+**Fix:** Extract the panel render block (lines 2766-2964) into `WorkspacePanelLayer.tsx`. Integrate WorkspaceTopBar. This should reduce the workspace to ~2400 lines (still large, but the remaining logic is essential orchestration).
 
-### 5. Workspace File is 2,771 Lines (Unmaintainable)
+### 5. Missing `<Suspense>` on Most Lazy-Loaded Panels
 
-`AIAppBuilderWorkspace.tsx` is a single 2,771-line file with 230+ imports, 80+ `useState` calls, and inline render logic for every panel. This is a maintenance and performance risk.
+Panels from Sprints E-AD are lazy-loaded via `lazyPanels.ts` but most are rendered without `<Suspense>` wrappers. React will throw if a lazy component renders without a Suspense boundary.
 
-**Fix:** Extract panel rendering into a `<PanelRenderer registry={panelRegistry} />` component that maps over the registry. Extract the top bar, bottom bar, and main content area into sub-components.
+**Fix:** The `<SafePanel>` helper (from Gap 2) will address this by combining `PanelErrorBoundary` + `Suspense` + the conditional show check.
+
+### 6. EnhancedCommandPalette Search Does Not Match Registry Keywords
+
+The `EnhancedCommandPalette` filters by `label` matching but does not check `keywords` on `CommandAction` items. This means typing "k8s" or "docker" in the palette won't find "Kubernetes" or "Docker Compose" even though keywords are provided.
+
+**Fix:** Update the filter logic in `EnhancedCommandPalette.tsx` to also search against `action.keywords`.
 
 ---
 
 ## Implementation Plan
 
-### Phase 1: Panel Registry (Foundation)
+### Step 1: Create SafePanel Helper
 
-Create `src/hooks/usePanelRegistry.ts`:
-- Define a `PanelEntry` type: `{ id, label, icon, category, keywords, component, hookInstance }`
-- Categories: `view`, `edit`, `devops`, `auth`, `search`, `monitoring`, `content`, `mobile`, `ai`, `data`, `collaboration`, `testing`, `security`, `monetization`, `dx`, `communication`, `navigation`, `polish`
-- Export `usePanelRegistry()` returning `{ panels, openPanel(id), closePanel(id), togglePanel(id), isOpen(id), getByCategory(cat) }`
-- Consolidates all 80+ `useState` booleans into one `Record<string, boolean>` managed via `useReducer`
+Create `src/components/ai-builder/SafePanel.tsx`:
+- Combines `PanelErrorBoundary`, `Suspense`, and conditional visibility
+- Props: `show: boolean`, `name: string`, `children: ReactNode`
+- Renders nothing when `show` is false
+- When `show` is true, renders children inside error boundary + suspense
 
-### Phase 2: Command Palette Registration
+### Step 2: Fix Cmd+K to Use EnhancedCommandPalette
 
-Update `commandActions` to be auto-generated from the panel registry:
-- Every panel gets a command action with `category: 'panel'`
-- Add keywords for search (e.g., "docker", "k8s", "kubernetes", "oauth", "mfa", "seo")
-- Group by category in the palette UI with section headers
+In `AIAppBuilderWorkspace.tsx`:
+- Change the `Cmd+K` handler to toggle `showEnhancedPalette` instead of `showCommandPalette`
+- Remove the old `CommandPalette` render and its state
+- Remove the duplicate `Cmd+K` listener inside `EnhancedCommandPalette.tsx`
 
-### Phase 3: Toolbar Mega-Menu
+### Step 3: Fix EnhancedCommandPalette Keyword Search
 
-Replace `ToolbarPanelsDropdown` with a categorized panel picker:
-- Group panels by domain (DevOps, Auth, Search, etc.)
-- Show category headers with counts
-- Support search filtering within the dropdown
-- Keep pin-to-toolbar functionality
+In `EnhancedCommandPalette.tsx`:
+- Update the filter logic to include `action.keywords` in search matching
+- Ensure actions with matching keywords appear in results
 
-### Phase 4: Panel Error Boundaries
+### Step 4: Integrate WorkspaceTopBar
 
-Create `src/components/ai-builder/PanelErrorBoundary.tsx`:
-- Wraps each lazy panel in a class-based error boundary
-- Shows error message with retry button on failure
-- Logs errors for debugging
+In `AIAppBuilderWorkspace.tsx`:
+- Replace the inline header block (~lines 2130-2270) with `<WorkspaceTopBar />`
+- Pass all required props from the workspace state
 
-### Phase 5: Workspace Decomposition
+### Step 5: Extract WorkspacePanelLayer
 
-Split `AIAppBuilderWorkspace.tsx` into:
-- `WorkspaceTopBar.tsx` - logo, project name, undo/redo, toolbar
-- `WorkspaceBottomBar.tsx` - settings, deploy, share, export
-- `WorkspaceMainContent.tsx` - chat, editor, preview panels
-- `WorkspacePanelLayer.tsx` - renders all open panels from registry
-- Keep `AIAppBuilderWorkspace.tsx` as the orchestrator (~500 lines max)
+Create `src/components/ai-builder/WorkspacePanelLayer.tsx`:
+- Move the ~200-line block of panel conditional renders (lines 2766-2964)
+- Accept `panelSetters`, hook instances, and shared callbacks as props
+- Use `SafePanel` wrapper for all panel renders
+
+### Step 6: Wrap All Panels in SafePanel
+
+Throughout the workspace and panel layer:
+- Replace bare `{showX && <PanelX />}` with `<SafePanel show={showX} name="Panel Name"><PanelX /></SafePanel>`
+- Replace existing `<PanelErrorBoundary><Suspense>...</Suspense></PanelErrorBoundary>` blocks with the cleaner `<SafePanel>` wrapper
 
 ---
 
 ## Technical Details
 
-### Panel Registry Data Structure
+### SafePanel Component
 
 ```text
-type PanelEntry = {
-  id: string              // e.g. 'docker-compose'
-  label: string           // e.g. 'Docker Compose'
-  icon: LucideIcon
-  category: PanelCategory
-  keywords: string[]
-  sprint: string          // e.g. 'Y'
+interface SafePanelProps {
+  show: boolean;
+  name: string;
+  children: React.ReactNode;
 }
 
-// Registry stores open state in a reducer:
-// state: Record<string, boolean>
-// dispatch({ type: 'TOGGLE', id: 'docker-compose' })
+function SafePanel({ show, name, children }: SafePanelProps) {
+  if (!show) return null;
+  return (
+    <PanelErrorBoundary panelName={name}>
+      <Suspense fallback={<PanelLoader />}>
+        {children}
+      </Suspense>
+    </PanelErrorBoundary>
+  );
+}
 ```
-
-### Estimated Scope
-
-- Phase 1 (Registry): 1 new file, refactor workspace state
-- Phase 2 (Command Palette): Update commandActions generation
-- Phase 3 (Toolbar): Rewrite ToolbarPanelsDropdown
-- Phase 4 (Error Boundaries): 1 new component, wrap all panels
-- Phase 5 (Decomposition): 4 new files, refactor workspace
 
 ### File Changes Summary
 
-| Action | File |
-|--------|------|
-| Create | `src/hooks/usePanelRegistry.ts` |
-| Create | `src/components/ai-builder/PanelErrorBoundary.tsx` |
-| Create | `src/components/ai-builder/WorkspaceTopBar.tsx` |
-| Create | `src/components/ai-builder/WorkspaceBottomBar.tsx` |
-| Create | `src/components/ai-builder/WorkspaceMainContent.tsx` |
-| Create | `src/components/ai-builder/WorkspacePanelLayer.tsx` |
-| Rewrite | `src/components/ai-builder/ToolbarPanelsDropdown.tsx` |
-| Refactor | `src/components/ai-builder/AIAppBuilderWorkspace.tsx` |
-| Update | `src/components/ai-builder/lazyPanels.ts` (add registry metadata) |
+| Action | File | Impact |
+|--------|------|--------|
+| Create | `src/components/ai-builder/SafePanel.tsx` | Reusable error boundary + suspense wrapper |
+| Create | `src/components/ai-builder/WorkspacePanelLayer.tsx` | Extracts ~200 lines of panel renders |
+| Edit | `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Fix Cmd+K, integrate TopBar, use SafePanel, extract panel layer |
+| Edit | `src/components/ai-builder/EnhancedCommandPalette.tsx` | Fix keyword search, remove duplicate Cmd+K listener |
+
+### What This Achieves
+
+- **All 150+ panels crash-safe** with per-panel error boundaries
+- **Cmd+K** opens the full command palette with all registry actions searchable by keyword
+- **Workspace reduced by ~350+ lines** via TopBar integration and panel layer extraction
+- **No duplicate keyboard listeners** fighting over the same shortcut
+- **Consistent Suspense boundaries** for all lazy-loaded panels
+
