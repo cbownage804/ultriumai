@@ -199,6 +199,12 @@ export const DataValidationPanel = lz(() => import('./DataValidationPanel'), 'Da
 export const CacheStrategyPanel = lz(() => import('./CacheStrategyPanel'), 'CacheStrategyPanel');
 export const ReactiveStorePanel = lz(() => import('./ReactiveStorePanel'), 'ReactiveStorePanel');
 export const DataMigrationPanel = lz(() => import('./DataMigrationPanel'), 'DataMigrationPanel');
+// Sprint V: Developer Experience (Phases 209-213)
+export const RegexPlaygroundPanel = lz(() => import('./RegexPlaygroundPanel'), 'RegexPlaygroundPanel');
+export const JsonYamlConverterPanel = lz(() => import('./JsonYamlConverterPanel'), 'JsonYamlConverterPanel');
+export const ColorContrastPanel = lz(() => import('./ColorContrastPanel'), 'ColorContrastPanel');
+export const TailwindSorterPanel = lz(() => import('./TailwindSorterPanel'), 'TailwindSorterPanel');
+export const MarkdownPreviewPanel = lz(() => import('./MarkdownPreviewPanel'), 'MarkdownPreviewPanel');
 
 // Already-lazy panels (keep existing lazy pattern)
 export const DatabasePanel = lz(() => import('./DatabasePanel'), 'DatabasePanel');
