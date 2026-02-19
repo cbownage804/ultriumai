@@ -208,6 +208,26 @@ import { MarkdownBlogPanel } from './MarkdownBlogPanel';
 import { ImageOptimizerPanel } from './ImageOptimizerPanel';
 import { VideoEmbedPanel } from './VideoEmbedPanel';
 import { I18nPanel } from './I18nPanel';
+import { AnalyticsDashboardPanel } from './AnalyticsDashboardPanel';
+import { ErrorTrackingPanel } from './ErrorTrackingPanel';
+import { SessionReplayPanel } from './SessionReplayPanel';
+import { ABTestingPanel } from './ABTestingPanel';
+import { AIUsagePanel } from './AIUsagePanel';
+import { DependencyScannerPanel } from './DependencyScannerPanel';
+import { CSPGeneratorPanel } from './CSPGeneratorPanel';
+import { GDPRPanel } from './GDPRPanel';
+import { RateLimiterPanel } from './RateLimiterPanel';
+import { SecretRotationPanel } from './SecretRotationPanel';
+import { useBuiltInAnalytics } from '@/hooks/useBuiltInAnalytics';
+import { useErrorTracking } from '@/hooks/useErrorTracking';
+import { useSessionReplay } from '@/hooks/useSessionReplay';
+import { useABTesting } from '@/hooks/useABTesting';
+import { useAIUsageAnalytics } from '@/hooks/useAIUsageAnalytics';
+import { useDependencyScanner } from '@/hooks/useDependencyScanner';
+import { useCSPGenerator } from '@/hooks/useCSPGenerator';
+import { useGDPRCompliance } from '@/hooks/useGDPRCompliance';
+import { useRateLimiter } from '@/hooks/useRateLimiter';
+import { useSecretRotation } from '@/hooks/useSecretRotation';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -522,6 +542,26 @@ export function AIAppBuilderWorkspace() {
   const [showImageOptimizer, setShowImageOptimizer] = useState(false);
   const [showVideoEmbed, setShowVideoEmbed] = useState(false);
   const [showI18n, setShowI18n] = useState(false);
+  const builtInAnalytics = useBuiltInAnalytics();
+  const errorTracking = useErrorTracking();
+  const sessionReplay = useSessionReplay();
+  const abTesting = useABTesting();
+  const aiUsageAnalytics = useAIUsageAnalytics();
+  const dependencyScanner = useDependencyScanner();
+  const cspGenerator = useCSPGenerator();
+  const gdprCompliance = useGDPRCompliance();
+  const rateLimiter = useRateLimiter();
+  const secretRotation = useSecretRotation();
+  const [showAnalyticsDashboard, setShowAnalyticsDashboard] = useState(false);
+  const [showErrorTracking, setShowErrorTracking] = useState(false);
+  const [showSessionReplay, setShowSessionReplay] = useState(false);
+  const [showABTesting, setShowABTesting] = useState(false);
+  const [showAIUsage, setShowAIUsage] = useState(false);
+  const [showDepScanner, setShowDepScanner] = useState(false);
+  const [showCSPGenerator, setShowCSPGenerator] = useState(false);
+  const [showGDPR, setShowGDPR] = useState(false);
+  const [showRateLimiter, setShowRateLimiter] = useState(false);
+  const [showSecretRotation, setShowSecretRotation] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2264,6 +2304,16 @@ export function AIAppBuilderWorkspace() {
       <TeamActivityPanel open={showTeamActivity} onClose={() => setShowTeamActivity(false)} activities={teamActivityFeed.activities} filter={teamActivityFeed.filter} onFilterChange={teamActivityFeed.setFilter} getActionIcon={teamActivityFeed.getActionIcon} getActionLabel={teamActivityFeed.getActionLabel} />
       <ApprovalPanel open={showApprovals} onClose={() => setShowApprovals(false)} requests={approvalWorkflow.requests} requireApproval={approvalWorkflow.requireApproval} onToggleRequire={approvalWorkflow.setRequireApproval} onApprove={approvalWorkflow.approve} onReject={approvalWorkflow.reject} onCancel={approvalWorkflow.cancelRequest} pendingCount={approvalWorkflow.pendingCount} />
       <ForkingPanel open={showForking} onClose={() => setShowForking(false)} forks={projectForking.forks} transfers={projectForking.transfers} projectName={project.name} projectId={currentProjectId || ''} fileCount={project.files.length} onFork={(includeHistory) => { projectForking.forkProject(currentProjectId || '', project.name, project.files, includeHistory); toast.success('Project forked!'); }} onTransfer={(email, reason) => { projectForking.transferProject(currentProjectId || '', project.name, email, reason); toast.success('Transfer initiated'); }} />
+      <AnalyticsDashboardPanel open={showAnalyticsDashboard} onClose={() => setShowAnalyticsDashboard(false)} summary={builtInAnalytics.getSummary()} isTracking={builtInAnalytics.isTracking} onStartTracking={builtInAnalytics.startTracking} onStopTracking={builtInAnalytics.stopTracking} onGenerateScript={builtInAnalytics.generateTrackingScript} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />
+      <ErrorTrackingPanel open={showErrorTracking} onClose={() => setShowErrorTracking(false)} errors={errorTracking.errors} stats={errorTracking.getStats()} onResolve={errorTracking.resolveError} onDelete={errorTracking.deleteError} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onGenerateBoundary={errorTracking.generateErrorBoundary} />
+      <SessionReplayPanel open={showSessionReplay} onClose={() => setShowSessionReplay(false)} sessions={sessionReplay.sessions} isRecording={sessionReplay.isRecording} onStartRecording={sessionReplay.startRecording} onStopRecording={sessionReplay.stopRecording} onDeleteSession={sessionReplay.deleteSession} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onGenerateScript={sessionReplay.generateReplayScript} />
+      <ABTestingPanel open={showABTesting} onClose={() => setShowABTesting(false)} tests={abTesting.tests} onCreate={abTesting.createTest} onStart={abTesting.startTest} onPause={abTesting.pauseTest} onComplete={abTesting.completeTest} onDelete={abTesting.deleteTest} onGenerateCode={abTesting.generateABCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />
+      <AIUsagePanel open={showAIUsage} onClose={() => setShowAIUsage(false)} summary={aiUsageAnalytics.getSummary()} estimatedMonthlyCost={aiUsageAnalytics.getEstimatedMonthlyCost()} />
+      <DependencyScannerPanel open={showDepScanner} onClose={() => setShowDepScanner(false)} latestScan={dependencyScanner.getLatestScan()} isScanning={dependencyScanner.isScanning} onScan={() => dependencyScanner.scanDependencies(installedPackages)} />
+      <CSPGeneratorPanel open={showCSPGenerator} onClose={() => setShowCSPGenerator(false)} config={cspGenerator.config} onAnalyze={cspGenerator.analyzeProject} onToggleDirective={cspGenerator.toggleDirective} onAddSource={cspGenerator.addSource} onRemoveSource={cspGenerator.removeSource} onSetReportOnly={cspGenerator.setReportOnly} onGenerateCSP={cspGenerator.generateCSP} onGenerateMetaTag={cspGenerator.generateMetaTag} files={project.files} />
+      <GDPRPanel open={showGDPR} onClose={() => setShowGDPR(false)} components={gdprCompliance.components} companyName={gdprCompliance.companyName} contactEmail={gdprCompliance.contactEmail} onSetCompanyName={gdprCompliance.setCompanyName} onSetContactEmail={gdprCompliance.setContactEmail} onGenerateAll={gdprCompliance.generateAll} onInsertCode={(code, name) => upsertFile(`src/components/${name}`, code)} />
+      <RateLimiterPanel open={showRateLimiter} onClose={() => setShowRateLimiter(false)} rules={rateLimiter.rules} onAdd={rateLimiter.addRule} onUpdate={rateLimiter.updateRule} onRemove={rateLimiter.removeRule} onToggle={rateLimiter.toggleRule} onGenerateMiddleware={rateLimiter.generateMiddleware} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />
+      <SecretRotationPanel open={showSecretRotation} onClose={() => setShowSecretRotation(false)} secrets={secretRotation.secrets} onAdd={secretRotation.addSecret} onMarkRotated={secretRotation.markRotated} onRemove={secretRotation.removeSecret} expiredCount={secretRotation.getExpiredSecrets().length} warningCount={secretRotation.getWarningSecrets().length} />
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
