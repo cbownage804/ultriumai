@@ -498,6 +498,16 @@ When the [DATABASE SCHEMA] context is provided in the conversation, you MUST use
 - Respect NOT NULL constraints — never omit required fields in inserts
 - A \`types.ts\` file with TypeScript interfaces is auto-generated — import types from it: \`import type { TableName } from './types'\`
 - When the user asks to "add a table" or "create a schema", emit a ===MIGRATION: === block AND update the types.ts file with the new interface
+
+AUTH TEMPLATE SYSTEM:
+When the [AUTH SYSTEM] context block is present, the project already has pre-built auth pages and session management injected:
+- DO NOT regenerate auth pages from scratch — modify the existing auth files instead
+- Use the globals and helpers described in the [AUTH SYSTEM] block (currentUser, useAuth(), requireAuth(), ProtectedRoute, etc.)
+- When adding new protected pages, wrap them with requireAuth() (vanilla) or <ProtectedRoute> (React)
+- When the user asks to "add login" or similar and [AUTH SYSTEM] is NOT present, proactively ask them to use the Auth panel in the sidebar or generate a complete auth system with login, signup, password reset, and session management
+- Always include supabase.auth.onAuthStateChange() for session tracking
+- For OAuth providers (Google, GitHub), use supabase.auth.signInWithOAuth({ provider: 'google' })
+- Generate a logout button/link that calls supabase.auth.signOut()
 `;
 
 const STRIPE_ADDON = `
