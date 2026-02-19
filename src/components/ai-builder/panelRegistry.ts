@@ -61,6 +61,14 @@ export const PANEL_CATEGORIES: Record<PanelCategory, { label: string; icon: Luci
 export const PANEL_REGISTRY: PanelEntry[] = [
   // Core panels
   { id: 'supabase-ide', label: 'Supabase IDE', icon: Database, category: 'data', keywords: ['supabase', 'sql', 'database', 'ide'], stateKey: 'showSupabaseIDE' },
+  { id: 'prompt-history', label: 'Prompt History', icon: Clock, category: 'view', keywords: ['prompt', 'history', 'previous', 'favorites'], stateKey: 'showPromptHistory' },
+  { id: 'version-history', label: 'Version History', icon: History, category: 'view', keywords: ['version', 'history', 'restore', 'snapshot'], stateKey: 'showVersionHistory' },
+  { id: 'rls-tester', label: 'RLS Policy Tester', icon: Shield, category: 'security', keywords: ['rls', 'policy', 'row', 'level', 'security'], stateKey: 'showRLSTester' },
+  { id: 'file-search', label: 'File Search', icon: Search, category: 'edit', keywords: ['search', 'find', 'replace', 'grep'], stateKey: 'showFileSearch' },
+  { id: 'file-tree', label: 'File Tree', icon: FolderOpen, category: 'view', keywords: ['files', 'tree', 'explorer', 'sidebar'], stateKey: 'showFileTree' },
+  { id: 'console-panel', label: 'Console', icon: Terminal, category: 'dx', keywords: ['console', 'log', 'output', 'debug'], stateKey: 'showConsole' },
+  { id: 'assets', label: 'Asset Manager', icon: Image, category: 'content', keywords: ['asset', 'image', 'upload', 'media'], stateKey: 'showAssets' },
+  { id: 'packages', label: 'Package Manager', icon: Package, category: 'dx', keywords: ['package', 'cdn', 'library', 'dependency'], stateKey: 'showPackages' },
   { id: 'database', label: 'Database Panel', icon: Database, category: 'data', keywords: ['db', 'tables', 'schema'], stateKey: 'showDatabase' },
   { id: 'db-explorer', label: 'Database Explorer', icon: Table2, category: 'data', keywords: ['explore', 'tables', 'rows'], stateKey: 'showDbExplorer' },
   { id: 'schema-designer', label: 'Schema Designer', icon: Waypoints, category: 'data', keywords: ['erd', 'schema', 'tables', 'relations'], stateKey: 'showSchemaDesigner' },

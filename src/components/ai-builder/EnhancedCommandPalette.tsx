@@ -87,6 +87,26 @@ export function EnhancedCommandPalette({
           icon: FileCode,
           action: () => onSelectFile(f.path),
         }));
+      
+      // Fallthrough: if no files match, also show matching actions
+      if (fileItems.length === 0 && searchQuery.length > 0) {
+        return actions
+          .filter(a => {
+            const text = `${a.label} ${a.description || ''} ${(a.keywords || []).join(' ')}`.toLowerCase();
+            return text.includes(searchQuery);
+          })
+          .slice(0, 15)
+          .map(a => ({
+            id: `action:${a.id}`,
+            type: 'action' as const,
+            label: a.label,
+            description: a.description,
+            icon: a.icon,
+            shortcut: a.shortcut,
+            action: a.action,
+            category: a.category,
+          }));
+      }
       return fileItems;
     }
 
