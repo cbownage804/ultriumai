@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { CheckCircle2, Loader2, XCircle, Wrench, Brain, Code2, Search, ChevronDown, X, FileCode, RotateCcw } from 'lucide-react';
+import { CheckCircle2, Loader2, XCircle, Wrench, Brain, Code2, Search, ChevronDown, X, RotateCcw, Shield, FileCode, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { AgentRun, AgentStep, AgentTask } from '@/hooks/useAgentMode';
+import type { AgentRun, AgentStep, AgentTask, AgentPlan } from '@/hooks/useAgentMode';
 
 const STEP_META: Record<AgentStep['type'], { icon: typeof Brain; label: string }> = {
   plan: { icon: Brain, label: 'Analyzing & planning' },
@@ -17,32 +17,126 @@ function formatElapsed(startMs?: number, endMs?: number): string {
   return elapsed < 1000 ? `${elapsed}ms` : `${(elapsed / 1000).toFixed(1)}s`;
 }
 
+interface PlanApprovalCardProps {
+  plan: AgentPlan;
+  onApprove: () => void;
+  onReject: () => void;
+}
+
+function PlanApprovalCard({ plan, onApprove, onReject }: PlanApprovalCardProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -4, scale: 0.98 }}
+      transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+      className="mx-3 mb-3 rounded-lg border border-violet-500/20 bg-violet-500/[0.05] overflow-hidden"
+    >
+      {/* Plan header */}
+      <div className="px-3 py-2 border-b border-violet-500/10 flex items-center gap-2">
+        <Shield className="h-3 w-3 text-violet-400" />
+        <span className="text-[10px] font-medium text-violet-300/80">Plan Approval Required</span>
+      </div>
+
+      {/* Approach */}
+      <div className="px-3 py-2 space-y-2">
+        <p className="text-[10px] text-white/50 leading-relaxed">{plan.approach}</p>
+
+        {/* Steps */}
+        {plan.steps.length > 0 && (
+          <div className="space-y-1">
+            <span className="text-[8px] text-white/25 uppercase tracking-wider">Steps</span>
+            {plan.steps.map((step, i) => (
+              <div key={i} className="flex items-start gap-1.5">
+                <ArrowRight className="h-2.5 w-2.5 text-violet-400/40 mt-0.5 shrink-0" />
+                <span className="text-[10px] text-white/40">{step}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Files */}
+        {(plan.filesToCreate.length > 0 || plan.filesToModify.length > 0) && (
+          <div className="flex flex-wrap gap-1">
+            {plan.filesToCreate.map(f => (
+              <span key={f} className="text-[8px] text-emerald-400/50 bg-emerald-500/[0.08] rounded px-1.5 py-0.5 font-mono">
+                + {f.split('/').pop()}
+              </span>
+            ))}
+            {plan.filesToModify.map(f => (
+              <span key={f} className="text-[8px] text-cyan-400/50 bg-cyan-500/[0.08] rounded px-1.5 py-0.5 font-mono">
+                ~ {f.split('/').pop()}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="px-3 py-2 border-t border-violet-500/10 flex items-center gap-2 justify-end">
+        <button
+          onClick={onReject}
+          className="text-[10px] text-white/30 hover:text-red-400 px-2 py-1 rounded hover:bg-red-500/[0.08] transition-colors"
+        >
+          Reject
+        </button>
+        <button
+          onClick={onApprove}
+          className="text-[10px] text-white font-medium bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/30 px-3 py-1 rounded transition-colors"
+        >
+          Approve & Build
+        </button>
+      </div>
+
+      {/* Auto-approve timer */}
+      <div className="px-3 pb-1.5">
+        <div className="h-[1px] bg-white/[0.04] rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-violet-500/30"
+            initial={{ width: '100%' }}
+            animate={{ width: '0%' }}
+            transition={{ duration: 30, ease: 'linear' }}
+          />
+        </div>
+        <span className="text-[8px] text-white/15 mt-0.5 block">Auto-approves in 30s</span>
+      </div>
+    </motion.div>
+  );
+}
+
 interface AgentModePanelProps {
   run: AgentRun | null;
   taskQueue: AgentTask[];
+  pendingApproval?: { taskId: string; plan: AgentPlan } | null;
   onCancel?: () => void;
   onCancelTask?: (taskId: string) => void;
   onRetryTask?: (taskId: string) => void;
   onClearCompleted?: () => void;
   onReorderQueue?: (newOrder: AgentTask[]) => void;
+  onApprovePlan?: () => void;
+  onRejectPlan?: () => void;
 }
 
-export function AgentModePanel({ run, taskQueue, onCancel, onCancelTask, onRetryTask, onClearCompleted }: AgentModePanelProps) {
+export function AgentModePanel({ run, taskQueue, pendingApproval, onCancel, onCancelTask, onRetryTask, onClearCompleted, onApprovePlan, onRejectPlan }: AgentModePanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const hasActiveContent = run || taskQueue.some(t => ['queued', 'running'].includes(t.status));
+  const hasActiveContent = run || taskQueue.some(t => ['queued', 'running', 'awaiting_approval'].includes(t.status));
   if (!hasActiveContent) return null;
 
   const isRunning = run?.status === 'running' || taskQueue.some(t => t.status === 'running');
-  const activeTask = taskQueue.find(t => t.status === 'running');
+  const isAwaitingApproval = run?.status === 'awaiting_approval' || !!pendingApproval;
+  const activeTask = taskQueue.find(t => t.status === 'running' || t.status === 'awaiting_approval');
   const queuedTasks = taskQueue.filter(t => t.status === 'queued');
   const finishedTasks = taskQueue.filter(t => ['completed', 'failed', 'cancelled'].includes(t.status));
   const activeStep = run?.steps.find(s => s.status === 'running');
   const completedSteps = run?.steps.filter(s => s.status === 'done') || [];
   const allDone = run?.status === 'completed' && !isRunning;
 
-  const ActiveIcon = activeStep ? STEP_META[activeStep.type].icon : Brain;
-  const activeLabel = activeStep ? STEP_META[activeStep.type].label : 'Working…';
+  const activeLabel = isAwaitingApproval
+    ? 'Awaiting approval…'
+    : activeStep
+      ? STEP_META[activeStep.type].label
+      : 'Working…';
 
   return (
     <motion.div
@@ -52,13 +146,12 @@ export function AgentModePanel({ run, taskQueue, onCancel, onCancelTask, onRetry
       transition={{ type: 'spring', damping: 30, stiffness: 400 }}
       className="flex gap-3 justify-start"
     >
-      {/* Avatar column — matches chat message avatar */}
+      {/* Avatar column */}
       <div className="h-8 w-8 mt-0.5 rounded-full bg-violet-500/15 flex items-center justify-center shrink-0">
-        {isRunning ? (
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-          >
+        {isAwaitingApproval ? (
+          <Shield className="h-4 w-4 text-violet-400 animate-pulse" />
+        ) : isRunning ? (
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}>
             <Brain className="h-4 w-4 text-violet-400" />
           </motion.div>
         ) : allDone ? (
@@ -72,15 +165,17 @@ export function AgentModePanel({ run, taskQueue, onCancel, onCancelTask, onRetry
       <div className={cn(
         "rounded-lg overflow-hidden transition-colors min-w-[200px] max-w-[340px]",
         "bg-muted/50 border border-white/[0.06]",
+        isAwaitingApproval && "border-violet-500/20",
       )}>
-        {/* Compact header — always shown */}
+        {/* Compact header */}
         <button
           onClick={() => setIsExpanded(prev => !prev)}
           className="w-full flex items-center gap-2.5 px-3 py-2 text-left group"
         >
-          {/* Animated step indicator */}
           <div className="relative shrink-0">
-            {isRunning ? (
+            {isAwaitingApproval ? (
+              <Shield className="h-3.5 w-3.5 text-violet-400 animate-pulse" />
+            ) : isRunning ? (
               <Loader2 className="h-3.5 w-3.5 text-cyan-400 animate-spin" />
             ) : allDone ? (
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400/60" />
@@ -89,14 +184,13 @@ export function AgentModePanel({ run, taskQueue, onCancel, onCancelTask, onRetry
             )}
           </div>
 
-          {/* Status label + step timeline */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <span className={cn(
                 "text-[11px] font-medium truncate",
-                isRunning ? "text-white/70" : allDone ? "text-white/40" : "text-red-300/60"
+                isAwaitingApproval ? "text-violet-300/80" : isRunning ? "text-white/70" : allDone ? "text-white/40" : "text-red-300/60"
               )}>
-                {isRunning ? activeLabel : allDone ? 'Task complete' : 'Task failed'}
+                {isAwaitingApproval ? 'Awaiting approval' : isRunning ? activeLabel : allDone ? 'Task complete' : 'Task failed'}
               </span>
               {activeStep && (
                 <span className="text-[9px] text-white/20 font-mono tabular-nums shrink-0">
@@ -105,10 +199,9 @@ export function AgentModePanel({ run, taskQueue, onCancel, onCancelTask, onRetry
               )}
             </div>
 
-            {/* Step dots row */}
             {run && run.steps.length > 0 && (
               <div className="flex items-center gap-1 mt-1">
-                {run.steps.map((step, i) => {
+                {run.steps.map((step) => {
                   const isActive = step.status === 'running';
                   const isDone = step.status === 'done';
                   const isError = step.status === 'error';
@@ -128,14 +221,13 @@ export function AgentModePanel({ run, taskQueue, onCancel, onCancelTask, onRetry
             )}
           </div>
 
-          {/* Right side controls */}
           <div className="flex items-center gap-1 shrink-0">
             {queuedTasks.length > 0 && (
               <span className="text-[8px] bg-white/[0.06] text-white/30 rounded-full px-1.5 py-0.5 font-mono">
                 +{queuedTasks.length}
               </span>
             )}
-            {isRunning && onCancel && (
+            {(isRunning || isAwaitingApproval) && onCancel && (
               <button
                 onClick={e => { e.stopPropagation(); onCancel(); }}
                 className="text-[9px] text-red-400/40 hover:text-red-400 px-1.5 py-0.5 rounded hover:bg-red-500/[0.08] transition-colors"
@@ -149,6 +241,17 @@ export function AgentModePanel({ run, taskQueue, onCancel, onCancelTask, onRetry
             )} />
           </div>
         </button>
+
+        {/* Plan approval card */}
+        <AnimatePresence>
+          {isAwaitingApproval && pendingApproval && onApprovePlan && onRejectPlan && (
+            <PlanApprovalCard
+              plan={pendingApproval.plan}
+              onApprove={onApprovePlan}
+              onReject={onRejectPlan}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Progress bar */}
         {isRunning && run && run.steps.length > 0 && (
@@ -183,6 +286,7 @@ export function AgentModePanel({ run, taskQueue, onCancel, onCancelTask, onRetry
                       const isActive = step.status === 'running';
                       const isDone = step.status === 'done';
                       const isError = step.status === 'error';
+                      const hasSnapshot = !!step.preSnapshot;
                       return (
                         <div key={step.id} className={cn(
                           "flex items-center gap-2 py-1 px-1.5 rounded-md",
@@ -204,6 +308,9 @@ export function AgentModePanel({ run, taskQueue, onCancel, onCancelTask, onRetry
                           )}>
                             {meta.label}
                           </span>
+                          {hasSnapshot && (isDone || isError) && (
+                            <span className="text-[7px] text-white/10 font-mono">📸</span>
+                          )}
                           {(isDone || isActive) && (
                             <span className="text-[8px] text-white/15 font-mono tabular-nums">
                               {formatElapsed(step.startedAt, step.completedAt)}
