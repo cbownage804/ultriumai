@@ -187,6 +187,12 @@ import { useNotificationCenterGenerator } from '@/hooks/useNotificationCenterGen
 import { useChatWidgetBuilder } from '@/hooks/useChatWidgetBuilder';
 import { useEmailSequenceBuilder } from '@/hooks/useEmailSequenceBuilder';
 import { useSMSTemplateManager } from '@/hooks/useSMSTemplateManager';
+// Sprint X
+import { useStepperWizardBuilder } from '@/hooks/useStepperWizardBuilder';
+import { useCommandMenuBuilder } from '@/hooks/useCommandMenuBuilder';
+import { useBreadcrumbGenerator } from '@/hooks/useBreadcrumbGenerator';
+import { useMegaMenuBuilder } from '@/hooks/useMegaMenuBuilder';
+import { useContextMenuDesigner } from '@/hooks/useContextMenuDesigner';
 
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
@@ -246,6 +252,8 @@ import {
   TailwindSorterPanel, MarkdownPreviewPanel,
   ToastDesignerPanel, NotificationCenterPanel, ChatWidgetPanel,
   EmailSequencePanel, SMSTemplatePanel,
+  StepperWizardPanel, CommandMenuPanel, BreadcrumbPanel,
+  MegaMenuPanel, ContextMenuPanel,
   DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
   EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
   BuildAnalyticsPanel as BuildAnalyticsPanelLazy,
@@ -729,6 +737,17 @@ export function AIAppBuilderWorkspace() {
   const [showChatWidget, setShowChatWidget] = useState(false);
   const [showEmailSequence, setShowEmailSequence] = useState(false);
   const [showSMSTemplate, setShowSMSTemplate] = useState(false);
+  // Sprint X: Advanced UI Patterns (Phases 219-223)
+  const stepperWizard = useStepperWizardBuilder();
+  const commandMenuBuilder = useCommandMenuBuilder();
+  const breadcrumbGen = useBreadcrumbGenerator();
+  const megaMenu = useMegaMenuBuilder();
+  const contextMenuDesigner = useContextMenuDesigner();
+  const [showStepperWizard, setShowStepperWizard] = useState(false);
+  const [showCommandMenuBuilder, setShowCommandMenuBuilder] = useState(false);
+  const [showBreadcrumbGen, setShowBreadcrumbGen] = useState(false);
+  const [showMegaMenu, setShowMegaMenu] = useState(false);
+  const [showContextMenu, setShowContextMenu] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2558,6 +2577,12 @@ export function AIAppBuilderWorkspace() {
       {showChatWidget && <ChatWidgetPanel {...chatWidget} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowChatWidget(false)} />}
       {showEmailSequence && <EmailSequencePanel {...emailSequence} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowEmailSequence(false)} />}
       {showSMSTemplate && <SMSTemplatePanel {...smsTemplate} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowSMSTemplate(false)} />}
+      {/* Sprint X: Advanced UI Patterns */}
+      {showStepperWizard && <StepperWizardPanel {...stepperWizard} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowStepperWizard(false)} />}
+      {showCommandMenuBuilder && <CommandMenuPanel {...commandMenuBuilder} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowCommandMenuBuilder(false)} />}
+      {showBreadcrumbGen && <BreadcrumbPanel {...breadcrumbGen} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowBreadcrumbGen(false)} />}
+      {showMegaMenu && <MegaMenuPanel {...megaMenu} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowMegaMenu(false)} />}
+      {showContextMenu && <ContextMenuPanel {...contextMenuDesigner} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowContextMenu(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
