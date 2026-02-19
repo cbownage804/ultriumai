@@ -241,6 +241,12 @@ export const FacetedFilterPanel = lz(() => import('./FacetedFilterPanel'), 'Face
 export const AutocompletePanel = lz(() => import('./AutocompletePanel'), 'AutocompletePanel');
 export const TagSystemPanel = lz(() => import('./TagSystemPanel'), 'TagSystemPanel');
 export const SEOMetaPanel = lz(() => import('./SEOMetaPanel'), 'SEOMetaPanel');
+// Sprint AC: Monitoring & Observability (Phases 244-248)
+export const KPIDashboardPanel = lz(() => import('./KPIDashboardPanel'), 'KPIDashboardPanel');
+export const AlertingRulesPanel = lz(() => import('./AlertingRulesPanel'), 'AlertingRulesPanel');
+export const AuditTrailPanel = lz(() => import('./AuditTrailPanel'), 'AuditTrailPanel');
+export const ClickHeatmapPanel = lz(() => import('./ClickHeatmapPanel'), 'ClickHeatmapPanel');
+export const BudgetMonitorPanel = lz(() => import('./BudgetMonitorPanel'), 'BudgetMonitorPanel');
 
 // Already-lazy panels (keep existing lazy pattern)
 export const DatabasePanel = lz(() => import('./DatabasePanel'), 'DatabasePanel');
