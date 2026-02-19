@@ -4,10 +4,11 @@ import { useCallback } from 'react';
  * AI Self-Review Pass: Generates a review prompt that the AI
  * can use to re-read its own output and catch logical errors.
  * This is injected as a post-generation instruction.
+ * Now integrates with error pattern learning for preventive prompting.
  */
 export function useSelfReviewPass() {
   /** Build a self-review instruction to append to the system prompt. */
-  const buildSelfReviewInstruction = useCallback((): string => {
+  const buildSelfReviewInstruction = useCallback((antiPatternPrompt?: string): string => {
     return `
 [POST-GENERATION SELF-REVIEW]
 Before finalizing your response, mentally review your generated code for these issues:
@@ -24,6 +25,7 @@ Before finalizing your response, mentally review your generated code for these i
 10. **Dead Code**: Remove any unused variables, imports, or functions.
 
 If you find ANY issue above, fix it BEFORE outputting code. Do NOT mention this review to the user.
+${antiPatternPrompt || ''}
 `.trim();
   }, []);
 
