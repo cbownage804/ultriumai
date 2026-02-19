@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { ProjectFile } from './useProjectFileSystem';
 import { useStreamingPreview } from './useStreamingPreview';
 import { useUserCredits } from './useUserCredits';
-import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory, buildErrorDiagnosisContext, analyzeConversationComplexity, generateProactiveSuggestions, compressConversationHistory, detectCommunicationStyle, extractUserPreferences, buildPreferencesContext, detectWorkflowIntent, buildEnhancedErrorContext, buildVisualIntelligenceContext, detectWebSearchIntent, buildWebSearchContext, detectURLCloneIntent } from '@/components/ai-builder/SupabaseConversational';
+import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory, buildErrorDiagnosisContext, analyzeConversationComplexity, generateProactiveSuggestions, compressConversationHistory, detectCommunicationStyle, extractUserPreferences, buildPreferencesContext, detectWorkflowIntent, buildEnhancedErrorContext, buildVisualIntelligenceContext, detectWebSearchIntent, buildWebSearchContext, detectURLCloneIntent, buildFileManifest, calculateContextBudget, type ContextBudgetInfo } from '@/components/ai-builder/SupabaseConversational';
 
 // ── File hash tracking for incremental context (Lovable-grade) ──
 const fileHashCache = new Map<string, string>();
@@ -538,6 +538,7 @@ export function useAIAppBuilder() {
   const [totalTokensUsed, setTotalTokensUsed] = useState(0);
   const [pendingFiles, setPendingFiles] = useState<ProjectFile[] | null>(null);
   const [pendingDeletions, setPendingDeletions] = useState<string[]>([]);
+  const [contextBudget, setContextBudget] = useState<ContextBudgetInfo | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const streaming = useStreamingPreview();
   const { deductCredits, totalRemaining } = useUserCredits();
@@ -752,11 +753,9 @@ export function useAIAppBuilder() {
       const useIncremental = files.length > 5 && changed.length < files.length;
       const contextFiles = useIncremental ? changed : files;
 
-      // Build a compact manifest of all files (always send full manifest)
-      const manifest = files.map(f => {
-        const isChanged = changed.some(c => c.path === f.path);
-        return `  - ${f.path} (${f.content.length} chars)${isChanged ? ' [MODIFIED]' : ''}`;
-      }).join('\n');
+      // Build a compact manifest of all files using the enhanced manifest builder
+      const modifiedPaths = new Set(changed.map(f => f.path));
+      const manifest = buildFileManifest(files, modifiedPaths);
       const unchangedNote = useIncremental && unchanged.length > 0
         ? `\n\n📋 ${unchanged.length} unchanged files omitted (content same as last build). Their paths are in the manifest above.`
         : '';
@@ -865,7 +864,17 @@ export function useAIAppBuilder() {
         ? `\n\n(${omittedCount} other files exist but are omitted for brevity. Only output files you need to change.)`
         : '';
 
-      return `PROJECT FILE MANIFEST (${files.length} files total):\n${manifest}${structureNote}${unchangedNote}\n\nFILE CONTENTS:\n${fileContext}${omittedNote}\n\nIMPORTANT: Only output ===FILE: path=== blocks for files you are CHANGING. To delete a file, use ===DELETE: path===. Do NOT re-output unchanged files.\n\nAFTER all ===FILE: blocks, write a brief 1-2 sentence conversational summary of what you changed and why — be friendly and helpful like a coding assistant. Example: "I've updated the header component with your new color scheme and added the mobile menu you asked for. Let me know if you'd like any tweaks!"\n\nUser request: ${userInput}`;
+      // ── Update context budget for the UI indicator ──
+      const budget = calculateContextBudget(
+        apiMessages.filter(m => m.role === 'system').map(m => ({ content: typeof m.content === 'string' ? m.content : '' })),
+        apiMessages.filter(m => m.role !== 'system').map(m => ({ content: typeof m.content === 'string' ? m.content : '' })),
+        fileContext,
+        files.length,
+        filesToSend.length,
+      );
+      setContextBudget(budget);
+
+      return `${manifest}${structureNote}${unchangedNote}\n\nFILE CONTENTS:\n${fileContext}${omittedNote}\n\nIMPORTANT: Only output ===FILE: path=== blocks for files you are CHANGING. To delete a file, use ===DELETE: path===. Do NOT re-output unchanged files.\n\nAFTER all ===FILE: blocks, write a brief 1-2 sentence conversational summary of what you changed and why — be friendly and helpful like a coding assistant. Example: "I've updated the header component with your new color scheme and added the mobile menu you asked for. Let me know if you'd like any tweaks!"\n\nUser request: ${userInput}`;
     };
 
     if (imageDataUrls?.length) {
@@ -1492,6 +1501,7 @@ export function useAIAppBuilder() {
     versions,
     setVersions,
     totalTokensUsed,
+    contextBudget,
     sendMessage,
     stopGenerating,
     clearChat,

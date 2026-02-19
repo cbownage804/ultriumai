@@ -19,7 +19,7 @@ import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
-import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, generateIntentSuggestions, analyzeConversationComplexity, detectCommunicationStyle, detectWebSearchIntent, detectURLCloneIntent } from './SupabaseConversational';
+import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, generateIntentSuggestions, analyzeConversationComplexity, detectCommunicationStyle, detectWebSearchIntent, detectURLCloneIntent, type ContextBudgetInfo } from './SupabaseConversational';
 import { StarterTemplatePicker } from './StarterTemplatePicker';
 import { StreamingText, StreamingCursor, ElapsedTimer } from './StreamingText';
 
@@ -83,6 +83,7 @@ interface BuilderChatPanelProps {
   totalTokensUsed: number;
   previousFiles: ProjectFile[];
   latestFiles: ProjectFile[];
+  contextBudget?: ContextBudgetInfo | null;
   onModeChange: (mode: BuilderMode) => void;
   onSend: (message: string, imageDataUrls?: string[] | null) => void;
   onStop: () => void;
@@ -292,7 +293,7 @@ function TypingIndicator() {
 
 export function BuilderChatPanel({
   messages, isGenerating, fileCount, mode, thinkingPhase, versions,
-  totalTokensUsed, previousFiles, latestFiles,
+  totalTokensUsed, previousFiles, latestFiles, contextBudget,
   onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates, onFixError,
   onForkFromMessage, onRevertToMessage, selectedModel, onModelChange,
   onToggleVisualEdit, isVisualEditActive, onOpenEditHistory, onSelectStarterTemplate, onReview,
@@ -1297,6 +1298,42 @@ export function BuilderChatPanel({
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Context budget indicator */}
+              {contextBudget && contextBudget.percentUsed > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded cursor-default">
+                      <div className="w-10 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            contextBudget.isCritical ? "bg-red-400" : contextBudget.isWarning ? "bg-amber-400" : "bg-emerald-400"
+                          )}
+                          style={{ width: `${contextBudget.percentUsed}%` }}
+                        />
+                      </div>
+                      <span className={cn(
+                        "text-[9px] font-mono",
+                        contextBudget.isCritical ? "text-red-400" : contextBudget.isWarning ? "text-amber-400" : "text-white/30"
+                      )}>
+                        {Math.round(contextBudget.percentUsed)}%
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs max-w-[240px]">
+                    <div className="space-y-1">
+                      <div className="font-medium">Context Budget: {Math.round(contextBudget.percentUsed)}% used</div>
+                      <div className="text-white/50">{(contextBudget.totalChars / 1000).toFixed(0)}K / {(contextBudget.maxChars / 1000).toFixed(0)}K chars</div>
+                      <div className="text-white/40 text-[10px] space-y-0.5">
+                        <div>📄 {contextBudget.filesIncluded} files included{contextBudget.filesOmitted > 0 ? `, ${contextBudget.filesOmitted} omitted` : ''}</div>
+                        <div>💬 History: {(contextBudget.historyChars / 1000).toFixed(0)}K chars</div>
+                        <div>📦 Files: {(contextBudget.fileContextChars / 1000).toFixed(0)}K chars</div>
+                      </div>
+                      {contextBudget.isCritical && <div className="text-red-400 text-[10px]">⚠️ Near limit — try shorter prompts or start a new chat</div>}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
               {/* Model selector */}
               {onModelChange && (
                 <Popover>
