@@ -279,6 +279,17 @@ import { ThemeStudioPanel } from './ThemeStudioPanel';
 import { FormBuilderPanel } from './FormBuilderPanel';
 import { ChartDashboardPanel } from './ChartDashboardPanel';
 import { LayoutGridPanel } from './LayoutGridPanel';
+// Sprint O: Data & Integration (Phases 174-178)
+import { useGraphQLBuilder } from '@/hooks/useGraphQLBuilder';
+import { useWebSocketManager } from '@/hooks/useWebSocketManager';
+import { useFileUploadManager } from '@/hooks/useFileUploadManager';
+import { usePaymentIntegration } from '@/hooks/usePaymentIntegration';
+import { useEmailTemplateBuilder } from '@/hooks/useEmailTemplateBuilder';
+import { GraphQLBuilderPanel } from './GraphQLBuilderPanel';
+import { WebSocketPanel } from './WebSocketPanel';
+import { FileUploadPanel } from './FileUploadPanel';
+import { PaymentPanel } from './PaymentPanel';
+import { EmailTemplatePanel } from './EmailTemplatePanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -667,6 +678,17 @@ export function AIAppBuilderWorkspace() {
   const [showFormBuilder, setShowFormBuilder] = useState(false);
   const [showChartDashboard, setShowChartDashboard] = useState(false);
   const [showLayoutGrid, setShowLayoutGrid] = useState(false);
+  // Sprint O: Data & Integration (Phases 174-178)
+  const graphqlBuilder = useGraphQLBuilder();
+  const wsManager = useWebSocketManager();
+  const fileUploadMgr = useFileUploadManager();
+  const paymentIntegration = usePaymentIntegration();
+  const emailTemplates = useEmailTemplateBuilder();
+  const [showGraphQL, setShowGraphQL] = useState(false);
+  const [showWSManager, setShowWSManager] = useState(false);
+  const [showFileUpload, setShowFileUpload] = useState(false);
+  const [showPayments, setShowPayments] = useState(false);
+  const [showEmailTemplates, setShowEmailTemplates] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2445,6 +2467,12 @@ export function AIAppBuilderWorkspace() {
       {showFormBuilder && <FormBuilderPanel forms={formBuilder.forms} activeForm={formBuilder.getActiveForm()} fieldTypes={formBuilder.fieldTypes} onCreateForm={formBuilder.createForm} onSetActiveForm={formBuilder.setActiveForm} onAddField={formBuilder.addField} onUpdateField={formBuilder.updateField} onRemoveField={formBuilder.removeField} onMoveField={formBuilder.moveField} onGenerateZod={formBuilder.generateZodSchema} onGenerateReact={formBuilder.generateReactForm} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowFormBuilder(false)} />}
       {showChartDashboard && <ChartDashboardPanel dashboards={chartDashboard.dashboards} activeDashboard={chartDashboard.getActiveDashboard()} chartTypes={chartDashboard.chartTypes} onCreateDashboard={chartDashboard.createDashboard} onSetActiveDashboard={chartDashboard.setActiveDashboard} onAddWidget={chartDashboard.addWidget} onUpdateWidget={chartDashboard.updateWidget} onRemoveWidget={chartDashboard.removeWidget} onGenerateCode={chartDashboard.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowChartDashboard(false)} />}
       {showLayoutGrid && <LayoutGridPanel layouts={layoutGrid.layouts} activeLayout={layoutGrid.getActiveLayout()} presets={layoutGrid.presets} onCreateLayout={layoutGrid.createLayout} onSetActiveLayout={layoutGrid.setActiveLayout} onApplyPreset={layoutGrid.applyPreset} onAddArea={layoutGrid.addArea} onUpdateArea={layoutGrid.updateArea} onRemoveArea={layoutGrid.removeArea} onUpdateLayout={layoutGrid.updateLayout} onGenerateCSS={layoutGrid.generateCSS} onGenerateTailwind={layoutGrid.generateTailwind} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowLayoutGrid(false)} />}
+      {/* Sprint O: Data & Integration */}
+      {showGraphQL && <GraphQLBuilderPanel open={showGraphQL} onClose={() => setShowGraphQL(false)} schemas={graphqlBuilder.schemas} activeSchema={graphqlBuilder.getActiveSchema()} scalarTypes={graphqlBuilder.SCALAR_TYPES} onCreateSchema={graphqlBuilder.createSchema} onSetActiveSchema={graphqlBuilder.setActiveSchemaId} onAddType={graphqlBuilder.addType} onAddField={graphqlBuilder.addField} onUpdateField={graphqlBuilder.updateTypeField} onRemoveField={graphqlBuilder.removeField} onRemoveType={graphqlBuilder.removeType} onAddQuery={graphqlBuilder.addQuery} onRemoveQuery={graphqlBuilder.removeQuery} onGenerateSDL={graphqlBuilder.generateSDL} onGenerateResolvers={graphqlBuilder.generateResolvers} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
+      {showWSManager && <WebSocketPanel open={showWSManager} onClose={() => setShowWSManager(false)} channels={wsManager.channels} messages={wsManager.messages} activeChannel={wsManager.getActiveChannel()} onSetActiveChannel={wsManager.setActiveChannelId} onCreateChannel={wsManager.createChannel} onUpdateChannel={wsManager.updateChannel} onRemoveChannel={wsManager.removeChannel} onAddEvent={wsManager.addEvent} onRemoveEvent={wsManager.removeEvent} onSimulateMessage={wsManager.simulateMessage} onClearMessages={wsManager.clearMessages} onGenerateServer={wsManager.generateServerCode} onGenerateClient={wsManager.generateClientCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
+      {showFileUpload && <FileUploadPanel open={showFileUpload} onClose={() => setShowFileUpload(false)} configs={fileUploadMgr.configs} previews={fileUploadMgr.previews} activeConfig={fileUploadMgr.getActiveConfig()} mimePresets={fileUploadMgr.MIME_PRESETS} onSetActiveConfig={fileUploadMgr.setActiveConfigId} onCreateConfig={fileUploadMgr.createConfig} onUpdateConfig={fileUploadMgr.updateConfig} onRemoveConfig={fileUploadMgr.removeConfig} onSimulateUpload={fileUploadMgr.simulateUpload} onClearPreviews={fileUploadMgr.clearPreviews} onGeneratePolicy={fileUploadMgr.generateStoragePolicy} onGenerateComponent={fileUploadMgr.generateUploadComponent} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
+      {showPayments && <PaymentPanel open={showPayments} onClose={() => setShowPayments(false)} products={paymentIntegration.products} config={paymentIntegration.config} onSetConfig={paymentIntegration.setConfig} onAddProduct={paymentIntegration.addProduct} onUpdateProduct={paymentIntegration.updateProduct} onRemoveProduct={paymentIntegration.removeProduct} onGenerateCheckout={paymentIntegration.generateCheckoutCode} onGenerateWebhook={paymentIntegration.generateWebhookCode} onGeneratePricing={paymentIntegration.generatePricingComponent} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
+      {showEmailTemplates && <EmailTemplatePanel open={showEmailTemplates} onClose={() => setShowEmailTemplates(false)} templates={emailTemplates.templates} activeTemplate={emailTemplates.getActiveTemplate()} presetKeys={emailTemplates.TEMPLATE_PRESETS} onSetActiveTemplate={emailTemplates.setActiveTemplateId} onCreateTemplate={emailTemplates.createTemplate} onUpdateTemplate={emailTemplates.updateTemplate} onRemoveTemplate={emailTemplates.removeTemplate} onAddVariable={emailTemplates.addVariable} onRemoveVariable={emailTemplates.removeVariable} onPreview={emailTemplates.previewWithData} onGenerateSend={emailTemplates.generateSendFunction} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
