@@ -108,6 +108,189 @@ function updateFileHashes(files: ProjectFile[]) {
   }
 }
 
+// ── Plan step parser (Lovable-grade) ──
+// Parses structured plan steps from AI streaming output for visual task cards
+interface PlanStep { step: number; label: string; status: 'pending' | 'active' | 'done' }
+
+function parsePlanSteps(content: string): PlanStep[] | undefined {
+  // Detect numbered plan patterns like "1. Create header component" or "Step 1: Build layout"
+  const planPatterns = [
+    /(?:^|\n)(?:Step\s+)?(\d+)[.):]\s*\*{0,2}(.+?)\*{0,2}(?:\n|$)/gi,
+    /(?:^|\n)[-•]\s+\*{0,2}(.+?)\*{0,2}(?:\n|$)/gi,
+  ];
+
+  // Only parse if we see plan-like preamble
+  const hasPlanHeader = /(?:here'?s (?:my|the) plan|i'?ll|let me|steps?:|plan:|phases?:)/i.test(content.slice(0, 500));
+  if (!hasPlanHeader) return undefined;
+
+  const steps: PlanStep[] = [];
+  const firstFileIdx = content.indexOf('===FILE:');
+  const planSection = firstFileIdx > 0 ? content.slice(0, firstFileIdx) : content.slice(0, 1500);
+
+  const numbered = [...planSection.matchAll(/(?:^|\n)(?:Step\s+)?(\d+)[.):]\s*\*{0,2}([^\n]{5,80})\*{0,2}/gi)];
+  if (numbered.length >= 2) {
+    for (const m of numbered) {
+      const stepNum = parseInt(m[1]);
+      const label = m[2].replace(/\*{1,2}/g, '').trim();
+      if (label && stepNum <= 10) {
+        steps.push({ step: stepNum, label, status: 'pending' });
+      }
+    }
+  }
+
+  if (steps.length < 2) return undefined;
+
+  // Mark steps as done based on what files have been output
+  const fileMatches = content.match(/===FILE:\s*.+?===/g) || [];
+  const completedCount = Math.min(steps.length, Math.ceil(fileMatches.length / Math.max(1, steps.length / fileMatches.length)));
+  for (let i = 0; i < steps.length; i++) {
+    if (i < completedCount) steps[i].status = 'done';
+    else if (i === completedCount) steps[i].status = 'active';
+  }
+
+  return steps;
+}
+
+// ── Post-generation syntax validation (Lovable-grade) ──
+interface ValidationResult {
+  valid: boolean;
+  errors: { file: string; message: string }[];
+}
+
+function validateGeneratedFiles(files: ProjectFile[]): ValidationResult {
+  const errors: { file: string; message: string }[] = [];
+
+  for (const f of files) {
+    const ext = f.path.split('.').pop()?.toLowerCase() || '';
+
+    // HTML: check for matching tags, unclosed elements
+    if (ext === 'html' || ext === 'htm') {
+      const openTags = (f.content.match(/<(?!\/|!|br|hr|img|input|meta|link)[a-z][^>]*>/gi) || []).length;
+      const closeTags = (f.content.match(/<\/[a-z][^>]*>/gi) || []).length;
+      if (Math.abs(openTags - closeTags) > 3) {
+        errors.push({ file: f.path, message: `Mismatched HTML tags: ${openTags} open vs ${closeTags} close` });
+      }
+      // Check for unclosed <script> or <style>
+      const scriptOpen = (f.content.match(/<script/gi) || []).length;
+      const scriptClose = (f.content.match(/<\/script>/gi) || []).length;
+      if (scriptOpen !== scriptClose) {
+        errors.push({ file: f.path, message: `Unclosed <script> tag` });
+      }
+    }
+
+    // JS/TS: check for basic syntax issues
+    if (['js', 'jsx', 'ts', 'tsx', 'mjs'].includes(ext)) {
+      // Bracket balance
+      const opens = (f.content.match(/[{([\]]/g) || []).length;
+      const closes = (f.content.match(/[})\]]/g) || []).length;
+      if (Math.abs(opens - closes) > 2) {
+        errors.push({ file: f.path, message: `Unbalanced brackets: ${opens} open vs ${closes} close` });
+      }
+      // Unclosed template literals
+      const backticks = (f.content.match(/`/g) || []).length;
+      if (backticks % 2 !== 0) {
+        errors.push({ file: f.path, message: `Odd number of backticks (unclosed template literal)` });
+      }
+    }
+
+    // CSS: check for unclosed braces
+    if (ext === 'css' || ext === 'scss') {
+      const openBraces = (f.content.match(/{/g) || []).length;
+      const closeBraces = (f.content.match(/}/g) || []).length;
+      if (openBraces !== closeBraces) {
+        errors.push({ file: f.path, message: `Unclosed CSS brace: ${openBraces} { vs ${closeBraces} }` });
+      }
+    }
+
+    // General: check for AI prose that leaked into code
+    const lastLines = f.content.split('\n').slice(-5);
+    const proseInCode = lastLines.some(l => /^(I've |Here's |This |Let me |I hope |Enjoy|Great|Perfect|Done!)/i.test(l.trim()));
+    if (proseInCode) {
+      errors.push({ file: f.path, message: `AI commentary detected at end of file` });
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+/** Strip trailing AI prose from validated files */
+function sanitizeValidationErrors(files: ProjectFile[], errors: ValidationResult['errors']): ProjectFile[] {
+  return files.map(f => {
+    const proseError = errors.find(e => e.file === f.path && e.message.includes('commentary'));
+    if (!proseError) return f;
+    // Strip trailing prose lines
+    const lines = f.content.split('\n');
+    let cutIdx = lines.length;
+    for (let i = lines.length - 1; i >= Math.max(0, lines.length - 10); i--) {
+      if (/^(I've |Here's |This |Let me |I hope |Enjoy|Great|Perfect|Done!)/i.test(lines[i].trim())) {
+        cutIdx = i;
+      } else if (lines[i].trim()) break;
+    }
+    return { ...f, content: lines.slice(0, cutIdx).join('\n').trimEnd() };
+  });
+}
+
+// ── Import graph analysis for smarter context (Lovable-grade) ──
+function buildImportGraph(files: ProjectFile[]): Map<string, Set<string>> {
+  const graph = new Map<string, Set<string>>();
+  const fileNames = new Map<string, string>(); // basename -> full path
+
+  for (const f of files) {
+    const base = f.path.split('/').pop()?.replace(/\.[^.]+$/, '') || '';
+    fileNames.set(base, f.path);
+    if (!graph.has(f.path)) graph.set(f.path, new Set());
+  }
+
+  for (const f of files) {
+    // Match import/require patterns
+    const importPatterns = [
+      /import\s+.*?\s+from\s+['"](.+?)['"]/g,
+      /import\s*\(['"](.+?)['"]\)/g,
+      /require\s*\(['"](.+?)['"]\)/g,
+      /<script\s+src=["'](.+?)["']/gi,
+      /<link\s+.*?href=["'](.+?)["']/gi,
+    ];
+
+    for (const pattern of importPatterns) {
+      let match;
+      while ((match = pattern.exec(f.content)) !== null) {
+        const ref = match[1];
+        // Resolve to a project file
+        const refBase = ref.split('/').pop()?.replace(/\.[^.]+$/, '') || ref;
+        const resolvedPath = fileNames.get(refBase);
+        if (resolvedPath && resolvedPath !== f.path) {
+          graph.get(f.path)?.add(resolvedPath);
+        }
+      }
+    }
+  }
+
+  return graph;
+}
+
+/** Get files that are in the dependency chain of a target file */
+function getDependencyChain(graph: Map<string, Set<string>>, targetPath: string, maxDepth = 3): Set<string> {
+  const visited = new Set<string>();
+  const queue: [string, number][] = [[targetPath, 0]];
+
+  while (queue.length > 0) {
+    const [path, depth] = queue.shift()!;
+    if (visited.has(path) || depth > maxDepth) continue;
+    visited.add(path);
+
+    // Forward deps (files this file imports)
+    const deps = graph.get(path);
+    if (deps) for (const dep of deps) queue.push([dep, depth + 1]);
+
+    // Reverse deps (files that import this file)
+    for (const [filePath, fileDeps] of graph) {
+      if (fileDeps.has(path)) queue.push([filePath, depth + 1]);
+    }
+  }
+
+  return visited;
+}
+
 // ── Request deduplication ──
 let lastRequestFingerprint = '';
 let lastRequestTime = 0;
@@ -628,7 +811,19 @@ export function useAIAppBuilder() {
           }
         }
 
-        // Import graph: if a high-scored file imports this file, boost it
+        // Import graph: boost files in the dependency chain of mentioned files
+        const importGraph = buildImportGraph(files);
+        const mentionedPaths = files.filter(other => 
+          lowerInput.includes(other.path.toLowerCase()) || 
+          lowerInput.includes(other.path.split('/').pop()?.split('.')[0]?.toLowerCase() || '')
+        ).map(other => other.path);
+        
+        for (const mp of mentionedPaths) {
+          const depChain = getDependencyChain(importGraph, mp, 2);
+          if (depChain.has(f.path)) score += 6;
+        }
+
+        // Reverse dep check: files that import this file
         const importedByRelevant = files.some(other => {
           if (other === f) return false;
           const otherScore = lowerInput.includes(other.path.toLowerCase()) ? 8 : 0;
@@ -863,6 +1058,19 @@ export function useAIAppBuilder() {
               if (delta) {
                 upsertAssistant(fullContent + delta);
                 streaming.parseIncremental(fullContent);
+                // Live plan step parsing — update every ~2KB of new content
+                if (fullContent.length % 2000 < 100) {
+                  const liveSteps = parsePlanSteps(fullContent);
+                  if (liveSteps) {
+                    setMessages(prev => {
+                      const last = prev[prev.length - 1];
+                      if (last?.role === 'assistant') {
+                        return prev.map((m, i) => i === prev.length - 1 ? { ...m, planSteps: liveSteps } : m);
+                      }
+                      return prev;
+                    });
+                  }
+                }
               }
             } catch {
               textBuffer = line + '\n' + textBuffer;
@@ -924,11 +1132,30 @@ export function useAIAppBuilder() {
 
     // ── Post-stream finalization (shared between main and retry paths) ──
     const finalizeStream = async () => {
+      const buildStartTime = performance.now();
       const { files: parsedFiles, deletions } = parseMultiFileOutput(fullContent);
-      if (parsedFiles.length > 0 || deletions.length > 0) {
+
+      // ── Post-gen validation (Lovable-grade) ──
+      let filesToApply = parsedFiles;
+      if (parsedFiles.length > 0) {
+        const validation = validateGeneratedFiles(parsedFiles);
+        if (!validation.valid) {
+          console.warn('[Validation] Issues found:', validation.errors);
+          // Auto-fix prose contamination
+          filesToApply = sanitizeValidationErrors(parsedFiles, validation.errors);
+          // Re-validate after sanitization
+          const recheck = validateGeneratedFiles(filesToApply);
+          const criticalErrors = recheck.errors.filter(e => !e.message.includes('commentary'));
+          if (criticalErrors.length > 0) {
+            toast.warning(`Code quality issues detected in ${criticalErrors.length} file(s). Preview may have errors.`, { duration: 5000 });
+          }
+        }
+      }
+
+      if (filesToApply.length > 0 || deletions.length > 0) {
         let mergedFiles = [...currentFiles];
         if (deletions.length > 0) mergedFiles = mergedFiles.filter(f => !deletions.includes(f.path));
-        for (const newFile of parsedFiles) {
+        for (const newFile of filesToApply) {
           const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
           if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
           else mergedFiles.push(newFile);
@@ -943,20 +1170,43 @@ export function useAIAppBuilder() {
           timestamp: new Date(),
           messageId: '',
         }]);
+
+        // ── Auto-rollback listener (Lovable-grade) ──
+        // Listen for preview errors within 5s of applying new files; revert if critical
+        const rollbackTimeout = setTimeout(() => {
+          window.removeEventListener('message', rollbackListener);
+        }, 5000);
+        const rollbackListener = (event: MessageEvent) => {
+          if (event.data?.type === 'preview-error' && event.data?.critical) {
+            console.warn('[Auto-Rollback] Preview error detected after build, reverting to previous version');
+            toast.error('New code caused errors — automatically reverted to previous version.', { duration: 6000 });
+            setLatestFiles([...currentFiles]);
+            clearTimeout(rollbackTimeout);
+            window.removeEventListener('message', rollbackListener);
+          }
+        };
+        window.addEventListener('message', rollbackListener);
       }
       streaming.stopStreaming();
+
+      // ── Build analytics (Lovable-grade) ──
+      const buildTimeMs = Math.round(performance.now() - buildStartTime);
+      const { changed } = getChangedFiles(currentFiles);
+      console.info(`[Build Analytics] ${filesToApply.length} files generated, ${deletions.length} deleted, ${changed.length} context files sent, build: ${buildTimeMs}ms`);
 
       const msgTokens = estimateTokens(input + fullContent);
       setTotalTokensUsed(prev => prev + msgTokens);
       if (!isFixRequest) await deductCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
       
+      // Parse plan steps from AI output for visual task cards
+      const planSteps = parsePlanSteps(fullContent);
       const suggestions = generateSuggestions(fullContent, effectiveMode, messages, currentFiles);
-      const totalChanges = (parsedFiles?.length || 0) + (deletions?.length || 0);
-      const snapshot = totalChanges > 0 ? [...currentFiles, ...parsedFiles.filter(pf => !currentFiles.some(cf => cf.path === pf.path))] : [...currentFiles];
+      const totalChanges = (filesToApply?.length || 0) + (deletions?.length || 0);
+      const snapshot = totalChanges > 0 ? [...currentFiles, ...filesToApply.filter(pf => !currentFiles.some(cf => cf.path === pf.path))] : [...currentFiles];
       setMessages(prev =>
         prev.map((m, i) =>
           i === prev.length - 1 && m.role === 'assistant'
-            ? { ...m, filesGenerated: totalChanges || undefined, suggestions, tokenEstimate: msgTokens, filesSnapshot: snapshot }
+            ? { ...m, filesGenerated: totalChanges || undefined, suggestions, tokenEstimate: msgTokens, filesSnapshot: snapshot, planSteps }
             : m
         )
       );
