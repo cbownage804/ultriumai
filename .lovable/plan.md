@@ -1,77 +1,94 @@
 
 
-# Fix "Resource Load Error" and Auto-Fix Loop Pollution
+# Fix Browser Freezing and Build Failures
 
-## Root Cause
+## Root Cause Analysis
 
-The `getCompiledHTML()` function in `useProjectFileSystem.ts` correctly **inlines** CSS and JS file contents into the HTML document (lines 276-298). However, it does **not strip** the original `<script src="main.js">` and `<link href="style.css">` tags from the AI-generated `index.html`.
+The browser freezes during builds because of a **cascade of expensive side effects** triggered every time a streamed file chunk arrives. Here's what happens on EVERY chunk during AI streaming:
 
-So the compiled output contains **both**:
-1. `<script src="main.js"></script>` -- tries to fetch over HTTP, fails with "Resource Load Error"
-2. `<script>/* main.js */ ... actual code ...</script>` -- the correctly inlined version
+1. `upsertFile()` updates `project.files` state
+2. This triggers THREE separate auto-save effects simultaneously:
+   - Cloud auto-save (`scheduleAutoSave`)
+   - IndexedDB save (`idbPersistence.saveToIDB`)
+   - localStorage save (`saveDraft`)
+3. Even though `liveCompiledHTML` now correctly skips compilation during generation, the auto-saves serialize the entire file tree to JSON on every chunk -- for a large project this means megabytes of JSON.stringify per chunk
+4. After generation ends, any "Failed to load" error still calls `forwardErrorToChat()` BEFORE hitting the guard, polluting the chat with error messages that confuse the next AI call
+5. The auto-fix loop can still fire immediately after generation ends, sending another full AI request before the user even sees the result
 
-The browser hits the first tag, fails to load it, and the error console picks it up. Then the auto-fix loop sees the error and injects an `[AUTO-FIX ATTEMPT 1/3]` prompt into the chat, wasting a credit trying to "fix" something that isn't actually broken -- the inlined code works fine.
+## Plan (3 targeted changes, 1 file)
 
-## Plan
+All changes are in `src/components/ai-builder/AIAppBuilderWorkspace.tsx`:
 
-### 1. Strip local file references from HTML before inlining (`useProjectFileSystem.ts`)
+### 1. Skip ALL auto-saves during streaming
 
-After loading the main HTML content but **before** injecting inlined CSS/JS, strip any `<script src="...">` and `<link href="...css">` tags that reference local VFS files (not external CDN URLs).
+Guard the three auto-save `useEffect` blocks so they do nothing while `isGenerating` is true. Saves will fire once after generation completes (when `isGenerating` flips to false and `project.files` is finalized).
 
+**Lines ~1147-1161** -- add `if (isGenerating) return;` at the top of each auto-save effect:
+
+```typescript
+// Auto-save (cloud)
+useEffect(() => {
+  if (isGenerating) return; // skip during streaming
+  if (project.files.length > 0) scheduleAutoSave(...);
+}, [project.files, ...deps, isGenerating]);
+
+// Auto-save to IndexedDB
+useEffect(() => {
+  if (isGenerating) return;
+  idbPersistence.saveToIDB(...);
+}, [...deps, isGenerating]);
+
+// Auto-save draft to localStorage
+useEffect(() => {
+  if (isGenerating) return;
+  saveDraft(...);
+}, [...deps, isGenerating]);
 ```
-// Strip <script src="main.js"> tags that match local VFS files
-// Strip <link href="style.css"> tags that match local VFS files
-// Keep external URLs (http://, https://, //) untouched
+
+This eliminates the main source of main-thread blocking during streaming.
+
+### 2. Move "Failed to load" guard BEFORE forwardErrorToChat
+
+Currently in `handleAutoFixError` (line ~1435-1455), `forwardErrorToChat()` runs first, THEN the guard checks for "Failed to load". This means resource errors still pollute the chat and can confuse subsequent AI calls. Move the guard up:
+
+```typescript
+const handleAutoFixError = useCallback((error) => {
+  // Skip resource load errors FIRST — don't even forward to chat
+  if (error.message?.includes('Failed to load')) return;
+  if (isGenerating) return;
+
+  forwardErrorToChat({ ... });
+  // ... rest of auto-fix logic
+}, [...]);
 ```
 
-This ensures the browser only sees the inlined versions and never tries to fetch local files over HTTP.
+### 3. Add post-generation cooldown for auto-fix
 
-### 2. Suppress auto-fix for "Failed to load" resource errors (`AIAppBuilderWorkspace.tsx`)
+After generation ends, the preview compiles and renders. If any transient errors fire during initial render (e.g., images loading, fonts), the auto-fix loop grabs them immediately. Add a 3-second cooldown after `isGenerating` flips to false before allowing auto-fix:
 
-As a safety net, skip the auto-fix loop for "Failed to load" errors that reference the app's own domain. These are always caused by the compilation pipeline, not by broken user code.
+```typescript
+const generationEndedAt = useRef<number>(0);
+
+useEffect(() => {
+  if (!isGenerating) {
+    generationEndedAt.current = Date.now();
+  }
+}, [isGenerating]);
+
+// In handleAutoFixError:
+if (Date.now() - generationEndedAt.current < 3000) return; // cooldown
+```
 
 ## Files to Change
 
 | File | Change |
 |------|--------|
-| `src/hooks/useProjectFileSystem.ts` | Add regex to strip `<script src="localfile.js">` and `<link href="localfile.css">` tags matching VFS files before inlining |
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Skip auto-fix for "Failed to load" resource errors |
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | 1. Guard 3 auto-save effects with `isGenerating` check 2. Reorder guards in `handleAutoFixError` 3. Add 3s post-generation cooldown for auto-fix |
 
-## Technical Details
+## Expected Result
 
-### Stripping logic (useProjectFileSystem.ts)
-
-Insert after line 198 (`let compiled = mainHTML.content;`), before head injections:
-
-```typescript
-// Strip local <script src> and <link href=css> tags that will be inlined
-const localPaths = new Set(files.map(f => f.path));
-// Remove <script src="main.js"></script> where main.js is a VFS file
-compiled = compiled.replace(
-  /<script\s+[^>]*src=['"]([^'"]+)['"]\s*><\/script>/gi,
-  (match, src) => {
-    if (src.startsWith('http') || src.startsWith('//')) return match; // keep CDN
-    const normalized = src.startsWith('./') ? src.slice(2) : src;
-    return localPaths.has(normalized) ? `<!-- inlined: ${normalized} -->` : match;
-  }
-);
-// Remove <link href="style.css" rel="stylesheet"> where style.css is a VFS file
-compiled = compiled.replace(
-  /<link\s+[^>]*href=['"]([^'"]+\.css)['"][^>]*>/gi,
-  (match, href) => {
-    if (href.startsWith('http') || href.startsWith('//')) return match;
-    const normalized = href.startsWith('./') ? href.slice(2) : href;
-    return localPaths.has(normalized) ? `<!-- inlined: ${normalized} -->` : match;
-  }
-);
-```
-
-### Auto-fix filter (AIAppBuilderWorkspace.tsx)
-
-In the error handler that calls `autoFixLoop.attemptFix`, add a guard:
-
-```typescript
-// Skip auto-fix for resource load errors (handled by compilation pipeline)
-if (error.message?.includes('Failed to load')) return;
-```
+- **No more browser freezes**: Auto-saves (the heaviest I/O) are completely skipped during streaming
+- **No more phantom errors in chat**: "Failed to load" errors are silenced before reaching the chat
+- **No more wasted auto-fix credits**: 3-second cooldown prevents transient render errors from triggering fix loops
+- **Builds complete reliably**: The only work happening during streaming is lightweight state updates for the code editor
 
