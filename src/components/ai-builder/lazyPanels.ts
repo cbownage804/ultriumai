@@ -235,6 +235,12 @@ export const FilePreviewGenPanel = lz(() => import('./FilePreviewGenPanel'), 'Fi
 export const AvatarGenPanel = lz(() => import('./AvatarGenPanel'), 'AvatarGenPanel');
 export const CarouselBuilderPanel = lz(() => import('./CarouselBuilderPanel'), 'CarouselBuilderPanel');
 export const GalleryLightboxPanel = lz(() => import('./GalleryLightboxPanel'), 'GalleryLightboxPanel');
+// Sprint AB: Search & Discovery (Phases 239-243)
+export const FullTextSearchPanel = lz(() => import('./FullTextSearchPanel'), 'FullTextSearchPanel');
+export const FacetedFilterPanel = lz(() => import('./FacetedFilterPanel'), 'FacetedFilterPanel');
+export const AutocompletePanel = lz(() => import('./AutocompletePanel'), 'AutocompletePanel');
+export const TagSystemPanel = lz(() => import('./TagSystemPanel'), 'TagSystemPanel');
+export const SEOMetaPanel = lz(() => import('./SEOMetaPanel'), 'SEOMetaPanel');
 
 // Already-lazy panels (keep existing lazy pattern)
 export const DatabasePanel = lz(() => import('./DatabasePanel'), 'DatabasePanel');
