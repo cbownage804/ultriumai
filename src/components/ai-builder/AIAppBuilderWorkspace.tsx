@@ -223,6 +223,12 @@ import { useAlertingRulesEngine } from '@/hooks/useAlertingRulesEngine';
 import { useAuditTrailGenerator } from '@/hooks/useAuditTrailGenerator';
 import { useClickHeatmap } from '@/hooks/useClickHeatmap';
 import { useBudgetCostMonitor } from '@/hooks/useBudgetCostMonitor';
+// Sprint AD
+import { useChangelogAutoGenerator } from '@/hooks/useChangelogAutoGenerator';
+import { useREADMEGenerator } from '@/hooks/useREADMEGenerator';
+import { useLicensePicker } from '@/hooks/useLicensePicker';
+import { useOpenAPISpecGenerator } from '@/hooks/useOpenAPISpecGenerator';
+import { useProjectHealthScore } from '@/hooks/useProjectHealthScore';
 
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
@@ -294,6 +300,8 @@ import {
    TagSystemPanel, SEOMetaPanel,
    KPIDashboardPanel, AlertingRulesPanel, AuditTrailPanel,
    ClickHeatmapPanel, BudgetMonitorPanel,
+   ChangelogAutoPanel, READMEGeneratorPanel, LicensePickerPanel,
+   OpenAPISpecPanel, ProjectHealthPanel,
   
   DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
   EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
@@ -844,6 +852,17 @@ export function AIAppBuilderWorkspace() {
   const [showAuditTrail, setShowAuditTrail] = useState(false);
   const [showClickHeatmap, setShowClickHeatmap] = useState(false);
   const [showBudgetMonitor, setShowBudgetMonitor] = useState(false);
+  // Sprint AD: Final Polish (Phases 249-253)
+  const changelogAutoGen = useChangelogAutoGenerator();
+  const readmeGen = useREADMEGenerator();
+  const licensePicker = useLicensePicker();
+  const openAPISpec = useOpenAPISpecGenerator();
+  const projectHealth = useProjectHealthScore();
+  const [showChangelogAuto, setShowChangelogAuto] = useState(false);
+  const [showREADMEGen, setShowREADMEGen] = useState(false);
+  const [showLicensePicker, setShowLicensePicker] = useState(false);
+  const [showOpenAPISpec, setShowOpenAPISpec] = useState(false);
+  const [showProjectHealth, setShowProjectHealth] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2709,6 +2728,12 @@ export function AIAppBuilderWorkspace() {
       {showAuditTrail && <AuditTrailPanel {...auditTrail} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowAuditTrail(false)} />}
       {showClickHeatmap && <ClickHeatmapPanel {...clickHeatmap} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowClickHeatmap(false)} />}
       {showBudgetMonitor && <BudgetMonitorPanel {...budgetMonitor} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowBudgetMonitor(false)} />}
+      {/* Sprint AD: Final Polish */}
+      {showChangelogAuto && <ChangelogAutoPanel {...changelogAutoGen} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowChangelogAuto(false)} />}
+      {showREADMEGen && <READMEGeneratorPanel {...readmeGen} files={project.files} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowREADMEGen(false)} />}
+      {showLicensePicker && <LicensePickerPanel {...licensePicker} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowLicensePicker(false)} />}
+      {showOpenAPISpec && <OpenAPISpecPanel {...openAPISpec} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowOpenAPISpec(false)} />}
+      {showProjectHealth && <ProjectHealthPanel {...projectHealth} files={project.files} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowProjectHealth(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}

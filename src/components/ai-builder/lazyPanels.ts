@@ -247,6 +247,12 @@ export const AlertingRulesPanel = lz(() => import('./AlertingRulesPanel'), 'Aler
 export const AuditTrailPanel = lz(() => import('./AuditTrailPanel'), 'AuditTrailPanel');
 export const ClickHeatmapPanel = lz(() => import('./ClickHeatmapPanel'), 'ClickHeatmapPanel');
 export const BudgetMonitorPanel = lz(() => import('./BudgetMonitorPanel'), 'BudgetMonitorPanel');
+// Sprint AD: Final Polish (Phases 249-253)
+export const ChangelogAutoPanel = lz(() => import('./ChangelogAutoPanel'), 'ChangelogAutoPanel');
+export const READMEGeneratorPanel = lz(() => import('./READMEGeneratorPanel'), 'READMEGeneratorPanel');
+export const LicensePickerPanel = lz(() => import('./LicensePickerPanel'), 'LicensePickerPanel');
+export const OpenAPISpecPanel = lz(() => import('./OpenAPISpecPanel'), 'OpenAPISpecPanel');
+export const ProjectHealthPanel = lz(() => import('./ProjectHealthPanel'), 'ProjectHealthPanel');
 
 // Already-lazy panels (keep existing lazy pattern)
 export const DatabasePanel = lz(() => import('./DatabasePanel'), 'DatabasePanel');
