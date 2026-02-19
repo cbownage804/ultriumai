@@ -739,10 +739,8 @@ export function useAIAppBuilder() {
     setMessages(prev => [...prev, userMsg]);
     setIsGenerating(true);
 
-    // Thinking phases
+    // Thinking phases — stream-driven, no artificial delays
     setThinkingPhase('analyzing');
-    const phaseTimer1 = setTimeout(() => setThinkingPhase('planning'), 1500);
-    const phaseTimer2 = setTimeout(() => setThinkingPhase('writing'), 3500);
 
     // Build conversation context — smart windowing: only last N messages
     const MAX_CONTEXT_MESSAGES = 20;
@@ -865,6 +863,7 @@ export function useAIAppBuilder() {
     const FILE_BUDGET_CHARS = Math.max(200_000, MAX_PAYLOAD_CHARS - systemChars - 200_000); // Reserve 200K for response headroom
 
     const buildFileContext = (files: ProjectFile[], userInput: string): string => {
+      // Fresh project shortcut — skip all context machinery
       if (files.length === 0) return userInput;
 
       // Phase 75: Use proactive context budget trimming
@@ -1195,6 +1194,11 @@ export function useAIAppBuilder() {
               if (delta) {
                 upsertAssistant(fullContent + delta);
                 streaming.parseIncremental(fullContent);
+                // Stream-driven phase transition: switch to 'writing' on first ===FILE: token
+                if (thinkingPhase !== null && fullContent.includes('===FILE:')) {
+                  setThinkingPhase('writing');
+                  setTimeout(() => setThinkingPhase(null), 500);
+                }
                 // Live plan step parsing — update every ~2KB of new content
                 if (fullContent.length % 2000 < 100) {
                   const liveSteps = parsePlanSteps(fullContent);
@@ -1365,31 +1369,48 @@ export function useAIAppBuilder() {
       setTotalTokensUsed(prev => prev + msgTokens);
       if (!isFixRequest) await deductCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
       
-      // Parse plan steps from AI output for visual task cards
-      const planSteps = parsePlanSteps(fullContent);
-      const suggestions = generateSuggestions(fullContent, effectiveMode, messages, currentFiles);
+      // Plan steps already computed during streaming — reuse from last message
+      const existingPlanSteps = messages[messages.length - 1]?.planSteps;
+      const planSteps = existingPlanSteps || parsePlanSteps(fullContent);
       const totalChanges = (allNewFiles?.length || 0) + (deletions?.length || 0);
       const snapshot = totalChanges > 0 ? [...currentFiles, ...allNewFiles.filter(pf => !currentFiles.some(cf => cf.path === pf.path))] : [...currentFiles];
 
-      // Build summary (Phase 5)
+      // Build summary (Phase 5) — skip redundant validation for initial builds
       const buildDurationMs = Date.now() - buildWallStart;
-      const validation = validateGeneratedFiles(allNewFiles);
+      const validationErrorCount = allNewFiles.length > 0 && currentFiles.length > 0
+        ? validateGeneratedFiles(allNewFiles).errors.length
+        : 0;
       const buildSummary: BuildSummary = {
         durationMs: buildDurationMs,
         filesGenerated: allNewFiles.length,
         filesDeleted: deletions.length,
         tokensUsed: msgTokens,
         contextChars: totalChars,
-        validationErrors: validation.errors.length,
+        validationErrors: validationErrorCount,
       };
 
+      // Unblock UI immediately, then compute suggestions async
       setMessages(prev =>
         prev.map((m, i) =>
           i === prev.length - 1 && m.role === 'assistant'
-            ? { ...m, filesGenerated: totalChanges || undefined, suggestions, tokenEstimate: msgTokens, filesSnapshot: snapshot, planSteps, buildSummary: totalChanges > 0 ? buildSummary : undefined, migrations: parsedMigrations.length > 0 ? parsedMigrations : undefined, edgeFunctions: parsedEdgeFunctions.length > 0 ? parsedEdgeFunctions : undefined }
+            ? { ...m, filesGenerated: totalChanges || undefined, tokenEstimate: msgTokens, filesSnapshot: snapshot, planSteps, buildSummary: totalChanges > 0 ? buildSummary : undefined, migrations: parsedMigrations.length > 0 ? parsedMigrations : undefined, edgeFunctions: parsedEdgeFunctions.length > 0 ? parsedEdgeFunctions : undefined }
             : m
         )
       );
+
+      // Defer suggestion generation so it doesn't block setIsGenerating(false)
+      requestAnimationFrame(() => {
+        const suggestions = generateSuggestions(fullContent, effectiveMode, messages, currentFiles);
+        if (suggestions?.length) {
+          setMessages(prev =>
+            prev.map((m, i) =>
+              i === prev.length - 1 && m.role === 'assistant'
+                ? { ...m, suggestions }
+                : m
+            )
+          );
+        }
+      });
     };
 
     try {
@@ -1456,8 +1477,6 @@ export function useAIAppBuilder() {
               if (retryResp.ok && retryResp.body) {
                 toast.success('Retry successful!', { duration: 2000 });
                 setThinkingPhase(null);
-                clearTimeout(phaseTimer1);
-                clearTimeout(phaseTimer2);
                 streaming.startStreaming();
                 fullContent = '';
                 await readStream(retryResp.body);
@@ -1498,8 +1517,6 @@ export function useAIAppBuilder() {
           ]);
           setIsGenerating(false);
           setThinkingPhase(null);
-          clearTimeout(phaseTimer1);
-          clearTimeout(phaseTimer2);
           return;
         }
 
@@ -1522,8 +1539,6 @@ export function useAIAppBuilder() {
         });
         setIsGenerating(false);
         setThinkingPhase(null);
-        clearTimeout(phaseTimer1);
-        clearTimeout(phaseTimer2);
         return;
       }
 
@@ -1531,8 +1546,6 @@ export function useAIAppBuilder() {
 
       // Clear thinking phases once streaming starts
       setThinkingPhase(null);
-      clearTimeout(phaseTimer1);
-      clearTimeout(phaseTimer2);
       streaming.startStreaming();
 
       await readStream(resp.body);
@@ -1552,8 +1565,6 @@ export function useAIAppBuilder() {
     } finally {
       setIsGenerating(false);
       setThinkingPhase(null);
-      clearTimeout(phaseTimer1);
-      clearTimeout(phaseTimer2);
       abortRef.current = null;
     }
   }, [messages, isGenerating, mode, totalRemaining, deductCredits]);
