@@ -490,6 +490,14 @@ The supabase-js SDK is pre-loaded and a \`supabase\` client is initialized globa
 Available globals: \`supabase\`, \`SUPABASE_URL\`, \`SUPABASE_ANON_KEY\`
 Use for: auth, database queries, realtime, storage.
 Do NOT include <script> tags for supabase — it's already injected.
+
+SCHEMA-AWARE QUERIES:
+When the [DATABASE SCHEMA] context is provided in the conversation, you MUST use the EXACT table and column names from it.
+- Use \`supabase.from('table_name').select('col1, col2, col3')\` with real column names
+- Reference foreign key relationships as documented in the schema
+- Respect NOT NULL constraints — never omit required fields in inserts
+- A \`types.ts\` file with TypeScript interfaces is auto-generated — import types from it: \`import type { TableName } from './types'\`
+- When the user asks to "add a table" or "create a schema", emit a ===MIGRATION: === block AND update the types.ts file with the new interface
 `;
 
 const STRIPE_ADDON = `
