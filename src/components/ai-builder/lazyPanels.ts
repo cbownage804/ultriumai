@@ -229,6 +229,12 @@ export const MFAFlowPanel = lz(() => import('./MFAFlowPanel'), 'MFAFlowPanel');
 export const SessionManagerPanel = lz(() => import('./SessionManagerPanel'), 'SessionManagerPanel');
 export const APIKeyPanel = lz(() => import('./APIKeyPanel'), 'APIKeyPanel');
 export const PermissionMatrixPanel = lz(() => import('./PermissionMatrixPanel'), 'PermissionMatrixPanel');
+// Sprint AA: Content & Media (Phases 234-238)
+export const RichTextConfigPanel = lz(() => import('./RichTextConfigPanel'), 'RichTextConfigPanel');
+export const FilePreviewGenPanel = lz(() => import('./FilePreviewGenPanel'), 'FilePreviewGenPanel');
+export const AvatarGenPanel = lz(() => import('./AvatarGenPanel'), 'AvatarGenPanel');
+export const CarouselBuilderPanel = lz(() => import('./CarouselBuilderPanel'), 'CarouselBuilderPanel');
+export const GalleryLightboxPanel = lz(() => import('./GalleryLightboxPanel'), 'GalleryLightboxPanel');
 
 // Already-lazy panels (keep existing lazy pattern)
 export const DatabasePanel = lz(() => import('./DatabasePanel'), 'DatabasePanel');

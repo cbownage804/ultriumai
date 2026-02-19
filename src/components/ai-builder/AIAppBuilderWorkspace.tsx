@@ -205,6 +205,12 @@ import { useMFAFlowGenerator } from '@/hooks/useMFAFlowGenerator';
 import { useSessionManager } from '@/hooks/useSessionManager';
 import { useAPIKeyManagement } from '@/hooks/useAPIKeyManagement';
 import { usePermissionMatrixBuilder } from '@/hooks/usePermissionMatrixBuilder';
+// Sprint AA
+import { useRichTextConfig } from '@/hooks/useRichTextConfig';
+import { useFilePreviewGenerator } from '@/hooks/useFilePreviewGenerator';
+import { useAvatarGenerator } from '@/hooks/useAvatarGenerator';
+import { useCarouselBuilder } from '@/hooks/useCarouselBuilder';
+import { useGalleryLightboxGenerator } from '@/hooks/useGalleryLightboxGenerator';
 
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
@@ -269,7 +275,10 @@ import {
   DockerComposePanel, KubernetesPanel, CICDPipelinePanel,
   StructuredLoggerPanel, HealthCheckPanel,
   OAuthSetupPanel, MFAFlowPanel, SessionManagerPanel,
+  RichTextConfigPanel, FilePreviewGenPanel, AvatarGenPanel,
+  CarouselBuilderPanel, GalleryLightboxPanel,
   APIKeyPanel, PermissionMatrixPanel,
+  
   DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
   EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
   BuildAnalyticsPanel as BuildAnalyticsPanelLazy,
@@ -786,6 +795,17 @@ export function AIAppBuilderWorkspace() {
   const [showSessionMgr, setShowSessionMgr] = useState(false);
   const [showAPIKeyMgmt, setShowAPIKeyMgmt] = useState(false);
   const [showPermMatrix, setShowPermMatrix] = useState(false);
+  // Sprint AA: Content & Media (Phases 234-238)
+  const richTextConfig = useRichTextConfig();
+  const filePreviewGen = useFilePreviewGenerator();
+  const avatarGen = useAvatarGenerator();
+  const carouselBuilder = useCarouselBuilder();
+  const galleryLightbox = useGalleryLightboxGenerator();
+  const [showRichTextConfig, setShowRichTextConfig] = useState(false);
+  const [showFilePreviewGen, setShowFilePreviewGen] = useState(false);
+  const [showAvatarGen, setShowAvatarGen] = useState(false);
+  const [showCarouselBuilder, setShowCarouselBuilder] = useState(false);
+  const [showGalleryLightbox, setShowGalleryLightbox] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2633,6 +2653,12 @@ export function AIAppBuilderWorkspace() {
       {showSessionMgr && <SessionManagerPanel {...sessionMgr} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowSessionMgr(false)} />}
       {showAPIKeyMgmt && <APIKeyPanel {...apiKeyMgmt} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowAPIKeyMgmt(false)} />}
       {showPermMatrix && <PermissionMatrixPanel {...permMatrix} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowPermMatrix(false)} />}
+      {/* Sprint AA: Content & Media */}
+      {showRichTextConfig && <RichTextConfigPanel {...richTextConfig} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowRichTextConfig(false)} />}
+      {showFilePreviewGen && <FilePreviewGenPanel {...filePreviewGen} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowFilePreviewGen(false)} />}
+      {showAvatarGen && <AvatarGenPanel {...avatarGen} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowAvatarGen(false)} />}
+      {showCarouselBuilder && <CarouselBuilderPanel {...carouselBuilder} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowCarouselBuilder(false)} />}
+      {showGalleryLightbox && <GalleryLightboxPanel {...galleryLightbox} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowGalleryLightbox(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
