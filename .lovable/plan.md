@@ -1,134 +1,146 @@
 
 
-# Production Parity Sweep -- Remaining Gaps & Remediation
+# Final Production Parity Sweep -- Complete Remediation
 
-## Summary of Current State
+## Current State Assessment
 
-The previous parity work (Phases 1-5) established the Panel Registry, ToolbarPanelsDropdown mega-menu, `panelSetters` map, and `commandActions` auto-generation. WorkspaceTopBar, WorkspaceBottomBar, and WorkspaceStatusBar were created. However, several critical integration issues remain that prevent true production readiness.
+After thorough audit, the workspace has:
+- 150+ panels in the registry, all accessible via Cmd+K and the mega-menu toolbar
+- SafePanel wrapping all panels in WorkspacePanelLayer (120+ panels)
+- Cmd+K correctly wired to EnhancedCommandPalette
+- Keyword search working in command palette
+
+However, **~30 panels rendered inline in the workspace (lines 2464-2632) are NOT wrapped in SafePanel** and several are missing from the registry entirely. The WorkspaceTopBar component was created but never integrated -- the workspace still renders ~200 lines of inline header JSX. The file remains at 2,845 lines.
 
 ---
 
-## Gap Analysis
+## Remaining Gaps
 
-### 1. Cmd+K Opens the Wrong Command Palette
+### Gap 1: ~30 Inline Panels Lack SafePanel Wrapping (lines 2464-2632)
 
-`Cmd+K` (line 1280) toggles `showCommandPalette`, which opens the **basic** `CommandPalette` component (line 2778) -- NOT the `EnhancedCommandPalette` that has all 150+ registry actions. The `EnhancedCommandPalette` is wired to `showEnhancedPalette` and has its own duplicate `Cmd+K` listener (line 47-54 of `EnhancedCommandPalette.tsx`), causing a conflict where both palettes fight over the same shortcut.
+These panels are rendered directly in the workspace's main content area without SafePanel:
+- VersionHistoryPanel, EnvVarsPanel, RLSPolicyTester, AssetManager
+- DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser, EdgeFunctionEditor
+- ActivityFeed, ExportGuidePanel, SchemaDesignerLazy, OneClickDeploy
+- BuilderHelpCenter, SetupWizard, PromptHistoryPanel, AICodeIntelligence
+- DatabaseExplorer, ComponentLibrary, DeployPipelinePanel, PerformanceProfilerLazy
+- BuildAnalyticsPanelLazy, ChangelogPanel, TestingDebugSuite, GPTConnectorPanel
+- ProjectReviewPanel, SupabaseIDEPanel, GitHubPanel, DatabaseMigrationPanel
+- EdgeFunctionEditorPanel, BuildWorkflowPanel, MultiFileSearchReplace
+- InBrowserTestRunner, PluginMarketplace, CollaborationPanelLazy, APIBuilderPanelLazy
+- DesignSystemPanelLazy, PackageManager, NPMPackageManagerPanel
+- PreviewDevToolsPanel, SymbolSearchPanel
 
-**Fix:** Remove the old `CommandPalette`, wire `Cmd+K` to only open `EnhancedCommandPalette`, and remove the duplicate listener from inside the component.
+Some have ad-hoc PanelErrorBoundary wrapping (Database Tools, Schema Designer, Performance Profiler, Build Analytics) but most are bare.
 
-### 2. PanelErrorBoundary Only Wraps 4 of 150+ Panels
+**Fix:** Wrap all 30+ inline panels in SafePanel for crash isolation.
 
-Currently, only Database Tools, Schema Designer, Performance Profiler, and Build Analytics have `<PanelErrorBoundary>` wrappers. The remaining ~146 panels (including all Sprint W-AD panels) are rendered as bare conditionals (`{showX && <PanelX />}`) with no error isolation. If any one of those panels throws, the entire workspace crashes.
+### Gap 2: WorkspaceTopBar Not Integrated (Still Inline Header)
 
-**Fix:** Wrap every panel render in `<PanelErrorBoundary>`. For efficiency, create a `<SafePanel>` helper that combines error boundary + Suspense in one wrapper.
+The workspace renders ~200 lines of inline header JSX (lines 2152-2333) despite `WorkspaceTopBar.tsx` existing as a ready-to-use component (264 lines). This is duplicated code.
 
-### 3. WorkspaceTopBar Created But Not Integrated
+**Fix:** Replace the inline header block with the WorkspaceTopBar component, passing required props.
 
-`WorkspaceTopBar.tsx` was created (264 lines) but the workspace still renders its own inline header JSX (lines ~2130-2270). The component is never used.
+### Gap 3: Several Inline Panels Missing From Registry
 
-**Fix:** Replace the inline header block in `AIAppBuilderWorkspace.tsx` with `<WorkspaceTopBar />`, passing the required props.
+These panels exist in the workspace but are NOT in `panelRegistry.ts`, meaning they can't be found via Cmd+K or the toolbar mega-menu:
+- `showPromptHistory` (Prompt History)
+- `showVersionHistory` (Version History)  
+- `showRLSTester` (RLS Policy Tester)
+- `showFileSearch` (File Search)
+- `showFileTree` (File Tree)
+- `showConsole` (Console)
+- `showDesignSystem` (Design System -- IS in registry but renders inline)
+- `showPackages` (Package Manager)
+- `showNPMManager` (NPM Manager -- IS in registry)
+- `showDevTools` (DevTools -- IS in registry)
+- `showSymbolSearch` (Symbol Search -- IS in registry)
 
-### 4. Workspace Still ~2964 Lines (Target Was 500)
+**Fix:** Add missing panels to the registry and ensure `panelSetters` includes them.
 
-Despite creating sub-components, the workspace file hasn't shrunk. The decomposition was never applied -- WorkspaceBottomBar and WorkspaceStatusBar are imported and used, but WorkspaceTopBar is not, and the massive panel render block (lines 2766-2964, ~200 lines of panel instantiation) was never extracted.
+### Gap 4: panelSetters Map Missing ~15 Inline Panel Setters
 
-**Fix:** Extract the panel render block (lines 2766-2964) into `WorkspacePanelLayer.tsx`. Integrate WorkspaceTopBar. This should reduce the workspace to ~2400 lines (still large, but the remaining logic is essential orchestration).
+The `panelSetters` map (lines 1940-2089) only covers panels from WorkspacePanelLayer. The inline panels (VersionHistory, RLSTester, FileSearch, Console, Assets, Packages, etc.) are missing, so Cmd+K registry actions for these panels won't work even after adding them to the registry.
 
-### 5. Missing `<Suspense>` on Most Lazy-Loaded Panels
+**Fix:** Add all missing setters to the panelSetters map.
 
-Panels from Sprints E-AD are lazy-loaded via `lazyPanels.ts` but most are rendered without `<Suspense>` wrappers. React will throw if a lazy component renders without a Suspense boundary.
+### Gap 5: Command Palette UX -- Actions Search Requires ">" Prefix
 
-**Fix:** The `<SafePanel>` helper (from Gap 2) will address this by combining `PanelErrorBoundary` + `Suspense` + the conditional show check.
+Currently, searching for panel actions in EnhancedCommandPalette requires typing ">" first (e.g., ">docker"). Without the prefix, it only searches files. Users won't know this convention.
 
-### 6. EnhancedCommandPalette Search Does Not Match Registry Keywords
+**Fix:** When no file matches are found for a query, also show matching actions. This is how VS Code and Lovable's palettes behave.
 
-The `EnhancedCommandPalette` filters by `label` matching but does not check `keywords` on `CommandAction` items. This means typing "k8s" or "docker" in the palette won't find "Kubernetes" or "Docker Compose" even though keywords are provided.
+### Gap 6: Inline Panels Block Cannot Be Extracted Yet
 
-**Fix:** Update the filter logic in `EnhancedCommandPalette.tsx` to also search against `action.keywords`.
+The ~30 inline panels (lines 2464-2632) are tightly coupled to the workspace layout (they render as sidebars alongside the editor/preview). Unlike the overlay/modal panels in WorkspacePanelLayer, these are structural -- they modify the layout flow. They can be wrapped in SafePanel for safety but can't easily be moved to WorkspacePanelLayer without breaking layout.
+
+**Fix:** Wrap in SafePanel in-place. A full extraction would require a separate WorkspaceSidebarLayer component that understands layout context.
 
 ---
 
 ## Implementation Plan
 
-### Step 1: Create SafePanel Helper
+### Phase 1: Add Missing Panels to Registry (panelRegistry.ts)
+Add entries for: Prompt History, Version History, RLS Policy Tester, File Search, File Tree, Console, Assets, Packages
 
-Create `src/components/ai-builder/SafePanel.tsx`:
-- Combines `PanelErrorBoundary`, `Suspense`, and conditional visibility
-- Props: `show: boolean`, `name: string`, `children: ReactNode`
-- Renders nothing when `show` is false
-- When `show` is true, renders children inside error boundary + suspense
+### Phase 2: Add Missing Setters to panelSetters Map (AIAppBuilderWorkspace.tsx)
+Add setters for: showPromptHistory, showVersionHistory, showRLSTester, showFileSearch, showFileTree, showConsole, showAssets, showPackages, showDesignSystem, showCollaboration, showAPIBuilder
 
-### Step 2: Fix Cmd+K to Use EnhancedCommandPalette
+### Phase 3: Wrap All 30+ Inline Panels in SafePanel
+Replace bare renders (lines 2464-2632) with SafePanel wrappers for crash isolation. Replace the 4 existing ad-hoc PanelErrorBoundary+Suspense blocks with consistent SafePanel usage.
 
-In `AIAppBuilderWorkspace.tsx`:
-- Change the `Cmd+K` handler to toggle `showEnhancedPalette` instead of `showCommandPalette`
-- Remove the old `CommandPalette` render and its state
-- Remove the duplicate `Cmd+K` listener inside `EnhancedCommandPalette.tsx`
+### Phase 4: Integrate WorkspaceTopBar
+Replace the ~180-line inline header block (lines 2152-2333) with the existing WorkspaceTopBar component, passing the required props. This reduces the workspace by ~180 lines.
 
-### Step 3: Fix EnhancedCommandPalette Keyword Search
-
-In `EnhancedCommandPalette.tsx`:
-- Update the filter logic to include `action.keywords` in search matching
-- Ensure actions with matching keywords appear in results
-
-### Step 4: Integrate WorkspaceTopBar
-
-In `AIAppBuilderWorkspace.tsx`:
-- Replace the inline header block (~lines 2130-2270) with `<WorkspaceTopBar />`
-- Pass all required props from the workspace state
-
-### Step 5: Extract WorkspacePanelLayer
-
-Create `src/components/ai-builder/WorkspacePanelLayer.tsx`:
-- Move the ~200-line block of panel conditional renders (lines 2766-2964)
-- Accept `panelSetters`, hook instances, and shared callbacks as props
-- Use `SafePanel` wrapper for all panel renders
-
-### Step 6: Wrap All Panels in SafePanel
-
-Throughout the workspace and panel layer:
-- Replace bare `{showX && <PanelX />}` with `<SafePanel show={showX} name="Panel Name"><PanelX /></SafePanel>`
-- Replace existing `<PanelErrorBoundary><Suspense>...</Suspense></PanelErrorBoundary>` blocks with the cleaner `<SafePanel>` wrapper
+### Phase 5: Fix Command Palette Fallthrough Search
+Update EnhancedCommandPalette so that when in file mode and no files match, it also shows matching actions (without requiring the ">" prefix). This matches production IDE behavior.
 
 ---
 
 ## Technical Details
 
-### SafePanel Component
+### Registry Additions (Phase 1)
 
 ```text
-interface SafePanelProps {
-  show: boolean;
-  name: string;
-  children: React.ReactNode;
-}
+{ id: 'prompt-history', label: 'Prompt History', icon: Clock, category: 'view', keywords: ['prompt', 'history', 'previous'], stateKey: 'showPromptHistory' },
+{ id: 'version-history', label: 'Version History', icon: History, category: 'view', keywords: ['version', 'history', 'restore'], stateKey: 'showVersionHistory' },
+{ id: 'rls-tester', label: 'RLS Policy Tester', icon: Shield, category: 'security', keywords: ['rls', 'policy', 'row', 'level'], stateKey: 'showRLSTester' },
+{ id: 'file-search', label: 'File Search', icon: Search, category: 'edit', keywords: ['search', 'find', 'replace'], stateKey: 'showFileSearch' },
+{ id: 'file-tree', label: 'File Tree', icon: FolderOpen, category: 'view', keywords: ['files', 'tree', 'explorer'], stateKey: 'showFileTree' },
+{ id: 'console', label: 'Console', icon: Terminal, category: 'dx', keywords: ['console', 'log', 'output'], stateKey: 'showConsole' },
+{ id: 'assets', label: 'Asset Manager', icon: Image, category: 'content', keywords: ['asset', 'image', 'upload'], stateKey: 'showAssets' },
+{ id: 'packages', label: 'Package Manager', icon: Package, category: 'dx', keywords: ['package', 'cdn', 'library'], stateKey: 'showPackages' },
+```
 
-function SafePanel({ show, name, children }: SafePanelProps) {
-  if (!show) return null;
-  return (
-    <PanelErrorBoundary panelName={name}>
-      <Suspense fallback={<PanelLoader />}>
-        {children}
-      </Suspense>
-    </PanelErrorBoundary>
-  );
-}
+### SafePanel Wrapping Pattern (Phase 3)
+
+Before:
+```text
+<VersionHistoryPanel versions={versions} ... open={showVersionHistory} />
+```
+
+After:
+```text
+<SafePanel show={showVersionHistory} name="Version History">
+  <VersionHistoryPanel versions={versions} ... open={showVersionHistory} />
+</SafePanel>
 ```
 
 ### File Changes Summary
 
-| Action | File | Impact |
-|--------|------|--------|
-| Create | `src/components/ai-builder/SafePanel.tsx` | Reusable error boundary + suspense wrapper |
-| Create | `src/components/ai-builder/WorkspacePanelLayer.tsx` | Extracts ~200 lines of panel renders |
-| Edit | `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Fix Cmd+K, integrate TopBar, use SafePanel, extract panel layer |
-| Edit | `src/components/ai-builder/EnhancedCommandPalette.tsx` | Fix keyword search, remove duplicate Cmd+K listener |
+| Action | File | Lines Changed |
+|--------|------|---------------|
+| Edit | `src/components/ai-builder/panelRegistry.ts` | +8 entries (~16 lines) |
+| Edit | `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Add ~11 setters, wrap ~30 panels in SafePanel, replace header with WorkspaceTopBar (~-180 lines net) |
+| Edit | `src/components/ai-builder/EnhancedCommandPalette.tsx` | Add action fallthrough search (~10 lines) |
+| Edit | `src/components/ai-builder/WorkspaceTopBar.tsx` | Minor prop adjustments if needed |
 
 ### What This Achieves
 
-- **All 150+ panels crash-safe** with per-panel error boundaries
-- **Cmd+K** opens the full command palette with all registry actions searchable by keyword
-- **Workspace reduced by ~350+ lines** via TopBar integration and panel layer extraction
-- **No duplicate keyboard listeners** fighting over the same shortcut
-- **Consistent Suspense boundaries** for all lazy-loaded panels
+- Every panel in the workspace is crash-isolated via SafePanel
+- Every panel is discoverable via Cmd+K and the toolbar mega-menu
+- WorkspaceTopBar is actually used, removing ~180 lines of duplication
+- Command palette search works intuitively without requiring ">" prefix
+- Workspace file reduced from ~2845 to ~2665 lines
+- True production parity: no panel can crash the workspace, every tool is discoverable
 
