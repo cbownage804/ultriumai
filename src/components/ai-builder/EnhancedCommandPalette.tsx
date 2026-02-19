@@ -42,17 +42,7 @@ export function EnhancedCommandPalette({
     if (open) { setQuery(''); setSelectedIndex(0); }
   }, [open]);
 
-  // Keyboard shortcut to open
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        onOpenChange(!open);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [open, onOpenChange]);
+  // Keyboard shortcut removed — handled by workspace-level handler to avoid conflicts
 
   const isFileMode = query.length === 0 || !query.startsWith('>');
   const searchQuery = query.startsWith('>') ? query.slice(1).trim().toLowerCase() : query.toLowerCase();
