@@ -1072,8 +1072,9 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
     });
 
     // Server-side safety: trim messages to fit within gateway token limits
-    // System prompt is ~400K chars, gateway limit is ~4M chars, so budget ~3M for messages
-    const MAX_MESSAGE_CHARS = 3_000_000;
+    // System prompt is ~100K tokens (~400K chars). Gemini limit is 1M tokens (~4M chars).
+    // Budget ~2M chars for messages to leave headroom for system prompt + response.
+    const MAX_MESSAGE_CHARS = 2_000_000;
     const finalMessages = trimMessagesToFit(sanitizedMessages, MAX_MESSAGE_CHARS);
 
     // ── Gateway call with timeout (Lovable-grade) ──
@@ -1122,8 +1123,44 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
       if (response.status === 400) {
         const errorText = await response.text();
         console.error("AI gateway error:", response.status, errorText);
-        const parsed = JSON.parse(errorText).error?.message || 'Request too large';
-        return new Response(JSON.stringify({ error: parsed }), {
+        let parsedMsg = 'Request too large';
+        try { parsedMsg = JSON.parse(errorText).error?.message || parsedMsg; } catch {}
+
+        // Auto-retry with aggressively reduced context if token limit exceeded
+        if (/token|exceeds|maximum/i.test(parsedMsg)) {
+          console.log("Token limit exceeded — retrying with reduced context");
+          const reducedMessages = trimMessagesToFit(sanitizedMessages, 800_000);
+          try {
+            const retryResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: model || "google/gemini-3-flash-preview",
+                messages: [{ role: "system", content: systemPrompt }, ...reducedMessages],
+                stream,
+              }),
+            });
+            if (retryResp.ok) {
+              console.log("Retry with reduced context succeeded");
+              if (stream) {
+                return new Response(retryResp.body, {
+                  headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+                });
+              }
+              const retryData = await retryResp.json();
+              return new Response(JSON.stringify({ content: retryData.choices?.[0]?.message?.content || "" }), {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              });
+            }
+          } catch (retryErr) {
+            console.error("Retry failed:", retryErr);
+          }
+        }
+
+        return new Response(JSON.stringify({ error: parsedMsg }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
