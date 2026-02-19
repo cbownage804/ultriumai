@@ -908,6 +908,9 @@ export function useAIAppBuilder() {
       const lowerInput = userInput.toLowerCase();
       const inputWords = lowerInput.split(/\s+/).filter(w => w.length > 2);
 
+      // Hoist import graph out of scoring loop (Change 3) — compute once, not per-file
+      const importGraph = buildImportGraph(contextFiles);
+
       const scored = contextFiles.map(f => {
         let score = 0;
         const lowerPath = f.path.toLowerCase();
@@ -935,7 +938,6 @@ export function useAIAppBuilder() {
         }
 
         // Import graph: boost files in the dependency chain of mentioned files
-        const importGraph = buildImportGraph(files);
         const mentionedPaths = files.filter(other => 
           lowerInput.includes(other.path.toLowerCase()) || 
           lowerInput.includes(other.path.split('/').pop()?.split('.')[0]?.toLowerCase() || '')
@@ -1152,15 +1154,43 @@ export function useAIAppBuilder() {
       let streamDone = false;
       lastChunkTime = Date.now();
 
+      // ── Batched streaming updates via rAF (Change 1 & 4) ──
+      let rafScheduled = false;
+      let lastParsedLength = 0; // For throttling parseIncremental (Change 2)
+
       const upsertAssistant = (content: string) => {
         fullContent = content;
-        setMessages(prev => {
-          const last = prev[prev.length - 1];
-          if (last?.role === 'assistant') {
-            return prev.map((m, i) => i === prev.length - 1 ? { ...m, content } : m);
-          }
-          return [...prev, { id: crypto.randomUUID(), role: 'assistant' as const, content, timestamp: new Date() }];
-        });
+        // Only accumulate — don't trigger React yet
+        if (!rafScheduled) {
+          rafScheduled = true;
+          requestAnimationFrame(() => {
+            rafScheduled = false;
+            const currentContent = fullContent; // Capture latest
+
+            // Single setMessages call per frame (was 2-3 per token)
+            setMessages(prev => {
+              const last = prev[prev.length - 1];
+              // Compute plan steps inline (Change 4 — merged into same update)
+              let planSteps: PlanStep[] | undefined;
+              if (currentContent.length > 200) {
+                planSteps = parsePlanSteps(currentContent);
+              }
+              if (last?.role === 'assistant') {
+                return prev.map((m, i) => i === prev.length - 1
+                  ? { ...m, content: currentContent, ...(planSteps ? { planSteps } : {}) }
+                  : m
+                );
+              }
+              return [...prev, { id: crypto.randomUUID(), role: 'assistant' as const, content: currentContent, timestamp: new Date(), ...(planSteps ? { planSteps } : {}) }];
+            });
+
+            // Throttled parseIncremental — only when 500+ new chars (Change 2)
+            if (currentContent.length - lastParsedLength >= 500) {
+              lastParsedLength = currentContent.length;
+              streaming.parseIncremental(currentContent);
+            }
+          });
+        }
       };
 
       // Stall detector — if no chunk in 30s, consider stream dead
@@ -1193,25 +1223,12 @@ export function useAIAppBuilder() {
               const delta = parsed.choices?.[0]?.delta?.content;
               if (delta) {
                 upsertAssistant(fullContent + delta);
-                streaming.parseIncremental(fullContent);
                 // Stream-driven phase transition: switch to 'writing' on first ===FILE: token
                 if (thinkingPhase !== null && fullContent.includes('===FILE:')) {
                   setThinkingPhase('writing');
                   setTimeout(() => setThinkingPhase(null), 500);
                 }
-                // Live plan step parsing — update every ~2KB of new content
-                if (fullContent.length % 2000 < 100) {
-                  const liveSteps = parsePlanSteps(fullContent);
-                  if (liveSteps) {
-                    setMessages(prev => {
-                      const last = prev[prev.length - 1];
-                      if (last?.role === 'assistant') {
-                        return prev.map((m, i) => i === prev.length - 1 ? { ...m, planSteps: liveSteps } : m);
-                      }
-                      return prev;
-                    });
-                  }
-                }
+                // Plan steps + parseIncremental are now handled inside the rAF batch (Changes 1, 2, 4)
               }
             } catch {
               textBuffer = line + '\n' + textBuffer;
@@ -1276,6 +1293,9 @@ export function useAIAppBuilder() {
     streaming.startStreaming();
 
     const finalizeStream = async () => {
+      // Final parseIncremental to catch any content not yet parsed by the rAF throttle
+      streaming.parseIncremental(fullContent);
+
       const buildStartTime = performance.now();
       const { files: parsedFiles, deletions, edits, migrations: parsedMigrations, edgeFunctions: parsedEdgeFunctions } = parseMultiFileOutput(fullContent);
 
