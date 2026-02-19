@@ -15,7 +15,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from '@/hooks/useAIAppBuilder';
+import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot, BuildSummary } from '@/hooks/useAIAppBuilder';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
@@ -690,6 +690,22 @@ export function BuilderChatPanel({
               Fix this
             </button>
           </div>
+        )}
+
+        {/* Build summary card (Phase 5) */}
+        {isCompleted && msg.buildSummary && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] text-[11px] text-white/40"
+          >
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{(msg.buildSummary.durationMs / 1000).toFixed(1)}s</span>
+            <span className="flex items-center gap-1"><FileCode className="h-3 w-3" />{msg.buildSummary.filesGenerated} file{msg.buildSummary.filesGenerated !== 1 ? 's' : ''}</span>
+            <span className="flex items-center gap-1"><Coins className="h-3 w-3" />~{Math.round(msg.buildSummary.tokensUsed / 1000)}k tokens</span>
+            {msg.buildSummary.validationErrors > 0 && (
+              <span className="flex items-center gap-1 text-amber-400/60"><AlertTriangle className="h-3 w-3" />{msg.buildSummary.validationErrors} issue{msg.buildSummary.validationErrors !== 1 ? 's' : ''}</span>
+            )}
+          </motion.div>
         )}
 
         {/* Bottom action bar — Lovable style */}

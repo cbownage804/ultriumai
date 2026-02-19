@@ -295,6 +295,15 @@ function getDependencyChain(graph: Map<string, Set<string>>, targetPath: string,
 let lastRequestFingerprint = '';
 let lastRequestTime = 0;
 
+export interface BuildSummary {
+  durationMs: number;
+  filesGenerated: number;
+  filesDeleted: number;
+  tokensUsed: number;
+  contextChars: number;
+  validationErrors: number;
+}
+
 export interface BuilderMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -320,6 +329,8 @@ export interface BuilderMessage {
   isEdited?: boolean;
   /** Original content before edit */
   originalContent?: string;
+  /** Build summary stats (Phase 5) */
+  buildSummary?: BuildSummary;
 }
 
 export type BuilderMode = 'build' | 'discuss';
@@ -1140,6 +1151,9 @@ export function useAIAppBuilder() {
     };
 
     // ── Post-stream finalization (shared between main and retry paths) ──
+    const buildWallStart = Date.now();
+    streaming.startStreaming();
+
     const finalizeStream = async () => {
       const buildStartTime = performance.now();
       const { files: parsedFiles, deletions } = parseMultiFileOutput(fullContent);
@@ -1212,10 +1226,23 @@ export function useAIAppBuilder() {
       const suggestions = generateSuggestions(fullContent, effectiveMode, messages, currentFiles);
       const totalChanges = (filesToApply?.length || 0) + (deletions?.length || 0);
       const snapshot = totalChanges > 0 ? [...currentFiles, ...filesToApply.filter(pf => !currentFiles.some(cf => cf.path === pf.path))] : [...currentFiles];
+
+      // Build summary (Phase 5)
+      const buildDurationMs = Date.now() - buildWallStart;
+      const validation = validateGeneratedFiles(filesToApply);
+      const buildSummary: BuildSummary = {
+        durationMs: buildDurationMs,
+        filesGenerated: filesToApply.length,
+        filesDeleted: deletions.length,
+        tokensUsed: msgTokens,
+        contextChars: totalChars,
+        validationErrors: validation.errors.length,
+      };
+
       setMessages(prev =>
         prev.map((m, i) =>
           i === prev.length - 1 && m.role === 'assistant'
-            ? { ...m, filesGenerated: totalChanges || undefined, suggestions, tokenEstimate: msgTokens, filesSnapshot: snapshot, planSteps }
+            ? { ...m, filesGenerated: totalChanges || undefined, suggestions, tokenEstimate: msgTokens, filesSnapshot: snapshot, planSteps, buildSummary: totalChanges > 0 ? buildSummary : undefined }
             : m
         )
       );

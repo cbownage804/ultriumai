@@ -522,6 +522,19 @@ export function AIAppBuilderWorkspace() {
       conflictResolver.setBaseSnapshot([...project.files]);
       versionTimeline.addSnapshot(`AI: ${messages[messages.length - 2]?.content?.slice(0, 40) || 'generation'}`, [...project.files], 'ai-generation');
 
+      // Record build analytics (Phase 5)
+      const lastMsg = messages[messages.length - 1];
+      buildAnalytics.recordBuild({
+        type: 'build',
+        durationMs: duration,
+        filesGenerated: latestFiles.length,
+        creditsUsed: 3,
+        success: true,
+        errorCount: validationResult.errorCount,
+        validationScore: validationResult.errorCount === 0 ? 100 : Math.max(0, 100 - validationResult.errorCount * 10),
+        promptLength: lastMsg?.content?.length || 0,
+      });
+
       // Auto-name project on first successful build
       if (!hasAutoNamed.current && project.name === 'Untitled Project') {
         // Find the first real user message (skip internal planning/system prompts)
