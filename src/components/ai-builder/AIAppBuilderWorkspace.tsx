@@ -1133,16 +1133,15 @@ export function AIAppBuilderWorkspace() {
     ? partialFiles[partialFiles.length - 1]?.path || null
     : null;
 
-  useEffect(() => {
-    if (isStreamingPreview && partialFiles.length > 0) {
-      for (const file of partialFiles) upsertFile(file.path, file.content);
-      // Auto-switch to the file currently being streamed
-      const lastFile = partialFiles[partialFiles.length - 1];
-      if (lastFile && rightTab === 'code') {
-        setActiveFile(lastFile.path);
-      }
+  // During streaming, overlay partialFiles onto the editor instead of updating project.files.
+  // This eliminates hundreds of upsertFile/setProject calls per second that caused browser freezing.
+  const editorFile = useMemo(() => {
+    if (isStreamingPreview && streamingFilePath) {
+      const streamFile = partialFiles.find(f => f.path === streamingFilePath);
+      if (streamFile) return streamFile;
     }
-  }, [partialFiles, isStreamingPreview]);
+    return activeFile;
+  }, [isStreamingPreview, streamingFilePath, partialFiles, activeFile]);
 
   // Auto-save (cloud) — includes chat messages + versions for persistence
   useEffect(() => {
@@ -2273,15 +2272,15 @@ export function AIAppBuilderWorkspace() {
                 </BuilderPreviewPanel>
             ) : (
               <div className="h-full flex flex-col bg-[#09090b]">
-                {activeFile && (
+                {(editorFile || activeFile) && (
                   <>
-                    <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} dirtyFiles={dirtyFiles} streamingFilePath={streamingFilePath} onSelect={(path) => setActiveFile(path)} onClose={(path) => closeFile(path)} onReorder={reorderOpenFiles} />
+                    <FileTabBar openPaths={project.openFilePaths} activePath={streamingFilePath || project.activeFilePath} dirtyFiles={dirtyFiles} streamingFilePath={streamingFilePath} onSelect={(path) => setActiveFile(path)} onClose={(path) => closeFile(path)} onReorder={reorderOpenFiles} />
                     <div className="flex-1 min-h-0">
-                      <CodeEditor file={activeFile} onContentChange={(path, content) => { upsertFile(path, content); setDirtyFiles(prev => new Set(prev).add(path)); }} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
+                      <CodeEditor file={editorFile} onContentChange={(path, content) => { upsertFile(path, content); setDirtyFiles(prev => new Set(prev).add(path)); }} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
                     </div>
                   </>
                 )}
-                {!activeFile && (
+                {!editorFile && !activeFile && (
                   <div className="flex-1 flex items-center justify-center text-white/20 text-sm">
                     No file open — generate code via Chat
                   </div>
@@ -2635,9 +2634,9 @@ export function AIAppBuilderWorkspace() {
                                 <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors" />
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
-                                    <FileBreadcrumb file={activeFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
+                                    <FileBreadcrumb file={editorFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
                                     <div className="flex-1 overflow-hidden">
-                                      <CodeEditor file={activeFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} />
+                                      <CodeEditor file={editorFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} />
                                     </div>
                                   </div>
                                 </ResizablePanel>
@@ -2650,9 +2649,9 @@ export function AIAppBuilderWorkspace() {
                               </div>
                             ) : (
                               <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
-                                <FileBreadcrumb file={activeFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
+                                <FileBreadcrumb file={editorFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
                                 <div className="flex-1 overflow-hidden">
-                                  <CodeEditor file={activeFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} />
+                                  <CodeEditor file={editorFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} />
                                 </div>
                               </div>
                             )}
