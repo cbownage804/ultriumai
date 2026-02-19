@@ -1089,10 +1089,22 @@ export function BuilderChatPanel({
                       <div className="flex gap-1.5 justify-end">
                         <button onClick={() => setEditingMsgId(null)} className="text-[10px] text-white/30 hover:text-white/60 px-2 py-1 rounded">Cancel</button>
                         <button
-                          onClick={() => { onSend(editInput); setEditingMsgId(null); }}
+                          onClick={() => {
+                            // Phase 23: Branch conversation — truncate history at this message and re-send
+                            if (onForkFromMessage) {
+                              // Mark original message as edited, then fork
+                              onUpdateMessages?.(prev => prev.map(m => 
+                                m.id === msg.id ? { ...m, isEdited: true, originalContent: m.originalContent || m.content, content: editInput } : m
+                              ));
+                              onForkFromMessage(msg.id);
+                            }
+                            onSend(editInput);
+                            setEditingMsgId(null);
+                          }}
                           className="text-[10px] text-cyan-400 hover:text-cyan-300 px-2 py-1 rounded bg-cyan-500/10"
                         >
-                          Re-send
+                          <GitFork className="h-3 w-3 inline mr-1" />
+                          Re-send as branch
                         </button>
                       </div>
                     </div>
@@ -1100,7 +1112,7 @@ export function BuilderChatPanel({
                   <div
                     className={cn(
                       msg.role === 'user'
-                        ? 'rounded-2xl px-3.5 py-2.5 bg-white/[0.08] text-white/90 text-[13px]'
+                        ? 'rounded-2xl px-3.5 py-2.5 bg-white/[0.08] text-white/90 text-[13px] relative group/user-msg'
                         : ''
                     )}
                   >
@@ -1112,6 +1124,17 @@ export function BuilderChatPanel({
                           <img key={i} src={url} alt={`Reference ${i + 1}`} className="rounded-lg max-h-32 mb-2 mr-2 border border-white/10 inline-block" />
                         ))}
                         <p className="whitespace-pre-wrap text-[13px]">{getCleanUserContent(msg.content)}</p>
+                        {/* Edit pencil — Phase 23 conversation branching */}
+                        <button
+                          onClick={() => { setEditingMsgId(msg.id); setEditInput(msg.content); }}
+                          className="absolute -left-8 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md flex items-center justify-center text-white/0 group-hover/user-msg:text-white/30 hover:!text-white/60 hover:bg-white/[0.05] transition-all"
+                          title="Edit & re-send"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                        {msg.isEdited && (
+                          <span className="text-[9px] text-white/20 ml-1.5">(edited)</span>
+                        )}
                       </div>
                     )}
                   </div>

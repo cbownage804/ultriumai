@@ -369,7 +369,10 @@ try {
   <script src="https://js.stripe.com/v3/"></script>
   <script>const stripe = Stripe('${options.stripeConfig.publishableKey}');</script>` : ''}
 
-  ${Object.keys(envObj).length > 0 ? `<script>window.ENV = ${JSON.stringify(envObj)};</script>` : ''}
+  ${Object.keys(envObj).length > 0 ? `<script>
+window.ENV = ${JSON.stringify(envObj)};
+(function(){var m={};for(var k in window.ENV){var v=window.ENV[k];m[k]=/key|secret|token|password|auth/i.test(k)&&v.length>8?'****...'+v.slice(-6):v;}console.log('%c[ENV] Variables loaded:','color:#6ee7b7',m);})();
+</script>` : ''}
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }

@@ -509,6 +509,114 @@ When the [AUTH SYSTEM] context block is present, the project already has pre-bui
 - For OAuth providers (Google, GitHub), use supabase.auth.signInWithOAuth({ provider: 'google' })
 - Generate a logout button/link that calls supabase.auth.signOut()
 
+REALTIME SUBSCRIPTIONS (Phase 19):
+When the user's request involves real-time data (chat, live updates, collaborative editing, notifications, sync, multiplayer), ALWAYS wire Supabase Realtime subscriptions alongside initial data fetches.
+
+REALTIME PATTERN — use this exact structure:
+\`\`\`javascript
+// 1. Initial data fetch
+const { data: items } = await supabase.from('table_name').select('*').order('created_at', { ascending: true });
+renderItems(items || []);
+
+// 2. Subscribe to live changes
+const channel = supabase
+  .channel('table-changes')
+  .on('postgres_changes',
+    { event: '*', schema: 'public', table: 'table_name' },
+    (payload) => {
+      if (payload.eventType === 'INSERT') {
+        addItem(payload.new);
+      } else if (payload.eventType === 'UPDATE') {
+        updateItem(payload.new);
+      } else if (payload.eventType === 'DELETE') {
+        removeItem(payload.old.id);
+      }
+    }
+  )
+  .subscribe();
+
+// 3. Cleanup on unmount (React: return from useEffect)
+// channel.unsubscribe();
+\`\`\`
+
+PRESENCE CHANNEL — for showing who's online:
+\`\`\`javascript
+const presenceChannel = supabase.channel('online-users');
+presenceChannel
+  .on('presence', { event: 'sync' }, () => {
+    const state = presenceChannel.presenceState();
+    renderOnlineUsers(Object.values(state).flat());
+  })
+  .subscribe(async (status) => {
+    if (status === 'SUBSCRIBED') {
+      await presenceChannel.track({ user_id: currentUser.id, name: currentUser.name, online_at: new Date().toISOString() });
+    }
+  });
+\`\`\`
+
+BROADCAST CHANNEL — for ephemeral events (typing indicators, cursor positions):
+\`\`\`javascript
+const broadcastChannel = supabase.channel('room-events');
+broadcastChannel
+  .on('broadcast', { event: 'typing' }, ({ payload }) => {
+    showTypingIndicator(payload.user_id);
+  })
+  .subscribe();
+
+// Send broadcast
+broadcastChannel.send({ type: 'broadcast', event: 'typing', payload: { user_id: currentUser.id } });
+\`\`\`
+
+REALTIME RULES:
+- ALWAYS fetch initial data first, THEN subscribe — never rely on realtime alone for initial state
+- Use a unique channel name per subscription (e.g., 'messages-changes', 'tasks-live')
+- In React, subscribe in useEffect and return cleanup: () => channel.unsubscribe()
+- For chat apps: use INSERT for new messages, combine with presence for online status
+- For collaborative apps: use UPDATE for shared state, broadcast for ephemeral events (cursors, typing)
+- Handle all event types (INSERT, UPDATE, DELETE) unless the UI only needs one
+
+SUPABASE STORAGE INTEGRATION (Phase 20):
+When the user asks for file uploads, avatars, image galleries, document attachments, or any file management feature, ALWAYS use Supabase Storage.
+
+STORAGE UPLOAD PATTERN:
+\`\`\`javascript
+async function uploadFile(file, bucket = 'uploads') {
+  const path = \\\`\\\${currentUser.id}/\\\${Date.now()}_\\\${file.name}\\\`;
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(path, file, { cacheControl: '3600', upsert: false });
+  if (error) throw error;
+  const { data: { publicUrl } } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(data.path);
+  return publicUrl;
+}
+\`\`\`
+
+DRAG-AND-DROP UPLOAD UI:
+\`\`\`html
+<div id="dropzone" ondragover="event.preventDefault(); this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="event.preventDefault(); this.classList.remove('drag-over'); handleFiles(event.dataTransfer.files)">
+  <p>Drag files here or <label for="file-input" style="cursor:pointer;color:var(--primary)">browse</label></p>
+  <input id="file-input" type="file" multiple hidden onchange="handleFiles(this.files)" />
+</div>
+\`\`\`
+
+STORAGE RULES:
+- ALWAYS include a ===MIGRATION:=== block to create the storage bucket with RLS policies:
+  ===MIGRATION: Create storage bucket for uploads===
+  INSERT INTO storage.buckets (id, name, public) VALUES ('uploads', 'uploads', true);
+  CREATE POLICY "Users can upload files" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'uploads' AND auth.uid()::text = (storage.foldername(name))[1]);
+  CREATE POLICY "Public read access" ON storage.objects FOR SELECT USING (bucket_id = 'uploads');
+  CREATE POLICY "Users can delete own files" ON storage.objects FOR DELETE USING (bucket_id = 'uploads' AND auth.uid()::text = (storage.foldername(name))[1]);
+  ===END_MIGRATION===
+- Store files under \`{user_id}/{filename}\` for RLS compatibility
+- Show upload progress using XMLHttpRequest or fetch with a progress wrapper
+- Validate file types and sizes before upload (max 50MB default)
+- For avatar/profile images: resize on client before upload using canvas, default 256x256
+- For image galleries: generate thumbnails by appending \`?width=200&height=200\` to public URLs
+- ALWAYS show a preview (image thumbnail or file icon) after upload
+- Include error handling: show toast on failure, retry option on network errors
+
 EDGE FUNCTION GENERATION (Phase 16):
 When the user's request requires server-side logic (sending emails, processing webhooks, calling external APIs with secret keys, scheduled jobs, payment processing, AI proxy calls), emit edge function code using the ===EDGE_FUNCTION: delimiter:
 
@@ -540,6 +648,17 @@ EDGE FUNCTION RULES:
 - You can emit multiple ===EDGE_FUNCTION: blocks in a single response
 - In the frontend code, invoke the function using: supabase.functions.invoke('function-name', { body: { ... } })
 - NEVER use ===FILE: for edge functions — always use ===EDGE_FUNCTION: so they get the deploy UI
+
+RLS POLICY BEST PRACTICES (Phase 21):
+When generating ===MIGRATION:=== blocks that include CREATE TABLE, ALWAYS:
+1. Add \`ALTER TABLE public.table_name ENABLE ROW LEVEL SECURITY;\` immediately after
+2. Add sensible default policies based on the table's purpose:
+   - User-owned data: \`CREATE POLICY "Users manage own rows" ON public.table_name FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);\`
+   - Public read, private write: \`CREATE POLICY "Public read" ON public.table_name FOR SELECT USING (true); CREATE POLICY "Auth write" ON public.table_name FOR INSERT WITH CHECK (auth.uid() = user_id);\`
+   - Team-based access: \`CREATE POLICY "Team access" ON public.table_name FOR ALL USING (team_id IN (SELECT team_id FROM team_members WHERE user_id = auth.uid()));\`
+   - Admin-only: \`CREATE POLICY "Admin only" ON public.table_name FOR ALL USING (public.is_admin_user());\`
+3. NEVER create tables without RLS. Every table with user data MUST have RLS enabled with at least a SELECT and INSERT policy.
+4. Always include a user_id column (UUID, NOT NULL) for user-scoped tables.
 `;
 
 const STRIPE_ADDON = `
