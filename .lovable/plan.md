@@ -1,94 +1,52 @@
 
 
-# Fix Browser Freezing and Build Failures
+# Fix Browser Freezing During Code Generation
 
-## Root Cause Analysis
+## Root Cause
 
-The browser freezes during builds because of a **cascade of expensive side effects** triggered every time a streamed file chunk arrives. Here's what happens on EVERY chunk during AI streaming:
+The streaming hot-reload effect (line 1136) calls `upsertFile()` for every partial file on **every single SSE token** received from the AI. Each `upsertFile` triggers a full React state update of `project.files`, which causes:
 
-1. `upsertFile()` updates `project.files` state
-2. This triggers THREE separate auto-save effects simultaneously:
-   - Cloud auto-save (`scheduleAutoSave`)
-   - IndexedDB save (`idbPersistence.saveToIDB`)
-   - localStorage save (`saveDraft`)
-3. Even though `liveCompiledHTML` now correctly skips compilation during generation, the auto-saves serialize the entire file tree to JSON on every chunk -- for a large project this means megabytes of JSON.stringify per chunk
-4. After generation ends, any "Failed to load" error still calls `forwardErrorToChat()` BEFORE hitting the guard, polluting the chat with error messages that confuse the next AI call
-5. The auto-fix loop can still fire immediately after generation ends, sending another full AI request before the user even sees the result
+- Re-evaluation of every `useMemo` and `useEffect` that depends on `project.files` (dozens of them)
+- Full React reconciliation of a 2800-line component with 100+ state variables and 50+ hooks
+- This happens hundreds of times per second during streaming
 
-## Plan (3 targeted changes, 1 file)
+Even though compilation and auto-saves are now guarded, the sheer volume of state updates from the streaming loop overwhelms the browser.
 
-All changes are in `src/components/ai-builder/AIAppBuilderWorkspace.tsx`:
+## Solution: Stop updating project files during streaming entirely
 
-### 1. Skip ALL auto-saves during streaming
+The streaming file updates into `project.files` serve no critical purpose during generation -- the code editor can display `partialFiles` directly, and compilation is already deferred. The final files arrive via `latestFiles` when generation completes (line 938-981), which is the canonical source.
 
-Guard the three auto-save `useEffect` blocks so they do nothing while `isGenerating` is true. Saves will fire once after generation completes (when `isGenerating` flips to false and `project.files` is finalized).
+### Changes (1 file)
 
-**Lines ~1147-1161** -- add `if (isGenerating) return;` at the top of each auto-save effect:
+**`src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-```typescript
-// Auto-save (cloud)
-useEffect(() => {
-  if (isGenerating) return; // skip during streaming
-  if (project.files.length > 0) scheduleAutoSave(...);
-}, [project.files, ...deps, isGenerating]);
+1. **Remove the streaming upsertFile loop** (lines 1136-1144): Delete the `useEffect` that calls `upsertFile` for every partial file during streaming. This eliminates hundreds of unnecessary state updates per second.
 
-// Auto-save to IndexedDB
-useEffect(() => {
-  if (isGenerating) return;
-  idbPersistence.saveToIDB(...);
-}, [...deps, isGenerating]);
+2. **Feed the code editor from `partialFiles` during streaming**: Update the code editor's file source so that while `isStreamingPreview` is true, the editor reads from `partialFiles` instead of `project.files`. This preserves the live code display without triggering state cascades.
 
-// Auto-save draft to localStorage
-useEffect(() => {
-  if (isGenerating) return;
-  saveDraft(...);
-}, [...deps, isGenerating]);
+3. **Track active streaming file without state updates**: Use a ref instead of calling `setActiveFile` during streaming. The editor tab can read the streaming file path from the already-computed `streamingFilePath` variable (line 1132).
+
+### Technical Detail
+
+```text
+BEFORE (per SSE token):
+  parseIncremental() -> setPartialFiles()
+  useEffect triggers -> upsertFile(file1) -> setProject()
+                     -> upsertFile(file2) -> setProject()
+                     -> setActiveFile()   -> setProject()
+  = 4+ React state updates per token x hundreds of tokens = FREEZE
+
+AFTER (per SSE token):
+  parseIncremental() -> setPartialFiles()
+  (no useEffect, no upsertFile, no setProject)
+  = 1 React state update per token = SMOOTH
 ```
 
-This eliminates the main source of main-thread blocking during streaming.
+### What the user will see
 
-### 2. Move "Failed to load" guard BEFORE forwardErrorToChat
-
-Currently in `handleAutoFixError` (line ~1435-1455), `forwardErrorToChat()` runs first, THEN the guard checks for "Failed to load". This means resource errors still pollute the chat and can confuse subsequent AI calls. Move the guard up:
-
-```typescript
-const handleAutoFixError = useCallback((error) => {
-  // Skip resource load errors FIRST — don't even forward to chat
-  if (error.message?.includes('Failed to load')) return;
-  if (isGenerating) return;
-
-  forwardErrorToChat({ ... });
-  // ... rest of auto-fix logic
-}, [...]);
-```
-
-### 3. Add post-generation cooldown for auto-fix
-
-After generation ends, the preview compiles and renders. If any transient errors fire during initial render (e.g., images loading, fonts), the auto-fix loop grabs them immediately. Add a 3-second cooldown after `isGenerating` flips to false before allowing auto-fix:
-
-```typescript
-const generationEndedAt = useRef<number>(0);
-
-useEffect(() => {
-  if (!isGenerating) {
-    generationEndedAt.current = Date.now();
-  }
-}, [isGenerating]);
-
-// In handleAutoFixError:
-if (Date.now() - generationEndedAt.current < 3000) return; // cooldown
-```
-
-## Files to Change
-
-| File | Change |
-|------|--------|
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | 1. Guard 3 auto-save effects with `isGenerating` check 2. Reorder guards in `handleAutoFixError` 3. Add 3s post-generation cooldown for auto-fix |
-
-## Expected Result
-
-- **No more browser freezes**: Auto-saves (the heaviest I/O) are completely skipped during streaming
-- **No more phantom errors in chat**: "Failed to load" errors are silenced before reaching the chat
-- **No more wasted auto-fix credits**: 3-second cooldown prevents transient render errors from triggering fix loops
-- **Builds complete reliably**: The only work happening during streaming is lightweight state updates for the code editor
+- Code editor still shows files being written in real-time (via partialFiles)
+- Skeleton preview still displays during generation (unchanged)
+- When generation completes, `latestFiles` syncs everything into `project.files` as before
+- Preview compiles and renders after generation ends (unchanged)
+- No more browser freezing
 
