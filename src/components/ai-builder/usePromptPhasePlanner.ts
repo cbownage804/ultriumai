@@ -187,7 +187,15 @@ export function usePromptPhasePlanner() {
 
   const analyzePrompt = useCallback((input: string): PhasePlan | null => {
     if (!isLargePrompt(input)) return null;
+    return createPlan(input);
+  }, []);
 
+  /** Force-create a phase plan regardless of prompt size heuristics (e.g. after payload_too_large) */
+  const forceAnalyzePrompt = useCallback((input: string): PhasePlan | null => {
+    return createPlan(input);
+  }, []);
+
+  function createPlan(input: string): PhasePlan | null {
     const phases = decomposeIntoPhases(input);
     if (phases.length <= 1) return null;
 
@@ -201,7 +209,7 @@ export function usePromptPhasePlanner() {
 
     setActivePlan(plan);
     return plan;
-  }, []);
+  }
 
   const getCurrentPhasePrompt = useCallback((): string | null => {
     if (!activePlan) return null;
@@ -288,6 +296,7 @@ export function usePromptPhasePlanner() {
   return {
     activePlan,
     analyzePrompt,
+    forceAnalyzePrompt,
     getCurrentPhasePrompt,
     advancePhase,
     skipPhase,
