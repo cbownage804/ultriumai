@@ -12,29 +12,8 @@ import { parseEdgeFunctionBlocks, stripEdgeFunctionBlocks, type EdgeFunctionBloc
 // ── File hash tracking for incremental context (Lovable-grade) ──
 const fileHashCache = new Map<string, string>();
 
-// ── Gateway health check cache ──
-let gatewayHealthy = true;
-let lastHealthCheck = 0;
-const HEALTH_CHECK_INTERVAL_MS = 60_000; // Re-check every 60s
-
-async function checkGatewayHealth(): Promise<boolean> {
-  const now = Date.now();
-  if (now - lastHealthCheck < HEALTH_CHECK_INTERVAL_MS) return gatewayHealthy;
-  lastHealthCheck = now;
-  try {
-    const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-app-builder`, {
-      method: 'HEAD',
-      signal: AbortSignal.timeout(5000),
-    });
-    // Any response (including 4xx from CORS/auth) means the service is reachable.
-    // Only a complete fetch failure (caught below) indicates the service is truly down.
-    gatewayHealthy = true;
-  } catch {
-    // Network error, DNS failure, or timeout — service is actually unreachable
-    gatewayHealthy = false;
-  }
-  return gatewayHealthy;
-}
+// Health check removed — false positives from CORS preflight errors caused misleading "AI slow" warnings.
+// Actual request failures are handled by the smart error classifier below.
 
 // ── Smart error classifier ──
 interface ClassifiedError {
@@ -704,12 +683,6 @@ export function useAIAppBuilder() {
     isAutoFix?: boolean,
   ) => {
     if (!input.trim() || isGenerating) return;
-
-    // ── Pre-flight health check ──
-    const healthy = await checkGatewayHealth();
-    if (!healthy) {
-      toast.warning('AI service may be slow or unavailable. Your request will still be attempted.', { duration: 4000 });
-    }
 
     // ── Request deduplication: prevent double-sends ──
     const fingerprint = hashString(input + (imageDataUrls?.join('') || ''));
