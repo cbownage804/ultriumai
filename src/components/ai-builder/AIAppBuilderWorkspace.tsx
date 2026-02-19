@@ -188,6 +188,26 @@ import { useSeedDataGenerator } from '@/hooks/useSeedDataGenerator';
 import { useAPIEndpointTester } from '@/hooks/useAPIEndpointTester';
 import { useWebhookBuilder } from '@/hooks/useWebhookBuilder';
 import { useCronJobScheduler } from '@/hooks/useCronJobScheduler';
+import { useEnvironmentManager } from '@/hooks/useEnvironmentManager';
+import { useOneClickRollback } from '@/hooks/useOneClickRollback';
+import { useUptimeMonitor } from '@/hooks/useUptimeMonitor';
+import { useBuildCacheManager } from '@/hooks/useBuildCacheManager';
+import { useCustomBuildScripts } from '@/hooks/useCustomBuildScripts';
+import { useCMSMode } from '@/hooks/useCMSMode';
+import { useMarkdownBlog } from '@/hooks/useMarkdownBlog';
+import { useImageOptimizer } from '@/hooks/useImageOptimizer';
+import { useVideoEmbedManager } from '@/hooks/useVideoEmbedManager';
+import { useI18nGenerator } from '@/hooks/useI18nGenerator';
+import { EnvironmentManagerPanel } from './EnvironmentManagerPanel';
+import { RollbackPanel } from './RollbackPanel';
+import { UptimeMonitorPanel } from './UptimeMonitorPanel';
+import { BuildCachePanel } from './BuildCachePanel';
+import { BuildScriptsPanel } from './BuildScriptsPanel';
+import { CMSModePanel } from './CMSModePanel';
+import { MarkdownBlogPanel } from './MarkdownBlogPanel';
+import { ImageOptimizerPanel } from './ImageOptimizerPanel';
+import { VideoEmbedPanel } from './VideoEmbedPanel';
+import { I18nPanel } from './I18nPanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -482,6 +502,26 @@ export function AIAppBuilderWorkspace() {
   const apiTester = useAPIEndpointTester();
   const webhookBuilder = useWebhookBuilder();
   const cronScheduler = useCronJobScheduler();
+  const environmentManager = useEnvironmentManager();
+  const rollbackManager = useOneClickRollback();
+  const uptimeMonitor = useUptimeMonitor();
+  const buildCache = useBuildCacheManager();
+  const buildScripts = useCustomBuildScripts();
+  const cmsMode = useCMSMode();
+  const markdownBlog = useMarkdownBlog();
+  const imageOptimizer = useImageOptimizer();
+  const videoEmbed = useVideoEmbedManager();
+  const i18nGenerator = useI18nGenerator();
+  const [showEnvManager, setShowEnvManager] = useState(false);
+  const [showRollback, setShowRollback] = useState(false);
+  const [showUptimeMonitor, setShowUptimeMonitor] = useState(false);
+  const [showBuildCache, setShowBuildCache] = useState(false);
+  const [showBuildScripts, setShowBuildScripts] = useState(false);
+  const [showCMSMode, setShowCMSMode] = useState(false);
+  const [showBlogEngine, setShowBlogEngine] = useState(false);
+  const [showImageOptimizer, setShowImageOptimizer] = useState(false);
+  const [showVideoEmbed, setShowVideoEmbed] = useState(false);
+  const [showI18n, setShowI18n] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2194,6 +2234,16 @@ export function AIAppBuilderWorkspace() {
       </div>
 
       <TemplateLibrary isOpen={showTemplates} onClose={() => setShowTemplates(false)} onSelectTemplate={(prompt) => handleSend(prompt)} />
+      <EnvironmentManagerPanel open={showEnvManager} onClose={() => setShowEnvManager(false)} environments={environmentManager.environments} activeEnv={environmentManager.activeEnv} onSwitch={environmentManager.switchEnvironment} onPromote={environmentManager.promote} onUpdateVars={environmentManager.updateEnvVars} />
+      <RollbackPanel open={showRollback} onClose={() => setShowRollback(false)} snapshots={rollbackManager.snapshots} currentFiles={project.files} onRollback={(id) => { const files = rollbackManager.rollback(id); if (files) { pushUndo('Before rollback', project.files); setFiles(files); toast.success('Rolled back'); } }} onGetDiff={(id) => rollbackManager.getDiff(id, project.files)} isRollingBack={rollbackManager.isRollingBack} />
+      <UptimeMonitorPanel open={showUptimeMonitor} onClose={() => setShowUptimeMonitor(false)} checks={uptimeMonitor.checks} stats={uptimeMonitor.getStats()} isMonitoring={uptimeMonitor.isMonitoring} url={uptimeMonitor.url} onStart={uptimeMonitor.startMonitoring} onStop={uptimeMonitor.stopMonitoring} publishedUrl={publishedUrl} />
+      <BuildCachePanel open={showBuildCache} onClose={() => setShowBuildCache(false)} stats={buildCache.stats} onInvalidate={() => buildCache.invalidate()} />
+      <BuildScriptsPanel open={showBuildScripts} onClose={() => setShowBuildScripts(false)} scripts={buildScripts.scripts} onToggle={buildScripts.toggleScript} onRun={(id) => { const r = buildScripts.runScript(id, project.files); toast[r.success ? 'success' : 'error'](r.output.slice(0, 80)); }} onRemove={buildScripts.removeScript} />
+      <CMSModePanel open={showCMSMode} onClose={() => setShowCMSMode(false)} isEnabled={cmsMode.isEnabled} onToggle={cmsMode.toggleCMS} blocks={cmsMode.blocks} onUpdateBlock={cmsMode.updateBlock} onExport={cmsMode.exportContent} editingBlock={cmsMode.editingBlock} onSetEditing={cmsMode.setEditingBlock} />
+      <MarkdownBlogPanel open={showBlogEngine} onClose={() => setShowBlogEngine(false)} posts={markdownBlog.posts} onGenerate={() => { const files = markdownBlog.generateBlogSystem(); files.forEach(f => upsertFile(f.path, f.content)); toast.success(`Generated ${files.length} blog files`); }} onRemovePost={markdownBlog.removePost} onInsertFiles={(files) => files.forEach(f => upsertFile(f.path, f.content))} />
+      <ImageOptimizerPanel open={showImageOptimizer} onClose={() => setShowImageOptimizer(false)} images={imageOptimizer.images} isProcessing={imageOptimizer.isProcessing} onOptimize={(f) => imageOptimizer.optimizeImage(f)} onGenerateTag={imageOptimizer.generateImgTag} onRemove={imageOptimizer.removeImage} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />
+      <VideoEmbedPanel open={showVideoEmbed} onClose={() => setShowVideoEmbed(false)} embeds={videoEmbed.embeds} onAdd={videoEmbed.addEmbed} onRemove={videoEmbed.removeEmbed} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />
+      <I18nPanel open={showI18n} onClose={() => setShowI18n(false)} strings={i18nGenerator.strings} locales={i18nGenerator.locales} onExtract={() => i18nGenerator.extractStrings(project.files)} onAddLocale={i18nGenerator.addLocale} onRemoveLocale={i18nGenerator.removeLocale} onUpdateTranslation={i18nGenerator.updateTranslation} onGenerateFiles={() => { const files = i18nGenerator.generateFiles(); files.forEach(f => upsertFile(f.path, f.content)); toast.success(`Generated ${files.length} i18n files`); }} />
       <EditHistoryTimeline isOpen={showEditHistory} onClose={() => setShowEditHistory(false)} versions={versions} onRestore={(id) => { restoreVersion(id); setShowEditHistory(false); }} />
       <CommandPalette open={showCommandPalette} onOpenChange={setShowCommandPalette} files={project.files} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} onSwitchTab={setRightTab} onSwitchMode={setMode} onUndo={handleUndo} onRedo={handleRedo} onSave={handleSave} onClear={handleClear} onOpenTemplates={() => setShowTemplates(true)} onPublish={handlePublish} canUndo={canUndo} canRedo={canRedo} />
       <KeyboardShortcutsPanel open={showShortcuts} onOpenChange={setShowShortcuts} />
