@@ -10,6 +10,7 @@ import { PreviewZoomControls } from './PreviewZoomControls';
 import { VisualEditOverlay } from './VisualEditOverlay';
 import { ResponsivePreviewBar, type ViewportMode, getViewportWidth } from './ResponsivePreviewBar';
 import { SkeletonPreview } from './SkeletonPreview';
+import { DeviceFrameOverlay, type DeviceType } from './DeviceFrameOverlay';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import previewBg from '@/assets/preview-placeholder-bg.jpg';
 
@@ -45,6 +46,7 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
+  const [isLandscape, setIsLandscape] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
@@ -407,34 +409,40 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
         </div>
       )}
 
-      {/* Preview */}
+      {/* Preview — Phase 42: Device Frame Overlay */}
       <div className="flex-1 min-h-0 flex items-stretch justify-center">
         {html ? (
-          <div
-            className={cn(
-              'h-full transition-all duration-300',
-              viewportMode !== 'desktop' && 'mx-auto rounded-lg border border-white/[0.06] shadow-2xl shadow-black/50 my-4'
-            )}
-            style={{
-              width: viewportWidth > 0 ? `${viewportWidth}px` : '100%',
-              maxWidth: '100%',
-              height: viewportMode === 'desktop' ? '100%' : 'calc(100% - 32px)',
-            }}
+          <DeviceFrameOverlay
+            device={viewportMode === 'mobile' ? 'iphone15' : viewportMode === 'tablet' ? 'ipad' : 'none'}
+            isLandscape={isLandscape}
+            onRotate={() => setIsLandscape(prev => !prev)}
           >
-            <iframe
-              ref={iframeRef}
-              key={iframeKey}
-              srcDoc={htmlWithErrorCapture || ''}
-              className="w-full h-full border-0 bg-white rounded-[inherit] origin-top-left"
-              sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-              title="App Preview"
+            <div
+              className={cn(
+                'h-full transition-all duration-300',
+                viewportMode !== 'desktop' && !['iphone15', 'ipad'].includes(viewportMode === 'mobile' ? 'iphone15' : viewportMode === 'tablet' ? 'ipad' : 'none') && 'mx-auto rounded-lg border border-white/[0.06] shadow-2xl shadow-black/50 my-4'
+              )}
               style={{
-                transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
-                width: zoom !== 100 ? `${10000 / zoom}%` : '100%',
-                height: zoom !== 100 ? `${10000 / zoom}%` : '100%',
+                width: viewportWidth > 0 ? `${viewportWidth}px` : '100%',
+                maxWidth: '100%',
+                height: viewportMode === 'desktop' ? '100%' : 'calc(100% - 32px)',
               }}
-            />
-          </div>
+            >
+              <iframe
+                ref={iframeRef}
+                key={iframeKey}
+                srcDoc={htmlWithErrorCapture || ''}
+                className="w-full h-full border-0 bg-white rounded-[inherit] origin-top-left"
+                sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                title="App Preview"
+                style={{
+                  transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
+                  width: zoom !== 100 ? `${10000 / zoom}%` : '100%',
+                  height: zoom !== 100 ? `${10000 / zoom}%` : '100%',
+                }}
+              />
+            </div>
+          </DeviceFrameOverlay>
         ) : isGenerating ? (
           <SkeletonPreview />
         ) : (
