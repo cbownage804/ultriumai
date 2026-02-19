@@ -302,22 +302,28 @@ export function useAgentMode() {
         completedAt: Date.now(),
       });
 
-      // Show plan approval UI and wait for user response
-      setCurrentRun(prev => prev ? { ...prev, status: 'awaiting_approval', plan: planData } : prev);
-      setTaskQueue(prev => prev.map(t => t.id === task.id ? { ...t, status: 'awaiting_approval' as const } : t));
-      setPendingApproval({ taskId: task.id, plan: planData });
+      // Auto-approve the initial command (no existing files = fresh project)
+      const isInitialCommand = currentFiles.length === 0;
+      let approved = true;
 
-      const approved = await new Promise<boolean>((resolve) => {
-        approvalResolverRef.current = resolve;
-        // Auto-approve after 30s if no response
-        setTimeout(() => {
-          if (approvalResolverRef.current === resolve) {
-            approvalResolverRef.current = null;
-            setPendingApproval(null);
-            resolve(true);
-          }
-        }, 30000);
-      });
+      if (!isInitialCommand) {
+        // Show plan approval UI and wait for user response
+        setCurrentRun(prev => prev ? { ...prev, status: 'awaiting_approval', plan: planData } : prev);
+        setTaskQueue(prev => prev.map(t => t.id === task.id ? { ...t, status: 'awaiting_approval' as const } : t));
+        setPendingApproval({ taskId: task.id, plan: planData });
+
+        approved = await new Promise<boolean>((resolve) => {
+          approvalResolverRef.current = resolve;
+          // Auto-approve after 30s if no response
+          setTimeout(() => {
+            if (approvalResolverRef.current === resolve) {
+              approvalResolverRef.current = null;
+              setPendingApproval(null);
+              resolve(true);
+            }
+          }, 30000);
+        });
+      }
 
       if (!approved || controller.signal.aborted) {
         setTaskQueue(prev => prev.map(t => t.id === task.id ? { ...t, status: 'cancelled' as const, completedAt: new Date() } : t));

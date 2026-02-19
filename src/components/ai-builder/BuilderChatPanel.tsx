@@ -105,6 +105,8 @@ interface BuilderChatPanelProps {
   onReview?: () => void;
   supabaseConfig?: { url: string; anonKey: string } | null;
   onUpdateMessages?: (updater: (prev: BuilderMessage[]) => BuilderMessage[]) => void;
+  /** Questions UI rendered above the input */
+  questionsSlot?: React.ReactNode;
 }
 
 
@@ -306,7 +308,7 @@ export function BuilderChatPanel({
   onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates, onFixError,
   onForkFromMessage, onRevertToMessage, selectedModel, onModelChange,
   onToggleVisualEdit, isVisualEditActive, onOpenEditHistory, onSelectStarterTemplate, onReview,
-  supabaseConfig, onUpdateMessages,
+  supabaseConfig, onUpdateMessages, questionsSlot,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -1203,6 +1205,9 @@ export function BuilderChatPanel({
           ))}
         </div>
       )}
+
+      {/* Questions slot — rendered right above the input like Lovable */}
+      {questionsSlot}
 
       {/* Quick Actions + Context Indicator + Mode Toggle + Input */}
       <div className="p-3 border-t border-white/[0.06] shrink-0 space-y-2" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
