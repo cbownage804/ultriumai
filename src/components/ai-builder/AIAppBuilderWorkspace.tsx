@@ -258,6 +258,16 @@ import { VoiceChatPanel } from './VoiceChatPanel';
 import { ScreenSharePanel } from './ScreenSharePanel';
 import { CodeReactionsPanel } from './CodeReactionsPanel';
 import { WhiteboardPanel } from './WhiteboardPanel';
+import { useVisualRegressionTesting } from '@/hooks/useVisualRegressionTesting';
+import { useAccessibilityScoring } from '@/hooks/useAccessibilityScoring';
+import { useCodeCoverageVisualizer } from '@/hooks/useCodeCoverageVisualizer';
+import { useMutationTesting } from '@/hooks/useMutationTesting';
+import { useLoadTesting } from '@/hooks/useLoadTesting';
+import { VisualRegressionPanel } from './VisualRegressionPanel';
+import { AccessibilityPanel } from './AccessibilityPanel';
+import { CodeCoveragePanel } from './CodeCoveragePanel';
+import { MutationTestingPanel } from './MutationTestingPanel';
+import { LoadTestingPanel } from './LoadTestingPanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -624,6 +634,17 @@ export function AIAppBuilderWorkspace() {
   const [showScreenShare, setShowScreenShare] = useState(false);
   const [showCodeReactions, setShowCodeReactions] = useState(false);
   const [showWhiteboard, setShowWhiteboard] = useState(false);
+  // Sprint M: Testing & Quality (Phases 164-168)
+  const visualRegression = useVisualRegressionTesting();
+  const a11yScoring = useAccessibilityScoring();
+  const codeCoverage = useCodeCoverageVisualizer();
+  const mutationTesting = useMutationTesting();
+  const loadTesting = useLoadTesting();
+  const [showVisualRegression, setShowVisualRegression] = useState(false);
+  const [showA11yScore, setShowA11yScore] = useState(false);
+  const [showCoverage, setShowCoverage] = useState(false);
+  const [showMutationTest, setShowMutationTest] = useState(false);
+  const [showLoadTest, setShowLoadTest] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2391,6 +2412,11 @@ export function AIAppBuilderWorkspace() {
       {showScreenShare && <ScreenSharePanel sessions={screenShare.sessions} activeSessionId={screenShare.activeSessionId} isSharing={screenShare.isSharing} isViewing={screenShare.isViewing} selectedTool={screenShare.selectedTool} annotationColor={screenShare.annotationColor} onStartSharing={() => screenShare.startSharing('self', 'me@local')} onStopSharing={screenShare.stopSharing} onJoinViewing={(id) => screenShare.joinViewing(id, 'self', 'me@local')} onSetTool={screenShare.setSelectedTool} onSetColor={screenShare.setAnnotationColor} onClearAnnotations={() => { const s = screenShare.getActiveSession(); if (s) screenShare.clearAnnotations(s.id); }} onClose={() => setShowScreenShare(false)} />}
       {showCodeReactions && <CodeReactionsPanel reactions={codeReactions.reactions} annotations={codeReactions.annotations} availableEmojis={codeReactions.availableEmojis} onAddReaction={(fp, l, e) => codeReactions.addReaction(fp, l, e, 'self', 'me@local')} onAddAnnotation={(fp, ls, le, t) => codeReactions.addAnnotation(fp, ls, le, t, 'self', 'me@local', '#8b5cf6')} onResolveAnnotation={codeReactions.resolveAnnotation} onDeleteAnnotation={codeReactions.deleteAnnotation} activeFilePath={activeFile?.path} onClose={() => setShowCodeReactions(false)} />}
       {showWhiteboard && <WhiteboardPanel boards={whiteboard.boards} activeBoardId={whiteboard.activeBoardId} selectedTool={whiteboard.selectedTool} strokeColor={whiteboard.strokeColor} strokeWidth={whiteboard.strokeWidth} fillColor={whiteboard.fillColor} onSetActiveBoardId={whiteboard.setActiveBoardId} onSetSelectedTool={whiteboard.setSelectedTool} onSetStrokeColor={whiteboard.setStrokeColor} onSetStrokeWidth={whiteboard.setStrokeWidth} onSetFillColor={whiteboard.setFillColor} onCreateBoard={whiteboard.createBoard} onClearBoard={whiteboard.clearBoard} onDeleteBoard={whiteboard.deleteBoard} onZoomIn={() => { const b = whiteboard.getActiveBoard(); if (b) whiteboard.setZoom(b.id, b.zoom + 0.1); }} onZoomOut={() => { const b = whiteboard.getActiveBoard(); if (b) whiteboard.setZoom(b.id, b.zoom - 0.1); }} onClose={() => setShowWhiteboard(false)} />}
+      {showVisualRegression && <VisualRegressionPanel open={showVisualRegression} onClose={() => setShowVisualRegression(false)} snapshots={visualRegression.snapshots} diffs={visualRegression.diffs} isCapturing={visualRegression.isCapturing} threshold={visualRegression.threshold} onSetThreshold={visualRegression.setThreshold} onCapture={visualRegression.captureSnapshot} onRunSuite={visualRegression.runFullSuite} onApprove={visualRegression.approveBaseline} />}
+      {showA11yScore && <AccessibilityPanel open={showA11yScore} onClose={() => setShowA11yScore(false)} score={a11yScoring.latestScore} isScanning={a11yScoring.isScanning} onScan={() => a11yScoring.scan(project.files)} onGoToFile={(p) => { const f = project.files.find(f => f.path === p); if (f) setActiveFile(f.path); }} />}
+      {showCoverage && <CodeCoveragePanel open={showCoverage} onClose={() => setShowCoverage(false)} report={codeCoverage.report} isAnalyzing={codeCoverage.isAnalyzing} onAnalyze={() => codeCoverage.analyze(project.files, project.files.filter(f => f.path.includes('.test.')))} onGoToFile={(p) => { const f = project.files.find(f => f.path === p); if (f) setActiveFile(f.path); }} />}
+      {showMutationTest && <MutationTestingPanel open={showMutationTest} onClose={() => setShowMutationTest(false)} report={mutationTesting.report} isRunning={mutationTesting.isRunning} onRun={() => mutationTesting.run(project.files)} onGoToFile={(p) => { const f = project.files.find(f => f.path === p); if (f) setActiveFile(f.path); }} />}
+      {showLoadTest && <LoadTestingPanel open={showLoadTest} onClose={() => setShowLoadTest(false)} results={loadTesting.results} isRunning={loadTesting.isRunning} onRun={loadTesting.run} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
