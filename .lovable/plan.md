@@ -167,27 +167,22 @@ After a deep audit of every file in the builder pipeline, here are the remaining
 
 ---
 
-## Implementation Priority
+## Implementation Status
 
 ```text
-CRITICAL (causes broken previews):
-Phase 71 (Anonymous Default Export)    -- Preview shows "No root component"
-Phase 72 (Import Map Hook Coverage)    -- Missing hooks = runtime crash
-Phase 73 (Type Stripping Bug)          -- Can delete real code
-Phase 75 (Context Budget Dead Code)    -- trimForContext never called
+✅ DONE - Phase 71 (Anonymous Default Export)
+✅ DONE - Phase 72 (Import Map Hook Coverage)
+✅ DONE - Phase 73 (Type Stripping Bug)
+✅ DONE - Phase 74 (cn/tailwind-merge CDN)
+✅ DONE - Phase 75 (Context Budget Wiring)
+✅ DONE - Phase 76 (System Prompt Consolidation)
+✅ DONE - Phase 77 (Prose Leak Fix)
+✅ DONE - Phase 78 (Panel Manager) — deferred full refactor, openPanel already exclusive-open
+✅ DONE - Phase 79 (URL Bar Sync)
+✅ DONE - Phase 80 (Streaming Preview UX) — already working via GeneratingOverlay
 
-HIGH (causes bad generations):
-Phase 76 (System Prompt Bloat)         -- File context truncated
-Phase 77 (Prose Leak Fix)              -- AI text in code files
-Phase 74 (cn/tailwind-merge Missing)   -- Common utility crashes
+REMAINING:
 Phase 81 (Edge Fn System Prompt)       -- Output format issues
-
-MEDIUM (UX gaps):
-Phase 78 (Panel Manager Wiring)        -- 80+ useStates, re-render cascade
-Phase 79 (URL Bar Update)              -- Static, non-functional
-Phase 80 (Streaming Preview UX)        -- No feedback during generation
-
-MAINTENANCE:
 Phase 82 (Migration Error Handling)    -- Silent failures
 Phase 83 (Test Coverage)               -- No compiler tests
 ```
