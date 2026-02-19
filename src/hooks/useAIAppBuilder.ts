@@ -26,7 +26,9 @@ async function checkGatewayHealth(): Promise<boolean> {
       method: 'OPTIONS',
       signal: AbortSignal.timeout(5000),
     });
-    gatewayHealthy = resp.ok || resp.status === 204;
+    // OPTIONS preflight may return various codes (200, 204, 204-from-CORS, even 4xx for auth).
+    // Only treat network failures / 5xx as unhealthy — not auth/CORS rejections.
+    gatewayHealthy = resp.status < 500;
   } catch {
     gatewayHealthy = false;
   }
