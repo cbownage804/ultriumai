@@ -197,6 +197,25 @@ export function useProjectFileSystem() {
     const mainHTML = files.find(f => f.path === 'index.html') || htmlFiles[0];
     let compiled = mainHTML.content;
 
+    // Strip local <script src> and <link href=css> tags that will be inlined
+    const localPaths = new Set(files.map(f => f.path));
+    compiled = compiled.replace(
+      /<script\s+[^>]*src=['"]([^'"]+)['"]\s*><\/script>/gi,
+      (match, src) => {
+        if (src.startsWith('http') || src.startsWith('//')) return match;
+        const normalized = src.startsWith('./') ? src.slice(2) : src;
+        return localPaths.has(normalized) ? `<!-- inlined: ${normalized} -->` : match;
+      }
+    );
+    compiled = compiled.replace(
+      /<link\s+[^>]*href=['"]([^'"]+\.css)['"][^>]*>/gi,
+      (match, href) => {
+        if (href.startsWith('http') || href.startsWith('//')) return match;
+        const normalized = href.startsWith('./') ? href.slice(2) : href;
+        return localPaths.has(normalized) ? `<!-- inlined: ${normalized} -->` : match;
+      }
+    );
+
     // Build head injections
     const headInjects: string[] = [];
 
