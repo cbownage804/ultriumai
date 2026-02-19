@@ -18,6 +18,8 @@ interface CodeEditorProps {
   remoteCursors?: RemoteCursor[];
   onCursorChange?: (line: number, column: number) => void;
   onInlineAIAction?: (action: string, selection: string, filePath: string) => void;
+  /** Phase 65: Cmd+I inline edit trigger */
+  onTriggerInlineEdit?: (filePath: string, selectedCode: string, startLine: number, endLine: number) => void;
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
@@ -32,7 +34,7 @@ const AI_ACTIONS = [
   { id: 'fix', label: 'Fix', icon: Sparkles },
 ];
 
-export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursorChange, onInlineAIAction }: CodeEditorProps) {
+export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursorChange, onInlineAIAction, onTriggerInlineEdit }: CodeEditorProps) {
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
   const decorationsRef = useRef<string[]>([]);
@@ -201,9 +203,25 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
       },
     });
 
+    // Phase 65: Register Cmd+I / Ctrl+I for inline AI edit
+    editor.addAction({
+      id: 'inline-ai-edit',
+      label: 'Inline AI Edit',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
+      run: (ed: any) => {
+        const selection = ed.getSelection();
+        const model = ed.getModel();
+        if (!selection || !model || selection.isEmpty()) return;
+        const selectedCode = model.getValueInRange(selection);
+        if (selectedCode.trim().length < 3) return;
+        const filePath = file?.path || '';
+        onTriggerInlineEdit?.(filePath, selectedCode, selection.startLineNumber, selection.endLineNumber);
+      },
+    });
+
     // Initial remote cursor render
     updateRemoteCursors();
-  }, [onCursorChange, updateRemoteCursors]);
+  }, [onCursorChange, updateRemoteCursors, onTriggerInlineEdit, file?.path]);
 
   const handleAIAction = useCallback((actionId: string) => {
     if (onInlineAIAction && file && selectedText) {

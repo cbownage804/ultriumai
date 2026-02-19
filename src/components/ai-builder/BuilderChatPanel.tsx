@@ -19,6 +19,7 @@ import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot, Build
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
+import { InlineSQLRunner } from './InlineSQLRunner';
 import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, generateIntentSuggestions, analyzeConversationComplexity, detectCommunicationStyle, detectWebSearchIntent, detectURLCloneIntent, type ContextBudgetInfo } from './SupabaseConversational';
 import { StarterTemplatePicker } from './StarterTemplatePicker';
 import { MigrationApprovalCard, type MigrationBlock } from './MigrationApprovalCard';
@@ -661,13 +662,31 @@ export function BuilderChatPanel({
                     code({ className, children, ...props }) {
                       const isInline = !className;
                       const codeStr = String(children).replace(/\n$/, '');
+                      const lang = className?.replace('language-', '') || '';
+                      
+                      // Phase 62: Detect SQL blocks and render InlineSQLRunner
+                      if (!isInline && lang === 'sql' && codeStr.length > 10) {
+                        return (
+                          <div className="my-2">
+                            <div className="relative group/code">
+                              <div className="flex items-center justify-between px-3 py-1 bg-white/[0.04] border border-white/[0.06] rounded-t-lg">
+                                <span className="text-[9px] text-white/25 font-mono">sql</span>
+                                <CopyCodeButton text={codeStr} />
+                              </div>
+                              <pre className="!mt-0 !rounded-t-none border border-t-0 border-white/[0.06] !bg-black/30"><code className={className} {...props}>{children}</code></pre>
+                            </div>
+                            <InlineSQLRunner sql={codeStr} supabaseUrl={supabaseConfig?.url} supabaseServiceKey={supabaseConfig?.anonKey} />
+                          </div>
+                        );
+                      }
+                      
                       if (isInline) {
                         return <code className="bg-white/[0.08] rounded px-1.5 py-0.5 text-[12px] font-mono text-cyan-300/80" {...props}>{children}</code>;
                       }
                       return (
                         <div className="relative group/code my-2">
                           <div className="flex items-center justify-between px-3 py-1 bg-white/[0.04] border border-white/[0.06] rounded-t-lg">
-                            <span className="text-[9px] text-white/25 font-mono">{className?.replace('language-', '') || 'code'}</span>
+                            <span className="text-[9px] text-white/25 font-mono">{lang || 'code'}</span>
                             <CopyCodeButton text={codeStr} />
                           </div>
                           <pre className="!mt-0 !rounded-t-none border border-t-0 border-white/[0.06] !bg-black/30"><code className={className} {...props}>{children}</code></pre>

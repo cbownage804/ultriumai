@@ -13,12 +13,14 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { useSupabaseConnection } from '@/hooks/useSupabaseConnection';
+import { SeedDataGenerator } from './SeedDataGenerator';
 
 interface DatabaseMigrationPanelProps {
   open: boolean;
   onClose: () => void;
   connection: ReturnType<typeof useSupabaseConnection>;
   onGenerateCode?: (code: string, fileName: string) => void;
+  onSendToChat?: (prompt: string) => void;
 }
 
 interface MigrationEntry {
@@ -32,12 +34,12 @@ interface MigrationEntry {
 
 const MIGRATIONS_KEY = 'app-builder-migrations';
 
-export function DatabaseMigrationPanel({ open, onClose, connection, onGenerateCode }: DatabaseMigrationPanelProps) {
+export function DatabaseMigrationPanel({ open, onClose, connection, onGenerateCode, onSendToChat }: DatabaseMigrationPanelProps) {
   const [activeTab, setActiveTab] = useState<'editor' | 'history' | 'templates'>('editor');
   const [sql, setSql] = useState('');
   const [migrationName, setMigrationName] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
-  const [lastResult, setLastResult] = useState<{ success: boolean; message: string; rowCount?: number } | null>(null);
+  const [lastResult, setLastResult] = useState<{ success: boolean; message: string; rowCount?: number; tableName?: string } | null>(null);
   const [migrations, setMigrations] = useState<MigrationEntry[]>(() => {
     try { return JSON.parse(localStorage.getItem(MIGRATIONS_KEY) || '[]'); } catch { return []; }
   });
@@ -112,7 +114,10 @@ export function DatabaseMigrationPanel({ open, onClose, connection, onGenerateCo
         }
       }
 
-      setLastResult({ success: true, message: `Executed successfully`, rowCount: totalAffected });
+      // Phase 58: Detect CREATE TABLE for seed data generation
+      const createTableMatch = sql.match(/CREATE\s+TABLE\s+(?:\w+\.)?(\w+)/i);
+      
+      setLastResult({ success: true, message: `Executed successfully`, rowCount: totalAffected, tableName: createTableMatch?.[1] || undefined });
       
       // Save to history
       const entry: MigrationEntry = {
@@ -259,6 +264,16 @@ CREATE POLICY "Users insert own profile"
                 {lastResult.success ? <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 shrink-0" /> : <XCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />}
                 <pre className="whitespace-pre-wrap break-all">{lastResult.message}</pre>
               </div>
+            )}
+
+            {/* Phase 58: Seed Data Generator after successful CREATE TABLE */}
+            {lastResult?.success && lastResult.tableName && onSendToChat && (
+              <SeedDataGenerator
+                tableName={lastResult.tableName}
+                migrationSQL={sql}
+                onGenerate={onSendToChat}
+                isGenerating={false}
+              />
             )}
 
             <div className="flex items-center gap-2">

@@ -64,13 +64,13 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
 
   const viewportWidth = getViewportWidth(viewportMode);
 
-  // Inject error + console + network capture + hot-patch listener script into HTML
-  const htmlWithErrorCapture = html ? html.replace(
-    '</head>',
-    `<script>
-window.addEventListener('error', function(e) {
-  window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: e.message, source: e.filename, line: e.lineno, col: e.colno }, '*');
-});
+  // Phase 69: Skip double console injection when compiler already injected interceptors
+  // Only inject hot-patch listener and navigation guards (no console/error interceptors)
+  const htmlWithErrorCapture = html ? (
+    html.includes('__builderInjected')
+      ? html.replace(
+          '</head>',
+          `<script>
 // === LIVE PREVIEW HOT-PATCH LISTENER ===
 window.addEventListener('message', function(e) {
   if (!e.data || e.data.type !== '__LIVE_PATCH__') return;
@@ -80,17 +80,46 @@ window.addEventListener('message', function(e) {
     if (p.kind === 'css') {
       var styleId = '__hotcss_' + p.path.replace(/[^a-z0-9]/gi, '_');
       var existing = document.getElementById(styleId);
-      if (existing) {
-        existing.textContent = p.content;
-      } else {
-        var style = document.createElement('style');
-        style.id = styleId;
-        style.textContent = p.content;
-        document.head.appendChild(style);
-      }
-    } else if (p.kind === 'html-body') {
-      document.body.innerHTML = p.content;
-    }
+      if (existing) { existing.textContent = p.content; }
+      else { var style = document.createElement('style'); style.id = styleId; style.textContent = p.content; document.head.appendChild(style); }
+    } else if (p.kind === 'html-body') { document.body.innerHTML = p.content; }
+  }
+  window.parent.postMessage({ type: '__LIVE_PATCH_ACK__', count: patches.length }, '*');
+});
+// === IFRAME NAVIGATION GUARD ===
+document.addEventListener('click', function(e) {
+  var anchor = e.target.closest ? e.target.closest('a') : null;
+  if (!anchor) return;
+  var href = anchor.getAttribute('href');
+  if (!href) return;
+  if (href.startsWith('javascript:') || href.startsWith('blob:') || href.startsWith('data:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+  if (href.startsWith('#')) { e.preventDefault(); try { var target = document.querySelector(href); if (target) target.scrollIntoView({ behavior: 'smooth' }); } catch(err) {} return; }
+  e.preventDefault();
+  window.parent.postMessage({ type: '__PREVIEW_NAV__', href: href }, '*');
+});
+document.addEventListener('submit', function(e) { var form = e.target; if (form && form.tagName === 'FORM' && form.getAttribute('action')) { e.preventDefault(); } });
+window.open = function(url) { window.parent.postMessage({ type: '__PREVIEW_NAV__', href: url, newTab: true }, '*'); return null; };
+window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
+</script>
+</head>`
+        )
+      : html.replace(
+          '</head>',
+          `<script>
+window.addEventListener('error', function(e) {
+  window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: e.message, source: e.filename, line: e.lineno, col: e.colno }, '*');
+});
+window.addEventListener('message', function(e) {
+  if (!e.data || e.data.type !== '__LIVE_PATCH__') return;
+  var patches = e.data.patches || [];
+  for (var i = 0; i < patches.length; i++) {
+    var p = patches[i];
+    if (p.kind === 'css') {
+      var styleId = '__hotcss_' + p.path.replace(/[^a-z0-9]/gi, '_');
+      var existing = document.getElementById(styleId);
+      if (existing) { existing.textContent = p.content; }
+      else { var style = document.createElement('style'); style.id = styleId; style.textContent = p.content; document.head.appendChild(style); }
+    } else if (p.kind === 'html-body') { document.body.innerHTML = p.content; }
   }
   window.parent.postMessage({ type: '__LIVE_PATCH_ACK__', count: patches.length }, '*');
 });
@@ -108,50 +137,23 @@ window.addEventListener('unhandledrejection', function(e) {
     orig.apply(console, arguments);
   };
 });
-// === IFRAME NAVIGATION GUARD ===
-// 1. Block anchor link navigation (prevents recursive app loading)
 document.addEventListener('click', function(e) {
   var anchor = e.target.closest ? e.target.closest('a') : null;
   if (!anchor) return;
   var href = anchor.getAttribute('href');
   if (!href) return;
   if (href.startsWith('javascript:') || href.startsWith('blob:') || href.startsWith('data:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
-  if (href.startsWith('#')) {
-    e.preventDefault();
-    if (href.length > 1) {
-      try {
-        var target = document.querySelector(href);
-        if (target) target.scrollIntoView({ behavior: 'smooth' });
-      } catch(err) {}
-    }
-    return;
-  }
+  if (href.startsWith('#')) { e.preventDefault(); try { var target = document.querySelector(href); if (target) target.scrollIntoView({ behavior: 'smooth' }); } catch(err) {} return; }
   e.preventDefault();
-  console.info('[Preview] Navigation blocked: ' + href);
   window.parent.postMessage({ type: '__PREVIEW_NAV__', href: href }, '*');
 });
-// 2. Block form submissions that navigate away
-document.addEventListener('submit', function(e) {
-  var form = e.target;
-  if (form && form.tagName === 'FORM' && form.getAttribute('action')) {
-    e.preventDefault();
-    console.info('[Preview] Form submit blocked: ' + form.getAttribute('action'));
-  }
-});
-// 3. Block window.open to prevent pop-under recursion
-window.open = function(url) {
-  console.info('[Preview] window.open blocked: ' + url);
-  window.parent.postMessage({ type: '__PREVIEW_NAV__', href: url, newTab: true }, '*');
-  return null;
-};
-// 4. Block top-level navigation attempts
+document.addEventListener('submit', function(e) { var form = e.target; if (form && form.tagName === 'FORM' && form.getAttribute('action')) { e.preventDefault(); } });
+window.open = function(url) { window.parent.postMessage({ type: '__PREVIEW_NAV__', href: url, newTab: true }, '*'); return null; };
 window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
-// Network logger
 (function() {
   var origFetch = window.fetch;
   window.fetch = function() {
-    var url = arguments[0];
-    if (typeof url === 'object' && url.url) url = url.url;
+    var url = arguments[0]; if (typeof url === 'object' && url.url) url = url.url;
     var method = (arguments[1] && arguments[1].method) || 'GET';
     var start = performance.now();
     return origFetch.apply(this, arguments).then(function(resp) {
@@ -162,19 +164,10 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
       throw err;
     });
   };
-  var origXHR = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function(method, url) {
-    this._netMethod = method;
-    this._netUrl = url;
-    this._netStart = performance.now();
-    this.addEventListener('loadend', function() {
-      window.parent.postMessage({ type: '__NETWORK_LOG__', method: this._netMethod, url: String(this._netUrl), status: this.status, duration: Math.round(performance.now() - this._netStart) }, '*');
-    });
-    return origXHR.apply(this, arguments);
-  };
 })();
 </script>
 </head>`
+        )
   ) : null;
 
   // ── Preview Health Monitor (Phase 1C) ──
