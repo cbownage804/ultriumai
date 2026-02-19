@@ -211,6 +211,12 @@ import { useFilePreviewGenerator } from '@/hooks/useFilePreviewGenerator';
 import { useAvatarGenerator } from '@/hooks/useAvatarGenerator';
 import { useCarouselBuilder } from '@/hooks/useCarouselBuilder';
 import { useGalleryLightboxGenerator } from '@/hooks/useGalleryLightboxGenerator';
+// Sprint AB
+import { useFullTextSearchSetup } from '@/hooks/useFullTextSearchSetup';
+import { useFacetedFilterBuilder } from '@/hooks/useFacetedFilterBuilder';
+import { useAutocompleteGenerator } from '@/hooks/useAutocompleteGenerator';
+import { useTagCategorySystem } from '@/hooks/useTagCategorySystem';
+import { useSEOMetaGenerator } from '@/hooks/useSEOMetaGenerator';
 
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
@@ -278,6 +284,8 @@ import {
   RichTextConfigPanel, FilePreviewGenPanel, AvatarGenPanel,
   CarouselBuilderPanel, GalleryLightboxPanel,
   APIKeyPanel, PermissionMatrixPanel,
+  FullTextSearchPanel, FacetedFilterPanel, AutocompletePanel,
+  TagSystemPanel, SEOMetaPanel,
   
   DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
   EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
@@ -806,6 +814,17 @@ export function AIAppBuilderWorkspace() {
   const [showAvatarGen, setShowAvatarGen] = useState(false);
   const [showCarouselBuilder, setShowCarouselBuilder] = useState(false);
   const [showGalleryLightbox, setShowGalleryLightbox] = useState(false);
+  // Sprint AB: Search & Discovery (Phases 239-243)
+  const ftsSetup = useFullTextSearchSetup();
+  const facetedFilter = useFacetedFilterBuilder();
+  const autocompleteGen = useAutocompleteGenerator();
+  const tagSystem = useTagCategorySystem();
+  const seoMetaGen = useSEOMetaGenerator();
+  const [showFTS, setShowFTS] = useState(false);
+  const [showFacetedFilter, setShowFacetedFilter] = useState(false);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [showTagSystem, setShowTagSystem] = useState(false);
+  const [showSEOMeta, setShowSEOMeta] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2659,6 +2678,12 @@ export function AIAppBuilderWorkspace() {
       {showAvatarGen && <AvatarGenPanel {...avatarGen} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowAvatarGen(false)} />}
       {showCarouselBuilder && <CarouselBuilderPanel {...carouselBuilder} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowCarouselBuilder(false)} />}
       {showGalleryLightbox && <GalleryLightboxPanel {...galleryLightbox} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowGalleryLightbox(false)} />}
+      {/* Sprint AB: Search & Discovery */}
+      {showFTS && <FullTextSearchPanel {...ftsSetup} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowFTS(false)} />}
+      {showFacetedFilter && <FacetedFilterPanel {...facetedFilter} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowFacetedFilter(false)} />}
+      {showAutocomplete && <AutocompletePanel {...autocompleteGen} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowAutocomplete(false)} />}
+      {showTagSystem && <TagSystemPanel {...tagSystem} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowTagSystem(false)} />}
+      {showSEOMeta && <SEOMetaPanel {...seoMetaGen} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowSEOMeta(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
