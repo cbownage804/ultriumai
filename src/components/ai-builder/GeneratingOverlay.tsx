@@ -4,18 +4,20 @@ import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
 interface GeneratingOverlayProps {
   isGenerating: boolean;
+  isCompiling?: boolean;
   phase?: string;
   partialFiles?: ProjectFile[];
   completedFileCount?: number;
 }
 
-export function GeneratingOverlay({ isGenerating, phase, partialFiles = [], completedFileCount = 0 }: GeneratingOverlayProps) {
+export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFiles = [], completedFileCount = 0 }: GeneratingOverlayProps) {
+  const showOverlay = isGenerating || isCompiling;
   const totalFiles = partialFiles.length;
   const progress = totalFiles > 0 ? (completedFileCount / totalFiles) * 100 : 0;
 
   return (
     <AnimatePresence>
-      {isGenerating && (
+      {showOverlay && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -42,7 +44,7 @@ export function GeneratingOverlay({ isGenerating, phase, partialFiles = [], comp
             <div className="flex items-center gap-1.5 px-3 py-2 border-b border-white/[0.06]">
               <Loader2 className="h-3 w-3 text-cyan-400 animate-spin" />
               <span className="text-[10px] text-white/60 font-medium">
-                {phase === 'writing' ? 'Writing code...' : phase === 'planning' ? 'Planning...' : 'Generating...'}
+                {isCompiling && !isGenerating ? 'Compiling preview...' : phase === 'writing' ? 'Writing code...' : phase === 'planning' ? 'Planning...' : 'Generating...'}
               </span>
             </div>
 
