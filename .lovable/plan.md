@@ -61,28 +61,33 @@ All 8 original phases are complete. This plan introduces 5 new phases that addre
 
 ---
 
-## Phase 11: Component Framework Support (React/Tailwind in Preview)
+## Phase 11: Component Framework Support (React/Tailwind in Preview) ✅ COMPLETED
+
+**Status**: ✅ Complete — `useReactCompiler` hook transpiles JSX/TSX using Babel Standalone CDN with virtual module resolution and topological dependency sorting. React 18 + ReactDOM + Tailwind Play CDN auto-injected. Framework auto-detection via `detectReactProject()`. `===MODE: react===` directive support in AI output parser. System prompt updated with React scaffolding instructions and mode switching guidance.
 
 **Problem**: The builder generates vanilla HTML/CSS/JS only. Modern apps need component-based architecture.
 
 **Changes**:
 
-1. **In-Browser React Compiler** (`src/hooks/useReactCompiler.ts` -- new file)
-   - Use `@babel/standalone` loaded from CDN to transpile JSX/TSX in the browser
-   - Transform `import` statements to resolve against project files
-   - Bundle React + ReactDOM via CDN injection into the preview iframe
-   - Support Tailwind CSS via the Play CDN (`<script src="https://cdn.tailwindcss.com">`)
+1. **In-Browser React Compiler** (`src/hooks/useReactCompiler.ts` — new file)
+   - Uses `@babel/standalone` loaded from CDN to transpile JSX/TSX in the browser
+   - Virtual module system (`__modules`) for inter-file import resolution
+   - TypeScript type annotation stripping via regex
+   - Topological dependency sorting for correct load order
+   - React 18 + ReactDOM via CDN injection into preview iframe
+   - Tailwind CSS via Play CDN (`<script src="https://cdn.tailwindcss.com">`)
+   - Auto-mounting: detects App.tsx default export and renders into `#root`
 
-2. **Framework Detection** (`src/hooks/useProjectFileSystem.ts`)
-   - Auto-detect when AI generates `.tsx` or `.jsx` files
-   - Switch the compiler pipeline from concatenation to React bundling
-   - Inject `React.createElement` runtime for JSX
-   - Support `useState`, `useEffect`, and other hooks
+2. **Framework Detection** (`src/hooks/useProjectFileSystem.ts`, `AIAppBuilderWorkspace.tsx`)
+   - `detectReactProject()` checks for `.tsx`/`.jsx` files
+   - Workspace `liveCompiledHTML` memo delegates to React compiler when detected
+   - Falls back to vanilla HTML compiler for non-React projects
 
 3. **System Prompt Enhancement** (`supabase/functions/ai-app-builder/index.ts`)
-   - Add a `===MODE: react===` directive the AI can emit to signal React output
-   - When detected, switch the preview pipeline to React mode
-   - Update file scaffolding to create `App.tsx`, `main.tsx`, `index.html` with React bootstrap
+   - `===MODE: react===` directive the AI can emit to signal React output
+   - React file scaffolding template (App.tsx, Header.tsx, styles.css)
+   - Clear guidance on when to use React vs vanilla mode
+   - `parseMultiFileOutput` strips `===MODE:` directives from content
 
 ---
 

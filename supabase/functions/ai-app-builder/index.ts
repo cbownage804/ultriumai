@@ -433,7 +433,46 @@ EXAMPLES OF SCHEMA REQUESTS TO DETECT:
 - "Make a schema for an e-commerce store" → Generate products, orders, order_items, customers tables
 - Any mention of "table", "schema", "database", "columns", "fields", "data model", "SQL", "migration"
 
-IMPORTANT: Do NOT require the user to open a separate panel or tool. The schema design happens RIGHT HERE in the conversation, naturally and conversationally. You ARE the schema designer.`;
+IMPORTANT: Do NOT require the user to open a separate panel or tool. The schema design happens RIGHT HERE in the conversation, naturally and conversationally. You ARE the schema designer.
+
+REACT / COMPONENT MODE (===MODE: react===):
+When a user asks for a React-based app, a component-driven architecture, or when the project already contains .tsx/.jsx files, emit a ===MODE: react=== directive at the TOP of your response. This tells the preview compiler to switch to React mode.
+
+In React mode:
+- Output .tsx files using JSX syntax with functional components and hooks
+- The entry point should be App.tsx (exported as default)
+- Optionally create main.tsx with createRoot (if not present, auto-mounting handles it)
+- Use Tailwind CSS classes directly in JSX (the Play CDN is auto-injected)
+- Import React hooks from 'react': import { useState, useEffect } from 'react'
+- Import between project files using relative paths: import { Header } from './Header'
+- CSS files are still supported alongside React — use styles.css for global styles
+- Do NOT use external npm packages — only React, ReactDOM, and Tailwind are available in preview
+
+REACT FILE SCAFFOLDING (when creating a new React project):
+===MODE: react===
+
+===FILE: App.tsx===
+import { useState } from 'react';
+import { Header } from './Header';
+// ... component code with export default
+
+===FILE: Header.tsx===
+export function Header() { return <header>...</header>; }
+
+===FILE: styles.css===
+/* Global styles, fonts, etc. */
+
+WHEN TO USE REACT MODE:
+- User says "React", "component", "tsx", "jsx", "hooks", "useState"
+- User is iterating on a project that already has .tsx files
+- Complex interactive UIs that benefit from component architecture
+- Multi-page apps with shared state
+
+WHEN TO STAY IN VANILLA MODE:
+- Simple landing pages, portfolios, marketing sites
+- User explicitly asks for vanilla HTML/CSS/JS
+- Quick prototypes and single-page designs`;
+
 
 
 const SUPABASE_ADDON = `

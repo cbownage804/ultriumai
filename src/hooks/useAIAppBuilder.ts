@@ -469,11 +469,14 @@ function parseEditBlocks(raw: string): EditBlock[] {
   return edits;
 }
 
-/** Parse the ===FILE: path===, ===EDIT: path===, and ===DELETE: path=== delimited format */
-export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; deletions: string[]; edits: EditBlock[] } {
-  const edits = parseEditBlocks(raw);
+/** Parse the ===FILE: path===, ===EDIT: path===, ===DELETE: path===, and ===MODE: react=== delimited format */
+export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; deletions: string[]; edits: EditBlock[]; isReactMode: boolean } {
+  // Detect and strip ===MODE: react=== directive
+  const isReactMode = /^===MODE:\s*react===$/m.test(raw);
+  const cleanedRaw = raw.replace(/^===MODE:\s*\w+===\s*$/gm, '');
+  const edits = parseEditBlocks(cleanedRaw);
 
-  const lines = raw.split('\n');
+  const lines = cleanedRaw.split('\n');
   const files: ProjectFile[] = [];
   const deletions: string[] = [];
   let currentPath: string | null = null;
@@ -574,7 +577,7 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
     }
   }
 
-  return { files, deletions, edits };
+  return { files, deletions, edits, isReactMode };
 }
 
 /** Generate contextual follow-up suggestions based on the response and conversation state */

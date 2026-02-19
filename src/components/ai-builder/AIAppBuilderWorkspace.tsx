@@ -38,6 +38,7 @@ import { QuickFileSwitcher } from './QuickFileSwitcher';
 import { AssetManager, type ProjectAsset } from './AssetManager';
 import { PackageManager, type CDNPackage } from './PackageManager';
 import { useProjectBundler } from '@/hooks/useProjectBundler';
+import { useReactCompiler, detectReactProject } from '@/hooks/useReactCompiler';
 import { useASTBundler } from '@/hooks/useASTBundler';
 import { useIncrementalCompiler } from '@/hooks/useIncrementalCompiler';
 import { useTypeScriptValidator } from '@/hooks/useTypeScriptValidator';
@@ -1242,10 +1243,26 @@ export function AIAppBuilderWorkspace() {
     toast.success(`Renamed to ${newPath.split('/').pop()}`);
   }, [project.files, upsertFile, deleteFile]);
 
-  const liveCompiledHTML = useMemo(
-    () => getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT),
-    [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT]
-  );
+  // ── React Compiler integration ──
+  const { compileReactProject } = useReactCompiler();
+  const isReactProject = useMemo(() => detectReactProject(project.files), [project.files]);
+
+  const liveCompiledHTML = useMemo(() => {
+    // If this is a React project, use the React compiler pipeline
+    if (isReactProject) {
+      const result = compileReactProject(project.files, {
+        supabaseConfig: supabaseConfig || undefined,
+        stripeConfig: stripeConfig || undefined,
+        envVars,
+      });
+      if (result.errors.length > 0) {
+        console.warn('[ReactCompiler] Warnings:', result.errors);
+      }
+      return result.html || null;
+    }
+    // Otherwise use the vanilla HTML compiler
+    return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+  }, [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, isReactProject, compileReactProject]);
   const [stableHTML, setStableHTML] = useState<string | null>(null);
 
   // Defer preview updates until build completes — but allow CSS hot-patches through immediately
