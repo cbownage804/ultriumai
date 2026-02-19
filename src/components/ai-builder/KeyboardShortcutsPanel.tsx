@@ -10,6 +10,7 @@ interface Shortcut {
 
 const SHORTCUTS: Shortcut[] = [
   { keys: ['⌘', 'K'], description: 'Open command palette', category: 'Navigation' },
+  { keys: ['⌘', 'P'], description: 'Quick file switch', category: 'Navigation' },
   { keys: ['⌘', 'S'], description: 'Save project', category: 'Navigation' },
   { keys: ['⌘', '⇧', 'F'], description: 'Search across files', category: 'Navigation' },
   { keys: ['⌘', '/'], description: 'Show keyboard shortcuts', category: 'Navigation' },
@@ -17,6 +18,7 @@ const SHORTCUTS: Shortcut[] = [
   { keys: ['⌘', '⇧', 'Z'], description: 'Redo', category: 'Editing' },
   { keys: ['Enter'], description: 'Send message', category: 'Chat' },
   { keys: ['⇧', 'Enter'], description: 'New line in chat', category: 'Chat' },
+  { keys: ['Esc'], description: 'Stop generation', category: 'Chat' },
 ];
 
 interface KeyboardShortcutsPanelProps {
