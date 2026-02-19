@@ -223,6 +223,12 @@ export const KubernetesPanel = lz(() => import('./KubernetesPanel'), 'Kubernetes
 export const CICDPipelinePanel = lz(() => import('./CICDPipelinePanel'), 'CICDPipelinePanel');
 export const StructuredLoggerPanel = lz(() => import('./StructuredLoggerPanel'), 'StructuredLoggerPanel');
 export const HealthCheckPanel = lz(() => import('./HealthCheckPanel'), 'HealthCheckPanel');
+// Sprint Z: Auth & Access (Phases 229-233)
+export const OAuthSetupPanel = lz(() => import('./OAuthSetupPanel'), 'OAuthSetupPanel');
+export const MFAFlowPanel = lz(() => import('./MFAFlowPanel'), 'MFAFlowPanel');
+export const SessionManagerPanel = lz(() => import('./SessionManagerPanel'), 'SessionManagerPanel');
+export const APIKeyPanel = lz(() => import('./APIKeyPanel'), 'APIKeyPanel');
+export const PermissionMatrixPanel = lz(() => import('./PermissionMatrixPanel'), 'PermissionMatrixPanel');
 
 // Already-lazy panels (keep existing lazy pattern)
 export const DatabasePanel = lz(() => import('./DatabasePanel'), 'DatabasePanel');
