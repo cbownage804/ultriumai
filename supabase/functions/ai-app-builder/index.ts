@@ -141,6 +141,12 @@ body { ... }
 ===FILE: app.js===
 // JavaScript code
 
+CRITICAL FORMAT RULES:
+- The delimiter MUST be exactly ===FILE: path=== on its own line (three equals, FILE:, space, path, three equals)
+- Do NOT wrap code in markdown fences (\`\`\`). Output raw code directly after the delimiter.
+- For first-time generations, use ===FILE: for ALL files. Only use ===EDIT: for modifications to existing files.
+- Keep AI commentary BEFORE the first ===FILE: block or AFTER all blocks — never between files.
+
 DESIGN PHILOSOPHY — THIS IS NON-NEGOTIABLE:
 - Every project MUST have a bold, distinctive aesthetic. Generic = failure. If it looks like a Bootstrap template, you've failed.
 - Pick a clear design direction and commit fully: glassmorphism, brutalist, editorial, neo-dark, retro-futuristic, organic, art deco, aurora gradients, liquid glass, neobrutalism. Execute with conviction and consistency.
@@ -454,7 +460,8 @@ In React mode:
 - Import React hooks from 'react': import { useState, useEffect } from 'react'
 - Import between project files using relative paths: import { Header } from './Header'
 - CSS files are still supported alongside React — use styles.css for global styles
-- Do NOT use external npm packages — only React, ReactDOM, and Tailwind are available in preview
+- The following npm packages are available via CDN and can be imported: lucide-react, framer-motion, recharts, date-fns, clsx, tailwind-merge, class-variance-authority, cmdk, react-hot-toast, @radix-ui/react-slot, @radix-ui/react-icons, uuid, lodash-es, zod, zustand. Do NOT import packages not in this list.
+- CRITICAL FORMAT RULE: Never wrap file content in markdown code fences (\`\`\`). Output raw code directly after ===FILE: path===. The parser expects raw content, not fenced blocks.
 
 REACT FILE SCAFFOLDING (when creating a new React project):
 ===MODE: react===
