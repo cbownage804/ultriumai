@@ -22,6 +22,7 @@ import { CodeDiffViewer } from './CodeDiffViewer';
 import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, generateIntentSuggestions, analyzeConversationComplexity, detectCommunicationStyle, detectWebSearchIntent, detectURLCloneIntent, type ContextBudgetInfo } from './SupabaseConversational';
 import { StarterTemplatePicker } from './StarterTemplatePicker';
 import { MigrationApprovalCard, type MigrationBlock } from './MigrationApprovalCard';
+import { EdgeFunctionCard, type EdgeFunctionBlock } from './EdgeFunctionCard';
 import { StreamingText, StreamingCursor, ElapsedTimer } from './StreamingText';
 
 /** Small component to avoid hooks-in-render violation */
@@ -170,6 +171,8 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
   let text = textLines.join('\n').trim();
   // Strip migration blocks from display text
   text = text.replace(/===MIGRATION:\s*.+?===\n[\s\S]*?===END_MIGRATION===/g, '').trim();
+  // Strip edge function blocks from display text
+  text = text.replace(/===EDGE_FUNCTION:\s*.+?===\n[\s\S]*?===END_EDGE_FUNCTION===/g, '').trim();
   // Strip code blocks (html, css, js, etc.)
   text = text.replace(/```[\w]*\n?[\s\S]*?```/g, '').trim();
   // Hide raw JSON planning objects (approach, steps, filesToCreate, etc.)
@@ -726,6 +729,26 @@ export function BuilderChatPanel({
                   onUpdateMessages?.(prev => prev.map(m => 
                     m.id === msg.id && m.migrations
                       ? { ...m, migrations: m.migrations.map(mig => mig.id === id ? { ...mig, status, ...result } : mig) }
+                      : m
+                  ));
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Edge function deploy cards (Phase 16) */}
+        {msg.edgeFunctions && msg.edgeFunctions.length > 0 && (
+          <div className="space-y-2">
+            {msg.edgeFunctions.map((ef) => (
+              <EdgeFunctionCard
+                key={ef.id}
+                edgeFunction={ef}
+                supabaseConfig={supabaseConfig || null}
+                onStatusChange={(id, status, result) => {
+                  onUpdateMessages?.(prev => prev.map(m => 
+                    m.id === msg.id && m.edgeFunctions
+                      ? { ...m, edgeFunctions: m.edgeFunctions.map(fn => fn.id === id ? { ...fn, status, ...result } : fn) }
                       : m
                   ));
                 }}
