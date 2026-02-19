@@ -86,27 +86,30 @@ All 8 original phases are complete. This plan introduces 5 new phases that addre
 
 ---
 
-## Phase 12: Smart Error Resolution & Self-Healing
+## Phase 12: Smart Error Resolution & Self-Healing ✅ COMPLETED
+
+**Status**: ✅ Complete — 4-stage fix escalation (targeted line → function rewrite → full file regen → rollback) in `useAutoErrorRecovery`. Structured `ErrorReport` with surrounding code, console warnings, failed requests, and previous fix context. Error pattern learning (`useErrorPatternLearning`) tracks recurring errors in localStorage and injects anti-pattern prompts into `useSelfReviewPass`. Categories: undefined_variable, syntax_error, null_access, infinite_loop, hook_violation, missing_import, duplicate_declaration, unclosed_string, unclosed_bracket, network_error.
 
 **Problem**: While "Try to Fix" exists, it often fails because the AI lacks sufficient error context. The fix loop needs to be smarter.
 
 **Changes**:
 
-1. **Error Context Enrichment** (`src/hooks/useAIAppBuilder.ts`)
-   - When a preview error occurs, capture: the full error message, the exact source file + line, the 20 lines surrounding the error, all console warnings, any failed network requests
-   - Build a structured error report that gets injected as system context for the fix request
-   - Include the previous fix attempt (if any) to prevent loops
+1. **Error Context Enrichment** (`src/hooks/useAutoErrorRecovery.ts`)
+   - Structured `ErrorReport` captures: message, source file + line, surrounding code (20 lines), console warnings, failed requests, previous fix attempt
+   - `getSurroundingCode()` extracts context around error line
+   - `extractFunctionAroundLine()` for function-level rewrites
 
 2. **Fix Strategy Escalation** (`src/hooks/useAutoErrorRecovery.ts`)
-   - Attempt 1: Targeted line fix (send only the broken file + error)
-   - Attempt 2: Function rewrite (send the broken function + its dependencies)
-   - Attempt 3: Full file regeneration (regenerate the entire file from scratch)
-   - Attempt 4: Rollback + notify user ("I couldn't fix this automatically. Here's what went wrong...")
+   - Attempt 1: Targeted line fix (minimal change to the broken line)
+   - Attempt 2: Function rewrite (entire function + dependencies)
+   - Attempt 3: Full file regeneration (from scratch with different approach)
+   - Attempt 4: Rollback + notify user
 
-3. **Error Pattern Learning** (`src/components/ai-builder/SupabaseConversational.tsx`)
-   - Track common error patterns across builds (e.g., "unclosed template literal", "undefined variable")
-   - Inject anti-patterns into the system prompt: "AVOID these common errors: [list]"
-   - Reduce repeat errors by 80%+ through preventive prompting
+3. **Error Pattern Learning** (`src/hooks/useErrorPatternLearning.ts`)
+   - Tracks error patterns across builds with normalization and categorization
+   - Persists to localStorage, auto-expires after 7 days
+   - `getAntiPatternPrompt()` generates preventive instructions for system prompt
+   - Integrated into `useSelfReviewPass` for automatic injection
 
 ---
 
