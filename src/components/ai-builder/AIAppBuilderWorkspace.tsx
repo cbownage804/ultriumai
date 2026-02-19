@@ -268,6 +268,17 @@ import { AccessibilityPanel } from './AccessibilityPanel';
 import { CodeCoveragePanel } from './CodeCoveragePanel';
 import { MutationTestingPanel } from './MutationTestingPanel';
 import { LoadTestingPanel } from './LoadTestingPanel';
+// Sprint N: Advanced UI Building (Phases 169-173)
+import { usePageBuilder } from '@/hooks/usePageBuilder';
+import { useThemeStudio } from '@/hooks/useThemeStudio';
+import { useFormBuilder } from '@/hooks/useFormBuilder';
+import { useChartDashboardBuilder } from '@/hooks/useChartDashboardBuilder';
+import { useLayoutGridEditor } from '@/hooks/useLayoutGridEditor';
+import { PageBuilderPanel } from './PageBuilderPanel';
+import { ThemeStudioPanel } from './ThemeStudioPanel';
+import { FormBuilderPanel } from './FormBuilderPanel';
+import { ChartDashboardPanel } from './ChartDashboardPanel';
+import { LayoutGridPanel } from './LayoutGridPanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -645,6 +656,17 @@ export function AIAppBuilderWorkspace() {
   const [showCoverage, setShowCoverage] = useState(false);
   const [showMutationTest, setShowMutationTest] = useState(false);
   const [showLoadTest, setShowLoadTest] = useState(false);
+  // Sprint N: Advanced UI Building (Phases 169-173)
+  const pageBuilder = usePageBuilder();
+  const themeStudio = useThemeStudio();
+  const formBuilder = useFormBuilder();
+  const chartDashboard = useChartDashboardBuilder();
+  const layoutGrid = useLayoutGridEditor();
+  const [showPageBuilder, setShowPageBuilder] = useState(false);
+  const [showThemeStudio, setShowThemeStudio] = useState(false);
+  const [showFormBuilder, setShowFormBuilder] = useState(false);
+  const [showChartDashboard, setShowChartDashboard] = useState(false);
+  const [showLayoutGrid, setShowLayoutGrid] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2417,6 +2439,12 @@ export function AIAppBuilderWorkspace() {
       {showCoverage && <CodeCoveragePanel open={showCoverage} onClose={() => setShowCoverage(false)} report={codeCoverage.report} isAnalyzing={codeCoverage.isAnalyzing} onAnalyze={() => codeCoverage.analyze(project.files, project.files.filter(f => f.path.includes('.test.')))} onGoToFile={(p) => { const f = project.files.find(f => f.path === p); if (f) setActiveFile(f.path); }} />}
       {showMutationTest && <MutationTestingPanel open={showMutationTest} onClose={() => setShowMutationTest(false)} report={mutationTesting.report} isRunning={mutationTesting.isRunning} onRun={() => mutationTesting.run(project.files)} onGoToFile={(p) => { const f = project.files.find(f => f.path === p); if (f) setActiveFile(f.path); }} />}
       {showLoadTest && <LoadTestingPanel open={showLoadTest} onClose={() => setShowLoadTest(false)} results={loadTesting.results} isRunning={loadTesting.isRunning} onRun={loadTesting.run} />}
+      {/* Sprint N: Advanced UI Building */}
+      {showPageBuilder && <PageBuilderPanel pages={pageBuilder.pages} activePage={pageBuilder.getActivePage()} blockTypes={pageBuilder.blockTypes} onCreatePage={pageBuilder.createPage} onSetActivePage={pageBuilder.setActivePage} onAddBlock={pageBuilder.addBlock} onRemoveBlock={pageBuilder.removeBlock} onMoveBlock={pageBuilder.moveBlock} onUpdateProp={pageBuilder.updateBlockProp} onGenerateCode={pageBuilder.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowPageBuilder(false)} />}
+      {showThemeStudio && <ThemeStudioPanel tokens={themeStudio.tokens} previewMode={themeStudio.previewMode} activePreset={themeStudio.activePreset} presets={themeStudio.presets} onSetPreviewMode={themeStudio.setPreviewMode} onUpdateToken={themeStudio.updateToken} onAddToken={themeStudio.addToken} onRemoveToken={themeStudio.removeToken} onApplyPreset={themeStudio.applyPreset} onGenerateCSS={themeStudio.generateCSS} onGenerateTailwind={themeStudio.generateTailwindConfig} onInsertCode={(code) => { upsertFile('design-tokens.css', code); }} onClose={() => setShowThemeStudio(false)} />}
+      {showFormBuilder && <FormBuilderPanel forms={formBuilder.forms} activeForm={formBuilder.getActiveForm()} fieldTypes={formBuilder.fieldTypes} onCreateForm={formBuilder.createForm} onSetActiveForm={formBuilder.setActiveForm} onAddField={formBuilder.addField} onUpdateField={formBuilder.updateField} onRemoveField={formBuilder.removeField} onMoveField={formBuilder.moveField} onGenerateZod={formBuilder.generateZodSchema} onGenerateReact={formBuilder.generateReactForm} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowFormBuilder(false)} />}
+      {showChartDashboard && <ChartDashboardPanel dashboards={chartDashboard.dashboards} activeDashboard={chartDashboard.getActiveDashboard()} chartTypes={chartDashboard.chartTypes} onCreateDashboard={chartDashboard.createDashboard} onSetActiveDashboard={chartDashboard.setActiveDashboard} onAddWidget={chartDashboard.addWidget} onUpdateWidget={chartDashboard.updateWidget} onRemoveWidget={chartDashboard.removeWidget} onGenerateCode={chartDashboard.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowChartDashboard(false)} />}
+      {showLayoutGrid && <LayoutGridPanel layouts={layoutGrid.layouts} activeLayout={layoutGrid.getActiveLayout()} presets={layoutGrid.presets} onCreateLayout={layoutGrid.createLayout} onSetActiveLayout={layoutGrid.setActiveLayout} onApplyPreset={layoutGrid.applyPreset} onAddArea={layoutGrid.addArea} onUpdateArea={layoutGrid.updateArea} onRemoveArea={layoutGrid.removeArea} onUpdateLayout={layoutGrid.updateLayout} onGenerateCSS={layoutGrid.generateCSS} onGenerateTailwind={layoutGrid.generateTailwind} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowLayoutGrid(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
