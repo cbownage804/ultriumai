@@ -60,6 +60,9 @@ import { useOutputValidation } from './useOutputValidation';
 import { useBuildAnalytics } from '@/hooks/useBuildAnalytics';
 import { detectSupabaseIntents, buildSupabaseContext, buildErrorDiagnosisContext, analyzeConversationComplexity } from './SupabaseConversational';
 import { PANEL_REGISTRY } from './panelRegistry';
+import { WorkspaceBottomBar } from './WorkspaceBottomBar';
+import { WorkspaceStatusBar } from './WorkspaceStatusBar';
+import { PanelErrorBoundary } from './PanelErrorBoundary';
 import { buildAuthTemplate } from './authTemplates';
 import { BugReportModal } from '@/components/help/BugReportModal';
 import { usePluginRegistry } from '@/hooks/usePluginRegistry';
@@ -2462,6 +2465,7 @@ export function AIAppBuilderWorkspace() {
                 <EnvVarsPanel envVars={envVariables} onChange={setEnvVariables} open={showEnvVars} onClose={() => setShowEnvVars(false)} />
                 <RLSPolicyTester supabaseConfig={supabaseConfig} open={showRLSTester} onClose={() => setShowRLSTester(false)} />
                 <AssetManager assets={assets} onUpload={handleAssetUpload} onDelete={handleAssetDelete} open={showAssets} onClose={() => setShowAssets(false)} />
+                <PanelErrorBoundary panelName="Database Tools">
                 <Suspense fallback={<PanelLoader />}>
                   <DatabasePanel open={showDatabase} onClose={() => setShowDatabase(false)} supabaseConfig={supabaseConfig} />
                   <AuthConfigPanel open={showAuth} onClose={() => setShowAuth(false)} supabaseConfig={supabaseConfig} onGenerateAuthPages={handleGenerateAuthPages} />
@@ -2469,8 +2473,10 @@ export function AIAppBuilderWorkspace() {
                   <StorageBrowser open={showStorage} onClose={() => setShowStorage(false)} supabaseConfig={supabaseConfig} />
                   <EdgeFunctionEditor open={showEdgeFunctions} onClose={() => setShowEdgeFunctions(false)} onCreateFunction={handleCreateEdgeFunction} functions={edgeFunctions} onSelectFunction={(name) => { setActiveFile(`functions/${name}/index.ts`); setRightTab('code'); }} onDeleteFunction={handleDeleteEdgeFunction} />
                 </Suspense>
+                </PanelErrorBoundary>
                 <ActivityFeed open={showActivity} onClose={() => setShowActivity(false)} entries={activityEntries} />
                 <ExportGuidePanel open={showExportGuide} onClose={() => setShowExportGuide(false)} />
+                <PanelErrorBoundary panelName="Schema Designer">
                 <Suspense fallback={<PanelLoader />}>
                   <SchemaDesignerLazy
                     open={showSchemaDesigner}
@@ -2479,6 +2485,7 @@ export function AIAppBuilderWorkspace() {
                     onSendToChat={(msg) => { sendMessage(msg, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }}
                   />
                 </Suspense>
+                </PanelErrorBoundary>
                 <OneClickDeploy
                   open={showOneClickDeploy}
                   onClose={() => setShowOneClickDeploy(false)}
@@ -2519,8 +2526,8 @@ export function AIAppBuilderWorkspace() {
                 <DatabaseExplorer open={showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
                 <ComponentLibrary open={showComponentLib} onClose={() => setShowComponentLib(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); } }} onApplyTheme={() => {}} />
                 <DeployPipelinePanel open={showDeployPipeline} onClose={() => setShowDeployPipeline(false)} onDeploy={handlePublish} publishedUrl={publishedUrl} isDeploying={isGenerating} projectName={project.name} onOpenDomainPanel={() => { setShowDeployPipeline(false); setShowDomainPanel(true); }} />
-                <Suspense fallback={<PanelLoader />}><PerformanceProfilerLazy open={showPerformanceProfiler} onClose={() => setShowPerformanceProfiler(false)} files={project.files} cdnPackages={cdnPackages} /></Suspense>
-                <Suspense fallback={<PanelLoader />}><BuildAnalyticsPanelLazy open={showBuildAnalytics} onClose={() => setShowBuildAnalytics(false)} analytics={buildAnalytics.getAnalytics()} /></Suspense>
+                <PanelErrorBoundary panelName="Performance Profiler"><Suspense fallback={<PanelLoader />}><PerformanceProfilerLazy open={showPerformanceProfiler} onClose={() => setShowPerformanceProfiler(false)} files={project.files} cdnPackages={cdnPackages} /></Suspense></PanelErrorBoundary>
+                <PanelErrorBoundary panelName="Build Analytics"><Suspense fallback={<PanelLoader />}><BuildAnalyticsPanelLazy open={showBuildAnalytics} onClose={() => setShowBuildAnalytics(false)} analytics={buildAnalytics.getAnalytics()} /></Suspense></PanelErrorBoundary>
                 <ChangelogPanel open={showChangelog} onClose={() => setShowChangelog(false)} entries={changelogEntries} />
                 <TestingDebugSuite open={showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); toast.success('Test generated'); }} projectFiles={project.files} />
                 <GPTConnectorPanel open={showGPTConnector} onClose={() => setShowGPTConnector(false)} linkedGPT={linkedGPT} onLinkGPT={setLinkedGPT} onUnlinkGPT={() => setLinkedGPT(null)} />
@@ -2740,34 +2747,20 @@ export function AIAppBuilderWorkspace() {
         </div>
 
         {/* Status Bar */}
-        {hasFiles && !isMobile && (
-          <div className="flex items-center h-6 px-3 border-t border-white/[0.06] bg-[#09090b] text-[10px] text-white/30 font-mono shrink-0 gap-3">
-            <div className="flex items-center gap-1.5">
-              <div className={cn(
-                "h-1.5 w-1.5 rounded-full",
-                isGenerating ? "bg-amber-400 animate-pulse" : "bg-emerald-400"
-              )} />
-              <span>{isGenerating ? 'Building' : 'Ready'}</span>
-            </div>
-            <div className="h-3 w-px bg-white/[0.06]" />
-            <span>{activeFile?.language || 'plaintext'}</span>
-            <span>Ln {cursorPosition.line}, Col {cursorPosition.column}</span>
-            <div className="h-3 w-px bg-white/[0.06]" />
-            <span>{project.files.length} file{project.files.length !== 1 ? 's' : ''}</span>
-            <span className="text-cyan-400/50">{activeBranchName}</span>
-            {dirtyFiles.size > 0 && (
-              <span className="text-amber-400/60 flex items-center gap-1">
-                <div className="h-1 w-1 rounded-full bg-amber-400/60" />
-                {dirtyFiles.size} unsaved
-              </span>
-            )}
-            <div className="flex-1" />
-            <AIAutocompleteIndicator enabled={aiAutocompleteEnabled} onToggle={() => setAiAutocompleteEnabled(prev => !prev)} />
-            <div className="h-3 w-px bg-white/[0.06]" />
-            <div className="h-3 w-px bg-white/[0.06]" />
-            <span>{isSaving ? 'Saving...' : lastSaved ? `Saved ${lastSaved.toLocaleTimeString()}` : ''}</span>
-          </div>
-        )}
+        <WorkspaceStatusBar
+          hasFiles={hasFiles}
+          isMobile={isMobile}
+          isGenerating={isGenerating}
+          activeFileLanguage={activeFile?.language}
+          cursorPosition={cursorPosition}
+          fileCount={project.files.length}
+          activeBranchName={activeBranchName}
+          dirtyFilesCount={dirtyFiles.size}
+          aiAutocompleteEnabled={aiAutocompleteEnabled}
+          onToggleAutocomplete={() => setAiAutocompleteEnabled(prev => !prev)}
+          isSaving={isSaving}
+          lastSaved={lastSaved}
+        />
       </div>
 
       <TemplateLibrary isOpen={showTemplates} onClose={() => setShowTemplates(false)} onSelectTemplate={(prompt) => handleSend(prompt)} />
@@ -2930,35 +2923,39 @@ export function AIAppBuilderWorkspace() {
       {showLicensePicker && <LicensePickerPanel {...licensePicker} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowLicensePicker(false)} />}
       {showOpenAPISpec && <OpenAPISpecPanel {...openAPISpec} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowOpenAPISpec(false)} />}
       {showProjectHealth && <ProjectHealthPanel {...projectHealth} files={project.files} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowProjectHealth(false)} />}
-      <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
-        <ProjectSettings
-          supabaseConfig={supabaseConfig}
-          githubConfig={githubConfig}
-          stripeConfig={stripeConfig}
-          vercelConfig={vercelConfig}
-          serviceKeys={serviceKeys}
-          envVars={envVars}
-          projectName={project.name}
-          projectSlug={previewSlug}
-          open={showSettingsPanel}
-          onOpenChange={setShowSettingsPanel}
-          onSupabaseChange={setSupabaseConfig}
-          onGithubChange={setGithubConfig}
-          onStripeChange={setStripeConfig}
-          onVercelChange={setVercelConfig}
-          onServiceKeysChange={setServiceKeys}
-          onEnvVarsChange={setEnvVars}
-          onDeleteProject={() => {
-            if (currentProjectId) deleteProject(currentProjectId);
-            resetProject(); clearChat(); setStableHTML(null); toast.success('Project deleted'); setShowSettingsPanel(false);
-          }}
-          onResetProject={() => { resetProject(); setStableHTML(null); toast.success('Project reset'); setShowSettingsPanel(false); }}
-        />
-        {vercelConfig && <VercelDeployButton projectName={project.name} files={project.files} vercelToken={vercelConfig.token} />}
-        {githubConfig && <GithubSyncButton projectName={project.name} files={project.files} githubToken={githubConfig.token} onPullFiles={handleGithubPullFiles} />}
-        <SharePreview html={compiledHTML} projectName={project.name} shareUrl={hostedPreviewUrl} isUploading={isUploadingPreview} onInstantUpload={previewSlug ? () => uploadPreviewNow(previewSlug, compiledHTML) : undefined} />
-        <ExportButton projectName={project.name} files={project.files} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} envVars={envVars} cdnPackages={cdnPackages} edgeFunctions={edgeFunctions} publishedUrl={publishedUrl} />
-      </div>
+      <WorkspaceBottomBar
+        supabaseConfig={supabaseConfig}
+        githubConfig={githubConfig}
+        stripeConfig={stripeConfig}
+        vercelConfig={vercelConfig}
+        serviceKeys={serviceKeys}
+        envVars={envVars}
+        projectName={project.name}
+        projectSlug={previewSlug}
+        showSettingsPanel={showSettingsPanel}
+        setShowSettingsPanel={setShowSettingsPanel}
+        onSupabaseChange={setSupabaseConfig}
+        onGithubChange={setGithubConfig}
+        onStripeChange={setStripeConfig}
+        onVercelChange={setVercelConfig}
+        onServiceKeysChange={setServiceKeys}
+        onEnvVarsChange={setEnvVars}
+        onDeleteProject={() => {
+          if (currentProjectId) deleteProject(currentProjectId);
+          resetProject(); clearChat(); setStableHTML(null); toast.success('Project deleted'); setShowSettingsPanel(false);
+        }}
+        onResetProject={() => { resetProject(); setStableHTML(null); toast.success('Project reset'); setShowSettingsPanel(false); }}
+        files={project.files}
+        compiledHTML={compiledHTML}
+        hostedPreviewUrl={hostedPreviewUrl}
+        isUploadingPreview={isUploadingPreview}
+        onInstantUpload={previewSlug ? () => uploadPreviewNow(previewSlug, compiledHTML) : undefined}
+        cdnPackages={cdnPackages}
+        edgeFunctions={edgeFunctions}
+        publishedUrl={publishedUrl}
+        currentProjectId={currentProjectId}
+        onGithubPullFiles={handleGithubPullFiles}
+      />
       {pendingConflicts && (
         <FileConflictDialog open={!!pendingConflicts} conflicts={pendingConflicts} onResolve={handleConflictResolve} onCancel={() => setPendingConflicts(null)} />
       )}
