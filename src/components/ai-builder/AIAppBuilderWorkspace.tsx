@@ -181,6 +181,12 @@ import { useJsonYamlConverter } from '@/hooks/useJsonYamlConverter';
 import { useColorContrastChecker } from '@/hooks/useColorContrastChecker';
 import { useTailwindClassSorter } from '@/hooks/useTailwindClassSorter';
 import { useMarkdownPreview } from '@/hooks/useMarkdownPreview';
+// Sprint W
+import { useToastDesigner } from '@/hooks/useToastDesigner';
+import { useNotificationCenterGenerator } from '@/hooks/useNotificationCenterGenerator';
+import { useChatWidgetBuilder } from '@/hooks/useChatWidgetBuilder';
+import { useEmailSequenceBuilder } from '@/hooks/useEmailSequenceBuilder';
+import { useSMSTemplateManager } from '@/hooks/useSMSTemplateManager';
 
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
@@ -238,6 +244,8 @@ import {
   ReactiveStorePanel, DataMigrationPanel,
   RegexPlaygroundPanel, JsonYamlConverterPanel, ColorContrastPanel,
   TailwindSorterPanel, MarkdownPreviewPanel,
+  ToastDesignerPanel, NotificationCenterPanel, ChatWidgetPanel,
+  EmailSequencePanel, SMSTemplatePanel,
   DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
   EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
   BuildAnalyticsPanel as BuildAnalyticsPanelLazy,
@@ -710,6 +718,17 @@ export function AIAppBuilderWorkspace() {
   const [showColorContrast, setShowColorContrast] = useState(false);
   const [showTailwindSorter, setShowTailwindSorter] = useState(false);
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
+  // Sprint W: Communication (Phases 214-218)
+  const toastDesigner = useToastDesigner();
+  const notifCenter = useNotificationCenterGenerator();
+  const chatWidget = useChatWidgetBuilder();
+  const emailSequence = useEmailSequenceBuilder();
+  const smsTemplate = useSMSTemplateManager();
+  const [showToastDesigner, setShowToastDesigner] = useState(false);
+  const [showNotifCenter, setShowNotifCenter] = useState(false);
+  const [showChatWidget, setShowChatWidget] = useState(false);
+  const [showEmailSequence, setShowEmailSequence] = useState(false);
+  const [showSMSTemplate, setShowSMSTemplate] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2533,6 +2552,12 @@ export function AIAppBuilderWorkspace() {
       {showColorContrast && <ColorContrastPanel {...colorContrast} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowColorContrast(false)} />}
       {showTailwindSorter && <TailwindSorterPanel {...tailwindSorter} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowTailwindSorter(false)} />}
       {showMarkdownPreview && <MarkdownPreviewPanel {...markdownPreview} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowMarkdownPreview(false)} />}
+      {/* Sprint W: Communication */}
+      {showToastDesigner && <ToastDesignerPanel {...toastDesigner} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowToastDesigner(false)} />}
+      {showNotifCenter && <NotificationCenterPanel {...notifCenter} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowNotifCenter(false)} />}
+      {showChatWidget && <ChatWidgetPanel {...chatWidget} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowChatWidget(false)} />}
+      {showEmailSequence && <EmailSequencePanel {...emailSequence} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowEmailSequence(false)} />}
+      {showSMSTemplate && <SMSTemplatePanel {...smsTemplate} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowSMSTemplate(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}

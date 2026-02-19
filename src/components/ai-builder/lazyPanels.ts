@@ -205,6 +205,12 @@ export const JsonYamlConverterPanel = lz(() => import('./JsonYamlConverterPanel'
 export const ColorContrastPanel = lz(() => import('./ColorContrastPanel'), 'ColorContrastPanel');
 export const TailwindSorterPanel = lz(() => import('./TailwindSorterPanel'), 'TailwindSorterPanel');
 export const MarkdownPreviewPanel = lz(() => import('./MarkdownPreviewPanel'), 'MarkdownPreviewPanel');
+// Sprint W: Communication (Phases 214-218)
+export const ToastDesignerPanel = lz(() => import('./ToastDesignerPanel'), 'ToastDesignerPanel');
+export const NotificationCenterPanel = lz(() => import('./NotificationCenterPanel'), 'NotificationCenterPanel');
+export const ChatWidgetPanel = lz(() => import('./ChatWidgetPanel'), 'ChatWidgetPanel');
+export const EmailSequencePanel = lz(() => import('./EmailSequencePanel'), 'EmailSequencePanel');
+export const SMSTemplatePanel = lz(() => import('./SMSTemplatePanel'), 'SMSTemplatePanel');
 
 // Already-lazy panels (keep existing lazy pattern)
 export const DatabasePanel = lz(() => import('./DatabasePanel'), 'DatabasePanel');
