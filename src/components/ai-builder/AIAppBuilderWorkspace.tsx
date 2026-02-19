@@ -632,10 +632,19 @@ export function AIAppBuilderWorkspace() {
     prevIsGeneratingRef.current = isGenerating;
   }, [isGenerating, latestFiles.length, messages, project.name, renameProject]);
 
-  // Hot-reload
+  // Hot-reload streaming files + auto-switch to currently streaming file tab
+  const streamingFilePath = isStreamingPreview && partialFiles.length > 0
+    ? partialFiles[partialFiles.length - 1]?.path || null
+    : null;
+
   useEffect(() => {
     if (isStreamingPreview && partialFiles.length > 0) {
       for (const file of partialFiles) upsertFile(file.path, file.content);
+      // Auto-switch to the file currently being streamed
+      const lastFile = partialFiles[partialFiles.length - 1];
+      if (lastFile && rightTab === 'code') {
+        setActiveFile(lastFile.path);
+      }
     }
   }, [partialFiles, isStreamingPreview]);
 
@@ -778,6 +787,11 @@ export function AIAppBuilderWorkspace() {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); handleSave(); }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') { e.preventDefault(); setShowFileSearch(prev => !prev); }
       if ((e.metaKey || e.ctrlKey) && e.key === '/') { e.preventDefault(); setShowShortcuts(prev => !prev); }
+      // Phase 51: Additional shortcuts
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') { e.preventDefault(); setShowFileTree(prev => !prev); }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'j') { e.preventDefault(); setShowConsole(prev => !prev); }
+      if ((e.metaKey || e.ctrlKey) && e.key === '.') { e.preventDefault(); setRightTab(prev => prev === 'preview' ? 'code' : 'preview'); }
+      if ((e.metaKey || e.ctrlKey) && e.key === '`') { e.preventDefault(); setShowTerminal(prev => !prev); }
       if (e.key === 'Escape') {
         // Stop AI generation first (highest priority)
         if (isGenerating) { e.preventDefault(); stopGenerating(); return; }
@@ -1638,7 +1652,7 @@ export function AIAppBuilderWorkspace() {
               <div className="h-full flex flex-col bg-[#09090b]">
                 {activeFile && (
                   <>
-                    <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} dirtyFiles={dirtyFiles} onSelect={(path) => setActiveFile(path)} onClose={(path) => closeFile(path)} onReorder={reorderOpenFiles} />
+                    <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} dirtyFiles={dirtyFiles} streamingFilePath={streamingFilePath} onSelect={(path) => setActiveFile(path)} onClose={(path) => closeFile(path)} onReorder={reorderOpenFiles} />
                     <div className="flex-1 min-h-0">
                       <CodeEditor file={activeFile} onContentChange={(path, content) => { upsertFile(path, content); setDirtyFiles(prev => new Set(prev).add(path)); }} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
                     </div>
@@ -1892,7 +1906,7 @@ export function AIAppBuilderWorkspace() {
                   {/* File tab bar (code/split only) */}
                   {hasFiles && rightTab !== 'preview' && (
                     <div className="flex items-center h-9 border-b border-white/[0.06] bg-[#0d0d14] shrink-0">
-                      <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} dirtyFiles={dirtyFiles} onSelect={setActiveFile} onClose={closeFile} onReorder={reorderOpenFiles} />
+                      <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} dirtyFiles={dirtyFiles} streamingFilePath={streamingFilePath} onSelect={setActiveFile} onClose={closeFile} onReorder={reorderOpenFiles} />
                       {isGenerating && (
                         <div className="ml-auto mr-3 flex items-center gap-1.5 text-[10px] text-amber-400/80">
                           <Activity className="h-3 w-3 animate-pulse" />
