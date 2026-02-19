@@ -64,6 +64,7 @@ import { WorkspaceBottomBar } from './WorkspaceBottomBar';
 import { WorkspaceStatusBar } from './WorkspaceStatusBar';
 import { WorkspacePanelLayer } from './WorkspacePanelLayer';
 import { PanelErrorBoundary } from './PanelErrorBoundary';
+import { SafePanel } from './SafePanel';
 import { buildAuthTemplate } from './authTemplates';
 import { BugReportModal } from '@/components/help/BugReportModal';
 import { usePluginRegistry } from '@/hooks/usePluginRegistry';
@@ -2086,6 +2087,16 @@ export function AIAppBuilderWorkspace() {
     showLicensePicker: (v) => setShowLicensePicker(v),
     showOpenAPISpec: (v) => setShowOpenAPISpec(v),
     showProjectHealth: (v) => setShowProjectHealth(v),
+    // Inline panels (not already in the map above)
+    showPromptHistory: (v) => setShowPromptHistory(v),
+    showVersionHistory: (v) => setShowVersionHistory(v),
+    showRLSTester: (v) => setShowRLSTester(v),
+    showFileSearch: (v) => setShowFileSearch(v),
+    showFileTree: (v) => setShowFileTree(v),
+    showConsole: (v) => setShowConsole(v),
+    showAssets: (v) => setShowAssets(v),
+    showPackages: (v) => setShowPackages(v),
+    showEnvVars: (v) => setShowEnvVars(v),
   }), []);
 
   // Open any panel by stateKey
@@ -2461,32 +2472,41 @@ export function AIAppBuilderWorkspace() {
             <ResizablePanel defaultSize={72} minSize={50}>
               <div className="h-full flex">
 
-                {/* Side panels */}
-                <VersionHistoryPanel versions={versions} currentFiles={project.files} onRestore={restoreVersion} onClose={() => setShowVersionHistory(false)} open={showVersionHistory} activeBranchName={activeBranchName} />
-                <EnvVarsPanel envVars={envVariables} onChange={setEnvVariables} open={showEnvVars} onClose={() => setShowEnvVars(false)} />
-                <RLSPolicyTester supabaseConfig={supabaseConfig} open={showRLSTester} onClose={() => setShowRLSTester(false)} />
-                <AssetManager assets={assets} onUpload={handleAssetUpload} onDelete={handleAssetDelete} open={showAssets} onClose={() => setShowAssets(false)} />
-                <PanelErrorBoundary panelName="Database Tools">
-                <Suspense fallback={<PanelLoader />}>
+                {/* Side panels — all wrapped in SafePanel for crash isolation */}
+                <SafePanel show={showVersionHistory} name="Version History">
+                  <VersionHistoryPanel versions={versions} currentFiles={project.files} onRestore={restoreVersion} onClose={() => setShowVersionHistory(false)} open={showVersionHistory} activeBranchName={activeBranchName} />
+                </SafePanel>
+                <SafePanel show={showEnvVars} name="Env Variables">
+                  <EnvVarsPanel envVars={envVariables} onChange={setEnvVariables} open={showEnvVars} onClose={() => setShowEnvVars(false)} />
+                </SafePanel>
+                <SafePanel show={showRLSTester} name="RLS Tester">
+                  <RLSPolicyTester supabaseConfig={supabaseConfig} open={showRLSTester} onClose={() => setShowRLSTester(false)} />
+                </SafePanel>
+                <SafePanel show={showAssets} name="Asset Manager">
+                  <AssetManager assets={assets} onUpload={handleAssetUpload} onDelete={handleAssetDelete} open={showAssets} onClose={() => setShowAssets(false)} />
+                </SafePanel>
+                <SafePanel show={showDatabase || showAuth || showKnowledge || showStorage || showEdgeFunctions} name="Database Tools">
                   <DatabasePanel open={showDatabase} onClose={() => setShowDatabase(false)} supabaseConfig={supabaseConfig} />
                   <AuthConfigPanel open={showAuth} onClose={() => setShowAuth(false)} supabaseConfig={supabaseConfig} onGenerateAuthPages={handleGenerateAuthPages} />
                   <KnowledgePanel open={showKnowledge} onClose={() => setShowKnowledge(false)} knowledge={knowledge} onKnowledgeChange={setKnowledge} />
                   <StorageBrowser open={showStorage} onClose={() => setShowStorage(false)} supabaseConfig={supabaseConfig} />
                   <EdgeFunctionEditor open={showEdgeFunctions} onClose={() => setShowEdgeFunctions(false)} onCreateFunction={handleCreateEdgeFunction} functions={edgeFunctions} onSelectFunction={(name) => { setActiveFile(`functions/${name}/index.ts`); setRightTab('code'); }} onDeleteFunction={handleDeleteEdgeFunction} />
-                </Suspense>
-                </PanelErrorBoundary>
-                <ActivityFeed open={showActivity} onClose={() => setShowActivity(false)} entries={activityEntries} />
-                <ExportGuidePanel open={showExportGuide} onClose={() => setShowExportGuide(false)} />
-                <PanelErrorBoundary panelName="Schema Designer">
-                <Suspense fallback={<PanelLoader />}>
+                </SafePanel>
+                <SafePanel show={showActivity} name="Activity Feed">
+                  <ActivityFeed open={showActivity} onClose={() => setShowActivity(false)} entries={activityEntries} />
+                </SafePanel>
+                <SafePanel show={showExportGuide} name="Export Guide">
+                  <ExportGuidePanel open={showExportGuide} onClose={() => setShowExportGuide(false)} />
+                </SafePanel>
+                <SafePanel show={showSchemaDesigner} name="Schema Designer">
                   <SchemaDesignerLazy
                     open={showSchemaDesigner}
                     onClose={() => setShowSchemaDesigner(false)}
                     onGenerateSQL={(sql) => { navigator.clipboard.writeText(sql); toast.success('SQL copied — paste into Supabase SQL editor'); }}
                     onSendToChat={(msg) => { sendMessage(msg, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }}
                   />
-                </Suspense>
-                </PanelErrorBoundary>
+                </SafePanel>
+                <SafePanel show={showOneClickDeploy} name="One-Click Deploy">
                 <OneClickDeploy
                   open={showOneClickDeploy}
                   onClose={() => setShowOneClickDeploy(false)}
@@ -2499,7 +2519,11 @@ export function AIAppBuilderWorkspace() {
                     else setNetlifyToken(token);
                   }}
                 />
-                <BuilderHelpCenter open={showHelpCenter} onClose={() => setShowHelpCenter(false)} />
+                </SafePanel>
+                <SafePanel show={showHelpCenter} name="Help Center">
+                  <BuilderHelpCenter open={showHelpCenter} onClose={() => setShowHelpCenter(false)} />
+                </SafePanel>
+                <SafePanel show={showSetupWizard} name="Setup Wizard">
                 <SetupWizard
                   open={showSetupWizard}
                   onClose={() => setShowSetupWizard(false)}
@@ -2512,6 +2536,8 @@ export function AIAppBuilderWorkspace() {
                   onOpenAuth={() => openPanel('auth')}
                   onOpenDeploy={() => setShowDeployPipeline(true)}
                 />
+                </SafePanel>
+                <SafePanel show={showPromptHistory} name="Prompt History">
                 <PromptHistoryPanel
                   open={showPromptHistory}
                   onClose={() => setShowPromptHistory(false)}
@@ -2523,16 +2549,35 @@ export function AIAppBuilderWorkspace() {
                   onExport={promptHistory.exportHistory}
                   onImport={promptHistory.importHistory}
                 />
-                <AICodeIntelligence open={showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); toast.success('Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); toast.success(`Found ${smells.length} suggestions`); }} activeFilePath={project.activeFilePath} />
-                <DatabaseExplorer open={showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
-                <ComponentLibrary open={showComponentLib} onClose={() => setShowComponentLib(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); } }} onApplyTheme={() => {}} />
-                <DeployPipelinePanel open={showDeployPipeline} onClose={() => setShowDeployPipeline(false)} onDeploy={handlePublish} publishedUrl={publishedUrl} isDeploying={isGenerating} projectName={project.name} onOpenDomainPanel={() => { setShowDeployPipeline(false); setShowDomainPanel(true); }} />
-                <PanelErrorBoundary panelName="Performance Profiler"><Suspense fallback={<PanelLoader />}><PerformanceProfilerLazy open={showPerformanceProfiler} onClose={() => setShowPerformanceProfiler(false)} files={project.files} cdnPackages={cdnPackages} /></Suspense></PanelErrorBoundary>
-                <PanelErrorBoundary panelName="Build Analytics"><Suspense fallback={<PanelLoader />}><BuildAnalyticsPanelLazy open={showBuildAnalytics} onClose={() => setShowBuildAnalytics(false)} analytics={buildAnalytics.getAnalytics()} /></Suspense></PanelErrorBoundary>
-                <ChangelogPanel open={showChangelog} onClose={() => setShowChangelog(false)} entries={changelogEntries} />
-                <TestingDebugSuite open={showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); toast.success('Test generated'); }} projectFiles={project.files} />
-                <GPTConnectorPanel open={showGPTConnector} onClose={() => setShowGPTConnector(false)} linkedGPT={linkedGPT} onLinkGPT={setLinkedGPT} onUnlinkGPT={() => setLinkedGPT(null)} />
-                {projectReview.showPanel && (
+                </SafePanel>
+                <SafePanel show={showCodeIntel} name="Code Intelligence">
+                  <AICodeIntelligence open={showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); toast.success('Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); toast.success(`Found ${smells.length} suggestions`); }} activeFilePath={project.activeFilePath} />
+                </SafePanel>
+                <SafePanel show={showDbExplorer} name="Database Explorer">
+                  <DatabaseExplorer open={showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
+                </SafePanel>
+                <SafePanel show={showComponentLib} name="Component Library">
+                  <ComponentLibrary open={showComponentLib} onClose={() => setShowComponentLib(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); } }} onApplyTheme={() => {}} />
+                </SafePanel>
+                <SafePanel show={showDeployPipeline} name="Deploy Pipeline">
+                  <DeployPipelinePanel open={showDeployPipeline} onClose={() => setShowDeployPipeline(false)} onDeploy={handlePublish} publishedUrl={publishedUrl} isDeploying={isGenerating} projectName={project.name} onOpenDomainPanel={() => { setShowDeployPipeline(false); setShowDomainPanel(true); }} />
+                </SafePanel>
+                <SafePanel show={showPerformanceProfiler} name="Performance Profiler">
+                  <PerformanceProfilerLazy open={showPerformanceProfiler} onClose={() => setShowPerformanceProfiler(false)} files={project.files} cdnPackages={cdnPackages} />
+                </SafePanel>
+                <SafePanel show={showBuildAnalytics} name="Build Analytics">
+                  <BuildAnalyticsPanelLazy open={showBuildAnalytics} onClose={() => setShowBuildAnalytics(false)} analytics={buildAnalytics.getAnalytics()} />
+                </SafePanel>
+                <SafePanel show={showChangelog} name="Changelog">
+                  <ChangelogPanel open={showChangelog} onClose={() => setShowChangelog(false)} entries={changelogEntries} />
+                </SafePanel>
+                <SafePanel show={showTestingSuite} name="Testing & Debug">
+                  <TestingDebugSuite open={showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); toast.success('Test generated'); }} projectFiles={project.files} />
+                </SafePanel>
+                <SafePanel show={showGPTConnector} name="GPT Connector">
+                  <GPTConnectorPanel open={showGPTConnector} onClose={() => setShowGPTConnector(false)} linkedGPT={linkedGPT} onLinkGPT={setLinkedGPT} onUnlinkGPT={() => setLinkedGPT(null)} />
+                </SafePanel>
+                <SafePanel show={projectReview.showPanel} name="Project Review">
                   <ProjectReviewPanel
                     isReviewing={projectReview.isReviewing}
                     result={projectReview.result}
@@ -2541,16 +2586,32 @@ export function AIAppBuilderWorkspace() {
                     onDismiss={projectReview.dismissFinding}
                     onGoToFile={(file, line) => { handleSetActiveFile(file); setRightTab('code'); }}
                   />
-                )}
-                <SupabaseIDEPanel open={showSupabaseIDE} onClose={() => setShowSupabaseIDE(false)} connection={supabaseConnection} onGenerateCode={(code, fileName) => { upsertFile(fileName, code); setRightTab('code'); setActiveFile(fileName); }} />
-                <GitHubPanel open={showGitHubPanel} onClose={() => setShowGitHubPanel(false)} projectName={project.name} files={project.files} onFilesImported={(imported) => { imported.forEach(f => upsertFile(f.path, f.content)); }} githubSync={githubSync} />
-                <DatabaseMigrationPanel open={showMigrationPanel} onClose={() => setShowMigrationPanel(false)} connection={supabaseConnection} onGenerateCode={(code, fileName) => { upsertFile(fileName, code); setRightTab('code'); setActiveFile(fileName); }} />
-                <EdgeFunctionEditorPanel open={showEdgeFnEditor} onClose={() => setShowEdgeFnEditor(false)} files={project.files} onUpsertFile={upsertFile} supabaseUrl={supabaseConnection.config?.url || supabaseConfig?.url} supabaseKey={supabaseConnection.config?.anonKey || supabaseConfig?.anonKey} />
-                <BuildWorkflowPanel open={showBuildWorkflow} onClose={() => setShowBuildWorkflow(false)} githubToken={localStorage.getItem('app-builder-github-pat') || undefined} githubRepo={localStorage.getItem('app-builder-github-repo') || undefined} />
-                <MultiFileSearchReplace open={showMultiSearch} onClose={() => setShowMultiSearch(false)} files={project.files} onReplaceInFiles={handleReplaceInFiles} onSelectFile={handleSetActiveFile} onSwitchToCode={() => setRightTab('code')} />
-                <InBrowserTestRunner open={showTestRunner} onClose={() => setShowTestRunner(false)} files={project.files} onGenerateTest={(filePath) => { sendMessage(`Generate unit tests for ${filePath}`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onSendToChat={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
-                <PluginMarketplace open={showExtensions} onClose={() => setShowExtensions(false)} catalogue={pluginRegistry.catalogue} installed={pluginRegistry.installed} onInstall={pluginRegistry.installPlugin} onUninstall={pluginRegistry.uninstallPlugin} onToggle={pluginRegistry.togglePlugin} onUpdateConfig={pluginRegistry.updatePluginConfig} />
-                <Suspense fallback={<PanelLoader />}>
+                </SafePanel>
+                <SafePanel show={showSupabaseIDE} name="Supabase IDE">
+                  <SupabaseIDEPanel open={showSupabaseIDE} onClose={() => setShowSupabaseIDE(false)} connection={supabaseConnection} onGenerateCode={(code, fileName) => { upsertFile(fileName, code); setRightTab('code'); setActiveFile(fileName); }} />
+                </SafePanel>
+                <SafePanel show={showGitHubPanel} name="GitHub">
+                  <GitHubPanel open={showGitHubPanel} onClose={() => setShowGitHubPanel(false)} projectName={project.name} files={project.files} onFilesImported={(imported) => { imported.forEach(f => upsertFile(f.path, f.content)); }} githubSync={githubSync} />
+                </SafePanel>
+                <SafePanel show={showMigrationPanel} name="Database Migration">
+                  <DatabaseMigrationPanel open={showMigrationPanel} onClose={() => setShowMigrationPanel(false)} connection={supabaseConnection} onGenerateCode={(code, fileName) => { upsertFile(fileName, code); setRightTab('code'); setActiveFile(fileName); }} />
+                </SafePanel>
+                <SafePanel show={showEdgeFnEditor} name="Edge Function Editor">
+                  <EdgeFunctionEditorPanel open={showEdgeFnEditor} onClose={() => setShowEdgeFnEditor(false)} files={project.files} onUpsertFile={upsertFile} supabaseUrl={supabaseConnection.config?.url || supabaseConfig?.url} supabaseKey={supabaseConnection.config?.anonKey || supabaseConfig?.anonKey} />
+                </SafePanel>
+                <SafePanel show={showBuildWorkflow} name="Build Workflow">
+                  <BuildWorkflowPanel open={showBuildWorkflow} onClose={() => setShowBuildWorkflow(false)} githubToken={localStorage.getItem('app-builder-github-pat') || undefined} githubRepo={localStorage.getItem('app-builder-github-repo') || undefined} />
+                </SafePanel>
+                <SafePanel show={showMultiSearch} name="Multi-File Search">
+                  <MultiFileSearchReplace open={showMultiSearch} onClose={() => setShowMultiSearch(false)} files={project.files} onReplaceInFiles={handleReplaceInFiles} onSelectFile={handleSetActiveFile} onSwitchToCode={() => setRightTab('code')} />
+                </SafePanel>
+                <SafePanel show={showTestRunner} name="Test Runner">
+                  <InBrowserTestRunner open={showTestRunner} onClose={() => setShowTestRunner(false)} files={project.files} onGenerateTest={(filePath) => { sendMessage(`Generate unit tests for ${filePath}`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onSendToChat={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
+                </SafePanel>
+                <SafePanel show={showExtensions} name="Extensions">
+                  <PluginMarketplace open={showExtensions} onClose={() => setShowExtensions(false)} catalogue={pluginRegistry.catalogue} installed={pluginRegistry.installed} onInstall={pluginRegistry.installPlugin} onUninstall={pluginRegistry.uninstallPlugin} onToggle={pluginRegistry.togglePlugin} onUpdateConfig={pluginRegistry.updatePluginConfig} />
+                </SafePanel>
+                <SafePanel show={showCollaboration} name="Collaboration">
                   <CollaborationPanelLazy
                     open={showCollaboration}
                     onClose={() => setShowCollaboration(false)}
@@ -2569,8 +2630,8 @@ export function AIAppBuilderWorkspace() {
                     onNavigateToFile={(path) => { setActiveFile(path); setRightTab('code'); }}
                     onAddSimulated={collaborationEngine.addSimulatedParticipant}
                   />
-                </Suspense>
-                <Suspense fallback={<PanelLoader />}>
+                </SafePanel>
+                <SafePanel show={showAPIBuilder} name="API Builder">
                   <APIBuilderPanelLazy
                     open={showAPIBuilder}
                     onClose={() => setShowAPIBuilder(false)}
@@ -2587,10 +2648,10 @@ export function AIAppBuilderWorkspace() {
                     onExportOpenAPI={apiBuilder.exportOpenAPI}
                     onClearLogs={apiBuilder.clearLogs}
                   />
-                </Suspense>
+                </SafePanel>
                 {showDesignSystem && (
                   <div className="w-72 border-r border-border overflow-hidden">
-                    <Suspense fallback={<PanelLoader />}>
+                    <SafePanel show={true} name="Design System">
                       <DesignSystemPanelLazy
                         onInjectCSS={(css) => {
                           const existingCSS = project.files.find(f => f.path === 'design-tokens.css');
@@ -2599,7 +2660,7 @@ export function AIAppBuilderWorkspace() {
                         }}
                         onClose={() => setShowDesignSystem(false)}
                       />
-                    </Suspense>
+                    </SafePanel>
                   </div>
                 )}
                 {showPackages && (
@@ -2607,7 +2668,7 @@ export function AIAppBuilderWorkspace() {
                     <PackageManager packages={cdnPackages} onAddPackage={(pkg) => setCdnPackages(prev => [...prev, pkg])} onRemovePackage={(name) => setCdnPackages(prev => prev.filter(p => p.name !== name))} />
                   </div>
                 )}
-                {showNPMManager && (
+                <SafePanel show={showNPMManager} name="NPM Manager">
                   <NPMPackageManagerPanel
                     open={showNPMManager}
                     onClose={() => setShowNPMManager(false)}
@@ -2616,20 +2677,20 @@ export function AIAppBuilderWorkspace() {
                     onUninstall={(name) => setInstalledPackages(prev => prev.filter(p => p.name !== name))}
                     onUpdateVersion={(name, version) => setInstalledPackages(prev => prev.map(p => p.name === name ? { ...p, version } : p))}
                   />
-                )}
-                {showDevTools && (
+                </SafePanel>
+                <SafePanel show={showDevTools} name="DevTools">
                   <div className="w-80 border-r border-white/[0.06] overflow-hidden">
                     <PreviewDevToolsPanel open={showDevTools} onClose={() => setShowDevTools(false)} iframeRef={previewIframeRef} onFixWithAI={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
                   </div>
-                )}
-                {showSymbolSearch && (
+                </SafePanel>
+                <SafePanel show={showSymbolSearch} name="Symbol Search">
                   <SymbolSearchPanel
                     open={showSymbolSearch}
                     onClose={() => setShowSymbolSearch(false)}
                     files={project.files}
                     onNavigate={(file, line) => { setActiveFile(file); setRightTab('code'); }}
                   />
-                )}
+                </SafePanel>
 
                 <div className="flex-1 flex flex-col overflow-hidden">
                   {/* File tab bar (code/split only) */}
