@@ -193,6 +193,12 @@ import { useCommandMenuBuilder } from '@/hooks/useCommandMenuBuilder';
 import { useBreadcrumbGenerator } from '@/hooks/useBreadcrumbGenerator';
 import { useMegaMenuBuilder } from '@/hooks/useMegaMenuBuilder';
 import { useContextMenuDesigner } from '@/hooks/useContextMenuDesigner';
+// Sprint Y
+import { useDockerComposeGenerator } from '@/hooks/useDockerComposeGenerator';
+import { useKubernetesGenerator } from '@/hooks/useKubernetesGenerator';
+import { useCICDPipelineDesigner } from '@/hooks/useCICDPipelineDesigner';
+import { useStructuredLogger } from '@/hooks/useStructuredLogger';
+import { useHealthCheckGenerator } from '@/hooks/useHealthCheckGenerator';
 
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
@@ -254,6 +260,8 @@ import {
   EmailSequencePanel, SMSTemplatePanel,
   StepperWizardPanel, CommandMenuPanel, BreadcrumbPanel,
   MegaMenuPanel, ContextMenuPanel,
+  DockerComposePanel, KubernetesPanel, CICDPipelinePanel,
+  StructuredLoggerPanel, HealthCheckPanel,
   DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
   EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
   BuildAnalyticsPanel as BuildAnalyticsPanelLazy,
@@ -748,6 +756,17 @@ export function AIAppBuilderWorkspace() {
   const [showBreadcrumbGen, setShowBreadcrumbGen] = useState(false);
   const [showMegaMenu, setShowMegaMenu] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState(false);
+  // Sprint Y: DevOps & Infrastructure (Phases 224-228)
+  const dockerCompose = useDockerComposeGenerator();
+  const k8sGenerator = useKubernetesGenerator();
+  const cicdPipeline = useCICDPipelineDesigner();
+  const structuredLogger = useStructuredLogger();
+  const healthCheck = useHealthCheckGenerator();
+  const [showDockerCompose, setShowDockerCompose] = useState(false);
+  const [showK8s, setShowK8s] = useState(false);
+  const [showCICDPipeline, setShowCICDPipeline] = useState(false);
+  const [showStructuredLogger, setShowStructuredLogger] = useState(false);
+  const [showHealthCheck, setShowHealthCheck] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2583,6 +2602,12 @@ export function AIAppBuilderWorkspace() {
       {showBreadcrumbGen && <BreadcrumbPanel {...breadcrumbGen} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowBreadcrumbGen(false)} />}
       {showMegaMenu && <MegaMenuPanel {...megaMenu} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowMegaMenu(false)} />}
       {showContextMenu && <ContextMenuPanel {...contextMenuDesigner} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowContextMenu(false)} />}
+      {/* Sprint Y: DevOps & Infrastructure */}
+      {showDockerCompose && <DockerComposePanel {...dockerCompose} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowDockerCompose(false)} />}
+      {showK8s && <KubernetesPanel {...k8sGenerator} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowK8s(false)} />}
+      {showCICDPipeline && <CICDPipelinePanel {...cicdPipeline} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowCICDPipeline(false)} />}
+      {showStructuredLogger && <StructuredLoggerPanel {...structuredLogger} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowStructuredLogger(false)} />}
+      {showHealthCheck && <HealthCheckPanel {...healthCheck} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowHealthCheck(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
