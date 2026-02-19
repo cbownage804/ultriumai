@@ -23,13 +23,14 @@ async function checkGatewayHealth(): Promise<boolean> {
   lastHealthCheck = now;
   try {
     const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-app-builder`, {
-      method: 'OPTIONS',
+      method: 'HEAD',
       signal: AbortSignal.timeout(5000),
     });
-    // OPTIONS preflight may return various codes (200, 204, 204-from-CORS, even 4xx for auth).
-    // Only treat network failures / 5xx as unhealthy — not auth/CORS rejections.
-    gatewayHealthy = resp.status < 500;
+    // Any response (including 4xx from CORS/auth) means the service is reachable.
+    // Only a complete fetch failure (caught below) indicates the service is truly down.
+    gatewayHealthy = true;
   } catch {
+    // Network error, DNS failure, or timeout — service is actually unreachable
     gatewayHealthy = false;
   }
   return gatewayHealthy;
