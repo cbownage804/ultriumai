@@ -17,13 +17,64 @@ export interface SavedProject {
   updated_at: string;
 }
 
+export interface DeploymentRecord {
+  id: string;
+  version: number;
+  timestamp: Date;
+  status: 'success' | 'failed' | 'building';
+  url?: string;
+  fileCount: number;
+  totalSizeKB: number;
+  duration?: number;
+  /** Stored compiled HTML for rollback */
+  compiledHtml?: string;
+}
+
+const DEPLOY_HISTORY_KEY = 'deploy-history';
+
+function loadDeployHistory(projectId: string): DeploymentRecord[] {
+  try {
+    const raw = localStorage.getItem(`${DEPLOY_HISTORY_KEY}-${projectId}`);
+    if (!raw) return [];
+    return JSON.parse(raw).map((d: any) => ({ ...d, timestamp: new Date(d.timestamp) }));
+  } catch { return []; }
+}
+
+function persistDeployHistory(projectId: string, history: DeploymentRecord[]) {
+  try {
+    // Only keep last 20 deployments, omit compiledHtml for older ones to save space
+    const toSave = history.slice(0, 20).map((d, i) => ({
+      ...d,
+      compiledHtml: i < 3 ? d.compiledHtml : undefined, // Keep HTML for 3 most recent only
+    }));
+    localStorage.setItem(`${DEPLOY_HISTORY_KEY}-${projectId}`, JSON.stringify(toSave));
+  } catch { /* ignore */ }
+}
+
 export function useProjectPersistence() {
   const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [deployHistory, setDeployHistory] = useState<DeploymentRecord[]>([]);
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Load deploy history when project changes
+  useEffect(() => {
+    if (currentProjectId) {
+      setDeployHistory(loadDeployHistory(currentProjectId));
+    } else {
+      setDeployHistory([]);
+    }
+  }, [currentProjectId]);
+
+  // Persist deploy history on change
+  useEffect(() => {
+    if (currentProjectId && deployHistory.length > 0) {
+      persistDeployHistory(currentProjectId, deployHistory);
+    }
+  }, [deployHistory, currentProjectId]);
 
   const loadProjects = useCallback(async () => {
     try {
@@ -148,6 +199,7 @@ export function useProjectPersistence() {
     name: string,
     compiledHtml: string,
   ): Promise<string | null> => {
+    const startTime = Date.now();
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -161,17 +213,12 @@ export function useProjectPersistence() {
         : crypto.randomUUID().split('-')[0];
       let slug = `${baseSlug}--${projectSuffix}`;
 
-      // Check if slug is already taken by another user, increment if needed
       let attempt = 0;
       while (attempt < 10) {
-        const checkPath = `${user.id}/${slug}/index.html`;
-        // If this is our own project re-publishing, upsert will handle it
-        // Check if any OTHER user has this slug by listing all previews
         const { data: existing } = await supabase.storage
           .from('published-apps')
           .list('previews', { search: slug });
         
-        // Also check the user's own folder - if it exists and belongs to current project, allow overwrite
         const { data: ownFiles } = await supabase.storage
           .from('published-apps')
           .list(`${user.id}/${slug}`);
@@ -201,6 +248,7 @@ export function useProjectPersistence() {
         .getPublicUrl(filePath);
 
       const publishedUrl = urlData.publicUrl;
+      const duration = Date.now() - startTime;
 
       // Update project record
       if (currentProjectId) {
@@ -210,13 +258,66 @@ export function useProjectPersistence() {
           .eq('id', currentProjectId);
       }
 
+      // Record versioned deployment
+      const newVersion = (deployHistory[0]?.version || 0) + 1;
+      const sizeKB = Math.round(new Blob([compiledHtml]).size / 1024);
+
+      const deployment: DeploymentRecord = {
+        id: crypto.randomUUID(),
+        version: newVersion,
+        timestamp: new Date(),
+        status: 'success',
+        url: publishedUrl,
+        fileCount: (compiledHtml.match(/<style/gi) || []).length + (compiledHtml.match(/<script/gi) || []).length + 1,
+        totalSizeKB: sizeKB,
+        duration,
+        compiledHtml,
+      };
+
+      setDeployHistory(prev => [deployment, ...prev].slice(0, 50));
+
       return publishedUrl;
     } catch (err) {
       console.error('Publish failed:', err);
+
+      // Record failed deployment
+      const newVersion = (deployHistory[0]?.version || 0) + 1;
+      const failedDeploy: DeploymentRecord = {
+        id: crypto.randomUUID(),
+        version: newVersion,
+        timestamp: new Date(),
+        status: 'failed',
+        fileCount: 0,
+        totalSizeKB: 0,
+        duration: Date.now() - startTime,
+      };
+      setDeployHistory(prev => [failedDeploy, ...prev].slice(0, 50));
+
       toast.error('Failed to publish');
       return null;
     }
-  }, [currentProjectId]);
+  }, [currentProjectId, deployHistory]);
+
+  /**
+   * Rollback to a previous versioned deployment by re-uploading its compiled HTML.
+   */
+  const rollbackToVersion = useCallback(async (
+    name: string,
+    deploymentId: string,
+  ): Promise<string | null> => {
+    const target = deployHistory.find(d => d.id === deploymentId);
+    if (!target?.compiledHtml) {
+      toast.error('Snapshot not available for this version');
+      return null;
+    }
+
+    toast.info(`Rolling back to v${target.version}...`);
+    const result = await publishProject(name, target.compiledHtml);
+    if (result) {
+      toast.success(`Rolled back to v${target.version}`);
+    }
+    return result;
+  }, [deployHistory, publishProject]);
 
   // Auto-save setup
   const scheduleAutoSave = useCallback((name: string, files: ProjectFile[], chatMessages?: any[], extraSettings?: Record<string, any>) => {
@@ -225,7 +326,7 @@ export function useProjectPersistence() {
       if (files.length > 0) {
         saveProject(name, files, undefined, undefined, chatMessages, extraSettings);
       }
-    }, 30000); // Auto-save every 30s after changes
+    }, 30000);
   }, [saveProject]);
 
   useEffect(() => {
@@ -240,11 +341,13 @@ export function useProjectPersistence() {
     isSaving,
     isLoading,
     lastSaved,
+    deployHistory,
     loadProjects,
     saveProject,
     loadProject,
     deleteProject,
     publishProject,
+    rollbackToVersion,
     scheduleAutoSave,
     setCurrentProjectId,
   };

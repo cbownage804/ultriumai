@@ -177,7 +177,7 @@ This is a phased roadmap to bring your AI App Builder to full parity with Lovabl
 
 ---
 
-## Phase 6: Robust Deployment Pipeline
+## Phase 6: Robust Deployment Pipeline ✅ DONE
 **Goal:** Make publishing reliable with proper hosting, custom domains, and version management.
 
 ### 6A. Versioned Deployments
@@ -267,7 +267,7 @@ Phase 5 (Build Pipeline)        -- ✅ COMPLETED
 Phase 2 (Surgical Edits)        -- ✅ COMPLETED
 Phase 8 (Polish)                -- ✅ COMPLETED
 Phase 7 (Agent Hardening)       -- ✅ COMPLETED
-Phase 6 (Deployment)            -- Production readiness
+Phase 6 (Deployment)            -- ✅ COMPLETED
 ```
 
 Each phase is designed to be independently shippable -- you can approve and implement them one at a time, and each one will immediately improve the builder.
