@@ -20,6 +20,8 @@ const QUICK_START_PROMPTS = [
   { icon: '🚀', label: 'Landing Page', prompt: 'Build a modern SaaS landing page with hero section, features grid, pricing cards, and footer', color: 'from-rose-500/20 to-orange-500/10 border-rose-500/20' },
   { icon: '📊', label: 'Dashboard', prompt: 'Build an analytics dashboard with sidebar navigation, stat cards, line chart, and recent activity table', color: 'from-blue-500/20 to-cyan-500/10 border-blue-500/20' },
   { icon: '🛒', label: 'E-commerce', prompt: 'Build an e-commerce storefront with product grid, filters, shopping cart drawer, and checkout form', color: 'from-amber-500/20 to-yellow-500/10 border-amber-500/20' },
+  { icon: '🎨', label: 'Portfolio', prompt: 'Build a creative portfolio site with hero section, project gallery with modal previews, about section, and contact form', color: 'from-pink-500/20 to-fuchsia-500/10 border-pink-500/20' },
+  { icon: '⚡', label: 'SaaS App', prompt: 'Build a SaaS application with authentication, settings page, billing section, team management, and a main dashboard', color: 'from-emerald-500/20 to-teal-500/10 border-emerald-500/20' },
   { icon: '💬', label: 'Chat App', prompt: 'Build a real-time chat interface with conversation list sidebar, message bubbles, and input with file upload', color: 'from-violet-500/20 to-purple-500/10 border-violet-500/20' },
 ];
 

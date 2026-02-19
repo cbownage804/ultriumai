@@ -690,6 +690,8 @@ export function AIAppBuilderWorkspace() {
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') { e.preventDefault(); setShowFileSearch(prev => !prev); }
       if ((e.metaKey || e.ctrlKey) && e.key === '/') { e.preventDefault(); setShowShortcuts(prev => !prev); }
       if (e.key === 'Escape') {
+        // Stop AI generation first (highest priority)
+        if (isGenerating) { e.preventDefault(); stopGenerating(); return; }
         if (showSettingsPanel) { setShowSettingsPanel(false); return; }
         if (showFileSearch) { setShowFileSearch(false); return; }
         if (showVersionHistory) { setShowVersionHistory(false); return; }
@@ -704,7 +706,7 @@ export function AIAppBuilderWorkspace() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [project.files, canUndo, canRedo, showSettingsPanel, showFileSearch, showVersionHistory, showConsole, showEnvVars, showAssets, showPackages, showActivity, showBilling, showFileTree]);
+  }, [project.files, canUndo, canRedo, isGenerating, stopGenerating, showSettingsPanel, showFileSearch, showVersionHistory, showConsole, showEnvVars, showAssets, showPackages, showActivity, showBilling, showFileTree]);
 
   const handleSend = (input: string, imageDataUrls?: string[] | null, skipQuestions?: boolean) => {
     // Questions: intercept large prompts and ask clarifying questions first
