@@ -219,7 +219,7 @@ export function AIAppBuilderWorkspace() {
   const phasePlanner = usePromptPhasePlanner();
   const builderQuestions = useBuilderQuestions();
   const { saveDraft, saveDraftImmediate, loadDraft, clearDraft, hasDraft } = useDraftPersistence();
-  const { previewUrl: hostedPreviewUrl, isUploading: isUploadingPreview, uploadPreview, clearPreviewTimer } = usePreviewHosting();
+  const { previewUrl: hostedPreviewUrl, isUploading: isUploadingPreview, uploadPreview, uploadPreviewNow, clearPreviewTimer } = usePreviewHosting();
   const idbPersistence = useIndexedDBPersistence();
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
 
@@ -2059,7 +2059,7 @@ export function AIAppBuilderWorkspace() {
         />
         {vercelConfig && <VercelDeployButton projectName={project.name} files={project.files} vercelToken={vercelConfig.token} />}
         {githubConfig && <GithubSyncButton projectName={project.name} files={project.files} githubToken={githubConfig.token} onPullFiles={handleGithubPullFiles} />}
-        <SharePreview html={compiledHTML} projectName={project.name} />
+        <SharePreview html={compiledHTML} projectName={project.name} shareUrl={hostedPreviewUrl} isUploading={isUploadingPreview} onInstantUpload={previewSlug ? () => uploadPreviewNow(previewSlug, compiledHTML) : undefined} />
         <ExportButton projectName={project.name} files={project.files} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} envVars={envVars} cdnPackages={cdnPackages} edgeFunctions={edgeFunctions} publishedUrl={publishedUrl} />
       </div>
       {pendingConflicts && (

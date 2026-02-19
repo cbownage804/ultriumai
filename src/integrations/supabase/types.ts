@@ -1241,6 +1241,36 @@ export type Database = {
         }
         Relationships: []
       }
+      app_builder_live_previews: {
+        Row: {
+          compiled_html: string
+          created_at: string
+          id: string
+          project_slug: string
+          updated_at: string
+          user_id: string
+          version_hash: string
+        }
+        Insert: {
+          compiled_html: string
+          created_at?: string
+          id?: string
+          project_slug: string
+          updated_at?: string
+          user_id: string
+          version_hash: string
+        }
+        Update: {
+          compiled_html?: string
+          created_at?: string
+          id?: string
+          project_slug?: string
+          updated_at?: string
+          user_id?: string
+          version_hash?: string
+        }
+        Relationships: []
+      }
       app_builder_project_settings: {
         Row: {
           allow_public_preview: boolean | null
