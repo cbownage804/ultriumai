@@ -59,6 +59,7 @@ import { useBuilderQuestions } from './useBuilderQuestions';
 import { useOutputValidation } from './useOutputValidation';
 import { useBuildAnalytics } from '@/hooks/useBuildAnalytics';
 import { detectSupabaseIntents, buildSupabaseContext, buildErrorDiagnosisContext, analyzeConversationComplexity } from './SupabaseConversational';
+import { PANEL_REGISTRY } from './panelRegistry';
 import { buildAuthTemplate } from './authTemplates';
 import { BugReportModal } from '@/components/help/BugReportModal';
 import { usePluginRegistry } from '@/hooks/usePluginRegistry';
@@ -1890,30 +1891,236 @@ export function AIAppBuilderWorkspace() {
     setRecentFiles(prev => [path, ...prev.filter(p => p !== path)].slice(0, 10));
   }, [setActiveFile]);
 
-  // Command palette actions
-  const commandActions = useMemo((): CommandAction[] => [
-    { id: 'preview', label: 'Switch to Preview', icon: Eye, category: 'view', shortcut: '⌘1', action: () => setRightTab('preview') },
-    { id: 'code', label: 'Switch to Code', icon: Code, category: 'view', shortcut: '⌘2', action: () => setRightTab('code') },
-    { id: 'split', label: 'Switch to Split View', icon: Columns, category: 'view', shortcut: '⌘3', action: () => setRightTab('split') },
-    { id: 'save', label: 'Save Project', icon: Settings, category: 'edit', shortcut: '⌘S', action: handleSave },
-    { id: 'undo', label: 'Undo', icon: Undo2, category: 'edit', shortcut: '⌘Z', action: handleUndo },
-    { id: 'redo', label: 'Redo', icon: Redo2, category: 'edit', shortcut: '⌘⇧Z', action: handleRedo },
-    { id: 'search', label: 'Multi-File Search & Replace', icon: Replace, category: 'edit', shortcut: '⌘⇧F', action: () => setShowMultiSearch(true), keywords: ['find', 'replace', 'search'] },
-    { id: 'test-runner', label: 'Open Test Runner', icon: Play, category: 'run', action: () => setShowTestRunner(true), keywords: ['test', 'run', 'jest', 'vitest'] },
-    { id: 'extensions', label: 'Extensions Marketplace', icon: Puzzle, category: 'panel', action: () => setShowExtensions(true), keywords: ['plugin', 'extension', 'marketplace'] },
-    { id: 'terminal', label: 'Toggle Terminal', icon: Terminal, category: 'panel', shortcut: '⌘`', action: () => setShowTerminal(t => !t) },
-    { id: 'files', label: 'Toggle File Tree', icon: FolderOpen, category: 'panel', action: () => setShowFileTree(t => !t) },
-    { id: 'publish', label: 'Publish App', icon: Rocket, category: 'deploy', action: handlePublish, keywords: ['deploy', 'publish'] },
-    { id: 'templates', label: 'Open Templates', icon: Layers, category: 'panel', action: () => setShowTemplates(true) },
-    { id: 'analytics', label: 'Build Analytics', icon: BarChart3, category: 'panel', action: () => setShowBuildAnalytics(true) },
-    { id: 'database', label: 'Database Panel', icon: Database, category: 'panel', action: () => openPanel('database'), keywords: ['supabase', 'db'] },
-    { id: 'console', label: 'Toggle Console', icon: Activity, category: 'panel', action: () => setShowConsole(c => !c) },
-    { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, category: 'panel', shortcut: '⌘/', action: () => setShowShortcuts(true) },
-    { id: 'prompt-history', label: 'Prompt History', icon: Clock, category: 'panel', action: () => setShowPromptHistory(true), keywords: ['history', 'prompts', 'favorites'] },
-    { id: 'code-smells', label: 'Analyze Code Quality', icon: Zap, category: 'run', action: () => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); setShowCodeIntel(true); toast.success(`Found ${smells.length} suggestions`); }, keywords: ['lint', 'quality', 'refactor', 'smell'] },
-    { id: 'gen-readme', label: 'Generate README', icon: BookOpen, category: 'run', action: () => { const prompt = docGenerator.generateReadmePrompt(project.files, project.name); handleSend(prompt); }, keywords: ['doc', 'readme', 'documentation'] },
-    { id: 'doc-file', label: 'Document Current File', icon: FileCode, category: 'run', action: () => { if (activeFile) { const prompt = docGenerator.generateDocPrompt(activeFile); handleSend(prompt); } else { toast.error('Open a file first'); } }, keywords: ['jsdoc', 'comment', 'document'] },
-  ], [handleSave, handleUndo, handleRedo, handlePublish, openPanel, codeSmellDetector, project.files, docGenerator, project.name, activeFile, handleSend]);
+  // Panel setters map for dynamic dispatch from ToolbarPanelsDropdown & command palette
+  const panelSetters = useMemo((): Record<string, (v: boolean) => void> => ({
+    showSupabaseIDE: (v) => setShowSupabaseIDE(v),
+    showDatabase: (v) => setShowDatabase(v),
+    showDbExplorer: (v) => setShowDbExplorer(v),
+    showSchemaDesigner: (v) => setShowSchemaDesigner(v),
+    showMigrationPanel: (v) => setShowMigrationPanel(v),
+    showAuth: (v) => setShowAuth(v),
+    showEdgeFunctions: (v) => setShowEdgeFunctions(v),
+    showEdgeFnEditor: (v) => setShowEdgeFnEditor(v),
+    showStorage: (v) => setShowStorage(v),
+    showKnowledge: (v) => setShowKnowledge(v),
+    showBuildAnalytics: (v) => setShowBuildAnalytics(v),
+    showPerformanceProfiler: (v) => setShowPerformanceProfiler(v),
+    showDesignSystem: (v) => setShowDesignSystem(v),
+    showComponentLib: (v) => setShowComponentLib(v),
+    showCodeIntel: (v) => setShowCodeIntel(v),
+    showTestingSuite: (v) => setShowTestingSuite(v),
+    showTerminal: (v) => setShowTerminal(v),
+    showSettingsPanel: (v) => setShowSettingsPanel(v),
+    showBilling: (v) => setShowBilling(v),
+    showShareDialog: (v) => setShowShareDialog(v),
+    showActivity: (v) => setShowActivity(v),
+    showSEOEditor: (v) => setShowSEOEditor(v),
+    showDomainPanel: (v) => setShowDomainPanel(v),
+    showDeployPipeline: (v) => setShowDeployPipeline(v),
+    showPublishPanel: (v) => setShowPublishPanel(v),
+    showExportGuide: (v) => setShowExportGuide(v),
+    showHelpCenter: (v) => setShowHelpCenter(v),
+    showGPTConnector: (v) => setShowGPTConnector(v),
+    showSetupWizard: (v) => setShowSetupWizard(v),
+    showOneClickDeploy: (v) => setShowOneClickDeploy(v),
+    showChangelog: (v) => setShowChangelog(v),
+    showMultiSearch: (v) => setShowMultiSearch(v),
+    showTestRunner: (v) => setShowTestRunner(v),
+    showExtensions: (v) => setShowExtensions(v),
+    showCollaboration: (v) => setShowCollaboration(v),
+    showAPIBuilder: (v) => setShowAPIBuilder(v),
+    showGitHubPanel: (v) => setShowGitHubPanel(v),
+    showBuildWorkflow: (v) => setShowBuildWorkflow(v),
+    showDevTools: (v) => setShowDevTools(v),
+    showNPMManager: (v) => setShowNPMManager(v),
+    showImageGen: (v) => setShowImageGen(v),
+    showSymbolSearch: (v) => setShowSymbolSearch(v),
+    showSecretsManager: (v) => setShowSecretsManager(v),
+    showModelSwitcher: (v) => setShowModelSwitcher(v),
+    showPromptChains: (v) => setShowPromptChains(v),
+    showCodeReview: (v) => setShowCodeReview(v),
+    showTestGenerator: (v) => setShowTestGenerator(v),
+    showNLQuery: (v) => setShowNLQuery(v),
+    showSnippetLibrary: (v) => setShowSnippetLibrary(v),
+    showSplitDiff: (v) => setShowSplitDiff(v),
+    showComments: (v) => setShowComments(v),
+    showTeamActivity: (v) => setShowTeamActivity(v),
+    showApprovals: (v) => setShowApprovals(v),
+    showForking: (v) => setShowForking(v),
+    showFigmaImport: (v) => setShowFigmaImport(v),
+    showColorExtractor: (v) => setShowColorExtractor(v),
+    showIconPicker: (v) => setShowIconPicker(v),
+    showBreakpointEditor: (v) => setShowBreakpointEditor(v),
+    showAnimationBuilder: (v) => setShowAnimationBuilder(v),
+    showVisualSchema: (v) => setShowVisualSchema(v),
+    showSeedData: (v) => setShowSeedData(v),
+    showAPITester: (v) => setShowAPITester(v),
+    showWebhookBuilder: (v) => setShowWebhookBuilder(v),
+    showCronScheduler: (v) => setShowCronScheduler(v),
+    showEnvManager: (v) => setShowEnvManager(v),
+    showRollback: (v) => setShowRollback(v),
+    showUptimeMonitor: (v) => setShowUptimeMonitor(v),
+    showBuildCache: (v) => setShowBuildCache(v),
+    showBuildScripts: (v) => setShowBuildScripts(v),
+    showCMSMode: (v) => setShowCMSMode(v),
+    showBlogEngine: (v) => setShowBlogEngine(v),
+    showImageOptimizer: (v) => setShowImageOptimizer(v),
+    showVideoEmbed: (v) => setShowVideoEmbed(v),
+    showI18n: (v) => setShowI18n(v),
+    showAnalyticsDashboard: (v) => setShowAnalyticsDashboard(v),
+    showErrorTracking: (v) => setShowErrorTracking(v),
+    showSessionReplay: (v) => setShowSessionReplay(v),
+    showABTesting: (v) => setShowABTesting(v),
+    showAIUsage: (v) => setShowAIUsage(v),
+    showDepScanner: (v) => setShowDepScanner(v),
+    showCSPGenerator: (v) => setShowCSPGenerator(v),
+    showGDPR: (v) => setShowGDPR(v),
+    showRateLimiter: (v) => setShowRateLimiter(v),
+    showSecretRotation: (v) => setShowSecretRotation(v),
+    showCLICompanion: (v) => setShowCLICompanion(v),
+    showGHActions: (v) => setShowGHActions(v),
+    showSlackDiscord: (v) => setShowSlackDiscord(v),
+    showWhiteLabel: (v) => setShowWhiteLabel(v),
+    showPluginSDK: (v) => setShowPluginSDK(v),
+    showRefactoring: (v) => setShowRefactoring(v),
+    showNLRegex: (v) => setShowNLRegex(v),
+    showCommitMsg: (v) => setShowCommitMsg(v),
+    showAutoImport: (v) => setShowAutoImport(v),
+    showDocWriter: (v) => setShowDocWriter(v),
+    showCoEditing: (v) => setShowCoEditing(v),
+    showVoiceChat: (v) => setShowVoiceChat(v),
+    showScreenShare: (v) => setShowScreenShare(v),
+    showCodeReactions: (v) => setShowCodeReactions(v),
+    showWhiteboard: (v) => setShowWhiteboard(v),
+    showVisualRegression: (v) => setShowVisualRegression(v),
+    showA11yScore: (v) => setShowA11yScore(v),
+    showCoverage: (v) => setShowCoverage(v),
+    showMutationTest: (v) => setShowMutationTest(v),
+    showLoadTest: (v) => setShowLoadTest(v),
+    showPageBuilder: (v) => setShowPageBuilder(v),
+    showThemeStudio: (v) => setShowThemeStudio(v),
+    showFormBuilder: (v) => setShowFormBuilder(v),
+    showChartDashboard: (v) => setShowChartDashboard(v),
+    showLayoutGrid: (v) => setShowLayoutGrid(v),
+    showGraphQL: (v) => setShowGraphQL(v),
+    showWSManager: (v) => setShowWSManager(v),
+    showFileUpload: (v) => setShowFileUpload(v),
+    showPayments: (v) => setShowPayments(v),
+    showEmailTemplates: (v) => setShowEmailTemplates(v),
+    showTutorialCreator: (v) => setShowTutorialCreator(v),
+    showCodePlayground: (v) => setShowCodePlayground(v),
+    showCustomLinting: (v) => setShowCustomLinting(v),
+    showDepGraph: (v) => setShowDepGraph(v),
+    showGitBlame: (v) => setShowGitBlame(v),
+    showMultiRegion: (v) => setShowMultiRegion(v),
+    showFeatureFlags: (v) => setShowFeatureFlags(v),
+    showCanaryDeploy: (v) => setShowCanaryDeploy(v),
+    showSSG: (v) => setShowSSG(v),
+    showDockerExport: (v) => setShowDockerExport(v),
+    showSubscriptions: (v) => setShowSubscriptions(v),
+    showInvoices: (v) => setShowInvoices(v),
+    showUsageMetering: (v) => setShowUsageMetering(v),
+    showAffiliates: (v) => setShowAffiliates(v),
+    showRevenue: (v) => setShowRevenue(v),
+    showCapacitor: (v) => setShowCapacitor(v),
+    showPushNotifications: (v) => setShowPushNotifications(v),
+    showOfflineFirst: (v) => setShowOfflineFirst(v),
+    showGestureBuilder: (v) => setShowGestureBuilder(v),
+    showAppStoreAssets: (v) => setShowAppStoreAssets(v),
+    showCodeTranslator: (v) => setShowCodeTranslator(v),
+    showSmartScaffold: (v) => setShowSmartScaffold(v),
+    showWorkflowAutomation: (v) => setShowWorkflowAutomation(v),
+    showPerfOptimizer: (v) => setShowPerfOptimizer(v),
+    showSecurityAuditor: (v) => setShowSecurityAuditor(v),
+    showStateMachine: (v) => setShowStateMachine(v),
+    showDataValidation: (v) => setShowDataValidation(v),
+    showCacheStrategy: (v) => setShowCacheStrategy(v),
+    showReactiveStore: (v) => setShowReactiveStore(v),
+    showDataMigration: (v) => setShowDataMigration(v),
+    showRegexPlayground: (v) => setShowRegexPlayground(v),
+    showJsonYamlConverter: (v) => setShowJsonYamlConverter(v),
+    showColorContrast: (v) => setShowColorContrast(v),
+    showTailwindSorter: (v) => setShowTailwindSorter(v),
+    showMarkdownPreview: (v) => setShowMarkdownPreview(v),
+    showToastDesigner: (v) => setShowToastDesigner(v),
+    showNotifCenter: (v) => setShowNotifCenter(v),
+    showChatWidget: (v) => setShowChatWidget(v),
+    showEmailSequence: (v) => setShowEmailSequence(v),
+    showSMSTemplate: (v) => setShowSMSTemplate(v),
+    showStepperWizard: (v) => setShowStepperWizard(v),
+    showCommandMenuBuilder: (v) => setShowCommandMenuBuilder(v),
+    showBreadcrumbGen: (v) => setShowBreadcrumbGen(v),
+    showMegaMenu: (v) => setShowMegaMenu(v),
+    showContextMenu: (v) => setShowContextMenu(v),
+    showDockerCompose: (v) => setShowDockerCompose(v),
+    showK8s: (v) => setShowK8s(v),
+    showCICDPipeline: (v) => setShowCICDPipeline(v),
+    showStructuredLogger: (v) => setShowStructuredLogger(v),
+    showHealthCheck: (v) => setShowHealthCheck(v),
+    showOAuthSetup: (v) => setShowOAuthSetup(v),
+    showMFAFlow: (v) => setShowMFAFlow(v),
+    showSessionMgr: (v) => setShowSessionMgr(v),
+    showAPIKeyMgmt: (v) => setShowAPIKeyMgmt(v),
+    showPermMatrix: (v) => setShowPermMatrix(v),
+    showRichTextConfig: (v) => setShowRichTextConfig(v),
+    showFilePreviewGen: (v) => setShowFilePreviewGen(v),
+    showAvatarGen: (v) => setShowAvatarGen(v),
+    showCarouselBuilder: (v) => setShowCarouselBuilder(v),
+    showGalleryLightbox: (v) => setShowGalleryLightbox(v),
+    showFTS: (v) => setShowFTS(v),
+    showFacetedFilter: (v) => setShowFacetedFilter(v),
+    showAutocomplete: (v) => setShowAutocomplete(v),
+    showTagSystem: (v) => setShowTagSystem(v),
+    showSEOMeta: (v) => setShowSEOMeta(v),
+    showKPIDashboard: (v) => setShowKPIDashboard(v),
+    showAlertingRules: (v) => setShowAlertingRules(v),
+    showAuditTrail: (v) => setShowAuditTrail(v),
+    showClickHeatmap: (v) => setShowClickHeatmap(v),
+    showBudgetMonitor: (v) => setShowBudgetMonitor(v),
+    showChangelogAuto: (v) => setShowChangelogAuto(v),
+    showREADMEGen: (v) => setShowREADMEGen(v),
+    showLicensePicker: (v) => setShowLicensePicker(v),
+    showOpenAPISpec: (v) => setShowOpenAPISpec(v),
+    showProjectHealth: (v) => setShowProjectHealth(v),
+  }), []);
+
+  // Open any panel by stateKey
+  const openPanelByKey = useCallback((stateKey: string) => {
+    const setter = panelSetters[stateKey];
+    if (setter) setter(true);
+  }, [panelSetters]);
+
+  // Command palette actions — auto-generated from panel registry + core actions
+  const commandActions = useMemo((): CommandAction[] => {
+    const coreActions: CommandAction[] = [
+      { id: 'preview', label: 'Switch to Preview', icon: Eye, category: 'view', shortcut: '⌘1', action: () => setRightTab('preview') },
+      { id: 'code', label: 'Switch to Code', icon: Code, category: 'view', shortcut: '⌘2', action: () => setRightTab('code') },
+      { id: 'split', label: 'Switch to Split View', icon: Columns, category: 'view', shortcut: '⌘3', action: () => setRightTab('split') },
+      { id: 'save', label: 'Save Project', icon: Settings, category: 'edit', shortcut: '⌘S', action: handleSave },
+      { id: 'undo', label: 'Undo', icon: Undo2, category: 'edit', shortcut: '⌘Z', action: handleUndo },
+      { id: 'redo', label: 'Redo', icon: Redo2, category: 'edit', shortcut: '⌘⇧Z', action: handleRedo },
+      { id: 'publish', label: 'Publish App', icon: Rocket, category: 'deploy', action: handlePublish, keywords: ['deploy', 'publish'] },
+      { id: 'files', label: 'Toggle File Tree', icon: FolderOpen, category: 'panel', action: () => setShowFileTree(t => !t) },
+      { id: 'console', label: 'Toggle Console', icon: Activity, category: 'panel', action: () => setShowConsole(c => !c) },
+      { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, category: 'panel', shortcut: '⌘/', action: () => setShowShortcuts(true) },
+      { id: 'prompt-history', label: 'Prompt History', icon: Clock, category: 'panel', action: () => setShowPromptHistory(true), keywords: ['history', 'prompts', 'favorites'] },
+      { id: 'code-smells', label: 'Analyze Code Quality', icon: Zap, category: 'run', action: () => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); setShowCodeIntel(true); toast.success(`Found ${smells.length} suggestions`); }, keywords: ['lint', 'quality', 'refactor', 'smell'] },
+      { id: 'gen-readme', label: 'Generate README', icon: BookOpen, category: 'run', action: () => { const prompt = docGenerator.generateReadmePrompt(project.files, project.name); handleSend(prompt); }, keywords: ['doc', 'readme', 'documentation'] },
+      { id: 'doc-file', label: 'Document Current File', icon: FileCode, category: 'run', action: () => { if (activeFile) { const prompt = docGenerator.generateDocPrompt(activeFile); handleSend(prompt); } else { toast.error('Open a file first'); } }, keywords: ['jsdoc', 'comment', 'document'] },
+    ];
+
+    // Auto-generate from panel registry
+    const registryActions: CommandAction[] = PANEL_REGISTRY.map(panel => ({
+      id: `panel-${panel.id}`,
+      label: panel.label,
+      icon: panel.icon,
+      category: 'panel',
+      keywords: panel.keywords,
+      action: () => openPanelByKey(panel.stateKey),
+    }));
+
+    return [...coreActions, ...registryActions];
+  }, [handleSave, handleUndo, handleRedo, handlePublish, openPanelByKey, codeSmellDetector, project.files, docGenerator, project.name, activeFile, handleSend]);
 
   // Sidebar removed — all tools accessible via ⌘K command palette (Lovable-style)
 
@@ -2054,19 +2261,8 @@ export function AIAppBuilderWorkspace() {
             {/* Divider */}
             <div className="h-4 w-px bg-white/[0.08] mx-0.5" />
 
-            {/* Panels dropdown (Analytics, Cloud, Code, Design, Security, Speed) */}
-            <ToolbarPanelsDropdown
-              onOpenPanel={(panelId) => {
-                switch (panelId) {
-                  case 'analytics': setShowBuildAnalytics(true); break;
-                  case 'cloud': setShowSupabaseIDE(true); break;
-                  case 'code': setRightTab('code'); break;
-                  case 'design': setShowDesignSystem(true); break;
-                  case 'security': setShowTestingSuite(true); break;
-                  case 'speed': setShowPerformanceProfiler(true); break;
-                }
-              }}
-            />
+            {/* Panels mega-menu — all 150+ tools */}
+            <ToolbarPanelsDropdown onOpenPanel={openPanelByKey} />
           </div>
 
           {/* RIGHT: URL bar + actions */}
