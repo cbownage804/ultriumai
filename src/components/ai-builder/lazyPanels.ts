@@ -181,6 +181,12 @@ export const InvoiceGeneratorPanel = lz(() => import('./InvoiceGeneratorPanel'),
 export const UsageMeteringPanel = lz(() => import('./UsageMeteringPanel'), 'UsageMeteringPanel');
 export const AffiliateTrackingPanel = lz(() => import('./AffiliateTrackingPanel'), 'AffiliateTrackingPanel');
 export const RevenueDashboardPanel = lz(() => import('./RevenueDashboardPanel'), 'RevenueDashboardPanel');
+// Sprint S: Mobile & Cross-Platform (Phases 194-198)
+export const CapacitorExportPanel = lz(() => import('./CapacitorExportPanel'), 'CapacitorExportPanel');
+export const PushNotificationPanel = lz(() => import('./PushNotificationPanel'), 'PushNotificationPanel');
+export const OfflineFirstPanel = lz(() => import('./OfflineFirstPanel'), 'OfflineFirstPanel');
+export const GestureBuilderPanel = lz(() => import('./GestureBuilderPanel'), 'GestureBuilderPanel');
+export const AppStoreAssetsPanel = lz(() => import('./AppStoreAssetsPanel'), 'AppStoreAssetsPanel');
 
 // Already-lazy panels (keep existing lazy pattern)
 export const DatabasePanel = lz(() => import('./DatabasePanel'), 'DatabasePanel');

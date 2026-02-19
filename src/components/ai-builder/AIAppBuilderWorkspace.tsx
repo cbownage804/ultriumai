@@ -157,6 +157,12 @@ import { useInvoiceGenerator } from '@/hooks/useInvoiceGenerator';
 import { useUsageMetering } from '@/hooks/useUsageMetering';
 import { useAffiliateTracking } from '@/hooks/useAffiliateTracking';
 import { useRevenueDashboard } from '@/hooks/useRevenueDashboard';
+// Sprint S: Mobile & Cross-Platform (Phases 194-198)
+import { useCapacitorExport } from '@/hooks/useCapacitorExport';
+import { usePushNotificationDesigner } from '@/hooks/usePushNotificationDesigner';
+import { useOfflineFirst } from '@/hooks/useOfflineFirst';
+import { useGestureBuilder } from '@/hooks/useGestureBuilder';
+import { useAppStoreAssets } from '@/hooks/useAppStoreAssets';
 
 // All panel components are lazy-loaded via lazyPanels.ts
 import {
@@ -207,6 +213,8 @@ import {
   MultiRegionPanel, FeatureFlagsPanel, CanaryDeployPanel, SSGPanel,
   DockerExportPanel, SubscriptionManagerPanel, InvoiceGeneratorPanel,
   UsageMeteringPanel, AffiliateTrackingPanel, RevenueDashboardPanel,
+  CapacitorExportPanel, PushNotificationPanel, OfflineFirstPanel,
+  GestureBuilderPanel, AppStoreAssetsPanel,
   DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
   EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
   BuildAnalyticsPanel as BuildAnalyticsPanelLazy,
@@ -635,6 +643,17 @@ export function AIAppBuilderWorkspace() {
   const [showUsageMetering, setShowUsageMetering] = useState(false);
   const [showAffiliates, setShowAffiliates] = useState(false);
   const [showRevenue, setShowRevenue] = useState(false);
+  // Sprint S: Mobile & Cross-Platform (Phases 194-198)
+  const capacitorExport = useCapacitorExport();
+  const pushNotifications = usePushNotificationDesigner();
+  const offlineFirst = useOfflineFirst();
+  const gestureBuilder = useGestureBuilder();
+  const appStoreAssets = useAppStoreAssets();
+  const [showCapacitor, setShowCapacitor] = useState(false);
+  const [showPushNotifications, setShowPushNotifications] = useState(false);
+  const [showOfflineFirst, setShowOfflineFirst] = useState(false);
+  const [showGestureBuilder, setShowGestureBuilder] = useState(false);
+  const [showAppStoreAssets, setShowAppStoreAssets] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2435,6 +2454,11 @@ export function AIAppBuilderWorkspace() {
       {showUsageMetering && <UsageMeteringPanel open={showUsageMetering} onClose={() => setShowUsageMetering(false)} meters={usageMetering.meters} activeMeterId={usageMetering.activeMeterId} setActiveMeterId={usageMetering.setActiveMeterId} getActiveMeter={usageMetering.getActiveMeter} UNIT_PRESETS={usageMetering.UNIT_PRESETS} createMeter={usageMetering.createMeter} updateMeter={usageMetering.updateMeter} removeMeter={usageMetering.removeMeter} recordUsage={usageMetering.recordUsage} getMeterUsagePercent={usageMetering.getMeterUsagePercent} calculateOverage={usageMetering.calculateOverage} generateMeteringMiddleware={usageMetering.generateMeteringMiddleware} generateUsageDashboard={usageMetering.generateUsageDashboard} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
       {showAffiliates && <AffiliateTrackingPanel open={showAffiliates} onClose={() => setShowAffiliates(false)} affiliates={affiliateTracking.affiliates} referrals={affiliateTracking.referrals} activeAffiliateId={affiliateTracking.activeAffiliateId} setActiveAffiliateId={affiliateTracking.setActiveAffiliateId} getActiveAffiliate={affiliateTracking.getActiveAffiliate} defaultCommission={affiliateTracking.defaultCommission} setDefaultCommission={affiliateTracking.setDefaultCommission} stats={affiliateTracking.getStats()} createAffiliate={affiliateTracking.createAffiliate} updateAffiliate={affiliateTracking.updateAffiliate} removeAffiliate={affiliateTracking.removeAffiliate} addReferral={affiliateTracking.addReferral} generateTrackingScript={affiliateTracking.generateTrackingScript} generateAffiliateDashboard={affiliateTracking.generateAffiliateDashboard} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
       {showRevenue && <RevenueDashboardPanel open={showRevenue} onClose={() => setShowRevenue(false)} entries={revenueDashboard.entries} dateRange={revenueDashboard.dateRange} setDateRange={revenueDashboard.setDateRange} metrics={revenueDashboard.getMetrics()} revenueBySource={revenueDashboard.getRevenueBySource()} dailyRevenue={revenueDashboard.getDailyRevenue()} seedDemoData={revenueDashboard.seedDemoData} generateDashboardComponent={revenueDashboard.generateDashboardComponent} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
+      {showCapacitor && <CapacitorExportPanel config={capacitorExport.config} exportResult={capacitorExport.exportResult} availablePermissions={capacitorExport.availablePermissions} onUpdateConfig={capacitorExport.updateConfig} onTogglePlatform={capacitorExport.togglePlatform} onTogglePermission={capacitorExport.togglePermission} onGenerate={capacitorExport.generateExport} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowCapacitor(false)} />}
+      {showPushNotifications && <PushNotificationPanel notifications={pushNotifications.notifications} segments={pushNotifications.segments} onAddNotification={pushNotifications.addNotification} onUpdateNotification={pushNotifications.updateNotification} onRemoveNotification={pushNotifications.removeNotification} onGenerateCode={pushNotifications.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowPushNotifications(false)} />}
+      {showOfflineFirst && <OfflineFirstPanel config={offlineFirst.config} isOnline={offlineFirst.isOnline} onUpdateConfig={offlineFirst.updateConfig} onAddTable={offlineFirst.addOfflineTable} onRemoveTable={offlineFirst.removeOfflineTable} onToggleOnline={offlineFirst.toggleOnline} onGenerateSW={offlineFirst.generateServiceWorker} onGenerateSyncHook={offlineFirst.generateSyncHook} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowOfflineFirst(false)} />}
+      {showGestureBuilder && <GestureBuilderPanel mappings={gestureBuilder.mappings} gesturePresets={gestureBuilder.gesturePresets} animationPresets={gestureBuilder.animationPresets} onAddMapping={gestureBuilder.addMapping} onUpdateMapping={gestureBuilder.updateMapping} onRemoveMapping={gestureBuilder.removeMapping} onGenerateCode={gestureBuilder.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowGestureBuilder(false)} />}
+      {showAppStoreAssets && <AppStoreAssetsPanel metadata={appStoreAssets.metadata} screenshots={appStoreAssets.screenshots} devicePresets={appStoreAssets.devicePresets} appCategories={appStoreAssets.appCategories} onUpdateMetadata={appStoreAssets.updateMetadata} onAddKeyword={appStoreAssets.addKeyword} onRemoveKeyword={appStoreAssets.removeKeyword} onAddScreenshot={appStoreAssets.addScreenshot} onUpdateScreenshot={appStoreAssets.updateScreenshot} onRemoveScreenshot={appStoreAssets.removeScreenshot} onGenerateFastlane={appStoreAssets.generateFastlaneMetadata} onGenerateStoreListing={appStoreAssets.generateStoreListingHTML} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowAppStoreAssets(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
