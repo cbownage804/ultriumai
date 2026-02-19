@@ -40,9 +40,11 @@ interface BuilderPreviewPanelProps {
   onExternalViewportChange?: (mode: ViewportMode) => void;
   /** Called when user wants to regenerate after exhausted fix attempts */
   onStartOver?: () => void;
+  /** Called when the preview URL changes (for syncing with parent) */
+  onUrlChange?: (url: string) => void;
 }
 
-export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
@@ -257,6 +259,7 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
     const handler = (e: MessageEvent) => {
       if (e.data?.type === '__NAV_CHANGE__' && e.data.url) {
         setCurrentUrl(e.data.url);
+        onUrlChange?.(e.data.url);
         setUrlHistory(prev => [...prev.slice(0, historyIndex + 1), e.data.url]);
         setHistoryIndex(prev => prev + 1);
       }
@@ -266,8 +269,10 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
         // For hash links, update the URL bar
         if (href.startsWith('#')) {
           setCurrentUrl('/' + href);
+          onUrlChange?.('/' + href);
         } else if (href.startsWith('/')) {
           setCurrentUrl(href);
+          onUrlChange?.(href);
           setUrlHistory(prev => [...prev.slice(0, historyIndex + 1), href]);
           setHistoryIndex(prev => prev + 1);
         }
@@ -276,7 +281,7 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [historyIndex]);
+  }, [historyIndex, onUrlChange]);
 
   const canGoBack = historyIndex > 0;
   const canGoForward = historyIndex < urlHistory.length - 1;
