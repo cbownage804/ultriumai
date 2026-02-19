@@ -319,6 +319,13 @@ export const PANEL_REGISTRY: PanelEntry[] = [
   { id: 'license-picker', label: 'License Picker', icon: FileText, category: 'polish', keywords: ['license', 'mit', 'apache'], stateKey: 'showLicensePicker' },
   { id: 'openapi-spec', label: 'OpenAPI Spec', icon: FileCode, category: 'polish', keywords: ['openapi', 'swagger', 'api', 'spec'], stateKey: 'showOpenAPISpec' },
   { id: 'project-health', label: 'Project Health', icon: Activity, category: 'polish', keywords: ['health', 'score', 'quality'], stateKey: 'showProjectHealth' },
+
+  // Utility panels
+  { id: 'templates', label: 'Template Library', icon: Layers, category: 'edit', keywords: ['template', 'starter', 'scaffold'], stateKey: 'showTemplates' },
+  { id: 'edit-history', label: 'Edit History', icon: History, category: 'view', keywords: ['edit', 'history', 'timeline', 'versions'], stateKey: 'showEditHistory' },
+  { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, category: 'dx', keywords: ['keyboard', 'shortcut', 'hotkey', 'keybind'], stateKey: 'showShortcuts' },
+  { id: 'diff-review', label: 'Diff Review', icon: Eye, category: 'edit', keywords: ['diff', 'review', 'changes', 'approve'], stateKey: 'showDiffReview' },
+  { id: 'quick-switcher', label: 'Quick File Switcher', icon: Search, category: 'edit', keywords: ['quick', 'switch', 'file', 'jump'], stateKey: 'showQuickSwitcher' },
 ];
 
 /** Get panels grouped by category */

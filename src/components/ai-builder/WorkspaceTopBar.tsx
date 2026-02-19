@@ -1,135 +1,121 @@
-import { useState, useCallback, type RefObject } from 'react';
+import { type RefObject } from 'react';
 import { Input } from '@/components/ui/input';
+import type { UndoEntry } from '@/hooks/useUndoRedo';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ToolbarPanelsDropdown } from './lazyPanels';
-import { SyncStatusIndicator, HeaderCreditsIndicator, ProjectDropdownMenu } from './lazyPanels';
+import { SyncStatusIndicator, HeaderCreditsIndicator, ProjectDropdownMenu, UndoPreviewPopover } from './lazyPanels';
 import {
-  Eye, Code, Pencil, Database, Undo2, Redo2, Search, History,
-  Columns, Rocket, Terminal, Globe, Users, Zap, RefreshCw, ArrowLeft,
-  MessageSquare,
+  Eye, Code, Database, Search, History,
+  Columns, Rocket, Terminal, Globe, Users, Zap, RefreshCw,
+  MessageSquare, Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useNavigate } from 'react-router-dom';
 import ultriumLogo from '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png';
+import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
 interface WorkspaceTopBarProps {
   projectName: string;
+  isGenerating: boolean;
+  hasFiles: boolean;
   isEditingName: boolean;
   editName: string;
   setEditName: (v: string) => void;
   setIsEditingName: (v: boolean) => void;
   onRename: () => void;
+  undoStack: UndoEntry[];
+  redoStack: UndoEntry[];
   canUndo: boolean;
   canRedo: boolean;
+  currentFiles: ProjectFile[];
   onUndo: () => void;
   onRedo: () => void;
   rightTab: 'preview' | 'code' | 'split';
   setRightTab: (v: 'preview' | 'code' | 'split') => void;
-  showCommandPalette: boolean;
-  setShowCommandPalette: (v: boolean) => void;
-  setShowTimeline: (v: (prev: boolean) => boolean) => void;
+  setShowPromptHistory: (v: boolean) => void;
   setShowVersionHistory: (v: boolean) => void;
-  onOpenPanel: (key: string) => void;
+  setShowSettingsPanel: (v: boolean) => void;
+  setShowPublishPanel: (v: boolean) => void;
+  setShowBilling: (v: boolean) => void;
+  setShowShareDialog: (v: boolean) => void;
   setShowSupabaseIDE: (v: boolean) => void;
   setShowTerminal: (v: boolean) => void;
+  onOpenPanel: (key: string) => void;
   previewCurrentUrl: string;
   previewIframeRef: RefObject<HTMLIFrameElement | null>;
   syncStatus: string;
   lastSaved: Date | null;
-  setShowBilling: (v: boolean) => void;
-  setShowShareDialog: (v: boolean) => void;
-  setShowPublishPanel: (v: boolean) => void;
   publishedUrl: string | null;
   isMobile: boolean;
   mobileTab: 'chat' | 'preview' | 'editor';
   setMobileTab: (v: 'chat' | 'preview' | 'editor') => void;
-  showBugReport: boolean;
-  setShowBugReport: (v: boolean) => void;
-  onSave: () => void;
-  onClear: () => void;
-  savedProjects: any[];
-  loadProjects: () => void;
-  onLoadProject: (id: string) => void;
-  onDeleteProject: (id: string) => void;
-  hasFiles: boolean;
 }
 
 export function WorkspaceTopBar({
-  projectName, isEditingName, editName, setEditName, setIsEditingName, onRename,
-  canUndo, canRedo, onUndo, onRedo,
+  projectName, isGenerating, hasFiles,
+  isEditingName, editName, setEditName, setIsEditingName, onRename,
+  undoStack, redoStack, canUndo, canRedo, currentFiles, onUndo, onRedo,
   rightTab, setRightTab,
-  showCommandPalette, setShowCommandPalette,
-  setShowTimeline, setShowVersionHistory,
-  onOpenPanel, setShowSupabaseIDE, setShowTerminal,
+  setShowPromptHistory, setShowVersionHistory,
+  setShowSettingsPanel, setShowPublishPanel, setShowBilling, setShowShareDialog,
+  setShowSupabaseIDE, setShowTerminal,
+  onOpenPanel,
   previewCurrentUrl, previewIframeRef,
   syncStatus, lastSaved,
-  setShowBilling, setShowShareDialog, setShowPublishPanel,
   publishedUrl, isMobile, mobileTab, setMobileTab,
-  showBugReport, setShowBugReport,
-  onSave, onClear, savedProjects, loadProjects, onLoadProject, onDeleteProject,
-  hasFiles,
 }: WorkspaceTopBarProps) {
-  const navigate = useNavigate();
-
   return (
     <>
       {/* Top Bar */}
-      <div className="flex items-center h-11 px-2 border-b border-white/[0.06] bg-[#09090b] shrink-0 gap-2">
-        {/* LEFT: Logo + Project name + undo/redo */}
-        <div className="flex items-center gap-2 min-w-0 shrink-0">
-          <button onClick={() => navigate('/hub')} className="flex items-center gap-1.5 px-1 group" title="Back to Hub">
-            <ArrowLeft className="h-3 w-3 text-white/30 group-hover:text-white/60 transition-colors" />
-            <img src={ultriumLogo} alt="Ultrium" className="h-5 w-5 object-contain" />
-          </button>
+      <div className="flex items-center justify-between px-2 h-11 border-b border-white/[0.06] bg-[#0c0c0c] shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        {/* LEFT: Logo + Project name dropdown */}
+        <div className="flex items-center gap-2 min-w-0">
+          <a href="/ai-studio" className="shrink-0 flex items-center justify-center h-8 w-8">
+            <img src={ultriumLogo} alt="UltriumAI" className="h-8 w-8 rounded-md object-contain" />
+          </a>
 
-          {/* Project dropdown menu */}
-          <ProjectDropdownMenu
-            projectName={projectName}
-            isEditingName={isEditingName}
-            editName={editName}
-            onEditNameChange={setEditName}
-            onStartEditing={() => { setEditName(projectName); setIsEditingName(true); }}
-            onFinishEditing={onRename}
-            onCancelEditing={() => setIsEditingName(false)}
-            onSave={onSave}
-            onClear={onClear}
-            showBugReport={showBugReport}
-            onToggleBugReport={() => setShowBugReport(!showBugReport)}
-            savedProjects={savedProjects}
-            onLoadProjects={loadProjects}
-            onLoadProject={onLoadProject}
-            onDeleteProject={onDeleteProject}
-          />
+          {isEditingName ? (
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onBlur={onRename}
+              onKeyDown={(e) => e.key === 'Enter' && onRename()}
+              className="h-7 w-48 text-sm bg-white/5 border-white/10 text-white"
+              autoFocus
+            />
+          ) : (
+            <ProjectDropdownMenu
+              projectName={projectName}
+              isGenerating={isGenerating}
+              hasFiles={hasFiles}
+              onRename={() => { setEditName(projectName); setIsEditingName(true); }}
+              onOpenSettings={() => setShowSettingsPanel(true)}
+              onPublish={() => setShowPublishPanel(true)}
+              onOpenBilling={() => setShowBilling(true)}
+            />
+          )}
 
-          {/* Undo/Redo + Search */}
-          <div className="flex items-center gap-0.5 ml-1">
+          {/* Undo/Redo with Smart Preview + History */}
+          <div className="hidden md:flex items-center gap-0.5 ml-1">
+            <UndoPreviewPopover
+              undoStack={undoStack}
+              redoStack={redoStack}
+              canUndo={canUndo}
+              canRedo={canRedo}
+              currentFiles={currentFiles}
+              onUndo={onUndo}
+              onRedo={onRedo}
+            />
             <Tooltip>
               <TooltipTrigger asChild>
-                <button onClick={onUndo} disabled={!canUndo} className="h-7 w-7 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 disabled:opacity-20 transition-colors">
-                  <Undo2 className="h-3.5 w-3.5" />
+                <button onClick={() => setShowPromptHistory(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                  <Clock className="h-3.5 w-3.5" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Undo ⌘Z</TooltipContent>
+              <TooltipContent side="bottom" className="text-xs">Prompt History</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button onClick={onRedo} disabled={!canRedo} className="h-7 w-7 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 disabled:opacity-20 transition-colors">
-                  <Redo2 className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Redo ⌘⇧Z</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={() => setShowCommandPalette(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors">
-                  <Search className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Command Palette ⌘K</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={() => setShowTimeline(prev => !prev)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                <button onClick={() => setShowVersionHistory(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
                   <History className="h-3.5 w-3.5" />
                 </button>
               </TooltipTrigger>
@@ -239,7 +225,7 @@ export function WorkspaceTopBar({
         </div>
       </div>
 
-      {/* Orange accent line under header */}
+      {/* Accent line */}
       <div className="h-[2px] bg-gradient-to-r from-violet-500 via-purple-500 to-violet-500 shrink-0" />
 
       {/* Mobile tab switcher */}
