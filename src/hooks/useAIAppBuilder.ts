@@ -5,6 +5,7 @@ import type { ProjectFile } from './useProjectFileSystem';
 import { useStreamingPreview } from './useStreamingPreview';
 import { useUserCredits } from './useUserCredits';
 import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory, buildErrorDiagnosisContext, analyzeConversationComplexity, generateProactiveSuggestions, compressConversationHistory, detectCommunicationStyle, extractUserPreferences, buildPreferencesContext, detectWorkflowIntent, buildEnhancedErrorContext, buildVisualIntelligenceContext, detectWebSearchIntent, buildWebSearchContext, detectURLCloneIntent, buildFileManifest, calculateContextBudget, type ContextBudgetInfo } from '@/components/ai-builder/SupabaseConversational';
+import { parseMigrationBlocks, stripMigrationBlocks, type MigrationBlock } from '@/components/ai-builder/MigrationApprovalCard';
 
 // ── File hash tracking for incremental context (Lovable-grade) ──
 const fileHashCache = new Map<string, string>();
@@ -331,6 +332,8 @@ export interface BuilderMessage {
   originalContent?: string;
   /** Build summary stats (Phase 5) */
   buildSummary?: BuildSummary;
+  /** Migration blocks parsed from AI output (Phase 14) */
+  migrations?: import('@/components/ai-builder/MigrationApprovalCard').MigrationBlock[];
 }
 
 export type BuilderMode = 'build' | 'discuss';
@@ -469,11 +472,15 @@ function parseEditBlocks(raw: string): EditBlock[] {
   return edits;
 }
 
-/** Parse the ===FILE: path===, ===EDIT: path===, ===DELETE: path===, and ===MODE: react=== delimited format */
-export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; deletions: string[]; edits: EditBlock[]; isReactMode: boolean } {
+/** Parse the ===FILE: path===, ===EDIT: path===, ===DELETE: path===, ===MODE: react===, and ===MIGRATION: blocks */
+export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; deletions: string[]; edits: EditBlock[]; isReactMode: boolean; migrations: import('@/components/ai-builder/MigrationApprovalCard').MigrationBlock[] } {
+  // Parse migration blocks first, then strip them before file parsing
+  const migrations = parseMigrationBlocks(raw);
+  const rawAfterMigrations = migrations.length > 0 ? stripMigrationBlocks(raw) : raw;
+
   // Detect and strip ===MODE: react=== directive
-  const isReactMode = /^===MODE:\s*react===$/m.test(raw);
-  const cleanedRaw = raw.replace(/^===MODE:\s*\w+===\s*$/gm, '');
+  const isReactMode = /^===MODE:\s*react===$/m.test(rawAfterMigrations);
+  const cleanedRaw = rawAfterMigrations.replace(/^===MODE:\s*\w+===\s*$/gm, '');
   const edits = parseEditBlocks(cleanedRaw);
 
   const lines = cleanedRaw.split('\n');
@@ -577,7 +584,7 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
     }
   }
 
-  return { files, deletions, edits, isReactMode };
+  return { files, deletions, edits, isReactMode, migrations };
 }
 
 /** Generate contextual follow-up suggestions based on the response and conversation state */
@@ -1271,7 +1278,7 @@ export function useAIAppBuilder() {
 
     const finalizeStream = async () => {
       const buildStartTime = performance.now();
-      const { files: parsedFiles, deletions, edits } = parseMultiFileOutput(fullContent);
+      const { files: parsedFiles, deletions, edits, migrations: parsedMigrations } = parseMultiFileOutput(fullContent);
 
       // ── Apply ===EDIT: patches to existing files (Phase 2) ──
       let patchedFiles: ProjectFile[] = [];
@@ -1384,7 +1391,7 @@ export function useAIAppBuilder() {
       setMessages(prev =>
         prev.map((m, i) =>
           i === prev.length - 1 && m.role === 'assistant'
-            ? { ...m, filesGenerated: totalChanges || undefined, suggestions, tokenEstimate: msgTokens, filesSnapshot: snapshot, planSteps, buildSummary: totalChanges > 0 ? buildSummary : undefined }
+            ? { ...m, filesGenerated: totalChanges || undefined, suggestions, tokenEstimate: msgTokens, filesSnapshot: snapshot, planSteps, buildSummary: totalChanges > 0 ? buildSummary : undefined, migrations: parsedMigrations.length > 0 ? parsedMigrations : undefined }
             : m
         )
       );
