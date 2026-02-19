@@ -187,6 +187,12 @@ export const PushNotificationPanel = lz(() => import('./PushNotificationPanel'),
 export const OfflineFirstPanel = lz(() => import('./OfflineFirstPanel'), 'OfflineFirstPanel');
 export const GestureBuilderPanel = lz(() => import('./GestureBuilderPanel'), 'GestureBuilderPanel');
 export const AppStoreAssetsPanel = lz(() => import('./AppStoreAssetsPanel'), 'AppStoreAssetsPanel');
+// Sprint T: AI & Automation (Phases 199-203)
+export const CodeTranslatorPanel = lz(() => import('./CodeTranslatorPanel'), 'CodeTranslatorPanel');
+export const SmartScaffoldingPanel = lz(() => import('./SmartScaffoldingPanel'), 'SmartScaffoldingPanel');
+export const WorkflowAutomationPanel = lz(() => import('./WorkflowAutomationPanel'), 'WorkflowAutomationPanel');
+export const PerfOptimizerPanel = lz(() => import('./PerfOptimizerPanel'), 'PerfOptimizerPanel');
+export const SecurityAuditorPanel = lz(() => import('./SecurityAuditorPanel'), 'SecurityAuditorPanel');
 
 // Already-lazy panels (keep existing lazy pattern)
 export const DatabasePanel = lz(() => import('./DatabasePanel'), 'DatabasePanel');

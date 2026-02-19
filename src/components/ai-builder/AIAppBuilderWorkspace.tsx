@@ -163,6 +163,12 @@ import { usePushNotificationDesigner } from '@/hooks/usePushNotificationDesigner
 import { useOfflineFirst } from '@/hooks/useOfflineFirst';
 import { useGestureBuilder } from '@/hooks/useGestureBuilder';
 import { useAppStoreAssets } from '@/hooks/useAppStoreAssets';
+// Sprint T: AI & Automation (Phases 199-203)
+import { useAICodeTranslator } from '@/hooks/useAICodeTranslator';
+import { useSmartScaffolding } from '@/hooks/useSmartScaffolding';
+import { useNLWorkflowAutomation } from '@/hooks/useNLWorkflowAutomation';
+import { useAIPerformanceOptimizer } from '@/hooks/useAIPerformanceOptimizer';
+import { useAISecurityAuditor } from '@/hooks/useAISecurityAuditor';
 
 // All panel components are lazy-loaded via lazyPanels.ts
 import {
@@ -215,6 +221,8 @@ import {
   UsageMeteringPanel, AffiliateTrackingPanel, RevenueDashboardPanel,
   CapacitorExportPanel, PushNotificationPanel, OfflineFirstPanel,
   GestureBuilderPanel, AppStoreAssetsPanel,
+  CodeTranslatorPanel, SmartScaffoldingPanel, WorkflowAutomationPanel,
+  PerfOptimizerPanel, SecurityAuditorPanel,
   DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
   EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
   BuildAnalyticsPanel as BuildAnalyticsPanelLazy,
@@ -654,6 +662,17 @@ export function AIAppBuilderWorkspace() {
   const [showOfflineFirst, setShowOfflineFirst] = useState(false);
   const [showGestureBuilder, setShowGestureBuilder] = useState(false);
   const [showAppStoreAssets, setShowAppStoreAssets] = useState(false);
+  // Sprint T: AI & Automation (Phases 199-203)
+  const codeTranslator = useAICodeTranslator();
+  const smartScaffolding = useSmartScaffolding();
+  const workflowAutomation = useNLWorkflowAutomation();
+  const perfOptimizer = useAIPerformanceOptimizer();
+  const securityAuditor = useAISecurityAuditor();
+  const [showCodeTranslator, setShowCodeTranslator] = useState(false);
+  const [showSmartScaffold, setShowSmartScaffold] = useState(false);
+  const [showWorkflowAutomation, setShowWorkflowAutomation] = useState(false);
+  const [showPerfOptimizer, setShowPerfOptimizer] = useState(false);
+  const [showSecurityAuditor, setShowSecurityAuditor] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2459,6 +2478,12 @@ export function AIAppBuilderWorkspace() {
       {showOfflineFirst && <OfflineFirstPanel config={offlineFirst.config} isOnline={offlineFirst.isOnline} onUpdateConfig={offlineFirst.updateConfig} onAddTable={offlineFirst.addOfflineTable} onRemoveTable={offlineFirst.removeOfflineTable} onToggleOnline={offlineFirst.toggleOnline} onGenerateSW={offlineFirst.generateServiceWorker} onGenerateSyncHook={offlineFirst.generateSyncHook} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowOfflineFirst(false)} />}
       {showGestureBuilder && <GestureBuilderPanel mappings={gestureBuilder.mappings} gesturePresets={gestureBuilder.gesturePresets} animationPresets={gestureBuilder.animationPresets} onAddMapping={gestureBuilder.addMapping} onUpdateMapping={gestureBuilder.updateMapping} onRemoveMapping={gestureBuilder.removeMapping} onGenerateCode={gestureBuilder.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowGestureBuilder(false)} />}
       {showAppStoreAssets && <AppStoreAssetsPanel metadata={appStoreAssets.metadata} screenshots={appStoreAssets.screenshots} devicePresets={appStoreAssets.devicePresets} appCategories={appStoreAssets.appCategories} onUpdateMetadata={appStoreAssets.updateMetadata} onAddKeyword={appStoreAssets.addKeyword} onRemoveKeyword={appStoreAssets.removeKeyword} onAddScreenshot={appStoreAssets.addScreenshot} onUpdateScreenshot={appStoreAssets.updateScreenshot} onRemoveScreenshot={appStoreAssets.removeScreenshot} onGenerateFastlane={appStoreAssets.generateFastlaneMetadata} onGenerateStoreListing={appStoreAssets.generateStoreListingHTML} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowAppStoreAssets(false)} />}
+      {/* Sprint T: AI & Automation */}
+      {showCodeTranslator && <CodeTranslatorPanel sourceLanguage={codeTranslator.sourceLanguage} targetLanguage={codeTranslator.targetLanguage} sourceCode={codeTranslator.sourceCode} supportedLanguages={codeTranslator.supportedLanguages} jobs={codeTranslator.jobs} onSetSourceLanguage={codeTranslator.setSourceLanguage} onSetTargetLanguage={codeTranslator.setTargetLanguage} onSetSourceCode={codeTranslator.setSourceCode} onTranslate={codeTranslator.translate} onRemoveJob={codeTranslator.removeJob} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowCodeTranslator(false)} />}
+      {showSmartScaffold && <SmartScaffoldingPanel templates={smartScaffolding.templates} selectedTemplate={smartScaffolding.selectedTemplate} entityName={smartScaffolding.entityName} onSetSelectedTemplate={smartScaffolding.setSelectedTemplate} onSetEntityName={smartScaffolding.setEntityName} onScaffold={smartScaffolding.scaffold} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowSmartScaffold(false)} />}
+      {showWorkflowAutomation && <WorkflowAutomationPanel workflows={workflowAutomation.workflows} nlPrompt={workflowAutomation.nlPrompt} onSetNlPrompt={workflowAutomation.setNlPrompt} onAddWorkflow={workflowAutomation.addWorkflow} onRemoveWorkflow={workflowAutomation.removeWorkflow} onToggleWorkflow={workflowAutomation.toggleWorkflow} onGenerateFromNL={workflowAutomation.generateFromNL} onGenerateCode={workflowAutomation.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowWorkflowAutomation(false)} />}
+      {showPerfOptimizer && <PerfOptimizerPanel report={perfOptimizer.report} isAnalyzing={perfOptimizer.isAnalyzing} autoOptimize={perfOptimizer.autoOptimize} onSetAutoOptimize={perfOptimizer.setAutoOptimize} onAnalyze={() => perfOptimizer.analyze(project.files)} onGenerateCode={perfOptimizer.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowPerfOptimizer(false)} />}
+      {showSecurityAuditor && <SecurityAuditorPanel report={securityAuditor.report} isScanning={securityAuditor.isScanning} onScan={() => securityAuditor.scan(project.files)} onGenerateCode={securityAuditor.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowSecurityAuditor(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
