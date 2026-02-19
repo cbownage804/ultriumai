@@ -9,6 +9,74 @@ import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory, b
 // ── File hash tracking for incremental context (Lovable-grade) ──
 const fileHashCache = new Map<string, string>();
 
+// ── Gateway health check cache ──
+let gatewayHealthy = true;
+let lastHealthCheck = 0;
+const HEALTH_CHECK_INTERVAL_MS = 60_000; // Re-check every 60s
+
+async function checkGatewayHealth(): Promise<boolean> {
+  const now = Date.now();
+  if (now - lastHealthCheck < HEALTH_CHECK_INTERVAL_MS) return gatewayHealthy;
+  lastHealthCheck = now;
+  try {
+    const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-app-builder`, {
+      method: 'OPTIONS',
+      signal: AbortSignal.timeout(5000),
+    });
+    gatewayHealthy = resp.ok || resp.status === 204;
+  } catch {
+    gatewayHealthy = false;
+  }
+  return gatewayHealthy;
+}
+
+// ── Smart error classifier ──
+interface ClassifiedError {
+  category: 'rate_limit' | 'credits' | 'payload_too_large' | 'timeout' | 'network' | 'server' | 'unknown';
+  userMessage: string;
+  suggestion: string;
+  retryable: boolean;
+  retryDelayMs?: number;
+}
+
+function classifyError(status: number, errorMsg: string, err?: Error): ClassifiedError {
+  if (status === 429) return {
+    category: 'rate_limit', retryable: true, retryDelayMs: 30_000,
+    userMessage: 'You\'re sending requests too quickly.',
+    suggestion: 'Wait 30 seconds, then try again.',
+  };
+  if (status === 402) return {
+    category: 'credits', retryable: false,
+    userMessage: 'AI credits exhausted.',
+    suggestion: 'Purchase more credits in Settings → Billing to continue.',
+  };
+  if (status === 400 && /token|too large|exceeds|maximum context/i.test(errorMsg)) return {
+    category: 'payload_too_large', retryable: true,
+    userMessage: 'Your project context is too large for a single request.',
+    suggestion: 'Try a more specific request like "update only the header component" instead of broad changes.',
+  };
+  if (status === 504 || status === 408 || err?.name === 'AbortError' || /timeout/i.test(errorMsg)) return {
+    category: 'timeout', retryable: true, retryDelayMs: 2000,
+    userMessage: 'The AI took too long to respond.',
+    suggestion: 'Try a simpler request, or break your task into smaller steps.',
+  };
+  if (err?.message?.includes('fetch') || err?.message?.includes('network') || err?.message?.includes('Failed to fetch')) return {
+    category: 'network', retryable: true, retryDelayMs: 3000,
+    userMessage: 'Network connection issue.',
+    suggestion: 'Check your internet connection and try again.',
+  };
+  if (status >= 500) return {
+    category: 'server', retryable: true, retryDelayMs: 5000,
+    userMessage: 'AI service is temporarily unavailable.',
+    suggestion: 'This usually resolves in a few seconds. Try again shortly.',
+  };
+  return {
+    category: 'unknown', retryable: false,
+    userMessage: errorMsg || 'Something went wrong.',
+    suggestion: 'Try rephrasing your request or refreshing the page.',
+  };
+}
+
 /** Fast string hash (djb2) for change detection — not cryptographic */
 function hashString(str: string): string {
   let hash = 5381;
@@ -63,6 +131,12 @@ export interface BuilderMessage {
   pendingApproval?: boolean;
   /** Workflow steps detected from user's multi-step request */
   workflowSteps?: string[];
+  /** Classified error info for smart error display */
+  classifiedError?: ClassifiedError;
+  /** Whether this message has been edited (for conversation branching) */
+  isEdited?: boolean;
+  /** Original content before edit */
+  originalContent?: string;
 }
 
 export type BuilderMode = 'build' | 'discuss';
@@ -298,6 +372,12 @@ export function useAIAppBuilder() {
     isAutoFix?: boolean,
   ) => {
     if (!input.trim() || isGenerating) return;
+
+    // ── Pre-flight health check ──
+    const healthy = await checkGatewayHealth();
+    if (!healthy) {
+      toast.warning('AI service may be slow or unavailable. Your request will still be attempted.', { duration: 4000 });
+    }
 
     // ── Request deduplication: prevent double-sends ──
     const fingerprint = hashString(input + (imageDataUrls?.join('') || ''));
@@ -965,21 +1045,25 @@ export function useAIAppBuilder() {
           }
         }
 
-        // All retries failed or not retryable — show appropriate error
-        if (isSizeError) {
-          toast.error('Your project is very large. Try a more specific request targeting fewer files.', { duration: 8000 });
-        } else if (resp.status === 429) {
-          toast.error('Rate limited — please wait 30 seconds and try again.', { duration: 6000 });
-        } else if (resp.status === 402) {
-          toast.error('AI credits exhausted. Purchase more credits to continue building.', {
+        // All retries failed or not retryable — use smart error classifier
+        const classified = classifyError(resp.status, errMsg);
+        if (classified.category === 'credits') {
+          toast.error(`${classified.userMessage} ${classified.suggestion}`, {
             duration: 8000,
             action: { label: 'Get Credits', onClick: () => window.dispatchEvent(new CustomEvent('open-billing')) },
           });
-        } else if (isServerError) {
-          toast.error('AI service temporarily busy. Please try again in a moment.', { duration: 6000 });
         } else {
-          toast.error(errMsg || 'Failed to generate. Check your prompt and try again.');
+          toast.error(`${classified.userMessage} ${classified.suggestion}`, { duration: 6000 });
         }
+        // Attach classified error to the last assistant message for inline display
+        setMessages(prev => {
+          const errorAssistant: BuilderMessage = {
+            id: crypto.randomUUID(), role: 'assistant',
+            content: `⚠️ ${classified.userMessage}\n\n💡 **Suggestion:** ${classified.suggestion}`,
+            timestamp: new Date(), classifiedError: classified,
+          };
+          return [...prev, errorAssistant];
+        });
         setIsGenerating(false);
         setThinkingPhase(null);
         clearTimeout(phaseTimer1);
@@ -1000,12 +1084,14 @@ export function useAIAppBuilder() {
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.error('AI Builder error:', err);
-        const errorMsg = err.message?.includes('fetch')
-          ? 'Network error — check your connection and try again.'
-          : err.message?.includes('timeout') || err.message?.includes('Timeout') || err.name === 'AbortError'
-          ? 'Request timed out after 90 seconds. Try a simpler prompt or try again.'
-          : 'Something went wrong during generation. Your project files are safe — try again.';
-        toast.error(errorMsg, { duration: 5000 });
+        const classified = classifyError(0, err.message || '', err);
+        toast.error(`${classified.userMessage} ${classified.suggestion}`, { duration: 5000 });
+        // Add error message to chat
+        setMessages(prev => [...prev, {
+          id: crypto.randomUUID(), role: 'assistant' as const,
+          content: `⚠️ ${classified.userMessage}\n\n💡 **Suggestion:** ${classified.suggestion}`,
+          timestamp: new Date(), classifiedError: classified,
+        }]);
       }
     } finally {
       setIsGenerating(false);
@@ -1056,6 +1142,68 @@ export function useAIAppBuilder() {
     });
   }, []);
 
+  /** Edit a previous user message and resend from that point (conversation branching) */
+  const editAndResend = useCallback(async (
+    messageId: string,
+    newContent: string,
+    currentFiles: ProjectFile[] = [],
+    supabaseConfig?: { url: string; anonKey: string } | null,
+    stripeConfig?: { publishableKey: string } | null,
+    serviceKeys?: { id: string; serviceId: string; apiKey: string }[],
+    imageDataUrls?: string[] | null,
+    model?: string,
+  ) => {
+    // Find the message index
+    const msgIdx = messages.findIndex(m => m.id === messageId);
+    if (msgIdx === -1) return;
+
+    // Branch: truncate conversation from edited message onwards
+    const branchedMessages = messages.slice(0, msgIdx);
+    const editedMsg: BuilderMessage = {
+      ...messages[msgIdx],
+      content: newContent,
+      isEdited: true,
+      originalContent: messages[msgIdx].content,
+    };
+    setMessages([...branchedMessages, editedMsg]);
+
+    // Restore files to the version snapshot just before this message
+    const priorVersion = versions.find(v => {
+      const vTime = v.timestamp.getTime();
+      return vTime < messages[msgIdx].timestamp.getTime();
+    });
+    if (priorVersion) {
+      setLatestFiles([...priorVersion.files]);
+    }
+
+    // Re-send with the edited content
+    await sendMessage(newContent, currentFiles, supabaseConfig, stripeConfig, serviceKeys, imageDataUrls, model);
+  }, [messages, versions, sendMessage]);
+
+  /** Retry the last failed request */
+  const retryLastMessage = useCallback(async (
+    currentFiles: ProjectFile[] = [],
+    supabaseConfig?: { url: string; anonKey: string } | null,
+    stripeConfig?: { publishableKey: string } | null,
+    serviceKeys?: { id: string; serviceId: string; apiKey: string }[],
+    model?: string,
+  ) => {
+    // Find the last user message
+    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+    if (!lastUserMsg) return;
+
+    // Remove the error assistant message
+    setMessages(prev => {
+      const lastAssistant = prev[prev.length - 1];
+      if (lastAssistant?.role === 'assistant' && lastAssistant.classifiedError) {
+        return prev.slice(0, -1);
+      }
+      return prev;
+    });
+
+    await sendMessage(lastUserMsg.content, currentFiles, supabaseConfig, stripeConfig, serviceKeys, lastUserMsg.imageUrls, model);
+  }, [messages, sendMessage]);
+
   return {
     messages,
     setMessages,
@@ -1073,6 +1221,8 @@ export function useAIAppBuilder() {
     clearChat,
     restoreVersion,
     forwardErrorToChat,
+    editAndResend,
+    retryLastMessage,
     // Streaming preview state
     partialFiles: streaming.partialFiles,
     isStreamingPreview: streaming.isStreaming,
