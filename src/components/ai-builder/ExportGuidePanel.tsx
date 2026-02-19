@@ -125,25 +125,43 @@ export function ExportGuidePanel({ open, onClose }: ExportGuidePanelProps) {
               </p>
             </section>
 
-            {/* Other Hosting */}
+            {/* Platform Configs */}
             <section className="space-y-3">
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                 <Server className="h-4 w-4 text-violet-400" />
-                Other Hosting Options
+                Included Platform Configs
               </h3>
+              <p className="text-muted-foreground text-xs">
+                Full-Stack exports now include ready-to-use configs for all major platforms:
+              </p>
 
               <div className="space-y-2 text-muted-foreground">
                 <div className="rounded-lg border border-border p-3">
-                  <p className="font-medium text-foreground">Vercel / Netlify</p>
-                  <p className="mt-1">Run <code>npm run build</code>, deploy the <code>dist/</code> folder. Add your env variables in the hosting dashboard.</p>
+                  <p className="font-medium text-foreground flex items-center gap-2">
+                    <Rocket className="h-3.5 w-3.5 text-primary" /> Vercel
+                  </p>
+                  <p className="mt-1 text-xs"><code>vercel.json</code> included — push to GitHub, connect to Vercel, and deploy. SPA rewrites are pre-configured.</p>
+                  <div className="rounded bg-muted/50 p-2 font-mono text-[11px] mt-1.5">npx vercel --prod</div>
                 </div>
                 <div className="rounded-lg border border-border p-3">
-                  <p className="font-medium text-foreground">GitHub Pages</p>
-                  <p className="mt-1">Push to GitHub → enable Pages on your repo. Note: SPA routing requires a 404.html redirect.</p>
+                  <p className="font-medium text-foreground flex items-center gap-2">
+                    <Globe className="h-3.5 w-3.5 text-emerald-400" /> Netlify
+                  </p>
+                  <p className="mt-1 text-xs"><code>netlify.toml</code> included — drag & drop the ZIP to Netlify, or connect via Git. Redirects pre-configured for SPA.</p>
+                  <div className="rounded bg-muted/50 p-2 font-mono text-[11px] mt-1.5">npx netlify deploy --prod --dir=dist</div>
                 </div>
                 <div className="rounded-lg border border-border p-3">
-                  <p className="font-medium text-foreground">VPS / Cloud VM</p>
-                  <p className="mt-1">Use the Docker image, or install nginx and serve the <code>dist/</code> folder directly. The included <code>nginx.conf</code> handles SPA routing.</p>
+                  <p className="font-medium text-foreground flex items-center gap-2">
+                    <Github className="h-3.5 w-3.5" /> GitHub Pages
+                  </p>
+                  <p className="mt-1 text-xs"><code>.github/workflows/deploy.yml</code> included — push to GitHub and enable Pages in repo Settings. Auto-deploys on push to main.</p>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <p className="font-medium text-foreground flex items-center gap-2">
+                    <Container className="h-3.5 w-3.5 text-blue-400" /> Docker / VPS
+                  </p>
+                  <p className="mt-1 text-xs"><code>Dockerfile</code> + <code>nginx.conf</code> included — multi-stage build, ~25 MB final image with SPA routing.</p>
+                  <div className="rounded bg-muted/50 p-2 font-mono text-[11px] mt-1.5">docker build -t my-app . && docker run -p 8080:80 my-app</div>
                 </div>
               </div>
             </section>

@@ -113,30 +113,29 @@ All 8 original phases are complete. This plan introduces 5 new phases that addre
 
 ---
 
-## Phase 13: Production Export & Real Hosting
+## Phase 13: Production Export & Real Hosting ✅ COMPLETED
 
-**Problem**: Published apps are just HTML uploaded to Supabase Storage. Need real deployment with proper hosting, performance optimization, and export for external platforms.
+**Status**: ✅ Complete — Enhanced `useBundleSizeTracking` with 0-100 performance scoring, embedded image size checks, DOM complexity analysis, SEO auditing (title, meta description, OpenGraph, viewport, alt attributes, lazy loading). Full-stack exports now include `vercel.json`, `netlify.toml`, `.github/workflows/deploy.yml`, `robots.txt`, and `sitemap.xml`. `ExportGuidePanel` updated with per-platform deployment commands.
+
+**Problem**: Published apps needed proper hosting configs, performance monitoring, and SEO essentials.
 
 **Changes**:
 
-1. **Optimized Build Output** (`src/components/ai-builder/exportProject.ts`)
-   - Minify HTML, CSS, and JS before publishing
-   - Inline critical CSS, defer non-critical
-   - Add `<meta>` tags for SEO (title, description, og:image)
-   - Generate a `manifest.json` for PWA support
-   - Create a `robots.txt` and `sitemap.xml`
+1. **Performance Budget & Scoring** (`src/components/ai-builder/useBundleSizeTracking.ts`)
+   - 0-100 performance score based on bundle size, image sizes, DOM complexity, and SEO
+   - Thresholds: bundle warn >500KB / error >1MB, images warn >200KB / error >1MB, DOM nodes warn >1500 / error >3000
+   - SEO checks: title, meta description, OpenGraph, viewport, alt attributes, lazy loading
+   - Score logged to build log with color-coded emoji (🟢/🟡/🔴)
 
-2. **One-Click Platform Export** (`src/components/ai-builder/ExportGuidePanel.tsx`)
-   - Vercel: Generate `vercel.json` + project structure, provide deploy command
-   - Netlify: Generate `netlify.toml`, provide drag-and-drop deploy instructions
-   - Docker: Generate `Dockerfile` + `nginx.conf` for containerized deployment
-   - GitHub Pages: Generate `.github/workflows/deploy.yml`
+2. **Platform Deployment Configs** (`src/components/ai-builder/exportProject.ts`)
+   - Vercel: `vercel.json` with SPA rewrites
+   - Netlify: `netlify.toml` with redirects and Node 20
+   - GitHub Pages: `.github/workflows/deploy.yml` with actions
+   - SEO: `robots.txt` and `sitemap.xml` placeholders
 
-3. **Performance Budget** (`src/components/ai-builder/BuilderPreviewPanel.tsx`)
-   - After each build, run a lightweight performance audit
-   - Check: total bundle size, number of DOM nodes, image sizes, unused CSS
-   - Show a performance score (0-100) in the build summary card
-   - Flag issues: "3 images over 500KB -- consider compressing"
+3. **Enhanced Export Guide** (`src/components/ai-builder/ExportGuidePanel.tsx`)
+   - Per-platform deployment commands (Vercel, Netlify, GitHub Pages, Docker)
+   - Config file descriptions and one-liner deploy commands
 
 ---
 

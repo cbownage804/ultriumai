@@ -1052,6 +1052,77 @@ dist/
     files[`supabase/${ef.path}`] = rewriteCdnImports(ef.content, cdnPkgs);
   }
 
+  // ── Platform deployment configs ──
+
+  // Vercel
+  files['vercel.json'] = JSON.stringify({
+    buildCommand: 'npm run build',
+    outputDirectory: 'dist',
+    framework: 'vite',
+    rewrites: [{ source: '/(.*)', destination: '/index.html' }],
+  }, null, 2);
+
+  // Netlify
+  files['netlify.toml'] = `[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[build.environment]
+  NODE_VERSION = "20"
+`;
+
+  // GitHub Pages workflow
+  files['.github/workflows/deploy.yml'] = `name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - uses: actions/deploy-pages@v4
+`;
+
+  // robots.txt
+  files['public/robots.txt'] = `User-agent: *
+Allow: /
+
+Sitemap: https://example.com/sitemap.xml
+`;
+
+  // sitemap.xml placeholder
+  files['public/sitemap.xml'] = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://example.com/</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+`;
+
   return files;
 }
 
