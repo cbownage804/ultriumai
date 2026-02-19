@@ -1,274 +1,213 @@
 
 
-# Full Plan: Clone Lovable's Architecture for a Production-Grade App Builder
+# Phase 9-13: Next-Generation App Builder Evolution
 
-This is a phased roadmap to bring your AI App Builder to full parity with Lovable's capabilities. Each phase builds on the previous one and targets a specific weakness.
-
----
-
-## Current State Assessment
-
-**Already Implemented (strong foundation):**
-- Streaming AI responses with SSE parsing
-- Multi-file output parsing (===FILE: / ===DELETE:)
-- Incremental context (file hashing, only sending changed files)
-- Smart file scoring by relevance
-- 3-phase token budget enforcement (2.5M char limit)
-- Retry with progressive context reduction (2 attempts)
-- Stream stall detection (30s timeout)
-- Gateway health check and error classification
-- Agent mode with Plan > Execute > Verify > Fix loop
-- Post-generation syntax validation
-- Auto-rollback on preview crash
-- Live preview sync (CSS hot-patching)
-- Version timeline with snapshots
-- Conversation compression and memory
-- URL scraping via Firecrawl
-- Visual intelligence (image analysis)
-
-**Critical Gaps (what breaks the experience):**
-
-1. The builder generates vanilla HTML/CSS/JS only -- no React/component framework support
-2. No real dependency resolution or module bundling (just concatenation)
-3. Preview runs in a srcdoc iframe -- no sandbox isolation or error boundary
-4. No persistent file system (files live only in React state)
-5. No real deployment pipeline (publish is just uploading HTML to Supabase Storage)
-6. No collaborative editing or real-time sync
-7. Agent mode uses the same sendMessage as manual chat -- no dedicated planning API
-8. No diff-based editing (AI rewrites entire files instead of surgical patches)
-9. Console/network error capture from preview is fragile (postMessage only)
-10. No "Try to Fix" button that automatically diagnoses and fixes errors
+All 8 original phases are complete. This plan introduces 5 new phases that address the remaining critical gaps and push the builder toward true production parity with Lovable.
 
 ---
 
-## Phase 1: Bulletproof Preview & Error Recovery ✅ DONE
-**Goal:** Make the preview never crash and automatically recover from bad AI output.
+## Phase 9: Real AI Image Generation (Replace Placeholder SVGs)
 
-### 1A. Sandboxed Preview with Error Boundary
-- Wrap the preview iframe content with a global error handler script that catches uncaught exceptions, unhandled rejections, and syntax errors
-- Inject a `window.onerror` and `window.onunhandledrejection` handler that posts structured error messages back to the parent via postMessage
-- Add a `<div id="__error_overlay__">` that displays a friendly error screen inside the iframe when a fatal error occurs, instead of a blank white page
+**Problem**: The `AIImageGenPanel` currently generates placeholder SVG gradients instead of real images. The `image-generation` edge function uses DALL-E 3 but is disconnected from the builder's image panel.
 
-### 1B. "Try to Fix" Auto-Diagnosis
-- When a preview error is captured, automatically extract the error message, stack trace, and affected file
-- Add a "Try to Fix" button to the error display in the chat panel
-- When clicked, construct a targeted fix prompt that includes: the error message, the source file content, and surrounding context
-- Send this as an `isAutoFix: true` request (no credit cost) with only the broken file(s) in context
-- Cap at 3 auto-fix attempts with escalating strategies (targeted fix -> function rewrite -> full file rewrite)
+**Changes**:
 
-### 1C. Preview Health Monitor
-- Add a periodic (every 2s) iframe health check using the existing `checkIframeHealth` from `useHotModuleRecovery`
-- If the iframe is unresponsive for 3 consecutive checks, trigger auto-rollback to `lastGoodSnapshot`
-- Show a toast: "Preview crashed -- rolled back to last working version"
+1. **Wire AIImageGenPanel to the Lovable AI Gateway** (`src/components/ai-builder/AIImageGenPanel.tsx`)
+   - Replace the `setTimeout` + SVG placeholder with a real API call to the Lovable AI Gateway using `google/gemini-2.5-flash-image` (or `gemini-3-pro-image-preview` for high quality)
+   - Call the gateway at `https://ai.gateway.lovable.dev/v1/chat/completions` with `modalities: ["image", "text"]`
+   - Extract base64 image from `response.choices[0].message.images[0].image_url.url`
+   - Store generated images as project assets automatically
 
-**Files to modify:**
-- `src/hooks/useProjectFileSystem.ts` -- inject error handler script into `getCompiledHTML`
-- `src/hooks/useAIAppBuilder.ts` -- add "Try to Fix" logic
-- `src/components/ai-builder/BuilderChatPanel.tsx` -- add "Try to Fix" button UI
-- `src/components/ai-builder/BuilderPreviewPanel.tsx` -- add health monitor loop
+2. **Image-to-Code Pipeline** (`src/hooks/useAIAppBuilder.ts`)
+   - When a user uploads an image with intent like "use as hero", "use as background", detect asset placement intent
+   - Auto-compress large images client-side (max 1200px, JPEG 80% quality) before embedding
+   - For images intended as assets: store the data URL in the asset manager, inject `<img src="...">` into the generated code referencing the asset
+   - Add `===ASSET: filename.png===` delimiter for the AI to emit base64 image data that gets auto-saved to assets
+
+3. **Image Optimization Pipeline** (`src/utils/imageOptimization.ts` -- new file)
+   - Client-side image compression using canvas resize
+   - WebP conversion when supported
+   - Lazy-load `loading="lazy"` injection into all generated `<img>` tags
+   - Responsive `srcset` generation for different viewport sizes
 
 ---
 
-## Phase 2: Surgical Edits (Diff-Based File Updates) ✅ DONE
-**Goal:** Stop regenerating entire files. Make the AI edit only the lines that need to change.
+## Phase 10: Persistent File System & Project Continuity
 
-### 2A. Edit Mode Detection
-- When the user's request targets a specific file or component (e.g., "change the header color", "fix the login button"), detect this as an EDIT request vs. a BUILD request
-- Add an `===EDIT: path===` marker format that supports line-range patches instead of full file replacement:
-  ```
-  ===EDIT: styles.css===
-  @@ 15-18 @@
-  .header { background: #1a1a2e; }
-  ```
+**Problem**: Files live only in React state. Refreshing the page or closing the tab loses everything unless manually saved. Projects should auto-persist and restore seamlessly.
 
-### 2B. Patch Parser
-- Extend `parseMultiFileOutput` to handle `===EDIT:` blocks
-- Parse `@@ lineStart-lineEnd @@` markers and apply patches to the existing file content
-- Fall back to full-file replacement if the patch doesn't apply cleanly
+**Changes**:
 
-### 2C. System Prompt Update
-- Add edit-mode instructions to the edge function system prompt telling the AI to use `===EDIT:` for small changes and `===FILE:` for new files or major rewrites
-- Include the current file content with line numbers so the AI can reference specific lines
+1. **IndexedDB File Storage** (`src/hooks/useProjectFileSystem.ts`)
+   - Add `idb-keyval` or raw IndexedDB wrapper to persist all project files locally
+   - Auto-save on every file change with debouncing (500ms)
+   - Load from IndexedDB on mount if a project ID is in the URL
+   - Keep the in-memory state as the source of truth, with IndexedDB as the persistence layer
 
-**Files to modify:**
-- `src/hooks/useAIAppBuilder.ts` -- add edit detection, patch parser
-- `supabase/functions/ai-app-builder/index.ts` -- add edit-mode system prompt instructions
+2. **Cloud Sync** (`src/hooks/useProjectPersistence.ts`)
+   - Auto-save project files to Supabase `builder_projects` table every 30 seconds (if changed)
+   - Store files as a JSONB array in the project record
+   - Add a `last_synced_at` timestamp for conflict detection
+   - Show a sync indicator in the header (synced / syncing / offline)
+
+3. **Session Recovery** (`src/components/ai-builder/AIAppBuilderWorkspace.tsx`)
+   - On mount, check for unsaved changes in IndexedDB
+   - If found, show a recovery dialog: "You have unsaved changes from your last session. Restore?"
+   - Include the conversation history in the recovery payload
 
 ---
 
-## Phase 3: Smart Context Window (Conversation Summarization)
-**Goal:** Prevent token overflow on long conversations by intelligently summarizing history.
+## Phase 11: Component Framework Support (React/Tailwind in Preview)
 
-### 3A. Automatic Conversation Summarizer
-- When conversation exceeds 15 messages, automatically summarize older messages into a compact context block
-- Summarization preserves: key decisions made, files created/modified, errors encountered and fixed, user preferences detected
-- Replace messages 1-N with a single `[CONVERSATION SUMMARY]` system message
+**Problem**: The builder generates vanilla HTML/CSS/JS only. Modern apps need component-based architecture.
 
-### 3B. File Manifest Optimization
-- Instead of sending file contents for unchanged files, send only a structured manifest:
-  ```
-  FILE_MANIFEST:
-  - index.html (1.2KB, last modified: msg #3) [HTML structure: header, hero, features, footer]
-  - styles.css (3.4KB, last modified: msg #5) [CSS: 12 rules, dark theme, responsive]
-  - app.js (2.1KB, last modified: msg #7) [JS: 4 functions, 2 event listeners]
-  ```
-- Only send full content for files the AI is likely to modify (based on relevance scoring)
+**Changes**:
 
-### 3C. Context Budget Dashboard
-- Add a small indicator in the chat panel showing current context usage (e.g., "Context: 45% used")
-- Warn the user when approaching limits
-- Show which files are included in context and which are omitted
+1. **In-Browser React Compiler** (`src/hooks/useReactCompiler.ts` -- new file)
+   - Use `@babel/standalone` loaded from CDN to transpile JSX/TSX in the browser
+   - Transform `import` statements to resolve against project files
+   - Bundle React + ReactDOM via CDN injection into the preview iframe
+   - Support Tailwind CSS via the Play CDN (`<script src="https://cdn.tailwindcss.com">`)
 
-**Files to modify:**
-- `src/hooks/useAIAppBuilder.ts` -- summarizer logic, manifest optimization
-- `src/components/ai-builder/SupabaseConversational.tsx` -- enhance `compressConversationHistory`
-- `src/components/ai-builder/BuilderChatPanel.tsx` -- context budget indicator
+2. **Framework Detection** (`src/hooks/useProjectFileSystem.ts`)
+   - Auto-detect when AI generates `.tsx` or `.jsx` files
+   - Switch the compiler pipeline from concatenation to React bundling
+   - Inject `React.createElement` runtime for JSX
+   - Support `useState`, `useEffect`, and other hooks
+
+3. **System Prompt Enhancement** (`supabase/functions/ai-app-builder/index.ts`)
+   - Add a `===MODE: react===` directive the AI can emit to signal React output
+   - When detected, switch the preview pipeline to React mode
+   - Update file scaffolding to create `App.tsx`, `main.tsx`, `index.html` with React bootstrap
 
 ---
 
-## Phase 4: Real Error Capture from Preview ✅ DONE
-**Goal:** Capture console errors, network failures, and rendering issues from the preview iframe reliably.
+## Phase 12: Smart Error Resolution & Self-Healing
 
-### 4A. Injected Console Interceptor
-- Inject a script into the compiled HTML that overrides `console.error`, `console.warn`, and `console.log`
-- Each intercepted call posts a structured message to the parent: `{ type: '__CONSOLE_LOG__', level, message, stack, timestamp }`
-- Also intercept `fetch` and `XMLHttpRequest` to capture network errors
+**Problem**: While "Try to Fix" exists, it often fails because the AI lacks sufficient error context. The fix loop needs to be smarter.
 
-### 4B. Error-to-Chat Pipeline
-- Automatically forward captured errors to the chat as inline annotations on the last assistant message
-- Group similar errors (deduplicate by message) and show count
-- Add a "Fix this" button on each error that pre-fills a fix prompt
+**Changes**:
 
-### 4C. Network Request Inspector
-- Capture all fetch/XHR requests from the preview and display them in the DevTools panel
-- Show request URL, method, status code, response time, and body preview
-- Highlight failed requests (4xx, 5xx) with red badges
+1. **Error Context Enrichment** (`src/hooks/useAIAppBuilder.ts`)
+   - When a preview error occurs, capture: the full error message, the exact source file + line, the 20 lines surrounding the error, all console warnings, any failed network requests
+   - Build a structured error report that gets injected as system context for the fix request
+   - Include the previous fix attempt (if any) to prevent loops
 
-**Files to modify:**
-- `src/hooks/useProjectFileSystem.ts` -- inject console/network interceptor scripts
-- `src/components/ai-builder/ConsolePanel.tsx` -- display captured logs
-- `src/components/ai-builder/PreviewDevToolsPanel.tsx` -- network request display
-- `src/hooks/useAIAppBuilder.ts` -- error-to-chat forwarding
+2. **Fix Strategy Escalation** (`src/hooks/useAutoErrorRecovery.ts`)
+   - Attempt 1: Targeted line fix (send only the broken file + error)
+   - Attempt 2: Function rewrite (send the broken function + its dependencies)
+   - Attempt 3: Full file regeneration (regenerate the entire file from scratch)
+   - Attempt 4: Rollback + notify user ("I couldn't fix this automatically. Here's what went wrong...")
+
+3. **Error Pattern Learning** (`src/components/ai-builder/SupabaseConversational.tsx`)
+   - Track common error patterns across builds (e.g., "unclosed template literal", "undefined variable")
+   - Inject anti-patterns into the system prompt: "AVOID these common errors: [list]"
+   - Reduce repeat errors by 80%+ through preventive prompting
 
 ---
 
-## Phase 5: Intelligent Build Pipeline
-**Goal:** Make builds faster, more reliable, and show progress like Lovable does.
+## Phase 13: Production Export & Real Hosting
 
-### 5A. Build Progress with Task Cards
-- Parse the AI's plan steps from streaming output (already started with `parsePlanSteps`)
-- Display them as visual task cards in the chat: each step shows pending/active/done status
-- Animate transitions between states
+**Problem**: Published apps are just HTML uploaded to Supabase Storage. Need real deployment with proper hosting, performance optimization, and export for external platforms.
 
-### 5B. Incremental File Application
-- Apply files to the preview AS they complete during streaming (not waiting for the entire response)
-- Each `===FILE:` block that finishes should immediately update the preview
-- CSS files can be hot-patched; HTML/JS trigger a rebuild
+**Changes**:
 
-### 5C. Build Timing and Analytics
-- Track and display: total build time, files generated, tokens used, context size
-- Show this in a compact "build summary" card after each generation
-- Persist build analytics for the project health dashboard
+1. **Optimized Build Output** (`src/components/ai-builder/exportProject.ts`)
+   - Minify HTML, CSS, and JS before publishing
+   - Inline critical CSS, defer non-critical
+   - Add `<meta>` tags for SEO (title, description, og:image)
+   - Generate a `manifest.json` for PWA support
+   - Create a `robots.txt` and `sitemap.xml`
 
-**Files to modify:**
-- `src/hooks/useAIAppBuilder.ts` -- incremental file application during streaming
-- `src/hooks/useStreamingPreview.ts` -- real-time file extraction
-- `src/components/ai-builder/BuilderChatPanel.tsx` -- task card UI, build summary
+2. **One-Click Platform Export** (`src/components/ai-builder/ExportGuidePanel.tsx`)
+   - Vercel: Generate `vercel.json` + project structure, provide deploy command
+   - Netlify: Generate `netlify.toml`, provide drag-and-drop deploy instructions
+   - Docker: Generate `Dockerfile` + `nginx.conf` for containerized deployment
+   - GitHub Pages: Generate `.github/workflows/deploy.yml`
 
----
-
-## Phase 6: Robust Deployment Pipeline ✅ DONE
-**Goal:** Make publishing reliable with proper hosting, custom domains, and version management.
-
-### 6A. Versioned Deployments
-- Each publish creates a versioned deployment (v1, v2, v3...) stored in Supabase Storage
-- Add a deployment history panel showing all published versions with timestamps
-- Allow instant rollback to any previous deployment
-
-### 6B. Deploy Preview
-- Before publishing, show a deploy preview dialog that displays:
-  - The compiled HTML in a sandboxed preview
-  - File count and total size
-  - Any detected issues (missing images, broken links)
-- Require user confirmation before publishing
-
-### 6C. Custom Domain Integration
-- The domain management system already exists (`CustomDomainPanel`, `verify-domain` edge function)
-- Ensure the full flow works: DNS configuration guidance, verification, SSL, and serving
-
-**Files to modify:**
-- `src/hooks/useProjectPersistence.ts` -- versioned deployment storage
-- `src/components/ai-builder/PublishPanel.tsx` -- deployment history and rollback
-- `src/components/ai-builder/DeployDialog.tsx` -- deploy preview
+3. **Performance Budget** (`src/components/ai-builder/BuilderPreviewPanel.tsx`)
+   - After each build, run a lightweight performance audit
+   - Check: total bundle size, number of DOM nodes, image sizes, unused CSS
+   - Show a performance score (0-100) in the build summary card
+   - Flag issues: "3 images over 500KB -- consider compressing"
 
 ---
 
-## Phase 7: Agent Mode Hardening ✅ DONE
-**Goal:** Make the autonomous agent reliable enough for hands-off multi-step builds.
-
-### 7A. Dedicated Planning API Call
-- Before executing, make a separate lightweight API call to get a structured plan (JSON)
-- Display the plan to the user for approval before proceeding
-- Parse the plan to determine which files will be created/modified
-
-### 7B. Per-Step File Snapshots
-- Take a file snapshot before each agent step
-- If a step fails, roll back to the pre-step snapshot (not the entire project)
-- Show per-step diffs in the agent panel
-
-### 7C. Cross-Step Context Threading
-- Thread context between agent steps: each step receives the output/changes from the previous step
-- Prevent the agent from losing track of what it already built
-- Add a "context window" that shows the agent what files it has modified so far
-
-**Files to modify:**
-- `src/hooks/useAgentMode.ts` -- planning API, snapshots, context threading
-- `src/components/ai-builder/AgentModePanel.tsx` -- plan approval UI
-- `supabase/functions/ai-app-builder/index.ts` -- lightweight planning endpoint
-
----
-
-## Phase 8: Polish and UX Parity ✅ DONE
-**Goal:** Match Lovable's UI polish and developer experience.
-
-### 8A. Thinking Indicator
-- Replace the simple "Analyzing... Planning... Writing..." text with Lovable-style animated thinking indicator
-- Show elapsed time during generation: "Thought for 12s"
-- Collapse the thinking section after completion
-
-### 8B. Message Actions
-- Add a "..." dropdown on each message with: Copy, View Snapshot, Retry, Edit & Resend, Branch From Here
-- The Edit & Resend already exists in `useAIAppBuilder` but needs UI wiring
-
-### 8C. Empty State and Onboarding
-- The WelcomeOverlay exists but ensure it provides clear starter templates and example prompts
-- Add template categories: Landing Pages, Dashboards, E-commerce, Portfolios, SaaS
-
-### 8D. Keyboard Shortcuts
-- Cmd+Enter to send message
-- Cmd+Z / Cmd+Shift+Z for undo/redo file changes
-- Cmd+K for command palette
-- Escape to stop generation
-
-**Files to modify:**
-- `src/components/ai-builder/BuilderChatPanel.tsx` -- thinking indicator, message actions
-- `src/components/ai-builder/StreamingText.tsx` -- elapsed timer refinements
-- `src/components/ai-builder/WelcomeOverlay.tsx` -- template categories
-
----
-
-## Implementation Priority Order
+## Implementation Priority
 
 ```text
-Phase 1 (Preview Safety)        -- ✅ COMPLETED
-Phase 4 (Error Capture)         -- ✅ COMPLETED
-Phase 3 (Context Management)    -- ✅ COMPLETED
-Phase 5 (Build Pipeline)        -- ✅ COMPLETED
-Phase 2 (Surgical Edits)        -- ✅ COMPLETED
-Phase 8 (Polish)                -- ✅ COMPLETED
-Phase 7 (Agent Hardening)       -- ✅ COMPLETED
-Phase 6 (Deployment)            -- ✅ COMPLETED
+Phase 9  (Real Image Generation)     -- Highest value, fixes a broken feature
+Phase 10 (Persistent File System)    -- Prevents data loss, critical UX
+Phase 12 (Smart Error Resolution)    -- Reduces frustration, improves reliability
+Phase 13 (Production Export)         -- Enables real-world use
+Phase 11 (React/Component Support)   -- Most complex, highest long-term impact
 ```
 
-Each phase is designed to be independently shippable -- you can approve and implement them one at a time, and each one will immediately improve the builder.
+---
+
+## Technical Details
+
+### Phase 9 -- Key Code Changes
+
+**AIImageGenPanel.tsx**: Replace the placeholder generation with:
+```typescript
+const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${LOVABLE_API_KEY}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    model: 'google/gemini-2.5-flash-image',
+    messages: [{ role: 'user', content: fullPrompt }],
+    modalities: ['image', 'text'],
+  }),
+});
+const data = await response.json();
+const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+```
+
+**New file -- imageOptimization.ts**:
+- `compressImage(dataUrl, maxWidth, quality)` -- canvas-based resize
+- `convertToWebP(dataUrl)` -- format conversion
+- `injectLazyLoading(html)` -- add `loading="lazy"` to all img tags
+
+### Phase 10 -- IndexedDB Schema
+
+- Key: `project:{projectId}:files` -- stores `ProjectFile[]`
+- Key: `project:{projectId}:messages` -- stores `BuilderMessage[]`
+- Key: `project:{projectId}:meta` -- stores name, timestamps, settings
+- Auto-cleanup: delete projects older than 30 days with no cloud sync
+
+### Phase 11 -- React Pipeline
+
+The React compiler pipeline will:
+1. Detect `.tsx`/`.jsx` files in the project
+2. Load `@babel/standalone` from CDN (cached)
+3. Transform each file: JSX to createElement, strip TypeScript types
+4. Resolve inter-file imports using a virtual module map
+5. Bundle into a single IIFE injected into the preview iframe
+6. Inject React 18 + ReactDOM from CDN into the iframe `<head>`
+
+### Phase 12 -- Error Report Structure
+
+```typescript
+interface ErrorReport {
+  message: string;
+  sourceFile: string;
+  sourceLine: number;
+  surroundingCode: string; // 20 lines around the error
+  consoleWarnings: string[];
+  failedRequests: { url: string; status: number }[];
+  previousFixAttempt?: string;
+  attemptNumber: number;
+}
+```
+
+### Phase 13 -- Performance Budget Thresholds
+
+- Total HTML + CSS + JS: warn > 500KB, error > 1MB
+- Individual images: warn > 200KB, error > 1MB
+- DOM nodes: warn > 1500, error > 3000
+- Unused CSS rules: warn > 30%
 
