@@ -193,6 +193,12 @@ export const SmartScaffoldingPanel = lz(() => import('./SmartScaffoldingPanel'),
 export const WorkflowAutomationPanel = lz(() => import('./WorkflowAutomationPanel'), 'WorkflowAutomationPanel');
 export const PerfOptimizerPanel = lz(() => import('./PerfOptimizerPanel'), 'PerfOptimizerPanel');
 export const SecurityAuditorPanel = lz(() => import('./SecurityAuditorPanel'), 'SecurityAuditorPanel');
+// Sprint U: Data & State Management (Phases 204-208)
+export const StateMachinePanel = lz(() => import('./StateMachinePanel'), 'StateMachinePanel');
+export const DataValidationPanel = lz(() => import('./DataValidationPanel'), 'DataValidationPanel');
+export const CacheStrategyPanel = lz(() => import('./CacheStrategyPanel'), 'CacheStrategyPanel');
+export const ReactiveStorePanel = lz(() => import('./ReactiveStorePanel'), 'ReactiveStorePanel');
+export const DataMigrationPanel = lz(() => import('./DataMigrationPanel'), 'DataMigrationPanel');
 
 // Already-lazy panels (keep existing lazy pattern)
 export const DatabasePanel = lz(() => import('./DatabasePanel'), 'DatabasePanel');
