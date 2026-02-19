@@ -1839,6 +1839,11 @@ export function AIAppBuilderWorkspace() {
   const isReactProject = useMemo(() => detectReactProject(project.files), [project.files]);
 
   const liveCompiledHTML = useMemo(() => {
+    // CRITICAL: Skip ALL compilation while AI is streaming files.
+    // The React compiler and vanilla bundler are expensive — running them on every
+    // streamed file chunk freezes the browser. Compilation only runs once generation ends.
+    if (isGenerating) return null;
+
     // If this is a React project, use the React compiler pipeline
     if (isReactProject) {
       const result = compileReactProject(project.files, {
@@ -1853,7 +1858,7 @@ export function AIAppBuilderWorkspace() {
     }
     // Otherwise use the vanilla HTML compiler
     return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
-  }, [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, isReactProject, compileReactProject]);
+  }, [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, isReactProject, compileReactProject, isGenerating]);
   const [stableHTML, setStableHTML] = useState<string | null>(null);
 
   // Defer preview updates until build completes — but allow CSS hot-patches through immediately
