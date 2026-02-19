@@ -169,8 +169,19 @@ import { useSmartScaffolding } from '@/hooks/useSmartScaffolding';
 import { useNLWorkflowAutomation } from '@/hooks/useNLWorkflowAutomation';
 import { useAIPerformanceOptimizer } from '@/hooks/useAIPerformanceOptimizer';
 import { useAISecurityAuditor } from '@/hooks/useAISecurityAuditor';
+// Sprint U
+import { useStateMachineDesigner } from '@/hooks/useStateMachineDesigner';
+import { useDataValidationStudio } from '@/hooks/useDataValidationStudio';
+import { useCacheStrategyManager } from '@/hooks/useCacheStrategyManager';
+import { useReactiveStoreBuilder } from '@/hooks/useReactiveStoreBuilder';
+import { useDataMigrationWizard } from '@/hooks/useDataMigrationWizard';
+// Sprint V
+import { useRegexPlayground } from '@/hooks/useRegexPlayground';
+import { useJsonYamlConverter } from '@/hooks/useJsonYamlConverter';
+import { useColorContrastChecker } from '@/hooks/useColorContrastChecker';
+import { useTailwindClassSorter } from '@/hooks/useTailwindClassSorter';
+import { useMarkdownPreview } from '@/hooks/useMarkdownPreview';
 
-// All panel components are lazy-loaded via lazyPanels.ts
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
   ProjectFileTree, FileTabBar, CodeEditor, ExportButton, ProjectSettings,
@@ -225,6 +236,8 @@ import {
   PerfOptimizerPanel, SecurityAuditorPanel,
   StateMachinePanel, DataValidationPanel, CacheStrategyPanel,
   ReactiveStorePanel, DataMigrationPanel,
+  RegexPlaygroundPanel, JsonYamlConverterPanel, ColorContrastPanel,
+  TailwindSorterPanel, MarkdownPreviewPanel,
   DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
   EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
   BuildAnalyticsPanel as BuildAnalyticsPanelLazy,
@@ -675,6 +688,28 @@ export function AIAppBuilderWorkspace() {
   const [showWorkflowAutomation, setShowWorkflowAutomation] = useState(false);
   const [showPerfOptimizer, setShowPerfOptimizer] = useState(false);
   const [showSecurityAuditor, setShowSecurityAuditor] = useState(false);
+  // Sprint U: Data & State Management (Phases 204-208)
+  const stateMachineDesigner = useStateMachineDesigner();
+  const dataValidation = useDataValidationStudio();
+  const cacheStrategy = useCacheStrategyManager();
+  const reactiveStore = useReactiveStoreBuilder();
+  const dataMigration = useDataMigrationWizard();
+  const [showStateMachine, setShowStateMachine] = useState(false);
+  const [showDataValidation, setShowDataValidation] = useState(false);
+  const [showCacheStrategy, setShowCacheStrategy] = useState(false);
+  const [showReactiveStore, setShowReactiveStore] = useState(false);
+  const [showDataMigration, setShowDataMigration] = useState(false);
+  // Sprint V: Developer Experience (Phases 209-213)
+  const regexPlayground = useRegexPlayground();
+  const jsonYamlConverter = useJsonYamlConverter();
+  const colorContrast = useColorContrastChecker();
+  const tailwindSorter = useTailwindClassSorter();
+  const markdownPreview = useMarkdownPreview();
+  const [showRegexPlayground, setShowRegexPlayground] = useState(false);
+  const [showJsonYamlConverter, setShowJsonYamlConverter] = useState(false);
+  const [showColorContrast, setShowColorContrast] = useState(false);
+  const [showTailwindSorter, setShowTailwindSorter] = useState(false);
+  const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2486,6 +2521,18 @@ export function AIAppBuilderWorkspace() {
       {showWorkflowAutomation && <WorkflowAutomationPanel workflows={workflowAutomation.workflows} nlPrompt={workflowAutomation.nlPrompt} onSetNlPrompt={workflowAutomation.setNlPrompt} onAddWorkflow={workflowAutomation.addWorkflow} onRemoveWorkflow={workflowAutomation.removeWorkflow} onToggleWorkflow={workflowAutomation.toggleWorkflow} onGenerateFromNL={workflowAutomation.generateFromNL} onGenerateCode={workflowAutomation.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowWorkflowAutomation(false)} />}
       {showPerfOptimizer && <PerfOptimizerPanel report={perfOptimizer.report} isAnalyzing={perfOptimizer.isAnalyzing} autoOptimize={perfOptimizer.autoOptimize} onSetAutoOptimize={perfOptimizer.setAutoOptimize} onAnalyze={() => perfOptimizer.analyze(project.files)} onGenerateCode={perfOptimizer.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowPerfOptimizer(false)} />}
       {showSecurityAuditor && <SecurityAuditorPanel report={securityAuditor.report} isScanning={securityAuditor.isScanning} onScan={() => securityAuditor.scan(project.files)} onGenerateCode={securityAuditor.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowSecurityAuditor(false)} />}
+      {/* Sprint U: Data & State Management */}
+      {showStateMachine && <StateMachinePanel config={stateMachineDesigner.config} onSetMachineName={stateMachineDesigner.setMachineName} onAddState={stateMachineDesigner.addState} onRemoveState={stateMachineDesigner.removeState} onUpdateState={stateMachineDesigner.updateState} onAddTransition={stateMachineDesigner.addTransition} onRemoveTransition={stateMachineDesigner.removeTransition} onAddContextField={stateMachineDesigner.addContextField} onRemoveContextField={stateMachineDesigner.removeContextField} onGenerateCode={stateMachineDesigner.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowStateMachine(false)} />}
+      {showDataValidation && <DataValidationPanel schemas={dataValidation.schemas} activeSchemaId={dataValidation.activeSchemaId} onSetActiveSchema={dataValidation.setActiveSchemaId} activeSchema={dataValidation.getActiveSchema()} onCreateSchema={dataValidation.createSchema} onDeleteSchema={dataValidation.deleteSchema} onAddField={dataValidation.addField} onRemoveField={dataValidation.removeField} onUpdateField={dataValidation.updateField} onGenerateCode={dataValidation.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowDataValidation(false)} />}
+      {showCacheStrategy && <CacheStrategyPanel rules={cacheStrategy.rules} presets={cacheStrategy.presets} onAddRule={cacheStrategy.addRule} onRemoveRule={cacheStrategy.removeRule} onUpdateRule={cacheStrategy.updateRule} onApplyPreset={cacheStrategy.applyPreset} formatDuration={cacheStrategy.formatDuration} onGenerateCode={cacheStrategy.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowCacheStrategy(false)} />}
+      {showReactiveStore && <ReactiveStorePanel slices={reactiveStore.slices} activeSliceId={reactiveStore.activeSliceId} onSetActiveSlice={reactiveStore.setActiveSliceId} activeSlice={reactiveStore.getActiveSlice()} onCreateSlice={reactiveStore.createSlice} onDeleteSlice={reactiveStore.deleteSlice} onUpdateSlice={reactiveStore.updateSlice} onAddField={reactiveStore.addField} onRemoveField={reactiveStore.removeField} onAddAction={reactiveStore.addAction} onRemoveAction={reactiveStore.removeAction} onAddSelector={reactiveStore.addSelector} onRemoveSelector={reactiveStore.removeSelector} onGenerateCode={reactiveStore.generateCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowReactiveStore(false)} />}
+      {showDataMigration && <DataMigrationPanel migrations={dataMigration.migrations} activeMigrationId={dataMigration.activeMigrationId} onSetActiveMigration={dataMigration.setActiveMigrationId} activeMigration={dataMigration.getActiveMigration()} onCreateMigration={dataMigration.createMigration} onDeleteMigration={dataMigration.deleteMigration} onAddAction={dataMigration.addAction} onRemoveAction={dataMigration.removeAction} onGenerateSQL={dataMigration.generateUpSQL} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowDataMigration(false)} />}
+      {/* Sprint V: Developer Experience */}
+      {showRegexPlayground && <RegexPlaygroundPanel {...regexPlayground} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowRegexPlayground(false)} />}
+      {showJsonYamlConverter && <JsonYamlConverterPanel {...jsonYamlConverter} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowJsonYamlConverter(false)} />}
+      {showColorContrast && <ColorContrastPanel {...colorContrast} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowColorContrast(false)} />}
+      {showTailwindSorter && <TailwindSorterPanel {...tailwindSorter} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowTailwindSorter(false)} />}
+      {showMarkdownPreview && <MarkdownPreviewPanel {...markdownPreview} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowMarkdownPreview(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
