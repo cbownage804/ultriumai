@@ -1158,6 +1158,8 @@ export function useAIAppBuilder() {
       let rafScheduled = false;
       let lastParsedLength = 0; // For throttling parseIncremental (Change 2)
 
+      const assistantMsgId = crypto.randomUUID(); // Stable ID for the assistant message
+
       const upsertAssistant = (content: string) => {
         fullContent = content;
         // Only accumulate — don't trigger React yet
@@ -1167,27 +1169,34 @@ export function useAIAppBuilder() {
             rafScheduled = false;
             const currentContent = fullContent; // Capture latest
 
-            // Single setMessages call per frame (was 2-3 per token)
-            setMessages(prev => {
-              const last = prev[prev.length - 1];
-              // Compute plan steps inline (Change 4 — merged into same update)
+            try {
+              // Compute plan steps safely (Change 4 — merged into same update)
               let planSteps: PlanStep[] | undefined;
-              if (currentContent.length > 200) {
-                planSteps = parsePlanSteps(currentContent);
-              }
-              if (last?.role === 'assistant') {
-                return prev.map((m, i) => i === prev.length - 1
-                  ? { ...m, content: currentContent, ...(planSteps ? { planSteps } : {}) }
-                  : m
-                );
-              }
-              return [...prev, { id: crypto.randomUUID(), role: 'assistant' as const, content: currentContent, timestamp: new Date(), ...(planSteps ? { planSteps } : {}) }];
-            });
+              try {
+                if (currentContent.length > 200) {
+                  planSteps = parsePlanSteps(currentContent);
+                }
+              } catch { /* plan step parsing is non-critical */ }
 
-            // Throttled parseIncremental — only when 500+ new chars (Change 2)
-            if (currentContent.length - lastParsedLength >= 500) {
-              lastParsedLength = currentContent.length;
-              streaming.parseIncremental(currentContent);
+              // Single setMessages call per frame (was 2-3 per token)
+              setMessages(prev => {
+                const last = prev[prev.length - 1];
+                if (last?.role === 'assistant') {
+                  return prev.map((m, i) => i === prev.length - 1
+                    ? { ...m, content: currentContent, ...(planSteps ? { planSteps } : {}) }
+                    : m
+                  );
+                }
+                return [...prev, { id: assistantMsgId, role: 'assistant' as const, content: currentContent, timestamp: new Date(), ...(planSteps ? { planSteps } : {}) }];
+              });
+
+              // Throttled parseIncremental — only when 500+ new chars (Change 2)
+              if (currentContent.length - lastParsedLength >= 500) {
+                lastParsedLength = currentContent.length;
+                streaming.parseIncremental(currentContent);
+              }
+            } catch (e) {
+              console.error('[Stream rAF] Error in batched update:', e);
             }
           });
         }
@@ -1255,6 +1264,17 @@ export function useAIAppBuilder() {
         }
       } finally {
         clearInterval(stallChecker);
+        // Flush any pending rAF update so final content is rendered
+        if (rafScheduled) {
+          rafScheduled = false;
+          setMessages(prev => {
+            const last = prev[prev.length - 1];
+            if (last?.role === 'assistant') {
+              return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: fullContent } : m);
+            }
+            return prev;
+          });
+        }
       }
 
       // ── Graceful partial output handling ──
