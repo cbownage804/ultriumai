@@ -126,6 +126,7 @@ import { AIImageGenPanel } from './AIImageGenPanel';
 import { SyncStatusIndicator } from './SyncStatusIndicator';
 import { SessionRecoveryDialog } from './SessionRecoveryDialog';
 import { useIndexedDBPersistence } from '@/hooks/useIndexedDBPersistence';
+import { useSchemaIntrospection } from '@/hooks/useSchemaIntrospection';
 import { HeaderCreditsIndicator } from './HeaderCreditsIndicator';
 import ultriumLogo from '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png';
 import { SymbolSearchPanel } from './SymbolSearchPanel';
@@ -348,6 +349,7 @@ export function AIAppBuilderWorkspace() {
   const apiBuilder = useAPIBuilder();
   const projectReview = useProjectReview();
   const supabaseConnection = useSupabaseConnection();
+  const schemaIntrospection = useSchemaIntrospection();
   const [showSupabaseIDE, setShowSupabaseIDE] = useState(false);
   const [showGitHubPanel, setShowGitHubPanel] = useState(false);
   const [showMigrationPanel, setShowMigrationPanel] = useState(false);
@@ -377,6 +379,21 @@ export function AIAppBuilderWorkspace() {
       });
     }
   }, [envVariables]);
+
+  // Fetch schema when Supabase config changes (for AI context injection + type generation)
+  useEffect(() => {
+    if (supabaseConfig?.url && serviceKeys.length > 0) {
+      const serviceKey = serviceKeys.find(k => k.serviceId === 'supabase_service_role');
+      if (serviceKey) {
+        schemaIntrospection.fetchSchema(supabaseConfig.url, serviceKey.apiKey).then(schema => {
+          if (schema) {
+            const typesFile = schemaIntrospection.generateTypesFile();
+            if (typesFile) upsertFile(typesFile.path, typesFile.content);
+          }
+        });
+      }
+    }
+  }, [supabaseConfig?.url, serviceKeys]);
 
   // Collaborative cursor broadcasting via Supabase Realtime
   useEffect(() => {
@@ -805,6 +822,7 @@ export function AIAppBuilderWorkspace() {
       supabaseContext,
       selfReview.buildSelfReviewInstruction(),
       promptMemory.buildMemoryContext(),
+      schemaIntrospection.getSchemaSummary() || '',
     ].filter(Boolean).join('\n') || undefined;
     
     const fullInput = contextPrefix + contextHint + input;

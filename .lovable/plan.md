@@ -31,7 +31,7 @@ After reviewing the full codebase, here are the remaining gaps between your buil
 
 ---
 
-## Phase 15: Real Supabase Type Generation and Client Wiring
+## Phase 15: Real Supabase Type Generation and Client Wiring ✅ COMPLETED
 
 **Gap**: Lovable auto-generates TypeScript types from the database schema and wires them into `supabase.from('table').select()` calls. Your builder uses raw `supabase` globals and generic queries without type safety.
 
