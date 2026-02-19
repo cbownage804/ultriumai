@@ -320,10 +320,68 @@ export function useProjectFileSystem() {
       }
     }
 
-    // ── Inject error boundary & error overlay (Phase 1A) ──
-    const errorBoundaryScript = `<script>
+    // ── Inject console/network interceptors + error boundary (Phase 1A + Phase 4) ──
+    const interceptorScript = `<script>
 (function(){
-  // Global error overlay container
+  if(window.__builderInjected) return;
+  window.__builderInjected = true;
+
+  // ── Phase 4A: Console Interceptor ──
+  var origConsole = { log: console.log, warn: console.warn, error: console.error, info: console.info, debug: console.debug };
+  var seenMessages = {};
+  ['log','warn','error','info','debug'].forEach(function(level){
+    console[level] = function(){
+      origConsole[level].apply(console, arguments);
+      try {
+        var msg = Array.prototype.slice.call(arguments).map(function(a){ return typeof a === 'object' ? JSON.stringify(a,null,2) : String(a); }).join(' ');
+        // Deduplicate rapid-fire identical messages
+        var key = level + ':' + msg;
+        var now = Date.now();
+        if (seenMessages[key] && now - seenMessages[key] < 500) return;
+        seenMessages[key] = now;
+        window.parent.postMessage({ type: '__CONSOLE_LOG__', level: level, message: msg, timestamp: now }, '*');
+      } catch(e){}
+    };
+  });
+
+  // ── Phase 4A: Fetch Interceptor ──
+  var origFetch = window.fetch;
+  window.fetch = function(){
+    var start = performance.now();
+    var req = arguments[0];
+    var url = typeof req === 'string' ? req : (req && req.url ? req.url : '');
+    var method = 'GET';
+    if (arguments[1] && arguments[1].method) method = arguments[1].method;
+    if (typeof req === 'object' && req.method) method = req.method;
+    return origFetch.apply(this, arguments).then(function(res){
+      var time = Math.round(performance.now() - start);
+      window.parent.postMessage({ type: '__NETWORK_LOG__', method: method, url: url, status: res.status, statusText: res.statusText, duration: time, ok: res.ok }, '*');
+      return res;
+    }).catch(function(err){
+      var time = Math.round(performance.now() - start);
+      window.parent.postMessage({ type: '__NETWORK_LOG__', method: method, url: url, status: 0, statusText: 'Failed', duration: time, ok: false, error: err.message }, '*');
+      throw err;
+    });
+  };
+
+  // ── Phase 4A: XHR Interceptor ──
+  var origXHROpen = XMLHttpRequest.prototype.open;
+  var origXHRSend = XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.open = function(method, url){
+    this.__bMethod = method;
+    this.__bUrl = url;
+    return origXHROpen.apply(this, arguments);
+  };
+  XMLHttpRequest.prototype.send = function(){
+    var self = this;
+    var start = performance.now();
+    self.addEventListener('loadend', function(){
+      window.parent.postMessage({ type: '__NETWORK_LOG__', method: self.__bMethod || 'GET', url: self.__bUrl || '', status: self.status, statusText: self.statusText, duration: Math.round(performance.now() - start), ok: self.status >= 200 && self.status < 300 }, '*');
+    });
+    return origXHRSend.apply(this, arguments);
+  };
+
+  // ── Phase 1A: Error overlay + boundary ──
   var overlay = document.createElement('div');
   overlay.id = '__error_overlay__';
   overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);color:#fff;font-family:system-ui,-apple-system,sans-serif;padding:40px;overflow:auto;';
@@ -362,19 +420,16 @@ export function useProjectFileSystem() {
       + '</div>'
       + '</div>';
 
-    // Notify parent for auto-fix pipeline
     window.parent.postMessage({ type: '__PREVIEW_CRITICAL_ERROR__', message: msg, stack: stack || '', title: title }, '*');
   }
 
-  // Catch synchronous errors
   window.onerror = function(msg, source, line, col, error) {
     var stack = error && error.stack ? error.stack : '';
     showOverlay('Runtime Error', String(msg), stack);
     window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: String(msg), source: source || '', line: line || 0, col: col || 0, critical: true }, '*');
-    return true; // Prevent default browser error display
+    return true;
   };
 
-  // Catch async errors
   window.addEventListener('unhandledrejection', function(e) {
     var msg = e.reason && e.reason.message ? e.reason.message : String(e.reason || 'Unknown async error');
     var stack = e.reason && e.reason.stack ? e.reason.stack : '';
@@ -382,7 +437,6 @@ export function useProjectFileSystem() {
     window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: 'Unhandled Promise: ' + msg, source: '', line: 0, critical: true }, '*');
   });
 
-  // Catch syntax errors in dynamically loaded scripts
   document.addEventListener('error', function(e) {
     if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
       var src = e.target.src || e.target.href || 'unknown';
@@ -392,13 +446,13 @@ export function useProjectFileSystem() {
 })();
 </script>`;
 
-    // Inject error boundary BEFORE </head> (early, before any app scripts)
+    // Inject interceptors BEFORE </head> (early, before any app scripts)
     if (compiled.includes('</head>')) {
-      compiled = compiled.replace('</head>', errorBoundaryScript + '\n</head>');
+      compiled = compiled.replace('</head>', interceptorScript + '\n</head>');
     } else if (compiled.includes('<body')) {
-      compiled = compiled.replace('<body', errorBoundaryScript + '\n<body');
+      compiled = compiled.replace('<body', interceptorScript + '\n<body');
     } else {
-      compiled = errorBoundaryScript + '\n' + compiled;
+      compiled = interceptorScript + '\n' + compiled;
     }
 
     return sanitizeTemplateLiterals(compiled);

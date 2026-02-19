@@ -75,10 +75,10 @@ export function PreviewDevToolsPanel({ open, onClose, iframeRef }: PreviewDevToo
     const handler = (e: MessageEvent) => {
       if (!e.data || typeof e.data !== 'object') return;
 
-      if (e.data.type === 'preview-console') {
+      // Support both old ('preview-console') and new ('__CONSOLE_LOG__') message formats
+      if (e.data.type === 'preview-console' || e.data.type === '__CONSOLE_LOG__') {
         const { level, message, source } = e.data;
         setConsoleLogs(prev => {
-          // Deduplicate consecutive identical messages
           const last = prev[prev.length - 1];
           if (last && last.message === message && last.level === level) {
             return [...prev.slice(0, -1), { ...last, count: last.count + 1 }];
@@ -94,8 +94,9 @@ export function PreviewDevToolsPanel({ open, onClose, iframeRef }: PreviewDevToo
         });
       }
 
-      if (e.data.type === 'preview-network') {
-        const { method, url, status, statusText, type, size, time, requestHeaders, responseHeaders, requestBody, responseBody } = e.data;
+      // Support both old ('preview-network') and new ('__NETWORK_LOG__') message formats
+      if (e.data.type === 'preview-network' || e.data.type === '__NETWORK_LOG__') {
+        const { method, url, status, statusText, type, size, time, duration, requestHeaders, responseHeaders, requestBody, responseBody } = e.data;
         setNetworkLogs(prev => [...prev, {
           id: crypto.randomUUID(),
           method: method || 'GET',
@@ -104,7 +105,7 @@ export function PreviewDevToolsPanel({ open, onClose, iframeRef }: PreviewDevToo
           statusText: statusText || '',
           type: type || 'fetch',
           size: size || '0 B',
-          time: time || 0,
+          time: time || duration || 0,
           timestamp: new Date(),
           requestHeaders,
           responseHeaders,
@@ -123,103 +124,8 @@ export function PreviewDevToolsPanel({ open, onClose, iframeRef }: PreviewDevToo
     consoleEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [consoleLogs]);
 
-  // Inject console/network interceptors into iframe
-  useEffect(() => {
-    if (!open || !iframeRef.current) return;
-
-    const script = `
-      (function() {
-        if (window.__devToolsInjected) return;
-        window.__devToolsInjected = true;
-
-        // Console interception
-        const origConsole = { log: console.log, warn: console.warn, error: console.error, info: console.info, debug: console.debug };
-        ['log','warn','error','info','debug'].forEach(level => {
-          console[level] = function(...args) {
-            origConsole[level].apply(console, args);
-            try {
-              parent.postMessage({
-                type: 'preview-console',
-                level,
-                message: args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '),
-              }, '*');
-            } catch(e) {}
-          };
-        });
-
-        // Uncaught errors
-        window.addEventListener('error', e => {
-          parent.postMessage({ type: 'preview-console', level: 'error', message: e.message, source: e.filename + ':' + e.lineno }, '*');
-        });
-
-        // Fetch interception
-        const origFetch = window.fetch;
-        window.fetch = async function(...args) {
-          const start = performance.now();
-          const req = new Request(...args);
-          try {
-            const res = await origFetch.apply(this, args);
-            const time = Math.round(performance.now() - start);
-            const clone = res.clone();
-            let size = '? B';
-            try {
-              const blob = await clone.blob();
-              size = blob.size > 1024 ? (blob.size / 1024).toFixed(1) + ' KB' : blob.size + ' B';
-            } catch(e) {}
-            parent.postMessage({
-              type: 'preview-network',
-              method: req.method,
-              url: req.url,
-              status: res.status,
-              statusText: res.statusText,
-              type: 'fetch',
-              size,
-              time,
-            }, '*');
-            return res;
-          } catch(err) {
-            parent.postMessage({
-              type: 'preview-network',
-              method: req.method,
-              url: req.url,
-              status: 0,
-              statusText: 'Failed',
-              type: 'fetch',
-              size: '0 B',
-              time: Math.round(performance.now() - start),
-            }, '*');
-            throw err;
-          }
-        };
-
-        // XHR interception
-        const origXHR = XMLHttpRequest.prototype.open;
-        XMLHttpRequest.prototype.open = function(method, url) {
-          this.__devMethod = method;
-          this.__devUrl = url;
-          this.__devStart = performance.now();
-          this.addEventListener('load', function() {
-            parent.postMessage({
-              type: 'preview-network',
-              method: this.__devMethod,
-              url: this.__devUrl,
-              status: this.status,
-              statusText: this.statusText,
-              type: 'xhr',
-              size: (this.response?.length || 0) + ' B',
-              time: Math.round(performance.now() - this.__devStart),
-            }, '*');
-          });
-          return origXHR.apply(this, arguments);
-        };
-      })();
-    `;
-
-    // Inject via postMessage asking iframe to eval (or via srcdoc injection)
-    try {
-      iframeRef.current.contentWindow?.postMessage({ type: 'inject-devtools', script }, '*');
-    } catch (e) {}
-  }, [open, iframeRef]);
+  // Console/network interceptors are now injected at compile time via getCompiledHTML (Phase 4A)
+  // No need for manual injection here.
 
   const filteredConsole = consoleLogs.filter(entry =>
     levelFilter.has(entry.level) &&
