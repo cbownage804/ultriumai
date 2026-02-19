@@ -927,6 +927,14 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Phase 90: Request size guard — reject payloads over 10MB
+    const contentLength = parseInt(req.headers.get('content-length') || '0');
+    if (contentLength > 10_000_000) {
+      return new Response(JSON.stringify({ error: "Request too large (max 10MB)" }), {
+        status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { messages, stream = true, supabaseConfig, stripeConfig, activeServices = [], mode = 'build', model } = await req.json();
 
     // Context window management: summarize old messages if conversation is too long
@@ -1081,8 +1089,8 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          model: model || "google/gemini-3-pro-preview",
+      body: JSON.stringify({
+          model: model || "google/gemini-3-flash-preview",
           messages: [{ role: "system", content: systemPrompt }, ...finalMessages],
           stream,
         }),

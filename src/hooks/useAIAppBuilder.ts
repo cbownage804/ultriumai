@@ -803,6 +803,14 @@ export function useAIAppBuilder() {
     const visualContext = buildVisualIntelligenceContext(!!(imageDataUrls?.length), input);
     if (visualContext) systemParts.push(visualContext);
 
+    // Phase 86: Inject schema context if Supabase is connected and types.ts exists
+    if (supabaseConfig && currentFiles.some(f => f.path === 'types.ts' || f.path === 'src/types.ts')) {
+      const typesFile = currentFiles.find(f => f.path.endsWith('types.ts'));
+      if (typesFile && typesFile.content.length > 50) {
+        systemParts.push(`[DATABASE SCHEMA]\nThe following TypeScript types represent the connected Supabase database schema:\n${typesFile.content.slice(0, 5000)}\n\nUse these EXACT table and column names in all queries.`);
+      }
+    }
+
     // Merge into a single system message, capped at 20K chars
     if (systemParts.length > 0) {
       const consolidated = systemParts.join('\n\n---\n\n').slice(0, 20_000);

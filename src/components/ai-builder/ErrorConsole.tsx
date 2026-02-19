@@ -178,7 +178,7 @@ export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest,
                     )}
                   >
                     {err.fixAttempts ? <RotateCcw className="h-2.5 w-2.5" /> : <Zap className="h-2.5 w-2.5" />}
-                    {attemptsExhausted ? 'Exhausted' : err.fixAttempts ? 'Retry' : 'Smart Fix'}
+                    {attemptsExhausted ? 'Exhausted' : err.fixAttempts ? `Retry (${err.fixAttempts}/${maxRetries})` : 'Smart Fix'}
                   </button>
                 </div>
               </div>
