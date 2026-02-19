@@ -301,6 +301,17 @@ import { CodePlaygroundPanel } from './CodePlaygroundPanel';
 import { CustomLintingPanel } from './CustomLintingPanel';
 import { DependencyGraphPanel } from './DependencyGraphPanel';
 import { GitBlameTimelinePanel } from './GitBlameTimelinePanel';
+// Sprint Q: Deployment & Hosting (Phases 184-188)
+import { useMultiRegionDeploy } from '@/hooks/useMultiRegionDeploy';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { useCanaryDeploy } from '@/hooks/useCanaryDeploy';
+import { useStaticSiteGenerator } from '@/hooks/useStaticSiteGenerator';
+import { useDockerExport } from '@/hooks/useDockerExport';
+import { MultiRegionPanel } from './MultiRegionPanel';
+import { FeatureFlagsPanel } from './FeatureFlagsPanel';
+import { CanaryDeployPanel } from './CanaryDeployPanel';
+import { SSGPanel } from './SSGPanel';
+import { DockerExportPanel } from './DockerExportPanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -711,6 +722,17 @@ export function AIAppBuilderWorkspace() {
   const [showCustomLinting, setShowCustomLinting] = useState(false);
   const [showDepGraph, setShowDepGraph] = useState(false);
   const [showGitBlame, setShowGitBlame] = useState(false);
+  // Sprint Q: Deployment & Hosting (Phases 184-188)
+  const multiRegionDeploy = useMultiRegionDeploy();
+  const featureFlags = useFeatureFlags();
+  const canaryDeploy = useCanaryDeploy();
+  const ssgGenerator = useStaticSiteGenerator();
+  const dockerExport = useDockerExport();
+  const [showMultiRegion, setShowMultiRegion] = useState(false);
+  const [showFeatureFlags, setShowFeatureFlags] = useState(false);
+  const [showCanaryDeploy, setShowCanaryDeploy] = useState(false);
+  const [showSSG, setShowSSG] = useState(false);
+  const [showDockerExport, setShowDockerExport] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2500,6 +2522,11 @@ export function AIAppBuilderWorkspace() {
       {showCustomLinting && <CustomLintingPanel rules={customLinting.rules} results={customLinting.results} activeRuleId={customLinting.activeRuleId} setActiveRuleId={customLinting.setActiveRuleId} getActiveRule={customLinting.getActiveRule} RULE_PRESETS={customLinting.RULE_PRESETS} createRule={customLinting.createRule} updateRule={customLinting.updateRule} removeRule={customLinting.removeRule} simulateLint={customLinting.simulateLint} clearResults={customLinting.clearResults} generateEslintConfig={customLinting.generateEslintConfig} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowCustomLinting(false)} />}
       {showDepGraph && <DependencyGraphPanel nodes={dependencyGraph.nodes} edges={dependencyGraph.edges} circularDeps={dependencyGraph.circularDeps} selectedNodeId={dependencyGraph.selectedNodeId} setSelectedNodeId={dependencyGraph.setSelectedNodeId} layout={dependencyGraph.layout} setLayout={dependencyGraph.setLayout} getSelectedNode={dependencyGraph.getSelectedNode} getNodeDependencies={dependencyGraph.getNodeDependencies} getStats={dependencyGraph.getStats} analyzeFiles={dependencyGraph.analyzeFiles} onClose={() => setShowDepGraph(false)} />}
       {showGitBlame && <GitBlameTimelinePanel blameFiles={gitBlame.blameFiles} timeline={gitBlame.timeline} activeFileId={gitBlame.activeFileId} setActiveFileId={gitBlame.setActiveFileId} selectedLine={gitBlame.selectedLine} setSelectedLine={gitBlame.setSelectedLine} getActiveFile={gitBlame.getActiveFile} getLineInfo={gitBlame.getLineInfo} getAuthorStats={gitBlame.getAuthorStats} onClose={() => setShowGitBlame(false)} />}
+      {showMultiRegion && <MultiRegionPanel regions={multiRegionDeploy.regions} config={multiRegionDeploy.config} setConfig={multiRegionDeploy.setConfig} AVAILABLE_REGIONS={multiRegionDeploy.AVAILABLE_REGIONS} addRegion={multiRegionDeploy.addRegion} removeRegion={multiRegionDeploy.removeRegion} setPrimary={multiRegionDeploy.setPrimary} toggleRegion={multiRegionDeploy.toggleRegion} simulateHealthCheck={multiRegionDeploy.simulateHealthCheck} generateNginxConfig={multiRegionDeploy.generateNginxConfig} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowMultiRegion(false)} />}
+      {showFeatureFlags && <FeatureFlagsPanel flags={featureFlags.flags} activeFlagId={featureFlags.activeFlagId} setActiveFlagId={featureFlags.setActiveFlagId} getActiveFlag={featureFlags.getActiveFlag} createFlag={featureFlags.createFlag} updateFlag={featureFlags.updateFlag} removeFlag={featureFlags.removeFlag} addVariant={featureFlags.addVariant} removeVariant={featureFlags.removeVariant} generateHookCode={featureFlags.generateHookCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowFeatureFlags(false)} />}
+      {showCanaryDeploy && <CanaryDeployPanel deployments={canaryDeploy.deployments} metrics={canaryDeploy.metrics} activeDeploymentId={canaryDeploy.activeDeploymentId} setActiveDeploymentId={canaryDeploy.setActiveDeploymentId} getActiveDeployment={canaryDeploy.getActiveDeployment} createDeployment={canaryDeploy.createDeployment} updateDeployment={canaryDeploy.updateDeployment} startRollout={canaryDeploy.startRollout} advanceCanary={canaryDeploy.advanceCanary} rollback={canaryDeploy.rollback} shouldAutoRollback={canaryDeploy.shouldAutoRollback} onClose={() => setShowCanaryDeploy(false)} />}
+      {showSSG && <SSGPanel pages={ssgGenerator.pages} config={ssgGenerator.config} setConfig={ssgGenerator.setConfig} isGenerating={ssgGenerator.isGenerating} addPage={ssgGenerator.addPage} updatePage={ssgGenerator.updatePage} removePage={ssgGenerator.removePage} generateAll={ssgGenerator.generateAll} generateSitemap={ssgGenerator.generateSitemap} generateBuildScript={ssgGenerator.generateBuildScript} getStats={ssgGenerator.getStats} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowSSG(false)} />}
+      {showDockerExport && <DockerExportPanel config={dockerExport.config} setConfig={dockerExport.setConfig} services={dockerExport.services} addEnvVar={dockerExport.addEnvVar} removeEnvVar={dockerExport.removeEnvVar} addService={dockerExport.addService} removeService={dockerExport.removeService} generateDockerfile={dockerExport.generateDockerfile} generateDockerCompose={dockerExport.generateDockerCompose} generateNginxConf={dockerExport.generateNginxConf} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowDockerExport(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
