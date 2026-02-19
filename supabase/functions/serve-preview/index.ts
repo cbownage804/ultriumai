@@ -28,7 +28,32 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-    // List all top-level user directories in the bucket
+    // === FAST PATH: Try live_previews table first (DB read, ~5ms) ===
+    const { data: livePreview, error: liveError } = await supabase
+      .from('app_builder_live_previews')
+      .select('compiled_html, version_hash, updated_at')
+      .eq('project_slug', slug)
+      .limit(1)
+      .maybeSingle()
+
+    if (!liveError && livePreview?.compiled_html) {
+      return new Response(livePreview.compiled_html, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=10, s-maxage=30',
+          'ETag': `"${livePreview.version_hash}"`,
+          'X-Served-By': 'ultrium-preview-live',
+          'X-Preview-Updated': livePreview.updated_at,
+          'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
+          'X-Content-Type-Options': 'nosniff',
+          'X-Frame-Options': 'SAMEORIGIN',
+          'Referrer-Policy': 'strict-origin-when-cross-origin',
+        },
+      })
+    }
+
+    // === FALLBACK: Search storage bucket ===
     const { data: userDirs, error: listError } = await supabase.storage
       .from('published-apps')
       .list('', { limit: 1000 })
@@ -71,7 +96,7 @@ Deno.serve(async (req) => {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=60, s-maxage=300',
-        'X-Served-By': 'ultrium-preview',
+        'X-Served-By': 'ultrium-preview-storage',
         'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'SAMEORIGIN',
@@ -87,7 +112,6 @@ Deno.serve(async (req) => {
 /** Resolve a custom domain (e.g. myapp.example.com) to a project slug via the DB */
 async function resolveCustomDomain(host: string): Promise<string | null> {
   if (!host) return null
-  // Skip our own infrastructure domains
   if (host.endsWith('.ultriumai.com') || host.endsWith('.ultriumai.app') || host.endsWith('.supabase.co')) {
     return null
   }
