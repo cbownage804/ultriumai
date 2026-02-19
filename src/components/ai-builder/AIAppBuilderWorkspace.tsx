@@ -2251,7 +2251,22 @@ export function AIAppBuilderWorkspace() {
         <div className="flex-1 overflow-hidden">
           {isMobile ? (
             mobileTab === 'chat' ? (
-              <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} />
+              <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} questionsSlot={builderQuestions.pending ? (
+                <div className="px-3 pt-2">
+                  <QuestionsCard
+                    questions={builderQuestions.pending.questions}
+                    onSubmit={(answers) => {
+                      const enriched = builderQuestions.buildEnrichedPrompt(builderQuestions.pending!.context, answers);
+                      handleSend(enriched, null, true);
+                    }}
+                    onSkip={() => {
+                      const ctx = builderQuestions.pending?.context || '';
+                      builderQuestions.dismiss();
+                      handleSend(ctx, null, true);
+                    }}
+                  />
+                </div>
+              ) : undefined} />
             ) : mobileTab === 'preview' ? (
                 <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
                   <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} />
@@ -2306,44 +2321,43 @@ export function AIAppBuilderWorkspace() {
                 )}
                 <div className="flex-1 overflow-hidden flex flex-col">
                   <div className="flex-1 overflow-hidden">
-                    <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} />
+                    <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} questionsSlot={builderQuestions.pending ? (
+                      <div className="px-3 pt-2">
+                        <QuestionsCard
+                          questions={builderQuestions.pending.questions}
+                          onSubmit={(answers) => {
+                            const enriched = builderQuestions.buildEnrichedPrompt(builderQuestions.pending!.context, answers);
+                            const plan = phasePlanner.analyzePrompt(enriched);
+                            if (plan) {
+                              const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** — ${p.description}`).join('\n');
+                              setMessages(prev => [...prev, {
+                                id: crypto.randomUUID(), role: 'assistant' as const,
+                                content: `✅ Got it! I've broken this into ${plan.phases.length} phases:\n\n${phaseList}\n\nClick **"Start Phase 1"** below to begin.`,
+                                timestamp: new Date(),
+                              }]);
+                            } else {
+                              handleSend(enriched, null, true);
+                            }
+                          }}
+                          onSkip={() => {
+                            const ctx = builderQuestions.pending?.context || '';
+                            builderQuestions.dismiss();
+                            const plan = phasePlanner.analyzePrompt(ctx);
+                            if (plan) {
+                              const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** — ${p.description}`).join('\n');
+                              setMessages(prev => [...prev, {
+                                id: crypto.randomUUID(), role: 'assistant' as const,
+                                content: `🚧 **This is a large project!** I've broken it into ${plan.phases.length} phases:\n\n${phaseList}\n\nClick **"Start Phase 1"** below to begin.`,
+                                timestamp: new Date(),
+                              }]);
+                            } else {
+                              handleSend(ctx, null, true);
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : undefined} />
                   </div>
-                  {builderQuestions.pending && (
-                    <div className="border-t border-white/[0.06] bg-[#0d0d0f]">
-                      <QuestionsCard
-                        questions={builderQuestions.pending.questions}
-                        onSubmit={(answers) => {
-                          const enriched = builderQuestions.buildEnrichedPrompt(builderQuestions.pending!.context, answers);
-                          const plan = phasePlanner.analyzePrompt(enriched);
-                          if (plan) {
-                            const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** — ${p.description}`).join('\n');
-                            setMessages(prev => [...prev, {
-                              id: crypto.randomUUID(), role: 'assistant' as const,
-                              content: `✅ Got it! I've broken this into ${plan.phases.length} phases:\n\n${phaseList}\n\nClick **"Start Phase 1"** below to begin.`,
-                              timestamp: new Date(),
-                            }]);
-                          } else {
-                            handleSend(enriched, null, true);
-                          }
-                        }}
-                        onSkip={() => {
-                          const ctx = builderQuestions.pending?.context || '';
-                          builderQuestions.dismiss();
-                          const plan = phasePlanner.analyzePrompt(ctx);
-                          if (plan) {
-                            const phaseList = plan.phases.map((p, i) => `${i + 1}. **${p.title}** — ${p.description}`).join('\n');
-                            setMessages(prev => [...prev, {
-                              id: crypto.randomUUID(), role: 'assistant' as const,
-                              content: `🚧 **This is a large project!** I've broken it into ${plan.phases.length} phases:\n\n${phaseList}\n\nClick **"Start Phase 1"** below to begin.`,
-                              timestamp: new Date(),
-                            }]);
-                          } else {
-                            handleSend(ctx, null, true);
-                          }
-                        }}
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
             </ResizablePanel>
