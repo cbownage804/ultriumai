@@ -143,6 +143,15 @@ import { SymbolSearchPanel } from './SymbolSearchPanel';
 import { SecretsManagerPanel } from './SecretsManagerPanel';
 import { ProjectDropdownMenu } from './ProjectDropdownMenu';
 import { ToolbarPanelsDropdown } from './ToolbarPanelsDropdown';
+import { ModelSwitcherPanel } from './ModelSwitcherPanel';
+import { PromptChainPanel } from './PromptChainPanel';
+import { CodeReviewPanel } from './CodeReviewPanel';
+import { TestGeneratorPanel } from './TestGeneratorPanel';
+import { NLQueryPanel } from './NLQueryPanel';
+import { usePromptChains } from '@/hooks/usePromptChains';
+import { useAICodeReview } from '@/hooks/useAICodeReview';
+import { useTestGenerator } from '@/hooks/useTestGenerator';
+import { useNLDatabaseQuery } from '@/hooks/useNLDatabaseQuery';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -393,6 +402,14 @@ export function AIAppBuilderWorkspace() {
   const [showImageGen, setShowImageGen] = useState(false);
   const [showSymbolSearch, setShowSymbolSearch] = useState(false);
   const [showSecretsManager, setShowSecretsManager] = useState(false);
+  const [showModelSwitcher, setShowModelSwitcher] = useState(false);
+  const [showPromptChains, setShowPromptChains] = useState(false);
+  const [showCodeReview, setShowCodeReview] = useState(false);
+  const [showTestGenerator, setShowTestGenerator] = useState(false);
+  const [showNLQuery, setShowNLQuery] = useState(false);
+  const promptChains = usePromptChains();
+  const codeReview = useAICodeReview();
+  const testGenerator = useTestGenerator();
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
