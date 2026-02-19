@@ -1,104 +1,77 @@
 
 
-# Defer Preview Until Build Completes (Lovable-style)
+# Fix "Resource Load Error" and Auto-Fix Loop Pollution
 
-## Problem
+## Root Cause
 
-The preview iframe renders **during** code generation, causing three issues:
+The `getCompiledHTML()` function in `useProjectFileSystem.ts` correctly **inlines** CSS and JS file contents into the HTML document (lines 276-298). However, it does **not strip** the original `<script src="main.js">` and `<link href="style.css">` tags from the AI-generated `index.html`.
 
-1. **Resource Load Errors** -- The iframe tries to load `app.js` before the AI has finished writing it, because `index.html` is upserted first and immediately compiled into the iframe's `srcDoc`
-2. **Frozen/slow UI** -- Every streamed file chunk triggers a full recompilation (`liveCompiledHTML` via `useMemo`) and iframe reload, consuming memory and CPU during generation
-3. **First-build bypass** -- The "defer preview" logic on line 1858 (`if (!isGenerating && liveCompiledHTML)`) correctly defers *subsequent* builds, but on the first build `stableHTML` is null, so line 1878 (`stableHTML || liveCompiledHTML`) falls through to the live-recomputing value
+So the compiled output contains **both**:
+1. `<script src="main.js"></script>` -- tries to fetch over HTTP, fails with "Resource Load Error"
+2. `<script>/* main.js */ ... actual code ...</script>` -- the correctly inlined version
 
-## Solution
+The browser hits the first tag, fails to load it, and the error console picks it up. Then the auto-fix loop sees the error and injects an `[AUTO-FIX ATTEMPT 1/3]` prompt into the chat, wasting a credit trying to "fix" something that isn't actually broken -- the inlined code works fine.
 
-Defer ALL preview rendering until `isGenerating` flips to `false`. Show the `SkeletonPreview` overlay during the build instead of a half-rendered iframe. This matches Lovable's behavior: build everything first, render preview only when done.
+## Plan
 
-## Changes
+### 1. Strip local file references from HTML before inlining (`useProjectFileSystem.ts`)
 
-### 1. `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
+After loading the main HTML content but **before** injecting inlined CSS/JS, strip any `<script src="...">` and `<link href="...css">` tags that reference local VFS files (not external CDN URLs).
 
-**Fix the `compiledHTML` passed to the preview panel:**
-
-Replace the current logic (lines ~1855-1878):
-
-```typescript
-const [stableHTML, setStableHTML] = useState<string | null>(null);
-
-// Defer preview updates until build completes
-useEffect(() => {
-  if (!isGenerating && liveCompiledHTML) {
-    setStableHTML(liveCompiledHTML);
-    liveSync.resetSnapshot(project.files);
-  }
-}, [isGenerating, liveCompiledHTML, project.files]);
-
-// For first load (no previous build), show immediately
-const compiledHTML = stableHTML || liveCompiledHTML;
+```
+// Strip <script src="main.js"> tags that match local VFS files
+// Strip <link href="style.css"> tags that match local VFS files
+// Keep external URLs (http://, https://, //) untouched
 ```
 
-With:
+This ensures the browser only sees the inlined versions and never tries to fetch local files over HTTP.
 
-```typescript
-const [stableHTML, setStableHTML] = useState<string | null>(null);
+### 2. Suppress auto-fix for "Failed to load" resource errors (`AIAppBuilderWorkspace.tsx`)
 
-// Only update preview when generation completes (never mid-build)
-useEffect(() => {
-  if (!isGenerating && liveCompiledHTML) {
-    const patched = liveSync.applyPatches(previewIframeRef, project.files);
-    if (!patched) {
-      setStableHTML(liveCompiledHTML);
-      liveSync.resetSnapshot(project.files);
-    }
-  }
-}, [isGenerating, liveCompiledHTML, project.files]);
+As a safety net, skip the auto-fix loop for "Failed to load" errors that reference the app's own domain. These are always caused by the compilation pipeline, not by broken user code.
 
-// NEVER fall through to liveCompiledHTML during generation
-const compiledHTML = stableHTML;
-```
-
-Key change: `compiledHTML = stableHTML` (not `stableHTML || liveCompiledHTML`). This means during the first build, `compiledHTML` stays `null`, and the `BuilderPreviewPanel` shows `SkeletonPreview` instead of a broken half-rendered iframe.
-
-**Stop upserting files during streaming into the project file system:**
-
-The streaming file upsert on lines 1136-1145 triggers recompilation. Change it so files are only upserted to the editor (for the code tab) but NOT triggering `liveCompiledHTML` recomputation:
-
-```typescript
-useEffect(() => {
-  if (isStreamingPreview && partialFiles.length > 0) {
-    for (const file of partialFiles) upsertFile(file.path, file.content);
-    const lastFile = partialFiles[partialFiles.length - 1];
-    if (lastFile && rightTab === 'code') {
-      setActiveFile(lastFile.path);
-    }
-  }
-}, [partialFiles, isStreamingPreview]);
-```
-
-This part stays the same (files still appear in the editor), but since `compiledHTML` no longer reads `liveCompiledHTML` during generation, the preview won't update until the build finishes.
-
-### 2. `src/components/ai-builder/BuilderPreviewPanel.tsx`
-
-**Ensure SkeletonPreview shows when `html` is null during generation:**
-
-The existing logic on line 412-445 already handles this correctly:
-- `html` exists -> show iframe
-- `html` is null AND `isGenerating` -> show `SkeletonPreview`
-- `html` is null AND not generating -> show placeholder
-
-No changes needed here since setting `compiledHTML = stableHTML` (which is `null` on first build) will naturally trigger the `SkeletonPreview` path.
-
-## What This Achieves
-
-- **No more "Resource Load Error"** -- the iframe never sees incomplete HTML
-- **No frozen/slow UI** -- no mid-build recompilation or iframe reloads
-- **Lower memory usage** -- the iframe DOM is not created until the build is done
-- **Lovable-style UX** -- skeleton during build, full preview when complete
-- **Existing hot-patch behavior preserved** -- manual edits after build still hot-patch via CSS
-
-## Files Changed
+## Files to Change
 
 | File | Change |
 |------|--------|
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Remove `liveCompiledHTML` fallback so `compiledHTML` is `null` until build completes |
+| `src/hooks/useProjectFileSystem.ts` | Add regex to strip `<script src="localfile.js">` and `<link href="localfile.css">` tags matching VFS files before inlining |
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Skip auto-fix for "Failed to load" resource errors |
+
+## Technical Details
+
+### Stripping logic (useProjectFileSystem.ts)
+
+Insert after line 198 (`let compiled = mainHTML.content;`), before head injections:
+
+```typescript
+// Strip local <script src> and <link href=css> tags that will be inlined
+const localPaths = new Set(files.map(f => f.path));
+// Remove <script src="main.js"></script> where main.js is a VFS file
+compiled = compiled.replace(
+  /<script\s+[^>]*src=['"]([^'"]+)['"]\s*><\/script>/gi,
+  (match, src) => {
+    if (src.startsWith('http') || src.startsWith('//')) return match; // keep CDN
+    const normalized = src.startsWith('./') ? src.slice(2) : src;
+    return localPaths.has(normalized) ? `<!-- inlined: ${normalized} -->` : match;
+  }
+);
+// Remove <link href="style.css" rel="stylesheet"> where style.css is a VFS file
+compiled = compiled.replace(
+  /<link\s+[^>]*href=['"]([^'"]+\.css)['"][^>]*>/gi,
+  (match, href) => {
+    if (href.startsWith('http') || href.startsWith('//')) return match;
+    const normalized = href.startsWith('./') ? href.slice(2) : href;
+    return localPaths.has(normalized) ? `<!-- inlined: ${normalized} -->` : match;
+  }
+);
+```
+
+### Auto-fix filter (AIAppBuilderWorkspace.tsx)
+
+In the error handler that calls `autoFixLoop.attemptFix`, add a guard:
+
+```typescript
+// Skip auto-fix for resource load errors (handled by compilation pipeline)
+if (error.message?.includes('Failed to load')) return;
+```
 
