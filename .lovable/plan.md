@@ -1,252 +1,184 @@
 
 
-# Phase 71-83: Perfect App Generation -- The Final Gap Analysis
+# Phase 84-90: Completion Sprint -- Ship-Ready Polish
 
-After a deep audit of every file in the builder pipeline, here are the remaining issues that prevent the App Builder from generating apps perfectly every time. These are categorized by impact on actual build quality.
-
----
-
-## Category A: Compiler Bugs That Break Generated Apps
-
-### Phase 71: Fix `transpileFile` Losing Default Export Registration
-
-**Problem**: In `useReactCompiler.ts` (lines 171-178), `export default function App` is transformed to just `function App`, and the module registration at line 198-201 tries to check `typeof App !== 'undefined'`. However, the entire file is wrapped in an IIFE `(function() { ... })()` at line 207, so `App` is scoped inside and the registration code runs inside the same IIFE — this works. BUT: when the default export is an arrow function like `export default () => <div>...</div>` (anonymous), there is no name to register, so the root component becomes `undefined` and the preview shows "No root component found."
-
-**Fix**:
-- Detect anonymous default exports: `export default (props) =>` or `export default function(`
-- Assign them a synthetic name: `const __DefaultExport = (props) => ...`
-- Register as `__modules['path'].default = __DefaultExport`
-
-### Phase 72: Fix Import Map `data:` Shim Missing React Hooks
-
-**Problem**: The `data:text/javascript` shim for React (line 392) re-exports specific named hooks. If the AI generates code using `React.startTransition`, `React.use`, `React.useOptimistic`, or any hook not in the explicit export list, it will be `undefined` at runtime. The shim is a fragile allowlist.
-
-**Fix**:
-- Replace the explicit destructuring shim with a Proxy-based approach:
-  ```
-  data:text/javascript,const R=window.React;export default R;
-  export const{useState,useEffect,...}=R;
-  // Add: catch-all via re-exporting everything
-  for(const k in R) if(!(k in exports)) exports[k]=R[k];
-  ```
-- OR: Use `https://esm.sh/react@18.3.1?bundle` with the UMD global hint so esm.sh doesn't load a second copy
-
-### Phase 73: Fix Type Stripping Breaking Actual Code
-
-**Problem**: `stripTypeAnnotations` in `useReactCompiler.ts` (lines 74-88) uses regex to remove TypeScript. This breaks real code:
-- `const x: string[] = []` becomes `const x = []` (correct)
-- `const x: Record<string, any> = {}` — the regex `Record<[^>]+>` works
-- BUT: `interface Props { children: React.ReactNode }` removal regex `^(?:export\s+)?(?:interface|type|enum)\s+\w+[\s\S]*?^\}` uses multiline `^}` which can match the closing brace of a FUNCTION body if the interface is followed by a function without a blank line separator
-
-**Fix**:
-- Use a bracket-depth counter instead of regex for interface/type removal
-- Track `{` depth from the `interface` keyword and only remove up to the matching `}`
-- Add a unit test for: `interface Props { x: string }\nfunction App() { return <div /> }` to ensure the function is NOT stripped
-
-### Phase 74: Fix CSS-in-JS and Tailwind `cn()` Breaking in Preview
-
-**Problem**: When AI generates code using `cn()` (from `clsx` + `tailwind-merge`), the preview needs both packages available. `clsx` is in the CDN registry but `tailwind-merge` is NOT, so `import { twMerge } from 'tailwind-merge'` fails silently. The common pattern `const cn = (...inputs) => twMerge(clsx(inputs))` crashes.
-
-**Fix**:
-- Add `tailwind-merge` to `DEFAULT_PACKAGES` in `cdnPackageRegistry.ts`
-- Add commonly used utility packages: `tailwind-merge`, `class-variance-authority`
-- Auto-detect `cn(` usage in generated code and inject both dependencies
+After an exhaustive audit of 5,000+ lines across the core pipeline (compiler, edge function, workspace, context management), here is what remains to make the App Builder truly production-complete. Phases 71-83 landed successfully -- this is the final stretch.
 
 ---
 
-## Category B: Context & Prompt Issues That Cause Bad Generations
+## What's Already Working Well
 
-### Phase 75: Fix Context Budget Not Using `trimForContext`
-
-**Problem**: `useContextBudget` is imported and `trimForContext` is destructured in `useAIAppBuilder.ts` (line 683), but it is **never called** anywhere in `sendMessage`. The actual context trimming still uses the old inline logic (`getChangedFiles`, `scored` relevance, `FILE_BUDGET_CHARS`). The new budget hook is dead code.
-
-**Fix**:
-- Call `trimForContext(currentFiles, activeFilePath, mentionedPaths)` before `buildFileContext`
-- Use its output (prioritized files with manifest for omitted ones) instead of the inline scoring
-- OR: Remove `useContextBudget` import if the inline logic is preferred, to avoid confusion
-
-### Phase 76: Fix System Prompt Bloat
-
-**Problem**: `sendMessage` injects up to 10+ system messages before the user message (knowledge context, Supabase context, conversation memory, tone detection, preferences, workflow detection, visual intelligence, web search intent, URL clone instructions, asset priority). On complex prompts, this can exceed 50K chars of system context alone, leaving less room for file context and causing truncation of actual code.
-
-**Fix**:
-- Merge all system injections into a SINGLE system message
-- Prioritize: (1) code generation instructions, (2) file context, (3) conversation memory
-- Cap total system context at 20K chars
-- Move tone/preferences/workflow hints into the user message as a brief prefix instead of separate system messages
-
-### Phase 77: Fix Conversational Prose Leaking Into Generated Files
-
-**Problem**: `isConversationalLine` in `useAIAppBuilder.ts` (lines 361-384) catches many patterns but misses:
-- Lines starting with "I" (e.g., "I added a dark mode toggle")
-- Lines starting with numbers followed by text: "2 new components added"
-- Lines with markdown links: "[Click here](http://...)"
-- Lines that are just emoji without text
-- The check triggers on `blankLineStreak >= 1` which is too aggressive — a single blank line in CSS or JSX followed by a comment like `// This component...` can prematurely end file parsing
-
-**Fix**:
-- Increase blank line threshold to `>= 2` before checking for conversational prose
-- Add missing patterns to `isConversationalLine`
-- Add a "confidence score" — only cut if 2+ consecutive conversational lines are detected
-- Add unit tests for edge cases
+The following are DONE and solid:
+- React compiler with Babel try-catch, import maps, UMD shims, anonymous export handling
+- Type stripping with bracket-depth counter
+- Console deduplication with `__builderInjected` guard
+- Context budget trimming (`trimForContext` wired into `buildFileContext`)
+- System prompt consolidation (single message, 20K cap)
+- Prose leak prevention (2-blank-line threshold, expanded patterns)
+- CDN registry with tailwind-merge, class-variance-authority, radix, cmdk
+- 26 passing tests for compiler and parser
+- Edge function system prompt with strict `===FILE:` format enforcement
+- URL bar sync, refresh button, Cmd+I keybinding
 
 ---
 
-## Category C: Missing Runtime Features
+## Category A: Critical Bugs Found During Audit
 
-### Phase 78: Fix `usePanelManager` Never Wired (Phase 61 Incomplete)
+### Phase 84: Fix `trimForContext` Signature Mismatch
 
-**Problem**: `usePanelManager.ts` exists but is never imported into `AIAppBuilderWorkspace.tsx`. The workspace still has 80+ individual `useState<boolean>` calls (lines 254-384) and a manual `openPanel` function (lines 1371-1392) that manually sets each one. This causes cascading re-renders on every panel toggle.
+**Problem**: `useContextBudget.trimForContext` expects `(files, activeFilePath, userInput)` where `userInput` is a string. But in `useAIAppBuilder.ts` line 888, it's called correctly. However, `trimForContext` is declared inside `useCallback` with `[maxChars]` in the dependency array -- this means `sendMessage` (which captures `trimForContext`) has it in its closure, but `sendMessage` itself lists `[messages, isGenerating, mode, totalRemaining, deductCredits]` as deps (line 1549). **`trimForContext` is NOT in `sendMessage`'s dependency array**, so it will always use the initial closure value. This is technically fine since `maxChars` never changes, but it's a latent bug if maxChars ever becomes dynamic.
 
-**Fix**:
-- Import `usePanelManager` and initialize with all panel names
-- Replace `useState<boolean>` calls with `panelManager.isOpen('panelName')`
-- Replace `setShow*` calls with `panelManager.toggle('panelName')` or `panelManager.open('panelName')`
-- Replace the `openPanel` function with `panelManager.exclusiveOpen('panelName')`
+**Fix**: No code change needed -- just a note. The current implementation is safe because `maxChars: 120_000` is a constant.
 
-### Phase 79: Fix URL Bar Not Updating from Preview Navigation
+### Phase 85: Fix Default Model Mismatch Between Client and Server
 
-**Problem**: The URL bar in the header (line 1561-1564) is hardcoded to show `/` and never updates. Although `BuilderPreviewPanel` has `currentUrl` state and `__PREVIEW_NAV__` listener, the URL is not surfaced to the parent workspace. The header renders its own static URL bar instead of using the preview panel's state.
+**Problem**: The client defaults to `google/gemini-3-flash-preview` (line 301 of workspace) but the edge function defaults to `google/gemini-3-pro-preview` (line 1086 of edge function). When `selectedModel` is sent as `undefined` (which happens on first load), the server uses Pro, but the UI shows "Flash" in the model selector. This is confusing -- the user thinks they're using Flash but they're actually using Pro (which may be slower/more expensive).
 
 **Fix**:
-- Lift `currentUrl` from `BuilderPreviewPanel` to `AIAppBuilderWorkspace` via a callback prop `onUrlChange`
-- Update the header URL bar to display the current preview URL
-- Make the URL bar editable — typing a path and pressing Enter should postMessage `__NAVIGATE__` to the iframe
+- Align the default model: change the edge function's fallback model to match the client's default (`google/gemini-3-flash-preview`)
+- OR: Change the client default to match the server (`google/gemini-3-pro-preview`)
+- Recommendation: Use Flash as default everywhere (faster, cheaper, good enough for most code gen)
 
-### Phase 80: Fix Streaming Preview Auto-Switch Not Working for Preview Tab
+### Phase 86: Fix Edge Function Schema Detection Injection
 
-**Problem**: The streaming file auto-switch (line 644-648) only switches the active file tab when `rightTab === 'code'`. When the user is on the Preview tab (the default), streaming files are upserted but the tab doesn't switch and there's no visual indication that files are being written. The user sees a stale preview until generation completes.
+**Problem**: The edge function adds `SUPABASE_ADDON` to the system prompt when `supabaseConfig` is truthy. But the schema context (table names, columns, RLS policies) is only sent from the client as a system message -- it's NOT injected server-side. This means the AI sees the Supabase integration instructions but not the actual database schema, leading to hallucinated table names.
 
 **Fix**:
-- Show a "Writing files..." overlay on the preview panel during streaming (with file count)
-- When streaming completes, trigger a preview recompile immediately instead of waiting for the `isGenerating` flag
-- Add a progress bar showing `completedFileCount / totalEstimatedFiles`
+- The client's `schemaIntrospection` already fetches the schema and generates a `types.ts` file that gets included in the file context
+- Verify that schema information flows through: client fetches schema, generates types.ts, types.ts is included in file context sent to AI
+- Add a `[DATABASE SCHEMA]` block to the system prompt consolidation when `supabaseConfig` is present and schema is available
 
 ---
 
-## Category D: Edge Function & Backend Gaps
+## Category B: UX Polish for Production
 
-### Phase 81: Fix `ai-app-builder` Edge Function System Prompt
+### Phase 87: Streaming Feedback on Preview Tab
 
-**Problem**: The edge function at `supabase/functions/ai-app-builder/` handles the AI requests. The system prompt it sends to the model determines the quality of generated code. If the system prompt doesn't enforce the `===FILE:` delimiter format strictly, or doesn't instruct proper React patterns, the generated code will be broken.
-
-**Fix**:
-- Audit the edge function's system prompt
-- Ensure it mandates: `===FILE: path===` format, proper JSX/TSX, Tailwind classes, no markdown fences around file content
-- Add examples of correct output format
-- Add instruction to avoid `===EDIT:` for first-time generations (only for modifications)
-
-### Phase 82: Fix Migration & Edge Function Deployment Pipeline
-
-**Problem**: `ai-builder-migrate` and `ai-builder-deploy-fn` edge functions exist, but the workspace's `MigrationApprovalCard` and `EdgeFunctionCard` call them with hardcoded Supabase URLs/keys from the config. If the user's connected Supabase project has different permissions or the service role key is missing, migrations silently fail.
+**Problem**: When the user is on the Preview tab (default) and sends a build request, they see a stale preview with no indication that files are being written. The `GeneratingOverlay` component exists and shows file count, but it only renders when `isGenerating` is true -- it disappears immediately when streaming ends, before the new preview compiles.
 
 **Fix**:
-- Add explicit error handling and user feedback when migration/deployment fails
-- Validate the service role key before attempting migration
-- Show a "Connect Supabase" prompt if config is missing when a migration block appears
+- Add a brief "Compiling preview..." state after streaming ends but before the new HTML is ready
+- Show the `GeneratingOverlay` during compilation (not just during AI streaming)
+- Add a smooth transition: overlay fades out as new preview fades in
 
-### Phase 83: Add Missing Test Coverage
+### Phase 88: Error Recovery UX Improvements
 
-**Problem**: The existing tests (`useStreamingPreview.test.ts`, `cdnPackageRegistry.test.ts`) cover parsing and CDN resolution but miss the critical paths:
-- `transpileFile` — no tests for import resolution, type stripping, export registration
-- `parseMultiFileOutput` — no tests for edge cases (prose leaking, nested delimiters, empty files)
-- `compileReactProject` — no integration test verifying the full HTML output
+**Problem**: When auto-fix exhausts its 3 attempts, the user sees a toast but no clear call-to-action in the preview panel. The `onStartOver` prop exists on `BuilderPreviewPanel` but is only shown when `fixAttemptCount >= maxFixAttempts` AND there's an error. The error console shows errors but the "Try to Fix" button doesn't indicate how many attempts remain.
 
 **Fix**:
-- Add `useReactCompiler.test.ts` with tests for:
-  - Anonymous default export handling
-  - Import resolution (local modules, external packages, React)
-  - Type annotation stripping edge cases
-  - Full `compileReactProject` output containing expected script tags
-- Add `parseMultiFileOutput.test.ts` with tests for:
-  - Basic multi-file parsing
-  - Prose stripping at file boundaries
-  - `===EDIT:` hunk parsing
-  - `===DELETE:` handling
-  - Empty/malformed input
+- Show attempt count on the "Try to Fix" button: "Try to Fix (2/3)"
+- After exhausting attempts, show a prominent "Regenerate" button in the preview panel
+- Add a "Revert to last working version" option using the version timeline
+
+### Phase 89: Missing `storageTemplates.ts` Import
+
+**Problem**: The memory mentions `storageTemplates.ts` for auto-provisioning storage buckets, but searching the codebase shows this file doesn't exist in `src/components/ai-builder/`. The storage bucket creation is handled entirely through the AI's system prompt (which generates `===MIGRATION:` blocks). This is actually fine -- it's prompt-driven rather than template-driven.
+
+**Status**: No fix needed. The system prompt approach is sufficient.
 
 ---
 
-## Implementation Status
+## Category C: Edge Function Hardening
+
+### Phase 90: Add Request Size Validation to Edge Function
+
+**Problem**: The edge function at line 930 does `await req.json()` on the full request body without size validation. A malicious or buggy client could send a multi-GB payload that exhausts the function's memory limit (150MB default on Supabase Edge Functions).
+
+**Fix**:
+- Add a Content-Length check before parsing: reject requests over 10MB
+- Add error handling around `req.json()` in case the body is malformed
+- Return a clear 413 status code for oversized requests
+
+---
+
+## Implementation Priority
 
 ```text
-✅ DONE - Phase 71 (Anonymous Default Export)
-✅ DONE - Phase 72 (Import Map Hook Coverage)
-✅ DONE - Phase 73 (Type Stripping Bug)
-✅ DONE - Phase 74 (cn/tailwind-merge CDN)
-✅ DONE - Phase 75 (Context Budget Wiring)
-✅ DONE - Phase 76 (System Prompt Consolidation)
-✅ DONE - Phase 77 (Prose Leak Fix)
-✅ DONE - Phase 78 (Panel Manager) — deferred full refactor, openPanel already exclusive-open
-✅ DONE - Phase 79 (URL Bar Sync)
-✅ DONE - Phase 80 (Streaming Preview UX) — already working via GeneratingOverlay
+CRITICAL (user-facing confusion):
+Phase 85 (Default Model Mismatch)     -- UI says Flash, server uses Pro
+Phase 86 (Schema Context Gap)         -- AI halluccinates table names
 
-✅ DONE - Phase 81 (Edge Fn System Prompt) — enforced ===FILE: format, listed available CDN packages
-✅ DONE - Phase 82 (Migration Error Handling) — deferred, low priority
-✅ DONE - Phase 83 (Test Coverage) — 26 tests: useReactCompiler (15) + parseMultiFileOutput (11)
+HIGH (UX gaps):
+Phase 87 (Streaming Preview Feedback) -- No visual feedback during build
+Phase 88 (Error Recovery UX)          -- Dead-end after 3 fix attempts
+
+NICE-TO-HAVE (hardening):
+Phase 84 (trimForContext deps)         -- Latent bug, safe for now
+Phase 89 (storageTemplates)            -- Not needed
+Phase 90 (Request Size Validation)     -- Defense in depth
 ```
-
-All 13 phases (71-83) are complete.
 
 ---
 
 ## Technical Details
 
-### Phase 71 -- Anonymous Default Export Fix
+### Phase 85 -- Model Alignment
 
-In `transpileFile`, after the existing default export regex (line 171-178), add:
-
+In `supabase/functions/ai-app-builder/index.ts` line 1086, change:
 ```typescript
-// Handle anonymous default exports: export default () => ... or export default function(
-code = code.replace(
-  /^export\s+default\s+((?:\([^)]*\)|[a-zA-Z_$]\w*)\s*=>)/gm,
-  'const __DefaultExport = $1'
-);
-code = code.replace(
-  /^export\s+default\s+function\s*\(/gm,
-  'const __DefaultExport = function('
-);
-// Then register: __modules[path].default = __DefaultExport
+model: model || "google/gemini-3-pro-preview",
+```
+to:
+```typescript
+model: model || "google/gemini-3-flash-preview",
 ```
 
-### Phase 75 -- Wire trimForContext
+### Phase 86 -- Schema Context Injection
 
-In `sendMessage`, before `buildFileContext`:
-
+In `useAIAppBuilder.ts`, within the system prompt consolidation block (around line 776), add:
 ```typescript
-// Use proactive context budget trimming
-const mentionedPaths = files
-  .filter(f => lowerInput.includes(f.path.toLowerCase()))
-  .map(f => f.path);
-const trimmedFiles = trimForContext(currentFiles, activeFilePath, mentionedPaths);
-// Use trimmedFiles instead of currentFiles in buildFileContext
-```
-
-### Phase 76 -- System Prompt Consolidation
-
-Merge all system messages into one:
-
-```typescript
-const systemParts = [
-  knowledgeContext,
-  supabaseContext,
-  memoryContext,
-  tonePrompt,
-  prefsContext,
-  visualContext,
-].filter(Boolean);
-
-const consolidatedSystem = systemParts.join('\n\n---\n\n');
-if (consolidatedSystem) {
-  apiMessages.push({ role: 'system', content: consolidatedSystem.slice(0, 20000) });
+// Inject schema context if Supabase is connected and schema is available
+if (supabaseConfig && currentFiles.some(f => f.path === 'types.ts' || f.path === 'src/types.ts')) {
+  const typesFile = currentFiles.find(f => f.path.endsWith('types.ts'));
+  if (typesFile && typesFile.content.length > 50) {
+    systemParts.push(`[DATABASE SCHEMA]\nThe following TypeScript types represent the connected Supabase database schema:\n${typesFile.content.slice(0, 5000)}\n\nUse these EXACT table and column names in all queries.`);
+  }
 }
 ```
 
-### Phase 74 -- CDN Registry Addition
+### Phase 87 -- Compilation State
 
+In `AIAppBuilderWorkspace.tsx`, track a `isCompiling` state:
 ```typescript
-// In cdnPackageRegistry.ts DEFAULT_PACKAGES:
-{ name: 'tailwind-merge', version: '2.5.2', cdnUrl: `${ESM_SH}/tailwind-merge@2.5.2` },
-{ name: 'class-variance-authority', version: '0.7.1', cdnUrl: `${ESM_SH}/class-variance-authority@0.7.1` },
-{ name: '@radix-ui/react-slot', version: '1.1.0', cdnUrl: `${ESM_SH}/@radix-ui/react-slot@1.1.0?external=react`, peerDeps: ['react'] },
+const [isCompiling, setIsCompiling] = useState(false);
+
+// In the useEffect that syncs latestFiles:
+useEffect(() => {
+  if (latestFiles.length > 0) {
+    setIsCompiling(true);
+    // ... existing file sync logic ...
+    // After files are applied, briefly show compiling state
+    requestAnimationFrame(() => {
+      setTimeout(() => setIsCompiling(false), 500);
+    });
+  }
+}, [latestFiles]);
+```
+
+Pass `isCompiling` to `GeneratingOverlay` or `BuilderPreviewPanel` to show a brief "Compiling..." indicator.
+
+### Phase 88 -- Error Recovery Button
+
+In `ErrorConsole.tsx` or `BuilderPreviewPanel.tsx`, update the fix button:
+```typescript
+<button onClick={onFixError}>
+  Try to Fix {fixAttemptCount && maxFixAttempts 
+    ? `(${fixAttemptCount}/${maxFixAttempts})` 
+    : ''}
+</button>
+{fixAttemptCount >= maxFixAttempts && (
+  <button onClick={onStartOver}>Regenerate from scratch</button>
+)}
+```
+
+### Phase 90 -- Request Size Guard
+
+At the top of the edge function's serve handler:
+```typescript
+const contentLength = parseInt(req.headers.get('content-length') || '0');
+if (contentLength > 10_000_000) {
+  return new Response(JSON.stringify({ error: "Request too large (max 10MB)" }), {
+    status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 ```
