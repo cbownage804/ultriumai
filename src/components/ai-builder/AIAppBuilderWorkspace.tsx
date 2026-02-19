@@ -1146,19 +1146,22 @@ export function AIAppBuilderWorkspace() {
 
   // Auto-save (cloud) — includes chat messages + versions for persistence
   useEffect(() => {
+    if (isGenerating) return; // skip during streaming to prevent browser freeze
     if (project.files.length > 0) scheduleAutoSave(project.name, project.files, messages, { versions });
-  }, [project.files, project.name, messages, versions, scheduleAutoSave]);
+  }, [project.files, project.name, messages, versions, scheduleAutoSave, isGenerating]);
 
   // Auto-save to IndexedDB (Phase 10 — fast local persistence)
   const sessionId = currentProjectId || 'draft';
   useEffect(() => {
+    if (isGenerating) return; // skip during streaming to prevent browser freeze
     idbPersistence.saveToIDB(sessionId, project.name, project.files, messages);
-  }, [project.files, project.name, messages, sessionId]);
+  }, [project.files, project.name, messages, sessionId, isGenerating]);
 
   // Auto-save draft to localStorage (survives refresh)
   useEffect(() => {
+    if (isGenerating) return; // skip during streaming to prevent browser freeze
     saveDraft(project.name, project.files, messages);
-  }, [project.files, project.name, messages, saveDraft]);
+  }, [project.files, project.name, messages, saveDraft, isGenerating]);
 
   // Immediately persist draft when user switches tabs or navigates away
   const latestRef = useRef({ name: project.name, files: project.files, messages });
@@ -1431,8 +1434,23 @@ export function AIAppBuilderWorkspace() {
     sendMessage(`${diagnosisContext}\n\nFix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, fixAttemptCount, lastFixError, getLastAIResponse]);
 
+  // Track when generation ends for post-generation cooldown
+  const generationEndedAt = useRef<number>(0);
+  useEffect(() => {
+    if (!isGenerating) {
+      generationEndedAt.current = Date.now();
+    }
+  }, [isGenerating]);
+
   // Auto-fix pipeline: uses Phase 47 useAutoFixLoop + hot recovery
   const handleAutoFixError = useCallback((error: import('./ErrorConsole').PreviewError) => {
+    // Skip resource load errors FIRST — don't even forward to chat
+    if (error.message?.includes('Failed to load')) return;
+    // Skip during generation
+    if (isGenerating) return;
+    // 3-second cooldown after generation ends to let preview stabilize
+    if (Date.now() - generationEndedAt.current < 3000) return;
+
     // Forward error to chat for inline display
     forwardErrorToChat({ message: error.message, source: error.source, line: error.line });
     // Hot Module Recovery: check if we should rollback instead of fix
@@ -1443,9 +1461,6 @@ export function AIAppBuilderWorkspace() {
       toast.info('Auto-rolled back to last working state');
       return;
     }
-    if (isGenerating) return;
-    // Skip auto-fix for resource load errors (handled by compilation pipeline)
-    if (error.message?.includes('Failed to load')) return;
     // Phase 47: Use structured auto-fix loop with exponential backoff
     autoFixLoop.attemptFix(
       { id: crypto.randomUUID(), message: error.message, source: error.source, line: error.line, timestamp: new Date(), type: 'error' },
