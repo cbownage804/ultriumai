@@ -1,101 +1,104 @@
 
 
-# Fix AI Builder Token Overflow and False Health Warnings
+# Defer Preview Until Build Completes (Lovable-style)
 
-## Problem Analysis
+## Problem
 
-The edge function logs show the exact error: **"The input token count exceeds the maximum number of tokens allowed 1048576"** (Gemini's 1M token limit). Here's why:
+The preview iframe renders **during** code generation, causing three issues:
 
-1. **The system prompt is massive (~660 lines, ~250K+ chars / ~60K+ tokens)** -- it lives in `BASE_SYSTEM_PROMPT` inside the edge function and contains extensive instructions for coding, design, CRUD patterns, schema design, storage, auth, realtime, edge functions, etc.
-2. **Client sends up to 2.5M chars of message context** on top of the system prompt
-3. **Server-side retry uses 800K char limit** -- but combined with the ~250K system prompt, this can still exceed 1M tokens
-4. **The "AI service may be slow" toast** still fires on first load because `HEAD` requests to edge functions fail with CORS/auth errors that get caught by the `catch` block
+1. **Resource Load Errors** -- The iframe tries to load `app.js` before the AI has finished writing it, because `index.html` is upserted first and immediately compiled into the iframe's `srcDoc`
+2. **Frozen/slow UI** -- Every streamed file chunk triggers a full recompilation (`liveCompiledHTML` via `useMemo`) and iframe reload, consuming memory and CPU during generation
+3. **First-build bypass** -- The "defer preview" logic on line 1858 (`if (!isGenerating && liveCompiledHTML)`) correctly defers *subsequent* builds, but on the first build `stableHTML` is null, so line 1878 (`stableHTML || liveCompiledHTML`) falls through to the live-recomputing value
 
-## Root Causes
+## Solution
 
-| Issue | Cause |
-|-------|-------|
-| "Provider returned error" 400 | System prompt (~60K tokens) + messages exceed Gemini's 1M token limit |
-| Server retry still fails | Retry at 800K chars + 250K system prompt = still over limit |
-| Client retry still fails | Client retries at 200K/100K chars but server still adds the 250K prompt |
-| False "AI slow" warning | `HEAD` request to edge function throws a network error (CORS), caught as "unreachable" |
+Defer ALL preview rendering until `isGenerating` flips to `false`. Show the `SkeletonPreview` overlay during the build instead of a half-rendered iframe. This matches Lovable's behavior: build everything first, render preview only when done.
 
-## Plan
+## Changes
 
-### 1. Trim the system prompt (edge function)
+### 1. `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
 
-The `BASE_SYSTEM_PROMPT` is bloated with examples, code templates, and repetitive instructions. Condense it from ~660 lines to ~200 lines by:
-- Removing verbose code examples (router patterns, CRUD patterns, storage examples) -- the model already knows these
-- Removing repetitive "CRITICAL" rules that say the same thing multiple ways
-- Condensing the design philosophy into a compact checklist instead of prose
-- Keeping the essential output format rules (===FILE:, ===EDIT:, ===MIGRATION:, ===EDGE_FUNCTION:)
+**Fix the `compiledHTML` passed to the preview panel:**
 
-Target: reduce from ~250K chars to ~80K chars (~20K tokens), freeing ~40K tokens of headroom.
+Replace the current logic (lines ~1855-1878):
 
-### 2. Fix server-side retry budget (edge function)
+```typescript
+const [stableHTML, setStableHTML] = useState<string | null>(null);
 
-Currently the retry uses 800K chars for messages. With a trimmed ~80K system prompt:
-- Primary attempt: 2M chars messages + 80K prompt = well within 4M char / 1M token limit
-- Retry attempt: reduce to **400K chars** (not 800K) to guarantee success even with overhead
+// Defer preview updates until build completes
+useEffect(() => {
+  if (!isGenerating && liveCompiledHTML) {
+    setStableHTML(liveCompiledHTML);
+    liveSync.resetSnapshot(project.files);
+  }
+}, [isGenerating, liveCompiledHTML, project.files]);
 
-### 3. Fix the health check (client)
-
-Replace the `HEAD` fetch (which fails on CORS) with a simpler approach: just set `gatewayHealthy = true` by default and only mark it false if a real request fails with a network error. The pre-flight check adds latency and false positives without value -- the actual request will fail with a proper error code anyway.
-
-### 4. Add system prompt size logging (edge function)
-
-Add a `console.log` for system prompt size so future debugging is easier:
-```
-console.log(`System prompt: ${systemPrompt.length} chars`);
+// For first load (no previous build), show immediately
+const compiledHTML = stableHTML || liveCompiledHTML;
 ```
 
-## Files to Change
+With:
 
-1. **`supabase/functions/ai-app-builder/index.ts`**
-   - Condense `BASE_SYSTEM_PROMPT` from ~660 lines to ~200 lines
-   - Reduce retry message budget from 800K to 400K chars
-   - Add system prompt size logging
+```typescript
+const [stableHTML, setStableHTML] = useState<string | null>(null);
 
-2. **`src/hooks/useAIAppBuilder.ts`**
-   - Remove the pre-flight `checkGatewayHealth()` function entirely
-   - Remove the health check call and "AI slow" toast before requests
-   - Keep the smart error classifier for actual request failures (it already handles all error types well)
+// Only update preview when generation completes (never mid-build)
+useEffect(() => {
+  if (!isGenerating && liveCompiledHTML) {
+    const patched = liveSync.applyPatches(previewIframeRef, project.files);
+    if (!patched) {
+      setStableHTML(liveCompiledHTML);
+      liveSync.resetSnapshot(project.files);
+    }
+  }
+}, [isGenerating, liveCompiledHTML, project.files]);
 
-## Technical Details
+// NEVER fall through to liveCompiledHTML during generation
+const compiledHTML = stableHTML;
+```
 
-### System Prompt Trimming Strategy
+Key change: `compiledHTML = stableHTML` (not `stableHTML || liveCompiledHTML`). This means during the first build, `compiledHTML` stays `null`, and the `BuilderPreviewPanel` shows `SkeletonPreview` instead of a broken half-rendered iframe.
 
-Sections to **keep** (essential for correct output):
-- Output format rules (===FILE:, ===EDIT:, ===MIGRATION:, ===EDGE_FUNCTION: delimiters)
-- Request complexity router (simple/medium/complex classification)
-- Fix mode diagnostics format
-- React mode directive
-- Supabase/Stripe addon blocks (these are conditional and small)
+**Stop upserting files during streaming into the project file system:**
 
-Sections to **remove or condense**:
-- Router code example (~20 lines of JS) -- model knows how to write routers
-- CRUD delete pattern example (~10 lines) -- model knows filter/splice
-- Storage upload pattern (~15 lines) -- model knows Supabase Storage API
-- Realtime subscription patterns (~40 lines) -- model knows these
-- Drag-and-drop HTML example -- unnecessary
-- Presence and broadcast examples -- unnecessary
-- 10-point pre-output validation checklist -- condense to 3 key rules
-- Repeated "CRITICAL" and "NON-NEGOTIABLE" emphasis -- once is enough
-- Anti-patterns list -- model already knows these
-- Design philosophy prose -- condense to bullet points
+The streaming file upsert on lines 1136-1145 triggers recompilation. Change it so files are only upserted to the editor (for the code tab) but NOT triggering `liveCompiledHTML` recomputation:
 
-### Health Check Removal
+```typescript
+useEffect(() => {
+  if (isStreamingPreview && partialFiles.length > 0) {
+    for (const file of partialFiles) upsertFile(file.path, file.content);
+    const lastFile = partialFiles[partialFiles.length - 1];
+    if (lastFile && rightTab === 'code') {
+      setActiveFile(lastFile.path);
+    }
+  }
+}, [partialFiles, isStreamingPreview]);
+```
 
-The current flow:
-1. User clicks "Send"
-2. `checkGatewayHealth()` fires a HEAD request
-3. HEAD fails (CORS) -> toast "AI may be slow"
-4. Actual request fires and works fine
+This part stays the same (files still appear in the editor), but since `compiledHTML` no longer reads `liveCompiledHTML` during generation, the preview won't update until the build finishes.
 
-New flow:
-1. User clicks "Send"
-2. Request fires directly
-3. If it fails, the error classifier handles it with specific guidance
+### 2. `src/components/ai-builder/BuilderPreviewPanel.tsx`
 
-This is simpler, faster (no extra network request), and eliminates false positives entirely.
+**Ensure SkeletonPreview shows when `html` is null during generation:**
+
+The existing logic on line 412-445 already handles this correctly:
+- `html` exists -> show iframe
+- `html` is null AND `isGenerating` -> show `SkeletonPreview`
+- `html` is null AND not generating -> show placeholder
+
+No changes needed here since setting `compiledHTML = stableHTML` (which is `null` on first build) will naturally trigger the `SkeletonPreview` path.
+
+## What This Achieves
+
+- **No more "Resource Load Error"** -- the iframe never sees incomplete HTML
+- **No frozen/slow UI** -- no mid-build recompilation or iframe reloads
+- **Lower memory usage** -- the iframe DOM is not created until the build is done
+- **Lovable-style UX** -- skeleton during build, full preview when complete
+- **Existing hot-patch behavior preserved** -- manual edits after build still hot-patch via CSS
+
+## Files Changed
+
+| File | Change |
+|------|--------|
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Remove `liveCompiledHTML` fallback so `compiledHTML` is `null` until build completes |
 
