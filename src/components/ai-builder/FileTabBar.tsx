@@ -6,6 +6,8 @@ interface FileTabBarProps {
   openPaths: string[];
   activePath: string | null;
   dirtyFiles?: Set<string>;
+  /** Path of the file currently being streamed by the AI */
+  streamingFilePath?: string | null;
   onSelect: (path: string) => void;
   onClose: (path: string) => void;
   onReorder?: (paths: string[]) => void;
@@ -25,7 +27,7 @@ function getTabIcon(path: string) {
   }
 }
 
-export function FileTabBar({ openPaths, activePath, dirtyFiles, onSelect, onClose, onReorder }: FileTabBarProps) {
+export function FileTabBar({ openPaths, activePath, dirtyFiles, streamingFilePath, onSelect, onClose, onReorder }: FileTabBarProps) {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const dragIndexRef = useRef<number | null>(null);
 
@@ -65,6 +67,7 @@ export function FileTabBar({ openPaths, activePath, dirtyFiles, onSelect, onClos
         const fileName = path.split('/').pop()!;
         const isActive = path === activePath;
         const isDirty = dirtyFiles?.has(path);
+        const isStreamingThis = streamingFilePath === path;
         return (
           <button
             key={path}
@@ -84,7 +87,10 @@ export function FileTabBar({ openPaths, activePath, dirtyFiles, onSelect, onClos
           >
             {getTabIcon(path)}
             <span>{fileName}</span>
-            {isDirty && (
+            {isStreamingThis && (
+              <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
+            )}
+            {isDirty && !isStreamingThis && (
               <div className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
             )}
             <button
