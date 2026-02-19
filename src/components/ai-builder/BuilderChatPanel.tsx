@@ -21,6 +21,7 @@ import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
 import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, generateIntentSuggestions, analyzeConversationComplexity, detectCommunicationStyle, detectWebSearchIntent, detectURLCloneIntent, type ContextBudgetInfo } from './SupabaseConversational';
 import { StarterTemplatePicker } from './StarterTemplatePicker';
+import { MigrationApprovalCard, type MigrationBlock } from './MigrationApprovalCard';
 import { StreamingText, StreamingCursor, ElapsedTimer } from './StreamingText';
 
 /** Small component to avoid hooks-in-render violation */
@@ -100,6 +101,8 @@ interface BuilderChatPanelProps {
   onOpenEditHistory?: () => void;
   onSelectStarterTemplate?: (template: import('./AppStarterTemplates').AppStarterTemplate) => void;
   onReview?: () => void;
+  supabaseConfig?: { url: string; anonKey: string } | null;
+  onUpdateMessages?: (updater: (prev: BuilderMessage[]) => BuilderMessage[]) => void;
 }
 
 
@@ -165,6 +168,8 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
   }
 
   let text = textLines.join('\n').trim();
+  // Strip migration blocks from display text
+  text = text.replace(/===MIGRATION:\s*.+?===\n[\s\S]*?===END_MIGRATION===/g, '').trim();
   // Strip code blocks (html, css, js, etc.)
   text = text.replace(/```[\w]*\n?[\s\S]*?```/g, '').trim();
   // Hide raw JSON planning objects (approach, steps, filesToCreate, etc.)
@@ -297,6 +302,7 @@ export function BuilderChatPanel({
   onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates, onFixError,
   onForkFromMessage, onRevertToMessage, selectedModel, onModelChange,
   onToggleVisualEdit, isVisualEditActive, onOpenEditHistory, onSelectStarterTemplate, onReview,
+  supabaseConfig, onUpdateMessages,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -706,6 +712,26 @@ export function BuilderChatPanel({
               <span className="flex items-center gap-1 text-amber-400/60"><AlertTriangle className="h-3 w-3" />{msg.buildSummary.validationErrors} issue{msg.buildSummary.validationErrors !== 1 ? 's' : ''}</span>
             )}
           </motion.div>
+        )}
+
+        {/* Migration approval cards (Phase 14) */}
+        {msg.migrations && msg.migrations.length > 0 && (
+          <div className="space-y-2">
+            {msg.migrations.map((migration) => (
+              <MigrationApprovalCard
+                key={migration.id}
+                migration={migration}
+                supabaseConfig={supabaseConfig || null}
+                onStatusChange={(id, status, result) => {
+                  onUpdateMessages?.(prev => prev.map(m => 
+                    m.id === msg.id && m.migrations
+                      ? { ...m, migrations: m.migrations.map(mig => mig.id === id ? { ...mig, status, ...result } : mig) }
+                      : m
+                  ));
+                }}
+              />
+            ))}
+          </div>
         )}
 
         {/* Bottom action bar — Lovable style */}

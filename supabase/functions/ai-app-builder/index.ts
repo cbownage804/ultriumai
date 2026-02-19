@@ -412,21 +412,29 @@ When a user asks to create tables, define a schema, set up a database, or descri
    - What the RLS policies do
    - Any indexes or constraints you added and why
 
-6. GUIDE NEXT STEPS: Tell the user:
-   "📋 **To apply this schema:**
-   1. Copy the SQL above
-   2. Go to your Supabase Dashboard → SQL Editor
-   3. Paste and run it
-   
-   Or if you haven't connected Supabase yet, set it up in the ⚙️ Setup Guide first.
-   
-   Want me to also build the UI that connects to these tables?"
+6. EMIT MIGRATION BLOCKS: Instead of telling the user to copy SQL, output it in a structured migration block that the UI will render as an approval card:
+
+===MIGRATION: Description of what this migration does===
+CREATE TABLE public.todos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id),
+  title TEXT NOT NULL,
+  completed BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.todos ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own todos" ON public.todos FOR ALL USING (auth.uid() = user_id);
+===END_MIGRATION===
+
+The migration block will be shown as a styled approval card with "Apply" and "Skip" buttons. The user can apply it directly or copy the SQL. You can include multiple migration blocks in a single response.
+
+IMPORTANT: ALWAYS use ===MIGRATION: ... === / ===END_MIGRATION=== format for ANY SQL that creates, alters, or drops tables, policies, functions, triggers, or indexes. Do NOT output raw SQL code blocks for schema changes — use migration blocks instead.
 
 7. OFFER TO BUILD THE FULL STACK: After generating the schema, proactively offer to generate the frontend code that connects to it — forms, tables, CRUD operations, real-time subscriptions.
 
 EXAMPLES OF SCHEMA REQUESTS TO DETECT:
-- "Create a users table" → Generate users table SQL
-- "I need a blog with posts and comments" → Generate posts + comments tables with FKs
+- "Create a users table" → Generate users table SQL in a migration block
+- "I need a blog with posts and comments" → Generate posts + comments tables with FKs in migration blocks
 - "Set up the database for a todo app" → Generate todos table with status, priority, due_date
 - "Add a profiles table" → Generate profiles table linked to auth.users
 - "I want users to be able to save favorites" → Generate favorites junction table
