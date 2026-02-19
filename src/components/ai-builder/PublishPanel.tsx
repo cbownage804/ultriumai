@@ -1,11 +1,12 @@
 import { useState, useCallback } from 'react';
-import { X, Globe, Rocket, Check, Copy, ExternalLink, Loader2, RefreshCw, Trash2, Plus, Shield, AlertCircle, Download, FileArchive, Container, Smartphone, Wifi, Package, ChevronLeft, Pencil, Users, FileText, Link } from 'lucide-react';
+import { X, Globe, Rocket, Check, Copy, ExternalLink, Loader2, RefreshCw, Trash2, Plus, Shield, AlertCircle, Download, FileArchive, Container, Smartphone, Wifi, Package, ChevronLeft, Pencil, Users, FileText, Link, RotateCcw, Eye, FileCode, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { exportProject, type ExportMode, type ExportContext, type EdgeFunctionMeta } from './exportProject';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import type { SupabaseConfig, StripeConfig, ServiceKey, EnvVar } from './ProjectSettings';
+import type { DeploymentRecord } from '@/hooks/useProjectPersistence';
 
 interface CustomDomain {
   id: string;
@@ -14,16 +15,6 @@ interface CustomDomain {
   isPrimary: boolean;
   addedAt: Date;
   sslStatus: 'provisioning' | 'active' | 'failed';
-}
-
-interface DeployHistory {
-  id: string;
-  version: string;
-  timestamp: Date;
-  status: 'success' | 'failed' | 'building';
-  url?: string;
-  fileCount: number;
-  duration?: number;
 }
 
 interface PublishPanelProps {
@@ -44,45 +35,52 @@ interface PublishPanelProps {
   edgeFunctions?: EdgeFunctionMeta[];
   storageBuckets?: string[];
   authProviders?: string[];
+  deployHistory?: DeploymentRecord[];
+  onRollback?: (deploymentId: string) => Promise<void>;
 }
 
-export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectName, hasFiles, onPublish, onUnpublish, files = [], supabaseConfig, stripeConfig, serviceKeys, envVars, cdnPackages, edgeFunctions, storageBuckets, authProviders }: PublishPanelProps) {
+export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectName, hasFiles, onPublish, onUnpublish, files = [], supabaseConfig, stripeConfig, serviceKeys, envVars, cdnPackages, edgeFunctions, storageBuckets, authProviders, deployHistory: externalHistory = [], onRollback }: PublishPanelProps) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [customDomains, setCustomDomains] = useState<CustomDomain[]>([]);
-  const [deployHistory, setDeployHistory] = useState<DeployHistory[]>([]);
   const [newDomain, setNewDomain] = useState('');
   const [showAddDomain, setShowAddDomain] = useState(false);
   const [activeSection, setActiveSection] = useState<'deploy' | 'export' | 'domains' | 'history'>('deploy');
   const [showEditSettings, setShowEditSettings] = useState(false);
+  const [showDeployPreview, setShowDeployPreview] = useState(false);
   const [accessMode, setAccessMode] = useState<'public' | 'password'>('public');
   const [siteTitle, setSiteTitle] = useState(projectName);
   const [siteDescription, setSiteDescription] = useState('');
+  const [rollingBack, setRollingBack] = useState<string | null>(null);
 
   const hasIntegrations = !!(supabaseConfig || stripeConfig || (serviceKeys && serviceKeys.length > 0));
+
+  // Compute deploy stats for preview
+  const totalSizeKB = files.reduce((sum, f) => sum + new Blob([f.content]).size, 0) / 1024;
+  const issueCount = files.filter(f => {
+    const c = f.content.toLowerCase();
+    return c.includes('todo:') || c.includes('fixme') || c.includes('console.log(');
+  }).length;
 
   const handlePublish = useCallback(async () => {
     setIsPublishing(true);
     try {
       await onPublish();
-      setDeployHistory(prev => [{
-        id: crypto.randomUUID(),
-        version: `v${prev.length + 1}`,
-        timestamp: new Date(),
-        status: 'success' as const,
-        url: publishedUrl || undefined,
-        fileCount: 0,
-      }, ...prev].slice(0, 50));
     } catch (e) {
-      setDeployHistory(prev => [{
-        id: crypto.randomUUID(),
-        version: `v${prev.length + 1}`,
-        timestamp: new Date(),
-        status: 'failed' as const,
-        fileCount: 0,
-      }, ...prev].slice(0, 50));
+      // Error handled by parent
     }
     setIsPublishing(false);
-  }, [onPublish, publishedUrl]);
+    setShowDeployPreview(false);
+  }, [onPublish]);
+
+  const handleRollback = useCallback(async (deploymentId: string) => {
+    if (!onRollback) return;
+    setRollingBack(deploymentId);
+    try {
+      await onRollback(deploymentId);
+    } finally {
+      setRollingBack(null);
+    }
+  }, [onRollback]);
 
   const addDomain = useCallback(() => {
     const d = newDomain.trim().toLowerCase();
@@ -216,33 +214,77 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
               </div>
 
               {/* Deploy button */}
-              <button
-                onClick={handlePublish}
-                disabled={!hasFiles || isPublishing}
-                className={cn(
-                  "w-full h-11 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all",
-                  hasFiles
-                    ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 shadow-lg shadow-cyan-500/20"
-                    : "bg-white/5 text-white/20 cursor-not-allowed"
-                )}
-              >
-                {isPublishing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Publishing...
-                  </>
-                ) : publishedUrl ? (
-                  <>
-                    <RefreshCw className="h-4 w-4" />
-                    Update Production
-                  </>
-                ) : (
-                  <>
-                    <Rocket className="h-4 w-4" />
-                    Publish to Production
-                  </>
-                )}
-              </button>
+              {/* Deploy Preview Card */}
+              {showDeployPreview && (
+                <div className="p-4 rounded-xl bg-white/[0.03] border border-cyan-500/20 space-y-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Eye className="h-3.5 w-3.5 text-cyan-400" />
+                    <span className="text-xs font-medium text-white/70">Deploy Preview</span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="p-2 rounded-lg bg-white/[0.03] text-center">
+                      <span className="text-[16px] font-bold text-white/70">{files.length}</span>
+                      <span className="text-[9px] text-white/30 block mt-0.5">Files</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white/[0.03] text-center">
+                      <span className="text-[16px] font-bold text-white/70">{totalSizeKB.toFixed(0)}</span>
+                      <span className="text-[9px] text-white/30 block mt-0.5">KB Total</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white/[0.03] text-center">
+                      <span className={cn("text-[16px] font-bold", issueCount > 0 ? "text-amber-400" : "text-emerald-400")}>{issueCount}</span>
+                      <span className="text-[9px] text-white/30 block mt-0.5">Warnings</span>
+                    </div>
+                  </div>
+
+                  {issueCount > 0 && (
+                    <div className="p-2 rounded-lg bg-amber-500/5 border border-amber-500/10 flex items-start gap-2">
+                      <AlertCircle className="h-3 w-3 text-amber-400 shrink-0 mt-0.5" />
+                      <span className="text-[10px] text-amber-400/70">{issueCount} file(s) contain TODOs, FIXMEs, or console.log statements</span>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button onClick={() => setShowDeployPreview(false)} className="flex-1 h-9 rounded-lg text-[12px] text-white/40 hover:text-white/60 bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handlePublish}
+                      disabled={isPublishing}
+                      className="flex-1 h-9 rounded-lg text-[12px] font-medium bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 flex items-center justify-center gap-1.5 transition-all"
+                    >
+                      {isPublishing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Rocket className="h-3.5 w-3.5" />}
+                      {isPublishing ? 'Publishing...' : 'Confirm Deploy'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Deploy button — shows preview first */}
+              {!showDeployPreview && (
+                <button
+                  onClick={() => setShowDeployPreview(true)}
+                  disabled={!hasFiles || isPublishing}
+                  className={cn(
+                    "w-full h-11 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all",
+                    hasFiles
+                      ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 shadow-lg shadow-cyan-500/20"
+                      : "bg-white/5 text-white/20 cursor-not-allowed"
+                  )}
+                >
+                  {publishedUrl ? (
+                    <>
+                      <RefreshCw className="h-4 w-4" />
+                      Update Production
+                    </>
+                  ) : (
+                    <>
+                      <Rocket className="h-4 w-4" />
+                      Publish to Production
+                    </>
+                  )}
+                </button>
+              )}
 
               {/* Edit Settings button */}
               <button
@@ -590,27 +632,52 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
           {/* History Section */}
           {activeSection === 'history' && (
             <div className="p-5 space-y-2">
-              {deployHistory.length === 0 ? (
+              {externalHistory.length === 0 ? (
                 <div className="py-8 text-center">
                   <Rocket className="h-10 w-10 text-white/10 mx-auto mb-2" />
                   <p className="text-[11px] text-white/25">No deploys yet</p>
                 </div>
               ) : (
-                deployHistory.map(deploy => (
+                externalHistory.map((deploy, idx) => (
                   <div key={deploy.id} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/[0.04]">
                     <div className="flex items-center gap-3">
                       <div className={cn("h-2 w-2 rounded-full", deploy.status === 'success' ? 'bg-emerald-400' : deploy.status === 'building' ? 'bg-amber-400 animate-pulse' : 'bg-red-400')} />
                       <div>
-                        <span className="text-[11px] font-medium text-white/60">{deploy.version}</span>
+                        <span className="text-[11px] font-medium text-white/60">v{deploy.version}</span>
                         <span className="text-[10px] text-white/25 ml-2">{deploy.timestamp.toLocaleString()}</span>
+                        {deploy.totalSizeKB > 0 && (
+                          <span className="text-[9px] text-white/15 ml-2">{deploy.totalSizeKB}KB</span>
+                        )}
+                        {deploy.duration && (
+                          <span className="text-[9px] text-white/15 ml-1">({(deploy.duration / 1000).toFixed(1)}s)</span>
+                        )}
                       </div>
                     </div>
-                    {deploy.status === 'success' && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-medium">Success</span>
-                    )}
-                    {deploy.status === 'failed' && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 font-medium">Failed</span>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {deploy.status === 'success' && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-medium">
+                          {idx === 0 ? 'Current' : 'Success'}
+                        </span>
+                      )}
+                      {deploy.status === 'failed' && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 font-medium">Failed</span>
+                      )}
+                      {/* Rollback button for non-current successful deploys */}
+                      {deploy.status === 'success' && idx > 0 && deploy.compiledHtml && onRollback && (
+                        <button
+                          onClick={() => handleRollback(deploy.id)}
+                          disabled={!!rollingBack}
+                          className="text-[9px] text-white/30 hover:text-cyan-400 px-1.5 py-0.5 rounded hover:bg-cyan-500/[0.08] transition-colors flex items-center gap-1"
+                        >
+                          {rollingBack === deploy.id ? (
+                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                          ) : (
+                            <RotateCcw className="h-2.5 w-2.5" />
+                          )}
+                          Rollback
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
