@@ -6,9 +6,11 @@ All 8 original phases are complete. This plan introduces 5 new phases that addre
 
 ---
 
-## Phase 9: Real AI Image Generation (Replace Placeholder SVGs)
+## Phase 9: Real AI Image Generation (Replace Placeholder SVGs) ✅ COMPLETED
 
-**Problem**: The `AIImageGenPanel` currently generates placeholder SVG gradients instead of real images. The `image-generation` edge function uses DALL-E 3 but is disconnected from the builder's image panel.
+**Status**: ✅ Complete — Edge function rewired to Lovable AI Gateway (`gemini-2.5-flash-image` / `gemini-3-pro-image-preview`), AIImageGenPanel calls real API, image optimization pipeline created (`compressImage`, `convertToWebP`, `injectLazyLoading`).
+
+**Problem**: The `AIImageGenPanel` previously generated placeholder SVG gradients instead of real images.
 
 **Changes**:
 

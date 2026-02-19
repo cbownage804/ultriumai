@@ -4,16 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { ImagePlus, Wand2, Download, Copy, Loader2, Sparkles, X } from 'lucide-react';
+import { ImagePlus, Wand2, Download, Copy, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { optimizeImage, getDataUrlSizeKB } from '@/utils/imageOptimization';
 
 interface GeneratedImage {
   id: string;
   prompt: string;
-  url: string; // data URL or blob URL
+  url: string;
   timestamp: Date;
   dimensions: { width: number; height: number };
+  sizeKB?: number;
+  format?: string;
 }
 
 interface AIImageGenPanelProps {
@@ -42,61 +46,75 @@ export function AIImageGenPanel({ open, onClose, onInsertAsAsset }: AIImageGenPa
   const [generated, setGenerated] = useState<GeneratedImage[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
+  const [quality, setQuality] = useState<'standard' | 'high'>('standard');
+  const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) return;
     setIsGenerating(true);
+    setError(null);
 
-    const fullPrompt = selectedStyle ? `${prompt}. Style: ${selectedStyle}. Ultra high resolution.` : `${prompt}. Ultra high resolution.`;
+    const styleStr = selectedStyle ? ` Style: ${selectedStyle}.` : '';
+    const dimStr = width !== height ? ` Aspect ratio approximately ${width}:${height}.` : '';
+    const fullPrompt = `${prompt}.${styleStr}${dimStr} Ultra high resolution.`;
 
     try {
-      // Simulate AI image generation (in real impl, this calls the Lovable AI gateway)
-      await new Promise(r => setTimeout(r, 2500));
+      const { data, error: fnError } = await supabase.functions.invoke('image-generation', {
+        body: { prompt: fullPrompt, quality },
+      });
 
-      // Generate a placeholder SVG as demo
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-        <defs>
-          <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:hsl(${Math.random() * 360},70%,50%);stop-opacity:1" />
-            <stop offset="50%" style="stop-color:hsl(${Math.random() * 360},60%,40%);stop-opacity:1" />
-            <stop offset="100%" style="stop-color:hsl(${Math.random() * 360},80%,30%);stop-opacity:1" />
-          </linearGradient>
-        </defs>
-        <rect width="${width}" height="${height}" fill="url(#g)"/>
-        <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="system-ui" font-size="${Math.min(width, height) * 0.04}" opacity="0.8">AI Generated Image</text>
-        <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="system-ui" font-size="${Math.min(width, height) * 0.025}" opacity="0.5">${width}×${height}</text>
-      </svg>`;
+      if (fnError) {
+        throw new Error(fnError.message || 'Image generation failed');
+      }
 
-      const blob = new Blob([svg], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      const rawImageUrl = data?.image;
+      if (!rawImageUrl) {
+        throw new Error('No image returned from the AI. Try a different prompt.');
+      }
+
+      // Optimize the image client-side
+      const optimized = await optimizeImage(rawImageUrl, {
+        maxWidth: Math.max(width, height),
+        quality: 0.85,
+        tryWebP: true,
+      });
 
       const img: GeneratedImage = {
         id: crypto.randomUUID(),
         prompt: fullPrompt,
-        url,
+        url: optimized.dataUrl,
         timestamp: new Date(),
         dimensions: { width, height },
+        sizeKB: optimized.sizeKB,
+        format: optimized.format,
       };
 
       setGenerated(prev => [img, ...prev]);
       setSelectedImage(img);
       toast.success('Image generated!');
-    } catch (err) {
-      toast.error('Failed to generate image');
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to generate image';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setIsGenerating(false);
     }
-  }, [prompt, width, height, selectedStyle]);
+  }, [prompt, width, height, selectedStyle, quality]);
 
   const handleInsertAsAsset = useCallback((img: GeneratedImage) => {
-    const name = `ai-gen-${Date.now()}.svg`;
+    const ext = img.format === 'webp' ? 'webp' : img.format === 'png' ? 'png' : 'jpg';
+    const name = `ai-gen-${Date.now()}.${ext}`;
     onInsertAsAsset?.(name, img.url);
     toast.success(`Added "${name}" to project assets`);
   }, [onInsertAsAsset]);
 
   const handleCopyDataUrl = useCallback((img: GeneratedImage) => {
     navigator.clipboard.writeText(img.url);
-    toast.success('Copied image URL');
+    toast.success('Copied image data URL');
   }, []);
 
   return (
@@ -106,13 +124,13 @@ export function AIImageGenPanel({ open, onClose, onInsertAsAsset }: AIImageGenPa
           <DialogTitle className="flex items-center gap-2">
             <ImagePlus className="h-5 w-5 text-fuchsia-400" />
             AI Image Generation
+            <Badge variant="outline" className="text-[9px] ml-1">Powered by Lovable AI</Badge>
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden grid grid-cols-[1fr_280px] gap-4">
           {/* Left: Prompt + results */}
           <div className="flex flex-col gap-3 overflow-hidden">
-            {/* Prompt input */}
             <div className="space-y-2">
               <Textarea
                 value={prompt}
@@ -125,17 +143,31 @@ export function AIImageGenPanel({ open, onClose, onInsertAsAsset }: AIImageGenPa
                   <Input
                     type="number"
                     value={width}
-                    onChange={(e) => setWidth(Math.min(1920, Math.max(512, +e.target.value)))}
+                    onChange={(e) => setWidth(Math.min(1920, Math.max(256, +e.target.value)))}
                     className="w-20 h-7 text-xs bg-white/5 border-white/10"
                   />
                   <span className="text-white/30 text-xs">×</span>
                   <Input
                     type="number"
                     value={height}
-                    onChange={(e) => setHeight(Math.min(1920, Math.max(512, +e.target.value)))}
+                    onChange={(e) => setHeight(Math.min(1920, Math.max(256, +e.target.value)))}
                     className="w-20 h-7 text-xs bg-white/5 border-white/10"
                   />
                 </div>
+
+                {/* Quality toggle */}
+                <button
+                  onClick={() => setQuality(q => q === 'standard' ? 'high' : 'standard')}
+                  className={cn(
+                    "text-[10px] px-2 py-1 rounded-full border transition-colors",
+                    quality === 'high'
+                      ? "border-amber-500/50 bg-amber-500/15 text-amber-300"
+                      : "border-white/10 text-white/40 hover:text-white/60"
+                  )}
+                >
+                  {quality === 'high' ? '✨ HD' : 'Standard'}
+                </button>
+
                 <div className="flex-1" />
                 <Button
                   onClick={handleGenerate}
@@ -144,10 +176,18 @@ export function AIImageGenPanel({ open, onClose, onInsertAsAsset }: AIImageGenPa
                   className="bg-fuchsia-600 hover:bg-fuchsia-700"
                 >
                   {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Wand2 className="h-3.5 w-3.5 mr-1.5" />}
-                  Generate
+                  {isGenerating ? 'Generating...' : 'Generate'}
                 </Button>
               </div>
             </div>
+
+            {/* Error display */}
+            {error && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
 
             {/* Style chips */}
             <div className="flex flex-wrap gap-1.5">
@@ -173,6 +213,7 @@ export function AIImageGenPanel({ open, onClose, onInsertAsAsset }: AIImageGenPa
                 <div className="flex flex-col items-center justify-center h-full text-white/20 gap-2">
                   <Sparkles className="h-8 w-8" />
                   <p className="text-sm">Generated images will appear here</p>
+                  <p className="text-[10px] text-white/15">Real AI-generated images via Lovable AI Gateway</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
@@ -191,6 +232,13 @@ export function AIImageGenPanel({ open, onClose, onInsertAsAsset }: AIImageGenPa
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
                         <p className="text-[10px] text-white/70 line-clamp-2">{img.prompt}</p>
                       </div>
+                      {img.sizeKB && (
+                        <div className="absolute top-1 left-1">
+                          <Badge variant="outline" className="text-[8px] bg-black/50 border-white/10">
+                            {img.sizeKB}KB · {img.format}
+                          </Badge>
+                        </div>
+                      )}
                       <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleInsertAsAsset(img); }}
@@ -245,9 +293,16 @@ export function AIImageGenPanel({ open, onClose, onInsertAsAsset }: AIImageGenPa
                     <Copy className="h-3 w-3" />
                   </Button>
                 </div>
-                <Badge variant="outline" className="text-[10px]">
-                  {selectedImage.dimensions.width}×{selectedImage.dimensions.height}
-                </Badge>
+                <div className="flex gap-1.5">
+                  <Badge variant="outline" className="text-[10px]">
+                    {selectedImage.dimensions.width}×{selectedImage.dimensions.height}
+                  </Badge>
+                  {selectedImage.sizeKB && (
+                    <Badge variant="outline" className="text-[10px]">
+                      {selectedImage.sizeKB}KB {selectedImage.format}
+                    </Badge>
+                  )}
+                </div>
               </div>
             )}
           </div>
