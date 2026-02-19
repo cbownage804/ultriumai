@@ -217,6 +217,12 @@ export const CommandMenuPanel = lz(() => import('./CommandMenuPanel'), 'CommandM
 export const BreadcrumbPanel = lz(() => import('./BreadcrumbPanel'), 'BreadcrumbPanel');
 export const MegaMenuPanel = lz(() => import('./MegaMenuPanel'), 'MegaMenuPanel');
 export const ContextMenuPanel = lz(() => import('./ContextMenuPanel'), 'ContextMenuPanel');
+// Sprint Y: DevOps & Infrastructure (Phases 224-228)
+export const DockerComposePanel = lz(() => import('./DockerComposePanel'), 'DockerComposePanel');
+export const KubernetesPanel = lz(() => import('./KubernetesPanel'), 'KubernetesPanel');
+export const CICDPipelinePanel = lz(() => import('./CICDPipelinePanel'), 'CICDPipelinePanel');
+export const StructuredLoggerPanel = lz(() => import('./StructuredLoggerPanel'), 'StructuredLoggerPanel');
+export const HealthCheckPanel = lz(() => import('./HealthCheckPanel'), 'HealthCheckPanel');
 
 // Already-lazy panels (keep existing lazy pattern)
 export const DatabasePanel = lz(() => import('./DatabasePanel'), 'DatabasePanel');
