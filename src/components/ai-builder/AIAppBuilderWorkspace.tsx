@@ -63,6 +63,7 @@ import { PANEL_REGISTRY } from './panelRegistry';
 import { WorkspaceBottomBar } from './WorkspaceBottomBar';
 import { WorkspaceStatusBar } from './WorkspaceStatusBar';
 import { WorkspacePanelLayer } from './WorkspacePanelLayer';
+import { WorkspaceTopBar } from './WorkspaceTopBar';
 import { PanelErrorBoundary } from './PanelErrorBoundary';
 import { SafePanel } from './SafePanel';
 import { buildAuthTemplate } from './authTemplates';
@@ -330,14 +331,12 @@ import {
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import ultriumLogo from '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png';
+import { useSearchParams } from 'react-router-dom';
 
 const PanelLoader = () => <div className="flex items-center justify-center h-full text-white/15 text-xs">Loading...</div>;
 
 export function AIAppBuilderWorkspace() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const {
     messages, setMessages, isGenerating, latestFiles, previousFiles, mode, setMode, thinkingPhase, versions, setVersions,
     totalTokensUsed, contextBudget, sendMessage, stopGenerating, clearChat, restoreVersion, forwardErrorToChat,
@@ -426,7 +425,7 @@ export function AIAppBuilderWorkspace() {
   const [showFileTree, setShowFileTree] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
-  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  // showCommandPalette removed — replaced by showEnhancedPalette
   const [showFileSearch, setShowFileSearch] = useState(false);
 
   // Panel states
@@ -2097,6 +2096,11 @@ export function AIAppBuilderWorkspace() {
     showAssets: (v) => setShowAssets(v),
     showPackages: (v) => setShowPackages(v),
     showEnvVars: (v) => setShowEnvVars(v),
+    showTemplates: (v) => setShowTemplates(v),
+    showEditHistory: (v) => setShowEditHistory(v),
+    showShortcuts: (v) => setShowShortcuts(v),
+    showDiffReview: (v) => setShowDiffReview(v),
+    showQuickSwitcher: (v) => setShowQuickSwitcher(v),
   }), []);
 
   // Open any panel by stateKey
@@ -2160,210 +2164,42 @@ export function AIAppBuilderWorkspace() {
         confirmLabel="Yes, clear everything"
         variant="danger"
       />
-        {/* ── Top Bar — Lovable-style ── */}
-        <div className="flex items-center justify-between px-2 h-11 border-b border-white/[0.06] bg-[#0c0c0c] shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-          {/* LEFT: Logo + Project name dropdown */}
-          <div className="flex items-center gap-2 min-w-0">
-            {/* App logo/icon */}
-            <button onClick={() => navigate('/ai-studio')} className="shrink-0 flex items-center justify-center h-8 w-8">
-              <img src={ultriumLogo} alt="UltriumAI" className="h-8 w-8 rounded-md object-contain" />
-            </button>
-
-            {isEditingName ? (
-              <Input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                onBlur={handleRename}
-                onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-                className="h-7 w-48 text-sm bg-white/5 border-white/10 text-white"
-                autoFocus
-              />
-            ) : (
-              <ProjectDropdownMenu
-                projectName={project.name}
-                isGenerating={isGenerating}
-                hasFiles={hasFiles}
-                onRename={() => { setEditName(project.name); setIsEditingName(true); }}
-                onOpenSettings={() => setShowSettingsPanel(true)}
-                onPublish={() => setShowPublishPanel(true)}
-                onOpenBilling={() => setShowBilling(true)}
-              />
-            )}
-
-            {/* Undo/Redo with Smart Preview + History */}
-            <div className="hidden md:flex items-center gap-0.5 ml-1">
-              <UndoPreviewPopover
-                undoStack={undoStack}
-                redoStack={redoStack}
-                canUndo={canUndo}
-                canRedo={canRedo}
-                currentFiles={project.files}
-                onUndo={handleUndo}
-                onRedo={handleRedo}
-              />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={() => setShowPromptHistory(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
-                    <Clock className="h-3.5 w-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">Prompt History</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={() => setShowVersionHistory(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
-                    <History className="h-3.5 w-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">Version History</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={() => setRightTab('split')} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", rightTab === 'split' ? "text-white/60 bg-white/5" : "text-white/30 hover:text-white/60 hover:bg-white/5")}>
-                    <Columns className="h-3.5 w-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">Split View</TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-
-          {/* CENTER: View tabs + tool icons */}
-          <div className="hidden md:flex items-center gap-1">
-            {/* Preview pill (primary action) */}
-            <button
-              onClick={() => setRightTab('preview')}
-              className={cn(
-                "flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium transition-all border",
-                rightTab === 'preview'
-                  ? "bg-violet-500/20 text-violet-300 border-violet-500/30 shadow-sm shadow-violet-500/10"
-                  : "text-white/50 border-transparent hover:text-violet-300/70 hover:bg-violet-500/[0.08]"
-              )}
-            >
-              <Eye className="h-3.5 w-3.5" />
-              Preview
-            </button>
-
-            {/* Divider */}
-            <div className="h-4 w-px bg-white/[0.08] mx-0.5" />
-
-            {/* Tool icons row */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={() => setShowSupabaseIDE(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
-                  <Database className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Supabase</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={() => setRightTab('code')} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", rightTab === 'code' ? "text-white/60 bg-white/5" : "text-white/30 hover:text-white/60 hover:bg-white/5")}>
-                  <Code className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Code Editor</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button onClick={() => setShowTerminal(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
-                  <Terminal className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Terminal</TooltipContent>
-            </Tooltip>
-
-            {/* Divider */}
-            <div className="h-4 w-px bg-white/[0.08] mx-0.5" />
-
-            {/* Panels mega-menu — all 150+ tools */}
-            <ToolbarPanelsDropdown onOpenPanel={openPanelByKey} />
-          </div>
-
-          {/* RIGHT: URL bar + actions */}
-          <div className="flex items-center gap-1.5">
-            {/* URL bar */}
-            <div className="hidden lg:flex items-center gap-1.5 h-7 px-2.5 rounded-md bg-white/[0.04] border border-white/[0.06] text-white/30 text-xs min-w-[180px]">
-              <Globe className="h-3 w-3 shrink-0" />
-              <span className="truncate font-mono">{previewCurrentUrl}</span>
-            </div>
-
-            {/* Expand + Refresh */}
-            <div className="hidden md:flex items-center gap-0.5">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button className="h-7 w-7 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors">
-                    <Zap className="h-3.5 w-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">Expand</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={() => { const iframe = previewIframeRef.current; if (iframe && iframe.srcdoc) { const s = iframe.srcdoc; iframe.srcdoc = ''; requestAnimationFrame(() => { iframe.srcdoc = s; }); } }} className="h-7 w-7 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors">
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">Refresh</TooltipContent>
-              </Tooltip>
-            </div>
-
-            <div className="h-5 w-px bg-white/[0.06] mx-0.5" />
-
-            {/* Sync status indicator (Phase 10) */}
-            <SyncStatusIndicator status={idbPersistence.syncStatus} lastSaved={lastSaved} />
-
-            {/* Credits indicator */}
-            <HeaderCreditsIndicator onOpenBilling={() => setShowBilling(true)} />
-
-            <div className="h-5 w-px bg-white/[0.06] mx-0.5" />
-
-            {/* Share button */}
-            <button
-              onClick={() => setShowShareDialog(true)}
-              className="h-6 px-2 rounded-md flex items-center gap-1 text-[11px] font-medium text-cyan-400/60 hover:text-cyan-300 hover:bg-cyan-500/[0.08] transition-colors"
-            >
-              <Users className="h-3 w-3" />
-              Share
-            </button>
-
-            {/* Publish button */}
-            <button
-              onClick={() => setShowPublishPanel(true)}
-              className={cn(
-                "h-6 px-2.5 rounded-md flex items-center gap-1 text-[11px] font-medium transition-colors",
-                publishedUrl
-                  ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30"
-                  : "bg-violet-500/15 text-violet-300/80 hover:text-violet-200 hover:bg-violet-500/25 border border-violet-500/20"
-              )}
-            >
-              <Rocket className="h-3 w-3" />
-              Publish
-            </button>
-          </div>
-        </div>
-
-        {/* Orange accent line under header */}
-        <div className="h-[2px] bg-gradient-to-r from-violet-500 via-purple-500 to-violet-500 shrink-0" />
-
-        {/* Mobile tab switcher */}
-        {isMobile && (
-          <div className="flex items-center h-11 border-b border-white/[0.06] bg-black/30 shrink-0 md:hidden">
-            <button onClick={() => setMobileTab('chat')} className={cn("flex-1 h-full min-h-[44px] flex items-center justify-center gap-1.5 text-xs font-medium transition-colors", mobileTab === 'chat' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}>
-              <MessageSquare className="h-3.5 w-3.5" />
-              Chat
-            </button>
-            <button onClick={() => setMobileTab('preview' as any)} className={cn("flex-1 h-full min-h-[44px] flex items-center justify-center gap-1.5 text-xs font-medium transition-colors", mobileTab === ('preview' as any) ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}>
-              <Eye className="h-3.5 w-3.5" />
-              Preview
-            </button>
-            <button onClick={() => setMobileTab('editor')} className={cn("flex-1 h-full min-h-[44px] flex items-center justify-center gap-1.5 text-xs font-medium transition-colors", mobileTab === 'editor' ? "text-cyan-400 border-b-2 border-cyan-400" : "text-white/40")}>
-              <Code className="h-3.5 w-3.5" />
-              Code
-            </button>
-          </div>
-        )}
-
+        <WorkspaceTopBar
+          projectName={project.name}
+          isGenerating={isGenerating}
+          hasFiles={hasFiles}
+          isEditingName={isEditingName}
+          editName={editName}
+          setEditName={setEditName}
+          setIsEditingName={setIsEditingName}
+          onRename={handleRename}
+          undoStack={undoStack}
+          redoStack={redoStack}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          currentFiles={project.files}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          rightTab={rightTab}
+          setRightTab={setRightTab}
+          setShowPromptHistory={setShowPromptHistory}
+          setShowVersionHistory={setShowVersionHistory}
+          setShowSettingsPanel={setShowSettingsPanel}
+          setShowPublishPanel={setShowPublishPanel}
+          setShowBilling={setShowBilling}
+          setShowShareDialog={setShowShareDialog}
+          setShowSupabaseIDE={setShowSupabaseIDE}
+          setShowTerminal={setShowTerminal}
+          onOpenPanel={openPanelByKey}
+          previewCurrentUrl={previewCurrentUrl}
+          previewIframeRef={previewIframeRef}
+          syncStatus={idbPersistence.syncStatus}
+          lastSaved={lastSaved}
+          publishedUrl={publishedUrl}
+          isMobile={isMobile}
+          mobileTab={mobileTab}
+          setMobileTab={setMobileTab}
+        />
         {/* ── Main Content ── */}
         <div className="flex-1 overflow-hidden">
           {isMobile ? (
@@ -2707,7 +2543,9 @@ export function AIAppBuilderWorkspace() {
                   )}
 
                   <div className="flex-1 overflow-hidden flex">
-                    <FileSearchPanel open={showFileSearch} onClose={() => setShowFileSearch(false)} files={project.files} onSelectFile={(path) => { setActiveFile(path); }} onSwitchToCode={() => setRightTab('code')} onReplaceInFiles={handleReplaceInFiles} />
+                    <PanelErrorBoundary panelName="File Search">
+                      <FileSearchPanel open={showFileSearch} onClose={() => setShowFileSearch(false)} files={project.files} onSelectFile={(path) => { setActiveFile(path); }} onSwitchToCode={() => setRightTab('code')} onReplaceInFiles={handleReplaceInFiles} />
+                    </PanelErrorBoundary>
 
                     <div className="flex-1 overflow-hidden flex flex-col">
                       <div className="flex-1 overflow-hidden">
@@ -2715,7 +2553,9 @@ export function AIAppBuilderWorkspace() {
                           {hasFiles && showFileTree && !showFileSearch && (
                             <>
                               <ResizablePanel defaultSize={18} minSize={12} maxSize={28}>
-                                <ProjectFileTree files={project.files} activeFilePath={project.activeFilePath} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} onDeleteFile={deleteFile} onCreateFile={handleCreateFile} onRenameFile={handleRenameFile} />
+                                <PanelErrorBoundary panelName="File Tree">
+                                  <ProjectFileTree files={project.files} activeFilePath={project.activeFilePath} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} onDeleteFile={deleteFile} onCreateFile={handleCreateFile} onRenameFile={handleRenameFile} />
+                                </PanelErrorBoundary>
                               </ResizablePanel>
                               <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors" />
                             </>
@@ -2762,41 +2602,49 @@ export function AIAppBuilderWorkspace() {
                       {/* Bottom panels — only visible when explicitly opened */}
                       {isGenerating && (
                         <div className="shrink-0">
-                          <BuildLogPanel entries={buildLog.entries} isBuilding={isGenerating} onClear={buildLog.clear} />
+                          <PanelErrorBoundary panelName="Build Log">
+                            <BuildLogPanel entries={buildLog.entries} isBuilding={isGenerating} onClear={buildLog.clear} />
+                          </PanelErrorBoundary>
                         </div>
                       )}
                       {showTimeline && versionTimeline.totalSnapshots > 0 && (
                         <div className="shrink-0 space-y-1">
-                          <VersionTimelineSlider
-                            snapshots={versionTimeline.snapshots}
-                            currentIndex={versionTimeline.currentIndex}
-                            onNavigate={(idx) => {
-                              const files = versionTimeline.navigateToSnapshot(idx);
-                              if (files) setFiles(files);
-                            }}
-                            onExit={() => { versionTimeline.exitHistoryPreview(); setShowTimeline(false); setShowDiffViewer(false); }}
-                            getDiff={versionTimeline.getSnapshotDiff}
-                            onToggleDiff={() => setShowDiffViewer(v => !v)}
-                            showDiff={showDiffViewer}
-                          />
-                          {showDiffViewer && versionTimeline.currentIndex > 0 && (
-                            <VersionDiffViewer
-                              prevSnapshot={versionTimeline.snapshots[versionTimeline.currentIndex - 1] ?? null}
-                              currSnapshot={versionTimeline.snapshots[versionTimeline.currentIndex]}
-                              diff={versionTimeline.getSnapshotDiff(versionTimeline.currentIndex)}
-                              onClose={() => setShowDiffViewer(false)}
+                          <PanelErrorBoundary panelName="Version Timeline">
+                            <VersionTimelineSlider
+                              snapshots={versionTimeline.snapshots}
+                              currentIndex={versionTimeline.currentIndex}
+                              onNavigate={(idx) => {
+                                const files = versionTimeline.navigateToSnapshot(idx);
+                                if (files) setFiles(files);
+                              }}
+                              onExit={() => { versionTimeline.exitHistoryPreview(); setShowTimeline(false); setShowDiffViewer(false); }}
+                              getDiff={versionTimeline.getSnapshotDiff}
+                              onToggleDiff={() => setShowDiffViewer(v => !v)}
+                              showDiff={showDiffViewer}
                             />
-                          )}
+                            {showDiffViewer && versionTimeline.currentIndex > 0 && (
+                              <VersionDiffViewer
+                                prevSnapshot={versionTimeline.snapshots[versionTimeline.currentIndex - 1] ?? null}
+                                currSnapshot={versionTimeline.snapshots[versionTimeline.currentIndex]}
+                                diff={versionTimeline.getSnapshotDiff(versionTimeline.currentIndex)}
+                                onClose={() => setShowDiffViewer(false)}
+                              />
+                            )}
+                          </PanelErrorBoundary>
                         </div>
                       )}
                       {showConsole && (
                         <div className="shrink-0 max-h-[30vh]">
-                          <ConsolePanel open={showConsole} onToggle={() => setShowConsole(!showConsole)} onFixError={handleFixError} />
+                          <PanelErrorBoundary panelName="Console">
+                            <ConsolePanel open={showConsole} onToggle={() => setShowConsole(!showConsole)} onFixError={handleFixError} />
+                          </PanelErrorBoundary>
                         </div>
                       )}
                       {showTerminal && (
                         <div className="shrink-0 max-h-[30vh]">
-                          <TerminalEmulator open={showTerminal} onClose={() => setShowTerminal(false)} projectName={project.name} />
+                          <PanelErrorBoundary panelName="Terminal">
+                            <TerminalEmulator open={showTerminal} onClose={() => setShowTerminal(false)} projectName={project.name} />
+                          </PanelErrorBoundary>
                         </div>
                       )}
                     </div>
