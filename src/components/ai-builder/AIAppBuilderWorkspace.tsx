@@ -241,7 +241,7 @@ import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
   ProjectFileTree, FileTabBar, CodeEditor, ExportButton, ProjectSettings,
   GithubSyncButton, VercelDeployButton, TemplateLibrary, SharePreview,
-  BranchManager, ProjectManager, CollaborativePresence, CommandPalette,
+  BranchManager, ProjectManager, CollaborativePresence,
   GeneratingOverlay, FileSearchPanel, FileBreadcrumb, VersionHistoryPanel,
   ConsolePanel, DeployDialog, EnvVarsPanel, RLSPolicyTester, FileConflictDialog,
   QuickFileSwitcher, AssetManager, PackageManager, OnboardingTour,
@@ -2499,11 +2499,11 @@ export function AIAppBuilderWorkspace() {
                     </SafePanel>
                   </div>
                 )}
-                {showPackages && (
+                <SafePanel show={showPackages} name="Package Manager">
                   <div className="w-64 border-r border-white/[0.06] bg-[#0d0d14] overflow-hidden">
                     <PackageManager packages={cdnPackages} onAddPackage={(pkg) => setCdnPackages(prev => [...prev, pkg])} onRemovePackage={(name) => setCdnPackages(prev => prev.filter(p => p.name !== name))} />
                   </div>
-                )}
+                </SafePanel>
                 <SafePanel show={showNPMManager} name="NPM Manager">
                   <NPMPackageManagerPanel
                     open={showNPMManager}
