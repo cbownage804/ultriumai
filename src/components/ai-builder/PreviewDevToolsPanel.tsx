@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, Trash2, Search, AlertTriangle, Info, XCircle, Globe, Clock, ArrowDown, ArrowUp, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { PerformanceMonitorPanel, type PerformanceMetrics } from './PerformanceMonitorPanel';
+import { AccessibilityAuditPanel, type A11yViolation } from './AccessibilityAuditPanel';
 
 interface ConsoleEntry {
   id: string;
@@ -32,6 +34,7 @@ interface PreviewDevToolsPanelProps {
   open: boolean;
   onClose: () => void;
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
+  onFixWithAI?: (prompt: string) => void;
 }
 
 const levelIcons: Record<string, React.ReactNode> = {
@@ -58,8 +61,8 @@ const statusColor = (status: number) => {
   return 'text-white/40';
 };
 
-export function PreviewDevToolsPanel({ open, onClose, iframeRef }: PreviewDevToolsPanelProps) {
-  const [tab, setTab] = useState<'console' | 'network'>('console');
+export function PreviewDevToolsPanel({ open, onClose, iframeRef, onFixWithAI }: PreviewDevToolsPanelProps) {
+  const [tab, setTab] = useState<'console' | 'network' | 'performance' | 'accessibility'>('console');
   const [consoleLogs, setConsoleLogs] = useState<ConsoleEntry[]>([]);
   const [networkLogs, setNetworkLogs] = useState<NetworkEntry[]>([]);
   const [consoleFilter, setConsoleFilter] = useState('');
@@ -67,6 +70,65 @@ export function PreviewDevToolsPanel({ open, onClose, iframeRef }: PreviewDevToo
   const [levelFilter, setLevelFilter] = useState<Set<string>>(new Set(['log', 'info', 'warn', 'error', 'debug']));
   const [selectedRequest, setSelectedRequest] = useState<NetworkEntry | null>(null);
   const consoleEndRef = useRef<HTMLDivElement>(null);
+  // Phase 43: Performance & Accessibility state
+  const [perfMetrics, setPerfMetrics] = useState<PerformanceMetrics | null>(null);
+  const [isPerfAuditing, setIsPerfAuditing] = useState(false);
+  const [a11yViolations, setA11yViolations] = useState<A11yViolation[]>([]);
+  const [isA11yAuditing, setIsA11yAuditing] = useState(false);
+  const [a11yScore, setA11yScore] = useState<number | null>(null);
+
+  const handleRunPerfAudit = useCallback(() => {
+    setIsPerfAuditing(true);
+    // Gather metrics from iframe
+    setTimeout(() => {
+      const iframe = iframeRef?.current;
+      const doc = iframe?.contentDocument;
+      const metrics: PerformanceMetrics = {
+        loadTimeMs: Math.round(performance.now()),
+        domNodes: doc?.querySelectorAll('*').length || 0,
+        bundleSizeKB: 0,
+        lcp: null,
+        cls: null,
+        inp: null,
+        jsHeapMB: null,
+        scriptCount: doc?.querySelectorAll('script').length || 0,
+        styleCount: doc?.querySelectorAll('style,link[rel=stylesheet]').length || 0,
+        imageCount: doc?.querySelectorAll('img').length || 0,
+      };
+      setPerfMetrics(metrics);
+      setIsPerfAuditing(false);
+    }, 500);
+  }, [iframeRef]);
+
+  const handleRunA11yAudit = useCallback(() => {
+    setIsA11yAuditing(true);
+    // Basic a11y checks (simplified axe-core equivalent)
+    setTimeout(() => {
+      const iframe = iframeRef?.current;
+      const doc = iframe?.contentDocument;
+      const violations: A11yViolation[] = [];
+      if (doc) {
+        // Check images without alt
+        const imgsNoAlt = doc.querySelectorAll('img:not([alt])');
+        if (imgsNoAlt.length > 0) {
+          violations.push({ id: 'image-alt', impact: 'critical', description: 'Images must have alt text', help: 'Images without alt text', helpUrl: 'https://dequeuniversity.com/rules/axe/4.7/image-alt', nodes: Array.from(imgsNoAlt).map(el => ({ html: el.outerHTML.slice(0, 200), target: [] })) });
+        }
+        // Check buttons without text
+        const emptyBtns = doc.querySelectorAll('button:empty:not([aria-label])');
+        if (emptyBtns.length > 0) {
+          violations.push({ id: 'button-name', impact: 'critical', description: 'Buttons must have discernible text', help: 'Buttons without accessible name', helpUrl: 'https://dequeuniversity.com/rules/axe/4.7/button-name', nodes: Array.from(emptyBtns).map(el => ({ html: el.outerHTML.slice(0, 200), target: [] })) });
+        }
+        // Check color contrast (simplified)
+        const lowContrast = doc.querySelectorAll('[style*="color: #ccc"], [style*="color: #ddd"]');
+        if (lowContrast.length > 0) {
+          violations.push({ id: 'color-contrast', impact: 'serious', description: 'Elements must have sufficient color contrast', help: 'Insufficient color contrast', helpUrl: 'https://dequeuniversity.com/rules/axe/4.7/color-contrast', nodes: Array.from(lowContrast).map(el => ({ html: (el as HTMLElement).outerHTML.slice(0, 200), target: [] })) });
+        }
+      }
+      setA11yViolations(violations);
+      setA11yScore(violations.length === 0 ? 100 : Math.max(0, 100 - violations.length * 15));
+      setIsA11yAuditing(false);
+    }, 800);
+  }, [iframeRef]);
 
   // Listen for console/network messages from preview iframe via postMessage
   useEffect(() => {
@@ -168,13 +230,20 @@ export function PreviewDevToolsPanel({ open, onClose, iframeRef }: PreviewDevToo
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-0 border-b border-white/[0.06] shrink-0">
-        <button onClick={() => setTab('console')} className={cn("px-4 py-1.5 text-[11px] font-medium transition-colors border-b-2", tab === 'console' ? 'text-white/80 border-cyan-500' : 'text-white/35 border-transparent hover:text-white/55')}>
+      <div className="flex items-center gap-0 border-b border-white/[0.06] shrink-0 overflow-x-auto">
+        <button onClick={() => setTab('console')} className={cn("px-3 py-1.5 text-[11px] font-medium transition-colors border-b-2 whitespace-nowrap", tab === 'console' ? 'text-white/80 border-cyan-500' : 'text-white/35 border-transparent hover:text-white/55')}>
           Console
         </button>
-        <button onClick={() => setTab('network')} className={cn("px-4 py-1.5 text-[11px] font-medium transition-colors border-b-2", tab === 'network' ? 'text-white/80 border-cyan-500' : 'text-white/35 border-transparent hover:text-white/55')}>
+        <button onClick={() => setTab('network')} className={cn("px-3 py-1.5 text-[11px] font-medium transition-colors border-b-2 whitespace-nowrap", tab === 'network' ? 'text-white/80 border-cyan-500' : 'text-white/35 border-transparent hover:text-white/55')}>
           Network
           {networkLogs.length > 0 && <span className="ml-1 text-white/25">({networkLogs.length})</span>}
+        </button>
+        <button onClick={() => setTab('performance')} className={cn("px-3 py-1.5 text-[11px] font-medium transition-colors border-b-2 whitespace-nowrap", tab === 'performance' ? 'text-white/80 border-cyan-500' : 'text-white/35 border-transparent hover:text-white/55')}>
+          Perf
+        </button>
+        <button onClick={() => setTab('accessibility')} className={cn("px-3 py-1.5 text-[11px] font-medium transition-colors border-b-2 whitespace-nowrap", tab === 'accessibility' ? 'text-white/80 border-cyan-500' : 'text-white/35 border-transparent hover:text-white/55')}>
+          A11y
+          {a11yViolations.length > 0 && <span className="ml-1 text-red-400/60">({a11yViolations.length})</span>}
         </button>
       </div>
 
@@ -302,6 +371,27 @@ export function PreviewDevToolsPanel({ open, onClose, iframeRef }: PreviewDevToo
             )}
           </div>
         </div>
+      )}
+
+      {/* Phase 43: Performance Tab */}
+      {tab === 'performance' && (
+        <PerformanceMonitorPanel
+          metrics={perfMetrics}
+          isAuditing={isPerfAuditing}
+          onRunAudit={handleRunPerfAudit}
+          onOptimize={(prompt) => onFixWithAI?.(prompt)}
+        />
+      )}
+
+      {/* Phase 43: Accessibility Tab */}
+      {tab === 'accessibility' && (
+        <AccessibilityAuditPanel
+          violations={a11yViolations}
+          isAuditing={isA11yAuditing}
+          onRunAudit={handleRunA11yAudit}
+          onFixViolation={(v) => onFixWithAI?.(`Fix this accessibility issue in my app: ${v.help}. ${v.description}. Affected elements: ${v.nodes.map(n => n.html).join(', ')}`)}
+          score={a11yScore}
+        />
       )}
     </div>
   );

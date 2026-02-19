@@ -6,6 +6,9 @@ import { useAutoErrorRecovery } from '@/hooks/useAutoErrorRecovery';
 import type { RemoteCursor } from './CodeEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
+import { useAutoFixLoop } from '@/hooks/useAutoFixLoop';
+import { useGithubSync } from '@/hooks/useGithubSync';
+import { useInlineAIEdit } from '@/hooks/useInlineAIEdit';
 import { useBranching } from '@/hooks/useBranching';
 import { useProjectPersistence } from '@/hooks/useProjectPersistence';
 import { useDraftPersistence } from '@/hooks/useDraftPersistence';
@@ -205,6 +208,20 @@ export function AIAppBuilderWorkspace() {
     executeAgentTask, getNextQueuedTask, isAnyRunning: isAgentRunning,
   } = useAgentMode();
   const autoRecovery = useAutoErrorRecovery();
+
+  // Phase 47: Wire useAutoFixLoop for structured error auto-fix
+  const autoFixLoop = useAutoFixLoop({
+    maxAttempts: 3,
+    baseDelayMs: 500,
+    onSendFix: (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true),
+  });
+
+  // Phase 46: Wire useGithubSync
+  const githubSync = useGithubSync();
+
+  // Phase 45: Wire useInlineAIEdit
+  const inlineAIEdit = useInlineAIEdit((prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel));
+
   const versionTimeline = useVersionTimeline();
   const buildLog = useBuildLog();
   const smokeTest = usePostBuildSmokeTest(buildLog.addEntry);
@@ -901,7 +918,7 @@ export function AIAppBuilderWorkspace() {
     sendMessage(`${diagnosisContext}\n\nFix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, fixAttemptCount, lastFixError, getLastAIResponse]);
 
-  // Auto-fix pipeline: automatically attempt to fix preview errors (with hot recovery)
+  // Auto-fix pipeline: uses Phase 47 useAutoFixLoop + hot recovery
   const handleAutoFixError = useCallback((error: import('./ErrorConsole').PreviewError) => {
     // Forward error to chat for inline display
     forwardErrorToChat({ message: error.message, source: error.source, line: error.line });
@@ -913,16 +930,13 @@ export function AIAppBuilderWorkspace() {
       toast.info('Auto-rolled back to last working state');
       return;
     }
-    if (isGenerating || fixAttemptCount >= MAX_FIX_ATTEMPTS) return;
-    autoRecovery.attemptRecovery(error, project.files, (prompt) => {
-      const enrichedPrompt = buildErrorDiagnosisContext(
-        { message: error.message, source: error.source, line: error.line },
-        project.files,
-        undefined,
-        getLastAIResponse(),
-      ) + '\n\n' + prompt;
-      sendMessage(enrichedPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
-    });
+    if (isGenerating) return;
+    // Phase 47: Use structured auto-fix loop with exponential backoff
+    autoFixLoop.attemptFix(
+      { id: crypto.randomUUID(), message: error.message, source: error.source, line: error.line, timestamp: new Date(), type: 'error' },
+      project.files,
+      messages.slice(-4).map(m => m.content),
+    );
   }, [isGenerating, fixAttemptCount, autoRecovery, project.files, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel, forwardErrorToChat, getLastAIResponse]);
 
   const handleForkFromMessage = useCallback(async (messageId: string) => {
@@ -1862,7 +1876,7 @@ export function AIAppBuilderWorkspace() {
                 )}
                 {showDevTools && (
                   <div className="w-80 border-r border-white/[0.06] overflow-hidden">
-                    <PreviewDevToolsPanel open={showDevTools} onClose={() => setShowDevTools(false)} iframeRef={previewIframeRef} />
+                    <PreviewDevToolsPanel open={showDevTools} onClose={() => setShowDevTools(false)} iframeRef={previewIframeRef} onFixWithAI={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
                   </div>
                 )}
                 {showSymbolSearch && (

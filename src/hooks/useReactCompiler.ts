@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
+import { generateImportMap, buildPackageLookup, DEFAULT_PACKAGES, type CDNPackageEntry } from '@/lib/cdnPackageRegistry';
 
 /**
  * In-Browser React Compiler
@@ -9,6 +10,7 @@ import type { ProjectFile } from './useProjectFileSystem';
  * - React 18 + ReactDOM from CDN
  * - Tailwind CSS Play CDN for utility classes
  * - Virtual module resolution between project files
+ * - ESM CDN import maps for npm package resolution (Phase 41)
  */
 
 export interface ReactCompilerResult {
@@ -127,8 +129,16 @@ export function useReactCompiler() {
             }
             return '';
           }
-          // Other external packages — skip (they need CDN injection)
-          return `// [external] ${specifier}`;
+          // Other external packages — resolve via CDN import map (Phase 41)
+          // They'll be resolved at runtime via the import map, so we use dynamic import
+          const parts: string[] = [];
+          if (defaultImport) parts.push(`const ${defaultImport} = (await import('${specifier}')).default || (await import('${specifier}'));`);
+          if (namedImports) {
+            const names = namedImports.split(',').map((n: string) => n.trim().split(/\s+as\s+/));
+            const destructure = names.map(([orig, alias]: string[]) => alias ? `${orig.trim()}: ${alias.trim()}` : orig.trim()).join(', ');
+            parts.push(`const { ${destructure} } = await import('${specifier}');`);
+          }
+          return parts.length > 0 ? parts.join('\n') : `// [external] ${specifier}`;
         }
 
         // Resolve local module
@@ -258,6 +268,7 @@ export function useReactCompiler() {
       supabaseConfig?: { url: string; anonKey: string } | null;
       stripeConfig?: { publishableKey: string } | null;
       envVars?: { key: string; value: string }[];
+      userPackages?: CDNPackageEntry[];
     }
   ): ReactCompilerResult => {
     const errors: string[] = [];
@@ -285,6 +296,13 @@ export function useReactCompiler() {
       }
     }
 
+    // Phase 41: Generate import map for NPM packages
+    const importMap = generateImportMap(options?.userPackages || []);
+    const importMapJSON = JSON.stringify({ imports: importMap }, null, 2);
+
+    // Phase 48: Detect react-router-dom usage for MemoryRouter wrapping
+    const usesReactRouter = reactFiles.some(f => /from\s+['"]react-router-dom['"]/.test(f.content));
+
     // Find the entry point (main.tsx, App.tsx, index.tsx, or first .tsx)
     const entryFile = files.find(f => f.path === 'main.tsx') ||
       files.find(f => f.path === 'src/main.tsx') ||
@@ -307,21 +325,32 @@ export function useReactCompiler() {
       mountScript = '';
     } else {
       // Auto-mount: render the App component into #root
+      // Phase 48: Wrap in MemoryRouter if react-router-dom is used
+      const routerWrapStart = usesReactRouter ? `
+    const { MemoryRouter } = await import('react-router-dom');
+    const wrappedElement = React.createElement(MemoryRouter, null, React.createElement(RootComponent));` : `
+    const wrappedElement = React.createElement(RootComponent);`;
+
       mountScript = `
+(async function() {
 try {
   const RootComponent = __modules['${appFile?.path || 'App.tsx'}']?.default || 
                          __modules['App.tsx']?.default ||
                          (typeof ${rootComponent} !== 'undefined' ? ${rootComponent} : null);
   if (RootComponent) {
+    ${routerWrapStart}
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(React.createElement(RootComponent));
+    root.render(wrappedElement);
+    window.parent.postMessage({ type: '__PREVIEW_READY__' }, '*');
   } else {
     document.getElementById('root').innerHTML = '<div style="padding:40px;text-align:center;color:#888;">No root component found. Export a default component from App.tsx.</div>';
   }
 } catch(e) {
   console.error('React mount error:', e);
   document.getElementById('root').innerHTML = '<div style="padding:40px;color:#ef4444;"><h2>React Error</h2><pre>' + e.message + '</pre></div>';
-}`;
+  window.parent.postMessage({ type: '__PREVIEW_ERROR__', error: { message: e.message, stack: e.stack } }, '*');
+}
+})();`;
     }
 
     // Collect CSS
@@ -350,6 +379,9 @@ try {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>React Preview</title>
 
+  <!-- Phase 41: ESM CDN Import Map for NPM packages -->
+  <script type="importmap">${importMapJSON}</script>
+
   <!-- Tailwind CSS Play CDN -->
   <script src="${CDN.tailwind}"></script>
 
@@ -362,7 +394,8 @@ try {
   <script>
     const SUPABASE_URL = '${options.supabaseConfig.url}';
     const SUPABASE_ANON_KEY = '${options.supabaseConfig.anonKey}';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    /* Phase 50: Avoid shadowing window.supabase SDK namespace */
+    window.__supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   </script>` : ''}
 
   ${options?.stripeConfig ? `
@@ -383,6 +416,33 @@ window.ENV = ${JSON.stringify(envObj)};
 <body>
   <div id="root"></div>
 
+  <!-- Phase 54: Render loop detector + preview timeout -->
+  <script>
+  (function(){
+    var __renderCount = 0;
+    var __renderTimer = setInterval(function(){
+      if (__renderCount > 100) {
+        clearInterval(__renderTimer);
+        window.parent.postMessage({ type: '__PREVIEW_ERROR__', error: { message: 'Infinite render loop detected. A component is re-rendering too frequently (>100/sec).', critical: true } }, '*');
+        var root = document.getElementById('root');
+        if (root) root.innerHTML = '<div style="padding:40px;color:#ef4444;font-family:system-ui"><h2>⚠️ Render Loop Detected</h2><p>A component is stuck in an infinite re-render loop. Check your useEffect dependencies and state updates.</p></div>';
+      }
+      __renderCount = 0;
+    }, 1000);
+    // Track renders by patching React.createElement
+    var origCE = React.createElement;
+    React.createElement = function() { __renderCount++; return origCE.apply(this, arguments); };
+    // Preview timeout: if no __PREVIEW_READY__ in 15s, show timeout
+    var __readyReceived = false;
+    window.addEventListener('message', function(e) { if (e.data && e.data.type === '__PREVIEW_READY__') __readyReceived = true; });
+    setTimeout(function(){
+      if (!__readyReceived && document.getElementById('root') && document.getElementById('root').innerHTML.trim().length < 10) {
+        window.parent.postMessage({ type: '__PREVIEW_ERROR__', error: { message: 'Preview timed out — no content rendered after 15 seconds.', critical: true } }, '*');
+      }
+    }, 15000);
+  })();
+  </script>
+
   <script>
     // ── Virtual module system ──
     window.__modules = {};
@@ -400,6 +460,7 @@ window.ENV = ${JSON.stringify(envObj)};
     // ── React globals available to all components ──
     const { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, Suspense, lazy, StrictMode } = React;
     const { createRoot, createPortal, flushSync } = ReactDOM;
+    ${options?.supabaseConfig ? `const supabase = window.__supabaseClient;` : ''}
 
     ${transpiledChunks.join('\n\n')}
 
