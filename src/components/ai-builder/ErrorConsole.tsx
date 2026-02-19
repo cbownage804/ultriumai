@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AlertTriangle, X, ChevronDown, ChevronUp, Zap, Bug, RotateCcw, Copy, Check, Lightbulb, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
 export interface PreviewError {
@@ -87,7 +88,12 @@ export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest,
   };
 
   return (
-    <div className="border-t border-red-500/20 bg-red-500/[0.03]">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      className="border-t border-red-500/20 bg-red-500/[0.03]"
+    >
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -118,14 +124,24 @@ export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest,
       </button>
 
       {/* Error list */}
+      <AnimatePresence>
       {isExpanded && (
-        <div className="max-h-40 overflow-auto">
-          {errors.map((err) => {
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="max-h-40 overflow-auto"
+        >
+          {errors.map((err, idx) => {
             const attemptsExhausted = (err.fixAttempts ?? 0) >= maxRetries;
             const hint = getFriendlyMessage(err.message);
             return (
-              <div
+              <motion.div
                 key={err.id}
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05, type: 'spring', stiffness: 400, damping: 30 }}
                 className={cn(
                   "flex items-start gap-2 px-3 py-2 border-t",
                   err.type === 'error' ? 'border-red-500/10' : 'border-amber-500/10'
@@ -181,13 +197,18 @@ export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest,
                     {attemptsExhausted ? 'Exhausted' : err.fixAttempts ? `Retry (${err.fixAttempts}/${maxRetries})` : 'Smart Fix'}
                   </button>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
 
           {/* Exhausted — offer alternatives */}
           {allExhausted && errorCount > 0 && (
-            <div className="px-3 py-3 border-t border-white/[0.06] bg-white/[0.02]">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="px-3 py-3 border-t border-white/[0.06] bg-white/[0.02]"
+            >
               <p className="text-[11px] text-white/50 mb-2">Auto-fix couldn't resolve this. Try one of these:</p>
               <div className="flex gap-2">
                 {onStartOver && (
@@ -210,10 +231,11 @@ export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest,
                   Copy All & Ask in Chat
                 </button>
               </div>
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       )}
-    </div>
+      </AnimatePresence>
+    </motion.div>
   );
 }

@@ -93,13 +93,28 @@ export function WelcomeOverlay({ onDismiss, onQuickStart }: WelcomeOverlayProps)
                     <X className="h-4 w-4" />
                   </button>
 
-                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.2 }} className="relative z-10">
-                    <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-violet-500/20 border border-white/[0.08] flex items-center justify-center mx-auto mb-4 shadow-lg shadow-cyan-500/10">
+                  <motion.div initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', delay: 0.2, stiffness: 200 }} className="relative z-10">
+                    <div className="absolute -inset-3 bg-cyan-500/15 rounded-full blur-xl animate-pulse" style={{ animationDuration: '3s' }} />
+                    <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-cyan-500/25 to-violet-500/25 border border-white/[0.1] flex items-center justify-center mx-auto mb-4 shadow-xl shadow-cyan-500/15">
                       <Sparkles className="h-7 w-7 text-cyan-400" />
                     </div>
                   </motion.div>
-                  <h2 className="text-xl font-bold text-white/95 relative z-10">Welcome to AI App Builder</h2>
-                  <p className="text-sm text-white/40 mt-1.5 relative z-10">Build full-stack apps with natural language — in under 60 seconds</p>
+                  <motion.h2
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-xl font-bold text-white/95 relative z-10"
+                  >
+                    Welcome to AI App Builder
+                  </motion.h2>
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    className="text-sm text-white/40 mt-1.5 relative z-10"
+                  >
+                    Build full-stack apps with natural language — in under 60 seconds
+                  </motion.p>
                 </div>
 
                 {/* Quick actions */}
