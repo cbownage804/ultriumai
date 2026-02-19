@@ -290,6 +290,17 @@ import { WebSocketPanel } from './WebSocketPanel';
 import { FileUploadPanel } from './FileUploadPanel';
 import { PaymentPanel } from './PaymentPanel';
 import { EmailTemplatePanel } from './EmailTemplatePanel';
+// Sprint P: Developer Experience (Phases 179-183)
+import { useTutorialCreator } from '@/hooks/useTutorialCreator';
+import { useCodePlayground } from '@/hooks/useCodePlayground';
+import { useCustomLinting } from '@/hooks/useCustomLinting';
+import { useDependencyGraph } from '@/hooks/useDependencyGraph';
+import { useGitBlameTimeline } from '@/hooks/useGitBlameTimeline';
+import { TutorialCreatorPanel } from './TutorialCreatorPanel';
+import { CodePlaygroundPanel } from './CodePlaygroundPanel';
+import { CustomLintingPanel } from './CustomLintingPanel';
+import { DependencyGraphPanel } from './DependencyGraphPanel';
+import { GitBlameTimelinePanel } from './GitBlameTimelinePanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -689,6 +700,17 @@ export function AIAppBuilderWorkspace() {
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [showPayments, setShowPayments] = useState(false);
   const [showEmailTemplates, setShowEmailTemplates] = useState(false);
+  // Sprint P: Developer Experience (Phases 179-183)
+  const tutorialCreator = useTutorialCreator();
+  const codePlayground = useCodePlayground();
+  const customLinting = useCustomLinting();
+  const dependencyGraph = useDependencyGraph();
+  const gitBlame = useGitBlameTimeline();
+  const [showTutorialCreator, setShowTutorialCreator] = useState(false);
+  const [showCodePlayground, setShowCodePlayground] = useState(false);
+  const [showCustomLinting, setShowCustomLinting] = useState(false);
+  const [showDepGraph, setShowDepGraph] = useState(false);
+  const [showGitBlame, setShowGitBlame] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2473,6 +2495,11 @@ export function AIAppBuilderWorkspace() {
       {showFileUpload && <FileUploadPanel open={showFileUpload} onClose={() => setShowFileUpload(false)} configs={fileUploadMgr.configs} previews={fileUploadMgr.previews} activeConfig={fileUploadMgr.getActiveConfig()} mimePresets={fileUploadMgr.MIME_PRESETS} onSetActiveConfig={fileUploadMgr.setActiveConfigId} onCreateConfig={fileUploadMgr.createConfig} onUpdateConfig={fileUploadMgr.updateConfig} onRemoveConfig={fileUploadMgr.removeConfig} onSimulateUpload={fileUploadMgr.simulateUpload} onClearPreviews={fileUploadMgr.clearPreviews} onGeneratePolicy={fileUploadMgr.generateStoragePolicy} onGenerateComponent={fileUploadMgr.generateUploadComponent} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
       {showPayments && <PaymentPanel open={showPayments} onClose={() => setShowPayments(false)} products={paymentIntegration.products} config={paymentIntegration.config} onSetConfig={paymentIntegration.setConfig} onAddProduct={paymentIntegration.addProduct} onUpdateProduct={paymentIntegration.updateProduct} onRemoveProduct={paymentIntegration.removeProduct} onGenerateCheckout={paymentIntegration.generateCheckoutCode} onGenerateWebhook={paymentIntegration.generateWebhookCode} onGeneratePricing={paymentIntegration.generatePricingComponent} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
       {showEmailTemplates && <EmailTemplatePanel open={showEmailTemplates} onClose={() => setShowEmailTemplates(false)} templates={emailTemplates.templates} activeTemplate={emailTemplates.getActiveTemplate()} presetKeys={emailTemplates.TEMPLATE_PRESETS} onSetActiveTemplate={emailTemplates.setActiveTemplateId} onCreateTemplate={emailTemplates.createTemplate} onUpdateTemplate={emailTemplates.updateTemplate} onRemoveTemplate={emailTemplates.removeTemplate} onAddVariable={emailTemplates.addVariable} onRemoveVariable={emailTemplates.removeVariable} onPreview={emailTemplates.previewWithData} onGenerateSend={emailTemplates.generateSendFunction} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} />}
+      {showTutorialCreator && <TutorialCreatorPanel tutorials={tutorialCreator.tutorials} activeTutorialId={tutorialCreator.activeTutorialId} setActiveTutorialId={tutorialCreator.setActiveTutorialId} getActiveTutorial={tutorialCreator.getActiveTutorial} previewStepIndex={tutorialCreator.previewStepIndex} setPreviewStepIndex={tutorialCreator.setPreviewStepIndex} createTutorial={tutorialCreator.createTutorial} updateTutorial={tutorialCreator.updateTutorial} removeTutorial={tutorialCreator.removeTutorial} addStep={tutorialCreator.addStep} updateStep={tutorialCreator.updateStep} removeStep={tutorialCreator.removeStep} generateTutorialCode={tutorialCreator.generateTutorialCode} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowTutorialCreator(false)} />}
+      {showCodePlayground && <CodePlaygroundPanel snippets={codePlayground.snippets} activeSnippetId={codePlayground.activeSnippetId} setActiveSnippetId={codePlayground.setActiveSnippetId} getActiveSnippet={codePlayground.getActiveSnippet} SNIPPET_TEMPLATES={codePlayground.SNIPPET_TEMPLATES} createSnippet={codePlayground.createSnippet} updateSnippet={codePlayground.updateSnippet} removeSnippet={codePlayground.removeSnippet} runSnippet={codePlayground.runSnippet} duplicateSnippet={codePlayground.duplicateSnippet} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowCodePlayground(false)} />}
+      {showCustomLinting && <CustomLintingPanel rules={customLinting.rules} results={customLinting.results} activeRuleId={customLinting.activeRuleId} setActiveRuleId={customLinting.setActiveRuleId} getActiveRule={customLinting.getActiveRule} RULE_PRESETS={customLinting.RULE_PRESETS} createRule={customLinting.createRule} updateRule={customLinting.updateRule} removeRule={customLinting.removeRule} simulateLint={customLinting.simulateLint} clearResults={customLinting.clearResults} generateEslintConfig={customLinting.generateEslintConfig} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowCustomLinting(false)} />}
+      {showDepGraph && <DependencyGraphPanel nodes={dependencyGraph.nodes} edges={dependencyGraph.edges} circularDeps={dependencyGraph.circularDeps} selectedNodeId={dependencyGraph.selectedNodeId} setSelectedNodeId={dependencyGraph.setSelectedNodeId} layout={dependencyGraph.layout} setLayout={dependencyGraph.setLayout} getSelectedNode={dependencyGraph.getSelectedNode} getNodeDependencies={dependencyGraph.getNodeDependencies} getStats={dependencyGraph.getStats} analyzeFiles={dependencyGraph.analyzeFiles} onClose={() => setShowDepGraph(false)} />}
+      {showGitBlame && <GitBlameTimelinePanel blameFiles={gitBlame.blameFiles} timeline={gitBlame.timeline} activeFileId={gitBlame.activeFileId} setActiveFileId={gitBlame.setActiveFileId} selectedLine={gitBlame.selectedLine} setSelectedLine={gitBlame.setSelectedLine} getActiveFile={gitBlame.getActiveFile} getLineInfo={gitBlame.getLineInfo} getAuthorStats={gitBlame.getAuthorStats} onClose={() => setShowGitBlame(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
