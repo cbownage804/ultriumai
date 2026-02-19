@@ -1,87 +1,100 @@
 
 
-# Speed Up AI Code Generation to Match Lovable
+# True Speed Parity with Lovable — Eliminate All Remaining Bottlenecks
 
-## Analysis: Where Time Is Being Wasted
+## Problem
 
-After tracing the full request lifecycle (user prompt -> edge function -> AI gateway -> streaming -> file parsing -> preview), here are the concrete bottlenecks:
+After the previous optimizations (removing fake delays, gating scraping, skipping context for fresh projects), the app is still noticeably slower than Lovable. The remaining bottlenecks are in the **streaming hot loop** and **pre-request context building**.
 
-### 1. Artificial Thinking Delays (3.5s wasted)
-Lines 743-745 in `useAIAppBuilder.ts` add fake "thinking phase" timers:
-- 1.5s delay before showing "planning"
-- 3.5s delay before showing "writing"
-These run BEFORE the AI even starts responding, adding 3.5s of pure dead time.
+## Root Causes (3 categories)
 
-### 2. Blocking URL Scraping (2-5s wasted)
-When the user mentions a URL, `scrapeBranding()` runs on the server BEFORE calling the AI gateway (line 456). For non-clone requests, URLs in messages still trigger scraping that blocks everything.
+### A. Streaming Hot Loop: 2-3 `setMessages` calls per SSE token
 
-### 3. Excessive Client-Side Context Computation
-Every request rebuilds the full import graph (`buildImportGraph`), scores every file by relevance, compresses conversation history, detects intents, extracts preferences, etc. For a fresh project with 0 files, this is pure overhead.
+Every single SSE token (hundreds per second) triggers:
+1. `upsertAssistant()` which calls `setMessages()` — full React state update
+2. `streaming.parseIncremental(fullContent)` — re-parses ALL content from scratch
+3. Every ~2KB: `parsePlanSteps()` + another `setMessages()` call
 
-### 4. Oversized System Prompt (~90 lines of rules)
-The `BASE_SYSTEM_PROMPT` is comprehensive but verbose. Combined with addon prompts (Supabase, Stripe, services), the system prompt can exceed 15KB. Larger prompts = slower time-to-first-token from the AI.
+This means React is reconciling the entire message list 200-500 times per second.
 
-### 5. Redundant Post-Stream Processing
-After streaming completes, `finalizeStream()` re-validates files, re-parses plan steps (already parsed during streaming), re-computes suggestions, and runs multiple iterations over the same data.
+### B. Import Graph Rebuilt Per-File During Scoring
 
-## Plan (5 targeted changes, 2 files)
+In `buildFileContext` (line 938), `buildImportGraph(files)` is called **inside** the `scored.map()` callback. This means for a project with 15 files, the import graph is rebuilt 15 times instead of once.
 
-### Change 1: Remove Artificial Thinking Delays
-**File:** `src/hooks/useAIAppBuilder.ts` (lines 742-745)
+### C. Redundant Context Layers
 
-Replace the fixed-delay thinking phases with stream-driven phases. Set "analyzing" immediately, then switch to "writing" when the first `===FILE:` token arrives in the stream (already detectable during parsing). Remove the `setTimeout` timers entirely.
+The context pipeline runs 4 separate passes over the file list:
+1. `trimForContext()` — scores and trims files
+2. `getChangedFiles()` — hashes all files
+3. `buildFileManifest()` — iterates all files again
+4. `scored.map()` — scores files a second time with import graph
 
-### Change 2: Skip Heavy Context for Fresh Projects
-**File:** `src/hooks/useAIAppBuilder.ts` (in `buildFileContext`, ~line 867)
+---
 
-When `currentFiles.length === 0` (fresh project / first prompt), skip ALL context machinery:
-- No import graph building
-- No file scoring/ranking
-- No incremental hash tracking
-- No manifest generation
-- Just send the raw user prompt directly
+## Plan (4 changes, 1 file)
 
-This eliminates ~50ms of synchronous JS on the main thread for the most common "first build" case.
+All changes are in `src/hooks/useAIAppBuilder.ts`.
 
-### Change 3: Make URL Scraping Non-Blocking on Server
-**File:** `supabase/functions/ai-app-builder/index.ts` (lines 451-458)
+### Change 1: Throttle Streaming UI Updates
 
-Only run `scrapeBranding()` when the user explicitly wants to clone/replicate a site (detected by clone-intent keywords). For all other requests that happen to contain URLs, skip scraping entirely. This eliminates 2-5s of network latency for most requests.
+Instead of calling `setMessages()` on every SSE delta, batch updates using `requestAnimationFrame`. This reduces React state updates from hundreds/second to ~60/second (one per frame).
 
-### Change 4: Condense the System Prompt
-**File:** `supabase/functions/ai-app-builder/index.ts` (lines 8-89)
+**How:** Replace the `upsertAssistant` function with a batched version:
+- Accumulate content into `fullContent` immediately (for parsing)
+- Only call `setMessages()` inside a `requestAnimationFrame` callback
+- Use a flag to prevent queuing multiple rAFs
 
-Reduce the `BASE_SYSTEM_PROMPT` by ~40% by:
-- Merging redundant sections (DESIGN PHILOSOPHY + TECHNICAL STANDARDS have overlapping rules)
-- Removing verbose examples that the model already knows (e.g., detailed CSS property listings)
-- Using shorthand notation for rule lists
-- Moving rarely-triggered sections (FIX MODE, URL SCRAPING) into conditional addons only injected when relevant
+This alone eliminates ~80% of the React reconciliation work during streaming.
 
-Smaller prompt = faster time-to-first-token from the AI gateway.
+### Change 2: Throttle `parseIncremental` Calls
 
-### Change 5: Streamline Post-Stream Finalization
-**File:** `src/hooks/useAIAppBuilder.ts` (in `finalizeStream`, ~line 1274)
+`streaming.parseIncremental(fullContent)` re-parses the entire accumulated content on every token. For a 50KB response, this means scanning 50KB of text hundreds of times.
 
-- Skip `parsePlanSteps()` call since it was already computed during streaming
-- Skip `validateGeneratedFiles()` for the initial build (no existing files to conflict with)
-- Defer `generateSuggestions()` to run after `setIsGenerating(false)` so the UI unblocks immediately
+**How:** Only call `parseIncremental` when a meaningful amount of new content has arrived (every ~500 characters instead of every token). This reduces parse calls from hundreds to ~100 total.
+
+### Change 3: Hoist Import Graph Out of the Scoring Loop
+
+Move `buildImportGraph(files)` from inside the `scored.map()` callback (line 938) to before the loop, computing it once. Pass the pre-built graph into the scoring logic.
+
+**How:** Add `const importGraph = buildImportGraph(files);` before the `scored` array creation, then reference it directly inside the map callback instead of rebuilding it.
+
+### Change 4: Merge Plan Step Parsing Into the Batched Update
+
+Instead of a separate `setMessages` call for plan steps every ~2KB, fold the plan step computation into the same `requestAnimationFrame` batch as the content update. This eliminates the second `setMessages` call entirely.
+
+---
+
+## Technical Detail
+
+```text
+BEFORE (per SSE token):
+  fullContent += delta
+  setMessages(...)           -- React reconciliation #1
+  parseIncremental(50KB)     -- full re-parse
+  [every 2KB]: parsePlanSteps() + setMessages(...)  -- React reconciliation #2
+
+AFTER (per SSE token):
+  fullContent += delta       -- just string concatenation
+  [every frame via rAF]:
+    setMessages(...)          -- 1 React reconciliation per 16ms
+    parseIncremental(...)     -- only if 500+ new chars
+    parsePlanSteps(...)       -- folded into same update
+```
 
 ## Expected Impact
 
-| Bottleneck | Before | After | Savings |
+| Bottleneck | Before | After | Improvement |
 |---|---|---|---|
-| Fake thinking delays | 3.5s | 0s | 3.5s |
-| URL scraping (non-clone) | 2-5s | 0s | 2-5s |
-| Context building (fresh project) | ~50ms | ~1ms | 49ms |
-| System prompt size | ~6KB | ~3.5KB | Faster TTFT |
-| Post-stream processing | ~100ms | ~30ms | 70ms |
+| setMessages calls/sec | 200-500 | ~60 (rAF) | 70-88% reduction |
+| parseIncremental calls | ~500 per response | ~100 | 80% reduction |
+| Import graph builds | 15x per request | 1x | 93% reduction |
+| Plan step setMessages | Separate call every 2KB | Merged into rAF batch | Eliminated |
 
-**Total: 4-8 seconds faster per generation**, bringing it much closer to Lovable's speed. The AI model inference time itself is unchanged (that depends on the gateway), but everything around it gets dramatically tighter.
+Combined with the previous optimizations (no fake delays, gated scraping, condensed prompt, deferred suggestions), this should bring the perceived speed very close to Lovable's.
 
 ## Files to Change
 
 | File | Changes |
 |---|---|
-| `src/hooks/useAIAppBuilder.ts` | Remove fake delays, skip context for fresh projects, streamline finalization |
-| `supabase/functions/ai-app-builder/index.ts` | Condense system prompt, gate URL scraping on clone intent |
+| `src/hooks/useAIAppBuilder.ts` | Throttle streaming updates via rAF, throttle parseIncremental, hoist import graph, merge plan step updates |
 
