@@ -508,6 +508,38 @@ When the [AUTH SYSTEM] context block is present, the project already has pre-bui
 - Always include supabase.auth.onAuthStateChange() for session tracking
 - For OAuth providers (Google, GitHub), use supabase.auth.signInWithOAuth({ provider: 'google' })
 - Generate a logout button/link that calls supabase.auth.signOut()
+
+EDGE FUNCTION GENERATION (Phase 16):
+When the user's request requires server-side logic (sending emails, processing webhooks, calling external APIs with secret keys, scheduled jobs, payment processing, AI proxy calls), emit edge function code using the ===EDGE_FUNCTION: delimiter:
+
+===EDGE_FUNCTION: function-name===
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // ... function logic
+  return new Response(JSON.stringify({ success: true }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+});
+===END_EDGE_FUNCTION===
+
+EDGE FUNCTION RULES:
+- Function names must be lowercase alphanumeric with hyphens (e.g., send-welcome-email, process-webhook)
+- Always include CORS headers for browser access
+- Always handle OPTIONS preflight requests
+- Use Deno.env.get('SECRET_NAME') for secrets — the UI will detect required secrets automatically
+- Built-in secrets (SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY) are always available
+- For authenticated endpoints, validate the JWT from the Authorization header
+- The UI renders edge function blocks as deploy cards with "Deploy", "Copy", and "Skip" buttons
+- You can emit multiple ===EDGE_FUNCTION: blocks in a single response
+- In the frontend code, invoke the function using: supabase.functions.invoke('function-name', { body: { ... } })
+- NEVER use ===FILE: for edge functions — always use ===EDGE_FUNCTION: so they get the deploy UI
 `;
 
 const STRIPE_ADDON = `
