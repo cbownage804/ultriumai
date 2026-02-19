@@ -379,15 +379,26 @@ try {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>React Preview</title>
 
-  <!-- Phase 41: ESM CDN Import Map for NPM packages -->
-  <script type="importmap">${importMapJSON}</script>
-
   <!-- Tailwind CSS Play CDN -->
   <script src="${CDN.tailwind}"></script>
 
-  <!-- React 18 -->
+  <!-- React 18 (UMD globals) -->
   <script crossorigin src="${CDN.react}"></script>
   <script crossorigin src="${CDN.reactDom}"></script>
+
+  <!-- Phase 68: Import map with data: shims so await import('react') returns UMD globals -->
+  <script type="importmap">{
+    "imports": {
+      "react": "data:text/javascript,const R=window.React;export default R;export const{useState,useEffect,useCallback,useMemo,useRef,useContext,createContext,memo,forwardRef,Fragment,useReducer,useLayoutEffect,Children,cloneElement,isValidElement,createElement,Suspense,lazy,StrictMode,useId,useSyncExternalStore,useTransition,useDeferredValue}=R;",
+      "react/jsx-runtime": "data:text/javascript,const R=window.React;export const jsx=R.createElement;export const jsxs=R.createElement;export const Fragment=R.Fragment;",
+      "react-dom": "data:text/javascript,const RD=window.ReactDOM;export default RD;export const{createRoot,createPortal,flushSync}=RD;",
+      "react-dom/client": "data:text/javascript,export const{createRoot}=window.ReactDOM;",
+      ${Object.entries(importMap)
+        .filter(([k]) => !['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'].includes(k))
+        .map(([k, v]) => `"${k}": "${v}"`)
+        .join(',\n      ')}
+    }
+  }</script>
 
   ${options?.supabaseConfig ? `
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -453,11 +464,13 @@ window.ENV = ${JSON.stringify(envObj)};
   <!-- Babel Standalone for runtime JSX transpilation -->
   <script src="${CDN.babel}"></script>
 
-  <script type="text/babel" data-presets="react,typescript" data-type="module">
-    // ── Module registry for inter-file imports ──
-    window.__modules = window.__modules || {};
-
-    // ── React globals available to all components ──
+  <!-- Phase 67: Manual Babel.transform with try-catch for error capture -->
+  <script>
+  (async function() {
+    try {
+      window.__modules = window.__modules || {};
+      var code = ${JSON.stringify(`
+    // React globals available to all components
     const { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, Suspense, lazy, StrictMode } = React;
     const { createRoot, createPortal, flushSync } = ReactDOM;
     ${options?.supabaseConfig ? `const supabase = window.__supabaseClient;` : ''}
@@ -465,6 +478,23 @@ window.ENV = ${JSON.stringify(envObj)};
     ${transpiledChunks.join('\n\n')}
 
     ${mountScript}
+      `)};
+      var transformed = Babel.transform(code, {
+        presets: ['react', ['typescript', { isTSX: true, allExtensions: true }]],
+        filename: 'app.tsx',
+      });
+      var fn = new Function(transformed.code);
+      fn();
+    } catch(e) {
+      console.error('[Babel] Transpilation error:', e.message);
+      window.parent.postMessage({
+        type: '__PREVIEW_ERROR__',
+        error: { message: 'Syntax Error: ' + e.message, source: 'babel', critical: true }
+      }, '*');
+      var root = document.getElementById('root');
+      if (root) root.innerHTML = '<div style="padding:40px;color:#ef4444;font-family:system-ui"><h2>Syntax Error</h2><pre style="white-space:pre-wrap;margin-top:12px;font-size:13px;color:#fca5a5">' + e.message + '</pre></div>';
+    }
+  })();
   </script>
 
   <!-- Console/Error interceptors -->
