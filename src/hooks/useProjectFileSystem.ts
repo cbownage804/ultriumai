@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { detectReactProject } from './useReactCompiler';
 
 export interface ProjectFile {
   path: string;
@@ -179,11 +180,19 @@ export function useProjectFileSystem() {
     const { files } = project;
     if (files.length === 0) return null;
 
+    // ── React project detection: delegate to React compiler if .tsx/.jsx files exist ──
+    // When React files are present but no HTML files, this is a pure React project.
+    // The React compiler will handle the full compilation pipeline.
+    const isReact = detectReactProject(files);
+
     const htmlFiles = files.filter(f => f.language === 'html');
     const cssFiles = files.filter(f => f.language === 'css');
     const jsFiles = files.filter(f => f.language === 'javascript' || f.language === 'typescript');
 
-    if (htmlFiles.length === 0) return null;
+    // For React projects without an index.html, return null to signal the workspace
+    // should use the React compiler instead
+    if (htmlFiles.length === 0 && !isReact) return null;
+    if (htmlFiles.length === 0 && isReact) return null; // Workspace handles React compilation
 
     const mainHTML = files.find(f => f.path === 'index.html') || htmlFiles[0];
     let compiled = mainHTML.content;

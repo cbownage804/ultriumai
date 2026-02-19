@@ -1,0 +1,448 @@
+import { useCallback, useRef } from 'react';
+import type { ProjectFile } from './useProjectFileSystem';
+
+/**
+ * In-Browser React Compiler
+ * 
+ * Detects React (.tsx/.jsx) projects and compiles them for preview using:
+ * - @babel/standalone (CDN) for JSX/TSX transpilation
+ * - React 18 + ReactDOM from CDN
+ * - Tailwind CSS Play CDN for utility classes
+ * - Virtual module resolution between project files
+ */
+
+export interface ReactCompilerResult {
+  html: string;
+  isReactProject: boolean;
+  componentCount: number;
+  errors: string[];
+}
+
+// CDN URLs for React ecosystem
+const CDN = {
+  babel: 'https://unpkg.com/@babel/standalone@7.26.5/babel.min.js',
+  react: 'https://unpkg.com/react@18.3.1/umd/react.production.min.js',
+  reactDom: 'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js',
+  tailwind: 'https://cdn.tailwindcss.com',
+} as const;
+
+/**
+ * Detect whether a set of project files constitutes a React project.
+ */
+export function detectReactProject(files: ProjectFile[]): boolean {
+  return files.some(f => /\.(tsx|jsx)$/.test(f.path));
+}
+
+/**
+ * Detect ===MODE: react=== directive in AI output.
+ */
+export function detectReactMode(content: string): boolean {
+  return /^===MODE:\s*react===$/m.test(content);
+}
+
+export function useReactCompiler() {
+  const babelLoadedRef = useRef(false);
+
+  /**
+   * Build a module map from project files for virtual import resolution.
+   * Maps module specifiers (e.g., './Header', './utils/api') to file content.
+   */
+  const buildModuleMap = useCallback((files: ProjectFile[]): Map<string, ProjectFile> => {
+    const map = new Map<string, ProjectFile>();
+    for (const f of files) {
+      // Map by full path
+      map.set(f.path, f);
+      // Map by path without extension
+      const noExt = f.path.replace(/\.(tsx?|jsx?)$/, '');
+      if (!map.has(noExt)) map.set(noExt, f);
+      // Map by ./path variants
+      map.set(`./${f.path}`, f);
+      map.set(`./${noExt}`, f);
+      // Map by bare filename stem
+      const stem = f.path.split('/').pop()?.replace(/\.\w+$/, '') || '';
+      if (stem && !map.has(stem)) map.set(stem, f);
+    }
+    return map;
+  }, []);
+
+  /**
+   * Strip TypeScript type annotations using regex (lightweight, no Babel needed for types).
+   * Handles: interface, type, enum, as X, generic brackets, return type annotations.
+   */
+  const stripTypeAnnotations = useCallback((code: string): string => {
+    let result = code;
+    // Remove interface/type/enum declarations (multi-line)
+    result = result.replace(/^(?:export\s+)?(?:interface|type|enum)\s+\w+[\s\S]*?^\}/gm, '');
+    // Remove single-line type aliases
+    result = result.replace(/^(?:export\s+)?type\s+\w+\s*=\s*[^;]+;/gm, '');
+    // Remove : Type annotations from parameters and variables (simplified)
+    result = result.replace(/: (?:React\.(?:FC|ReactNode|MouseEvent|ChangeEvent|FormEvent|CSSProperties|RefObject)(?:<[^>]+>)?|string|number|boolean|void|any|null|undefined|never|unknown|object|Record<[^>]+>|Array<[^>]+>|\w+(?:\[\])?(?:\s*\|\s*\w+(?:\[\])?)*)/g, '');
+    // Remove generic type parameters from function/component declarations
+    result = result.replace(/<(?:T|K|V|Props|State)(?:\s+extends\s+\w+)?(?:,\s*\w+(?:\s+extends\s+\w+)?)*>/g, '');
+    // Remove 'as Type' assertions
+    result = result.replace(/\s+as\s+\w+(?:<[^>]+>)?/g, '');
+    // Remove satisfies keyword
+    result = result.replace(/\s+satisfies\s+\w+/g, '');
+    return result;
+  }, []);
+
+  /**
+   * Transpile a single file's JSX/TSX content into browser-executable JS.
+   * Uses regex-based transforms (no Babel dependency for the host app).
+   */
+  const transpileFile = useCallback((file: ProjectFile, moduleMap: Map<string, ProjectFile>): string => {
+    let code = file.content;
+
+    // Step 1: Strip TypeScript if .tsx or .ts
+    if (file.path.endsWith('.tsx') || file.path.endsWith('.ts')) {
+      code = stripTypeAnnotations(code);
+    }
+
+    // Step 2: Resolve imports — replace with module map references
+    // Convert: import X from './Y' → const X = __modules['Y'].default;
+    // Convert: import { A, B } from './Y' → const { A, B } = __modules['Y'];
+    const importLines: string[] = [];
+    code = code.replace(
+      /^import\s+(?:(\w+)(?:\s*,\s*)?)?(?:\{([^}]+)\})?\s+from\s+['"]([^'"]+)['"];?\s*$/gm,
+      (_match, defaultImport, namedImports, specifier) => {
+        // Skip external package imports (react, react-dom, etc.) — these are globals
+        if (!specifier.startsWith('.') && !specifier.startsWith('/')) {
+          // Map common packages to globals
+          if (specifier === 'react') {
+            const parts: string[] = [];
+            if (defaultImport) parts.push(`const ${defaultImport} = React;`);
+            if (namedImports) {
+              const names = namedImports.split(',').map((n: string) => n.trim().split(/\s+as\s+/));
+              for (const [orig, alias] of names) {
+                parts.push(`const ${(alias || orig).trim()} = React.${orig.trim()};`);
+              }
+            }
+            return parts.join('\n');
+          }
+          if (specifier === 'react-dom' || specifier === 'react-dom/client') {
+            if (defaultImport) return `const ${defaultImport} = ReactDOM;`;
+            if (namedImports) {
+              const names = namedImports.split(',').map((n: string) => n.trim());
+              return names.map(n => `const ${n.trim()} = ReactDOM.${n.trim()};`).join('\n');
+            }
+            return '';
+          }
+          // Other external packages — skip (they need CDN injection)
+          return `// [external] ${specifier}`;
+        }
+
+        // Resolve local module
+        const resolved = moduleMap.get(specifier) ||
+          moduleMap.get(specifier.replace(/^\.\//, '')) ||
+          moduleMap.get(specifier.replace(/\.\w+$/, ''));
+        const moduleKey = resolved?.path || specifier;
+
+        const parts: string[] = [];
+        if (defaultImport) {
+          parts.push(`const ${defaultImport} = __modules['${moduleKey}']?.default || __modules['${moduleKey}'];`);
+        }
+        if (namedImports) {
+          const destructure = namedImports.split(',').map((n: string) => {
+            const [orig, alias] = n.trim().split(/\s+as\s+/);
+            return alias ? `${orig.trim()}: ${alias.trim()}` : orig.trim();
+          }).join(', ');
+          parts.push(`const { ${destructure} } = __modules['${moduleKey}'] || {};`);
+        }
+        importLines.push(moduleKey);
+        return parts.join('\n');
+      }
+    );
+
+    // Remove side-effect imports
+    code = code.replace(/^import\s+['"][^'"]+['"];?\s*$/gm, '');
+
+    // Step 3: Transform exports into module registration
+    // export default X → __modules['path'].default = X;
+    code = code.replace(
+      /^export\s+default\s+(?:function\s+(\w+)|class\s+(\w+)|(\w+))/gm,
+      (_match, fnName, className, varName) => {
+        const name = fnName || className || varName;
+        if (fnName) return `function ${name}`;
+        if (className) return `class ${name}`;
+        return name;
+      }
+    );
+
+    // export { X, Y } → already handled by import resolution
+    code = code.replace(/^export\s*\{[^}]+\}\s*;?\s*$/gm, '');
+
+    // export const/function/class X → const/function/class X (and register)
+    const exportedNames: string[] = [];
+    code = code.replace(
+      /^export\s+((?:const|let|var|function|class)\s+(\w+))/gm,
+      (_match, declaration, name) => {
+        exportedNames.push(name);
+        return declaration;
+      }
+    );
+
+    // Build module registration
+    const defaultMatch = file.content.match(/export\s+default\s+(?:function\s+|class\s+)?(\w+)/);
+    const defaultExport = defaultMatch?.[1];
+    const registration: string[] = [];
+    if (defaultExport) {
+      registration.push(`__modules['${file.path}'] = __modules['${file.path}'] || {};`);
+      registration.push(`__modules['${file.path}'].default = typeof ${defaultExport} !== 'undefined' ? ${defaultExport} : undefined;`);
+    }
+    for (const name of exportedNames) {
+      registration.push(`__modules['${file.path}'] = __modules['${file.path}'] || {};`);
+      registration.push(`__modules['${file.path}']['${name}'] = typeof ${name} !== 'undefined' ? ${name} : undefined;`);
+    }
+
+    return `/* === ${file.path} === */\n(function() {\n${code}\n${registration.join('\n')}\n})();`;
+  }, [stripTypeAnnotations]);
+
+  /**
+   * Topologically sort React files so dependencies are loaded first.
+   */
+  const sortByDependency = useCallback((files: ProjectFile[], moduleMap: Map<string, ProjectFile>): ProjectFile[] => {
+    const graph = new Map<string, Set<string>>();
+    const fileSet = new Set(files.map(f => f.path));
+
+    for (const f of files) {
+      const deps = new Set<string>();
+      const importRegex = /import\s+.*?from\s+['"]([^'"]+)['"]/g;
+      let match;
+      while ((match = importRegex.exec(f.content)) !== null) {
+        const specifier = match[1];
+        if (!specifier.startsWith('.') && !specifier.startsWith('/')) continue;
+        const resolved = moduleMap.get(specifier) ||
+          moduleMap.get(specifier.replace(/^\.\//, '')) ||
+          moduleMap.get(specifier.replace(/\.\w+$/, ''));
+        if (resolved && fileSet.has(resolved.path)) {
+          deps.add(resolved.path);
+        }
+      }
+      graph.set(f.path, deps);
+    }
+
+    // Topological sort (Kahn's algorithm)
+    const inDegree = new Map<string, number>();
+    for (const path of fileSet) inDegree.set(path, 0);
+    for (const deps of graph.values()) {
+      for (const dep of deps) {
+        inDegree.set(dep, (inDegree.get(dep) || 0) + 1);
+      }
+    }
+
+    // Wait — inDegree is reversed for topo sort. Files with no dependents go last.
+    // Actually we want: if A imports B, B should come first.
+    // So in-degree should count how many files depend ON this file.
+    // Let's just do DFS-based topo sort.
+    const visited = new Set<string>();
+    const ordered: string[] = [];
+    const visit = (path: string) => {
+      if (visited.has(path)) return;
+      visited.add(path);
+      const deps = graph.get(path) || new Set();
+      for (const dep of deps) visit(dep);
+      ordered.push(path);
+    };
+    for (const path of fileSet) visit(path);
+
+    const fileMap = new Map(files.map(f => [f.path, f]));
+    return ordered.map(p => fileMap.get(p)!).filter(Boolean);
+  }, []);
+
+  /**
+   * Compile a React project into a single HTML document for iframe preview.
+   */
+  const compileReactProject = useCallback((
+    files: ProjectFile[],
+    options?: {
+      supabaseConfig?: { url: string; anonKey: string } | null;
+      stripeConfig?: { publishableKey: string } | null;
+      envVars?: { key: string; value: string }[];
+    }
+  ): ReactCompilerResult => {
+    const errors: string[] = [];
+
+    const reactFiles = files.filter(f => /\.(tsx?|jsx?)$/.test(f.path));
+    const cssFiles = files.filter(f => f.language === 'css' || f.language === 'scss');
+    const htmlFiles = files.filter(f => f.language === 'html');
+
+    if (reactFiles.length === 0) {
+      return { html: '', isReactProject: false, componentCount: 0, errors: ['No React files found'] };
+    }
+
+    const moduleMap = buildModuleMap(files);
+
+    // Sort files by dependency order
+    const sorted = sortByDependency(reactFiles, moduleMap);
+
+    // Transpile each file
+    const transpiledChunks: string[] = [];
+    for (const file of sorted) {
+      try {
+        transpiledChunks.push(transpileFile(file, moduleMap));
+      } catch (err: any) {
+        errors.push(`Transpile error in ${file.path}: ${err.message}`);
+      }
+    }
+
+    // Find the entry point (main.tsx, App.tsx, index.tsx, or first .tsx)
+    const entryFile = files.find(f => f.path === 'main.tsx') ||
+      files.find(f => f.path === 'src/main.tsx') ||
+      files.find(f => f.path === 'index.tsx');
+    const appFile = files.find(f => f.path === 'App.tsx') ||
+      files.find(f => f.path === 'src/App.tsx') ||
+      reactFiles.find(f => /App\.(tsx|jsx)$/.test(f.path));
+
+    // Determine root component name
+    let rootComponent = 'App';
+    if (appFile) {
+      const defaultExport = appFile.content.match(/export\s+default\s+(?:function\s+|class\s+)?(\w+)/);
+      if (defaultExport) rootComponent = defaultExport[1];
+    }
+
+    // If there's a main.tsx/index.tsx with createRoot, use that pattern
+    let mountScript: string;
+    if (entryFile && /createRoot|ReactDOM\.render/.test(entryFile.content)) {
+      // The entry file handles mounting — it's already transpiled in the chunks
+      mountScript = '';
+    } else {
+      // Auto-mount: render the App component into #root
+      mountScript = `
+try {
+  const RootComponent = __modules['${appFile?.path || 'App.tsx'}']?.default || 
+                         __modules['App.tsx']?.default ||
+                         (typeof ${rootComponent} !== 'undefined' ? ${rootComponent} : null);
+  if (RootComponent) {
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(RootComponent));
+  } else {
+    document.getElementById('root').innerHTML = '<div style="padding:40px;text-align:center;color:#888;">No root component found. Export a default component from App.tsx.</div>';
+  }
+} catch(e) {
+  console.error('React mount error:', e);
+  document.getElementById('root').innerHTML = '<div style="padding:40px;color:#ef4444;"><h2>React Error</h2><pre>' + e.message + '</pre></div>';
+}`;
+    }
+
+    // Collect CSS
+    const allCSS = cssFiles.map(f => `/* ${f.path} */\n${f.content}`).join('\n\n');
+
+    // Build env injection
+    const envObj: Record<string, string> = {};
+    if (options?.envVars) {
+      for (const v of options.envVars) {
+        if (v.key) envObj[v.key] = v.value;
+      }
+    }
+
+    // Count components (functions returning JSX)
+    const componentCount = reactFiles.filter(f =>
+      /(?:function|const)\s+\w+.*(?:=>|\{)[\s\S]*?(?:return\s*\(?\s*<|=>\s*\(?\s*<)/s.test(f.content)
+    ).length;
+
+    // Check for custom HTML shell
+    const htmlShell = htmlFiles.find(f => f.path === 'index.html');
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>React Preview</title>
+
+  <!-- Tailwind CSS Play CDN -->
+  <script src="${CDN.tailwind}"></script>
+
+  <!-- React 18 -->
+  <script crossorigin src="${CDN.react}"></script>
+  <script crossorigin src="${CDN.reactDom}"></script>
+
+  ${options?.supabaseConfig ? `
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    const SUPABASE_URL = '${options.supabaseConfig.url}';
+    const SUPABASE_ANON_KEY = '${options.supabaseConfig.anonKey}';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>` : ''}
+
+  ${options?.stripeConfig ? `
+  <script src="https://js.stripe.com/v3/"></script>
+  <script>const stripe = Stripe('${options.stripeConfig.publishableKey}');</script>` : ''}
+
+  ${Object.keys(envObj).length > 0 ? `<script>window.ENV = ${JSON.stringify(envObj)};</script>` : ''}
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; }
+    ${allCSS}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    // ── Virtual module system ──
+    window.__modules = {};
+    const { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment } = React;
+    const { createRoot, createPortal } = ReactDOM;
+  </script>
+
+  <!-- Babel Standalone for runtime JSX transpilation -->
+  <script src="${CDN.babel}"></script>
+
+  <script type="text/babel" data-presets="react,typescript" data-type="module">
+    // ── Module registry for inter-file imports ──
+    window.__modules = window.__modules || {};
+
+    // ── React globals available to all components ──
+    const { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, Suspense, lazy, StrictMode } = React;
+    const { createRoot, createPortal, flushSync } = ReactDOM;
+
+    ${transpiledChunks.join('\n\n')}
+
+    ${mountScript}
+  </script>
+
+  <!-- Console/Error interceptors -->
+  <script>
+  (function(){
+    if(window.__builderInjected) return;
+    window.__builderInjected = true;
+    var origConsole = { log: console.log, warn: console.warn, error: console.error, info: console.info, debug: console.debug };
+    var seenMessages = {};
+    ['log','warn','error','info','debug'].forEach(function(level){
+      console[level] = function(){
+        origConsole[level].apply(console, arguments);
+        try {
+          var msg = Array.prototype.slice.call(arguments).map(function(a){ return typeof a === 'object' ? JSON.stringify(a,null,2) : String(a); }).join(' ');
+          var key = level + ':' + msg;
+          var now = Date.now();
+          if (seenMessages[key] && now - seenMessages[key] < 500) return;
+          seenMessages[key] = now;
+          window.parent.postMessage({ type: '__CONSOLE_LOG__', level: level, message: msg, timestamp: now }, '*');
+        } catch(e){}
+      };
+    });
+
+    // Error overlay
+    window.onerror = function(msg, src, line, col, err) {
+      window.parent.postMessage({ type: '__PREVIEW_ERROR__', error: { message: String(msg), source: src, line: line, column: col, stack: err && err.stack } }, '*');
+    };
+    window.addEventListener('unhandledrejection', function(e) {
+      window.parent.postMessage({ type: '__PREVIEW_ERROR__', error: { message: 'Unhandled Promise: ' + (e.reason?.message || String(e.reason)), stack: e.reason?.stack } }, '*');
+    });
+  })();
+  </script>
+</body>
+</html>`;
+
+    return { html, isReactProject: true, componentCount, errors };
+  }, [buildModuleMap, sortByDependency, transpileFile]);
+
+  return {
+    compileReactProject,
+    detectReactProject,
+    detectReactMode,
+    buildModuleMap,
+  };
+}
