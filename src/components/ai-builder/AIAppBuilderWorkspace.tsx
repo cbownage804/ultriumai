@@ -199,6 +199,12 @@ import { useKubernetesGenerator } from '@/hooks/useKubernetesGenerator';
 import { useCICDPipelineDesigner } from '@/hooks/useCICDPipelineDesigner';
 import { useStructuredLogger } from '@/hooks/useStructuredLogger';
 import { useHealthCheckGenerator } from '@/hooks/useHealthCheckGenerator';
+// Sprint Z
+import { useOAuthProviderSetup } from '@/hooks/useOAuthProviderSetup';
+import { useMFAFlowGenerator } from '@/hooks/useMFAFlowGenerator';
+import { useSessionManager } from '@/hooks/useSessionManager';
+import { useAPIKeyManagement } from '@/hooks/useAPIKeyManagement';
+import { usePermissionMatrixBuilder } from '@/hooks/usePermissionMatrixBuilder';
 
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
@@ -262,6 +268,8 @@ import {
   MegaMenuPanel, ContextMenuPanel,
   DockerComposePanel, KubernetesPanel, CICDPipelinePanel,
   StructuredLoggerPanel, HealthCheckPanel,
+  OAuthSetupPanel, MFAFlowPanel, SessionManagerPanel,
+  APIKeyPanel, PermissionMatrixPanel,
   DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
   EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
   BuildAnalyticsPanel as BuildAnalyticsPanelLazy,
@@ -767,6 +775,17 @@ export function AIAppBuilderWorkspace() {
   const [showCICDPipeline, setShowCICDPipeline] = useState(false);
   const [showStructuredLogger, setShowStructuredLogger] = useState(false);
   const [showHealthCheck, setShowHealthCheck] = useState(false);
+  // Sprint Z
+  const oauthSetup = useOAuthProviderSetup();
+  const mfaFlow = useMFAFlowGenerator();
+  const sessionMgr = useSessionManager();
+  const apiKeyMgmt = useAPIKeyManagement();
+  const permMatrix = usePermissionMatrixBuilder();
+  const [showOAuthSetup, setShowOAuthSetup] = useState(false);
+  const [showMFAFlow, setShowMFAFlow] = useState(false);
+  const [showSessionMgr, setShowSessionMgr] = useState(false);
+  const [showAPIKeyMgmt, setShowAPIKeyMgmt] = useState(false);
+  const [showPermMatrix, setShowPermMatrix] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2608,6 +2627,12 @@ export function AIAppBuilderWorkspace() {
       {showCICDPipeline && <CICDPipelinePanel {...cicdPipeline} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowCICDPipeline(false)} />}
       {showStructuredLogger && <StructuredLoggerPanel {...structuredLogger} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowStructuredLogger(false)} />}
       {showHealthCheck && <HealthCheckPanel {...healthCheck} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowHealthCheck(false)} />}
+      {/* Sprint Z: Auth & Access */}
+      {showOAuthSetup && <OAuthSetupPanel {...oauthSetup} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowOAuthSetup(false)} />}
+      {showMFAFlow && <MFAFlowPanel {...mfaFlow} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowMFAFlow(false)} />}
+      {showSessionMgr && <SessionManagerPanel {...sessionMgr} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowSessionMgr(false)} />}
+      {showAPIKeyMgmt && <APIKeyPanel {...apiKeyMgmt} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowAPIKeyMgmt(false)} />}
+      {showPermMatrix && <PermissionMatrixPanel {...permMatrix} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowPermMatrix(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
