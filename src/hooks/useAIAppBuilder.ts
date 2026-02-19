@@ -1392,6 +1392,32 @@ export function useAIAppBuilder() {
     });
   }, []);
 
+  /** "Try to Fix" — auto-diagnose and fix a preview error (Phase 1B) */
+  const tryToFix = useCallback(async (
+    error: { message: string; source?: string; line?: number },
+    currentFiles: ProjectFile[] = [],
+    supabaseConfig?: { url: string; anonKey: string } | null,
+    stripeConfig?: { publishableKey: string } | null,
+    serviceKeys?: { id: string; serviceId: string; apiKey: string }[],
+    model?: string,
+  ) => {
+    // Find the affected file
+    const errorFile = error.source
+      ? currentFiles.find(f => error.source?.includes(f.path))
+      : null;
+
+    // Build a targeted fix prompt
+    const fixPrompt = [
+      `Auto-fix error: "${error.message}"`,
+      error.source ? `Source: ${error.source}${error.line ? `:${error.line}` : ''}` : '',
+      errorFile ? `\nFile content (${errorFile.path}):\n\`\`\`\n${errorFile.content}\n\`\`\`` : '',
+      '\nFix this error. Return only the corrected file(s). Do NOT explain — just output the fixed code.',
+    ].filter(Boolean).join('\n');
+
+    // Send as auto-fix (no credit cost)
+    await sendMessage(fixPrompt, currentFiles, supabaseConfig, stripeConfig, serviceKeys, null, model, undefined, true);
+  }, [sendMessage]);
+
   /** Edit a previous user message and resend from that point (conversation branching) */
   const editAndResend = useCallback(async (
     messageId: string,
@@ -1471,6 +1497,7 @@ export function useAIAppBuilder() {
     clearChat,
     restoreVersion,
     forwardErrorToChat,
+    tryToFix,
     editAndResend,
     retryLastMessage,
     // Streaming preview state

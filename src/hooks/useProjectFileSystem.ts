@@ -320,6 +320,87 @@ export function useProjectFileSystem() {
       }
     }
 
+    // ── Inject error boundary & error overlay (Phase 1A) ──
+    const errorBoundaryScript = `<script>
+(function(){
+  // Global error overlay container
+  var overlay = document.createElement('div');
+  overlay.id = '__error_overlay__';
+  overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);color:#fff;font-family:system-ui,-apple-system,sans-serif;padding:40px;overflow:auto;';
+  document.addEventListener('DOMContentLoaded', function(){ document.body.appendChild(overlay); });
+
+  var errorCount = 0;
+  var MAX_ERRORS = 10;
+  var shownErrors = new Set();
+
+  function showOverlay(title, msg, stack) {
+    if (!overlay) return;
+    if (shownErrors.has(msg)) return;
+    shownErrors.add(msg);
+    errorCount++;
+    if (errorCount > MAX_ERRORS) return;
+
+    overlay.style.display = 'flex';
+    overlay.style.flexDirection = 'column';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.innerHTML = '<div style="max-width:600px;width:100%;text-align:left;">'
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">'
+      + '<div style="width:48px;height:48px;border-radius:12px;background:rgba(239,68,68,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+      + '<svg width="24" height="24" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+      + '</div>'
+      + '<div><h2 style="margin:0;font-size:20px;font-weight:700;color:#fca5a5;">' + title + '</h2>'
+      + '<p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,0.5);">An error occurred in the preview</p></div>'
+      + '</div>'
+      + '<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;margin-bottom:16px;">'
+      + '<p style="margin:0;font-size:14px;color:#fca5a5;word-break:break-word;">' + msg.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>'
+      + (stack ? '<pre style="margin:12px 0 0;font-size:11px;color:rgba(255,255,255,0.35);overflow-x:auto;white-space:pre-wrap;max-height:200px;">' + stack.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>' : '')
+      + '</div>'
+      + '<div style="display:flex;gap:8px;">'
+      + '<button onclick="document.getElementById(\\'__error_overlay__\\').style.display=\\'none\\'" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;cursor:pointer;">Dismiss</button>'
+      + '<button onclick="location.reload()" style="padding:8px 16px;border-radius:8px;border:none;background:rgba(239,68,68,0.3);color:#fca5a5;font-size:13px;cursor:pointer;">Reload</button>'
+      + '</div>'
+      + '</div>';
+
+    // Notify parent for auto-fix pipeline
+    window.parent.postMessage({ type: '__PREVIEW_CRITICAL_ERROR__', message: msg, stack: stack || '', title: title }, '*');
+  }
+
+  // Catch synchronous errors
+  window.onerror = function(msg, source, line, col, error) {
+    var stack = error && error.stack ? error.stack : '';
+    showOverlay('Runtime Error', String(msg), stack);
+    window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: String(msg), source: source || '', line: line || 0, col: col || 0, critical: true }, '*');
+    return true; // Prevent default browser error display
+  };
+
+  // Catch async errors
+  window.addEventListener('unhandledrejection', function(e) {
+    var msg = e.reason && e.reason.message ? e.reason.message : String(e.reason || 'Unknown async error');
+    var stack = e.reason && e.reason.stack ? e.reason.stack : '';
+    showOverlay('Unhandled Promise Rejection', msg, stack);
+    window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: 'Unhandled Promise: ' + msg, source: '', line: 0, critical: true }, '*');
+  });
+
+  // Catch syntax errors in dynamically loaded scripts
+  document.addEventListener('error', function(e) {
+    if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+      var src = e.target.src || e.target.href || 'unknown';
+      showOverlay('Resource Load Error', 'Failed to load: ' + src, '');
+    }
+  }, true);
+})();
+</script>`;
+
+    // Inject error boundary BEFORE </head> (early, before any app scripts)
+    if (compiled.includes('</head>')) {
+      compiled = compiled.replace('</head>', errorBoundaryScript + '\n</head>');
+    } else if (compiled.includes('<body')) {
+      compiled = compiled.replace('<body', errorBoundaryScript + '\n<body');
+    } else {
+      compiled = errorBoundaryScript + '\n' + compiled;
+    }
+
     return sanitizeTemplateLiterals(compiled);
   }, [project, sanitizeTemplateLiterals]);
 

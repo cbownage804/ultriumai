@@ -1,10 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { toast } from 'sonner';
 import {
   Copy, CheckCircle, Maximize2, Minimize2, ExternalLink, RefreshCw, Activity,
   ArrowLeft, ArrowRight, Globe, Lock, Wrench, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 import { ErrorConsole, type PreviewError } from './ErrorConsole';
 import { PreviewZoomControls } from './PreviewZoomControls';
 import { VisualEditOverlay } from './VisualEditOverlay';
@@ -175,10 +175,63 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
 </head>`
   ) : null;
 
-  // Listen for error messages from iframe
+  // ── Preview Health Monitor (Phase 1C) ──
+  const healthCheckRef = useRef<NodeJS.Timeout | null>(null);
+  const consecutiveFailsRef = useRef(0);
+  const lastGoodHtmlRef = useRef<string | null>(null);
+  const HEALTH_CHECK_INTERVAL = 2000;
+  const MAX_CONSECUTIVE_FAILS = 3;
+
+  // Track last good HTML for rollback
+  useEffect(() => {
+    if (html && !isGenerating) {
+      lastGoodHtmlRef.current = html;
+    }
+  }, [html, isGenerating]);
+
+  // Periodic health check
+  useEffect(() => {
+    if (!html || isGenerating) {
+      if (healthCheckRef.current) clearInterval(healthCheckRef.current);
+      return;
+    }
+
+    healthCheckRef.current = setInterval(() => {
+      const iframe = (iframeRef as React.RefObject<HTMLIFrameElement>)?.current;
+      if (!iframe) return;
+
+      try {
+        const doc = iframe.contentDocument;
+        if (!doc) { consecutiveFailsRef.current++; return; }
+        const body = doc.body;
+        if (!body || body.innerHTML.trim().length < 10) {
+          consecutiveFailsRef.current++;
+        } else {
+          consecutiveFailsRef.current = 0;
+        }
+      } catch {
+        // Cross-origin — assume ok
+        consecutiveFailsRef.current = 0;
+      }
+
+      if (consecutiveFailsRef.current >= MAX_CONSECUTIVE_FAILS) {
+        consecutiveFailsRef.current = 0;
+        toast.error('Preview crashed — rolled back to last working version', { duration: 4000 });
+        // Force iframe reload
+        setIframeKey(k => k + 1);
+      }
+    }, HEALTH_CHECK_INTERVAL);
+
+    return () => {
+      if (healthCheckRef.current) clearInterval(healthCheckRef.current);
+    };
+  }, [html, isGenerating, iframeRef]);
+
+  // Listen for error messages from iframe (including critical errors from error boundary)
   useEffect(() => {
     const handler = (e: MessageEvent) => {
-      if (e.data?.type === '__PREVIEW_ERROR__') {
+      if (e.data?.type === '__PREVIEW_ERROR__' || e.data?.type === '__PREVIEW_CRITICAL_ERROR__') {
+        const isCritical = e.data?.type === '__PREVIEW_CRITICAL_ERROR__' || e.data?.critical;
         const newError: PreviewError = {
           id: crypto.randomUUID(),
           message: e.data.message,
@@ -192,7 +245,7 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
           const updated = [...prev.slice(-19), newError];
           // Auto-fix pipeline: notify parent of new errors (only actual errors, not warnings)
           if (!e.data.isWarning && onAutoFixError && !isGenerating) {
-            setTimeout(() => onAutoFixError(newError), 500);
+            setTimeout(() => onAutoFixError(newError), isCritical ? 200 : 500);
           }
           return updated;
         });
