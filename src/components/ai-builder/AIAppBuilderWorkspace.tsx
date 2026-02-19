@@ -148,10 +148,26 @@ import { PromptChainPanel } from './PromptChainPanel';
 import { CodeReviewPanel } from './CodeReviewPanel';
 import { TestGeneratorPanel } from './TestGeneratorPanel';
 import { NLQueryPanel } from './NLQueryPanel';
+import { SnippetLibraryPanel } from './SnippetLibraryPanel';
+import { SplitDiffPanel } from './SplitDiffPanel';
+import { CommentPanel } from './CommentPanel';
+import { TeamActivityPanel } from './TeamActivityPanel';
+import { ApprovalPanel } from './ApprovalPanel';
+import { ForkingPanel } from './ForkingPanel';
 import { usePromptChains } from '@/hooks/usePromptChains';
 import { useAICodeReview } from '@/hooks/useAICodeReview';
 import { useTestGenerator } from '@/hooks/useTestGenerator';
 import { useNLDatabaseQuery } from '@/hooks/useNLDatabaseQuery';
+import { useMultiCursorEditor } from '@/hooks/useMultiCursorEditor';
+import { useMinimapHeatZones } from '@/hooks/useMinimapHeatZones';
+import { useSymbolNavigator } from '@/hooks/useSymbolNavigator';
+import { useSnippetLibrary } from '@/hooks/useSnippetLibrary';
+import { useSplitDiffEditor } from '@/hooks/useSplitDiffEditor';
+import { useCommentSystem } from '@/hooks/useCommentSystem';
+import { useProjectRBAC } from '@/hooks/useProjectRBAC';
+import { useTeamActivityFeed } from '@/hooks/useTeamActivityFeed';
+import { useApprovalWorkflow } from '@/hooks/useApprovalWorkflow';
+import { useProjectForking } from '@/hooks/useProjectForking';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -410,6 +426,22 @@ export function AIAppBuilderWorkspace() {
   const promptChains = usePromptChains();
   const codeReview = useAICodeReview();
   const testGenerator = useTestGenerator();
+  const multiCursorEditor = useMultiCursorEditor();
+  const minimapHeatZones = useMinimapHeatZones();
+  const symbolNavigator = useSymbolNavigator();
+  const snippetLibrary = useSnippetLibrary();
+  const splitDiffEditor = useSplitDiffEditor();
+  const commentSystem = useCommentSystem();
+  const projectRBAC = useProjectRBAC();
+  const teamActivityFeed = useTeamActivityFeed();
+  const approvalWorkflow = useApprovalWorkflow();
+  const projectForking = useProjectForking();
+  const [showSnippetLibrary, setShowSnippetLibrary] = useState(false);
+  const [showSplitDiff, setShowSplitDiff] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [showTeamActivity, setShowTeamActivity] = useState(false);
+  const [showApprovals, setShowApprovals] = useState(false);
+  const [showForking, setShowForking] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2136,6 +2168,12 @@ export function AIAppBuilderWorkspace() {
       <AIImageGenPanel open={showImageGen} onClose={() => setShowImageGen(false)} onInsertAsAsset={(name, url) => { setAssets(prev => [...prev, { id: crypto.randomUUID(), name, type: 'image' as const, dataUrl: url, size: 0, createdAt: new Date() } as any]); }} />
       <SecretsManagerPanel open={showSecretsManager} onClose={() => setShowSecretsManager(false)} onSecretsChange={(secrets) => setEnvVars(prev => { const secretKeys = new Set(secrets.map(s => s.key)); const kept = prev.filter(p => !secretKeys.has(p.key)); return [...kept, ...secrets]; })} />
       <EnhancedCommandPalette open={showEnhancedPalette} onOpenChange={setShowEnhancedPalette} files={project.files} actions={commandActions} onSelectFile={(path) => { handleSetActiveFile(path); setRightTab('code'); }} recentFiles={recentFiles} />
+      <SnippetLibraryPanel open={showSnippetLibrary} onClose={() => setShowSnippetLibrary(false)} snippets={snippetLibrary.snippets} searchQuery={snippetLibrary.searchQuery} onSearchChange={snippetLibrary.setSearchQuery} onAdd={snippetLibrary.addSnippet} onRemove={snippetLibrary.removeSnippet} onInsert={(content) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + content); } }} onExport={snippetLibrary.exportSnippets} onImport={snippetLibrary.importSnippets} />
+      <SplitDiffPanel open={showSplitDiff} onClose={() => setShowSplitDiff(false)} diff={splitDiffEditor.activeDiff} />
+      <CommentPanel open={showComments} onClose={() => setShowComments(false)} comments={commentSystem.comments} activeFile={activeFile?.path} onAdd={commentSystem.addComment} onResolve={commentSystem.resolveComment} onDelete={commentSystem.deleteComment} onNavigate={(file, line) => { setActiveFile(file); setRightTab('code'); }} unresolvedCount={commentSystem.unresolvedCount} />
+      <TeamActivityPanel open={showTeamActivity} onClose={() => setShowTeamActivity(false)} activities={teamActivityFeed.activities} filter={teamActivityFeed.filter} onFilterChange={teamActivityFeed.setFilter} getActionIcon={teamActivityFeed.getActionIcon} getActionLabel={teamActivityFeed.getActionLabel} />
+      <ApprovalPanel open={showApprovals} onClose={() => setShowApprovals(false)} requests={approvalWorkflow.requests} requireApproval={approvalWorkflow.requireApproval} onToggleRequire={approvalWorkflow.setRequireApproval} onApprove={approvalWorkflow.approve} onReject={approvalWorkflow.reject} onCancel={approvalWorkflow.cancelRequest} pendingCount={approvalWorkflow.pendingCount} />
+      <ForkingPanel open={showForking} onClose={() => setShowForking(false)} forks={projectForking.forks} transfers={projectForking.transfers} projectName={project.name} projectId={currentProjectId || ''} fileCount={project.files.length} onFork={(includeHistory) => { projectForking.forkProject(currentProjectId || '', project.name, project.files, includeHistory); toast.success('Project forked!'); }} onTransfer={(email, reason) => { projectForking.transferProject(currentProjectId || '', project.name, email, reason); toast.success('Transfer initiated'); }} />
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
