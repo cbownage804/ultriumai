@@ -217,6 +217,12 @@ import { useFacetedFilterBuilder } from '@/hooks/useFacetedFilterBuilder';
 import { useAutocompleteGenerator } from '@/hooks/useAutocompleteGenerator';
 import { useTagCategorySystem } from '@/hooks/useTagCategorySystem';
 import { useSEOMetaGenerator } from '@/hooks/useSEOMetaGenerator';
+// Sprint AC
+import { useKPIDashboardBuilder } from '@/hooks/useKPIDashboardBuilder';
+import { useAlertingRulesEngine } from '@/hooks/useAlertingRulesEngine';
+import { useAuditTrailGenerator } from '@/hooks/useAuditTrailGenerator';
+import { useClickHeatmap } from '@/hooks/useClickHeatmap';
+import { useBudgetCostMonitor } from '@/hooks/useBudgetCostMonitor';
 
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
@@ -284,8 +290,10 @@ import {
   RichTextConfigPanel, FilePreviewGenPanel, AvatarGenPanel,
   CarouselBuilderPanel, GalleryLightboxPanel,
   APIKeyPanel, PermissionMatrixPanel,
-  FullTextSearchPanel, FacetedFilterPanel, AutocompletePanel,
-  TagSystemPanel, SEOMetaPanel,
+   FullTextSearchPanel, FacetedFilterPanel, AutocompletePanel,
+   TagSystemPanel, SEOMetaPanel,
+   KPIDashboardPanel, AlertingRulesPanel, AuditTrailPanel,
+   ClickHeatmapPanel, BudgetMonitorPanel,
   
   DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
   EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
@@ -825,6 +833,17 @@ export function AIAppBuilderWorkspace() {
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [showTagSystem, setShowTagSystem] = useState(false);
   const [showSEOMeta, setShowSEOMeta] = useState(false);
+  // Sprint AC: Monitoring & Observability (Phases 244-248)
+  const kpiDashboard = useKPIDashboardBuilder();
+  const alertingRules = useAlertingRulesEngine();
+  const auditTrail = useAuditTrailGenerator();
+  const clickHeatmap = useClickHeatmap();
+  const budgetMonitor = useBudgetCostMonitor();
+  const [showKPIDashboard, setShowKPIDashboard] = useState(false);
+  const [showAlertingRules, setShowAlertingRules] = useState(false);
+  const [showAuditTrail, setShowAuditTrail] = useState(false);
+  const [showClickHeatmap, setShowClickHeatmap] = useState(false);
+  const [showBudgetMonitor, setShowBudgetMonitor] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2684,6 +2703,12 @@ export function AIAppBuilderWorkspace() {
       {showAutocomplete && <AutocompletePanel {...autocompleteGen} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowAutocomplete(false)} />}
       {showTagSystem && <TagSystemPanel {...tagSystem} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowTagSystem(false)} />}
       {showSEOMeta && <SEOMetaPanel {...seoMetaGen} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowSEOMeta(false)} />}
+      {/* Sprint AC: Monitoring & Observability */}
+      {showKPIDashboard && <KPIDashboardPanel {...kpiDashboard} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowKPIDashboard(false)} />}
+      {showAlertingRules && <AlertingRulesPanel {...alertingRules} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowAlertingRules(false)} />}
+      {showAuditTrail && <AuditTrailPanel {...auditTrail} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowAuditTrail(false)} />}
+      {showClickHeatmap && <ClickHeatmapPanel {...clickHeatmap} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowClickHeatmap(false)} />}
+      {showBudgetMonitor && <BudgetMonitorPanel {...budgetMonitor} onInsertCode={(code) => { if (activeFile) upsertFile(activeFile.path, activeFile.content + '\n' + code); }} onClose={() => setShowBudgetMonitor(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
