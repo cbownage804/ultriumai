@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, lazy, Suspense, useMemo } from 'react';
+import { useEffect, useState, useCallback, useRef, Suspense, useMemo } from 'react';
 import { useAIAppBuilder } from '@/hooks/useAIAppBuilder';
 import { useProjectFileSystem, type ProjectFile } from '@/hooks/useProjectFileSystem';
 import { useAgentMode } from '@/hooks/useAgentMode';
@@ -9,8 +9,6 @@ import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { usePromptHistory } from '@/hooks/usePromptHistory';
 import { useCodeSmellDetector } from '@/hooks/useCodeSmellDetector';
 import { useDocGenerator } from '@/hooks/useDocGenerator';
-import { PromptHistoryPanel } from './PromptHistoryPanel';
-import { UndoPreviewPopover } from './UndoPreviewPopover';
 import { useAutoFixLoop } from '@/hooks/useAutoFixLoop';
 import { useGithubSync } from '@/hooks/useGithubSync';
 import { useInlineAIEdit } from '@/hooks/useInlineAIEdit';
@@ -19,33 +17,20 @@ import { useProjectPersistence } from '@/hooks/useProjectPersistence';
 import { useDraftPersistence } from '@/hooks/useDraftPersistence';
 import { usePreviewHosting } from '@/hooks/usePreviewHosting';
 import { usePreviewCapture } from '@/hooks/usePreviewCapture';
-import { BuilderChatPanel } from './BuilderChatPanel';
-import { BuilderPreviewPanel } from './BuilderPreviewPanel';
-import { ProjectFileTree } from './ProjectFileTree';
-import { FileTabBar } from './FileTabBar';
-import { CodeEditor } from './CodeEditor';
-import { ExportButton } from './ExportButton';
-import { ProjectSettings, type SupabaseConfig, type GithubConfig, type StripeConfig, type VercelConfig, type ServiceKey, type EnvVar } from './ProjectSettings';
-import { GithubSyncButton } from './GithubSyncButton';
-import { VercelDeployButton } from './VercelDeployButton';
-import { TemplateLibrary } from './TemplateLibrary';
-import { SharePreview } from './SharePreview';
-import { BranchManager } from './BranchManager';
-import { ProjectManager } from './ProjectManager';
-import { CollaborativePresence } from './CollaborativePresence';
-import { CommandPalette } from './CommandPalette';
-import { GeneratingOverlay } from './GeneratingOverlay';
-import { FileSearchPanel } from './FileSearchPanel';
-import { FileBreadcrumb } from './FileBreadcrumb';
-import { VersionHistoryPanel } from './VersionHistoryPanel';
-import { ConsolePanel } from './ConsolePanel';
-import { DeployDialog } from './DeployDialog';
-import { EnvVarsPanel, type EnvVariable } from './EnvVarsPanel';
-import { RLSPolicyTester } from './RLSPolicyTester';
-import { FileConflictDialog } from './FileConflictDialog';
-import { QuickFileSwitcher } from './QuickFileSwitcher';
-import { AssetManager, type ProjectAsset } from './AssetManager';
-import { PackageManager, type CDNPackage } from './PackageManager';
+import type { SupabaseConfig, GithubConfig, StripeConfig, VercelConfig, ServiceKey, EnvVar } from './ProjectSettings';
+import type { KnowledgeConfig } from './KnowledgePanel';
+import type { CodeSuggestion } from './AICodeIntelligence';
+import type { TestCase } from './TestingDebugSuite';
+import type { ViewportMode } from './ResponsivePreviewBar';
+import { getViewportWidth } from './ResponsivePreviewBar';
+import type { LinkedGPTConfig } from './GPTConnectorPanel';
+import type { EnvVariable } from './EnvVarsPanel';
+import type { ProjectAsset } from './AssetManager';
+import type { CDNPackage } from './PackageManager';
+import type { BuildNotification } from './BuildNotificationCenter';
+import type { ActivityEntry } from './ActivityFeed';
+import type { ChangelogEntry } from './ChangelogPanel';
+import type { CommandAction } from './EnhancedCommandPalette';
 import { useProjectBundler } from '@/hooks/useProjectBundler';
 import { useReactCompiler, detectReactProject } from '@/hooks/useReactCompiler';
 import { useASTBundler } from '@/hooks/useASTBundler';
@@ -53,32 +38,10 @@ import { useIncrementalCompiler } from '@/hooks/useIncrementalCompiler';
 import { useTypeScriptValidator } from '@/hooks/useTypeScriptValidator';
 import { useConflictResolver } from '@/hooks/useConflictResolver';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
-import { OnboardingTour } from './OnboardingTour';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { KeyboardShortcutsPanel } from './KeyboardShortcutsPanel';
-import { ActivityFeed, type ActivityEntry } from './ActivityFeed';
-import { BillingPanel, CreditsPill } from './BillingPanel';
-import { ProjectShareDialog, CollaboratorAvatars } from './ProjectShareDialog';
-import { SEOEditor } from './SEOEditor';
-import { BuildNotificationCenter, type BuildNotification } from './BuildNotificationCenter';
-import type { KnowledgeConfig } from './KnowledgePanel';
-import { AICodeIntelligence, type CodeSuggestion } from './AICodeIntelligence';
-import { DatabaseExplorer } from './DatabaseExplorer';
-import { ComponentLibrary } from './ComponentLibrary';
-import { TestingDebugSuite, type TestCase } from './TestingDebugSuite';
-import { DiffReviewPanel } from './DiffReviewPanel';
-import { CustomDomainPanel } from './CustomDomainPanel';
-import { ExportGuidePanel } from './ExportGuidePanel';
-import { TerminalEmulator } from './TerminalEmulator';
-import { AgentModePanel } from './AgentModePanel';
-import { ResponsivePreviewBar, type ViewportMode, getViewportWidth } from './ResponsivePreviewBar';
-import { BuildLogPanel } from './BuildLogPanel';
-import { VersionTimelineSlider } from './VersionTimelineSlider';
-import { VersionDiffViewer } from './VersionDiffViewer';
-import { SplitEditorPane } from './SplitEditorPane';
 import { usePostBuildSmokeTest } from './usePostBuildSmokeTest';
 import { useVersionTimeline } from '@/hooks/useVersionTimeline';
 import { useBuildLog } from '@/hooks/useBuildLog';
@@ -92,78 +55,19 @@ import { useLighthouseAudit } from './useLighthouseAudit';
 import { useBundleSizeTracking } from './useBundleSizeTracking';
 import { useDeleteButtonAutoPatcher } from './useDeleteButtonAutoPatcher';
 import { usePromptPhasePlanner } from './usePromptPhasePlanner';
-import { PhasePlannerPanel } from './PhasePlannerPanel';
-import { QuestionsCard } from './QuestionsCard';
 import { useBuilderQuestions } from './useBuilderQuestions';
-import { DeployPipelinePanel } from './DeployPipelinePanel';
 import { useOutputValidation } from './useOutputValidation';
 import { useBuildAnalytics } from '@/hooks/useBuildAnalytics';
-import { ComponentPalette } from './ComponentPalette';
-import { ChangelogPanel, type ChangelogEntry } from './ChangelogPanel';
-import { AIAutocompleteIndicator } from './AIAutocomplete';
-import { BuilderHelpCenter } from './BuilderHelpCenter';
-import { WelcomeOverlay } from './WelcomeOverlay';
-import { ConfirmDialog } from './ConfirmDialog';
-import { GPTConnectorPanel, type LinkedGPTConfig } from './GPTConnectorPanel';
-import { SetupWizard } from './SetupWizard';
-import { OneClickDeploy } from './OneClickDeploy';
-import { EditHistoryTimeline } from './EditHistoryTimeline';
 import { detectSupabaseIntents, buildSupabaseContext, buildErrorDiagnosisContext, analyzeConversationComplexity } from './SupabaseConversational';
 import { buildAuthTemplate } from './authTemplates';
-import { MobilePWAInstall } from './MobilePWAInstall';
 import { BugReportModal } from '@/components/help/BugReportModal';
-import { EnhancedCommandPalette, type CommandAction } from './EnhancedCommandPalette';
-import { MultiFileSearchReplace } from './MultiFileSearchReplace';
-import { InBrowserTestRunner } from './InBrowserTestRunner';
-import { PluginMarketplace } from './PluginMarketplace';
 import { usePluginRegistry } from '@/hooks/usePluginRegistry';
 import { useCollaborationEngine } from '@/hooks/useCollaborationEngine';
 import { useAPIBuilder } from '@/hooks/useAPIBuilder';
-import { ShortcutsHint } from './ShortcutsHint';
 import { useProjectReview } from './useProjectReview';
-import { ProjectReviewPanel } from './ProjectReviewPanel';
 import { useSupabaseConnection } from '@/hooks/useSupabaseConnection';
-import { SupabaseIDEPanel } from './SupabaseIDEPanel';
-import { GitHubPanel } from './GitHubPanel';
-import { DatabaseMigrationPanel } from './DatabaseMigrationPanel';
-import { EdgeFunctionEditorPanel } from './EdgeFunctionEditorPanel';
-import { BuildWorkflowPanel } from './BuildWorkflowPanel';
-import { PreviewDevToolsPanel } from './PreviewDevToolsPanel';
-import { VisualEditToolbar } from './VisualEditToolbar';
-import { NPMPackageManagerPanel } from './NPMPackageManagerPanel';
-import { PublishPanel } from './PublishPanel';
-import { AIImageGenPanel } from './AIImageGenPanel';
-import { SyncStatusIndicator } from './SyncStatusIndicator';
-import { SessionRecoveryDialog } from './SessionRecoveryDialog';
 import { useIndexedDBPersistence } from '@/hooks/useIndexedDBPersistence';
 import { useSchemaIntrospection } from '@/hooks/useSchemaIntrospection';
-import { HeaderCreditsIndicator } from './HeaderCreditsIndicator';
-import ultriumLogo from '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png';
-import { SymbolSearchPanel } from './SymbolSearchPanel';
-import { SecretsManagerPanel } from './SecretsManagerPanel';
-import { ProjectDropdownMenu } from './ProjectDropdownMenu';
-import { ToolbarPanelsDropdown } from './ToolbarPanelsDropdown';
-import { ModelSwitcherPanel } from './ModelSwitcherPanel';
-import { PromptChainPanel } from './PromptChainPanel';
-import { CodeReviewPanel } from './CodeReviewPanel';
-import { TestGeneratorPanel } from './TestGeneratorPanel';
-import { NLQueryPanel } from './NLQueryPanel';
-import { SnippetLibraryPanel } from './SnippetLibraryPanel';
-import { SplitDiffPanel } from './SplitDiffPanel';
-import { CommentPanel } from './CommentPanel';
-import { TeamActivityPanel } from './TeamActivityPanel';
-import { ApprovalPanel } from './ApprovalPanel';
-import { ForkingPanel } from './ForkingPanel';
-import { FigmaImportPanel } from './FigmaImportPanel';
-import { ColorPaletteExtractorPanel } from './ColorPaletteExtractorPanel';
-import { IconPickerPanel } from './IconPickerPanel';
-import { BreakpointEditorPanel } from './BreakpointEditorPanel';
-import { AnimationBuilderPanel } from './AnimationBuilderPanel';
-import { VisualSchemaBuilderPanel } from './VisualSchemaBuilderPanel';
-import { SeedDataPanel } from './SeedDataPanel';
-import { APIEndpointTesterPanel } from './APIEndpointTesterPanel';
-import { WebhookBuilderPanel } from './WebhookBuilderPanel';
-import { CronSchedulerPanel } from './CronSchedulerPanel';
 import { usePromptChains } from '@/hooks/usePromptChains';
 import { useAICodeReview } from '@/hooks/useAICodeReview';
 import { useTestGenerator } from '@/hooks/useTestGenerator';
@@ -198,26 +102,6 @@ import { useMarkdownBlog } from '@/hooks/useMarkdownBlog';
 import { useImageOptimizer } from '@/hooks/useImageOptimizer';
 import { useVideoEmbedManager } from '@/hooks/useVideoEmbedManager';
 import { useI18nGenerator } from '@/hooks/useI18nGenerator';
-import { EnvironmentManagerPanel } from './EnvironmentManagerPanel';
-import { RollbackPanel } from './RollbackPanel';
-import { UptimeMonitorPanel } from './UptimeMonitorPanel';
-import { BuildCachePanel } from './BuildCachePanel';
-import { BuildScriptsPanel } from './BuildScriptsPanel';
-import { CMSModePanel } from './CMSModePanel';
-import { MarkdownBlogPanel } from './MarkdownBlogPanel';
-import { ImageOptimizerPanel } from './ImageOptimizerPanel';
-import { VideoEmbedPanel } from './VideoEmbedPanel';
-import { I18nPanel } from './I18nPanel';
-import { AnalyticsDashboardPanel } from './AnalyticsDashboardPanel';
-import { ErrorTrackingPanel } from './ErrorTrackingPanel';
-import { SessionReplayPanel } from './SessionReplayPanel';
-import { ABTestingPanel } from './ABTestingPanel';
-import { AIUsagePanel } from './AIUsagePanel';
-import { DependencyScannerPanel } from './DependencyScannerPanel';
-import { CSPGeneratorPanel } from './CSPGeneratorPanel';
-import { GDPRPanel } from './GDPRPanel';
-import { RateLimiterPanel } from './RateLimiterPanel';
-import { SecretRotationPanel } from './SecretRotationPanel';
 import { useBuiltInAnalytics } from '@/hooks/useBuiltInAnalytics';
 import { useErrorTracking } from '@/hooks/useErrorTracking';
 import { useSessionReplay } from '@/hooks/useSessionReplay';
@@ -233,96 +117,104 @@ import { useGitHubActionsGenerator } from '@/hooks/useGitHubActionsGenerator';
 import { useSlackDiscordBot } from '@/hooks/useSlackDiscordBot';
 import { useWhiteLabelExport } from '@/hooks/useWhiteLabelExport';
 import { usePluginSDK } from '@/hooks/usePluginSDK';
-import { CLICompanionPanel } from './CLICompanionPanel';
-import { GitHubActionsPanel } from './GitHubActionsPanel';
-import { SlackDiscordPanel } from './SlackDiscordPanel';
-import { WhiteLabelPanel } from './WhiteLabelPanel';
-import { PluginSDKPanel } from './PluginSDKPanel';
 import { useAIRefactoring } from '@/hooks/useAIRefactoring';
 import { useNLToRegex } from '@/hooks/useNLToRegex';
 import { useAICommitMessages } from '@/hooks/useAICommitMessages';
 import { useSmartAutoImport } from '@/hooks/useSmartAutoImport';
 import { useAIDocWriter } from '@/hooks/useAIDocWriter';
-import { AIRefactoringPanel } from './AIRefactoringPanel';
-import { NLRegexPanel } from './NLRegexPanel';
-import { CommitMessagePanel } from './CommitMessagePanel';
-import { AutoImportPanel } from './AutoImportPanel';
-import { AIDocWriterPanel } from './AIDocWriterPanel';
 import { useRealTimeCoEditing } from '@/hooks/useRealTimeCoEditing';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 import { useScreenShare } from '@/hooks/useScreenShare';
 import { useCodeReactions } from '@/hooks/useCodeReactions';
 import { useCollaborativeWhiteboard } from '@/hooks/useCollaborativeWhiteboard';
-import { CoEditingPanel } from './CoEditingPanel';
-import { VoiceChatPanel } from './VoiceChatPanel';
-import { ScreenSharePanel } from './ScreenSharePanel';
-import { CodeReactionsPanel } from './CodeReactionsPanel';
-import { WhiteboardPanel } from './WhiteboardPanel';
 import { useVisualRegressionTesting } from '@/hooks/useVisualRegressionTesting';
 import { useAccessibilityScoring } from '@/hooks/useAccessibilityScoring';
 import { useCodeCoverageVisualizer } from '@/hooks/useCodeCoverageVisualizer';
 import { useMutationTesting } from '@/hooks/useMutationTesting';
 import { useLoadTesting } from '@/hooks/useLoadTesting';
-import { VisualRegressionPanel } from './VisualRegressionPanel';
-import { AccessibilityPanel } from './AccessibilityPanel';
-import { CodeCoveragePanel } from './CodeCoveragePanel';
-import { MutationTestingPanel } from './MutationTestingPanel';
-import { LoadTestingPanel } from './LoadTestingPanel';
-// Sprint N: Advanced UI Building (Phases 169-173)
 import { usePageBuilder } from '@/hooks/usePageBuilder';
 import { useThemeStudio } from '@/hooks/useThemeStudio';
 import { useFormBuilder } from '@/hooks/useFormBuilder';
 import { useChartDashboardBuilder } from '@/hooks/useChartDashboardBuilder';
 import { useLayoutGridEditor } from '@/hooks/useLayoutGridEditor';
-import { PageBuilderPanel } from './PageBuilderPanel';
-import { ThemeStudioPanel } from './ThemeStudioPanel';
-import { FormBuilderPanel } from './FormBuilderPanel';
-import { ChartDashboardPanel } from './ChartDashboardPanel';
-import { LayoutGridPanel } from './LayoutGridPanel';
-// Sprint O: Data & Integration (Phases 174-178)
 import { useGraphQLBuilder } from '@/hooks/useGraphQLBuilder';
 import { useWebSocketManager } from '@/hooks/useWebSocketManager';
 import { useFileUploadManager } from '@/hooks/useFileUploadManager';
 import { usePaymentIntegration } from '@/hooks/usePaymentIntegration';
 import { useEmailTemplateBuilder } from '@/hooks/useEmailTemplateBuilder';
-import { GraphQLBuilderPanel } from './GraphQLBuilderPanel';
-import { WebSocketPanel } from './WebSocketPanel';
-import { FileUploadPanel } from './FileUploadPanel';
-import { PaymentPanel } from './PaymentPanel';
-import { EmailTemplatePanel } from './EmailTemplatePanel';
-// Sprint P: Developer Experience (Phases 179-183)
 import { useTutorialCreator } from '@/hooks/useTutorialCreator';
 import { useCodePlayground } from '@/hooks/useCodePlayground';
 import { useCustomLinting } from '@/hooks/useCustomLinting';
 import { useDependencyGraph } from '@/hooks/useDependencyGraph';
 import { useGitBlameTimeline } from '@/hooks/useGitBlameTimeline';
-import { TutorialCreatorPanel } from './TutorialCreatorPanel';
-import { CodePlaygroundPanel } from './CodePlaygroundPanel';
-import { CustomLintingPanel } from './CustomLintingPanel';
-import { DependencyGraphPanel } from './DependencyGraphPanel';
-import { GitBlameTimelinePanel } from './GitBlameTimelinePanel';
-// Sprint Q: Deployment & Hosting (Phases 184-188)
 import { useMultiRegionDeploy } from '@/hooks/useMultiRegionDeploy';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { useCanaryDeploy } from '@/hooks/useCanaryDeploy';
 import { useStaticSiteGenerator } from '@/hooks/useStaticSiteGenerator';
 import { useDockerExport } from '@/hooks/useDockerExport';
-import { MultiRegionPanel } from './MultiRegionPanel';
-import { FeatureFlagsPanel } from './FeatureFlagsPanel';
-import { CanaryDeployPanel } from './CanaryDeployPanel';
-import { SSGPanel } from './SSGPanel';
-import { DockerExportPanel } from './DockerExportPanel';
-// Sprint R: Monetization & Business (Phases 189-193)
 import { useSubscriptionManager } from '@/hooks/useSubscriptionManager';
 import { useInvoiceGenerator } from '@/hooks/useInvoiceGenerator';
 import { useUsageMetering } from '@/hooks/useUsageMetering';
 import { useAffiliateTracking } from '@/hooks/useAffiliateTracking';
 import { useRevenueDashboard } from '@/hooks/useRevenueDashboard';
-import { SubscriptionManagerPanel } from './SubscriptionManagerPanel';
-import { InvoiceGeneratorPanel } from './InvoiceGeneratorPanel';
-import { UsageMeteringPanel } from './UsageMeteringPanel';
-import { AffiliateTrackingPanel } from './AffiliateTrackingPanel';
-import { RevenueDashboardPanel } from './RevenueDashboardPanel';
+
+// All panel components are lazy-loaded via lazyPanels.ts
+import {
+  PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
+  ProjectFileTree, FileTabBar, CodeEditor, ExportButton, ProjectSettings,
+  GithubSyncButton, VercelDeployButton, TemplateLibrary, SharePreview,
+  BranchManager, ProjectManager, CollaborativePresence, CommandPalette,
+  GeneratingOverlay, FileSearchPanel, FileBreadcrumb, VersionHistoryPanel,
+  ConsolePanel, DeployDialog, EnvVarsPanel, RLSPolicyTester, FileConflictDialog,
+  QuickFileSwitcher, AssetManager, PackageManager, OnboardingTour,
+  KeyboardShortcutsPanel, ActivityFeed, BillingPanel, CreditsPill,
+  ProjectShareDialog, CollaboratorAvatars, SEOEditor, BuildNotificationCenter,
+  AICodeIntelligence, DatabaseExplorer, ComponentLibrary, TestingDebugSuite,
+  DiffReviewPanel, CustomDomainPanel, ExportGuidePanel, TerminalEmulator,
+  AgentModePanel, ResponsivePreviewBar, BuildLogPanel, VersionTimelineSlider,
+  VersionDiffViewer, SplitEditorPane, PhasePlannerPanel, QuestionsCard,
+  DeployPipelinePanel, ComponentPalette, ChangelogPanel, AIAutocompleteIndicator,
+  BuilderHelpCenter, WelcomeOverlay, ConfirmDialog, GPTConnectorPanel,
+  SetupWizard, OneClickDeploy, EditHistoryTimeline, MobilePWAInstall,
+  EnhancedCommandPalette, MultiFileSearchReplace, InBrowserTestRunner,
+  PluginMarketplace, ShortcutsHint, ProjectReviewPanel, SupabaseIDEPanel,
+  GitHubPanel, DatabaseMigrationPanel, EdgeFunctionEditorPanel,
+  BuildWorkflowPanel, PreviewDevToolsPanel, VisualEditToolbar,
+  NPMPackageManagerPanel, PublishPanel, AIImageGenPanel, SyncStatusIndicator,
+  SessionRecoveryDialog, HeaderCreditsIndicator, SymbolSearchPanel,
+  SecretsManagerPanel, ProjectDropdownMenu, ToolbarPanelsDropdown,
+  ModelSwitcherPanel, PromptChainPanel, CodeReviewPanel, TestGeneratorPanel,
+  NLQueryPanel, SnippetLibraryPanel, SplitDiffPanel, CommentPanel,
+  TeamActivityPanel, ApprovalPanel, ForkingPanel, FigmaImportPanel,
+  ColorPaletteExtractorPanel, IconPickerPanel, BreakpointEditorPanel,
+  AnimationBuilderPanel, VisualSchemaBuilderPanel, SeedDataPanel,
+  APIEndpointTesterPanel, WebhookBuilderPanel, CronSchedulerPanel,
+  EnvironmentManagerPanel, RollbackPanel, UptimeMonitorPanel,
+  BuildCachePanel, BuildScriptsPanel, CMSModePanel, MarkdownBlogPanel,
+  ImageOptimizerPanel, VideoEmbedPanel, I18nPanel, AnalyticsDashboardPanel,
+  ErrorTrackingPanel, SessionReplayPanel, ABTestingPanel, AIUsagePanel,
+  DependencyScannerPanel, CSPGeneratorPanel, GDPRPanel, RateLimiterPanel,
+  SecretRotationPanel, CLICompanionPanel, GitHubActionsPanel,
+  SlackDiscordPanel, WhiteLabelPanel, PluginSDKPanel, AIRefactoringPanel,
+  NLRegexPanel, CommitMessagePanel, AutoImportPanel, AIDocWriterPanel,
+  CoEditingPanel, VoiceChatPanel, ScreenSharePanel, CodeReactionsPanel,
+  WhiteboardPanel, VisualRegressionPanel, AccessibilityPanel,
+  CodeCoveragePanel, MutationTestingPanel, LoadTestingPanel,
+  PageBuilderPanel, ThemeStudioPanel, FormBuilderPanel, ChartDashboardPanel,
+  LayoutGridPanel, GraphQLBuilderPanel, WebSocketPanel, FileUploadPanel,
+  PaymentPanel, EmailTemplatePanel, TutorialCreatorPanel, CodePlaygroundPanel,
+  CustomLintingPanel, DependencyGraphPanel, GitBlameTimelinePanel,
+  MultiRegionPanel, FeatureFlagsPanel, CanaryDeployPanel, SSGPanel,
+  DockerExportPanel, SubscriptionManagerPanel, InvoiceGeneratorPanel,
+  UsageMeteringPanel, AffiliateTrackingPanel, RevenueDashboardPanel,
+  DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
+  EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
+  BuildAnalyticsPanel as BuildAnalyticsPanelLazy,
+  SchemaDesigner as SchemaDesignerLazy,
+  DesignSystemPanel as DesignSystemPanelLazy,
+  CollaborationPanel as CollaborationPanelLazy,
+  APIBuilderPanel as APIBuilderPanelLazy,
+} from './lazyPanels';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -337,19 +229,7 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-
-// Lazy load heavy panels
-const DatabasePanel = lazy(() => import('./DatabasePanel').then(m => ({ default: m.DatabasePanel })));
-const AuthConfigPanel = lazy(() => import('./AuthConfigPanel').then(m => ({ default: m.AuthConfigPanel })));
-const KnowledgePanel = lazy(() => import('./KnowledgePanel').then(m => ({ default: m.KnowledgePanel })));
-const StorageBrowser = lazy(() => import('./StorageBrowser').then(m => ({ default: m.StorageBrowser })));
-const EdgeFunctionEditor = lazy(() => import('./EdgeFunctionEditor').then(m => ({ default: m.EdgeFunctionEditor })));
-const PerformanceProfilerLazy = lazy(() => import('./PerformanceProfiler').then(m => ({ default: m.PerformanceProfiler })));
-const BuildAnalyticsPanelLazy = lazy(() => import('./BuildAnalyticsPanel').then(m => ({ default: m.BuildAnalyticsPanel })));
-const SchemaDesignerLazy = lazy(() => import('./SchemaDesigner').then(m => ({ default: m.SchemaDesigner })));
-const DesignSystemPanelLazy = lazy(() => import('./DesignSystemPanel').then(m => ({ default: m.DesignSystemPanel })));
-const CollaborationPanelLazy = lazy(() => import('./CollaborationPanel').then(m => ({ default: m.CollaborationPanel })));
-const APIBuilderPanelLazy = lazy(() => import('./APIBuilderPanel').then(m => ({ default: m.APIBuilderPanel })));
+import ultriumLogo from '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png';
 
 const PanelLoader = () => <div className="flex items-center justify-center h-full text-white/15 text-xs">Loading...</div>;
 
