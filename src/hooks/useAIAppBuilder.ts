@@ -6,6 +6,44 @@ import { useStreamingPreview } from './useStreamingPreview';
 import { useUserCredits } from './useUserCredits';
 import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory, buildErrorDiagnosisContext, analyzeConversationComplexity, generateProactiveSuggestions, compressConversationHistory, detectCommunicationStyle, extractUserPreferences, buildPreferencesContext, detectWorkflowIntent, buildEnhancedErrorContext, buildVisualIntelligenceContext, detectWebSearchIntent, buildWebSearchContext, detectURLCloneIntent } from '@/components/ai-builder/SupabaseConversational';
 
+// ── File hash tracking for incremental context (Lovable-grade) ──
+const fileHashCache = new Map<string, string>();
+
+/** Fast string hash (djb2) for change detection — not cryptographic */
+function hashString(str: string): string {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(36);
+}
+
+/** Returns only files that changed since the last build */
+function getChangedFiles(files: ProjectFile[]): { changed: ProjectFile[]; unchanged: string[] } {
+  const changed: ProjectFile[] = [];
+  const unchanged: string[] = [];
+  for (const f of files) {
+    const hash = hashString(f.content);
+    if (fileHashCache.get(f.path) !== hash) {
+      changed.push(f);
+    } else {
+      unchanged.push(f.path);
+    }
+  }
+  return { changed, unchanged };
+}
+
+/** Update hash cache after a successful build */
+function updateFileHashes(files: ProjectFile[]) {
+  for (const f of files) {
+    fileHashCache.set(f.path, hashString(f.content));
+  }
+}
+
+// ── Request deduplication ──
+let lastRequestFingerprint = '';
+let lastRequestTime = 0;
+
 export interface BuilderMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -261,6 +299,16 @@ export function useAIAppBuilder() {
   ) => {
     if (!input.trim() || isGenerating) return;
 
+    // ── Request deduplication: prevent double-sends ──
+    const fingerprint = hashString(input + (imageDataUrls?.join('') || ''));
+    const now = Date.now();
+    if (fingerprint === lastRequestFingerprint && now - lastRequestTime < 3000) {
+      console.warn('[Dedup] Duplicate request blocked');
+      return;
+    }
+    lastRequestFingerprint = fingerprint;
+    lastRequestTime = now;
+
     // Detect fix/retry requests — these should be free to avoid burning credits on repeated fixes
     const isFixRequest = isAutoFix || /\b(fix|broken|doesn'?t work|not working|still broken|won'?t|can'?t|bug|error|issue|remove.*(button|doesn|broken|work)|delete.*(button|doesn|broken|work))\b/i.test(input);
 
@@ -436,8 +484,19 @@ export function useAIAppBuilder() {
     const buildFileContext = (files: ProjectFile[], userInput: string): string => {
       if (files.length === 0) return userInput;
 
-      // Build a compact manifest of all files
-      const manifest = files.map(f => `  - ${f.path} (${f.content.length} chars)`).join('\n');
+      // ── Incremental context: only send changed files, with manifest of unchanged ──
+      const { changed, unchanged } = getChangedFiles(files);
+      const useIncremental = files.length > 5 && changed.length < files.length;
+      const contextFiles = useIncremental ? changed : files;
+
+      // Build a compact manifest of all files (always send full manifest)
+      const manifest = files.map(f => {
+        const isChanged = changed.some(c => c.path === f.path);
+        return `  - ${f.path} (${f.content.length} chars)${isChanged ? ' [MODIFIED]' : ''}`;
+      }).join('\n');
+      const unchangedNote = useIncremental && unchanged.length > 0
+        ? `\n\n📋 ${unchanged.length} unchanged files omitted (content same as last build). Their paths are in the manifest above.`
+        : '';
 
       // Extract component/structure summary for multi-turn context awareness
       const structureSummary: string[] = [];
@@ -463,7 +522,7 @@ export function useAIAppBuilder() {
       const lowerInput = userInput.toLowerCase();
       const inputWords = lowerInput.split(/\s+/).filter(w => w.length > 2);
 
-      const scored = files.map(f => {
+      const scored = contextFiles.map(f => {
         let score = 0;
         const lowerPath = f.path.toLowerCase();
         const fileName = f.path.split('/').pop()?.split('.')[0]?.toLowerCase() || '';
@@ -531,7 +590,7 @@ export function useAIAppBuilder() {
         ? `\n\n(${omittedCount} other files exist but are omitted for brevity. Only output files you need to change.)`
         : '';
 
-      return `PROJECT FILE MANIFEST (${files.length} files total):\n${manifest}${structureNote}\n\nFILE CONTENTS:\n${fileContext}${omittedNote}\n\nIMPORTANT: Only output ===FILE: path=== blocks for files you are CHANGING. To delete a file, use ===DELETE: path===. Do NOT re-output unchanged files.\n\nAFTER all ===FILE: blocks, write a brief 1-2 sentence conversational summary of what you changed and why — be friendly and helpful like a coding assistant. Example: "I've updated the header component with your new color scheme and added the mobile menu you asked for. Let me know if you'd like any tweaks!"\n\nUser request: ${userInput}`;
+      return `PROJECT FILE MANIFEST (${files.length} files total):\n${manifest}${structureNote}${unchangedNote}\n\nFILE CONTENTS:\n${fileContext}${omittedNote}\n\nIMPORTANT: Only output ===FILE: path=== blocks for files you are CHANGING. To delete a file, use ===DELETE: path===. Do NOT re-output unchanged files.\n\nAFTER all ===FILE: blocks, write a brief 1-2 sentence conversational summary of what you changed and why — be friendly and helpful like a coding assistant. Example: "I've updated the header component with your new color scheme and added the mobile menu you asked for. Let me know if you'd like any tweaks!"\n\nUser request: ${userInput}`;
     };
 
     if (imageDataUrls?.length) {
@@ -671,12 +730,16 @@ export function useAIAppBuilder() {
     abortRef.current = controller;
     let fullContent = '';
 
-    // ── Shared streaming reader (DRY — used by main path and retries) ──
+    // ── Shared streaming reader with interruption recovery (DRY) ──
+    let lastChunkTime = 0;
+    const STREAM_STALL_MS = 30_000; // 30s stall = stream dead
+    
     const readStream = async (body: ReadableStream<Uint8Array>) => {
       const reader = body.getReader();
       const decoder = new TextDecoder();
       let textBuffer = '';
       let streamDone = false;
+      lastChunkTime = Date.now();
 
       const upsertAssistant = (content: string) => {
         fullContent = content;
@@ -689,49 +752,70 @@ export function useAIAppBuilder() {
         });
       };
 
-      while (!streamDone) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        textBuffer += decoder.decode(value, { stream: true });
+      // Stall detector — if no chunk in 30s, consider stream dead
+      const stallChecker = setInterval(() => {
+        if (Date.now() - lastChunkTime > STREAM_STALL_MS && !streamDone) {
+          console.warn('[Stream] Stall detected — closing reader');
+          reader.cancel().catch(() => {});
+          streamDone = true;
+        }
+      }, 5000);
 
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (line.startsWith(':') || line.trim() === '') continue;
-          if (!line.startsWith('data: ')) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') { streamDone = true; break; }
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              upsertAssistant(fullContent + delta);
-              streaming.parseIncremental(fullContent);
+      try {
+        while (!streamDone) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          lastChunkTime = Date.now();
+          textBuffer += decoder.decode(value, { stream: true });
+
+          let newlineIndex: number;
+          while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+            let line = textBuffer.slice(0, newlineIndex);
+            textBuffer = textBuffer.slice(newlineIndex + 1);
+            if (line.endsWith('\r')) line = line.slice(0, -1);
+            if (line.startsWith(':') || line.trim() === '') continue;
+            if (!line.startsWith('data: ')) continue;
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === '[DONE]') { streamDone = true; break; }
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const delta = parsed.choices?.[0]?.delta?.content;
+              if (delta) {
+                upsertAssistant(fullContent + delta);
+                streaming.parseIncremental(fullContent);
+              }
+            } catch {
+              textBuffer = line + '\n' + textBuffer;
+              break;
             }
-          } catch {
-            textBuffer = line + '\n' + textBuffer;
-            break;
           }
         }
+
+        // Flush remaining buffer
+        if (textBuffer.trim()) {
+          for (let raw of textBuffer.split('\n')) {
+            if (!raw) continue;
+            if (raw.endsWith('\r')) raw = raw.slice(0, -1);
+            if (raw.startsWith(':') || raw.trim() === '') continue;
+            if (!raw.startsWith('data: ')) continue;
+            const jsonStr = raw.slice(6).trim();
+            if (jsonStr === '[DONE]') continue;
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const delta = parsed.choices?.[0]?.delta?.content;
+              if (delta) upsertAssistant(fullContent + delta);
+            } catch { /* ignore */ }
+          }
+        }
+      } finally {
+        clearInterval(stallChecker);
       }
 
-      // Flush remaining buffer
-      if (textBuffer.trim()) {
-        for (let raw of textBuffer.split('\n')) {
-          if (!raw) continue;
-          if (raw.endsWith('\r')) raw = raw.slice(0, -1);
-          if (raw.startsWith(':') || raw.trim() === '') continue;
-          if (!raw.startsWith('data: ')) continue;
-          const jsonStr = raw.slice(6).trim();
-          if (jsonStr === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) upsertAssistant(fullContent + delta);
-          } catch { /* ignore */ }
-        }
+      // ── Graceful partial output handling ──
+      // If stream died mid-way but we got some complete files, still use them
+      if (!streamDone && fullContent.includes('===FILE:')) {
+        console.warn('[Stream] Interrupted but partial output has files — using what we got');
+        toast.warning('Stream interrupted — using partially generated files.', { duration: 5000 });
       }
     };
 
@@ -769,6 +853,8 @@ export function useAIAppBuilder() {
           if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
           else mergedFiles.push(newFile);
         }
+        // Update file hash cache for incremental tracking
+        updateFileHashes(mergedFiles);
         setLatestFiles(mergedFiles);
         setVersions(prev => [...prev, {
           id: crypto.randomUUID(),

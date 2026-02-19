@@ -817,18 +817,37 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
     const MAX_MESSAGE_CHARS = 3_000_000;
     const finalMessages = trimMessagesToFit(sanitizedMessages, MAX_MESSAGE_CHARS);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: model || "google/gemini-3-pro-preview",
-        messages: [{ role: "system", content: systemPrompt }, ...finalMessages],
-        stream,
-      }),
-    });
+    // ── Gateway call with timeout (Lovable-grade) ──
+    const GATEWAY_TIMEOUT_MS = 120_000; // 2 minutes
+    const gatewayController = new AbortController();
+    const gatewayTimer = setTimeout(() => gatewayController.abort(), GATEWAY_TIMEOUT_MS);
+
+    let response: Response;
+    try {
+      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: model || "google/gemini-3-pro-preview",
+          messages: [{ role: "system", content: systemPrompt }, ...finalMessages],
+          stream,
+        }),
+        signal: gatewayController.signal,
+      });
+    } catch (fetchErr: any) {
+      clearTimeout(gatewayTimer);
+      if (fetchErr.name === 'AbortError') {
+        console.error("AI gateway timed out after", GATEWAY_TIMEOUT_MS, "ms");
+        return new Response(JSON.stringify({ error: "AI gateway timed out. Try a shorter prompt." }), {
+          status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      throw fetchErr;
+    }
+    clearTimeout(gatewayTimer);
 
     if (!response.ok) {
       if (response.status === 429) {
