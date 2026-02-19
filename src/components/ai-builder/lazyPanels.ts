@@ -211,6 +211,12 @@ export const NotificationCenterPanel = lz(() => import('./NotificationCenterPane
 export const ChatWidgetPanel = lz(() => import('./ChatWidgetPanel'), 'ChatWidgetPanel');
 export const EmailSequencePanel = lz(() => import('./EmailSequencePanel'), 'EmailSequencePanel');
 export const SMSTemplatePanel = lz(() => import('./SMSTemplatePanel'), 'SMSTemplatePanel');
+// Sprint X: Advanced UI Patterns (Phases 219-223)
+export const StepperWizardPanel = lz(() => import('./StepperWizardPanel'), 'StepperWizardPanel');
+export const CommandMenuPanel = lz(() => import('./CommandMenuPanel'), 'CommandMenuPanel');
+export const BreadcrumbPanel = lz(() => import('./BreadcrumbPanel'), 'BreadcrumbPanel');
+export const MegaMenuPanel = lz(() => import('./MegaMenuPanel'), 'MegaMenuPanel');
+export const ContextMenuPanel = lz(() => import('./ContextMenuPanel'), 'ContextMenuPanel');
 
 // Already-lazy panels (keep existing lazy pattern)
 export const DatabasePanel = lz(() => import('./DatabasePanel'), 'DatabasePanel');
