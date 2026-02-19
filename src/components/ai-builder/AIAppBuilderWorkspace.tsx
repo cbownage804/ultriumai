@@ -1444,6 +1444,8 @@ export function AIAppBuilderWorkspace() {
       return;
     }
     if (isGenerating) return;
+    // Skip auto-fix for resource load errors (handled by compilation pipeline)
+    if (error.message?.includes('Failed to load')) return;
     // Phase 47: Use structured auto-fix loop with exponential backoff
     autoFixLoop.attemptFix(
       { id: crypto.randomUUID(), message: error.message, source: error.source, line: error.line, timestamp: new Date(), type: 'error' },
