@@ -1,318 +1,259 @@
 
 
-# Phase 41-57: Production Hardening and True Wiring Parity
+# Phase 58-70: Final Production Hardening -- True Lovable Parity
 
-## The Core Problem
-
-Phases 24-40 created many standalone files (hooks, components, utilities) but **most are not wired into the workspace**. The builder has "feature files" that exist on disk but are never imported, never rendered, and never connected to the data flow. This plan closes every gap to make the builder production-ready and flawless.
+After a thorough audit of the entire codebase, here is every remaining gap between the App Builder and a production-ready Lovable parity IDE. Each item below is either **dead code that needs wiring**, a **missing behavioral feature**, or a **reliability issue that would break real users**.
 
 ---
 
-## Category A: Unwired Features (Critical — Features exist but are dead code)
+## Category A: Still-Unwired Code (Features built but never imported)
 
-### Phase 41: Wire CDN Import Map into React Compiler
+### Phase 58: Wire SeedDataGenerator into DatabaseMigrationPanel
 
-**Problem**: `cdnPackageRegistry.ts` exists with `generateImportMap()` and `resolveBareImport()` but `useReactCompiler.ts` never imports or uses them. External package imports like `lucide-react` still resolve to `// [external] lucide-react` comments — they silently fail.
-
-**Fix**:
-- Import `generateImportMap`, `buildPackageLookup`, `resolveBareImport` from `cdnPackageRegistry.ts` into `useReactCompiler.ts`
-- In `compileReactProject()`, inject a `<script type="importmap">` tag into the HTML `<head>` with all registered packages
-- Update the `transpileFile()` function to resolve external bare imports to CDN URLs instead of commenting them out
-- Add `react-router-dom` detection: when imports from `react-router-dom` are found, wrap the mount script in `<MemoryRouter>`
-
-### Phase 42: Wire Device Frame Overlay into Preview
-
-**Problem**: `DeviceFrameOverlay.tsx` exists but is never imported or rendered in `AIAppBuilderWorkspace.tsx` or `BuilderPreviewPanel.tsx`.
+**Problem**: `SeedDataGenerator.tsx` exists but is never imported by any component. After a migration creates a table, users see no option to populate it with sample data.
 
 **Fix**:
-- Import `DeviceFrameOverlay` into `BuilderPreviewPanel.tsx`
-- Wrap the iframe in `<DeviceFrameOverlay>` when a non-desktop viewport is selected
-- Connect rotation toggle to the `ResponsivePreviewBar` viewport switcher
+- Import `SeedDataGenerator` into `DatabaseMigrationPanel.tsx`
+- After a migration succeeds that contains `CREATE TABLE`, render the `SeedDataGenerator` component below the migration card with the table name and SQL passed as props
+- Wire `onGenerate` to send the seed prompt through the chat pipeline
 
-### Phase 43: Wire Performance Monitor and Accessibility Audit
+### Phase 59: Wire InlineSQLRunner into BuilderChatPanel
 
-**Problem**: `PerformanceMonitorPanel.tsx` and `AccessibilityAuditPanel.tsx` exist but are never imported or rendered.
-
-**Fix**:
-- Add "Performance" and "Accessibility" tabs to `PreviewDevToolsPanel.tsx`
-- Import both panels and render them in the dev tools drawer
-- Wire "Fix with AI" buttons to `sendMessage()` for auto-remediation
-
-### Phase 44: Wire Seed Data Generator and Inline SQL Runner
-
-**Problem**: `SeedDataGenerator.tsx` and `InlineSQLRunner.tsx` exist but are never imported.
+**Problem**: `InlineSQLRunner.tsx` exists but is never imported. SQL blocks in AI chat responses have no "Run Query" button.
 
 **Fix**:
-- Wire `SeedDataGenerator` into `DatabaseMigrationPanel` — show "Generate sample data" after a migration succeeds
-- Wire `InlineSQLRunner` into `BuilderChatPanel` — detect ```sql blocks in AI responses and render the run button inline
+- Import `InlineSQLRunner` into `BuilderChatPanel.tsx`
+- In the message renderer, detect fenced code blocks with language `sql` and render an `InlineSQLRunner` component below each one
+- Pass the connected Supabase URL and service key from the workspace config
 
-### Phase 45: Wire Inline AI Edit (Cmd+I)
+### Phase 60: Wire useContextBudget into useAIAppBuilder
 
-**Problem**: `useInlineAIEdit.ts` exists but is never imported into `AIAppBuilderWorkspace.tsx` or connected to `CodeEditor.tsx`.
-
-**Fix**:
-- Import `useInlineAIEdit` into the workspace
-- Pass the `triggerInlineEdit` handler to `CodeEditor` as a prop
-- Register `Cmd+I` / `Ctrl+I` keybinding in the Monaco editor that opens the inline prompt popover
-- Wire accept/reject to `upsertFile()`
-
-### Phase 46: Wire GitHub Sync Hook
-
-**Problem**: `useGithubSync.ts` exists but is never imported into the workspace. The `GithubSyncButton` and `GitHubPanel` components exist but use separate, disconnected logic.
+**Problem**: `useContextBudget.ts` exists with priority scoring and manifest-mode trimming, but `useAIAppBuilder.ts` still uses its own inline context budget logic. When projects get large, the inline logic fails and falls back to reactive retries instead of proactively trimming.
 
 **Fix**:
-- Import `useGithubSync` into the workspace
-- Wire `pushToGitHub` and `pullFromGitHub` to the existing `GithubSyncButton` and `GitHubPanel`
-- Show sync status in the header (last sync time, connected repo indicator)
+- Import `useContextBudget` into `useAIAppBuilder.ts`
+- Before building the AI request payload, call `trimContext(files, activeFilePath, mentionedPaths)` to proactively reduce context size
+- Use the `isOverBudget` flag to show a "Context trimmed" indicator in the chat
+- Remove the duplicate inline budget logic
 
-### Phase 47: Wire Auto-Fix Loop (useAutoFixLoop)
+### Phase 61: Wire usePanelManager into AIAppBuilderWorkspace
 
-**Problem**: `useAutoFixLoop.ts` exists but the workspace uses its own inline auto-fix logic (`handleAutoFixError`, `handleSmartFixError`) with manual attempt counting. The dedicated hook with exponential backoff, fix history, and structured prompts is unused.
+**Problem**: `usePanelManager.ts` exists with a `useReducer`-based pattern for managing panel states, but the workspace still uses 40+ individual `useState<boolean>` calls for panel visibility. This causes unnecessary re-renders and makes the code fragile.
 
 **Fix**:
-- Replace the manual fix counting in `AIAppBuilderWorkspace.tsx` with `useAutoFixLoop`
-- Wire `attemptFix` to `handleAutoFixError`
-- Wire `markFixSuccess` to the latestFiles change effect (errors cleared = fix succeeded)
-- Display `fixHistory` in a "Fix History" section of the console panel
+- Import `usePanelManager` and replace the 40+ `show*` state variables with a single `panelManager` instance
+- Update all `setShow*` calls to use `panelManager.toggle('panelName')` or `panelManager.exclusiveOpen('panelName')`
+- This is a refactor-only change with no user-facing impact but significantly improves maintainability
 
 ---
 
-## Category B: Compiler and Preview Gaps (High Impact)
+## Category B: Missing Behavioral Features
 
-### Phase 48: React Router Support in Compiler
+### Phase 62: Chat SQL Block Detection and Rendering
 
-**Problem**: The React compiler has no awareness of `react-router-dom`. When AI generates multi-page apps with `<BrowserRouter>`, `<Routes>`, and `<Route>`, the preview breaks because router components are undefined and there is no history provider.
-
-**Fix**:
-- Detect `react-router-dom` imports in project files
-- Auto-wrap the root component mount in `<MemoryRouter>` (from the CDN import map)
-- Intercept iframe navigation via `postMessage` and update the URL bar in `BuilderPreviewPanel`
-- Add back/forward navigation buttons that work within the iframe history
-
-### Phase 49: Streaming Preview Hot-Apply
-
-**Problem**: `useStreamingPreview` extracts files incrementally but the preview only recompiles after the full AI response completes. The `FileTabBar` shows dirty indicators but doesn't auto-switch to the currently streaming file.
+**Problem**: Even once `InlineSQLRunner` is imported, `BuilderChatPanel` renders AI messages using `ReactMarkdown` which treats SQL blocks as plain code. There is no detection logic to intercept SQL blocks and render interactive components.
 
 **Fix**:
-- In the `latestFiles` sync effect, detect partial file updates from `partialFiles` and trigger incremental recompile
-- Auto-switch the active file tab to the file currently being streamed (last partial file)
-- Add a pulsing indicator on the tab of the file being written
+- Add a custom `code` component to the `ReactMarkdown` renderer that detects `language === 'sql'` and renders an `InlineSQLRunner` instead of a plain `<pre>` block
+- Similarly detect `language === 'bash'` or `language === 'sh'` and offer a "Copy" button
 
-### Phase 50: Supabase Client Bridge for Preview
+### Phase 63: Preview URL Bar Navigation
 
-**Problem**: The Supabase client is injected into the preview HTML as a UMD script, but `supabase` is assigned to `window.supabase.createClient(...)` which shadows the global `window.supabase` object from the SDK. This causes `supabase.channel()` realtime calls to fail because `.createClient()` returns a different object than the SDK namespace.
+**Problem**: The URL bar in `BuilderPreviewPanel` shows `localhost:3000/` but is static. When React Router navigation happens inside the iframe, the URL bar doesn't update. Back/forward buttons exist but don't actually work because iframe postMessage navigation events from Phase 48 are sent but never received.
 
 **Fix**:
-- Rename the client variable to `window.__supabaseClient` to avoid shadowing
-- Inject a helper: `const supabase = window.__supabaseClient;` inside the Babel script block so generated code can reference `supabase` naturally
-- Add realtime subscription cleanup on preview unmount to prevent channel leaks
+- Add a `message` event listener in `BuilderPreviewPanel` for `__PREVIEW_NAV__` messages
+- Update `currentUrl` state when navigation events are received
+- Wire back/forward buttons to push/pop from `urlHistory` and postMessage a `__NAVIGATE__` event back to the iframe
+- In the compiler output, add a listener for `__NAVIGATE__` that calls `window.history.pushState()`
+
+### Phase 64: Refresh Button Actually Reloads Preview
+
+**Problem**: The refresh button in the workspace header (line ~1578) has an empty `onClick` handler: `onClick={() => { /* refresh preview */ }}`. It does nothing.
+
+**Fix**:
+- Wire the refresh button to increment the iframe's `iframeKey` state (which forces a full re-render of the srcdoc)
+- This can be done by lifting `setIframeKey` from `BuilderPreviewPanel` or passing a `onRefresh` callback prop
+
+### Phase 65: Inline AI Edit (Cmd+I) Keybinding in Monaco
+
+**Problem**: `useInlineAIEdit` is initialized in the workspace but never connected to the Monaco editor. Pressing Cmd+I does nothing because the keybinding is never registered.
+
+**Fix**:
+- In `CodeEditor.tsx`, register a Monaco `addAction` for `Cmd+I` / `Ctrl+I`
+- When triggered, get the current selection text and cursor position
+- Show an inline input popover (can use a Monaco overlay widget or a React portal positioned at cursor)
+- On submit, call the `triggerInlineEdit` function from `useInlineAIEdit`
+- Display the AI's suggested replacement as a diff decoration (green for additions)
+
+### Phase 66: GitHub Panel Wiring to useGithubSync
+
+**Problem**: `useGithubSync` is initialized in the workspace but `GitHubPanel.tsx` uses its own separate logic with `localStorage` for PAT storage and direct fetch calls. The two systems are disconnected.
+
+**Fix**:
+- Pass `githubSync` props (pushToGitHub, pullFromGitHub, syncStatus, lastSyncTime) into `GitHubPanel`
+- Replace the panel's internal push/pull logic with calls to the hook
+- Show sync status indicator in the workspace header when a repo is connected
 
 ---
 
-## Category C: UX Hardening (Medium Impact)
+## Category C: Robustness and Edge Cases
 
-### Phase 51: Keyboard Shortcuts Completion
+### Phase 67: Babel Transpilation Error Capture
 
-**Problem**: Some shortcuts are registered in `KeyboardShortcutsPanel` and `EnhancedCommandPalette` but several standard IDE shortcuts are missing or non-functional.
-
-**Fix**:
-- Wire missing shortcuts in the workspace's `useEffect` keyboard handler:
-  - `Cmd+S`: Save snapshot (trigger `saveProject`)
-  - `Cmd+P`: Open quick file switcher
-  - `Cmd+Shift+F`: Open multi-file search
-  - `Cmd+B`: Toggle sidebar
-  - `Cmd+J`: Toggle console
-  - `Cmd+Enter`: Send message (already works in chat input)
-  - `Cmd+.`: Toggle between preview/code tabs
-- Add shortcut hints as tooltips on toolbar buttons
-
-### Phase 52: Conversation Branching Polish
-
-**Problem**: The fork/revert from message feature exists but lacks visual branch indicators and snapshot reliability. `handleForkFromMessage` renames the project but doesn't maintain a branch tree.
+**Problem**: The render loop detector and preview timeout (Phase 54) are wired, but Babel transpilation errors inside `<script type="text/babel">` are NOT caught. When Babel fails to parse generated JSX (common with complex TypeScript), the preview shows a blank white screen with no error message to the user.
 
 **Fix**:
-- Track branch history as a flat list with parent references
-- Show branch indicator badges on forked messages ("Branch 2 of 3")
-- Ensure `filesSnapshot` is populated on every AI response message (currently may be null)
-- Add a "Branches" dropdown in the header showing all forks with switch capability
+- Replace the single `<script type="text/babel">` block with a two-stage approach:
+  1. Load Babel standalone
+  2. Use `Babel.transform(code, { presets: ['react', 'typescript'] })` in a try-catch inside a regular `<script>` block
+  3. If transform succeeds, `eval()` the result
+  4. If transform fails, post the Babel error message to parent via `__PREVIEW_ERROR__`
+- This ensures ALL transpilation errors are captured and surfaced
 
-### Phase 53: Template Gallery Expansion
+### Phase 68: Import Map + UMD React Conflict
 
-**Problem**: `AppStarterTemplates.ts` and `TemplateLibrary.tsx` exist but the template count is limited and there is no community template system.
-
-**Fix**:
-- Expand to 15+ templates covering: SaaS dashboard, blog/CMS, e-commerce storefront, portfolio, admin panel, social feed, project management, chat app, landing page, documentation site, booking system, fitness tracker, finance dashboard, AI chatbot, recipe app
-- Each template includes realistic multi-file React code, not just stubs
-- Add category filters and search to the template picker
-
----
-
-## Category D: Robustness and Error Handling
-
-### Phase 54: Preview Error Boundary Hardening
-
-**Problem**: Preview errors are captured via `window.onerror` and `unhandledrejection` but Babel transpilation errors are not caught — they silently produce blank previews. Also, infinite render loops in generated React code freeze the iframe without triggering any error.
+**Problem**: The compiler injects BOTH a `<script type="importmap">` (which maps `react` to `esm.sh`) AND UMD React scripts (`unpkg.com/react@18/umd/react.production.min.js`). This creates two React instances -- the UMD global `React` and the ESM module `react`. Components using `await import('react')` get a different React than those using the global `React`, causing "Invalid hook call" errors.
 
 **Fix**:
-- Wrap the Babel `<script type="text/babel">` block in a try-catch that posts errors to the parent
-- Add a render-loop detector: count React renders per second; if > 100, kill the render and report
-- Add a "Preview timed out" state if the iframe doesn't send a `__PREVIEW_READY__` message within 10 seconds
-- Show a clear error overlay instead of a blank white screen
+- Remove the UMD React/ReactDOM `<script>` tags
+- Rely entirely on the import map for React resolution: `"react": "https://esm.sh/react@18.3.1"` 
+- OR: Remove React from the import map and keep the UMD globals, but ensure that `await import('react')` returns the global `window.React` object by adding a shim in the import map: `"react": "data:text/javascript,export default window.React;export const useState=React.useState;..."`
+- The second approach is safer and avoids double-download
 
-### Phase 55: Context Budget Overflow Protection
+### Phase 69: Console Log Deduplication in Preview
 
-**Problem**: The AI context system has budget calculations but when the project grows large, the entire file content is still sent, occasionally exceeding model limits and causing 400 errors. The retry with reduced context works but is reactive, not preventive.
-
-**Fix**:
-- Before sending, measure total context size against the budget
-- If over budget, automatically switch to manifest mode (file names + hashes only) for unchanged files
-- Only include full content for: active file, files mentioned in the prompt, files referenced by imports from mentioned files
-- Show a "Context trimmed" indicator when files are omitted
-
-### Phase 56: State Management Cleanup
-
-**Problem**: `AIAppBuilderWorkspace.tsx` has 100+ `useState` calls, making it fragile and hard to maintain. State updates can cause cascading re-renders.
+**Problem**: Console interceptors are injected TWICE into the preview HTML -- once by the React compiler in `useReactCompiler.ts` (lines 471-498) and once by `BuilderPreviewPanel.tsx` (lines 68-177 via `htmlWithErrorCapture`). This causes every console message to appear twice in the DevTools panel and every error to trigger two auto-fix attempts.
 
 **Fix**:
-- Group related state into reducer objects:
-  - `panelState`: all `show*` booleans -> single `useReducer`
-  - `configState`: supabase, github, stripe, vercel configs -> single object
-  - `editorState`: activeFile, cursor, dirty files, split pane -> single object
-- Memoize heavy computations (compiled HTML, file indices)
-- Extract panel toggle logic into a `usePanelManager` hook
+- Remove the console/error interceptor injection from `BuilderPreviewPanel.tsx` (`htmlWithErrorCapture`)
+- Rely solely on the interceptors injected by the compiler (which are more complete and include the `__builderInjected` guard)
+- OR: Add the `__builderInjected` guard to `BuilderPreviewPanel`'s injection so it skips if already injected
 
-### Phase 57: End-to-End Test Suite
+### Phase 70: Template Gallery Expansion
 
-**Problem**: No automated tests exist for the builder's core compilation pipeline, streaming parser, or file system operations.
+**Problem**: `AppStarterTemplates.ts` has only a handful of templates (CRUD app, landing page, dashboard). Lovable offers 15+ polished templates. The current templates are Vanilla JS only -- no React templates exist despite the builder supporting React.
 
 **Fix**:
-- Add unit tests for:
-  - `useReactCompiler.compileReactProject()` — verify HTML output for basic React projects
-  - `useStreamingPreview.parseIncremental()` — verify file extraction from streaming content
-  - `cdnPackageRegistry.resolveBareImport()` — verify CDN URL resolution
-  - `useAutoFixLoop.buildFixPrompt()` — verify prompt structure
-- Add integration test for the full cycle: files -> compile -> preview HTML contains expected elements
+- Add 10+ React templates: SaaS Dashboard, Blog/CMS, E-commerce Storefront, Portfolio, Chat App, Project Management Board, Social Feed, AI Chatbot, Booking System, Finance Dashboard
+- Each template should include 3-5 React files (App.tsx, components, styles) with working Tailwind CSS
+- Add category filters to `StarterTemplatePicker` (App, Site, Tool, React, Vanilla)
+- Add preview thumbnails (can be emoji-based for now)
 
 ---
 
 ## Implementation Priority
 
 ```text
-CRITICAL (do first — features are dead code without these):
-Phase 41 (Wire Import Map)         -- NPM packages broken without it
-Phase 48 (React Router in Compiler)-- Multi-page apps broken
-Phase 50 (Supabase Client Bridge)  -- Realtime/DB broken in preview
-Phase 54 (Error Boundary Hardening)-- Blank previews with no feedback
+CRITICAL (causes user-visible bugs):
+Phase 68 (Import Map + UMD Conflict)  -- Dual React = broken hooks
+Phase 69 (Console Log Deduplication)   -- Double errors, double fix attempts
+Phase 67 (Babel Error Capture)         -- Blank screen with no feedback
+Phase 64 (Refresh Button)             -- Button does nothing
 
-HIGH (features exist but invisible):
-Phase 42 (Device Frames)           -- Component exists, not rendered
-Phase 43 (Perf + A11y Panels)      -- Components exist, not rendered
-Phase 44 (Seed Data + SQL Runner)  -- Components exist, not rendered
-Phase 45 (Inline AI Edit)          -- Hook exists, not connected
-Phase 46 (GitHub Sync)             -- Hook exists, not connected
-Phase 47 (Auto-Fix Loop)           -- Hook exists, replaced by inline logic
+HIGH (features built but invisible):
+Phase 58 (Seed Data Generator)         -- Never rendered
+Phase 59 (Inline SQL Runner)           -- Never rendered
+Phase 62 (SQL Block Detection)         -- Renders as plain code
+Phase 65 (Cmd+I Keybinding)            -- Never registered
+Phase 66 (GitHub Panel Wiring)         -- Disconnected systems
+Phase 63 (URL Bar Navigation)          -- Static, non-functional
 
-MEDIUM (UX polish):
-Phase 49 (Streaming Hot-Apply)     -- Preview only updates after full response
-Phase 51 (Keyboard Shortcuts)      -- Some registered, many missing
-Phase 52 (Branch Polish)           -- Works but no visual indicators
-Phase 53 (Template Expansion)      -- Limited selection
-
-MAINTENANCE (tech debt):
-Phase 55 (Context Overflow)        -- Reactive, not preventive
-Phase 56 (State Cleanup)           -- 100+ useState, fragile
-Phase 57 (Test Suite)              -- No automated tests
+MAINTENANCE (tech debt, no user impact):
+Phase 60 (Context Budget Wiring)       -- Reactive instead of proactive
+Phase 61 (Panel Manager Wiring)        -- 40+ useStates
+Phase 70 (Template Expansion)          -- Limited selection
 ```
 
 ---
 
 ## Technical Details
 
-### Phase 41 -- Import Map Injection (in useReactCompiler.ts)
+### Phase 68 -- React Instance Deduplication
 
-The `compileReactProject()` method will inject this before the React CDN scripts:
-
+Current (broken -- two React instances):
 ```html
-<script type="importmap">
-{
+<script type="importmap">{ "imports": { "react": "https://esm.sh/react@18.3.1" } }</script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+```
+
+Fixed (single React via shim):
+```html
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script type="importmap">{
   "imports": {
-    "react": "https://esm.sh/react@18.3.1",
-    "react-dom": "https://esm.sh/react-dom@18.3.1",
+    "react": "data:text/javascript,const R=window.React;export default R;export const{useState,useEffect,useCallback,useMemo,useRef,useContext,createContext,memo,forwardRef,Fragment,useReducer,useLayoutEffect,Children,cloneElement,isValidElement,createElement,Suspense,lazy,StrictMode}=R;",
+    "react-dom": "data:text/javascript,const RD=window.ReactDOM;export default RD;export const{createRoot,createPortal,flushSync}=RD;",
+    "react-dom/client": "data:text/javascript,export const{createRoot}=window.ReactDOM;",
     "lucide-react": "https://esm.sh/lucide-react@0.462.0?external=react",
-    "date-fns": "https://esm.sh/date-fns@3.6.0",
-    "recharts": "https://esm.sh/recharts@3.1.0?external=react,react-dom",
     ...
   }
-}
+}</script>
+```
+
+This ensures `await import('react')` returns the same React instance as the UMD global.
+
+### Phase 67 -- Babel Try-Catch Wrapping
+
+Replace:
+```html
+<script type="text/babel" data-presets="react,typescript" data-type="module">
+  // all transpiled code...
 </script>
 ```
 
-And `transpileFile()` will change from:
-```javascript
-// [external] lucide-react  // BROKEN
-```
-To:
-```javascript
-const { Search, X, Plus } = await import('lucide-react');  // WORKS
-```
-
-### Phase 48 -- Router Wrapping
-
-When `react-router-dom` imports are detected, the mount script changes from:
-```javascript
-root.render(React.createElement(RootComponent));
-```
-To:
-```javascript
-const { MemoryRouter } = await import('react-router-dom');
-root.render(React.createElement(MemoryRouter, null, React.createElement(RootComponent)));
-```
-
-### Phase 50 -- Supabase Client Fix
-
-Current (broken shadowing):
-```javascript
-const supabase = window.supabase.createClient(URL, KEY);
-// window.supabase is now the SDK namespace, not the client
-```
-
-Fixed:
-```javascript
-window.__supabaseClient = window.supabase.createClient(URL, KEY);
-// Inside Babel block:
-const supabase = window.__supabaseClient;
-```
-
-### Phase 54 -- Render Loop Detector
-
-```javascript
-let __renderCount = 0;
-const __renderTimer = setInterval(() => {
-  if (__renderCount > 100) {
-    clearInterval(__renderTimer);
+With:
+```html
+<script>
+(async function() {
+  try {
+    var code = `...all transpiled code...`;
+    var transformed = Babel.transform(code, {
+      presets: ['react', ['typescript', { isTSX: true, allExtensions: true }]],
+      filename: 'app.tsx',
+    });
+    var fn = new Function('React', 'ReactDOM', transformed.code);
+    fn(React, ReactDOM);
+  } catch(e) {
+    console.error('[Babel] Transpilation error:', e.message);
     window.parent.postMessage({
       type: '__PREVIEW_ERROR__',
-      error: { message: 'Infinite render loop detected. A component is re-rendering too frequently.' }
+      error: { message: 'Syntax Error: ' + e.message, source: 'babel', critical: true }
     }, '*');
-    document.getElementById('root').innerHTML = '<div style="padding:40px;color:#ef4444"><h2>Render Loop</h2><p>A component is stuck in an infinite loop.</p></div>';
+    document.getElementById('root').innerHTML = '<div style="padding:40px;color:#ef4444"><h2>Syntax Error</h2><pre>' + e.message + '</pre></div>';
   }
-  __renderCount = 0;
-}, 1000);
+})();
+</script>
 ```
 
-### Phase 56 -- Panel State Reducer
+### Phase 69 -- Deduplication Fix
+
+In `BuilderPreviewPanel.tsx`, change `htmlWithErrorCapture` to skip injection when the compiler has already injected interceptors:
 
 ```typescript
-type PanelAction = { type: 'toggle'; panel: string } | { type: 'closeAll' } | { type: 'open'; panel: string };
-
-function panelReducer(state: Record<string, boolean>, action: PanelAction) {
-  switch (action.type) {
-    case 'toggle': return { ...state, [action.panel]: !state[action.panel] };
-    case 'open': return { ...state, [action.panel]: true };
-    case 'closeAll': return Object.fromEntries(Object.keys(state).map(k => [k, false]));
-  }
-}
+const htmlWithErrorCapture = html ? (
+  html.includes('__builderInjected')
+    ? html  // Compiler already injected interceptors
+    : html.replace('</head>', `<script>...</script></head>`)
+) : null;
 ```
 
-This consolidates 40+ `useState<boolean>` calls into a single reducer.
+### Phase 62 -- ReactMarkdown SQL Detection
+
+```typescript
+// In BuilderChatPanel message renderer:
+<ReactMarkdown
+  components={{
+    code({ node, className, children, ...props }) {
+      const lang = className?.replace('language-', '');
+      const codeStr = String(children).trim();
+      if (lang === 'sql' && codeStr.length > 10) {
+        return <InlineSQLRunner sql={codeStr} supabaseUrl={supabaseConfig?.url} />;
+      }
+      return <code className={className} {...props}>{children}</code>;
+    }
+  }}
+/>
+```
 
