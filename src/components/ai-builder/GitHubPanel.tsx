@@ -23,6 +23,14 @@ interface GitHubPanelProps {
   projectName: string;
   files: ProjectFile[];
   onFilesImported?: (files: { path: string; content: string }[]) => void;
+  /** Connected useGithubSync hook — when provided, push/pull use the hook instead of local logic */
+  githubSync?: {
+    github: import('@/hooks/useGithubSync').GithubSyncState;
+    connectGitHub: (token: string, repoName: string) => void;
+    disconnectGitHub: () => void;
+    pushToGitHub: (files: ProjectFile[], options?: { isPrivate?: boolean; description?: string }) => Promise<any>;
+    pullFromGitHub: () => Promise<ProjectFile[] | null>;
+  };
 }
 
 interface RepoInfo {
@@ -51,7 +59,7 @@ interface CommitInfo {
 const PAT_KEY = 'app-builder-github-pat';
 const REPO_KEY = 'app-builder-github-repo';
 
-export function GitHubPanel({ open, onClose, projectName, files, onFilesImported }: GitHubPanelProps) {
+export function GitHubPanel({ open, onClose, projectName, files, onFilesImported, githubSync }: GitHubPanelProps) {
   const [token, setToken] = useState(() => localStorage.getItem(PAT_KEY) || '');
   const [connected, setConnected] = useState(false);
   const [username, setUsername] = useState('');
@@ -96,6 +104,11 @@ export function GitHubPanel({ open, onClose, projectName, files, onFilesImported
       setUsername(user.login);
       setConnected(true);
       localStorage.setItem(PAT_KEY, token);
+      // Also connect the githubSync hook if available
+      if (githubSync) {
+        const savedRepo = localStorage.getItem(REPO_KEY);
+        if (savedRepo) githubSync.connectGitHub(token, savedRepo.split('/').pop() || '');
+      }
       toast.success(`Connected as ${user.login}`);
       setActiveTab('repo');
       fetchRepos(user.login);
@@ -110,6 +123,7 @@ export function GitHubPanel({ open, onClose, projectName, files, onFilesImported
     setSelectedRepo(null);
     localStorage.removeItem(PAT_KEY);
     setActiveTab('connect');
+    githubSync?.disconnectGitHub();
   };
 
   const fetchRepos = async (user?: string) => {
@@ -133,6 +147,10 @@ export function GitHubPanel({ open, onClose, projectName, files, onFilesImported
     setSelectedRepo(repo);
     setSelectedBranch(repo.default_branch);
     localStorage.setItem(REPO_KEY, repo.full_name);
+    // Sync with hook
+    if (githubSync && token) {
+      githubSync.connectGitHub(token, repo.name);
+    }
     fetchBranches(repo);
     fetchCommits(repo, repo.default_branch);
   };
