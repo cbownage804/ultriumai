@@ -413,14 +413,26 @@ export function useAIAppBuilder() {
     const compressedHistory = compressConversationHistory(rawHistory, 8, MAX_CONTEXT_MESSAGES);
     
     for (const m of compressedHistory) {
-      // Strip file content from old assistant messages to save tokens
-      const content = m.role === 'assistant'
-        ? m.content.replace(/===FILE:[\s\S]*?(?====FILE:|$)/g, '[file content omitted]').slice(0, 500)
-        : m.content.slice(0, 2000); // Also cap user messages in history
+      // Strip file content AND image data URLs from old messages to save tokens
+      let content = m.content;
+      if (m.role === 'assistant') {
+        content = content.replace(/===FILE:[\s\S]*?(?====FILE:|$)/g, '[file content omitted]').slice(0, 500);
+      } else {
+        // Strip base64 data URLs from old user messages (these are huge)
+        content = content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{100,}/g, '[image data omitted]');
+        content = content.slice(0, 2000);
+      }
       apiMessages.push({ role: m.role, content });
     }
 
+    // ── Payload budget constants ──
+    const MAX_PAYLOAD_CHARS = 2_500_000; // Safe limit accounting for ~400K server-side system prompt
+
     // Build the user message content — send manifest + only relevant files for efficiency
+    // Dynamic budget: scale file limits based on how much system context we've already used
+    const systemChars = apiMessages.reduce((sum, m) => sum + (typeof m.content === 'string' ? m.content.length : 0), 0);
+    const FILE_BUDGET_CHARS = Math.max(200_000, MAX_PAYLOAD_CHARS - systemChars - 200_000); // Reserve 200K for response headroom
+
     const buildFileContext = (files: ProjectFile[], userInput: string): string => {
       if (files.length === 0) return userInput;
 
@@ -478,7 +490,6 @@ export function useAIAppBuilder() {
         }
 
         // Import graph: if a high-scored file imports this file, boost it
-        // (simplified: check if any file that scores >5 imports this file)
         const importedByRelevant = files.some(other => {
           if (other === f) return false;
           const otherScore = lowerInput.includes(other.path.toLowerCase()) ? 8 : 0;
@@ -496,18 +507,21 @@ export function useAIAppBuilder() {
         return { file: f, score };
       });
 
-      // Take files with score > 0, sorted by score, limited to top 12 for token efficiency
-      const MAX_FILES = 12;
-      const MAX_FILE_CHARS = 15000; // Cap individual file content
+      // Dynamic file limits based on remaining budget
+      const MAX_FILES = files.length <= 5 ? files.length : Math.min(15, Math.max(5, Math.floor(FILE_BUDGET_CHARS / 20000)));
       const relevant = scored
         .filter(s => s.score > 0)
         .sort((a, b) => b.score - a.score)
         .slice(0, MAX_FILES);
 
       const filesToSend = relevant.length > 0 ? relevant.map(s => s.file) : files.slice(0, MAX_FILES);
+      
+      // Dynamic per-file cap: distribute budget evenly, minimum 5KB each
+      const perFileCap = Math.max(5000, Math.floor(FILE_BUDGET_CHARS / filesToSend.length));
+      
       const fileContext = filesToSend.map(f => {
-        const content = f.content.length > MAX_FILE_CHARS
-          ? f.content.slice(0, MAX_FILE_CHARS) + '\n/* ... truncated ... */'
+        const content = f.content.length > perFileCap
+          ? f.content.slice(0, perFileCap) + '\n/* ... truncated ... */'
           : f.content;
         return `===FILE: ${f.path}===\n${content}`;
       }).join('\n\n');
@@ -585,16 +599,16 @@ export function useAIAppBuilder() {
       apiMessages.push({ role: 'user', content: buildFileContext(currentFiles, input) });
     }
 
-    // ── Token budget enforcement ──
-    // Rough estimate: 1 token ≈ 4 chars. Gemini limit is 1M tokens ≈ 4M chars.
-    // Leave headroom for system prompt on edge function side (~100K chars).
-    const MAX_PAYLOAD_CHARS = 3_500_000;
+    // ── Token budget enforcement (Lovable-grade) ──
+    // Target: stay well under 1M tokens (≈4M chars). Use 2.5M as safe payload max
+    // to account for the ~400K system prompt added server-side.
     const estimateChars = (msg: any): number => {
       if (typeof msg.content === 'string') return msg.content.length;
       if (Array.isArray(msg.content)) {
         return msg.content.reduce((sum: number, block: any) => {
           if (block.type === 'text') return sum + (block.text?.length || 0);
-          if (block.type === 'image_url') return sum + Math.min(block.image_url?.url?.length || 0, 100000);
+          // Images: count as ~1K tokens regardless of actual size (vision model handles separately)
+          if (block.type === 'image_url') return sum + 4000;
           return sum;
         }, 0);
       }
@@ -602,20 +616,54 @@ export function useAIAppBuilder() {
     };
     let totalChars = apiMessages.reduce((sum, m) => sum + estimateChars(m), 0);
 
-    // If over budget, aggressively trim: remove older history messages first
-    while (totalChars > MAX_PAYLOAD_CHARS && apiMessages.length > 2) {
-      // Find the first non-system, non-last message to remove
+    // Phase 1: Drop system context messages (least important first) if over 2M chars
+    const PHASE1_LIMIT = 2_000_000;
+    if (totalChars > PHASE1_LIMIT) {
+      // Remove system messages from end-to-start (later = less important), keep first 2
+      for (let i = apiMessages.length - 2; i >= 2; i--) {
+        if (totalChars <= PHASE1_LIMIT) break;
+        if (apiMessages[i].role === 'system') {
+          totalChars -= estimateChars(apiMessages[i]);
+          apiMessages.splice(i, 1);
+        }
+      }
+    }
+
+    // Phase 2: Remove older history messages (keep system + last user message)
+    const PHASE2_LIMIT = 2_500_000;
+    while (totalChars > PHASE2_LIMIT && apiMessages.length > 2) {
       const removeIdx = apiMessages.findIndex((m, i) => i > 0 && i < apiMessages.length - 1 && m.role !== 'system');
       if (removeIdx === -1) break;
       totalChars -= estimateChars(apiMessages[removeIdx]);
       apiMessages.splice(removeIdx, 1);
     }
 
-    // If STILL over budget, truncate file contents in the last user message
+    // Phase 3: Truncate the user message file content if still over budget
     if (totalChars > MAX_PAYLOAD_CHARS) {
       const lastMsg = apiMessages[apiMessages.length - 1];
-      if (typeof lastMsg.content === 'string' && lastMsg.content.length > 500000) {
-        lastMsg.content = lastMsg.content.slice(0, 500000) + '\n\n[TRUNCATED: Project too large. Only partial file content included. Focus on files mentioned in the user request.]';
+      if (typeof lastMsg.content === 'string' && lastMsg.content.length > 300000) {
+        // Keep manifest + user request, aggressively truncate file contents
+        const manifestEnd = lastMsg.content.indexOf('FILE CONTENTS:');
+        const userReqStart = lastMsg.content.lastIndexOf('User request:');
+        if (manifestEnd > 0 && userReqStart > 0) {
+          const manifest = lastMsg.content.slice(0, manifestEnd + 14);
+          const userReq = lastMsg.content.slice(userReqStart);
+          const fileSection = lastMsg.content.slice(manifestEnd + 14, userReqStart);
+          // Keep only first 200K of file content
+          const truncatedFiles = fileSection.slice(0, 200000) + '\n\n[... remaining files omitted for token budget ...]\n\n';
+          lastMsg.content = manifest + truncatedFiles + userReq;
+        } else {
+          lastMsg.content = lastMsg.content.slice(0, 300000) + '\n\n[TRUNCATED for token budget. Focus on files mentioned in the user request.]';
+        }
+      }
+      // For multimodal: strip large data URLs from text blocks
+      if (Array.isArray(lastMsg.content)) {
+        lastMsg.content = lastMsg.content.map((block: any) => {
+          if (block.type === 'text' && block.text?.length > 300000) {
+            return { ...block, text: block.text.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{5000,}/g, '[image data omitted for budget]').slice(0, 300000) };
+          }
+          return block;
+        });
       }
     }
 
@@ -644,13 +692,123 @@ export function useAIAppBuilder() {
 
       if (!resp.ok) {
         const errData = await resp.json().catch(() => ({ error: 'Unknown error' }));
-        if (resp.status === 400) {
-          const errorMsg = errData?.error || '';
-          if (errorMsg.includes('token') || errorMsg.includes('too large') || errorMsg.includes('exceeds')) {
-            toast.error('Your project is too large for a single prompt. Try a more specific request targeting fewer files.', { duration: 8000 });
-          } else {
-            toast.error('Invalid request — ' + (errorMsg || 'please simplify your prompt and try again.'), { duration: 6000 });
+        const errMsg = errData?.error || '';
+        const isSizeError = resp.status === 400 && (errMsg.includes('token') || errMsg.includes('too large') || errMsg.includes('exceeds') || errMsg.includes('maximum context'));
+        const isServerError = resp.status >= 500 || resp.status === 504 || resp.status === 408;
+
+        // ── Auto-retry with reduced context on size/server errors ──
+        if ((isSizeError || isServerError) && apiMessages.length > 2) {
+          console.warn(`AI request failed (${resp.status}), auto-retrying with reduced context...`);
+          toast.info('Optimizing request size... retrying automatically.', { duration: 3000 });
+
+          // Aggressively reduce: keep only system[0] + last user message
+          const systemMsg = apiMessages[0];
+          const lastUserMsg = apiMessages[apiMessages.length - 1];
+          const reducedMessages = [systemMsg, lastUserMsg];
+
+          // Also truncate file content in the user message
+          if (typeof lastUserMsg.content === 'string' && lastUserMsg.content.length > 200000) {
+            lastUserMsg.content = lastUserMsg.content.slice(0, 200000) + '\n\n[Context reduced for retry. Focus on the specific request.]';
           }
+
+          try {
+            const retryResp = await fetch(BUILDER_URL, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+              body: JSON.stringify({
+                messages: reducedMessages,
+                stream: true,
+                mode: effectiveMode,
+                model: model || undefined,
+                supabaseConfig: supabaseConfig || undefined,
+                stripeConfig: stripeConfig || undefined,
+                activeServices: serviceKeys?.map(sk => sk.serviceId) || [],
+              }),
+              signal: controller.signal,
+            });
+
+            if (retryResp.ok && retryResp.body) {
+              // Swap in the retry response and continue with streaming below
+              toast.success('Retry successful!', { duration: 2000 });
+              // Process the retry response through the same streaming logic
+              setThinkingPhase(null);
+              clearTimeout(phaseTimer1);
+              clearTimeout(phaseTimer2);
+              streaming.startStreaming();
+
+              const retryReader = retryResp.body.getReader();
+              const retryDecoder = new TextDecoder();
+              let retryBuffer = '';
+              let retryDone = false;
+
+              const upsertRetry = (content: string) => {
+                fullContent = content;
+                setMessages(prev => {
+                  const last = prev[prev.length - 1];
+                  if (last?.role === 'assistant') {
+                    return prev.map((m, i) => i === prev.length - 1 ? { ...m, content } : m);
+                  }
+                  return [...prev, { id: crypto.randomUUID(), role: 'assistant' as const, content, timestamp: new Date() }];
+                });
+              };
+
+              while (!retryDone) {
+                const { done, value } = await retryReader.read();
+                if (done) break;
+                retryBuffer += retryDecoder.decode(value, { stream: true });
+                let ni: number;
+                while ((ni = retryBuffer.indexOf('\n')) !== -1) {
+                  let ln = retryBuffer.slice(0, ni);
+                  retryBuffer = retryBuffer.slice(ni + 1);
+                  if (ln.endsWith('\r')) ln = ln.slice(0, -1);
+                  if (ln.startsWith(':') || ln.trim() === '') continue;
+                  if (!ln.startsWith('data: ')) continue;
+                  const js = ln.slice(6).trim();
+                  if (js === '[DONE]') { retryDone = true; break; }
+                  try {
+                    const p = JSON.parse(js);
+                    const d = p.choices?.[0]?.delta?.content;
+                    if (d) { upsertRetry(fullContent + d); streaming.parseIncremental(fullContent); }
+                  } catch { retryBuffer = ln + '\n' + retryBuffer; break; }
+                }
+              }
+
+              // Continue to the post-streaming logic below (parsing files, etc.)
+              // by NOT returning here — the code after the streaming block will handle it
+              // We need to skip the original streaming block though, so set a flag
+              // Actually, easier: just goto the post-stream section
+              const { files: retryParsed, deletions: retryDeletions } = parseMultiFileOutput(fullContent);
+              if (retryParsed.length > 0 || retryDeletions.length > 0) {
+                let mergedFiles = [...currentFiles];
+                if (retryDeletions.length > 0) mergedFiles = mergedFiles.filter(f => !retryDeletions.includes(f.path));
+                for (const nf of retryParsed) {
+                  const idx = mergedFiles.findIndex(f => f.path === nf.path);
+                  if (idx >= 0) mergedFiles[idx] = nf; else mergedFiles.push(nf);
+                }
+                setLatestFiles(mergedFiles);
+                setVersions(prev => [...prev, { id: crypto.randomUUID(), label: `AI: ${input.slice(0, 40)}...`, files: [...mergedFiles], timestamp: new Date(), messageId: '' }]);
+              }
+              streaming.stopStreaming();
+              const retryTokens = estimateTokens(input + fullContent);
+              setTotalTokensUsed(prev => prev + retryTokens);
+              if (!isFixRequest) await deductCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
+              const retrySuggestions = generateSuggestions(fullContent, effectiveMode, messages, currentFiles);
+              setMessages(prev => prev.map((m, i) => i === prev.length - 1 && m.role === 'assistant' ? { ...m, filesGenerated: retryParsed.length + retryDeletions.length || undefined, suggestions: retrySuggestions, tokenEstimate: retryTokens } : m));
+              setIsGenerating(false);
+              setThinkingPhase(null);
+              return;
+            }
+          } catch (retryErr) {
+            console.error('Retry also failed:', retryErr);
+          }
+        }
+
+        // Original error handling (if retry failed or wasn't applicable)
+        if (isSizeError) {
+          toast.error('Your project is very large. Try a more specific request targeting fewer files.', { duration: 8000 });
         } else if (resp.status === 429) {
           toast.error('Rate limited — please wait 30 seconds and try again.', { duration: 6000 });
         } else if (resp.status === 402) {
@@ -658,12 +816,10 @@ export function useAIAppBuilder() {
             duration: 8000,
             action: { label: 'Get Credits', onClick: () => window.dispatchEvent(new CustomEvent('open-billing')) },
           });
-        } else if (resp.status === 504 || resp.status === 408) {
-          toast.error('Request timed out. The AI is overloaded — try again with a simpler prompt.', { duration: 6000 });
-        } else if (resp.status >= 500) {
-          toast.error('Server error — our AI service is temporarily unavailable. Please try again in a moment.', { duration: 6000 });
+        } else if (isServerError) {
+          toast.error('AI service temporarily busy. Please try again in a moment.', { duration: 6000 });
         } else {
-          toast.error(errData.error || 'Failed to generate. Check your prompt and try again.');
+          toast.error(errMsg || 'Failed to generate. Check your prompt and try again.');
         }
         setIsGenerating(false);
         setThinkingPhase(null);

@@ -574,6 +574,67 @@ async function scrapeBranding(url: string): Promise<string | null> {
   }
 }
 
+/** Estimate total character count of messages array */
+function estimateTotalChars(messages: any[]): number {
+  return messages.reduce((sum: number, m: any) => {
+    if (typeof m.content === 'string') return sum + m.content.length;
+    if (Array.isArray(m.content)) {
+      return sum + m.content.reduce((s: number, b: any) => {
+        if (b.type === 'text') return s + (b.text?.length || 0);
+        if (b.type === 'image_url') return s + 4000; // Vision tokens, not raw chars
+        return s;
+      }, 0);
+    }
+    return sum;
+  }, 0);
+}
+
+/** Server-side context trimming to prevent gateway 400 errors */
+function trimMessagesToFit(messages: any[], maxChars: number): any[] {
+  let result = [...messages];
+  let total = estimateTotalChars(result);
+
+  // Phase 1: Truncate old assistant messages (they contain file outputs)
+  if (total > maxChars) {
+    result = result.map((m, i) => {
+      if (i > 0 && i < result.length - 1 && m.role === 'assistant' && typeof m.content === 'string' && m.content.length > 500) {
+        return { ...m, content: m.content.slice(0, 300) + '\n[content trimmed server-side]' };
+      }
+      return m;
+    });
+    total = estimateTotalChars(result);
+  }
+
+  // Phase 2: Remove middle messages (keep first system + last 3)
+  while (total > maxChars && result.length > 4) {
+    const removeIdx = result.findIndex((m, i) => i > 0 && i < result.length - 3);
+    if (removeIdx === -1) break;
+    total -= estimateTotalChars([result[removeIdx]]);
+    result.splice(removeIdx, 1);
+  }
+
+  // Phase 3: Truncate the last user message's file content
+  if (total > maxChars) {
+    const last = result[result.length - 1];
+    if (typeof last.content === 'string' && last.content.length > 200000) {
+      last.content = last.content.slice(0, 200000) + '\n\n[Truncated server-side for token budget]';
+    } else if (Array.isArray(last.content)) {
+      last.content = last.content.map((block: any) => {
+        if (block.type === 'text' && block.text?.length > 200000) {
+          return { ...block, text: block.text.slice(0, 200000) + '\n[Truncated]' };
+        }
+        // Strip large base64 data URLs
+        if (block.type === 'text' && block.text) {
+          return { ...block, text: block.text.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{10000,}/g, '[image data stripped server-side]') };
+        }
+        return block;
+      });
+    }
+  }
+
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -584,12 +645,10 @@ serve(async (req) => {
     let processedMessages = [...messages];
     const MAX_CONTEXT_MESSAGES = 40;
     if (processedMessages.length > MAX_CONTEXT_MESSAGES) {
-      // Keep the first 2 messages (initial context) and the last 10
       const oldMessages = processedMessages.slice(2, -10);
       const recentMessages = processedMessages.slice(-10);
       const firstMessages = processedMessages.slice(0, 2);
       
-      // Create a summary of old messages
       const summary = oldMessages.map(m => 
         `[${m.role}]: ${typeof m.content === 'string' ? m.content.slice(0, 100) : '(multimodal)'}...`
       ).join('\n');
@@ -716,6 +775,11 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
       return { ...msg, content: sanitizedContent };
     });
 
+    // Server-side safety: trim messages to fit within gateway token limits
+    // System prompt is ~400K chars, gateway limit is ~4M chars, so budget ~3M for messages
+    const MAX_MESSAGE_CHARS = 3_000_000;
+    const finalMessages = trimMessagesToFit(sanitizedMessages, MAX_MESSAGE_CHARS);
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -724,7 +788,7 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
       },
       body: JSON.stringify({
         model: model || "google/gemini-3-pro-preview",
-        messages: [{ role: "system", content: systemPrompt }, ...sanitizedMessages],
+        messages: [{ role: "system", content: systemPrompt }, ...finalMessages],
         stream,
       }),
     });
