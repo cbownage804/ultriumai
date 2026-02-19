@@ -1874,8 +1874,8 @@ export function AIAppBuilderWorkspace() {
     }
   }, [project.files, isGenerating, stableHTML]);
 
-  // For first load (no previous build), show immediately
-  const compiledHTML = stableHTML || liveCompiledHTML;
+  // NEVER fall through to liveCompiledHTML during generation — show SkeletonPreview until build completes
+  const compiledHTML = stableHTML;
   const hasFiles = project.files.length > 0;
 
   // Mobile detection
