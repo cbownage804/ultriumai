@@ -346,8 +346,9 @@ export interface VersionSnapshot {
 
 const BUILDER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-app-builder`;
 const FILE_DELIMITER = /^===FILE:\s*(.+?)===$/;
-
 const DELETE_DELIMITER = /^===DELETE:\s*(.+?)===$/;
+const EDIT_DELIMITER = /^===EDIT:\s*(.+?)===$/;
+const HUNK_HEADER = /^@@\s*(\d+)-(\d+)\s*@@$/;
 
 /** Detect conversational prose that should not be part of a code file */
 function isConversationalLine(line: string): boolean {
@@ -375,14 +376,110 @@ function isConversationalLine(line: string): boolean {
   return markers.some(r => r.test(trimmed));
 }
 
-/** Parse the ===FILE: path=== and ===DELETE: path=== delimited format */
-export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; deletions: string[] } {
+/** Apply a single hunk patch to existing file content */
+function applyHunkPatch(
+  existingContent: string,
+  hunks: { startLine: number; endLine: number; newLines: string[] }[]
+): string | null {
+  const lines = existingContent.split('\n');
+  // Apply hunks from bottom to top so line numbers remain stable
+  const sorted = [...hunks].sort((a, b) => b.startLine - a.startLine);
+  for (const hunk of sorted) {
+    const start = Math.max(0, hunk.startLine - 1); // 1-indexed to 0-indexed
+    const end = Math.min(lines.length, hunk.endLine);
+    if (start > lines.length) return null; // out of bounds — patch doesn't apply
+    lines.splice(start, end - start, ...hunk.newLines);
+  }
+  return lines.join('\n');
+}
+
+/** Parse ===EDIT: path=== blocks into hunks */
+interface EditBlock {
+  path: string;
+  hunks: { startLine: number; endLine: number; newLines: string[] }[];
+}
+
+function parseEditBlocks(raw: string): EditBlock[] {
+  const lines = raw.split('\n');
+  const edits: EditBlock[] = [];
+  let currentPath: string | null = null;
+  let currentHunks: EditBlock['hunks'] = [];
+  let currentHunkLines: string[] = [];
+  let currentHunkStart = 0;
+  let currentHunkEnd = 0;
+  let inHunk = false;
+
+  const flushHunk = () => {
+    if (inHunk && currentHunkStart > 0) {
+      currentHunks.push({ startLine: currentHunkStart, endLine: currentHunkEnd, newLines: [...currentHunkLines] });
+    }
+    currentHunkLines = [];
+    inHunk = false;
+  };
+
+  const flushEdit = () => {
+    flushHunk();
+    if (currentPath && currentHunks.length > 0) {
+      edits.push({ path: currentPath, hunks: [...currentHunks] });
+    }
+    currentHunks = [];
+  };
+
+  for (const line of lines) {
+    const editMatch = line.match(EDIT_DELIMITER);
+    if (editMatch) {
+      flushEdit();
+      currentPath = editMatch[1].trim();
+      continue;
+    }
+
+    // If we're inside an ===EDIT: block
+    if (currentPath) {
+      // Check for new file/delete/edit delimiter — means this edit block is done
+      if (FILE_DELIMITER.test(line) || DELETE_DELIMITER.test(line)) {
+        flushEdit();
+        currentPath = null;
+        continue;
+      }
+
+      const hunkMatch = line.match(HUNK_HEADER);
+      if (hunkMatch) {
+        flushHunk();
+        currentHunkStart = parseInt(hunkMatch[1]);
+        currentHunkEnd = parseInt(hunkMatch[2]);
+        inHunk = true;
+        continue;
+      }
+
+      if (inHunk) {
+        // Stop hunk on blank line followed by conversational prose
+        if (!line.trim() && currentHunkLines.length > 0) {
+          // peek ahead handled by the next iteration
+          currentHunkLines.push(line);
+        } else if (isConversationalLine(line)) {
+          flushEdit();
+          currentPath = null;
+        } else {
+          currentHunkLines.push(line);
+        }
+      }
+    }
+  }
+  flushEdit();
+  return edits;
+}
+
+/** Parse the ===FILE: path===, ===EDIT: path===, and ===DELETE: path=== delimited format */
+export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; deletions: string[]; edits: EditBlock[] } {
+  const edits = parseEditBlocks(raw);
+
   const lines = raw.split('\n');
   const files: ProjectFile[] = [];
   const deletions: string[] = [];
   let currentPath: string | null = null;
   let currentLines: string[] = [];
   let blankLineStreak = 0;
+  let inEditBlock = false;
 
   const flush = () => {
     if (currentPath) {
@@ -400,12 +497,24 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
   };
 
   for (const line of lines) {
+    // Skip ===EDIT: blocks — they're handled separately by parseEditBlocks
+    const editMatch = line.match(EDIT_DELIMITER);
+    if (editMatch) {
+      flush();
+      currentPath = null;
+      currentLines = [];
+      blankLineStreak = 0;
+      inEditBlock = true;
+      continue;
+    }
+
     const deleteMatch = line.match(DELETE_DELIMITER);
     if (deleteMatch) {
       flush();
       currentPath = null;
       currentLines = [];
       blankLineStreak = 0;
+      inEditBlock = false;
       deletions.push(deleteMatch[1].trim());
       continue;
     }
@@ -415,6 +524,10 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
       currentPath = match[1].trim();
       currentLines = [];
       blankLineStreak = 0;
+      inEditBlock = false;
+    } else if (inEditBlock) {
+      // Skip lines inside edit blocks — already parsed
+      continue;
     } else if (currentPath !== null) {
       // Track blank lines — conversational text after 2+ blank lines signals end of file
       if (!line.trim()) {
@@ -435,12 +548,9 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
   flush();
 
   // Post-process: strip trailing conversational prose from the last file
-  // This catches cases where AI commentary is appended without blank line gaps
   for (const file of files) {
     const fileLines = file.content.split('\n');
     let cutIndex = fileLines.length;
-    
-    // Scan from the end to find where conversational text starts
     for (let i = fileLines.length - 1; i >= 0; i--) {
       const line = fileLines[i].trim();
       if (!line) { cutIndex = i; continue; }
@@ -450,13 +560,12 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
         break;
       }
     }
-    
     if (cutIndex < fileLines.length) {
       file.content = fileLines.slice(0, cutIndex).join('\n').trim();
     }
   }
 
-  if (files.length === 0 && deletions.length === 0) {
+  if (files.length === 0 && deletions.length === 0 && edits.length === 0) {
     const trimmed = raw.trim();
     const htmlMatch = trimmed.match(/```html\n?([\s\S]*?)```/);
     const html = htmlMatch ? htmlMatch[1] : trimmed;
@@ -465,7 +574,7 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
     }
   }
 
-  return { files, deletions };
+  return { files, deletions, edits };
 }
 
 /** Generate contextual follow-up suggestions based on the response and conversation state */
@@ -864,10 +973,13 @@ export function useAIAppBuilder() {
       const perFileCap = Math.max(5000, Math.floor(FILE_BUDGET_CHARS / filesToSend.length));
       
       const fileContext = filesToSend.map(f => {
-        const content = f.content.length > perFileCap
-          ? f.content.slice(0, perFileCap) + '\n/* ... truncated ... */'
-          : f.content;
-        return `===FILE: ${f.path}===\n${content}`;
+        let content = f.content;
+        if (content.length > perFileCap) {
+          content = content.slice(0, perFileCap) + '\n/* ... truncated ... */';
+        }
+        // Add line numbers so the AI can use ===EDIT: with @@ lineStart-endLine @@ markers
+        const numberedContent = content.split('\n').map((line, i) => `${i + 1}: ${line}`).join('\n');
+        return `===FILE: ${f.path}===\n${numberedContent}`;
       }).join('\n\n');
 
       const omittedCount = files.length - filesToSend.length;
@@ -885,7 +997,7 @@ export function useAIAppBuilder() {
       );
       setContextBudget(budget);
 
-      return `${manifest}${structureNote}${unchangedNote}\n\nFILE CONTENTS:\n${fileContext}${omittedNote}\n\nIMPORTANT: Only output ===FILE: path=== blocks for files you are CHANGING. To delete a file, use ===DELETE: path===. Do NOT re-output unchanged files.\n\nAFTER all ===FILE: blocks, write a brief 1-2 sentence conversational summary of what you changed and why — be friendly and helpful like a coding assistant. Example: "I've updated the header component with your new color scheme and added the mobile menu you asked for. Let me know if you'd like any tweaks!"\n\nUser request: ${userInput}`;
+      return `${manifest}${structureNote}${unchangedNote}\n\nFILE CONTENTS (with line numbers for ===EDIT: patches):\n${fileContext}${omittedNote}\n\nIMPORTANT: For small changes, use ===EDIT: path=== with @@ lineStart-endLine @@ hunks instead of rewriting entire files. Use ===FILE: path=== only for new files or major rewrites. To delete a file, use ===DELETE: path===. Do NOT re-output unchanged files.\n\nAFTER all code blocks, write a brief 1-2 sentence conversational summary of what you changed and why — be friendly and helpful like a coding assistant.\n\nUser request: ${userInput}`;
     };
 
     if (imageDataUrls?.length) {
@@ -1121,8 +1233,8 @@ export function useAIAppBuilder() {
 
       // ── Graceful partial output handling ──
       // If stream died mid-way but we got some complete files, still use them
-      if (!streamDone && fullContent.includes('===FILE:')) {
-        console.warn('[Stream] Interrupted but partial output has files — using what we got');
+      if (!streamDone && (fullContent.includes('===FILE:') || fullContent.includes('===EDIT:'))) {
+        console.warn('[Stream] Interrupted but partial output has files/edits — using what we got');
         toast.warning('Stream interrupted — using partially generated files.', { duration: 5000 });
       }
     };
@@ -1156,7 +1268,33 @@ export function useAIAppBuilder() {
 
     const finalizeStream = async () => {
       const buildStartTime = performance.now();
-      const { files: parsedFiles, deletions } = parseMultiFileOutput(fullContent);
+      const { files: parsedFiles, deletions, edits } = parseMultiFileOutput(fullContent);
+
+      // ── Apply ===EDIT: patches to existing files (Phase 2) ──
+      let patchedFiles: ProjectFile[] = [];
+      if (edits.length > 0) {
+        for (const edit of edits) {
+          const existing = currentFiles.find(f => f.path === edit.path);
+          if (existing) {
+            const patched = applyHunkPatch(existing.content, edit.hunks);
+            if (patched !== null) {
+              const ext = edit.path.split('.').pop()?.toLowerCase() || '';
+              const langMap: Record<string, string> = {
+                html: 'html', htm: 'html', css: 'css', scss: 'scss',
+                js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript',
+                json: 'json', md: 'markdown', svg: 'xml',
+              };
+              patchedFiles.push({ path: edit.path, content: patched, language: langMap[ext] || 'plaintext' });
+              console.info(`[Patch] Applied ${edit.hunks.length} hunk(s) to ${edit.path}`);
+            } else {
+              console.warn(`[Patch] Failed to apply patch to ${edit.path} — hunks out of bounds`);
+              toast.warning(`Patch failed for ${edit.path} — file may have changed.`);
+            }
+          } else {
+            console.warn(`[Patch] Target file ${edit.path} not found — skipping edit`);
+          }
+        }
+      }
 
       // ── Post-gen validation (Lovable-grade) ──
       let filesToApply = parsedFiles;
@@ -1164,9 +1302,7 @@ export function useAIAppBuilder() {
         const validation = validateGeneratedFiles(parsedFiles);
         if (!validation.valid) {
           console.warn('[Validation] Issues found:', validation.errors);
-          // Auto-fix prose contamination
           filesToApply = sanitizeValidationErrors(parsedFiles, validation.errors);
-          // Re-validate after sanitization
           const recheck = validateGeneratedFiles(filesToApply);
           const criticalErrors = recheck.errors.filter(e => !e.message.includes('commentary'));
           if (criticalErrors.length > 0) {
@@ -1175,10 +1311,13 @@ export function useAIAppBuilder() {
         }
       }
 
-      if (filesToApply.length > 0 || deletions.length > 0) {
+      // Merge: full file replacements + patched edits
+      const allNewFiles = [...filesToApply, ...patchedFiles];
+
+      if (allNewFiles.length > 0 || deletions.length > 0) {
         let mergedFiles = [...currentFiles];
         if (deletions.length > 0) mergedFiles = mergedFiles.filter(f => !deletions.includes(f.path));
-        for (const newFile of filesToApply) {
+        for (const newFile of allNewFiles) {
           const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
           if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
           else mergedFiles.push(newFile);
@@ -1215,7 +1354,7 @@ export function useAIAppBuilder() {
       // ── Build analytics (Lovable-grade) ──
       const buildTimeMs = Math.round(performance.now() - buildStartTime);
       const { changed } = getChangedFiles(currentFiles);
-      console.info(`[Build Analytics] ${filesToApply.length} files generated, ${deletions.length} deleted, ${changed.length} context files sent, build: ${buildTimeMs}ms`);
+      console.info(`[Build Analytics] ${filesToApply.length} files generated, ${patchedFiles.length} patched, ${deletions.length} deleted, ${changed.length} context files sent, build: ${buildTimeMs}ms`);
 
       const msgTokens = estimateTokens(input + fullContent);
       setTotalTokensUsed(prev => prev + msgTokens);
@@ -1224,15 +1363,15 @@ export function useAIAppBuilder() {
       // Parse plan steps from AI output for visual task cards
       const planSteps = parsePlanSteps(fullContent);
       const suggestions = generateSuggestions(fullContent, effectiveMode, messages, currentFiles);
-      const totalChanges = (filesToApply?.length || 0) + (deletions?.length || 0);
-      const snapshot = totalChanges > 0 ? [...currentFiles, ...filesToApply.filter(pf => !currentFiles.some(cf => cf.path === pf.path))] : [...currentFiles];
+      const totalChanges = (allNewFiles?.length || 0) + (deletions?.length || 0);
+      const snapshot = totalChanges > 0 ? [...currentFiles, ...allNewFiles.filter(pf => !currentFiles.some(cf => cf.path === pf.path))] : [...currentFiles];
 
       // Build summary (Phase 5)
       const buildDurationMs = Date.now() - buildWallStart;
-      const validation = validateGeneratedFiles(filesToApply);
+      const validation = validateGeneratedFiles(allNewFiles);
       const buildSummary: BuildSummary = {
         durationMs: buildDurationMs,
-        filesGenerated: filesToApply.length,
+        filesGenerated: allNewFiles.length,
         filesDeleted: deletions.length,
         tokensUsed: msgTokens,
         contextChars: totalChars,
