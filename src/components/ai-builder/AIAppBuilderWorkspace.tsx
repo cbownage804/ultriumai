@@ -6,6 +6,11 @@ import { useAutoErrorRecovery } from '@/hooks/useAutoErrorRecovery';
 import type { RemoteCursor } from './CodeEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
+import { usePromptHistory } from '@/hooks/usePromptHistory';
+import { useCodeSmellDetector } from '@/hooks/useCodeSmellDetector';
+import { useDocGenerator } from '@/hooks/useDocGenerator';
+import { PromptHistoryPanel } from './PromptHistoryPanel';
+import { UndoPreviewPopover } from './UndoPreviewPopover';
 import { useAutoFixLoop } from '@/hooks/useAutoFixLoop';
 import { useGithubSync } from '@/hooks/useGithubSync';
 import { useInlineAIEdit } from '@/hooks/useInlineAIEdit';
@@ -183,7 +188,11 @@ export function AIAppBuilderWorkspace() {
     reorderOpenFiles, getCompiledHTML, activeFile,
   } = useProjectFileSystem();
 
-  const { canUndo, canRedo, pushUndo, undo, redo } = useUndoRedo();
+  const { undoStack, redoStack, canUndo, canRedo, pushUndo, undo, redo } = useUndoRedo();
+  const promptHistory = usePromptHistory();
+  const codeSmellDetector = useCodeSmellDetector();
+  const docGenerator = useDocGenerator();
+  const [showPromptHistory, setShowPromptHistory] = useState(false);
   const {
     branches, activeBranch, activeBranchName,
     createBranch, switchBranch, mergeBranch, deleteBranch, updateBranchFiles,
@@ -486,7 +495,12 @@ export function AIAppBuilderWorkspace() {
       // Phase 87: Show compiling state while preview rebuilds
       setIsCompiling(true);
       requestAnimationFrame(() => {
-        setTimeout(() => setIsCompiling(false), 800);
+        setTimeout(() => {
+          setIsCompiling(false);
+          // Phase 100: Auto-detect code smells after build
+          const smells = codeSmellDetector.analyzeFiles([...project.files, ...latestFiles]);
+          if (smells.length > 0) setCodeSuggestions(smells);
+        }, 800);
       });
     }
   }, [latestFiles]);
@@ -856,6 +870,8 @@ export function AIAppBuilderWorkspace() {
     
     // Process prompt memory (detect user corrections)
     promptMemory.processUserMessage(input);
+    // Log to prompt history
+    promptHistory.addEntry(input, selectedModel, project.files.length);
 
     const knowledgeCtx = [
       knowledge.customInstructions || '',
@@ -1423,7 +1439,11 @@ export function AIAppBuilderWorkspace() {
     { id: 'database', label: 'Database Panel', icon: Database, category: 'panel', action: () => openPanel('database'), keywords: ['supabase', 'db'] },
     { id: 'console', label: 'Toggle Console', icon: Activity, category: 'panel', action: () => setShowConsole(c => !c) },
     { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, category: 'panel', shortcut: '⌘/', action: () => setShowShortcuts(true) },
-  ], [handleSave, handleUndo, handleRedo, handlePublish, openPanel]);
+    { id: 'prompt-history', label: 'Prompt History', icon: Clock, category: 'panel', action: () => setShowPromptHistory(true), keywords: ['history', 'prompts', 'favorites'] },
+    { id: 'code-smells', label: 'Analyze Code Quality', icon: Zap, category: 'run', action: () => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); setShowCodeIntel(true); toast.success(`Found ${smells.length} suggestions`); }, keywords: ['lint', 'quality', 'refactor', 'smell'] },
+    { id: 'gen-readme', label: 'Generate README', icon: BookOpen, category: 'run', action: () => { const prompt = docGenerator.generateReadmePrompt(project.files, project.name); handleSend(prompt); }, keywords: ['doc', 'readme', 'documentation'] },
+    { id: 'doc-file', label: 'Document Current File', icon: FileCode, category: 'run', action: () => { if (activeFile) { const prompt = docGenerator.generateDocPrompt(activeFile); handleSend(prompt); } else { toast.error('Open a file first'); } }, keywords: ['jsdoc', 'comment', 'document'] },
+  ], [handleSave, handleUndo, handleRedo, handlePublish, openPanel, codeSmellDetector, project.files, docGenerator, project.name, activeFile, handleSend]);
 
   // Sidebar removed — all tools accessible via ⌘K command palette (Lovable-style)
 
@@ -1478,8 +1498,25 @@ export function AIAppBuilderWorkspace() {
               />
             )}
 
-            {/* Undo/Redo + History icons */}
+            {/* Undo/Redo with Smart Preview + History */}
             <div className="hidden md:flex items-center gap-0.5 ml-1">
+              <UndoPreviewPopover
+                undoStack={undoStack}
+                redoStack={redoStack}
+                canUndo={canUndo}
+                canRedo={canRedo}
+                currentFiles={project.files}
+                onUndo={handleUndo}
+                onRedo={handleRedo}
+              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button onClick={() => setShowPromptHistory(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                    <Clock className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">Prompt History</TooltipContent>
+              </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button onClick={() => setShowVersionHistory(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
@@ -1801,7 +1838,18 @@ export function AIAppBuilderWorkspace() {
                   onOpenAuth={() => openPanel('auth')}
                   onOpenDeploy={() => setShowDeployPipeline(true)}
                 />
-                <AICodeIntelligence open={showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); toast.success('Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => toast.success('Refreshed suggestions')} activeFilePath={project.activeFilePath} />
+                <PromptHistoryPanel
+                  open={showPromptHistory}
+                  onClose={() => setShowPromptHistory(false)}
+                  history={promptHistory.history}
+                  onRerun={(prompt) => { setShowPromptHistory(false); handleSend(prompt); }}
+                  onToggleFavorite={promptHistory.toggleFavorite}
+                  onRemove={promptHistory.removeEntry}
+                  onClear={promptHistory.clearHistory}
+                  onExport={promptHistory.exportHistory}
+                  onImport={promptHistory.importHistory}
+                />
+                <AICodeIntelligence open={showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); toast.success('Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); toast.success(`Found ${smells.length} suggestions`); }} activeFilePath={project.activeFilePath} />
                 <DatabaseExplorer open={showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
                 <ComponentLibrary open={showComponentLib} onClose={() => setShowComponentLib(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); } }} onApplyTheme={() => {}} />
                 <DeployPipelinePanel open={showDeployPipeline} onClose={() => setShowDeployPipeline(false)} onDeploy={handlePublish} publishedUrl={publishedUrl} isDeploying={isGenerating} projectName={project.name} onOpenDomainPanel={() => { setShowDeployPipeline(false); setShowDomainPanel(true); }} />
