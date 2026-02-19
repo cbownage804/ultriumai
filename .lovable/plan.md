@@ -1,224 +1,213 @@
 
 
-# Phase 9-13: Next-Generation App Builder Evolution
+# Phase 14-18: True Lovable Operational Parity
 
-All 8 original phases are complete. This plan introduces 5 new phases that address the remaining critical gaps and push the builder toward true production parity with Lovable.
-
----
-
-## Phase 9: Real AI Image Generation (Replace Placeholder SVGs) ✅ COMPLETED
-
-**Status**: ✅ Complete — Edge function rewired to Lovable AI Gateway (`gemini-2.5-flash-image` / `gemini-3-pro-image-preview`), AIImageGenPanel calls real API, image optimization pipeline created (`compressImage`, `convertToWebP`, `injectLazyLoading`).
-
-**Problem**: The `AIImageGenPanel` previously generated placeholder SVG gradients instead of real images.
-
-**Changes**:
-
-1. **Wire AIImageGenPanel to the Lovable AI Gateway** (`src/components/ai-builder/AIImageGenPanel.tsx`)
-   - Replace the `setTimeout` + SVG placeholder with a real API call to the Lovable AI Gateway using `google/gemini-2.5-flash-image` (or `gemini-3-pro-image-preview` for high quality)
-   - Call the gateway at `https://ai.gateway.lovable.dev/v1/chat/completions` with `modalities: ["image", "text"]`
-   - Extract base64 image from `response.choices[0].message.images[0].image_url.url`
-   - Store generated images as project assets automatically
-
-2. **Image-to-Code Pipeline** (`src/hooks/useAIAppBuilder.ts`)
-   - When a user uploads an image with intent like "use as hero", "use as background", detect asset placement intent
-   - Auto-compress large images client-side (max 1200px, JPEG 80% quality) before embedding
-   - For images intended as assets: store the data URL in the asset manager, inject `<img src="...">` into the generated code referencing the asset
-   - Add `===ASSET: filename.png===` delimiter for the AI to emit base64 image data that gets auto-saved to assets
-
-3. **Image Optimization Pipeline** (`src/utils/imageOptimization.ts` -- new file)
-   - Client-side image compression using canvas resize
-   - WebP conversion when supported
-   - Lazy-load `loading="lazy"` injection into all generated `<img>` tags
-   - Responsive `srcset` generation for different viewport sizes
+After reviewing the full codebase, here are the remaining gaps between your builder and how Lovable actually operates. These focus on **operational behavior** -- not more tools/panels, but how the core build loop works.
 
 ---
 
-## Phase 10: Persistent File System & Project Continuity ✅ COMPLETED
+## Phase 14: Supabase Database Migrations from Chat
 
-**Status**: ✅ Complete — IndexedDB persistence via `useIndexedDBPersistence` hook with 500ms debounced auto-save, session recovery dialog (`SessionRecoveryDialog`), and sync status indicator (`SyncStatusIndicator`) in header. Falls back to localStorage draft. Recovery dialog shows file/message counts and time-ago.
-
-**Problem**: Files live only in React state. Refreshing the page or closing the tab loses everything unless manually saved. Projects should auto-persist and restore seamlessly.
+**Gap**: Lovable executes real SQL migrations against Supabase directly from the conversation. Your builder generates SQL in chat and tells the user to copy-paste it into the Supabase dashboard manually.
 
 **Changes**:
 
-1. **IndexedDB File Storage** (`src/hooks/useProjectFileSystem.ts`)
-   - Add `idb-keyval` or raw IndexedDB wrapper to persist all project files locally
-   - Auto-save on every file change with debouncing (500ms)
-   - Load from IndexedDB on mount if a project ID is in the URL
-   - Keep the in-memory state as the source of truth, with IndexedDB as the persistence layer
+1. **Migration Execution Edge Function** (`supabase/functions/ai-builder-migrate/index.ts`)
+   - Accept SQL statements + the user's connected Supabase project URL/service role key
+   - Execute migrations using the Supabase Management API or direct `pg` connection
+   - Return success/error with affected tables and row counts
+   - Support rollback by generating inverse migration SQL
 
-2. **Cloud Sync** (`src/hooks/useProjectPersistence.ts`)
-   - Auto-save project files to Supabase `builder_projects` table every 30 seconds (if changed)
-   - Store files as a JSONB array in the project record
-   - Add a `last_synced_at` timestamp for conflict detection
-   - Show a sync indicator in the header (synced / syncing / offline)
+2. **Migration Approval UI** (`src/components/ai-builder/MigrationApprovalCard.tsx`)
+   - When the AI outputs `===MIGRATION:===` blocks, show a styled approval card in chat
+   - Display the SQL with syntax highlighting and a plain-English summary
+   - "Apply" and "Skip" buttons -- never auto-execute DDL
+   - After approval, call the migration edge function and show success/failure inline
 
-3. **Session Recovery** (`src/components/ai-builder/AIAppBuilderWorkspace.tsx`)
-   - On mount, check for unsaved changes in IndexedDB
-   - If found, show a recovery dialog: "You have unsaved changes from your last session. Restore?"
-   - Include the conversation history in the recovery payload
+3. **System Prompt Update** (`supabase/functions/ai-app-builder/index.ts`)
+   - Add `===MIGRATION: description===` delimiter to the output format
+   - Instruct the AI to emit migration blocks whenever it detects database schema needs
+   - Include the connected Supabase schema context (table names, columns, RLS policies) so the AI generates correct ALTER/CREATE statements
 
 ---
 
-## Phase 11: Component Framework Support (React/Tailwind in Preview) ✅ COMPLETED
+## Phase 15: Real Supabase Type Generation and Client Wiring
 
-**Status**: ✅ Complete — `useReactCompiler` hook transpiles JSX/TSX using Babel Standalone CDN with virtual module resolution and topological dependency sorting. React 18 + ReactDOM + Tailwind Play CDN auto-injected. Framework auto-detection via `detectReactProject()`. `===MODE: react===` directive support in AI output parser. System prompt updated with React scaffolding instructions and mode switching guidance.
-
-**Problem**: The builder generates vanilla HTML/CSS/JS only. Modern apps need component-based architecture.
+**Gap**: Lovable auto-generates TypeScript types from the database schema and wires them into `supabase.from('table').select()` calls. Your builder uses raw `supabase` globals and generic queries without type safety.
 
 **Changes**:
 
-1. **In-Browser React Compiler** (`src/hooks/useReactCompiler.ts` — new file)
-   - Uses `@babel/standalone` loaded from CDN to transpile JSX/TSX in the browser
-   - Virtual module system (`__modules`) for inter-file import resolution
-   - TypeScript type annotation stripping via regex
-   - Topological dependency sorting for correct load order
-   - React 18 + ReactDOM via CDN injection into preview iframe
-   - Tailwind CSS via Play CDN (`<script src="https://cdn.tailwindcss.com">`)
-   - Auto-mounting: detects App.tsx default export and renders into `#root`
+1. **Schema Introspection** (`supabase/functions/ai-builder-schema/index.ts`)
+   - Query `information_schema.tables` and `information_schema.columns` from the connected project
+   - Return a JSON schema definition with table names, column names, types, nullability, defaults, and foreign keys
+   - Cache results for 5 minutes to avoid repeated queries
 
-2. **Framework Detection** (`src/hooks/useProjectFileSystem.ts`, `AIAppBuilderWorkspace.tsx`)
-   - `detectReactProject()` checks for `.tsx`/`.jsx` files
-   - Workspace `liveCompiledHTML` memo delegates to React compiler when detected
-   - Falls back to vanilla HTML compiler for non-React projects
+2. **Type Generation** (client-side in `useAIAppBuilder.ts`)
+   - After migration approval or on first build, fetch the schema
+   - Generate a `types.ts` file with TypeScript interfaces matching the database tables
+   - Auto-inject into the project file system
+   - Include the schema summary in the AI system prompt so generated code uses correct column names and types
 
-3. **System Prompt Enhancement** (`supabase/functions/ai-app-builder/index.ts`)
-   - `===MODE: react===` directive the AI can emit to signal React output
-   - React file scaffolding template (App.tsx, Header.tsx, styles.css)
-   - Clear guidance on when to use React vs vanilla mode
-   - `parseMultiFileOutput` strips `===MODE:` directives from content
+3. **Query Builder Context**
+   - When the AI detects database intent, inject the real schema as context
+   - The AI generates `supabase.from('todos').select('id, title, completed')` with actual column names
+   - No more guessing or generic placeholder queries
 
 ---
 
-## Phase 12: Smart Error Resolution & Self-Healing ✅ COMPLETED
+## Phase 16: Edge Function Generation and Deployment
 
-**Status**: ✅ Complete — 4-stage fix escalation (targeted line → function rewrite → full file regen → rollback) in `useAutoErrorRecovery`. Structured `ErrorReport` with surrounding code, console warnings, failed requests, and previous fix context. Error pattern learning (`useErrorPatternLearning`) tracks recurring errors in localStorage and injects anti-pattern prompts into `useSelfReviewPass`. Categories: undefined_variable, syntax_error, null_access, infinite_loop, hook_violation, missing_import, duplicate_declaration, unclosed_string, unclosed_bracket, network_error.
-
-**Problem**: While "Try to Fix" exists, it often fails because the AI lacks sufficient error context. The fix loop needs to be smarter.
+**Gap**: Lovable generates and deploys Edge Functions as part of the build. Your builder has the concept but the AI just outputs JS files -- it doesn't create actual deployable Deno edge functions.
 
 **Changes**:
 
-1. **Error Context Enrichment** (`src/hooks/useAutoErrorRecovery.ts`)
-   - Structured `ErrorReport` captures: message, source file + line, surrounding code (20 lines), console warnings, failed requests, previous fix attempt
-   - `getSurroundingCode()` extracts context around error line
-   - `extractFunctionAroundLine()` for function-level rewrites
+1. **Edge Function File Convention**
+   - When the AI detects server-side needs (email, webhooks, scheduled jobs, API proxies), emit files with a `===EDGE_FUNCTION: function-name===` delimiter
+   - Parse these into a separate `supabase/functions/{name}/index.ts` structure
+   - Show them in a dedicated "Edge Functions" section of the file tree
 
-2. **Fix Strategy Escalation** (`src/hooks/useAutoErrorRecovery.ts`)
-   - Attempt 1: Targeted line fix (minimal change to the broken line)
-   - Attempt 2: Function rewrite (entire function + dependencies)
-   - Attempt 3: Full file regeneration (from scratch with different approach)
-   - Attempt 4: Rollback + notify user
+2. **Deploy Pipeline** (`supabase/functions/ai-builder-deploy-fn/index.ts`)
+   - Accept the function source code + connected Supabase project credentials
+   - Use the Supabase Management API to deploy the function
+   - Return deployment status, logs URL, and invocation URL
+   - Show deployment status in the build summary card
 
-3. **Error Pattern Learning** (`src/hooks/useErrorPatternLearning.ts`)
-   - Tracks error patterns across builds with normalization and categorization
-   - Persists to localStorage, auto-expires after 7 days
-   - `getAntiPatternPrompt()` generates preventive instructions for system prompt
-   - Integrated into `useSelfReviewPass` for automatic injection
+3. **Secrets Injection**
+   - When an edge function references `Deno.env.get('SOME_KEY')`, detect the required secrets
+   - Prompt the user to add missing secrets via the Secrets Manager panel
+   - Block deployment until required secrets are configured
 
 ---
 
-## Phase 13: Production Export & Real Hosting ✅ COMPLETED
+## Phase 17: Authentication Flow Generation
 
-**Status**: ✅ Complete — Enhanced `useBundleSizeTracking` with 0-100 performance scoring, embedded image size checks, DOM complexity analysis, SEO auditing (title, meta description, OpenGraph, viewport, alt attributes, lazy loading). Full-stack exports now include `vercel.json`, `netlify.toml`, `.github/workflows/deploy.yml`, `robots.txt`, and `sitemap.xml`. `ExportGuidePanel` updated with per-platform deployment commands.
-
-**Problem**: Published apps needed proper hosting configs, performance monitoring, and SEO essentials.
+**Gap**: Lovable generates complete auth flows (signup, login, password reset, OAuth, protected routes, session management) that work immediately. Your builder generates auth UI but it's disconnected -- no real session management or route protection.
 
 **Changes**:
 
-1. **Performance Budget & Scoring** (`src/components/ai-builder/useBundleSizeTracking.ts`)
-   - 0-100 performance score based on bundle size, image sizes, DOM complexity, and SEO
-   - Thresholds: bundle warn >500KB / error >1MB, images warn >200KB / error >1MB, DOM nodes warn >1500 / error >3000
-   - SEO checks: title, meta description, OpenGraph, viewport, alt attributes, lazy loading
-   - Score logged to build log with color-coded emoji (🟢/🟡/🔴)
+1. **Auth Template System** (`src/components/ai-builder/authTemplates.ts`)
+   - Pre-built, tested auth patterns: email/password, magic link, Google OAuth, GitHub OAuth
+   - Each template includes: login page, signup page, password reset, session listener, protected route wrapper, logout button
+   - All templates use the injected `supabase` client for real auth calls
 
-2. **Platform Deployment Configs** (`src/components/ai-builder/exportProject.ts`)
-   - Vercel: `vercel.json` with SPA rewrites
-   - Netlify: `netlify.toml` with redirects and Node 20
-   - GitHub Pages: `.github/workflows/deploy.yml` with actions
-   - SEO: `robots.txt` and `sitemap.xml` placeholders
+2. **Session Management in Preview**
+   - Inject `supabase.auth.onAuthStateChange()` listener into the preview iframe
+   - Store session in the preview's localStorage
+   - Route protection: redirect to `/login` when accessing protected routes without a session
+   - Pass auth state to all components via a global `currentUser` variable
 
-3. **Enhanced Export Guide** (`src/components/ai-builder/ExportGuidePanel.tsx`)
-   - Per-platform deployment commands (Vercel, Netlify, GitHub Pages, Docker)
-   - Config file descriptions and one-liner deploy commands
+3. **Auth State Detection in AI Prompt**
+   - When the user says "add login", "user accounts", "protected", or "my data", auto-detect auth intent
+   - Inject the full auth template into the build rather than generating it from scratch each time
+   - Reduce errors by using tested, known-good auth code
+
+---
+
+## Phase 18: Real-time Preview URL Sharing (Like Lovable's "Share" Button)
+
+**Gap**: Lovable lets you share a live preview URL that anyone can open and see the current state of the app. Your builder uploads to Supabase Storage, but it's debounced at 5 seconds and uses a static file -- not a live-updating preview.
+
+**Changes**:
+
+1. **Instant Preview Deployment** (improve `usePreviewHosting.ts`)
+   - Reduce debounce from 5s to 1s for faster sharing
+   - Use content-hashing for the file path to enable CDN caching
+   - Add a "Copy Share Link" button that instantly uploads and copies the URL
+   - Show a toast with the shareable URL
+
+2. **Live Preview via Edge Function** (enhance `supabase/functions/serve-preview/index.ts`)
+   - Store the latest compiled HTML in a fast key-value store (Supabase table with a single row per project)
+   - The serve-preview function reads from this store and serves the latest version
+   - Updates are near-instant since it's a database read, not a storage fetch
+   - Add cache headers for performance while ensuring freshness
+
+3. **QR Code for Mobile Testing**
+   - Generate a QR code for the preview URL (already have `qrcode` package installed)
+   - Show it in a popover when hovering the share button
+   - Makes mobile testing frictionless
 
 ---
 
 ## Implementation Priority
 
 ```text
-Phase 9  (Real Image Generation)     -- Highest value, fixes a broken feature
-Phase 10 (Persistent File System)    -- Prevents data loss, critical UX
-Phase 12 (Smart Error Resolution)    -- Reduces frustration, improves reliability
-Phase 13 (Production Export)         -- Enables real-world use
-Phase 11 (React/Component Support)   -- Most complex, highest long-term impact
+Phase 14 (Database Migrations)      -- Core Lovable behavior, highest parity value
+Phase 15 (Type Gen & Schema Wiring) -- Makes generated code actually work with real DB
+Phase 17 (Auth Flow Generation)     -- Most-requested feature for real apps
+Phase 16 (Edge Function Deploy)     -- Enables true full-stack apps
+Phase 18 (Live Preview Sharing)     -- Polish feature, good UX
 ```
 
 ---
 
 ## Technical Details
 
-### Phase 9 -- Key Code Changes
+### Phase 14 -- Migration Delimiter Format
 
-**AIImageGenPanel.tsx**: Replace the placeholder generation with:
-```typescript
-const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-  method: 'POST',
-  headers: {
-    Authorization: `Bearer ${LOVABLE_API_KEY}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    model: 'google/gemini-2.5-flash-image',
-    messages: [{ role: 'user', content: fullPrompt }],
-    modalities: ['image', 'text'],
-  }),
-});
-const data = await response.json();
-const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+The AI will output migration blocks inline with file blocks:
+
+```text
+===MIGRATION: Create todos table===
+CREATE TABLE public.todos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id),
+  title TEXT NOT NULL,
+  completed BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.todos ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own todos"
+  ON public.todos FOR ALL
+  USING (auth.uid() = user_id);
+===END_MIGRATION===
 ```
 
-**New file -- imageOptimization.ts**:
-- `compressImage(dataUrl, maxWidth, quality)` -- canvas-based resize
-- `convertToWebP(dataUrl)` -- format conversion
-- `injectLazyLoading(html)` -- add `loading="lazy"` to all img tags
+The chat UI renders this as an approval card, not raw text.
 
-### Phase 10 -- IndexedDB Schema
+### Phase 15 -- Schema Context Injection
 
-- Key: `project:{projectId}:files` -- stores `ProjectFile[]`
-- Key: `project:{projectId}:messages` -- stores `BuilderMessage[]`
-- Key: `project:{projectId}:meta` -- stores name, timestamps, settings
-- Auto-cleanup: delete projects older than 30 days with no cloud sync
+Before each build, if Supabase is connected, the system prompt will include:
 
-### Phase 11 -- React Pipeline
-
-The React compiler pipeline will:
-1. Detect `.tsx`/`.jsx` files in the project
-2. Load `@babel/standalone` from CDN (cached)
-3. Transform each file: JSX to createElement, strip TypeScript types
-4. Resolve inter-file imports using a virtual module map
-5. Bundle into a single IIFE injected into the preview iframe
-6. Inject React 18 + ReactDOM from CDN into the iframe `<head>`
-
-### Phase 12 -- Error Report Structure
-
-```typescript
-interface ErrorReport {
-  message: string;
-  sourceFile: string;
-  sourceLine: number;
-  surroundingCode: string; // 20 lines around the error
-  consoleWarnings: string[];
-  failedRequests: { url: string; status: number }[];
-  previousFixAttempt?: string;
-  attemptNumber: number;
-}
+```text
+[DATABASE SCHEMA]
+Table: todos (id: uuid PK, user_id: uuid FK->auth.users, title: text, completed: bool, created_at: timestamptz)
+Table: profiles (id: uuid PK FK->auth.users, display_name: text, avatar_url: text)
+RLS: todos -- users can CRUD own rows
+[/DATABASE SCHEMA]
 ```
 
-### Phase 13 -- Performance Budget Thresholds
+This ensures the AI generates queries that match the real schema.
 
-- Total HTML + CSS + JS: warn > 500KB, error > 1MB
-- Individual images: warn > 200KB, error > 1MB
-- DOM nodes: warn > 1500, error > 3000
-- Unused CSS rules: warn > 30%
+### Phase 16 -- Edge Function Detection
+
+The AI emits:
+```text
+===EDGE_FUNCTION: send-welcome-email===
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// ... function code
+===END_EDGE_FUNCTION===
+```
+
+The parser extracts this into a deployable function and triggers the deploy pipeline.
+
+### Phase 17 -- Auth Template Structure
+
+Each auth template is a self-contained module with:
+- `renderLoginPage()` -- login form with email/password or OAuth buttons
+- `renderSignupPage()` -- registration with validation
+- `setupAuthListener()` -- `onAuthStateChange` wired to the router
+- `requireAuth(callback)` -- wrapper that redirects unauthenticated users
+- `getCurrentUser()` -- returns the current session user or null
+
+### Phase 18 -- Preview Storage Schema
+
+A new `app_builder_live_previews` table:
+- `project_id` (UUID, PK)
+- `compiled_html` (TEXT) -- the full HTML output
+- `updated_at` (TIMESTAMPTZ)
+- `version_hash` (TEXT) -- for cache busting
+
+The serve-preview function queries this table instead of Storage for faster reads.
 
