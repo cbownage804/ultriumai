@@ -33,6 +33,7 @@ import { VersionHistoryPanel } from './VersionHistoryPanel';
 import { ConsolePanel } from './ConsolePanel';
 import { DeployDialog } from './DeployDialog';
 import { EnvVarsPanel, type EnvVariable } from './EnvVarsPanel';
+import { RLSPolicyTester } from './RLSPolicyTester';
 import { FileConflictDialog } from './FileConflictDialog';
 import { QuickFileSwitcher } from './QuickFileSwitcher';
 import { AssetManager, type ProjectAsset } from './AssetManager';
@@ -243,6 +244,7 @@ export function AIAppBuilderWorkspace() {
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showConsole, setShowConsole] = useState(false);
   const [showEnvVars, setShowEnvVars] = useState(false);
+  const [showRLSTester, setShowRLSTester] = useState(false);
   const [showAssets, setShowAssets] = useState(false);
   const [envVariables, setEnvVariables] = useState<EnvVariable[]>([]);
   const [assets, setAssets] = useState<ProjectAsset[]>([]);
@@ -1720,6 +1722,7 @@ export function AIAppBuilderWorkspace() {
                 {/* Side panels */}
                 <VersionHistoryPanel versions={versions} currentFiles={project.files} onRestore={restoreVersion} onClose={() => setShowVersionHistory(false)} open={showVersionHistory} activeBranchName={activeBranchName} />
                 <EnvVarsPanel envVars={envVariables} onChange={setEnvVariables} open={showEnvVars} onClose={() => setShowEnvVars(false)} />
+                <RLSPolicyTester supabaseConfig={supabaseConfig} open={showRLSTester} onClose={() => setShowRLSTester(false)} />
                 <AssetManager assets={assets} onUpload={handleAssetUpload} onDelete={handleAssetDelete} open={showAssets} onClose={() => setShowAssets(false)} />
                 <Suspense fallback={<PanelLoader />}>
                   <DatabasePanel open={showDatabase} onClose={() => setShowDatabase(false)} supabaseConfig={supabaseConfig} />

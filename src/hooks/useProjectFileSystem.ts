@@ -221,7 +221,19 @@ export function useProjectFileSystem() {
       }
     }
     if (Object.keys(envObj).length > 0) {
-      headInjects.push(`<script>window.ENV = ${JSON.stringify(envObj)};</script>`);
+      // Build masked version for console display (secrets masking)
+      const maskedObj: Record<string, string> = {};
+      for (const [k, v] of Object.entries(envObj)) {
+        const isSecret = /key|secret|token|password|auth/i.test(k);
+        maskedObj[k] = isSecret && v.length > 8 ? '****...' + v.slice(-6) : v;
+      }
+      headInjects.push(`<script>
+window.ENV = ${JSON.stringify(envObj)};
+// Masked console display for secrets
+if (typeof console !== 'undefined') {
+  console.log('%c[ENV] Variables loaded:', 'color:#6ee7b7', ${JSON.stringify(maskedObj)});
+}
+</script>`);
     }
 
     // Inject CDN packages
