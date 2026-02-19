@@ -671,22 +671,136 @@ export function useAIAppBuilder() {
     abortRef.current = controller;
     let fullContent = '';
 
+    // ── Shared streaming reader (DRY — used by main path and retries) ──
+    const readStream = async (body: ReadableStream<Uint8Array>) => {
+      const reader = body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = '';
+      let streamDone = false;
+
+      const upsertAssistant = (content: string) => {
+        fullContent = content;
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant') {
+            return prev.map((m, i) => i === prev.length - 1 ? { ...m, content } : m);
+          }
+          return [...prev, { id: crypto.randomUUID(), role: 'assistant' as const, content, timestamp: new Date() }];
+        });
+      };
+
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (line.startsWith(':') || line.trim() === '') continue;
+          if (!line.startsWith('data: ')) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') { streamDone = true; break; }
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              upsertAssistant(fullContent + delta);
+              streaming.parseIncremental(fullContent);
+            }
+          } catch {
+            textBuffer = line + '\n' + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Flush remaining buffer
+      if (textBuffer.trim()) {
+        for (let raw of textBuffer.split('\n')) {
+          if (!raw) continue;
+          if (raw.endsWith('\r')) raw = raw.slice(0, -1);
+          if (raw.startsWith(':') || raw.trim() === '') continue;
+          if (!raw.startsWith('data: ')) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) upsertAssistant(fullContent + delta);
+          } catch { /* ignore */ }
+        }
+      }
+    };
+
+    // ── Fetch with timeout helper ──
+    const FETCH_TIMEOUT_MS = 90_000; // 90 seconds
+    const fetchWithTimeout = (url: string, init: RequestInit): Promise<Response> => {
+      const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+      return fetch(url, init).finally(() => clearTimeout(timeoutId));
+    };
+
+    // ── Build request payload ──
+    const buildPayload = (msgs: typeof apiMessages) => JSON.stringify({
+      messages: msgs,
+      stream: true,
+      mode: effectiveMode,
+      model: model || undefined,
+      supabaseConfig: supabaseConfig || undefined,
+      stripeConfig: stripeConfig || undefined,
+      activeServices: serviceKeys?.map(sk => sk.serviceId) || [],
+    });
+
+    const fetchHeaders = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    };
+
+    // ── Post-stream finalization (shared between main and retry paths) ──
+    const finalizeStream = async () => {
+      const { files: parsedFiles, deletions } = parseMultiFileOutput(fullContent);
+      if (parsedFiles.length > 0 || deletions.length > 0) {
+        let mergedFiles = [...currentFiles];
+        if (deletions.length > 0) mergedFiles = mergedFiles.filter(f => !deletions.includes(f.path));
+        for (const newFile of parsedFiles) {
+          const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
+          if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
+          else mergedFiles.push(newFile);
+        }
+        setLatestFiles(mergedFiles);
+        setVersions(prev => [...prev, {
+          id: crypto.randomUUID(),
+          label: `AI: ${input.slice(0, 40)}${input.length > 40 ? '...' : ''}`,
+          files: [...mergedFiles],
+          timestamp: new Date(),
+          messageId: '',
+        }]);
+      }
+      streaming.stopStreaming();
+
+      const msgTokens = estimateTokens(input + fullContent);
+      setTotalTokensUsed(prev => prev + msgTokens);
+      if (!isFixRequest) await deductCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
+      
+      const suggestions = generateSuggestions(fullContent, effectiveMode, messages, currentFiles);
+      const totalChanges = (parsedFiles?.length || 0) + (deletions?.length || 0);
+      const snapshot = totalChanges > 0 ? [...currentFiles, ...parsedFiles.filter(pf => !currentFiles.some(cf => cf.path === pf.path))] : [...currentFiles];
+      setMessages(prev =>
+        prev.map((m, i) =>
+          i === prev.length - 1 && m.role === 'assistant'
+            ? { ...m, filesGenerated: totalChanges || undefined, suggestions, tokenEstimate: msgTokens, filesSnapshot: snapshot }
+            : m
+        )
+      );
+    };
+
     try {
-      const resp = await fetch(BUILDER_URL, {
+      const resp = await fetchWithTimeout(BUILDER_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          messages: apiMessages,
-          stream: true,
-          mode: effectiveMode,
-          model: model || undefined,
-          supabaseConfig: supabaseConfig || undefined,
-          stripeConfig: stripeConfig || undefined,
-          activeServices: serviceKeys?.map(sk => sk.serviceId) || [],
-        }),
+        headers: fetchHeaders,
+        body: buildPayload(apiMessages),
         signal: controller.signal,
       });
 
@@ -695,118 +809,77 @@ export function useAIAppBuilder() {
         const errMsg = errData?.error || '';
         const isSizeError = resp.status === 400 && (errMsg.includes('token') || errMsg.includes('too large') || errMsg.includes('exceeds') || errMsg.includes('maximum context'));
         const isServerError = resp.status >= 500 || resp.status === 504 || resp.status === 408;
+        const isRetryable = (isSizeError || isServerError) && apiMessages.length > 2;
 
-        // ── Auto-retry with reduced context on size/server errors ──
-        if ((isSizeError || isServerError) && apiMessages.length > 2) {
-          console.warn(`AI request failed (${resp.status}), auto-retrying with reduced context...`);
-          toast.info('Optimizing request size... retrying automatically.', { duration: 3000 });
+        // ── Exponential backoff retry (up to 2 attempts with progressive context reduction) ──
+        if (isRetryable) {
+          const MAX_RETRIES = 2;
+          const RETRY_CONFIGS = [
+            { label: 'Optimizing context...', maxChars: 200_000, keepMsgs: 4 },
+            { label: 'Minimal context retry...', maxChars: 100_000, keepMsgs: 2 },
+          ];
 
-          // Aggressively reduce: keep only system[0] + last user message
-          const systemMsg = apiMessages[0];
-          const lastUserMsg = apiMessages[apiMessages.length - 1];
-          const reducedMessages = [systemMsg, lastUserMsg];
+          for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            const config = RETRY_CONFIGS[attempt];
+            const backoffMs = (attempt + 1) * 1500;
+            console.warn(`Retry ${attempt + 1}/${MAX_RETRIES}: ${config.label} (backoff ${backoffMs}ms)`);
+            toast.info(config.label, { duration: 3000 });
 
-          // Also truncate file content in the user message
-          if (typeof lastUserMsg.content === 'string' && lastUserMsg.content.length > 200000) {
-            lastUserMsg.content = lastUserMsg.content.slice(0, 200000) + '\n\n[Context reduced for retry. Focus on the specific request.]';
-          }
+            await new Promise(r => setTimeout(r, backoffMs));
+            if (controller.signal.aborted) break;
 
-          try {
-            const retryResp = await fetch(BUILDER_URL, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-              },
-              body: JSON.stringify({
-                messages: reducedMessages,
-                stream: true,
-                mode: effectiveMode,
-                model: model || undefined,
-                supabaseConfig: supabaseConfig || undefined,
-                stripeConfig: stripeConfig || undefined,
-                activeServices: serviceKeys?.map(sk => sk.serviceId) || [],
-              }),
-              signal: controller.signal,
-            });
+            // Progressive context reduction
+            const systemMsg = apiMessages[0];
+            const lastUserMsg = { ...apiMessages[apiMessages.length - 1] };
+            const keepMessages = apiMessages.slice(0, Math.min(config.keepMsgs, apiMessages.length - 1));
+            const reducedMessages = keepMessages[keepMessages.length - 1] === lastUserMsg
+              ? keepMessages
+              : [...keepMessages, lastUserMsg];
 
-            if (retryResp.ok && retryResp.body) {
-              // Swap in the retry response and continue with streaming below
-              toast.success('Retry successful!', { duration: 2000 });
-              // Process the retry response through the same streaming logic
-              setThinkingPhase(null);
-              clearTimeout(phaseTimer1);
-              clearTimeout(phaseTimer2);
-              streaming.startStreaming();
-
-              const retryReader = retryResp.body.getReader();
-              const retryDecoder = new TextDecoder();
-              let retryBuffer = '';
-              let retryDone = false;
-
-              const upsertRetry = (content: string) => {
-                fullContent = content;
-                setMessages(prev => {
-                  const last = prev[prev.length - 1];
-                  if (last?.role === 'assistant') {
-                    return prev.map((m, i) => i === prev.length - 1 ? { ...m, content } : m);
-                  }
-                  return [...prev, { id: crypto.randomUUID(), role: 'assistant' as const, content, timestamp: new Date() }];
-                });
-              };
-
-              while (!retryDone) {
-                const { done, value } = await retryReader.read();
-                if (done) break;
-                retryBuffer += retryDecoder.decode(value, { stream: true });
-                let ni: number;
-                while ((ni = retryBuffer.indexOf('\n')) !== -1) {
-                  let ln = retryBuffer.slice(0, ni);
-                  retryBuffer = retryBuffer.slice(ni + 1);
-                  if (ln.endsWith('\r')) ln = ln.slice(0, -1);
-                  if (ln.startsWith(':') || ln.trim() === '') continue;
-                  if (!ln.startsWith('data: ')) continue;
-                  const js = ln.slice(6).trim();
-                  if (js === '[DONE]') { retryDone = true; break; }
-                  try {
-                    const p = JSON.parse(js);
-                    const d = p.choices?.[0]?.delta?.content;
-                    if (d) { upsertRetry(fullContent + d); streaming.parseIncremental(fullContent); }
-                  } catch { retryBuffer = ln + '\n' + retryBuffer; break; }
-                }
-              }
-
-              // Continue to the post-streaming logic below (parsing files, etc.)
-              // by NOT returning here — the code after the streaming block will handle it
-              // We need to skip the original streaming block though, so set a flag
-              // Actually, easier: just goto the post-stream section
-              const { files: retryParsed, deletions: retryDeletions } = parseMultiFileOutput(fullContent);
-              if (retryParsed.length > 0 || retryDeletions.length > 0) {
-                let mergedFiles = [...currentFiles];
-                if (retryDeletions.length > 0) mergedFiles = mergedFiles.filter(f => !retryDeletions.includes(f.path));
-                for (const nf of retryParsed) {
-                  const idx = mergedFiles.findIndex(f => f.path === nf.path);
-                  if (idx >= 0) mergedFiles[idx] = nf; else mergedFiles.push(nf);
-                }
-                setLatestFiles(mergedFiles);
-                setVersions(prev => [...prev, { id: crypto.randomUUID(), label: `AI: ${input.slice(0, 40)}...`, files: [...mergedFiles], timestamp: new Date(), messageId: '' }]);
-              }
-              streaming.stopStreaming();
-              const retryTokens = estimateTokens(input + fullContent);
-              setTotalTokensUsed(prev => prev + retryTokens);
-              if (!isFixRequest) await deductCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
-              const retrySuggestions = generateSuggestions(fullContent, effectiveMode, messages, currentFiles);
-              setMessages(prev => prev.map((m, i) => i === prev.length - 1 && m.role === 'assistant' ? { ...m, filesGenerated: retryParsed.length + retryDeletions.length || undefined, suggestions: retrySuggestions, tokenEstimate: retryTokens } : m));
-              setIsGenerating(false);
-              setThinkingPhase(null);
-              return;
+            // Truncate file content in the user message
+            if (typeof lastUserMsg.content === 'string' && lastUserMsg.content.length > config.maxChars) {
+              lastUserMsg.content = lastUserMsg.content.slice(0, config.maxChars) + `\n\n[Context reduced for retry attempt ${attempt + 1}. Focus on the specific request.]`;
             }
-          } catch (retryErr) {
-            console.error('Retry also failed:', retryErr);
+            if (Array.isArray(lastUserMsg.content)) {
+              lastUserMsg.content = lastUserMsg.content.map((block: any) => {
+                if (block.type === 'text' && block.text?.length > config.maxChars) {
+                  return { ...block, text: block.text.slice(0, config.maxChars) + '\n[Truncated for retry]' };
+                }
+                return block;
+              });
+            }
+
+            try {
+              const retryResp = await fetchWithTimeout(BUILDER_URL, {
+                method: 'POST',
+                headers: fetchHeaders,
+                body: buildPayload(reducedMessages),
+                signal: controller.signal,
+              });
+
+              if (retryResp.ok && retryResp.body) {
+                toast.success('Retry successful!', { duration: 2000 });
+                setThinkingPhase(null);
+                clearTimeout(phaseTimer1);
+                clearTimeout(phaseTimer2);
+                streaming.startStreaming();
+                fullContent = '';
+                await readStream(retryResp.body);
+                await finalizeStream();
+                setIsGenerating(false);
+                setThinkingPhase(null);
+                return;
+              }
+              // If non-ok, continue to next attempt
+              console.warn(`Retry ${attempt + 1} returned ${retryResp.status}, continuing...`);
+            } catch (retryErr: any) {
+              if (retryErr.name === 'AbortError') break;
+              console.warn(`Retry ${attempt + 1} failed:`, retryErr.message);
+            }
           }
         }
 
-        // Original error handling (if retry failed or wasn't applicable)
+        // All retries failed or not retryable — show appropriate error
         if (isSizeError) {
           toast.error('Your project is very large. Try a more specific request targeting fewer files.', { duration: 8000 });
         } else if (resp.status === 429) {
@@ -836,137 +909,15 @@ export function useAIAppBuilder() {
       clearTimeout(phaseTimer2);
       streaming.startStreaming();
 
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = '';
-      let streamDone = false;
-
-      const upsertAssistant = (content: string) => {
-        fullContent = content;
-        setMessages(prev => {
-          const last = prev[prev.length - 1];
-          if (last?.role === 'assistant') {
-            return prev.map((m, i) =>
-              i === prev.length - 1 ? { ...m, content } : m
-            );
-          }
-          return [
-            ...prev,
-            { id: crypto.randomUUID(), role: 'assistant' as const, content, timestamp: new Date() },
-          ];
-        });
-      };
-
-      while (!streamDone) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (line.startsWith(':') || line.trim() === '') continue;
-          if (!line.startsWith('data: ')) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') { streamDone = true; break; }
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              const newContent = fullContent + delta;
-              upsertAssistant(newContent);
-              // Incrementally parse files for hot-reload
-              streaming.parseIncremental(newContent);
-            }
-          } catch {
-            textBuffer = line + '\n' + textBuffer;
-            break;
-          }
-        }
-      }
-
-      // Flush remaining
-      if (textBuffer.trim()) {
-        for (let raw of textBuffer.split('\n')) {
-          if (!raw) continue;
-          if (raw.endsWith('\r')) raw = raw.slice(0, -1);
-          if (raw.startsWith(':') || raw.trim() === '') continue;
-          if (!raw.startsWith('data: ')) continue;
-          const jsonStr = raw.slice(6).trim();
-          if (jsonStr === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) upsertAssistant(fullContent + delta);
-          } catch { /* ignore */ }
-        }
-      }
-
-      // Parse multi-file output — store as pending for approval
-      const { files: parsedFiles, deletions } = parseMultiFileOutput(fullContent);
-      if (parsedFiles.length > 0 || deletions.length > 0) {
-        // Merge: start with current files, remove deletions, then overlay changed files
-        let mergedFiles = [...currentFiles];
-        
-        // Process deletions
-        if (deletions.length > 0) {
-          mergedFiles = mergedFiles.filter(f => !deletions.includes(f.path));
-        }
-        
-        // Process additions/updates
-        for (const newFile of parsedFiles) {
-          const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
-          if (existingIdx >= 0) {
-            mergedFiles[existingIdx] = newFile;
-          } else {
-            mergedFiles.push(newFile);
-          }
-        }
-        // Auto-apply files (approval UI in chat shows summary, user can revert)
-        setLatestFiles(mergedFiles);
-
-        // Save version snapshot after successful generation
-        setVersions(prev => [...prev, {
-          id: crypto.randomUUID(),
-          label: `AI: ${input.slice(0, 40)}${input.length > 40 ? '...' : ''}`,
-          files: [...mergedFiles],
-          timestamp: new Date(),
-          messageId: '',
-        }]);
-      }
-      streaming.stopStreaming();
-
-      // Track token usage and deduct credits
-      const msgTokens = estimateTokens(input + fullContent);
-      setTotalTokensUsed(prev => prev + msgTokens);
-      
-      // Deduct credits after successful generation — but NOT for auto-fixes or fix requests
-      if (!isFixRequest) {
-        await deductCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
-      }
-      // Add suggestions + file count + token estimate + filesSnapshot to the final assistant message
-      const suggestions = generateSuggestions(fullContent, effectiveMode, messages, currentFiles);
-      const totalChanges = parsedFiles.length + deletions.length;
-      const snapshot = totalChanges > 0 ? [...currentFiles, ...parsedFiles.filter(pf => !currentFiles.some(cf => cf.path === pf.path))] : [...currentFiles];
-      setMessages(prev =>
-        prev.map((m, i) =>
-          i === prev.length - 1 && m.role === 'assistant'
-            ? { ...m, filesGenerated: totalChanges || undefined, suggestions, tokenEstimate: msgTokens, filesSnapshot: snapshot }
-            : m
-        )
-      );
+      await readStream(resp.body);
+      await finalizeStream();
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.error('AI Builder error:', err);
         const errorMsg = err.message?.includes('fetch')
           ? 'Network error — check your connection and try again.'
-          : err.message?.includes('timeout') || err.message?.includes('Timeout')
-          ? 'Request timed out. Try a simpler prompt or try again.'
+          : err.message?.includes('timeout') || err.message?.includes('Timeout') || err.name === 'AbortError'
+          ? 'Request timed out after 90 seconds. Try a simpler prompt or try again.'
           : 'Something went wrong during generation. Your project files are safe — try again.';
         toast.error(errorMsg, { duration: 5000 });
       }
