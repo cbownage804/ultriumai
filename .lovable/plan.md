@@ -34,7 +34,9 @@ All 8 original phases are complete. This plan introduces 5 new phases that addre
 
 ---
 
-## Phase 10: Persistent File System & Project Continuity
+## Phase 10: Persistent File System & Project Continuity ✅ COMPLETED
+
+**Status**: ✅ Complete — IndexedDB persistence via `useIndexedDBPersistence` hook with 500ms debounced auto-save, session recovery dialog (`SessionRecoveryDialog`), and sync status indicator (`SyncStatusIndicator`) in header. Falls back to localStorage draft. Recovery dialog shows file/message counts and time-ago.
 
 **Problem**: Files live only in React state. Refreshing the page or closing the tab loses everything unless manually saved. Projects should auto-persist and restore seamlessly.
 

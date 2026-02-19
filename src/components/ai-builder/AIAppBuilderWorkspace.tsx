@@ -122,6 +122,9 @@ import { VisualEditToolbar } from './VisualEditToolbar';
 import { NPMPackageManagerPanel } from './NPMPackageManagerPanel';
 import { PublishPanel } from './PublishPanel';
 import { AIImageGenPanel } from './AIImageGenPanel';
+import { SyncStatusIndicator } from './SyncStatusIndicator';
+import { SessionRecoveryDialog } from './SessionRecoveryDialog';
+import { useIndexedDBPersistence } from '@/hooks/useIndexedDBPersistence';
 import { HeaderCreditsIndicator } from './HeaderCreditsIndicator';
 import ultriumLogo from '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png';
 import { SymbolSearchPanel } from './SymbolSearchPanel';
@@ -214,6 +217,8 @@ export function AIAppBuilderWorkspace() {
   const builderQuestions = useBuilderQuestions();
   const { saveDraft, saveDraftImmediate, loadDraft, clearDraft, hasDraft } = useDraftPersistence();
   const { previewUrl: hostedPreviewUrl, isUploading: isUploadingPreview, uploadPreview, clearPreviewTimer } = usePreviewHosting();
+  const idbPersistence = useIndexedDBPersistence();
+  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
 
   const [rightTab, setRightTab] = useState<'preview' | 'code' | 'split'>('preview');
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -601,6 +606,12 @@ export function AIAppBuilderWorkspace() {
     if (project.files.length > 0) scheduleAutoSave(project.name, project.files, messages, { versions });
   }, [project.files, project.name, messages, versions, scheduleAutoSave]);
 
+  // Auto-save to IndexedDB (Phase 10 — fast local persistence)
+  const sessionId = currentProjectId || 'draft';
+  useEffect(() => {
+    idbPersistence.saveToIDB(sessionId, project.name, project.files, messages);
+  }, [project.files, project.name, messages, sessionId]);
+
   // Auto-save draft to localStorage (survives refresh)
   useEffect(() => {
     saveDraft(project.name, project.files, messages);
@@ -654,6 +665,42 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     if (initialProjectId || isNewProject) return; // skip draft restore when loading a specific project or starting fresh
     if (project.files.length > 0 || messages.length > 0) return;
+    // Try IndexedDB first (larger, more reliable), fall back to localStorage draft
+    (async () => {
+      const idbSession = await idbPersistence.checkRecovery();
+      if (idbSession && (idbSession.files.length > 0 || idbSession.messages.length > 0)) {
+        setShowRecoveryDialog(true);
+        return;
+      }
+      // Fall back to localStorage draft
+      const draft = loadDraft();
+      if (draft && (draft.files.length > 0 || draft.messages.length > 0)) {
+        setFiles(draft.files);
+        renameProject(draft.name);
+        if (draft.messages.length > 0) {
+          setMessages(draft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+        }
+      }
+    })();
+  }, []); // intentionally run once on mount
+
+  // Handle recovery dialog actions
+  const handleRestoreSession = useCallback(() => {
+    const session = idbPersistence.recoverableSession;
+    if (!session) return;
+    setFiles(session.files);
+    renameProject(session.name);
+    if (session.messages.length > 0) {
+      setMessages(session.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+    }
+    setShowRecoveryDialog(false);
+    toast.success('Session restored');
+  }, [idbPersistence.recoverableSession, setFiles, renameProject, setMessages]);
+
+  const handleDiscardSession = useCallback(() => {
+    idbPersistence.clearSession();
+    setShowRecoveryDialog(false);
+    // Fall back to localStorage draft
     const draft = loadDraft();
     if (draft && (draft.files.length > 0 || draft.messages.length > 0)) {
       setFiles(draft.files);
@@ -661,14 +708,14 @@ export function AIAppBuilderWorkspace() {
       if (draft.messages.length > 0) {
         setMessages(draft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
       }
-      // Silent restore — no toast so it feels seamless when returning to the tab
     }
-  }, []); // intentionally run once on mount
+  }, [idbPersistence, loadDraft, setFiles, renameProject, setMessages]);
 
   // Clear draft when starting a new project
   useEffect(() => {
     if (isNewProject) {
       clearDraft();
+      idbPersistence.clearSession();
     }
   }, [isNewProject]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1296,6 +1343,12 @@ export function AIAppBuilderWorkspace() {
       <WelcomeOverlay onQuickStart={(prompt) => handleSend(prompt)} />
       <OnboardingTour />
       <ShortcutsHint />
+      <SessionRecoveryDialog
+        session={idbPersistence.recoverableSession}
+        open={showRecoveryDialog}
+        onRestore={handleRestoreSession}
+        onDiscard={handleDiscardSession}
+      />
       <ConfirmDialog
         open={!!confirmAction}
         onClose={() => setConfirmAction(null)}
@@ -1448,6 +1501,9 @@ export function AIAppBuilderWorkspace() {
             </div>
 
             <div className="h-5 w-px bg-white/[0.06] mx-0.5" />
+
+            {/* Sync status indicator (Phase 10) */}
+            <SyncStatusIndicator status={idbPersistence.syncStatus} lastSaved={lastSaved} />
 
             {/* Credits indicator */}
             <HeaderCreditsIndicator onOpenBilling={() => setShowBilling(true)} />
