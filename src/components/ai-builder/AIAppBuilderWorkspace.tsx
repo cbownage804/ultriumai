@@ -248,6 +248,16 @@ import { NLRegexPanel } from './NLRegexPanel';
 import { CommitMessagePanel } from './CommitMessagePanel';
 import { AutoImportPanel } from './AutoImportPanel';
 import { AIDocWriterPanel } from './AIDocWriterPanel';
+import { useRealTimeCoEditing } from '@/hooks/useRealTimeCoEditing';
+import { useVoiceChat } from '@/hooks/useVoiceChat';
+import { useScreenShare } from '@/hooks/useScreenShare';
+import { useCodeReactions } from '@/hooks/useCodeReactions';
+import { useCollaborativeWhiteboard } from '@/hooks/useCollaborativeWhiteboard';
+import { CoEditingPanel } from './CoEditingPanel';
+import { VoiceChatPanel } from './VoiceChatPanel';
+import { ScreenSharePanel } from './ScreenSharePanel';
+import { CodeReactionsPanel } from './CodeReactionsPanel';
+import { WhiteboardPanel } from './WhiteboardPanel';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -603,6 +613,17 @@ export function AIAppBuilderWorkspace() {
   const [showCommitMsg, setShowCommitMsg] = useState(false);
   const [showAutoImport, setShowAutoImport] = useState(false);
   const [showDocWriter, setShowDocWriter] = useState(false);
+  // Sprint L: Real-Time & Multiplayer (Phases 159-163)
+  const coEditing = useRealTimeCoEditing();
+  const voiceChat = useVoiceChat();
+  const screenShare = useScreenShare();
+  const codeReactions = useCodeReactions();
+  const whiteboard = useCollaborativeWhiteboard();
+  const [showCoEditing, setShowCoEditing] = useState(false);
+  const [showVoiceChat, setShowVoiceChat] = useState(false);
+  const [showScreenShare, setShowScreenShare] = useState(false);
+  const [showCodeReactions, setShowCodeReactions] = useState(false);
+  const [showWhiteboard, setShowWhiteboard] = useState(false);
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -2365,6 +2386,11 @@ export function AIAppBuilderWorkspace() {
       {showCommitMsg && <CommitMessagePanel messages={aiCommitMessages.messages} diffs={aiCommitMessages.currentDiffs} typeLabels={aiCommitMessages.typeLabels} onGenerate={() => { const diffs = aiCommitMessages.computeDiffs(previousFiles || [], project.files); aiCommitMessages.generateLocal(diffs); }} onGenerateAI={(p) => sendMessage(p, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} onClear={aiCommitMessages.clearHistory} onClose={() => setShowCommitMsg(false)} />}
       {showAutoImport && <AutoImportPanel suggestions={smartAutoImport.suggestions} onApply={(s) => { const file = project.files.find(f => f.path === s.filePath); if (file) { const updated = smartAutoImport.applyImport(file.content, s.importStatement); upsertFile(s.filePath, updated); } }} onAnalyze={() => { const af = activeFile ? project.files.find(f => f.path === activeFile.path) : null; if (af) smartAutoImport.analyzeFile(af.content, af.path, project.files); }} onClear={smartAutoImport.clearSuggestions} onClose={() => setShowAutoImport(false)} />}
       {showDocWriter && <AIDocWriterPanel results={aiDocWriter.results} verbosity={aiDocWriter.verbosity} onSetVerbosity={aiDocWriter.setVerbosity} onGenerateJSDoc={() => { const af = activeFile ? project.files.find(f => f.path === activeFile.path) : null; if (af) sendMessage(aiDocWriter.buildJSDocPrompt(af, aiDocWriter.verbosity), project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onGenerateReadme={() => sendMessage(aiDocWriter.buildReadmePrompt(project.files, project.name, aiDocWriter.verbosity), project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} onGenerateAPIDoc={() => { const af = activeFile ? project.files.find(f => f.path === activeFile.path) : null; if (af) sendMessage(aiDocWriter.buildAPIDocPrompt(af, aiDocWriter.verbosity), project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onGenerateComponentDoc={() => { const af = activeFile ? project.files.find(f => f.path === activeFile.path) : null; if (af) sendMessage(aiDocWriter.buildComponentDocPrompt(af, aiDocWriter.verbosity), project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onClose={() => setShowDocWriter(false)} />}
+      {showCoEditing && <CoEditingPanel sessions={coEditing.sessions} activeSessionId={coEditing.activeSessionId} isConnected={coEditing.isConnected} conflictCount={coEditing.conflictCount} onStartSession={(fp) => coEditing.startSession(fp, 'self', 'me@local')} onJoinSession={(id) => coEditing.joinSession(id, 'self', 'me@local')} onEndSession={coEditing.endSession} onClose={() => setShowCoEditing(false)} />}
+      {showVoiceChat && <VoiceChatPanel channels={voiceChat.channels} activeChannelId={voiceChat.activeChannelId} isMuted={voiceChat.isMuted} isDeafened={voiceChat.isDeafened} isPushToTalk={voiceChat.isPushToTalk} onJoinChannel={(id) => voiceChat.joinChannel(id, 'self', 'me@local')} onLeaveChannel={voiceChat.leaveChannel} onToggleMute={voiceChat.toggleMute} onToggleDeafen={voiceChat.toggleDeafen} onTogglePTT={voiceChat.togglePushToTalk} onCreateChannel={voiceChat.createChannel} onClose={() => setShowVoiceChat(false)} />}
+      {showScreenShare && <ScreenSharePanel sessions={screenShare.sessions} activeSessionId={screenShare.activeSessionId} isSharing={screenShare.isSharing} isViewing={screenShare.isViewing} selectedTool={screenShare.selectedTool} annotationColor={screenShare.annotationColor} onStartSharing={() => screenShare.startSharing('self', 'me@local')} onStopSharing={screenShare.stopSharing} onJoinViewing={(id) => screenShare.joinViewing(id, 'self', 'me@local')} onSetTool={screenShare.setSelectedTool} onSetColor={screenShare.setAnnotationColor} onClearAnnotations={() => { const s = screenShare.getActiveSession(); if (s) screenShare.clearAnnotations(s.id); }} onClose={() => setShowScreenShare(false)} />}
+      {showCodeReactions && <CodeReactionsPanel reactions={codeReactions.reactions} annotations={codeReactions.annotations} availableEmojis={codeReactions.availableEmojis} onAddReaction={(fp, l, e) => codeReactions.addReaction(fp, l, e, 'self', 'me@local')} onAddAnnotation={(fp, ls, le, t) => codeReactions.addAnnotation(fp, ls, le, t, 'self', 'me@local', '#8b5cf6')} onResolveAnnotation={codeReactions.resolveAnnotation} onDeleteAnnotation={codeReactions.deleteAnnotation} activeFilePath={activeFile?.path} onClose={() => setShowCodeReactions(false)} />}
+      {showWhiteboard && <WhiteboardPanel boards={whiteboard.boards} activeBoardId={whiteboard.activeBoardId} selectedTool={whiteboard.selectedTool} strokeColor={whiteboard.strokeColor} strokeWidth={whiteboard.strokeWidth} fillColor={whiteboard.fillColor} onSetActiveBoardId={whiteboard.setActiveBoardId} onSetSelectedTool={whiteboard.setSelectedTool} onSetStrokeColor={whiteboard.setStrokeColor} onSetStrokeWidth={whiteboard.setStrokeWidth} onSetFillColor={whiteboard.setFillColor} onCreateBoard={whiteboard.createBoard} onClearBoard={whiteboard.clearBoard} onDeleteBoard={whiteboard.deleteBoard} onZoomIn={() => { const b = whiteboard.getActiveBoard(); if (b) whiteboard.setZoom(b.id, b.zoom + 0.1); }} onZoomOut={() => { const b = whiteboard.getActiveBoard(); if (b) whiteboard.setZoom(b.id, b.zoom - 0.1); }} onClose={() => setShowWhiteboard(false)} />}
       <div className="flex items-center gap-1 px-2 py-1 border-t border-white/[0.06] bg-[#09090b] shrink-0">
         <ProjectSettings
           supabaseConfig={supabaseConfig}
