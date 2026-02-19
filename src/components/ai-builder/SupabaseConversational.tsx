@@ -477,12 +477,19 @@ export function compressConversationHistory(
   const decisionsSet = new Set<string>();
   const errorsFixed: string[] = [];
   const filesDiscussed = new Set<string>();
+  const technologiesUsed = new Set<string>();
+  const userCorrections: string[] = [];
 
   for (const msg of older) {
     const c = msg.content;
     // Track file mentions
     const fileMatches = c.match(/===FILE:\s*(.+?)===/g);
     if (fileMatches) fileMatches.forEach(m => filesDiscussed.add(m.replace(/===FILE:\s*|===/g, '').trim()));
+
+    // Track technologies / libraries mentioned
+    const techPatterns = /\b(react|vue|tailwind|supabase|stripe|firebase|prisma|nextjs|express|mongodb|postgres|redis|graphql|rest api|websocket|oauth|jwt|framer.motion)\b/gi;
+    const techMatches = c.match(techPatterns);
+    if (techMatches) techMatches.forEach(t => technologiesUsed.add(t.toLowerCase()));
 
     // Track decisions
     if (msg.role === 'assistant') {
@@ -497,21 +504,117 @@ export function compressConversationHistory(
     // Track user preferences / corrections
     if (msg.role === 'user') {
       const correction = c.match(/(?:no|not|don't|actually|instead|I (?:want|meant|prefer|need))\s+(.{10,80}?)(?:\.|$)/i);
-      if (correction) facts.push(`User preference: ${correction[1].trim()}`);
+      if (correction) {
+        userCorrections.push(correction[1].trim());
+        facts.push(`User preference: ${correction[1].trim()}`);
+      }
+      // Track explicit design preferences
+      const designPref = c.match(/(?:make it|I (?:want|like|prefer)|use|keep)\s+(dark|light|minimal|modern|colorful|professional|clean|bold|round|flat|gradient)/i);
+      if (designPref) facts.push(`Design preference: ${designPref[1]}`);
     }
   }
 
   const summary: string[] = ['[CONVERSATION SUMMARY — older messages compressed]'];
+  summary.push(`Conversation depth: ${older.length} messages summarized, ${recent.length} recent kept`);
   if (filesDiscussed.size > 0) summary.push(`Files created/modified: ${[...filesDiscussed].join(', ')}`);
+  if (technologiesUsed.size > 0) summary.push(`Technologies used: ${[...technologiesUsed].join(', ')}`);
   if (decisionsSet.size > 0) summary.push(`Key decisions: ${[...decisionsSet].slice(0, 5).join('; ')}`);
   if (errorsFixed.length > 0) summary.push(`Errors fixed: ${errorsFixed.slice(0, 3).join('; ')}`);
-  if (facts.length > 0) summary.push(`User preferences: ${facts.slice(0, 4).join('; ')}`);
-  summary.push(`(${older.length} older messages compressed)`);
+  if (facts.length > 0) summary.push(`User preferences: ${facts.slice(0, 6).join('; ')}`);
+  if (userCorrections.length > 0) summary.push(`User corrections (IMPORTANT — do not repeat these mistakes): ${userCorrections.slice(0, 3).join('; ')}`);
+  summary.push(`\nMaintain continuity with the above context. Do NOT re-explain things already discussed.`);
 
   return [
     { role: 'system', content: summary.join('\n') },
     ...recent,
   ];
+}
+
+/**
+ * Build a compact file manifest for context-efficient file representation.
+ * Returns a structured summary of each file without full content — used when
+ * a file is unlikely to be modified but the AI needs to know it exists.
+ */
+export function buildFileManifest(
+  files: { path: string; content: string }[],
+  modifiedPaths: Set<string>,
+): string {
+  if (files.length === 0) return '';
+
+  const lines: string[] = ['FILE_MANIFEST:'];
+  for (const f of files) {
+    const sizeKB = (f.content.length / 1024).toFixed(1);
+    const isModified = modifiedPaths.has(f.path);
+    const ext = f.path.split('.').pop()?.toLowerCase() || '';
+
+    // Generate a compact structural summary based on file type
+    let summary = '';
+    if (ext === 'html' || ext === 'htm') {
+      const sections = f.content.match(/<(?:header|nav|main|section|footer|aside|form|div\s+(?:id|class)=["'][^"']+["'])[^>]*>/gi);
+      summary = sections ? `[${sections.length} sections]` : '[HTML]';
+    } else if (ext === 'css' || ext === 'scss') {
+      const rules = (f.content.match(/\{/g) || []).length;
+      const hasMedia = f.content.includes('@media');
+      summary = `[${rules} rules${hasMedia ? ', responsive' : ''}]`;
+    } else if (['js', 'ts', 'jsx', 'tsx'].includes(ext)) {
+      const fns = f.content.match(/(?:function|const|class)\s+(\w+)/g);
+      const exports = f.content.match(/export\s+/g);
+      summary = `[${fns?.length || 0} definitions, ${exports?.length || 0} exports]`;
+    } else if (ext === 'json') {
+      summary = '[config]';
+    } else if (ext === 'svg') {
+      summary = '[vector graphic]';
+    }
+
+    lines.push(`  - ${f.path} (${sizeKB}KB)${isModified ? ' [MODIFIED]' : ''} ${summary}`);
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Calculate the current context budget usage.
+ * Returns percentage used and detailed breakdown for the UI indicator.
+ */
+export interface ContextBudgetInfo {
+  totalChars: number;
+  maxChars: number;
+  percentUsed: number;
+  systemContextChars: number;
+  historyChars: number;
+  fileContextChars: number;
+  filesIncluded: number;
+  filesOmitted: number;
+  isWarning: boolean;
+  isCritical: boolean;
+}
+
+export function calculateContextBudget(
+  systemMessages: { content: string }[],
+  historyMessages: { content: string }[],
+  fileContext: string,
+  totalFiles: number,
+  includedFiles: number,
+): ContextBudgetInfo {
+  const MAX_CHARS = 2_500_000;
+  const systemContextChars = systemMessages.reduce((s, m) => s + m.content.length, 0);
+  const historyChars = historyMessages.reduce((s, m) => s + m.content.length, 0);
+  const fileContextChars = fileContext.length;
+  const totalChars = systemContextChars + historyChars + fileContextChars;
+  const percentUsed = Math.min(100, (totalChars / MAX_CHARS) * 100);
+
+  return {
+    totalChars,
+    maxChars: MAX_CHARS,
+    percentUsed,
+    systemContextChars,
+    historyChars,
+    fileContextChars,
+    filesIncluded: includedFiles,
+    filesOmitted: totalFiles - includedFiles,
+    isWarning: percentUsed > 60,
+    isCritical: percentUsed > 85,
+  };
 }
 
 // ═══════════════════════════════════════════
