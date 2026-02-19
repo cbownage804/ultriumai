@@ -379,6 +379,11 @@ function isConversationalLine(line: string): boolean {
     /^[-•]\s+\*\*[A-Z]/,      // Bullet bold list items
     /^[-•]\s+[A-Z][a-z].*[:.]\s*$/,  // Bullet prose items ending with : or .
     /^(Summary|Overview|Changes|Features|Improvements|Updates|Key (changes|features|updates)|What I (did|changed)|Here'?s (a|the) (summary|breakdown|overview))/i,
+    // Phase 77: Additional prose patterns
+    /^I\s[a-z]/,              // Lines starting with "I added...", "I created..."
+    /^\d+\s+(new|component|file|change)/i, // "2 new components added"
+    /^\[.+\]\(.+\)/,          // Markdown links: [text](url)
+    /^[A-Z][a-z]+ly,?\s/,     // Adverb-starting sentences: "Additionally, ..."
   ];
   return markers.some(r => r.test(trimmed));
 }
@@ -547,12 +552,13 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
       // Skip lines inside edit blocks — already parsed
       continue;
     } else if (currentPath !== null) {
-      // Track blank lines — conversational text after 2+ blank lines signals end of file
+      // Phase 77: Track blank lines — require 2+ blank lines before checking for prose
+      // (1 blank line is common in CSS/JSX and shouldn't trigger cutoff)
       if (!line.trim()) {
         blankLineStreak++;
         currentLines.push(line);
-      } else if (blankLineStreak >= 1 && isConversationalLine(line)) {
-        // End of file content — AI started talking (even after 1 blank line)
+      } else if (blankLineStreak >= 2 && isConversationalLine(line)) {
+        // End of file content — AI started talking after 2+ blank lines
         flush();
         currentPath = null;
         currentLines = [];
@@ -766,51 +772,41 @@ export function useAIAppBuilder() {
     const MAX_CONTEXT_MESSAGES = 20;
     const apiMessages: { role: string; content: string | any[] }[] = [];
 
-    // Prepend knowledge context if provided
-    if (knowledgeContext) {
-      apiMessages.push({ role: 'system', content: knowledgeContext });
-    }
+    // Phase 76: Consolidate all system injections into a SINGLE message to reduce prompt bloat
+    const systemParts: string[] = [];
 
-    // Inject conversational Supabase context based on intent detection
+    if (knowledgeContext) systemParts.push(knowledgeContext);
+
     const detectedIntents = detectSupabaseIntents(input);
     const hasSupabase = !!supabaseConfig;
-    const supabaseContext = buildSupabaseContext(detectedIntents, hasSupabase);
-    if (supabaseContext) {
-      apiMessages.push({ role: 'system', content: supabaseContext });
-    }
+    const supabaseContextStr = buildSupabaseContext(detectedIntents, hasSupabase);
+    if (supabaseContextStr) systemParts.push(supabaseContextStr);
 
-    // Inject conversation memory for multi-turn coherence
     const memoryContext = buildConversationMemory(
       messages.map(m => ({ role: m.role, content: m.content }))
     );
-    if (memoryContext) {
-      apiMessages.push({ role: 'system', content: memoryContext });
-    }
+    if (memoryContext) systemParts.push(memoryContext);
 
-    // Inject adaptive tone based on user's communication style
     const userTexts = messages.filter(m => m.role === 'user').map(m => m.content);
     const { prompt: tonePrompt } = detectCommunicationStyle(userTexts);
-    if (tonePrompt) {
-      apiMessages.push({ role: 'system', content: tonePrompt });
-    }
+    if (tonePrompt) systemParts.push(tonePrompt);
 
-    // Inject learned user preferences
     const prefs = extractUserPreferences(messages.map(m => ({ role: m.role, content: m.content })));
     const prefsContext = buildPreferencesContext(prefs);
-    if (prefsContext) {
-      apiMessages.push({ role: 'system', content: prefsContext });
-    }
+    if (prefsContext) systemParts.push(prefsContext);
 
-    // Detect multi-step workflow and inject step context
     const workflow = detectWorkflowIntent(input);
     if (workflow) {
-      apiMessages.push({ role: 'system', content: `[WORKFLOW DETECTED] The user has a multi-step request with ${workflow.steps.length} steps:\n${workflow.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\nExecute ALL steps in sequence in a single response. Show progress for each step.` });
+      systemParts.push(`[WORKFLOW DETECTED] The user has a multi-step request with ${workflow.steps.length} steps:\n${workflow.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\nExecute ALL steps in sequence in a single response. Show progress for each step.`);
     }
 
-    // Inject visual intelligence context when images are attached
     const visualContext = buildVisualIntelligenceContext(!!(imageDataUrls?.length), input);
-    if (visualContext) {
-      apiMessages.push({ role: 'system', content: visualContext });
+    if (visualContext) systemParts.push(visualContext);
+
+    // Merge into a single system message, capped at 20K chars
+    if (systemParts.length > 0) {
+      const consolidated = systemParts.join('\n\n---\n\n').slice(0, 20_000);
+      apiMessages.push({ role: 'system', content: consolidated });
     }
 
     // Detect web search intent and inject search guidance
@@ -887,10 +883,16 @@ export function useAIAppBuilder() {
     const buildFileContext = (files: ProjectFile[], userInput: string): string => {
       if (files.length === 0) return userInput;
 
+      // Phase 75: Use proactive context budget trimming
+      const activeFilePath = files[0]?.path || null;
+      const trimResult = trimForContext(files, activeFilePath, userInput);
+      const contextFiles = trimResult.wasTrimmed
+        ? trimResult.files.map(f => files.find(pf => pf.path === f.path) || { path: f.path, content: f.content, language: 'plaintext' as string } as ProjectFile)
+        : files;
+
       // ── Incremental context: only send changed files, with manifest of unchanged ──
-      const { changed, unchanged } = getChangedFiles(files);
-      const useIncremental = files.length > 5 && changed.length < files.length;
-      const contextFiles = useIncremental ? changed : files;
+      const { changed, unchanged } = getChangedFiles(contextFiles);
+      const useIncremental = contextFiles.length > 5 && changed.length < contextFiles.length;
 
       // Build a compact manifest of all files using the enhanced manifest builder
       const modifiedPaths = new Set(changed.map(f => f.path));
