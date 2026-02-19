@@ -589,31 +589,69 @@ function estimateTotalChars(messages: any[]): number {
   }, 0);
 }
 
-/** Server-side context trimming to prevent gateway 400 errors */
+/** Summarize a message into a compact form for context compression */
+function summarizeMessage(msg: any): string {
+  const content = typeof msg.content === 'string' ? msg.content : 
+    Array.isArray(msg.content) ? msg.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join(' ') : '';
+  
+  if (msg.role === 'assistant') {
+    // Extract file paths from ===FILE: markers
+    const fileMatches = content.match(/===FILE:\s*(.+?)===/g) || [];
+    const filePaths = fileMatches.map((m: string) => m.replace(/===FILE:\s*/, '').replace(/===/, '').trim());
+    if (filePaths.length > 0) {
+      return `[Updated ${filePaths.length} files: ${filePaths.slice(0, 5).join(', ')}${filePaths.length > 5 ? '...' : ''}]`;
+    }
+    // Extract key decisions / summaries
+    const firstLine = content.split('\n').find((l: string) => l.trim().length > 10)?.trim() || '';
+    return firstLine.slice(0, 150);
+  }
+  // User messages: keep more context
+  return content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{100,}/g, '[image]').slice(0, 300);
+}
+
+/** Server-side context trimming with intelligent summarization (Lovable-grade) */
 function trimMessagesToFit(messages: any[], maxChars: number): any[] {
   let result = [...messages];
   let total = estimateTotalChars(result);
 
-  // Phase 1: Truncate old assistant messages (they contain file outputs)
-  if (total > maxChars) {
+  // Phase 1: Summarize old assistant messages (they contain huge file outputs)
+  if (total > maxChars * 0.7) {
     result = result.map((m, i) => {
-      if (i > 0 && i < result.length - 1 && m.role === 'assistant' && typeof m.content === 'string' && m.content.length > 500) {
-        return { ...m, content: m.content.slice(0, 300) + '\n[content trimmed server-side]' };
+      // Keep first 2 and last 3 messages intact
+      if (i < 2 || i >= result.length - 3) return m;
+      if (m.role === 'assistant' && typeof m.content === 'string' && m.content.length > 500) {
+        return { ...m, content: summarizeMessage(m) };
+      }
+      if (m.role === 'user' && typeof m.content === 'string' && m.content.length > 500) {
+        return { ...m, content: summarizeMessage(m) };
       }
       return m;
     });
     total = estimateTotalChars(result);
   }
 
-  // Phase 2: Remove middle messages (keep first system + last 3)
+  // Phase 2: Remove middle messages, keeping summary context
+  if (total > maxChars && result.length > 6) {
+    const keep = [
+      ...result.slice(0, 2),
+      { role: 'system', content: `[CONVERSATION SUMMARY — ${result.length - 5} messages condensed]\n` +
+        result.slice(2, -3).map((m: any) => `[${m.role}] ${summarizeMessage(m)}`).join('\n') +
+        '\n[END SUMMARY]' },
+      ...result.slice(-3),
+    ];
+    result = keep;
+    total = estimateTotalChars(result);
+  }
+
+  // Phase 3: Remove all middle messages if still too large
   while (total > maxChars && result.length > 4) {
-    const removeIdx = result.findIndex((m, i) => i > 0 && i < result.length - 3);
+    const removeIdx = result.findIndex((_m: any, i: number) => i > 0 && i < result.length - 3);
     if (removeIdx === -1) break;
     total -= estimateTotalChars([result[removeIdx]]);
     result.splice(removeIdx, 1);
   }
 
-  // Phase 3: Truncate the last user message's file content
+  // Phase 4: Truncate the last user message's file content
   if (total > maxChars) {
     const last = result[result.length - 1];
     if (typeof last.content === 'string' && last.content.length > 200000) {
@@ -623,7 +661,6 @@ function trimMessagesToFit(messages: any[], maxChars: number): any[] {
         if (block.type === 'text' && block.text?.length > 200000) {
           return { ...block, text: block.text.slice(0, 200000) + '\n[Truncated]' };
         }
-        // Strip large base64 data URLs
         if (block.type === 'text' && block.text) {
           return { ...block, text: block.text.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{10000,}/g, '[image data stripped server-side]') };
         }
