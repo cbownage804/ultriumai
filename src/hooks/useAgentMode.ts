@@ -11,24 +11,38 @@ export type AgentStep = {
   filesModified?: string[];
   startedAt?: number;
   completedAt?: number;
+  /** Snapshot of project files taken BEFORE this step executed */
+  preSnapshot?: ProjectFile[];
+};
+
+export type AgentPlan = {
+  approach: string;
+  filesToCreate: string[];
+  filesToModify: string[];
+  steps: string[];
+  dependencies: string[];
+  approved: boolean;
 };
 
 export type AgentRun = {
   id: string;
   prompt: string;
   steps: AgentStep[];
-  status: 'idle' | 'running' | 'completed' | 'failed';
+  status: 'idle' | 'running' | 'awaiting_approval' | 'completed' | 'failed';
   startedAt: Date;
   completedAt?: Date;
   planSummary?: string;
   filesToModify?: string[];
+  plan?: AgentPlan;
+  /** Accumulated context: files modified across all steps so far */
+  modifiedFilesContext?: Map<string, string>;
 };
 
 export type AgentTask = {
   id: string;
   prompt: string;
   imageDataUrls?: string[] | null;
-  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'awaiting_approval';
   run: AgentRun | null;
   createdAt: Date;
   completedAt?: Date;
@@ -48,7 +62,6 @@ export type AgentNotification = {
 const MAX_FIX_RETRIES = 3;
 const VERIFY_TIMEOUT_MS = 3000;
 
-// Planning prompt that asks AI to return structured JSON
 const PLANNING_SYSTEM_PROMPT = `[PLANNING MODE — Do NOT generate code. Return ONLY a JSON object.]
 
 Analyze the user's request in context of the current project files and return a structured plan as JSON:
@@ -65,15 +78,12 @@ Return ONLY valid JSON, no markdown, no explanation.`;
 
 function tryParseJSON(text: string): { approach?: string; filesToCreate?: string[]; filesToModify?: string[]; steps?: string[] } | null {
   try {
-    // Try direct parse first
     return JSON.parse(text);
   } catch {
-    // Try to extract JSON from markdown code blocks
     const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (match) {
       try { return JSON.parse(match[1].trim()); } catch { /* fall through */ }
     }
-    // Try to find first { ... } block
     const braceMatch = text.match(/\{[\s\S]*\}/);
     if (braceMatch) {
       try { return JSON.parse(braceMatch[0]); } catch { /* fall through */ }
@@ -89,7 +99,6 @@ function loadPersistedTasks(): AgentTask[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as AgentTask[];
-    // Only restore completed/failed tasks as history (not queued/running)
     return parsed
       .filter(t => ['completed', 'failed', 'cancelled'].includes(t.status))
       .slice(0, 20)
@@ -106,21 +115,47 @@ function persistTasks(tasks: AgentTask[]) {
   } catch { /* ignore */ }
 }
 
+/**
+ * Take a lightweight snapshot of project files for rollback.
+ * Only stores path + content (omits heavy metadata).
+ */
+function snapshotFiles(files: ProjectFile[]): ProjectFile[] {
+  return files.map(f => ({ path: f.path, content: f.content, language: f.language }));
+}
+
+/**
+ * Build a cross-step context string summarizing what has been modified so far.
+ * This prevents the AI from losing track of prior work during multi-step builds.
+ */
+function buildCrossStepContext(modifiedFiles: Map<string, string>, completedStepLabels: string[]): string {
+  if (modifiedFiles.size === 0) return '';
+
+  const fileList = Array.from(modifiedFiles.keys())
+    .map(p => `  - ${p}`)
+    .join('\n');
+
+  const stepsCompleted = completedStepLabels.length > 0
+    ? `\nCompleted steps:\n${completedStepLabels.map((s, i) => `  ${i + 1}. ${s}`).join('\n')}`
+    : '';
+
+  return `\n\n[AGENT CONTEXT — Files modified in this session:\n${fileList}${stepsCompleted}\n\nBuild on top of these changes. Do NOT recreate or overwrite work already done.]`;
+}
+
 export function useAgentMode() {
   const [taskQueue, setTaskQueue] = useState<AgentTask[]>(() => loadPersistedTasks());
   const [currentRun, setCurrentRun] = useState<AgentRun | null>(null);
   const [agentHistory, setAgentHistory] = useState<AgentRun[]>([]);
   const [notifications, setNotifications] = useState<AgentNotification[]>([]);
+  const [pendingApproval, setPendingApproval] = useState<{ taskId: string; plan: AgentPlan } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const isProcessingRef = useRef(false);
   const errorBufferRef = useRef<string[]>([]);
+  const approvalResolverRef = useRef<((approved: boolean) => void) | null>(null);
 
-  // Persist completed tasks to localStorage
   useEffect(() => {
     persistTasks(taskQueue);
   }, [taskQueue]);
 
-  // Emit a notification
   const emitNotification = useCallback((taskId: string, type: AgentNotification['type'], title: string, detail?: string) => {
     const notif: AgentNotification = {
       id: crypto.randomUUID(),
@@ -131,15 +166,9 @@ export function useAgentMode() {
       timestamp: new Date(),
     };
     setNotifications(prev => [notif, ...prev].slice(0, 50));
-
-    // Also show toast
-    if (type === 'success') {
-      toast.success(title, { description: detail });
-    } else if (type === 'error') {
-      toast.error(title, { description: detail });
-    } else {
-      toast.warning(title, { description: detail });
-    }
+    if (type === 'success') toast.success(title, { description: detail });
+    else if (type === 'error') toast.error(title, { description: detail });
+    else toast.warning(title, { description: detail });
   }, []);
 
   const updateStep = useCallback((stepId: string, updates: Partial<AgentStep>) => {
@@ -163,17 +192,26 @@ export function useAgentMode() {
 
   const cancelRun = useCallback(() => {
     abortRef.current?.abort();
+    approvalResolverRef.current?.(false);
+    approvalResolverRef.current = null;
+    setPendingApproval(null);
     completeRun('failed');
     toast.info('Agent run cancelled');
   }, [completeRun]);
 
-  // Listen for preview errors via postMessage — real capture
+  /**
+   * Approve or reject the pending plan.
+   */
+  const respondToPlan = useCallback((approved: boolean) => {
+    setPendingApproval(null);
+    approvalResolverRef.current?.(approved);
+    approvalResolverRef.current = null;
+  }, []);
+
   const waitForPreviewErrors = useCallback((): Promise<string[]> => {
     return new Promise((resolve) => {
       errorBufferRef.current = [];
-
       const handler = (event: MessageEvent) => {
-        // Capture both __PREVIEW_ERROR__ (from ConsolePanel wiring) and generic error formats
         if (
           event.data?.type === '__PREVIEW_ERROR__' ||
           event.data?.type === 'preview-error' ||
@@ -185,9 +223,7 @@ export function useAgentMode() {
           }
         }
       };
-
       window.addEventListener('message', handler);
-
       setTimeout(() => {
         window.removeEventListener('message', handler);
         resolve([...errorBufferRef.current]);
@@ -195,12 +231,24 @@ export function useAgentMode() {
     });
   }, []);
 
-  // Core agent execution: Plan > Execute > Verify > Fix loop
+  /**
+   * Rollback files to a pre-step snapshot.
+   */
+  const rollbackToSnapshot = useCallback((
+    snapshot: ProjectFile[],
+    applyFiles: (files: ProjectFile[]) => void,
+  ) => {
+    applyFiles(snapshot);
+    toast.info('Rolled back to pre-step snapshot');
+  }, []);
+
+  // Core agent execution: Plan > Approve > Execute > Verify > Fix loop
   const executeAgentTask = useCallback(async (
     task: AgentTask,
     sendMessage: (input: string, files: ProjectFile[], ...args: any[]) => Promise<void>,
     currentFiles: ProjectFile[],
     extraArgs: any[],
+    applyFiles?: (files: ProjectFile[]) => void,
   ) => {
     const controller = new AbortController();
     abortRef.current = controller;
@@ -210,50 +258,105 @@ export function useAgentMode() {
     const execStepId = crypto.randomUUID();
     const verifyStepId = crypto.randomUUID();
 
+    // Cross-step context accumulator
+    const modifiedFilesCtx = new Map<string, string>();
+    const completedStepLabels: string[] = [];
+
     const run: AgentRun = {
       id: crypto.randomUUID(),
       prompt: task.prompt,
       steps: [
-        { id: planStepId, type: 'plan', label: 'Analyzing & planning', status: 'pending', startedAt: Date.now() },
+        { id: planStepId, type: 'plan', label: 'Analyzing & planning', status: 'pending', startedAt: Date.now(), preSnapshot: snapshotFiles(currentFiles) },
         { id: execStepId, type: 'execute', label: 'Generating code', status: 'pending' },
         { id: verifyStepId, type: 'verify', label: 'Verifying output', status: 'pending' },
       ],
       status: 'running',
       startedAt: new Date(),
+      modifiedFilesContext: modifiedFilesCtx,
     };
     setCurrentRun(run);
-
-    // Update task status
     setTaskQueue(prev => prev.map(t => t.id === task.id ? { ...t, status: 'running' as const, run } : t));
 
     try {
-      // ─── Step 1: Intelligent Planning ───
+      // ─── Step 1: Planning with Approval Gate ───
       updateStep(planStepId, { status: 'running', startedAt: Date.now() });
-
       if (controller.signal.aborted) return;
 
-      // Build file tree summary for context (no separate API call — just enrich the prompt)
       const fileTree = currentFiles.map(f => f.path).join('\n');
 
-      // Mark planning as done immediately (planning is embedded in the build prompt)
-      updateStep(planStepId, { status: 'done', detail: 'Plan ready', completedAt: Date.now() });
+      // Parse a lightweight plan from the prompt
+      const planData: AgentPlan = {
+        approach: `Build: ${task.prompt.slice(0, 100)}`,
+        filesToCreate: [],
+        filesToModify: currentFiles.filter(f =>
+          task.prompt.toLowerCase().includes(f.path.split('/').pop()?.replace(/\.\w+$/, '') || '')
+        ).map(f => f.path).slice(0, 5),
+        steps: ['Generate code based on requirements', 'Verify output for errors', 'Apply fixes if needed'],
+        dependencies: [],
+        approved: false,
+      };
 
-      // ─── Step 2: Execute (single sendMessage call — plan + build combined) ───
-      updateStep(execStepId, { status: 'running', startedAt: Date.now() });
+      updateStep(planStepId, {
+        status: 'done',
+        detail: `Plan: ${planData.approach.slice(0, 80)}`,
+        completedAt: Date.now(),
+      });
 
-      const buildPrompt = `${task.prompt}\n\n[Project file tree:\n${fileTree}]`;
+      // Show plan approval UI and wait for user response
+      setCurrentRun(prev => prev ? { ...prev, status: 'awaiting_approval', plan: planData } : prev);
+      setTaskQueue(prev => prev.map(t => t.id === task.id ? { ...t, status: 'awaiting_approval' as const } : t));
+      setPendingApproval({ taskId: task.id, plan: planData });
+
+      const approved = await new Promise<boolean>((resolve) => {
+        approvalResolverRef.current = resolve;
+        // Auto-approve after 30s if no response
+        setTimeout(() => {
+          if (approvalResolverRef.current === resolve) {
+            approvalResolverRef.current = null;
+            setPendingApproval(null);
+            resolve(true);
+          }
+        }, 30000);
+      });
+
+      if (!approved || controller.signal.aborted) {
+        setTaskQueue(prev => prev.map(t => t.id === task.id ? { ...t, status: 'cancelled' as const, completedAt: new Date() } : t));
+        completeRun('failed');
+        emitNotification(task.id, 'warning', 'Agent: plan rejected');
+        return;
+      }
+
+      planData.approved = true;
+      setCurrentRun(prev => prev ? { ...prev, status: 'running', plan: planData } : prev);
+      setTaskQueue(prev => prev.map(t => t.id === task.id ? { ...t, status: 'running' as const } : t));
+      completedStepLabels.push('Planning complete');
+
+      // ─── Step 2: Execute with pre-step snapshot ───
+      const execSnapshot = snapshotFiles(currentFiles);
+      updateStep(execStepId, { status: 'running', startedAt: Date.now(), preSnapshot: execSnapshot });
+
+      const crossCtx = buildCrossStepContext(modifiedFilesCtx, completedStepLabels);
+      const buildPrompt = `${task.prompt}\n\n[Project file tree:\n${fileTree}]${crossCtx}`;
 
       await sendMessage(buildPrompt, currentFiles, ...extraArgs);
 
       if (controller.signal.aborted) return;
       updateStep(execStepId, { status: 'done', detail: 'Code generated', completedAt: Date.now() });
+      completedStepLabels.push('Code generation complete');
+
+      // Track modified files for cross-step context
+      currentFiles.forEach(f => {
+        const snapFile = execSnapshot.find(s => s.path === f.path);
+        if (!snapFile || snapFile.content !== f.content) {
+          modifiedFilesCtx.set(f.path, f.content);
+        }
+      });
 
       // ─── Step 3: Verify ───
-      updateStep(verifyStepId, { status: 'running', startedAt: Date.now() });
+      const verifySnapshot = snapshotFiles(currentFiles);
+      updateStep(verifyStepId, { status: 'running', startedAt: Date.now(), preSnapshot: verifySnapshot });
 
-      // Wait for preview to load and capture errors from iframe
       const errors = await waitForPreviewErrors();
-
       if (controller.signal.aborted) return;
 
       let fixCount = 0;
@@ -261,7 +364,6 @@ export function useAgentMode() {
       if (errors.length === 0) {
         updateStep(verifyStepId, { status: 'done', detail: 'No errors detected', completedAt: Date.now() });
       } else {
-        // Error detected — enter self-correction loop
         updateStep(verifyStepId, { status: 'error', detail: `${errors.length} error(s) found`, completedAt: Date.now() });
 
         while (errors.length > 0 && fixCount < MAX_FIX_RETRIES) {
@@ -269,17 +371,19 @@ export function useAgentMode() {
           fixCount++;
 
           const errorSummary = errors.slice(0, 3).join('\n');
-
-          // Add fix step
           const fixStepId = crypto.randomUUID();
           const reVerifyStepId = crypto.randomUUID();
+
+          // Snapshot before fix attempt
+          const fixSnapshot = snapshotFiles(currentFiles);
+
           setCurrentRun(prev => {
             if (!prev) return prev;
             return {
               ...prev,
               steps: [
                 ...prev.steps,
-                { id: fixStepId, type: 'fix' as const, label: `Auto-fixing: ${errors[0].slice(0, 50)}${errors[0].length > 50 ? '...' : ''}`, status: 'pending' as const, startedAt: Date.now() },
+                { id: fixStepId, type: 'fix' as const, label: `Auto-fixing: ${errors[0].slice(0, 50)}${errors[0].length > 50 ? '...' : ''}`, status: 'pending' as const, startedAt: Date.now(), preSnapshot: fixSnapshot },
                 { id: reVerifyStepId, type: 'verify' as const, label: 'Re-verifying output', status: 'pending' as const },
               ],
             };
@@ -292,16 +396,25 @@ export function useAgentMode() {
             ? `\n\nThis is auto-fix attempt ${fixCount}/${MAX_FIX_RETRIES}. Previous fixes didn't resolve it. Try a completely different approach.`
             : '';
 
-          const fixPrompt = `Auto-fix error in the generated code:\n\n${errorSummary}${escalation}\n\nReturn the corrected file(s).`;
+          const fixCtx = buildCrossStepContext(modifiedFilesCtx, completedStepLabels);
+          const fixPrompt = `Auto-fix error in the generated code:\n\n${errorSummary}${escalation}${fixCtx}\n\nReturn the corrected file(s).`;
 
           await sendMessage(fixPrompt, currentFiles, ...extraArgs);
 
           if (controller.signal.aborted) return;
           updateStep(fixStepId, { status: 'done', detail: `Fix attempt ${fixCount}`, completedAt: Date.now() });
+          completedStepLabels.push(`Fix attempt ${fixCount}`);
+
+          // Update modified files context
+          currentFiles.forEach(f => {
+            const snapFile = fixSnapshot.find(s => s.path === f.path);
+            if (!snapFile || snapFile.content !== f.content) {
+              modifiedFilesCtx.set(f.path, f.content);
+            }
+          });
 
           // Re-verify
           updateStep(reVerifyStepId, { status: 'running', startedAt: Date.now() });
-
           const retryErrors = await waitForPreviewErrors();
 
           if (retryErrors.length === 0) {
@@ -309,6 +422,13 @@ export function useAgentMode() {
             break;
           } else {
             updateStep(reVerifyStepId, { status: 'error', detail: `${retryErrors.length} error(s) remain`, completedAt: Date.now() });
+
+            // If fix made things worse and we have a rollback function, revert
+            if (retryErrors.length > errors.length && applyFiles && fixSnapshot.length > 0) {
+              rollbackToSnapshot(fixSnapshot, applyFiles);
+              emitNotification(task.id, 'warning', 'Agent: rolled back fix', 'Fix attempt made things worse');
+            }
+
             errors.splice(0, errors.length, ...retryErrors);
           }
         }
@@ -318,7 +438,6 @@ export function useAgentMode() {
         }
       }
 
-      // Task completed
       setTaskQueue(prev => prev.map(t =>
         t.id === task.id
           ? { ...t, status: 'completed' as const, completedAt: new Date(), errorCount: fixCount }
@@ -339,9 +458,8 @@ export function useAgentMode() {
       abortRef.current = null;
       isProcessingRef.current = false;
     }
-  }, [updateStep, completeRun, waitForPreviewErrors, emitNotification]);
+  }, [updateStep, completeRun, waitForPreviewErrors, emitNotification, rollbackToSnapshot]);
 
-  // Enqueue a new task
   const enqueueTask = useCallback((prompt: string, imageDataUrls?: string[] | null): AgentTask => {
     const task: AgentTask = {
       id: crypto.randomUUID(),
@@ -357,12 +475,14 @@ export function useAgentMode() {
     return task;
   }, []);
 
-  // Cancel a specific task
   const cancelTask = useCallback((taskId: string) => {
     setTaskQueue(prev => prev.map(t => {
       if (t.id === taskId) {
-        if (t.status === 'running') {
+        if (t.status === 'running' || t.status === 'awaiting_approval') {
           abortRef.current?.abort();
+          approvalResolverRef.current?.(false);
+          approvalResolverRef.current = null;
+          setPendingApproval(null);
           completeRun('failed');
         }
         return { ...t, status: 'cancelled' as const, completedAt: new Date() };
@@ -371,7 +491,6 @@ export function useAgentMode() {
     }));
   }, [completeRun]);
 
-  // Retry a failed task
   const retryTask = useCallback((taskId: string) => {
     setTaskQueue(prev => prev.map(t =>
       t.id === taskId && (t.status === 'failed' || t.status === 'cancelled')
@@ -380,19 +499,16 @@ export function useAgentMode() {
     ));
   }, []);
 
-  // Clear completed/cancelled/failed tasks
   const clearCompleted = useCallback(() => {
-    setTaskQueue(prev => prev.filter(t => t.status === 'queued' || t.status === 'running'));
+    setTaskQueue(prev => prev.filter(t => t.status === 'queued' || t.status === 'running' || t.status === 'awaiting_approval'));
   }, []);
 
-  // Auto-process queue: when no task is running, start the next queued task
   const getNextQueuedTask = useCallback(() => {
     return taskQueue.find(t => t.status === 'queued');
   }, [taskQueue]);
 
-  const isAnyRunning = taskQueue.some(t => t.status === 'running');
+  const isAnyRunning = taskQueue.some(t => t.status === 'running' || t.status === 'awaiting_approval');
 
-  // Reorder queued tasks (drag & drop)
   const reorderQueue = useCallback((newOrder: AgentTask[]) => {
     setTaskQueue(newOrder);
   }, []);
@@ -418,11 +534,13 @@ export function useAgentMode() {
     agentHistory,
     taskQueue,
     notifications,
+    pendingApproval,
     isAnyRunning,
     startAgentRun,
     updateStep,
     completeRun,
     cancelRun,
+    respondToPlan,
     enqueueTask,
     cancelTask,
     retryTask,

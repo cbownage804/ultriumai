@@ -187,10 +187,12 @@ export function AIAppBuilderWorkspace() {
     currentRun: agentRun,
     taskQueue: agentTaskQueue,
     notifications: agentNotifications,
+    pendingApproval: agentPendingApproval,
     startAgentRun, cancelRun: cancelAgent,
     enqueueTask, cancelTask: cancelAgentTask,
     retryTask: retryAgentTask, clearCompleted: clearAgentCompleted,
     reorderQueue: reorderAgentQueue,
+    respondToPlan: respondToAgentPlan,
     executeAgentTask, getNextQueuedTask, isAnyRunning: isAgentRunning,
   } = useAgentMode();
   const autoRecovery = useAutoErrorRecovery();
@@ -1538,7 +1540,7 @@ export function AIAppBuilderWorkspace() {
                   <PanelLeftClose className="h-3.5 w-3.5" />
                 </button>
                 {/* Agent mode step tracker */}
-                <AgentModePanel run={agentRun} taskQueue={agentTaskQueue} onCancel={cancelAgent} onCancelTask={cancelAgentTask} onRetryTask={retryAgentTask} onClearCompleted={clearAgentCompleted} onReorderQueue={reorderAgentQueue} />
+                <AgentModePanel run={agentRun} taskQueue={agentTaskQueue} pendingApproval={agentPendingApproval} onCancel={cancelAgent} onCancelTask={cancelAgentTask} onRetryTask={retryAgentTask} onClearCompleted={clearAgentCompleted} onReorderQueue={reorderAgentQueue} onApprovePlan={() => respondToAgentPlan(true)} onRejectPlan={() => respondToAgentPlan(false)} />
                 {phasePlanner.activePlan && (
                   <PhasePlannerPanel
                     plan={phasePlanner.activePlan}
