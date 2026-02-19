@@ -444,45 +444,87 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
         ) : isGenerating ? (
           <SkeletonPreview />
         ) : (
-          <div className="flex flex-col items-center justify-center h-full w-full text-center relative overflow-hidden">
+          <div className="flex flex-col items-center justify-center h-full w-full text-center relative overflow-hidden select-none">
             {/* Vibrant background image — full bleed */}
-            <img src={previewBg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a12]/90 via-[#0a0a12]/40 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.06] via-transparent to-violet-500/[0.06]" />
+            <img src={previewBg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-50 transition-opacity duration-1000" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a12] via-[#0a0a12]/60 to-[#0a0a12]/30" />
+            
+            {/* Animated mesh gradient background */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full bg-cyan-500/[0.07] blur-[120px] animate-pulse" />
+              <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-violet-500/[0.06] blur-[100px] animate-pulse" style={{ animationDelay: '1.5s', animationDuration: '4s' }} />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full bg-fuchsia-500/[0.04] blur-[80px] animate-pulse" style={{ animationDelay: '3s', animationDuration: '5s' }} />
+            </div>
+
+            {/* Floating particles */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute h-1 w-1 rounded-full bg-cyan-400/30"
+                  style={{
+                    left: `${15 + i * 15}%`,
+                    top: `${20 + (i % 3) * 25}%`,
+                    animation: `float ${3 + i * 0.5}s ease-in-out infinite alternate`,
+                    animationDelay: `${i * 0.4}s`,
+                  }}
+                />
+              ))}
+            </div>
             
             <div className="relative z-10 space-y-8 px-6">
-              {/* Glowing icon */}
+              {/* Glowing icon with breathing animation */}
               <div className="relative mx-auto w-fit">
-                <div className="absolute -inset-6 bg-cyan-500/20 rounded-full blur-2xl animate-pulse" />
-                <div className="absolute -inset-4 bg-violet-500/15 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1s' }} />
-                <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-500/30 via-violet-500/25 to-fuchsia-500/20 border border-cyan-400/20 flex items-center justify-center mx-auto shadow-2xl shadow-cyan-500/30 backdrop-blur-xl">
-                  <Activity className="h-9 w-9 text-cyan-300" />
+                <div className="absolute -inset-8 bg-cyan-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '3s' }} />
+                <div className="absolute -inset-5 bg-violet-500/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s', animationDuration: '4s' }} />
+                <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-500/25 via-violet-500/20 to-fuchsia-500/15 border border-cyan-400/15 flex items-center justify-center mx-auto shadow-2xl shadow-cyan-500/20 backdrop-blur-xl transition-transform hover:scale-105 duration-300">
+                  <Activity className="h-9 w-9 text-cyan-300/90" />
                 </div>
               </div>
               
-              {/* Title */}
+              {/* Title with refined typography */}
               <div className="space-y-3">
-                <h3 className="font-bold text-3xl tracking-tight bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
+                <h3 className="font-bold text-3xl tracking-tight bg-gradient-to-r from-cyan-300 via-white/95 to-violet-300 bg-clip-text text-transparent drop-shadow-sm">
                   Live Preview
                 </h3>
-                <p className="text-base text-white/50 max-w-[340px] mx-auto leading-relaxed">
+                <p className="text-sm text-white/40 max-w-[320px] mx-auto leading-relaxed">
                   Describe what you want to build and watch your app come to life in real-time
                 </p>
               </div>
               
-              {/* Feature pills */}
-              <div className="flex items-center gap-3 justify-center flex-wrap">
-                <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs font-medium backdrop-blur-sm">
-                  <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400" /> Hot reload
-                </span>
-                <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-medium backdrop-blur-sm">
-                  <span className="h-2 w-2 rounded-full bg-violet-400 shadow-sm shadow-violet-400" /> Multi-file
-                </span>
-                <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-medium backdrop-blur-sm">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400" /> Responsive
-                </span>
+              {/* Feature pills with hover effects */}
+              <div className="flex items-center gap-2.5 justify-center flex-wrap">
+                {[
+                  { label: 'Hot reload', color: 'cyan' },
+                  { label: 'Multi-file', color: 'violet' },
+                  { label: 'Responsive', color: 'emerald' },
+                ].map(({ label, color }) => (
+                  <span
+                    key={label}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-sm transition-all duration-200 hover:scale-105 cursor-default",
+                      `bg-${color}-500/10 border border-${color}-500/20 text-${color}-300`
+                    )}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full bg-${color}-400 shadow-sm shadow-${color}-400`} />
+                    {label}
+                  </span>
+                ))}
               </div>
+              
+              {/* Keyboard shortcut hint */}
+              <p className="text-[11px] text-white/20">
+                Press <kbd className="px-1.5 py-0.5 bg-white/[0.06] border border-white/[0.08] rounded text-[10px] font-mono text-white/30">⌘K</kbd> for commands
+              </p>
             </div>
+
+            {/* CSS for floating particles */}
+            <style>{`
+              @keyframes float {
+                from { transform: translateY(0) scale(1); opacity: 0.3; }
+                to { transform: translateY(-20px) scale(1.5); opacity: 0.1; }
+              }
+            `}</style>
           </div>
         )}
       </div>
