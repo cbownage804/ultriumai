@@ -1232,26 +1232,7 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Prompt suggestions for empty state */}
-        {messages.length === 0 && !input && (
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              { label: 'Build a landing page', icon: '🚀', accent: 'border-rose-500/20 text-rose-300/70 hover:bg-rose-500/10 hover:border-rose-500/30' },
-              { label: 'Create a dashboard with charts', icon: '📊', accent: 'border-blue-500/20 text-blue-300/70 hover:bg-blue-500/10 hover:border-blue-500/30' },
-              { label: 'Paste a screenshot to clone', icon: '👁️', accent: 'border-violet-500/20 text-violet-300/70 hover:bg-violet-500/10 hover:border-violet-500/30' },
-              { label: 'Search for best practices', icon: '🔍', accent: 'border-amber-500/20 text-amber-300/70 hover:bg-amber-500/10 hover:border-amber-500/30' },
-            ].map(s => (
-              <button
-                key={s.label}
-                onClick={() => setInput(s.label)}
-                className={cn("flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] transition-all", s.accent)}
-              >
-                <span>{s.icon}</span>
-                <span>{s.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Bottom suggestion chips removed — hero template cards handle this */}
 
         {/* Lovable-style input area with integrated mode toggle */}
         <div data-tour="chat-input" className={cn("rounded-xl border bg-white/[0.05] transition-all overflow-hidden shadow-lg focus-within:ring-2 focus-within:ring-offset-0", mode === 'build' ? "border-violet-500/30 shadow-violet-500/5 focus-within:ring-violet-500/40 focus-within:border-violet-500/50" : "border-teal-500/30 shadow-teal-500/5 focus-within:ring-teal-500/40 focus-within:border-teal-500/50")}>
