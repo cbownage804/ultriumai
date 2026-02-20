@@ -225,6 +225,14 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
     .replace(/^I'?ve included:\s*$/gm, '')
     // Remove "Source: about:srcdoc" lines
     .replace(/^Source:\s*about:srcdoc.*$/gm, '')
+    // Remove "Design Specs:" sections and everything until next file/heading
+    .replace(/(?:\*{0,2})?Design Specs?:?\*{0,2}[\s\S]*?(?=\n===FILE|\n#{1,4}\s|$)/gi, '')
+    // Remove "Working on tasks..." progress lines
+    .replace(/^Working on tasks\.{0,3}\s*$/gm, '')
+    // Remove "Writing N files..." progress lines
+    .replace(/^Writing \d+ files?\.{0,3}\s*$/gm, '')
+    // Remove bare single-word planning items (Typography, Palette, Components, etc.)
+    .replace(/^[-•*]?\s*(?:Typography|Palette|Components|Layout|Spacing|Colors?|Fonts?|Icons?)\s*$/gm, '')
     // Clean up excessive newlines
     .replace(/\n{3,}/g, '\n\n')
     .trim();
