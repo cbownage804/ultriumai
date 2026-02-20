@@ -569,7 +569,9 @@ export function BuilderChatPanel({
             {/* Card header — clean, no bookmark */}
             <div className="px-4 py-3">
               <span className="text-[13px] font-medium text-white/80">
-                {totalFiles > 1 ? `Updated ${totalFiles} files` : fileNames[0]?.split('/').pop() || 'Code changes'}
+                {isStreaming 
+                  ? (totalFiles > 1 ? `Generating ${totalFiles} files...` : `Generating ${fileNames[0]?.split('/').pop() || 'code'}...`)
+                  : (totalFiles > 1 ? `Updated ${totalFiles} files` : fileNames[0]?.split('/').pop() || 'Code changes')}
               </span>
             </div>
 
@@ -577,7 +579,7 @@ export function BuilderChatPanel({
             <div className="px-4 pb-2 space-y-1">
               {fileNames.slice(0, 4).map((name, i) => {
                 const shortName = name.split('/').pop() || name;
-                const isFileDone = !isStreaming || i < fileNames.length - 1 || hasFiles;
+                const isFileDone = !isStreaming;
                 return (
                   <div key={i} className="flex items-center gap-2 py-1">
                     {isFileDone ? (
