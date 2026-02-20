@@ -84,6 +84,18 @@ export function useReactCompiler() {
   const stripTypeAnnotations = useCallback((code: string): string => {
     let result = code;
 
+    // Phase 67: Strip `import type` statements completely before any other processing
+    result = result.replace(/^import\s+type\s+\{[^}]*\}\s+from\s+['"][^'"]+['"];?\s*$/gm, '');
+    // Strip inline type imports: import { type X, type Y } from '...' → import { } from '...'
+    // But also handle mixed: import { type X, Y } from '...' → import { Y } from '...'
+    result = result.replace(/^(import\s+\{)([^}]+)(\}\s+from\s+['"][^'"]+['"];?\s*)$/gm, (_match, prefix, names, suffix) => {
+      const filtered = names.split(',')
+        .map((n: string) => n.trim())
+        .filter((n: string) => !n.startsWith('type ') && n.length > 0);
+      if (filtered.length === 0) return ''; // All were type imports
+      return `${prefix} ${filtered.join(', ')} ${suffix}`;
+    });
+
     // Phase 73: Bracket-depth counter for interface/type/enum removal
     // Prevents accidentally stripping function bodies that follow an interface
     const lines = result.split('\n');
@@ -226,6 +238,42 @@ export function useReactCompiler() {
     // Remove side-effect imports
     code = code.replace(/^import\s+['"][^'"]+['"];?\s*$/gm, '');
 
+    // Phase 62: Handle re-export patterns
+    // export * from './utils' → Object.assign(__modules[thisPath], __modules[sourcePath])
+    code = code.replace(
+      /^export\s+\*\s+from\s+['"]([^'"]+)['"];?\s*$/gm,
+      (_match, specifier) => {
+        const resolved = moduleMap.get(specifier) ||
+          moduleMap.get(specifier.replace(/^\.\//, '')) ||
+          moduleMap.get(specifier.replace(/\.\w+$/, ''));
+        const sourceKey = resolved?.path || specifier;
+        return `Object.assign(__modules['${file.path}'] || (__modules['${file.path}'] = {}), __modules['${sourceKey}'] || {});`;
+      }
+    );
+    // export { X as Y } from './module' → re-export with alias
+    code = code.replace(
+      /^export\s*\{([^}]+)\}\s*from\s+['"]([^'"]+)['"];?\s*$/gm,
+      (_match, names, specifier) => {
+        const resolved = moduleMap.get(specifier) ||
+          moduleMap.get(specifier.replace(/^\.\//, '')) ||
+          moduleMap.get(specifier.replace(/\.\w+$/, ''));
+        const sourceKey = resolved?.path || specifier;
+        const pairs = names.split(',').map((n: string) => {
+          const [orig, alias] = n.trim().split(/\s+as\s+/);
+          return { orig: orig.trim(), alias: (alias || orig).trim() };
+        });
+        const lines = [`__modules['${file.path}'] = __modules['${file.path}'] || {};`];
+        for (const { orig, alias } of pairs) {
+          if (orig === 'default') {
+            lines.push(`__modules['${file.path}']['${alias}'] = (__modules['${sourceKey}'] || {}).default;`);
+          } else {
+            lines.push(`__modules['${file.path}']['${alias}'] = (__modules['${sourceKey}'] || {})['${orig}'];`);
+          }
+        }
+        return lines.join('\n');
+      }
+    );
+
     // Step 3: Transform exports into module registration
 
     // Phase 71: Handle anonymous default exports FIRST
@@ -251,7 +299,7 @@ export function useReactCompiler() {
       }
     );
 
-    // export { X, Y } → already handled by import resolution
+    // export { X, Y } → already handled by import resolution (but only local re-exports above)
     code = code.replace(/^export\s*\{[^}]+\}\s*;?\s*$/gm, '');
 
     // export const/function/class X → const/function/class X (and register)
@@ -264,6 +312,19 @@ export function useReactCompiler() {
       }
     );
 
+    // Phase 69: Transform inline dynamic import() for local modules
+    // Replace import('./utils') with Promise.resolve(__modules['utils'])
+    code = code.replace(
+      /\bimport\s*\(\s*['"](\.[^'"]+)['"]\s*\)/g,
+      (_match, specifier) => {
+        const resolved = moduleMap.get(specifier) ||
+          moduleMap.get(specifier.replace(/^\.\//, '')) ||
+          moduleMap.get(specifier.replace(/\.\w+$/, ''));
+        const moduleKey = resolved?.path || specifier;
+        return `Promise.resolve(__modules['${moduleKey}'] || {})`;
+      }
+    );
+
     // Build module registration
     // Phase 71: Check for anonymous default export (__DefaultExport) or named default
     const defaultMatch = file.content.match(/export\s+default\s+(?:function\s+|class\s+)?(\w+)/);
@@ -271,16 +332,20 @@ export function useReactCompiler() {
                                  /export\s+default\s+function\s*\(/.test(file.content);
     const defaultExport = hasAnonymousDefault ? '__DefaultExport' : defaultMatch?.[1];
     const registration: string[] = [];
+
+    // Phase 68: Always initialize module and register ALL exports
+    registration.push(`__modules['${file.path}'] = __modules['${file.path}'] || {};`);
+
     if (defaultExport) {
-      registration.push(`__modules['${file.path}'] = __modules['${file.path}'] || {};`);
       registration.push(`__modules['${file.path}'].default = typeof ${defaultExport} !== 'undefined' ? ${defaultExport} : undefined;`);
     }
+    // Phase 68: Named exports are ALWAYS registered, regardless of default export
     for (const name of exportedNames) {
-      registration.push(`__modules['${file.path}'] = __modules['${file.path}'] || {};`);
       registration.push(`__modules['${file.path}']['${name}'] = typeof ${name} !== 'undefined' ? ${name} : undefined;`);
     }
 
-    return `/* === ${file.path} === */\n(function() {\n${code}\n${registration.join('\n')}\n})();`;
+    // Phase 61: Use async IIFE so `await import()` works for external packages
+    return `/* === ${file.path} === */\n(async function() {\n${code}\n${registration.join('\n')}\n})();`;
   }, [stripTypeAnnotations]);
 
   /**
@@ -307,19 +372,7 @@ export function useReactCompiler() {
       graph.set(f.path, deps);
     }
 
-    // Topological sort (Kahn's algorithm)
-    const inDegree = new Map<string, number>();
-    for (const path of fileSet) inDegree.set(path, 0);
-    for (const deps of graph.values()) {
-      for (const dep of deps) {
-        inDegree.set(dep, (inDegree.get(dep) || 0) + 1);
-      }
-    }
-
-    // Wait — inDegree is reversed for topo sort. Files with no dependents go last.
-    // Actually we want: if A imports B, B should come first.
-    // So in-degree should count how many files depend ON this file.
-    // Let's just do DFS-based topo sort.
+    // DFS-based topological sort
     const visited = new Set<string>();
     const ordered: string[] = [];
     const visit = (path: string) => {
@@ -333,6 +386,34 @@ export function useReactCompiler() {
 
     const fileMap = new Map(files.map(f => [f.path, f]));
     return ordered.map(p => fileMap.get(p)!).filter(Boolean);
+  }, []);
+
+  /**
+   * Phase 63: Resolve CSS @import statements by inlining referenced files.
+   */
+  const resolveCSSimports = useCallback((cssContent: string, cssPath: string, allFiles: ProjectFile[]): string => {
+    return cssContent.replace(
+      /@import\s+['"]([^'"]+)['"];?\s*/g,
+      (_match, importPath) => {
+        // Resolve relative to current CSS file's directory
+        const dir = cssPath.includes('/') ? cssPath.substring(0, cssPath.lastIndexOf('/') + 1) : '';
+        const resolvedPath = importPath.startsWith('./')
+          ? dir + importPath.slice(2)
+          : importPath.startsWith('/')
+            ? importPath.slice(1)
+            : dir + importPath;
+        const importedFile = allFiles.find(f =>
+          f.path === resolvedPath ||
+          f.path === importPath ||
+          f.path === importPath.replace(/^\.\//, '')
+        );
+        if (importedFile) {
+          return `/* @import inlined: ${importPath} */\n${importedFile.content}\n`;
+        }
+        // External @import (e.g., Google Fonts) — keep as-is
+        return _match;
+      }
+    );
   }, []);
 
   /**
@@ -394,9 +475,11 @@ export function useReactCompiler() {
       if (defaultExport) rootComponent = defaultExport[1];
     }
 
-    // If there's a main.tsx/index.tsx with createRoot, use that pattern
+    // Phase 70: If there's a main.tsx/index.tsx with createRoot, use that pattern
+    // Verify the entry file's createRoot targets #root — skip auto-mount entirely
     let mountScript: string;
-    if (entryFile && /createRoot|ReactDOM\.render/.test(entryFile.content)) {
+    const hasEntryMount = entryFile && /createRoot|ReactDOM\.render/.test(entryFile.content);
+    if (hasEntryMount) {
       // The entry file handles mounting — it's already transpiled in the chunks
       mountScript = '';
     } else {
@@ -444,8 +527,11 @@ try {
 })();`;
     }
 
-    // Collect CSS
-    const allCSS = cssFiles.map(f => `/* ${f.path} */\n${f.content}`).join('\n\n');
+    // Phase 63: Resolve CSS @import and collect all CSS
+    const allCSS = cssFiles.map(f => {
+      const resolved = resolveCSSimports(f.content, f.path, files);
+      return `/* ${f.path} */\n${resolved}`;
+    }).join('\n\n');
 
     // Build env injection
     const envObj: Record<string, string> = {};
@@ -470,17 +556,18 @@ try {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>React Preview</title>
 
-  <!-- Tailwind CSS Play CDN -->
-  <script src="${CDN.tailwind}" onerror="console.warn('Tailwind CDN failed'); document.head.insertAdjacentHTML('beforeend', '<style>body{font-family:sans-serif;padding:20px;line-height:1.5}</style>')"></script>
+  <!-- Phase 64: Tailwind CSS Play CDN with defer-like loading -->
+  <script src="${CDN.tailwind}" onerror="console.warn('Tailwind CDN failed'); document.head.insertAdjacentHTML('beforeend', '<style>body{font-family:sans-serif;padding:20px;line-height:1.5}</style>')" onload="document.dispatchEvent(new Event('tailwind-ready'))"></script>
 
   <!-- React 18 (UMD globals) -->
   <script crossorigin src="${CDN.react}"></script>
   <script crossorigin src="${CDN.reactDom}"></script>
 
   <!-- Phase 68: Import map with data: shims so await import('react') returns UMD globals -->
+  <!-- Phase 65: All React 18 hooks exported including useId, useSyncExternalStore, useTransition, useDeferredValue, useInsertionEffect -->
   <script type="importmap">{
     "imports": {
-      "react": "data:text/javascript,const R=window.React;export default R;export const{useState,useEffect,useCallback,useMemo,useRef,useContext,createContext,memo,forwardRef,Fragment,useReducer,useLayoutEffect,Children,cloneElement,isValidElement,createElement,Suspense,lazy,StrictMode,useId,useSyncExternalStore,useTransition,useDeferredValue,startTransition,use,useOptimistic,useActionState,useFormStatus,cache,createRef,PureComponent,Component}=R;for(const __k in R)if(!({useState:1,useEffect:1,useCallback:1,useMemo:1,useRef:1,useContext:1,createContext:1,memo:1,forwardRef:1,Fragment:1,useReducer:1,useLayoutEffect:1,Children:1,cloneElement:1,isValidElement:1,createElement:1,Suspense:1,lazy:1,StrictMode:1,useId:1,useSyncExternalStore:1,useTransition:1,useDeferredValue:1,startTransition:1,use:1,useOptimistic:1,useActionState:1,useFormStatus:1,cache:1,createRef:1,PureComponent:1,Component:1,default:1}[__k])&&R[__k]!==undefined)try{Object.defineProperty(exports,__k,{get:()=>R[__k],enumerable:true})}catch(e){}",
+      "react": "data:text/javascript,const R=window.React;export default R;export const{useState,useEffect,useCallback,useMemo,useRef,useContext,createContext,memo,forwardRef,Fragment,useReducer,useLayoutEffect,Children,cloneElement,isValidElement,createElement,Suspense,lazy,StrictMode,useId,useSyncExternalStore,useTransition,useDeferredValue,useInsertionEffect,startTransition,use,useOptimistic,useActionState,useFormStatus,cache,createRef,PureComponent,Component}=R;for(const __k in R)if(!({useState:1,useEffect:1,useCallback:1,useMemo:1,useRef:1,useContext:1,createContext:1,memo:1,forwardRef:1,Fragment:1,useReducer:1,useLayoutEffect:1,Children:1,cloneElement:1,isValidElement:1,createElement:1,Suspense:1,lazy:1,StrictMode:1,useId:1,useSyncExternalStore:1,useTransition:1,useDeferredValue:1,useInsertionEffect:1,startTransition:1,use:1,useOptimistic:1,useActionState:1,useFormStatus:1,cache:1,createRef:1,PureComponent:1,Component:1,default:1}[__k])&&R[__k]!==undefined)try{Object.defineProperty(exports,__k,{get:()=>R[__k],enumerable:true})}catch(e){}",
       "react/jsx-runtime": "data:text/javascript,const R=window.React;export const jsx=R.createElement;export const jsxs=R.createElement;export const Fragment=R.Fragment;",
       "react-dom": "data:text/javascript,const RD=window.ReactDOM;export default RD;export const{createRoot,createPortal,flushSync}=RD;",
       "react-dom/client": "data:text/javascript,export const{createRoot}=window.ReactDOM;",
@@ -518,14 +605,17 @@ window.ENV = ${JSON.stringify(envObj)};
 <body>
   <div id="root"></div>
 
-  <!-- Phase 54: Render loop detector + preview timeout -->
+  <!-- Phase 66: Render loop detector — threshold raised to 500 for StrictMode, initial 2s grace period -->
   <script>
   (function(){
     var __renderCount = 0;
+    var __mountTime = Date.now();
     var __renderTimer = setInterval(function(){
-      if (__renderCount > 100) {
+      // Phase 66: Skip detection during initial 2-second mount burst
+      if (Date.now() - __mountTime < 2000) { __renderCount = 0; return; }
+      if (__renderCount > 500) {
         clearInterval(__renderTimer);
-        window.parent.postMessage({ type: '__PREVIEW_ERROR__', error: { message: 'Infinite render loop detected. A component is re-rendering too frequently (>100/sec).', critical: true } }, '*');
+        window.parent.postMessage({ type: '__PREVIEW_ERROR__', error: { message: 'Infinite render loop detected. A component is re-rendering too frequently (>500/sec).', critical: true } }, '*');
         var root = document.getElementById('root');
         if (root) root.innerHTML = '<div style="padding:40px;color:#ef4444;font-family:system-ui"><h2>⚠️ Render Loop Detected</h2><p>A component is stuck in an infinite re-render loop. Check your useEffect dependencies and state updates.</p></div>';
       }
@@ -548,7 +638,8 @@ window.ENV = ${JSON.stringify(envObj)};
   <script>
     // ── Virtual module system ──
     window.__modules = {};
-    const { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment } = React;
+    // Phase 65: All React 18 hooks available globally
+    const { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, useInsertionEffect } = React;
     const { createRoot, createPortal } = ReactDOM;
   </script>
 
@@ -562,7 +653,8 @@ window.ENV = ${JSON.stringify(envObj)};
       window.__modules = window.__modules || {};
       var code = ${JSON.stringify(`
     // React globals available to all components
-    const { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, Suspense, lazy, StrictMode } = React;
+    // Phase 65: Full React 18 hook set
+    const { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, useInsertionEffect, Suspense, lazy, StrictMode } = React;
     const { createRoot, createPortal, flushSync } = ReactDOM;
     ${options?.supabaseConfig ? `const supabase = window.__supabaseClient;` : ''}
 
@@ -585,6 +677,41 @@ window.ENV = ${JSON.stringify(envObj)};
       var root = document.getElementById('root');
       if (root) root.innerHTML = '<div style="padding:40px;color:#ef4444;font-family:system-ui"><h2>Syntax Error</h2><pre style="white-space:pre-wrap;margin-top:12px;font-size:13px;color:#fca5a5">' + e.message + '</pre></div>';
     }
+  })();
+  </script>
+
+  <!-- Phase 95: Inherit parent dark mode preference -->
+  <script>
+  (function(){
+    try {
+      var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (isDark) document.documentElement.classList.add('dark');
+      document.documentElement.style.setProperty('color-scheme', isDark ? 'dark' : 'light');
+    } catch(e){}
+  })();
+  </script>
+
+  <!-- Phase 94: Web Worker shim -->
+  <script>
+  (function(){
+    var OrigWorker = window.Worker;
+    window.Worker = function(url, opts) {
+      // If the URL matches a VFS file, convert to Blob URL
+      if (window.__modules && typeof url === 'string' && !url.startsWith('blob:') && !url.startsWith('http')) {
+        var workerContent = null;
+        for (var key in window.__modules) {
+          if (key.endsWith(url) || key === url) {
+            workerContent = window.__modules[key]?.default || '';
+            break;
+          }
+        }
+        if (workerContent && typeof workerContent === 'string') {
+          var blob = new Blob([workerContent], { type: 'application/javascript' });
+          url = URL.createObjectURL(blob);
+        }
+      }
+      return new OrigWorker(url, opts);
+    };
   })();
   </script>
 
@@ -633,7 +760,7 @@ window.ENV = ${JSON.stringify(envObj)};
     }
 
     return { html, isReactProject: true, componentCount, errors };
-  }, [buildModuleMap, sortByDependency, transpileFile]);
+  }, [buildModuleMap, sortByDependency, transpileFile, resolveCSSimports]);
 
   return {
     compileReactProject,
