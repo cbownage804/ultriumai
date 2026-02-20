@@ -1,125 +1,137 @@
 
 
-# Full Diagnosis: It's Not Just Re-renders
+# Remaining Issues Beyond Re-renders
 
-After deep-diving into the code, I found **at least 5 distinct problems** that collectively keep the preview stuck on skeletons. Re-renders were one, and you've mostly fixed those. But the remaining issues are just as critical.
-
----
-
-## Issue 1: `setThinkingPhase` Still Re-renders the Workspace During Streaming
-
-**File**: `src/hooks/useAIAppBuilder.ts`, line 1291
-
-Inside the streaming loop, every time a `===FILE:` marker appears in the content:
-```
-setThinkingPhase('writing');
-setTimeout(() => setThinkingPhase(null), 500);
-```
-
-`thinkingPhase` is `useState` inside `useAIAppBuilder`, which is consumed by the workspace. This fires repeatedly during streaming, causing workspace re-renders that you spent the last several rounds eliminating.
-
-**Fix**: Gate this so it only fires once (use a ref flag), or remove it entirely since the overlay already shows progress.
+After reviewing the full codebase, here are 6 additional problems that contribute to freezes and preview failures -- none of which are re-render related.
 
 ---
 
-## Issue 2: `editorStreamFiles` Polling Re-renders the Workspace Every 400ms
+## Issue 6: `upsertFile()` Loop Causes N State Updates for N Files
 
-**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`, lines 1057-1068
+**File**: `AIAppBuilderWorkspace.tsx`, line 880
 
+When generation completes and `latestFiles` fires, the effect does:
 ```typescript
-const [editorStreamFiles, setEditorStreamFiles] = useState<ProjectFile[]>([]);
-useEffect(() => {
-  const interval = setInterval(() => {
-    const files = partialFilesRef.current;
-    setEditorStreamFiles(prev => prev !== files ? files : prev);
-  }, 400);
-  ...
-}, [isStreamingPreview, partialFilesRef]);
+for (const file of latestFiles) upsertFile(file.path, file.content);
 ```
 
-This is `useState` **inside the workspace component itself**. Every 400ms during streaming, if partialFilesRef changed (which it does on every parse), this triggers a full workspace re-render. This defeats all the ref-based optimizations.
+Each `upsertFile` call individually updates the `project.files` state. For a 15-file project, that is 15 sequential state updates, each triggering a re-render and a `liveCompiledHTML` recomputation. The first render (line 877) uses `setFiles(latestFiles)` for empty projects, but for iterative builds (existing project + new files), it falls into the loop.
 
-**Fix**: Move the editor file display to a child component with its own local state, or use a ref here too and only update the CodeEditor directly.
+**Fix**: Batch all file updates into a single `setFiles()` call by merging existing files with new ones in one pass, instead of calling `upsertFile` per file.
 
 ---
 
-## Issue 3: Vanilla HTML Projects Can Never Compile During Streaming
+## Issue 7: 120s Force-Compile Fallback Still Uses `project.files` for Vanilla
 
-**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`, line 1847
+**File**: `AIAppBuilderWorkspace.tsx`, line 1939
 
-In the timer-based compilation, the vanilla (non-React) branch calls:
+The 120-second safety net attempts vanilla compilation via:
 ```typescript
 const html = getCompiledHTML(supabaseConfig, ...);
 ```
 
-But `getCompiledHTML` reads from `project.files`, which is **empty during initial generation**. Files only get populated when `setLatestFiles` triggers the `latestFiles` effect (line 858-903) at the END of streaming. So for non-React projects, the 3-second timer will check every 3 seconds and always get `null` -- the preview never appears until generation fully completes.
+But `getCompiledHTML` reads from `project.files`, which is still empty during initial generation. The Issue 3 fix was applied to the 3-second timer, but this 120-second fallback was missed. It will always return `null` for new vanilla projects.
 
-**Fix**: Pass `pFiles` (from `partialFilesRef`) to a temporary file system or compile vanilla HTML directly from the partial files array, just like the React path already does.
-
----
-
-## Issue 4: Post-Generation "Wall of Work" Blocks the Main Thread
-
-**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`, lines 858-1000
-
-When generation ends and `setLatestFiles` fires, the `latestFiles` effect runs **synchronously** and triggers:
-
-1. `upsertFile()` for every single file (individual state updates)
-2. `updateBranchFiles()`
-3. `codeSmellDetector.analyzeFiles()` -- analyzes ALL files
-4. TypeScript validation (`tsValidator.validate()`)
-5. Smoke tests (`smokeTest.runSmokeTest()`)
-6. Dependency conflict detection
-7. Lighthouse audit
-8. Bundle size analysis
-9. Delete button auto-patcher
-10. Auto-generate companion test files
-11. `compileReactProject()` or `getCompiledHTML()` for the preview
-
-This is hundreds of milliseconds (possibly seconds) of synchronous work that blocks the preview from appearing even AFTER generation completes.
-
-**Fix**: Defer non-critical work (`codeSmellDetector`, `lighthouseAudit`, `bundleSize`, `fileScaffolding`) to `requestIdleCallback` or `setTimeout(..., 0)`. Prioritize compilation first.
+**Fix**: Use `partialFilesRef.current` for the vanilla fallback path too, same as the 3-second timer.
 
 ---
 
-## Issue 5: Multiple `setMessages` Calls During Finalization
+## Issue 8: `streamingFilePath` State Lives in the Workspace
 
-**File**: `src/hooks/useAIAppBuilder.ts`, lines 1327 and 1589
+**File**: `AIAppBuilderWorkspace.tsx`, line 1064
 
-`finalizeStream()` calls `setMessages` twice:
-- Line 1327: Commits the final assistant content
-- Line 1589: Adds `filesGenerated`, `buildSummary`, `migrations`, etc.
+```typescript
+const [streamingFilePath, setStreamingFilePath] = useState<string | null>(null);
+const handleStreamingFileChange = useCallback((path: string | null) => {
+  setStreamingFilePath(path);
+}, []);
+```
 
-Each `setMessages` call re-renders the workspace. Plus line 1636 does a THIRD call to add suggestions.
+The `StreamingCodeEditor` child calls `onStreamingFileChange` every 400ms when the active streaming file changes. This updates `streamingFilePath` state in the workspace, triggering a full re-render. This partially undoes the benefit of extracting the editor to a child component.
 
-**Fix**: Merge all updates into a single `setMessages` call, or defer the enrichment call with `requestAnimationFrame` (the suggestions one already does this, but the line 1589 one doesn't).
+**Fix**: Move `streamingFilePath` to a ref, or keep it entirely inside `StreamingCodeEditor` and pass it to the `FileTabBar` via a separate lightweight child.
 
 ---
 
-## Summary Table
+## Issue 9: 400+ Panel Accessor/Setter Variables Recreated on Every Render
 
-| Issue | Type | Impact | Fix Difficulty |
-|-------|------|--------|----------------|
-| 1. `setThinkingPhase` in stream loop | State change during streaming | Workspace re-renders on every FILE marker | Easy -- gate with ref flag |
-| 2. `editorStreamFiles` polling | State change every 400ms | Workspace re-renders 2.5x/sec | Medium -- extract to child component |
-| 3. Vanilla HTML can't compile during streaming | Logic bug | Non-React previews never appear until stream ends | Medium -- pass pFiles to compiler |
-| 4. Post-generation wall of synchronous work | Main thread blocking | Preview delayed 1-3s after generation ends | Medium -- defer non-critical work |
-| 5. Multiple `setMessages` in finalization | State changes | 2-3 workspace re-renders at stream end | Easy -- merge calls |
+**File**: `AIAppBuilderWorkspace.tsx`, lines 368-792
+
+The component creates ~200 boolean accessors (`const showX = !!panels.showX`) and ~200 setter functions (`const setShowX = sp('showX')`) on every render. The `sp` callback (line 579) depends on `panels`, so whenever ANY panel toggles, all 200 setters are recreated.
+
+This is not a streaming issue, but it adds significant overhead to every render -- each render has to allocate and garbage-collect 400+ closures. During rapid state changes (like generation ending), this compounds the problem.
+
+**Fix**: Replace the 200 individual boolean variables with direct `panels.showX` reads in JSX. Replace `sp()` setters with a single `togglePanel(key)` function. This eliminates 400 variable allocations per render.
+
+---
+
+## Issue 10: `liveCompiledHTML` Runs Synchronously When Generation Ends
+
+**File**: `AIAppBuilderWorkspace.tsx`, line 1866
+
+```typescript
+const liveCompiledHTML = useMemo(() => {
+  if (isGenerating) return null;
+  if (project.files.length === 0) return null;
+  if (isReactProject) {
+    const result = compileReactProject(project.files, ...);
+    return result.html || null;
+  }
+  return getCompiledHTML(...);
+}, [project.files, ..., isGenerating]);
+```
+
+When `isGenerating` flips from `true` to `false`, this memo immediately runs the compiler synchronously on the full file set. For React projects with 15+ files, `compileReactProject` can take 200-500ms, blocking the main thread at exactly the moment the user expects to see the preview.
+
+But the timer-based compilation (lines 1814-1863) should have ALREADY produced a `stableHTML` during generation. The issue is that `liveCompiledHTML` runs again anyway (because `isGenerating` changed), and the `useEffect` on line 1890 overwrites `stableHTML` with the (identical) new result. This is redundant work.
+
+**Fix**: Skip the `liveCompiledHTML` recomputation if `stableHTML` is already set from the timer-based path. Only recompile from `project.files` if `stableHTML` is still `null` when generation ends.
+
+---
+
+## Issue 11: `setFiles` for Initial Projects Doesn't Trigger Preview Compilation
+
+**File**: `AIAppBuilderWorkspace.tsx`, line 878
+
+For brand-new projects (`project.files.length === 0`), the effect calls:
+```typescript
+setFiles(latestFiles);
+```
+
+This updates `project.files` in one batch (good). But the `liveCompiledHTML` memo depends on `project.files`, so it runs the compiler synchronously in the same render. Meanwhile, `stableHTML` may already contain a valid preview from the timer-based compilation. The `useEffect` on line 1890 then overwrites `stableHTML` with the `liveCompiledHTML` result, causing a potentially unnecessary iframe reload.
+
+**Fix**: In the `useEffect` on line 1890, skip updating `stableHTML` if it already has content and the new `liveCompiledHTML` is equivalent (same length or hash check).
+
+---
+
+## Summary
+
+| Issue | Type | Impact | Fix |
+|-------|------|--------|-----|
+| 6. upsertFile loop | Batching bug | N state updates + N compiler runs | Single setFiles() merge |
+| 7. 120s fallback uses project.files | Logic bug | Vanilla preview never appears at 120s | Use partialFilesRef |
+| 8. streamingFilePath in workspace | State leak | Workspace re-renders during streaming | Move to ref or child |
+| 9. 400+ panel variables per render | Allocation overhead | ~5ms per render wasted on closures | Use panels object directly |
+| 10. Redundant compilation at generation end | Wasted CPU | 200-500ms blocked main thread | Skip if stableHTML exists |
+| 11. Unnecessary iframe reload | UX bug | Preview flickers when generation ends | Skip duplicate stableHTML write |
 
 ## Implementation Plan
 
-### Step 1: Fix `setThinkingPhase` (Issue 1)
-In `useAIAppBuilder.ts`, add a `thinkingPhaseSetRef` boolean ref. Only call `setThinkingPhase('writing')` once, then never again during the same stream.
+### Step 1: Batch upsertFile into single setFiles (Issue 6)
+In the `latestFiles` effect, merge existing `project.files` with `latestFiles` into a single array and call `setFiles(merged)` once, eliminating the per-file loop.
 
-### Step 2: Extract editor streaming to a child component (Issue 2)
-Create a thin wrapper around CodeEditor that owns the `editorStreamFiles` state and polling interval. The workspace passes `partialFilesRef` and `isStreamingPreview` as props; the child does its own 400ms poll with local state.
+### Step 2: Fix 120s fallback for vanilla (Issue 7)
+In the 120s force-compile effect, replace the vanilla `getCompiledHTML()` call with the same inline CSS/JS approach used in the 3-second timer (reading from `partialFilesRef`).
 
-### Step 3: Fix vanilla compilation path (Issue 3)
-In the timer-based compilation effect, for the non-React branch, temporarily set `project.files` from `pFiles` before calling `getCompiledHTML`, or better: build a standalone vanilla compiler function that accepts a files array directly (like `compileReactProject` already does).
+### Step 3: Move streamingFilePath to ref (Issue 8)
+Convert `streamingFilePath` from `useState` to `useRef`. Only the `FileTabBar` needs it, and it can read from the ref directly or receive it from `StreamingCodeEditor`.
 
-### Step 4: Defer post-build work (Issue 4)
-Wrap non-critical analyses (`codeSmellDetector`, `lighthouseAudit`, `bundleSize`, `fileScaffolding`, `deleteAutoPatcher`) in `setTimeout(() => { ... }, 100)` so compilation and preview update happen first.
+### Step 4: Eliminate panel variable explosion (Issue 9)
+Replace all `const showX = !!panels.showX` with direct `panels.showX` in JSX. Create a single `togglePanel` function instead of 200 individual setters.
 
-### Step 5: Merge `setMessages` calls (Issue 5)
-Combine the two `setMessages` calls in `finalizeStream` into one that includes both the content and the metadata enrichment.
+### Step 5: Skip redundant compilation (Issue 10)
+Add a guard to `liveCompiledHTML`: if `stableHTML` is already set when `isGenerating` goes to `false`, return `stableHTML` instead of recompiling.
+
+### Step 6: Prevent duplicate stableHTML writes (Issue 11)
+In the `useEffect` that syncs `liveCompiledHTML` to `stableHTML`, skip the write if `stableHTML` already has content.
 
