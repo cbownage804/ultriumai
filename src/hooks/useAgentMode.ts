@@ -217,8 +217,9 @@ export function useAgentMode() {
           event.data?.type === 'preview-error' ||
           event.data?.type === '__CONSOLE_LOG__' && event.data?.level === 'error'
         ) {
-          const msg = event.data.message || event.data.error || String(event.data);
-          if (msg && !errorBufferRef.current.includes(msg)) {
+          const raw = event.data.message || event.data.error || event.data;
+          const msg = typeof raw === 'string' ? raw : (raw?.message || String(raw));
+          if (msg && typeof msg === 'string' && !errorBufferRef.current.includes(msg)) {
             errorBufferRef.current.push(msg);
           }
         }
@@ -389,7 +390,7 @@ export function useAgentMode() {
               ...prev,
               steps: [
                 ...prev.steps,
-                { id: fixStepId, type: 'fix' as const, label: `Auto-fixing: ${errors[0].slice(0, 50)}${errors[0].length > 50 ? '...' : ''}`, status: 'pending' as const, startedAt: Date.now(), preSnapshot: fixSnapshot },
+                { id: fixStepId, type: 'fix' as const, label: `Auto-fixing: ${String(errors[0] || '').slice(0, 50)}${String(errors[0] || '').length > 50 ? '...' : ''}`, status: 'pending' as const, startedAt: Date.now(), preSnapshot: fixSnapshot },
                 { id: reVerifyStepId, type: 'verify' as const, label: 'Re-verifying output', status: 'pending' as const },
               ],
             };
