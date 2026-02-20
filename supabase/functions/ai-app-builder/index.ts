@@ -689,7 +689,7 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
       const reader = response.body!.getReader();
       const encoder = new TextEncoder();
       let sentDone = false;
-      let receivedFirstChunk = false;
+      let lastUpstreamTime = Date.now();
 
       const ensureDone = async () => {
         if (sentDone) return;
@@ -704,18 +704,20 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
       // Also use abort signal from the incoming request
       req.signal?.addEventListener('abort', () => { ensureDone(); });
 
-      // Keepalive: Send SSE comments every 8s while waiting for first chunk.
-      // This prevents Supabase's idle connection timeout (~30s) from killing the stream
-      // during the AI model's "thinking" phase before first token arrives.
+      // Keepalive: Send SSE comments every 8s throughout the ENTIRE stream.
+      // This prevents idle connection timeouts during AI "thinking" pauses
+      // between files, not just before the first chunk.
       const keepaliveInterval = setInterval(async () => {
-        if (receivedFirstChunk || sentDone) {
+        if (sentDone) {
           clearInterval(keepaliveInterval);
           return;
         }
-        try {
-          await writer.write(encoder.encode(': keepalive\n\n'));
-        } catch {
-          clearInterval(keepaliveInterval);
+        if (Date.now() - lastUpstreamTime > 7_000) {
+          try {
+            await writer.write(encoder.encode(': keepalive\n\n'));
+          } catch {
+            clearInterval(keepaliveInterval);
+          }
         }
       }, 8_000);
 
@@ -724,10 +726,7 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            if (!receivedFirstChunk) {
-              receivedFirstChunk = true;
-              clearInterval(keepaliveInterval);
-            }
+            lastUpstreamTime = Date.now();
             await writer.write(value);
           }
         } catch (e) {
