@@ -1679,14 +1679,18 @@ export function AIAppBuilderWorkspace() {
       const isReact = pFiles.some(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx'));
       try {
         if (isReact) {
-          const result = compileReactProject(pFiles, {
-            supabaseConfig: supabaseConfig || undefined,
-            stripeConfig: stripeConfig || undefined,
-            envVars,
-          });
-          if (result.html) {
-            setStableHTML(result.html);
-            compiled = true;
+          try {
+            const result = compileReactProject(pFiles, {
+              supabaseConfig: supabaseConfig || undefined,
+              stripeConfig: stripeConfig || undefined,
+              envVars,
+            });
+            if (result.html) {
+              setStableHTML(result.html);
+              compiled = true;
+            }
+          } catch (compileErr) {
+            console.warn('[Preview] React compilation crashed on partial files:', compileErr);
           }
         } else {
           // Issue 3 fix: For vanilla projects, compile from partialFilesRef
@@ -1721,28 +1725,33 @@ export function AIAppBuilderWorkspace() {
   // stableHTML, stableHTMLRef, and prevIsGeneratingForReset moved above timer-based compilation effect to fix hook ordering
 
   const liveCompiledHTML = useMemo(() => {
-    // During generation, compilation is handled by the timer above
-    if (isGenerating) return null;
+    try {
+      // During generation, compilation is handled by the timer above
+      if (isGenerating) return null;
 
-    if (project.files.length === 0) return null;
+      if (project.files.length === 0) return null;
 
-    // Issue 10 fix: Skip redundant compilation if stableHTML already exists from timer-based path
-    if (stableHTMLRef.current) return null;
+      // Issue 10 fix: Skip redundant compilation if stableHTML already exists from timer-based path
+      if (stableHTMLRef.current) return null;
 
-    // If this is a React project, use the React compiler pipeline
-    if (isReactProject) {
-      const result = compileReactProject(project.files, {
-        supabaseConfig: supabaseConfig || undefined,
-        stripeConfig: stripeConfig || undefined,
-        envVars,
-      });
-      if (result.errors.length > 0) {
-        console.warn('[ReactCompiler] Warnings:', result.errors);
+      // If this is a React project, use the React compiler pipeline
+      if (isReactProject) {
+        const result = compileReactProject(project.files, {
+          supabaseConfig: supabaseConfig || undefined,
+          stripeConfig: stripeConfig || undefined,
+          envVars,
+        });
+        if (result.errors.length > 0) {
+          console.warn('[ReactCompiler] Warnings:', result.errors);
+        }
+        return result.html || null;
       }
-      return result.html || null;
+      // Otherwise use the vanilla HTML compiler
+      return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+    } catch (e) {
+      console.error('[ReactCompiler] Compilation crashed:', e);
+      return null;
     }
-    // Otherwise use the vanilla HTML compiler
-    return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
   }, [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, isReactProject, compileReactProject, isGenerating]);
 
   // Defer preview updates until build completes — but allow CSS hot-patches through immediately
