@@ -715,6 +715,10 @@ export function useAIAppBuilder() {
   const { deductCredits, totalRemaining } = useUserCredits();
   const { trimForContext } = useContextBudget({ maxChars: 120_000 });
 
+  // Issue 27 fix: Use a ref to read messages inside sendMessage without including it in deps
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+
   const sendMessage = useCallback(async (
     input: string,
     currentFiles: ProjectFile[] = [],
@@ -730,8 +734,9 @@ export function useAIAppBuilder() {
     if (!input.trim() || isGenerating) return;
 
     // Phase 52: Cap messages at 200 entries to prevent sluggish re-renders
-    if (messages.length > 200) {
-      const compressed = [...messages.slice(0, 5), ...messages.slice(-50)];
+    const currentMessages = messagesRef.current;
+    if (currentMessages.length > 200) {
+      const compressed = [...currentMessages.slice(0, 5), ...currentMessages.slice(-50)];
       setMessages(compressed);
     }
 
@@ -767,7 +772,7 @@ export function useAIAppBuilder() {
     }
 
     // Phase 16: Only auto-detect intent on first message; respect user's explicit choice after that
-    const isFirstMessage = messages.length === 0;
+    const isFirstMessage = messagesRef.current.length === 0;
     const detectedMode = isFirstMessage ? detectIntent(input) : null;
     if (detectedMode && detectedMode !== mode) {
       setMode(detectedMode);
@@ -823,15 +828,15 @@ export function useAIAppBuilder() {
     if (supabaseContextStr) systemParts.push(supabaseContextStr);
 
     const memoryContext = buildConversationMemory(
-      messages.map(m => ({ role: m.role, content: m.content }))
+      messagesRef.current.map(m => ({ role: m.role, content: m.content }))
     );
     if (memoryContext) systemParts.push(memoryContext);
 
-    const userTexts = messages.filter(m => m.role === 'user').map(m => m.content);
+    const userTexts = messagesRef.current.filter(m => m.role === 'user').map(m => m.content);
     const { prompt: tonePrompt } = detectCommunicationStyle(userTexts);
     if (tonePrompt) systemParts.push(tonePrompt);
 
-    const prefs = extractUserPreferences(messages.map(m => ({ role: m.role, content: m.content })));
+    const prefs = extractUserPreferences(messagesRef.current.map(m => ({ role: m.role, content: m.content })));
     const prefsContext = buildPreferencesContext(prefs);
     if (prefsContext) systemParts.push(prefsContext);
 
@@ -904,7 +909,7 @@ export function useAIAppBuilder() {
     }
 
     // Smart conversation compression — keep recent messages intact, compress older ones
-    const rawHistory = messages.map(m => ({ role: m.role, content: m.content }));
+    const rawHistory = messagesRef.current.map(m => ({ role: m.role, content: m.content }));
     const compressedHistory = compressConversationHistory(rawHistory, 8, MAX_CONTEXT_MESSAGES);
     
     for (const m of compressedHistory) {
@@ -1898,7 +1903,7 @@ export function useAIAppBuilder() {
       setThinkingPhase(null);
       abortRef.current = null;
     }
-  }, [messages, isGenerating, mode, totalRemaining, deductCredits]);
+  }, [isGenerating, mode, totalRemaining, deductCredits]); // Issue 27 fix: removed `messages` dep — read via messagesRef
 
   const stopGenerating = useCallback(() => {
     abortRef.current?.abort();
