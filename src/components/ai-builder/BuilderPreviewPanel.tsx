@@ -88,6 +88,10 @@ window.addEventListener('message', function(e) {
   }
   window.parent.postMessage({ type: '__LIVE_PATCH_ACK__', count: patches.length }, '*');
 });
+// Phase 20: Capture unhandled promise rejections (also in __builderInjected path)
+window.addEventListener('unhandledrejection', function(e) {
+  window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: 'Unhandled Promise: ' + (e.reason?.message || e.reason || 'Unknown'), source: '', line: 0, critical: false }, '*');
+});
 // === IFRAME NAVIGATION GUARD ===
 document.addEventListener('click', function(e) {
   var anchor = e.target.closest ? e.target.closest('a') : null;
@@ -228,21 +232,28 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === '__PREVIEW_ERROR__' || e.data?.type === '__PREVIEW_CRITICAL_ERROR__') {
-        const isCritical = e.data?.type === '__PREVIEW_CRITICAL_ERROR__' || e.data?.critical;
+        // Phase 7: Classify errors — only uncaught exceptions and syntax errors are critical
+        const isForcedCritical = e.data?.type === '__PREVIEW_CRITICAL_ERROR__';
+        const msg = e.data.message || '';
+        const isNetworkNoise = /Failed to load|ERR_BLOCKED|ERR_CONNECTION|favicon\.ico|404/i.test(msg);
+        const isSyntaxError = /SyntaxError|Unexpected token|Unterminated/i.test(msg);
+        const isUncaughtException = e.data.source && !e.data.source.includes('console.');
+        const isCritical = isForcedCritical || (!isNetworkNoise && (isSyntaxError || isUncaughtException));
+
         const newError: PreviewError = {
           id: crypto.randomUUID(),
-          message: e.data.message,
+          message: msg,
           source: e.data.source || undefined,
           line: e.data.line || undefined,
           timestamp: new Date(),
           type: e.data.isWarning ? 'warning' : 'error',
         };
         setErrors(prev => {
-          if (prev.some(p => p.message === e.data.message)) return prev;
+          if (prev.some(p => p.message === msg)) return prev;
           const updated = [...prev.slice(-19), newError];
-          // Auto-fix pipeline: notify parent of new errors (only actual errors, not warnings)
-          if (!e.data.isWarning && onAutoFixError && !isGenerating) {
-            setTimeout(() => onAutoFixError(newError), isCritical ? 200 : 500);
+          // Auto-fix pipeline: only notify for critical, non-warning errors
+          if (!e.data.isWarning && isCritical && onAutoFixError && !isGenerating) {
+            setTimeout(() => onAutoFixError(newError), 500);
           }
           return updated;
         });

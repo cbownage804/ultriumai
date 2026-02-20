@@ -86,8 +86,13 @@ function getChangedFiles(files: ProjectFile[]): { changed: ProjectFile[]; unchan
   return { changed, unchanged };
 }
 
-/** Update hash cache after a successful build */
+/** Update hash cache after a successful build — Phase 6: also prune stale entries */
 function updateFileHashes(files: ProjectFile[]) {
+  const currentPaths = new Set(files.map(f => f.path));
+  // Prune entries for files that no longer exist
+  for (const key of fileHashCache.keys()) {
+    if (!currentPaths.has(key)) fileHashCache.delete(key);
+  }
   for (const f of files) {
     fileHashCache.set(f.path, hashString(f.content));
   }
@@ -344,6 +349,9 @@ function isConversationalLine(line: string): boolean {
   const trimmed = line.trim();
   if (!trimmed) return false;
 
+  // Phase 12: Exclude JSX comments and template literals from prose detection
+  if (trimmed.startsWith('{/*') || trimmed.startsWith('/*') || trimmed.startsWith('*')) return false;
+
   // Quick-exit: lines starting with valid code tokens are NOT conversational
   if (/^[<{\/\[\]()@#.;:=!&|+\-*%?~`\\]/.test(trimmed)) return false;
   if (/^(import |export |const |let |var |function |class |return |if |else |for |while |switch |case |try |catch |throw |new |type |interface |enum |async |await |from |default |module |require|<!DOCTYPE|<\?xml)/.test(trimmed)) return false;
@@ -380,8 +388,15 @@ function applyHunkPatch(
   const sorted = [...hunks].sort((a, b) => b.startLine - a.startLine);
   for (const hunk of sorted) {
     const start = Math.max(0, hunk.startLine - 1); // 1-indexed to 0-indexed
+    // Phase 15: Clamp endLine to file length to prevent silent corruption
     const end = Math.min(lines.length, hunk.endLine);
-    if (start > lines.length) return null; // out of bounds — patch doesn't apply
+    if (start > lines.length) {
+      console.warn(`[Patch] Hunk start ${hunk.startLine} exceeds file length ${lines.length} — skipping`);
+      return null; // out of bounds — patch doesn't apply
+    }
+    if (hunk.endLine > lines.length) {
+      console.warn(`[Patch] Hunk endLine ${hunk.endLine} clamped to ${lines.length}`);
+    }
     lines.splice(start, end - start, ...hunk.newLines);
   }
   return lines.join('\n');
@@ -465,9 +480,12 @@ function parseEditBlocks(raw: string): EditBlock[] {
 
 /** Parse the ===FILE: path===, ===EDIT: path===, ===DELETE: path===, ===MODE: react===, ===MIGRATION:, and ===EDGE_FUNCTION: blocks */
 export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; deletions: string[]; edits: EditBlock[]; isReactMode: boolean; migrations: import('@/components/ai-builder/MigrationApprovalCard').MigrationBlock[]; edgeFunctions: import('@/components/ai-builder/EdgeFunctionCard').EdgeFunctionBlock[] } {
+  // Phase 3: Normalize line endings (Windows \r\n → \n)
+  const normalizedRaw = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
   // Parse migration blocks first, then strip them before file parsing
-  const migrations = parseMigrationBlocks(raw);
-  const rawAfterMigrations = migrations.length > 0 ? stripMigrationBlocks(raw) : raw;
+  const migrations = parseMigrationBlocks(normalizedRaw);
+  const rawAfterMigrations = migrations.length > 0 ? stripMigrationBlocks(normalizedRaw) : normalizedRaw;
 
   // Parse edge function blocks, then strip them
   const edgeFunctions = parseEdgeFunctionBlocks(rawAfterMigrations);
@@ -648,9 +666,9 @@ function detectIntent(input: string): BuilderMode | null {
   return null;
 }
 
-/** Rough token estimate (~4 chars per token) */
-function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 4);
+/** Phase 9: Token estimate that accounts for images (~1K tokens each) */
+function estimateTokens(text: string, imageCount = 0): number {
+  return Math.ceil(text.length / 4) + (imageCount * 1000);
 }
 
 export function useAIAppBuilder() {
@@ -693,10 +711,11 @@ export function useAIAppBuilder() {
       accumulatedFilesRef.current = [];
       setContinuationRound(0);
     }
-    // ── Request deduplication: prevent double-sends ──
+    // ── Phase 8: Request deduplication (exempt retries/auto-fix) ──
     const fingerprint = hashString(input + (imageDataUrls?.join('') || ''));
     const now = Date.now();
-    if (fingerprint === lastRequestFingerprint && now - lastRequestTime < 3000) {
+    const skipDedup = isAutoFix || input.startsWith('[CONTINUE]');
+    if (!skipDedup && fingerprint === lastRequestFingerprint && now - lastRequestTime < 3000) {
       console.warn('[Dedup] Duplicate request blocked');
       return;
     }
@@ -714,8 +733,9 @@ export function useAIAppBuilder() {
       throw new Error(errMsg);
     }
 
-    // Auto-detect intent and switch mode
-    const detectedMode = detectIntent(input);
+    // Phase 16: Only auto-detect intent on first message; respect user's explicit choice after that
+    const isFirstMessage = messages.length === 0;
+    const detectedMode = isFirstMessage ? detectIntent(input) : null;
     if (detectedMode && detectedMode !== mode) {
       setMode(detectedMode);
     }
@@ -1211,11 +1231,11 @@ export function useAIAppBuilder() {
         }
       };
 
-      // Stall detector — if no chunk in 15s, consider stream dead and recover partial content
+      // Phase 1: Stall detector — trigger controller.abort() so wasInterrupted is correctly set
       const stallChecker = setInterval(() => {
         if (Date.now() - lastChunkTime > STREAM_STALL_MS && !streamDone) {
-          console.warn('[Stream] Stall detected after', STREAM_STALL_MS, 'ms — forcing finalization with partial content');
-          // Don't show warning toast here — continuation logic in finalizeStream will handle it
+          console.warn('[Stream] Stall detected after', STREAM_STALL_MS, 'ms — aborting for continuation');
+          controller.abort(); // Phase 1: Set aborted flag so finalizeStream triggers continuation
           reader.cancel().catch(() => {});
           streamDone = true;
         }
@@ -1274,17 +1294,17 @@ export function useAIAppBuilder() {
         }
       } finally {
         clearInterval(stallChecker);
-        // Flush any pending rAF update so final content is rendered
-        if (rafScheduled) {
-          rafScheduled = false;
-          setMessages(prev => {
-            const last = prev[prev.length - 1];
-            if (last?.role === 'assistant') {
-              return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: fullContent } : m);
-            }
-            return prev;
-          });
-        }
+      // Phase 2: Cancel pending rAF and do synchronous final flush
+        rafScheduled = false;
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant') {
+            return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: fullContent } : m);
+          }
+          return [...prev, { id: assistantMsgId, role: 'assistant' as const, content: fullContent, timestamp: new Date() }];
+        });
+        // Phase 2: Also flush final parseIncremental
+        streaming.parseIncremental(fullContent);
       }
 
       // ── Graceful partial output handling ──
@@ -1435,10 +1455,11 @@ export function useAIAppBuilder() {
               : v
           ));
         } else {
+          // Phase 10: Deep-copy file objects to prevent mutation
           setVersions(prev => [...prev, {
             id: crypto.randomUUID(),
             label: `AI: ${input.slice(0, 40)}${input.length > 40 ? '...' : ''}`,
-            files: [...mergedFiles],
+            files: mergedFiles.map(f => ({ ...f })),
             timestamp: new Date(),
             messageId: '',
           }]);
@@ -1720,12 +1741,14 @@ export function useAIAppBuilder() {
         const originalUserMsg = apiMessages[apiMessages.length - 1];
         const originalPromptSnippet = typeof originalUserMsg.content === 'string' ? originalUserMsg.content.slice(0, 500) : '[multimodal]';
 
-        // ── Fix 1 + Fix 5: Directive continuation prompt with truncated file recovery ──
+        // ── Fix 5 + Phase 4: Directive continuation prompt with minimal system context ──
         const truncatedNote = truncatedPaths.length > 0
           ? `\n\nIMPORTANT: The following file(s) were cut off mid-stream and need to be regenerated completely:\n${truncatedPaths.map(p => `- ${p}`).join('\n')}\nPlease output them in full first, then continue with remaining files.`
           : '';
+        // Phase 4: Use minimal system prompt for continuation (no conversation memory/tone/preferences)
+        const minimalSystem = apiMessages[0]?.content;
         const contMessages = [
-          apiMessages[0], // system prompt
+          { role: 'system' as const, content: typeof minimalSystem === 'string' ? minimalSystem.slice(0, 5000) : '' },
           { role: 'assistant' as const, content: `[Generated ${continuationResult.generatedPaths.length} files: ${continuationResult.generatedPaths.join(', ')}]` },
           { role: 'user' as const, content: `[CONTINUE] You are building: "${originalPromptSnippet}"\n\nFiles completed so far: ${continuationResult.generatedPaths.join(', ')}${truncatedNote}\n\nIMPORTANT: You MUST output more files using ===FILE: path=== format.\nDo NOT write explanations or summaries — ONLY output code files.\nIf all files are done, output a single small file like ===FILE: README.md=== with a project description.\nIf more files remain, end with ===CONTINUE===` },
         ];
@@ -1796,6 +1819,8 @@ export function useAIAppBuilder() {
     setTotalTokensUsed(0);
     setPendingFiles(null);
     setPendingDeletions([]);
+    // Phase 6: Clear file hash cache to prevent stale entries
+    fileHashCache.clear();
   }, []);
 
   const restoreVersion = useCallback((versionId: string) => {
@@ -1822,9 +1847,9 @@ export function useAIAppBuilder() {
     });
   }, []);
 
-  /** "Try to Fix" — auto-diagnose and fix a preview error (Phase 1B) */
+  /** "Try to Fix" — auto-diagnose and fix a preview error (Phase 1B + Phase 11: include stack trace) */
   const tryToFix = useCallback(async (
-    error: { message: string; source?: string; line?: number },
+    error: { message: string; source?: string; line?: number; stack?: string },
     currentFiles: ProjectFile[] = [],
     supabaseConfig?: { url: string; anonKey: string } | null,
     stripeConfig?: { publishableKey: string } | null,
@@ -1836,10 +1861,11 @@ export function useAIAppBuilder() {
       ? currentFiles.find(f => error.source?.includes(f.path))
       : null;
 
-    // Build a targeted fix prompt
+    // Build a targeted fix prompt — Phase 11: include stack trace
     const fixPrompt = [
       `Auto-fix error: "${error.message}"`,
       error.source ? `Source: ${error.source}${error.line ? `:${error.line}` : ''}` : '',
+      error.stack ? `Stack trace:\n${error.stack}` : '',
       errorFile ? `\nFile content (${errorFile.path}):\n\`\`\`\n${errorFile.content}\n\`\`\`` : '',
       '\nFix this error. Return only the corrected file(s). Do NOT explain — just output the fixed code.',
     ].filter(Boolean).join('\n');
