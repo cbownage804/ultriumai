@@ -544,17 +544,42 @@ export function BuilderChatPanel({
     });
   };
 
-  /** Extract plan steps from numbered list patterns in text */
+  /** Extract plan/task steps from numbered lists, bullet lists, or markdown checkboxes */
   const extractPlanSteps = (text: string, isStreaming: boolean, hasFiles: boolean): { step: number; label: string; status: 'pending' | 'active' | 'done' }[] | null => {
-    // Match patterns like "1. Create header" or "1. **Create header**"
+    // Try markdown checkboxes first: - [x] Done task / - [ ] Pending task
+    const checkboxPattern = /^[-*]\s+\[([ xX])\]\s+(.+)$/gm;
+    const checkboxMatches = [...text.matchAll(checkboxPattern)];
+    if (checkboxMatches.length >= 2) {
+      return checkboxMatches.map((m, i) => ({
+        step: i + 1,
+        label: m[2].replace(/\*+/g, '').trim(),
+        status: m[1].toLowerCase() === 'x' ? 'done' as const : isStreaming && i === checkboxMatches.length - 1 ? 'active' as const : 'pending' as const,
+      }));
+    }
+
+    // Try numbered list: "1. Create header" or "1. **Create header**"
     const stepPattern = /^\d+\.\s+\*{0,2}(.+?)\*{0,2}$/gm;
     const matches = [...text.matchAll(stepPattern)];
-    if (matches.length < 2) return null; // Need at least 2 steps to show as a plan
-    return matches.map((m, i) => ({
-      step: i + 1,
-      label: m[1].replace(/\*+/g, '').trim(),
-      status: hasFiles ? 'done' as const : isStreaming ? (i === matches.length - 1 ? 'active' as const : 'done' as const) : 'pending' as const,
-    }));
+    if (matches.length >= 2) {
+      return matches.map((m, i) => ({
+        step: i + 1,
+        label: m[1].replace(/\*+/g, '').trim(),
+        status: hasFiles ? 'done' as const : isStreaming ? (i === matches.length - 1 ? 'active' as const : 'done' as const) : 'pending' as const,
+      }));
+    }
+
+    // Try bullet list with bold labels: "- **Task name**: description" or "- Task name"
+    const bulletPattern = /^[-•]\s+\*{0,2}([^*\n:]+?)\*{0,2}(?:\s*[:—]\s*.+)?$/gm;
+    const bulletMatches = [...text.matchAll(bulletPattern)];
+    if (bulletMatches.length >= 3) {
+      return bulletMatches.map((m, i) => ({
+        step: i + 1,
+        label: m[1].trim(),
+        status: hasFiles ? 'done' as const : isStreaming ? (i === bulletMatches.length - 1 ? 'active' as const : 'done' as const) : 'pending' as const,
+      }));
+    }
+
+    return null;
   };
 
   const renderAssistantMessage = (msg: BuilderMessage, isLast: boolean) => {
@@ -566,10 +591,15 @@ export function BuilderChatPanel({
     const isCompleted = !isStreaming && (hasFiles || fileNames.length > 0);
     const isThinkingCollapsed = thinkingCollapsed[msg.id] ?? true;
 
-    // Clean display text — strip plan step duplicates
+    // Clean display text — strip plan step duplicates (numbered, checkbox, bullet patterns)
     const planSteps = msg.planSteps || (text ? extractPlanSteps(text, isStreaming, !!hasFiles) : null);
     const displayText = planSteps && planSteps.length > 0
-      ? text.replace(/^\d+\.\s+\*{0,2}.+?\*{0,2}$/gm, '').replace(/\n{3,}/g, '\n\n').trim()
+      ? text
+          .replace(/^\d+\.\s+\*{0,2}.+?\*{0,2}$/gm, '')
+          .replace(/^[-*]\s+\[([ xX])\]\s+.+$/gm, '')
+          .replace(/^[-•]\s+\*{0,2}[^*\n:]+?\*{0,2}(?:\s*[:—]\s*.+)?$/gm, '')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim()
       : text;
 
     // Calculate elapsed time for "Thought for Xs" display
@@ -597,6 +627,63 @@ export function BuilderChatPanel({
         {/* Collapsed thinking content */}
         {!isThinkingCollapsed && introLine && (
           <p className="text-[13px] text-white/50 leading-relaxed">{introLine}</p>
+        )}
+
+        {/* Task breakdown checklist — shows plan steps as a visual checklist */}
+        {planSteps && planSteps.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl border border-white/[0.1] overflow-hidden"
+          >
+            <div className="px-4 py-3 border-b border-white/[0.06]">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-medium text-white/80">
+                  {isStreaming ? 'Working on tasks...' : `Completed ${planSteps.filter(s => s.status === 'done').length} of ${planSteps.length} tasks`}
+                </span>
+                {!isStreaming && planSteps.every(s => s.status === 'done') && (
+                  <span className="text-[11px] text-emerald-400/70 font-medium flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> All done
+                  </span>
+                )}
+              </div>
+              {/* Progress bar */}
+              <div className="flex gap-0.5 mt-2">
+                {planSteps.map((step, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "h-1 rounded-full flex-1 transition-all duration-500",
+                      step.status === 'done' ? 'bg-emerald-400' :
+                      step.status === 'active' ? 'bg-cyan-400 animate-pulse' :
+                      'bg-white/[0.08]'
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="px-4 py-2 space-y-0.5">
+              {planSteps.map((step, i) => (
+                <div key={i} className="flex items-start gap-2.5 py-1.5">
+                  {step.status === 'done' ? (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                  ) : step.status === 'active' ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-cyan-400 shrink-0 mt-0.5" />
+                  ) : (
+                    <div className="h-4 w-4 rounded-full border border-white/[0.15] shrink-0 mt-0.5" />
+                  )}
+                  <span className={cn(
+                    "text-[13px] leading-snug",
+                    step.status === 'done' ? "text-white/50" :
+                    step.status === 'active' ? "text-white/80" :
+                    "text-white/30"
+                  )}>
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
         )}
 
         {/* Task card — Lovable style bordered card */}
