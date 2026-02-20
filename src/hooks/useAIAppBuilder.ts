@@ -1331,6 +1331,9 @@ export function useAIAppBuilder() {
     }, WALL_CLOCK_MAX_MS);
 
     let workingFiles = [...currentFiles];
+    let creditsDeducted = false;
+    let preRoundSnapshot = [...currentFiles]; // Safe rollback snapshot (Fix 6)
+    let truncatedPaths: string[] = []; // Truncated file tracking (Fix 1)
 
     const finalizeStream = async () => {
       // Final parseIncremental to catch any content not yet parsed by the rAF throttle
@@ -1381,6 +1384,34 @@ export function useAIAppBuilder() {
         }
       }
 
+      // ── Fix 1: Truncated file detection ──
+      // If stream was interrupted, the LAST parsed file may be truncated (unclosed braces/tags).
+      // Detect and remove it so continuation can regenerate it.
+      truncatedPaths = [];
+      if (controller.signal.aborted && filesToApply.length > 0) {
+        const lastFile = filesToApply[filesToApply.length - 1];
+        const ext = lastFile.path.split('.').pop()?.toLowerCase() || '';
+        let isTruncated = false;
+        if (['js', 'jsx', 'ts', 'tsx', 'mjs'].includes(ext)) {
+          const opens = (lastFile.content.match(/[{(]/g) || []).length;
+          const closes = (lastFile.content.match(/[})]/g) || []).length;
+          isTruncated = opens - closes > 3;
+        } else if (['html', 'htm'].includes(ext)) {
+          const openTags = (lastFile.content.match(/<(?!\/|!|br|hr|img|input|meta|link)[a-z][^>]*>/gi) || []).length;
+          const closeTags = (lastFile.content.match(/<\/[a-z][^>]*>/gi) || []).length;
+          isTruncated = openTags - closeTags > 3;
+        } else if (['css', 'scss'].includes(ext)) {
+          const ob = (lastFile.content.match(/{/g) || []).length;
+          const cb = (lastFile.content.match(/}/g) || []).length;
+          isTruncated = ob - cb > 2;
+        }
+        if (isTruncated) {
+          console.warn(`[Truncation] Detected truncated file: ${lastFile.path} — removing from this round`);
+          truncatedPaths.push(lastFile.path);
+          filesToApply = filesToApply.slice(0, -1);
+        }
+      }
+
       // Merge: full file replacements + patched edits
       const allNewFiles = [...filesToApply, ...patchedFiles];
 
@@ -1396,13 +1427,22 @@ export function useAIAppBuilder() {
         updateFileHashes(mergedFiles);
         workingFiles = mergedFiles; // Cumulative merge for continuation rounds
         setLatestFiles(mergedFiles);
-        setVersions(prev => [...prev, {
-          id: crypto.randomUUID(),
-          label: `AI: ${input.slice(0, 40)}${input.length > 40 ? '...' : ''}`,
-          files: [...mergedFiles],
-          timestamp: new Date(),
-          messageId: '',
-        }]);
+        // ── Fix 4: Version history dedup — update existing entry during continuation rounds ──
+        if (continuationCountRef.current > 0) {
+          setVersions(prev => prev.map((v, i) =>
+            i === prev.length - 1
+              ? { ...v, files: [...mergedFiles], label: `AI: ${input.slice(0, 40)}... (round ${continuationCountRef.current + 1})` }
+              : v
+          ));
+        } else {
+          setVersions(prev => [...prev, {
+            id: crypto.randomUUID(),
+            label: `AI: ${input.slice(0, 40)}${input.length > 40 ? '...' : ''}`,
+            files: [...mergedFiles],
+            timestamp: new Date(),
+            messageId: '',
+          }]);
+        }
 
         // ── Auto-rollback listener (Lovable-grade) ──
         // Listen for preview errors within 5s of applying new files; revert if critical
@@ -1411,9 +1451,9 @@ export function useAIAppBuilder() {
         }, 5000);
         const rollbackListener = (event: MessageEvent) => {
           if (event.data?.type === 'preview-error' && event.data?.critical) {
-            console.warn('[Auto-Rollback] Preview error detected after build, reverting to previous version');
+            console.warn('[Auto-Rollback] Preview error detected after build, reverting to pre-round snapshot');
             toast.error('New code caused errors — automatically reverted to previous version.', { duration: 6000 });
-            setLatestFiles([...currentFiles]);
+            setLatestFiles([...preRoundSnapshot]); // Fix 6: Use pre-round snapshot, not original currentFiles
             clearTimeout(rollbackTimeout);
             window.removeEventListener('message', rollbackListener);
           }
@@ -1429,7 +1469,11 @@ export function useAIAppBuilder() {
 
       const msgTokens = estimateTokens(input + fullContent);
       setTotalTokensUsed(prev => prev + msgTokens);
-      if (!isFixRequest) await deductCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
+      // ── Fix 3: Single credit deduction — only charge on the first round ──
+      if (!isFixRequest && !creditsDeducted) {
+        await deductCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
+        creditsDeducted = true;
+      }
       
       // Plan steps already computed during streaming — reuse from last message
       const existingPlanSteps = messages[messages.length - 1]?.planSteps;
@@ -1464,7 +1508,14 @@ export function useAIAppBuilder() {
       const MAX_CONTINUATION_ROUNDS = 4;
       const hasContinueMarker = fullContent.includes('===CONTINUE===');
       const wasInterrupted = !hasContinueMarker && controller.signal.aborted && (parsedFiles.length > 0 || patchedFiles.length > 0);
-      const shouldContinue = (hasContinueMarker || wasInterrupted) && continuationCountRef.current < MAX_CONTINUATION_ROUNDS;
+      let shouldContinue = (hasContinueMarker || wasInterrupted || truncatedPaths.length > 0) && continuationCountRef.current < MAX_CONTINUATION_ROUNDS;
+
+      // ── Fix 2: Empty continuation round guard ──
+      if (shouldContinue && continuationCountRef.current > 0 && allNewFiles.length === 0 && deletions.length === 0) {
+        console.warn('[Continuation] Empty round detected — no files produced. Breaking loop.');
+        toast.info('AI finished generating — no more files needed.', { duration: 4000 });
+        shouldContinue = false;
+      }
 
       // Track accumulated file paths across rounds
       const newFilePaths = allNewFiles.map(f => f.path);
@@ -1663,12 +1714,20 @@ export function useAIAppBuilder() {
         fullContent = '';
         streaming.startStreaming();
 
+        // ── Fix 6: Capture pre-round snapshot before each continuation round ──
+        preRoundSnapshot = [...workingFiles];
+
         const originalUserMsg = apiMessages[apiMessages.length - 1];
         const originalPromptSnippet = typeof originalUserMsg.content === 'string' ? originalUserMsg.content.slice(0, 500) : '[multimodal]';
+
+        // ── Fix 1 + Fix 5: Directive continuation prompt with truncated file recovery ──
+        const truncatedNote = truncatedPaths.length > 0
+          ? `\n\nIMPORTANT: The following file(s) were cut off mid-stream and need to be regenerated completely:\n${truncatedPaths.map(p => `- ${p}`).join('\n')}\nPlease output them in full first, then continue with remaining files.`
+          : '';
         const contMessages = [
           apiMessages[0], // system prompt
           { role: 'assistant' as const, content: `[Generated ${continuationResult.generatedPaths.length} files: ${continuationResult.generatedPaths.join(', ')}]` },
-          { role: 'user' as const, content: `[CONTINUE] Original request: "${originalPromptSnippet}"\n\nYou previously generated: ${continuationResult.generatedPaths.join(', ')}. Continue generating the remaining files. If more remain, end with ===CONTINUE===` },
+          { role: 'user' as const, content: `[CONTINUE] You are building: "${originalPromptSnippet}"\n\nFiles completed so far: ${continuationResult.generatedPaths.join(', ')}${truncatedNote}\n\nIMPORTANT: You MUST output more files using ===FILE: path=== format.\nDo NOT write explanations or summaries — ONLY output code files.\nIf all files are done, output a single small file like ===FILE: README.md=== with a project description.\nIf more files remain, end with ===CONTINUE===` },
         ];
 
         const contWallClock = setTimeout(() => {
