@@ -697,7 +697,7 @@ export function useAIAppBuilder() {
   const [latestFiles, setLatestFiles] = useState<ProjectFile[]>([]);
   // Ref-based streaming: content stored in ref to avoid workspace re-renders
   const streamingContentRef = useRef<string>('');
-  const [streamingVersion, setStreamingVersion] = useState(0);
+  
   const [previousFiles, setPreviousFiles] = useState<ProjectFile[]>([]);
   const [mode, setMode] = useState<BuilderMode>('build');
   const [thinkingPhase, setThinkingPhase] = useState<ThinkingPhase>(null);
@@ -1224,9 +1224,6 @@ export function useAIAppBuilder() {
 
       const assistantMsgId = crypto.randomUUID();
 
-      let lastUpdateTime = 0;
-      const STREAMING_VERSION_THROTTLE_MS = 300;
-
       const upsertAssistant = (content: string) => {
         fullContent = content;
         // Write to ref — no React re-render triggered
@@ -1238,12 +1235,6 @@ export function useAIAppBuilder() {
           streaming.parseIncremental(content);
         }
 
-        // Bump version counter at most every 300ms so chat panel can re-render independently
-        const now = Date.now();
-        if (now - lastUpdateTime >= STREAMING_VERSION_THROTTLE_MS) {
-          lastUpdateTime = now;
-          setStreamingVersion(v => v + 1);
-        }
       };
 
       // Phase 1: Stall detector — trigger controller.abort() so wasInterrupted is correctly set
@@ -1342,7 +1333,7 @@ export function useAIAppBuilder() {
         });
         // Clear streaming ref now that messages state has the final content
         streamingContentRef.current = '';
-        setStreamingVersion(0);
+        
         // Final parseIncremental flush
         streaming.parseIncremental(fullContent);
       }
@@ -2069,6 +2060,5 @@ export function useAIAppBuilder() {
     completedFileCount: streaming.completedFileCount,
     // Ref-based streaming for chat panel (avoids workspace re-renders)
     streamingContentRef,
-    streamingVersion,
   };
 }
