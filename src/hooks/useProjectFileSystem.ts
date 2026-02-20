@@ -18,8 +18,8 @@ export interface ProjectState {
   files: ProjectFile[];
   activeFilePath: string | null;
   openFilePaths: string[];
-  /** Phase 86: Binary assets map (path → data URL) */
-  assets: Map<string, ProjectAssetEntry>;
+  /** Phase 86: Binary assets record (path → data URL) — plain object for JSON-serializability */
+  assets: Record<string, ProjectAssetEntry>;
 }
 
 function detectLanguage(path: string): string {
@@ -40,7 +40,7 @@ const DEFAULT_PROJECT: ProjectState = {
   files: [],
   activeFilePath: null,
   openFilePaths: [],
-  assets: new Map(),
+  assets: {},
 };
 
 export function useProjectFileSystem() {
@@ -115,8 +115,7 @@ export function useProjectFileSystem() {
   /** Phase 86: Add a binary asset (image, font, etc.) */
   const addAsset = useCallback((path: string, dataUrl: string, mimeType: string) => {
     setProject(prev => {
-      const assets = new Map(prev.assets);
-      assets.set(path, { dataUrl, mimeType });
+      const assets = { ...prev.assets, [path]: { dataUrl, mimeType } };
       return { ...prev, assets };
     });
   }, []);
@@ -124,8 +123,7 @@ export function useProjectFileSystem() {
   /** Phase 86: Remove a binary asset */
   const removeAsset = useCallback((path: string) => {
     setProject(prev => {
-      const assets = new Map(prev.assets);
-      assets.delete(path);
+      const { [path]: _, ...assets } = prev.assets;
       return { ...prev, assets };
     });
   }, []);
@@ -256,13 +254,13 @@ export function useProjectFileSystem() {
     );
 
     // Phase 92: Replace relative <img src> with data URLs or placeholders
-    if (assets.size > 0) {
+    if (Object.keys(assets).length > 0) {
       compiled = compiled.replace(
         /<img\s+([^>]*)src=['"]([^'"]+)['"]/gi,
         (match, before, src) => {
           if (src.startsWith('http') || src.startsWith('//') || src.startsWith('data:')) return match;
           const normalized = src.startsWith('./') ? src.slice(2) : src;
-          const asset = assets.get(normalized);
+          const asset = assets[normalized];
           if (asset) return `<img ${before}src="${asset.dataUrl}"`;
           return match;
         }
