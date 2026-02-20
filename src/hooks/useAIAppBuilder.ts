@@ -1216,7 +1216,7 @@ export function useAIAppBuilder() {
 
     // ── Shared streaming reader with interruption recovery (DRY) ──
     let lastChunkTime = 0;
-    const STREAM_STALL_MS = 15_000; // 15s stall = stream dead (faster detection)
+    const STREAM_STALL_MS = 25_000; // 25s stall = stream dead (tolerates AI thinking pauses)
     
     const readStream = async (body: ReadableStream<Uint8Array>) => {
       const reader = body.getReader();
@@ -1259,7 +1259,7 @@ export function useAIAppBuilder() {
           // Fix 1: Promise.race heartbeat — detect dead streams within 20s
           const readPromise = reader.read();
           const timeoutPromise = new Promise<ReadableStreamReadResult<Uint8Array>>((resolve) =>
-            setTimeout(() => resolve({ done: true, value: undefined as any }), 20_000)
+            setTimeout(() => resolve({ done: true, value: undefined as any }), 30_000)
           );
           const { done, value } = await Promise.race([readPromise, timeoutPromise]);
           if (done) {
