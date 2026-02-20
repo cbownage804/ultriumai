@@ -198,7 +198,7 @@ export function AIAppBuilderWorkspace() {
   const {
     messages, setMessages, isGenerating, latestFiles, previousFiles, mode, setMode, thinkingPhase, versions, setVersions,
     totalTokensUsed, contextBudget, continuationRound, sendMessage, stopGenerating, clearChat, restoreVersion, forwardErrorToChat,
-    partialFiles, isStreamingPreview, completedFileCount,
+    partialFilesRef, isStreamingPreview, completedFileCountRef,
     streamingContentRef,
   } = useAIAppBuilder();
 
@@ -1053,19 +1053,33 @@ export function AIAppBuilderWorkspace() {
   }, [isGenerating, latestFiles.length, messages, project.name, renameProject]);
 
   // Hot-reload streaming files + auto-switch to currently streaming file tab
-  const streamingFilePath = isStreamingPreview && partialFiles.length > 0
-    ? partialFiles[partialFiles.length - 1]?.path || null
+  // Poll partialFilesRef locally for editor display (avoids workspace re-renders)
+  const [editorStreamFiles, setEditorStreamFiles] = useState<ProjectFile[]>([]);
+  useEffect(() => {
+    if (!isStreamingPreview) {
+      setEditorStreamFiles([]);
+      return;
+    }
+    const interval = setInterval(() => {
+      const files = partialFilesRef.current;
+      setEditorStreamFiles(prev => prev !== files ? files : prev);
+    }, 400);
+    return () => clearInterval(interval);
+  }, [isStreamingPreview, partialFilesRef]);
+
+  const streamingFilePath = isStreamingPreview && editorStreamFiles.length > 0
+    ? editorStreamFiles[editorStreamFiles.length - 1]?.path || null
     : null;
 
   // During streaming, overlay partialFiles onto the editor instead of updating project.files.
   // This eliminates hundreds of upsertFile/setProject calls per second that caused browser freezing.
   const editorFile = useMemo(() => {
     if (isStreamingPreview && streamingFilePath) {
-      const streamFile = partialFiles.find(f => f.path === streamingFilePath);
+      const streamFile = editorStreamFiles.find(f => f.path === streamingFilePath);
       if (streamFile) return streamFile;
     }
     return activeFile;
-  }, [isStreamingPreview, streamingFilePath, partialFiles, activeFile]);
+  }, [isStreamingPreview, streamingFilePath, editorStreamFiles, activeFile]);
 
   // Phase 50: Debounced auto-save to prevent corruption from rapid updates
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1805,22 +1819,53 @@ export function AIAppBuilderWorkspace() {
   const { compileReactProject } = useReactCompiler();
   const isReactProject = useMemo(() => detectReactProject(project.files), [project.files]);
 
-  const liveCompiledHTML = useMemo(() => {
-    // CRITICAL: Skip ALL compilation while AI is streaming files.
-    // The React compiler and vanilla bundler are expensive — running them on every
-    // streamed file chunk freezes the browser. Compilation only runs once generation ends.
-    // Allow compilation once enough files are complete, even during generation
-    if (isGenerating && completedFileCount < 3) return null;
+  // Timer-based compilation: poll partialFilesRef every 3s during generation
+  // instead of running the expensive compiler synchronously on every state change
+  useEffect(() => {
+    if (!isGenerating) return;
+    let compiled = false;
+    const interval = setInterval(() => {
+      if (compiled) return;
+      const pFiles = partialFilesRef.current;
+      const pCount = completedFileCountRef.current;
+      if (pCount < 3 || pFiles.length === 0) return;
 
-    // During generation, use partialFiles for compilation since project.files
-    // is empty for new projects (files only sync via latestFiles after generation ends)
-    const filesToCompile = isGenerating && partialFiles.length > 0 ? partialFiles : project.files;
-    if (filesToCompile.length === 0) return null;
+      console.log(`[Preview] Timer-based compile: ${pCount} completed files of ${pFiles.length}`);
+      const isReact = pFiles.some(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx'));
+      try {
+        if (isReact) {
+          const result = compileReactProject(pFiles, {
+            supabaseConfig: supabaseConfig || undefined,
+            stripeConfig: stripeConfig || undefined,
+            envVars,
+          });
+          if (result.html) {
+            setStableHTML(result.html);
+            compiled = true;
+          }
+        } else {
+          const html = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+          if (html) {
+            setStableHTML(html);
+            compiled = true;
+          }
+        }
+      } catch (e) {
+        console.warn('[Preview] Timer-based compilation failed:', e);
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isGenerating, partialFilesRef, completedFileCountRef, compileReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, getCompiledHTML]);
+
+  const liveCompiledHTML = useMemo(() => {
+    // During generation, compilation is handled by the timer above
+    if (isGenerating) return null;
+
+    if (project.files.length === 0) return null;
 
     // If this is a React project, use the React compiler pipeline
-    const isReact = isGenerating ? filesToCompile.some(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx')) : isReactProject;
-    if (isReact) {
-      const result = compileReactProject(filesToCompile, {
+    if (isReactProject) {
+      const result = compileReactProject(project.files, {
         supabaseConfig: supabaseConfig || undefined,
         stripeConfig: stripeConfig || undefined,
         envVars,
@@ -1832,23 +1877,18 @@ export function AIAppBuilderWorkspace() {
     }
     // Otherwise use the vanilla HTML compiler
     return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
-  }, [project.files, partialFiles, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, isReactProject, compileReactProject, isGenerating, completedFileCount]);
+  }, [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, isReactProject, compileReactProject, isGenerating]);
   const [stableHTML, setStableHTML] = useState<string | null>(null);
 
   // Defer preview updates until build completes — but allow CSS hot-patches through immediately
   useEffect(() => {
     if (liveCompiledHTML) {
-      if (isGenerating) {
-        // During generation, only do full reloads (no hot-patching incomplete code)
+      // Try hot-patching first (CSS-only changes skip full reload)
+      const patched = liveSync.applyPatches(previewIframeRef, project.files);
+      if (!patched) {
+        // Full reload needed — update srcdoc
         setStableHTML(liveCompiledHTML);
-      } else {
-        // Try hot-patching first (CSS-only changes skip full reload)
-        const patched = liveSync.applyPatches(previewIframeRef, project.files);
-        if (!patched) {
-          // Full reload needed — update srcdoc
-          setStableHTML(liveCompiledHTML);
-          liveSync.resetSnapshot(project.files);
-        }
+        liveSync.resetSnapshot(project.files);
       }
     }
     // Fix 5: If generation finished but compilation returned null, show error fallback
@@ -1869,13 +1909,13 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     if (!isGenerating) return;
     const timer = setTimeout(() => {
-      if (partialFiles.length > 0 && !stableHTML) {
+      const pFiles = partialFilesRef.current;
+      if (pFiles.length > 0 && !stableHTML) {
         console.warn('[Preview] Generation exceeded 120s — force-compiling partial files for preview');
-        // Attempt compilation from partial files
-        const isPartialReact = partialFiles.some(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx'));
+        const isPartialReact = pFiles.some(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx'));
         if (isPartialReact) {
           try {
-            const result = compileReactProject(partialFiles, {
+            const result = compileReactProject(pFiles, {
               supabaseConfig: supabaseConfig || undefined,
               stripeConfig: stripeConfig || undefined,
               envVars,
@@ -1898,7 +1938,7 @@ export function AIAppBuilderWorkspace() {
       }
     }, 120_000);
     return () => clearTimeout(timer);
-  }, [isGenerating, partialFiles, stableHTML]);
+  }, [isGenerating, partialFilesRef, stableHTML]);
 
   // NEVER fall through to liveCompiledHTML during generation — show SkeletonPreview until build completes
   const compiledHTML = stableHTML;
@@ -2064,8 +2104,8 @@ export function AIAppBuilderWorkspace() {
                 </div>
               ) : undefined} />
             ) : mobileTab === 'preview' ? (
-                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
-                  <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} continuationRound={continuationRound} />
+                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
+                  <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                 </BuilderPreviewPanel>
             ) : (
               <div className="h-full flex flex-col bg-[#09090b]">
@@ -2423,8 +2463,8 @@ export function AIAppBuilderWorkspace() {
                               <ResizablePanelGroup direction="horizontal" className="h-full">
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="preview" className="h-full">
-                                    <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
-                                      <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} continuationRound={continuationRound} />
+                                    <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
+                                      <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                                     </BuilderPreviewPanel>
                                   </div>
                                 </ResizablePanel>
@@ -2440,8 +2480,8 @@ export function AIAppBuilderWorkspace() {
                               </ResizablePanelGroup>
                             ) : rightTab === 'preview' || !hasFiles ? (
                               <div data-tour="preview" className="h-full">
-                                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCount} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
-                                  <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFiles={partialFiles} completedFileCount={completedFileCount} continuationRound={continuationRound} />
+                                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
+                                  <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                                 </BuilderPreviewPanel>
                               </div>
                             ) : (

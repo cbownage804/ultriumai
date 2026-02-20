@@ -2054,10 +2054,10 @@ export function useAIAppBuilder() {
     tryToFix,
     editAndResend,
     retryLastMessage,
-    // Streaming preview state
-    partialFiles: streaming.partialFiles,
+    // Streaming preview refs (not state — avoids workspace re-renders)
+    partialFilesRef: streaming.partialFilesRef,
     isStreamingPreview: streaming.isStreaming,
-    completedFileCount: streaming.completedFileCount,
+    completedFileCountRef: streaming.completedFileCountRef,
     // Ref-based streaming for chat panel (avoids workspace re-renders)
     streamingContentRef,
   };
