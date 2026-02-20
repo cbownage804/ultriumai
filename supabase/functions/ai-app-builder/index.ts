@@ -583,7 +583,7 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
           stream,
           // Issue 28 fix: Explicit model parameters for deterministic code output
           temperature: 0.3,
-          max_tokens: 16384,
+          max_tokens: 65536,
           top_p: 0.95,
         }),
         signal: gatewayController.signal,
