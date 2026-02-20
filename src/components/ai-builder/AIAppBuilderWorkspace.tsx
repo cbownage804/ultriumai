@@ -364,216 +364,18 @@ export function AIAppBuilderWorkspace() {
   const multiCursorEditor = useMultiCursorEditor();
   const minimapHeatZones = useMinimapHeatZones();
   const symbolNavigator = useSymbolNavigator();
-  // Backward-compatible boolean accessors
+  // Issue 20 fix: Only keep boolean accessors needed in keyboard/escape handler
+  // All other panel visibility checks use panels.showX directly
   const showVersionHistory = !!panels.showVersionHistory;
   const showConsole = !!panels.showConsole;
   const showEnvVars = !!panels.showEnvVars;
-  const showRLSTester = !!panels.showRLSTester;
   const showAssets = !!panels.showAssets;
   const showPackages = !!panels.showPackages;
-  const showDatabase = !!panels.showDatabase;
-  const showAuth = !!panels.showAuth;
-  const showKnowledge = !!panels.showKnowledge;
-  const showStorage = !!panels.showStorage;
-  const showEdgeFunctions = !!panels.showEdgeFunctions;
   const showActivity = !!panels.showActivity;
   const showBilling = !!panels.showBilling;
-  const showShareDialog = !!panels.showShareDialog;
-  const showSEOEditor = !!panels.showSEOEditor;
   const showSettingsPanel = !!panels.showSettingsPanel;
-  const showExportGuide = !!panels.showExportGuide;
-  const showCodeIntel = !!panels.showCodeIntel;
-  const showDbExplorer = !!panels.showDbExplorer;
-  const showComponentLib = !!panels.showComponentLib;
-  const showTestingSuite = !!panels.showTestingSuite;
-  const showDiffReview = !!panels.showDiffReview;
-  const showDomainPanel = !!panels.showDomainPanel;
-  const showTerminal = !!panels.showTerminal;
-  const showBuildLog = !!panels.showBuildLog;
-  const showTimeline = !!panels.showTimeline;
-  const showDiffViewer = !!panels.showDiffViewer;
-  const showDeployPipeline = !!panels.showDeployPipeline;
-  const showComponentPalette = !!panels.showComponentPalette;
-  const showHelpCenter = !!panels.showHelpCenter;
-  const showGPTConnector = !!panels.showGPTConnector;
-  const showPerformanceProfiler = !!panels.showPerformanceProfiler;
-  const showBuildAnalytics = !!panels.showBuildAnalytics;
-  const showDesignSystem = !!panels.showDesignSystem;
-  const showChangelog = !!panels.showChangelog;
-  const showSetupWizard = !!panels.showSetupWizard;
-  const showSchemaDesigner = !!panels.showSchemaDesigner;
-  const showOneClickDeploy = !!panels.showOneClickDeploy;
-  const showEditHistory = !!panels.showEditHistory;
-  const showBugReport = !!panels.showBugReport;
-  const showEnhancedPalette = !!panels.showEnhancedPalette;
-  const showMultiSearch = !!panels.showMultiSearch;
-  const showTestRunner = !!panels.showTestRunner;
-  const showExtensions = !!panels.showExtensions;
-  const showCollaboration = !!panels.showCollaboration;
-  const showAPIBuilder = !!panels.showAPIBuilder;
-  const showSupabaseIDE = !!panels.showSupabaseIDE;
-  const showGitHubPanel = !!panels.showGitHubPanel;
-  const showMigrationPanel = !!panels.showMigrationPanel;
-  const showEdgeFnEditor = !!panels.showEdgeFnEditor;
-  const showBuildWorkflow = !!panels.showBuildWorkflow;
-  const showDevTools = !!panels.showDevTools;
-  const showNPMManager = !!panels.showNPMManager;
-  const showPublishPanel = !!panels.showPublishPanel;
-  const showImageGen = !!panels.showImageGen;
-  const showSymbolSearch = !!panels.showSymbolSearch;
-  const showSecretsManager = !!panels.showSecretsManager;
-  const showModelSwitcher = !!panels.showModelSwitcher;
-  const showPromptChains = !!panels.showPromptChains;
-  const showCodeReview = !!panels.showCodeReview;
-  const showTestGenerator = !!panels.showTestGenerator;
-  const showNLQuery = !!panels.showNLQuery;
-  const showSnippetLibrary = !!panels.showSnippetLibrary;
-  const showSplitDiff = !!panels.showSplitDiff;
-  const showComments = !!panels.showComments;
-  const showTeamActivity = !!panels.showTeamActivity;
-  const showApprovals = !!panels.showApprovals;
-  const showForking = !!panels.showForking;
-  const showFigmaImport = !!panels.showFigmaImport;
-  const showColorExtractor = !!panels.showColorExtractor;
-  const showIconPicker = !!panels.showIconPicker;
-  const showBreakpointEditor = !!panels.showBreakpointEditor;
-  const showAnimationBuilder = !!panels.showAnimationBuilder;
-  const showVisualSchema = !!panels.showVisualSchema;
-  const showSeedData = !!panels.showSeedData;
-  const showAPITester = !!panels.showAPITester;
-  const showWebhookBuilder = !!panels.showWebhookBuilder;
-  const showCronScheduler = !!panels.showCronScheduler;
-  const showEnvManager = !!panels.showEnvManager;
-  const showRollback = !!panels.showRollback;
-  const showUptimeMonitor = !!panels.showUptimeMonitor;
-  const showBuildCache = !!panels.showBuildCache;
-  const showBuildScripts = !!panels.showBuildScripts;
-  const showCMSMode = !!panels.showCMSMode;
-  const showBlogEngine = !!panels.showBlogEngine;
-  const showImageOptimizer = !!panels.showImageOptimizer;
-  const showVideoEmbed = !!panels.showVideoEmbed;
-  const showI18n = !!panels.showI18n;
-  const showAnalyticsDashboard = !!panels.showAnalyticsDashboard;
-  const showErrorTracking = !!panels.showErrorTracking;
-  const showSessionReplay = !!panels.showSessionReplay;
-  const showABTesting = !!panels.showABTesting;
-  const showAIUsage = !!panels.showAIUsage;
-  const showDepScanner = !!panels.showDepScanner;
-  const showCSPGenerator = !!panels.showCSPGenerator;
-  const showGDPR = !!panels.showGDPR;
-  const showRateLimiter = !!panels.showRateLimiter;
-  const showSecretRotation = !!panels.showSecretRotation;
-  const showCLICompanion = !!panels.showCLICompanion;
-  const showGHActions = !!panels.showGHActions;
-  const showSlackDiscord = !!panels.showSlackDiscord;
-  const showWhiteLabel = !!panels.showWhiteLabel;
-  const showPluginSDK = !!panels.showPluginSDK;
-  const showRefactoring = !!panels.showRefactoring;
-  const showNLRegex = !!panels.showNLRegex;
-  const showCommitMsg = !!panels.showCommitMsg;
-  const showAutoImport = !!panels.showAutoImport;
-  const showDocWriter = !!panels.showDocWriter;
-  const showCoEditing = !!panels.showCoEditing;
-  const showVoiceChat = !!panels.showVoiceChat;
-  const showScreenShare = !!panels.showScreenShare;
-  const showCodeReactions = !!panels.showCodeReactions;
-  const showWhiteboard = !!panels.showWhiteboard;
-  const showVisualRegression = !!panels.showVisualRegression;
-  const showA11yScore = !!panels.showA11yScore;
-  const showCoverage = !!panels.showCoverage;
-  const showMutationTest = !!panels.showMutationTest;
-  const showLoadTest = !!panels.showLoadTest;
-  const showPageBuilder = !!panels.showPageBuilder;
-  const showThemeStudio = !!panels.showThemeStudio;
-  const showFormBuilder = !!panels.showFormBuilder;
-  const showChartDashboard = !!panels.showChartDashboard;
-  const showLayoutGrid = !!panels.showLayoutGrid;
-  const showGraphQL = !!panels.showGraphQL;
-  const showWSManager = !!panels.showWSManager;
-  const showFileUpload = !!panels.showFileUpload;
-  const showPayments = !!panels.showPayments;
-  const showEmailTemplates = !!panels.showEmailTemplates;
-  const showTutorialCreator = !!panels.showTutorialCreator;
-  const showCodePlayground = !!panels.showCodePlayground;
-  const showCustomLinting = !!panels.showCustomLinting;
-  const showDepGraph = !!panels.showDepGraph;
-  const showGitBlame = !!panels.showGitBlame;
-  const showMultiRegion = !!panels.showMultiRegion;
-  const showFeatureFlags = !!panels.showFeatureFlags;
-  const showCanaryDeploy = !!panels.showCanaryDeploy;
-  const showSSG = !!panels.showSSG;
-  const showDockerExport = !!panels.showDockerExport;
-  const showSubscriptions = !!panels.showSubscriptions;
-  const showInvoices = !!panels.showInvoices;
-  const showUsageMetering = !!panels.showUsageMetering;
-  const showAffiliates = !!panels.showAffiliates;
-  const showRevenue = !!panels.showRevenue;
-  const showCapacitor = !!panels.showCapacitor;
-  const showPushNotifications = !!panels.showPushNotifications;
-  const showOfflineFirst = !!panels.showOfflineFirst;
-  const showGestureBuilder = !!panels.showGestureBuilder;
-  const showAppStoreAssets = !!panels.showAppStoreAssets;
-  const showCodeTranslator = !!panels.showCodeTranslator;
-  const showSmartScaffold = !!panels.showSmartScaffold;
-  const showWorkflowAutomation = !!panels.showWorkflowAutomation;
-  const showPerfOptimizer = !!panels.showPerfOptimizer;
-  const showSecurityAuditor = !!panels.showSecurityAuditor;
-  const showStateMachine = !!panels.showStateMachine;
-  const showDataValidation = !!panels.showDataValidation;
-  const showCacheStrategy = !!panels.showCacheStrategy;
-  const showReactiveStore = !!panels.showReactiveStore;
-  const showDataMigration = !!panels.showDataMigration;
-  const showRegexPlayground = !!panels.showRegexPlayground;
-  const showJsonYamlConverter = !!panels.showJsonYamlConverter;
-  const showColorContrast = !!panels.showColorContrast;
-  const showTailwindSorter = !!panels.showTailwindSorter;
-  const showMarkdownPreview = !!panels.showMarkdownPreview;
-  const showToastDesigner = !!panels.showToastDesigner;
-  const showNotifCenter = !!panels.showNotifCenter;
-  const showChatWidget = !!panels.showChatWidget;
-  const showEmailSequence = !!panels.showEmailSequence;
-  const showSMSTemplate = !!panels.showSMSTemplate;
-  const showStepperWizard = !!panels.showStepperWizard;
-  const showCommandMenuBuilder = !!panels.showCommandMenuBuilder;
-  const showBreadcrumbGen = !!panels.showBreadcrumbGen;
-  const showMegaMenu = !!panels.showMegaMenu;
-  const showContextMenu = !!panels.showContextMenu;
-  const showDockerCompose = !!panels.showDockerCompose;
-  const showK8s = !!panels.showK8s;
-  const showCICDPipeline = !!panels.showCICDPipeline;
-  const showStructuredLogger = !!panels.showStructuredLogger;
-  const showHealthCheck = !!panels.showHealthCheck;
-  const showOAuthSetup = !!panels.showOAuthSetup;
-  const showMFAFlow = !!panels.showMFAFlow;
-  const showSessionMgr = !!panels.showSessionMgr;
-  const showAPIKeyMgmt = !!panels.showAPIKeyMgmt;
-  const showPermMatrix = !!panels.showPermMatrix;
-  const showRichTextConfig = !!panels.showRichTextConfig;
-  const showFilePreviewGen = !!panels.showFilePreviewGen;
-  const showAvatarGen = !!panels.showAvatarGen;
-  const showCarouselBuilder = !!panels.showCarouselBuilder;
-  const showGalleryLightbox = !!panels.showGalleryLightbox;
-  const showFTS = !!panels.showFTS;
-  const showFacetedFilter = !!panels.showFacetedFilter;
-  const showAutocomplete = !!panels.showAutocomplete;
-  const showTagSystem = !!panels.showTagSystem;
-  const showSEOMeta = !!panels.showSEOMeta;
-  const showKPIDashboard = !!panels.showKPIDashboard;
-  const showAlertingRules = !!panels.showAlertingRules;
-  const showAuditTrail = !!panels.showAuditTrail;
-  const showClickHeatmap = !!panels.showClickHeatmap;
-  const showBudgetMonitor = !!panels.showBudgetMonitor;
-  const showChangelogAuto = !!panels.showChangelogAuto;
-  const showREADMEGen = !!panels.showREADMEGen;
-  const showLicensePicker = !!panels.showLicensePicker;
-  const showOpenAPISpec = !!panels.showOpenAPISpec;
-  const showProjectHealth = !!panels.showProjectHealth;
-  const showPromptHistory = !!panels.showPromptHistory;
   const showFileSearch = !!panels.showFileSearch;
   const showFileTree = !!panels.showFileTree;
-  const showTemplates = !!panels.showTemplates;
-  const showShortcuts = !!panels.showShortcuts;
-  const showQuickSwitcher = !!panels.showQuickSwitcher;
 
   // Issue 15 fix: Memoized panel setters map — closures created once, not 210 per render
   const panelsRef = useRef(panels);
@@ -1140,8 +942,11 @@ export function AIAppBuilderWorkspace() {
   }, [project.files, project.name, messages, saveDraft, isGenerating]);
 
   // Immediately persist draft when user switches tabs or navigates away
+  // Issue 21 fix: Assign properties directly instead of allocating a new object per render
   const latestRef = useRef({ name: project.name, files: project.files, messages });
-  latestRef.current = { name: project.name, files: project.files, messages };
+  latestRef.current.name = project.name;
+  latestRef.current.files = project.files;
+  latestRef.current.messages = messages;
 
   useEffect(() => {
     const flushDraft = () => saveDraftImmediate(latestRef.current.name, latestRef.current.files, latestRef.current.messages);
@@ -1415,24 +1220,13 @@ export function AIAppBuilderWorkspace() {
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, fixAttemptCount, lastFixError, getLastAIResponse]);
 
   // Track when generation ends for post-generation cooldown
-  // Phase 58: Removed duplicate smoke test + auto-patcher calls (now only in latestFiles watcher above)
+  // Issue 17 fix: Removed duplicate smoke test (now only runs in latestFiles watcher above)
   const generationEndedAt = useRef<number>(0);
   const compilationEndedAt = useRef<number>(0);
   const prevIsGenerating = useRef(false);
   useEffect(() => {
     if (!isGenerating && prevIsGenerating.current) {
       generationEndedAt.current = Date.now();
-
-      // Phase 13: Forward smoke test errors to chat (lightweight — the full check runs in latestFiles watcher)
-      if (project.files.length > 0) {
-        try {
-          const smokeResult = smokeTest.runSmokeTest(project.files);
-          if (smokeResult.errors.length > 0) {
-            const firstError = smokeResult.errors[0];
-            forwardErrorToChat({ message: `[Smoke Test] ${firstError.message}`, source: firstError.file });
-          }
-        } catch (e) { /* smoke test is non-critical */ }
-      }
     }
     prevIsGenerating.current = isGenerating;
   }, [isGenerating]);
@@ -2273,36 +2067,36 @@ export function AIAppBuilderWorkspace() {
                 <SafePanel show={showEnvVars} name="Env Variables">
                   <EnvVarsPanel envVars={envVariables} onChange={setEnvVariables} open={showEnvVars} onClose={() => setShowEnvVars(false)} />
                 </SafePanel>
-                <SafePanel show={showRLSTester} name="RLS Tester">
-                  <RLSPolicyTester supabaseConfig={supabaseConfig} open={showRLSTester} onClose={() => setShowRLSTester(false)} />
+                <SafePanel show={!!panels.showRLSTester} name="RLS Tester">
+                  <RLSPolicyTester supabaseConfig={supabaseConfig} open={!!panels.showRLSTester} onClose={() => setShowRLSTester(false)} />
                 </SafePanel>
                 <SafePanel show={showAssets} name="Asset Manager">
                   <AssetManager assets={assets} onUpload={handleAssetUpload} onDelete={handleAssetDelete} open={showAssets} onClose={() => setShowAssets(false)} />
                 </SafePanel>
-                <SafePanel show={showDatabase || showAuth || showKnowledge || showStorage || showEdgeFunctions} name="Database Tools">
-                  <DatabasePanel open={showDatabase} onClose={() => setShowDatabase(false)} supabaseConfig={supabaseConfig} />
-                  <AuthConfigPanel open={showAuth} onClose={() => setShowAuth(false)} supabaseConfig={supabaseConfig} onGenerateAuthPages={handleGenerateAuthPages} />
-                  <KnowledgePanel open={showKnowledge} onClose={() => setShowKnowledge(false)} knowledge={knowledge} onKnowledgeChange={setKnowledge} />
-                  <StorageBrowser open={showStorage} onClose={() => setShowStorage(false)} supabaseConfig={supabaseConfig} />
-                  <EdgeFunctionEditor open={showEdgeFunctions} onClose={() => setShowEdgeFunctions(false)} onCreateFunction={handleCreateEdgeFunction} functions={edgeFunctions} onSelectFunction={(name) => { setActiveFile(`functions/${name}/index.ts`); setRightTab('code'); }} onDeleteFunction={handleDeleteEdgeFunction} />
+                <SafePanel show={!!panels.showDatabase || !!panels.showAuth || !!panels.showKnowledge || !!panels.showStorage || !!panels.showEdgeFunctions} name="Database Tools">
+                  <DatabasePanel open={!!panels.showDatabase} onClose={() => setShowDatabase(false)} supabaseConfig={supabaseConfig} />
+                  <AuthConfigPanel open={!!panels.showAuth} onClose={() => setShowAuth(false)} supabaseConfig={supabaseConfig} onGenerateAuthPages={handleGenerateAuthPages} />
+                  <KnowledgePanel open={!!panels.showKnowledge} onClose={() => setShowKnowledge(false)} knowledge={knowledge} onKnowledgeChange={setKnowledge} />
+                  <StorageBrowser open={!!panels.showStorage} onClose={() => setShowStorage(false)} supabaseConfig={supabaseConfig} />
+                  <EdgeFunctionEditor open={!!panels.showEdgeFunctions} onClose={() => setShowEdgeFunctions(false)} onCreateFunction={handleCreateEdgeFunction} functions={edgeFunctions} onSelectFunction={(name) => { setActiveFile(`functions/${name}/index.ts`); setRightTab('code'); }} onDeleteFunction={handleDeleteEdgeFunction} />
                 </SafePanel>
                 <SafePanel show={showActivity} name="Activity Feed">
                   <ActivityFeed open={showActivity} onClose={() => setShowActivity(false)} entries={activityEntries} />
                 </SafePanel>
-                <SafePanel show={showExportGuide} name="Export Guide">
-                  <ExportGuidePanel open={showExportGuide} onClose={() => setShowExportGuide(false)} />
+                <SafePanel show={!!panels.showExportGuide} name="Export Guide">
+                  <ExportGuidePanel open={!!panels.showExportGuide} onClose={() => setShowExportGuide(false)} />
                 </SafePanel>
-                <SafePanel show={showSchemaDesigner} name="Schema Designer">
+                <SafePanel show={!!panels.showSchemaDesigner} name="Schema Designer">
                   <SchemaDesignerLazy
-                    open={showSchemaDesigner}
+                    open={!!panels.showSchemaDesigner}
                     onClose={() => setShowSchemaDesigner(false)}
                     onGenerateSQL={(sql) => { navigator.clipboard.writeText(sql); toast.success('SQL copied — paste into Supabase SQL editor'); }}
                     onSendToChat={(msg) => { sendMessage(msg, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }}
                   />
                 </SafePanel>
-                <SafePanel show={showOneClickDeploy} name="One-Click Deploy">
+                <SafePanel show={!!panels.showOneClickDeploy} name="One-Click Deploy">
                 <OneClickDeploy
-                  open={showOneClickDeploy}
+                  open={!!panels.showOneClickDeploy}
                   onClose={() => setShowOneClickDeploy(false)}
                   projectName={project.name}
                   files={project.files}
@@ -2314,12 +2108,12 @@ export function AIAppBuilderWorkspace() {
                   }}
                 />
                 </SafePanel>
-                <SafePanel show={showHelpCenter} name="Help Center">
-                  <BuilderHelpCenter open={showHelpCenter} onClose={() => setShowHelpCenter(false)} />
+                <SafePanel show={!!panels.showHelpCenter} name="Help Center">
+                  <BuilderHelpCenter open={!!panels.showHelpCenter} onClose={() => setShowHelpCenter(false)} />
                 </SafePanel>
-                <SafePanel show={showSetupWizard} name="Setup Wizard">
+                <SafePanel show={!!panels.showSetupWizard} name="Setup Wizard">
                 <SetupWizard
-                  open={showSetupWizard}
+                  open={!!panels.showSetupWizard}
                   onClose={() => setShowSetupWizard(false)}
                   supabaseConfig={supabaseConfig}
                   stripeConfig={stripeConfig}
@@ -2331,9 +2125,9 @@ export function AIAppBuilderWorkspace() {
                   onOpenDeploy={() => setShowDeployPipeline(true)}
                 />
                 </SafePanel>
-                <SafePanel show={showPromptHistory} name="Prompt History">
+                <SafePanel show={!!panels.showPromptHistory} name="Prompt History">
                 <PromptHistoryPanel
-                  open={showPromptHistory}
+                  open={!!panels.showPromptHistory}
                   onClose={() => setShowPromptHistory(false)}
                   history={promptHistory.history}
                   onRerun={(prompt) => { setShowPromptHistory(false); handleSend(prompt); }}
@@ -2344,32 +2138,32 @@ export function AIAppBuilderWorkspace() {
                   onImport={promptHistory.importHistory}
                 />
                 </SafePanel>
-                <SafePanel show={showCodeIntel} name="Code Intelligence">
-                  <AICodeIntelligence open={showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); toast.success('Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); toast.success(`Found ${smells.length} suggestions`); }} activeFilePath={project.activeFilePath} />
+                <SafePanel show={!!panels.showCodeIntel} name="Code Intelligence">
+                  <AICodeIntelligence open={!!panels.showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); toast.success('Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); toast.success(`Found ${smells.length} suggestions`); }} activeFilePath={project.activeFilePath} />
                 </SafePanel>
-                <SafePanel show={showDbExplorer} name="Database Explorer">
-                  <DatabaseExplorer open={showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
+                <SafePanel show={!!panels.showDbExplorer} name="Database Explorer">
+                  <DatabaseExplorer open={!!panels.showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
                 </SafePanel>
-                <SafePanel show={showComponentLib} name="Component Library">
-                  <ComponentLibrary open={showComponentLib} onClose={() => setShowComponentLib(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); } }} onApplyTheme={() => {}} />
+                <SafePanel show={!!panels.showComponentLib} name="Component Library">
+                  <ComponentLibrary open={!!panels.showComponentLib} onClose={() => setShowComponentLib(false)} onInsertComponent={(code) => { if (activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + code); } }} onApplyTheme={() => {}} />
                 </SafePanel>
-                <SafePanel show={showDeployPipeline} name="Deploy Pipeline">
-                  <DeployPipelinePanel open={showDeployPipeline} onClose={() => setShowDeployPipeline(false)} onDeploy={handlePublish} publishedUrl={publishedUrl} isDeploying={isGenerating} projectName={project.name} onOpenDomainPanel={() => { setShowDeployPipeline(false); setShowDomainPanel(true); }} />
+                <SafePanel show={!!panels.showDeployPipeline} name="Deploy Pipeline">
+                  <DeployPipelinePanel open={!!panels.showDeployPipeline} onClose={() => setShowDeployPipeline(false)} onDeploy={handlePublish} publishedUrl={publishedUrl} isDeploying={isGenerating} projectName={project.name} onOpenDomainPanel={() => { setShowDeployPipeline(false); setShowDomainPanel(true); }} />
                 </SafePanel>
-                <SafePanel show={showPerformanceProfiler} name="Performance Profiler">
-                  <PerformanceProfilerLazy open={showPerformanceProfiler} onClose={() => setShowPerformanceProfiler(false)} files={project.files} cdnPackages={cdnPackages} />
+                <SafePanel show={!!panels.showPerformanceProfiler} name="Performance Profiler">
+                  <PerformanceProfilerLazy open={!!panels.showPerformanceProfiler} onClose={() => setShowPerformanceProfiler(false)} files={project.files} cdnPackages={cdnPackages} />
                 </SafePanel>
-                <SafePanel show={showBuildAnalytics} name="Build Analytics">
-                  <BuildAnalyticsPanelLazy open={showBuildAnalytics} onClose={() => setShowBuildAnalytics(false)} analytics={buildAnalytics.getAnalytics()} />
+                <SafePanel show={!!panels.showBuildAnalytics} name="Build Analytics">
+                  <BuildAnalyticsPanelLazy open={!!panels.showBuildAnalytics} onClose={() => setShowBuildAnalytics(false)} analytics={buildAnalytics.getAnalytics()} />
                 </SafePanel>
-                <SafePanel show={showChangelog} name="Changelog">
-                  <ChangelogPanel open={showChangelog} onClose={() => setShowChangelog(false)} entries={changelogEntries} />
+                <SafePanel show={!!panels.showChangelog} name="Changelog">
+                  <ChangelogPanel open={!!panels.showChangelog} onClose={() => setShowChangelog(false)} entries={changelogEntries} />
                 </SafePanel>
-                <SafePanel show={showTestingSuite} name="Testing & Debug">
-                  <TestingDebugSuite open={showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); toast.success('Test generated'); }} projectFiles={project.files} />
+                <SafePanel show={!!panels.showTestingSuite} name="Testing & Debug">
+                  <TestingDebugSuite open={!!panels.showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); toast.success('Test generated'); }} projectFiles={project.files} />
                 </SafePanel>
-                <SafePanel show={showGPTConnector} name="GPT Connector">
-                  <GPTConnectorPanel open={showGPTConnector} onClose={() => setShowGPTConnector(false)} linkedGPT={linkedGPT} onLinkGPT={setLinkedGPT} onUnlinkGPT={() => setLinkedGPT(null)} />
+                <SafePanel show={!!panels.showGPTConnector} name="GPT Connector">
+                  <GPTConnectorPanel open={!!panels.showGPTConnector} onClose={() => setShowGPTConnector(false)} linkedGPT={linkedGPT} onLinkGPT={setLinkedGPT} onUnlinkGPT={() => setLinkedGPT(null)} />
                 </SafePanel>
                 <SafePanel show={projectReview.showPanel} name="Project Review">
                   <ProjectReviewPanel
@@ -2381,33 +2175,33 @@ export function AIAppBuilderWorkspace() {
                     onGoToFile={(file, line) => { handleSetActiveFile(file); setRightTab('code'); }}
                   />
                 </SafePanel>
-                <SafePanel show={showSupabaseIDE} name="Supabase IDE">
-                  <SupabaseIDEPanel open={showSupabaseIDE} onClose={() => setShowSupabaseIDE(false)} connection={supabaseConnection} onGenerateCode={(code, fileName) => { upsertFile(fileName, code); setRightTab('code'); setActiveFile(fileName); }} />
+                <SafePanel show={!!panels.showSupabaseIDE} name="Supabase IDE">
+                  <SupabaseIDEPanel open={!!panels.showSupabaseIDE} onClose={() => setShowSupabaseIDE(false)} connection={supabaseConnection} onGenerateCode={(code, fileName) => { upsertFile(fileName, code); setRightTab('code'); setActiveFile(fileName); }} />
                 </SafePanel>
-                <SafePanel show={showGitHubPanel} name="GitHub">
-                  <GitHubPanel open={showGitHubPanel} onClose={() => setShowGitHubPanel(false)} projectName={project.name} files={project.files} onFilesImported={(imported) => { imported.forEach(f => upsertFile(f.path, f.content)); }} githubSync={githubSync} />
+                <SafePanel show={!!panels.showGitHubPanel} name="GitHub">
+                  <GitHubPanel open={!!panels.showGitHubPanel} onClose={() => setShowGitHubPanel(false)} projectName={project.name} files={project.files} onFilesImported={(imported) => { imported.forEach(f => upsertFile(f.path, f.content)); }} githubSync={githubSync} />
                 </SafePanel>
-                <SafePanel show={showMigrationPanel} name="Database Migration">
-                  <DatabaseMigrationPanel open={showMigrationPanel} onClose={() => setShowMigrationPanel(false)} connection={supabaseConnection} onGenerateCode={(code, fileName) => { upsertFile(fileName, code); setRightTab('code'); setActiveFile(fileName); }} />
+                <SafePanel show={!!panels.showMigrationPanel} name="Database Migration">
+                  <DatabaseMigrationPanel open={!!panels.showMigrationPanel} onClose={() => setShowMigrationPanel(false)} connection={supabaseConnection} onGenerateCode={(code, fileName) => { upsertFile(fileName, code); setRightTab('code'); setActiveFile(fileName); }} />
                 </SafePanel>
-                <SafePanel show={showEdgeFnEditor} name="Edge Function Editor">
-                  <EdgeFunctionEditorPanel open={showEdgeFnEditor} onClose={() => setShowEdgeFnEditor(false)} files={project.files} onUpsertFile={upsertFile} supabaseUrl={supabaseConnection.config?.url || supabaseConfig?.url} supabaseKey={supabaseConnection.config?.anonKey || supabaseConfig?.anonKey} />
+                <SafePanel show={!!panels.showEdgeFnEditor} name="Edge Function Editor">
+                  <EdgeFunctionEditorPanel open={!!panels.showEdgeFnEditor} onClose={() => setShowEdgeFnEditor(false)} files={project.files} onUpsertFile={upsertFile} supabaseUrl={supabaseConnection.config?.url || supabaseConfig?.url} supabaseKey={supabaseConnection.config?.anonKey || supabaseConfig?.anonKey} />
                 </SafePanel>
-                <SafePanel show={showBuildWorkflow} name="Build Workflow">
-                  <BuildWorkflowPanel open={showBuildWorkflow} onClose={() => setShowBuildWorkflow(false)} githubToken={localStorage.getItem('app-builder-github-pat') || undefined} githubRepo={localStorage.getItem('app-builder-github-repo') || undefined} />
+                <SafePanel show={!!panels.showBuildWorkflow} name="Build Workflow">
+                  <BuildWorkflowPanel open={!!panels.showBuildWorkflow} onClose={() => setShowBuildWorkflow(false)} githubToken={localStorage.getItem('app-builder-github-pat') || undefined} githubRepo={localStorage.getItem('app-builder-github-repo') || undefined} />
                 </SafePanel>
-                <SafePanel show={showMultiSearch} name="Multi-File Search">
-                  <MultiFileSearchReplace open={showMultiSearch} onClose={() => setShowMultiSearch(false)} files={project.files} onReplaceInFiles={handleReplaceInFiles} onSelectFile={handleSetActiveFile} onSwitchToCode={() => setRightTab('code')} />
+                <SafePanel show={!!panels.showMultiSearch} name="Multi-File Search">
+                  <MultiFileSearchReplace open={!!panels.showMultiSearch} onClose={() => setShowMultiSearch(false)} files={project.files} onReplaceInFiles={handleReplaceInFiles} onSelectFile={handleSetActiveFile} onSwitchToCode={() => setRightTab('code')} />
                 </SafePanel>
-                <SafePanel show={showTestRunner} name="Test Runner">
-                  <InBrowserTestRunner open={showTestRunner} onClose={() => setShowTestRunner(false)} files={project.files} onGenerateTest={(filePath) => { sendMessage(`Generate unit tests for ${filePath}`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onSendToChat={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
+                <SafePanel show={!!panels.showTestRunner} name="Test Runner">
+                  <InBrowserTestRunner open={!!panels.showTestRunner} onClose={() => setShowTestRunner(false)} files={project.files} onGenerateTest={(filePath) => { sendMessage(`Generate unit tests for ${filePath}`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }} onSendToChat={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
                 </SafePanel>
-                <SafePanel show={showExtensions} name="Extensions">
-                  <PluginMarketplace open={showExtensions} onClose={() => setShowExtensions(false)} catalogue={pluginRegistry.catalogue} installed={pluginRegistry.installed} onInstall={pluginRegistry.installPlugin} onUninstall={pluginRegistry.uninstallPlugin} onToggle={pluginRegistry.togglePlugin} onUpdateConfig={pluginRegistry.updatePluginConfig} />
+                <SafePanel show={!!panels.showExtensions} name="Extensions">
+                  <PluginMarketplace open={!!panels.showExtensions} onClose={() => setShowExtensions(false)} catalogue={pluginRegistry.catalogue} installed={pluginRegistry.installed} onInstall={pluginRegistry.installPlugin} onUninstall={pluginRegistry.uninstallPlugin} onToggle={pluginRegistry.togglePlugin} onUpdateConfig={pluginRegistry.updatePluginConfig} />
                 </SafePanel>
-                <SafePanel show={showCollaboration} name="Collaboration">
+                <SafePanel show={!!panels.showCollaboration} name="Collaboration">
                   <CollaborationPanelLazy
-                    open={showCollaboration}
+                    open={!!panels.showCollaboration}
                     onClose={() => setShowCollaboration(false)}
                     isConnected={collaborationEngine.isConnected}
                     participants={collaborationEngine.participants}
@@ -2425,9 +2219,9 @@ export function AIAppBuilderWorkspace() {
                     onAddSimulated={collaborationEngine.addSimulatedParticipant}
                   />
                 </SafePanel>
-                <SafePanel show={showAPIBuilder} name="API Builder">
+                <SafePanel show={!!panels.showAPIBuilder} name="API Builder">
                   <APIBuilderPanelLazy
-                    open={showAPIBuilder}
+                    open={!!panels.showAPIBuilder}
                     onClose={() => setShowAPIBuilder(false)}
                     endpoints={apiBuilder.endpoints}
                     requestLogs={apiBuilder.requestLogs}
@@ -2443,7 +2237,7 @@ export function AIAppBuilderWorkspace() {
                     onClearLogs={apiBuilder.clearLogs}
                   />
                 </SafePanel>
-                {showDesignSystem && (
+                {panels.showDesignSystem && (
                   <div className="w-72 border-r border-border overflow-hidden">
                     <SafePanel show={true} name="Design System">
                       <DesignSystemPanelLazy
@@ -2462,9 +2256,9 @@ export function AIAppBuilderWorkspace() {
                     <PackageManager packages={cdnPackages} onAddPackage={(pkg) => setCdnPackages(prev => [...prev, pkg])} onRemovePackage={(name) => setCdnPackages(prev => prev.filter(p => p.name !== name))} />
                   </div>
                 </SafePanel>
-                <SafePanel show={showNPMManager} name="NPM Manager">
+                <SafePanel show={!!panels.showNPMManager} name="NPM Manager">
                   <NPMPackageManagerPanel
-                    open={showNPMManager}
+                    open={!!panels.showNPMManager}
                     onClose={() => setShowNPMManager(false)}
                     installedPackages={installedPackages}
                     onInstall={(name, version) => setInstalledPackages(prev => [...prev, { name, version: version || 'latest' }])}
@@ -2472,14 +2266,14 @@ export function AIAppBuilderWorkspace() {
                     onUpdateVersion={(name, version) => setInstalledPackages(prev => prev.map(p => p.name === name ? { ...p, version } : p))}
                   />
                 </SafePanel>
-                <SafePanel show={showDevTools} name="DevTools">
+                <SafePanel show={!!panels.showDevTools} name="DevTools">
                   <div className="w-80 border-r border-white/[0.06] overflow-hidden">
-                    <PreviewDevToolsPanel open={showDevTools} onClose={() => setShowDevTools(false)} iframeRef={previewIframeRef} onFixWithAI={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
+                    <PreviewDevToolsPanel open={!!panels.showDevTools} onClose={() => setShowDevTools(false)} iframeRef={previewIframeRef} onFixWithAI={(prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)} />
                   </div>
                 </SafePanel>
-                <SafePanel show={showSymbolSearch} name="Symbol Search">
+                <SafePanel show={!!panels.showSymbolSearch} name="Symbol Search">
                   <SymbolSearchPanel
-                    open={showSymbolSearch}
+                    open={!!panels.showSymbolSearch}
                     onClose={() => setShowSymbolSearch(false)}
                     files={project.files}
                     onNavigate={(file, line) => { setActiveFile(file); setRightTab('code'); }}
@@ -2565,7 +2359,7 @@ export function AIAppBuilderWorkspace() {
                           </PanelErrorBoundary>
                         </div>
                       )}
-                      {showTimeline && versionTimeline.totalSnapshots > 0 && (
+                      {panels.showTimeline && versionTimeline.totalSnapshots > 0 && (
                         <div className="shrink-0 space-y-1">
                           <PanelErrorBoundary panelName="Version Timeline">
                             <VersionTimelineSlider
@@ -2578,9 +2372,9 @@ export function AIAppBuilderWorkspace() {
                               onExit={() => { versionTimeline.exitHistoryPreview(); setShowTimeline(false); setShowDiffViewer(false); }}
                               getDiff={versionTimeline.getSnapshotDiff}
                               onToggleDiff={() => setShowDiffViewer(v => !v)}
-                              showDiff={showDiffViewer}
+                              showDiff={!!panels.showDiffViewer}
                             />
-                            {showDiffViewer && versionTimeline.currentIndex > 0 && (
+                            {panels.showDiffViewer && versionTimeline.currentIndex > 0 && (
                               <VersionDiffViewer
                                 prevSnapshot={versionTimeline.snapshots[versionTimeline.currentIndex - 1] ?? null}
                                 currSnapshot={versionTimeline.snapshots[versionTimeline.currentIndex]}
@@ -2598,10 +2392,10 @@ export function AIAppBuilderWorkspace() {
                           </PanelErrorBoundary>
                         </div>
                       )}
-                      {showTerminal && (
+                      {panels.showTerminal && (
                         <div className="shrink-0 max-h-[30vh]">
                           <PanelErrorBoundary panelName="Terminal">
-                            <TerminalEmulator open={showTerminal} onClose={() => setShowTerminal(false)} projectName={project.name} />
+                            <TerminalEmulator open={!!panels.showTerminal} onClose={() => setShowTerminal(false)} projectName={project.name} />
                           </PanelErrorBoundary>
                         </div>
                       )}
@@ -2632,7 +2426,7 @@ export function AIAppBuilderWorkspace() {
       </div>
 
       <WorkspacePanelLayer
-        panelVisibility={{ showTemplates, showEditHistory, showShortcuts, showBilling, showShareDialog, showSEOEditor, showDomainPanel, showPublishPanel, showDiffReview, showQuickSwitcher, showImageGen, showSecretsManager, showEnhancedPalette }}
+        panelVisibility={{ showTemplates: !!panels.showTemplates, showEditHistory: !!panels.showEditHistory, showShortcuts: !!panels.showShortcuts, showBilling, showShareDialog: !!panels.showShareDialog, showSEOEditor: !!panels.showSEOEditor, showDomainPanel: !!panels.showDomainPanel, showPublishPanel: !!panels.showPublishPanel, showDiffReview: !!panels.showDiffReview, showQuickSwitcher: !!panels.showQuickSwitcher, showImageGen: !!panels.showImageGen, showSecretsManager: !!panels.showSecretsManager, showEnhancedPalette: !!panels.showEnhancedPalette }}
         panelSetters={{ setShowTemplates, setShowEditHistory, setShowShortcuts, setShowBilling, setShowShareDialog, setShowSEOEditor, setShowDomainPanel, setShowPublishPanel, setShowDiffReview, setShowQuickSwitcher, setShowImageGen, setShowSecretsManager, setShowEnhancedPalette }}
         hooks={{ versions, restoreVersion }}
         handleSend={handleSend}
@@ -2666,114 +2460,114 @@ export function AIAppBuilderWorkspace() {
         handleSetActiveFile={handleSetActiveFile}
         pendingDiffChanges={pendingDiffChanges}
         setPendingDiffChanges={setPendingDiffChanges}
-        showBugReport={showBugReport}
+        showBugReport={!!panels.showBugReport}
         setShowBugReport={setShowBugReport}
       />
       {/* Conditionally-mounted panel groups — hooks only initialize when panels are active */}
-      {(showEnvManager || showRollback || showUptimeMonitor || showBuildCache || showBuildScripts || showCMSMode || showBlogEngine || showImageOptimizer || showVideoEmbed || showI18n || showAnalyticsDashboard || showErrorTracking || showSessionReplay || showABTesting || showAIUsage || showDepScanner || showCSPGenerator || showGDPR || showRateLimiter || showSecretRotation || showSnippetLibrary || showSplitDiff || showComments || showTeamActivity || showApprovals || showForking || showFigmaImport || showColorExtractor || showIconPicker || showBreakpointEditor || showAnimationBuilder || showVisualSchema || showSeedData || showAPITester || showWebhookBuilder || showCronScheduler) && (
+      {(panels.showEnvManager || panels.showRollback || panels.showUptimeMonitor || panels.showBuildCache || panels.showBuildScripts || panels.showCMSMode || panels.showBlogEngine || panels.showImageOptimizer || panels.showVideoEmbed || panels.showI18n || panels.showAnalyticsDashboard || panels.showErrorTracking || panels.showSessionReplay || panels.showABTesting || panels.showAIUsage || panels.showDepScanner || panels.showCSPGenerator || panels.showGDPR || panels.showRateLimiter || panels.showSecretRotation || panels.showSnippetLibrary || panels.showSplitDiff || panels.showComments || panels.showTeamActivity || panels.showApprovals || panels.showForking || panels.showFigmaImport || panels.showColorExtractor || panels.showIconPicker || panels.showBreakpointEditor || panels.showAnimationBuilder || panels.showVisualSchema || panels.showSeedData || panels.showAPITester || panels.showWebhookBuilder || panels.showCronScheduler) && (
         <InfraPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
           versions={versions} restoreVersion={restoreVersion}
-          showEnvManager={showEnvManager} setShowEnvManager={setShowEnvManager} showRollback={showRollback} setShowRollback={setShowRollback} showUptimeMonitor={showUptimeMonitor} setShowUptimeMonitor={setShowUptimeMonitor} showBuildCache={showBuildCache} setShowBuildCache={setShowBuildCache} showBuildScripts={showBuildScripts} setShowBuildScripts={setShowBuildScripts} showCMSMode={showCMSMode} setShowCMSMode={setShowCMSMode} showBlogEngine={showBlogEngine} setShowBlogEngine={setShowBlogEngine} showImageOptimizer={showImageOptimizer} setShowImageOptimizer={setShowImageOptimizer} showVideoEmbed={showVideoEmbed} setShowVideoEmbed={setShowVideoEmbed} showI18n={showI18n} setShowI18n={setShowI18n} showAnalyticsDashboard={showAnalyticsDashboard} setShowAnalyticsDashboard={setShowAnalyticsDashboard} showErrorTracking={showErrorTracking} setShowErrorTracking={setShowErrorTracking} showSessionReplay={showSessionReplay} setShowSessionReplay={setShowSessionReplay} showABTesting={showABTesting} setShowABTesting={setShowABTesting} showAIUsage={showAIUsage} setShowAIUsage={setShowAIUsage} showDepScanner={showDepScanner} setShowDepScanner={setShowDepScanner} showCSPGenerator={showCSPGenerator} setShowCSPGenerator={setShowCSPGenerator} showGDPR={showGDPR} setShowGDPR={setShowGDPR} showRateLimiter={showRateLimiter} setShowRateLimiter={setShowRateLimiter} showSecretRotation={showSecretRotation} setShowSecretRotation={setShowSecretRotation} showSnippetLibrary={showSnippetLibrary} setShowSnippetLibrary={setShowSnippetLibrary} showSplitDiff={showSplitDiff} setShowSplitDiff={setShowSplitDiff} showComments={showComments} setShowComments={setShowComments} showTeamActivity={showTeamActivity} setShowTeamActivity={setShowTeamActivity} showApprovals={showApprovals} setShowApprovals={setShowApprovals} showForking={showForking} setShowForking={setShowForking} showFigmaImport={showFigmaImport} setShowFigmaImport={setShowFigmaImport} showColorExtractor={showColorExtractor} setShowColorExtractor={setShowColorExtractor} showIconPicker={showIconPicker} setShowIconPicker={setShowIconPicker} showBreakpointEditor={showBreakpointEditor} setShowBreakpointEditor={setShowBreakpointEditor} showAnimationBuilder={showAnimationBuilder} setShowAnimationBuilder={setShowAnimationBuilder} showVisualSchema={showVisualSchema} setShowVisualSchema={setShowVisualSchema} showSeedData={showSeedData} setShowSeedData={setShowSeedData} showAPITester={showAPITester} setShowAPITester={setShowAPITester} showWebhookBuilder={showWebhookBuilder} setShowWebhookBuilder={setShowWebhookBuilder} showCronScheduler={showCronScheduler} setShowCronScheduler={setShowCronScheduler}
+          showEnvManager={!!panels.showEnvManager} setShowEnvManager={setShowEnvManager} showRollback={!!panels.showRollback} setShowRollback={setShowRollback} showUptimeMonitor={!!panels.showUptimeMonitor} setShowUptimeMonitor={setShowUptimeMonitor} showBuildCache={!!panels.showBuildCache} setShowBuildCache={setShowBuildCache} showBuildScripts={!!panels.showBuildScripts} setShowBuildScripts={setShowBuildScripts} showCMSMode={!!panels.showCMSMode} setShowCMSMode={setShowCMSMode} showBlogEngine={!!panels.showBlogEngine} setShowBlogEngine={setShowBlogEngine} showImageOptimizer={!!panels.showImageOptimizer} setShowImageOptimizer={setShowImageOptimizer} showVideoEmbed={!!panels.showVideoEmbed} setShowVideoEmbed={setShowVideoEmbed} showI18n={!!panels.showI18n} setShowI18n={setShowI18n} showAnalyticsDashboard={!!panels.showAnalyticsDashboard} setShowAnalyticsDashboard={setShowAnalyticsDashboard} showErrorTracking={!!panels.showErrorTracking} setShowErrorTracking={setShowErrorTracking} showSessionReplay={!!panels.showSessionReplay} setShowSessionReplay={setShowSessionReplay} showABTesting={!!panels.showABTesting} setShowABTesting={setShowABTesting} showAIUsage={!!panels.showAIUsage} setShowAIUsage={setShowAIUsage} showDepScanner={!!panels.showDepScanner} setShowDepScanner={setShowDepScanner} showCSPGenerator={!!panels.showCSPGenerator} setShowCSPGenerator={setShowCSPGenerator} showGDPR={!!panels.showGDPR} setShowGDPR={setShowGDPR} showRateLimiter={!!panels.showRateLimiter} setShowRateLimiter={setShowRateLimiter} showSecretRotation={!!panels.showSecretRotation} setShowSecretRotation={setShowSecretRotation} showSnippetLibrary={!!panels.showSnippetLibrary} setShowSnippetLibrary={setShowSnippetLibrary} showSplitDiff={!!panels.showSplitDiff} setShowSplitDiff={setShowSplitDiff} showComments={!!panels.showComments} setShowComments={setShowComments} showTeamActivity={!!panels.showTeamActivity} setShowTeamActivity={setShowTeamActivity} showApprovals={!!panels.showApprovals} setShowApprovals={setShowApprovals} showForking={!!panels.showForking} setShowForking={setShowForking} showFigmaImport={!!panels.showFigmaImport} setShowFigmaImport={setShowFigmaImport} showColorExtractor={!!panels.showColorExtractor} setShowColorExtractor={setShowColorExtractor} showIconPicker={!!panels.showIconPicker} setShowIconPicker={setShowIconPicker} showBreakpointEditor={!!panels.showBreakpointEditor} setShowBreakpointEditor={setShowBreakpointEditor} showAnimationBuilder={!!panels.showAnimationBuilder} setShowAnimationBuilder={setShowAnimationBuilder} showVisualSchema={!!panels.showVisualSchema} setShowVisualSchema={setShowVisualSchema} showSeedData={!!panels.showSeedData} setShowSeedData={setShowSeedData} showAPITester={!!panels.showAPITester} setShowAPITester={setShowAPITester} showWebhookBuilder={!!panels.showWebhookBuilder} setShowWebhookBuilder={setShowWebhookBuilder} showCronScheduler={!!panels.showCronScheduler} setShowCronScheduler={setShowCronScheduler}
         />
       )}
-      {(showRefactoring || showNLRegex || showCommitMsg || showAutoImport || showDocWriter || showCLICompanion || showGHActions || showSlackDiscord || showWhiteLabel || showPluginSDK) && (
+      {(panels.showRefactoring || panels.showNLRegex || panels.showCommitMsg || panels.showAutoImport || panels.showDocWriter || panels.showCLICompanion || panels.showGHActions || panels.showSlackDiscord || panels.showWhiteLabel || panels.showPluginSDK) && (
         <IntegrationPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showRefactoring={showRefactoring} setShowRefactoring={setShowRefactoring} showNLRegex={showNLRegex} setShowNLRegex={setShowNLRegex} showCommitMsg={showCommitMsg} setShowCommitMsg={setShowCommitMsg} showAutoImport={showAutoImport} setShowAutoImport={setShowAutoImport} showDocWriter={showDocWriter} setShowDocWriter={setShowDocWriter} showCLICompanion={showCLICompanion} setShowCLICompanion={setShowCLICompanion} showGHActions={showGHActions} setShowGHActions={setShowGHActions} showSlackDiscord={showSlackDiscord} setShowSlackDiscord={setShowSlackDiscord} showWhiteLabel={showWhiteLabel} setShowWhiteLabel={setShowWhiteLabel} showPluginSDK={showPluginSDK} setShowPluginSDK={setShowPluginSDK}
+          showRefactoring={!!panels.showRefactoring} setShowRefactoring={setShowRefactoring} showNLRegex={!!panels.showNLRegex} setShowNLRegex={setShowNLRegex} showCommitMsg={!!panels.showCommitMsg} setShowCommitMsg={setShowCommitMsg} showAutoImport={!!panels.showAutoImport} setShowAutoImport={setShowAutoImport} showDocWriter={!!panels.showDocWriter} setShowDocWriter={setShowDocWriter} showCLICompanion={!!panels.showCLICompanion} setShowCLICompanion={setShowCLICompanion} showGHActions={!!panels.showGHActions} setShowGHActions={setShowGHActions} showSlackDiscord={!!panels.showSlackDiscord} setShowSlackDiscord={setShowSlackDiscord} showWhiteLabel={!!panels.showWhiteLabel} setShowWhiteLabel={setShowWhiteLabel} showPluginSDK={!!panels.showPluginSDK} setShowPluginSDK={setShowPluginSDK}
         />
       )}
-      {(showCoEditing || showVoiceChat || showScreenShare || showCodeReactions || showWhiteboard) && (
+      {(panels.showCoEditing || panels.showVoiceChat || panels.showScreenShare || panels.showCodeReactions || panels.showWhiteboard) && (
         <CollabPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showCoEditing={showCoEditing} setShowCoEditing={setShowCoEditing} showVoiceChat={showVoiceChat} setShowVoiceChat={setShowVoiceChat} showScreenShare={showScreenShare} setShowScreenShare={setShowScreenShare} showCodeReactions={showCodeReactions} setShowCodeReactions={setShowCodeReactions} showWhiteboard={showWhiteboard} setShowWhiteboard={setShowWhiteboard}
+          showCoEditing={!!panels.showCoEditing} setShowCoEditing={setShowCoEditing} showVoiceChat={!!panels.showVoiceChat} setShowVoiceChat={setShowVoiceChat} showScreenShare={!!panels.showScreenShare} setShowScreenShare={setShowScreenShare} showCodeReactions={!!panels.showCodeReactions} setShowCodeReactions={setShowCodeReactions} showWhiteboard={!!panels.showWhiteboard} setShowWhiteboard={setShowWhiteboard}
         />
       )}
-      {(showVisualRegression || showA11yScore || showCoverage || showMutationTest || showLoadTest) && (
+      {(panels.showVisualRegression || panels.showA11yScore || panels.showCoverage || panels.showMutationTest || panels.showLoadTest) && (
         <TestingPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showVisualRegression={showVisualRegression} setShowVisualRegression={setShowVisualRegression} showA11yScore={showA11yScore} setShowA11yScore={setShowA11yScore} showCoverage={showCoverage} setShowCoverage={setShowCoverage} showMutationTest={showMutationTest} setShowMutationTest={setShowMutationTest} showLoadTest={showLoadTest} setShowLoadTest={setShowLoadTest}
+          showVisualRegression={!!panels.showVisualRegression} setShowVisualRegression={setShowVisualRegression} showA11yScore={!!panels.showA11yScore} setShowA11yScore={setShowA11yScore} showCoverage={!!panels.showCoverage} setShowCoverage={setShowCoverage} showMutationTest={!!panels.showMutationTest} setShowMutationTest={setShowMutationTest} showLoadTest={!!panels.showLoadTest} setShowLoadTest={setShowLoadTest}
         />
       )}
-      {(showPageBuilder || showThemeStudio || showFormBuilder || showChartDashboard || showLayoutGrid) && (
+      {(panels.showPageBuilder || panels.showThemeStudio || panels.showFormBuilder || panels.showChartDashboard || panels.showLayoutGrid) && (
         <UIBuildingPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showPageBuilder={showPageBuilder} setShowPageBuilder={setShowPageBuilder} showThemeStudio={showThemeStudio} setShowThemeStudio={setShowThemeStudio} showFormBuilder={showFormBuilder} setShowFormBuilder={setShowFormBuilder} showChartDashboard={showChartDashboard} setShowChartDashboard={setShowChartDashboard} showLayoutGrid={showLayoutGrid} setShowLayoutGrid={setShowLayoutGrid}
+          showPageBuilder={!!panels.showPageBuilder} setShowPageBuilder={setShowPageBuilder} showThemeStudio={!!panels.showThemeStudio} setShowThemeStudio={setShowThemeStudio} showFormBuilder={!!panels.showFormBuilder} setShowFormBuilder={setShowFormBuilder} showChartDashboard={!!panels.showChartDashboard} setShowChartDashboard={setShowChartDashboard} showLayoutGrid={!!panels.showLayoutGrid} setShowLayoutGrid={setShowLayoutGrid}
         />
       )}
-      {(showGraphQL || showWSManager || showFileUpload || showPayments || showEmailTemplates) && (
+      {(panels.showGraphQL || panels.showWSManager || panels.showFileUpload || panels.showPayments || panels.showEmailTemplates) && (
         <DataIntegrationPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showGraphQL={showGraphQL} setShowGraphQL={setShowGraphQL} showWSManager={showWSManager} setShowWSManager={setShowWSManager} showFileUpload={showFileUpload} setShowFileUpload={setShowFileUpload} showPayments={showPayments} setShowPayments={setShowPayments} showEmailTemplates={showEmailTemplates} setShowEmailTemplates={setShowEmailTemplates}
+          showGraphQL={!!panels.showGraphQL} setShowGraphQL={setShowGraphQL} showWSManager={!!panels.showWSManager} setShowWSManager={setShowWSManager} showFileUpload={!!panels.showFileUpload} setShowFileUpload={setShowFileUpload} showPayments={!!panels.showPayments} setShowPayments={setShowPayments} showEmailTemplates={!!panels.showEmailTemplates} setShowEmailTemplates={setShowEmailTemplates}
         />
       )}
-      {(showTutorialCreator || showCodePlayground || showCustomLinting || showDepGraph || showGitBlame) && (
+      {(panels.showTutorialCreator || panels.showCodePlayground || panels.showCustomLinting || panels.showDepGraph || panels.showGitBlame) && (
         <DevExperiencePanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showTutorialCreator={showTutorialCreator} setShowTutorialCreator={setShowTutorialCreator} showCodePlayground={showCodePlayground} setShowCodePlayground={setShowCodePlayground} showCustomLinting={showCustomLinting} setShowCustomLinting={setShowCustomLinting} showDepGraph={showDepGraph} setShowDepGraph={setShowDepGraph} showGitBlame={showGitBlame} setShowGitBlame={setShowGitBlame}
+          showTutorialCreator={!!panels.showTutorialCreator} setShowTutorialCreator={setShowTutorialCreator} showCodePlayground={!!panels.showCodePlayground} setShowCodePlayground={setShowCodePlayground} showCustomLinting={!!panels.showCustomLinting} setShowCustomLinting={setShowCustomLinting} showDepGraph={!!panels.showDepGraph} setShowDepGraph={setShowDepGraph} showGitBlame={!!panels.showGitBlame} setShowGitBlame={setShowGitBlame}
         />
       )}
-      {(showMultiRegion || showFeatureFlags || showCanaryDeploy || showSSG || showDockerExport) && (
+      {(panels.showMultiRegion || panels.showFeatureFlags || panels.showCanaryDeploy || panels.showSSG || panels.showDockerExport) && (
         <DeploymentPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showMultiRegion={showMultiRegion} setShowMultiRegion={setShowMultiRegion} showFeatureFlags={showFeatureFlags} setShowFeatureFlags={setShowFeatureFlags} showCanaryDeploy={showCanaryDeploy} setShowCanaryDeploy={setShowCanaryDeploy} showSSG={showSSG} setShowSSG={setShowSSG} showDockerExport={showDockerExport} setShowDockerExport={setShowDockerExport}
+          showMultiRegion={!!panels.showMultiRegion} setShowMultiRegion={setShowMultiRegion} showFeatureFlags={!!panels.showFeatureFlags} setShowFeatureFlags={setShowFeatureFlags} showCanaryDeploy={!!panels.showCanaryDeploy} setShowCanaryDeploy={setShowCanaryDeploy} showSSG={!!panels.showSSG} setShowSSG={setShowSSG} showDockerExport={!!panels.showDockerExport} setShowDockerExport={setShowDockerExport}
         />
       )}
-      {(showSubscriptions || showInvoices || showUsageMetering || showAffiliates || showRevenue) && (
+      {(panels.showSubscriptions || panels.showInvoices || panels.showUsageMetering || panels.showAffiliates || panels.showRevenue) && (
         <MonetizationPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showSubscriptions={showSubscriptions} setShowSubscriptions={setShowSubscriptions} showInvoices={showInvoices} setShowInvoices={setShowInvoices} showUsageMetering={showUsageMetering} setShowUsageMetering={setShowUsageMetering} showAffiliates={showAffiliates} setShowAffiliates={setShowAffiliates} showRevenue={showRevenue} setShowRevenue={setShowRevenue}
+          showSubscriptions={!!panels.showSubscriptions} setShowSubscriptions={setShowSubscriptions} showInvoices={!!panels.showInvoices} setShowInvoices={setShowInvoices} showUsageMetering={!!panels.showUsageMetering} setShowUsageMetering={setShowUsageMetering} showAffiliates={!!panels.showAffiliates} setShowAffiliates={setShowAffiliates} showRevenue={!!panels.showRevenue} setShowRevenue={setShowRevenue}
         />
       )}
-      {(showCapacitor || showPushNotifications || showOfflineFirst || showGestureBuilder || showAppStoreAssets) && (
+      {(panels.showCapacitor || panels.showPushNotifications || panels.showOfflineFirst || panels.showGestureBuilder || panels.showAppStoreAssets) && (
         <MobilePanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showCapacitor={showCapacitor} setShowCapacitor={setShowCapacitor} showPushNotifications={showPushNotifications} setShowPushNotifications={setShowPushNotifications} showOfflineFirst={showOfflineFirst} setShowOfflineFirst={setShowOfflineFirst} showGestureBuilder={showGestureBuilder} setShowGestureBuilder={setShowGestureBuilder} showAppStoreAssets={showAppStoreAssets} setShowAppStoreAssets={setShowAppStoreAssets}
+          showCapacitor={!!panels.showCapacitor} setShowCapacitor={setShowCapacitor} showPushNotifications={!!panels.showPushNotifications} setShowPushNotifications={setShowPushNotifications} showOfflineFirst={!!panels.showOfflineFirst} setShowOfflineFirst={setShowOfflineFirst} showGestureBuilder={!!panels.showGestureBuilder} setShowGestureBuilder={setShowGestureBuilder} showAppStoreAssets={!!panels.showAppStoreAssets} setShowAppStoreAssets={setShowAppStoreAssets}
         />
       )}
-      {(showCodeTranslator || showSmartScaffold || showWorkflowAutomation || showPerfOptimizer || showSecurityAuditor) && (
+      {(panels.showCodeTranslator || panels.showSmartScaffold || panels.showWorkflowAutomation || panels.showPerfOptimizer || panels.showSecurityAuditor) && (
         <AIAutomationPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showCodeTranslator={showCodeTranslator} setShowCodeTranslator={setShowCodeTranslator} showSmartScaffold={showSmartScaffold} setShowSmartScaffold={setShowSmartScaffold} showWorkflowAutomation={showWorkflowAutomation} setShowWorkflowAutomation={setShowWorkflowAutomation} showPerfOptimizer={showPerfOptimizer} setShowPerfOptimizer={setShowPerfOptimizer} showSecurityAuditor={showSecurityAuditor} setShowSecurityAuditor={setShowSecurityAuditor}
+          showCodeTranslator={!!panels.showCodeTranslator} setShowCodeTranslator={setShowCodeTranslator} showSmartScaffold={!!panels.showSmartScaffold} setShowSmartScaffold={setShowSmartScaffold} showWorkflowAutomation={!!panels.showWorkflowAutomation} setShowWorkflowAutomation={setShowWorkflowAutomation} showPerfOptimizer={!!panels.showPerfOptimizer} setShowPerfOptimizer={setShowPerfOptimizer} showSecurityAuditor={!!panels.showSecurityAuditor} setShowSecurityAuditor={setShowSecurityAuditor}
         />
       )}
-      {(showStateMachine || showDataValidation || showCacheStrategy || showReactiveStore || showDataMigration) && (
+      {(panels.showStateMachine || panels.showDataValidation || panels.showCacheStrategy || panels.showReactiveStore || panels.showDataMigration) && (
         <DataStatePanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showStateMachine={showStateMachine} setShowStateMachine={setShowStateMachine} showDataValidation={showDataValidation} setShowDataValidation={setShowDataValidation} showCacheStrategy={showCacheStrategy} setShowCacheStrategy={setShowCacheStrategy} showReactiveStore={showReactiveStore} setShowReactiveStore={setShowReactiveStore} showDataMigration={showDataMigration} setShowDataMigration={setShowDataMigration}
+          showStateMachine={!!panels.showStateMachine} setShowStateMachine={setShowStateMachine} showDataValidation={!!panels.showDataValidation} setShowDataValidation={setShowDataValidation} showCacheStrategy={!!panels.showCacheStrategy} setShowCacheStrategy={setShowCacheStrategy} showReactiveStore={!!panels.showReactiveStore} setShowReactiveStore={setShowReactiveStore} showDataMigration={!!panels.showDataMigration} setShowDataMigration={setShowDataMigration}
         />
       )}
-      {(showRegexPlayground || showJsonYamlConverter || showColorContrast || showTailwindSorter || showMarkdownPreview) && (
+      {(panels.showRegexPlayground || panels.showJsonYamlConverter || panels.showColorContrast || panels.showTailwindSorter || panels.showMarkdownPreview) && (
         <DevToolsPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showRegexPlayground={showRegexPlayground} setShowRegexPlayground={setShowRegexPlayground} showJsonYamlConverter={showJsonYamlConverter} setShowJsonYamlConverter={setShowJsonYamlConverter} showColorContrast={showColorContrast} setShowColorContrast={setShowColorContrast} showTailwindSorter={showTailwindSorter} setShowTailwindSorter={setShowTailwindSorter} showMarkdownPreview={showMarkdownPreview} setShowMarkdownPreview={setShowMarkdownPreview}
+          showRegexPlayground={!!panels.showRegexPlayground} setShowRegexPlayground={setShowRegexPlayground} showJsonYamlConverter={!!panels.showJsonYamlConverter} setShowJsonYamlConverter={setShowJsonYamlConverter} showColorContrast={!!panels.showColorContrast} setShowColorContrast={setShowColorContrast} showTailwindSorter={!!panels.showTailwindSorter} setShowTailwindSorter={setShowTailwindSorter} showMarkdownPreview={!!panels.showMarkdownPreview} setShowMarkdownPreview={setShowMarkdownPreview}
         />
       )}
-      {(showToastDesigner || showNotifCenter || showChatWidget || showEmailSequence || showSMSTemplate) && (
+      {(panels.showToastDesigner || panels.showNotifCenter || panels.showChatWidget || panels.showEmailSequence || panels.showSMSTemplate) && (
         <CommunicationPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showToastDesigner={showToastDesigner} setShowToastDesigner={setShowToastDesigner} showNotifCenter={showNotifCenter} setShowNotifCenter={setShowNotifCenter} showChatWidget={showChatWidget} setShowChatWidget={setShowChatWidget} showEmailSequence={showEmailSequence} setShowEmailSequence={setShowEmailSequence} showSMSTemplate={showSMSTemplate} setShowSMSTemplate={setShowSMSTemplate}
+          showToastDesigner={!!panels.showToastDesigner} setShowToastDesigner={setShowToastDesigner} showNotifCenter={!!panels.showNotifCenter} setShowNotifCenter={setShowNotifCenter} showChatWidget={!!panels.showChatWidget} setShowChatWidget={setShowChatWidget} showEmailSequence={!!panels.showEmailSequence} setShowEmailSequence={setShowEmailSequence} showSMSTemplate={!!panels.showSMSTemplate} setShowSMSTemplate={setShowSMSTemplate}
         />
       )}
-      {(showStepperWizard || showCommandMenuBuilder || showBreadcrumbGen || showMegaMenu || showContextMenu) && (
+      {(panels.showStepperWizard || panels.showCommandMenuBuilder || panels.showBreadcrumbGen || panels.showMegaMenu || panels.showContextMenu) && (
         <UIPatternsPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showStepperWizard={showStepperWizard} setShowStepperWizard={setShowStepperWizard} showCommandMenuBuilder={showCommandMenuBuilder} setShowCommandMenuBuilder={setShowCommandMenuBuilder} showBreadcrumbGen={showBreadcrumbGen} setShowBreadcrumbGen={setShowBreadcrumbGen} showMegaMenu={showMegaMenu} setShowMegaMenu={setShowMegaMenu} showContextMenu={showContextMenu} setShowContextMenu={setShowContextMenu}
+          showStepperWizard={!!panels.showStepperWizard} setShowStepperWizard={setShowStepperWizard} showCommandMenuBuilder={!!panels.showCommandMenuBuilder} setShowCommandMenuBuilder={setShowCommandMenuBuilder} showBreadcrumbGen={!!panels.showBreadcrumbGen} setShowBreadcrumbGen={setShowBreadcrumbGen} showMegaMenu={!!panels.showMegaMenu} setShowMegaMenu={setShowMegaMenu} showContextMenu={!!panels.showContextMenu} setShowContextMenu={setShowContextMenu}
         />
       )}
-      {(showDockerCompose || showK8s || showCICDPipeline || showStructuredLogger || showHealthCheck) && (
+      {(panels.showDockerCompose || panels.showK8s || panels.showCICDPipeline || panels.showStructuredLogger || panels.showHealthCheck) && (
         <DevOpsPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showDockerCompose={showDockerCompose} setShowDockerCompose={setShowDockerCompose} showK8s={showK8s} setShowK8s={setShowK8s} showCICDPipeline={showCICDPipeline} setShowCICDPipeline={setShowCICDPipeline} showStructuredLogger={showStructuredLogger} setShowStructuredLogger={setShowStructuredLogger} showHealthCheck={showHealthCheck} setShowHealthCheck={setShowHealthCheck}
+          showDockerCompose={!!panels.showDockerCompose} setShowDockerCompose={setShowDockerCompose} showK8s={!!panels.showK8s} setShowK8s={setShowK8s} showCICDPipeline={!!panels.showCICDPipeline} setShowCICDPipeline={setShowCICDPipeline} showStructuredLogger={!!panels.showStructuredLogger} setShowStructuredLogger={setShowStructuredLogger} showHealthCheck={!!panels.showHealthCheck} setShowHealthCheck={setShowHealthCheck}
         />
       )}
-      {(showOAuthSetup || showMFAFlow || showSessionMgr || showAPIKeyMgmt || showPermMatrix) && (
+      {(panels.showOAuthSetup || panels.showMFAFlow || panels.showSessionMgr || panels.showAPIKeyMgmt || panels.showPermMatrix) && (
         <AuthSecurityPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showOAuthSetup={showOAuthSetup} setShowOAuthSetup={setShowOAuthSetup} showMFAFlow={showMFAFlow} setShowMFAFlow={setShowMFAFlow} showSessionMgr={showSessionMgr} setShowSessionMgr={setShowSessionMgr} showAPIKeyMgmt={showAPIKeyMgmt} setShowAPIKeyMgmt={setShowAPIKeyMgmt} showPermMatrix={showPermMatrix} setShowPermMatrix={setShowPermMatrix}
+          showOAuthSetup={!!panels.showOAuthSetup} setShowOAuthSetup={setShowOAuthSetup} showMFAFlow={!!panels.showMFAFlow} setShowMFAFlow={setShowMFAFlow} showSessionMgr={!!panels.showSessionMgr} setShowSessionMgr={setShowSessionMgr} showAPIKeyMgmt={!!panels.showAPIKeyMgmt} setShowAPIKeyMgmt={setShowAPIKeyMgmt} showPermMatrix={!!panels.showPermMatrix} setShowPermMatrix={setShowPermMatrix}
         />
       )}
-      {(showRichTextConfig || showFilePreviewGen || showAvatarGen || showCarouselBuilder || showGalleryLightbox) && (
+      {(panels.showRichTextConfig || panels.showFilePreviewGen || panels.showAvatarGen || panels.showCarouselBuilder || panels.showGalleryLightbox) && (
         <ContentMediaPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showRichTextConfig={showRichTextConfig} setShowRichTextConfig={setShowRichTextConfig} showFilePreviewGen={showFilePreviewGen} setShowFilePreviewGen={setShowFilePreviewGen} showAvatarGen={showAvatarGen} setShowAvatarGen={setShowAvatarGen} showCarouselBuilder={showCarouselBuilder} setShowCarouselBuilder={setShowCarouselBuilder} showGalleryLightbox={showGalleryLightbox} setShowGalleryLightbox={setShowGalleryLightbox}
+          showRichTextConfig={!!panels.showRichTextConfig} setShowRichTextConfig={setShowRichTextConfig} showFilePreviewGen={!!panels.showFilePreviewGen} setShowFilePreviewGen={setShowFilePreviewGen} showAvatarGen={!!panels.showAvatarGen} setShowAvatarGen={setShowAvatarGen} showCarouselBuilder={!!panels.showCarouselBuilder} setShowCarouselBuilder={setShowCarouselBuilder} showGalleryLightbox={!!panels.showGalleryLightbox} setShowGalleryLightbox={setShowGalleryLightbox}
         />
       )}
-      {(showFTS || showFacetedFilter || showAutocomplete || showTagSystem || showSEOMeta) && (
+      {(panels.showFTS || panels.showFacetedFilter || panels.showAutocomplete || panels.showTagSystem || panels.showSEOMeta) && (
         <SearchDiscoveryPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showFTS={showFTS} setShowFTS={setShowFTS} showFacetedFilter={showFacetedFilter} setShowFacetedFilter={setShowFacetedFilter} showAutocomplete={showAutocomplete} setShowAutocomplete={setShowAutocomplete} showTagSystem={showTagSystem} setShowTagSystem={setShowTagSystem} showSEOMeta={showSEOMeta} setShowSEOMeta={setShowSEOMeta}
+          showFTS={!!panels.showFTS} setShowFTS={setShowFTS} showFacetedFilter={!!panels.showFacetedFilter} setShowFacetedFilter={setShowFacetedFilter} showAutocomplete={!!panels.showAutocomplete} setShowAutocomplete={setShowAutocomplete} showTagSystem={!!panels.showTagSystem} setShowTagSystem={setShowTagSystem} showSEOMeta={!!panels.showSEOMeta} setShowSEOMeta={setShowSEOMeta}
         />
       )}
-      {(showKPIDashboard || showAlertingRules || showAuditTrail || showClickHeatmap || showBudgetMonitor) && (
+      {(panels.showKPIDashboard || panels.showAlertingRules || panels.showAuditTrail || panels.showClickHeatmap || panels.showBudgetMonitor) && (
         <MonitoringPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showKPIDashboard={showKPIDashboard} setShowKPIDashboard={setShowKPIDashboard} showAlertingRules={showAlertingRules} setShowAlertingRules={setShowAlertingRules} showAuditTrail={showAuditTrail} setShowAuditTrail={setShowAuditTrail} showClickHeatmap={showClickHeatmap} setShowClickHeatmap={setShowClickHeatmap} showBudgetMonitor={showBudgetMonitor} setShowBudgetMonitor={setShowBudgetMonitor}
+          showKPIDashboard={!!panels.showKPIDashboard} setShowKPIDashboard={setShowKPIDashboard} showAlertingRules={!!panels.showAlertingRules} setShowAlertingRules={setShowAlertingRules} showAuditTrail={!!panels.showAuditTrail} setShowAuditTrail={setShowAuditTrail} showClickHeatmap={!!panels.showClickHeatmap} setShowClickHeatmap={setShowClickHeatmap} showBudgetMonitor={!!panels.showBudgetMonitor} setShowBudgetMonitor={setShowBudgetMonitor}
         />
       )}
-      {(showChangelogAuto || showREADMEGen || showLicensePicker || showOpenAPISpec || showProjectHealth) && (
+      {(panels.showChangelogAuto || panels.showREADMEGen || panels.showLicensePicker || panels.showOpenAPISpec || panels.showProjectHealth) && (
         <FinalPolishPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
-          showChangelogAuto={showChangelogAuto} setShowChangelogAuto={setShowChangelogAuto} showREADMEGen={showREADMEGen} setShowREADMEGen={setShowREADMEGen} showLicensePicker={showLicensePicker} setShowLicensePicker={setShowLicensePicker} showOpenAPISpec={showOpenAPISpec} setShowOpenAPISpec={setShowOpenAPISpec} showProjectHealth={showProjectHealth} setShowProjectHealth={setShowProjectHealth}
+          showChangelogAuto={!!panels.showChangelogAuto} setShowChangelogAuto={setShowChangelogAuto} showREADMEGen={!!panels.showREADMEGen} setShowREADMEGen={setShowREADMEGen} showLicensePicker={!!panels.showLicensePicker} setShowLicensePicker={setShowLicensePicker} showOpenAPISpec={!!panels.showOpenAPISpec} setShowOpenAPISpec={setShowOpenAPISpec} showProjectHealth={!!panels.showProjectHealth} setShowProjectHealth={setShowProjectHealth}
         />
       )}
       <WorkspaceBottomBar
