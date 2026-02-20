@@ -1093,7 +1093,7 @@ export function AIAppBuilderWorkspace() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [project.files, canUndo, canRedo, isGenerating, stopGenerating, showSettingsPanel, showFileSearch, showVersionHistory, showConsole, showEnvVars, showAssets, showPackages, showActivity, showBilling, showFileTree]);
+  }, [canUndo, canRedo, isGenerating, stopGenerating, showSettingsPanel, showFileSearch, showVersionHistory, showConsole, showEnvVars, showAssets, showPackages, showActivity, showBilling, showFileTree]);
 
   const handleSend = (input: string, imageDataUrls?: string[] | null, skipQuestions?: boolean) => {
     // Questions: intercept large prompts and ask clarifying questions first
@@ -1515,11 +1515,11 @@ export function AIAppBuilderWorkspace() {
     }
   }, [saveProject, project.name, project.files, branches, activeBranch, messages, clearDraft, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, captureAndUpload, linkedGPT]);
 
-  // Auto-capture thumbnail after generation completes
+  // Auto-capture thumbnail after generation completes (Issue 18: reuse stableHTML instead of redundant getCompiledHTML)
   const wasGeneratingRef = useRef(false);
   useEffect(() => {
     if (wasGeneratingRef.current && !isGenerating && project.files.length > 0 && currentProjectId) {
-      const html = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+      const html = compiledForHosting;
       if (html) {
         setTimeout(() => {
           captureAndUpload(html, currentProjectId).catch(() => {});
@@ -1527,7 +1527,7 @@ export function AIAppBuilderWorkspace() {
       }
     }
     wasGeneratingRef.current = isGenerating;
-  }, [isGenerating, project.files.length, currentProjectId, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, captureAndUpload]);
+  }, [isGenerating, project.files.length, currentProjectId, compiledForHosting, captureAndUpload]);
 
   // Auto-advance to next phase when generation completes and autoAdvance is on
   useEffect(() => {
