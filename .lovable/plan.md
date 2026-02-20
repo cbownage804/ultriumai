@@ -1,86 +1,105 @@
 
-
-# Fix App Builder Preview Getting Stuck on "Loading preview..."
+# Fix React Error #310: "Rendered more hooks than during the previous render"
 
 ## Problem
 
-The App Builder preview gets stuck showing skeleton placeholders and "Loading preview..." indefinitely. The generation appears to be running but never completes, so the preview iframe never receives compiled HTML.
+The App Builder crashes with React error #310: "Rendered more hooks than during the previous render." This is a hooks ordering violation caused by having 350+ hooks in a single component (`AIAppBuilderWorkspace`). With this many hooks, React's internal fiber tracking becomes fragile, and any Suspense boundary resolution or conditional rendering path can cause hook count mismatches between renders.
 
-## Root Cause Analysis
+## Root Cause
 
-There are **two interacting issues**:
+`AIAppBuilderWorkspace.tsx` has:
+- **~160 individual `useState(false)` calls** for panel visibility (lines 288-565)
+- **~50 custom hooks** (useCodeSmellDetector, useGithubSync, useReactCompiler, etc.)
+- **~80 additional `useState` calls** for other state
+- Total: **~290+ individual hook calls** in one component
 
-### Issue 1: Edge function stream termination race condition
+React tracks hooks by call order. When this many hooks exist, any variation in execution path (e.g., a Suspense fallback resolving, an error boundary recovery, or a component prop change affecting which lazy components load) can cause the hook count to differ between renders, triggering error #310.
 
-The `ai-app-builder` edge function wraps the AI gateway's stream in a `TransformStream` (lines 727-744). When the Supabase edge function runtime shuts down (60s limit), the `TransformStream` writer's catch block tries to write `data: [DONE]` — but this can fail silently if the writable stream is already closed by the runtime. The client's `readStream` then hangs waiting for more data.
+## Solution: Consolidate 160 useState into 1 usePanelManager
 
-The 15-second stall detector should catch this, but `lastChunkTime` gets reset by every chunk — if the AI was actively streaming right up until the shutdown, the stall detector won't fire for another 15 seconds. Meanwhile, the 55-second wall-clock timer may have already passed if we're on a continuation round.
+Replace all ~160 panel visibility `useState(false)` declarations with a single `usePanelManager` reducer call. This reduces the hook count from ~290 to ~130 -- well within React's safe operating range.
 
-### Issue 2: Wall-clock timer not reset per continuation round
+## Implementation Steps
 
-The `WALL_CLOCK_MAX_MS` timer (55s) is set once at the start of `sendMessage` (line 1383) but only cleared inside the continuation loop for continuation rounds (line 1854 per-round). The main wall-clock timer from line 1383 could fire during a continuation round and abort a valid stream.
+### Step 1: Create panel keys constant file
 
-However, the bigger issue is that for the **first round**, the wall-clock starts at 55s. The edge function has a 50s gateway timeout + boot time. These are very close, meaning the client-side wall-clock may fire before the stream naturally completes, causing an abort and triggering continuation — then the continuation round gets its own wall-clock but the same pattern repeats.
+Create `src/components/ai-builder/panelKeys.ts` containing a `PANEL_KEYS` array with all ~160 panel state key strings extracted from the current `useState` declarations.
 
-## Fix Plan
+### Step 2: Replace useState declarations in AIAppBuilderWorkspace
 
-### Fix 1: Add a client-side heartbeat timeout to `readStream`
-
-Add a per-read timeout inside the stream loop. If `reader.read()` takes longer than 20 seconds without returning any data, force-break the loop. This catches the case where the edge function dies without sending `[DONE]`.
-
-**File**: `src/hooks/useAIAppBuilder.ts`
-**Change**: In the `readStream` function, wrap `reader.read()` with a Promise.race against a 20-second timeout, so a dead stream is detected faster than the existing 15-second stall checker (which only runs every 5 seconds).
+Remove lines 288-565 (the ~160 `const [showX, setShowX] = useState(false)` declarations) and replace with:
 
 ```typescript
-// Inside the while loop in readStream:
-const readPromise = reader.read();
-const timeoutPromise = new Promise<{done: true, value: undefined}>((resolve) => 
-  setTimeout(() => resolve({done: true, value: undefined}), 20_000)
-);
-const { done, value } = await Promise.race([readPromise, timeoutPromise]);
+import { usePanelManager } from '@/hooks/usePanelManager';
+import { PANEL_KEYS } from './panelKeys';
+
+const { panels, toggle, open, close, exclusiveOpen } = usePanelManager(PANEL_KEYS);
 ```
 
-### Fix 2: Reset wall-clock timer for each round
+Then destructure all `showX` booleans from `panels` and create a `setShowX` compatibility layer:
 
-Move the wall-clock timer reset into each continuation round so it gets a fresh 55-second budget.
+```typescript
+// Destructure for backward compatibility
+const showDockerCompose = !!panels.showDockerCompose;
+const showK8s = !!panels.showK8s;
+// ... etc for all 160 keys
 
-**File**: `src/hooks/useAIAppBuilder.ts`
-**Change**: Clear and re-set `wallClockTimer` at the top of the `readStream` or at the start of each fetch call, not just once.
+// Create setter helpers
+const sp = (key: string) => (v: boolean | ((prev: boolean) => boolean)) => {
+  const val = typeof v === 'function' ? v(!!panels[key]) : v;
+  val ? open(key) : close(key);
+};
+const setShowDockerCompose = sp('showDockerCompose');
+const setShowK8s = sp('showK8s');
+// ... etc
+```
 
-### Fix 3: Edge function stream termination hardening
+### Step 3: Simplify the panelSetters map
 
-Ensure the `TransformStream` always sends `[DONE]` when the stream terminates, even on runtime shutdown.
+Replace the ~200-line `panelSetters` useMemo (lines 1677-1882) with a 5-line auto-generator:
 
-**File**: `supabase/functions/ai-app-builder/index.ts`
-**Change**: Add a Deno-compatible `addEventListener('beforeunload')` or use `AbortSignal` from the request to detect shutdown and force-flush `[DONE]` to the stream.
+```typescript
+const panelSetters = useMemo(() => {
+  const map: Record<string, (v: boolean) => void> = {};
+  for (const key of PANEL_KEYS) {
+    map[key] = (v: boolean) => v ? open(key) : close(key);
+  }
+  return map;
+}, [open, close]);
+```
 
-### Fix 4: Fail-safe in `finalizeStream` for empty content
+### Step 4: Simplify openPanel function
 
-If `fullContent` is empty after streaming completes (edge function died before any data came through), skip the continuation loop and show a user-friendly error instead of leaving `isGenerating` in a limbo state.
+Replace the 20-line `openPanel` function (lines 1647-1668) with:
 
-**File**: `src/hooks/useAIAppBuilder.ts`
-**Change**: At the top of `finalizeStream`, check if `fullContent.trim()` is empty and return early with an error message.
+```typescript
+const openPanel = (panel: string) => {
+  exclusiveOpen('show' + panel.charAt(0).toUpperCase() + panel.slice(1), 
+    EXCLUSIVE_PANEL_GROUP);
+};
+```
 
-### Fix 5: Force compile after generation even if `liveCompiledHTML` is null
+### Step 5: Update panel group props
 
-The `stableHTML` effect (line 1607) only runs when `!isGenerating && liveCompiledHTML`. If compilation produces `null` (e.g., no `index.html` found), the preview stays as skeleton forever. Add a fallback that shows an error state in the preview.
+Panel groups and `WorkspacePanelLayer` that receive individual `showX`/`setShowX` props will continue working because the destructured variables and setter functions have identical signatures.
 
-**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
-**Change**: After `isGenerating` transitions to `false`, if `liveCompiledHTML` is still `null` but `project.files.length > 0`, set `stableHTML` to a simple error HTML page: "Compilation failed - check console for errors."
+## Impact
 
-## Technical Details
+| Metric | Before | After |
+|--------|--------|-------|
+| useState calls | ~290 | ~130 |
+| Total hooks | ~350 | ~180 |
+| panelSetters map | ~200 lines | ~5 lines |
+| Risk of #310 | High | Low |
 
-| File | Lines | Change |
-|------|-------|--------|
-| `src/hooks/useAIAppBuilder.ts` | ~1275 | Add `Promise.race` read timeout in stream loop |
-| `src/hooks/useAIAppBuilder.ts` | ~1383 | Reset wall-clock timer per continuation round |
-| `src/hooks/useAIAppBuilder.ts` | ~1395 | Guard against empty `fullContent` in `finalizeStream` |
-| `supabase/functions/ai-app-builder/index.ts` | ~727-744 | Harden TransformStream termination |
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | ~1606-1627 | Add fallback when compilation returns null after build |
+## Files Changed
+
+| File | Change |
+|------|--------|
+| `src/components/ai-builder/panelKeys.ts` | New: defines PANEL_KEYS constant |
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Replace 160 useState with usePanelManager, simplify panelSetters |
+| `src/hooks/usePanelManager.ts` | No changes needed |
 
 ## Risk
 
-- **Low-Medium**: These are defensive guards that only activate in failure paths. Normal generation flow is untouched.
-- Fix 1 (read timeout) is the highest impact — it directly prevents the "stuck forever" scenario.
-- Fix 3 requires edge function redeployment.
-
+- **Low**: Pure refactor. Every `useState(false)` becomes a key in the reducer's `Record<string, boolean>` initialized to `false`. The destructured booleans and setter functions maintain identical signatures, so all downstream components (panel groups, WorkspacePanelLayer) continue working without changes.
