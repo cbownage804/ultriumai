@@ -938,7 +938,8 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     if (latestFiles.length > 0) {
       if (project.files.length > 0) {
-        pushUndo('AI generation', project.files);
+        // Phase 51: Push full file array (including files about to be deleted) to undo stack
+        pushUndo('AI generation', [...project.files]);
         versionTimeline.addSnapshot('Before AI generation', project.files, 'auto');
       }
       const conflicts = latestFiles.filter(f => dirtyFiles.has(f.path));
@@ -1034,7 +1035,7 @@ export function AIAppBuilderWorkspace() {
       } else {
         buildLog.addEntry('info', `✅ Validation passed (${validationResult.validationTimeMs}ms)`);
       }
-      // Run post-build smoke test + all quality checks
+      // Phase 58: Run post-build quality checks ONLY here (removed duplicates from isGenerating transition effect)
       const smokeResult = smokeTest.runSmokeTest(latestFiles);
       const conflictWarnings = conflictDetection.detectConflicts(latestFiles);
       if (conflictWarnings.length > 0) {
@@ -1054,7 +1055,7 @@ export function AIAppBuilderWorkspace() {
         buildLog.addEntry('info', `🔧 Auto-patched ${patchResult.fixes.length} delete/remove issue(s)`);
         patchResult.fixes.forEach(fix => buildLog.addEntry('info', `  ✅ ${fix}`));
       }
-      // Auto-generate companion test files for new components
+      // Phase 59: Auto-generate companion test files — regenerate if source changed
       const companions = fileScaffolding.generateCompanionFiles(latestFiles, project.files);
       if (companions.length > 0) {
         companions.forEach(f => upsertFile(f.path, f.content));
@@ -1065,13 +1066,15 @@ export function AIAppBuilderWorkspace() {
       conflictResolver.setBaseSnapshot([...project.files]);
       versionTimeline.addSnapshot(`AI: ${messages[messages.length - 2]?.content?.slice(0, 40) || 'generation'}`, [...project.files], 'ai-generation');
 
-      // Record build analytics (Phase 5)
+      // Record build analytics (Phase 60: compute actual credit cost based on mode)
       const lastMsg = messages[messages.length - 1];
+      const isAutoFixBuild = lastMsg?.content?.startsWith('Auto-fix error:') || false;
+      const actualCredits = isAutoFixBuild ? 0 : (mode === 'build' ? 3 : 1);
       buildAnalytics.recordBuild({
         type: 'build',
         durationMs: duration,
         filesGenerated: latestFiles.length,
-        creditsUsed: 3,
+        creditsUsed: actualCredits,
         success: true,
         errorCount: validationResult.errorCount,
         validationScore: validationResult.errorCount === 0 ? 100 : Math.max(0, 100 - validationResult.errorCount * 10),
@@ -1143,10 +1146,24 @@ export function AIAppBuilderWorkspace() {
     return activeFile;
   }, [isStreamingPreview, streamingFilePath, partialFiles, activeFile]);
 
+  // Phase 50: Debounced auto-save to prevent corruption from rapid updates
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveInProgressRef = useRef(false);
+
   // Auto-save (cloud) — includes chat messages + versions for persistence
   useEffect(() => {
     if (isGenerating) return; // skip during streaming to prevent browser freeze
-    if (project.files.length > 0) scheduleAutoSave(project.name, project.files, messages, { versions });
+    if (project.files.length === 0) return;
+    // Phase 50: Debounce with 2s delay, cancel pending saves
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      if (saveInProgressRef.current) return;
+      saveInProgressRef.current = true;
+      scheduleAutoSave(project.name, project.files, messages, { versions });
+      // Reset flag after a short delay (scheduleAutoSave is itself debounced)
+      setTimeout(() => { saveInProgressRef.current = false; }, 500);
+    }, 2000);
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
   }, [project.files, project.name, messages, versions, scheduleAutoSave, isGenerating]);
 
   // Auto-save to IndexedDB (Phase 10 — fast local persistence)
@@ -1433,37 +1450,24 @@ export function AIAppBuilderWorkspace() {
     sendMessage(`${diagnosisContext}\n\nFix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, fixAttemptCount, lastFixError, getLastAIResponse]);
 
-  // Track when generation ends for post-generation cooldown + Phase 13/18: post-build hooks
+  // Track when generation ends for post-generation cooldown
+  // Phase 58: Removed duplicate smoke test + auto-patcher calls (now only in latestFiles watcher above)
   const generationEndedAt = useRef<number>(0);
+  const compilationEndedAt = useRef<number>(0);
   const prevIsGenerating = useRef(false);
   useEffect(() => {
     if (!isGenerating && prevIsGenerating.current) {
       generationEndedAt.current = Date.now();
 
-      // Phase 13: Run smoke test after builds complete
+      // Phase 13: Forward smoke test errors to chat (lightweight — the full check runs in latestFiles watcher)
       if (project.files.length > 0) {
         try {
           const smokeResult = smokeTest.runSmokeTest(project.files);
           if (smokeResult.errors.length > 0) {
             const firstError = smokeResult.errors[0];
-            console.warn(`[Smoke Test] ${smokeResult.errors.length} error(s) found:`, smokeResult.errors.map(e => e.message));
             forwardErrorToChat({ message: `[Smoke Test] ${firstError.message}`, source: firstError.file });
           }
-          if (smokeResult.warnings.length > 0) {
-            console.info(`[Smoke Test] ${smokeResult.warnings.length} warning(s)`);
-          }
         } catch (e) { /* smoke test is non-critical */ }
-      }
-
-      // Phase 18: Run delete button auto-patcher after builds
-      if (project.files.length > 0) {
-        try {
-          const patchResult = deleteAutoPatcher.patchDeleteButtons(project.files);
-          if (patchResult.patched) {
-            patchResult.files.forEach(f => upsertFile(f.path, f.content));
-            toast.info(`Auto-fixed ${patchResult.fixes.length} file(s) with common patterns`, { duration: 3000 });
-          }
-        } catch (e) { /* patcher is non-critical */ }
       }
     }
     prevIsGenerating.current = isGenerating;

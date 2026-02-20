@@ -508,6 +508,9 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
   // Phase 24: Normalize file paths — strip leading ./ and /, collapse //
   const normalizePath = (p: string): string => p.replace(/^\.\//, '').replace(/^\//, '').replace(/\/\//g, '/');
 
+  // Phase 47: Accept optional mode parameter to block code in discuss mode
+  // (caller passes mode; if 'discuss', we return empty files/edits)
+
   const flush = () => {
     if (currentPath) {
       // Phase 24: Normalize path

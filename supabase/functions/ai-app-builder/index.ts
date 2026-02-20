@@ -27,6 +27,16 @@ FIX MODE: 🔍 Diagnosis block (symptom/root cause/files/fix). Attempt 2: rewrit
 
 REACT: .tsx, functional components+hooks, App.tsx entry, Tailwind. Packages: lucide-react, framer-motion, recharts, date-fns, clsx, tailwind-merge, cva, cmdk, react-hot-toast, @radix-ui/react-slot, uuid, lodash-es, zod, zustand
 
+IMPORTS: Always use ESM (import/export). Always destructure React hooks: import { useState, useEffect } from 'react'. Never use require(). Never mix import and require in the same project.
+
+NAMING: Each file must export a uniquely named component matching its filename. App.tsx exports App, Header.tsx exports Header. Never duplicate export names across files.
+
+CRITICAL: EVERY .map() that returns JSX MUST have a unique key prop. Use item.id or index as fallback. Missing keys cause React warnings that break the preview.
+
+TAILWIND: Only use default Tailwind utility classes. Do NOT invent custom classes like 'text-primary-500'. Use exact values: text-blue-500, bg-gray-100, etc. For custom colors, define them in a <style> block using CSS custom properties.
+
+ASYNC: Every async event handler MUST have try/catch. Show error feedback on failure (alert, console.error, or toast). Never leave async operations uncaught.
+
 MULTI-PAGE: hash/pushState router, shared layout, active nav, 404, transitions.
 URL SCRAPING: NEVER use CORS proxies. Use platform Firecrawl edge function.
 PRE-CHECKS: All handlers defined, all DOM IDs exist, mutations persist+render, no orphan buttons.
@@ -42,6 +52,8 @@ const SUPABASE_ADDON = `
 SUPABASE INTEGRATION:
 Globals available: \`supabase\`, \`SUPABASE_URL\`, \`SUPABASE_ANON_KEY\`. SDK is pre-loaded.
 Use for: auth, database queries, realtime subscriptions, storage.
+
+UX: Every data-fetching component MUST have a loading state (spinner or skeleton). Initialize data as empty array [], not undefined. Show error state if query fails. Never render raw undefined data.
 
 SCHEMA-AWARE: When [DATABASE SCHEMA] context is provided, use EXACT table/column names. A types.ts file is auto-generated.
 
@@ -330,8 +342,34 @@ serve(async (req) => {
 
     const { messages, stream = true, supabaseConfig, stripeConfig, activeServices = [], mode = 'build', model } = await req.json();
 
+    // Phase 54: Validate message content types — filter malformed messages
+    const validatedMessages = (messages as any[]).filter((m: any) => {
+      if (!m || !m.role) return false;
+      if (m.content === null || m.content === undefined) return false;
+      if (typeof m.content === 'number') { m.content = String(m.content); return true; }
+      if (typeof m.content === 'string') return true;
+      if (Array.isArray(m.content)) {
+        m.content = m.content.filter((block: any) => 
+          block && (block.type === 'text' || block.type === 'image_url')
+        );
+        return m.content.length > 0;
+      }
+      return false;
+    });
+
+    // Phase 55: Validate model string
+    const VALID_MODELS = new Set([
+      'google/gemini-3-flash-preview',
+      'google/gemini-2.5-flash',
+      'google/gemini-2.0-flash',
+      'anthropic/claude-sonnet-4',
+      'anthropic/claude-3.5-sonnet',
+    ]);
+    const DEFAULT_MODEL = 'google/gemini-3-flash-preview';
+    const selectedModel = (model && VALID_MODELS.has(model)) ? model : DEFAULT_MODEL;
+
     // Context window management: summarize old messages if conversation is too long
-    let processedMessages = [...messages];
+    let processedMessages = [...validatedMessages];
     const MAX_CONTEXT_MESSAGES = 40;
     if (processedMessages.length > MAX_CONTEXT_MESSAGES) {
       const oldMessages = processedMessages.slice(2, -10);
@@ -351,7 +389,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    if (!validatedMessages || !Array.isArray(validatedMessages) || validatedMessages.length === 0) {
       return new Response(JSON.stringify({ error: "Messages array is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -482,6 +520,10 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
     const MAX_MESSAGE_CHARS = 2_000_000;
     const finalMessages = trimMessagesToFit(sanitizedMessages, MAX_MESSAGE_CHARS);
 
+    // Phase 57: Log final payload size for debugging token errors
+    const finalPayloadChars = estimateTotalChars([{ role: 'system', content: systemPrompt }, ...finalMessages]);
+    console.log(`Final payload: ${finalPayloadChars} chars (~${Math.round(finalPayloadChars / 4)} tokens), ${finalMessages.length} messages, system prompt: ${systemPrompt.length} chars`);
+
     // ── Gateway call with timeout (Lovable-grade) ──
     const GATEWAY_TIMEOUT_MS = 50_000; // 50s — must finish before Supabase ~60s wall-clock limit
     const gatewayController = new AbortController();
@@ -496,7 +538,7 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
           "Content-Type": "application/json",
         },
       body: JSON.stringify({
-          model: model || "google/gemini-3-flash-preview",
+          model: selectedModel,
           messages: [{ role: "system", content: systemPrompt }, ...finalMessages],
           stream,
         }),
@@ -585,7 +627,26 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
     }
 
     if (stream) {
-      return new Response(response.body, {
+      // Phase 56: Wrap stream in TransformStream to ensure proper termination on abort
+      const { readable, writable } = new TransformStream();
+      const writer = writable.getWriter();
+      const reader = response.body!.getReader();
+      (async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            await writer.write(value);
+          }
+        } catch (e) {
+          // Stream aborted — send termination signal
+          const encoder = new TextEncoder();
+          try { await writer.write(encoder.encode('data: [DONE]\n\n')); } catch {}
+        } finally {
+          try { await writer.close(); } catch {}
+        }
+      })();
+      return new Response(readable, {
         headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
       });
     }
