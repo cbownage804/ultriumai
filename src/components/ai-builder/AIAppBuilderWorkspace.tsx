@@ -302,17 +302,22 @@ export function AIAppBuilderWorkspace() {
   const tsValidator = useTypeScriptValidator();
   const conflictResolver = useConflictResolver();
   const bundleForBrowser = useCallback((files: ProjectFile[]) => {
-    const result = incrementalCompiler.compileIncremental(
-      files,
-      (file) => {
-        const graph = astBundler.buildDependencyGraph([file]);
-        const node = graph.get(file.path);
-        if (!node) return file.content;
-        return `/* ═══ ${file.path} ═══ */\n(function() {\n"use strict";\n${astBundler.stripModuleSyntax(file.content, node)}\n})();`;
-      },
-      (f) => astBundler.topologicalSort(astBundler.buildDependencyGraph(f)).filter(p => f.some(file => file.path === p)),
-    );
-    return result.output;
+    try {
+      const result = incrementalCompiler.compileIncremental(
+        files,
+        (file) => {
+          const graph = astBundler.buildDependencyGraph([file]);
+          const node = graph.get(file.path);
+          if (!node) return file.content;
+          return `/* ═══ ${file.path} ═══ */\n(function() {\n"use strict";\n${astBundler.stripModuleSyntax(file.content, node)}\n})();`;
+        },
+        (f) => astBundler.topologicalSort(astBundler.buildDependencyGraph(f)).filter(p => f.some(file => file.path === p)),
+      );
+      return result.output;
+    } catch (e) {
+      console.error('[bundleForBrowser] Bundling crashed:', e);
+      return '';
+    }
   }, [astBundler, incrementalCompiler]);
   const liveSync = useLivePreviewSync();
   const [remoteCursors, setRemoteCursors] = useState<RemoteCursor[]>([]);
@@ -1057,8 +1062,13 @@ export function AIAppBuilderWorkspace() {
   // Issue 12 fix: Skip redundant compilation during generation
   const compiledForHosting = useMemo(
     () => {
-      if (isGenerating) return null;
-      return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+      try {
+        if (isGenerating) return null;
+        return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+      } catch (e) {
+        console.error('[compiledForHosting] Compilation crashed:', e);
+        return null;
+      }
     },
     [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, isGenerating]
   );
@@ -1647,7 +1657,14 @@ export function AIAppBuilderWorkspace() {
 
   // ── React Compiler integration ──
   const { compileReactProject } = useReactCompiler();
-  const isReactProject = useMemo(() => detectReactProject(project.files), [project.files]);
+  const isReactProject = useMemo(() => {
+    try {
+      return detectReactProject(project.files);
+    } catch (e) {
+      console.error('[detectReactProject] crashed:', e);
+      return false;
+    }
+  }, [project.files]);
 
   // Moved above timer-based compilation effect to fix React hook ordering (#310)
   const [stableHTML, setStableHTML] = useState<string | null>(null);
