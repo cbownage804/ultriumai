@@ -704,22 +704,22 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
       // Also use abort signal from the incoming request
       req.signal?.addEventListener('abort', () => { ensureDone(); });
 
-      // Keepalive: Send SSE comments every 8s throughout the ENTIRE stream.
-      // This prevents idle connection timeouts during AI "thinking" pauses
-      // between files, not just before the first chunk.
+      // Keepalive: Send SSE comments every 4s throughout the ENTIRE stream.
+      // More aggressive interval ensures Supabase proxy never sees idle connection.
       const keepaliveInterval = setInterval(async () => {
         if (sentDone) {
           clearInterval(keepaliveInterval);
           return;
         }
-        if (Date.now() - lastUpstreamTime > 7_000) {
+        if (Date.now() - lastUpstreamTime > 3_000) {
           try {
             await writer.write(encoder.encode(': keepalive\n\n'));
+            console.log(`[${requestId}] Keepalive sent (gap: ${Date.now() - lastUpstreamTime}ms)`);
           } catch {
             clearInterval(keepaliveInterval);
           }
         }
-      }, 8_000);
+      }, 4_000);
 
       (async () => {
         try {
@@ -729,6 +729,7 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
             lastUpstreamTime = Date.now();
             await writer.write(value);
           }
+          console.log(`[${requestId}] Upstream stream completed after ${Date.now() - lastUpstreamTime}ms since last chunk`);
         } catch (e) {
           // Stream aborted by upstream — still send termination signal
         } finally {
