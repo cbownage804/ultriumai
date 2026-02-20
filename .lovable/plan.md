@@ -1,132 +1,100 @@
 
 
-# Fix: Preview Stuck on Skeletons Due to Main Thread Blocking
+# Fix: Main Thread Blocking During Streaming (Firefox "Slowing Down" Warning)
 
 ## Problem
 
-The preview permanently shows "Loading preview..." skeletons because the main thread is blocked by excessive re-renders in the 2700-line `AIAppBuilderWorkspace` component. Firefox explicitly warns "This page is slowing down Firefox." The generation timer freezes at "27.8s" and never advances, proving the main thread is stalled. This means ALL JavaScript timeouts (the 55s wall-clock, 120s force-compile, 3-minute cap) never fire.
+Despite the 200ms throttle on `setMessages`, the preview stays stuck on skeletons and Firefox shows "This page is slowing down Firefox." The generation timer freezes, proving the main thread is stalled and ALL timeouts (55s wall-clock, 120s force-compile, 3-min cap) never fire.
 
 ## Root Cause
 
-Every streaming token triggers `setMessages()` inside `requestAnimationFrame`, which re-renders the entire `AIAppBuilderWorkspace` component (2700 lines, ~180 hooks, dozens of memos and effects). Even with rAF batching, this component is too expensive to re-render at streaming frequency. Firefox throttles the page, blocking all timers.
+Each `setMessages()` call triggers a full re-render of `AIAppBuilderWorkspace` (2700 lines, ~180 hooks, dozens of effects). At 200ms throttle, that is 5 renders/second. But each render takes longer than 200ms due to:
 
-## Fix Strategy: Two surgical changes
+- ~180 hooks re-evaluating
+- Multiple `useEffect` hooks with `messages` in their dependency arrays (auto-save to cloud, IDB, localStorage, latestRef assignment)
+- Dozens of `useMemo` recomputations
+- The entire JSX tree (2700 lines) re-diffing
 
-### Fix A: Allow compilation during generation (remove the `isGenerating` block)
+Result: the main thread is blocked 100% of the time during streaming. No timers fire, no compilation happens, preview stays as skeleton.
 
-The `liveCompiledHTML` memo (line 1811) has `if (isGenerating) return null` which blocks ALL compilation while streaming. This was originally added to prevent "Resource Load Errors" from incomplete files, but it causes the preview to show skeletons for the entire generation duration (potentially minutes with continuation rounds).
+## Solution: Use a Ref for Streaming Content, Stop Re-rendering the Workspace
 
-**Change**: Replace the hard block with a conditional: compile when `completedFileCount >= 3` (meaning at least 3 files have been fully streamed). This gives users a live preview that updates as files arrive, while still avoiding compilation of a single half-written file.
+During streaming, store the assistant's content in a `useRef` instead of calling `setMessages`. Only the chat panel needs to display the streaming text -- and it can read from a separate, lightweight "streaming content" signal. The workspace component never re-renders during streaming.
 
-**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (line 1807-1811)
+### Change 1: Add a streaming content ref to `useAIAppBuilder`
+
+**File**: `src/hooks/useAIAppBuilder.ts`
+
+Add a `streamingContentRef` and a `streamingVersion` counter (a simple number state that increments at most every 300ms to let the chat panel know there is new content to display):
 
 ```typescript
-// BEFORE:
-if (isGenerating) return null;
-
-// AFTER:
-// Allow compilation once enough files are complete, even during generation
-if (isGenerating && completedFileCount < 3) return null;
+const streamingContentRef = useRef<string>('');
+const [streamingVersion, setStreamingVersion] = useState(0);
 ```
 
-### Fix B: Throttle `setMessages` more aggressively during streaming
+### Change 2: Replace `setMessages` with ref writes during streaming
 
-Currently `setMessages` fires every `requestAnimationFrame` (~16ms). For a 2700-line component, this is too frequent. Throttle to every 200ms during streaming.
+**File**: `src/hooks/useAIAppBuilder.ts`
 
-**File**: `src/hooks/useAIAppBuilder.ts` (lines 1225-1264)
-
-Change the `upsertAssistant` function to use a 200ms throttle instead of rAF:
+In `upsertAssistant`, instead of calling `setMessages` (which re-renders the entire workspace), write to `streamingContentRef.current` and bump `streamingVersion` at most every 300ms:
 
 ```typescript
-let lastUpdateTime = 0;
-const UPDATE_THROTTLE_MS = 200;
-let throttleTimer: ReturnType<typeof setTimeout> | null = null;
-
 const upsertAssistant = (content: string) => {
   fullContent = content;
-  const now = Date.now();
+  streamingContentRef.current = content;
   
-  const doUpdate = () => {
-    lastUpdateTime = Date.now();
-    const currentContent = fullContent;
-    
-    let planSteps: PlanStep[] | undefined;
-    try {
-      if (currentContent.length > 200) {
-        planSteps = parsePlanSteps(currentContent);
-      }
-    } catch {}
-
-    setMessages(prev => {
-      const last = prev[prev.length - 1];
-      if (last?.role === 'assistant') {
-        return prev.map((m, i) => i === prev.length - 1
-          ? { ...m, content: currentContent, ...(planSteps ? { planSteps } : {}) }
-          : m
-        );
-      }
-      return [...prev, { id: assistantMsgId, role: 'assistant' as const, content: currentContent, timestamp: new Date(), ...(planSteps ? { planSteps } : {}) }];
-    });
-
-    if (currentContent.length - lastParsedLength >= 500) {
-      lastParsedLength = currentContent.length;
-      streaming.parseIncremental(currentContent);
-    }
-  };
-
-  if (now - lastUpdateTime >= UPDATE_THROTTLE_MS) {
-    doUpdate();
-  } else if (!throttleTimer) {
-    throttleTimer = setTimeout(() => {
-      throttleTimer = null;
-      doUpdate();
-    }, UPDATE_THROTTLE_MS - (now - lastUpdateTime));
+  // Still parse for file streaming (lightweight, no React state)
+  if (content.length - lastParsedLength >= 500) {
+    lastParsedLength = content.length;
+    streaming.parseIncremental(content);
+  }
+  
+  // Bump version counter at most every 300ms for chat display
+  const now = Date.now();
+  if (now - lastUpdateTime >= 300) {
+    lastUpdateTime = now;
+    setStreamingVersion(v => v + 1);
   }
 };
 ```
 
-### Fix C: Update stableHTML effect to accept generation-time compilation
+Then in the `finally` block (stream end), do a single `setMessages` call to commit the final content.
 
-The `stableHTML` effect (line 1831) currently requires `!isGenerating` to update. With Fix A allowing compilation during generation, we need to also accept updates while generating.
+### Change 3: Pass streamingContentRef to BuilderChatPanel
 
-**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (line 1831-1846)
+**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
 
-```typescript
-// BEFORE:
-if (!isGenerating && liveCompiledHTML) { ... }
+Pass `streamingContentRef` and `streamingVersion` to `BuilderChatPanel`. The chat panel reads `streamingContentRef.current` when `isGenerating` is true and `streamingVersion` changes, displaying the live text without re-rendering the workspace.
 
-// AFTER:
-if (liveCompiledHTML) {
-  // During generation, only do full reloads (no hot-patching incomplete code)
-  if (isGenerating) {
-    setStableHTML(liveCompiledHTML);
-  } else {
-    const patched = liveSync.applyPatches(previewIframeRef, project.files);
-    if (!patched) {
-      setStableHTML(liveCompiledHTML);
-      liveSync.resetSnapshot(project.files);
-    }
-  }
-}
-```
+### Change 4: Update BuilderChatPanel to use the streaming ref
 
-## Technical Details
+**File**: `src/components/ai-builder/BuilderChatPanel.tsx` (or wherever it is defined)
 
-| File | Lines | Change |
-|------|-------|--------|
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | ~1811 | Allow compilation when completedFileCount >= 3 during generation |
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | ~1831-1846 | Accept compilation results during generation |
-| `src/hooks/useAIAppBuilder.ts` | ~1225-1264 | Throttle setMessages to 200ms instead of rAF (16ms) |
+When `isGenerating` is true, append a virtual assistant message from `streamingContentRef.current` to the displayed messages. This is computed locally inside the chat panel, so only the chat panel re-renders.
 
-## Expected Result
+### Change 5: Remove `messages` from heavy dependency arrays
 
-- Preview shows a live draft within ~15-20 seconds (after 3 files complete) instead of waiting for entire generation to finish
-- Main thread stays responsive (5x fewer React re-renders during streaming)
-- Firefox "slowing down" warning eliminated
-- All safety timers (wall-clock, 3-min cap) can fire reliably because the main thread isn't blocked
+The auto-save effects (lines 1074-1100) already skip during `isGenerating`, but they still re-run their setup/teardown because `messages` is in the dependency array. Since `messages` won't change during streaming anymore (only `streamingVersion` changes), these effects stay dormant.
+
+## Impact
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Workspace re-renders during streaming | ~5/sec (200ms throttle) | 0 (ref-only writes) |
+| Chat panel re-renders during streaming | ~5/sec (coupled) | ~3/sec (independent, 300ms) |
+| Main thread blocked | 100% during streaming | <10% |
+| Timers fire reliably | No | Yes |
+| Preview compilation | Never starts (thread blocked) | Starts after 3 files complete |
+
+## Files Changed
+
+| File | Change |
+|------|--------|
+| `src/hooks/useAIAppBuilder.ts` | Add `streamingContentRef`, `streamingVersion`; rewrite `upsertAssistant` to use ref; single `setMessages` on stream end |
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Pass `streamingContentRef` and `streamingVersion` to `BuilderChatPanel` |
+| `src/components/ai-builder/BuilderChatPanel.tsx` | Read streaming content from ref instead of `messages` prop during generation |
 
 ## Risk
 
-- **Low**: Fix A may show a brief flash if files 1-3 have compile errors, but the user sees progress instead of an eternal skeleton. The `completedFileCount >= 3` threshold ensures at least index.html + a CSS + a component are present before first compile.
-- **Low**: Fix B reduces chat update frequency from ~60fps to ~5fps during streaming. The code editor already reads from `partialFiles` directly, so users still see code appearing in real-time.
+- **Low**: The only behavioral change is that `messages` state doesn't update during streaming. All consumers that need streaming content (chat display) get it from the ref. All consumers that skip during streaming (auto-save, IDB, drafts) already guard with `if (isGenerating) return`. The final `setMessages` call at stream end commits everything, so post-stream behavior is identical.
 
