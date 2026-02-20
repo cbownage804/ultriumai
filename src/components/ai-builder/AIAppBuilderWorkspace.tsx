@@ -575,11 +575,13 @@ export function AIAppBuilderWorkspace() {
   const showShortcuts = !!panels.showShortcuts;
   const showQuickSwitcher = !!panels.showQuickSwitcher;
 
-  // Setter helper — creates a setter compatible with (v: boolean) and (v: (prev) => boolean)
+  // Issue 9 fix: Use panelsRef to remove panels dependency, preventing 200 setter recreations
+  const panelsRef = useRef(panels);
+  panelsRef.current = panels;
   const sp = useCallback((key: string) => (v: boolean | ((prev: boolean) => boolean)) => {
-    const val = typeof v === 'function' ? v(!!panels[key]) : v;
+    const val = typeof v === 'function' ? v(!!panelsRef.current[key]) : v;
     val ? openP(key) : closeP(key);
-  }, [panels, openP, closeP]);
+  }, [openP, closeP]);
 
   const setShowVersionHistory = sp('showVersionHistory');
   const setShowConsole = sp('showConsole');
@@ -874,10 +876,13 @@ export function AIAppBuilderWorkspace() {
         const nonConflicting = latestFiles.filter(f => !dirtyFiles.has(f.path));
         for (const file of nonConflicting) upsertFile(file.path, file.content);
       } else {
+        // Issue 6 fix: Batch all file updates into a single setFiles call
         if (project.files.length === 0) {
           setFiles(latestFiles);
         } else {
-          for (const file of latestFiles) upsertFile(file.path, file.content);
+          const existingMap = new Map(project.files.map(f => [f.path, f]));
+          for (const f of latestFiles) existingMap.set(f.path, f);
+          setFiles(Array.from(existingMap.values()));
         }
       }
       updateBranchFiles(latestFiles);
@@ -1059,11 +1064,10 @@ export function AIAppBuilderWorkspace() {
     prevIsGeneratingRef.current = isGenerating;
   }, [isGenerating, latestFiles.length, messages, project.name, renameProject]);
 
-  // Issue 2 fix: editorStreamFiles polling moved to StreamingCodeEditor child component.
-  // Only keep a lightweight streamingFilePath ref for the tab bar.
-  const [streamingFilePath, setStreamingFilePath] = useState<string | null>(null);
+  // Issue 8 fix: streamingFilePath as ref to avoid workspace re-renders
+  const streamingFilePathRef = useRef<string | null>(null);
   const handleStreamingFileChange = useCallback((path: string | null) => {
-    setStreamingFilePath(path);
+    streamingFilePathRef.current = path;
   }, []);
 
   // editorFile for non-streaming contexts (split view, code-only tab)
@@ -1863,11 +1867,19 @@ export function AIAppBuilderWorkspace() {
     return () => clearInterval(interval);
   }, [isGenerating, partialFilesRef, completedFileCountRef, compileReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, getCompiledHTML]);
 
+  const [stableHTML, setStableHTML] = useState<string | null>(null);
+  // Issue 10 fix: Track stableHTML in a ref so liveCompiledHTML can skip redundant compilation
+  const stableHTMLRef = useRef<string | null>(null);
+  stableHTMLRef.current = stableHTML;
+
   const liveCompiledHTML = useMemo(() => {
     // During generation, compilation is handled by the timer above
     if (isGenerating) return null;
 
     if (project.files.length === 0) return null;
+
+    // Issue 10 fix: Skip redundant compilation if stableHTML already exists from timer-based path
+    if (stableHTMLRef.current) return null;
 
     // If this is a React project, use the React compiler pipeline
     if (isReactProject) {
@@ -1884,11 +1896,12 @@ export function AIAppBuilderWorkspace() {
     // Otherwise use the vanilla HTML compiler
     return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
   }, [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, isReactProject, compileReactProject, isGenerating]);
-  const [stableHTML, setStableHTML] = useState<string | null>(null);
 
   // Defer preview updates until build completes — but allow CSS hot-patches through immediately
   useEffect(() => {
     if (liveCompiledHTML) {
+      // Issue 11 fix: Skip if stableHTML already has content (avoid redundant iframe reload)
+      if (stableHTML && stableHTML.length > 0) return;
       // Try hot-patching first (CSS-only changes skip full reload)
       const patched = liveSync.applyPatches(previewIframeRef, project.files);
       if (!patched) {
@@ -1934,10 +1947,23 @@ export function AIAppBuilderWorkspace() {
             console.warn('[Preview] Partial React compilation failed:', e);
           }
         }
-        // Fallback: try vanilla compilation
+        // Issue 7 fix: Fallback vanilla compilation using partialFilesRef (project.files is empty during generation)
         try {
-          const html = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
-          if (html) setStableHTML(html);
+          const htmlFile = pFiles.find(f => f.path.endsWith('.html'));
+          if (htmlFile) {
+            let html = htmlFile.content;
+            const cssFiles = pFiles.filter(f => f.path.endsWith('.css'));
+            if (cssFiles.length > 0) {
+              const cssInline = cssFiles.map(f => `<style>/* ${f.path} */\n${f.content}</style>`).join('\n');
+              html = html.replace('</head>', `${cssInline}\n</head>`);
+            }
+            const jsFiles = pFiles.filter(f => f.path.endsWith('.js') && !f.path.endsWith('.config.js'));
+            if (jsFiles.length > 0) {
+              const jsInline = jsFiles.map(f => `<script>/* ${f.path} */\n${f.content}</script>`).join('\n');
+              html = html.replace('</body>', `${jsInline}\n</body>`);
+            }
+            setStableHTML(html);
+          }
         } catch (e) {
           console.warn('[Preview] Partial vanilla compilation failed:', e);
         }
@@ -2117,7 +2143,7 @@ export function AIAppBuilderWorkspace() {
               <div className="h-full flex flex-col bg-[#09090b]">
                 {(editorFile || activeFile) && (
                   <>
-                    <FileTabBar openPaths={project.openFilePaths} activePath={streamingFilePath || project.activeFilePath} dirtyFiles={dirtyFiles} streamingFilePath={streamingFilePath} onSelect={(path) => setActiveFile(path)} onClose={(path) => closeFile(path)} onReorder={reorderOpenFiles} />
+                    <FileTabBar openPaths={project.openFilePaths} activePath={streamingFilePathRef.current || project.activeFilePath} dirtyFiles={dirtyFiles} streamingFilePath={streamingFilePathRef.current} onSelect={(path) => setActiveFile(path)} onClose={(path) => closeFile(path)} onReorder={reorderOpenFiles} />
                     <div className="flex-1 min-h-0">
                       <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={(path, content) => { upsertFile(path, content); setDirtyFiles(prev => new Set(prev).add(path)); }} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onStreamingFileChange={handleStreamingFileChange} />
                     </div>
@@ -2435,7 +2461,7 @@ export function AIAppBuilderWorkspace() {
                   {/* File tab bar (code/split only) */}
                   {hasFiles && rightTab !== 'preview' && (
                     <div className="flex items-center h-9 border-b border-white/[0.06] bg-[#0d0d14] shrink-0">
-                      <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} dirtyFiles={dirtyFiles} streamingFilePath={streamingFilePath} onSelect={setActiveFile} onClose={closeFile} onReorder={reorderOpenFiles} />
+                      <FileTabBar openPaths={project.openFilePaths} activePath={project.activeFilePath} dirtyFiles={dirtyFiles} streamingFilePath={streamingFilePathRef.current} onSelect={setActiveFile} onClose={closeFile} onReorder={reorderOpenFiles} />
                       {isGenerating && (
                         <div className="ml-auto mr-3 flex items-center gap-1.5 text-[10px] text-amber-400/80">
                           <Activity className="h-3 w-3 animate-pulse" />
