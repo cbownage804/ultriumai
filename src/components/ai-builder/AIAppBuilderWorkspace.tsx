@@ -1649,6 +1649,21 @@ export function AIAppBuilderWorkspace() {
   const { compileReactProject } = useReactCompiler();
   const isReactProject = useMemo(() => detectReactProject(project.files), [project.files]);
 
+  // Moved above timer-based compilation effect to fix React hook ordering (#310)
+  const [stableHTML, setStableHTML] = useState<string | null>(null);
+  const stableHTMLRef = useRef<string | null>(null);
+  stableHTMLRef.current = stableHTML;
+
+  // Issue 24 fix: Reset stableHTML when a new generation starts so subsequent builds recompile
+  const prevIsGeneratingForReset = useRef(false);
+  useEffect(() => {
+    if (isGenerating && !prevIsGeneratingForReset.current) {
+      setStableHTML(null);
+      stableHTMLRef.current = null;
+    }
+    prevIsGeneratingForReset.current = isGenerating;
+  }, [isGenerating]);
+
   // Timer-based compilation: poll partialFilesRef every 3s during generation
   // instead of running the expensive compiler synchronously on every state change
   useEffect(() => {
@@ -1703,20 +1718,7 @@ export function AIAppBuilderWorkspace() {
     return () => clearInterval(interval);
   }, [isGenerating, partialFilesRef, completedFileCountRef, compileReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, getCompiledHTML]);
 
-  const [stableHTML, setStableHTML] = useState<string | null>(null);
-  // Issue 10 fix: Track stableHTML in a ref so liveCompiledHTML can skip redundant compilation
-  const stableHTMLRef = useRef<string | null>(null);
-  stableHTMLRef.current = stableHTML;
-
-  // Issue 24 fix: Reset stableHTML when a new generation starts so subsequent builds recompile
-  const prevIsGeneratingForReset = useRef(false);
-  useEffect(() => {
-    if (isGenerating && !prevIsGeneratingForReset.current) {
-      setStableHTML(null);
-      stableHTMLRef.current = null;
-    }
-    prevIsGeneratingForReset.current = isGenerating;
-  }, [isGenerating]);
+  // stableHTML, stableHTMLRef, and prevIsGeneratingForReset moved above timer-based compilation effect to fix hook ordering
 
   const liveCompiledHTML = useMemo(() => {
     // During generation, compilation is handled by the timer above
