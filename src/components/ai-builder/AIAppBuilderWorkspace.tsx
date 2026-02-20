@@ -1812,9 +1812,15 @@ export function AIAppBuilderWorkspace() {
     // Allow compilation once enough files are complete, even during generation
     if (isGenerating && completedFileCount < 3) return null;
 
+    // During generation, use partialFiles for compilation since project.files
+    // is empty for new projects (files only sync via latestFiles after generation ends)
+    const filesToCompile = isGenerating && partialFiles.length > 0 ? partialFiles : project.files;
+    if (filesToCompile.length === 0) return null;
+
     // If this is a React project, use the React compiler pipeline
-    if (isReactProject) {
-      const result = compileReactProject(project.files, {
+    const isReact = isGenerating ? filesToCompile.some(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx')) : isReactProject;
+    if (isReact) {
+      const result = compileReactProject(filesToCompile, {
         supabaseConfig: supabaseConfig || undefined,
         stripeConfig: stripeConfig || undefined,
         envVars,
@@ -1826,7 +1832,7 @@ export function AIAppBuilderWorkspace() {
     }
     // Otherwise use the vanilla HTML compiler
     return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
-  }, [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, isReactProject, compileReactProject, isGenerating, completedFileCount]);
+  }, [project.files, partialFiles, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, isReactProject, compileReactProject, isGenerating, completedFileCount]);
   const [stableHTML, setStableHTML] = useState<string | null>(null);
 
   // Defer preview updates until build completes — but allow CSS hot-patches through immediately
