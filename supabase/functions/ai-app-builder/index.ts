@@ -37,11 +37,28 @@ TAILWIND: Only use default Tailwind utility classes. Do NOT invent custom classe
 
 ASYNC: Every async event handler MUST have try/catch. Show error feedback on failure (alert, console.error, or toast). Never leave async operations uncaught.
 
-MULTI-PAGE: hash/pushState router, shared layout, active nav, 404, transitions.
+HANDLERS: Every onClick, onChange, onSubmit handler MUST reference a function defined earlier in the same component. Before outputting a JSX element with an event handler, verify the handler function exists. If it doesn't, define it as a const arrow function above the return statement.
+
+RESPONSIVE: ALWAYS use responsive Tailwind classes: grid-cols-1 sm:grid-cols-2 lg:grid-cols-3. NEVER use fixed pixel widths for containers. Use max-w-7xl mx-auto for page width. Sidebars must collapse on mobile (hidden md:block). Test: the app must look correct at 375px width.
+
+STATE: ALL data displayed in lists, tables, or cards MUST come from useState (or Supabase queries). NEVER hardcode data in JSX. Initialize state with 2-3 sample items. All CRUD operations must modify state using setState with immutable patterns (.filter, .map, spread operator).
+
+LOADING: Show a centered spinner (CSS animation, no dependencies) during ALL async operations. Use a simple isLoading state: const [isLoading, setIsLoading] = useState(true). Wrap data-fetching in useEffect that sets isLoading=false after data arrives. The spinner must be visible IMMEDIATELY — no delayed renders.
+
+EMPTY STATES: Every list, table, or data grid MUST check if data.length === 0 and show a friendly empty state: an icon, a message ('No items yet'), and a CTA button ('Add your first item'). Never render an empty container.
+
+RESILIENCE: Every fetch/API call must have: 1) try/catch, 2) a user-visible error message (not just console.error), 3) a retry button. For Supabase queries, check both 'error' and 'data' before rendering. Show 'Something went wrong. Try again.' with a retry button on failure.
+
+FORMS: Every form MUST have: 1) 'required' attribute on mandatory fields, 2) type='email' for email fields, 3) minLength for text fields, 4) a disabled submit button until form is valid, 5) onSubmit with e.preventDefault(). Show inline validation errors on blur. Never allow empty form submission.
+
+MULTI-PAGE: ROUTING: For multi-page apps, use a hash-based router (window.location.hash) with a central renderPage() function. Each 'page' is a function that returns HTML. The nav links must use '#/page' format. Include a hashchange listener that re-renders on navigation. Test: clicking every nav link must show different content.
+
 URL SCRAPING: NEVER use CORS proxies. Use platform Firecrawl edge function.
 PRE-CHECKS: All handlers defined, all DOM IDs exist, mutations persist+render, no orphan buttons.
 
 CHUNKING: Output the MOST IMPORTANT files first (index.html, then main app file, then styles).
+LENGTH: If your response will exceed 4000 lines, use ===CONTINUE=== to signal you need more rounds.
+NEVER leave a file half-written. Finish the current file completely before moving to the next.
 If you run out of space, end your response with ===CONTINUE=== on its own line — the system will
 automatically send a follow-up request for remaining files. Do NOT rush or truncate files
 to fit everything in one response. Quality over completeness.`;
@@ -307,11 +324,23 @@ function trimMessagesToFit(messages: any[], maxChars: number): any[] {
     result.splice(removeIdx, 1);
   }
 
-  // Phase 4: Truncate the last user message's file content
+  // Phase 103: Smart truncation of last user message — preserve instruction, trim file context
   if (total > maxChars) {
     const last = result[result.length - 1];
     if (typeof last.content === 'string' && last.content.length > 200000) {
-      last.content = last.content.slice(0, 200000) + '\n\n[Truncated server-side for token budget]';
+      // Detect the boundary between user instruction and file context
+      const userRequestMarker = last.content.indexOf('User request:');
+      const projectFilesMarker = last.content.indexOf('[PROJECT FILES]');
+      if (userRequestMarker >= 0 && projectFilesMarker >= 0) {
+        // Preserve first 5000 chars of user instruction + truncated file context
+        const instructionEnd = Math.min(userRequestMarker + 5000, projectFilesMarker);
+        const instruction = last.content.slice(0, instructionEnd);
+        const fileContext = last.content.slice(projectFilesMarker);
+        const maxFileContext = 200000 - instruction.length;
+        last.content = instruction + fileContext.slice(0, maxFileContext) + '\n\n[File context truncated server-side for token budget]';
+      } else {
+        last.content = last.content.slice(0, 200000) + '\n\n[Truncated server-side for token budget]';
+      }
     } else if (Array.isArray(last.content)) {
       last.content = last.content.map((block: any) => {
         if (block.type === 'text' && block.text?.length > 200000) {
@@ -328,19 +357,38 @@ function trimMessagesToFit(messages: any[], maxChars: number): any[] {
   return result;
 }
 
+/** Phase 71: Auto-detect truncated output and append ===CONTINUE=== */
+function detectTruncatedOutput(content: string): boolean {
+  if (!content || content.length < 100) return false;
+  const lastLines = content.trim().split('\n').slice(-5);
+  const lastLine = lastLines[lastLines.length - 1]?.trim() || '';
+  // Check if we're inside an unclosed code block (no matching ===FILE: with content after it)
+  const fileMarkers = content.match(/===FILE:\s*.+?===/g) || [];
+  if (fileMarkers.length === 0) return false;
+  // If the last non-empty line looks like code (not a closing tag/brace) and we have open markers
+  const looksLikeCode = /^[\s]*[a-zA-Z<{\/\[\]()@#.;:=!&|+\-*%?~`\\]/.test(lastLine) && !lastLine.includes('===');
+  const hasUnclosedBraces = (content.match(/{/g) || []).length > (content.match(/}/g) || []).length + 2;
+  return looksLikeCode && hasUnclosedBraces;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // Phase 100: Generate request ID for debugging
+  const requestId = crypto.randomUUID();
 
   try {
     // Phase 90: Request size guard — reject payloads over 10MB
     const contentLength = parseInt(req.headers.get('content-length') || '0');
     if (contentLength > 10_000_000) {
-      return new Response(JSON.stringify({ error: "Request too large (max 10MB)" }), {
-        status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: "Request too large (max 10MB)", requestId }), {
+        status: 413, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Request-Id": requestId },
       });
     }
 
     const { messages, stream = true, supabaseConfig, stripeConfig, activeServices = [], mode = 'build', model } = await req.json();
+
+    console.log(`[${requestId}] Mode: ${mode}, Messages: ${messages?.length}, Model: ${model || 'default'}`);
 
     // Phase 54: Validate message content types — filter malformed messages
     const validatedMessages = (messages as any[]).filter((m: any) => {
@@ -352,6 +400,17 @@ serve(async (req) => {
         m.content = m.content.filter((block: any) => 
           block && (block.type === 'text' || block.type === 'image_url')
         );
+        // Phase 99: Truncate oversized base64 images (>2MB)
+        m.content = m.content.map((block: any) => {
+          if (block.type === 'image_url' && block.image_url?.url) {
+            const url = block.image_url.url;
+            if (url.startsWith('data:') && url.length > 2_000_000) {
+              console.log(`[${requestId}] Truncating oversized image block (${Math.round(url.length / 1024)}KB)`);
+              return { ...block, image_url: { ...block.image_url, url: url.slice(0, 1_000_000) } };
+            }
+          }
+          return block;
+        });
         return m.content.length > 0;
       }
       return false;
@@ -390,8 +449,8 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     if (!validatedMessages || !Array.isArray(validatedMessages) || validatedMessages.length === 0) {
-      return new Response(JSON.stringify({ error: "Messages array is required" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: "Messages array is required", requestId }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Request-Id": requestId },
       });
     }
 
@@ -425,13 +484,43 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
 "You'll want Supabase connected before we build — we'll need it for [auth/database/etc]."`;
 
     let systemPrompt = mode === 'discuss' ? DISCUSS_SYSTEM_PROMPT : BASE_SYSTEM_PROMPT;
-    console.log(`System prompt (base): ${systemPrompt.length} chars`);
+    console.log(`[${requestId}] System prompt (base): ${systemPrompt.length} chars`);
     if (supabaseConfig) systemPrompt += SUPABASE_ADDON;
     if (stripeConfig) systemPrompt += STRIPE_ADDON;
 
-    for (const serviceId of activeServices) {
+    // Phase 97: Cap system prompt — only include 2 most relevant service prompts
+    const lastUserText = (() => {
+      const last = processedMessages.filter((m: any) => m.role === 'user').pop();
+      if (!last) return '';
+      if (typeof last.content === 'string') return last.content;
+      if (Array.isArray(last.content)) return last.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join(' ');
+      return '';
+    })();
+
+    // Score services by relevance to user's message
+    const scoredServices = activeServices.map((serviceId: string) => {
+      const keywords: Record<string, string[]> = {
+        openai: ['gpt', 'openai', 'chatgpt', 'ai chat', 'completion'],
+        anthropic: ['claude', 'anthropic'],
+        google_ai: ['gemini', 'google ai'],
+        elevenlabs: ['voice', 'speech', 'tts', 'text to speech', 'audio'],
+        deepgram: ['transcribe', 'speech to text', 'stt', 'voice'],
+        replicate: ['image generation', 'stable diffusion', 'flux', 'replicate'],
+        groq: ['groq', 'llama', 'fast ai'],
+      };
+      const serviceKeywords = keywords[serviceId] || [serviceId];
+      const score = serviceKeywords.some(kw => lastUserText.toLowerCase().includes(kw)) ? 10 : 0;
+      return { serviceId, score };
+    }).sort((a: any, b: any) => b.score - a.score);
+
+    // Include top 2 relevant + any explicitly mentioned
+    const MAX_SERVICE_ADDONS = 2;
+    let addedServices = 0;
+    for (const { serviceId } of scoredServices) {
+      if (addedServices >= MAX_SERVICE_ADDONS && systemPrompt.length > 5000) break;
       if (SERVICE_PROMPTS[serviceId]) {
         systemPrompt += SERVICE_PROMPTS[serviceId];
+        addedServices++;
       }
     }
 
@@ -439,23 +528,34 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
       systemPrompt += `\n\nIMPORTANT: All API keys are available via window.ENV.KEY_NAME. Do NOT hardcode keys. Always use window.ENV to access them. Note: browser-side API calls expose keys — acceptable for prototyping only.`;
     }
 
-    // Detect URLs and scrape branding data — ONLY for clone/replicate intent
+    // Phase 98: Tighten clone-intent detection — require URL proximity to keyword
     const urls = extractUrls(processedMessages);
     let brandingContext = '';
-    if (urls.length > 0) {
-      // Check for clone-intent keywords to avoid blocking scrape on every URL mention
-      const lastUserContent = processedMessages.filter((m: any) => m.role === 'user').pop()?.content || '';
-      const textContent = typeof lastUserContent === 'string' ? lastUserContent : 
-        Array.isArray(lastUserContent) ? lastUserContent.filter((b: any) => b.type === 'text').map((b: any) => b.text).join(' ') : '';
-      const cloneKeywords = /\b(clone|replicate|copy|recreate|rebuild|reproduce|match|mimic|look like|looks like|similar to|based on|inspired by|style of)\b/i;
-      const isCloneIntent = cloneKeywords.test(textContent);
+    if (urls.length > 0 && lastUserText.length >= 20) {
+      // Check for clone-intent keywords NEAR a URL (within 80 chars)
+      const cloneKeywords = /\b(clone|replicate|copy|recreate|rebuild|reproduce|match|mimic|similar to|based on|inspired by|style of)\b/i;
+      const isCloneIntent = (() => {
+        for (const url of urls) {
+          const urlIdx = lastUserText.indexOf(url);
+          if (urlIdx === -1) continue;
+          const nearby = lastUserText.slice(Math.max(0, urlIdx - 80), urlIdx + url.length + 80);
+          if (cloneKeywords.test(nearby)) return true;
+        }
+        // Also check if clone keyword appears before any URL
+        const firstUrlIdx = Math.min(...urls.map(u => lastUserText.indexOf(u)).filter(i => i >= 0));
+        if (firstUrlIdx > 0) {
+          const before = lastUserText.slice(0, firstUrlIdx);
+          if (cloneKeywords.test(before)) return true;
+        }
+        return false;
+      })();
       
       if (isCloneIntent) {
-        console.log(`Clone intent detected — scraping URLs: ${urls.join(', ')}`);
+        console.log(`[${requestId}] Clone intent detected — scraping URLs: ${urls.join(', ')}`);
         const results = await Promise.all(urls.slice(0, 2).map(u => scrapeBranding(u)));
         brandingContext = results.filter(Boolean).join('\n');
       } else {
-        console.log(`URLs detected but no clone intent — skipping scrape for speed`);
+        console.log(`[${requestId}] URLs detected but no clone intent — skipping scrape`);
       }
     }
 
@@ -465,24 +565,14 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
       const lastIdx = enrichedMessages.length - 1;
       if (enrichedMessages[lastIdx]?.role === 'user') {
         const lastContent = enrichedMessages[lastIdx].content;
-        // Handle both string and multimodal array content
         if (typeof lastContent === 'string') {
-          enrichedMessages[lastIdx] = {
-            ...enrichedMessages[lastIdx],
-            content: lastContent + brandingContext,
-          };
+          enrichedMessages[lastIdx] = { ...enrichedMessages[lastIdx], content: lastContent + brandingContext };
         } else if (Array.isArray(lastContent)) {
-          // Find the text block and append branding context to it
           const enrichedContent = lastContent.map((block: any) => {
-            if (block.type === 'text') {
-              return { ...block, text: block.text + brandingContext };
-            }
+            if (block.type === 'text') return { ...block, text: block.text + brandingContext };
             return block;
           });
-          enrichedMessages[lastIdx] = {
-            ...enrichedMessages[lastIdx],
-            content: enrichedContent,
-          };
+          enrichedMessages[lastIdx] = { ...enrichedMessages[lastIdx], content: enrichedContent };
         }
       }
     }
@@ -493,9 +583,7 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
       const sanitizedContent = msg.content.map((block: any) => {
         if (block.type === 'image_url' && block.image_url?.url) {
           const url = block.image_url.url;
-          // Check for SVG mime type in data URLs
           if (url.startsWith('data:image/svg+xml')) {
-            // Convert SVG data URL to text block so the AI can still understand it
             try {
               const base64Part = url.split(',')[1];
               const svgText = atob(base64Part);
@@ -504,7 +592,6 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
               return { type: 'text', text: '[User attached an SVG image that could not be decoded]' };
             }
           }
-          // Also check URL extension
           if (url.endsWith('.svg') || url.includes('.svg?')) {
             return { type: 'text', text: `[User attached an SVG image from URL: ${url}]` };
           }
@@ -515,17 +602,15 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
     });
 
     // Server-side safety: trim messages to fit within gateway token limits
-    // System prompt is ~100K tokens (~400K chars). Gemini limit is 1M tokens (~4M chars).
-    // Budget ~2M chars for messages to leave headroom for system prompt + response.
     const MAX_MESSAGE_CHARS = 2_000_000;
     const finalMessages = trimMessagesToFit(sanitizedMessages, MAX_MESSAGE_CHARS);
 
     // Phase 57: Log final payload size for debugging token errors
     const finalPayloadChars = estimateTotalChars([{ role: 'system', content: systemPrompt }, ...finalMessages]);
-    console.log(`Final payload: ${finalPayloadChars} chars (~${Math.round(finalPayloadChars / 4)} tokens), ${finalMessages.length} messages, system prompt: ${systemPrompt.length} chars`);
+    console.log(`[${requestId}] Final payload: ${finalPayloadChars} chars (~${Math.round(finalPayloadChars / 4)} tokens), ${finalMessages.length} messages, system prompt: ${systemPrompt.length} chars`);
 
     // ── Gateway call with timeout (Lovable-grade) ──
-    const GATEWAY_TIMEOUT_MS = 50_000; // 50s — must finish before Supabase ~60s wall-clock limit
+    const GATEWAY_TIMEOUT_MS = 50_000;
     const gatewayController = new AbortController();
     const gatewayTimer = setTimeout(() => gatewayController.abort(), GATEWAY_TIMEOUT_MS);
 
@@ -547,9 +632,9 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
     } catch (fetchErr: any) {
       clearTimeout(gatewayTimer);
       if (fetchErr.name === 'AbortError') {
-        console.error("AI gateway timed out after", GATEWAY_TIMEOUT_MS, "ms");
-        return new Response(JSON.stringify({ error: "AI gateway timed out. Try a shorter prompt." }), {
-          status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        console.error(`[${requestId}] AI gateway timed out after ${GATEWAY_TIMEOUT_MS}ms`);
+        return new Response(JSON.stringify({ error: "AI gateway timed out. Try a shorter prompt.", requestId }), {
+          status: 504, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Request-Id": requestId },
         });
       }
       throw fetchErr;
@@ -557,37 +642,48 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
     clearTimeout(gatewayTimer);
 
     if (!response.ok) {
+      // Phase 96: Safely parse error response (handle HTML 502 pages)
+      const parseErrorResponse = async (resp: Response): Promise<string> => {
+        try {
+          const text = await resp.text();
+          try {
+            const json = JSON.parse(text);
+            return json.error?.message || json.error || text.slice(0, 500);
+          } catch {
+            // HTML error page or non-JSON — extract meaningful text
+            const stripped = text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            return stripped.slice(0, 500) || `HTTP ${resp.status}`;
+          }
+        } catch {
+          return `HTTP ${resp.status} (response unreadable)`;
+        }
+      };
+
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited. Please wait and try again." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        return new Response(JSON.stringify({ error: "Rate limited. Please wait and try again.", requestId }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Request-Id": requestId },
         });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        return new Response(JSON.stringify({ error: "AI credits exhausted.", requestId }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Request-Id": requestId },
         });
       }
       if (response.status === 400) {
-        const errorText = await response.text();
-        console.error("AI gateway error:", response.status, errorText);
-        let parsedMsg = 'Request too large';
-        try { parsedMsg = JSON.parse(errorText).error?.message || parsedMsg; } catch {}
+        const parsedMsg = await parseErrorResponse(response);
+        console.error(`[${requestId}] AI gateway 400:`, parsedMsg);
 
-        // Auto-retry with aggressively reduced context if token limit exceeded
-        // Phase 19: Use fallback model on retry
+        // Auto-retry with reduced context if token limit exceeded
         const FALLBACK_MODEL = "google/gemini-2.5-flash";
         if (/token|exceeds|maximum/i.test(parsedMsg)) {
-          console.log("Token limit exceeded — retrying with reduced context (400K chars) + fallback model");
+          console.log(`[${requestId}] Token limit exceeded — retrying with reduced context + fallback model`);
           const reducedMessages = trimMessagesToFit(sanitizedMessages, 400_000);
           const retryController = new AbortController();
           const retryTimer = setTimeout(() => retryController.abort(), 25_000);
           try {
             const retryResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
               method: "POST",
-              headers: {
-                Authorization: `Bearer ${LOVABLE_API_KEY}`,
-                "Content-Type": "application/json",
-              },
+              headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
               body: JSON.stringify({
                 model: FALLBACK_MODEL,
                 messages: [{ role: "system", content: systemPrompt }, ...reducedMessages],
@@ -596,33 +692,33 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
               signal: retryController.signal,
             });
             if (retryResp.ok) {
-              console.log("Retry with reduced context succeeded");
+              console.log(`[${requestId}] Retry with reduced context succeeded`);
               if (stream) {
                 return new Response(retryResp.body, {
-                  headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+                  headers: { ...corsHeaders, "Content-Type": "text/event-stream", "X-Request-Id": requestId },
                 });
               }
               const retryData = await retryResp.json();
-              return new Response(JSON.stringify({ content: retryData.choices?.[0]?.message?.content || "" }), {
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              return new Response(JSON.stringify({ content: retryData.choices?.[0]?.message?.content || "", requestId }), {
+                headers: { ...corsHeaders, "Content-Type": "application/json", "X-Request-Id": requestId },
               });
             }
           } catch (retryErr) {
-            console.error("Retry failed:", retryErr);
+            console.error(`[${requestId}] Retry failed:`, retryErr);
           } finally {
             clearTimeout(retryTimer);
           }
         }
 
-        return new Response(JSON.stringify({ error: parsedMsg }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        return new Response(JSON.stringify({ error: parsedMsg, requestId }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Request-Id": requestId },
         });
       }
-      // Transient 500/502/503 — Phase 14: include Retry-After header
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      return new Response(JSON.stringify({ error: "AI service is temporarily unavailable. Please try again in a moment." }), {
-        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "5" },
+      // Transient 500/502/503
+      const errorMsg = await parseErrorResponse(response);
+      console.error(`[${requestId}] AI gateway ${response.status}:`, errorMsg);
+      return new Response(JSON.stringify({ error: "AI service is temporarily unavailable. Please try again in a moment.", requestId }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "5", "X-Request-Id": requestId },
       });
     }
 
@@ -647,18 +743,18 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
         }
       })();
       return new Response(readable, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream", "X-Request-Id": requestId },
       });
     }
 
     const data = await response.json();
-    return new Response(JSON.stringify({ content: data.choices?.[0]?.message?.content || "" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ content: data.choices?.[0]?.message?.content || "", requestId }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json", "X-Request-Id": requestId },
     });
   } catch (e) {
-    console.error("ai-app-builder error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    console.error(`[${requestId}] ai-app-builder error:`, e);
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error", requestId }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Request-Id": requestId },
     });
   }
 });
