@@ -36,7 +36,7 @@ export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFil
       const completed = completedFileCountRef.current;
       setLocalFiles(prev => prev.length !== files.length || prev !== files ? files : prev);
       setLocalCompleted(prev => prev !== completed ? completed : prev);
-    }, 500);
+    }, 2000);
     return () => clearInterval(interval);
   }, [showOverlay, partialFilesRef, completedFileCountRef]);
 
@@ -55,15 +55,12 @@ export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFil
           transition={{ duration: 0.4, ease: 'easeOut' }}
           className="absolute inset-0 z-10 pointer-events-none"
         >
-          {/* Top shimmer bar — wider, smoother, phase-colored */}
+          {/* Top shimmer bar — CSS-only to avoid JS animation overhead */}
           <div className="absolute top-0 left-0 right-0 h-[3px] overflow-hidden">
-            <motion.div
+            <div
               className={`h-full w-[200%] bg-gradient-to-r ${shimmerGradient} opacity-90`}
-              animate={{ x: ['-50%', '0%'] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+              style={{ animation: 'shimmer-slide 2s linear infinite' }}
             />
-            {/* Glow effect beneath bar */}
-            <div className={`absolute top-0 left-0 right-0 h-6 bg-gradient-to-b ${shimmerGradient.includes('emerald') ? 'from-emerald-500/20' : shimmerGradient.includes('violet') ? 'from-violet-500/20' : 'from-cyan-500/20'} to-transparent blur-sm`} />
           </div>
 
           {/* Corner badge with file list */}
@@ -72,7 +69,7 @@ export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFil
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: -8, opacity: 0, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="absolute top-3 right-3 bg-black/85 backdrop-blur-xl border border-white/[0.08] rounded-xl overflow-hidden min-w-[190px] shadow-2xl shadow-black/50"
+            className="absolute top-3 right-3 bg-[#0a0a14]/95 border border-white/[0.08] rounded-xl overflow-hidden min-w-[190px] shadow-2xl shadow-black/50"
           >
             <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/[0.06]">
               {isCompiling && !isGenerating ? (
@@ -96,40 +93,31 @@ export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFil
                     const isComplete = i < localCompleted;
                     const fileName = file.path.split('/').pop()!;
                     return (
-                      <motion.div
+                      <div
                         key={file.path}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.06, type: 'spring', stiffness: 300 }}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200"
+                        style={{ animationDelay: `${i * 60}ms` }}
                       >
                         {isComplete ? (
-                          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500 }}>
-                            <Check className="h-3 w-3 text-emerald-400 shrink-0" />
-                          </motion.div>
+                          <Check className="h-3 w-3 text-emerald-400 shrink-0" />
                         ) : (
                           <FileCode className="h-3 w-3 text-cyan-400/50 animate-pulse shrink-0" />
                         )}
                         <span className={`text-[10px] font-mono truncate transition-colors duration-300 ${isComplete ? 'text-white/40' : 'text-cyan-300/80'}`}>
                           {fileName}
                         </span>
-                      </motion.div>
+                      </div>
                     );
                   })}
                 </div>
 
-                {/* Progress bar — smoother, with glow */}
+                {/* Progress bar */}
                 <div className="px-3 pb-2.5 pt-1">
                   <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden relative">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-cyan-500 via-violet-500 to-cyan-400 rounded-full relative"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.max(progress, 3)}%` }}
-                      transition={{ duration: 0.5, ease: 'easeOut' }}
-                    >
-                      {/* Shimmer on progress bar */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
-                    </motion.div>
+                    <div
+                      className="h-full bg-gradient-to-r from-cyan-500 via-violet-500 to-cyan-400 rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${Math.max(progress, 3)}%` }}
+                    />
                   </div>
                   <div className="text-[9px] text-white/25 mt-1.5 text-right font-mono">
                     {localCompleted}/{totalFiles} files

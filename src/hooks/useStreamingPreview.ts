@@ -27,44 +27,69 @@ export function useStreamingPreview() {
   const completedFileCountRef = useRef(0);
   const [isStreaming, setIsStreaming] = useState(false);
   const lastEmittedRef = useRef<string>('');
+  // Cache: track the byte offset of the last fully-scanned delimiter boundary
+  const lastScanOffsetRef = useRef(0);
+  const cachedFilesRef = useRef<{ path: string; startOffset: number }[]>([]);
 
   const parseIncremental = useCallback((rawContent: string) => {
     // Avoid re-parsing if content hasn't changed
     if (rawContent === lastEmittedRef.current) return;
     lastEmittedRef.current = rawContent;
 
-    const lines = rawContent.split('\n');
-    const files: ProjectFile[] = [];
-    let currentPath: string | null = null;
-    let currentLines: string[] = [];
-    let completedCount = 0;
+    // Optimization: only scan new content from lastScanOffset for new delimiters
+    const lastOffset = lastScanOffsetRef.current;
+    const cached = cachedFilesRef.current;
 
-    const flush = (isComplete: boolean) => {
-      if (currentPath) {
-        const content = currentLines.join('\n').trimEnd();
-        if (content) {
-          files.push({
-            path: currentPath,
-            content,
-            language: detectLanguage(currentPath),
-          });
-          if (isComplete) completedCount++;
-        }
-      }
-    };
-
-    for (const line of lines) {
+    // Find new delimiters in the new portion
+    let scanFrom = lastOffset;
+    const newDelimiters: { path: string; offset: number }[] = [];
+    
+    while (scanFrom < rawContent.length) {
+      const nlIdx = rawContent.indexOf('\n', scanFrom);
+      if (nlIdx === -1) break;
+      const line = rawContent.slice(scanFrom, nlIdx);
       const match = line.match(FILE_DELIMITER);
       if (match) {
-        flush(true); // previous file is complete when a new delimiter appears
-        currentPath = match[1].trim();
-        currentLines = [];
-      } else if (currentPath !== null) {
-        currentLines.push(line);
+        newDelimiters.push({ path: match[1].trim(), offset: scanFrom });
+      }
+      scanFrom = nlIdx + 1;
+    }
+
+    // Merge new delimiters into cache
+    if (newDelimiters.length > 0) {
+      // The last cached file boundary might need updating if we found delimiters
+      cached.push(...newDelimiters.map(d => ({ path: d.path, startOffset: d.offset })));
+      lastScanOffsetRef.current = scanFrom;
+    } else {
+      lastScanOffsetRef.current = scanFrom;
+    }
+
+    // Build files from all known delimiters
+    const files: ProjectFile[] = [];
+    let completedCount = 0;
+    const allDelimiters = cached;
+
+    for (let i = 0; i < allDelimiters.length; i++) {
+      const delim = allDelimiters[i];
+      // Content starts after the delimiter line
+      const contentStart = rawContent.indexOf('\n', delim.startOffset);
+      if (contentStart === -1) continue;
+      
+      const contentEnd = i < allDelimiters.length - 1 
+        ? allDelimiters[i + 1].startOffset 
+        : rawContent.length;
+      
+      const content = rawContent.slice(contentStart + 1, contentEnd).trimEnd();
+      if (content) {
+        files.push({
+          path: delim.path,
+          content,
+          language: detectLanguage(delim.path),
+        });
+        // File is complete if there's a next delimiter after it
+        if (i < allDelimiters.length - 1) completedCount++;
       }
     }
-    // Flush the last file as in-progress (not complete yet since stream may continue)
-    flush(false);
 
     if (files.length > 0) {
       partialFilesRef.current = files;
@@ -77,6 +102,8 @@ export function useStreamingPreview() {
     partialFilesRef.current = [];
     completedFileCountRef.current = 0;
     lastEmittedRef.current = '';
+    lastScanOffsetRef.current = 0;
+    cachedFilesRef.current = [];
   }, []);
 
   const stopStreaming = useCallback(() => {

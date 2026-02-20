@@ -45,7 +45,7 @@ export function StreamingCodeEditor({
      const interval = setInterval(() => {
        const files = partialFilesRef.current;
        setEditorStreamFiles(prev => prev !== files ? files : prev);
-     }, 1200);
+     }, 3000);
     return () => clearInterval(interval);
   }, [isStreamingPreview, partialFilesRef, onStreamingFileChange]);
 
