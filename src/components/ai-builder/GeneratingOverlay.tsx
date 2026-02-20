@@ -8,6 +8,7 @@ interface GeneratingOverlayProps {
   phase?: string;
   partialFiles?: ProjectFile[];
   completedFileCount?: number;
+  continuationRound?: number;
 }
 
 const PHASE_CONFIG: Record<string, { label: string; color: string; gradient: string }> = {
@@ -16,7 +17,7 @@ const PHASE_CONFIG: Record<string, { label: string; color: string; gradient: str
   writing: { label: 'Writing code...', color: 'text-emerald-400', gradient: 'from-emerald-500 via-cyan-400 to-teal-500' },
 };
 
-export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFiles = [], completedFileCount = 0 }: GeneratingOverlayProps) {
+export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFiles = [], completedFileCount = 0, continuationRound = 0 }: GeneratingOverlayProps) {
   const showOverlay = isGenerating || isCompiling;
   const totalFiles = partialFiles.length;
   const progress = totalFiles > 0 ? (completedFileCount / totalFiles) * 100 : 0;
@@ -59,7 +60,11 @@ export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFil
                 <Loader2 className="h-3.5 w-3.5 text-cyan-400 animate-spin" />
               )}
               <span className={`text-[11px] font-medium ${phaseConfig?.color || 'text-white/60'}`}>
-                {isCompiling && !isGenerating ? 'Compiling preview...' : phaseConfig?.label || 'Generating...'}
+                {isCompiling && !isGenerating 
+                  ? 'Compiling preview...' 
+                  : continuationRound > 0 
+                    ? `Generating remaining files... (round ${continuationRound + 1})`
+                    : phaseConfig?.label || 'Generating...'}
               </span>
             </div>
 

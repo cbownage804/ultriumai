@@ -29,7 +29,12 @@ REACT: .tsx, functional components+hooks, App.tsx entry, Tailwind. Packages: luc
 
 MULTI-PAGE: hash/pushState router, shared layout, active nav, 404, transitions.
 URL SCRAPING: NEVER use CORS proxies. Use platform Firecrawl edge function.
-PRE-CHECKS: All handlers defined, all DOM IDs exist, mutations persist+render, no orphan buttons.`;
+PRE-CHECKS: All handlers defined, all DOM IDs exist, mutations persist+render, no orphan buttons.
+
+CHUNKING: Output the MOST IMPORTANT files first (index.html, then main app file, then styles).
+If you run out of space, end your response with ===CONTINUE=== on its own line — the system will
+automatically send a follow-up request for remaining files. Do NOT rush or truncate files
+to fit everything in one response. Quality over completeness.`;
 
 
 
@@ -559,52 +564,9 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      // Retry transient 500/502/503 errors up to 2 times with backoff + model fallback
+      // Transient 500/502/503 — return error immediately; client handles retry with fresh invocations
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
-
-      const fallbackModels = [
-        model || "google/gemini-3-flash-preview",
-        "google/gemini-2.5-flash",
-        "google/gemini-3-pro-preview",
-      ];
-
-      for (let attempt = 0; attempt < 3; attempt++) {
-        const retryModel = fallbackModels[Math.min(attempt, fallbackModels.length - 1)];
-        const delay = (attempt + 1) * 1500;
-        console.log(`Retrying gateway (attempt ${attempt + 1}/3, model=${retryModel}) after ${delay}ms...`);
-        await new Promise(r => setTimeout(r, delay));
-        try {
-          const retryResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: retryModel,
-              messages: [{ role: "system", content: systemPrompt }, ...finalMessages],
-              stream,
-            }),
-          });
-          if (retryResp.ok) {
-            console.log(`Retry attempt ${attempt + 1} succeeded with model ${retryModel}`);
-            if (stream) {
-              return new Response(retryResp.body, {
-                headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-              });
-            }
-            const retryData = await retryResp.json();
-            return new Response(JSON.stringify({ content: retryData.choices?.[0]?.message?.content || "" }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-          console.error(`Retry attempt ${attempt + 1} failed with status ${retryResp.status}`);
-        } catch (retryErr) {
-          console.error(`Retry attempt ${attempt + 1} error:`, retryErr);
-        }
-      }
-
       return new Response(JSON.stringify({ error: "AI service is temporarily unavailable. Please try again in a moment." }), {
         status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

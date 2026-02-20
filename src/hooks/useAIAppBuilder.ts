@@ -665,7 +665,10 @@ export function useAIAppBuilder() {
   const [pendingFiles, setPendingFiles] = useState<ProjectFile[] | null>(null);
   const [pendingDeletions, setPendingDeletions] = useState<string[]>([]);
   const [contextBudget, setContextBudget] = useState<ContextBudgetInfo | null>(null);
+  const [continuationRound, setContinuationRound] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
+  const continuationCountRef = useRef(0);
+  const accumulatedFilesRef = useRef<string[]>([]);
   const streaming = useStreamingPreview();
   const { deductCredits, totalRemaining } = useUserCredits();
   const { trimForContext } = useContextBudget({ maxChars: 120_000 });
@@ -684,6 +687,12 @@ export function useAIAppBuilder() {
   ) => {
     if (!input.trim() || isGenerating) return;
 
+    // Reset continuation state for new user-initiated messages (not auto-continuations)
+    if (!input.startsWith('[CONTINUE]')) {
+      continuationCountRef.current = 0;
+      accumulatedFilesRef.current = [];
+      setContinuationRound(0);
+    }
     // ── Request deduplication: prevent double-sends ──
     const fingerprint = hashString(input + (imageDataUrls?.join('') || ''));
     const now = Date.now();
@@ -1206,7 +1215,7 @@ export function useAIAppBuilder() {
       const stallChecker = setInterval(() => {
         if (Date.now() - lastChunkTime > STREAM_STALL_MS && !streamDone) {
           console.warn('[Stream] Stall detected after', STREAM_STALL_MS, 'ms — forcing finalization with partial content');
-          toast.warning('Generation stalled — applying partial results. You can send another message to continue.', { duration: 8000 });
+          // Don't show warning toast here — continuation logic in finalizeStream will handle it
           reader.cancel().catch(() => {});
           streamDone = true;
         }
@@ -1281,8 +1290,7 @@ export function useAIAppBuilder() {
       // ── Graceful partial output handling ──
       // If stream died mid-way but we got some complete files, still use them
       if (!streamDone && (fullContent.includes('===FILE:') || fullContent.includes('===EDIT:'))) {
-        console.warn('[Stream] Interrupted but partial output has files/edits — using what we got');
-        toast.warning('Stream interrupted — using partially generated files.', { duration: 5000 });
+        console.warn('[Stream] Interrupted but partial output has files/edits — will trigger continuation');
       }
     };
 
@@ -1317,8 +1325,7 @@ export function useAIAppBuilder() {
     const WALL_CLOCK_MAX_MS = 55_000;
     const wallClockTimer = setTimeout(() => {
       if (abortRef.current && !abortRef.current.signal.aborted) {
-        console.warn('[Stream] Wall-clock safety net triggered at', WALL_CLOCK_MAX_MS, 'ms — aborting');
-        toast.warning('Build took too long — applying what was generated. Send another message to continue.', { duration: 8000 });
+        console.warn('[Stream] Wall-clock safety net triggered at', WALL_CLOCK_MAX_MS, 'ms — aborting for continuation');
         abortRef.current.abort();
       }
     }, WALL_CLOCK_MAX_MS);
@@ -1449,6 +1456,34 @@ export function useAIAppBuilder() {
         )
       );
 
+      // ── Auto-continuation detection (Lovable parity) ──
+      const MAX_CONTINUATION_ROUNDS = 4;
+      const hasContinueMarker = fullContent.includes('===CONTINUE===');
+      const wasInterrupted = !hasContinueMarker && controller.signal.aborted && (parsedFiles.length > 0 || patchedFiles.length > 0);
+      const shouldContinue = (hasContinueMarker || wasInterrupted) && continuationCountRef.current < MAX_CONTINUATION_ROUNDS;
+
+      // Track accumulated file paths across rounds
+      const newFilePaths = allNewFiles.map(f => f.path);
+      accumulatedFilesRef.current = [...new Set([...accumulatedFilesRef.current, ...newFilePaths])];
+
+      if (shouldContinue) {
+        continuationCountRef.current++;
+        const round = continuationCountRef.current;
+        setContinuationRound(round);
+        console.info(`[Continuation] Round ${round}/${MAX_CONTINUATION_ROUNDS} — ${accumulatedFilesRef.current.length} files so far`);
+        toast.info(`Generating remaining files... (round ${round + 1}/${MAX_CONTINUATION_ROUNDS + 1})`, { duration: 4000 });
+
+        // Return a signal that the caller should auto-continue
+        return { shouldContinue: true, generatedPaths: accumulatedFilesRef.current };
+      }
+
+      // Final round — reset continuation state
+      if (continuationCountRef.current > 0) {
+        const totalAcross = accumulatedFilesRef.current.length;
+        toast.success(`Generation complete — ${totalAcross} files across ${continuationCountRef.current + 1} rounds`, { duration: 5000 });
+      }
+      setContinuationRound(0);
+
       // Defer suggestion generation so it doesn't block setIsGenerating(false)
       requestAnimationFrame(() => {
         const suggestions = generateSuggestions(fullContent, effectiveMode, messages, currentFiles);
@@ -1462,6 +1497,8 @@ export function useAIAppBuilder() {
           );
         }
       });
+
+      return { shouldContinue: false };
     };
 
     try {
@@ -1600,7 +1637,97 @@ export function useAIAppBuilder() {
       streaming.startStreaming();
 
       await readStream(resp.body);
-      await finalizeStream();
+      const result = await finalizeStream();
+
+      // ── Auto-continuation loop (Lovable parity) ──
+      if (result?.shouldContinue && result.generatedPaths) {
+        clearTimeout(wallClockTimer);
+        const continuationPrompt = `[CONTINUE] You previously generated: ${result.generatedPaths.join(', ')}. Continue generating the remaining files for this project. Pick up exactly where you left off. Output files using ===FILE: path=== format. If more files remain after this round, end with ===CONTINUE===`;
+        
+        // Reset abort controller for fresh request
+        const contController = new AbortController();
+        abortRef.current = contController;
+        fullContent = '';
+        streaming.startStreaming();
+        
+        // Build minimal continuation payload
+        const contMessages = [
+          ...apiMessages.slice(0, 2), // system context
+          { role: 'assistant' as const, content: `[Generated ${result.generatedPaths.length} files: ${result.generatedPaths.join(', ')}]` },
+          { role: 'user' as const, content: continuationPrompt },
+        ];
+        
+        const contWallClock = setTimeout(() => {
+          if (abortRef.current && !abortRef.current.signal.aborted) {
+            abortRef.current.abort();
+          }
+        }, WALL_CLOCK_MAX_MS);
+        
+        try {
+          const contResp = await fetchWithTimeout(BUILDER_URL, {
+            method: 'POST',
+            headers: fetchHeaders,
+            body: buildPayload(contMessages),
+            signal: contController.signal,
+          });
+          
+          if (contResp.ok && contResp.body) {
+            await readStream(contResp.body);
+            const contResult = await finalizeStream();
+            
+            // Recursive continuation — up to MAX rounds (tracked by continuationCountRef)
+            if (contResult?.shouldContinue && contResult.generatedPaths) {
+              // The finalizeStream already incremented continuationCountRef
+              // and will cap at MAX_CONTINUATION_ROUNDS — subsequent calls
+              // will return shouldContinue: false when cap is reached
+              clearTimeout(contWallClock);
+              
+              // One more round via recursive self-call pattern
+              const cont2Controller = new AbortController();
+              abortRef.current = cont2Controller;
+              fullContent = '';
+              streaming.startStreaming();
+              
+              const cont2Messages = [
+                ...apiMessages.slice(0, 2),
+                { role: 'assistant' as const, content: `[Generated ${contResult.generatedPaths.length} files: ${contResult.generatedPaths.join(', ')}]` },
+                { role: 'user' as const, content: `[CONTINUE] You previously generated: ${contResult.generatedPaths.join(', ')}. Continue generating the remaining files. If more remain, end with ===CONTINUE===` },
+              ];
+              
+              const cont2WallClock = setTimeout(() => {
+                if (abortRef.current && !abortRef.current.signal.aborted) abortRef.current.abort();
+              }, WALL_CLOCK_MAX_MS);
+              
+              try {
+                const cont2Resp = await fetchWithTimeout(BUILDER_URL, {
+                  method: 'POST',
+                  headers: fetchHeaders,
+                  body: buildPayload(cont2Messages),
+                  signal: cont2Controller.signal,
+                });
+                if (cont2Resp.ok && cont2Resp.body) {
+                  await readStream(cont2Resp.body);
+                  await finalizeStream(); // Will cap at MAX rounds
+                }
+              } catch (e: any) {
+                if (e.name !== 'AbortError') console.warn('[Continuation R3] Error:', e.message);
+              } finally {
+                clearTimeout(cont2WallClock);
+              }
+            }
+          } else {
+            console.warn('[Continuation] Follow-up request failed with status', contResp.status);
+            toast.warning('Could not continue generation — using what was built so far.', { duration: 5000 });
+          }
+        } catch (contErr: any) {
+          if (contErr.name !== 'AbortError') {
+            console.warn('[Continuation] Error:', contErr.message);
+            toast.warning('Continuation failed — partial results applied.', { duration: 5000 });
+          }
+        } finally {
+          clearTimeout(contWallClock);
+        }
+      }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.error('AI Builder error:', err);
@@ -1762,6 +1889,7 @@ export function useAIAppBuilder() {
     setVersions,
     totalTokensUsed,
     contextBudget,
+    continuationRound,
     sendMessage,
     stopGenerating,
     clearChat,
