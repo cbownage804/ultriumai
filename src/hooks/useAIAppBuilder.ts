@@ -1148,7 +1148,7 @@ export function useAIAppBuilder() {
       }
     }
 
-    const controller = new AbortController();
+    let controller = new AbortController();
     abortRef.current = controller;
     let fullContent = '';
 
@@ -1337,7 +1337,8 @@ export function useAIAppBuilder() {
       streaming.parseIncremental(fullContent);
 
       const buildStartTime = performance.now();
-      const { files: parsedFiles, deletions, edits, migrations: parsedMigrations, edgeFunctions: parsedEdgeFunctions } = parseMultiFileOutput(fullContent);
+      const cleanedContent = fullContent.replace(/\n?===CONTINUE===\s*$/g, '');
+      const { files: parsedFiles, deletions, edits, migrations: parsedMigrations, edgeFunctions: parsedEdgeFunctions } = parseMultiFileOutput(cleanedContent);
 
       // ── Apply ===EDIT: patches to existing files (Phase 2) ──
       let patchedFiles: ProjectFile[] = [];
@@ -1512,6 +1513,8 @@ export function useAIAppBuilder() {
         signal: controller.signal,
       });
 
+      let retryResult: any = null;
+
       if (!resp.ok) {
         const errData = await resp.json().catch(() => ({ error: 'Unknown error' }));
         const errMsg = errData?.error || '';
@@ -1571,10 +1574,8 @@ export function useAIAppBuilder() {
                 streaming.startStreaming();
                 fullContent = '';
                 await readStream(retryResp.body);
-                await finalizeStream();
-                setIsGenerating(false);
-                setThinkingPhase(null);
-                return;
+                retryResult = await finalizeStream();
+                break; // exit retry loop, fall through to continuation loop
               }
               // If non-ok, continue to next attempt
               console.warn(`Retry ${attempt + 1} returned ${retryResp.status}, continuing...`);
@@ -1585,78 +1586,89 @@ export function useAIAppBuilder() {
           }
         }
 
-        // All retries failed or not retryable — use smart error classifier
-        const classified = classifyError(resp.status, errMsg);
+        // If retry succeeded, fall through to continuation loop
+        if (retryResult) {
+          // Skip error handling — jump to continuation loop below
+        } else {
+          // All retries failed or not retryable — use smart error classifier
+          const classified = classifyError(resp.status, errMsg);
 
-        // ── Payload too large: trigger phase planner fallback instead of showing error ──
-        if (classified.category === 'payload_too_large') {
-          // Find the original user prompt from the last user message
-          const lastUserContent = apiMessages[apiMessages.length - 1]?.content;
-          const originalPrompt = typeof lastUserContent === 'string'
-            ? lastUserContent
-            : Array.isArray(lastUserContent)
-            ? lastUserContent.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('\n')
-            : input;
-          window.dispatchEvent(new CustomEvent('phase-planner-fallback', { detail: { prompt: originalPrompt } }));
-          setMessages(prev => [
-            ...prev,
-            {
-              id: crypto.randomUUID(), role: 'assistant' as const,
-              content: `🚧 **This project is too large for a single request.** I'm breaking it into phases so we can build it step by step.`,
-              timestamp: new Date(),
-            },
-          ]);
+          // ── Payload too large: trigger phase planner fallback instead of showing error ──
+          if (classified.category === 'payload_too_large') {
+            const lastUserContent = apiMessages[apiMessages.length - 1]?.content;
+            const originalPrompt = typeof lastUserContent === 'string'
+              ? lastUserContent
+              : Array.isArray(lastUserContent)
+              ? lastUserContent.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('\n')
+              : input;
+            window.dispatchEvent(new CustomEvent('phase-planner-fallback', { detail: { prompt: originalPrompt } }));
+            setMessages(prev => [
+              ...prev,
+              {
+                id: crypto.randomUUID(), role: 'assistant' as const,
+                content: `🚧 **This project is too large for a single request.** I'm breaking it into phases so we can build it step by step.`,
+                timestamp: new Date(),
+              },
+            ]);
+            setIsGenerating(false);
+            setThinkingPhase(null);
+            return;
+          }
+
+          if (classified.category === 'credits') {
+            toast.error(`${classified.userMessage} ${classified.suggestion}`, {
+              duration: 8000,
+              action: { label: 'Get Credits', onClick: () => window.dispatchEvent(new CustomEvent('open-billing')) },
+            });
+          } else {
+            toast.error(`${classified.userMessage} ${classified.suggestion}`, { duration: 6000 });
+          }
+          setMessages(prev => {
+            const errorAssistant: BuilderMessage = {
+              id: crypto.randomUUID(), role: 'assistant',
+              content: `⚠️ ${classified.userMessage}\n\n💡 **Suggestion:** ${classified.suggestion}`,
+              timestamp: new Date(), classifiedError: classified,
+            };
+            return [...prev, errorAssistant];
+          });
           setIsGenerating(false);
           setThinkingPhase(null);
           return;
         }
-
-        if (classified.category === 'credits') {
-          toast.error(`${classified.userMessage} ${classified.suggestion}`, {
-            duration: 8000,
-            action: { label: 'Get Credits', onClick: () => window.dispatchEvent(new CustomEvent('open-billing')) },
-          });
-        } else {
-          toast.error(`${classified.userMessage} ${classified.suggestion}`, { duration: 6000 });
-        }
-        // Attach classified error to the last assistant message for inline display
-        setMessages(prev => {
-          const errorAssistant: BuilderMessage = {
-            id: crypto.randomUUID(), role: 'assistant',
-            content: `⚠️ ${classified.userMessage}\n\n💡 **Suggestion:** ${classified.suggestion}`,
-            timestamp: new Date(), classifiedError: classified,
-          };
-          return [...prev, errorAssistant];
-        });
-        setIsGenerating(false);
-        setThinkingPhase(null);
-        return;
       }
 
-      if (!resp.body) throw new Error('No response body');
+      // ── Happy path OR successful retry — run stream + continuation ──
+      let continuationResult: any = null;
 
-      // Clear thinking phases once streaming starts
-      setThinkingPhase(null);
-      streaming.startStreaming();
-
-      await readStream(resp.body);
-      const result = await finalizeStream();
-
-      // ── Auto-continuation loop (Lovable parity) ──
-      let continuationResult = result;
+      if (retryResult) {
+        // Retry already streamed and finalized — use its result
+        continuationResult = retryResult;
+      } else if (!resp.ok) {
+        // Should not reach here (handled above), but safety guard
+        throw new Error('Unexpected state: response not ok and no retry result');
+      } else {
+        if (!resp.body) throw new Error('No response body');
+        setThinkingPhase(null);
+        streaming.startStreaming();
+        await readStream(resp.body);
+        const result = await finalizeStream();
+        continuationResult = result;
+      }
 
       while (continuationResult?.shouldContinue && continuationResult.generatedPaths) {
         clearTimeout(wallClockTimer);
 
-        const contController = new AbortController();
-        abortRef.current = contController;
+        controller = new AbortController();
+        abortRef.current = controller;
         fullContent = '';
         streaming.startStreaming();
 
+        const originalUserMsg = apiMessages[apiMessages.length - 1];
+        const originalPromptSnippet = typeof originalUserMsg.content === 'string' ? originalUserMsg.content.slice(0, 500) : '[multimodal]';
         const contMessages = [
-          ...apiMessages.slice(0, 2),
+          apiMessages[0], // system prompt
           { role: 'assistant' as const, content: `[Generated ${continuationResult.generatedPaths.length} files: ${continuationResult.generatedPaths.join(', ')}]` },
-          { role: 'user' as const, content: `[CONTINUE] You previously generated: ${continuationResult.generatedPaths.join(', ')}. Continue generating the remaining files. If more remain, end with ===CONTINUE===` },
+          { role: 'user' as const, content: `[CONTINUE] Original request: "${originalPromptSnippet}"\n\nYou previously generated: ${continuationResult.generatedPaths.join(', ')}. Continue generating the remaining files. If more remain, end with ===CONTINUE===` },
         ];
 
         const contWallClock = setTimeout(() => {
@@ -1670,7 +1682,7 @@ export function useAIAppBuilder() {
             method: 'POST',
             headers: fetchHeaders,
             body: buildPayload(contMessages),
-            signal: contController.signal,
+            signal: controller.signal,
           });
 
           if (contResp.ok && contResp.body) {
