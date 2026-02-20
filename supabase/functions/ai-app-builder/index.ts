@@ -473,7 +473,7 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
     const finalMessages = trimMessagesToFit(sanitizedMessages, MAX_MESSAGE_CHARS);
 
     // ── Gateway call with timeout (Lovable-grade) ──
-    const GATEWAY_TIMEOUT_MS = 120_000; // 2 minutes
+    const GATEWAY_TIMEOUT_MS = 50_000; // 50s — must finish before Supabase ~60s wall-clock limit
     const gatewayController = new AbortController();
     const gatewayTimer = setTimeout(() => gatewayController.abort(), GATEWAY_TIMEOUT_MS);
 

@@ -1145,7 +1145,7 @@ export function useAIAppBuilder() {
 
     // ── Shared streaming reader with interruption recovery (DRY) ──
     let lastChunkTime = 0;
-    const STREAM_STALL_MS = 30_000; // 30s stall = stream dead
+    const STREAM_STALL_MS = 15_000; // 15s stall = stream dead (faster detection)
     
     const readStream = async (body: ReadableStream<Uint8Array>) => {
       const reader = body.getReader();
@@ -1202,10 +1202,11 @@ export function useAIAppBuilder() {
         }
       };
 
-      // Stall detector — if no chunk in 30s, consider stream dead
+      // Stall detector — if no chunk in 15s, consider stream dead and recover partial content
       const stallChecker = setInterval(() => {
         if (Date.now() - lastChunkTime > STREAM_STALL_MS && !streamDone) {
-          console.warn('[Stream] Stall detected — closing reader');
+          console.warn('[Stream] Stall detected after', STREAM_STALL_MS, 'ms — forcing finalization with partial content');
+          toast.warning('Generation stalled — applying partial results. You can send another message to continue.', { duration: 8000 });
           reader.cancel().catch(() => {});
           streamDone = true;
         }
@@ -1286,7 +1287,7 @@ export function useAIAppBuilder() {
     };
 
     // ── Fetch with timeout helper ──
-    const FETCH_TIMEOUT_MS = 90_000; // 90 seconds
+    const FETCH_TIMEOUT_MS = 60_000; // 60s — aligned with edge function limits
     const fetchWithTimeout = (url: string, init: RequestInit): Promise<Response> => {
       const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
       return fetch(url, init).finally(() => clearTimeout(timeoutId));
@@ -1311,6 +1312,16 @@ export function useAIAppBuilder() {
     // ── Post-stream finalization (shared between main and retry paths) ──
     const buildWallStart = Date.now();
     streaming.startStreaming();
+
+    // ── Wall-clock safety net: force-finalize after 55s no matter what ──
+    const WALL_CLOCK_MAX_MS = 55_000;
+    const wallClockTimer = setTimeout(() => {
+      if (abortRef.current && !abortRef.current.signal.aborted) {
+        console.warn('[Stream] Wall-clock safety net triggered at', WALL_CLOCK_MAX_MS, 'ms — aborting');
+        toast.warning('Build took too long — applying what was generated. Send another message to continue.', { duration: 8000 });
+        abortRef.current.abort();
+      }
+    }, WALL_CLOCK_MAX_MS);
 
     const finalizeStream = async () => {
       // Final parseIncremental to catch any content not yet parsed by the rAF throttle
@@ -1603,6 +1614,7 @@ export function useAIAppBuilder() {
         }]);
       }
     } finally {
+      clearTimeout(wallClockTimer);
       setIsGenerating(false);
       setThinkingPhase(null);
       abortRef.current = null;
