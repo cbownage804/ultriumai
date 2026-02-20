@@ -1,236 +1,282 @@
 
 
-# 40 More App Builder Hardening Phases (Phases 21-60)
+# 50-Phase Production Hardening Plan (Phases 61-110)
 
-A comprehensive sweep across the parser, React compiler, preview engine, error pipeline, system prompt, edge function, and workspace orchestrator to close every remaining reliability gap.
-
----
-
-## Category A: Parser and File Handling (Phases 21-27)
-
-### Phase 21: JSON File Content Corrupted by Prose Detector
-**File:** `src/hooks/useAIAppBuilder.ts`
-**Problem:** `isConversationalLine` runs on all file types, but JSON files often have top-level keys like `"This"` or `"name"` that match prose patterns. JSON files get truncated.
-**Fix:** Skip prose detection entirely for `.json`, `.svg`, and `.md` files — only run it on `.html`, `.css`, `.js/.ts/.jsx/.tsx` files.
-
-### Phase 22: Duplicate File Paths Across Rounds Cause Overwrite Wars
-**File:** `src/hooks/useAIAppBuilder.ts`
-**Problem:** If the AI outputs `===FILE: styles.css===` in both round 1 and round 2, the round-2 version replaces round-1 entirely — even if round 2's version is a smaller continuation fragment.
-**Fix:** Before merging, detect if a continuation-round file has fewer lines than the existing file for the same path. If so, append the new content instead of replacing, or skip the merge and warn.
-
-### Phase 23: `===EDIT:` Blocks Silently Ignored When File Was Just Created
-**File:** `src/hooks/useAIAppBuilder.ts`
-**Problem:** If the AI outputs `===FILE: App.tsx===` followed by `===EDIT: App.tsx===` in the same response, the edit references the just-created file. But `applyHunkPatch` looks in `workingFiles` (pre-generation), not `filesToApply`. The edit is silently skipped.
-**Fix:** After parsing full files and before applying edits, merge `filesToApply` into a temporary lookup so edits can target same-response files.
-
-### Phase 24: File Path Normalization Inconsistency
-**File:** `src/hooks/useAIAppBuilder.ts`
-**Problem:** The AI sometimes outputs `===FILE: ./src/App.tsx===` or `===FILE: /App.tsx===` while the project stores paths as `src/App.tsx`. The leading `./` or `/` causes a duplicate file entry instead of an update.
-**Fix:** Normalize paths after parsing: strip leading `./` and `/`, collapse `//` into `/`.
-
-### Phase 25: SVG Files Treated as Code by Bracket Balance Check
-**File:** `src/hooks/useAIAppBuilder.ts` (validation + truncation detection)
-**Problem:** SVG files have angle brackets `<>` that don't follow HTML tag patterns. The bracket-balance validator flags them as "mismatched HTML tags" and the truncation detector may incorrectly remove the last SVG file.
-**Fix:** Exclude `.svg` files from HTML tag-balance checks and from the truncation detector's bracket analysis.
-
-### Phase 26: Markdown Files Stripped by Prose Detector
-**File:** `src/hooks/useAIAppBuilder.ts`
-**Problem:** Markdown (`.md`) files start with `#` headings which match `isConversationalLine`'s markdown heading pattern. Entire README files get stripped as "prose."
-**Fix:** Add file extension awareness to the parser loop — when `currentPath` ends in `.md` or `.mdx`, never apply prose detection.
-
-### Phase 27: SCSS/LESS Files Not Handled by Language Detection
-**File:** `src/hooks/useAIAppBuilder.ts` (parseMultiFileOutput `langMap`)
-**Problem:** `.less` and `.sass` extensions are missing from `langMap`, causing them to get `plaintext` language tag. No syntax highlighting in the editor.
-**Fix:** Add `less: 'less'`, `sass: 'scss'` to the `langMap` in both `parseMultiFileOutput` and the `flush` function.
+These 50 phases close every remaining gap between the current builder and a production-grade tool that ships complete, error-free apps consistently.
 
 ---
 
-## Category B: React Compiler Hardening (Phases 28-33)
+## Category A: React Compiler Production Parity (Phases 61-70)
 
-### Phase 28: React Compiler Silently Fails Without Error Surfacing
+### Phase 61: Synchronous IIFE Wrapper Breaks `await import()` for External Packages
+**File:** `src/hooks/useReactCompiler.ts` (line 283)
+**Problem:** External package imports are converted to `await import('...')`, but each file's transpiled code is wrapped in a synchronous IIFE: `(function() { ... })()`. `await` is illegal in a non-async function, causing "Unexpected reserved word 'await'" errors.
+**Fix:** Change the per-file IIFE from `(function() { ... })()` to `(async function() { ... })()`. The mount script at line 411 already uses this pattern safely.
+
+### Phase 62: `export *` and `export { X as Y }` Not Handled by Transpiler
+**File:** `src/hooks/useReactCompiler.ts` (line 255)
+**Problem:** The transpiler handles `export default`, `export const`, and `export { X }`, but not `export * from './utils'` or `export { default as Button } from './Button'`. These common React patterns silently produce broken modules.
+**Fix:** Add regex handlers for re-export patterns: map `export * from '...'` to `Object.assign(__modules[path], __modules[source])` and `export { X as Y }` to named module registration.
+
+### Phase 63: CSS `@import` Statements Not Resolved in React Preview
+**File:** `src/hooks/useReactCompiler.ts` (line 448)
+**Problem:** CSS files may contain `@import './base.css'` which are collected as raw text but the `@import` references break because there's no server to resolve them. The preview shows unstyled content.
+**Fix:** Pre-process CSS files: resolve `@import` statements by inlining the referenced file content from the project files before concatenating all CSS.
+
+### Phase 64: Tailwind CDN Script Blocks React Rendering
+**File:** `src/hooks/useReactCompiler.ts` (line 474)
+**Problem:** The Tailwind CDN script (`<script src="cdn.tailwindcss.com">`) is synchronous and blocks the DOM. If the CDN is slow (>3s), the React app mounts but Tailwind hasn't loaded, causing a flash of unstyled content.
+**Fix:** Move the Tailwind CDN script to `defer` or load it with a callback that triggers a re-render. Add an `onload` handler that dispatches a custom event so components can react.
+
+### Phase 65: `useId()` Hook Crashes in Preview Due to Missing React 18 Feature
+**File:** `src/hooks/useReactCompiler.ts` (line 551)
+**Problem:** The global destructure `const { useState, useEffect, ... } = React` on line 551 includes common hooks but misses `useId`, `useSyncExternalStore`, and `useTransition`. If the AI generates code using these newer hooks via the global destructure (not import), they're undefined.
+**Fix:** Already partially addressed in the data: shim (line 483), but the global destructure on line 551 needs to include ALL React 18 hooks. Add `useId, useSyncExternalStore, useTransition, useDeferredValue, useInsertionEffect`.
+
+### Phase 66: React `StrictMode` Double-Renders Trigger Render Loop Detector
+**File:** `src/hooks/useReactCompiler.ts` (line 523-536)
+**Problem:** The render loop detector counts `React.createElement` calls and flags >100/sec as infinite. But React StrictMode (sometimes generated by AI) intentionally double-invokes render functions, doubling the count and triggering false positives.
+**Fix:** Raise the threshold from 100 to 500 createElement calls/sec to account for StrictMode doubling. Also exclude the initial mount burst (first 2 seconds) from detection.
+
+### Phase 67: `import type` Statements Not Stripped
+**File:** `src/hooks/useReactCompiler.ts` (line 167)
+**Problem:** TypeScript `import type { X } from './Y'` statements are processed by the import handler, generating `const { X } = __modules['Y']` — but type-only imports should be completely removed since they don't exist at runtime.
+**Fix:** Add a regex to strip `import type { ... } from '...'` and `import { type X, type Y } from '...'` before the import resolution step.
+
+### Phase 68: Named Exports Inside `export default function` Body Lost
+**File:** `src/hooks/useReactCompiler.ts` (line 258-265)
+**Problem:** If a file has both `export default function App()` and `export const THEME = {...}`, the named export handler strips `export` but the registration code only runs for the default. The named `THEME` export is lost.
+**Fix:** Ensure `exportedNames` array is populated regardless of whether a default export exists, and always emit named export registrations in the module footer.
+
+### Phase 69: Dynamic `import()` Inside Components Causes Runtime Errors
 **File:** `src/hooks/useReactCompiler.ts`
-**Problem:** When Babel transpilation fails, the error is caught and pushed to `result.errors[]`, but the preview shows a blank page with no user-facing feedback.
-**Fix:** When `result.errors.length > 0`, inject an error overlay into the compiled HTML that displays the errors with file/line info, styled as a red error box.
+**Problem:** The import handler only processes top-level static `import X from '...'` statements. If the AI generates `const module = await import('./utils')` inside a function, it's not resolved to `__modules['utils']` and fails at runtime.
+**Fix:** Add a second pass that transforms inline `import('...')` calls for local modules: replace `import('./utils')` with `Promise.resolve(__modules['utils'])`.
 
-### Phase 29: Import Resolution Fails for Aliased Paths (`@/`)
+### Phase 70: Multiple `createRoot` Calls Cause "Target Container Already Has Root" Error
+**File:** `src/hooks/useReactCompiler.ts` (line 397-444)
+**Problem:** If the AI generates both `main.tsx` (with `createRoot`) and the compiler also auto-mounts via the mount script, two `createRoot` calls hit the same `#root` div, causing a React warning and potential crashes.
+**Fix:** If an entry file with `createRoot` is detected, skip the auto-mount script entirely. Currently the check exists (line 400) but `mountScript` is set to empty string — verify the transpiled entry file's `createRoot` call references the correct DOM element.
+
+---
+
+## Category B: Output Quality and Completeness (Phases 71-80)
+
+### Phase 71: AI Stops Generating Mid-File When Output Is Long
+**File:** `supabase/functions/ai-app-builder/index.ts`
+**Problem:** The AI often truncates its output mid-file for complex apps (>3000 lines total), producing broken code. The `===CONTINUE===` mechanism relies on the AI outputting this marker, but it frequently doesn't.
+**Fix:** Add to the system prompt: `"LENGTH: If your response will exceed 4000 lines, use ===CONTINUE=== to signal you need more rounds. NEVER leave a file half-written. Finish the current file completely before moving to the next."`. Also add a server-side check: if the last line of the response is inside a code block (no closing brace/tag), append `===CONTINUE===` automatically.
+
+### Phase 72: AI Generates Dead `onClick` Handlers
+**File:** `supabase/functions/ai-app-builder/index.ts`
+**Problem:** The AI frequently generates buttons with `onClick={handleDelete}` but never defines `handleDelete`. This is the #1 source of runtime errors in generated apps.
+**Fix:** Add to BASE_SYSTEM_PROMPT: `"HANDLERS: Every onClick, onChange, onSubmit handler MUST reference a function defined earlier in the same component. Before outputting a JSX element with an event handler, verify the handler function exists. If it doesn't, define it as a const arrow function above the return statement."`
+
+### Phase 73: Multi-Page Apps Have Broken Navigation
+**File:** `supabase/functions/ai-app-builder/index.ts`
+**Problem:** AI-generated multi-page apps use `<a href="/about">` which the preview intercepts but doesn't actually render the `/about` content because there's no router. Users see a single page with dead nav links.
+**Fix:** Strengthen the MULTI-PAGE section of the prompt: `"ROUTING: For multi-page apps, use a hash-based router (window.location.hash) with a central renderPage() function. Each 'page' is a function that returns HTML. The nav links must use '#/page' format. Include a hashchange listener that re-renders on navigation. Test: clicking every nav link must show different content."`
+
+### Phase 74: React Apps Missing `index.html` Entry
+**File:** `src/hooks/useReactCompiler.ts` (line 356-358)
+**Problem:** The React compiler checks for `.tsx/.jsx` files to detect a React project. But when `===MODE: react===` is used and the AI only outputs `.tsx` files without `index.html`, `getCompiledHTML` (in `useProjectFileSystem.ts`) can't find an HTML entry and falls back to an empty preview.
+**Fix:** In `useProjectFileSystem.ts`, if `detectReactProject` returns true but no `index.html` exists, skip the HTML compilation path and delegate directly to `compileReactProject` in the workspace orchestrator.
+
+### Phase 75: Generated Apps Lack Error States for Network Failures
+**File:** `supabase/functions/ai-app-builder/index.ts`
+**Problem:** Apps with fetch calls show blank screens when the API is down or the network is offline. The AI generates the happy path but no error UI.
+**Fix:** Add to the system prompt: `"RESILIENCE: Every fetch/API call must have: 1) try/catch, 2) a user-visible error message (not just console.error), 3) a retry button. For Supabase queries, check both 'error' and 'data' before rendering. Show 'Something went wrong. Try again.' with a retry button on failure."`
+
+### Phase 76: Empty State Not Generated for Data-Driven Components
+**File:** `supabase/functions/ai-app-builder/index.ts`
+**Problem:** List/table/card grid components render nothing when the data array is empty. Users see a blank screen and think the app is broken.
+**Fix:** Add to system prompt: `"EMPTY STATES: Every list, table, or data grid MUST check if data.length === 0 and show a friendly empty state: an icon, a message ('No items yet'), and a CTA button ('Add your first item'). Never render an empty container."`
+
+### Phase 77: AI Generates Incomplete Forms (Missing Validation)
+**File:** `supabase/functions/ai-app-builder/index.ts`
+**Problem:** Forms are generated with inputs but no validation — empty submissions create blank records, emails aren't validated, required fields aren't enforced.
+**Fix:** Add to system prompt: `"FORMS: Every form MUST have: 1) 'required' attribute on mandatory fields, 2) type='email' for email fields, 3) minLength for text fields, 4) a disabled submit button until form is valid, 5) onSubmit with e.preventDefault(). Show inline validation errors on blur. Never allow empty form submission."`
+
+### Phase 78: AI Doesn't Generate Responsive Layouts Consistently
+**File:** `supabase/functions/ai-app-builder/index.ts`
+**Problem:** Despite "Mobile-first" in the prompt, the AI often generates fixed-width layouts that break on mobile. Grid layouts use `grid-cols-4` without responsive breakpoints.
+**Fix:** Add to system prompt: `"RESPONSIVE: ALWAYS use responsive Tailwind classes: grid-cols-1 sm:grid-cols-2 lg:grid-cols-3. NEVER use fixed pixel widths for containers. Use max-w-7xl mx-auto for page width. Sidebars must collapse on mobile (hidden md:block). Test: the app must look correct at 375px width."`
+
+### Phase 79: AI Generates Hardcoded Data Instead of State
+**File:** `supabase/functions/ai-app-builder/index.ts`
+**Problem:** For CRUD apps, the AI sometimes hardcodes sample data directly in JSX instead of using `useState`. Add/delete/edit operations don't work because the data isn't in state.
+**Fix:** Add to system prompt: `"STATE: ALL data displayed in lists, tables, or cards MUST come from useState (or Supabase queries). NEVER hardcode data in JSX. Initialize state with 2-3 sample items. All CRUD operations must modify state using setState with immutable patterns (.filter, .map, spread operator)."`
+
+### Phase 80: Generated Apps Have No Loading Indicators
+**File:** `supabase/functions/ai-app-builder/index.ts`
+**Problem:** Apps with async operations (Supabase queries, API calls) show nothing while loading. The user stares at a blank screen for 1-3 seconds.
+**Fix:** Already partially addressed in Phase 46. Reinforce: `"LOADING: Show a centered spinner (CSS animation, no dependencies) during ALL async operations. Use a simple isLoading state: const [isLoading, setIsLoading] = useState(true). Wrap data-fetching in useEffect that sets isLoading=false after data arrives. The spinner must be visible IMMEDIATELY — no delayed renders."`
+
+---
+
+## Category C: State and Persistence Reliability (Phases 81-87)
+
+### Phase 81: Auto-Save Fires During Generation, Saving Partial Files
+**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
+**Problem:** The debounced auto-save watches `latestFiles` and `project.files`. During continuation rounds, `latestFiles` updates multiple times with partial file sets, triggering auto-save of incomplete project state.
+**Fix:** Skip auto-save entirely while `isGenerating` is true. Only trigger auto-save after generation completes and files stabilize.
+
+### Phase 82: IndexedDB Recovery Dialog Shows Stale Data
+**File:** `src/hooks/useIndexedDBPersistence.ts`
+**Problem:** The session recovery dialog offers to restore IndexedDB data, but if the user has already loaded a newer version from Supabase, the IndexedDB data is older. Restoring it silently loses the cloud version.
+**Fix:** Compare timestamps: only offer IndexedDB recovery if the IndexedDB timestamp is MORE RECENT than the Supabase-loaded data. Show the timestamp difference in the dialog.
+
+### Phase 83: `pushUndo` Called Inside Loops Creates Excessive Snapshots
+**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
+**Problem:** Some handlers call `pushUndo` before batch operations (like auth template injection). If the user rapidly clicks template buttons, the undo stack fills with near-identical snapshots, bloating memory.
+**Fix:** Deduplicate undo snapshots: if the top of the undo stack has the same file count and total content hash as the current state, skip the push.
+
+### Phase 84: Version Timeline Doesn't Persist Across Page Reloads
+**File:** `src/hooks/useVersionTimeline.ts`
+**Problem:** Version snapshots are stored in React state only. When the user refreshes the page, all version history is lost. They can't roll back to previous AI generations from earlier in the session.
+**Fix:** Persist version snapshots to IndexedDB (not Supabase — too large). On page load, restore the last 20 versions from IndexedDB. Cap IndexedDB storage at 50 versions, pruning oldest.
+
+### Phase 85: File Rename Not Supported
+**File:** `src/hooks/useProjectFileSystem.ts`
+**Problem:** There's no `renameFile` function. If the AI generates a file at the wrong path (e.g., `styles.css` instead of `src/styles.css`), the user has to manually delete and recreate it. The file tree has no rename option.
+**Fix:** Add `renameFile(oldPath: string, newPath: string)` to `useProjectFileSystem`. Update all open tabs and active file references. Also update any import references in other files that point to the old path.
+
+### Phase 86: Binary Files (Images) Silently Dropped
+**File:** `src/hooks/useProjectFileSystem.ts`
+**Problem:** The `ProjectFile` type only has `content: string`. If the user uploads an image via the Asset Manager or the AI references a generated image, it can't be stored in the VFS. Binary assets are lost on reload.
+**Fix:** Add an `assets` map to the project state: `Map<string, { blob: Blob; mimeType: string }>`. Store uploaded images here. In `getCompiledHTML`, convert asset references to data URLs for the preview.
+
+### Phase 87: Multiple Browser Tabs Cause Data Loss
+**File:** `src/hooks/useProjectPersistence.ts`
+**Problem:** If the user has the same project open in two tabs, both tabs write to Supabase independently. The last writer wins, potentially overwriting the other tab's changes.
+**Fix:** Add a BroadcastChannel listener. When one tab saves, notify other tabs. If a conflict is detected (both have unsaved changes), show a "Project modified in another tab — reload?" dialog.
+
+---
+
+## Category D: Preview Engine Hardening (Phases 88-95)
+
+### Phase 88: Preview Iframe Doesn't Support `localStorage` / `sessionStorage`
+**File:** `src/components/ai-builder/BuilderPreviewPanel.tsx`
+**Problem:** AI-generated apps that use `localStorage` (for dark mode, user preferences, auth tokens) crash because the srcdoc iframe's storage is isolated and cleared on every reload.
+**Fix:** Inject a `localStorage` shim that stores data in the parent frame via postMessage. Persist the shim data across preview reloads using a Map in the parent component.
+
+### Phase 89: Preview Crashes on `window.location` Assignment
+**File:** `src/components/ai-builder/BuilderPreviewPanel.tsx`
+**Problem:** The AI generates `window.location.href = '/dashboard'` which causes the iframe to navigate away from the srcdoc, breaking the preview entirely. The navigation guard catches `<a>` clicks but not programmatic navigation.
+**Fix:** Inject overrides for `window.location.assign`, `window.location.replace`, and `window.location.href` setter that convert them to hash-based navigation and postMessage to the parent instead.
+
+### Phase 90: CSS Animations Cause High CPU in Preview
+**File:** `src/components/ai-builder/BuilderPreviewPanel.tsx`
+**Problem:** The AI generates CSS animations (gradients, particle effects, infinite rotations) that consume 30-40% CPU in the preview iframe, making the entire IDE sluggish.
+**Fix:** When the user switches to the code tab or the preview is not visible, pause all animations in the iframe by injecting `*, *::before, *::after { animation-play-state: paused !important; }`. Resume when the preview tab is active.
+
+### Phase 91: Preview `fetch()` Calls to Relative URLs Fail
+**File:** `src/components/ai-builder/BuilderPreviewPanel.tsx`
+**Problem:** AI-generated code sometimes uses `fetch('/api/data')` which resolves relative to `about:srcdoc` — a non-existent origin. All relative fetch calls fail silently.
+**Fix:** Inject a fetch wrapper that detects relative URLs and either: (a) converts them to the Supabase Functions URL if connected, or (b) returns a mock response with sample data and logs a warning.
+
+### Phase 92: `<img>` Tags with Relative `src` Show Broken Images
+**File:** `src/hooks/useProjectFileSystem.ts`
+**Problem:** The AI generates `<img src="images/hero.jpg">` but the preview runs in srcdoc with no server to resolve relative paths. Images show as broken.
+**Fix:** In `getCompiledHTML`, scan for `<img src="...">`  and `url(...)` in CSS that reference project files. Replace them with inline data URLs if the file exists in the VFS, or with Unsplash placeholder URLs if they don't.
+
+### Phase 93: Console Panel Missing Timestamps and Filtering
+**File:** `src/components/ai-builder/ErrorConsole.tsx`
+**Problem:** The console panel shows errors and logs but with no timestamps, no severity filtering, and no search. When debugging, users can't find the relevant error among noise.
+**Fix:** Add a filter bar with severity toggles (error/warn/info/debug), a search input, and relative timestamps ("2s ago"). Also add a "Clear" button and a count badge per severity level.
+
+### Phase 94: Preview Doesn't Support Web Workers
 **File:** `src/hooks/useReactCompiler.ts`
-**Problem:** AI-generated React code uses `import { Button } from '@/components/ui/button'`. The module map doesn't resolve `@/` prefix aliases, causing "module not found" at runtime.
-**Fix:** In `buildModuleMap`, add alias resolution: strip `@/` prefix and map to the equivalent relative path. Also map `@/lib/utils` to `lib/utils`.
+**Problem:** If the AI generates a Web Worker (e.g., for heavy computation), `new Worker('worker.js')` fails because the worker file isn't served by a URL.
+**Fix:** Intercept `new Worker()` calls and convert the worker file content to a Blob URL: `new Worker(URL.createObjectURL(new Blob([workerCode])))`. Add worker file detection to the module map.
 
-### Phase 30: Tailwind CDN Fails Silently on Network Issues
+### Phase 95: Preview Dark Mode Doesn't Match System Preferences
 **File:** `src/hooks/useReactCompiler.ts`
-**Problem:** The React compiler injects `<script src="https://cdn.tailwindcss.com">`. If the CDN is slow or offline, Tailwind classes render unstyled with no warning.
-**Fix:** Add an `onerror` handler on the Tailwind script tag that injects a minimal set of utility CSS as a fallback and shows a warning banner.
-
-### Phase 31: Type Stripping Breaks Generic Components
-**File:** `src/hooks/useReactCompiler.ts` (`stripTypeAnnotations`)
-**Problem:** The regex-based type stripper can break on complex generics like `const fn = <T extends Record<string, unknown>>(arg: T) => ...` — it incorrectly strips the generic parameter as JSX.
-**Fix:** Before stripping, detect arrow function generics (`= <T...>(`) and preserve them by temporarily replacing with a marker, then restoring after type stripping.
-
-### Phase 32: Missing Error Boundary in React Preview
-**File:** `src/hooks/useReactCompiler.ts`
-**Problem:** React runtime errors crash the entire preview with a blank screen. Unlike the HTML preview which has error capture scripts, the React preview has no `ErrorBoundary` wrapper.
-**Fix:** Inject a React `ErrorBoundary` component that catches render errors and displays them inline. Also post the error to parent frame via `window.parent.postMessage`.
-
-### Phase 33: Hot Module Patching Not Working for React Projects
-**File:** `src/hooks/useLivePreviewSync.ts`
-**Problem:** The `__LIVE_PATCH__` system patches CSS and HTML body content, but React projects use a single compiled `<script>` — CSS patches work, but component changes require a full reload.
-**Fix:** For React projects, detect when only CSS files changed and apply CSS-only hot patches. For JS/TSX changes, trigger a full iframe reload instead of attempting HTML body patching.
+**Problem:** AI-generated apps with dark/light mode toggles use `prefers-color-scheme` media query, but the preview iframe doesn't inherit the parent's color scheme preference. Dark mode detection fails.
+**Fix:** Pass the parent frame's `prefers-color-scheme` value to the iframe via a CSS custom property or meta tag injection. Update on change using a `matchMedia` listener.
 
 ---
 
-## Category C: Preview Engine and Error Pipeline (Phases 34-40)
+## Category E: Edge Function and Gateway Robustness (Phases 96-103)
 
-### Phase 34: Error Console Floods with Duplicate Errors
-**File:** `src/components/ai-builder/BuilderPreviewPanel.tsx`
-**Problem:** The same error (e.g., "Cannot read property of undefined") fires repeatedly on every re-render, filling the error console with 50+ identical entries and triggering multiple auto-fix attempts.
-**Fix:** Deduplicate errors by message content within a 2-second window. If the same error message fires more than twice within 2 seconds, only keep the first occurrence.
-
-### Phase 35: Auto-Fix Cooldown Races with Generation End Detection
-**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
-**Problem:** The 3-second cooldown (`generationEndedAt.current`) uses `Date.now()` in `handleAutoFixError`, but the compilation step after generation can take 1-2 seconds. Errors from the compilation itself (legitimate errors) get swallowed by the cooldown.
-**Fix:** Start the cooldown from when compilation finishes (when `compiledHTML` updates), not when `isGenerating` becomes false. Track `compilationEndedAt` separately.
-
-### Phase 36: Preview Iframe Doesn't Reset Scroll Position on New Builds
-**File:** `src/components/ai-builder/BuilderPreviewPanel.tsx`
-**Problem:** After a new generation, the preview iframe retains the previous scroll position. If the user was scrolled to the bottom, the new app appears blank until they scroll up.
-**Fix:** After `iframeKey` changes or `html` updates, scroll the iframe content to top: `iframeRef.current?.contentWindow?.scrollTo(0, 0)`.
-
-### Phase 37: Preview Breaks When AI Generates `<iframe>` Inside App
-**File:** `src/hooks/useProjectFileSystem.ts` (`getCompiledHTML`)
-**Problem:** If the AI generates an app that contains `<iframe>` tags (e.g., embedded videos, maps), the nested iframe breaks the parent's error capture and message handling.
-**Fix:** Add `sandbox="allow-scripts allow-same-origin allow-popups"` to any `<iframe>` tags in the generated HTML. Also wrap the error capture script to only listen to same-origin messages.
-
-### Phase 38: Console Log Interceptor Breaks `console.log` Object Formatting
-**File:** `src/components/ai-builder/BuilderPreviewPanel.tsx`
-**Problem:** The injected console interceptor uses `Array.from(arguments).join(' ')`, which converts objects to `[object Object]` instead of preserving structure. This makes debugging impossible.
-**Fix:** Use `JSON.stringify` for object arguments (with try/catch for circular refs): `typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)`.
-
-### Phase 39: Network Log Interceptor Doesn't Capture POST Bodies
-**File:** `src/components/ai-builder/BuilderPreviewPanel.tsx`
-**Problem:** The fetch interceptor logs method, URL, status, and duration, but not the request body or response body. When debugging API calls (e.g., Supabase queries), the user can't see what data was sent or received.
-**Fix:** Capture `init.body` (stringified, truncated to 500 chars) and `response.clone().text()` (truncated) in the `__NETWORK_LOG__` message.
-
-### Phase 40: Error Source Mapping Shows Wrong File for React Projects
-**File:** `src/components/ai-builder/BuilderPreviewPanel.tsx`
-**Problem:** React runtime errors report `source: ""` or `source: "about:srcdoc"` because the compiled HTML is a single `srcdoc`. There's no way to map errors back to the original `.tsx` file.
-**Fix:** Inject source map comments in the compiled React output that map to virtual file paths. In the error handler, parse the stack trace to extract the original component name and report it as the source.
-
----
-
-## Category D: System Prompt and AI Output Quality (Phases 41-47)
-
-### Phase 41: System Prompt Doesn't Enforce Consistent Import Patterns
-**File:** `supabase/functions/ai-app-builder/index.ts` (BASE_SYSTEM_PROMPT)
-**Problem:** The AI sometimes uses `import React from 'react'` (default import) and sometimes `import { useState } from 'react'` (named import) in the same project, or mixes CommonJS `require()` with ESM `import`.
-**Fix:** Add to system prompt: `"IMPORTS: Always use ESM (import/export). Always destructure React hooks: import { useState, useEffect } from 'react'. Never use require()."`
-
-### Phase 42: AI Generates Duplicate Component Names Across Files
+### Phase 96: Gateway Returns HTML Error Page Instead of JSON on 502
 **File:** `supabase/functions/ai-app-builder/index.ts`
-**Problem:** When generating multi-file React projects, the AI sometimes creates `export default function App()` in both `App.tsx` and `components/Dashboard.tsx`, causing import conflicts.
-**Fix:** Add to system prompt: `"NAMING: Each file must export a uniquely named component matching its filename. App.tsx exports App, Header.tsx exports Header. Never duplicate export names across files."`
+**Problem:** When the Lovable AI gateway has an outage, it sometimes returns an HTML error page (nginx 502) instead of JSON. The client's `resp.json()` call throws, and the error classifier receives a garbled message.
+**Fix:** Wrap `resp.json()` in a try-catch with text fallback: `const errData = await resp.json().catch(() => ({ error: await resp.text().catch(() => 'Gateway error') }))`.
 
-### Phase 43: AI Omits `key` Props on `.map()` Outputs
+### Phase 97: System Prompt Exceeds Token Limit with Many Services Connected
 **File:** `supabase/functions/ai-app-builder/index.ts`
-**Problem:** Despite the self-review instruction mentioning key props, the AI frequently omits them on generated `.map()` JSX, causing React warnings that flood the console.
-**Fix:** Add to BASE_SYSTEM_PROMPT near the REACT section: `"CRITICAL: EVERY .map() that returns JSX MUST have a unique key prop. Use item.id or index as fallback. Missing keys cause React warnings."`
+**Problem:** With Supabase + Stripe + 5 AI services connected, the system prompt grows to ~8000 chars. Combined with the conversation history, this can push the total past the model's context window.
+**Fix:** Cap the system prompt at 5000 chars. If it exceeds, prioritize: base prompt > Supabase addon > active service prompts (only include the 2 most relevant based on user message keywords) > Stripe addon.
 
-### Phase 44: AI Generates Tailwind Classes That Don't Exist
+### Phase 98: Firecrawl Scrape Blocks the Edge Function Even When Not Needed
 **File:** `supabase/functions/ai-app-builder/index.ts`
-**Problem:** The AI sometimes hallucinates Tailwind classes like `text-primary-500` or `bg-accent-100` that don't exist in default Tailwind. These render as unstyled.
-**Fix:** Add to system prompt: `"TAILWIND: Only use default Tailwind utility classes. Do NOT invent custom classes like 'text-primary-500'. Use exact values: text-blue-500, bg-gray-100, etc. For custom colors, define them in a <style> block using CSS custom properties."`
+**Problem:** The clone-intent detection regex (`cloneKeywords`) is too broad — "looks like" triggers scraping even on casual comparisons. This wastes 3-5 seconds on non-clone requests that mention URLs.
+**Fix:** Tighten the regex: require the URL to be adjacent to the clone keyword (within 50 chars). Also skip scraping if the user's message is under 20 chars (unlikely to be a clone request).
 
-### Phase 45: AI Generates `async` Event Handlers Without Error Handling
+### Phase 99: Edge Function Doesn't Handle Multimodal Image Blocks Larger Than 5MB
 **File:** `supabase/functions/ai-app-builder/index.ts`
-**Problem:** The AI wraps Supabase calls in `async` handlers but omits `try/catch`, causing unhandled promise rejections that crash the preview silently.
-**Fix:** Already mentioned in self-review but not enforced in system prompt. Add to CRUD section: `"ASYNC: Every async event handler MUST have try/catch. Show toast.error() on failure. Never leave async operations uncaught."`
+**Problem:** Users can upload high-res screenshots as base64 data URLs. A single 5MP image is ~7MB base64. The gateway accepts it but burns most of the token budget on the image embedding.
+**Fix:** In the message validation step (Phase 54), detect base64 image blocks larger than 2MB and resize them by truncating to ~1MB (losing quality but preserving enough for layout understanding). Log a warning.
 
-### Phase 46: AI Doesn't Generate Loading States for Async Operations
+### Phase 100: No Request ID for Debugging
 **File:** `supabase/functions/ai-app-builder/index.ts`
-**Problem:** Apps with Supabase queries show raw undefined data or empty screens while loading. The AI doesn't add `isLoading` states.
-**Fix:** Add to SUPABASE_ADDON: `"UX: Every data-fetching component MUST have a loading state (spinner or skeleton). Initialize data as empty array, not undefined. Show error state if query fails."`
+**Problem:** When a build fails, there's no way to correlate the client error with the server-side logs. Users report "it didn't work" and we can't find the corresponding request.
+**Fix:** Generate a `requestId` (UUID) at the start of the edge function. Include it in all console.log statements and in the response headers (`X-Request-Id`). On the client, capture and display the request ID in error messages so users can report it.
 
-### Phase 47: Discuss Mode AI Generates Code Despite Instructions
-**File:** `supabase/functions/ai-app-builder/index.ts`
-**Problem:** The discuss mode system prompt says "DO NOT output any code", but the AI sometimes outputs `===FILE:` blocks anyway, which get parsed and applied.
-**Fix:** In `parseMultiFileOutput`, if the mode is `discuss`, return empty files/edits even if `===FILE:` blocks are found. Pass `mode` through to the parser.
-
----
-
-## Category E: State Management and Persistence (Phases 48-53)
-
-### Phase 48: Version Restore Doesn't Update File Hash Cache
+### Phase 101: Gateway Streaming Breaks on Empty `choices` Array
 **File:** `src/hooks/useAIAppBuilder.ts`
-**Problem:** After `restoreVersion`, the file hash cache still contains hashes from the current files. The next build sends wrong incremental context because `getChangedFiles` thinks restored files are "unchanged."
-**Fix:** Call `updateFileHashes(version.files)` inside `restoreVersion` after setting files.
+**Problem:** Some SSE chunks from the gateway have `choices: []` (empty array) during rate-limited responses. The client does `parsed.choices?.[0]?.delta?.content` which returns undefined, but doesn't crash — it just silently drops the chunk.
+**Fix:** This is actually handled correctly (undefined delta = no-op). However, log a warning when an empty choices array is received 5+ times consecutively, as it indicates a degraded gateway response.
 
-### Phase 49: `editAndResend` Doesn't Reset Continuation State
+### Phase 102: Client Doesn't Respect `Retry-After` Header
 **File:** `src/hooks/useAIAppBuilder.ts`
-**Problem:** If the user edits and resends a message while a multi-round generation was in progress, `continuationCountRef` and `accumulatedFilesRef` retain stale state from the previous generation.
-**Fix:** Reset `continuationCountRef.current = 0`, `accumulatedFilesRef.current = []`, and `setContinuationRound(0)` at the start of `editAndResend`.
+**Problem:** Phase 14 added `Retry-After: 5` to 503 responses, but the client-side retry logic (line 1646) uses its own backoff schedule and ignores the header.
+**Fix:** In the retry loop, check `resp.headers.get('Retry-After')` and use it as the minimum backoff. Parse both delta-seconds and HTTP-date formats.
 
-### Phase 50: Project Persistence Race Condition on Rapid Saves
-**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
-**Problem:** Auto-save fires on every `latestFiles` change. During continuation rounds, latestFiles updates 2-4 times in rapid succession, causing concurrent Supabase upserts that can corrupt the saved state.
-**Fix:** Debounce the auto-save with a 2-second delay. Cancel pending saves when a new one starts. Use a save-in-progress flag to prevent overlapping writes.
-
-### Phase 51: Undo/Redo Stack Doesn't Capture File Deletions
-**File:** `src/hooks/useUndoRedo.ts` (used in workspace)
-**Problem:** When the AI outputs `===DELETE: styles.css===`, the file is removed from `latestFiles`, but the undo stack only captures file content changes, not deletions. Undoing doesn't restore deleted files.
-**Fix:** Push the full file array (including deleted files) to the undo stack before applying deletions.
-
-### Phase 52: Message History Grows Unbounded
-**File:** `src/hooks/useAIAppBuilder.ts`
-**Problem:** `messages` state array grows indefinitely. After 100+ messages in a session, React re-renders become sluggish because every `setMessages` call diffs a large array.
-**Fix:** Cap messages at 200 entries. When limit is reached, compress older messages (keep first 5 + last 50, summarize middle).
-
-### Phase 53: `latestFiles` and `project.files` Can Desync
-**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
-**Problem:** `useAIAppBuilder` sets `latestFiles` directly, but the workspace reads from `project.files` (via `useProjectFileSystem`). There's an effect that syncs them, but during rapid updates (streaming), the two can be out of sync causing the preview to show stale content.
-**Fix:** Consolidate to a single source of truth. Remove the dual-state and have the builder write directly to the project file system.
+### Phase 103: Context Trimming Strips the User's Actual Request
+**File:** `supabase/functions/ai-app-builder/index.ts` (line 310-327)
+**Problem:** The server-side `trimMessagesToFit` aggressively truncates the LAST user message (which contains the actual request + file context) to 200K chars. For large projects, this truncates the file context, but for projects with many images, it can truncate the user's actual instruction.
+**Fix:** Split the last user message: preserve the user's instruction text (first 5000 chars) untouched, then truncate only the file context portion. Detect the boundary via the `User request:` marker that the client injects.
 
 ---
 
-## Category F: Edge Function and Gateway Resilience (Phases 54-57)
+## Category F: Workspace UX and Reliability (Phases 104-110)
 
-### Phase 54: Edge Function Doesn't Validate Message Content Types
-**File:** `supabase/functions/ai-app-builder/index.ts`
-**Problem:** The edge function passes messages directly to the gateway without validating that `content` is either a string or a valid multimodal array. Malformed content (e.g., `null`, number) causes a gateway 400.
-**Fix:** Add content validation: filter out messages with null/undefined content, convert numbers to strings, ensure multimodal arrays only contain valid block types.
-
-### Phase 55: Gateway Model String Not Validated
-**File:** `supabase/functions/ai-app-builder/index.ts`
-**Problem:** The `model` parameter is passed from the client without validation. If the user selects a model that doesn't exist on the gateway, it returns a cryptic error.
-**Fix:** Maintain a `VALID_MODELS` set and validate/fallback: `const selectedModel = VALID_MODELS.has(model) ? model : DEFAULT_MODEL`.
-
-### Phase 56: Streaming Response Not Flushed on Edge Function Timeout
-**File:** `supabase/functions/ai-app-builder/index.ts`
-**Problem:** If the gateway aborts mid-stream due to `gatewayController`, the partially streamed response body is sent to the client as a readable stream, but the stream is never properly closed. The client's reader hangs waiting for more data.
-**Fix:** Wrap the response body in a `TransformStream` that detects abortion and sends a proper stream termination (`data: [DONE]`).
-
-### Phase 57: System Prompt Size Not Logged for Debugging
-**File:** `supabase/functions/ai-app-builder/index.ts`
-**Problem:** The base system prompt size is logged, but the final system prompt (after addons, services, branding) isn't. When builds fail with token errors, there's no way to know how large the final prompt was.
-**Fix:** Log `finalMessages` total char count before sending to gateway: `console.log('Final payload: ${estimateTotalChars(finalMessages)} chars, ${finalMessages.length} messages')`.
-
----
-
-## Category G: Workspace Orchestration (Phases 58-60)
-
-### Phase 58: Post-Build Hooks Run Twice (Effect + LatestFiles Watcher)
+### Phase 104: Code Editor Loses Cursor Position on File Update
 **File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
-**Problem:** Smoke test and delete auto-patcher run in both the `isGenerating` transition effect (line 1440) AND the `latestFiles` watcher (line 1038). On every generation, they execute twice, doubling build log entries and potentially double-patching files.
-**Fix:** Remove the duplicate from one location. Keep the `isGenerating` transition effect as the primary trigger (it runs once per generation), and remove the quality checks from the `latestFiles` watcher.
+**Problem:** When the AI generates new file content, the Monaco editor receives the full content update, resetting the cursor to position (0,0). If the user was editing and the AI modifies the same file, they lose their place.
+**Fix:** Before applying AI-generated content to the active file, save the editor's cursor position and scroll state. After the content update, restore cursor to the nearest valid position (same line if it still exists, or end of file).
 
-### Phase 59: Companion Test File Generation Creates Stale Tests
-**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
-**Problem:** `fileScaffolding.generateCompanionFiles` creates test files after every build, but if the component changes on the next build, the test files become stale. They're never updated — only created if missing.
-**Fix:** Track which test files were auto-generated (vs user-created). On subsequent builds, regenerate auto-generated test files if their source component changed.
+### Phase 105: File Tree Doesn't Show Folder Structure
+**File:** `src/components/ai-builder/ProjectFileTree.tsx`
+**Problem:** Files like `src/components/Header.tsx` and `src/utils/api.ts` are shown as flat paths in the file tree. There's no visual folder hierarchy, making navigation difficult for larger projects.
+**Fix:** Parse file paths into a tree structure: group files by directory, show collapsible folder nodes. Sort folders before files. Show file counts per folder. Highlight the active file's folder.
 
-### Phase 60: Build Analytics Records Wrong Credit Count
+### Phase 106: No Keyboard Shortcut for "Send Message" in Chat
+**File:** `src/components/ai-builder/BuilderChatPanel.tsx`
+**Problem:** Users must click the Send button or press Enter. But Enter creates a newline in the textarea. There's no clear shortcut for sending, and Cmd+Enter isn't bound.
+**Fix:** Bind Cmd/Ctrl+Enter to send the message. Show a hint below the textarea: "Cmd+Enter to send". Keep plain Enter for newlines.
+
+### Phase 107: Build Log Panel Shows Raw Technical Output
+**File:** `src/hooks/useBuildLog.ts`
+**Problem:** The build log shows entries like `[Build Analytics] 5 files generated, 2 patched, 0 deleted, 3 context files sent, build: 1234ms`. This is developer-facing, not user-facing.
+**Fix:** Translate log entries into friendly format: "Generated 5 files and patched 2 existing files (1.2s)". Add severity icons (check for success, warning triangle for issues, X for errors).
+
+### Phase 108: Template Library Doesn't Preview Before Applying
+**File:** `src/components/ai-builder/TemplateLibrary.tsx`
+**Problem:** Clicking a template immediately replaces all project files. There's no preview of what the template looks like before committing.
+**Fix:** Add a preview modal that shows a screenshot/description of the template. Require a "Use this template" confirmation button. Also add "Merge with existing" option that only adds new files without replacing existing ones.
+
+### Phase 109: Project Export Doesn't Include Package Dependencies
+**File:** (Export utility)
+**Problem:** When exporting a React project as ZIP, the export includes `.tsx` files but no `package.json`. The user can't `npm install` and run the project locally.
+**Fix:** Auto-generate a `package.json` based on detected imports: scan all files for `import X from 'package'`, match against the CDN package registry, and produce a valid `package.json` with the correct versions. Also generate a minimal `vite.config.ts` and `tsconfig.json`.
+
+### Phase 110: No Onboarding for First-Time Users
 **File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
-**Problem:** `buildAnalytics.recordBuild` hardcodes `creditsUsed: 3` regardless of the actual mode (discuss = 1 credit, build = 3 credits) or whether credits were deducted at all (auto-fix is free).
-**Fix:** Pass the actual credit cost from the builder. Either expose it from `useAIAppBuilder` or compute it in the workspace based on mode + isAutoFix.
+**Problem:** New users land on a blank workspace with no guidance. They don't know to type a prompt, what "Build" vs "Discuss" modes mean, or that they can upload images.
+**Fix:** Show a first-launch overlay with 3 quick-start options: (1) "Describe your app" with example prompts, (2) "Start from template" with top 6 templates, (3) "Upload a screenshot" for visual cloning. Track `hasSeenOnboarding` in localStorage. Also add tooltips to mode switcher and image upload button.
 
 ---
 
@@ -238,56 +284,74 @@ A comprehensive sweep across the parser, React compiler, preview engine, error p
 
 | Phase | Category | Issue | Impact | File |
 |-------|----------|-------|--------|------|
-| 21 | Parser | JSON files corrupted by prose detector | JSON/config files broken | useAIAppBuilder.ts |
-| 22 | Parser | Duplicate paths across rounds overwrite | Round 2 replaces round 1 content | useAIAppBuilder.ts |
-| 23 | Parser | EDIT blocks can't target same-response files | Edits silently skipped | useAIAppBuilder.ts |
-| 24 | Parser | Path normalization (`./`, `/`) | Duplicate file entries | useAIAppBuilder.ts |
-| 25 | Parser | SVG files flagged by bracket balance | False truncation detection | useAIAppBuilder.ts |
-| 26 | Parser | Markdown files stripped as prose | README files destroyed | useAIAppBuilder.ts |
-| 27 | Parser | Missing SCSS/LESS language mapping | No syntax highlighting | useAIAppBuilder.ts |
-| 28 | React | Compiler errors show blank page | User sees nothing | useReactCompiler.ts |
-| 29 | React | `@/` import alias not resolved | Module not found errors | useReactCompiler.ts |
-| 30 | React | Tailwind CDN fails silently | Unstyled preview | useReactCompiler.ts |
-| 31 | React | Type stripper breaks generics | Compilation fails | useReactCompiler.ts |
-| 32 | React | No ErrorBoundary in React preview | Blank screen on errors | useReactCompiler.ts |
-| 33 | React | Hot patching doesn't work for React | Full reload needed every time | useLivePreviewSync.ts |
-| 34 | Preview | Duplicate errors flood console | Multiple auto-fix triggers | BuilderPreviewPanel.tsx |
-| 35 | Preview | Cooldown races with compilation | Legitimate errors swallowed | AIAppBuilderWorkspace.tsx |
-| 36 | Preview | Scroll position not reset | New builds appear blank | BuilderPreviewPanel.tsx |
-| 37 | Preview | Nested iframes break error capture | Errors from embeds lost | useProjectFileSystem.ts |
-| 38 | Preview | Console objects show [object Object] | Debugging impossible | BuilderPreviewPanel.tsx |
-| 39 | Preview | Network logs missing request/response body | Can't debug API calls | BuilderPreviewPanel.tsx |
-| 40 | Preview | Error source unknown in React projects | Can't identify broken component | BuilderPreviewPanel.tsx |
-| 41 | Prompt | Inconsistent import patterns | Module resolution errors | ai-app-builder/index.ts |
-| 42 | Prompt | Duplicate component names | Import conflicts | ai-app-builder/index.ts |
-| 43 | Prompt | Missing key props on .map() | React console warnings | ai-app-builder/index.ts |
-| 44 | Prompt | Hallucinated Tailwind classes | Unstyled elements | ai-app-builder/index.ts |
-| 45 | Prompt | Async handlers without try/catch | Silent failures | ai-app-builder/index.ts |
-| 46 | Prompt | No loading states for async data | Blank screens while loading | ai-app-builder/index.ts |
-| 47 | Prompt | Discuss mode leaks code | Unwanted file changes | useAIAppBuilder.ts |
-| 48 | State | Version restore doesn't update hashes | Stale incremental context | useAIAppBuilder.ts |
-| 49 | State | editAndResend doesn't reset continuation | Ghost continuation rounds | useAIAppBuilder.ts |
-| 50 | State | Rapid auto-saves corrupt persistence | Lost project data | AIAppBuilderWorkspace.tsx |
-| 51 | State | Undo doesn't capture deletions | Can't undo file removal | AIAppBuilderWorkspace.tsx |
-| 52 | State | Messages array grows unbounded | Sluggish re-renders | useAIAppBuilder.ts |
-| 53 | State | latestFiles vs project.files desync | Stale preview content | AIAppBuilderWorkspace.tsx |
-| 54 | Edge Fn | Message content not validated | Gateway 400 errors | ai-app-builder/index.ts |
-| 55 | Edge Fn | Model string not validated | Cryptic error messages | ai-app-builder/index.ts |
-| 56 | Edge Fn | Stream not terminated on abort | Client reader hangs | ai-app-builder/index.ts |
-| 57 | Edge Fn | Final prompt size not logged | Impossible to debug token errors | ai-app-builder/index.ts |
-| 58 | Workspace | Post-build hooks run twice | Double patching and log spam | AIAppBuilderWorkspace.tsx |
-| 59 | Workspace | Auto-generated tests become stale | Misleading test results | AIAppBuilderWorkspace.tsx |
-| 60 | Workspace | Build analytics hardcodes credits | Inaccurate usage tracking | AIAppBuilderWorkspace.tsx |
+| 61 | React | Sync IIFE breaks await import | External packages crash | useReactCompiler.ts |
+| 62 | React | export *, export as not handled | Broken module re-exports | useReactCompiler.ts |
+| 63 | React | CSS @import not resolved | Unstyled content | useReactCompiler.ts |
+| 64 | React | Tailwind CDN blocks render | Flash of unstyled content | useReactCompiler.ts |
+| 65 | React | Missing React 18 hooks in globals | useId crashes | useReactCompiler.ts |
+| 66 | React | StrictMode triggers loop detector | False "infinite loop" error | useReactCompiler.ts |
+| 67 | React | import type not stripped | Runtime reference errors | useReactCompiler.ts |
+| 68 | React | Named exports lost with default | Missing component exports | useReactCompiler.ts |
+| 69 | React | Dynamic import() not resolved | Module not found | useReactCompiler.ts |
+| 70 | React | Double createRoot calls | "Container has root" error | useReactCompiler.ts |
+| 71 | Prompt | AI stops mid-file on long output | Broken files | ai-app-builder/index.ts |
+| 72 | Prompt | Dead onClick handlers | Runtime "not defined" errors | ai-app-builder/index.ts |
+| 73 | Prompt | Broken multi-page navigation | Dead nav links | ai-app-builder/index.ts |
+| 74 | Compiler | React projects missing index.html | Empty preview | useProjectFileSystem.ts |
+| 75 | Prompt | No error states for network failures | Blank screen on errors | ai-app-builder/index.ts |
+| 76 | Prompt | No empty states for data lists | Blank screen = "broken" | ai-app-builder/index.ts |
+| 77 | Prompt | Forms missing validation | Empty/invalid submissions | ai-app-builder/index.ts |
+| 78 | Prompt | Non-responsive layouts | Broken on mobile | ai-app-builder/index.ts |
+| 79 | Prompt | Hardcoded data instead of state | CRUD doesn't work | ai-app-builder/index.ts |
+| 80 | Prompt | No loading indicators | Blank screen while loading | ai-app-builder/index.ts |
+| 81 | State | Auto-save during generation | Partial files persisted | AIAppBuilderWorkspace.tsx |
+| 82 | State | Stale IndexedDB recovery | Cloud data overwritten | useIndexedDBPersistence.ts |
+| 83 | State | Excessive undo snapshots | Memory bloat | AIAppBuilderWorkspace.tsx |
+| 84 | State | Versions lost on reload | No rollback after refresh | useVersionTimeline.ts |
+| 85 | State | No file rename support | Manual delete/recreate | useProjectFileSystem.ts |
+| 86 | State | Binary files dropped | Images lost on reload | useProjectFileSystem.ts |
+| 87 | State | Multi-tab data loss | Last writer wins | useProjectPersistence.ts |
+| 88 | Preview | localStorage not supported | Dark mode/prefs crash | BuilderPreviewPanel.tsx |
+| 89 | Preview | window.location crashes iframe | Preview breaks entirely | BuilderPreviewPanel.tsx |
+| 90 | Preview | CSS animations cause high CPU | IDE becomes sluggish | BuilderPreviewPanel.tsx |
+| 91 | Preview | Relative fetch() URLs fail | API calls silently fail | BuilderPreviewPanel.tsx |
+| 92 | Preview | Relative img src broken | Broken image icons | useProjectFileSystem.ts |
+| 93 | Preview | Console missing filters | Can't find relevant errors | ErrorConsole.tsx |
+| 94 | Preview | Web Workers not supported | Heavy computation fails | useReactCompiler.ts |
+| 95 | Preview | Dark mode detection fails | Wrong color scheme | useReactCompiler.ts |
+| 96 | Edge Fn | Gateway returns HTML on 502 | JSON parse crash | ai-app-builder/index.ts |
+| 97 | Edge Fn | System prompt too large | Token limit exceeded | ai-app-builder/index.ts |
+| 98 | Edge Fn | Scrape triggered too often | Wasted 3-5s per request | ai-app-builder/index.ts |
+| 99 | Edge Fn | Oversized image blocks | Token budget consumed | ai-app-builder/index.ts |
+| 100 | Edge Fn | No request ID for debugging | Can't trace failures | ai-app-builder/index.ts |
+| 101 | Client | Empty choices array not logged | Silent degradation | useAIAppBuilder.ts |
+| 102 | Client | Retry-After header ignored | Retries too fast on 503 | useAIAppBuilder.ts |
+| 103 | Edge Fn | Context trim strips user request | AI doesn't see the instruction | ai-app-builder/index.ts |
+| 104 | UX | Editor cursor reset on update | User loses edit position | AIAppBuilderWorkspace.tsx |
+| 105 | UX | Flat file tree for nested paths | Navigation difficult | ProjectFileTree.tsx |
+| 106 | UX | No Cmd+Enter to send message | Friction to send | BuilderChatPanel.tsx |
+| 107 | UX | Raw build log output | Not user-friendly | useBuildLog.ts |
+| 108 | UX | No template preview | Accidental file replacement | TemplateLibrary.tsx |
+| 109 | UX | Export missing package.json | Can't run locally | Export utility |
+| 110 | UX | No onboarding for new users | Confused first experience | AIAppBuilderWorkspace.tsx |
 
 ## Files Changed
 
 | File | Phases |
 |------|--------|
-| `src/hooks/useAIAppBuilder.ts` | 21-27, 47, 48, 49, 52 |
-| `src/hooks/useReactCompiler.ts` | 28, 29, 30, 31, 32 |
-| `src/hooks/useLivePreviewSync.ts` | 33 |
-| `src/hooks/useProjectFileSystem.ts` | 37 |
-| `src/components/ai-builder/BuilderPreviewPanel.tsx` | 34, 36, 38, 39, 40 |
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | 35, 50, 51, 53, 58, 59, 60 |
-| `supabase/functions/ai-app-builder/index.ts` | 41, 42, 43, 44, 45, 46, 54, 55, 56, 57 |
+| `src/hooks/useReactCompiler.ts` | 61-70, 94, 95 |
+| `supabase/functions/ai-app-builder/index.ts` | 71-73, 75-80, 96-100, 103 |
+| `src/hooks/useProjectFileSystem.ts` | 74, 85, 86, 92 |
+| `src/hooks/useAIAppBuilder.ts` | 101, 102 |
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | 81, 83, 104, 110 |
+| `src/components/ai-builder/BuilderPreviewPanel.tsx` | 88-91, 93 |
+| `src/hooks/useIndexedDBPersistence.ts` | 82 |
+| `src/hooks/useVersionTimeline.ts` | 84 |
+| `src/hooks/useProjectPersistence.ts` | 87 |
+| `src/components/ai-builder/ErrorConsole.tsx` | 93 |
+| `src/components/ai-builder/ProjectFileTree.tsx` | 105 |
+| `src/components/ai-builder/BuilderChatPanel.tsx` | 106 |
+| `src/hooks/useBuildLog.ts` | 107 |
+| `src/components/ai-builder/TemplateLibrary.tsx` | 108 |
+| Export utility | 109 |
 
