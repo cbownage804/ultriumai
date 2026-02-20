@@ -701,6 +701,7 @@ export function useAIAppBuilder() {
   const [previousFiles, setPreviousFiles] = useState<ProjectFile[]>([]);
   const [mode, setMode] = useState<BuilderMode>('build');
   const [thinkingPhase, setThinkingPhase] = useState<ThinkingPhase>(null);
+  const thinkingPhaseSetRef = useRef(false); // Gate: only fire setThinkingPhase('writing') once per stream
   const [versions, setVersions] = useState<VersionSnapshot[]>([]);
   const [totalTokensUsed, setTotalTokensUsed] = useState(0);
   const [pendingFiles, setPendingFiles] = useState<ProjectFile[] | null>(null);
@@ -805,6 +806,7 @@ export function useAIAppBuilder() {
 
     // Thinking phases — stream-driven, no artificial delays
     setThinkingPhase('analyzing');
+    thinkingPhaseSetRef.current = false; // Reset gate for new stream
 
     // Build conversation context — smart windowing: only last N messages
     const MAX_CONTEXT_MESSAGES = 20;
@@ -1287,7 +1289,9 @@ export function useAIAppBuilder() {
               const delta = parsed.choices?.[0]?.delta?.content;
               if (delta) {
                 upsertAssistant(fullContent + delta);
-                if (thinkingPhase !== null && fullContent.includes('===FILE:')) {
+                // Issue 1 fix: Only fire setThinkingPhase('writing') once per stream
+                if (!thinkingPhaseSetRef.current && fullContent.includes('===FILE:')) {
+                  thinkingPhaseSetRef.current = true;
                   setThinkingPhase('writing');
                   setTimeout(() => setThinkingPhase(null), 500);
                 }
@@ -1585,14 +1589,16 @@ export function useAIAppBuilder() {
         validationErrors: validationErrorCount,
       };
 
-      // Unblock UI immediately, then compute suggestions async
-      setMessages(prev =>
-        prev.map((m, i) =>
-          i === prev.length - 1 && m.role === 'assistant'
-            ? { ...m, filesGenerated: totalChanges || undefined, tokenEstimate: msgTokens, filesSnapshot: snapshot, planSteps, buildSummary: totalChanges > 0 ? buildSummary : undefined, migrations: parsedMigrations.length > 0 ? parsedMigrations : undefined, edgeFunctions: parsedEdgeFunctions.length > 0 ? parsedEdgeFunctions : undefined }
-            : m
-        )
-      );
+      // Issue 5 fix: Defer metadata enrichment with rAF to avoid blocking UI
+      requestAnimationFrame(() => {
+        setMessages(prev =>
+          prev.map((m, i) =>
+            i === prev.length - 1 && m.role === 'assistant'
+              ? { ...m, filesGenerated: totalChanges || undefined, tokenEstimate: msgTokens, filesSnapshot: snapshot, planSteps, buildSummary: totalChanges > 0 ? buildSummary : undefined, migrations: parsedMigrations.length > 0 ? parsedMigrations : undefined, edgeFunctions: parsedEdgeFunctions.length > 0 ? parsedEdgeFunctions : undefined }
+              : m
+          )
+        );
+      });
 
       // ── Auto-continuation detection (Lovable parity) ──
       const MAX_CONTINUATION_ROUNDS = 4;

@@ -92,6 +92,7 @@ import {
   DataIntegrationPanelGroup, DevExperiencePanelGroup, DeploymentPanelGroup,
   MonetizationPanelGroup, IntegrationPanelGroup, InfraPanelGroup,
 } from './panel-groups';
+import { StreamingCodeEditor } from './StreamingCodeEditor';
 
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
@@ -891,14 +892,15 @@ export function AIAppBuilderWorkspace() {
       latestFiles.forEach(f => buildLog.logFileWrite(f.path));
       // Phase 87: Show compiling state while preview rebuilds
       setIsCompiling(true);
+      // Issue 4 fix: Prioritize compilation first, defer non-critical analyses
       requestAnimationFrame(() => {
-        setTimeout(() => {
-          setIsCompiling(false);
-          // Phase 100: Auto-detect code smells after build
-          const smells = codeSmellDetector.analyzeFiles([...project.files, ...latestFiles]);
-          if (smells.length > 0) setCodeSuggestions(smells);
-        }, 800);
+        setIsCompiling(false);
       });
+      // Defer code smell analysis so it doesn't block preview
+      setTimeout(() => {
+        const smells = codeSmellDetector.analyzeFiles([...project.files, ...latestFiles]);
+        if (smells.length > 0) setCodeSuggestions(smells);
+      }, 200);
     }
   }, [latestFiles]);
 
@@ -956,7 +958,8 @@ export function AIAppBuilderWorkspace() {
       } else {
         buildLog.addEntry('info', `✅ Validation passed (${validationResult.validationTimeMs}ms)`);
       }
-      // Phase 58: Run post-build quality checks ONLY here (removed duplicates from isGenerating transition effect)
+      // Issue 4 fix: Defer non-critical post-build work to unblock preview
+      // Run smoke test synchronously (fast, needed for error annotations)
       const smokeResult = smokeTest.runSmokeTest(latestFiles);
       const conflictWarnings = conflictDetection.detectConflicts(latestFiles);
       if (conflictWarnings.length > 0) {
@@ -967,21 +970,25 @@ export function AIAppBuilderWorkspace() {
         [...smokeResult.warnings, ...conflictWarnings],
         smokeResult.errors
       );
-      lighthouseAudit.runAudit(latestFiles);
-      bundleSize.analyzeBundle(latestFiles);
-      // Auto-patch broken delete/remove buttons deterministically (zero credits)
-      const patchResult = deleteAutoPatcher.patchDeleteButtons(latestFiles);
-      if (patchResult.patched) {
-        patchResult.files.forEach(f => upsertFile(f.path, f.content));
-        buildLog.addEntry('info', `🔧 Auto-patched ${patchResult.fixes.length} delete/remove issue(s)`);
-        patchResult.fixes.forEach(fix => buildLog.addEntry('info', `  ✅ ${fix}`));
-      }
-      // Phase 59: Auto-generate companion test files — regenerate if source changed
-      const companions = fileScaffolding.generateCompanionFiles(latestFiles, project.files);
-      if (companions.length > 0) {
-        companions.forEach(f => upsertFile(f.path, f.content));
-        buildLog.addEntry('info', `🧪 Auto-generated ${companions.length} test file(s)`);
-      }
+
+      // Defer heavy audits
+      setTimeout(() => {
+        lighthouseAudit.runAudit(latestFiles);
+        bundleSize.analyzeBundle(latestFiles);
+        // Auto-patch broken delete/remove buttons deterministically (zero credits)
+        const patchResult = deleteAutoPatcher.patchDeleteButtons(latestFiles);
+        if (patchResult.patched) {
+          patchResult.files.forEach(f => upsertFile(f.path, f.content));
+          buildLog.addEntry('info', `🔧 Auto-patched ${patchResult.fixes.length} delete/remove issue(s)`);
+          patchResult.fixes.forEach(fix => buildLog.addEntry('info', `  ✅ ${fix}`));
+        }
+        // Phase 59: Auto-generate companion test files
+        const companions = fileScaffolding.generateCompanionFiles(latestFiles, project.files);
+        if (companions.length > 0) {
+          companions.forEach(f => upsertFile(f.path, f.content));
+          buildLog.addEntry('info', `🧪 Auto-generated ${companions.length} test file(s)`);
+        }
+      }, 100);
       // Mark preview as good for hot recovery & update conflict resolver base snapshot
       hotRecovery.markAsGood([...project.files]);
       conflictResolver.setBaseSnapshot([...project.files]);
@@ -1052,34 +1059,17 @@ export function AIAppBuilderWorkspace() {
     prevIsGeneratingRef.current = isGenerating;
   }, [isGenerating, latestFiles.length, messages, project.name, renameProject]);
 
-  // Hot-reload streaming files + auto-switch to currently streaming file tab
-  // Poll partialFilesRef locally for editor display (avoids workspace re-renders)
-  const [editorStreamFiles, setEditorStreamFiles] = useState<ProjectFile[]>([]);
-  useEffect(() => {
-    if (!isStreamingPreview) {
-      setEditorStreamFiles([]);
-      return;
-    }
-    const interval = setInterval(() => {
-      const files = partialFilesRef.current;
-      setEditorStreamFiles(prev => prev !== files ? files : prev);
-    }, 400);
-    return () => clearInterval(interval);
-  }, [isStreamingPreview, partialFilesRef]);
+  // Issue 2 fix: editorStreamFiles polling moved to StreamingCodeEditor child component.
+  // Only keep a lightweight streamingFilePath ref for the tab bar.
+  const [streamingFilePath, setStreamingFilePath] = useState<string | null>(null);
+  const handleStreamingFileChange = useCallback((path: string | null) => {
+    setStreamingFilePath(path);
+  }, []);
 
-  const streamingFilePath = isStreamingPreview && editorStreamFiles.length > 0
-    ? editorStreamFiles[editorStreamFiles.length - 1]?.path || null
-    : null;
-
-  // During streaming, overlay partialFiles onto the editor instead of updating project.files.
-  // This eliminates hundreds of upsertFile/setProject calls per second that caused browser freezing.
+  // editorFile for non-streaming contexts (split view, code-only tab)
   const editorFile = useMemo(() => {
-    if (isStreamingPreview && streamingFilePath) {
-      const streamFile = editorStreamFiles.find(f => f.path === streamingFilePath);
-      if (streamFile) return streamFile;
-    }
     return activeFile;
-  }, [isStreamingPreview, streamingFilePath, editorStreamFiles, activeFile]);
+  }, [activeFile]);
 
   // Phase 50: Debounced auto-save to prevent corruption from rapid updates
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1844,8 +1834,24 @@ export function AIAppBuilderWorkspace() {
             compiled = true;
           }
         } else {
-          const html = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
-          if (html) {
+          // Issue 3 fix: For vanilla projects, compile from partialFilesRef
+          // since project.files is empty during initial generation
+          const indexFile = pFiles.find(f => f.path === 'index.html' || f.path.endsWith('/index.html'));
+          if (indexFile) {
+            // Build a minimal HTML by inlining CSS/JS from partial files
+            let html = indexFile.content;
+            // Inline CSS files
+            const cssFiles = pFiles.filter(f => f.path.endsWith('.css'));
+            if (cssFiles.length > 0) {
+              const cssInline = cssFiles.map(f => `<style>/* ${f.path} */\n${f.content}</style>`).join('\n');
+              html = html.replace('</head>', `${cssInline}\n</head>`);
+            }
+            // Inline JS files  
+            const jsFiles = pFiles.filter(f => f.path.endsWith('.js') && !f.path.endsWith('.config.js'));
+            if (jsFiles.length > 0) {
+              const jsInline = jsFiles.map(f => `<script>/* ${f.path} */\n${f.content}</script>`).join('\n');
+              html = html.replace('</body>', `${jsInline}\n</body>`);
+            }
             setStableHTML(html);
             compiled = true;
           }
@@ -2113,7 +2119,7 @@ export function AIAppBuilderWorkspace() {
                   <>
                     <FileTabBar openPaths={project.openFilePaths} activePath={streamingFilePath || project.activeFilePath} dirtyFiles={dirtyFiles} streamingFilePath={streamingFilePath} onSelect={(path) => setActiveFile(path)} onClose={(path) => closeFile(path)} onReorder={reorderOpenFiles} />
                     <div className="flex-1 min-h-0">
-                      <CodeEditor file={editorFile} onContentChange={(path, content) => { upsertFile(path, content); setDirtyFiles(prev => new Set(prev).add(path)); }} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} />
+                      <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={(path, content) => { upsertFile(path, content); setDirtyFiles(prev => new Set(prev).add(path)); }} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onStreamingFileChange={handleStreamingFileChange} />
                     </div>
                   </>
                 )}
@@ -2473,7 +2479,7 @@ export function AIAppBuilderWorkspace() {
                                   <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
                                     <FileBreadcrumb file={editorFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
                                     <div className="flex-1 overflow-hidden">
-                                      <CodeEditor file={editorFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} />
+                                      <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} onStreamingFileChange={handleStreamingFileChange} />
                                     </div>
                                   </div>
                                 </ResizablePanel>
@@ -2488,7 +2494,7 @@ export function AIAppBuilderWorkspace() {
                               <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
                                 <FileBreadcrumb file={editorFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
                                 <div className="flex-1 overflow-hidden">
-                                  <CodeEditor file={editorFile} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} />
+                                  <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} onStreamingFileChange={handleStreamingFileChange} />
                                 </div>
                               </div>
                             )}
