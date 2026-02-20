@@ -82,160 +82,16 @@ import { useNLDatabaseQuery } from '@/hooks/useNLDatabaseQuery';
 import { useMultiCursorEditor } from '@/hooks/useMultiCursorEditor';
 import { useMinimapHeatZones } from '@/hooks/useMinimapHeatZones';
 import { useSymbolNavigator } from '@/hooks/useSymbolNavigator';
-import { useSnippetLibrary } from '@/hooks/useSnippetLibrary';
-import { useSplitDiffEditor } from '@/hooks/useSplitDiffEditor';
-import { useCommentSystem } from '@/hooks/useCommentSystem';
 import { useProjectRBAC } from '@/hooks/useProjectRBAC';
-import { useTeamActivityFeed } from '@/hooks/useTeamActivityFeed';
-import { useApprovalWorkflow } from '@/hooks/useApprovalWorkflow';
-import { useProjectForking } from '@/hooks/useProjectForking';
-import { useFigmaImport } from '@/hooks/useFigmaImport';
-import { useColorPaletteExtractor } from '@/hooks/useColorPaletteExtractor';
-import { useIconPicker } from '@/hooks/useIconPicker';
-import { useResponsiveBreakpointEditor } from '@/hooks/useResponsiveBreakpointEditor';
-import { useAnimationBuilder } from '@/hooks/useAnimationBuilder';
-import { useVisualSchemaBuilder } from '@/hooks/useVisualSchemaBuilder';
-import { useSeedDataGenerator } from '@/hooks/useSeedDataGenerator';
-import { useAPIEndpointTester } from '@/hooks/useAPIEndpointTester';
-import { useWebhookBuilder } from '@/hooks/useWebhookBuilder';
-import { useCronJobScheduler } from '@/hooks/useCronJobScheduler';
-import { useEnvironmentManager } from '@/hooks/useEnvironmentManager';
-import { useOneClickRollback } from '@/hooks/useOneClickRollback';
-import { useUptimeMonitor } from '@/hooks/useUptimeMonitor';
-import { useBuildCacheManager } from '@/hooks/useBuildCacheManager';
-import { useCustomBuildScripts } from '@/hooks/useCustomBuildScripts';
-import { useCMSMode } from '@/hooks/useCMSMode';
-import { useMarkdownBlog } from '@/hooks/useMarkdownBlog';
-import { useImageOptimizer } from '@/hooks/useImageOptimizer';
-import { useVideoEmbedManager } from '@/hooks/useVideoEmbedManager';
-import { useI18nGenerator } from '@/hooks/useI18nGenerator';
-import { useBuiltInAnalytics } from '@/hooks/useBuiltInAnalytics';
-import { useErrorTracking } from '@/hooks/useErrorTracking';
-import { useSessionReplay } from '@/hooks/useSessionReplay';
-import { useABTesting } from '@/hooks/useABTesting';
-import { useAIUsageAnalytics } from '@/hooks/useAIUsageAnalytics';
-import { useDependencyScanner } from '@/hooks/useDependencyScanner';
-import { useCSPGenerator } from '@/hooks/useCSPGenerator';
-import { useGDPRCompliance } from '@/hooks/useGDPRCompliance';
-import { useRateLimiter } from '@/hooks/useRateLimiter';
-import { useSecretRotation } from '@/hooks/useSecretRotation';
-import { useCLICompanion } from '@/hooks/useCLICompanion';
-import { useGitHubActionsGenerator } from '@/hooks/useGitHubActionsGenerator';
-import { useSlackDiscordBot } from '@/hooks/useSlackDiscordBot';
-import { useWhiteLabelExport } from '@/hooks/useWhiteLabelExport';
-import { usePluginSDK } from '@/hooks/usePluginSDK';
-import { useAIRefactoring } from '@/hooks/useAIRefactoring';
-import { useNLToRegex } from '@/hooks/useNLToRegex';
-import { useAICommitMessages } from '@/hooks/useAICommitMessages';
-import { useSmartAutoImport } from '@/hooks/useSmartAutoImport';
-import { useAIDocWriter } from '@/hooks/useAIDocWriter';
-import { useRealTimeCoEditing } from '@/hooks/useRealTimeCoEditing';
-import { useVoiceChat } from '@/hooks/useVoiceChat';
-import { useScreenShare } from '@/hooks/useScreenShare';
-import { useCodeReactions } from '@/hooks/useCodeReactions';
-import { useCollaborativeWhiteboard } from '@/hooks/useCollaborativeWhiteboard';
-import { useVisualRegressionTesting } from '@/hooks/useVisualRegressionTesting';
-import { useAccessibilityScoring } from '@/hooks/useAccessibilityScoring';
-import { useCodeCoverageVisualizer } from '@/hooks/useCodeCoverageVisualizer';
-import { useMutationTesting } from '@/hooks/useMutationTesting';
-import { useLoadTesting } from '@/hooks/useLoadTesting';
-import { usePageBuilder } from '@/hooks/usePageBuilder';
-import { useThemeStudio } from '@/hooks/useThemeStudio';
-import { useFormBuilder } from '@/hooks/useFormBuilder';
-import { useChartDashboardBuilder } from '@/hooks/useChartDashboardBuilder';
-import { useLayoutGridEditor } from '@/hooks/useLayoutGridEditor';
-import { useGraphQLBuilder } from '@/hooks/useGraphQLBuilder';
-import { useWebSocketManager } from '@/hooks/useWebSocketManager';
-import { useFileUploadManager } from '@/hooks/useFileUploadManager';
-import { usePaymentIntegration } from '@/hooks/usePaymentIntegration';
-import { useEmailTemplateBuilder } from '@/hooks/useEmailTemplateBuilder';
-import { useTutorialCreator } from '@/hooks/useTutorialCreator';
-import { useCodePlayground } from '@/hooks/useCodePlayground';
-import { useCustomLinting } from '@/hooks/useCustomLinting';
-import { useDependencyGraph } from '@/hooks/useDependencyGraph';
-import { useGitBlameTimeline } from '@/hooks/useGitBlameTimeline';
-import { useMultiRegionDeploy } from '@/hooks/useMultiRegionDeploy';
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
-import { useCanaryDeploy } from '@/hooks/useCanaryDeploy';
-import { useStaticSiteGenerator } from '@/hooks/useStaticSiteGenerator';
-import { useDockerExport } from '@/hooks/useDockerExport';
-import { useSubscriptionManager } from '@/hooks/useSubscriptionManager';
-import { useInvoiceGenerator } from '@/hooks/useInvoiceGenerator';
-import { useUsageMetering } from '@/hooks/useUsageMetering';
-import { useAffiliateTracking } from '@/hooks/useAffiliateTracking';
-import { useRevenueDashboard } from '@/hooks/useRevenueDashboard';
-// Sprint S: Mobile & Cross-Platform (Phases 194-198)
-import { useCapacitorExport } from '@/hooks/useCapacitorExport';
-import { usePushNotificationDesigner } from '@/hooks/usePushNotificationDesigner';
-import { useOfflineFirst } from '@/hooks/useOfflineFirst';
-import { useGestureBuilder } from '@/hooks/useGestureBuilder';
-import { useAppStoreAssets } from '@/hooks/useAppStoreAssets';
-// Sprint T: AI & Automation (Phases 199-203)
-import { useAICodeTranslator } from '@/hooks/useAICodeTranslator';
-import { useSmartScaffolding } from '@/hooks/useSmartScaffolding';
-import { useNLWorkflowAutomation } from '@/hooks/useNLWorkflowAutomation';
-import { useAIPerformanceOptimizer } from '@/hooks/useAIPerformanceOptimizer';
-import { useAISecurityAuditor } from '@/hooks/useAISecurityAuditor';
-// Sprint U
-import { useStateMachineDesigner } from '@/hooks/useStateMachineDesigner';
-import { useDataValidationStudio } from '@/hooks/useDataValidationStudio';
-import { useCacheStrategyManager } from '@/hooks/useCacheStrategyManager';
-import { useReactiveStoreBuilder } from '@/hooks/useReactiveStoreBuilder';
-import { useDataMigrationWizard } from '@/hooks/useDataMigrationWizard';
-// Sprint V
-import { useRegexPlayground } from '@/hooks/useRegexPlayground';
-import { useJsonYamlConverter } from '@/hooks/useJsonYamlConverter';
-import { useColorContrastChecker } from '@/hooks/useColorContrastChecker';
-import { useTailwindClassSorter } from '@/hooks/useTailwindClassSorter';
-import { useMarkdownPreview } from '@/hooks/useMarkdownPreview';
-// Sprint W
-import { useToastDesigner } from '@/hooks/useToastDesigner';
-import { useNotificationCenterGenerator } from '@/hooks/useNotificationCenterGenerator';
-import { useChatWidgetBuilder } from '@/hooks/useChatWidgetBuilder';
-import { useEmailSequenceBuilder } from '@/hooks/useEmailSequenceBuilder';
-import { useSMSTemplateManager } from '@/hooks/useSMSTemplateManager';
-// Sprint X
-import { useStepperWizardBuilder } from '@/hooks/useStepperWizardBuilder';
-import { useCommandMenuBuilder } from '@/hooks/useCommandMenuBuilder';
-import { useBreadcrumbGenerator } from '@/hooks/useBreadcrumbGenerator';
-import { useMegaMenuBuilder } from '@/hooks/useMegaMenuBuilder';
-import { useContextMenuDesigner } from '@/hooks/useContextMenuDesigner';
-// Sprint Y
-import { useDockerComposeGenerator } from '@/hooks/useDockerComposeGenerator';
-import { useKubernetesGenerator } from '@/hooks/useKubernetesGenerator';
-import { useCICDPipelineDesigner } from '@/hooks/useCICDPipelineDesigner';
-import { useStructuredLogger } from '@/hooks/useStructuredLogger';
-import { useHealthCheckGenerator } from '@/hooks/useHealthCheckGenerator';
-// Sprint Z
-import { useOAuthProviderSetup } from '@/hooks/useOAuthProviderSetup';
-import { useMFAFlowGenerator } from '@/hooks/useMFAFlowGenerator';
-import { useSessionManager } from '@/hooks/useSessionManager';
-import { useAPIKeyManagement } from '@/hooks/useAPIKeyManagement';
-import { usePermissionMatrixBuilder } from '@/hooks/usePermissionMatrixBuilder';
-// Sprint AA
-import { useRichTextConfig } from '@/hooks/useRichTextConfig';
-import { useFilePreviewGenerator } from '@/hooks/useFilePreviewGenerator';
-import { useAvatarGenerator } from '@/hooks/useAvatarGenerator';
-import { useCarouselBuilder } from '@/hooks/useCarouselBuilder';
-import { useGalleryLightboxGenerator } from '@/hooks/useGalleryLightboxGenerator';
-// Sprint AB
-import { useFullTextSearchSetup } from '@/hooks/useFullTextSearchSetup';
-import { useFacetedFilterBuilder } from '@/hooks/useFacetedFilterBuilder';
-import { useAutocompleteGenerator } from '@/hooks/useAutocompleteGenerator';
-import { useTagCategorySystem } from '@/hooks/useTagCategorySystem';
-import { useSEOMetaGenerator } from '@/hooks/useSEOMetaGenerator';
-// Sprint AC
-import { useKPIDashboardBuilder } from '@/hooks/useKPIDashboardBuilder';
-import { useAlertingRulesEngine } from '@/hooks/useAlertingRulesEngine';
-import { useAuditTrailGenerator } from '@/hooks/useAuditTrailGenerator';
-import { useClickHeatmap } from '@/hooks/useClickHeatmap';
-import { useBudgetCostMonitor } from '@/hooks/useBudgetCostMonitor';
-// Sprint AD
-import { useChangelogAutoGenerator } from '@/hooks/useChangelogAutoGenerator';
-import { useREADMEGenerator } from '@/hooks/useREADMEGenerator';
-import { useLicensePicker } from '@/hooks/useLicensePicker';
-import { useOpenAPISpecGenerator } from '@/hooks/useOpenAPISpecGenerator';
-import { useProjectHealthScore } from '@/hooks/useProjectHealthScore';
+import {
+  MobilePanelGroup, AIAutomationPanelGroup, DataStatePanelGroup,
+  DevToolsPanelGroup, CommunicationPanelGroup, UIPatternsPanelGroup,
+  DevOpsPanelGroup, AuthSecurityPanelGroup, ContentMediaPanelGroup,
+  SearchDiscoveryPanelGroup, MonitoringPanelGroup, FinalPolishPanelGroup,
+  CollabPanelGroup, TestingPanelGroup, UIBuildingPanelGroup,
+  DataIntegrationPanelGroup, DevExperiencePanelGroup, DeploymentPanelGroup,
+  MonetizationPanelGroup, IntegrationPanelGroup, InfraPanelGroup,
+} from './panel-groups';
 
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
@@ -565,13 +421,7 @@ export function AIAppBuilderWorkspace() {
   const multiCursorEditor = useMultiCursorEditor();
   const minimapHeatZones = useMinimapHeatZones();
   const symbolNavigator = useSymbolNavigator();
-  const snippetLibrary = useSnippetLibrary();
-  const splitDiffEditor = useSplitDiffEditor();
-  const commentSystem = useCommentSystem();
-  const projectRBAC = useProjectRBAC();
-  const teamActivityFeed = useTeamActivityFeed();
-  const approvalWorkflow = useApprovalWorkflow();
-  const projectForking = useProjectForking();
+  // Panel visibility states (hooks moved to conditional panel groups)
   const [showSnippetLibrary, setShowSnippetLibrary] = useState(false);
   const [showSplitDiff, setShowSplitDiff] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -588,26 +438,6 @@ export function AIAppBuilderWorkspace() {
   const [showAPITester, setShowAPITester] = useState(false);
   const [showWebhookBuilder, setShowWebhookBuilder] = useState(false);
   const [showCronScheduler, setShowCronScheduler] = useState(false);
-  const figmaImport = useFigmaImport();
-  const colorExtractor = useColorPaletteExtractor();
-  const iconPicker = useIconPicker();
-  const breakpointEditor = useResponsiveBreakpointEditor();
-  const animationBuilder = useAnimationBuilder();
-  const visualSchema = useVisualSchemaBuilder();
-  const seedData = useSeedDataGenerator();
-  const apiTester = useAPIEndpointTester();
-  const webhookBuilder = useWebhookBuilder();
-  const cronScheduler = useCronJobScheduler();
-  const environmentManager = useEnvironmentManager();
-  const rollbackManager = useOneClickRollback();
-  const uptimeMonitor = useUptimeMonitor();
-  const buildCache = useBuildCacheManager();
-  const buildScripts = useCustomBuildScripts();
-  const cmsMode = useCMSMode();
-  const markdownBlog = useMarkdownBlog();
-  const imageOptimizer = useImageOptimizer();
-  const videoEmbed = useVideoEmbedManager();
-  const i18nGenerator = useI18nGenerator();
   const [showEnvManager, setShowEnvManager] = useState(false);
   const [showRollback, setShowRollback] = useState(false);
   const [showUptimeMonitor, setShowUptimeMonitor] = useState(false);
@@ -618,16 +448,6 @@ export function AIAppBuilderWorkspace() {
   const [showImageOptimizer, setShowImageOptimizer] = useState(false);
   const [showVideoEmbed, setShowVideoEmbed] = useState(false);
   const [showI18n, setShowI18n] = useState(false);
-  const builtInAnalytics = useBuiltInAnalytics();
-  const errorTracking = useErrorTracking();
-  const sessionReplay = useSessionReplay();
-  const abTesting = useABTesting();
-  const aiUsageAnalytics = useAIUsageAnalytics();
-  const dependencyScanner = useDependencyScanner();
-  const cspGenerator = useCSPGenerator();
-  const gdprCompliance = useGDPRCompliance();
-  const rateLimiter = useRateLimiter();
-  const secretRotation = useSecretRotation();
   const [showAnalyticsDashboard, setShowAnalyticsDashboard] = useState(false);
   const [showErrorTracking, setShowErrorTracking] = useState(false);
   const [showSessionReplay, setShowSessionReplay] = useState(false);
@@ -638,231 +458,106 @@ export function AIAppBuilderWorkspace() {
   const [showGDPR, setShowGDPR] = useState(false);
   const [showRateLimiter, setShowRateLimiter] = useState(false);
   const [showSecretRotation, setShowSecretRotation] = useState(false);
-  const cliCompanion = useCLICompanion();
-  const githubActionsGen = useGitHubActionsGenerator();
-  const slackDiscordBot = useSlackDiscordBot();
-  const whiteLabelExport = useWhiteLabelExport();
-  const pluginSDK = usePluginSDK();
   const [showCLICompanion, setShowCLICompanion] = useState(false);
   const [showGHActions, setShowGHActions] = useState(false);
   const [showSlackDiscord, setShowSlackDiscord] = useState(false);
   const [showWhiteLabel, setShowWhiteLabel] = useState(false);
   const [showPluginSDK, setShowPluginSDK] = useState(false);
-  // Sprint K: AI Intelligence (Phases 154-158)
-  const aiRefactoring = useAIRefactoring();
-  const nlToRegex = useNLToRegex();
-  const aiCommitMessages = useAICommitMessages();
-  const smartAutoImport = useSmartAutoImport();
-  const aiDocWriter = useAIDocWriter();
   const [showRefactoring, setShowRefactoring] = useState(false);
   const [showNLRegex, setShowNLRegex] = useState(false);
   const [showCommitMsg, setShowCommitMsg] = useState(false);
   const [showAutoImport, setShowAutoImport] = useState(false);
   const [showDocWriter, setShowDocWriter] = useState(false);
-  // Sprint L: Real-Time & Multiplayer (Phases 159-163)
-  const coEditing = useRealTimeCoEditing();
-  const voiceChat = useVoiceChat();
-  const screenShare = useScreenShare();
-  const codeReactions = useCodeReactions();
-  const whiteboard = useCollaborativeWhiteboard();
   const [showCoEditing, setShowCoEditing] = useState(false);
   const [showVoiceChat, setShowVoiceChat] = useState(false);
   const [showScreenShare, setShowScreenShare] = useState(false);
   const [showCodeReactions, setShowCodeReactions] = useState(false);
   const [showWhiteboard, setShowWhiteboard] = useState(false);
-  // Sprint M: Testing & Quality (Phases 164-168)
-  const visualRegression = useVisualRegressionTesting();
-  const a11yScoring = useAccessibilityScoring();
-  const codeCoverage = useCodeCoverageVisualizer();
-  const mutationTesting = useMutationTesting();
-  const loadTesting = useLoadTesting();
   const [showVisualRegression, setShowVisualRegression] = useState(false);
   const [showA11yScore, setShowA11yScore] = useState(false);
   const [showCoverage, setShowCoverage] = useState(false);
   const [showMutationTest, setShowMutationTest] = useState(false);
   const [showLoadTest, setShowLoadTest] = useState(false);
-  // Sprint N: Advanced UI Building (Phases 169-173)
-  const pageBuilder = usePageBuilder();
-  const themeStudio = useThemeStudio();
-  const formBuilder = useFormBuilder();
-  const chartDashboard = useChartDashboardBuilder();
-  const layoutGrid = useLayoutGridEditor();
   const [showPageBuilder, setShowPageBuilder] = useState(false);
   const [showThemeStudio, setShowThemeStudio] = useState(false);
   const [showFormBuilder, setShowFormBuilder] = useState(false);
   const [showChartDashboard, setShowChartDashboard] = useState(false);
   const [showLayoutGrid, setShowLayoutGrid] = useState(false);
-  // Sprint O: Data & Integration (Phases 174-178)
-  const graphqlBuilder = useGraphQLBuilder();
-  const wsManager = useWebSocketManager();
-  const fileUploadMgr = useFileUploadManager();
-  const paymentIntegration = usePaymentIntegration();
-  const emailTemplates = useEmailTemplateBuilder();
   const [showGraphQL, setShowGraphQL] = useState(false);
   const [showWSManager, setShowWSManager] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [showPayments, setShowPayments] = useState(false);
   const [showEmailTemplates, setShowEmailTemplates] = useState(false);
-  // Sprint P: Developer Experience (Phases 179-183)
-  const tutorialCreator = useTutorialCreator();
-  const codePlayground = useCodePlayground();
-  const customLinting = useCustomLinting();
-  const dependencyGraph = useDependencyGraph();
-  const gitBlame = useGitBlameTimeline();
   const [showTutorialCreator, setShowTutorialCreator] = useState(false);
   const [showCodePlayground, setShowCodePlayground] = useState(false);
   const [showCustomLinting, setShowCustomLinting] = useState(false);
   const [showDepGraph, setShowDepGraph] = useState(false);
   const [showGitBlame, setShowGitBlame] = useState(false);
-  // Sprint Q: Deployment & Hosting (Phases 184-188)
-  const multiRegionDeploy = useMultiRegionDeploy();
-  const featureFlags = useFeatureFlags();
-  const canaryDeploy = useCanaryDeploy();
-  const ssgGenerator = useStaticSiteGenerator();
-  const dockerExport = useDockerExport();
   const [showMultiRegion, setShowMultiRegion] = useState(false);
   const [showFeatureFlags, setShowFeatureFlags] = useState(false);
   const [showCanaryDeploy, setShowCanaryDeploy] = useState(false);
   const [showSSG, setShowSSG] = useState(false);
   const [showDockerExport, setShowDockerExport] = useState(false);
-  // Sprint R: Monetization & Business (Phases 189-193)
-  const subscriptionMgr = useSubscriptionManager();
-  const invoiceGen = useInvoiceGenerator();
-  const usageMetering = useUsageMetering();
-  const affiliateTracking = useAffiliateTracking();
-  const revenueDashboard = useRevenueDashboard();
   const [showSubscriptions, setShowSubscriptions] = useState(false);
   const [showInvoices, setShowInvoices] = useState(false);
   const [showUsageMetering, setShowUsageMetering] = useState(false);
   const [showAffiliates, setShowAffiliates] = useState(false);
   const [showRevenue, setShowRevenue] = useState(false);
-  // Sprint S: Mobile & Cross-Platform (Phases 194-198)
-  const capacitorExport = useCapacitorExport();
-  const pushNotifications = usePushNotificationDesigner();
-  const offlineFirst = useOfflineFirst();
-  const gestureBuilder = useGestureBuilder();
-  const appStoreAssets = useAppStoreAssets();
   const [showCapacitor, setShowCapacitor] = useState(false);
   const [showPushNotifications, setShowPushNotifications] = useState(false);
   const [showOfflineFirst, setShowOfflineFirst] = useState(false);
   const [showGestureBuilder, setShowGestureBuilder] = useState(false);
   const [showAppStoreAssets, setShowAppStoreAssets] = useState(false);
-  // Sprint T: AI & Automation (Phases 199-203)
-  const codeTranslator = useAICodeTranslator();
-  const smartScaffolding = useSmartScaffolding();
-  const workflowAutomation = useNLWorkflowAutomation();
-  const perfOptimizer = useAIPerformanceOptimizer();
-  const securityAuditor = useAISecurityAuditor();
   const [showCodeTranslator, setShowCodeTranslator] = useState(false);
   const [showSmartScaffold, setShowSmartScaffold] = useState(false);
   const [showWorkflowAutomation, setShowWorkflowAutomation] = useState(false);
   const [showPerfOptimizer, setShowPerfOptimizer] = useState(false);
   const [showSecurityAuditor, setShowSecurityAuditor] = useState(false);
-  // Sprint U: Data & State Management (Phases 204-208)
-  const stateMachineDesigner = useStateMachineDesigner();
-  const dataValidation = useDataValidationStudio();
-  const cacheStrategy = useCacheStrategyManager();
-  const reactiveStore = useReactiveStoreBuilder();
-  const dataMigration = useDataMigrationWizard();
   const [showStateMachine, setShowStateMachine] = useState(false);
   const [showDataValidation, setShowDataValidation] = useState(false);
   const [showCacheStrategy, setShowCacheStrategy] = useState(false);
   const [showReactiveStore, setShowReactiveStore] = useState(false);
   const [showDataMigration, setShowDataMigration] = useState(false);
-  // Sprint V: Developer Experience (Phases 209-213)
-  const regexPlayground = useRegexPlayground();
-  const jsonYamlConverter = useJsonYamlConverter();
-  const colorContrast = useColorContrastChecker();
-  const tailwindSorter = useTailwindClassSorter();
-  const markdownPreview = useMarkdownPreview();
   const [showRegexPlayground, setShowRegexPlayground] = useState(false);
   const [showJsonYamlConverter, setShowJsonYamlConverter] = useState(false);
   const [showColorContrast, setShowColorContrast] = useState(false);
   const [showTailwindSorter, setShowTailwindSorter] = useState(false);
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
-  // Sprint W: Communication (Phases 214-218)
-  const toastDesigner = useToastDesigner();
-  const notifCenter = useNotificationCenterGenerator();
-  const chatWidget = useChatWidgetBuilder();
-  const emailSequence = useEmailSequenceBuilder();
-  const smsTemplate = useSMSTemplateManager();
   const [showToastDesigner, setShowToastDesigner] = useState(false);
   const [showNotifCenter, setShowNotifCenter] = useState(false);
   const [showChatWidget, setShowChatWidget] = useState(false);
   const [showEmailSequence, setShowEmailSequence] = useState(false);
   const [showSMSTemplate, setShowSMSTemplate] = useState(false);
-  // Sprint X: Advanced UI Patterns (Phases 219-223)
-  const stepperWizard = useStepperWizardBuilder();
-  const commandMenuBuilder = useCommandMenuBuilder();
-  const breadcrumbGen = useBreadcrumbGenerator();
-  const megaMenu = useMegaMenuBuilder();
-  const contextMenuDesigner = useContextMenuDesigner();
   const [showStepperWizard, setShowStepperWizard] = useState(false);
   const [showCommandMenuBuilder, setShowCommandMenuBuilder] = useState(false);
   const [showBreadcrumbGen, setShowBreadcrumbGen] = useState(false);
   const [showMegaMenu, setShowMegaMenu] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState(false);
-  // Sprint Y: DevOps & Infrastructure (Phases 224-228)
-  const dockerCompose = useDockerComposeGenerator();
-  const k8sGenerator = useKubernetesGenerator();
-  const cicdPipeline = useCICDPipelineDesigner();
-  const structuredLogger = useStructuredLogger();
-  const healthCheck = useHealthCheckGenerator();
   const [showDockerCompose, setShowDockerCompose] = useState(false);
   const [showK8s, setShowK8s] = useState(false);
   const [showCICDPipeline, setShowCICDPipeline] = useState(false);
   const [showStructuredLogger, setShowStructuredLogger] = useState(false);
   const [showHealthCheck, setShowHealthCheck] = useState(false);
-  // Sprint Z
-  const oauthSetup = useOAuthProviderSetup();
-  const mfaFlow = useMFAFlowGenerator();
-  const sessionMgr = useSessionManager();
-  const apiKeyMgmt = useAPIKeyManagement();
-  const permMatrix = usePermissionMatrixBuilder();
   const [showOAuthSetup, setShowOAuthSetup] = useState(false);
   const [showMFAFlow, setShowMFAFlow] = useState(false);
   const [showSessionMgr, setShowSessionMgr] = useState(false);
   const [showAPIKeyMgmt, setShowAPIKeyMgmt] = useState(false);
   const [showPermMatrix, setShowPermMatrix] = useState(false);
-  // Sprint AA: Content & Media (Phases 234-238)
-  const richTextConfig = useRichTextConfig();
-  const filePreviewGen = useFilePreviewGenerator();
-  const avatarGen = useAvatarGenerator();
-  const carouselBuilder = useCarouselBuilder();
-  const galleryLightbox = useGalleryLightboxGenerator();
   const [showRichTextConfig, setShowRichTextConfig] = useState(false);
   const [showFilePreviewGen, setShowFilePreviewGen] = useState(false);
   const [showAvatarGen, setShowAvatarGen] = useState(false);
   const [showCarouselBuilder, setShowCarouselBuilder] = useState(false);
   const [showGalleryLightbox, setShowGalleryLightbox] = useState(false);
-  // Sprint AB: Search & Discovery (Phases 239-243)
-  const ftsSetup = useFullTextSearchSetup();
-  const facetedFilter = useFacetedFilterBuilder();
-  const autocompleteGen = useAutocompleteGenerator();
-  const tagSystem = useTagCategorySystem();
-  const seoMetaGen = useSEOMetaGenerator();
   const [showFTS, setShowFTS] = useState(false);
   const [showFacetedFilter, setShowFacetedFilter] = useState(false);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [showTagSystem, setShowTagSystem] = useState(false);
   const [showSEOMeta, setShowSEOMeta] = useState(false);
-  // Sprint AC: Monitoring & Observability (Phases 244-248)
-  const kpiDashboard = useKPIDashboardBuilder();
-  const alertingRules = useAlertingRulesEngine();
-  const auditTrail = useAuditTrailGenerator();
-  const clickHeatmap = useClickHeatmap();
-  const budgetMonitor = useBudgetCostMonitor();
   const [showKPIDashboard, setShowKPIDashboard] = useState(false);
   const [showAlertingRules, setShowAlertingRules] = useState(false);
   const [showAuditTrail, setShowAuditTrail] = useState(false);
   const [showClickHeatmap, setShowClickHeatmap] = useState(false);
   const [showBudgetMonitor, setShowBudgetMonitor] = useState(false);
-  // Sprint AD: Final Polish (Phases 249-253)
-  const changelogAutoGen = useChangelogAutoGenerator();
-  const readmeGen = useREADMEGenerator();
-  const licensePicker = useLicensePicker();
-  const openAPISpec = useOpenAPISpecGenerator();
-  const projectHealth = useProjectHealthScore();
   const [showChangelogAuto, setShowChangelogAuto] = useState(false);
   const [showREADMEGen, setShowREADMEGen] = useState(false);
   const [showLicensePicker, setShowLicensePicker] = useState(false);
@@ -2766,9 +2461,9 @@ export function AIAppBuilderWorkspace() {
       </div>
 
       <WorkspacePanelLayer
-        panelVisibility={{ showTemplates, showEnvManager, showRollback, showUptimeMonitor, showBuildCache, showBuildScripts, showCMSMode, showBlogEngine, showImageOptimizer, showVideoEmbed, showI18n, showEditHistory, showShortcuts, showBilling, showShareDialog, showSEOEditor, showDomainPanel, showPublishPanel, showDiffReview, showQuickSwitcher, showImageGen, showSecretsManager, showEnhancedPalette, showSnippetLibrary, showSplitDiff, showComments, showTeamActivity, showApprovals, showForking, showAnalyticsDashboard, showErrorTracking, showSessionReplay, showABTesting, showAIUsage, showDepScanner, showCSPGenerator, showGDPR, showRateLimiter, showSecretRotation, showCLICompanion, showGHActions, showSlackDiscord, showWhiteLabel, showPluginSDK, showRefactoring, showNLRegex, showCommitMsg, showAutoImport, showDocWriter, showCoEditing, showVoiceChat, showScreenShare, showCodeReactions, showWhiteboard, showVisualRegression, showA11yScore, showCoverage, showMutationTest, showLoadTest, showPageBuilder, showThemeStudio, showFormBuilder, showChartDashboard, showLayoutGrid, showGraphQL, showWSManager, showFileUpload, showPayments, showEmailTemplates, showTutorialCreator, showCodePlayground, showCustomLinting, showDepGraph, showGitBlame, showMultiRegion, showFeatureFlags, showCanaryDeploy, showSSG, showDockerExport, showSubscriptions, showInvoices, showUsageMetering, showAffiliates, showRevenue, showCapacitor, showPushNotifications, showOfflineFirst, showGestureBuilder, showAppStoreAssets, showCodeTranslator, showSmartScaffold, showWorkflowAutomation, showPerfOptimizer, showSecurityAuditor, showStateMachine, showDataValidation, showCacheStrategy, showReactiveStore, showDataMigration, showRegexPlayground, showJsonYamlConverter, showColorContrast, showTailwindSorter, showMarkdownPreview, showToastDesigner, showNotifCenter, showChatWidget, showEmailSequence, showSMSTemplate, showStepperWizard, showCommandMenuBuilder, showBreadcrumbGen, showMegaMenu, showContextMenu, showDockerCompose, showK8s, showCICDPipeline, showStructuredLogger, showHealthCheck, showOAuthSetup, showMFAFlow, showSessionMgr, showAPIKeyMgmt, showPermMatrix, showRichTextConfig, showFilePreviewGen, showAvatarGen, showCarouselBuilder, showGalleryLightbox, showFTS, showFacetedFilter, showAutocomplete, showTagSystem, showSEOMeta, showKPIDashboard, showAlertingRules, showAuditTrail, showClickHeatmap, showBudgetMonitor, showChangelogAuto, showREADMEGen, showLicensePicker, showOpenAPISpec, showProjectHealth }}
-        panelSetters={{ setShowTemplates, setShowEnvManager, setShowRollback, setShowUptimeMonitor, setShowBuildCache, setShowBuildScripts, setShowCMSMode, setShowBlogEngine, setShowImageOptimizer, setShowVideoEmbed, setShowI18n, setShowEditHistory, setShowShortcuts, setShowBilling, setShowShareDialog, setShowSEOEditor, setShowDomainPanel, setShowPublishPanel, setShowDiffReview, setShowQuickSwitcher, setShowImageGen, setShowSecretsManager, setShowEnhancedPalette, setShowSnippetLibrary, setShowSplitDiff, setShowComments, setShowTeamActivity, setShowApprovals, setShowForking, setShowAnalyticsDashboard, setShowErrorTracking, setShowSessionReplay, setShowABTesting, setShowAIUsage, setShowDepScanner, setShowCSPGenerator, setShowGDPR, setShowRateLimiter, setShowSecretRotation, setShowCLICompanion, setShowGHActions, setShowSlackDiscord, setShowWhiteLabel, setShowPluginSDK, setShowRefactoring, setShowNLRegex, setShowCommitMsg, setShowAutoImport, setShowDocWriter, setShowCoEditing, setShowVoiceChat, setShowScreenShare, setShowCodeReactions, setShowWhiteboard, setShowVisualRegression, setShowA11yScore, setShowCoverage, setShowMutationTest, setShowLoadTest, setShowPageBuilder, setShowThemeStudio, setShowFormBuilder, setShowChartDashboard, setShowLayoutGrid, setShowGraphQL, setShowWSManager, setShowFileUpload, setShowPayments, setShowEmailTemplates, setShowTutorialCreator, setShowCodePlayground, setShowCustomLinting, setShowDepGraph, setShowGitBlame, setShowMultiRegion, setShowFeatureFlags, setShowCanaryDeploy, setShowSSG, setShowDockerExport, setShowSubscriptions, setShowInvoices, setShowUsageMetering, setShowAffiliates, setShowRevenue, setShowCapacitor, setShowPushNotifications, setShowOfflineFirst, setShowGestureBuilder, setShowAppStoreAssets, setShowCodeTranslator, setShowSmartScaffold, setShowWorkflowAutomation, setShowPerfOptimizer, setShowSecurityAuditor, setShowStateMachine, setShowDataValidation, setShowCacheStrategy, setShowReactiveStore, setShowDataMigration, setShowRegexPlayground, setShowJsonYamlConverter, setShowColorContrast, setShowTailwindSorter, setShowMarkdownPreview, setShowToastDesigner, setShowNotifCenter, setShowChatWidget, setShowEmailSequence, setShowSMSTemplate, setShowStepperWizard, setShowCommandMenuBuilder, setShowBreadcrumbGen, setShowMegaMenu, setShowContextMenu, setShowDockerCompose, setShowK8s, setShowCICDPipeline, setShowStructuredLogger, setShowHealthCheck, setShowOAuthSetup, setShowMFAFlow, setShowSessionMgr, setShowAPIKeyMgmt, setShowPermMatrix, setShowRichTextConfig, setShowFilePreviewGen, setShowAvatarGen, setShowCarouselBuilder, setShowGalleryLightbox, setShowFTS, setShowFacetedFilter, setShowAutocomplete, setShowTagSystem, setShowSEOMeta, setShowKPIDashboard, setShowAlertingRules, setShowAuditTrail, setShowClickHeatmap, setShowBudgetMonitor, setShowChangelogAuto, setShowREADMEGen, setShowLicensePicker, setShowOpenAPISpec, setShowProjectHealth }}
-        hooks={{ environmentManager, rollbackManager: rollbackManager, uptimeMonitor, buildCache, buildScripts, cmsMode, markdownBlog, imageOptimizer, videoEmbed, i18nGenerator, versions, restoreVersion, snippetLibrary, splitDiffEditor, commentSystem, teamActivityFeed, approvalWorkflow, projectForking, builtInAnalytics, errorTracking, sessionReplay, abTesting, aiUsageAnalytics, dependencyScanner, cspGenerator, gdprCompliance, rateLimiter, secretRotation, cliCompanion, githubActionsGen, slackDiscordBot, whiteLabelExport, pluginSDK, aiRefactoring, nlToRegex, aiCommitMessages, smartAutoImport, aiDocWriter, coEditing, voiceChat, screenShare, codeReactions, whiteboard, visualRegression, a11yScoring, codeCoverage, mutationTesting, loadTesting, pageBuilder, themeStudio, formBuilder, chartDashboard, layoutGrid, graphqlBuilder, wsManager, fileUploadMgr, paymentIntegration, emailTemplates, tutorialCreator, codePlayground, customLinting, dependencyGraph, gitBlame, multiRegionDeploy, featureFlags, canaryDeploy, ssgGenerator, dockerExport, subscriptionMgr, invoiceGen, usageMetering, affiliateTracking, revenueDashboard, capacitorExport, pushNotifications, offlineFirst, gestureBuilder, appStoreAssets, codeTranslator, smartScaffolding, workflowAutomation, perfOptimizer, securityAuditor, stateMachineDesigner, dataValidation, cacheStrategy, reactiveStore, dataMigration, regexPlayground, jsonYamlConverter, colorContrast, tailwindSorter, markdownPreview, toastDesigner, notifCenter, chatWidget, emailSequence, smsTemplate, stepperWizard, commandMenuBuilder, breadcrumbGen, megaMenu, contextMenuDesigner, dockerCompose, k8sGenerator, cicdPipeline, structuredLogger, healthCheck, oauthSetup, mfaFlow, sessionMgr, apiKeyMgmt, permMatrix, richTextConfig, filePreviewGen, avatarGen, carouselBuilder, galleryLightbox, ftsSetup, facetedFilter, autocompleteGen, tagSystem, seoMetaGen, kpiDashboard, alertingRules, auditTrail, clickHeatmap, budgetMonitor, changelogAutoGen, readmeGen, licensePicker, openAPISpec, projectHealth }}
+        panelVisibility={{ showTemplates, showEditHistory, showShortcuts, showBilling, showShareDialog, showSEOEditor, showDomainPanel, showPublishPanel, showDiffReview, showQuickSwitcher, showImageGen, showSecretsManager, showEnhancedPalette }}
+        panelSetters={{ setShowTemplates, setShowEditHistory, setShowShortcuts, setShowBilling, setShowShareDialog, setShowSEOEditor, setShowDomainPanel, setShowPublishPanel, setShowDiffReview, setShowQuickSwitcher, setShowImageGen, setShowSecretsManager, setShowEnhancedPalette }}
+        hooks={{ versions, restoreVersion }}
         handleSend={handleSend}
         upsertFile={upsertFile}
         activeFile={activeFile}
@@ -2792,8 +2487,6 @@ export function AIAppBuilderWorkspace() {
         setAssets={setAssets}
         envVars={envVars}
         setEnvVars={setEnvVars}
-        installedPackages={installedPackages}
-        previousFiles={previousFiles}
         pushUndo={pushUndo}
         setFiles={setFiles}
         persistedDeployHistory={persistedDeployHistory}
@@ -2805,6 +2498,113 @@ export function AIAppBuilderWorkspace() {
         showBugReport={showBugReport}
         setShowBugReport={setShowBugReport}
       />
+      {/* Conditionally-mounted panel groups — hooks only initialize when panels are active */}
+      {(showEnvManager || showRollback || showUptimeMonitor || showBuildCache || showBuildScripts || showCMSMode || showBlogEngine || showImageOptimizer || showVideoEmbed || showI18n || showAnalyticsDashboard || showErrorTracking || showSessionReplay || showABTesting || showAIUsage || showDepScanner || showCSPGenerator || showGDPR || showRateLimiter || showSecretRotation || showSnippetLibrary || showSplitDiff || showComments || showTeamActivity || showApprovals || showForking || showFigmaImport || showColorExtractor || showIconPicker || showBreakpointEditor || showAnimationBuilder || showVisualSchema || showSeedData || showAPITester || showWebhookBuilder || showCronScheduler) && (
+        <InfraPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          versions={versions} restoreVersion={restoreVersion}
+          showEnvManager={showEnvManager} setShowEnvManager={setShowEnvManager} showRollback={showRollback} setShowRollback={setShowRollback} showUptimeMonitor={showUptimeMonitor} setShowUptimeMonitor={setShowUptimeMonitor} showBuildCache={showBuildCache} setShowBuildCache={setShowBuildCache} showBuildScripts={showBuildScripts} setShowBuildScripts={setShowBuildScripts} showCMSMode={showCMSMode} setShowCMSMode={setShowCMSMode} showBlogEngine={showBlogEngine} setShowBlogEngine={setShowBlogEngine} showImageOptimizer={showImageOptimizer} setShowImageOptimizer={setShowImageOptimizer} showVideoEmbed={showVideoEmbed} setShowVideoEmbed={setShowVideoEmbed} showI18n={showI18n} setShowI18n={setShowI18n} showAnalyticsDashboard={showAnalyticsDashboard} setShowAnalyticsDashboard={setShowAnalyticsDashboard} showErrorTracking={showErrorTracking} setShowErrorTracking={setShowErrorTracking} showSessionReplay={showSessionReplay} setShowSessionReplay={setShowSessionReplay} showABTesting={showABTesting} setShowABTesting={setShowABTesting} showAIUsage={showAIUsage} setShowAIUsage={setShowAIUsage} showDepScanner={showDepScanner} setShowDepScanner={setShowDepScanner} showCSPGenerator={showCSPGenerator} setShowCSPGenerator={setShowCSPGenerator} showGDPR={showGDPR} setShowGDPR={setShowGDPR} showRateLimiter={showRateLimiter} setShowRateLimiter={setShowRateLimiter} showSecretRotation={showSecretRotation} setShowSecretRotation={setShowSecretRotation} showSnippetLibrary={showSnippetLibrary} setShowSnippetLibrary={setShowSnippetLibrary} showSplitDiff={showSplitDiff} setShowSplitDiff={setShowSplitDiff} showComments={showComments} setShowComments={setShowComments} showTeamActivity={showTeamActivity} setShowTeamActivity={setShowTeamActivity} showApprovals={showApprovals} setShowApprovals={setShowApprovals} showForking={showForking} setShowForking={setShowForking} showFigmaImport={showFigmaImport} setShowFigmaImport={setShowFigmaImport} showColorExtractor={showColorExtractor} setShowColorExtractor={setShowColorExtractor} showIconPicker={showIconPicker} setShowIconPicker={setShowIconPicker} showBreakpointEditor={showBreakpointEditor} setShowBreakpointEditor={setShowBreakpointEditor} showAnimationBuilder={showAnimationBuilder} setShowAnimationBuilder={setShowAnimationBuilder} showVisualSchema={showVisualSchema} setShowVisualSchema={setShowVisualSchema} showSeedData={showSeedData} setShowSeedData={setShowSeedData} showAPITester={showAPITester} setShowAPITester={setShowAPITester} showWebhookBuilder={showWebhookBuilder} setShowWebhookBuilder={setShowWebhookBuilder} showCronScheduler={showCronScheduler} setShowCronScheduler={setShowCronScheduler}
+        />
+      )}
+      {(showRefactoring || showNLRegex || showCommitMsg || showAutoImport || showDocWriter || showCLICompanion || showGHActions || showSlackDiscord || showWhiteLabel || showPluginSDK) && (
+        <IntegrationPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showRefactoring={showRefactoring} setShowRefactoring={setShowRefactoring} showNLRegex={showNLRegex} setShowNLRegex={setShowNLRegex} showCommitMsg={showCommitMsg} setShowCommitMsg={setShowCommitMsg} showAutoImport={showAutoImport} setShowAutoImport={setShowAutoImport} showDocWriter={showDocWriter} setShowDocWriter={setShowDocWriter} showCLICompanion={showCLICompanion} setShowCLICompanion={setShowCLICompanion} showGHActions={showGHActions} setShowGHActions={setShowGHActions} showSlackDiscord={showSlackDiscord} setShowSlackDiscord={setShowSlackDiscord} showWhiteLabel={showWhiteLabel} setShowWhiteLabel={setShowWhiteLabel} showPluginSDK={showPluginSDK} setShowPluginSDK={setShowPluginSDK}
+        />
+      )}
+      {(showCoEditing || showVoiceChat || showScreenShare || showCodeReactions || showWhiteboard) && (
+        <CollabPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showCoEditing={showCoEditing} setShowCoEditing={setShowCoEditing} showVoiceChat={showVoiceChat} setShowVoiceChat={setShowVoiceChat} showScreenShare={showScreenShare} setShowScreenShare={setShowScreenShare} showCodeReactions={showCodeReactions} setShowCodeReactions={setShowCodeReactions} showWhiteboard={showWhiteboard} setShowWhiteboard={setShowWhiteboard}
+        />
+      )}
+      {(showVisualRegression || showA11yScore || showCoverage || showMutationTest || showLoadTest) && (
+        <TestingPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showVisualRegression={showVisualRegression} setShowVisualRegression={setShowVisualRegression} showA11yScore={showA11yScore} setShowA11yScore={setShowA11yScore} showCoverage={showCoverage} setShowCoverage={setShowCoverage} showMutationTest={showMutationTest} setShowMutationTest={setShowMutationTest} showLoadTest={showLoadTest} setShowLoadTest={setShowLoadTest}
+        />
+      )}
+      {(showPageBuilder || showThemeStudio || showFormBuilder || showChartDashboard || showLayoutGrid) && (
+        <UIBuildingPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showPageBuilder={showPageBuilder} setShowPageBuilder={setShowPageBuilder} showThemeStudio={showThemeStudio} setShowThemeStudio={setShowThemeStudio} showFormBuilder={showFormBuilder} setShowFormBuilder={setShowFormBuilder} showChartDashboard={showChartDashboard} setShowChartDashboard={setShowChartDashboard} showLayoutGrid={showLayoutGrid} setShowLayoutGrid={setShowLayoutGrid}
+        />
+      )}
+      {(showGraphQL || showWSManager || showFileUpload || showPayments || showEmailTemplates) && (
+        <DataIntegrationPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showGraphQL={showGraphQL} setShowGraphQL={setShowGraphQL} showWSManager={showWSManager} setShowWSManager={setShowWSManager} showFileUpload={showFileUpload} setShowFileUpload={setShowFileUpload} showPayments={showPayments} setShowPayments={setShowPayments} showEmailTemplates={showEmailTemplates} setShowEmailTemplates={setShowEmailTemplates}
+        />
+      )}
+      {(showTutorialCreator || showCodePlayground || showCustomLinting || showDepGraph || showGitBlame) && (
+        <DevExperiencePanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showTutorialCreator={showTutorialCreator} setShowTutorialCreator={setShowTutorialCreator} showCodePlayground={showCodePlayground} setShowCodePlayground={setShowCodePlayground} showCustomLinting={showCustomLinting} setShowCustomLinting={setShowCustomLinting} showDepGraph={showDepGraph} setShowDepGraph={setShowDepGraph} showGitBlame={showGitBlame} setShowGitBlame={setShowGitBlame}
+        />
+      )}
+      {(showMultiRegion || showFeatureFlags || showCanaryDeploy || showSSG || showDockerExport) && (
+        <DeploymentPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showMultiRegion={showMultiRegion} setShowMultiRegion={setShowMultiRegion} showFeatureFlags={showFeatureFlags} setShowFeatureFlags={setShowFeatureFlags} showCanaryDeploy={showCanaryDeploy} setShowCanaryDeploy={setShowCanaryDeploy} showSSG={showSSG} setShowSSG={setShowSSG} showDockerExport={showDockerExport} setShowDockerExport={setShowDockerExport}
+        />
+      )}
+      {(showSubscriptions || showInvoices || showUsageMetering || showAffiliates || showRevenue) && (
+        <MonetizationPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showSubscriptions={showSubscriptions} setShowSubscriptions={setShowSubscriptions} showInvoices={showInvoices} setShowInvoices={setShowInvoices} showUsageMetering={showUsageMetering} setShowUsageMetering={setShowUsageMetering} showAffiliates={showAffiliates} setShowAffiliates={setShowAffiliates} showRevenue={showRevenue} setShowRevenue={setShowRevenue}
+        />
+      )}
+      {(showCapacitor || showPushNotifications || showOfflineFirst || showGestureBuilder || showAppStoreAssets) && (
+        <MobilePanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showCapacitor={showCapacitor} setShowCapacitor={setShowCapacitor} showPushNotifications={showPushNotifications} setShowPushNotifications={setShowPushNotifications} showOfflineFirst={showOfflineFirst} setShowOfflineFirst={setShowOfflineFirst} showGestureBuilder={showGestureBuilder} setShowGestureBuilder={setShowGestureBuilder} showAppStoreAssets={showAppStoreAssets} setShowAppStoreAssets={setShowAppStoreAssets}
+        />
+      )}
+      {(showCodeTranslator || showSmartScaffold || showWorkflowAutomation || showPerfOptimizer || showSecurityAuditor) && (
+        <AIAutomationPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showCodeTranslator={showCodeTranslator} setShowCodeTranslator={setShowCodeTranslator} showSmartScaffold={showSmartScaffold} setShowSmartScaffold={setShowSmartScaffold} showWorkflowAutomation={showWorkflowAutomation} setShowWorkflowAutomation={setShowWorkflowAutomation} showPerfOptimizer={showPerfOptimizer} setShowPerfOptimizer={setShowPerfOptimizer} showSecurityAuditor={showSecurityAuditor} setShowSecurityAuditor={setShowSecurityAuditor}
+        />
+      )}
+      {(showStateMachine || showDataValidation || showCacheStrategy || showReactiveStore || showDataMigration) && (
+        <DataStatePanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showStateMachine={showStateMachine} setShowStateMachine={setShowStateMachine} showDataValidation={showDataValidation} setShowDataValidation={setShowDataValidation} showCacheStrategy={showCacheStrategy} setShowCacheStrategy={setShowCacheStrategy} showReactiveStore={showReactiveStore} setShowReactiveStore={setShowReactiveStore} showDataMigration={showDataMigration} setShowDataMigration={setShowDataMigration}
+        />
+      )}
+      {(showRegexPlayground || showJsonYamlConverter || showColorContrast || showTailwindSorter || showMarkdownPreview) && (
+        <DevToolsPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showRegexPlayground={showRegexPlayground} setShowRegexPlayground={setShowRegexPlayground} showJsonYamlConverter={showJsonYamlConverter} setShowJsonYamlConverter={setShowJsonYamlConverter} showColorContrast={showColorContrast} setShowColorContrast={setShowColorContrast} showTailwindSorter={showTailwindSorter} setShowTailwindSorter={setShowTailwindSorter} showMarkdownPreview={showMarkdownPreview} setShowMarkdownPreview={setShowMarkdownPreview}
+        />
+      )}
+      {(showToastDesigner || showNotifCenter || showChatWidget || showEmailSequence || showSMSTemplate) && (
+        <CommunicationPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showToastDesigner={showToastDesigner} setShowToastDesigner={setShowToastDesigner} showNotifCenter={showNotifCenter} setShowNotifCenter={setShowNotifCenter} showChatWidget={showChatWidget} setShowChatWidget={setShowChatWidget} showEmailSequence={showEmailSequence} setShowEmailSequence={setShowEmailSequence} showSMSTemplate={showSMSTemplate} setShowSMSTemplate={setShowSMSTemplate}
+        />
+      )}
+      {(showStepperWizard || showCommandMenuBuilder || showBreadcrumbGen || showMegaMenu || showContextMenu) && (
+        <UIPatternsPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showStepperWizard={showStepperWizard} setShowStepperWizard={setShowStepperWizard} showCommandMenuBuilder={showCommandMenuBuilder} setShowCommandMenuBuilder={setShowCommandMenuBuilder} showBreadcrumbGen={showBreadcrumbGen} setShowBreadcrumbGen={setShowBreadcrumbGen} showMegaMenu={showMegaMenu} setShowMegaMenu={setShowMegaMenu} showContextMenu={showContextMenu} setShowContextMenu={setShowContextMenu}
+        />
+      )}
+      {(showDockerCompose || showK8s || showCICDPipeline || showStructuredLogger || showHealthCheck) && (
+        <DevOpsPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showDockerCompose={showDockerCompose} setShowDockerCompose={setShowDockerCompose} showK8s={showK8s} setShowK8s={setShowK8s} showCICDPipeline={showCICDPipeline} setShowCICDPipeline={setShowCICDPipeline} showStructuredLogger={showStructuredLogger} setShowStructuredLogger={setShowStructuredLogger} showHealthCheck={showHealthCheck} setShowHealthCheck={setShowHealthCheck}
+        />
+      )}
+      {(showOAuthSetup || showMFAFlow || showSessionMgr || showAPIKeyMgmt || showPermMatrix) && (
+        <AuthSecurityPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showOAuthSetup={showOAuthSetup} setShowOAuthSetup={setShowOAuthSetup} showMFAFlow={showMFAFlow} setShowMFAFlow={setShowMFAFlow} showSessionMgr={showSessionMgr} setShowSessionMgr={setShowSessionMgr} showAPIKeyMgmt={showAPIKeyMgmt} setShowAPIKeyMgmt={setShowAPIKeyMgmt} showPermMatrix={showPermMatrix} setShowPermMatrix={setShowPermMatrix}
+        />
+      )}
+      {(showRichTextConfig || showFilePreviewGen || showAvatarGen || showCarouselBuilder || showGalleryLightbox) && (
+        <ContentMediaPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showRichTextConfig={showRichTextConfig} setShowRichTextConfig={setShowRichTextConfig} showFilePreviewGen={showFilePreviewGen} setShowFilePreviewGen={setShowFilePreviewGen} showAvatarGen={showAvatarGen} setShowAvatarGen={setShowAvatarGen} showCarouselBuilder={showCarouselBuilder} setShowCarouselBuilder={setShowCarouselBuilder} showGalleryLightbox={showGalleryLightbox} setShowGalleryLightbox={setShowGalleryLightbox}
+        />
+      )}
+      {(showFTS || showFacetedFilter || showAutocomplete || showTagSystem || showSEOMeta) && (
+        <SearchDiscoveryPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showFTS={showFTS} setShowFTS={setShowFTS} showFacetedFilter={showFacetedFilter} setShowFacetedFilter={setShowFacetedFilter} showAutocomplete={showAutocomplete} setShowAutocomplete={setShowAutocomplete} showTagSystem={showTagSystem} setShowTagSystem={setShowTagSystem} showSEOMeta={showSEOMeta} setShowSEOMeta={setShowSEOMeta}
+        />
+      )}
+      {(showKPIDashboard || showAlertingRules || showAuditTrail || showClickHeatmap || showBudgetMonitor) && (
+        <MonitoringPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showKPIDashboard={showKPIDashboard} setShowKPIDashboard={setShowKPIDashboard} showAlertingRules={showAlertingRules} setShowAlertingRules={setShowAlertingRules} showAuditTrail={showAuditTrail} setShowAuditTrail={setShowAuditTrail} showClickHeatmap={showClickHeatmap} setShowClickHeatmap={setShowClickHeatmap} showBudgetMonitor={showBudgetMonitor} setShowBudgetMonitor={setShowBudgetMonitor}
+        />
+      )}
+      {(showChangelogAuto || showREADMEGen || showLicensePicker || showOpenAPISpec || showProjectHealth) && (
+        <FinalPolishPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
+          showChangelogAuto={showChangelogAuto} setShowChangelogAuto={setShowChangelogAuto} showREADMEGen={showREADMEGen} setShowREADMEGen={setShowREADMEGen} showLicensePicker={showLicensePicker} setShowLicensePicker={setShowLicensePicker} showOpenAPISpec={showOpenAPISpec} setShowOpenAPISpec={setShowOpenAPISpec} showProjectHealth={showProjectHealth} setShowProjectHealth={setShowProjectHealth}
+        />
+      )}
       <WorkspaceBottomBar
         supabaseConfig={supabaseConfig}
         githubConfig={githubConfig}
