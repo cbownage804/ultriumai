@@ -7,11 +7,19 @@ export interface ProjectFile {
   language: string;
 }
 
+/** Phase 86: Binary asset storage for images/blobs */
+export interface ProjectAssetEntry {
+  mimeType: string;
+  dataUrl: string;
+}
+
 export interface ProjectState {
   name: string;
   files: ProjectFile[];
   activeFilePath: string | null;
   openFilePaths: string[];
+  /** Phase 86: Binary assets map (path → data URL) */
+  assets: Map<string, ProjectAssetEntry>;
 }
 
 function detectLanguage(path: string): string {
@@ -32,6 +40,7 @@ const DEFAULT_PROJECT: ProjectState = {
   files: [],
   activeFilePath: null,
   openFilePaths: [],
+  assets: new Map(),
 };
 
 export function useProjectFileSystem() {
@@ -77,6 +86,50 @@ export function useProjectFileSystem() {
     });
   }, []);
 
+  /** Phase 85: Rename a file and update import references in other files */
+  const renameFile = useCallback((oldPath: string, newPath: string) => {
+    setProject(prev => {
+      const files = prev.files.map(f => {
+        if (f.path === oldPath) {
+          return { ...f, path: newPath, language: detectLanguage(newPath) };
+        }
+        // Update import references in other files
+        const oldBase = oldPath.replace(/\.[^.]+$/, '');
+        const newBase = newPath.replace(/\.[^.]+$/, '');
+        if (oldBase !== newBase && (f.language === 'javascript' || f.language === 'typescript')) {
+          const oldRef = `./${oldBase}`;
+          const newRef = `./${newBase}`;
+          const updated = f.content
+            .replace(new RegExp(`from\\s+['"]${escapeRegex(oldRef)}['"]`, 'g'), `from '${newRef}'`)
+            .replace(new RegExp(`from\\s+['"]${escapeRegex(oldPath)}['"]`, 'g'), `from '${newPath}'`);
+          if (updated !== f.content) return { ...f, content: updated };
+        }
+        return f;
+      });
+      const openFilePaths = prev.openFilePaths.map(p => p === oldPath ? newPath : p);
+      const activeFilePath = prev.activeFilePath === oldPath ? newPath : prev.activeFilePath;
+      return { ...prev, files, openFilePaths, activeFilePath };
+    });
+  }, []);
+
+  /** Phase 86: Add a binary asset (image, font, etc.) */
+  const addAsset = useCallback((path: string, dataUrl: string, mimeType: string) => {
+    setProject(prev => {
+      const assets = new Map(prev.assets);
+      assets.set(path, { dataUrl, mimeType });
+      return { ...prev, assets };
+    });
+  }, []);
+
+  /** Phase 86: Remove a binary asset */
+  const removeAsset = useCallback((path: string) => {
+    setProject(prev => {
+      const assets = new Map(prev.assets);
+      assets.delete(path);
+      return { ...prev, assets };
+    });
+  }, []);
+
   const setActiveFile = useCallback((path: string) => {
     setProject(prev => ({
       ...prev,
@@ -113,10 +166,8 @@ export function useProjectFileSystem() {
   /**
    * Sanitize HTML body content: detect raw template literals (${...}) outside
    * <script> and <style> tags and convert them into proper DOM manipulation.
-   * This prevents broken previews when the AI generates template literals in HTML.
    */
   const sanitizeTemplateLiterals = useCallback((html: string): string => {
-    // Split HTML into script/style blocks and "other" (HTML body) segments
     const segments: { text: string; isCode: boolean }[] = [];
     const tagPattern = /(<script[\s>][\s\S]*?<\/script>|<style[\s>][\s\S]*?<\/style>)/gi;
     let lastIndex = 0;
@@ -133,28 +184,20 @@ export function useProjectFileSystem() {
       segments.push({ text: html.slice(lastIndex), isCode: false });
     }
 
-    // Check if any non-code segment has raw template literals
     const hasRawLiterals = segments.some(s => !s.isCode && /\$\{[^}]+\}/.test(s.text));
     if (!hasRawLiterals) return html;
 
-    // Escape raw template literals in HTML body to prevent broken rendering
     const sanitized = segments.map(s => {
       if (s.isCode) return s.text;
-      // Replace ${expr} with a visible placeholder so the page doesn't break
       return s.text.replace(/\$\{([^}]+)\}/g, '{{$1}}');
     }).join('');
 
-    // Inject a small script that resolves {{expr}} placeholders via the nearest
-    // data context, or simply shows them as-is.  This keeps the page functional.
     const fixerScript = `<script>
 (function(){
-  // Auto-fix: AI generated template literals outside script tags.
-  // Replace {{expr}} placeholders with evaluated values if possible.
   var body = document.body;
   if (!body) return;
   var html = body.innerHTML;
   if (html.indexOf('{{') === -1) return;
-  // Just display the placeholder names cleanly instead of breaking
   body.innerHTML = html.replace(/\\{\\{([^}]+)\\}\\}/g, function(_, expr) {
     return '<span style="color:#888;font-style:italic">[' + expr.trim() + ']</span>';
   });
@@ -167,8 +210,6 @@ export function useProjectFileSystem() {
     return sanitized + '\n' + fixerScript;
   }, []);
 
-  /** Combine all project files into a single renderable HTML document */
-  // Phase 37: Add sandbox attribute to nested iframes via regex post-processing
   const addSandboxToIframes = (html: string) => html.replace(/<iframe\s+(?!.*?sandbox=)/gi, '<iframe sandbox="allow-scripts allow-same-origin allow-popups" ');
 
   const getCompiledHTML = useCallback((
@@ -180,22 +221,17 @@ export function useProjectFileSystem() {
     jsBundler?: (files: ProjectFile[]) => string,
     linkedGPT?: { gptId: string; name: string; themeColor: string; widgetStyle: 'bubble' | 'inline'; position: 'bottom-right' | 'bottom-left'; welcomeMessage: string; placeholderPrompt: string } | null,
   ): string | null => {
-    const { files } = project;
+    const { files, assets } = project;
     if (files.length === 0) return null;
 
-    // ── React project detection: delegate to React compiler if .tsx/.jsx files exist ──
-    // When React files are present but no HTML files, this is a pure React project.
-    // The React compiler will handle the full compilation pipeline.
     const isReact = detectReactProject(files);
 
     const htmlFiles = files.filter(f => f.language === 'html');
     const cssFiles = files.filter(f => f.language === 'css');
     const jsFiles = files.filter(f => f.language === 'javascript' || f.language === 'typescript');
 
-    // For React projects without an index.html, return null to signal the workspace
-    // should use the React compiler instead
     if (htmlFiles.length === 0 && !isReact) return null;
-    if (htmlFiles.length === 0 && isReact) return null; // Workspace handles React compilation
+    if (htmlFiles.length === 0 && isReact) return null;
 
     const mainHTML = files.find(f => f.path === 'index.html') || htmlFiles[0];
     let compiled = mainHTML.content;
@@ -219,17 +255,29 @@ export function useProjectFileSystem() {
       }
     );
 
+    // Phase 92: Replace relative <img src> with data URLs or placeholders
+    if (assets.size > 0) {
+      compiled = compiled.replace(
+        /<img\s+([^>]*)src=['"]([^'"]+)['"]/gi,
+        (match, before, src) => {
+          if (src.startsWith('http') || src.startsWith('//') || src.startsWith('data:')) return match;
+          const normalized = src.startsWith('./') ? src.slice(2) : src;
+          const asset = assets.get(normalized);
+          if (asset) return `<img ${before}src="${asset.dataUrl}"`;
+          return match;
+        }
+      );
+    }
+
     // Build head injections
     const headInjects: string[] = [];
 
-    // Inject environment variables + service keys into window.ENV
     const envObj: Record<string, string> = {};
     if (envVars && envVars.length > 0) {
       for (const v of envVars) {
         if (v.key) envObj[v.key] = v.value;
       }
     }
-    // Inject service API keys using their catalog env key names
     if (serviceKeys && serviceKeys.length > 0) {
       const SERVICE_ENV_MAP: Record<string, string> = {
         openai: 'OPENAI_API_KEY', anthropic: 'ANTHROPIC_API_KEY', google_ai: 'GOOGLE_AI_API_KEY',
@@ -243,7 +291,6 @@ export function useProjectFileSystem() {
       }
     }
     if (Object.keys(envObj).length > 0) {
-      // Build masked version for console display (secrets masking)
       const maskedObj: Record<string, string> = {};
       for (const [k, v] of Object.entries(envObj)) {
         const isSecret = /key|secret|token|password|auth/i.test(k);
@@ -251,21 +298,18 @@ export function useProjectFileSystem() {
       }
       headInjects.push(`<script>
 window.ENV = ${JSON.stringify(envObj)};
-// Masked console display for secrets
 if (typeof console !== 'undefined') {
   console.log('%c[ENV] Variables loaded:', 'color:#6ee7b7', ${JSON.stringify(maskedObj)});
 }
 </script>`);
     }
 
-    // Inject CDN packages
     if (cdnPackages && cdnPackages.length > 0) {
       for (const pkg of cdnPackages) {
         headInjects.push(`<script src="${pkg.cdnUrl}"></script>`);
       }
     }
 
-    // Inject Supabase SDK if configured
     if (supabaseConfig?.url && supabaseConfig?.anonKey) {
       headInjects.push(`<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -275,7 +319,6 @@ if (typeof console !== 'undefined') {
 </script>`);
     }
 
-    // Inject Stripe.js if configured
     if (stripeConfig?.publishableKey) {
       headInjects.push(`<script src="https://js.stripe.com/v3/"></script>
 <script>
@@ -284,7 +327,6 @@ if (typeof console !== 'undefined') {
 </script>`);
     }
 
-    // Apply head injections
     if (headInjects.length > 0) {
       const injection = headInjects.join('\n');
       if (compiled.includes('</head>')) {
@@ -294,7 +336,6 @@ if (typeof console !== 'undefined') {
       }
     }
 
-    // Inject CSS files before </head>
     if (cssFiles.length > 0) {
       const cssInject = cssFiles
         .map(f => `<style>/* ${f.path} */\n${f.content}</style>`)
@@ -306,7 +347,6 @@ if (typeof console !== 'undefined') {
       }
     }
 
-    // Inject JS files before </body> — use bundler if provided for proper import resolution
     if (jsFiles.length > 0) {
       const jsContent = jsBundler
         ? jsBundler(jsFiles)
@@ -363,13 +403,12 @@ if (typeof console !== 'undefined') {
       }
     }
 
-    // ── Inject console/network interceptors + error boundary (Phase 1A + Phase 4) ──
+    // ── Inject console/network interceptors + error boundary ──
     const interceptorScript = `<script>
 (function(){
   if(window.__builderInjected) return;
   window.__builderInjected = true;
 
-  // ── Phase 4A: Console Interceptor ──
   var origConsole = { log: console.log, warn: console.warn, error: console.error, info: console.info, debug: console.debug };
   var seenMessages = {};
   ['log','warn','error','info','debug'].forEach(function(level){
@@ -377,7 +416,6 @@ if (typeof console !== 'undefined') {
       origConsole[level].apply(console, arguments);
       try {
         var msg = Array.prototype.slice.call(arguments).map(function(a){ return typeof a === 'object' ? JSON.stringify(a,null,2) : String(a); }).join(' ');
-        // Deduplicate rapid-fire identical messages
         var key = level + ':' + msg;
         var now = Date.now();
         if (seenMessages[key] && now - seenMessages[key] < 500) return;
@@ -387,7 +425,6 @@ if (typeof console !== 'undefined') {
     };
   });
 
-  // ── Phase 4A: Fetch Interceptor ──
   var origFetch = window.fetch;
   window.fetch = function(){
     var start = performance.now();
@@ -396,6 +433,15 @@ if (typeof console !== 'undefined') {
     var method = 'GET';
     if (arguments[1] && arguments[1].method) method = arguments[1].method;
     if (typeof req === 'object' && req.method) method = req.method;
+
+    // Phase 91: Intercept relative fetch URLs
+    if (typeof req === 'string' && req.startsWith('/') && !req.startsWith('//')) {
+      console.warn('[Preview] Relative fetch URL "' + req + '" — returning mock response. Connect a backend to enable API calls.');
+      return Promise.resolve(new Response(JSON.stringify({ message: 'Mock response — connect a backend for real API calls', path: req }), {
+        status: 200, headers: { 'Content-Type': 'application/json' }
+      }));
+    }
+
     return origFetch.apply(this, arguments).then(function(res){
       var time = Math.round(performance.now() - start);
       window.parent.postMessage({ type: '__NETWORK_LOG__', method: method, url: url, status: res.status, statusText: res.statusText, duration: time, ok: res.ok }, '*');
@@ -407,7 +453,6 @@ if (typeof console !== 'undefined') {
     });
   };
 
-  // ── Phase 4A: XHR Interceptor ──
   var origXHROpen = XMLHttpRequest.prototype.open;
   var origXHRSend = XMLHttpRequest.prototype.send;
   XMLHttpRequest.prototype.open = function(method, url){
@@ -419,86 +464,87 @@ if (typeof console !== 'undefined') {
     var self = this;
     var start = performance.now();
     self.addEventListener('loadend', function(){
-      window.parent.postMessage({ type: '__NETWORK_LOG__', method: self.__bMethod || 'GET', url: self.__bUrl || '', status: self.status, statusText: self.statusText, duration: Math.round(performance.now() - start), ok: self.status >= 200 && self.status < 300 }, '*');
+      window.parent.postMessage({ type: '__NETWORK_LOG__', method: self.__bMethod || 'GET', url: self.__bUrl || '', status: self.status, duration: Math.round(performance.now() - start) }, '*');
     });
     return origXHRSend.apply(this, arguments);
   };
 
-  // ── Phase 1A: Error overlay + boundary ──
-  var overlay = document.createElement('div');
-  overlay.id = '__error_overlay__';
-  overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);color:#fff;font-family:system-ui,-apple-system,sans-serif;padding:40px;overflow:auto;';
-  document.addEventListener('DOMContentLoaded', function(){ document.body.appendChild(overlay); });
+  // Phase 88: localStorage/sessionStorage shim for srcdoc iframe
+  (function() {
+    var store = {};
+    try { if (window.localStorage) return; } catch(e) {}
+    var handler = {
+      getItem: function(k) { return store[k] !== undefined ? store[k] : null; },
+      setItem: function(k, v) { store[k] = String(v); window.parent.postMessage({ type: '__STORAGE_SET__', key: k, value: String(v) }, '*'); },
+      removeItem: function(k) { delete store[k]; },
+      clear: function() { store = {}; },
+      get length() { return Object.keys(store).length; },
+      key: function(i) { return Object.keys(store)[i] || null; }
+    };
+    try {
+      Object.defineProperty(window, 'localStorage', { value: handler, writable: false });
+      Object.defineProperty(window, 'sessionStorage', { value: handler, writable: false });
+    } catch(e) {}
+    window.addEventListener('message', function(ev) {
+      if (ev.data && ev.data.type === '__STORAGE_RESTORE__' && ev.data.data) {
+        store = ev.data.data;
+      }
+    });
+  })();
 
-  var errorCount = 0;
-  var MAX_ERRORS = 10;
-  var shownErrors = new Set();
+  // Phase 89: window.location override to prevent iframe navigation breakage
+  (function() {
+    var origAssign = window.location.assign;
+    var origReplace = window.location.replace;
+    window.location.assign = function(url) {
+      window.parent.postMessage({ type: '__PREVIEW_NAV__', href: url }, '*');
+    };
+    window.location.replace = function(url) {
+      window.parent.postMessage({ type: '__PREVIEW_NAV__', href: url }, '*');
+    };
+    try {
+      var loc = window.location;
+      Object.defineProperty(window, 'location', {
+        get: function() { return loc; },
+        set: function(url) {
+          window.parent.postMessage({ type: '__PREVIEW_NAV__', href: String(url) }, '*');
+        }
+      });
+    } catch(e) {}
+  })();
 
-  function showOverlay(title, msg, stack) {
-    if (!overlay) return;
-    if (shownErrors.has(msg)) return;
-    shownErrors.add(msg);
-    errorCount++;
-    if (errorCount > MAX_ERRORS) return;
-
-    overlay.style.display = 'flex';
-    overlay.style.flexDirection = 'column';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.innerHTML = '<div style="max-width:600px;width:100%;text-align:left;">'
-      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">'
-      + '<div style="width:48px;height:48px;border-radius:12px;background:rgba(239,68,68,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
-      + '<svg width="24" height="24" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
-      + '</div>'
-      + '<div><h2 style="margin:0;font-size:20px;font-weight:700;color:#fca5a5;">' + title + '</h2>'
-      + '<p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,0.5);">An error occurred in the preview</p></div>'
-      + '</div>'
-      + '<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;margin-bottom:16px;">'
-      + '<p style="margin:0;font-size:14px;color:#fca5a5;word-break:break-word;">' + msg.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>'
-      + (stack ? '<pre style="margin:12px 0 0;font-size:11px;color:rgba(255,255,255,0.35);overflow-x:auto;white-space:pre-wrap;max-height:200px;">' + stack.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>' : '')
-      + '</div>'
-      + '<div style="display:flex;gap:8px;">'
-      + '<button onclick="document.getElementById(\\'__error_overlay__\\').style.display=\\'none\\'" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;cursor:pointer;">Dismiss</button>'
-      + '<button onclick="location.reload()" style="padding:8px 16px;border-radius:8px;border:none;background:rgba(239,68,68,0.3);color:#fca5a5;font-size:13px;cursor:pointer;">Reload</button>'
-      + '</div>'
-      + '</div>';
-
-    window.parent.postMessage({ type: '__PREVIEW_CRITICAL_ERROR__', message: msg, stack: stack || '', title: title }, '*');
-  }
-
-  window.onerror = function(msg, source, line, col, error) {
-    var stack = error && error.stack ? error.stack : '';
-    showOverlay('Runtime Error', String(msg), stack);
-    window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: String(msg), source: source || '', line: line || 0, col: col || 0, critical: true }, '*');
-    return true;
-  };
-
-  window.addEventListener('unhandledrejection', function(e) {
-    var msg = e.reason && e.reason.message ? e.reason.message : String(e.reason || 'Unknown async error');
-    var stack = e.reason && e.reason.stack ? e.reason.stack : '';
-    showOverlay('Unhandled Promise Rejection', msg, stack);
-    window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: 'Unhandled Promise: ' + msg, source: '', line: 0, critical: true }, '*');
-  });
-
-  document.addEventListener('error', function(e) {
-    if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
-      var src = e.target.src || e.target.href || 'unknown';
-      showOverlay('Resource Load Error', 'Failed to load: ' + src, '');
+  // Phase 95: Pass dark mode preference to iframe
+  (function() {
+    var mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+    if (mq) {
+      document.documentElement.setAttribute('data-prefers-dark', mq.matches ? 'true' : 'false');
+      mq.addEventListener('change', function(e) {
+        document.documentElement.setAttribute('data-prefers-dark', e.matches ? 'true' : 'false');
+      });
     }
-  }, true);
+  })();
+
+  window.onerror = function(msg, src, line, col, err) {
+    window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: String(msg), source: src || '', line: line || 0, col: col || 0, critical: true }, '*');
+  };
+  window.addEventListener('unhandledrejection', function(e) {
+    window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: 'Unhandled Promise: ' + (e.reason && e.reason.message ? e.reason.message : e.reason || 'Unknown'), source: '', line: 0, critical: false }, '*');
+  });
 })();
 </script>`;
 
-    // Inject interceptors BEFORE </head> (early, before any app scripts)
+    // Inject before </head> or at start
     if (compiled.includes('</head>')) {
-      compiled = compiled.replace('</head>', interceptorScript + '\n</head>');
-    } else if (compiled.includes('<body')) {
-      compiled = compiled.replace('<body', interceptorScript + '\n<body');
+      compiled = compiled.replace('</head>', `${interceptorScript}\n</head>`);
     } else {
-      compiled = interceptorScript + '\n' + compiled;
+      compiled = `${interceptorScript}\n${compiled}`;
     }
 
-    return addSandboxToIframes(sanitizeTemplateLiterals(compiled));
+    // Post-process: sanitize template literals & sandbox iframes
+    compiled = sanitizeTemplateLiterals(compiled);
+    compiled = addSandboxToIframes(compiled);
+
+    return compiled;
   }, [project, sanitizeTemplateLiterals]);
 
   return {
@@ -506,12 +552,19 @@ if (typeof console !== 'undefined') {
     setFiles,
     upsertFile,
     deleteFile,
+    renameFile,
+    addAsset,
+    removeAsset,
     setActiveFile,
     closeFile,
     reorderOpenFiles,
     renameProject,
     resetProject,
     getCompiledHTML,
-    activeFile: project.files.find(f => f.path === project.activeFilePath) || null,
+    sanitizeTemplateLiterals,
   };
+}
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
