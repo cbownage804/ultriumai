@@ -1210,6 +1210,7 @@ export function useAIAppBuilder() {
       const decoder = new TextDecoder();
       let textBuffer = '';
       let streamDone = false;
+      let emptyChoicesCount = 0;
       lastChunkTime = Date.now();
 
       // ── Batched streaming updates via rAF (Change 1 & 4) ──
@@ -1288,15 +1289,22 @@ export function useAIAppBuilder() {
             if (jsonStr === '[DONE]') { streamDone = true; break; }
             try {
               const parsed = JSON.parse(jsonStr);
+              // Phase 101: Warn on consecutive empty choices arrays
+              if (parsed.choices && parsed.choices.length === 0) {
+                emptyChoicesCount = (emptyChoicesCount || 0) + 1;
+                if (emptyChoicesCount === 5) {
+                  console.warn('[AI Builder] 5+ consecutive empty choices arrays — gateway may be degraded');
+                }
+                continue;
+              }
+              emptyChoicesCount = 0;
               const delta = parsed.choices?.[0]?.delta?.content;
               if (delta) {
                 upsertAssistant(fullContent + delta);
-                // Stream-driven phase transition: switch to 'writing' on first ===FILE: token
                 if (thinkingPhase !== null && fullContent.includes('===FILE:')) {
                   setThinkingPhase('writing');
                   setTimeout(() => setThinkingPhase(null), 500);
                 }
-                // Plan steps + parseIncremental are now handled inside the rAF batch (Changes 1, 2, 4)
               }
             } catch {
               textBuffer = line + '\n' + textBuffer;
@@ -1652,7 +1660,20 @@ export function useAIAppBuilder() {
 
           for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
             const config = RETRY_CONFIGS[attempt];
-            const backoffMs = (attempt + 1) * 1500;
+            // Phase 102: Respect Retry-After header from server
+            const retryAfterHeader = resp.headers.get('Retry-After');
+            let backoffMs = (attempt + 1) * 1500;
+            if (retryAfterHeader) {
+              const parsed = parseInt(retryAfterHeader, 10);
+              if (!isNaN(parsed)) {
+                backoffMs = Math.max(backoffMs, parsed * 1000);
+              } else {
+                const retryDate = new Date(retryAfterHeader).getTime();
+                if (!isNaN(retryDate)) {
+                  backoffMs = Math.max(backoffMs, retryDate - Date.now());
+                }
+              }
+            }
             console.warn(`Retry ${attempt + 1}/${MAX_RETRIES}: ${config.label} (backoff ${backoffMs}ms)`);
             toast.info(config.label, { duration: 3000 });
 
