@@ -530,6 +530,8 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
         if (/token|exceeds|maximum/i.test(parsedMsg)) {
           console.log("Token limit exceeded — retrying with reduced context (400K chars)");
           const reducedMessages = trimMessagesToFit(sanitizedMessages, 400_000);
+          const retryController = new AbortController();
+          const retryTimer = setTimeout(() => retryController.abort(), 25_000);
           try {
             const retryResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
               method: "POST",
@@ -542,6 +544,7 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
                 messages: [{ role: "system", content: systemPrompt }, ...reducedMessages],
                 stream,
               }),
+              signal: retryController.signal,
             });
             if (retryResp.ok) {
               console.log("Retry with reduced context succeeded");
@@ -557,6 +560,8 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
             }
           } catch (retryErr) {
             console.error("Retry failed:", retryErr);
+          } finally {
+            clearTimeout(retryTimer);
           }
         }
 
