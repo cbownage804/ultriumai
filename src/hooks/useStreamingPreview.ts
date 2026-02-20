@@ -16,11 +16,16 @@ function detectLanguage(path: string): string {
 /**
  * Incrementally parses ===FILE: blocks during streaming and emits
  * partial file updates so the preview can hot-reload as files complete.
+ * 
+ * PERF: partialFiles and completedFileCount are stored in refs (not state)
+ * to avoid triggering re-renders of the 2700-line workspace component.
+ * Consumers that need reactive updates (GeneratingOverlay, editor) poll
+ * from refs using local state + setInterval.
  */
 export function useStreamingPreview() {
-  const [partialFiles, setPartialFiles] = useState<ProjectFile[]>([]);
+  const partialFilesRef = useRef<ProjectFile[]>([]);
+  const completedFileCountRef = useRef(0);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [completedFileCount, setCompletedFileCount] = useState(0);
   const lastEmittedRef = useRef<string>('');
 
   const parseIncremental = useCallback((rawContent: string) => {
@@ -62,15 +67,15 @@ export function useStreamingPreview() {
     flush(false);
 
     if (files.length > 0) {
-      setPartialFiles(files);
-      setCompletedFileCount(completedCount);
+      partialFilesRef.current = files;
+      completedFileCountRef.current = completedCount;
     }
   }, []);
 
   const startStreaming = useCallback(() => {
     setIsStreaming(true);
-    setPartialFiles([]);
-    setCompletedFileCount(0);
+    partialFilesRef.current = [];
+    completedFileCountRef.current = 0;
     lastEmittedRef.current = '';
   }, []);
 
@@ -79,9 +84,9 @@ export function useStreamingPreview() {
   }, []);
 
   return {
-    partialFiles,
+    partialFilesRef,
+    completedFileCountRef,
     isStreaming,
-    completedFileCount,
     parseIncremental,
     startStreaming,
     stopStreaming,

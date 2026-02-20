@@ -1,3 +1,4 @@
+import { useState, useEffect, type RefObject } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Check, FileCode, Sparkles } from 'lucide-react';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
@@ -6,8 +7,8 @@ interface GeneratingOverlayProps {
   isGenerating: boolean;
   isCompiling?: boolean;
   phase?: string;
-  partialFiles?: ProjectFile[];
-  completedFileCount?: number;
+  partialFilesRef: RefObject<ProjectFile[]>;
+  completedFileCountRef: RefObject<number>;
   continuationRound?: number;
 }
 
@@ -17,10 +18,30 @@ const PHASE_CONFIG: Record<string, { label: string; color: string; gradient: str
   writing: { label: 'Writing code...', color: 'text-emerald-400', gradient: 'from-emerald-500 via-cyan-400 to-teal-500' },
 };
 
-export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFiles = [], completedFileCount = 0, continuationRound = 0 }: GeneratingOverlayProps) {
+export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFilesRef, completedFileCountRef, continuationRound = 0 }: GeneratingOverlayProps) {
   const showOverlay = isGenerating || isCompiling;
-  const totalFiles = partialFiles.length;
-  const progress = totalFiles > 0 ? (completedFileCount / totalFiles) * 100 : 0;
+
+  // Local polling state — reads from refs every 500ms, only THIS component re-renders
+  const [localFiles, setLocalFiles] = useState<ProjectFile[]>([]);
+  const [localCompleted, setLocalCompleted] = useState(0);
+
+  useEffect(() => {
+    if (!showOverlay) {
+      setLocalFiles([]);
+      setLocalCompleted(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      const files = partialFilesRef.current;
+      const completed = completedFileCountRef.current;
+      setLocalFiles(prev => prev.length !== files.length || prev !== files ? files : prev);
+      setLocalCompleted(prev => prev !== completed ? completed : prev);
+    }, 500);
+    return () => clearInterval(interval);
+  }, [showOverlay, partialFilesRef, completedFileCountRef]);
+
+  const totalFiles = localFiles.length;
+  const progress = totalFiles > 0 ? (localCompleted / totalFiles) * 100 : 0;
   const phaseConfig = phase ? PHASE_CONFIG[phase] : null;
   const shimmerGradient = phaseConfig?.gradient || 'from-cyan-500 via-violet-400 to-cyan-500';
 
@@ -71,8 +92,8 @@ export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFil
             {totalFiles > 0 && (
               <>
                 <div className="px-3 py-2 space-y-1.5 max-h-[160px] overflow-auto">
-                  {partialFiles.map((file, i) => {
-                    const isComplete = i < completedFileCount;
+                  {localFiles.map((file, i) => {
+                    const isComplete = i < localCompleted;
                     const fileName = file.path.split('/').pop()!;
                     return (
                       <motion.div
@@ -111,7 +132,7 @@ export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFil
                     </motion.div>
                   </div>
                   <div className="text-[9px] text-white/25 mt-1.5 text-right font-mono">
-                    {completedFileCount}/{totalFiles} files
+                    {localCompleted}/{totalFiles} files
                   </div>
                 </div>
               </>
