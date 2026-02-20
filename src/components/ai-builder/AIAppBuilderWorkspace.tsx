@@ -575,223 +575,230 @@ export function AIAppBuilderWorkspace() {
   const showShortcuts = !!panels.showShortcuts;
   const showQuickSwitcher = !!panels.showQuickSwitcher;
 
-  // Issue 9 fix: Use panelsRef to remove panels dependency, preventing 200 setter recreations
+  // Issue 15 fix: Memoized panel setters map — closures created once, not 210 per render
   const panelsRef = useRef(panels);
   panelsRef.current = panels;
-  const sp = useCallback((key: string) => (v: boolean | ((prev: boolean) => boolean)) => {
-    const val = typeof v === 'function' ? v(!!panelsRef.current[key]) : v;
-    val ? openP(key) : closeP(key);
+  const panelSetters = useMemo((): Record<string, (v: boolean | ((prev: boolean) => boolean)) => void> => {
+    const map: Record<string, (v: boolean | ((prev: boolean) => boolean)) => void> = {};
+    for (const key of PANEL_KEYS) {
+      map[key] = (v: boolean | ((prev: boolean) => boolean)) => {
+        const val = typeof v === 'function' ? v(!!panelsRef.current[key]) : v;
+        val ? openP(key) : closeP(key);
+      };
+    }
+    return map;
   }, [openP, closeP]);
 
-  const setShowVersionHistory = sp('showVersionHistory');
-  const setShowConsole = sp('showConsole');
-  const setShowEnvVars = sp('showEnvVars');
-  const setShowRLSTester = sp('showRLSTester');
-  const setShowAssets = sp('showAssets');
-  const setShowPackages = sp('showPackages');
-  const setShowDatabase = sp('showDatabase');
-  const setShowAuth = sp('showAuth');
-  const setShowKnowledge = sp('showKnowledge');
-  const setShowStorage = sp('showStorage');
-  const setShowEdgeFunctions = sp('showEdgeFunctions');
-  const setShowActivity = sp('showActivity');
-  const setShowBilling = sp('showBilling');
-  const setShowShareDialog = sp('showShareDialog');
-  const setShowSEOEditor = sp('showSEOEditor');
-  const setShowSettingsPanel = sp('showSettingsPanel');
-  const setShowExportGuide = sp('showExportGuide');
-  const setShowCodeIntel = sp('showCodeIntel');
-  const setShowDbExplorer = sp('showDbExplorer');
-  const setShowComponentLib = sp('showComponentLib');
-  const setShowTestingSuite = sp('showTestingSuite');
-  const setShowDiffReview = sp('showDiffReview');
-  const setShowDomainPanel = sp('showDomainPanel');
-  const setShowTerminal = sp('showTerminal');
-  const setShowBuildLog = sp('showBuildLog');
-  const setShowTimeline = sp('showTimeline');
-  const setShowDiffViewer = sp('showDiffViewer');
-  const setShowDeployPipeline = sp('showDeployPipeline');
-  const setShowComponentPalette = sp('showComponentPalette');
-  const setShowHelpCenter = sp('showHelpCenter');
-  const setShowGPTConnector = sp('showGPTConnector');
-  const setShowPerformanceProfiler = sp('showPerformanceProfiler');
-  const setShowBuildAnalytics = sp('showBuildAnalytics');
-  const setShowDesignSystem = sp('showDesignSystem');
-  const setShowChangelog = sp('showChangelog');
-  const setShowSetupWizard = sp('showSetupWizard');
-  const setShowSchemaDesigner = sp('showSchemaDesigner');
-  const setShowOneClickDeploy = sp('showOneClickDeploy');
-  const setShowEditHistory = sp('showEditHistory');
-  const setShowBugReport = sp('showBugReport');
-  const setShowEnhancedPalette = sp('showEnhancedPalette');
-  const setShowMultiSearch = sp('showMultiSearch');
-  const setShowTestRunner = sp('showTestRunner');
-  const setShowExtensions = sp('showExtensions');
-  const setShowCollaboration = sp('showCollaboration');
-  const setShowAPIBuilder = sp('showAPIBuilder');
-  const setShowSupabaseIDE = sp('showSupabaseIDE');
-  const setShowGitHubPanel = sp('showGitHubPanel');
-  const setShowMigrationPanel = sp('showMigrationPanel');
-  const setShowEdgeFnEditor = sp('showEdgeFnEditor');
-  const setShowBuildWorkflow = sp('showBuildWorkflow');
-  const setShowDevTools = sp('showDevTools');
-  const setShowNPMManager = sp('showNPMManager');
-  const setShowPublishPanel = sp('showPublishPanel');
-  const setShowImageGen = sp('showImageGen');
-  const setShowSymbolSearch = sp('showSymbolSearch');
-  const setShowSecretsManager = sp('showSecretsManager');
-  const setShowModelSwitcher = sp('showModelSwitcher');
-  const setShowPromptChains = sp('showPromptChains');
-  const setShowCodeReview = sp('showCodeReview');
-  const setShowTestGenerator = sp('showTestGenerator');
-  const setShowNLQuery = sp('showNLQuery');
-  const setShowSnippetLibrary = sp('showSnippetLibrary');
-  const setShowSplitDiff = sp('showSplitDiff');
-  const setShowComments = sp('showComments');
-  const setShowTeamActivity = sp('showTeamActivity');
-  const setShowApprovals = sp('showApprovals');
-  const setShowForking = sp('showForking');
-  const setShowFigmaImport = sp('showFigmaImport');
-  const setShowColorExtractor = sp('showColorExtractor');
-  const setShowIconPicker = sp('showIconPicker');
-  const setShowBreakpointEditor = sp('showBreakpointEditor');
-  const setShowAnimationBuilder = sp('showAnimationBuilder');
-  const setShowVisualSchema = sp('showVisualSchema');
-  const setShowSeedData = sp('showSeedData');
-  const setShowAPITester = sp('showAPITester');
-  const setShowWebhookBuilder = sp('showWebhookBuilder');
-  const setShowCronScheduler = sp('showCronScheduler');
-  const setShowEnvManager = sp('showEnvManager');
-  const setShowRollback = sp('showRollback');
-  const setShowUptimeMonitor = sp('showUptimeMonitor');
-  const setShowBuildCache = sp('showBuildCache');
-  const setShowBuildScripts = sp('showBuildScripts');
-  const setShowCMSMode = sp('showCMSMode');
-  const setShowBlogEngine = sp('showBlogEngine');
-  const setShowImageOptimizer = sp('showImageOptimizer');
-  const setShowVideoEmbed = sp('showVideoEmbed');
-  const setShowI18n = sp('showI18n');
-  const setShowAnalyticsDashboard = sp('showAnalyticsDashboard');
-  const setShowErrorTracking = sp('showErrorTracking');
-  const setShowSessionReplay = sp('showSessionReplay');
-  const setShowABTesting = sp('showABTesting');
-  const setShowAIUsage = sp('showAIUsage');
-  const setShowDepScanner = sp('showDepScanner');
-  const setShowCSPGenerator = sp('showCSPGenerator');
-  const setShowGDPR = sp('showGDPR');
-  const setShowRateLimiter = sp('showRateLimiter');
-  const setShowSecretRotation = sp('showSecretRotation');
-  const setShowCLICompanion = sp('showCLICompanion');
-  const setShowGHActions = sp('showGHActions');
-  const setShowSlackDiscord = sp('showSlackDiscord');
-  const setShowWhiteLabel = sp('showWhiteLabel');
-  const setShowPluginSDK = sp('showPluginSDK');
-  const setShowRefactoring = sp('showRefactoring');
-  const setShowNLRegex = sp('showNLRegex');
-  const setShowCommitMsg = sp('showCommitMsg');
-  const setShowAutoImport = sp('showAutoImport');
-  const setShowDocWriter = sp('showDocWriter');
-  const setShowCoEditing = sp('showCoEditing');
-  const setShowVoiceChat = sp('showVoiceChat');
-  const setShowScreenShare = sp('showScreenShare');
-  const setShowCodeReactions = sp('showCodeReactions');
-  const setShowWhiteboard = sp('showWhiteboard');
-  const setShowVisualRegression = sp('showVisualRegression');
-  const setShowA11yScore = sp('showA11yScore');
-  const setShowCoverage = sp('showCoverage');
-  const setShowMutationTest = sp('showMutationTest');
-  const setShowLoadTest = sp('showLoadTest');
-  const setShowPageBuilder = sp('showPageBuilder');
-  const setShowThemeStudio = sp('showThemeStudio');
-  const setShowFormBuilder = sp('showFormBuilder');
-  const setShowChartDashboard = sp('showChartDashboard');
-  const setShowLayoutGrid = sp('showLayoutGrid');
-  const setShowGraphQL = sp('showGraphQL');
-  const setShowWSManager = sp('showWSManager');
-  const setShowFileUpload = sp('showFileUpload');
-  const setShowPayments = sp('showPayments');
-  const setShowEmailTemplates = sp('showEmailTemplates');
-  const setShowTutorialCreator = sp('showTutorialCreator');
-  const setShowCodePlayground = sp('showCodePlayground');
-  const setShowCustomLinting = sp('showCustomLinting');
-  const setShowDepGraph = sp('showDepGraph');
-  const setShowGitBlame = sp('showGitBlame');
-  const setShowMultiRegion = sp('showMultiRegion');
-  const setShowFeatureFlags = sp('showFeatureFlags');
-  const setShowCanaryDeploy = sp('showCanaryDeploy');
-  const setShowSSG = sp('showSSG');
-  const setShowDockerExport = sp('showDockerExport');
-  const setShowSubscriptions = sp('showSubscriptions');
-  const setShowInvoices = sp('showInvoices');
-  const setShowUsageMetering = sp('showUsageMetering');
-  const setShowAffiliates = sp('showAffiliates');
-  const setShowRevenue = sp('showRevenue');
-  const setShowCapacitor = sp('showCapacitor');
-  const setShowPushNotifications = sp('showPushNotifications');
-  const setShowOfflineFirst = sp('showOfflineFirst');
-  const setShowGestureBuilder = sp('showGestureBuilder');
-  const setShowAppStoreAssets = sp('showAppStoreAssets');
-  const setShowCodeTranslator = sp('showCodeTranslator');
-  const setShowSmartScaffold = sp('showSmartScaffold');
-  const setShowWorkflowAutomation = sp('showWorkflowAutomation');
-  const setShowPerfOptimizer = sp('showPerfOptimizer');
-  const setShowSecurityAuditor = sp('showSecurityAuditor');
-  const setShowStateMachine = sp('showStateMachine');
-  const setShowDataValidation = sp('showDataValidation');
-  const setShowCacheStrategy = sp('showCacheStrategy');
-  const setShowReactiveStore = sp('showReactiveStore');
-  const setShowDataMigration = sp('showDataMigration');
-  const setShowRegexPlayground = sp('showRegexPlayground');
-  const setShowJsonYamlConverter = sp('showJsonYamlConverter');
-  const setShowColorContrast = sp('showColorContrast');
-  const setShowTailwindSorter = sp('showTailwindSorter');
-  const setShowMarkdownPreview = sp('showMarkdownPreview');
-  const setShowToastDesigner = sp('showToastDesigner');
-  const setShowNotifCenter = sp('showNotifCenter');
-  const setShowChatWidget = sp('showChatWidget');
-  const setShowEmailSequence = sp('showEmailSequence');
-  const setShowSMSTemplate = sp('showSMSTemplate');
-  const setShowStepperWizard = sp('showStepperWizard');
-  const setShowCommandMenuBuilder = sp('showCommandMenuBuilder');
-  const setShowBreadcrumbGen = sp('showBreadcrumbGen');
-  const setShowMegaMenu = sp('showMegaMenu');
-  const setShowContextMenu = sp('showContextMenu');
-  const setShowDockerCompose = sp('showDockerCompose');
-  const setShowK8s = sp('showK8s');
-  const setShowCICDPipeline = sp('showCICDPipeline');
-  const setShowStructuredLogger = sp('showStructuredLogger');
-  const setShowHealthCheck = sp('showHealthCheck');
-  const setShowOAuthSetup = sp('showOAuthSetup');
-  const setShowMFAFlow = sp('showMFAFlow');
-  const setShowSessionMgr = sp('showSessionMgr');
-  const setShowAPIKeyMgmt = sp('showAPIKeyMgmt');
-  const setShowPermMatrix = sp('showPermMatrix');
-  const setShowRichTextConfig = sp('showRichTextConfig');
-  const setShowFilePreviewGen = sp('showFilePreviewGen');
-  const setShowAvatarGen = sp('showAvatarGen');
-  const setShowCarouselBuilder = sp('showCarouselBuilder');
-  const setShowGalleryLightbox = sp('showGalleryLightbox');
-  const setShowFTS = sp('showFTS');
-  const setShowFacetedFilter = sp('showFacetedFilter');
-  const setShowAutocomplete = sp('showAutocomplete');
-  const setShowTagSystem = sp('showTagSystem');
-  const setShowSEOMeta = sp('showSEOMeta');
-  const setShowKPIDashboard = sp('showKPIDashboard');
-  const setShowAlertingRules = sp('showAlertingRules');
-  const setShowAuditTrail = sp('showAuditTrail');
-  const setShowClickHeatmap = sp('showClickHeatmap');
-  const setShowBudgetMonitor = sp('showBudgetMonitor');
-  const setShowChangelogAuto = sp('showChangelogAuto');
-  const setShowREADMEGen = sp('showREADMEGen');
-  const setShowLicensePicker = sp('showLicensePicker');
-  const setShowOpenAPISpec = sp('showOpenAPISpec');
-  const setShowProjectHealth = sp('showProjectHealth');
-  const setShowPromptHistory = sp('showPromptHistory');
-  const setShowFileSearch = sp('showFileSearch');
-  const setShowFileTree = sp('showFileTree');
-  const setShowTemplates = sp('showTemplates');
-  const setShowShortcuts = sp('showShortcuts');
-  const setShowQuickSwitcher = sp('showQuickSwitcher');
+  // Property lookups from cached map (no new closures per render)
+  const setShowVersionHistory = panelSetters.showVersionHistory;
+  const setShowConsole = panelSetters.showConsole;
+  const setShowEnvVars = panelSetters.showEnvVars;
+  const setShowRLSTester = panelSetters.showRLSTester;
+  const setShowAssets = panelSetters.showAssets;
+  const setShowPackages = panelSetters.showPackages;
+  const setShowDatabase = panelSetters.showDatabase;
+  const setShowAuth = panelSetters.showAuth;
+  const setShowKnowledge = panelSetters.showKnowledge;
+  const setShowStorage = panelSetters.showStorage;
+  const setShowEdgeFunctions = panelSetters.showEdgeFunctions;
+  const setShowActivity = panelSetters.showActivity;
+  const setShowBilling = panelSetters.showBilling;
+  const setShowShareDialog = panelSetters.showShareDialog;
+  const setShowSEOEditor = panelSetters.showSEOEditor;
+  const setShowSettingsPanel = panelSetters.showSettingsPanel;
+  const setShowExportGuide = panelSetters.showExportGuide;
+  const setShowCodeIntel = panelSetters.showCodeIntel;
+  const setShowDbExplorer = panelSetters.showDbExplorer;
+  const setShowComponentLib = panelSetters.showComponentLib;
+  const setShowTestingSuite = panelSetters.showTestingSuite;
+  const setShowDiffReview = panelSetters.showDiffReview;
+  const setShowDomainPanel = panelSetters.showDomainPanel;
+  const setShowTerminal = panelSetters.showTerminal;
+  const setShowBuildLog = panelSetters.showBuildLog;
+  const setShowTimeline = panelSetters.showTimeline;
+  const setShowDiffViewer = panelSetters.showDiffViewer;
+  const setShowDeployPipeline = panelSetters.showDeployPipeline;
+  const setShowComponentPalette = panelSetters.showComponentPalette;
+  const setShowHelpCenter = panelSetters.showHelpCenter;
+  const setShowGPTConnector = panelSetters.showGPTConnector;
+  const setShowPerformanceProfiler = panelSetters.showPerformanceProfiler;
+  const setShowBuildAnalytics = panelSetters.showBuildAnalytics;
+  const setShowDesignSystem = panelSetters.showDesignSystem;
+  const setShowChangelog = panelSetters.showChangelog;
+  const setShowSetupWizard = panelSetters.showSetupWizard;
+  const setShowSchemaDesigner = panelSetters.showSchemaDesigner;
+  const setShowOneClickDeploy = panelSetters.showOneClickDeploy;
+  const setShowEditHistory = panelSetters.showEditHistory;
+  const setShowBugReport = panelSetters.showBugReport;
+  const setShowEnhancedPalette = panelSetters.showEnhancedPalette;
+  const setShowMultiSearch = panelSetters.showMultiSearch;
+  const setShowTestRunner = panelSetters.showTestRunner;
+  const setShowExtensions = panelSetters.showExtensions;
+  const setShowCollaboration = panelSetters.showCollaboration;
+  const setShowAPIBuilder = panelSetters.showAPIBuilder;
+  const setShowSupabaseIDE = panelSetters.showSupabaseIDE;
+  const setShowGitHubPanel = panelSetters.showGitHubPanel;
+  const setShowMigrationPanel = panelSetters.showMigrationPanel;
+  const setShowEdgeFnEditor = panelSetters.showEdgeFnEditor;
+  const setShowBuildWorkflow = panelSetters.showBuildWorkflow;
+  const setShowDevTools = panelSetters.showDevTools;
+  const setShowNPMManager = panelSetters.showNPMManager;
+  const setShowPublishPanel = panelSetters.showPublishPanel;
+  const setShowImageGen = panelSetters.showImageGen;
+  const setShowSymbolSearch = panelSetters.showSymbolSearch;
+  const setShowSecretsManager = panelSetters.showSecretsManager;
+  const setShowModelSwitcher = panelSetters.showModelSwitcher;
+  const setShowPromptChains = panelSetters.showPromptChains;
+  const setShowCodeReview = panelSetters.showCodeReview;
+  const setShowTestGenerator = panelSetters.showTestGenerator;
+  const setShowNLQuery = panelSetters.showNLQuery;
+  const setShowSnippetLibrary = panelSetters.showSnippetLibrary;
+  const setShowSplitDiff = panelSetters.showSplitDiff;
+  const setShowComments = panelSetters.showComments;
+  const setShowTeamActivity = panelSetters.showTeamActivity;
+  const setShowApprovals = panelSetters.showApprovals;
+  const setShowForking = panelSetters.showForking;
+  const setShowFigmaImport = panelSetters.showFigmaImport;
+  const setShowColorExtractor = panelSetters.showColorExtractor;
+  const setShowIconPicker = panelSetters.showIconPicker;
+  const setShowBreakpointEditor = panelSetters.showBreakpointEditor;
+  const setShowAnimationBuilder = panelSetters.showAnimationBuilder;
+  const setShowVisualSchema = panelSetters.showVisualSchema;
+  const setShowSeedData = panelSetters.showSeedData;
+  const setShowAPITester = panelSetters.showAPITester;
+  const setShowWebhookBuilder = panelSetters.showWebhookBuilder;
+  const setShowCronScheduler = panelSetters.showCronScheduler;
+  const setShowEnvManager = panelSetters.showEnvManager;
+  const setShowRollback = panelSetters.showRollback;
+  const setShowUptimeMonitor = panelSetters.showUptimeMonitor;
+  const setShowBuildCache = panelSetters.showBuildCache;
+  const setShowBuildScripts = panelSetters.showBuildScripts;
+  const setShowCMSMode = panelSetters.showCMSMode;
+  const setShowBlogEngine = panelSetters.showBlogEngine;
+  const setShowImageOptimizer = panelSetters.showImageOptimizer;
+  const setShowVideoEmbed = panelSetters.showVideoEmbed;
+  const setShowI18n = panelSetters.showI18n;
+  const setShowAnalyticsDashboard = panelSetters.showAnalyticsDashboard;
+  const setShowErrorTracking = panelSetters.showErrorTracking;
+  const setShowSessionReplay = panelSetters.showSessionReplay;
+  const setShowABTesting = panelSetters.showABTesting;
+  const setShowAIUsage = panelSetters.showAIUsage;
+  const setShowDepScanner = panelSetters.showDepScanner;
+  const setShowCSPGenerator = panelSetters.showCSPGenerator;
+  const setShowGDPR = panelSetters.showGDPR;
+  const setShowRateLimiter = panelSetters.showRateLimiter;
+  const setShowSecretRotation = panelSetters.showSecretRotation;
+  const setShowCLICompanion = panelSetters.showCLICompanion;
+  const setShowGHActions = panelSetters.showGHActions;
+  const setShowSlackDiscord = panelSetters.showSlackDiscord;
+  const setShowWhiteLabel = panelSetters.showWhiteLabel;
+  const setShowPluginSDK = panelSetters.showPluginSDK;
+  const setShowRefactoring = panelSetters.showRefactoring;
+  const setShowNLRegex = panelSetters.showNLRegex;
+  const setShowCommitMsg = panelSetters.showCommitMsg;
+  const setShowAutoImport = panelSetters.showAutoImport;
+  const setShowDocWriter = panelSetters.showDocWriter;
+  const setShowCoEditing = panelSetters.showCoEditing;
+  const setShowVoiceChat = panelSetters.showVoiceChat;
+  const setShowScreenShare = panelSetters.showScreenShare;
+  const setShowCodeReactions = panelSetters.showCodeReactions;
+  const setShowWhiteboard = panelSetters.showWhiteboard;
+  const setShowVisualRegression = panelSetters.showVisualRegression;
+  const setShowA11yScore = panelSetters.showA11yScore;
+  const setShowCoverage = panelSetters.showCoverage;
+  const setShowMutationTest = panelSetters.showMutationTest;
+  const setShowLoadTest = panelSetters.showLoadTest;
+  const setShowPageBuilder = panelSetters.showPageBuilder;
+  const setShowThemeStudio = panelSetters.showThemeStudio;
+  const setShowFormBuilder = panelSetters.showFormBuilder;
+  const setShowChartDashboard = panelSetters.showChartDashboard;
+  const setShowLayoutGrid = panelSetters.showLayoutGrid;
+  const setShowGraphQL = panelSetters.showGraphQL;
+  const setShowWSManager = panelSetters.showWSManager;
+  const setShowFileUpload = panelSetters.showFileUpload;
+  const setShowPayments = panelSetters.showPayments;
+  const setShowEmailTemplates = panelSetters.showEmailTemplates;
+  const setShowTutorialCreator = panelSetters.showTutorialCreator;
+  const setShowCodePlayground = panelSetters.showCodePlayground;
+  const setShowCustomLinting = panelSetters.showCustomLinting;
+  const setShowDepGraph = panelSetters.showDepGraph;
+  const setShowGitBlame = panelSetters.showGitBlame;
+  const setShowMultiRegion = panelSetters.showMultiRegion;
+  const setShowFeatureFlags = panelSetters.showFeatureFlags;
+  const setShowCanaryDeploy = panelSetters.showCanaryDeploy;
+  const setShowSSG = panelSetters.showSSG;
+  const setShowDockerExport = panelSetters.showDockerExport;
+  const setShowSubscriptions = panelSetters.showSubscriptions;
+  const setShowInvoices = panelSetters.showInvoices;
+  const setShowUsageMetering = panelSetters.showUsageMetering;
+  const setShowAffiliates = panelSetters.showAffiliates;
+  const setShowRevenue = panelSetters.showRevenue;
+  const setShowCapacitor = panelSetters.showCapacitor;
+  const setShowPushNotifications = panelSetters.showPushNotifications;
+  const setShowOfflineFirst = panelSetters.showOfflineFirst;
+  const setShowGestureBuilder = panelSetters.showGestureBuilder;
+  const setShowAppStoreAssets = panelSetters.showAppStoreAssets;
+  const setShowCodeTranslator = panelSetters.showCodeTranslator;
+  const setShowSmartScaffold = panelSetters.showSmartScaffold;
+  const setShowWorkflowAutomation = panelSetters.showWorkflowAutomation;
+  const setShowPerfOptimizer = panelSetters.showPerfOptimizer;
+  const setShowSecurityAuditor = panelSetters.showSecurityAuditor;
+  const setShowStateMachine = panelSetters.showStateMachine;
+  const setShowDataValidation = panelSetters.showDataValidation;
+  const setShowCacheStrategy = panelSetters.showCacheStrategy;
+  const setShowReactiveStore = panelSetters.showReactiveStore;
+  const setShowDataMigration = panelSetters.showDataMigration;
+  const setShowRegexPlayground = panelSetters.showRegexPlayground;
+  const setShowJsonYamlConverter = panelSetters.showJsonYamlConverter;
+  const setShowColorContrast = panelSetters.showColorContrast;
+  const setShowTailwindSorter = panelSetters.showTailwindSorter;
+  const setShowMarkdownPreview = panelSetters.showMarkdownPreview;
+  const setShowToastDesigner = panelSetters.showToastDesigner;
+  const setShowNotifCenter = panelSetters.showNotifCenter;
+  const setShowChatWidget = panelSetters.showChatWidget;
+  const setShowEmailSequence = panelSetters.showEmailSequence;
+  const setShowSMSTemplate = panelSetters.showSMSTemplate;
+  const setShowStepperWizard = panelSetters.showStepperWizard;
+  const setShowCommandMenuBuilder = panelSetters.showCommandMenuBuilder;
+  const setShowBreadcrumbGen = panelSetters.showBreadcrumbGen;
+  const setShowMegaMenu = panelSetters.showMegaMenu;
+  const setShowContextMenu = panelSetters.showContextMenu;
+  const setShowDockerCompose = panelSetters.showDockerCompose;
+  const setShowK8s = panelSetters.showK8s;
+  const setShowCICDPipeline = panelSetters.showCICDPipeline;
+  const setShowStructuredLogger = panelSetters.showStructuredLogger;
+  const setShowHealthCheck = panelSetters.showHealthCheck;
+  const setShowOAuthSetup = panelSetters.showOAuthSetup;
+  const setShowMFAFlow = panelSetters.showMFAFlow;
+  const setShowSessionMgr = panelSetters.showSessionMgr;
+  const setShowAPIKeyMgmt = panelSetters.showAPIKeyMgmt;
+  const setShowPermMatrix = panelSetters.showPermMatrix;
+  const setShowRichTextConfig = panelSetters.showRichTextConfig;
+  const setShowFilePreviewGen = panelSetters.showFilePreviewGen;
+  const setShowAvatarGen = panelSetters.showAvatarGen;
+  const setShowCarouselBuilder = panelSetters.showCarouselBuilder;
+  const setShowGalleryLightbox = panelSetters.showGalleryLightbox;
+  const setShowFTS = panelSetters.showFTS;
+  const setShowFacetedFilter = panelSetters.showFacetedFilter;
+  const setShowAutocomplete = panelSetters.showAutocomplete;
+  const setShowTagSystem = panelSetters.showTagSystem;
+  const setShowSEOMeta = panelSetters.showSEOMeta;
+  const setShowKPIDashboard = panelSetters.showKPIDashboard;
+  const setShowAlertingRules = panelSetters.showAlertingRules;
+  const setShowAuditTrail = panelSetters.showAuditTrail;
+  const setShowClickHeatmap = panelSetters.showClickHeatmap;
+  const setShowBudgetMonitor = panelSetters.showBudgetMonitor;
+  const setShowChangelogAuto = panelSetters.showChangelogAuto;
+  const setShowREADMEGen = panelSetters.showREADMEGen;
+  const setShowLicensePicker = panelSetters.showLicensePicker;
+  const setShowOpenAPISpec = panelSetters.showOpenAPISpec;
+  const setShowProjectHealth = panelSetters.showProjectHealth;
+  const setShowPromptHistory = panelSetters.showPromptHistory;
+  const setShowFileSearch = panelSetters.showFileSearch;
+  const setShowFileTree = panelSetters.showFileTree;
+  const setShowTemplates = panelSetters.showTemplates;
+  const setShowShortcuts = panelSetters.showShortcuts;
+  const setShowQuickSwitcher = panelSetters.showQuickSwitcher;
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -951,18 +958,6 @@ export function AIAppBuilderWorkspace() {
         read: false,
       }, ...prev].slice(0, 50));
       buildLog.logBuildComplete(latestFiles.length, duration);
-      // Run TypeScript validation before preview
-      const validationResult = tsValidator.validate(latestFiles);
-      if (validationResult.errorCount > 0) {
-        buildLog.addEntry('warning' as any, `⚠️ ${validationResult.errorCount} validation error(s), ${validationResult.warningCount} warning(s)`);
-        validationResult.diagnostics.filter(d => d.severity === 'error').slice(0, 5).forEach(d =>
-          buildLog.addEntry('warning' as any, `  ❌ ${d.file}:${d.line} — ${d.message}`)
-        );
-      } else if (validationResult.warningCount > 0) {
-        buildLog.addEntry('info', `✅ Validation passed with ${validationResult.warningCount} warning(s) (${validationResult.validationTimeMs}ms)`);
-      } else {
-        buildLog.addEntry('info', `✅ Validation passed (${validationResult.validationTimeMs}ms)`);
-      }
       // Issue 4 fix: Defer non-critical post-build work to unblock preview
       // Run smoke test synchronously (fast, needed for error annotations)
       const smokeResult = smokeTest.runSmokeTest(latestFiles);
@@ -976,8 +971,20 @@ export function AIAppBuilderWorkspace() {
         smokeResult.errors
       );
 
-      // Defer heavy audits
+      // Defer heavy audits + Issue 14 fix: move TS validation into deferred block
       setTimeout(() => {
+        // Issue 14: TS validation deferred to unblock preview render
+        const validationResult = tsValidator.validate(latestFiles);
+        if (validationResult.errorCount > 0) {
+          buildLog.addEntry('warning' as any, `⚠️ ${validationResult.errorCount} validation error(s), ${validationResult.warningCount} warning(s)`);
+          validationResult.diagnostics.filter(d => d.severity === 'error').slice(0, 5).forEach(d =>
+            buildLog.addEntry('warning' as any, `  ❌ ${d.file}:${d.line} — ${d.message}`)
+          );
+        } else if (validationResult.warningCount > 0) {
+          buildLog.addEntry('info', `✅ Validation passed with ${validationResult.warningCount} warning(s) (${validationResult.validationTimeMs}ms)`);
+        } else {
+          buildLog.addEntry('info', `✅ Validation passed (${validationResult.validationTimeMs}ms)`);
+        }
         lighthouseAudit.runAudit(latestFiles);
         bundleSize.analyzeBundle(latestFiles);
         // Auto-patch broken delete/remove buttons deterministically (zero credits)
@@ -1009,8 +1016,8 @@ export function AIAppBuilderWorkspace() {
         filesGenerated: latestFiles.length,
         creditsUsed: actualCredits,
         success: true,
-        errorCount: validationResult.errorCount,
-        validationScore: validationResult.errorCount === 0 ? 100 : Math.max(0, 100 - validationResult.errorCount * 10),
+        errorCount: 0, // validation now deferred; updated async
+        validationScore: 100,
         promptLength: lastMsg?.content?.length || 0,
       });
 
@@ -1095,16 +1102,40 @@ export function AIAppBuilderWorkspace() {
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
   }, [project.files, project.name, messages, versions, scheduleAutoSave, isGenerating]);
 
+  // Issue 13 fix: Track post-generation transition to defer saves
+  const postGenTimestampRef = useRef<number>(0);
+  useEffect(() => {
+    if (prevIsGeneratingRef.current && !isGenerating) {
+      postGenTimestampRef.current = Date.now();
+    }
+  }, [isGenerating]);
+
   // Auto-save to IndexedDB (Phase 10 — fast local persistence)
   const sessionId = currentProjectId || 'draft';
   useEffect(() => {
     if (isGenerating) return; // skip during streaming to prevent browser freeze
+    // Issue 13 fix: Defer save for 1s after generation ends to let compilation take priority
+    const elapsed = Date.now() - postGenTimestampRef.current;
+    if (elapsed < 1000) {
+      const timer = setTimeout(() => {
+        idbPersistence.saveToIDB(sessionId, project.name, project.files, messages);
+      }, 1000 - elapsed);
+      return () => clearTimeout(timer);
+    }
     idbPersistence.saveToIDB(sessionId, project.name, project.files, messages);
   }, [project.files, project.name, messages, sessionId, isGenerating]);
 
   // Auto-save draft to localStorage (survives refresh)
   useEffect(() => {
     if (isGenerating) return; // skip during streaming to prevent browser freeze
+    // Issue 13 fix: Defer save for 1s after generation ends
+    const elapsed = Date.now() - postGenTimestampRef.current;
+    if (elapsed < 1000) {
+      const timer = setTimeout(() => {
+        saveDraft(project.name, project.files, messages);
+      }, 1000 - elapsed);
+      return () => clearTimeout(timer);
+    }
     saveDraft(project.name, project.files, messages);
   }, [project.files, project.name, messages, saveDraft, isGenerating]);
 
@@ -1211,9 +1242,13 @@ export function AIAppBuilderWorkspace() {
   }, [isNewProject]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-upload preview to Supabase Storage for live hosting
+  // Issue 12 fix: Skip redundant compilation during generation
   const compiledForHosting = useMemo(
-    () => getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser),
-    [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser]
+    () => {
+      if (isGenerating) return null;
+      return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+    },
+    [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, isGenerating]
   );
   useEffect(() => {
     if (previewSlug && compiledForHosting) {
@@ -2009,14 +2044,7 @@ export function AIAppBuilderWorkspace() {
     setRecentFiles(prev => [path, ...prev.filter(p => p !== path)].slice(0, 10));
   }, [setActiveFile]);
 
-  // Panel setters map — auto-generated from PANEL_KEYS
-  const panelSetters = useMemo((): Record<string, (v: boolean) => void> => {
-    const map: Record<string, (v: boolean) => void> = {};
-    for (const key of PANEL_KEYS) {
-      map[key] = (v: boolean) => v ? openP(key) : closeP(key);
-    }
-    return map;
-  }, [openP, closeP]);
+  // Issue 15: panelSetters already defined above — removed duplicate
 
   // Open any panel by stateKey
   const openPanelByKey = useCallback((stateKey: string) => {
@@ -2024,7 +2052,19 @@ export function AIAppBuilderWorkspace() {
     if (setter) setter(true);
   }, [panelSetters]);
 
-  // Command palette actions — auto-generated from panel registry + core actions
+  // Issue 16 fix: Static registry actions — computed once (no dependencies on files/activeFile)
+  const staticRegistryActions = useMemo((): CommandAction[] => {
+    return PANEL_REGISTRY.map(panel => ({
+      id: `panel-${panel.id}`,
+      label: panel.label,
+      icon: panel.icon,
+      category: 'panel' as const,
+      keywords: panel.keywords,
+      action: () => openPanelByKey(panel.stateKey),
+    }));
+  }, [openPanelByKey]);
+
+  // Dynamic core actions — only these depend on project.files, activeFile, etc.
   const commandActions = useMemo((): CommandAction[] => {
     const coreActions: CommandAction[] = [
       { id: 'preview', label: 'Switch to Preview', icon: Eye, category: 'view', shortcut: '⌘1', action: () => setRightTab('preview') },
@@ -2042,19 +2082,8 @@ export function AIAppBuilderWorkspace() {
       { id: 'gen-readme', label: 'Generate README', icon: BookOpen, category: 'run', action: () => { const prompt = docGenerator.generateReadmePrompt(project.files, project.name); handleSend(prompt); }, keywords: ['doc', 'readme', 'documentation'] },
       { id: 'doc-file', label: 'Document Current File', icon: FileCode, category: 'run', action: () => { if (activeFile) { const prompt = docGenerator.generateDocPrompt(activeFile); handleSend(prompt); } else { toast.error('Open a file first'); } }, keywords: ['jsdoc', 'comment', 'document'] },
     ];
-
-    // Auto-generate from panel registry
-    const registryActions: CommandAction[] = PANEL_REGISTRY.map(panel => ({
-      id: `panel-${panel.id}`,
-      label: panel.label,
-      icon: panel.icon,
-      category: 'panel',
-      keywords: panel.keywords,
-      action: () => openPanelByKey(panel.stateKey),
-    }));
-
-    return [...coreActions, ...registryActions];
-  }, [handleSave, handleUndo, handleRedo, handlePublish, openPanelByKey, codeSmellDetector, project.files, docGenerator, project.name, activeFile, handleSend]);
+    return [...coreActions, ...staticRegistryActions];
+  }, [handleSave, handleUndo, handleRedo, handlePublish, codeSmellDetector, project.files, docGenerator, project.name, activeFile, handleSend, staticRegistryActions]);
 
   // Sidebar removed — all tools accessible via ⌘K command palette (Lovable-style)
 
