@@ -107,9 +107,8 @@ interface BuilderChatPanelProps {
   onUpdateMessages?: (updater: (prev: BuilderMessage[]) => BuilderMessage[]) => void;
   /** Questions UI rendered above the input */
   questionsSlot?: React.ReactNode;
-  /** Ref-based streaming: content ref + version counter to avoid workspace re-renders */
+  /** Ref-based streaming: content ref to avoid workspace re-renders */
   streamingContentRef?: MutableRefObject<string>;
-  streamingVersion?: number;
 }
 
 
@@ -312,7 +311,7 @@ export function BuilderChatPanel({
   onForkFromMessage, onRevertToMessage, selectedModel, onModelChange,
   onToggleVisualEdit, isVisualEditActive, onOpenEditHistory, onSelectStarterTemplate, onReview,
   supabaseConfig, onUpdateMessages, questionsSlot,
-  streamingContentRef, streamingVersion,
+  streamingContentRef,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -325,27 +324,38 @@ export function BuilderChatPanel({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Build display messages: during streaming, append virtual assistant message from ref
+  // Local state for streaming content — polls ref every 300ms, only THIS component re-renders
+  const [localStreamContent, setLocalStreamContent] = useState('');
+
+  useEffect(() => {
+    if (!isGenerating || !streamingContentRef) {
+      setLocalStreamContent('');
+      return;
+    }
+    const interval = setInterval(() => {
+      const current = streamingContentRef.current;
+      setLocalStreamContent(prev => current !== prev ? current : prev);
+    }, 300);
+    return () => clearInterval(interval);
+  }, [isGenerating, streamingContentRef]);
+
   const displayMessages = useMemo(() => {
-    if (isGenerating && streamingContentRef?.current) {
-      const streamContent = streamingContentRef.current;
-      // Check if messages already has a trailing assistant msg (shouldn't during ref-streaming, but guard)
-      const last = messages[messages.length - 1];
-      if (last?.role === 'assistant') {
-        // Replace last assistant message content with streaming content
-        return messages.map((m, i) => i === messages.length - 1 ? { ...m, content: streamContent } : m);
+    if (isGenerating && localStreamContent) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg?.role === 'assistant') {
+        return messages.map((m, i) =>
+          i === messages.length - 1 ? { ...m, content: localStreamContent } : m
+        );
       }
-      // Append virtual streaming assistant message
       return [...messages, {
         id: '__streaming__',
         role: 'assistant' as const,
-        content: streamContent,
+        content: localStreamContent,
         timestamp: new Date(),
       }];
     }
     return messages;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, isGenerating, streamingVersion]);
+  }, [messages, isGenerating, localStreamContent]);
 
   useEffect(() => {
     // ScrollArea's actual scrollable element is the Viewport child
