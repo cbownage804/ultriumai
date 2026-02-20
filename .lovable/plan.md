@@ -1,81 +1,86 @@
 
 
-# Consolidate 160+ useState Booleans into usePanelManager Reducer
+# Fix App Builder Preview Getting Stuck on "Loading preview..."
 
-## What This Does
+## Problem
 
-Right now, the workspace has ~160 individual lines like `const [showDockerCompose, setShowDockerCompose] = useState(false)` plus a ~200-line `panelSetters` map that wraps each setter. This is replaced with a single `usePanelManager(ALL_PANEL_KEYS)` call that manages all visibility in one reducer.
+The App Builder preview gets stuck showing skeleton placeholders and "Loading preview..." indefinitely. The generation appears to be running but never completes, so the preview iframe never receives compiled HTML.
 
-## Impact
+## Root Cause Analysis
 
-- **160 useState calls** reduced to **1 useReducer call**
-- **200-line panelSetters map** replaced with the reducer's built-in `toggle`/`open`/`close` methods
-- Eliminates ~350 lines of boilerplate from the workspace file
-- Faster renders: one state object update vs. individual setState calls
+There are **two interacting issues**:
 
-## Implementation Steps
+### Issue 1: Edge function stream termination race condition
 
-### Step 1: Define panel key constants
+The `ai-app-builder` edge function wraps the AI gateway's stream in a `TransformStream` (lines 727-744). When the Supabase edge function runtime shuts down (60s limit), the `TransformStream` writer's catch block tries to write `data: [DONE]` — but this can fail silently if the writable stream is already closed by the runtime. The client's `readStream` then hangs waiting for more data.
 
-Create a `PANEL_KEYS` array listing all ~160 panel string keys (e.g. `'showDockerCompose'`, `'showK8s'`, etc.) at the top of `AIAppBuilderWorkspace.tsx` or in a shared constants file.
+The 15-second stall detector should catch this, but `lastChunkTime` gets reset by every chunk — if the AI was actively streaming right up until the shutdown, the stall detector won't fire for another 15 seconds. Meanwhile, the 55-second wall-clock timer may have already passed if we're on a continuation round.
 
-### Step 2: Replace useState declarations
+### Issue 2: Wall-clock timer not reset per continuation round
 
-Remove lines 390-565 (the ~160 `useState(false)` declarations) and replace with:
+The `WALL_CLOCK_MAX_MS` timer (55s) is set once at the start of `sendMessage` (line 1383) but only cleared inside the continuation loop for continuation rounds (line 1854 per-round). The main wall-clock timer from line 1383 could fire during a continuation round and abort a valid stream.
 
-```typescript
-const { panels, toggle, open, close, isOpen } = usePanelManager(PANEL_KEYS);
-```
+However, the bigger issue is that for the **first round**, the wall-clock starts at 55s. The edge function has a 50s gateway timeout + boot time. These are very close, meaning the client-side wall-clock may fire before the stream naturally completes, causing an abort and triggering continuation — then the continuation round gets its own wall-clock but the same pattern repeats.
 
-### Step 3: Update all references
+## Fix Plan
 
-Throughout the file, replace:
-- `showDockerCompose` with `panels.showDockerCompose` (or `isOpen('showDockerCompose')`)
-- `setShowDockerCompose(false)` with `close('showDockerCompose')`
-- `setShowDockerCompose(true)` with `open('showDockerCompose')`
-- `setShowDockerCompose(v)` with `v ? open('showDockerCompose') : close('showDockerCompose')`
+### Fix 1: Add a client-side heartbeat timeout to `readStream`
 
-### Step 4: Replace panelSetters map
+Add a per-read timeout inside the stream loop. If `reader.read()` takes longer than 20 seconds without returning any data, force-break the loop. This catches the case where the edge function dies without sending `[DONE]`.
 
-The ~200-line `panelSetters` useMemo (lines 1672-1877) becomes:
+**File**: `src/hooks/useAIAppBuilder.ts`
+**Change**: In the `readStream` function, wrap `reader.read()` with a Promise.race against a 20-second timeout, so a dead stream is detected faster than the existing 15-second stall checker (which only runs every 5 seconds).
 
 ```typescript
-const panelSetters = useMemo(() => {
-  const map: Record<string, (v: boolean) => void> = {};
-  for (const key of PANEL_KEYS) {
-    map[key] = (v: boolean) => v ? open(key) : close(key);
-  }
-  return map;
-}, [open, close]);
+// Inside the while loop in readStream:
+const readPromise = reader.read();
+const timeoutPromise = new Promise<{done: true, value: undefined}>((resolve) => 
+  setTimeout(() => resolve({done: true, value: undefined}), 20_000)
+);
+const { done, value } = await Promise.race([readPromise, timeoutPromise]);
 ```
 
-Or even simpler -- `openPanelByKey` just calls `open(stateKey)` directly.
+### Fix 2: Reset wall-clock timer for each round
 
-### Step 5: Update panel group props
+Move the wall-clock timer reset into each continuation round so it gets a fresh 55-second budget.
 
-Panel groups currently receive individual `showX` / `setShowX` props. Update them to receive the `panels` record and `open`/`close`/`toggle` functions instead, or create adapter props:
+**File**: `src/hooks/useAIAppBuilder.ts`
+**Change**: Clear and re-set `wallClockTimer` at the top of the `readStream` or at the start of each fetch call, not just once.
 
-```typescript
-showDockerCompose={!!panels.showDockerCompose}
-setShowDockerCompose={(v) => v ? open('showDockerCompose') : close('showDockerCompose')}
-```
+### Fix 3: Edge function stream termination hardening
 
-### Step 6: Update WorkspacePanelLayer
+Ensure the `TransformStream` always sends `[DONE]` when the stream terminates, even on runtime shutdown.
 
-The `panelVisibility` prop already accepts `Record<string, boolean>` -- it can receive `panels` directly. The `panelSetters` prop can use the generated map from Step 4.
+**File**: `supabase/functions/ai-app-builder/index.ts`
+**Change**: Add a Deno-compatible `addEventListener('beforeunload')` or use `AbortSignal` from the request to detect shutdown and force-flush `[DONE]` to the stream.
+
+### Fix 4: Fail-safe in `finalizeStream` for empty content
+
+If `fullContent` is empty after streaming completes (edge function died before any data came through), skip the continuation loop and show a user-friendly error instead of leaving `isGenerating` in a limbo state.
+
+**File**: `src/hooks/useAIAppBuilder.ts`
+**Change**: At the top of `finalizeStream`, check if `fullContent.trim()` is empty and return early with an error message.
+
+### Fix 5: Force compile after generation even if `liveCompiledHTML` is null
+
+The `stableHTML` effect (line 1607) only runs when `!isGenerating && liveCompiledHTML`. If compilation produces `null` (e.g., no `index.html` found), the preview stays as skeleton forever. Add a fallback that shows an error state in the preview.
+
+**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
+**Change**: After `isGenerating` transitions to `false`, if `liveCompiledHTML` is still `null` but `project.files.length > 0`, set `stableHTML` to a simple error HTML page: "Compilation failed - check console for errors."
 
 ## Technical Details
 
-| File | Change |
-|------|--------|
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Remove ~160 useState, add usePanelManager, update all references, simplify panelSetters |
-| `src/hooks/usePanelManager.ts` | No changes needed -- already has the right API |
-| `src/components/ai-builder/panel-groups/*.tsx` | Minor: adapt show/setShow props to use panels record |
-| `src/components/ai-builder/WorkspacePanelLayer.tsx` | Minor: receive panels record for panelVisibility |
+| File | Lines | Change |
+|------|-------|--------|
+| `src/hooks/useAIAppBuilder.ts` | ~1275 | Add `Promise.race` read timeout in stream loop |
+| `src/hooks/useAIAppBuilder.ts` | ~1383 | Reset wall-clock timer per continuation round |
+| `src/hooks/useAIAppBuilder.ts` | ~1395 | Guard against empty `fullContent` in `finalizeStream` |
+| `supabase/functions/ai-app-builder/index.ts` | ~727-744 | Harden TransformStream termination |
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | ~1606-1627 | Add fallback when compilation returns null after build |
 
 ## Risk
 
-- **Low**: Pure refactor with no behavior change. Every `useState(false)` becomes a key in the reducer's `Record<string, boolean>` initialized to `false`.
-- The `usePanelManager` hook already exists and is tested.
-- Panel groups can continue receiving individual boolean props via destructuring from the `panels` object.
+- **Low-Medium**: These are defensive guards that only activate in failure paths. Normal generation flow is untouched.
+- Fix 1 (read timeout) is the highest impact — it directly prevents the "stuck forever" scenario.
+- Fix 3 requires edge function redeployment.
 
