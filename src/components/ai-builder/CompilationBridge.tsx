@@ -109,59 +109,6 @@ export function CompilationBridge({
     return () => clearPreviewTimer();
   }, [compiledForHosting, previewSlug, uploadPreview, clearPreviewTimer]);
 
-  // ── Timer-based compilation during generation ──
-  useEffect(() => {
-    if (!isGenerating) return;
-    let attempted = false;
-    const interval = setInterval(() => {
-      if (attempted) return;
-      const pFiles = partialFilesRef.current;
-      const pCount = completedFileCountRef.current;
-      if (pCount < 3 || pFiles.length === 0) return;
-
-      console.log(`[Preview] Timer-based compile: ${pCount} completed files of ${pFiles.length}`);
-      const isReact = pFiles.some(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx'));
-      try {
-        if (isReact) {
-          try {
-            const result = compileReactProject(pFiles, {
-              supabaseConfig: supabaseConfig || undefined,
-              stripeConfig: stripeConfig || undefined,
-              envVars,
-            });
-            if (result.html) {
-              setStableHTML(result.html);
-            }
-            attempted = true;
-          } catch (compileErr) {
-            console.warn('[Preview] React compilation crashed on partial files:', compileErr);
-            attempted = true;
-          }
-        } else {
-          const indexFile = pFiles.find(f => f.path === 'index.html' || f.path.endsWith('/index.html'));
-          if (indexFile) {
-            let html = indexFile.content;
-            const cssFiles = pFiles.filter(f => f.path.endsWith('.css'));
-            if (cssFiles.length > 0) {
-              const cssInline = cssFiles.map(f => `<style>/* ${f.path} */\n${f.content}</style>`).join('\n');
-              html = html.replace('</head>', `${cssInline}\n</head>`);
-            }
-            const jsFiles = pFiles.filter(f => f.path.endsWith('.js') && !f.path.endsWith('.config.js'));
-            if (jsFiles.length > 0) {
-              const jsInline = jsFiles.map(f => `<script>/* ${f.path} */\n${f.content}</script>`).join('\n');
-              html = html.replace('</body>', `${jsInline}\n</body>`);
-            }
-            setStableHTML(html);
-            attempted = true;
-          }
-        }
-      } catch (e) {
-        console.warn('[Preview] Timer-based compilation failed:', e);
-        attempted = true;
-      }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [isGenerating, partialFilesRef, completedFileCountRef, compileReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, getCompiledHTML, setStableHTML]);
 
   // ── liveCompiledHTML (post-generation) ──
   const liveCompiledHTML = useMemo(() => {
@@ -213,52 +160,6 @@ export function CompilationBridge({
     }
   }, [files, isGenerating, stableHTML]);
 
-  // Force compile after 120s timeout
-  useEffect(() => {
-    if (!isGenerating) return;
-    const timer = setTimeout(() => {
-      const pFiles = partialFilesRef.current;
-      if (pFiles.length > 0 && !stableHTML) {
-        console.warn('[Preview] Generation exceeded 120s — force-compiling partial files for preview');
-        const isPartialReact = pFiles.some(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx'));
-        if (isPartialReact) {
-          try {
-            const result = compileReactProject(pFiles, {
-              supabaseConfig: supabaseConfig || undefined,
-              stripeConfig: stripeConfig || undefined,
-              envVars,
-            });
-            if (result.html) {
-              setStableHTML(result.html);
-              return;
-            }
-          } catch (e) {
-            console.warn('[Preview] Partial React compilation failed:', e);
-          }
-        }
-        try {
-          const htmlFile = pFiles.find(f => f.path.endsWith('.html'));
-          if (htmlFile) {
-            let html = htmlFile.content;
-            const cssFiles = pFiles.filter(f => f.path.endsWith('.css'));
-            if (cssFiles.length > 0) {
-              const cssInline = cssFiles.map(f => `<style>/* ${f.path} */\n${f.content}</style>`).join('\n');
-              html = html.replace('</head>', `${cssInline}\n</head>`);
-            }
-            const jsFiles = pFiles.filter(f => f.path.endsWith('.js') && !f.path.endsWith('.config.js'));
-            if (jsFiles.length > 0) {
-              const jsInline = jsFiles.map(f => `<script>/* ${f.path} */\n${f.content}</script>`).join('\n');
-              html = html.replace('</body>', `${jsInline}\n</body>`);
-            }
-            setStableHTML(html);
-          }
-        } catch (e) {
-          console.warn('[Preview] Partial vanilla compilation failed:', e);
-        }
-      }
-    }, 120_000);
-    return () => clearTimeout(timer);
-  }, [isGenerating, partialFilesRef, stableHTML, setStableHTML]);
 
   // This component renders nothing — it only manages compilation state
   return null;
