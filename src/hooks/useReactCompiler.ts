@@ -60,6 +60,16 @@ export function useReactCompiler() {
       // Map by ./path variants
       map.set(`./${f.path}`, f);
       map.set(`./${noExt}`, f);
+      // Phase 29: Resolve @/ aliases
+      if (f.path.startsWith('src/')) {
+        const alias = f.path.replace(/^src\//, '@/');
+        map.set(alias, f);
+        map.set(alias.replace(/\.(tsx?|jsx?)$/, ''), f);
+      } else {
+        // Fallback for flat structure
+        map.set(`@/${f.path}`, f);
+        map.set(`@/${noExt}`, f);
+      }
       // Map by bare filename stem
       const stem = f.path.split('/').pop()?.replace(/\.\w+$/, '') || '';
       if (stem && !map.has(stem)) map.set(stem, f);
@@ -118,8 +128,19 @@ export function useReactCompiler() {
     result = result.replace(/^(?:export\s+)?type\s+\w+\s*=\s*[^;{]+;/gm, '');
     // Remove : Type annotations from parameters and variables (simplified)
     result = result.replace(/: (?:React\.(?:FC|ReactNode|MouseEvent|ChangeEvent|FormEvent|CSSProperties|RefObject)(?:<[^>]+>)?|string|number|boolean|void|any|null|undefined|never|unknown|object|Record<[^>]+>|Array<[^>]+>|\w+(?:\[\])?(?:\s*\|\s*\w+(?:\[\])?)*)/g, '');
-    // Remove generic type parameters from function/component declarations
+    // Phase 31: Preserve generic type parameters in arrow functions before stripping
+    // e.g. const f = <T>(x: T) => ...
+    const genericsMarker = '___GENERIC___';
+    const genericsMap: string[] = [];
+    result = result.replace(/=\s*<[A-Z][\w,\s]*>(?=\s*\()/g, (match) => {
+      genericsMap.push(match);
+      return `${genericsMarker}${genericsMap.length - 1}`;
+    });
+
     result = result.replace(/<(?:T|K|V|Props|State)(?:\s+extends\s+\w+)?(?:,\s*\w+(?:\s+extends\s+\w+)?)*>/g, '');
+
+    // Restore generics (though Babel will likely strip them anyway, this prevents regex breakage)
+    result = result.replace(new RegExp(`${genericsMarker}(\\d+)`, 'g'), (_, idx) => genericsMap[parseInt(idx)] || '');
     // Remove 'as Type' assertions
     result = result.replace(/\s+as\s+\w+(?:<[^>]+>)?/g, '');
     // Remove satisfies keyword
@@ -394,8 +415,23 @@ try {
                          (typeof ${rootComponent} !== 'undefined' ? ${rootComponent} : null);
   if (RootComponent) {
     ${routerWrapStart}
+    // Phase 32: Inject ErrorBoundary
+    class ErrorBoundary extends React.Component {
+      constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+      static getDerivedStateFromError(error) { return { hasError: true, error }; }
+      componentDidCatch(error, info) { console.error('React Boundary:', error, info); window.parent.postMessage({ type: '__PREVIEW_ERROR__', error: { message: error.message, stack: info.componentStack, source: 'react-boundary', critical: true } }, '*'); }
+      render() {
+        if (this.state.hasError) {
+          return React.createElement('div', { style: { padding: 40, color: '#ef4444', fontFamily: 'system-ui' } },
+            React.createElement('h2', null, 'Runtime Error'),
+            React.createElement('pre', { style: { whiteSpace: 'pre-wrap', marginTop: 12 } }, this.state.error?.message)
+          );
+        }
+        return this.props.children;
+      }
+    }
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(wrappedElement);
+    root.render(React.createElement(ErrorBoundary, null, wrappedElement));
     window.parent.postMessage({ type: '__PREVIEW_READY__' }, '*');
   } else {
     document.getElementById('root').innerHTML = '<div style="padding:40px;text-align:center;color:#888;">No root component found. Export a default component from App.tsx.</div>';
@@ -435,7 +471,7 @@ try {
   <title>React Preview</title>
 
   <!-- Tailwind CSS Play CDN -->
-  <script src="${CDN.tailwind}"></script>
+  <script src="${CDN.tailwind}" onerror="console.warn('Tailwind CDN failed'); document.head.insertAdjacentHTML('beforeend', '<style>body{font-family:sans-serif;padding:20px;line-height:1.5}</style>')"></script>
 
   <!-- React 18 (UMD globals) -->
   <script crossorigin src="${CDN.react}"></script>
@@ -584,6 +620,17 @@ window.ENV = ${JSON.stringify(envObj)};
   </script>
 </body>
 </html>`;
+
+    // Phase 28: Inject error overlay if compilation failed
+    if (errors.length > 0) {
+      const errorHtml = `
+        <div style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.9);color:white;padding:40px;font-family:system-ui;overflow:auto">
+          <h2 style="color:#ef4444;margin-bottom:20px">Compilation Error</h2>
+          ${errors.map(e => `<pre style="color:#fca5a5;margin-bottom:10px;white-space:pre-wrap">${e}</pre>`).join('')}
+        </div>
+      `;
+      return { html: errorHtml + html, isReactProject: true, componentCount, errors };
+    }
 
     return { html, isReactProject: true, componentCount, errors };
   }, [buildModuleMap, sortByDependency, transpileFile]);

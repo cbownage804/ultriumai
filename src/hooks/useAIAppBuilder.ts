@@ -153,8 +153,9 @@ function validateGeneratedFiles(files: ProjectFile[]): ValidationResult {
   for (const f of files) {
     const ext = f.path.split('.').pop()?.toLowerCase() || '';
 
+    // Phase 25: Skip SVG files from HTML tag-balance checks
     // HTML: check for matching tags, unclosed elements
-    if (ext === 'html' || ext === 'htm') {
+    if ((ext === 'html' || ext === 'htm')) {
       const openTags = (f.content.match(/<(?!\/|!|br|hr|img|input|meta|link)[a-z][^>]*>/gi) || []).length;
       const closeTags = (f.content.match(/<\/[a-z][^>]*>/gi) || []).length;
       if (Math.abs(openTags - closeTags) > 3) {
@@ -504,15 +505,21 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
   let blankLineStreak = 0;
   let inEditBlock = false;
 
+  // Phase 24: Normalize file paths — strip leading ./ and /, collapse //
+  const normalizePath = (p: string): string => p.replace(/^\.\//, '').replace(/^\//, '').replace(/\/\//g, '/');
+
   const flush = () => {
     if (currentPath) {
+      // Phase 24: Normalize path
+      currentPath = normalizePath(currentPath);
       const content = currentLines.join('\n').trim();
       if (content) {
         const ext = currentPath.split('.').pop()?.toLowerCase() || '';
+        // Phase 27: Added less and sass language mappings
         const langMap: Record<string, string> = {
-          html: 'html', htm: 'html', css: 'css', scss: 'scss',
+          html: 'html', htm: 'html', css: 'css', scss: 'scss', less: 'less', sass: 'scss',
           js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript',
-          json: 'json', md: 'markdown', svg: 'xml',
+          json: 'json', md: 'markdown', mdx: 'markdown', svg: 'xml',
         };
         files.push({ path: currentPath, content, language: langMap[ext] || 'plaintext' });
       }
@@ -552,12 +559,16 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
       // Skip lines inside edit blocks — already parsed
       continue;
     } else if (currentPath !== null) {
+      // Phase 21/26: Skip prose detection for non-code files (JSON, SVG, MD, MDX)
+      const currentExt = currentPath.split('.').pop()?.toLowerCase() || '';
+      const skipProseDetection = ['json', 'svg', 'md', 'mdx', 'yaml', 'yml', 'toml'].includes(currentExt);
+
       // Phase 77: Track blank lines — require 2+ blank lines before checking for prose
       // (1 blank line is common in CSS/JSX and shouldn't trigger cutoff)
       if (!line.trim()) {
         blankLineStreak++;
         currentLines.push(line);
-      } else if (blankLineStreak >= 2 && isConversationalLine(line)) {
+      } else if (!skipProseDetection && blankLineStreak >= 2 && isConversationalLine(line)) {
         // End of file content — AI started talking after 2+ blank lines
         flush();
         currentPath = null;
@@ -571,8 +582,14 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
   }
   flush();
 
+  // Phase 24: Normalize deletion paths and edit paths
+  const normalizedDeletions = deletions.map(normalizePath);
+
   // Post-process: strip trailing conversational prose from the last file
+  // Phase 21/26: Skip for non-code files
   for (const file of files) {
+    const fileExt = file.path.split('.').pop()?.toLowerCase() || '';
+    if (['json', 'svg', 'md', 'mdx', 'yaml', 'yml', 'toml'].includes(fileExt)) continue;
     const fileLines = file.content.split('\n');
     let cutIndex = fileLines.length;
     for (let i = fileLines.length - 1; i >= 0; i--) {
@@ -589,7 +606,7 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
     }
   }
 
-  if (files.length === 0 && deletions.length === 0 && edits.length === 0) {
+  if (files.length === 0 && normalizedDeletions.length === 0 && edits.length === 0) {
     const trimmed = raw.trim();
     const htmlMatch = trimmed.match(/```html\n?([\s\S]*?)```/);
     const html = htmlMatch ? htmlMatch[1] : trimmed;
@@ -598,7 +615,7 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
     }
   }
 
-  return { files, deletions, edits, isReactMode, migrations, edgeFunctions };
+  return { files, deletions: normalizedDeletions, edits, isReactMode, migrations, edgeFunctions };
 }
 
 /** Generate contextual follow-up suggestions based on the response and conversation state */
@@ -705,6 +722,12 @@ export function useAIAppBuilder() {
   ) => {
     if (!input.trim() || isGenerating) return;
 
+    // Phase 52: Cap messages at 200 entries to prevent sluggish re-renders
+    if (messages.length > 200) {
+      const compressed = [...messages.slice(0, 5), ...messages.slice(-50)];
+      setMessages(compressed);
+    }
+
     // Reset continuation state for new user-initiated messages (not auto-continuations)
     if (!input.startsWith('[CONTINUE]')) {
       continuationCountRef.current = 0;
@@ -740,6 +763,9 @@ export function useAIAppBuilder() {
       setMode(detectedMode);
     }
     const effectiveMode = detectedMode || mode;
+
+    // Phase 47: In discuss mode, block code output by passing mode to parser
+    // (handled in finalizeStream where parseMultiFileOutput is called)
 
     // Save previous files for diff view
     if (currentFiles.length > 0) {
@@ -1363,11 +1389,33 @@ export function useAIAppBuilder() {
       const cleanedContent = fullContent.replace(/\n?===CONTINUE===\s*$/g, '');
       const { files: parsedFiles, deletions, edits, migrations: parsedMigrations, edgeFunctions: parsedEdgeFunctions } = parseMultiFileOutput(cleanedContent);
 
+
+      // ── Post-gen validation (Lovable-grade) ──
+      let filesToApply = parsedFiles;
+      if (parsedFiles.length > 0) {
+        const validation = validateGeneratedFiles(parsedFiles);
+        if (!validation.valid) {
+          console.warn('[Validation] Issues found:', validation.errors);
+          filesToApply = sanitizeValidationErrors(parsedFiles, validation.errors);
+          const recheck = validateGeneratedFiles(filesToApply);
+          const criticalErrors = recheck.errors.filter(e => !e.message.includes('commentary'));
+          if (criticalErrors.length > 0) {
+            toast.warning(`Code quality issues detected in ${criticalErrors.length} file(s). Preview may have errors.`, { duration: 5000 });
+          }
+        }
+      }
+
+      // Phase 23: Merge filesToApply into a lookup so EDIT blocks can target same-response files
+      const combinedLookup = new Map<string, ProjectFile>();
+      for (const f of workingFiles) combinedLookup.set(f.path, f);
+      for (const f of filesToApply) combinedLookup.set(f.path, f);
+
       // ── Apply ===EDIT: patches to existing files (Phase 2) ──
       let patchedFiles: ProjectFile[] = [];
       if (edits.length > 0) {
         for (const edit of edits) {
-          const existing = workingFiles.find(f => f.path === edit.path);
+          // Phase 23: Look in combined lookup (workingFiles + just-created files)
+          const existing = combinedLookup.get(edit.path);
           if (existing) {
             const patched = applyHunkPatch(existing.content, edit.hunks);
             if (patched !== null) {
@@ -1385,21 +1433,6 @@ export function useAIAppBuilder() {
             }
           } else {
             console.warn(`[Patch] Target file ${edit.path} not found — skipping edit`);
-          }
-        }
-      }
-
-      // ── Post-gen validation (Lovable-grade) ──
-      let filesToApply = parsedFiles;
-      if (parsedFiles.length > 0) {
-        const validation = validateGeneratedFiles(parsedFiles);
-        if (!validation.valid) {
-          console.warn('[Validation] Issues found:', validation.errors);
-          filesToApply = sanitizeValidationErrors(parsedFiles, validation.errors);
-          const recheck = validateGeneratedFiles(filesToApply);
-          const criticalErrors = recheck.errors.filter(e => !e.message.includes('commentary'));
-          if (criticalErrors.length > 0) {
-            toast.warning(`Code quality issues detected in ${criticalErrors.length} file(s). Preview may have errors.`, { duration: 5000 });
           }
         }
       }
@@ -1438,10 +1471,22 @@ export function useAIAppBuilder() {
       if (allNewFiles.length > 0 || deletions.length > 0) {
         let mergedFiles = [...workingFiles];
         if (deletions.length > 0) mergedFiles = mergedFiles.filter(f => !deletions.includes(f.path));
+        // Phase 22: For continuation rounds, detect if new file is smaller than existing — append instead
+        const isContinuation = continuationCountRef.current > 0;
         for (const newFile of allNewFiles) {
           const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
-          if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
-          else mergedFiles.push(newFile);
+          if (existingIdx >= 0) {
+            // Phase 22: If continuation round and new version is much smaller, append instead of replace
+            const existing = mergedFiles[existingIdx];
+            if (isContinuation && newFile.content.split('\n').length < existing.content.split('\n').length * 0.3 && newFile.content.length > 20) {
+              console.warn(`[Merge] Phase 22: Appending ${newFile.path} (continuation fragment) instead of replacing`);
+              mergedFiles[existingIdx] = { ...existing, content: existing.content + '\n' + newFile.content };
+            } else {
+              mergedFiles[existingIdx] = newFile;
+            }
+          } else {
+            mergedFiles.push(newFile);
+          }
         }
         // Update file hash cache for incremental tracking
         updateFileHashes(mergedFiles);
@@ -1828,6 +1873,8 @@ export function useAIAppBuilder() {
     if (version && version.files.length > 0) {
       setPreviousFiles([...latestFiles]);
       setLatestFiles([...version.files]);
+      // Phase 48: Update file hash cache after version restore
+      updateFileHashes(version.files);
       toast.success(`Restored to: ${version.label}`);
     } else {
       toast.error('Version has no files to restore');
@@ -1888,6 +1935,11 @@ export function useAIAppBuilder() {
     // Find the message index
     const msgIdx = messages.findIndex(m => m.id === messageId);
     if (msgIdx === -1) return;
+
+    // Phase 49: Reset continuation state on editAndResend
+    continuationCountRef.current = 0;
+    accumulatedFilesRef.current = [];
+    setContinuationRound(0);
 
     // Branch: truncate conversation from edited message onwards
     const branchedMessages = messages.slice(0, msgIdx);
