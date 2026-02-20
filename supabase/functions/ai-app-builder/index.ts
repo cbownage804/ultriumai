@@ -149,7 +149,7 @@ function extractUrls(messages: { role: string; content: any }[]): string[] {
   return matches.map(u => u.startsWith('http') ? u : `https://${u}`);
 }
 
-/** Scrape a website for branding using Firecrawl */
+/** Scrape a website for branding using Firecrawl — Phase 5: with 5s timeout */
 async function scrapeBranding(url: string): Promise<string | null> {
   const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
   if (!apiKey) {
@@ -159,6 +159,9 @@ async function scrapeBranding(url: string): Promise<string | null> {
 
   try {
     console.log(`Scraping branding from: ${url}`);
+    // Phase 5: 5s AbortController timeout to prevent starving the AI gateway call
+    const scrapeController = new AbortController();
+    const scrapeTimeout = setTimeout(() => scrapeController.abort(), 5000);
     const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
       method: 'POST',
       headers: {
@@ -171,7 +174,9 @@ async function scrapeBranding(url: string): Promise<string | null> {
         onlyMainContent: true,
         waitFor: 3000,
       }),
+      signal: scrapeController.signal,
     });
+    clearTimeout(scrapeTimeout);
 
     if (!response.ok) {
       console.error(`Firecrawl error: ${response.status}`);
@@ -527,8 +532,10 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
         try { parsedMsg = JSON.parse(errorText).error?.message || parsedMsg; } catch {}
 
         // Auto-retry with aggressively reduced context if token limit exceeded
+        // Phase 19: Use fallback model on retry
+        const FALLBACK_MODEL = "google/gemini-2.5-flash";
         if (/token|exceeds|maximum/i.test(parsedMsg)) {
-          console.log("Token limit exceeded — retrying with reduced context (400K chars)");
+          console.log("Token limit exceeded — retrying with reduced context (400K chars) + fallback model");
           const reducedMessages = trimMessagesToFit(sanitizedMessages, 400_000);
           const retryController = new AbortController();
           const retryTimer = setTimeout(() => retryController.abort(), 25_000);
@@ -540,7 +547,7 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                model: model || "google/gemini-3-flash-preview",
+                model: FALLBACK_MODEL,
                 messages: [{ role: "system", content: systemPrompt }, ...reducedMessages],
                 stream,
               }),
@@ -569,11 +576,11 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      // Transient 500/502/503 — return error immediately; client handles retry with fresh invocations
+      // Transient 500/502/503 — Phase 14: include Retry-After header
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
       return new Response(JSON.stringify({ error: "AI service is temporarily unavailable. Please try again in a moment." }), {
-        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "5" },
       });
     }
 

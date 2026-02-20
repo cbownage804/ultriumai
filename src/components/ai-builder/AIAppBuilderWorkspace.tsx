@@ -1433,12 +1433,40 @@ export function AIAppBuilderWorkspace() {
     sendMessage(`${diagnosisContext}\n\nFix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, fixAttemptCount, lastFixError, getLastAIResponse]);
 
-  // Track when generation ends for post-generation cooldown
+  // Track when generation ends for post-generation cooldown + Phase 13/18: post-build hooks
   const generationEndedAt = useRef<number>(0);
+  const prevIsGenerating = useRef(false);
   useEffect(() => {
-    if (!isGenerating) {
+    if (!isGenerating && prevIsGenerating.current) {
       generationEndedAt.current = Date.now();
+
+      // Phase 13: Run smoke test after builds complete
+      if (project.files.length > 0) {
+        try {
+          const smokeResult = smokeTest.runSmokeTest(project.files);
+          if (smokeResult.errors.length > 0) {
+            const firstError = smokeResult.errors[0];
+            console.warn(`[Smoke Test] ${smokeResult.errors.length} error(s) found:`, smokeResult.errors.map(e => e.message));
+            forwardErrorToChat({ message: `[Smoke Test] ${firstError.message}`, source: firstError.file });
+          }
+          if (smokeResult.warnings.length > 0) {
+            console.info(`[Smoke Test] ${smokeResult.warnings.length} warning(s)`);
+          }
+        } catch (e) { /* smoke test is non-critical */ }
+      }
+
+      // Phase 18: Run delete button auto-patcher after builds
+      if (project.files.length > 0) {
+        try {
+          const patchResult = deleteAutoPatcher.patchDeleteButtons(project.files);
+          if (patchResult.patched) {
+            patchResult.files.forEach(f => upsertFile(f.path, f.content));
+            toast.info(`Auto-fixed ${patchResult.fixes.length} file(s) with common patterns`, { duration: 3000 });
+          }
+        } catch (e) { /* patcher is non-critical */ }
+      }
     }
+    prevIsGenerating.current = isGenerating;
   }, [isGenerating]);
 
   // Auto-fix pipeline: uses Phase 47 useAutoFixLoop + hot recovery
