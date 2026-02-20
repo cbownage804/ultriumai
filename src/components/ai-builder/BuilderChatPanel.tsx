@@ -353,7 +353,7 @@ export function BuilderChatPanel({
       // Skip updates for very large content -- only file names matter during streaming
       if (current.length > 20_000) return;
       setLocalStreamContent(prev => current !== prev ? current : prev);
-    }, 800);
+    }, 2500);
     return () => clearInterval(interval);
   }, [isGenerating, streamingContentRef]);
 
