@@ -1,137 +1,112 @@
 
+# More Performance Issues: Redundant Compilation, Auto-Save Storms, and Panel Overhead
 
-# Remaining Issues Beyond Re-renders
-
-After reviewing the full codebase, here are 6 additional problems that contribute to freezes and preview failures -- none of which are re-render related.
-
----
-
-## Issue 6: `upsertFile()` Loop Causes N State Updates for N Files
-
-**File**: `AIAppBuilderWorkspace.tsx`, line 880
-
-When generation completes and `latestFiles` fires, the effect does:
-```typescript
-for (const file of latestFiles) upsertFile(file.path, file.content);
-```
-
-Each `upsertFile` call individually updates the `project.files` state. For a 15-file project, that is 15 sequential state updates, each triggering a re-render and a `liveCompiledHTML` recomputation. The first render (line 877) uses `setFiles(latestFiles)` for empty projects, but for iterative builds (existing project + new files), it falls into the loop.
-
-**Fix**: Batch all file updates into a single `setFiles()` call by merging existing files with new ones in one pass, instead of calling `upsertFile` per file.
+Beyond what's been fixed, here are 5 remaining issues contributing to sluggishness and potential preview failures.
 
 ---
 
-## Issue 7: 120s Force-Compile Fallback Still Uses `project.files` for Vanilla
+## Issue 12: `compiledForHosting` Runs a SECOND Full Compilation on Every File Change
 
-**File**: `AIAppBuilderWorkspace.tsx`, line 1939
-
-The 120-second safety net attempts vanilla compilation via:
-```typescript
-const html = getCompiledHTML(supabaseConfig, ...);
-```
-
-But `getCompiledHTML` reads from `project.files`, which is still empty during initial generation. The Issue 3 fix was applied to the 3-second timer, but this 120-second fallback was missed. It will always return `null` for new vanilla projects.
-
-**Fix**: Use `partialFilesRef.current` for the vanilla fallback path too, same as the 3-second timer.
-
----
-
-## Issue 8: `streamingFilePath` State Lives in the Workspace
-
-**File**: `AIAppBuilderWorkspace.tsx`, line 1064
+**File**: `AIAppBuilderWorkspace.tsx`, lines 1214-1217
 
 ```typescript
-const [streamingFilePath, setStreamingFilePath] = useState<string | null>(null);
-const handleStreamingFileChange = useCallback((path: string | null) => {
-  setStreamingFilePath(path);
-}, []);
+const compiledForHosting = useMemo(
+  () => getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser),
+  [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser]
+);
 ```
 
-The `StreamingCodeEditor` child calls `onStreamingFileChange` every 400ms when the active streaming file changes. This updates `streamingFilePath` state in the workspace, triggering a full re-render. This partially undoes the benefit of extracting the editor to a child component.
+This runs a complete vanilla compilation every time `project.files` changes -- entirely independent of `liveCompiledHTML` and `stableHTML`. When the batched `setFiles` fires after generation, this memo recomputes synchronously alongside `liveCompiledHTML`, doubling the compilation cost. For hosted preview upload, this doesn't even need to run during generation.
 
-**Fix**: Move `streamingFilePath` to a ref, or keep it entirely inside `StreamingCodeEditor` and pass it to the `FileTabBar` via a separate lightweight child.
-
----
-
-## Issue 9: 400+ Panel Accessor/Setter Variables Recreated on Every Render
-
-**File**: `AIAppBuilderWorkspace.tsx`, lines 368-792
-
-The component creates ~200 boolean accessors (`const showX = !!panels.showX`) and ~200 setter functions (`const setShowX = sp('showX')`) on every render. The `sp` callback (line 579) depends on `panels`, so whenever ANY panel toggles, all 200 setters are recreated.
-
-This is not a streaming issue, but it adds significant overhead to every render -- each render has to allocate and garbage-collect 400+ closures. During rapid state changes (like generation ending), this compounds the problem.
-
-**Fix**: Replace the 200 individual boolean variables with direct `panels.showX` reads in JSX. Replace `sp()` setters with a single `togglePanel(key)` function. This eliminates 400 variable allocations per render.
+**Fix**: Guard this memo with `if (isGenerating) return null;` to skip it during generation, same as `liveCompiledHTML`. Or better: reuse `stableHTML`/`liveCompiledHTML` instead of running a separate compilation.
 
 ---
 
-## Issue 10: `liveCompiledHTML` Runs Synchronously When Generation Ends
+## Issue 13: Three Auto-Save Effects Fire Simultaneously After Generation
 
-**File**: `AIAppBuilderWorkspace.tsx`, line 1866
+**File**: `AIAppBuilderWorkspace.tsx`, lines 1083-1109
+
+Three separate effects all trigger when `project.files` changes:
+1. Line 1083: Cloud auto-save (`scheduleAutoSave`) -- debounced 2s
+2. Line 1100: IndexedDB save (`idbPersistence.saveToIDB`) -- immediate
+3. Line 1106: localStorage draft save (`saveDraft`) -- immediate
+
+Effects 2 and 3 run synchronously on the same render that updates `project.files`. For a 15-file project, serializing and writing to IDB + localStorage blocks the main thread for 50-200ms right when the preview should be compiling.
+
+The `isGenerating` guard on these effects means they all fire the instant `isGenerating` flips to `false` (which is the same render where `project.files` gets populated). So compilation, auto-save x3, and all deferred work compete on the same frame.
+
+**Fix**: Add a startup delay to the IDB and localStorage saves -- use `setTimeout(..., 1000)` after `isGenerating` transitions from true to false, so compilation and preview have priority.
+
+---
+
+## Issue 14: `tsValidator.validate()` Runs Synchronously on the Completion Render
+
+**File**: `AIAppBuilderWorkspace.tsx`, lines 955-965
 
 ```typescript
-const liveCompiledHTML = useMemo(() => {
-  if (isGenerating) return null;
-  if (project.files.length === 0) return null;
-  if (isReactProject) {
-    const result = compileReactProject(project.files, ...);
-    return result.html || null;
-  }
-  return getCompiledHTML(...);
-}, [project.files, ..., isGenerating]);
+const validationResult = tsValidator.validate(latestFiles);
 ```
 
-When `isGenerating` flips from `true` to `false`, this memo immediately runs the compiler synchronously on the full file set. For React projects with 15+ files, `compileReactProject` can take 200-500ms, blocking the main thread at exactly the moment the user expects to see the preview.
+This runs inside the `isGenerating` transition effect (line 940), which fires on the same render as the `latestFiles` effect. TypeScript validation iterates every file, parses ASTs, and checks types -- potentially 100-300ms for larger projects. It runs before the deferred `setTimeout` block, so it blocks the preview.
 
-But the timer-based compilation (lines 1814-1863) should have ALREADY produced a `stableHTML` during generation. The issue is that `liveCompiledHTML` runs again anyway (because `isGenerating` changed), and the `useEffect` on line 1890 overwrites `stableHTML` with the (identical) new result. This is redundant work.
-
-**Fix**: Skip the `liveCompiledHTML` recomputation if `stableHTML` is already set from the timer-based path. Only recompile from `project.files` if `stableHTML` is still `null` when generation ends.
+**Fix**: Move `tsValidator.validate()` into the deferred `setTimeout` block alongside lighthouse/bundleSize (line 980). Smoke test and conflict detection can stay synchronous since they're fast.
 
 ---
 
-## Issue 11: `setFiles` for Initial Projects Doesn't Trigger Preview Compilation
+## Issue 15: The 200+ Boolean Panel Accessors Are Still Being Created
 
-**File**: `AIAppBuilderWorkspace.tsx`, line 878
+**File**: `AIAppBuilderWorkspace.tsx`, lines 368-576
 
-For brand-new projects (`project.files.length === 0`), the effect calls:
+Despite the Issue 9 fix making `sp()` stable, there are still 210 lines of `const showX = !!panels.showX` (lines 368-576). These aren't closures so they're cheap individually, but:
+- They create 210 local variables on every render
+- They're used as props to child components, causing those children to re-render whenever ANY panel toggles (because `panels` is a new object from the reducer)
+
+More importantly, the 210 `const setShowX = sp(...)` calls (lines 586-794) still create 210 function calls per render. Even though `sp` is stable, `sp('showVersionHistory')` returns a new closure every call.
+
+**Fix**: Memoize the setter map (already partially done at line 2013 with `panelSetters`). Replace the 210 individual `setShowX` constants with direct lookups from `panelSetters`. This eliminates 210 closure allocations per render.
+
+---
+
+## Issue 16: `commandActions` Memo Has Heavyweight Dependencies
+
+**File**: `AIAppBuilderWorkspace.tsx`, lines 2028-2057
+
 ```typescript
-setFiles(latestFiles);
+const commandActions = useMemo((): CommandAction[] => {
+  ...
+}, [handleSave, handleUndo, handleRedo, handlePublish, openPanelByKey,
+    codeSmellDetector, project.files, docGenerator, project.name, activeFile, handleSend]);
 ```
 
-This updates `project.files` in one batch (good). But the `liveCompiledHTML` memo depends on `project.files`, so it runs the compiler synchronously in the same render. Meanwhile, `stableHTML` may already contain a valid preview from the timer-based compilation. The `useEffect` on line 1890 then overwrites `stableHTML` with the `liveCompiledHTML` result, causing a potentially unnecessary iframe reload.
+This memo depends on `project.files` and `activeFile`. Every time a file changes or the user switches tabs, this rebuilds the entire command action array (core actions + all 155+ registry entries). The `PANEL_REGISTRY.map()` inside allocates 155 objects each time.
 
-**Fix**: In the `useEffect` on line 1890, skip updating `stableHTML` if it already has content and the new `liveCompiledHTML` is equivalent (same length or hash check).
+**Fix**: Split into two memos: one for static registry actions (no dependencies, computed once), and one for the handful of dynamic core actions. Merge them in a third memo that's cheaper to update.
 
 ---
 
 ## Summary
 
-| Issue | Type | Impact | Fix |
-|-------|------|--------|-----|
-| 6. upsertFile loop | Batching bug | N state updates + N compiler runs | Single setFiles() merge |
-| 7. 120s fallback uses project.files | Logic bug | Vanilla preview never appears at 120s | Use partialFilesRef |
-| 8. streamingFilePath in workspace | State leak | Workspace re-renders during streaming | Move to ref or child |
-| 9. 400+ panel variables per render | Allocation overhead | ~5ms per render wasted on closures | Use panels object directly |
-| 10. Redundant compilation at generation end | Wasted CPU | 200-500ms blocked main thread | Skip if stableHTML exists |
-| 11. Unnecessary iframe reload | UX bug | Preview flickers when generation ends | Skip duplicate stableHTML write |
+| Issue | Type | Impact | Fix Difficulty |
+|-------|------|--------|----------------|
+| 12. Redundant `compiledForHosting` | Duplicate compilation | 200-500ms extra blocking on file change | Easy -- guard with `isGenerating` |
+| 13. Triple auto-save on completion | Main thread contention | 50-200ms serialization competing with compilation | Easy -- defer with setTimeout |
+| 14. Synchronous TS validation | Main thread blocking | 100-300ms before preview can render | Easy -- move into deferred block |
+| 15. 210 setter closures per render | Allocation overhead | ~3ms per render, child re-render cascades | Medium -- use panelSetters map |
+| 16. Heavy `commandActions` memo | Unnecessary recomputation | 155 object allocations on every file change | Medium -- split static/dynamic |
 
 ## Implementation Plan
 
-### Step 1: Batch upsertFile into single setFiles (Issue 6)
-In the `latestFiles` effect, merge existing `project.files` with `latestFiles` into a single array and call `setFiles(merged)` once, eliminating the per-file loop.
+### Step 1: Guard `compiledForHosting` during generation (Issue 12)
+Add `if (isGenerating) return null;` as the first line of the `compiledForHosting` useMemo.
 
-### Step 2: Fix 120s fallback for vanilla (Issue 7)
-In the 120s force-compile effect, replace the vanilla `getCompiledHTML()` call with the same inline CSS/JS approach used in the 3-second timer (reading from `partialFilesRef`).
+### Step 2: Defer auto-saves after generation (Issue 13)
+Add a `postGenerationDelayRef` that tracks when `isGenerating` transitions to false. In the IDB and localStorage save effects, skip saves for 1 second after this transition to let compilation take priority.
 
-### Step 3: Move streamingFilePath to ref (Issue 8)
-Convert `streamingFilePath` from `useState` to `useRef`. Only the `FileTabBar` needs it, and it can read from the ref directly or receive it from `StreamingCodeEditor`.
+### Step 3: Move TS validation to deferred block (Issue 14)
+Move `tsValidator.validate(latestFiles)` into the existing `setTimeout(() => { ... }, 100)` block at line 980, alongside lighthouse audit and bundle size analysis.
 
-### Step 4: Eliminate panel variable explosion (Issue 9)
-Replace all `const showX = !!panels.showX` with direct `panels.showX` in JSX. Create a single `togglePanel` function instead of 200 individual setters.
+### Step 4: Consolidate panel setters (Issue 15)
+Replace the 210 individual `const setShowX = sp(...)` lines with a single `panelSetters` memo that returns a `Record<string, (v: boolean) => void>`. Update all JSX prop references to use `panelSetters.showVersionHistory` instead of `setShowVersionHistory`.
 
-### Step 5: Skip redundant compilation (Issue 10)
-Add a guard to `liveCompiledHTML`: if `stableHTML` is already set when `isGenerating` goes to `false`, return `stableHTML` instead of recompiling.
-
-### Step 6: Prevent duplicate stableHTML writes (Issue 11)
-In the `useEffect` that syncs `liveCompiledHTML` to `stableHTML`, skip the write if `stableHTML` already has content.
-
+### Step 5: Split command actions memo (Issue 16)
+Create a `staticRegistryActions` memo with no dependencies (computed once). Keep dynamic core actions in a separate memo with minimal dependencies. Merge in the final `commandActions` memo.
