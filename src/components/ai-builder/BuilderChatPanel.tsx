@@ -342,7 +342,11 @@ export function BuilderChatPanel({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Phase 106: Cmd/Ctrl+Enter to send, plain Enter for newlines
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSend();
+    } else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }

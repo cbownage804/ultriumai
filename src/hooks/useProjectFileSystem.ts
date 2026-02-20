@@ -562,6 +562,8 @@ if (typeof console !== 'undefined') {
     resetProject,
     getCompiledHTML,
     sanitizeTemplateLiterals,
+    /** Derived: the currently active file object */
+    activeFile: project.files.find(f => f.path === project.activeFilePath) || null,
   };
 }
 
