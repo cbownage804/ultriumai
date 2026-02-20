@@ -1,79 +1,52 @@
 
 
-# Fix: Persistent Error #310 — Isolate Compilation Into a Safe Child Component
+# Fix: Eliminate Mid-Generation Compilation Freeze
 
 ## Problem
 
-Error #310 ("Rendered fewer hooks than expected") continues to crash the App Builder after generation completes, despite wrapping all useMemo/useCallback bodies in try/catch. The try/catch approach prevents exceptions from propagating, but React still detects hook count mismatches if any render-time code path causes an interruption in the 100+ hook chain inside AIAppBuilderWorkspace.tsx.
+The browser freezes at ~40s during code generation. The root cause is `CompilationBridge.tsx` running `compileReactProject()` **during active streaming** via a 5-second polling timer (line 116). This function is a heavy synchronous operation that:
 
-## Root Cause
+- Builds a module map with regex scans of every file
+- Topologically sorts files via dependency graph construction
+- Runs 20+ regex replacements per file for transpilation
+- Assembles a large HTML string
 
-The component has 2658 lines and 100+ hooks. When generation finishes and `project.files` updates, multiple useMemo hooks re-evaluate simultaneously. If ANY intermediate computation (even outside our wrapped hooks) throws during this cascade, React counts fewer executed hooks and throws #310. The error boundary catches it, but the entire workspace crashes.
+Even though the `attempted` flag limits it to one call, that single call on 3-5 partial files can freeze the main thread for 2-5 seconds, triggering the "page is slowing down" browser warning. A second identical freeze point exists at the 120-second timeout (line 217).
 
-## Solution: Extract Compilation Into a Dedicated Child Component
+## Solution
 
-Instead of trying to protect every possible throw site in a 100+ hook component, move the compilation logic into a small, isolated child component wrapped in its own error boundary. If compilation crashes, only the preview fails — the chat, file tree, and editor remain functional.
+Remove both mid-generation compilation calls entirely. The preview already shows a skeleton overlay during generation -- attempting to compile incomplete, partially-streamed files is unreliable and causes the freeze. Compilation should only happen **after** generation completes, via the existing `liveCompiledHTML` useMemo which is already gated by `if (isGenerating) return null`.
 
-### Change 1: Create `CompilationBridge.tsx`
+## Changes (1 file)
 
-**New file**: `src/components/ai-builder/CompilationBridge.tsx`
+**File**: `src/components/ai-builder/CompilationBridge.tsx`
 
-A small component that:
-- Receives `project.files`, configs, and `isGenerating` as props
-- Internally calls `useReactCompiler()`, `detectReactProject()`, and compilation useMemo
-- Exposes the compiled HTML via a callback prop (`onCompiled`)
-- Has its own try/catch in ALL computation paths
-- If it crashes, its parent error boundary catches it without affecting the workspace's hook count
+### Change 1: Remove the 5-second timer-based compilation effect (lines 112-164)
 
-```
-CompilationBridge (isolated component)
-  - useReactCompiler()
-  - isReactProject useMemo
-  - liveCompiledHTML useMemo
-  - compiledForHosting useMemo
-  - Reports results via onCompiled(html) callback
-```
+Delete the entire `useEffect` that polls `partialFilesRef` every 5 seconds and calls `compileReactProject` during generation. This is the primary freeze source.
 
-### Change 2: Update AIAppBuilderWorkspace.tsx
+### Change 2: Remove the 120-second timeout compilation effect (lines 216-261)
 
-- Remove the `useReactCompiler()`, `isReactProject`, `liveCompiledHTML`, and `compiledForHosting` hooks from the workspace
-- Render `<CompilationBridge>` as a child, wrapped in a `<PanelErrorBoundary>`
-- Receive compiled HTML via callback into a useState
-- This reduces the hook count in the workspace by ~5 and isolates the most crash-prone code
+Delete the entire `useEffect` that force-compiles partial files after 120 seconds. This is a secondary freeze source with the same heavy synchronous call.
 
-### Change 3: Wrap CompilationBridge in error boundary
+### Change 3: Simplify the fallback error page logic
 
-In the workspace JSX, render:
-```tsx
-<PanelErrorBoundary panelName="Compiler">
-  <CompilationBridge
-    files={project.files}
-    isGenerating={isGenerating}
-    supabaseConfig={supabaseConfig}
-    stripeConfig={stripeConfig}
-    envVars={envVars}
-    serviceKeys={serviceKeys}
-    cdnPackages={cdnPackages}
-    bundleForBrowser={bundleForBrowser}
-    linkedGPT={linkedGPT}
-    onCompiled={setStableHTML}
-    getCompiledHTML={getCompiledHTML}
-  />
-</PanelErrorBoundary>
-```
+The null-compilation fallback (line 203-206) that shows "Compilation Error" when generation finishes but `liveCompiledHTML` is null -- this stays intact as it handles the post-generation case correctly.
 
-## Why This Fixes Error #310
+## What Stays the Same
 
-- The compilation hooks are moved OUT of the 100+ hook component, so if they crash, they don't affect the workspace's hook count
-- The workspace retains all its other hooks in stable order
-- CompilationBridge has only ~5 hooks, making it trivially safe
-- If CompilationBridge crashes, PanelErrorBoundary catches it — the workspace shows "Compiler failed to load" in the preview area but the chat and editor remain fully functional
+- `liveCompiledHTML` useMemo (line 167): Compiles AFTER generation ends -- this is the correct compilation point
+- `compiledForHosting` useMemo (line 89): Also gated by `if (isGenerating) return null` -- safe
+- GeneratingOverlay skeleton during streaming -- provides visual feedback without compilation
+- Post-generation error fallback page -- catches compilation failures after streaming
 
-## Files Changed
+## Technical Details
 
-1. **New**: `src/components/ai-builder/CompilationBridge.tsx` — isolated compilation component
-2. **Edit**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx` — remove compilation hooks, render CompilationBridge
+The removed effects total ~100 lines of complex async compilation logic. They are replaced by... nothing. The existing `liveCompiledHTML` useMemo already handles compilation after generation, and the skeleton overlay already handles the "during generation" UI. The mid-generation compilation was an optimization that backfired by freezing the browser.
 
-## Risk
+## Expected Result
 
-Low. This is a pure refactor that moves existing logic into a child component. No behavior changes. The compilation output is identical — only the error isolation boundary changes.
+- Zero browser freezes during generation
+- Preview shows skeleton during streaming (same as current visual)
+- Compilation happens once, instantly after generation ends
+- No more "This page is slowing down your browser" warnings
