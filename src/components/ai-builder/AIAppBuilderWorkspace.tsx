@@ -185,6 +185,8 @@ import {
   Github, Hammer, FileCode, ImagePlus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePanelManager } from '@/hooks/usePanelManager';
+import { PANEL_KEYS, EXCLUSIVE_PANEL_GROUP } from './panelKeys';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
@@ -209,7 +211,7 @@ export function AIAppBuilderWorkspace() {
   const promptHistory = usePromptHistory();
   const codeSmellDetector = useCodeSmellDetector();
   const docGenerator = useDocGenerator();
-  const [showPromptHistory, setShowPromptHistory] = useState(false);
+  // showPromptHistory now managed by usePanelManager
   const {
     branches, activeBranch, activeBranchName,
     createBranch, switchBranch, mergeBranch, deleteBranch, updateBranchFiles,
@@ -269,7 +271,7 @@ export function AIAppBuilderWorkspace() {
 
   const [rightTab, setRightTab] = useState<'preview' | 'code' | 'split'>('preview');
   const [previewCurrentUrl, setPreviewCurrentUrl] = useState('/');
-  const [showShortcuts, setShowShortcuts] = useState(false);
+  // showShortcuts now managed by usePanelManager
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(project.name);
   const [supabaseConfig, setSupabaseConfig] = useState<SupabaseConfig | null>(null);
@@ -278,29 +280,25 @@ export function AIAppBuilderWorkspace() {
   const [vercelConfig, setVercelConfig] = useState<VercelConfig | null>(null);
   const [serviceKeys, setServiceKeys] = useState<ServiceKey[]>([]);
   const [envVars, setEnvVars] = useState<EnvVar[]>([]);
-  const [showFileTree, setShowFileTree] = useState(false);
-  const [showTemplates, setShowTemplates] = useState(false);
+  // showFileTree + showTemplates now managed by usePanelManager
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   // showCommandPalette removed — replaced by showEnhancedPalette
-  const [showFileSearch, setShowFileSearch] = useState(false);
+  // showFileSearch now managed by usePanelManager
 
-  // Panel states
-  const [showVersionHistory, setShowVersionHistory] = useState(false);
-  const [showConsole, setShowConsole] = useState(false);
-  const [showEnvVars, setShowEnvVars] = useState(false);
-  const [showRLSTester, setShowRLSTester] = useState(false);
-  const [showAssets, setShowAssets] = useState(false);
+  // Panel states — consolidated into a single reducer (fixes React #310)
+  const { panels, open: openP, close: closeP, exclusiveOpen, isOpen: isPanelOpen } = usePanelManager([...PANEL_KEYS]);
+  // showBuildLog defaults to true (was useState(true) before consolidation)
+  useEffect(() => { openP('showBuildLog'); }, []);
+
+  // Non-panel state that was intermixed with panel useState calls
   const [envVariables, setEnvVariables] = useState<EnvVariable[]>([]);
   const [assets, setAssets] = useState<ProjectAsset[]>([]);
-  const [showPackages, setShowPackages] = useState(false);
   const [cdnPackages, setCdnPackages] = useState<CDNPackage[]>([]);
   const { findReferencedFiles } = useProjectBundler();
   const astBundler = useASTBundler();
   const incrementalCompiler = useIncrementalCompiler();
   const tsValidator = useTypeScriptValidator();
   const conflictResolver = useConflictResolver();
-
-  // Incremental bundler: uses AST bundler for per-file compilation + caching
   const bundleForBrowser = useCallback((files: ProjectFile[]) => {
     const result = incrementalCompiler.compileIncremental(
       files,
@@ -326,243 +324,470 @@ export function AIAppBuilderWorkspace() {
   const MAX_FIX_ATTEMPTS = 3;
   const [isCompiling, setIsCompiling] = useState(false);
   const [selectedModel, setSelectedModel] = useState('google/gemini-3-flash-preview');
-  const [showQuickSwitcher, setShowQuickSwitcher] = useState(false);
   const [previewSlug, setPreviewSlug] = useState<string | null>(null);
   const [pendingConflicts, setPendingConflicts] = useState<{ path: string; userContent: string; aiContent: string }[] | null>(null);
-  const [showDatabase, setShowDatabase] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
-  const [showKnowledge, setShowKnowledge] = useState(false);
-  const [showStorage, setShowStorage] = useState(false);
-  const [showEdgeFunctions, setShowEdgeFunctions] = useState(false);
   const [knowledge, setKnowledge] = useState<KnowledgeConfig>({ customInstructions: '', contextFiles: [] });
   const [edgeFunctions, setEdgeFunctions] = useState<{ name: string; status: 'deployed' | 'draft' | 'error'; lastDeployed?: string }[]>([]);
-  const [showActivity, setShowActivity] = useState(false);
-  const [showBilling, setShowBilling] = useState(false);
-  const [showShareDialog, setShowShareDialog] = useState(false);
-  const [showSEOEditor, setShowSEOEditor] = useState(false);
-  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
-  const [showExportGuide, setShowExportGuide] = useState(false);
   const [collaborators, setCollaborators] = useState<{ id: string; email: string; role: 'viewer' | 'editor' | 'admin'; avatarColor: string; joinedAt: Date }[]>([]);
   const [buildNotifications, setBuildNotifications] = useState<BuildNotification[]>([]);
   const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>([]);
-  const [showCodeIntel, setShowCodeIntel] = useState(false);
-  const [showDbExplorer, setShowDbExplorer] = useState(false);
-  const [showComponentLib, setShowComponentLib] = useState(false);
-  const [showTestingSuite, setShowTestingSuite] = useState(false);
   const [codeSuggestions, setCodeSuggestions] = useState<CodeSuggestion[]>([]);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
-  const [showDiffReview, setShowDiffReview] = useState(false);
   const [pendingDiffChanges, setPendingDiffChanges] = useState<{ path: string; oldContent: string; newContent: string; isNew: boolean }[]>([]);
-  const [showDomainPanel, setShowDomainPanel] = useState(false);
-  const [showTerminal, setShowTerminal] = useState(false);
   const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
   const [isVisualEditActive, setIsVisualEditActive] = useState(false);
   const previewIframeRef = useRef<HTMLIFrameElement>(null);
-  const [showBuildLog, setShowBuildLog] = useState(true);
-  const [showTimeline, setShowTimeline] = useState(false);
-  const [showDiffViewer, setShowDiffViewer] = useState(false);
   const [splitRightFile, setSplitRightFile] = useState<string | null>(null);
   const buildStartTimeRef = useRef<number>(0);
-  const [showDeployPipeline, setShowDeployPipeline] = useState(false);
-  const [showComponentPalette, setShowComponentPalette] = useState(false);
   const [aiAutocompleteEnabled, setAiAutocompleteEnabled] = useState(true);
-  const [showHelpCenter, setShowHelpCenter] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ title: string; description: string; onConfirm: () => void } | null>(null);
   const workspaceContainerRef = useRef<HTMLDivElement>(null);
-  const [showGPTConnector, setShowGPTConnector] = useState(false);
   const [linkedGPT, setLinkedGPT] = useState<LinkedGPTConfig | null>(null);
-  const [showPerformanceProfiler, setShowPerformanceProfiler] = useState(false);
-  const [showBuildAnalytics, setShowBuildAnalytics] = useState(false);
-  const [showDesignSystem, setShowDesignSystem] = useState(false);
   const buildAnalytics = useBuildAnalytics();
   const outputValidation = useOutputValidation();
-  const [showChangelog, setShowChangelog] = useState(false);
   const [changelogEntries, setChangelogEntries] = useState<ChangelogEntry[]>([]);
-  const [showSetupWizard, setShowSetupWizard] = useState(false);
-  const [showSchemaDesigner, setShowSchemaDesigner] = useState(false);
-  const [showOneClickDeploy, setShowOneClickDeploy] = useState(false);
   const [netlifyToken, setNetlifyToken] = useState<string | null>(null);
-  const [showEditHistory, setShowEditHistory] = useState(false);
-  const [showBugReport, setShowBugReport] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
-  const [showEnhancedPalette, setShowEnhancedPalette] = useState(false);
-  const [showMultiSearch, setShowMultiSearch] = useState(false);
-  const [showTestRunner, setShowTestRunner] = useState(false);
-  const [showExtensions, setShowExtensions] = useState(false);
   const pluginRegistry = usePluginRegistry();
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
-  const [showCollaboration, setShowCollaboration] = useState(false);
   const collaborationEngine = useCollaborationEngine(currentProjectId);
-  const [showAPIBuilder, setShowAPIBuilder] = useState(false);
   const apiBuilder = useAPIBuilder();
   const projectReview = useProjectReview();
   const supabaseConnection = useSupabaseConnection();
   const schemaIntrospection = useSchemaIntrospection();
-  const [showSupabaseIDE, setShowSupabaseIDE] = useState(false);
-  const [showGitHubPanel, setShowGitHubPanel] = useState(false);
-  const [showMigrationPanel, setShowMigrationPanel] = useState(false);
-  const [showEdgeFnEditor, setShowEdgeFnEditor] = useState(false);
-  const [showBuildWorkflow, setShowBuildWorkflow] = useState(false);
-  const [showDevTools, setShowDevTools] = useState(false);
-  const [showNPMManager, setShowNPMManager] = useState(false);
-  const [showPublishPanel, setShowPublishPanel] = useState(false);
   const [installedPackages, setInstalledPackages] = useState<{ name: string; version: string; description?: string; isDevDep?: boolean }[]>([]);
-  const [showImageGen, setShowImageGen] = useState(false);
-  const [showSymbolSearch, setShowSymbolSearch] = useState(false);
-  const [showSecretsManager, setShowSecretsManager] = useState(false);
-  const [showModelSwitcher, setShowModelSwitcher] = useState(false);
-  const [showPromptChains, setShowPromptChains] = useState(false);
-  const [showCodeReview, setShowCodeReview] = useState(false);
-  const [showTestGenerator, setShowTestGenerator] = useState(false);
-  const [showNLQuery, setShowNLQuery] = useState(false);
   const promptChains = usePromptChains();
   const codeReview = useAICodeReview();
   const testGenerator = useTestGenerator();
   const multiCursorEditor = useMultiCursorEditor();
   const minimapHeatZones = useMinimapHeatZones();
   const symbolNavigator = useSymbolNavigator();
-  // Panel visibility states (hooks moved to conditional panel groups)
-  const [showSnippetLibrary, setShowSnippetLibrary] = useState(false);
-  const [showSplitDiff, setShowSplitDiff] = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const [showTeamActivity, setShowTeamActivity] = useState(false);
-  const [showApprovals, setShowApprovals] = useState(false);
-  const [showForking, setShowForking] = useState(false);
-  const [showFigmaImport, setShowFigmaImport] = useState(false);
-  const [showColorExtractor, setShowColorExtractor] = useState(false);
-  const [showIconPicker, setShowIconPicker] = useState(false);
-  const [showBreakpointEditor, setShowBreakpointEditor] = useState(false);
-  const [showAnimationBuilder, setShowAnimationBuilder] = useState(false);
-  const [showVisualSchema, setShowVisualSchema] = useState(false);
-  const [showSeedData, setShowSeedData] = useState(false);
-  const [showAPITester, setShowAPITester] = useState(false);
-  const [showWebhookBuilder, setShowWebhookBuilder] = useState(false);
-  const [showCronScheduler, setShowCronScheduler] = useState(false);
-  const [showEnvManager, setShowEnvManager] = useState(false);
-  const [showRollback, setShowRollback] = useState(false);
-  const [showUptimeMonitor, setShowUptimeMonitor] = useState(false);
-  const [showBuildCache, setShowBuildCache] = useState(false);
-  const [showBuildScripts, setShowBuildScripts] = useState(false);
-  const [showCMSMode, setShowCMSMode] = useState(false);
-  const [showBlogEngine, setShowBlogEngine] = useState(false);
-  const [showImageOptimizer, setShowImageOptimizer] = useState(false);
-  const [showVideoEmbed, setShowVideoEmbed] = useState(false);
-  const [showI18n, setShowI18n] = useState(false);
-  const [showAnalyticsDashboard, setShowAnalyticsDashboard] = useState(false);
-  const [showErrorTracking, setShowErrorTracking] = useState(false);
-  const [showSessionReplay, setShowSessionReplay] = useState(false);
-  const [showABTesting, setShowABTesting] = useState(false);
-  const [showAIUsage, setShowAIUsage] = useState(false);
-  const [showDepScanner, setShowDepScanner] = useState(false);
-  const [showCSPGenerator, setShowCSPGenerator] = useState(false);
-  const [showGDPR, setShowGDPR] = useState(false);
-  const [showRateLimiter, setShowRateLimiter] = useState(false);
-  const [showSecretRotation, setShowSecretRotation] = useState(false);
-  const [showCLICompanion, setShowCLICompanion] = useState(false);
-  const [showGHActions, setShowGHActions] = useState(false);
-  const [showSlackDiscord, setShowSlackDiscord] = useState(false);
-  const [showWhiteLabel, setShowWhiteLabel] = useState(false);
-  const [showPluginSDK, setShowPluginSDK] = useState(false);
-  const [showRefactoring, setShowRefactoring] = useState(false);
-  const [showNLRegex, setShowNLRegex] = useState(false);
-  const [showCommitMsg, setShowCommitMsg] = useState(false);
-  const [showAutoImport, setShowAutoImport] = useState(false);
-  const [showDocWriter, setShowDocWriter] = useState(false);
-  const [showCoEditing, setShowCoEditing] = useState(false);
-  const [showVoiceChat, setShowVoiceChat] = useState(false);
-  const [showScreenShare, setShowScreenShare] = useState(false);
-  const [showCodeReactions, setShowCodeReactions] = useState(false);
-  const [showWhiteboard, setShowWhiteboard] = useState(false);
-  const [showVisualRegression, setShowVisualRegression] = useState(false);
-  const [showA11yScore, setShowA11yScore] = useState(false);
-  const [showCoverage, setShowCoverage] = useState(false);
-  const [showMutationTest, setShowMutationTest] = useState(false);
-  const [showLoadTest, setShowLoadTest] = useState(false);
-  const [showPageBuilder, setShowPageBuilder] = useState(false);
-  const [showThemeStudio, setShowThemeStudio] = useState(false);
-  const [showFormBuilder, setShowFormBuilder] = useState(false);
-  const [showChartDashboard, setShowChartDashboard] = useState(false);
-  const [showLayoutGrid, setShowLayoutGrid] = useState(false);
-  const [showGraphQL, setShowGraphQL] = useState(false);
-  const [showWSManager, setShowWSManager] = useState(false);
-  const [showFileUpload, setShowFileUpload] = useState(false);
-  const [showPayments, setShowPayments] = useState(false);
-  const [showEmailTemplates, setShowEmailTemplates] = useState(false);
-  const [showTutorialCreator, setShowTutorialCreator] = useState(false);
-  const [showCodePlayground, setShowCodePlayground] = useState(false);
-  const [showCustomLinting, setShowCustomLinting] = useState(false);
-  const [showDepGraph, setShowDepGraph] = useState(false);
-  const [showGitBlame, setShowGitBlame] = useState(false);
-  const [showMultiRegion, setShowMultiRegion] = useState(false);
-  const [showFeatureFlags, setShowFeatureFlags] = useState(false);
-  const [showCanaryDeploy, setShowCanaryDeploy] = useState(false);
-  const [showSSG, setShowSSG] = useState(false);
-  const [showDockerExport, setShowDockerExport] = useState(false);
-  const [showSubscriptions, setShowSubscriptions] = useState(false);
-  const [showInvoices, setShowInvoices] = useState(false);
-  const [showUsageMetering, setShowUsageMetering] = useState(false);
-  const [showAffiliates, setShowAffiliates] = useState(false);
-  const [showRevenue, setShowRevenue] = useState(false);
-  const [showCapacitor, setShowCapacitor] = useState(false);
-  const [showPushNotifications, setShowPushNotifications] = useState(false);
-  const [showOfflineFirst, setShowOfflineFirst] = useState(false);
-  const [showGestureBuilder, setShowGestureBuilder] = useState(false);
-  const [showAppStoreAssets, setShowAppStoreAssets] = useState(false);
-  const [showCodeTranslator, setShowCodeTranslator] = useState(false);
-  const [showSmartScaffold, setShowSmartScaffold] = useState(false);
-  const [showWorkflowAutomation, setShowWorkflowAutomation] = useState(false);
-  const [showPerfOptimizer, setShowPerfOptimizer] = useState(false);
-  const [showSecurityAuditor, setShowSecurityAuditor] = useState(false);
-  const [showStateMachine, setShowStateMachine] = useState(false);
-  const [showDataValidation, setShowDataValidation] = useState(false);
-  const [showCacheStrategy, setShowCacheStrategy] = useState(false);
-  const [showReactiveStore, setShowReactiveStore] = useState(false);
-  const [showDataMigration, setShowDataMigration] = useState(false);
-  const [showRegexPlayground, setShowRegexPlayground] = useState(false);
-  const [showJsonYamlConverter, setShowJsonYamlConverter] = useState(false);
-  const [showColorContrast, setShowColorContrast] = useState(false);
-  const [showTailwindSorter, setShowTailwindSorter] = useState(false);
-  const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
-  const [showToastDesigner, setShowToastDesigner] = useState(false);
-  const [showNotifCenter, setShowNotifCenter] = useState(false);
-  const [showChatWidget, setShowChatWidget] = useState(false);
-  const [showEmailSequence, setShowEmailSequence] = useState(false);
-  const [showSMSTemplate, setShowSMSTemplate] = useState(false);
-  const [showStepperWizard, setShowStepperWizard] = useState(false);
-  const [showCommandMenuBuilder, setShowCommandMenuBuilder] = useState(false);
-  const [showBreadcrumbGen, setShowBreadcrumbGen] = useState(false);
-  const [showMegaMenu, setShowMegaMenu] = useState(false);
-  const [showContextMenu, setShowContextMenu] = useState(false);
-  const [showDockerCompose, setShowDockerCompose] = useState(false);
-  const [showK8s, setShowK8s] = useState(false);
-  const [showCICDPipeline, setShowCICDPipeline] = useState(false);
-  const [showStructuredLogger, setShowStructuredLogger] = useState(false);
-  const [showHealthCheck, setShowHealthCheck] = useState(false);
-  const [showOAuthSetup, setShowOAuthSetup] = useState(false);
-  const [showMFAFlow, setShowMFAFlow] = useState(false);
-  const [showSessionMgr, setShowSessionMgr] = useState(false);
-  const [showAPIKeyMgmt, setShowAPIKeyMgmt] = useState(false);
-  const [showPermMatrix, setShowPermMatrix] = useState(false);
-  const [showRichTextConfig, setShowRichTextConfig] = useState(false);
-  const [showFilePreviewGen, setShowFilePreviewGen] = useState(false);
-  const [showAvatarGen, setShowAvatarGen] = useState(false);
-  const [showCarouselBuilder, setShowCarouselBuilder] = useState(false);
-  const [showGalleryLightbox, setShowGalleryLightbox] = useState(false);
-  const [showFTS, setShowFTS] = useState(false);
-  const [showFacetedFilter, setShowFacetedFilter] = useState(false);
-  const [showAutocomplete, setShowAutocomplete] = useState(false);
-  const [showTagSystem, setShowTagSystem] = useState(false);
-  const [showSEOMeta, setShowSEOMeta] = useState(false);
-  const [showKPIDashboard, setShowKPIDashboard] = useState(false);
-  const [showAlertingRules, setShowAlertingRules] = useState(false);
-  const [showAuditTrail, setShowAuditTrail] = useState(false);
-  const [showClickHeatmap, setShowClickHeatmap] = useState(false);
-  const [showBudgetMonitor, setShowBudgetMonitor] = useState(false);
-  const [showChangelogAuto, setShowChangelogAuto] = useState(false);
-  const [showREADMEGen, setShowREADMEGen] = useState(false);
-  const [showLicensePicker, setShowLicensePicker] = useState(false);
-  const [showOpenAPISpec, setShowOpenAPISpec] = useState(false);
-  const [showProjectHealth, setShowProjectHealth] = useState(false);
+  // Backward-compatible boolean accessors
+  const showVersionHistory = !!panels.showVersionHistory;
+  const showConsole = !!panels.showConsole;
+  const showEnvVars = !!panels.showEnvVars;
+  const showRLSTester = !!panels.showRLSTester;
+  const showAssets = !!panels.showAssets;
+  const showPackages = !!panels.showPackages;
+  const showDatabase = !!panels.showDatabase;
+  const showAuth = !!panels.showAuth;
+  const showKnowledge = !!panels.showKnowledge;
+  const showStorage = !!panels.showStorage;
+  const showEdgeFunctions = !!panels.showEdgeFunctions;
+  const showActivity = !!panels.showActivity;
+  const showBilling = !!panels.showBilling;
+  const showShareDialog = !!panels.showShareDialog;
+  const showSEOEditor = !!panels.showSEOEditor;
+  const showSettingsPanel = !!panels.showSettingsPanel;
+  const showExportGuide = !!panels.showExportGuide;
+  const showCodeIntel = !!panels.showCodeIntel;
+  const showDbExplorer = !!panels.showDbExplorer;
+  const showComponentLib = !!panels.showComponentLib;
+  const showTestingSuite = !!panels.showTestingSuite;
+  const showDiffReview = !!panels.showDiffReview;
+  const showDomainPanel = !!panels.showDomainPanel;
+  const showTerminal = !!panels.showTerminal;
+  const showBuildLog = !!panels.showBuildLog;
+  const showTimeline = !!panels.showTimeline;
+  const showDiffViewer = !!panels.showDiffViewer;
+  const showDeployPipeline = !!panels.showDeployPipeline;
+  const showComponentPalette = !!panels.showComponentPalette;
+  const showHelpCenter = !!panels.showHelpCenter;
+  const showGPTConnector = !!panels.showGPTConnector;
+  const showPerformanceProfiler = !!panels.showPerformanceProfiler;
+  const showBuildAnalytics = !!panels.showBuildAnalytics;
+  const showDesignSystem = !!panels.showDesignSystem;
+  const showChangelog = !!panels.showChangelog;
+  const showSetupWizard = !!panels.showSetupWizard;
+  const showSchemaDesigner = !!panels.showSchemaDesigner;
+  const showOneClickDeploy = !!panels.showOneClickDeploy;
+  const showEditHistory = !!panels.showEditHistory;
+  const showBugReport = !!panels.showBugReport;
+  const showEnhancedPalette = !!panels.showEnhancedPalette;
+  const showMultiSearch = !!panels.showMultiSearch;
+  const showTestRunner = !!panels.showTestRunner;
+  const showExtensions = !!panels.showExtensions;
+  const showCollaboration = !!panels.showCollaboration;
+  const showAPIBuilder = !!panels.showAPIBuilder;
+  const showSupabaseIDE = !!panels.showSupabaseIDE;
+  const showGitHubPanel = !!panels.showGitHubPanel;
+  const showMigrationPanel = !!panels.showMigrationPanel;
+  const showEdgeFnEditor = !!panels.showEdgeFnEditor;
+  const showBuildWorkflow = !!panels.showBuildWorkflow;
+  const showDevTools = !!panels.showDevTools;
+  const showNPMManager = !!panels.showNPMManager;
+  const showPublishPanel = !!panels.showPublishPanel;
+  const showImageGen = !!panels.showImageGen;
+  const showSymbolSearch = !!panels.showSymbolSearch;
+  const showSecretsManager = !!panels.showSecretsManager;
+  const showModelSwitcher = !!panels.showModelSwitcher;
+  const showPromptChains = !!panels.showPromptChains;
+  const showCodeReview = !!panels.showCodeReview;
+  const showTestGenerator = !!panels.showTestGenerator;
+  const showNLQuery = !!panels.showNLQuery;
+  const showSnippetLibrary = !!panels.showSnippetLibrary;
+  const showSplitDiff = !!panels.showSplitDiff;
+  const showComments = !!panels.showComments;
+  const showTeamActivity = !!panels.showTeamActivity;
+  const showApprovals = !!panels.showApprovals;
+  const showForking = !!panels.showForking;
+  const showFigmaImport = !!panels.showFigmaImport;
+  const showColorExtractor = !!panels.showColorExtractor;
+  const showIconPicker = !!panels.showIconPicker;
+  const showBreakpointEditor = !!panels.showBreakpointEditor;
+  const showAnimationBuilder = !!panels.showAnimationBuilder;
+  const showVisualSchema = !!panels.showVisualSchema;
+  const showSeedData = !!panels.showSeedData;
+  const showAPITester = !!panels.showAPITester;
+  const showWebhookBuilder = !!panels.showWebhookBuilder;
+  const showCronScheduler = !!panels.showCronScheduler;
+  const showEnvManager = !!panels.showEnvManager;
+  const showRollback = !!panels.showRollback;
+  const showUptimeMonitor = !!panels.showUptimeMonitor;
+  const showBuildCache = !!panels.showBuildCache;
+  const showBuildScripts = !!panels.showBuildScripts;
+  const showCMSMode = !!panels.showCMSMode;
+  const showBlogEngine = !!panels.showBlogEngine;
+  const showImageOptimizer = !!panels.showImageOptimizer;
+  const showVideoEmbed = !!panels.showVideoEmbed;
+  const showI18n = !!panels.showI18n;
+  const showAnalyticsDashboard = !!panels.showAnalyticsDashboard;
+  const showErrorTracking = !!panels.showErrorTracking;
+  const showSessionReplay = !!panels.showSessionReplay;
+  const showABTesting = !!panels.showABTesting;
+  const showAIUsage = !!panels.showAIUsage;
+  const showDepScanner = !!panels.showDepScanner;
+  const showCSPGenerator = !!panels.showCSPGenerator;
+  const showGDPR = !!panels.showGDPR;
+  const showRateLimiter = !!panels.showRateLimiter;
+  const showSecretRotation = !!panels.showSecretRotation;
+  const showCLICompanion = !!panels.showCLICompanion;
+  const showGHActions = !!panels.showGHActions;
+  const showSlackDiscord = !!panels.showSlackDiscord;
+  const showWhiteLabel = !!panels.showWhiteLabel;
+  const showPluginSDK = !!panels.showPluginSDK;
+  const showRefactoring = !!panels.showRefactoring;
+  const showNLRegex = !!panels.showNLRegex;
+  const showCommitMsg = !!panels.showCommitMsg;
+  const showAutoImport = !!panels.showAutoImport;
+  const showDocWriter = !!panels.showDocWriter;
+  const showCoEditing = !!panels.showCoEditing;
+  const showVoiceChat = !!panels.showVoiceChat;
+  const showScreenShare = !!panels.showScreenShare;
+  const showCodeReactions = !!panels.showCodeReactions;
+  const showWhiteboard = !!panels.showWhiteboard;
+  const showVisualRegression = !!panels.showVisualRegression;
+  const showA11yScore = !!panels.showA11yScore;
+  const showCoverage = !!panels.showCoverage;
+  const showMutationTest = !!panels.showMutationTest;
+  const showLoadTest = !!panels.showLoadTest;
+  const showPageBuilder = !!panels.showPageBuilder;
+  const showThemeStudio = !!panels.showThemeStudio;
+  const showFormBuilder = !!panels.showFormBuilder;
+  const showChartDashboard = !!panels.showChartDashboard;
+  const showLayoutGrid = !!panels.showLayoutGrid;
+  const showGraphQL = !!panels.showGraphQL;
+  const showWSManager = !!panels.showWSManager;
+  const showFileUpload = !!panels.showFileUpload;
+  const showPayments = !!panels.showPayments;
+  const showEmailTemplates = !!panels.showEmailTemplates;
+  const showTutorialCreator = !!panels.showTutorialCreator;
+  const showCodePlayground = !!panels.showCodePlayground;
+  const showCustomLinting = !!panels.showCustomLinting;
+  const showDepGraph = !!panels.showDepGraph;
+  const showGitBlame = !!panels.showGitBlame;
+  const showMultiRegion = !!panels.showMultiRegion;
+  const showFeatureFlags = !!panels.showFeatureFlags;
+  const showCanaryDeploy = !!panels.showCanaryDeploy;
+  const showSSG = !!panels.showSSG;
+  const showDockerExport = !!panels.showDockerExport;
+  const showSubscriptions = !!panels.showSubscriptions;
+  const showInvoices = !!panels.showInvoices;
+  const showUsageMetering = !!panels.showUsageMetering;
+  const showAffiliates = !!panels.showAffiliates;
+  const showRevenue = !!panels.showRevenue;
+  const showCapacitor = !!panels.showCapacitor;
+  const showPushNotifications = !!panels.showPushNotifications;
+  const showOfflineFirst = !!panels.showOfflineFirst;
+  const showGestureBuilder = !!panels.showGestureBuilder;
+  const showAppStoreAssets = !!panels.showAppStoreAssets;
+  const showCodeTranslator = !!panels.showCodeTranslator;
+  const showSmartScaffold = !!panels.showSmartScaffold;
+  const showWorkflowAutomation = !!panels.showWorkflowAutomation;
+  const showPerfOptimizer = !!panels.showPerfOptimizer;
+  const showSecurityAuditor = !!panels.showSecurityAuditor;
+  const showStateMachine = !!panels.showStateMachine;
+  const showDataValidation = !!panels.showDataValidation;
+  const showCacheStrategy = !!panels.showCacheStrategy;
+  const showReactiveStore = !!panels.showReactiveStore;
+  const showDataMigration = !!panels.showDataMigration;
+  const showRegexPlayground = !!panels.showRegexPlayground;
+  const showJsonYamlConverter = !!panels.showJsonYamlConverter;
+  const showColorContrast = !!panels.showColorContrast;
+  const showTailwindSorter = !!panels.showTailwindSorter;
+  const showMarkdownPreview = !!panels.showMarkdownPreview;
+  const showToastDesigner = !!panels.showToastDesigner;
+  const showNotifCenter = !!panels.showNotifCenter;
+  const showChatWidget = !!panels.showChatWidget;
+  const showEmailSequence = !!panels.showEmailSequence;
+  const showSMSTemplate = !!panels.showSMSTemplate;
+  const showStepperWizard = !!panels.showStepperWizard;
+  const showCommandMenuBuilder = !!panels.showCommandMenuBuilder;
+  const showBreadcrumbGen = !!panels.showBreadcrumbGen;
+  const showMegaMenu = !!panels.showMegaMenu;
+  const showContextMenu = !!panels.showContextMenu;
+  const showDockerCompose = !!panels.showDockerCompose;
+  const showK8s = !!panels.showK8s;
+  const showCICDPipeline = !!panels.showCICDPipeline;
+  const showStructuredLogger = !!panels.showStructuredLogger;
+  const showHealthCheck = !!panels.showHealthCheck;
+  const showOAuthSetup = !!panels.showOAuthSetup;
+  const showMFAFlow = !!panels.showMFAFlow;
+  const showSessionMgr = !!panels.showSessionMgr;
+  const showAPIKeyMgmt = !!panels.showAPIKeyMgmt;
+  const showPermMatrix = !!panels.showPermMatrix;
+  const showRichTextConfig = !!panels.showRichTextConfig;
+  const showFilePreviewGen = !!panels.showFilePreviewGen;
+  const showAvatarGen = !!panels.showAvatarGen;
+  const showCarouselBuilder = !!panels.showCarouselBuilder;
+  const showGalleryLightbox = !!panels.showGalleryLightbox;
+  const showFTS = !!panels.showFTS;
+  const showFacetedFilter = !!panels.showFacetedFilter;
+  const showAutocomplete = !!panels.showAutocomplete;
+  const showTagSystem = !!panels.showTagSystem;
+  const showSEOMeta = !!panels.showSEOMeta;
+  const showKPIDashboard = !!panels.showKPIDashboard;
+  const showAlertingRules = !!panels.showAlertingRules;
+  const showAuditTrail = !!panels.showAuditTrail;
+  const showClickHeatmap = !!panels.showClickHeatmap;
+  const showBudgetMonitor = !!panels.showBudgetMonitor;
+  const showChangelogAuto = !!panels.showChangelogAuto;
+  const showREADMEGen = !!panels.showREADMEGen;
+  const showLicensePicker = !!panels.showLicensePicker;
+  const showOpenAPISpec = !!panels.showOpenAPISpec;
+  const showProjectHealth = !!panels.showProjectHealth;
+  const showPromptHistory = !!panels.showPromptHistory;
+  const showFileSearch = !!panels.showFileSearch;
+  const showFileTree = !!panels.showFileTree;
+  const showTemplates = !!panels.showTemplates;
+  const showShortcuts = !!panels.showShortcuts;
+  const showQuickSwitcher = !!panels.showQuickSwitcher;
+
+  // Setter helper — creates a setter compatible with (v: boolean) and (v: (prev) => boolean)
+  const sp = useCallback((key: string) => (v: boolean | ((prev: boolean) => boolean)) => {
+    const val = typeof v === 'function' ? v(!!panels[key]) : v;
+    val ? openP(key) : closeP(key);
+  }, [panels, openP, closeP]);
+
+  const setShowVersionHistory = sp('showVersionHistory');
+  const setShowConsole = sp('showConsole');
+  const setShowEnvVars = sp('showEnvVars');
+  const setShowRLSTester = sp('showRLSTester');
+  const setShowAssets = sp('showAssets');
+  const setShowPackages = sp('showPackages');
+  const setShowDatabase = sp('showDatabase');
+  const setShowAuth = sp('showAuth');
+  const setShowKnowledge = sp('showKnowledge');
+  const setShowStorage = sp('showStorage');
+  const setShowEdgeFunctions = sp('showEdgeFunctions');
+  const setShowActivity = sp('showActivity');
+  const setShowBilling = sp('showBilling');
+  const setShowShareDialog = sp('showShareDialog');
+  const setShowSEOEditor = sp('showSEOEditor');
+  const setShowSettingsPanel = sp('showSettingsPanel');
+  const setShowExportGuide = sp('showExportGuide');
+  const setShowCodeIntel = sp('showCodeIntel');
+  const setShowDbExplorer = sp('showDbExplorer');
+  const setShowComponentLib = sp('showComponentLib');
+  const setShowTestingSuite = sp('showTestingSuite');
+  const setShowDiffReview = sp('showDiffReview');
+  const setShowDomainPanel = sp('showDomainPanel');
+  const setShowTerminal = sp('showTerminal');
+  const setShowBuildLog = sp('showBuildLog');
+  const setShowTimeline = sp('showTimeline');
+  const setShowDiffViewer = sp('showDiffViewer');
+  const setShowDeployPipeline = sp('showDeployPipeline');
+  const setShowComponentPalette = sp('showComponentPalette');
+  const setShowHelpCenter = sp('showHelpCenter');
+  const setShowGPTConnector = sp('showGPTConnector');
+  const setShowPerformanceProfiler = sp('showPerformanceProfiler');
+  const setShowBuildAnalytics = sp('showBuildAnalytics');
+  const setShowDesignSystem = sp('showDesignSystem');
+  const setShowChangelog = sp('showChangelog');
+  const setShowSetupWizard = sp('showSetupWizard');
+  const setShowSchemaDesigner = sp('showSchemaDesigner');
+  const setShowOneClickDeploy = sp('showOneClickDeploy');
+  const setShowEditHistory = sp('showEditHistory');
+  const setShowBugReport = sp('showBugReport');
+  const setShowEnhancedPalette = sp('showEnhancedPalette');
+  const setShowMultiSearch = sp('showMultiSearch');
+  const setShowTestRunner = sp('showTestRunner');
+  const setShowExtensions = sp('showExtensions');
+  const setShowCollaboration = sp('showCollaboration');
+  const setShowAPIBuilder = sp('showAPIBuilder');
+  const setShowSupabaseIDE = sp('showSupabaseIDE');
+  const setShowGitHubPanel = sp('showGitHubPanel');
+  const setShowMigrationPanel = sp('showMigrationPanel');
+  const setShowEdgeFnEditor = sp('showEdgeFnEditor');
+  const setShowBuildWorkflow = sp('showBuildWorkflow');
+  const setShowDevTools = sp('showDevTools');
+  const setShowNPMManager = sp('showNPMManager');
+  const setShowPublishPanel = sp('showPublishPanel');
+  const setShowImageGen = sp('showImageGen');
+  const setShowSymbolSearch = sp('showSymbolSearch');
+  const setShowSecretsManager = sp('showSecretsManager');
+  const setShowModelSwitcher = sp('showModelSwitcher');
+  const setShowPromptChains = sp('showPromptChains');
+  const setShowCodeReview = sp('showCodeReview');
+  const setShowTestGenerator = sp('showTestGenerator');
+  const setShowNLQuery = sp('showNLQuery');
+  const setShowSnippetLibrary = sp('showSnippetLibrary');
+  const setShowSplitDiff = sp('showSplitDiff');
+  const setShowComments = sp('showComments');
+  const setShowTeamActivity = sp('showTeamActivity');
+  const setShowApprovals = sp('showApprovals');
+  const setShowForking = sp('showForking');
+  const setShowFigmaImport = sp('showFigmaImport');
+  const setShowColorExtractor = sp('showColorExtractor');
+  const setShowIconPicker = sp('showIconPicker');
+  const setShowBreakpointEditor = sp('showBreakpointEditor');
+  const setShowAnimationBuilder = sp('showAnimationBuilder');
+  const setShowVisualSchema = sp('showVisualSchema');
+  const setShowSeedData = sp('showSeedData');
+  const setShowAPITester = sp('showAPITester');
+  const setShowWebhookBuilder = sp('showWebhookBuilder');
+  const setShowCronScheduler = sp('showCronScheduler');
+  const setShowEnvManager = sp('showEnvManager');
+  const setShowRollback = sp('showRollback');
+  const setShowUptimeMonitor = sp('showUptimeMonitor');
+  const setShowBuildCache = sp('showBuildCache');
+  const setShowBuildScripts = sp('showBuildScripts');
+  const setShowCMSMode = sp('showCMSMode');
+  const setShowBlogEngine = sp('showBlogEngine');
+  const setShowImageOptimizer = sp('showImageOptimizer');
+  const setShowVideoEmbed = sp('showVideoEmbed');
+  const setShowI18n = sp('showI18n');
+  const setShowAnalyticsDashboard = sp('showAnalyticsDashboard');
+  const setShowErrorTracking = sp('showErrorTracking');
+  const setShowSessionReplay = sp('showSessionReplay');
+  const setShowABTesting = sp('showABTesting');
+  const setShowAIUsage = sp('showAIUsage');
+  const setShowDepScanner = sp('showDepScanner');
+  const setShowCSPGenerator = sp('showCSPGenerator');
+  const setShowGDPR = sp('showGDPR');
+  const setShowRateLimiter = sp('showRateLimiter');
+  const setShowSecretRotation = sp('showSecretRotation');
+  const setShowCLICompanion = sp('showCLICompanion');
+  const setShowGHActions = sp('showGHActions');
+  const setShowSlackDiscord = sp('showSlackDiscord');
+  const setShowWhiteLabel = sp('showWhiteLabel');
+  const setShowPluginSDK = sp('showPluginSDK');
+  const setShowRefactoring = sp('showRefactoring');
+  const setShowNLRegex = sp('showNLRegex');
+  const setShowCommitMsg = sp('showCommitMsg');
+  const setShowAutoImport = sp('showAutoImport');
+  const setShowDocWriter = sp('showDocWriter');
+  const setShowCoEditing = sp('showCoEditing');
+  const setShowVoiceChat = sp('showVoiceChat');
+  const setShowScreenShare = sp('showScreenShare');
+  const setShowCodeReactions = sp('showCodeReactions');
+  const setShowWhiteboard = sp('showWhiteboard');
+  const setShowVisualRegression = sp('showVisualRegression');
+  const setShowA11yScore = sp('showA11yScore');
+  const setShowCoverage = sp('showCoverage');
+  const setShowMutationTest = sp('showMutationTest');
+  const setShowLoadTest = sp('showLoadTest');
+  const setShowPageBuilder = sp('showPageBuilder');
+  const setShowThemeStudio = sp('showThemeStudio');
+  const setShowFormBuilder = sp('showFormBuilder');
+  const setShowChartDashboard = sp('showChartDashboard');
+  const setShowLayoutGrid = sp('showLayoutGrid');
+  const setShowGraphQL = sp('showGraphQL');
+  const setShowWSManager = sp('showWSManager');
+  const setShowFileUpload = sp('showFileUpload');
+  const setShowPayments = sp('showPayments');
+  const setShowEmailTemplates = sp('showEmailTemplates');
+  const setShowTutorialCreator = sp('showTutorialCreator');
+  const setShowCodePlayground = sp('showCodePlayground');
+  const setShowCustomLinting = sp('showCustomLinting');
+  const setShowDepGraph = sp('showDepGraph');
+  const setShowGitBlame = sp('showGitBlame');
+  const setShowMultiRegion = sp('showMultiRegion');
+  const setShowFeatureFlags = sp('showFeatureFlags');
+  const setShowCanaryDeploy = sp('showCanaryDeploy');
+  const setShowSSG = sp('showSSG');
+  const setShowDockerExport = sp('showDockerExport');
+  const setShowSubscriptions = sp('showSubscriptions');
+  const setShowInvoices = sp('showInvoices');
+  const setShowUsageMetering = sp('showUsageMetering');
+  const setShowAffiliates = sp('showAffiliates');
+  const setShowRevenue = sp('showRevenue');
+  const setShowCapacitor = sp('showCapacitor');
+  const setShowPushNotifications = sp('showPushNotifications');
+  const setShowOfflineFirst = sp('showOfflineFirst');
+  const setShowGestureBuilder = sp('showGestureBuilder');
+  const setShowAppStoreAssets = sp('showAppStoreAssets');
+  const setShowCodeTranslator = sp('showCodeTranslator');
+  const setShowSmartScaffold = sp('showSmartScaffold');
+  const setShowWorkflowAutomation = sp('showWorkflowAutomation');
+  const setShowPerfOptimizer = sp('showPerfOptimizer');
+  const setShowSecurityAuditor = sp('showSecurityAuditor');
+  const setShowStateMachine = sp('showStateMachine');
+  const setShowDataValidation = sp('showDataValidation');
+  const setShowCacheStrategy = sp('showCacheStrategy');
+  const setShowReactiveStore = sp('showReactiveStore');
+  const setShowDataMigration = sp('showDataMigration');
+  const setShowRegexPlayground = sp('showRegexPlayground');
+  const setShowJsonYamlConverter = sp('showJsonYamlConverter');
+  const setShowColorContrast = sp('showColorContrast');
+  const setShowTailwindSorter = sp('showTailwindSorter');
+  const setShowMarkdownPreview = sp('showMarkdownPreview');
+  const setShowToastDesigner = sp('showToastDesigner');
+  const setShowNotifCenter = sp('showNotifCenter');
+  const setShowChatWidget = sp('showChatWidget');
+  const setShowEmailSequence = sp('showEmailSequence');
+  const setShowSMSTemplate = sp('showSMSTemplate');
+  const setShowStepperWizard = sp('showStepperWizard');
+  const setShowCommandMenuBuilder = sp('showCommandMenuBuilder');
+  const setShowBreadcrumbGen = sp('showBreadcrumbGen');
+  const setShowMegaMenu = sp('showMegaMenu');
+  const setShowContextMenu = sp('showContextMenu');
+  const setShowDockerCompose = sp('showDockerCompose');
+  const setShowK8s = sp('showK8s');
+  const setShowCICDPipeline = sp('showCICDPipeline');
+  const setShowStructuredLogger = sp('showStructuredLogger');
+  const setShowHealthCheck = sp('showHealthCheck');
+  const setShowOAuthSetup = sp('showOAuthSetup');
+  const setShowMFAFlow = sp('showMFAFlow');
+  const setShowSessionMgr = sp('showSessionMgr');
+  const setShowAPIKeyMgmt = sp('showAPIKeyMgmt');
+  const setShowPermMatrix = sp('showPermMatrix');
+  const setShowRichTextConfig = sp('showRichTextConfig');
+  const setShowFilePreviewGen = sp('showFilePreviewGen');
+  const setShowAvatarGen = sp('showAvatarGen');
+  const setShowCarouselBuilder = sp('showCarouselBuilder');
+  const setShowGalleryLightbox = sp('showGalleryLightbox');
+  const setShowFTS = sp('showFTS');
+  const setShowFacetedFilter = sp('showFacetedFilter');
+  const setShowAutocomplete = sp('showAutocomplete');
+  const setShowTagSystem = sp('showTagSystem');
+  const setShowSEOMeta = sp('showSEOMeta');
+  const setShowKPIDashboard = sp('showKPIDashboard');
+  const setShowAlertingRules = sp('showAlertingRules');
+  const setShowAuditTrail = sp('showAuditTrail');
+  const setShowClickHeatmap = sp('showClickHeatmap');
+  const setShowBudgetMonitor = sp('showBudgetMonitor');
+  const setShowChangelogAuto = sp('showChangelogAuto');
+  const setShowREADMEGen = sp('showREADMEGen');
+  const setShowLicensePicker = sp('showLicensePicker');
+  const setShowOpenAPISpec = sp('showOpenAPISpec');
+  const setShowProjectHealth = sp('showProjectHealth');
+  const setShowPromptHistory = sp('showPromptHistory');
+  const setShowFileSearch = sp('showFileSearch');
+  const setShowFileTree = sp('showFileTree');
+  const setShowTemplates = sp('showTemplates');
+  const setShowShortcuts = sp('showShortcuts');
+  const setShowQuickSwitcher = sp('showQuickSwitcher');
   const addActivity = useCallback((type: ActivityEntry['type'], label: string, detail?: string) => {
     setActivityEntries(prev => [{ id: crypto.randomUUID(), type, label, detail, timestamp: new Date() }, ...prev].slice(0, 100));
   }, []);
@@ -1643,29 +1868,20 @@ export function AIAppBuilderWorkspace() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // Close other panels when opening one
-  const openPanel = (panel: 'history' | 'envVars' | 'assets' | 'packages' | 'database' | 'auth' | 'knowledge' | 'storage' | 'edgeFunctions' | 'activity' | 'codeIntel' | 'componentLib' | 'testingSuite' | 'exportGuide' | 'helpCenter' | 'gptConnector' | 'setupWizard' | 'schemaDesigner' | 'oneClickDeploy' | 'designSystem') => {
-    setShowVersionHistory(panel === 'history' ? !showVersionHistory : false);
-    setShowEnvVars(panel === 'envVars' ? !showEnvVars : false);
-    setShowAssets(panel === 'assets' ? !showAssets : false);
-    setShowPackages(panel === 'packages' ? !showPackages : false);
-    setShowDatabase(panel === 'database' ? !showDatabase : false);
-    setShowAuth(panel === 'auth' ? !showAuth : false);
-    setShowKnowledge(panel === 'knowledge' ? !showKnowledge : false);
-    setShowStorage(panel === 'storage' ? !showStorage : false);
-    setShowEdgeFunctions(panel === 'edgeFunctions' ? !showEdgeFunctions : false);
-    setShowActivity(panel === 'activity' ? !showActivity : false);
-    setShowCodeIntel(panel === 'codeIntel' ? !showCodeIntel : false);
-    setShowComponentLib(panel === 'componentLib' ? !showComponentLib : false);
-    setShowTestingSuite(panel === 'testingSuite' ? !showTestingSuite : false);
-    setShowExportGuide(panel === 'exportGuide' ? !showExportGuide : false);
-    setShowHelpCenter(panel === 'helpCenter' ? !showHelpCenter : false);
-    setShowGPTConnector(panel === 'gptConnector' ? !showGPTConnector : false);
-    setShowSetupWizard(panel === 'setupWizard' ? !showSetupWizard : false);
-    setShowSchemaDesigner(panel === 'schemaDesigner' ? !showSchemaDesigner : false);
-    setShowOneClickDeploy(panel === 'oneClickDeploy' ? !showOneClickDeploy : false);
-    setShowDesignSystem(panel === 'designSystem' ? !showDesignSystem : false);
-  };
+  // Close other panels when opening one — uses exclusiveOpen from usePanelManager
+  const openPanel = useCallback((panel: string) => {
+    const keyMap: Record<string, string> = {
+      history: 'showVersionHistory', envVars: 'showEnvVars', assets: 'showAssets',
+      packages: 'showPackages', database: 'showDatabase', auth: 'showAuth',
+      knowledge: 'showKnowledge', storage: 'showStorage', edgeFunctions: 'showEdgeFunctions',
+      activity: 'showActivity', codeIntel: 'showCodeIntel', componentLib: 'showComponentLib',
+      testingSuite: 'showTestingSuite', exportGuide: 'showExportGuide', helpCenter: 'showHelpCenter',
+      gptConnector: 'showGPTConnector', setupWizard: 'showSetupWizard', schemaDesigner: 'showSchemaDesigner',
+      oneClickDeploy: 'showOneClickDeploy', designSystem: 'showDesignSystem',
+    };
+    const key = keyMap[panel] || ('show' + panel.charAt(0).toUpperCase() + panel.slice(1));
+    exclusiveOpen(key, EXCLUSIVE_PANEL_GROUP);
+  }, [exclusiveOpen]);
 
   // Track recent files
   const handleSetActiveFile = useCallback((path: string) => {
@@ -1673,213 +1889,14 @@ export function AIAppBuilderWorkspace() {
     setRecentFiles(prev => [path, ...prev.filter(p => p !== path)].slice(0, 10));
   }, [setActiveFile]);
 
-  // Panel setters map for dynamic dispatch from ToolbarPanelsDropdown & command palette
-  const panelSetters = useMemo((): Record<string, (v: boolean) => void> => ({
-    showSupabaseIDE: (v) => setShowSupabaseIDE(v),
-    showDatabase: (v) => setShowDatabase(v),
-    showDbExplorer: (v) => setShowDbExplorer(v),
-    showSchemaDesigner: (v) => setShowSchemaDesigner(v),
-    showMigrationPanel: (v) => setShowMigrationPanel(v),
-    showAuth: (v) => setShowAuth(v),
-    showEdgeFunctions: (v) => setShowEdgeFunctions(v),
-    showEdgeFnEditor: (v) => setShowEdgeFnEditor(v),
-    showStorage: (v) => setShowStorage(v),
-    showKnowledge: (v) => setShowKnowledge(v),
-    showBuildAnalytics: (v) => setShowBuildAnalytics(v),
-    showPerformanceProfiler: (v) => setShowPerformanceProfiler(v),
-    showDesignSystem: (v) => setShowDesignSystem(v),
-    showComponentLib: (v) => setShowComponentLib(v),
-    showCodeIntel: (v) => setShowCodeIntel(v),
-    showTestingSuite: (v) => setShowTestingSuite(v),
-    showTerminal: (v) => setShowTerminal(v),
-    showSettingsPanel: (v) => setShowSettingsPanel(v),
-    showBilling: (v) => setShowBilling(v),
-    showShareDialog: (v) => setShowShareDialog(v),
-    showActivity: (v) => setShowActivity(v),
-    showSEOEditor: (v) => setShowSEOEditor(v),
-    showDomainPanel: (v) => setShowDomainPanel(v),
-    showDeployPipeline: (v) => setShowDeployPipeline(v),
-    showPublishPanel: (v) => setShowPublishPanel(v),
-    showExportGuide: (v) => setShowExportGuide(v),
-    showHelpCenter: (v) => setShowHelpCenter(v),
-    showGPTConnector: (v) => setShowGPTConnector(v),
-    showSetupWizard: (v) => setShowSetupWizard(v),
-    showOneClickDeploy: (v) => setShowOneClickDeploy(v),
-    showChangelog: (v) => setShowChangelog(v),
-    showMultiSearch: (v) => setShowMultiSearch(v),
-    showTestRunner: (v) => setShowTestRunner(v),
-    showExtensions: (v) => setShowExtensions(v),
-    showCollaboration: (v) => setShowCollaboration(v),
-    showAPIBuilder: (v) => setShowAPIBuilder(v),
-    showGitHubPanel: (v) => setShowGitHubPanel(v),
-    showBuildWorkflow: (v) => setShowBuildWorkflow(v),
-    showDevTools: (v) => setShowDevTools(v),
-    showNPMManager: (v) => setShowNPMManager(v),
-    showImageGen: (v) => setShowImageGen(v),
-    showSymbolSearch: (v) => setShowSymbolSearch(v),
-    showSecretsManager: (v) => setShowSecretsManager(v),
-    showModelSwitcher: (v) => setShowModelSwitcher(v),
-    showPromptChains: (v) => setShowPromptChains(v),
-    showCodeReview: (v) => setShowCodeReview(v),
-    showTestGenerator: (v) => setShowTestGenerator(v),
-    showNLQuery: (v) => setShowNLQuery(v),
-    showSnippetLibrary: (v) => setShowSnippetLibrary(v),
-    showSplitDiff: (v) => setShowSplitDiff(v),
-    showComments: (v) => setShowComments(v),
-    showTeamActivity: (v) => setShowTeamActivity(v),
-    showApprovals: (v) => setShowApprovals(v),
-    showForking: (v) => setShowForking(v),
-    showFigmaImport: (v) => setShowFigmaImport(v),
-    showColorExtractor: (v) => setShowColorExtractor(v),
-    showIconPicker: (v) => setShowIconPicker(v),
-    showBreakpointEditor: (v) => setShowBreakpointEditor(v),
-    showAnimationBuilder: (v) => setShowAnimationBuilder(v),
-    showVisualSchema: (v) => setShowVisualSchema(v),
-    showSeedData: (v) => setShowSeedData(v),
-    showAPITester: (v) => setShowAPITester(v),
-    showWebhookBuilder: (v) => setShowWebhookBuilder(v),
-    showCronScheduler: (v) => setShowCronScheduler(v),
-    showEnvManager: (v) => setShowEnvManager(v),
-    showRollback: (v) => setShowRollback(v),
-    showUptimeMonitor: (v) => setShowUptimeMonitor(v),
-    showBuildCache: (v) => setShowBuildCache(v),
-    showBuildScripts: (v) => setShowBuildScripts(v),
-    showCMSMode: (v) => setShowCMSMode(v),
-    showBlogEngine: (v) => setShowBlogEngine(v),
-    showImageOptimizer: (v) => setShowImageOptimizer(v),
-    showVideoEmbed: (v) => setShowVideoEmbed(v),
-    showI18n: (v) => setShowI18n(v),
-    showAnalyticsDashboard: (v) => setShowAnalyticsDashboard(v),
-    showErrorTracking: (v) => setShowErrorTracking(v),
-    showSessionReplay: (v) => setShowSessionReplay(v),
-    showABTesting: (v) => setShowABTesting(v),
-    showAIUsage: (v) => setShowAIUsage(v),
-    showDepScanner: (v) => setShowDepScanner(v),
-    showCSPGenerator: (v) => setShowCSPGenerator(v),
-    showGDPR: (v) => setShowGDPR(v),
-    showRateLimiter: (v) => setShowRateLimiter(v),
-    showSecretRotation: (v) => setShowSecretRotation(v),
-    showCLICompanion: (v) => setShowCLICompanion(v),
-    showGHActions: (v) => setShowGHActions(v),
-    showSlackDiscord: (v) => setShowSlackDiscord(v),
-    showWhiteLabel: (v) => setShowWhiteLabel(v),
-    showPluginSDK: (v) => setShowPluginSDK(v),
-    showRefactoring: (v) => setShowRefactoring(v),
-    showNLRegex: (v) => setShowNLRegex(v),
-    showCommitMsg: (v) => setShowCommitMsg(v),
-    showAutoImport: (v) => setShowAutoImport(v),
-    showDocWriter: (v) => setShowDocWriter(v),
-    showCoEditing: (v) => setShowCoEditing(v),
-    showVoiceChat: (v) => setShowVoiceChat(v),
-    showScreenShare: (v) => setShowScreenShare(v),
-    showCodeReactions: (v) => setShowCodeReactions(v),
-    showWhiteboard: (v) => setShowWhiteboard(v),
-    showVisualRegression: (v) => setShowVisualRegression(v),
-    showA11yScore: (v) => setShowA11yScore(v),
-    showCoverage: (v) => setShowCoverage(v),
-    showMutationTest: (v) => setShowMutationTest(v),
-    showLoadTest: (v) => setShowLoadTest(v),
-    showPageBuilder: (v) => setShowPageBuilder(v),
-    showThemeStudio: (v) => setShowThemeStudio(v),
-    showFormBuilder: (v) => setShowFormBuilder(v),
-    showChartDashboard: (v) => setShowChartDashboard(v),
-    showLayoutGrid: (v) => setShowLayoutGrid(v),
-    showGraphQL: (v) => setShowGraphQL(v),
-    showWSManager: (v) => setShowWSManager(v),
-    showFileUpload: (v) => setShowFileUpload(v),
-    showPayments: (v) => setShowPayments(v),
-    showEmailTemplates: (v) => setShowEmailTemplates(v),
-    showTutorialCreator: (v) => setShowTutorialCreator(v),
-    showCodePlayground: (v) => setShowCodePlayground(v),
-    showCustomLinting: (v) => setShowCustomLinting(v),
-    showDepGraph: (v) => setShowDepGraph(v),
-    showGitBlame: (v) => setShowGitBlame(v),
-    showMultiRegion: (v) => setShowMultiRegion(v),
-    showFeatureFlags: (v) => setShowFeatureFlags(v),
-    showCanaryDeploy: (v) => setShowCanaryDeploy(v),
-    showSSG: (v) => setShowSSG(v),
-    showDockerExport: (v) => setShowDockerExport(v),
-    showSubscriptions: (v) => setShowSubscriptions(v),
-    showInvoices: (v) => setShowInvoices(v),
-    showUsageMetering: (v) => setShowUsageMetering(v),
-    showAffiliates: (v) => setShowAffiliates(v),
-    showRevenue: (v) => setShowRevenue(v),
-    showCapacitor: (v) => setShowCapacitor(v),
-    showPushNotifications: (v) => setShowPushNotifications(v),
-    showOfflineFirst: (v) => setShowOfflineFirst(v),
-    showGestureBuilder: (v) => setShowGestureBuilder(v),
-    showAppStoreAssets: (v) => setShowAppStoreAssets(v),
-    showCodeTranslator: (v) => setShowCodeTranslator(v),
-    showSmartScaffold: (v) => setShowSmartScaffold(v),
-    showWorkflowAutomation: (v) => setShowWorkflowAutomation(v),
-    showPerfOptimizer: (v) => setShowPerfOptimizer(v),
-    showSecurityAuditor: (v) => setShowSecurityAuditor(v),
-    showStateMachine: (v) => setShowStateMachine(v),
-    showDataValidation: (v) => setShowDataValidation(v),
-    showCacheStrategy: (v) => setShowCacheStrategy(v),
-    showReactiveStore: (v) => setShowReactiveStore(v),
-    showDataMigration: (v) => setShowDataMigration(v),
-    showRegexPlayground: (v) => setShowRegexPlayground(v),
-    showJsonYamlConverter: (v) => setShowJsonYamlConverter(v),
-    showColorContrast: (v) => setShowColorContrast(v),
-    showTailwindSorter: (v) => setShowTailwindSorter(v),
-    showMarkdownPreview: (v) => setShowMarkdownPreview(v),
-    showToastDesigner: (v) => setShowToastDesigner(v),
-    showNotifCenter: (v) => setShowNotifCenter(v),
-    showChatWidget: (v) => setShowChatWidget(v),
-    showEmailSequence: (v) => setShowEmailSequence(v),
-    showSMSTemplate: (v) => setShowSMSTemplate(v),
-    showStepperWizard: (v) => setShowStepperWizard(v),
-    showCommandMenuBuilder: (v) => setShowCommandMenuBuilder(v),
-    showBreadcrumbGen: (v) => setShowBreadcrumbGen(v),
-    showMegaMenu: (v) => setShowMegaMenu(v),
-    showContextMenu: (v) => setShowContextMenu(v),
-    showDockerCompose: (v) => setShowDockerCompose(v),
-    showK8s: (v) => setShowK8s(v),
-    showCICDPipeline: (v) => setShowCICDPipeline(v),
-    showStructuredLogger: (v) => setShowStructuredLogger(v),
-    showHealthCheck: (v) => setShowHealthCheck(v),
-    showOAuthSetup: (v) => setShowOAuthSetup(v),
-    showMFAFlow: (v) => setShowMFAFlow(v),
-    showSessionMgr: (v) => setShowSessionMgr(v),
-    showAPIKeyMgmt: (v) => setShowAPIKeyMgmt(v),
-    showPermMatrix: (v) => setShowPermMatrix(v),
-    showRichTextConfig: (v) => setShowRichTextConfig(v),
-    showFilePreviewGen: (v) => setShowFilePreviewGen(v),
-    showAvatarGen: (v) => setShowAvatarGen(v),
-    showCarouselBuilder: (v) => setShowCarouselBuilder(v),
-    showGalleryLightbox: (v) => setShowGalleryLightbox(v),
-    showFTS: (v) => setShowFTS(v),
-    showFacetedFilter: (v) => setShowFacetedFilter(v),
-    showAutocomplete: (v) => setShowAutocomplete(v),
-    showTagSystem: (v) => setShowTagSystem(v),
-    showSEOMeta: (v) => setShowSEOMeta(v),
-    showKPIDashboard: (v) => setShowKPIDashboard(v),
-    showAlertingRules: (v) => setShowAlertingRules(v),
-    showAuditTrail: (v) => setShowAuditTrail(v),
-    showClickHeatmap: (v) => setShowClickHeatmap(v),
-    showBudgetMonitor: (v) => setShowBudgetMonitor(v),
-    showChangelogAuto: (v) => setShowChangelogAuto(v),
-    showREADMEGen: (v) => setShowREADMEGen(v),
-    showLicensePicker: (v) => setShowLicensePicker(v),
-    showOpenAPISpec: (v) => setShowOpenAPISpec(v),
-    showProjectHealth: (v) => setShowProjectHealth(v),
-    // Inline panels (not already in the map above)
-    showPromptHistory: (v) => setShowPromptHistory(v),
-    showVersionHistory: (v) => setShowVersionHistory(v),
-    showRLSTester: (v) => setShowRLSTester(v),
-    showFileSearch: (v) => setShowFileSearch(v),
-    showFileTree: (v) => setShowFileTree(v),
-    showConsole: (v) => setShowConsole(v),
-    showAssets: (v) => setShowAssets(v),
-    showPackages: (v) => setShowPackages(v),
-    showEnvVars: (v) => setShowEnvVars(v),
-    showTemplates: (v) => setShowTemplates(v),
-    showEditHistory: (v) => setShowEditHistory(v),
-    showShortcuts: (v) => setShowShortcuts(v),
-    showDiffReview: (v) => setShowDiffReview(v),
-    showQuickSwitcher: (v) => setShowQuickSwitcher(v),
-  }), []);
+  // Panel setters map — auto-generated from PANEL_KEYS
+  const panelSetters = useMemo((): Record<string, (v: boolean) => void> => {
+    const map: Record<string, (v: boolean) => void> = {};
+    for (const key of PANEL_KEYS) {
+      map[key] = (v: boolean) => v ? openP(key) : closeP(key);
+    }
+    return map;
+  }, [openP, closeP]);
 
   // Open any panel by stateKey
   const openPanelByKey = useCallback((stateKey: string) => {
