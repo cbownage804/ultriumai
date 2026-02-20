@@ -603,13 +603,17 @@ export function BuilderChatPanel({
   const renderAssistantMessage = (msg: BuilderMessage, isLast: boolean) => {
     const isStreaming = isGenerating && isLast;
 
-    // During streaming, skip expensive getDisplayContent entirely — just extract file names cheaply
-    if (isStreaming) {
-      const fileNames: string[] = [];
-      for (const match of msg.content.matchAll(/^===FILE:\s*(.+?)===$/gm)) {
-        fileNames.push(match[1].trim());
-      }
-      const planSteps = msg.planSteps || extractPlanSteps(msg.content, true, false);
+     // During streaming, skip expensive getDisplayContent entirely — just extract file names cheaply
+     if (isStreaming) {
+       const fileNames: string[] = [];
+       // Only scan first 5KB for file names to avoid CPU spikes on large content
+       const scanContent = msg.content.length > 5000 ? msg.content.slice(0, 5000) : msg.content;
+       for (const match of scanContent.matchAll(/^===FILE:\s*(.+?)===$/gm)) {
+         fileNames.push(match[1].trim());
+       }
+       // Only extract plan steps from first 3KB to avoid regex backtracking on large content
+       const planContent = msg.content.length > 3000 ? msg.content.slice(0, 3000) : msg.content;
+       const planSteps = msg.planSteps || extractPlanSteps(planContent, true, false);
       return (
         <div className="space-y-3">
           <button

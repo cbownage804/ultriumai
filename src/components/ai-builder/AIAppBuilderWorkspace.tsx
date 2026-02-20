@@ -1681,13 +1681,13 @@ export function AIAppBuilderWorkspace() {
     prevIsGeneratingForReset.current = isGenerating;
   }, [isGenerating]);
 
-  // Timer-based compilation: poll partialFilesRef every 3s during generation
-  // instead of running the expensive compiler synchronously on every state change
-  useEffect(() => {
-    if (!isGenerating) return;
-    let compiled = false;
-    const interval = setInterval(() => {
-      if (compiled) return;
+   // Timer-based compilation: poll partialFilesRef every 5s during generation
+   // instead of running the expensive compiler synchronously on every state change
+   useEffect(() => {
+     if (!isGenerating) return;
+     let attempted = false;
+     const interval = setInterval(() => {
+       if (attempted) return;
       const pFiles = partialFilesRef.current;
       const pCount = completedFileCountRef.current;
       if (pCount < 3 || pFiles.length === 0) return;
@@ -1702,13 +1702,14 @@ export function AIAppBuilderWorkspace() {
               stripeConfig: stripeConfig || undefined,
               envVars,
             });
-            if (result.html) {
-              setStableHTML(result.html);
-              compiled = true;
-            }
-          } catch (compileErr) {
-            console.warn('[Preview] React compilation crashed on partial files:', compileErr);
-          }
+             if (result.html) {
+               setStableHTML(result.html);
+             }
+             attempted = true;
+           } catch (compileErr) {
+             console.warn('[Preview] React compilation crashed on partial files:', compileErr);
+             attempted = true;
+           }
         } else {
           // Issue 3 fix: For vanilla projects, compile from partialFilesRef
           // since project.files is empty during initial generation
@@ -1728,14 +1729,15 @@ export function AIAppBuilderWorkspace() {
               const jsInline = jsFiles.map(f => `<script>/* ${f.path} */\n${f.content}</script>`).join('\n');
               html = html.replace('</body>', `${jsInline}\n</body>`);
             }
-            setStableHTML(html);
-            compiled = true;
-          }
-        }
-      } catch (e) {
-        console.warn('[Preview] Timer-based compilation failed:', e);
-      }
-    }, 3000);
+             setStableHTML(html);
+             attempted = true;
+           }
+         }
+       } catch (e) {
+         console.warn('[Preview] Timer-based compilation failed:', e);
+         attempted = true;
+       }
+     }, 5000);
     return () => clearInterval(interval);
   }, [isGenerating, partialFilesRef, completedFileCountRef, compileReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, getCompiledHTML]);
 

@@ -42,10 +42,10 @@ export function StreamingCodeEditor({
       onStreamingFileChange?.(null);
       return;
     }
-    const interval = setInterval(() => {
-      const files = partialFilesRef.current;
-      setEditorStreamFiles(prev => prev !== files ? files : prev);
-    }, 400);
+     const interval = setInterval(() => {
+       const files = partialFilesRef.current;
+       setEditorStreamFiles(prev => prev !== files ? files : prev);
+     }, 1200);
     return () => clearInterval(interval);
   }, [isStreamingPreview, partialFilesRef, onStreamingFileChange]);
 
