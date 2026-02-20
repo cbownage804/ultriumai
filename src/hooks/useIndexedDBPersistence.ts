@@ -71,7 +71,6 @@ export function useIndexedDBPersistence() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedHash = useRef<string>('');
 
-  // Quick hash for change detection
   const hashState = useCallback((files: ProjectFile[], messages: any[]): string => {
     let h = 0;
     for (const f of files) {
@@ -82,7 +81,6 @@ export function useIndexedDBPersistence() {
     return h.toString(36);
   }, []);
 
-  // Save to IndexedDB with debounce
   const saveToIDB = useCallback((projectId: string, name: string, files: ProjectFile[], messages: any[]) => {
     if (files.length === 0 && messages.length === 0) return;
 
@@ -111,8 +109,8 @@ export function useIndexedDBPersistence() {
     }, SAVE_DEBOUNCE_MS);
   }, [hashState]);
 
-  // Check for recoverable session on mount
-  const checkRecovery = useCallback(async (): Promise<RecoverableSession | null> => {
+  /** Phase 82: Compare timestamps — only offer recovery if IDB is more recent than cloud data */
+  const checkRecovery = useCallback(async (cloudTimestamp?: string): Promise<RecoverableSession | null> => {
     try {
       const sessionMeta = await idbGet<{ projectId: string; name: string; savedAt: string }>(META_STORE, SESSION_KEY);
       if (!sessionMeta?.projectId) return null;
@@ -121,6 +119,16 @@ export function useIndexedDBPersistence() {
       const messages = await idbGet<any[]>(MESSAGES_STORE, sessionMeta.projectId);
 
       if ((!files || files.length === 0) && (!messages || messages.length === 0)) return null;
+
+      // Phase 82: If cloud data is more recent, skip recovery
+      if (cloudTimestamp && sessionMeta.savedAt) {
+        const idbTime = new Date(sessionMeta.savedAt).getTime();
+        const cloudTime = new Date(cloudTimestamp).getTime();
+        if (cloudTime >= idbTime) {
+          // Cloud is newer or same — don't offer recovery
+          return null;
+        }
+      }
 
       const session: RecoverableSession = {
         projectId: sessionMeta.projectId,
@@ -137,7 +145,6 @@ export function useIndexedDBPersistence() {
     }
   }, []);
 
-  // Clear session data
   const clearSession = useCallback(async (projectId?: string) => {
     try {
       const id = projectId || (await idbGet<{ projectId: string }>(META_STORE, SESSION_KEY))?.projectId;
@@ -154,7 +161,6 @@ export function useIndexedDBPersistence() {
     } catch { /* ignore */ }
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);

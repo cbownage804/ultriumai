@@ -26,7 +26,6 @@ export interface DeploymentRecord {
   fileCount: number;
   totalSizeKB: number;
   duration?: number;
-  /** Stored compiled HTML for rollback */
   compiledHtml?: string;
 }
 
@@ -42,14 +41,16 @@ function loadDeployHistory(projectId: string): DeploymentRecord[] {
 
 function persistDeployHistory(projectId: string, history: DeploymentRecord[]) {
   try {
-    // Only keep last 20 deployments, omit compiledHtml for older ones to save space
     const toSave = history.slice(0, 20).map((d, i) => ({
       ...d,
-      compiledHtml: i < 3 ? d.compiledHtml : undefined, // Keep HTML for 3 most recent only
+      compiledHtml: i < 3 ? d.compiledHtml : undefined,
     }));
     localStorage.setItem(`${DEPLOY_HISTORY_KEY}-${projectId}`, JSON.stringify(toSave));
   } catch { /* ignore */ }
 }
+
+/** Phase 87: BroadcastChannel for multi-tab conflict detection */
+const CHANNEL_NAME = 'ai-builder-sync';
 
 export function useProjectPersistence() {
   const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
@@ -58,7 +59,33 @@ export function useProjectPersistence() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [deployHistory, setDeployHistory] = useState<DeploymentRecord[]>([]);
+  const [tabConflict, setTabConflict] = useState(false);
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
+  const channelRef = useRef<BroadcastChannel | null>(null);
+  const hasUnsavedRef = useRef(false);
+
+  // Phase 87: Set up BroadcastChannel for multi-tab sync
+  useEffect(() => {
+    try {
+      channelRef.current = new BroadcastChannel(CHANNEL_NAME);
+      channelRef.current.onmessage = (e) => {
+        if (e.data?.type === 'project-saved' && e.data.projectId === currentProjectId) {
+          if (hasUnsavedRef.current) {
+            setTabConflict(true);
+            toast.warning('Project modified in another tab — reload to see latest changes', { duration: 8000 });
+          } else {
+            // No local changes, silently accept
+            setLastSaved(new Date(e.data.savedAt));
+          }
+        }
+      };
+    } catch {
+      // BroadcastChannel not supported
+    }
+    return () => {
+      channelRef.current?.close();
+    };
+  }, [currentProjectId]);
 
   // Load deploy history when project changes
   useEffect(() => {
@@ -69,7 +96,6 @@ export function useProjectPersistence() {
     }
   }, [currentProjectId]);
 
-  // Persist deploy history on change
   useEffect(() => {
     if (currentProjectId && deployHistory.length > 0) {
       persistDeployHistory(currentProjectId, deployHistory);
@@ -136,6 +162,13 @@ export function useProjectPersistence() {
           .eq('id', currentProjectId);
         if (error) throw error;
         setLastSaved(new Date());
+        hasUnsavedRef.current = false;
+        // Phase 87: Notify other tabs
+        channelRef.current?.postMessage({
+          type: 'project-saved',
+          projectId: currentProjectId,
+          savedAt: new Date().toISOString(),
+        });
         return currentProjectId;
       } else {
         const { data, error } = await supabase
@@ -146,6 +179,7 @@ export function useProjectPersistence() {
         if (error) throw error;
         setCurrentProjectId(data.id);
         setLastSaved(new Date());
+        hasUnsavedRef.current = false;
         return data.id;
       }
     } catch (err) {
@@ -169,6 +203,7 @@ export function useProjectPersistence() {
       if (error) throw error;
       setCurrentProjectId(projectId);
       setLastSaved(new Date(data.updated_at));
+      setTabConflict(false);
       return data as unknown as SavedProject;
     } catch (err) {
       console.error('Load failed:', err);
@@ -250,7 +285,6 @@ export function useProjectPersistence() {
       const publishedUrl = urlData.publicUrl;
       const duration = Date.now() - startTime;
 
-      // Update project record
       if (currentProjectId) {
         await supabase
           .from('builder_projects')
@@ -258,7 +292,6 @@ export function useProjectPersistence() {
           .eq('id', currentProjectId);
       }
 
-      // Record versioned deployment
       const newVersion = (deployHistory[0]?.version || 0) + 1;
       const sizeKB = Math.round(new Blob([compiledHtml]).size / 1024);
 
@@ -280,7 +313,6 @@ export function useProjectPersistence() {
     } catch (err) {
       console.error('Publish failed:', err);
 
-      // Record failed deployment
       const newVersion = (deployHistory[0]?.version || 0) + 1;
       const failedDeploy: DeploymentRecord = {
         id: crypto.randomUUID(),
@@ -298,9 +330,6 @@ export function useProjectPersistence() {
     }
   }, [currentProjectId, deployHistory]);
 
-  /**
-   * Rollback to a previous versioned deployment by re-uploading its compiled HTML.
-   */
   const rollbackToVersion = useCallback(async (
     name: string,
     deploymentId: string,
@@ -319,8 +348,13 @@ export function useProjectPersistence() {
     return result;
   }, [deployHistory, publishProject]);
 
-  // Auto-save setup
+  // Track unsaved state for multi-tab conflict detection
+  const markUnsaved = useCallback(() => {
+    hasUnsavedRef.current = true;
+  }, []);
+
   const scheduleAutoSave = useCallback((name: string, files: ProjectFile[], chatMessages?: any[], extraSettings?: Record<string, any>) => {
+    hasUnsavedRef.current = true;
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(() => {
       if (files.length > 0) {
@@ -342,6 +376,7 @@ export function useProjectPersistence() {
     isLoading,
     lastSaved,
     deployHistory,
+    tabConflict,
     loadProjects,
     saveProject,
     loadProject,
@@ -350,5 +385,6 @@ export function useProjectPersistence() {
     rollbackToVersion,
     scheduleAutoSave,
     setCurrentProjectId,
+    markUnsaved,
   };
 }

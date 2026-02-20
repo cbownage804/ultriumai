@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { AlertTriangle, X, ChevronDown, ChevronUp, Zap, Bug, RotateCcw, Copy, Check, Lightbulb, RefreshCw } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { AlertTriangle, X, ChevronDown, ChevronUp, Zap, Bug, RotateCcw, Copy, Check, Lightbulb, RefreshCw, Search, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
@@ -18,17 +18,14 @@ interface ErrorConsoleProps {
   errors: PreviewError[];
   onClear: () => void;
   onFixRequest: (error: PreviewError) => void;
-  /** Enhanced: auto-fix with full context */
   onSmartFixRequest?: (error: PreviewError, context: string) => void;
   projectFiles?: ProjectFile[];
   maxRetries?: number;
-  /** Called when user wants to start fresh */
   onStartOver?: () => void;
 }
 
 const MAX_FIX_RETRIES = 3;
 
-/** Map common error patterns to user-friendly explanations */
 function getFriendlyMessage(message: string): { friendly: string; suggestion: string } | null {
   const patterns: [RegExp, string, string][] = [
     [/is not defined/i, 'A variable or function is missing', 'The AI will add the missing definition. Click Smart Fix.'],
@@ -50,15 +47,40 @@ function getFriendlyMessage(message: string): { friendly: string; suggestion: st
   return null;
 }
 
+/** Phase 93: Format relative timestamps */
+function timeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 5) return 'just now';
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  return `${Math.floor(minutes / 60)}h ago`;
+}
+
 export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest, projectFiles, maxRetries = MAX_FIX_RETRIES, onStartOver }: ErrorConsoleProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  // Phase 93: Search and severity filter
+  const [searchQuery, setSearchQuery] = useState('');
+  const [severityFilter, setSeverityFilter] = useState<'all' | 'error' | 'warning'>('all');
 
   if (errors.length === 0) return null;
 
   const errorCount = errors.filter(e => e.type === 'error').length;
   const warnCount = errors.filter(e => e.type === 'warning').length;
   const allExhausted = errors.every(e => (e.fixAttempts ?? 0) >= maxRetries);
+
+  // Phase 93: Filter errors by search and severity
+  const filteredErrors = useMemo(() => {
+    return errors.filter(e => {
+      if (severityFilter !== 'all' && e.type !== severityFilter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return e.message.toLowerCase().includes(q) || (e.source?.toLowerCase().includes(q) ?? false);
+      }
+      return true;
+    });
+  }, [errors, searchQuery, severityFilter]);
 
   const handleSmartFix = (err: PreviewError) => {
     if ((err.fixAttempts ?? 0) >= maxRetries) return;
@@ -106,6 +128,13 @@ export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest,
             {errorCount > 0 && warnCount > 0 && ' · '}
             {warnCount > 0 && `${warnCount} warning${warnCount > 1 ? 's' : ''}`}
           </span>
+          {/* Phase 93: Severity badges */}
+          {errorCount > 0 && (
+            <span className="text-[9px] px-1 py-0.5 rounded bg-red-500/15 text-red-400/80 font-mono">{errorCount}</span>
+          )}
+          {warnCount > 0 && (
+            <span className="text-[9px] px-1 py-0.5 rounded bg-amber-500/15 text-amber-400/80 font-mono">{warnCount}</span>
+          )}
           {allExhausted && errorCount > 0 && (
             <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400/70 font-medium">
               Auto-fix limit reached
@@ -131,9 +160,43 @@ export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest,
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="max-h-40 overflow-auto"
+          className="max-h-48 overflow-auto"
         >
-          {errors.map((err, idx) => {
+          {/* Phase 93: Filter bar */}
+          <div className="flex items-center gap-2 px-3 py-1.5 border-b border-red-500/10">
+            <div className="flex items-center gap-1 bg-white/[0.03] border border-white/[0.06] rounded-md px-2 h-5 flex-1">
+              <Search className="h-2.5 w-2.5 text-white/20 shrink-0" />
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Filter errors..."
+                className="flex-1 bg-transparent text-[10px] text-white/60 placeholder:text-white/15 outline-none"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="text-white/20 hover:text-white/50">
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-0.5">
+              {(['all', 'error', 'warning'] as const).map(sev => (
+                <button
+                  key={sev}
+                  onClick={(e) => { e.stopPropagation(); setSeverityFilter(sev); }}
+                  className={cn(
+                    "text-[9px] px-1.5 py-0.5 rounded transition-colors",
+                    severityFilter === sev
+                      ? sev === 'error' ? 'bg-red-500/20 text-red-300' : sev === 'warning' ? 'bg-amber-500/20 text-amber-300' : 'bg-white/10 text-white/60'
+                      : 'text-white/25 hover:text-white/50 hover:bg-white/5'
+                  )}
+                >
+                  {sev === 'all' ? 'All' : sev === 'error' ? 'Errors' : 'Warnings'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {filteredErrors.map((err, idx) => {
             const attemptsExhausted = (err.fixAttempts ?? 0) >= maxRetries;
             const hint = getFriendlyMessage(err.message);
             return (
@@ -152,7 +215,6 @@ export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest,
                   err.type === 'error' ? 'text-red-400' : 'text-amber-400'
                 )} />
                 <div className="flex-1 min-w-0">
-                  {/* Friendly message if available */}
                   {hint && (
                     <p className="text-[11px] text-white/60 mb-0.5 flex items-center gap-1">
                       <Lightbulb className="h-2.5 w-2.5 text-amber-400/60 shrink-0" />
@@ -160,12 +222,15 @@ export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest,
                     </p>
                   )}
                   <p className="text-[11px] text-white/40 font-mono truncate">{err.message}</p>
-                  {err.source && (
-                    <p className="text-[9px] text-white/25 font-mono">
-                      {err.source}{err.line ? `:${err.line}` : ''}
-                    </p>
-                  )}
-                  {/* Suggestion */}
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {err.source && (
+                      <p className="text-[9px] text-white/25 font-mono">
+                        {err.source}{err.line ? `:${err.line}` : ''}
+                      </p>
+                    )}
+                    {/* Phase 93: Relative timestamp */}
+                    <span className="text-[9px] text-white/15">{timeAgo(err.timestamp)}</span>
+                  </div>
                   {hint && !attemptsExhausted && (
                     <p className="text-[9px] text-cyan-400/50 mt-0.5">{hint.suggestion}</p>
                   )}
