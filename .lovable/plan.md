@@ -1,86 +1,82 @@
 
 
-# Fix: Browser Freeze During Generation + Chat Content Leaking
+# Fix: Persistent React Error #310 -- Protect ALL File-Processing useMemo Calls
 
 ## Problem
 
-Two issues visible in the screenshots:
-
-1. **Firefox shows "This page is slowing down Firefox"** -- the browser CPU is saturated during generation, causing the entire page to become unresponsive around 29 seconds.
-
-2. **Chat shows leaked content** -- "Working on tasks...", "Primary", "Background", "Accent", "Typography", "Design Tokens:", "Writing 1 file..." all appear in the chat when they should be hidden.
+Error #310 ("Rendered fewer hooks than expected") keeps crashing the App Builder after generation completes. The previous fix only wrapped `liveCompiledHTML` in try/catch, but there are **three more useMemo calls** that also process `project.files` and can throw uncaught exceptions during render. When any one of them throws, React stops executing hooks mid-render, detects a hook count mismatch, and crashes the entire component.
 
 ## Root Cause
 
-### Browser Freeze
+When generation completes, `project.files` updates, which triggers re-evaluation of every `useMemo` that depends on it. These three are unprotected:
 
-The `BuilderChatPanel` polls `streamingContentRef` every **300ms** and sets `localStreamContent` state. This triggers `displayMessages` to recalculate, which calls `getDisplayContent()` on the streaming message. That function:
+1. **`compiledForHosting`** (line 1058) -- calls `getCompiledHTML()` which can throw on malformed files
+2. **`isReactProject`** (line 1650) -- calls `detectReactProject()` which scans files
+3. **`bundleForBrowser`** (line 304) -- calls `astBundler.buildDependencyGraph()` and `incrementalCompiler.compileIncremental()` which can throw on invalid imports/syntax
 
-1. Splits the **entire streaming content** (50-100KB of source code) into lines
-2. Runs line-by-line pattern matching with 8 regex patterns per line
-3. Then applies **25+ regex replacements** on the result, many using `[\s\S]*` which causes catastrophic backtracking on large strings
-4. Then `extractPlanSteps` runs 3 more regex scans with `matchAll`
-5. Then `renderAssistantMessage` processes the result through ReactMarkdown
+Any one of these throwing = Error #310.
 
-This happens **every 300ms** for the duration of generation. At 30 seconds, the content is large enough to saturate the CPU.
+## Fix (1 file, 3 changes)
 
-### Chat Content Leaking
+**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
 
-The `insideFile` detector in `getDisplayContent` uses heuristic "conversational patterns" to decide when a line exits a file block. Lines like blank lines inside code are skipped, and items like "Design Tokens:" or "Primary" don't match any conversational pattern, so they remain in the "inside file" state. But blank lines (`continue`) cause them to accumulate silently. The stripping regexes at lines 228-236 only catch some patterns.
-
-## Fix (2 changes, 1 file)
-
-### Change 1: Skip expensive content processing during streaming
-
-During active streaming, the chat panel should show a **minimal static UI** (the task breakdown card + file progress) instead of running `getDisplayContent` on the full streaming content. The streaming content is only needed for extracting file names (for the progress card), not for displaying prose.
-
-**File**: `src/components/ai-builder/BuilderChatPanel.tsx`
-
-In `renderAssistantMessage`, when `isStreaming` is true, skip `getDisplayContent` entirely and instead:
-- Extract file names cheaply with a single `matchAll` on the `===FILE:` pattern
-- Show only the task breakdown card and file progress
-- Do NOT process or display the prose text during streaming
-
-This eliminates the 300ms CPU spike completely.
-
-### Change 2: Reduce streaming content polling to 800ms and add size guard
-
-**File**: `src/components/ai-builder/BuilderChatPanel.tsx`
-
-Change the `streamingContentRef` polling interval from 300ms to 800ms, and skip setting state if content exceeds 20KB (the chat display doesn't need to process megabytes of code).
+### Change 1: Wrap `compiledForHosting` in try/catch
 
 ```typescript
-// Lines 343-347: Change interval and add size guard
-const interval = setInterval(() => {
-  const current = streamingContentRef.current;
-  // Skip updates for very large content -- only file names matter during streaming
-  if (current.length > 20_000) return;
-  setLocalStreamContent(prev => current !== prev ? current : prev);
-}, 800);
+const compiledForHosting = useMemo(
+  () => {
+    try {
+      if (isGenerating) return null;
+      return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+    } catch (e) {
+      console.error('[compiledForHosting] Compilation crashed:', e);
+      return null;
+    }
+  },
+  [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, isGenerating]
+);
 ```
 
-### Change 3: Improve content stripping for non-streaming messages
-
-After generation completes, the final message still needs `getDisplayContent`. Add these additional strip patterns to catch the remaining leaked content:
+### Change 2: Wrap `isReactProject` in try/catch
 
 ```typescript
-// Add to the regex chain:
-.replace(/^(?:Thinking\.{0,3})\s*$/gm, '')
-.replace(/^\*{0,2}Design Tokens?:?\*{0,2}\s*$/gm, '')
-.replace(/^[-•*]?\s*(?:Primary|Secondary|Background|Accent|Foreground|Muted|Border|Ring)\s*$/gm, '')
-.replace(/^Loading preview\.{0,3}\s*$/gm, '')
+const isReactProject = useMemo(() => {
+  try {
+    return detectReactProject(project.files);
+  } catch (e) {
+    console.error('[detectReactProject] crashed:', e);
+    return false;
+  }
+}, [project.files]);
 ```
 
-## Technical Summary
+### Change 3: Wrap `bundleForBrowser` in try/catch
 
-| Issue | Cause | Fix |
-|-------|-------|-----|
-| Browser freeze | `getDisplayContent` runs 25+ regexes on 50-100KB content every 300ms | Skip prose processing during streaming; reduce poll rate |
-| Chat leaking | Strip patterns don't cover all AI planning terms | Add missing strip patterns for design tokens, color names |
-| "Slowing down Firefox" | Catastrophic regex backtracking on large `[\s\S]*` patterns | Size guard prevents processing content > 20KB |
+```typescript
+const bundleForBrowser = useCallback((files: ProjectFile[]) => {
+  try {
+    const result = incrementalCompiler.compileIncremental(
+      files,
+      (file) => {
+        const graph = astBundler.buildDependencyGraph([file]);
+        const node = graph.get(file.path);
+        if (!node) return file.content;
+        return `/* ... */\n(function() {\n"use strict";\n${astBundler.stripModuleSyntax(file.content, node)}\n})();`;
+      },
+      (f) => astBundler.topologicalSort(astBundler.buildDependencyGraph(f)).filter(p => f.some(file => file.path === p)),
+    );
+    return result.output;
+  } catch (e) {
+    console.error('[bundleForBrowser] Bundling crashed:', e);
+    return '';
+  }
+}, [astBundler, incrementalCompiler]);
+```
 
-## Expected Result
+## Why This Fixes It
 
-- No more browser freezing during generation
-- Chat shows only the task breakdown card and file progress during streaming
-- After generation, the final message displays clean conversational text without leaked planning content
+With all four file-processing computations protected by try/catch (`liveCompiledHTML` + these three), no render-time exception can escape and disrupt React's hook execution order. The component will always complete its full render cycle with all ~60 hooks called, preventing Error #310.
+
+## Risk
+
+Very low. Each fallback value (`null`, `false`, `''`) is already handled by downstream consumers. The preview will show "Compilation Error" fallback if compilation fails, which is far better than crashing the entire App Builder.
