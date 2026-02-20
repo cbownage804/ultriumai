@@ -32,12 +32,12 @@ import type { ActivityEntry } from './ActivityFeed';
 import type { ChangelogEntry } from './ChangelogPanel';
 import type { CommandAction } from './EnhancedCommandPalette';
 import { useProjectBundler } from '@/hooks/useProjectBundler';
-import { useReactCompiler, detectReactProject } from '@/hooks/useReactCompiler';
+import { CompilationBridge } from './CompilationBridge';
 import { useASTBundler } from '@/hooks/useASTBundler';
 import { useIncrementalCompiler } from '@/hooks/useIncrementalCompiler';
 import { useTypeScriptValidator } from '@/hooks/useTypeScriptValidator';
 import { useConflictResolver } from '@/hooks/useConflictResolver';
-import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
+// useLivePreviewSync moved to CompilationBridge
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -319,7 +319,6 @@ export function AIAppBuilderWorkspace() {
       return '';
     }
   }, [astBundler, incrementalCompiler]);
-  const liveSync = useLivePreviewSync();
   const [remoteCursors, setRemoteCursors] = useState<RemoteCursor[]>([]);
   const channelRef = useRef<any>(null);
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
@@ -1058,26 +1057,13 @@ export function AIAppBuilderWorkspace() {
     }
   }, [isNewProject]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-upload preview to Supabase Storage for live hosting
-  // Issue 12 fix: Skip redundant compilation during generation
-  const compiledForHosting = useMemo(
-    () => {
-      try {
-        if (isGenerating) return null;
-        return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
-      } catch (e) {
-        console.error('[compiledForHosting] Compilation crashed:', e);
-        return null;
-      }
-    },
-    [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, isGenerating]
-  );
-  useEffect(() => {
-    if (previewSlug && compiledForHosting) {
-      uploadPreview(previewSlug, compiledForHosting);
-    }
-    return () => clearPreviewTimer();
-  }, [compiledForHosting, previewSlug, uploadPreview, clearPreviewTimer]);
+   // compiledForHosting is now managed by CompilationBridge
+   const [compiledForHosting, setCompiledForHostingState] = useState<string | null>(null);
+   const compiledForHostingRef = useRef<string | null>(null);
+   const handleCompiledForHosting = useCallback((html: string | null) => {
+     compiledForHostingRef.current = html;
+     setCompiledForHostingState(html);
+   }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -1655,200 +1641,14 @@ export function AIAppBuilderWorkspace() {
     toast.success(`Renamed to ${newPath.split('/').pop()}`);
   }, [project.files, upsertFile, deleteFile]);
 
-  // ── React Compiler integration ──
-  const { compileReactProject } = useReactCompiler();
-  const isReactProject = useMemo(() => {
-    try {
-      return detectReactProject(project.files);
-    } catch (e) {
-      console.error('[detectReactProject] crashed:', e);
-      return false;
-    }
-  }, [project.files]);
-
-  // Moved above timer-based compilation effect to fix React hook ordering (#310)
+  // ── Compilation is now isolated in CompilationBridge (fixes React Error #310) ──
   const [stableHTML, setStableHTML] = useState<string | null>(null);
   const stableHTMLRef = useRef<string | null>(null);
-  stableHTMLRef.current = stableHTML;
+  const handleStableHTML = useCallback((html: string | null) => {
+    stableHTMLRef.current = html;
+    setStableHTML(html);
+  }, []);
 
-  // Issue 24 fix: Reset stableHTML when a new generation starts so subsequent builds recompile
-  const prevIsGeneratingForReset = useRef(false);
-  useEffect(() => {
-    if (isGenerating && !prevIsGeneratingForReset.current) {
-      setStableHTML(null);
-      stableHTMLRef.current = null;
-    }
-    prevIsGeneratingForReset.current = isGenerating;
-  }, [isGenerating]);
-
-   // Timer-based compilation: poll partialFilesRef every 5s during generation
-   // instead of running the expensive compiler synchronously on every state change
-   useEffect(() => {
-     if (!isGenerating) return;
-     let attempted = false;
-     const interval = setInterval(() => {
-       if (attempted) return;
-      const pFiles = partialFilesRef.current;
-      const pCount = completedFileCountRef.current;
-      if (pCount < 3 || pFiles.length === 0) return;
-
-      console.log(`[Preview] Timer-based compile: ${pCount} completed files of ${pFiles.length}`);
-      const isReact = pFiles.some(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx'));
-      try {
-        if (isReact) {
-          try {
-            const result = compileReactProject(pFiles, {
-              supabaseConfig: supabaseConfig || undefined,
-              stripeConfig: stripeConfig || undefined,
-              envVars,
-            });
-             if (result.html) {
-               setStableHTML(result.html);
-             }
-             attempted = true;
-           } catch (compileErr) {
-             console.warn('[Preview] React compilation crashed on partial files:', compileErr);
-             attempted = true;
-           }
-        } else {
-          // Issue 3 fix: For vanilla projects, compile from partialFilesRef
-          // since project.files is empty during initial generation
-          const indexFile = pFiles.find(f => f.path === 'index.html' || f.path.endsWith('/index.html'));
-          if (indexFile) {
-            // Build a minimal HTML by inlining CSS/JS from partial files
-            let html = indexFile.content;
-            // Inline CSS files
-            const cssFiles = pFiles.filter(f => f.path.endsWith('.css'));
-            if (cssFiles.length > 0) {
-              const cssInline = cssFiles.map(f => `<style>/* ${f.path} */\n${f.content}</style>`).join('\n');
-              html = html.replace('</head>', `${cssInline}\n</head>`);
-            }
-            // Inline JS files  
-            const jsFiles = pFiles.filter(f => f.path.endsWith('.js') && !f.path.endsWith('.config.js'));
-            if (jsFiles.length > 0) {
-              const jsInline = jsFiles.map(f => `<script>/* ${f.path} */\n${f.content}</script>`).join('\n');
-              html = html.replace('</body>', `${jsInline}\n</body>`);
-            }
-             setStableHTML(html);
-             attempted = true;
-           }
-         }
-       } catch (e) {
-         console.warn('[Preview] Timer-based compilation failed:', e);
-         attempted = true;
-       }
-     }, 5000);
-    return () => clearInterval(interval);
-  }, [isGenerating, partialFilesRef, completedFileCountRef, compileReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, getCompiledHTML]);
-
-  // stableHTML, stableHTMLRef, and prevIsGeneratingForReset moved above timer-based compilation effect to fix hook ordering
-
-  const liveCompiledHTML = useMemo(() => {
-    try {
-      // During generation, compilation is handled by the timer above
-      if (isGenerating) return null;
-
-      if (project.files.length === 0) return null;
-
-      // Issue 10 fix: Skip redundant compilation if stableHTML already exists from timer-based path
-      if (stableHTMLRef.current) return null;
-
-      // If this is a React project, use the React compiler pipeline
-      if (isReactProject) {
-        const result = compileReactProject(project.files, {
-          supabaseConfig: supabaseConfig || undefined,
-          stripeConfig: stripeConfig || undefined,
-          envVars,
-        });
-        if (result.errors.length > 0) {
-          console.warn('[ReactCompiler] Warnings:', result.errors);
-        }
-        return result.html || null;
-      }
-      // Otherwise use the vanilla HTML compiler
-      return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
-    } catch (e) {
-      console.error('[ReactCompiler] Compilation crashed:', e);
-      return null;
-    }
-  }, [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, isReactProject, compileReactProject, isGenerating]);
-
-  // Defer preview updates until build completes — but allow CSS hot-patches through immediately
-  useEffect(() => {
-    if (liveCompiledHTML) {
-      // Issue 11 fix: Skip if stableHTML already has content (avoid redundant iframe reload)
-      if (stableHTML && stableHTML.length > 0) return;
-      // Try hot-patching first (CSS-only changes skip full reload)
-      const patched = liveSync.applyPatches(previewIframeRef, project.files);
-      if (!patched) {
-        // Full reload needed — update srcdoc
-        setStableHTML(liveCompiledHTML);
-        liveSync.resetSnapshot(project.files);
-      }
-    }
-    // Fix 5: If generation finished but compilation returned null, show error fallback
-    if (!isGenerating && !liveCompiledHTML && project.files.length > 0 && stableHTML === null) {
-      console.warn('[Preview] Generation complete but compilation returned null — showing error fallback');
-      setStableHTML(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Compilation Error</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a14;color:#fff;font-family:system-ui,sans-serif}.card{text-align:center;max-width:440px;padding:2rem}h1{font-size:1.5rem;margin-bottom:1rem;color:#f87171}p{color:#ffffff90;line-height:1.6;margin-bottom:0.5rem}code{background:#1e1e2e;padding:2px 6px;border-radius:4px;font-size:0.85em}</style></head><body><div class="card"><h1>⚠️ Compilation Error</h1><p>Your project files were generated but could not be compiled into a preview.</p><p>Check that your project has an <code>index.html</code> file and try regenerating.</p></div></body></html>`);
-    }
-  }, [isGenerating, liveCompiledHTML, project.files, stableHTML]);
-
-  // Also hot-patch during manual edits (when not generating)
-  useEffect(() => {
-    if (!isGenerating && stableHTML && project.files.length > 0) {
-      liveSync.applyPatches(previewIframeRef, project.files);
-    }
-  }, [project.files, isGenerating, stableHTML]);
-
-  // Fix 4: Force stableHTML update if generation exceeds 120 seconds with partial files available
-  useEffect(() => {
-    if (!isGenerating) return;
-    const timer = setTimeout(() => {
-      const pFiles = partialFilesRef.current;
-      if (pFiles.length > 0 && !stableHTML) {
-        console.warn('[Preview] Generation exceeded 120s — force-compiling partial files for preview');
-        const isPartialReact = pFiles.some(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx'));
-        if (isPartialReact) {
-          try {
-            const result = compileReactProject(pFiles, {
-              supabaseConfig: supabaseConfig || undefined,
-              stripeConfig: stripeConfig || undefined,
-              envVars,
-            });
-            if (result.html) {
-              setStableHTML(result.html);
-              return;
-            }
-          } catch (e) {
-            console.warn('[Preview] Partial React compilation failed:', e);
-          }
-        }
-        // Issue 7 fix: Fallback vanilla compilation using partialFilesRef (project.files is empty during generation)
-        try {
-          const htmlFile = pFiles.find(f => f.path.endsWith('.html'));
-          if (htmlFile) {
-            let html = htmlFile.content;
-            const cssFiles = pFiles.filter(f => f.path.endsWith('.css'));
-            if (cssFiles.length > 0) {
-              const cssInline = cssFiles.map(f => `<style>/* ${f.path} */\n${f.content}</style>`).join('\n');
-              html = html.replace('</head>', `${cssInline}\n</head>`);
-            }
-            const jsFiles = pFiles.filter(f => f.path.endsWith('.js') && !f.path.endsWith('.config.js'));
-            if (jsFiles.length > 0) {
-              const jsInline = jsFiles.map(f => `<script>/* ${f.path} */\n${f.content}</script>`).join('\n');
-              html = html.replace('</body>', `${jsInline}\n</body>`);
-            }
-            setStableHTML(html);
-          }
-        } catch (e) {
-          console.warn('[Preview] Partial vanilla compilation failed:', e);
-        }
-      }
-    }, 120_000);
-    return () => clearTimeout(timer);
-  }, [isGenerating, partialFilesRef, stableHTML]);
-
-  // NEVER fall through to liveCompiledHTML during generation — show SkeletonPreview until build completes
   const compiledHTML = stableHTML;
   const hasFiles = project.files.length > 0;
 
@@ -1931,6 +1731,29 @@ export function AIAppBuilderWorkspace() {
   return (
     <TooltipProvider delayDuration={300}>
       <div className="h-full w-full flex flex-col bg-[#09090b] overflow-hidden relative">
+      {/* CompilationBridge — isolated compilation hooks (fixes React Error #310) */}
+      <PanelErrorBoundary panelName="Compiler">
+        <CompilationBridge
+          files={project.files}
+          isGenerating={isGenerating}
+          supabaseConfig={supabaseConfig}
+          stripeConfig={stripeConfig}
+          envVars={envVars}
+          serviceKeys={serviceKeys}
+          cdnPackages={cdnPackages}
+          bundleForBrowser={bundleForBrowser}
+          linkedGPT={linkedGPT}
+          getCompiledHTML={getCompiledHTML}
+          partialFilesRef={partialFilesRef}
+          completedFileCountRef={completedFileCountRef}
+          previewIframeRef={previewIframeRef}
+          previewSlug={previewSlug}
+          uploadPreview={uploadPreview}
+          clearPreviewTimer={clearPreviewTimer}
+          onStableHTML={handleStableHTML}
+          onCompiledForHosting={handleCompiledForHosting}
+        />
+      </PanelErrorBoundary>
       <WelcomeOverlay onQuickStart={(prompt) => handleSend(prompt)} />
       <OnboardingTour />
       <ShortcutsHint />
