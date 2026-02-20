@@ -1273,8 +1273,18 @@ export function useAIAppBuilder() {
 
       try {
         while (!streamDone) {
-          const { done, value } = await reader.read();
-          if (done) break;
+          // Fix 1: Promise.race heartbeat — detect dead streams within 20s
+          const readPromise = reader.read();
+          const timeoutPromise = new Promise<ReadableStreamReadResult<Uint8Array>>((resolve) =>
+            setTimeout(() => resolve({ done: true, value: undefined as any }), 20_000)
+          );
+          const { done, value } = await Promise.race([readPromise, timeoutPromise]);
+          if (done) {
+            if (!value) {
+              console.warn('[Stream] Read timeout (20s) — treating as stream death');
+            }
+            break;
+          }
           lastChunkTime = Date.now();
           textBuffer += decoder.decode(value, { stream: true });
 
@@ -1379,13 +1389,24 @@ export function useAIAppBuilder() {
     streaming.startStreaming();
 
     // ── Wall-clock safety net: force-finalize after 55s no matter what ──
+    // Fix 2: Use a mutable ref so we can reset per continuation round
     const WALL_CLOCK_MAX_MS = 55_000;
-    const wallClockTimer = setTimeout(() => {
+    let wallClockTimer = setTimeout(() => {
       if (abortRef.current && !abortRef.current.signal.aborted) {
         console.warn('[Stream] Wall-clock safety net triggered at', WALL_CLOCK_MAX_MS, 'ms — aborting for continuation');
         abortRef.current.abort();
       }
     }, WALL_CLOCK_MAX_MS);
+
+    const resetWallClock = () => {
+      clearTimeout(wallClockTimer);
+      wallClockTimer = setTimeout(() => {
+        if (abortRef.current && !abortRef.current.signal.aborted) {
+          console.warn('[Stream] Wall-clock safety net triggered at', WALL_CLOCK_MAX_MS, 'ms — aborting for continuation');
+          abortRef.current.abort();
+        }
+      }, WALL_CLOCK_MAX_MS);
+    };
 
     let workingFiles = [...currentFiles];
     let creditsDeducted = false;
@@ -1393,6 +1414,14 @@ export function useAIAppBuilder() {
     let truncatedPaths: string[] = []; // Truncated file tracking (Fix 1)
 
     const finalizeStream = async () => {
+      // Fix 4: Guard against empty content — edge function died before sending anything
+      if (!fullContent.trim()) {
+        console.error('[Stream] Empty response — edge function likely died before sending data');
+        toast.error('AI service failed to respond. Please try again.');
+        streaming.stopStreaming();
+        return { shouldContinue: false, generatedPaths: [] as string[] };
+      }
+
       // Final parseIncremental to catch any content not yet parsed by the rAF throttle
       streaming.parseIncremental(fullContent);
 
@@ -1797,7 +1826,8 @@ export function useAIAppBuilder() {
       }
 
       while (continuationResult?.shouldContinue && continuationResult.generatedPaths) {
-        clearTimeout(wallClockTimer);
+        // Fix 2: Reset wall-clock for each continuation round
+        resetWallClock();
 
         controller = new AbortController();
         abortRef.current = controller;

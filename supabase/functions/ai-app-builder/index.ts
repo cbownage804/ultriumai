@@ -724,9 +724,26 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
 
     if (stream) {
       // Phase 56: Wrap stream in TransformStream to ensure proper termination on abort
+      // Fix 3: Hardened — always send [DONE] on any exit path including runtime shutdown
       const { readable, writable } = new TransformStream();
       const writer = writable.getWriter();
       const reader = response.body!.getReader();
+      const encoder = new TextEncoder();
+      let sentDone = false;
+
+      const ensureDone = async () => {
+        if (sentDone) return;
+        sentDone = true;
+        try { await writer.write(encoder.encode('data: [DONE]\n\n')); } catch {}
+        try { await writer.close(); } catch {}
+      };
+
+      // Deno runtime shutdown signal — flush [DONE] before process exits
+      const shutdownHandler = () => { ensureDone(); };
+      globalThis.addEventListener?.('unload', shutdownHandler);
+      // Also use abort signal from the incoming request
+      req.signal?.addEventListener('abort', () => { ensureDone(); });
+
       (async () => {
         try {
           while (true) {
@@ -735,11 +752,10 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
             await writer.write(value);
           }
         } catch (e) {
-          // Stream aborted — send termination signal
-          const encoder = new TextEncoder();
-          try { await writer.write(encoder.encode('data: [DONE]\n\n')); } catch {}
+          // Stream aborted by upstream — still send termination signal
         } finally {
-          try { await writer.close(); } catch {}
+          await ensureDone();
+          globalThis.removeEventListener?.('unload', shutdownHandler);
         }
       })();
       return new Response(readable, {
