@@ -543,7 +543,7 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
                   </span>
                 </div>
                 <span className="text-[11px] text-red-200/70 truncate">
-                  {errors.find(e => e.type === 'error')?.message.slice(0, 120)}
+                  {errors.find(e => e.type === 'error')?.message?.slice(0, 120)}
                 </span>
               </div>
               <div className="flex items-center gap-2 shrink-0">
