@@ -1,82 +1,79 @@
 
 
-# Fix: Persistent React Error #310 -- Protect ALL File-Processing useMemo Calls
+# Fix: Persistent Error #310 — Isolate Compilation Into a Safe Child Component
 
 ## Problem
 
-Error #310 ("Rendered fewer hooks than expected") keeps crashing the App Builder after generation completes. The previous fix only wrapped `liveCompiledHTML` in try/catch, but there are **three more useMemo calls** that also process `project.files` and can throw uncaught exceptions during render. When any one of them throws, React stops executing hooks mid-render, detects a hook count mismatch, and crashes the entire component.
+Error #310 ("Rendered fewer hooks than expected") continues to crash the App Builder after generation completes, despite wrapping all useMemo/useCallback bodies in try/catch. The try/catch approach prevents exceptions from propagating, but React still detects hook count mismatches if any render-time code path causes an interruption in the 100+ hook chain inside AIAppBuilderWorkspace.tsx.
 
 ## Root Cause
 
-When generation completes, `project.files` updates, which triggers re-evaluation of every `useMemo` that depends on it. These three are unprotected:
+The component has 2658 lines and 100+ hooks. When generation finishes and `project.files` updates, multiple useMemo hooks re-evaluate simultaneously. If ANY intermediate computation (even outside our wrapped hooks) throws during this cascade, React counts fewer executed hooks and throws #310. The error boundary catches it, but the entire workspace crashes.
 
-1. **`compiledForHosting`** (line 1058) -- calls `getCompiledHTML()` which can throw on malformed files
-2. **`isReactProject`** (line 1650) -- calls `detectReactProject()` which scans files
-3. **`bundleForBrowser`** (line 304) -- calls `astBundler.buildDependencyGraph()` and `incrementalCompiler.compileIncremental()` which can throw on invalid imports/syntax
+## Solution: Extract Compilation Into a Dedicated Child Component
 
-Any one of these throwing = Error #310.
+Instead of trying to protect every possible throw site in a 100+ hook component, move the compilation logic into a small, isolated child component wrapped in its own error boundary. If compilation crashes, only the preview fails — the chat, file tree, and editor remain functional.
 
-## Fix (1 file, 3 changes)
+### Change 1: Create `CompilationBridge.tsx`
 
-**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
+**New file**: `src/components/ai-builder/CompilationBridge.tsx`
 
-### Change 1: Wrap `compiledForHosting` in try/catch
+A small component that:
+- Receives `project.files`, configs, and `isGenerating` as props
+- Internally calls `useReactCompiler()`, `detectReactProject()`, and compilation useMemo
+- Exposes the compiled HTML via a callback prop (`onCompiled`)
+- Has its own try/catch in ALL computation paths
+- If it crashes, its parent error boundary catches it without affecting the workspace's hook count
 
-```typescript
-const compiledForHosting = useMemo(
-  () => {
-    try {
-      if (isGenerating) return null;
-      return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
-    } catch (e) {
-      console.error('[compiledForHosting] Compilation crashed:', e);
-      return null;
-    }
-  },
-  [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, isGenerating]
-);
+```
+CompilationBridge (isolated component)
+  - useReactCompiler()
+  - isReactProject useMemo
+  - liveCompiledHTML useMemo
+  - compiledForHosting useMemo
+  - Reports results via onCompiled(html) callback
 ```
 
-### Change 2: Wrap `isReactProject` in try/catch
+### Change 2: Update AIAppBuilderWorkspace.tsx
 
-```typescript
-const isReactProject = useMemo(() => {
-  try {
-    return detectReactProject(project.files);
-  } catch (e) {
-    console.error('[detectReactProject] crashed:', e);
-    return false;
-  }
-}, [project.files]);
+- Remove the `useReactCompiler()`, `isReactProject`, `liveCompiledHTML`, and `compiledForHosting` hooks from the workspace
+- Render `<CompilationBridge>` as a child, wrapped in a `<PanelErrorBoundary>`
+- Receive compiled HTML via callback into a useState
+- This reduces the hook count in the workspace by ~5 and isolates the most crash-prone code
+
+### Change 3: Wrap CompilationBridge in error boundary
+
+In the workspace JSX, render:
+```tsx
+<PanelErrorBoundary panelName="Compiler">
+  <CompilationBridge
+    files={project.files}
+    isGenerating={isGenerating}
+    supabaseConfig={supabaseConfig}
+    stripeConfig={stripeConfig}
+    envVars={envVars}
+    serviceKeys={serviceKeys}
+    cdnPackages={cdnPackages}
+    bundleForBrowser={bundleForBrowser}
+    linkedGPT={linkedGPT}
+    onCompiled={setStableHTML}
+    getCompiledHTML={getCompiledHTML}
+  />
+</PanelErrorBoundary>
 ```
 
-### Change 3: Wrap `bundleForBrowser` in try/catch
+## Why This Fixes Error #310
 
-```typescript
-const bundleForBrowser = useCallback((files: ProjectFile[]) => {
-  try {
-    const result = incrementalCompiler.compileIncremental(
-      files,
-      (file) => {
-        const graph = astBundler.buildDependencyGraph([file]);
-        const node = graph.get(file.path);
-        if (!node) return file.content;
-        return `/* ... */\n(function() {\n"use strict";\n${astBundler.stripModuleSyntax(file.content, node)}\n})();`;
-      },
-      (f) => astBundler.topologicalSort(astBundler.buildDependencyGraph(f)).filter(p => f.some(file => file.path === p)),
-    );
-    return result.output;
-  } catch (e) {
-    console.error('[bundleForBrowser] Bundling crashed:', e);
-    return '';
-  }
-}, [astBundler, incrementalCompiler]);
-```
+- The compilation hooks are moved OUT of the 100+ hook component, so if they crash, they don't affect the workspace's hook count
+- The workspace retains all its other hooks in stable order
+- CompilationBridge has only ~5 hooks, making it trivially safe
+- If CompilationBridge crashes, PanelErrorBoundary catches it — the workspace shows "Compiler failed to load" in the preview area but the chat and editor remain fully functional
 
-## Why This Fixes It
+## Files Changed
 
-With all four file-processing computations protected by try/catch (`liveCompiledHTML` + these three), no render-time exception can escape and disrupt React's hook execution order. The component will always complete its full render cycle with all ~60 hooks called, preventing Error #310.
+1. **New**: `src/components/ai-builder/CompilationBridge.tsx` — isolated compilation component
+2. **Edit**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx` — remove compilation hooks, render CompilationBridge
 
 ## Risk
 
-Very low. Each fallback value (`null`, `false`, `''`) is already handled by downstream consumers. The preview will show "Compilation Error" fallback if compilation fails, which is far better than crashing the entire App Builder.
+Low. This is a pure refactor that moves existing logic into a child component. No behavior changes. The compilation output is identical — only the error isolation boundary changes.
