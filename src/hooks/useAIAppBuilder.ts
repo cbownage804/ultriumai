@@ -1216,51 +1216,58 @@ export function useAIAppBuilder() {
       let emptyChoicesCount = 0;
       lastChunkTime = Date.now();
 
-      // ── Batched streaming updates via rAF (Change 1 & 4) ──
-      let rafScheduled = false;
-      let lastParsedLength = 0; // For throttling parseIncremental (Change 2)
+      // ── Throttled streaming updates (200ms) to keep main thread responsive ──
+      let lastParsedLength = 0;
 
-      const assistantMsgId = crypto.randomUUID(); // Stable ID for the assistant message
+      const assistantMsgId = crypto.randomUUID();
+
+      let lastUpdateTime = 0;
+      const UPDATE_THROTTLE_MS = 200;
+      let throttleTimer: ReturnType<typeof setTimeout> | null = null;
 
       const upsertAssistant = (content: string) => {
         fullContent = content;
-        // Only accumulate — don't trigger React yet
-        if (!rafScheduled) {
-          rafScheduled = true;
-          requestAnimationFrame(() => {
-            rafScheduled = false;
-            const currentContent = fullContent; // Capture latest
+        const now = Date.now();
 
+        const doUpdate = () => {
+          lastUpdateTime = Date.now();
+          const currentContent = fullContent; // Capture latest
+
+          try {
+            let planSteps: PlanStep[] | undefined;
             try {
-              // Compute plan steps safely (Change 4 — merged into same update)
-              let planSteps: PlanStep[] | undefined;
-              try {
-                if (currentContent.length > 200) {
-                  planSteps = parsePlanSteps(currentContent);
-                }
-              } catch { /* plan step parsing is non-critical */ }
-
-              // Single setMessages call per frame (was 2-3 per token)
-              setMessages(prev => {
-                const last = prev[prev.length - 1];
-                if (last?.role === 'assistant') {
-                  return prev.map((m, i) => i === prev.length - 1
-                    ? { ...m, content: currentContent, ...(planSteps ? { planSteps } : {}) }
-                    : m
-                  );
-                }
-                return [...prev, { id: assistantMsgId, role: 'assistant' as const, content: currentContent, timestamp: new Date(), ...(planSteps ? { planSteps } : {}) }];
-              });
-
-              // Throttled parseIncremental — only when 500+ new chars (Change 2)
-              if (currentContent.length - lastParsedLength >= 500) {
-                lastParsedLength = currentContent.length;
-                streaming.parseIncremental(currentContent);
+              if (currentContent.length > 200) {
+                planSteps = parsePlanSteps(currentContent);
               }
-            } catch (e) {
-              console.error('[Stream rAF] Error in batched update:', e);
+            } catch { /* plan step parsing is non-critical */ }
+
+            setMessages(prev => {
+              const last = prev[prev.length - 1];
+              if (last?.role === 'assistant') {
+                return prev.map((m, i) => i === prev.length - 1
+                  ? { ...m, content: currentContent, ...(planSteps ? { planSteps } : {}) }
+                  : m
+                );
+              }
+              return [...prev, { id: assistantMsgId, role: 'assistant' as const, content: currentContent, timestamp: new Date(), ...(planSteps ? { planSteps } : {}) }];
+            });
+
+            if (currentContent.length - lastParsedLength >= 500) {
+              lastParsedLength = currentContent.length;
+              streaming.parseIncremental(currentContent);
             }
-          });
+          } catch (e) {
+            console.error('[Stream throttle] Error in batched update:', e);
+          }
+        };
+
+        if (now - lastUpdateTime >= UPDATE_THROTTLE_MS) {
+          doUpdate();
+        } else if (!throttleTimer) {
+          throttleTimer = setTimeout(() => {
+            throttleTimer = null;
+            doUpdate();
+          }, UPDATE_THROTTLE_MS - (now - lastUpdateTime));
         }
       };
 
@@ -1344,8 +1351,8 @@ export function useAIAppBuilder() {
         }
       } finally {
         clearInterval(stallChecker);
-      // Phase 2: Cancel pending rAF and do synchronous final flush
-        rafScheduled = false;
+      // Phase 2: Cancel pending throttle timer and do synchronous final flush
+        if (throttleTimer) { clearTimeout(throttleTimer); throttleTimer = null; }
         setMessages(prev => {
           const last = prev[prev.length - 1];
           if (last?.role === 'assistant') {
