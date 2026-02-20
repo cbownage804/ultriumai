@@ -54,8 +54,9 @@ export function useLivePreviewSync() {
 
       if (ext === 'css' || ext === 'scss') {
         patches.push({ path, kind: 'css', content });
-      } else if (ext === 'js' || ext === 'ts') {
-        // JS changes require reload (can't safely hot-swap scripts)
+      } else if (ext === 'js' || ext === 'ts' || ext === 'jsx' || ext === 'tsx') {
+        // Phase 33: JS/TS changes require reload (can't safely hot-swap scripts)
+        // Especially for React components, we need a full re-mount
         prevFilesRef.current = current;
         return null;
       } else if (ext === 'html' || ext === 'htm') {

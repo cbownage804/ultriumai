@@ -168,6 +168,9 @@ export function useProjectFileSystem() {
   }, []);
 
   /** Combine all project files into a single renderable HTML document */
+  // Phase 37: Add sandbox attribute to nested iframes via regex post-processing
+  const addSandboxToIframes = (html: string) => html.replace(/<iframe\s+(?!.*?sandbox=)/gi, '<iframe sandbox="allow-scripts allow-same-origin allow-popups" ');
+
   const getCompiledHTML = useCallback((
     supabaseConfig?: { url: string; anonKey: string } | null,
     stripeConfig?: { publishableKey: string } | null,
@@ -495,7 +498,7 @@ if (typeof console !== 'undefined') {
       compiled = interceptorScript + '\n' + compiled;
     }
 
-    return sanitizeTemplateLiterals(compiled);
+    return addSandboxToIframes(sanitizeTemplateLiterals(compiled));
   }, [project, sanitizeTemplateLiterals]);
 
   return {

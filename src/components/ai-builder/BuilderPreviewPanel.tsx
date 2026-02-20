@@ -135,7 +135,7 @@ window.addEventListener('unhandledrejection', function(e) {
 ['log','info','warn','error'].forEach(function(level) {
   var orig = console[level];
   console[level] = function() {
-    var msg = Array.from(arguments).join(' ');
+    var msg = Array.from(arguments).map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
     window.parent.postMessage({ type: '__CONSOLE_LOG__', level: level, message: msg, source: 'console.' + level, line: 0 }, '*');
     if (level === 'error' || level === 'warn') {
       window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: msg, source: 'console.' + level, line: 0, isWarning: level === 'warn' }, '*');
@@ -163,7 +163,8 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
     var method = (arguments[1] && arguments[1].method) || 'GET';
     var start = performance.now();
     return origFetch.apply(this, arguments).then(function(resp) {
-      window.parent.postMessage({ type: '__NETWORK_LOG__', method: method, url: String(url), status: resp.status, duration: Math.round(performance.now() - start) }, '*');
+      var body = ''; try { body = (arguments[1] && arguments[1].body) ? String(arguments[1].body).slice(0, 500) : ''; } catch(e){}
+      window.parent.postMessage({ type: '__NETWORK_LOG__', method: method, url: String(url), status: resp.status, duration: Math.round(performance.now() - start), body }, '*');
       return resp;
     }).catch(function(err) {
       window.parent.postMessage({ type: '__NETWORK_LOG__', method: method, url: String(url), status: 0, duration: Math.round(performance.now() - start) }, '*');
@@ -249,7 +250,8 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
           type: e.data.isWarning ? 'warning' : 'error',
         };
         setErrors(prev => {
-          if (prev.some(p => p.message === msg)) return prev;
+          // Phase 34: Deduplicate errors by message within 2s window
+          if (prev.some(p => p.message === msg && (Date.now() - p.timestamp.getTime()) < 2000)) return prev;
           const updated = [...prev.slice(-19), newError];
           // Auto-fix pipeline: only notify for critical, non-warning errors
           if (!e.data.isWarning && isCritical && onAutoFixError && !isGenerating) {
@@ -263,7 +265,11 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
     return () => window.removeEventListener('message', handler);
   }, [onAutoFixError, isGenerating]);
 
-  useEffect(() => { setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0); }, [html]);
+  useEffect(() => { 
+    setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0);
+    // Phase 36: Reset scroll position on new build
+    if (iframeRef.current?.contentWindow) iframeRef.current.contentWindow.scrollTo(0, 0);
+  }, [html]);
 
   // Listen for navigation messages from iframe
   useEffect(() => {
