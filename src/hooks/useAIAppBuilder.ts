@@ -1256,18 +1256,8 @@ export function useAIAppBuilder() {
 
       try {
         while (!streamDone) {
-          // Fix 1: Promise.race heartbeat — detect dead streams within 20s
-          const readPromise = reader.read();
-          const timeoutPromise = new Promise<ReadableStreamReadResult<Uint8Array>>((resolve) =>
-            setTimeout(() => resolve({ done: true, value: undefined as any }), 30_000)
-          );
-          const { done, value } = await Promise.race([readPromise, timeoutPromise]);
-          if (done) {
-            if (!value) {
-              console.warn('[Stream] Read timeout (20s) — treating as stream death');
-            }
-            break;
-          }
+          const { done, value } = await reader.read();
+          if (done) break;
           lastChunkTime = Date.now();
           textBuffer += decoder.decode(value, { stream: true });
 
