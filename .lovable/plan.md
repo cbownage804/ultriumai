@@ -1,132 +1,81 @@
 
 
-# Fix: Workspace Performance Collapse (200+ Hooks on Every Render)
+# Consolidate 160+ useState Booleans into usePanelManager Reducer
 
-## Root Cause
+## What This Does
 
-`AIAppBuilderWorkspace.tsx` is a 2,846-line component that calls **200+ custom hooks** and **300+ useState** on every render. Each hook initializes state, refs, and effects — even for panels the user never opens (KubernetesGenerator, MutationTesting, AffiliateTracking, etc.).
-
-This causes:
-- Firefox "This page is slowing down Firefox" warning
-- "Loading preview..." that never resolves
-- Multi-second initial render blocking the preview compilation
-
-## Solution: Deferred Hook Initialization
-
-Move all non-core hooks behind a lazy initialization pattern. Only ~15 hooks are needed on initial load (AI builder, file system, undo/redo, persistence, preview compiler). The other 185+ hooks should only initialize when their panel is opened.
-
-## Implementation
-
-### Step 1: Create a `useLazyHook` utility
-
-A new utility that defers hook initialization until first access:
-
-```typescript
-// src/hooks/useLazyHook.ts
-function useLazyHook<T>(factory: () => T): () => T {
-  const ref = useRef<T | null>(null);
-  const [, forceRender] = useState(0);
-  return useCallback(() => {
-    if (!ref.current) {
-      ref.current = factory();
-      forceRender(n => n + 1);
-    }
-    return ref.current;
-  }, []);
-}
-```
-
-**Problem**: React hooks can't be conditionally called. So we can't truly defer them.
-
-### Better Approach: Extract Panel Groups into Sub-Components
-
-Split the workspace into **panel group components** that only mount when their section is active. Each group owns its hooks.
-
-### Step 2: Create Panel Group Components
-
-Extract Sprint S-AD hooks (Phases 194-253) into isolated components:
-
-- `MobilePanelGroup` — Sprint S hooks (5 hooks)
-- `AIAutomationPanelGroup` — Sprint T hooks (5 hooks)  
-- `DataStatePanelGroup` — Sprint U hooks (5 hooks)
-- `DevToolsPanelGroup` — Sprint V hooks (5 hooks)
-- `CommunicationPanelGroup` — Sprint W hooks (5 hooks)
-- `UIPatternsPanelGroup` — Sprint X hooks (5 hooks)
-- `DevOpsPanelGroup` — Sprint Y hooks (5 hooks)
-- `AuthSecurityPanelGroup` — Sprint Z hooks (5 hooks)
-- `ContentMediaPanelGroup` — Sprint AA hooks (5 hooks)
-- `SearchDiscoveryPanelGroup` — Sprint AB hooks (5 hooks)
-- `MonitoringPanelGroup` — Sprint AC hooks (5 hooks)
-- `FinalPolishPanelGroup` — Sprint AD hooks (5 hooks)
-- `CollabPanelGroup` — Sprint L hooks (5 hooks)
-- `TestingPanelGroup` — Sprint M hooks (5 hooks)
-- `UIBuildingPanelGroup` — Sprint N hooks (5 hooks)
-- `DataIntegrationPanelGroup` — Sprint O hooks (5 hooks)
-- `DevExperiencePanelGroup` — Sprint P hooks (5 hooks)
-- `DeploymentPanelGroup` — Sprint Q hooks (5 hooks)
-- `MonetizationPanelGroup` — Sprint R hooks (5 hooks)
-- `IntegrationPanelGroup` — Sprint K hooks (5 hooks)
-- `InfraPanelGroup` — Sprint I-J hooks (10 hooks)
-
-Each component only renders when any of its panels are visible, so its hooks only run when needed.
-
-### Step 3: Conditional Rendering in Workspace
-
-Replace inline hook calls with conditionally-mounted group components:
-
-```text
-Before (runs 200+ hooks always):
-  const capacitorExport = useCapacitorExport();
-  const pushNotifications = usePushNotificationDesigner();
-  ...
-
-After (hooks only run when panel group is active):
-  {anyMobilePanelOpen && <MobilePanelGroup ... />}
-```
-
-### Step 4: Keep Only Core Hooks in Workspace
-
-The workspace component retains only ~20 essential hooks:
-- useAIAppBuilder
-- useProjectFileSystem
-- useUndoRedo
-- useProjectPersistence
-- useReactCompiler
-- useBuildLog
-- useVersionTimeline
-- useAutoFixLoop
-- useBranching
-- useAgentMode
-- useAutoErrorRecovery
-- useBuildAnalytics
-- useIndexedDBPersistence
-- useLivePreviewSync
-- usePromptHistory
-
-Everything else moves into lazy panel groups.
+Right now, the workspace has ~160 individual lines like `const [showDockerCompose, setShowDockerCompose] = useState(false)` plus a ~200-line `panelSetters` map that wraps each setter. This is replaced with a single `usePanelManager(ALL_PANEL_KEYS)` call that manages all visibility in one reducer.
 
 ## Impact
 
-- Initial hook count drops from **200+** to **~20**
-- Render time drops from **2-5 seconds** to **<100ms**
-- Firefox "slowing down" warning eliminated
-- Preview loads immediately after generation
-- Each panel group adds its hooks only when opened
+- **160 useState calls** reduced to **1 useReducer call**
+- **200-line panelSetters map** replaced with the reducer's built-in `toggle`/`open`/`close` methods
+- Eliminates ~350 lines of boilerplate from the workspace file
+- Faster renders: one state object update vs. individual setState calls
 
-## Files Changed
+## Implementation Steps
+
+### Step 1: Define panel key constants
+
+Create a `PANEL_KEYS` array listing all ~160 panel string keys (e.g. `'showDockerCompose'`, `'showK8s'`, etc.) at the top of `AIAppBuilderWorkspace.tsx` or in a shared constants file.
+
+### Step 2: Replace useState declarations
+
+Remove lines 390-565 (the ~160 `useState(false)` declarations) and replace with:
+
+```typescript
+const { panels, toggle, open, close, isOpen } = usePanelManager(PANEL_KEYS);
+```
+
+### Step 3: Update all references
+
+Throughout the file, replace:
+- `showDockerCompose` with `panels.showDockerCompose` (or `isOpen('showDockerCompose')`)
+- `setShowDockerCompose(false)` with `close('showDockerCompose')`
+- `setShowDockerCompose(true)` with `open('showDockerCompose')`
+- `setShowDockerCompose(v)` with `v ? open('showDockerCompose') : close('showDockerCompose')`
+
+### Step 4: Replace panelSetters map
+
+The ~200-line `panelSetters` useMemo (lines 1672-1877) becomes:
+
+```typescript
+const panelSetters = useMemo(() => {
+  const map: Record<string, (v: boolean) => void> = {};
+  for (const key of PANEL_KEYS) {
+    map[key] = (v: boolean) => v ? open(key) : close(key);
+  }
+  return map;
+}, [open, close]);
+```
+
+Or even simpler -- `openPanelByKey` just calls `open(stateKey)` directly.
+
+### Step 5: Update panel group props
+
+Panel groups currently receive individual `showX` / `setShowX` props. Update them to receive the `panels` record and `open`/`close`/`toggle` functions instead, or create adapter props:
+
+```typescript
+showDockerCompose={!!panels.showDockerCompose}
+setShowDockerCompose={(v) => v ? open('showDockerCompose') : close('showDockerCompose')}
+```
+
+### Step 6: Update WorkspacePanelLayer
+
+The `panelVisibility` prop already accepts `Record<string, boolean>` -- it can receive `panels` directly. The `panelSetters` prop can use the generated map from Step 4.
+
+## Technical Details
 
 | File | Change |
 |------|--------|
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Remove 180+ hook calls, add conditional panel group rendering |
-| `src/components/ai-builder/panel-groups/MobilePanelGroup.tsx` | New — Sprint S hooks + panels |
-| `src/components/ai-builder/panel-groups/AIAutomationPanelGroup.tsx` | New — Sprint T hooks + panels |
-| `src/components/ai-builder/panel-groups/DataStatePanelGroup.tsx` | New — Sprint U hooks + panels |
-| ... (21 panel group files total) | New — each owns 5 hooks + panels |
-| `src/components/ai-builder/panel-groups/index.ts` | New — barrel export |
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Remove ~160 useState, add usePanelManager, update all references, simplify panelSetters |
+| `src/hooks/usePanelManager.ts` | No changes needed -- already has the right API |
+| `src/components/ai-builder/panel-groups/*.tsx` | Minor: adapt show/setShow props to use panels record |
+| `src/components/ai-builder/WorkspacePanelLayer.tsx` | Minor: receive panels record for panelVisibility |
 
 ## Risk
 
-- Low: Panel groups are purely organizational — no behavior changes
-- The panel open/close state booleans stay in the workspace (lightweight useState) so the conditional mount triggers work
-- Hook results that were passed between unrelated panels will need a shared context or callback pattern (rare)
+- **Low**: Pure refactor with no behavior change. Every `useState(false)` becomes a key in the reducer's `Record<string, boolean>` initialized to `false`.
+- The `usePanelManager` hook already exists and is tested.
+- Panel groups can continue receiving individual boolean props via destructuring from the `panels` object.
 
