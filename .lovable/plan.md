@@ -1,70 +1,132 @@
 
-# Fix "Loading preview..." Stuck Permanently
+
+# Fix: Preview Stuck on Skeletons Due to Main Thread Blocking
 
 ## Problem
 
-The App Builder preview stays stuck on skeleton "Loading preview..." forever. Screenshots show it persisting from 10:23 AM through 10:38 AM (15+ minutes) even though the AI finished writing files.
+The preview permanently shows "Loading preview..." skeletons because the main thread is blocked by excessive re-renders in the 2700-line `AIAppBuilderWorkspace` component. Firefox explicitly warns "This page is slowing down Firefox." The generation timer freezes at "27.8s" and never advances, proving the main thread is stalled. This means ALL JavaScript timeouts (the 55s wall-clock, 120s force-compile, 3-minute cap) never fire.
 
 ## Root Cause
 
-There are two compounding issues:
+Every streaming token triggers `setMessages()` inside `requestAnimationFrame`, which re-renders the entire `AIAppBuilderWorkspace` component (2700 lines, ~180 hooks, dozens of memos and effects). Even with rAF batching, this component is too expensive to re-render at streaming frequency. Firefox throttles the page, blocking all timers.
 
-### Issue 1: `isGenerating` stays `true` too long during continuation rounds
+## Fix Strategy: Two surgical changes
 
-The continuation loop (up to 4 rounds x 55s wall-clock each = 220 seconds max) keeps `isGenerating` true the entire time. During this period, the `liveCompiledHTML` memo explicitly returns `null` (line 1811: `if (isGenerating) return null`), so the preview stays as skeleton. Additionally, if the stream stalls between continuation rounds, each round's 20s read timeout + 15s stall detector adds more wait time.
+### Fix A: Allow compilation during generation (remove the `isGenerating` block)
 
-### Issue 2: No progress indicator during streaming
+The `liveCompiledHTML` memo (line 1811) has `if (isGenerating) return null` which blocks ALL compilation while streaming. This was originally added to prevent "Resource Load Errors" from incomplete files, but it causes the preview to show skeletons for the entire generation duration (potentially minutes with continuation rounds).
 
-While `isGenerating` is `true`, the preview shows only static skeletons with no indication that files are being received. The "Loading preview..." text is static and gives users no feedback about progress, making it appear frozen even when the system is working correctly.
+**Change**: Replace the hard block with a conditional: compile when `completedFileCount >= 3` (meaning at least 3 files have been fully streamed). This gives users a live preview that updates as files arrive, while still avoiding compilation of a single half-written file.
 
-## Fix Plan
+**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (line 1807-1811)
 
-### Fix 1: Show a live progress overlay instead of static skeletons during generation
+```typescript
+// BEFORE:
+if (isGenerating) return null;
 
-Instead of showing static skeleton placeholders during the entire generation, show a dynamic progress overlay that displays:
-- Number of files received so far (from `completedFileCount`)  
-- File names being generated (from `partialFiles`)
-- A progress bar tied to the streaming state
-- The continuation round number if applicable
+// AFTER:
+// Allow compilation once enough files are complete, even during generation
+if (isGenerating && completedFileCount < 3) return null;
+```
 
-This uses data already available from `useStreamingPreview` (`partialFiles`, `completedFileCount`, `isStreamingPreview`) — no new hooks needed.
+### Fix B: Throttle `setMessages` more aggressively during streaming
 
-**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
-**Change**: In the preview area, when `isGenerating` is true, replace the static `SkeletonPreview` with a `GeneratingOverlay` component that shows real-time file generation progress.
+Currently `setMessages` fires every `requestAnimationFrame` (~16ms). For a 2700-line component, this is too frequent. Throttle to every 200ms during streaming.
 
-### Fix 2: Add a maximum total generation time limit
+**File**: `src/hooks/useAIAppBuilder.ts` (lines 1225-1264)
 
-Add a hard 3-minute cap across ALL continuation rounds combined (not per-round). If the total time exceeds 3 minutes, force-break the continuation loop and compile whatever files have been received.
+Change the `upsertAssistant` function to use a 200ms throttle instead of rAF:
 
-**File**: `src/hooks/useAIAppBuilder.ts`  
-**Change**: Add a `totalBuildStart` timestamp at the top of `sendMessage`. In the continuation `while` loop (line 1828), add a check: `if (Date.now() - totalBuildStart > 180_000) break;`
+```typescript
+let lastUpdateTime = 0;
+const UPDATE_THROTTLE_MS = 200;
+let throttleTimer: ReturnType<typeof setTimeout> | null = null;
 
-### Fix 3: Compile partial files for preview during generation
+const upsertAssistant = (content: string) => {
+  fullContent = content;
+  const now = Date.now();
+  
+  const doUpdate = () => {
+    lastUpdateTime = Date.now();
+    const currentContent = fullContent;
+    
+    let planSteps: PlanStep[] | undefined;
+    try {
+      if (currentContent.length > 200) {
+        planSteps = parsePlanSteps(currentContent);
+      }
+    } catch {}
 
-Instead of blocking ALL compilation while `isGenerating`, allow compilation of completed files (from `partialFiles` via `useStreamingPreview`) as a "live preview" that updates during streaming. This means the user can see the app taking shape while it's being built.
+    setMessages(prev => {
+      const last = prev[prev.length - 1];
+      if (last?.role === 'assistant') {
+        return prev.map((m, i) => i === prev.length - 1
+          ? { ...m, content: currentContent, ...(planSteps ? { planSteps } : {}) }
+          : m
+        );
+      }
+      return [...prev, { id: assistantMsgId, role: 'assistant' as const, content: currentContent, timestamp: new Date(), ...(planSteps ? { planSteps } : {}) }];
+    });
 
-**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`  
-**Change**: Add a secondary `useMemo` that compiles `partialFiles` when `isGenerating && completedFileCount > 0`, and use it to populate a "draft preview" visible to the user. The existing `stableHTML` logic stays untouched — this is purely additive.
+    if (currentContent.length - lastParsedLength >= 500) {
+      lastParsedLength = currentContent.length;
+      streaming.parseIncremental(currentContent);
+    }
+  };
 
-### Fix 4: Force `stableHTML` update with a timeout fallback
+  if (now - lastUpdateTime >= UPDATE_THROTTLE_MS) {
+    doUpdate();
+  } else if (!throttleTimer) {
+    throttleTimer = setTimeout(() => {
+      throttleTimer = null;
+      doUpdate();
+    }, UPDATE_THROTTLE_MS - (now - lastUpdateTime));
+  }
+};
+```
 
-If `isGenerating` has been `true` for more than 2 minutes but `partialFiles` has files, force-compile them and set `stableHTML` anyway, breaking the deadlock.
+### Fix C: Update stableHTML effect to accept generation-time compilation
 
-**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`  
-**Change**: Add a `useEffect` that starts a 120-second timer when `isGenerating` becomes `true`. If it fires while still generating and `partialFiles.length > 0`, compile partial files into `stableHTML` and display them.
+The `stableHTML` effect (line 1831) currently requires `!isGenerating` to update. With Fix A allowing compilation during generation, we need to also accept updates while generating.
+
+**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (line 1831-1846)
+
+```typescript
+// BEFORE:
+if (!isGenerating && liveCompiledHTML) { ... }
+
+// AFTER:
+if (liveCompiledHTML) {
+  // During generation, only do full reloads (no hot-patching incomplete code)
+  if (isGenerating) {
+    setStableHTML(liveCompiledHTML);
+  } else {
+    const patched = liveSync.applyPatches(previewIframeRef, project.files);
+    if (!patched) {
+      setStableHTML(liveCompiledHTML);
+      liveSync.resetSnapshot(project.files);
+    }
+  }
+}
+```
 
 ## Technical Details
 
-| File | Change |
-|------|--------|
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Add progress overlay during generation, add 2-min timeout fallback for stableHTML, add partial file preview |
-| `src/hooks/useAIAppBuilder.ts` | Add 3-minute total build time cap |
+| File | Lines | Change |
+|------|-------|--------|
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | ~1811 | Allow compilation when completedFileCount >= 3 during generation |
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | ~1831-1846 | Accept compilation results during generation |
+| `src/hooks/useAIAppBuilder.ts` | ~1225-1264 | Throttle setMessages to 200ms instead of rAF (16ms) |
 
-## Implementation Priority
+## Expected Result
 
-Fix 2 (3-minute cap) is the most critical — it prevents the infinite-feeling wait. Fix 1 (progress overlay) is the most impactful UX improvement. Fix 3 and 4 are enhancements that make the wait feel productive.
+- Preview shows a live draft within ~15-20 seconds (after 3 files complete) instead of waiting for entire generation to finish
+- Main thread stays responsive (5x fewer React re-renders during streaming)
+- Firefox "slowing down" warning eliminated
+- All safety timers (wall-clock, 3-min cap) can fire reliably because the main thread isn't blocked
 
 ## Risk
 
-- **Low**: All fixes are additive safety mechanisms. The existing compilation and streaming logic is untouched.
-- Fix 3 runs compilation during streaming which could cause brief UI jank, but it's throttled by the `completedFileCount` dependency.
+- **Low**: Fix A may show a brief flash if files 1-3 have compile errors, but the user sees progress instead of an eternal skeleton. The `completedFileCount >= 3` threshold ensures at least index.html + a CSS + a component are present before first compile.
+- **Low**: Fix B reduces chat update frequency from ~60fps to ~5fps during streaming. The code editor already reads from `partialFiles` directly, so users still see code appearing in real-time.
+
