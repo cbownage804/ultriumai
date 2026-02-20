@@ -1,108 +1,88 @@
 
 
-# Fix: Stream Freeze at ~30 Seconds
+# Fix: Error #310 Crash After Generation + Chat Content Leaking
 
-## Root Cause
+## Problem Summary
 
-The `Promise.race` read timeout at line 1261 in `useAIAppBuilder.ts` is **dangling and never cleaned up**. Here's what happens:
+There are actually **two separate bugs**, not a streaming timeout:
 
-```text
-1. Each iteration of the read loop creates a NEW 30-second setTimeout
-2. When reader.read() returns data, Promise.race settles, but the 30s timer is NEVER cleared
-3. After ~30 seconds of streaming, that first timer fires
-4. It resolves with { done: true, value: undefined }
-5. But critically: the reader is NEVER canceled and the controller is NEVER aborted
-6. The response body connection is left DANGLING in the browser
-7. This causes downstream hangs in finalization and prevents clean completion
-```
+1. **The stream works fine** -- edge function logs confirm generation completes successfully in ~27-31 seconds with zero errors and zero keepalive gaps. The "stuck at 30s" perception is because the app crashes immediately after generation finishes.
 
-The stall detector (25s) already handles dead streams properly -- it aborts the controller AND cancels the reader. The read timeout is redundant, buggy (no cleanup), and is the direct cause of the ~30s freeze.
+2. **React Error #310** ("Rendered fewer hooks than expected") crashes the entire App Builder when generation completes. The "App Builder failed to load" error screen you see is this crash caught by PanelErrorBoundary.
 
-## Fix (2 files, 1 deployment)
+3. **AI planning text leaks into chat** -- text like "Design Specs:", "Working on tasks...", "Typography", "Palette", "Components" appears in the chat instead of being hidden.
 
-### Step 1: Remove the buggy `Promise.race` read timeout entirely
+## Root Cause Analysis
 
-**File**: `src/hooks/useAIAppBuilder.ts`, lines 1258-1264
+### Error #310
 
-The stall detector (5s interval, 25s threshold) already catches dead streams. The read timeout is redundant and actively harmful.
+The `liveCompiledHTML` useMemo (line 1723 of AIAppBuilderWorkspace.tsx) calls `compileReactProject()` synchronously when `isGenerating` transitions to `false` and `project.files` updates with newly generated files. If the React compiler throws an exception on the new (possibly partial or malformed) files, the exception propagates up through React's render cycle. When an exception occurs mid-render in a component with 60+ hooks, React detects that fewer hooks ran than expected and throws Error #310.
 
-Replace:
-```typescript
-const readPromise = reader.read();
-const timeoutPromise = new Promise<ReadableStreamReadResult<Uint8Array>>((resolve) =>
-  setTimeout(() => resolve({ done: true, value: undefined as any }), 30_000)
-);
-const { done, value } = await Promise.race([readPromise, timeoutPromise]);
-```
+The compilation error is the trigger; Error #310 is the symptom.
 
-With:
-```typescript
-const { done, value } = await reader.read();
-```
+### Chat Content Leaking
 
-Also remove the dead log at line 1266-1268 that references "Read timeout (20s)":
-```typescript
-if (done) {
-  // no special handling needed -- stall detector handles dead streams
-  break;
-}
-```
+The `getDisplayContent` function in BuilderChatPanel.tsx strips file blocks and common AI meta-sections, but doesn't strip "Design Specs:" headings or task-list-style content ("Typography", "Palette", "Components"). These are part of the AI's thinking/planning output that should be hidden from the user.
 
-### Step 2: Make edge function keepalive more aggressive and add logging
+## Fix Plan (3 changes, 2 files)
 
-**File**: `supabase/functions/ai-app-builder/index.ts`, lines 710-722
+### Change 1: Wrap `liveCompiledHTML` useMemo in try/catch
 
-Change the keepalive from 8s/7s to 4s/3s to ensure the Supabase platform proxy never sees an idle connection:
+**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`, line ~1723
+
+Wrap the entire body of the `liveCompiledHTML` useMemo in a try/catch so compilation errors return `null` instead of throwing through React's render cycle. This prevents Error #310 entirely.
 
 ```typescript
-const keepaliveInterval = setInterval(async () => {
-  if (sentDone) {
-    clearInterval(keepaliveInterval);
-    return;
-  }
-  if (Date.now() - lastUpstreamTime > 3_000) {
-    try {
-      await writer.write(encoder.encode(': keepalive\n\n'));
-      console.log(`[${requestId}] Keepalive sent (gap: ${Date.now() - lastUpstreamTime}ms)`);
-    } catch {
-      clearInterval(keepaliveInterval);
+const liveCompiledHTML = useMemo(() => {
+  try {
+    if (isGenerating) return null;
+    if (project.files.length === 0) return null;
+    if (stableHTMLRef.current) return null;
+    if (isReactProject) {
+      const result = compileReactProject(project.files, { ... });
+      if (result.errors.length > 0) console.warn(...);
+      return result.html || null;
     }
+    return getCompiledHTML(...);
+  } catch (e) {
+    console.error('[ReactCompiler] Compilation crashed:', e);
+    return null; // Graceful fallback -- preview will show error page
   }
-}, 4_000);
+}, [...]);
 ```
 
-Also add a timing log when the upstream reader completes to track actual execution time:
+### Change 2: Strip "Design Specs:" and task-list content from chat display
+
+**File**: `src/components/ai-builder/BuilderChatPanel.tsx`, in the `getDisplayContent` function
+
+Add patterns to strip:
+- "Design Specs:" headings and content that follows
+- "Working on tasks..." progress lines
+- Bare single-word task items like "Typography", "Palette", "Components"
+- "Writing X files..." progress markers
 
 ```typescript
-// After the while(true) loop in the async IIFE:
-console.log(`[${requestId}] Upstream stream completed after ${Date.now() - lastUpstreamTime}ms since last chunk`);
+// After existing strip patterns, add:
+.replace(/(?:\*{0,2})?Design Specs?:?\*{0,2}[\s\S]*?(?=\n===FILE|\n#{1,4}\s|$)/gi, '')
+.replace(/^Working on tasks\.{0,3}\s*$/gm, '')
+.replace(/^Writing \d+ files?\.{0,3}\s*$/gm, '')
 ```
 
-### Step 3: Redeploy edge function
+### Change 3: Also wrap timer-based compilation in try/catch
 
-Force-redeploy `ai-app-builder` to ensure the latest keepalive logic is live.
+**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`, line ~1680
 
-## Why This Fixes It
+The timer-based compile during streaming (inside `setInterval`) should also be wrapped to prevent partial-file compilation from crashing.
 
-- The `Promise.race` created a ticking 30s bomb on every read iteration
-- When the first bomb detonated, it broke out of the read loop without cleaning up the reader or connection
-- The dangling connection/reader caused the finalization path to hang
-- Removing it leaves just the stall detector, which properly aborts and cancels on timeout
-- More aggressive keepalives (4s) ensure no proxy/platform timeouts during model thinking pauses
+This is already partially wrapped but the React compiler call itself should be in a try/catch that catches all errors, not just the outer try/catch.
 
-## Technical Details
+## Why This Fixes Both Issues
 
-### What the stall detector already does correctly (no changes needed):
-```typescript
-// Lines 1248-1255 -- this is the CORRECT timeout mechanism
-const stallChecker = setInterval(() => {
-  if (Date.now() - lastChunkTime > STREAM_STALL_MS && !streamDone) {
-    controller.abort();           // Signals the fetch to terminate
-    reader.cancel().catch(() => {}); // Cleans up the reader
-    streamDone = true;            // Breaks the while loop
-  }
-}, 5000);
-```
+- **Error #310**: The useMemo no longer throws, so all 60+ hooks execute on every render. React never sees a hook count mismatch.
+- **Chat leaking**: The AI's planning text ("Design Specs:", task lists) is stripped before display, so only the meaningful conversational response shows.
+- **No streaming changes needed**: The stream is working correctly. Previous keepalive and timeout fixes remain in place as defense-in-depth.
 
-This properly cleans up everything. The `Promise.race` timeout does NOT do this cleanup.
+## Technical Risk
+
+Low. The try/catch in useMemo is a standard React pattern for error-prone computations. The fallback path (returning null) already exists and triggers the "Compilation Error" fallback page in the preview, which is a much better UX than crashing the entire App Builder.
 
