@@ -1852,6 +1852,41 @@ export function AIAppBuilderWorkspace() {
     }
   }, [project.files, isGenerating, stableHTML]);
 
+  // Fix 4: Force stableHTML update if generation exceeds 120 seconds with partial files available
+  useEffect(() => {
+    if (!isGenerating) return;
+    const timer = setTimeout(() => {
+      if (partialFiles.length > 0 && !stableHTML) {
+        console.warn('[Preview] Generation exceeded 120s — force-compiling partial files for preview');
+        // Attempt compilation from partial files
+        const isPartialReact = partialFiles.some(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx'));
+        if (isPartialReact) {
+          try {
+            const result = compileReactProject(partialFiles, {
+              supabaseConfig: supabaseConfig || undefined,
+              stripeConfig: stripeConfig || undefined,
+              envVars,
+            });
+            if (result.html) {
+              setStableHTML(result.html);
+              return;
+            }
+          } catch (e) {
+            console.warn('[Preview] Partial React compilation failed:', e);
+          }
+        }
+        // Fallback: try vanilla compilation
+        try {
+          const html = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+          if (html) setStableHTML(html);
+        } catch (e) {
+          console.warn('[Preview] Partial vanilla compilation failed:', e);
+        }
+      }
+    }, 120_000);
+    return () => clearTimeout(timer);
+  }, [isGenerating, partialFiles, stableHTML]);
+
   // NEVER fall through to liveCompiledHTML during generation — show SkeletonPreview until build completes
   const compiledHTML = stableHTML;
   const hasFiles = project.files.length > 0;

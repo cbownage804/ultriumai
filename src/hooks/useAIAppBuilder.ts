@@ -737,6 +737,9 @@ export function useAIAppBuilder() {
       accumulatedFilesRef.current = [];
       setContinuationRound(0);
     }
+    // Fix: Hard 3-minute cap across ALL continuation rounds combined
+    const totalBuildStart = Date.now();
+    const TOTAL_BUILD_MAX_MS = 180_000; // 3 minutes
     // ── Phase 8: Request deduplication (exempt retries/auto-fix) ──
     const fingerprint = hashString(input + (imageDataUrls?.join('') || ''));
     const now = Date.now();
@@ -1826,6 +1829,12 @@ export function useAIAppBuilder() {
       }
 
       while (continuationResult?.shouldContinue && continuationResult.generatedPaths) {
+        // Hard 3-minute total build cap — prevents infinite-feeling waits
+        if (Date.now() - totalBuildStart > TOTAL_BUILD_MAX_MS) {
+          console.warn('[Continuation] Total build time exceeded 3 minutes — breaking loop.');
+          toast.warning('Generation capped at 3 minutes — compiling what was built so far.', { duration: 5000 });
+          break;
+        }
         // Fix 2: Reset wall-clock for each continuation round
         resetWallClock();
 
