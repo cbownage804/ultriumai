@@ -233,6 +233,14 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
     .replace(/^Writing \d+ files?\.{0,3}\s*$/gm, '')
     // Remove bare single-word planning items (Typography, Palette, Components, etc.)
     .replace(/^[-•*]?\s*(?:Typography|Palette|Components|Layout|Spacing|Colors?|Fonts?|Icons?)\s*$/gm, '')
+    // Remove "Thinking..." lines
+    .replace(/^(?:Thinking\.{0,3})\s*$/gm, '')
+    // Remove "Design Tokens:" headings
+    .replace(/^\*{0,2}Design Tokens?:?\*{0,2}\s*$/gm, '')
+    // Remove bare color/token names (Primary, Background, Accent, etc.)
+    .replace(/^[-•*]?\s*(?:Primary|Secondary|Background|Accent|Foreground|Muted|Border|Ring)\s*$/gm, '')
+    // Remove "Loading preview..." lines
+    .replace(/^Loading preview\.{0,3}\s*$/gm, '')
     // Clean up excessive newlines
     .replace(/\n{3,}/g, '\n\n')
     .trim();
@@ -342,8 +350,10 @@ export function BuilderChatPanel({
     }
     const interval = setInterval(() => {
       const current = streamingContentRef.current;
+      // Skip updates for very large content -- only file names matter during streaming
+      if (current.length > 20_000) return;
       setLocalStreamContent(prev => current !== prev ? current : prev);
-    }, 300);
+    }, 800);
     return () => clearInterval(interval);
   }, [isGenerating, streamingContentRef]);
 
@@ -591,12 +601,61 @@ export function BuilderChatPanel({
   };
 
   const renderAssistantMessage = (msg: BuilderMessage, isLast: boolean) => {
-    const { text, fileNames } = getDisplayContent(msg);
     const isStreaming = isGenerating && isLast;
+
+    // During streaming, skip expensive getDisplayContent entirely — just extract file names cheaply
+    if (isStreaming) {
+      const fileNames: string[] = [];
+      for (const match of msg.content.matchAll(/^===FILE:\s*(.+?)===$/gm)) {
+        fileNames.push(match[1].trim());
+      }
+      const planSteps = msg.planSteps || extractPlanSteps(msg.content, true, false);
+      return (
+        <div className="space-y-3">
+          <button
+            onClick={() => setThinkingCollapsed(prev => ({ ...prev, [msg.id]: !(thinkingCollapsed[msg.id] ?? true) }))}
+            className="flex items-center gap-1.5 text-white/30 text-[13px] hover:text-white/50 transition-colors"
+          >
+            <ChevronDown className={cn("h-3 w-3 transition-transform", (thinkingCollapsed[msg.id] ?? true) && "-rotate-90")} />
+            <span>Thinking...</span>
+          </button>
+          {planSteps && planSteps.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-white/[0.1] overflow-hidden">
+              <div className="px-4 py-3 border-b border-white/[0.06]">
+                <span className="text-[13px] font-medium text-white/80">Working on tasks...</span>
+                <div className="flex gap-0.5 mt-2">
+                  {planSteps.map((step, i) => (
+                    <div key={i} className={cn("h-1 rounded-full flex-1 transition-all duration-500", step.status === 'done' ? 'bg-emerald-400' : step.status === 'active' ? 'bg-cyan-400 animate-pulse' : 'bg-white/[0.08]')} />
+                  ))}
+                </div>
+              </div>
+              <div className="px-4 py-2 space-y-0.5">
+                {planSteps.map((step, i) => (
+                  <div key={i} className="flex items-start gap-2.5 py-1.5">
+                    {step.status === 'done' ? <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" /> : step.status === 'active' ? <Loader2 className="h-4 w-4 animate-spin text-cyan-400 shrink-0 mt-0.5" /> : <div className="h-4 w-4 rounded-full border border-white/[0.15] shrink-0 mt-0.5" />}
+                    <span className={cn("text-[13px] leading-snug", step.status === 'done' ? "text-white/50" : step.status === 'active' ? "text-white/80" : "text-white/30")}>{step.label}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+          {fileNames.length > 0 && (
+            <div className="rounded-xl border border-white/[0.1] px-4 py-3">
+              <div className="flex items-center gap-2">
+                <FileCode className="h-4 w-4 text-cyan-400" />
+                <span className="text-[13px] text-white/70">{fileNames.length} file{fileNames.length !== 1 ? 's' : ''} in progress...</span>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const { text, fileNames } = getDisplayContent(msg);
     const hasFiles = msg.filesGenerated && msg.filesGenerated > 0;
     const isBuildExpanded = expandedBuildMessages.has(msg.id);
     const totalFiles = hasFiles ? msg.filesGenerated! : fileNames.length;
-    const isCompleted = !isStreaming && (hasFiles || fileNames.length > 0);
+    const isCompleted = hasFiles || fileNames.length > 0;
     const isThinkingCollapsed = thinkingCollapsed[msg.id] ?? true;
 
     // Clean display text — strip plan step duplicates (numbered, checkbox, bullet patterns)
