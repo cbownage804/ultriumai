@@ -1,88 +1,86 @@
 
 
-# Fix: Error #310 Crash After Generation + Chat Content Leaking
+# Fix: Browser Freeze During Generation + Chat Content Leaking
 
-## Problem Summary
+## Problem
 
-There are actually **two separate bugs**, not a streaming timeout:
+Two issues visible in the screenshots:
 
-1. **The stream works fine** -- edge function logs confirm generation completes successfully in ~27-31 seconds with zero errors and zero keepalive gaps. The "stuck at 30s" perception is because the app crashes immediately after generation finishes.
+1. **Firefox shows "This page is slowing down Firefox"** -- the browser CPU is saturated during generation, causing the entire page to become unresponsive around 29 seconds.
 
-2. **React Error #310** ("Rendered fewer hooks than expected") crashes the entire App Builder when generation completes. The "App Builder failed to load" error screen you see is this crash caught by PanelErrorBoundary.
+2. **Chat shows leaked content** -- "Working on tasks...", "Primary", "Background", "Accent", "Typography", "Design Tokens:", "Writing 1 file..." all appear in the chat when they should be hidden.
 
-3. **AI planning text leaks into chat** -- text like "Design Specs:", "Working on tasks...", "Typography", "Palette", "Components" appears in the chat instead of being hidden.
+## Root Cause
 
-## Root Cause Analysis
+### Browser Freeze
 
-### Error #310
+The `BuilderChatPanel` polls `streamingContentRef` every **300ms** and sets `localStreamContent` state. This triggers `displayMessages` to recalculate, which calls `getDisplayContent()` on the streaming message. That function:
 
-The `liveCompiledHTML` useMemo (line 1723 of AIAppBuilderWorkspace.tsx) calls `compileReactProject()` synchronously when `isGenerating` transitions to `false` and `project.files` updates with newly generated files. If the React compiler throws an exception on the new (possibly partial or malformed) files, the exception propagates up through React's render cycle. When an exception occurs mid-render in a component with 60+ hooks, React detects that fewer hooks ran than expected and throws Error #310.
+1. Splits the **entire streaming content** (50-100KB of source code) into lines
+2. Runs line-by-line pattern matching with 8 regex patterns per line
+3. Then applies **25+ regex replacements** on the result, many using `[\s\S]*` which causes catastrophic backtracking on large strings
+4. Then `extractPlanSteps` runs 3 more regex scans with `matchAll`
+5. Then `renderAssistantMessage` processes the result through ReactMarkdown
 
-The compilation error is the trigger; Error #310 is the symptom.
+This happens **every 300ms** for the duration of generation. At 30 seconds, the content is large enough to saturate the CPU.
 
 ### Chat Content Leaking
 
-The `getDisplayContent` function in BuilderChatPanel.tsx strips file blocks and common AI meta-sections, but doesn't strip "Design Specs:" headings or task-list-style content ("Typography", "Palette", "Components"). These are part of the AI's thinking/planning output that should be hidden from the user.
+The `insideFile` detector in `getDisplayContent` uses heuristic "conversational patterns" to decide when a line exits a file block. Lines like blank lines inside code are skipped, and items like "Design Tokens:" or "Primary" don't match any conversational pattern, so they remain in the "inside file" state. But blank lines (`continue`) cause them to accumulate silently. The stripping regexes at lines 228-236 only catch some patterns.
 
-## Fix Plan (3 changes, 2 files)
+## Fix (2 changes, 1 file)
 
-### Change 1: Wrap `liveCompiledHTML` useMemo in try/catch
+### Change 1: Skip expensive content processing during streaming
 
-**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`, line ~1723
+During active streaming, the chat panel should show a **minimal static UI** (the task breakdown card + file progress) instead of running `getDisplayContent` on the full streaming content. The streaming content is only needed for extracting file names (for the progress card), not for displaying prose.
 
-Wrap the entire body of the `liveCompiledHTML` useMemo in a try/catch so compilation errors return `null` instead of throwing through React's render cycle. This prevents Error #310 entirely.
+**File**: `src/components/ai-builder/BuilderChatPanel.tsx`
 
-```typescript
-const liveCompiledHTML = useMemo(() => {
-  try {
-    if (isGenerating) return null;
-    if (project.files.length === 0) return null;
-    if (stableHTMLRef.current) return null;
-    if (isReactProject) {
-      const result = compileReactProject(project.files, { ... });
-      if (result.errors.length > 0) console.warn(...);
-      return result.html || null;
-    }
-    return getCompiledHTML(...);
-  } catch (e) {
-    console.error('[ReactCompiler] Compilation crashed:', e);
-    return null; // Graceful fallback -- preview will show error page
-  }
-}, [...]);
-```
+In `renderAssistantMessage`, when `isStreaming` is true, skip `getDisplayContent` entirely and instead:
+- Extract file names cheaply with a single `matchAll` on the `===FILE:` pattern
+- Show only the task breakdown card and file progress
+- Do NOT process or display the prose text during streaming
 
-### Change 2: Strip "Design Specs:" and task-list content from chat display
+This eliminates the 300ms CPU spike completely.
 
-**File**: `src/components/ai-builder/BuilderChatPanel.tsx`, in the `getDisplayContent` function
+### Change 2: Reduce streaming content polling to 800ms and add size guard
 
-Add patterns to strip:
-- "Design Specs:" headings and content that follows
-- "Working on tasks..." progress lines
-- Bare single-word task items like "Typography", "Palette", "Components"
-- "Writing X files..." progress markers
+**File**: `src/components/ai-builder/BuilderChatPanel.tsx`
+
+Change the `streamingContentRef` polling interval from 300ms to 800ms, and skip setting state if content exceeds 20KB (the chat display doesn't need to process megabytes of code).
 
 ```typescript
-// After existing strip patterns, add:
-.replace(/(?:\*{0,2})?Design Specs?:?\*{0,2}[\s\S]*?(?=\n===FILE|\n#{1,4}\s|$)/gi, '')
-.replace(/^Working on tasks\.{0,3}\s*$/gm, '')
-.replace(/^Writing \d+ files?\.{0,3}\s*$/gm, '')
+// Lines 343-347: Change interval and add size guard
+const interval = setInterval(() => {
+  const current = streamingContentRef.current;
+  // Skip updates for very large content -- only file names matter during streaming
+  if (current.length > 20_000) return;
+  setLocalStreamContent(prev => current !== prev ? current : prev);
+}, 800);
 ```
 
-### Change 3: Also wrap timer-based compilation in try/catch
+### Change 3: Improve content stripping for non-streaming messages
 
-**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`, line ~1680
+After generation completes, the final message still needs `getDisplayContent`. Add these additional strip patterns to catch the remaining leaked content:
 
-The timer-based compile during streaming (inside `setInterval`) should also be wrapped to prevent partial-file compilation from crashing.
+```typescript
+// Add to the regex chain:
+.replace(/^(?:Thinking\.{0,3})\s*$/gm, '')
+.replace(/^\*{0,2}Design Tokens?:?\*{0,2}\s*$/gm, '')
+.replace(/^[-•*]?\s*(?:Primary|Secondary|Background|Accent|Foreground|Muted|Border|Ring)\s*$/gm, '')
+.replace(/^Loading preview\.{0,3}\s*$/gm, '')
+```
 
-This is already partially wrapped but the React compiler call itself should be in a try/catch that catches all errors, not just the outer try/catch.
+## Technical Summary
 
-## Why This Fixes Both Issues
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| Browser freeze | `getDisplayContent` runs 25+ regexes on 50-100KB content every 300ms | Skip prose processing during streaming; reduce poll rate |
+| Chat leaking | Strip patterns don't cover all AI planning terms | Add missing strip patterns for design tokens, color names |
+| "Slowing down Firefox" | Catastrophic regex backtracking on large `[\s\S]*` patterns | Size guard prevents processing content > 20KB |
 
-- **Error #310**: The useMemo no longer throws, so all 60+ hooks execute on every render. React never sees a hook count mismatch.
-- **Chat leaking**: The AI's planning text ("Design Specs:", task lists) is stripped before display, so only the meaningful conversational response shows.
-- **No streaming changes needed**: The stream is working correctly. Previous keepalive and timeout fixes remain in place as defense-in-depth.
+## Expected Result
 
-## Technical Risk
-
-Low. The try/catch in useMemo is a standard React pattern for error-prone computations. The fallback path (returning null) already exists and triggers the "Compilation Error" fallback page in the preview, which is a much better UX than crashing the entire App Builder.
-
+- No more browser freezing during generation
+- Chat shows only the task breakdown card and file progress during streaming
+- After generation, the final message displays clean conversational text without leaked planning content
