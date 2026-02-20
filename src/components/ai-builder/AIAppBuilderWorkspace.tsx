@@ -682,8 +682,13 @@ export function AIAppBuilderWorkspace() {
           userContent: project.files.find(pf => pf.path === f.path)?.content || '',
           aiContent: f.content,
         })));
+      // Issue 23 fix: Batch non-conflicting files into a single setFiles merge
         const nonConflicting = latestFiles.filter(f => !dirtyFiles.has(f.path));
-        for (const file of nonConflicting) upsertFile(file.path, file.content);
+        if (nonConflicting.length > 0) {
+          const existingMap = new Map(project.files.map(f => [f.path, f]));
+          for (const f of nonConflicting) existingMap.set(f.path, f);
+          setFiles(Array.from(existingMap.values()));
+        }
       } else {
         // Issue 6 fix: Batch all file updates into a single setFiles call
         if (project.files.length === 0) {
@@ -704,12 +709,7 @@ export function AIAppBuilderWorkspace() {
       setLastFixError(null);
       // Log files to build log
       latestFiles.forEach(f => buildLog.logFileWrite(f.path));
-      // Phase 87: Show compiling state while preview rebuilds
-      setIsCompiling(true);
-      // Issue 4 fix: Prioritize compilation first, defer non-critical analyses
-      requestAnimationFrame(() => {
-        setIsCompiling(false);
-      });
+      // Issue 30 fix: Removed isCompiling flicker (was set true then immediately false next frame)
       // Defer code smell analysis so it doesn't block preview
       setTimeout(() => {
         const smells = codeSmellDetector.analyzeFiles([...project.files, ...latestFiles]);
@@ -790,17 +790,24 @@ export function AIAppBuilderWorkspace() {
         lighthouseAudit.runAudit(latestFiles);
         bundleSize.analyzeBundle(latestFiles);
         // Auto-patch broken delete/remove buttons deterministically (zero credits)
+        // Issues 25 & 26 fix: Batch patched + companion files into a single setFiles merge
         const patchResult = deleteAutoPatcher.patchDeleteButtons(latestFiles);
+        const companions = fileScaffolding.generateCompanionFiles(latestFiles, project.files);
+        const batchFiles: typeof latestFiles = [];
         if (patchResult.patched) {
-          patchResult.files.forEach(f => upsertFile(f.path, f.content));
+          batchFiles.push(...patchResult.files);
           buildLog.addEntry('info', `🔧 Auto-patched ${patchResult.fixes.length} delete/remove issue(s)`);
           patchResult.fixes.forEach(fix => buildLog.addEntry('info', `  ✅ ${fix}`));
         }
-        // Phase 59: Auto-generate companion test files
-        const companions = fileScaffolding.generateCompanionFiles(latestFiles, project.files);
         if (companions.length > 0) {
-          companions.forEach(f => upsertFile(f.path, f.content));
+          batchFiles.push(...companions);
           buildLog.addEntry('info', `🧪 Auto-generated ${companions.length} test file(s)`);
+        }
+        if (batchFiles.length > 0) {
+          const currentFiles = project.files;
+          const map = new Map(currentFiles.map(f => [f.path, f]));
+          for (const f of batchFiles) map.set(f.path, f);
+          setFiles(Array.from(map.values()));
         }
       }, 100);
       // Mark preview as good for hot recovery & update conflict resolver base snapshot
@@ -1508,12 +1515,12 @@ export function AIAppBuilderWorkspace() {
     setDirtyFiles(new Set());
     clearDraft();
     toast.success('Project saved');
-    // Capture thumbnail in background (non-blocking)
-    const html = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+    // Issue 22 fix: Reuse existing compiledForHosting instead of redundant getCompiledHTML call
+    const html = compiledForHosting;
     if (projectId && html) {
       captureAndUpload(html, projectId).catch(() => {});
     }
-  }, [saveProject, project.name, project.files, branches, activeBranch, messages, clearDraft, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, captureAndUpload, linkedGPT]);
+  }, [saveProject, project.name, project.files, branches, activeBranch, messages, clearDraft, compiledForHosting, captureAndUpload, linkedGPT]);
 
   // Auto-capture thumbnail after generation completes (Issue 18: reuse stableHTML instead of redundant getCompiledHTML)
   const wasGeneratingRef = useRef(false);
@@ -1700,6 +1707,16 @@ export function AIAppBuilderWorkspace() {
   // Issue 10 fix: Track stableHTML in a ref so liveCompiledHTML can skip redundant compilation
   const stableHTMLRef = useRef<string | null>(null);
   stableHTMLRef.current = stableHTML;
+
+  // Issue 24 fix: Reset stableHTML when a new generation starts so subsequent builds recompile
+  const prevIsGeneratingForReset = useRef(false);
+  useEffect(() => {
+    if (isGenerating && !prevIsGeneratingForReset.current) {
+      setStableHTML(null);
+      stableHTMLRef.current = null;
+    }
+    prevIsGeneratingForReset.current = isGenerating;
+  }, [isGenerating]);
 
   const liveCompiledHTML = useMemo(() => {
     // During generation, compilation is handled by the timer above

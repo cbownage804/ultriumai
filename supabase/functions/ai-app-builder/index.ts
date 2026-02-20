@@ -528,54 +528,9 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
       systemPrompt += `\n\nIMPORTANT: All API keys are available via window.ENV.KEY_NAME. Do NOT hardcode keys. Always use window.ENV to access them. Note: browser-side API calls expose keys — acceptable for prototyping only.`;
     }
 
-    // Phase 98: Tighten clone-intent detection — require URL proximity to keyword
-    const urls = extractUrls(processedMessages);
-    let brandingContext = '';
-    if (urls.length > 0 && lastUserText.length >= 20) {
-      // Check for clone-intent keywords NEAR a URL (within 80 chars)
-      const cloneKeywords = /\b(clone|replicate|copy|recreate|rebuild|reproduce|match|mimic|similar to|based on|inspired by|style of)\b/i;
-      const isCloneIntent = (() => {
-        for (const url of urls) {
-          const urlIdx = lastUserText.indexOf(url);
-          if (urlIdx === -1) continue;
-          const nearby = lastUserText.slice(Math.max(0, urlIdx - 80), urlIdx + url.length + 80);
-          if (cloneKeywords.test(nearby)) return true;
-        }
-        // Also check if clone keyword appears before any URL
-        const firstUrlIdx = Math.min(...urls.map(u => lastUserText.indexOf(u)).filter(i => i >= 0));
-        if (firstUrlIdx > 0) {
-          const before = lastUserText.slice(0, firstUrlIdx);
-          if (cloneKeywords.test(before)) return true;
-        }
-        return false;
-      })();
-      
-      if (isCloneIntent) {
-        console.log(`[${requestId}] Clone intent detected — scraping URLs: ${urls.join(', ')}`);
-        const results = await Promise.all(urls.slice(0, 2).map(u => scrapeBranding(u)));
-        brandingContext = results.filter(Boolean).join('\n');
-      } else {
-        console.log(`[${requestId}] URLs detected but no clone intent — skipping scrape`);
-      }
-    }
-
-    // Inject branding data into the last user message
+    // Issue 29 fix: Removed server-side URL scraping — client already injects scraped content
+    // The client-side firecrawl-scrape call handles URL context injection before sending to this edge function
     const enrichedMessages = [...processedMessages];
-    if (brandingContext) {
-      const lastIdx = enrichedMessages.length - 1;
-      if (enrichedMessages[lastIdx]?.role === 'user') {
-        const lastContent = enrichedMessages[lastIdx].content;
-        if (typeof lastContent === 'string') {
-          enrichedMessages[lastIdx] = { ...enrichedMessages[lastIdx], content: lastContent + brandingContext };
-        } else if (Array.isArray(lastContent)) {
-          const enrichedContent = lastContent.map((block: any) => {
-            if (block.type === 'text') return { ...block, text: block.text + brandingContext };
-            return block;
-          });
-          enrichedMessages[lastIdx] = { ...enrichedMessages[lastIdx], content: enrichedContent };
-        }
-      }
-    }
 
     // Sanitize messages: convert unsupported image types (SVG) to text descriptions
     const sanitizedMessages = enrichedMessages.map((msg: any) => {
@@ -626,6 +581,10 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
           model: selectedModel,
           messages: [{ role: "system", content: systemPrompt }, ...finalMessages],
           stream,
+          // Issue 28 fix: Explicit model parameters for deterministic code output
+          temperature: 0.3,
+          max_tokens: 16384,
+          top_p: 0.95,
         }),
         signal: gatewayController.signal,
       });
