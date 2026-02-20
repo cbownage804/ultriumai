@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, type MutableRefObject } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
@@ -107,6 +107,9 @@ interface BuilderChatPanelProps {
   onUpdateMessages?: (updater: (prev: BuilderMessage[]) => BuilderMessage[]) => void;
   /** Questions UI rendered above the input */
   questionsSlot?: React.ReactNode;
+  /** Ref-based streaming: content ref + version counter to avoid workspace re-renders */
+  streamingContentRef?: MutableRefObject<string>;
+  streamingVersion?: number;
 }
 
 
@@ -309,6 +312,7 @@ export function BuilderChatPanel({
   onForkFromMessage, onRevertToMessage, selectedModel, onModelChange,
   onToggleVisualEdit, isVisualEditActive, onOpenEditHistory, onSelectStarterTemplate, onReview,
   supabaseConfig, onUpdateMessages, questionsSlot,
+  streamingContentRef, streamingVersion,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -321,6 +325,28 @@ export function BuilderChatPanel({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Build display messages: during streaming, append virtual assistant message from ref
+  const displayMessages = useMemo(() => {
+    if (isGenerating && streamingContentRef?.current) {
+      const streamContent = streamingContentRef.current;
+      // Check if messages already has a trailing assistant msg (shouldn't during ref-streaming, but guard)
+      const last = messages[messages.length - 1];
+      if (last?.role === 'assistant') {
+        // Replace last assistant message content with streaming content
+        return messages.map((m, i) => i === messages.length - 1 ? { ...m, content: streamContent } : m);
+      }
+      // Append virtual streaming assistant message
+      return [...messages, {
+        id: '__streaming__',
+        role: 'assistant' as const,
+        content: streamContent,
+        timestamp: new Date(),
+      }];
+    }
+    return messages;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, isGenerating, streamingVersion]);
+
   useEffect(() => {
     // ScrollArea's actual scrollable element is the Viewport child
     const el = scrollRef.current;
@@ -331,7 +357,7 @@ export function BuilderChatPanel({
         target.scrollTop = target.scrollHeight;
       });
     }
-  }, [messages, thinkingPhase]);
+  }, [displayMessages, thinkingPhase]);
 
   const handleSend = () => {
     if (!input.trim() || isGenerating) return;
@@ -991,7 +1017,7 @@ export function BuilderChatPanel({
       {/* Messages */}
       <ScrollArea className="flex-1" ref={scrollRef}>
         <div className="p-4 space-y-4">
-          {messages.length === 0 ? (
+          {displayMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-8 relative">
               {/* Ambient glow */}
               <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[240px] rounded-full bg-gradient-to-br from-cyan-500/[0.06] to-violet-500/[0.04] blur-[80px] pointer-events-none" />
@@ -1083,7 +1109,7 @@ export function BuilderChatPanel({
               </motion.div>
             </div>
           ) : (
-            messages.filter((msg) => {
+            displayMessages.filter((msg) => {
               // Hide any message containing internal planning/system prompts
               if (isInternalMessage(msg.content)) return false;
               // Hide assistant messages that are only internal planning JSON
@@ -1188,7 +1214,7 @@ export function BuilderChatPanel({
           {/* Thinking / typing indicator — only show when no content is streaming yet */}
           {isGenerating && thinkingPhase && renderThinkingIndicator()}
           {isGenerating && !thinkingPhase && (() => {
-            const lastMsg = messages[messages.length - 1];
+            const lastMsg = displayMessages[displayMessages.length - 1];
             const hasStreamingContent = lastMsg?.role === 'assistant' && lastMsg.content.length > 0;
             return hasStreamingContent ? null : <TypingIndicator />;
           })()}

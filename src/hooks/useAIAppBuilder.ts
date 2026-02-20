@@ -695,6 +695,9 @@ export function useAIAppBuilder() {
   const [messages, setMessages] = useState<BuilderMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [latestFiles, setLatestFiles] = useState<ProjectFile[]>([]);
+  // Ref-based streaming: content stored in ref to avoid workspace re-renders
+  const streamingContentRef = useRef<string>('');
+  const [streamingVersion, setStreamingVersion] = useState(0);
   const [previousFiles, setPreviousFiles] = useState<ProjectFile[]>([]);
   const [mode, setMode] = useState<BuilderMode>('build');
   const [thinkingPhase, setThinkingPhase] = useState<ThinkingPhase>(null);
@@ -1216,58 +1219,30 @@ export function useAIAppBuilder() {
       let emptyChoicesCount = 0;
       lastChunkTime = Date.now();
 
-      // ── Throttled streaming updates (200ms) to keep main thread responsive ──
+      // ── Ref-based streaming: NO setMessages during streaming to avoid workspace re-renders ──
       let lastParsedLength = 0;
 
       const assistantMsgId = crypto.randomUUID();
 
       let lastUpdateTime = 0;
-      const UPDATE_THROTTLE_MS = 200;
-      let throttleTimer: ReturnType<typeof setTimeout> | null = null;
+      const STREAMING_VERSION_THROTTLE_MS = 300;
 
       const upsertAssistant = (content: string) => {
         fullContent = content;
+        // Write to ref — no React re-render triggered
+        streamingContentRef.current = content;
+
+        // Still parse for file streaming (lightweight, no React state updates)
+        if (content.length - lastParsedLength >= 500) {
+          lastParsedLength = content.length;
+          streaming.parseIncremental(content);
+        }
+
+        // Bump version counter at most every 300ms so chat panel can re-render independently
         const now = Date.now();
-
-        const doUpdate = () => {
-          lastUpdateTime = Date.now();
-          const currentContent = fullContent; // Capture latest
-
-          try {
-            let planSteps: PlanStep[] | undefined;
-            try {
-              if (currentContent.length > 200) {
-                planSteps = parsePlanSteps(currentContent);
-              }
-            } catch { /* plan step parsing is non-critical */ }
-
-            setMessages(prev => {
-              const last = prev[prev.length - 1];
-              if (last?.role === 'assistant') {
-                return prev.map((m, i) => i === prev.length - 1
-                  ? { ...m, content: currentContent, ...(planSteps ? { planSteps } : {}) }
-                  : m
-                );
-              }
-              return [...prev, { id: assistantMsgId, role: 'assistant' as const, content: currentContent, timestamp: new Date(), ...(planSteps ? { planSteps } : {}) }];
-            });
-
-            if (currentContent.length - lastParsedLength >= 500) {
-              lastParsedLength = currentContent.length;
-              streaming.parseIncremental(currentContent);
-            }
-          } catch (e) {
-            console.error('[Stream throttle] Error in batched update:', e);
-          }
-        };
-
-        if (now - lastUpdateTime >= UPDATE_THROTTLE_MS) {
-          doUpdate();
-        } else if (!throttleTimer) {
-          throttleTimer = setTimeout(() => {
-            throttleTimer = null;
-            doUpdate();
-          }, UPDATE_THROTTLE_MS - (now - lastUpdateTime));
+        if (now - lastUpdateTime >= STREAMING_VERSION_THROTTLE_MS) {
+          lastUpdateTime = now;
+          setStreamingVersion(v => v + 1);
         }
       };
 
@@ -1351,16 +1326,24 @@ export function useAIAppBuilder() {
         }
       } finally {
         clearInterval(stallChecker);
-      // Phase 2: Cancel pending throttle timer and do synchronous final flush
-        if (throttleTimer) { clearTimeout(throttleTimer); throttleTimer = null; }
+        // Single setMessages call to commit final content (the only one during the entire stream)
+        let planSteps: PlanStep[] | undefined;
+        try {
+          if (fullContent.length > 200) {
+            planSteps = parsePlanSteps(fullContent);
+          }
+        } catch { /* plan step parsing is non-critical */ }
         setMessages(prev => {
           const last = prev[prev.length - 1];
           if (last?.role === 'assistant') {
-            return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: fullContent } : m);
+            return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: fullContent, ...(planSteps ? { planSteps } : {}) } : m);
           }
-          return [...prev, { id: assistantMsgId, role: 'assistant' as const, content: fullContent, timestamp: new Date() }];
+          return [...prev, { id: assistantMsgId, role: 'assistant' as const, content: fullContent, timestamp: new Date(), ...(planSteps ? { planSteps } : {}) }];
         });
-        // Phase 2: Also flush final parseIncremental
+        // Clear streaming ref now that messages state has the final content
+        streamingContentRef.current = '';
+        setStreamingVersion(0);
+        // Final parseIncremental flush
         streaming.parseIncremental(fullContent);
       }
 
@@ -2084,5 +2067,8 @@ export function useAIAppBuilder() {
     partialFiles: streaming.partialFiles,
     isStreamingPreview: streaming.isStreaming,
     completedFileCount: streaming.completedFileCount,
+    // Ref-based streaming for chat panel (avoids workspace re-renders)
+    streamingContentRef,
+    streamingVersion,
   };
 }
