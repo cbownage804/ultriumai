@@ -689,6 +689,7 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
       const reader = response.body!.getReader();
       const encoder = new TextEncoder();
       let sentDone = false;
+      let receivedFirstChunk = false;
 
       const ensureDone = async () => {
         if (sentDone) return;
@@ -703,16 +704,36 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
       // Also use abort signal from the incoming request
       req.signal?.addEventListener('abort', () => { ensureDone(); });
 
+      // Keepalive: Send SSE comments every 8s while waiting for first chunk.
+      // This prevents Supabase's idle connection timeout (~30s) from killing the stream
+      // during the AI model's "thinking" phase before first token arrives.
+      const keepaliveInterval = setInterval(async () => {
+        if (receivedFirstChunk || sentDone) {
+          clearInterval(keepaliveInterval);
+          return;
+        }
+        try {
+          await writer.write(encoder.encode(': keepalive\n\n'));
+        } catch {
+          clearInterval(keepaliveInterval);
+        }
+      }, 8_000);
+
       (async () => {
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
+            if (!receivedFirstChunk) {
+              receivedFirstChunk = true;
+              clearInterval(keepaliveInterval);
+            }
             await writer.write(value);
           }
         } catch (e) {
           // Stream aborted by upstream — still send termination signal
         } finally {
+          clearInterval(keepaliveInterval);
           await ensureDone();
           globalThis.removeEventListener?.('unload', shutdownHandler);
         }
