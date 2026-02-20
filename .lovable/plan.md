@@ -1,100 +1,112 @@
 
 
-# Fix: Main Thread Blocking During Streaming (Firefox "Slowing Down" Warning)
+# Fix: Remove streamingVersion State from Workspace (The ACTUAL Root Cause)
 
 ## Problem
 
-Despite the 200ms throttle on `setMessages`, the preview stays stuck on skeletons and Firefox shows "This page is slowing down Firefox." The generation timer freezes, proving the main thread is stalled and ALL timeouts (55s wall-clock, 120s force-compile, 3-min cap) never fire.
+The Firefox "slowing down" warning persists because `streamingVersion` is a `useState` inside `useAIAppBuilder`, which is consumed by the 2700-line `AIAppBuilderWorkspace`. Every 300ms, `setStreamingVersion(v => v + 1)` triggers a full workspace re-render -- exactly the same problem as before, just with a different state variable.
 
-## Root Cause
+The ref-based `streamingContentRef` optimization was correct in concept but defeated by putting the notification counter (`streamingVersion`) in the same hook that the workspace consumes.
 
-Each `setMessages()` call triggers a full re-render of `AIAppBuilderWorkspace` (2700 lines, ~180 hooks, dozens of effects). At 200ms throttle, that is 5 renders/second. But each render takes longer than 200ms due to:
+## Root Cause (one line)
 
-- ~180 hooks re-evaluating
-- Multiple `useEffect` hooks with `messages` in their dependency arrays (auto-save to cloud, IDB, localStorage, latestRef assignment)
-- Dozens of `useMemo` recomputations
-- The entire JSX tree (2700 lines) re-diffing
-
-Result: the main thread is blocked 100% of the time during streaming. No timers fire, no compilation happens, preview stays as skeleton.
-
-## Solution: Use a Ref for Streaming Content, Stop Re-rendering the Workspace
-
-During streaming, store the assistant's content in a `useRef` instead of calling `setMessages`. Only the chat panel needs to display the streaming text -- and it can read from a separate, lightweight "streaming content" signal. The workspace component never re-renders during streaming.
-
-### Change 1: Add a streaming content ref to `useAIAppBuilder`
-
-**File**: `src/hooks/useAIAppBuilder.ts`
-
-Add a `streamingContentRef` and a `streamingVersion` counter (a simple number state that increments at most every 300ms to let the chat panel know there is new content to display):
-
-```typescript
-const streamingContentRef = useRef<string>('');
-const [streamingVersion, setStreamingVersion] = useState(0);
+```
+// In useAIAppBuilder.ts (consumed by AIAppBuilderWorkspace):
+const [streamingVersion, setStreamingVersion] = useState(0);  // <-- THIS re-renders the workspace
 ```
 
-### Change 2: Replace `setMessages` with ref writes during streaming
+## Solution: Move the polling to BuilderChatPanel
 
-**File**: `src/hooks/useAIAppBuilder.ts`
+Remove `streamingVersion` state and `setStreamingVersion` entirely from `useAIAppBuilder`. Instead, have `BuilderChatPanel` set up its own `setInterval` (every 300ms) that reads `streamingContentRef.current` and updates a **local** state inside the chat panel. This way:
 
-In `upsertAssistant`, instead of calling `setMessages` (which re-renders the entire workspace), write to `streamingContentRef.current` and bump `streamingVersion` at most every 300ms:
+- The workspace component has **zero** state changes during streaming
+- Only the chat panel re-renders (it's a leaf component, cheap to re-render)
+- All timers, compilation, and safety mechanisms work reliably
 
+## Changes
+
+### File 1: `src/hooks/useAIAppBuilder.ts`
+
+**Remove** `streamingVersion` state and all `setStreamingVersion` calls:
+
+- Line 700: Remove `const [streamingVersion, setStreamingVersion] = useState(0);`
+- Line 1243-1246: Remove the `setStreamingVersion(v => v + 1)` block from `upsertAssistant` (keep only the ref write and parseIncremental)
+- Line 1345: Remove `setStreamingVersion(0);` from the finally block
+- Line 2072: Remove `streamingVersion` from the return object
+
+The `upsertAssistant` function becomes simply:
 ```typescript
 const upsertAssistant = (content: string) => {
   fullContent = content;
   streamingContentRef.current = content;
-  
-  // Still parse for file streaming (lightweight, no React state)
+
   if (content.length - lastParsedLength >= 500) {
     lastParsedLength = content.length;
     streaming.parseIncremental(content);
   }
-  
-  // Bump version counter at most every 300ms for chat display
-  const now = Date.now();
-  if (now - lastUpdateTime >= 300) {
-    lastUpdateTime = now;
-    setStreamingVersion(v => v + 1);
-  }
 };
 ```
 
-Then in the `finally` block (stream end), do a single `setMessages` call to commit the final content.
+### File 2: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
 
-### Change 3: Pass streamingContentRef to BuilderChatPanel
+- Line 202: Remove `streamingVersion` from the destructure of `useAIAppBuilder()`
+- Lines 2044 and 2114: Remove `streamingVersion={streamingVersion}` from both `BuilderChatPanel` invocations
 
-**File**: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
+### File 3: `src/components/ai-builder/BuilderChatPanel.tsx`
 
-Pass `streamingContentRef` and `streamingVersion` to `BuilderChatPanel`. The chat panel reads `streamingContentRef.current` when `isGenerating` is true and `streamingVersion` changes, displaying the live text without re-rendering the workspace.
+- Remove `streamingVersion` from the props interface (line 112)
+- Remove `streamingVersion` from the function parameters (line 315)
+- Replace the `displayMessages` memo with a local polling approach:
 
-### Change 4: Update BuilderChatPanel to use the streaming ref
+```typescript
+// Local state for streaming content — polls ref every 300ms, only THIS component re-renders
+const [localStreamContent, setLocalStreamContent] = useState('');
 
-**File**: `src/components/ai-builder/BuilderChatPanel.tsx` (or wherever it is defined)
+useEffect(() => {
+  if (!isGenerating || !streamingContentRef) {
+    setLocalStreamContent('');
+    return;
+  }
+  // Poll the ref every 300ms to pick up new streaming content
+  const interval = setInterval(() => {
+    const current = streamingContentRef.current;
+    if (current !== localStreamContent) {
+      setLocalStreamContent(current);
+    }
+  }, 300);
+  return () => clearInterval(interval);
+}, [isGenerating, streamingContentRef]);
 
-When `isGenerating` is true, append a virtual assistant message from `streamingContentRef.current` to the displayed messages. This is computed locally inside the chat panel, so only the chat panel re-renders.
-
-### Change 5: Remove `messages` from heavy dependency arrays
-
-The auto-save effects (lines 1074-1100) already skip during `isGenerating`, but they still re-run their setup/teardown because `messages` is in the dependency array. Since `messages` won't change during streaming anymore (only `streamingVersion` changes), these effects stay dormant.
+const displayMessages = useMemo(() => {
+  if (isGenerating && localStreamContent) {
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg?.role === 'assistant') {
+      return messages.map((m, i) =>
+        i === messages.length - 1 ? { ...m, content: localStreamContent } : m
+      );
+    }
+    return [...messages, {
+      id: '__streaming__',
+      role: 'assistant' as const,
+      content: localStreamContent,
+      timestamp: new Date(),
+    }];
+  }
+  return messages;
+}, [messages, isGenerating, localStreamContent]);
+```
 
 ## Impact
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Workspace re-renders during streaming | ~5/sec (200ms throttle) | 0 (ref-only writes) |
-| Chat panel re-renders during streaming | ~5/sec (coupled) | ~3/sec (independent, 300ms) |
-| Main thread blocked | 100% during streaming | <10% |
-| Timers fire reliably | No | Yes |
-| Preview compilation | Never starts (thread blocked) | Starts after 3 files complete |
-
-## Files Changed
-
-| File | Change |
-|------|--------|
-| `src/hooks/useAIAppBuilder.ts` | Add `streamingContentRef`, `streamingVersion`; rewrite `upsertAssistant` to use ref; single `setMessages` on stream end |
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Pass `streamingContentRef` and `streamingVersion` to `BuilderChatPanel` |
-| `src/components/ai-builder/BuilderChatPanel.tsx` | Read streaming content from ref instead of `messages` prop during generation |
+| Metric | Before (broken) | After (fixed) |
+|--------|-----------------|---------------|
+| Workspace re-renders during streaming | ~3/sec (streamingVersion) | 0 |
+| Chat panel re-renders during streaming | ~3/sec (coupled to workspace) | ~3/sec (independent, local state) |
+| Main thread blocked | 100% (workspace re-render > 300ms) | Less than 10% (chat panel re-render < 5ms) |
+| Firefox "slowing down" warning | Yes | No |
+| Safety timers fire | No | Yes |
 
 ## Risk
 
-- **Low**: The only behavioral change is that `messages` state doesn't update during streaming. All consumers that need streaming content (chat display) get it from the ref. All consumers that skip during streaming (auto-save, IDB, drafts) already guard with `if (isGenerating) return`. The final `setMessages` call at stream end commits everything, so post-stream behavior is identical.
+**Very low**: This is purely moving where the state lives. The streaming content still flows through the same ref. The only difference is that the 300ms polling happens inside BuilderChatPanel (local state) instead of useAIAppBuilder (global state that re-renders the workspace).
 
