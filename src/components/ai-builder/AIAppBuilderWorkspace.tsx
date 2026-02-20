@@ -1808,7 +1808,8 @@ export function AIAppBuilderWorkspace() {
     // CRITICAL: Skip ALL compilation while AI is streaming files.
     // The React compiler and vanilla bundler are expensive — running them on every
     // streamed file chunk freezes the browser. Compilation only runs once generation ends.
-    if (isGenerating) return null;
+    // Allow compilation once enough files are complete, even during generation
+    if (isGenerating && completedFileCount < 3) return null;
 
     // If this is a React project, use the React compiler pipeline
     if (isReactProject) {
@@ -1824,18 +1825,23 @@ export function AIAppBuilderWorkspace() {
     }
     // Otherwise use the vanilla HTML compiler
     return getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
-  }, [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, isReactProject, compileReactProject, isGenerating]);
+  }, [project.files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, isReactProject, compileReactProject, isGenerating, completedFileCount]);
   const [stableHTML, setStableHTML] = useState<string | null>(null);
 
   // Defer preview updates until build completes — but allow CSS hot-patches through immediately
   useEffect(() => {
-    if (!isGenerating && liveCompiledHTML) {
-      // Try hot-patching first (CSS-only changes skip full reload)
-      const patched = liveSync.applyPatches(previewIframeRef, project.files);
-      if (!patched) {
-        // Full reload needed — update srcdoc
+    if (liveCompiledHTML) {
+      if (isGenerating) {
+        // During generation, only do full reloads (no hot-patching incomplete code)
         setStableHTML(liveCompiledHTML);
-        liveSync.resetSnapshot(project.files);
+      } else {
+        // Try hot-patching first (CSS-only changes skip full reload)
+        const patched = liveSync.applyPatches(previewIframeRef, project.files);
+        if (!patched) {
+          // Full reload needed — update srcdoc
+          setStableHTML(liveCompiledHTML);
+          liveSync.resetSnapshot(project.files);
+        }
       }
     }
     // Fix 5: If generation finished but compilation returned null, show error fallback
