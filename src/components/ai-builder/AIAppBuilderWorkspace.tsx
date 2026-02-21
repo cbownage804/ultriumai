@@ -997,7 +997,7 @@ export function AIAppBuilderWorkspace() {
   latestRef.current.name = project.name;
   latestRef.current.files = project.files;
   latestRef.current.messages = messages;
-  const lastSaveTimestampRef = useRef<number>(Date.now());
+  const lastSaveTimestampRef = useRef<number>(0);
 
   // Use a ref for saveToIDB so the effect doesn't depend on the idbPersistence object
   // (which changes identity every render due to syncStatus state)
@@ -1018,37 +1018,42 @@ export function AIAppBuilderWorkspace() {
 
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') {
+        // Update the timestamp BEFORE flushing so we know when this save happened
+        lastSaveTimestampRef.current = Date.now();
         flushDraft();
       } else if (document.visibilityState === 'visible') {
         // Always compare storage timestamp vs React state on tab return.
         // This catches: empty state, partial corruption, stale heap after freeze.
         const current = latestRef.current;
+        const reactIsEmpty = current.files.length === 0 && current.messages.length === 0;
+
+        // Synchronous: try localStorage first
         const draft = loadDraft();
+        let bestTime = lastSaveTimestampRef.current;
+        let restored = false;
 
         if (draft && (draft.files.length > 0 || draft.messages.length > 0)) {
-          const reactIsEmpty = current.files.length === 0 && current.messages.length === 0;
-          // Re-hydrate if React state is empty OR if the draft is newer
           const draftTime = draft.savedAt ? new Date(draft.savedAt).getTime() : 0;
-          const shouldRestore = reactIsEmpty || draftTime > (lastSaveTimestampRef.current || 0);
-
-          if (shouldRestore) {
-            console.info('[Draft] Re-hydrating from storage (reactEmpty=%s, draftTime=%s)', reactIsEmpty, draft.savedAt);
+          if (reactIsEmpty || draftTime > bestTime) {
+            console.info('[Draft] Re-hydrating from localStorage (reactEmpty=%s, draftTime=%s)', reactIsEmpty, draft.savedAt);
             setFiles(draft.files);
             renameProject(draft.name);
             if (draft.messages.length > 0) {
               setMessages(draft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
             }
+            bestTime = draftTime;
             lastSaveTimestampRef.current = draftTime;
+            restored = true;
           }
         }
 
-        // Also try IDB (larger capacity) — async, so it may override localStorage result
+        // Async: check IDB for potentially newer/larger data
         (async () => {
           try {
             const idbSession = await idbPersistence.checkRecovery();
             if (idbSession && idbSession.files.length > 0) {
               const idbTime = idbSession.savedAt ? new Date(idbSession.savedAt).getTime() : 0;
-              if (idbTime > (lastSaveTimestampRef.current || 0)) {
+              if (idbTime > lastSaveTimestampRef.current) {
                 console.info('[Draft] IDB has newer data, re-hydrating from IDB');
                 setFiles(idbSession.files);
                 renameProject(idbSession.name);
@@ -1121,6 +1126,9 @@ export function AIAppBuilderWorkspace() {
       if (lsDraft.messages.length > 0) {
         setMessages(lsDraft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
       }
+      // Mark the timestamp so visibility handler doesn't overwrite with older data
+      const lsTime = lsDraft.savedAt ? new Date(lsDraft.savedAt).getTime() : Date.now();
+      lastSaveTimestampRef.current = lsTime;
     }
 
     // ASYNC SECOND: Check IDB for potentially more complete data
