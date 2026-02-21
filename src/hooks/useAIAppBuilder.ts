@@ -1339,6 +1339,10 @@ export function useAIAppBuilder() {
       console.info('[AI Builder] ⏳ Awaiting buildCompletePromise for job:', jobId);
       await buildCompletePromise;
       console.info('[AI Builder] 🏁 buildCompletePromise resolved, sendMessage returning for job:', jobId);
+
+      // Clear generating/thinking state on SUCCESS (previously only cleared in catch)
+      setIsGenerating(false);
+      setThinkingPhase(null);
     } catch (err: any) {
       console.error('AI Builder error:', err);
       const classified = classifyError(0, err.message || '', err);
