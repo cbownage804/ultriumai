@@ -998,12 +998,14 @@ export function AIAppBuilderWorkspace() {
   // (which changes identity every render due to syncStatus state)
   const saveToIDBRef = useRef(idbPersistence.saveToIDB);
   saveToIDBRef.current = idbPersistence.saveToIDB;
+  const saveToIDBImmediateRef = useRef(idbPersistence.saveToIDBImmediate);
+  saveToIDBImmediateRef.current = idbPersistence.saveToIDBImmediate;
 
   useEffect(() => {
     const flushDraft = () => {
       saveDraftImmediate(latestRef.current.name, latestRef.current.files, latestRef.current.messages);
-      // Also flush to IndexedDB for more reliable recovery
-      saveToIDBRef.current(sessionId, latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+      // Use immediate (non-debounced) IDB save — browser may discard tab before debounce fires
+      saveToIDBImmediateRef.current(sessionId, latestRef.current.name, latestRef.current.files, latestRef.current.messages);
     };
 
     const handleVisibility = () => {
@@ -1058,25 +1060,35 @@ export function AIAppBuilderWorkspace() {
     if (project.files.length > 0 || messages.length > 0) return;
     // Try IndexedDB first (larger, more reliable), fall back to localStorage draft
     (async () => {
-      const idbSession = await idbPersistence.checkRecovery();
-      if (idbSession && (idbSession.files.length > 0 || idbSession.messages.length > 0)) {
-        // Auto-restore without asking -- user should never lose work
+      // Try both sources in parallel — pick whichever has more data
+      const [idbSession, lsDraft] = await Promise.all([
+        idbPersistence.checkRecovery().catch(() => null),
+        Promise.resolve(loadDraft()),
+      ]);
+
+      const idbFileCount = idbSession?.files?.length || 0;
+      const lsFileCount = lsDraft?.files?.length || 0;
+      const idbMsgCount = idbSession?.messages?.length || 0;
+      const lsMsgCount = lsDraft?.messages?.length || 0;
+
+      const useIDB = idbFileCount + idbMsgCount >= lsFileCount + lsMsgCount
+        && (idbFileCount > 0 || idbMsgCount > 0);
+      const useLS = !useIDB && (lsFileCount > 0 || lsMsgCount > 0);
+
+      if (useIDB && idbSession) {
         setFiles(idbSession.files);
         renameProject(idbSession.name);
         if (idbSession.messages.length > 0) {
           setMessages(idbSession.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
         }
         dedupeToast('success', 'Session auto-restored');
-        return;
-      }
-      // Fall back to localStorage draft
-      const draft = loadDraft();
-      if (draft && (draft.files.length > 0 || draft.messages.length > 0)) {
-        setFiles(draft.files);
-        renameProject(draft.name);
-        if (draft.messages.length > 0) {
-          setMessages(draft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+      } else if (useLS && lsDraft) {
+        setFiles(lsDraft.files);
+        renameProject(lsDraft.name);
+        if (lsDraft.messages.length > 0) {
+          setMessages(lsDraft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
         }
+        dedupeToast('success', 'Draft auto-restored');
       }
     })();
   }, []); // intentionally run once on mount

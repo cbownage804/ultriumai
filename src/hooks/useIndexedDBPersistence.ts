@@ -167,11 +167,30 @@ export function useIndexedDBPersistence() {
     };
   }, []);
 
+  /** Immediate (non-debounced) save — use on visibilitychange / beforeunload */
+  const saveToIDBImmediate = useCallback(async (
+    projectId: string, name: string, files: ProjectFile[], messages: any[]
+  ) => {
+    if (files.length === 0 && messages.length === 0) return;
+    try {
+      const timestamp = new Date().toISOString();
+      await Promise.all([
+        idbSet(FILES_STORE, projectId, files.map(f => ({ path: f.path, content: f.content, language: f.language }))),
+        idbSet(MESSAGES_STORE, projectId, messages),
+        idbSet(META_STORE, projectId, { name, savedAt: timestamp }),
+        idbSet(META_STORE, SESSION_KEY, { projectId, name, savedAt: timestamp }),
+      ]);
+    } catch (err) {
+      console.warn('IndexedDB immediate save failed:', err);
+    }
+  }, []);
+
   return {
     syncStatus,
     hasRecoverableSession,
     recoverableSession,
     saveToIDB,
+    saveToIDBImmediate,
     checkRecovery,
     clearSession,
   };
