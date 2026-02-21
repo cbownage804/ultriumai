@@ -1757,6 +1757,23 @@ export function AIAppBuilderWorkspace() {
     setStableHTML(html);
   }, []);
 
+  // When the tab returns from background, the browser may have discarded
+  // iframe content. Force re-apply stableHTML so the preview re-renders.
+  useEffect(() => {
+    const handleVisible = () => {
+      if (document.visibilityState === 'visible' && stableHTMLRef.current) {
+        const html = stableHTMLRef.current;
+        setStableHTML(null);
+        requestAnimationFrame(() => {
+          stableHTMLRef.current = html;
+          setStableHTML(html);
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisible);
+    return () => document.removeEventListener('visibilitychange', handleVisible);
+  }, []);
+
   const compiledHTML = stableHTML;
   const hasFiles = project.files.length > 0;
 
