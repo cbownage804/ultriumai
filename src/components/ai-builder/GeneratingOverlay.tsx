@@ -13,6 +13,7 @@ interface GeneratingOverlayProps {
 }
 
 const PHASE_CONFIG: Record<string, { label: string; color: string; gradient: string }> = {
+  thinking: { label: 'Thinking...', color: 'text-white/50', gradient: 'from-white/30 via-white/20 to-white/30' },
   analyzing: { label: 'Analyzing...', color: 'text-violet-400', gradient: 'from-violet-500 via-violet-400 to-fuchsia-500' },
   planning: { label: 'Planning architecture...', color: 'text-cyan-400', gradient: 'from-cyan-500 via-cyan-400 to-blue-500' },
   writing: { label: 'Writing code...', color: 'text-emerald-400', gradient: 'from-emerald-500 via-cyan-400 to-teal-500' },
