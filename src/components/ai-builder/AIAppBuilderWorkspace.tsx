@@ -780,20 +780,20 @@ export function AIAppBuilderWorkspace() {
       buildLog.logBuildComplete(latestFiles.length, duration);
       // Issue 4 fix: Defer non-critical post-build work to unblock preview
       // Run smoke test synchronously (fast, needed for error annotations)
-      const smokeResult = smokeTest.runSmokeTest(latestFiles);
-      const conflictWarnings = conflictDetection.detectConflicts(latestFiles);
-      if (conflictWarnings.length > 0) {
-        buildLog.addEntry('warning' as any, `🔗 ${conflictWarnings.length} dependency conflict(s) detected`);
-        conflictWarnings.slice(0, 3).forEach(w => buildLog.addEntry('info', `  ⚠ ${w.message}`));
-      }
-      errorAnnotations.updateAnnotations(
-        [...smokeResult.warnings, ...conflictWarnings],
-        smokeResult.errors
-      );
+      // Phase 2: Defer ALL post-generation work via requestIdleCallback to unblock preview
+      const deferPostGen = () => {
+        const smokeResult = smokeTest.runSmokeTest(latestFiles);
+        const conflictWarnings = conflictDetection.detectConflicts(latestFiles);
+        if (conflictWarnings.length > 0) {
+          buildLog.addEntry('warning' as any, `🔗 ${conflictWarnings.length} dependency conflict(s) detected`);
+          conflictWarnings.slice(0, 3).forEach(w => buildLog.addEntry('info', `  ⚠ ${w.message}`));
+        }
+        errorAnnotations.updateAnnotations(
+          [...smokeResult.warnings, ...conflictWarnings],
+          smokeResult.errors
+        );
 
-      // Defer heavy audits + Issue 14 fix: move TS validation into deferred block
-      setTimeout(() => {
-        // Issue 14: TS validation deferred to unblock preview render
+        // TS validation
         const validationResult = tsValidator.validate(latestFiles);
         if (validationResult.errorCount > 0) {
           buildLog.addEntry('warning' as any, `⚠️ ${validationResult.errorCount} validation error(s), ${validationResult.warningCount} warning(s)`);
@@ -808,7 +808,6 @@ export function AIAppBuilderWorkspace() {
         lighthouseAudit.runAudit(latestFiles);
         bundleSize.analyzeBundle(latestFiles);
         // Auto-patch broken delete/remove buttons deterministically (zero credits)
-        // Issues 25 & 26 fix: Batch patched + companion files into a single setFiles merge
         const patchResult = deleteAutoPatcher.patchDeleteButtons(latestFiles);
         const companions = fileScaffolding.generateCompanionFiles(latestFiles, project.files);
         const batchFiles: typeof latestFiles = [];
@@ -821,13 +820,26 @@ export function AIAppBuilderWorkspace() {
           batchFiles.push(...companions);
           buildLog.addEntry('info', `🧪 Auto-generated ${companions.length} test file(s)`);
         }
+        // Phase 3: Gate the second setFiles behind requestIdleCallback (2s+) to prevent double compilation
         if (batchFiles.length > 0) {
-          const currentFiles = project.files;
-          const map = new Map(currentFiles.map(f => [f.path, f]));
-          for (const f of batchFiles) map.set(f.path, f);
-          setFiles(Array.from(map.values()));
+          const deferPatch = () => {
+            const currentFiles = project.files;
+            const map = new Map(currentFiles.map(f => [f.path, f]));
+            for (const f of batchFiles) map.set(f.path, f);
+            setFiles(Array.from(map.values()));
+          };
+          if (typeof requestIdleCallback === 'function') {
+            requestIdleCallback(deferPatch, { timeout: 5000 });
+          } else {
+            setTimeout(deferPatch, 2000);
+          }
         }
-      }, 100);
+      };
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(deferPostGen, { timeout: 3000 });
+      } else {
+        setTimeout(deferPostGen, 500);
+      }
       // Mark preview as good for hot recovery & update conflict resolver base snapshot
       hotRecovery.markAsGood([...project.files]);
       conflictResolver.setBaseSnapshot([...project.files]);
@@ -1046,7 +1058,7 @@ export function AIAppBuilderWorkspace() {
       setMessages(session.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
     }
     setShowRecoveryDialog(false);
-    toast.success('Session restored');
+    dedupeToast('success', 'Session restored');
   }, [idbPersistence.recoverableSession, setFiles, renameProject, setMessages]);
 
   const handleDiscardSession = useCallback(() => {
@@ -1293,15 +1305,15 @@ export function AIAppBuilderWorkspace() {
     setMessages(truncatedMessages);
     renameProject(forkName);
     await saveProject(forkName, project.files, branches, activeBranch, truncatedMessages);
-    toast.success(`Forked as "${forkName}"`);
+    dedupeToast('success', `Forked as "${forkName}"`);
   }, [saveProject, project.name, project.files, branches, activeBranch, messages, setMessages, renameProject]);
 
   const handleRevertToMessage = useCallback((messageId: string) => {
     const msg = messages.find(m => m.id === messageId);
-    if (!msg?.filesSnapshot) { toast.error('No snapshot available for this message'); return; }
+    if (!msg?.filesSnapshot) { dedupeToast('error', 'No snapshot available for this message'); return; }
     pushUndo('Before revert', project.files);
     setFiles(msg.filesSnapshot);
-    toast.success('Reverted to message snapshot');
+    dedupeToast('success', 'Reverted to message snapshot');
   }, [messages, pushUndo, project.files, setFiles]);
 
   const handleSelectStarterTemplate = useCallback((template: import('./AppStarterTemplates').AppStarterTemplate) => {
@@ -1345,7 +1357,7 @@ export function AIAppBuilderWorkspace() {
   const handleDeleteEdgeFunction = useCallback((name: string) => {
     deleteFile(`functions/${name}/index.ts`);
     setEdgeFunctions(prev => prev.filter(f => f.name !== name));
-    toast.success(`Function "${name}" deleted`);
+    dedupeToast('success', `Function "${name}" deleted`);
     addActivity('file_edit', `Deleted edge function: ${name}`);
   }, [deleteFile, addActivity]);
 
@@ -1493,37 +1505,37 @@ export function AIAppBuilderWorkspace() {
       renameProject(newName);
       // Immediately persist the rename to Supabase
       await saveProject(newName, project.files, branches, activeBranch, messages);
-      toast.success(`Renamed to "${newName}"`);
+      dedupeToast('success', `Renamed to "${newName}"`);
     }
     setIsEditingName(false);
   };
 
   const handleUndo = useCallback(() => {
     const restored = undo(project.files);
-    if (restored) { setFiles(restored); toast.success('Undone'); }
+    if (restored) { setFiles(restored); dedupeToast('success', 'Undone'); }
   }, [undo, project.files, setFiles]);
 
   const handleRedo = useCallback(() => {
     const restored = redo(project.files);
-    if (restored) { setFiles(restored); toast.success('Redone'); }
+    if (restored) { setFiles(restored); dedupeToast('success', 'Redone'); }
   }, [redo, project.files, setFiles]);
 
   const handleCreateBranch = useCallback((name: string) => {
     createBranch(name, project.files);
-    toast.success(`Branch "${name}" created`);
+    dedupeToast('success', `Branch "${name}" created`);
   }, [createBranch, project.files]);
 
   const handleSwitchBranch = useCallback((branchId: string) => {
     const files = switchBranch(branchId, project.files);
     if (files && files.length > 0) { pushUndo('Branch switch', project.files); setFiles(files); }
-    toast.success('Switched branch');
+    dedupeToast('success', 'Switched branch');
   }, [switchBranch, project.files, pushUndo, setFiles]);
 
   const handleMergeBranch = useCallback((branchId: string) => {
     pushUndo('Before merge', project.files);
     const merged = mergeBranch(branchId, project.files);
     setFiles(merged);
-    toast.success('Branch merged');
+    dedupeToast('success', 'Branch merged');
   }, [mergeBranch, project.files, pushUndo, setFiles]);
 
   const { captureAndUpload } = usePreviewCapture();
@@ -1534,7 +1546,7 @@ export function AIAppBuilderWorkspace() {
     const projectId = await saveProject(project.name, project.files, branches, activeBranch, messages, extraSettings);
     setDirtyFiles(new Set());
     clearDraft();
-    toast.success('Project saved');
+    dedupeToast('success', 'Project saved');
     // Issue 22 fix: Reuse existing compiledForHosting instead of redundant getCompiledHTML call
     const html = compiledForHosting;
     if (projectId && html) {
@@ -1613,33 +1625,34 @@ export function AIAppBuilderWorkspace() {
       } else {
         setLinkedGPT(null);
       }
-      toast.success(`Loaded "${loaded.name}"`);
+      dedupeToast('success', `Loaded "${loaded.name}"`);
     }
   }, [loadProject, setFiles, renameProject, setMessages, setVersions]);
 
+  // Phase 4: Make handlePublish async-safe — reuse compiledForHosting instead of synchronous getCompiledHTML
   const handlePublish = useCallback(async () => {
-    const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
-    if (!compiledHTML) { toast.error('Nothing to publish'); return; }
+    const compiledHTML = compiledForHostingRef.current || stableHTMLRef.current;
+    if (!compiledHTML) { dedupeToast('error', 'Nothing to publish — wait for compilation to finish'); return; }
     setBuildNotifications(prev => [{ id: crypto.randomUUID(), type: 'deploy' as const, title: 'Deploying to production...', timestamp: new Date(), read: false }, ...prev]);
     const url = await publishProject(project.name, compiledHTML);
     if (url) {
       setPublishedUrl(url);
-      toast.success('Published successfully!');
+      dedupeToast('success', 'Published successfully!');
       setBuildNotifications(prev => [{ id: crypto.randomUUID(), type: 'success' as const, title: 'Published to production', detail: url, timestamp: new Date(), read: false }, ...prev].slice(0, 50));
     }
-  }, [publishProject, project.name, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser]);
+  }, [publishProject, project.name]);
 
   const handleRemix = useCallback(async (projectId: string) => {
     const loaded = await loadProject(projectId);
     if (loaded) {
       setFiles(loaded.files as any[]);
       renameProject(`Remix of ${loaded.name}`);
-      toast.success(`Remixed "${loaded.name}" — save to create your own copy`);
+      dedupeToast('success', `Remixed "${loaded.name}" — save to create your own copy`);
     }
   }, [loadProject, setFiles, renameProject]);
 
   const handleAssetUpload = useCallback((asset: ProjectAsset) => { setAssets(prev => [...prev, asset]); }, []);
-  const handleAssetDelete = useCallback((id: string) => { setAssets(prev => prev.filter(a => a.id !== id)); toast.success('Asset deleted'); }, []);
+  const handleAssetDelete = useCallback((id: string) => { setAssets(prev => prev.filter(a => a.id !== id)); dedupeToast('success', 'Asset deleted'); }, []);
 
   const STARTER_CONTENT: Record<string, string> = {
     html: '<!DOCTYPE html>\n<html>\n<head>\n  <title>Page</title>\n</head>\n<body>\n  \n</body>\n</html>',
@@ -1654,7 +1667,7 @@ export function AIAppBuilderWorkspace() {
     const content = STARTER_CONTENT[ext] || '';
     upsertFile(path, content);
     setRightTab('code');
-    toast.success(`Created ${path}`);
+    dedupeToast('success', `Created ${path}`);
   }, [upsertFile]);
 
   const handleRenameFile = useCallback((oldPath: string, newPath: string) => {
@@ -1662,7 +1675,7 @@ export function AIAppBuilderWorkspace() {
     if (!file) return;
     upsertFile(newPath, file.content);
     deleteFile(oldPath);
-    toast.success(`Renamed to ${newPath.split('/').pop()}`);
+    dedupeToast('success', `Renamed to ${newPath.split('/').pop()}`);
   }, [project.files, upsertFile, deleteFile]);
 
   // ── Compilation is now isolated in CompilationBridge (fixes React Error #310) ──
@@ -1743,9 +1756,9 @@ export function AIAppBuilderWorkspace() {
       { id: 'console', label: 'Toggle Console', icon: Activity, category: 'panel', action: () => setShowConsole(c => !c) },
       { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, category: 'panel', shortcut: '⌘/', action: () => setShowShortcuts(true) },
       { id: 'prompt-history', label: 'Prompt History', icon: Clock, category: 'panel', action: () => setShowPromptHistory(true), keywords: ['history', 'prompts', 'favorites'] },
-      { id: 'code-smells', label: 'Analyze Code Quality', icon: Zap, category: 'run', action: () => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); setShowCodeIntel(true); toast.success(`Found ${smells.length} suggestions`); }, keywords: ['lint', 'quality', 'refactor', 'smell'] },
+      { id: 'code-smells', label: 'Analyze Code Quality', icon: Zap, category: 'run', action: () => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); setShowCodeIntel(true); dedupeToast('success', `Found ${smells.length} suggestions`); }, keywords: ['lint', 'quality', 'refactor', 'smell'] },
       { id: 'gen-readme', label: 'Generate README', icon: BookOpen, category: 'run', action: () => { const prompt = docGenerator.generateReadmePrompt(project.files, project.name); handleSend(prompt); }, keywords: ['doc', 'readme', 'documentation'] },
-      { id: 'doc-file', label: 'Document Current File', icon: FileCode, category: 'run', action: () => { if (activeFile) { const prompt = docGenerator.generateDocPrompt(activeFile); handleSend(prompt); } else { toast.error('Open a file first'); } }, keywords: ['jsdoc', 'comment', 'document'] },
+      { id: 'doc-file', label: 'Document Current File', icon: FileCode, category: 'run', action: () => { if (activeFile) { const prompt = docGenerator.generateDocPrompt(activeFile); handleSend(prompt); } else { dedupeToast('error', 'Open a file first'); } }, keywords: ['jsdoc', 'comment', 'document'] },
     ];
     return [...coreActions, ...staticRegistryActions];
   }, [handleSave, handleUndo, handleRedo, handlePublish, codeSmellDetector, project.files, docGenerator, project.name, activeFile, handleSend, staticRegistryActions]);
@@ -1985,7 +1998,7 @@ export function AIAppBuilderWorkspace() {
                   <SchemaDesignerLazy
                     open={!!panels.showSchemaDesigner}
                     onClose={() => setShowSchemaDesigner(false)}
-                    onGenerateSQL={(sql) => { navigator.clipboard.writeText(sql); toast.success('SQL copied — paste into Supabase SQL editor'); }}
+                    onGenerateSQL={(sql) => { navigator.clipboard.writeText(sql); dedupeToast('success', 'SQL copied — paste into Supabase SQL editor'); }}
                     onSendToChat={(msg) => { sendMessage(msg, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel); }}
                   />
                 </SafePanel>
@@ -2034,7 +2047,7 @@ export function AIAppBuilderWorkspace() {
                 />
                 </SafePanel>
                 <SafePanel show={!!panels.showCodeIntel} name="Code Intelligence">
-                  <AICodeIntelligence open={!!panels.showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); toast.success('Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); toast.success(`Found ${smells.length} suggestions`); }} activeFilePath={project.activeFilePath} />
+                  <AICodeIntelligence open={!!panels.showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); dedupeToast('success', 'Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); dedupeToast('success', `Found ${smells.length} suggestions`); }} activeFilePath={project.activeFilePath} />
                 </SafePanel>
                 <SafePanel show={!!panels.showDbExplorer} name="Database Explorer">
                   <DatabaseExplorer open={!!panels.showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
@@ -2055,7 +2068,7 @@ export function AIAppBuilderWorkspace() {
                   <ChangelogPanel open={!!panels.showChangelog} onClose={() => setShowChangelog(false)} entries={changelogEntries} />
                 </SafePanel>
                 <SafePanel show={!!panels.showTestingSuite} name="Testing & Debug">
-                  <TestingDebugSuite open={!!panels.showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); toast.success('Test generated'); }} projectFiles={project.files} />
+                  <TestingDebugSuite open={!!panels.showTestingSuite} onClose={() => setShowTestingSuite(false)} tests={testCases} onRunTests={() => setTestCases(prev => prev.map(t => ({ ...t, status: Math.random() > 0.2 ? 'passed' as const : 'failed' as const, duration: Math.floor(Math.random() * 200 + 10) })))} onRunSingleTest={(id) => setTestCases(prev => prev.map(t => t.id === id ? { ...t, status: 'passed' as const, duration: Math.floor(Math.random() * 100 + 5) } : t))} onGenerateTests={(filePath) => { setTestCases(prev => [...prev, { id: crypto.randomUUID(), name: `test ${filePath}`, file: filePath, status: 'idle' as const }]); dedupeToast('success', 'Test generated'); }} projectFiles={project.files} />
                 </SafePanel>
                 <SafePanel show={!!panels.showGPTConnector} name="GPT Connector">
                   <GPTConnectorPanel open={!!panels.showGPTConnector} onClose={() => setShowGPTConnector(false)} linkedGPT={linkedGPT} onLinkGPT={setLinkedGPT} onUnlinkGPT={() => setLinkedGPT(null)} />
@@ -2139,7 +2152,7 @@ export function AIAppBuilderWorkspace() {
                         onInjectCSS={(css) => {
                           const existingCSS = project.files.find(f => f.path === 'design-tokens.css');
                           upsertFile('design-tokens.css', css);
-                          if (!existingCSS) toast.success('Created design-tokens.css');
+                          if (!existingCSS) dedupeToast('success', 'Created design-tokens.css');
                         }}
                         onClose={() => setShowDesignSystem(false)}
                       />
@@ -2484,9 +2497,9 @@ export function AIAppBuilderWorkspace() {
         onEnvVarsChange={setEnvVars}
         onDeleteProject={() => {
           if (currentProjectId) deleteProject(currentProjectId);
-          resetProject(); clearChat(); setStableHTML(null); toast.success('Project deleted'); setShowSettingsPanel(false);
+          resetProject(); clearChat(); setStableHTML(null); dedupeToast('success', 'Project deleted'); setShowSettingsPanel(false);
         }}
-        onResetProject={() => { resetProject(); setStableHTML(null); toast.success('Project reset'); setShowSettingsPanel(false); }}
+        onResetProject={() => { resetProject(); setStableHTML(null); dedupeToast('success', 'Project reset'); setShowSettingsPanel(false); }}
         files={project.files}
         compiledHTML={compiledHTML}
         hostedPreviewUrl={hostedPreviewUrl}

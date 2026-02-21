@@ -128,6 +128,10 @@ export function CompilationBridge({
   }, [isGenerating]);
 
 
+  // Phase 5: Debounce compilation — 500ms delay so rapid setFiles calls consolidate
+  const compilationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const compilationCleanupRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     if (isGenerating || filesRef.current.length === 0 || stableHTMLRef.current) {
       setLiveCompiledHTML(null);
@@ -136,70 +140,78 @@ export function CompilationBridge({
 
     // Prevent re-entry — only compile once per generation cycle
     if (compilationLockRef.current) return;
-    compilationLockRef.current = true;
 
-    onCompilingChangeRef.current?.(true);
+    // Debounce: wait 500ms for rapid file changes to settle
+    if (compilationDebounceRef.current) clearTimeout(compilationDebounceRef.current);
+    compilationDebounceRef.current = setTimeout(() => {
+      if (compilationLockRef.current) return;
+      compilationLockRef.current = true;
 
-    let cancelled = false;
-    let compileTimerId: ReturnType<typeof setTimeout>;
-    const safetyTimeout = setTimeout(() => {
-      if (!cancelled) {
-        console.error('[Compilation] Safety timeout reached (10s) — showing error fallback');
-        onCompilingChangeRef.current?.(false);
-        compilationAttemptedRef.current = true;
-        setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-      }
-    }, COMPILE_TIMEOUT_MS);
+      onCompilingChangeRef.current?.(true);
 
-    // Use requestAnimationFrame → setTimeout to yield to browser before heavy work
-    const rafId = requestAnimationFrame(() => {
-      if (cancelled) return;
-      const compileTimer = setTimeout(() => {
-        if (cancelled) return;
-        try {
-          console.time('[liveCompiledHTML]');
-          let result: string | null = null;
-          if (isReactProject) {
-            const compiled = compileReactProjectRef.current(filesRef.current, {
-              supabaseConfig: supabaseConfig || undefined,
-              stripeConfig: stripeConfig || undefined,
-              envVars,
-            });
-            if (compiled.errors.length > 0) {
-              console.warn('[ReactCompiler] Warnings:', compiled.errors);
-            }
-            result = compiled.html || null;
-          } else {
-            result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
-          }
-          console.timeEnd('[liveCompiledHTML]');
-          if (!cancelled) {
-            clearTimeout(safetyTimeout);
-            onCompilingChangeRef.current?.(false);
-            compilationAttemptedRef.current = true;
-            setLiveCompiledHTML(result);
-          }
-        } catch (e) {
-          console.error('[ReactCompiler] Compilation crashed:', e);
-          if (!cancelled) {
-            clearTimeout(safetyTimeout);
-            onCompilingChangeRef.current?.(false);
-            compilationAttemptedRef.current = true;
-            setLiveCompiledHTML(null);
-          }
+      let cancelled = false;
+      let compileTimerId: ReturnType<typeof setTimeout>;
+      const safetyTimeout = setTimeout(() => {
+        if (!cancelled) {
+          console.error('[Compilation] Safety timeout reached (10s) — showing error fallback');
+          onCompilingChangeRef.current?.(false);
+          compilationAttemptedRef.current = true;
+          setLiveCompiledHTML(ERROR_FALLBACK_HTML);
         }
-      }, 100);
+      }, COMPILE_TIMEOUT_MS);
 
-      // Store for cleanup
-      compileTimerId = compileTimer;
-    });
+      const rafId = requestAnimationFrame(() => {
+        if (cancelled) return;
+        const compileTimer = setTimeout(() => {
+          if (cancelled) return;
+          try {
+            console.time('[liveCompiledHTML]');
+            let result: string | null = null;
+            if (isReactProject) {
+              const compiled = compileReactProjectRef.current(filesRef.current, {
+                supabaseConfig: supabaseConfig || undefined,
+                stripeConfig: stripeConfig || undefined,
+                envVars,
+              });
+              if (compiled.errors.length > 0) {
+                console.warn('[ReactCompiler] Warnings:', compiled.errors);
+              }
+              result = compiled.html || null;
+            } else {
+              result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
+            }
+            console.timeEnd('[liveCompiledHTML]');
+            if (!cancelled) {
+              clearTimeout(safetyTimeout);
+              onCompilingChangeRef.current?.(false);
+              compilationAttemptedRef.current = true;
+              setLiveCompiledHTML(result);
+            }
+          } catch (e) {
+            console.error('[ReactCompiler] Compilation crashed:', e);
+            if (!cancelled) {
+              clearTimeout(safetyTimeout);
+              onCompilingChangeRef.current?.(false);
+              compilationAttemptedRef.current = true;
+              setLiveCompiledHTML(null);
+            }
+          }
+        }, 100);
+        compileTimerId = compileTimer;
+      });
+
+      compilationCleanupRef.current = () => {
+        cancelled = true;
+        cancelAnimationFrame(rafId);
+        clearTimeout(compileTimerId);
+        clearTimeout(safetyTimeout);
+        onCompilingChangeRef.current?.(false);
+      };
+    }, 500);
 
     return () => {
-      cancelled = true;
-      cancelAnimationFrame(rafId);
-      clearTimeout(compileTimerId);
-      clearTimeout(safetyTimeout);
-      onCompilingChangeRef.current?.(false);
+      if (compilationDebounceRef.current) clearTimeout(compilationDebounceRef.current);
+      compilationCleanupRef.current?.();
     };
   }, [filesDigest, supabaseConfig, stripeConfig, isReactProject, isGenerating]);
 
