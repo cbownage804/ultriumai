@@ -42,7 +42,13 @@ function stripTypeAnnotations(code: string): string {
 
   result = result.replace(/^(?:export\s+)?type\s+\w+\s*=\s*[^;{]+;/gm, '');
   result = result.replace(/: (?:React\.(?:FC|ReactNode|MouseEvent|ChangeEvent|FormEvent|CSSProperties|RefObject)(?:<[^>]+>)?|string|number|boolean|void|any|null|undefined|never|unknown|object|Record<[^>]+>|Array<[^>]+>|[A-Z]\w*(?:\[\])?(?:\s*\|\s*[A-Z]\w*(?:\[\])?)*)/g, '');
-  result = result.replace(/<(?:T|K|V|Props|State)(?:\s+extends\s+\w+)?(?:,\s*\w+(?:\s+extends\s+\w+)?)*>/g, '');
+  // Safety pass: strip generics after known React hooks and built-in constructors
+  result = result.replace(
+    /\b(useState|useRef|useCallback|useMemo|useReducer|useContext|createContext|forwardRef|memo|lazy|useImperativeHandle|useLayoutEffect|Set|Map|Array|Promise|Record)\s*<[^>]+>/g,
+    '$1'
+  );
+  // Broad generic strip (only after identifiers, not JSX)
+  result = result.replace(/(?<=\w)<(?:[A-Za-z][\w.]*(?:\[\])?(?:\s*\|\s*[\w.]+(?:\[\])?)*(?:\s*,\s*[\w.]+(?:\[\])?(?:\s*\|\s*[\w.]+)?)*)>/g, '');
   result = result.replace(/\s+as\s+\w+(?:<[^>]+>)?/g, '');
   result = result.replace(/\s+satisfies\s+\w+/g, '');
   return result;
@@ -126,6 +132,30 @@ const cfg = {};`;
     const result = stripTypeAnnotations(code);
     expect(result).not.toContain('interface Config');
     expect(result).toContain('const cfg = {};');
+  });
+
+  it('strips concrete generics like <boolean>, <HTMLDivElement>', () => {
+    const code = `const [open, setOpen] = useState<boolean>(false);
+const ref = useRef<HTMLDivElement>(null);`;
+    const result = stripTypeAnnotations(code);
+    expect(result).toContain('useState(false)');
+    expect(result).toContain('useRef(null)');
+    expect(result).not.toContain('<boolean>');
+    expect(result).not.toContain('<HTMLDivElement>');
+  });
+
+  it('strips multi-param generics like <string, number>', () => {
+    const code = `const m = new Map<string, number>();`;
+    const result = stripTypeAnnotations(code);
+    expect(result).toContain('new Map()');
+    expect(result).not.toContain('<string, number>');
+  });
+
+  it('does NOT strip JSX tags', () => {
+    const code = `return <div><span>hello</span></div>;`;
+    const result = stripTypeAnnotations(code);
+    expect(result).toContain('<div>');
+    expect(result).toContain('<span>');
   });
 });
 

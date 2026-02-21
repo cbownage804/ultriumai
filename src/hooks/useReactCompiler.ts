@@ -149,7 +149,13 @@ export function useReactCompiler() {
       return `${genericsMarker}${genericsMap.length - 1}`;
     });
 
-    result = result.replace(/<(?:T|K|V|Props|State)(?:\s+extends\s+\w+)?(?:,\s*\w+(?:\s+extends\s+\w+)?)*>/g, '');
+    // Safety pass: strip generics after known React hooks and built-in constructors
+    result = result.replace(
+      /\b(useState|useRef|useCallback|useMemo|useReducer|useContext|createContext|forwardRef|memo|lazy|useImperativeHandle|useLayoutEffect|Set|Map|Array|Promise|Record)\s*<[^>]+>/g,
+      '$1'
+    );
+    // Broad generic strip: handles all <TypeName> patterns after identifiers (not JSX)
+    result = result.replace(/(?<=\w)<(?:[A-Za-z][\w.]*(?:\[\])?(?:\s*\|\s*[\w.]+(?:\[\])?)*(?:\s*,\s*[\w.]+(?:\[\])?(?:\s*\|\s*[\w.]+)?)*)>/g, '');
 
     // Restore generics (though Babel will likely strip them anyway, this prevents regex breakage)
     result = result.replace(new RegExp(`${genericsMarker}(\\d+)`, 'g'), (_, idx) => genericsMap[parseInt(idx)] || '');
