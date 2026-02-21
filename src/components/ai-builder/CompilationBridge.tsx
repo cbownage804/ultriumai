@@ -308,7 +308,7 @@ export function CompilationBridge({
   // ── Preview update effects ──
   useEffect(() => {
     if (liveCompiledHTML) {
-      if (stableHTML && stableHTML.length > 0) return;
+      if (stableHTML === liveCompiledHTML) return;
       const patched = liveSync.applyPatches(previewIframeRef, filesRef.current);
       if (!patched) {
         setStableHTML(liveCompiledHTML);
