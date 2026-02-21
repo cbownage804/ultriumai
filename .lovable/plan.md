@@ -1,46 +1,35 @@
 
 
-# Auto-Connect Registrar Detection for App Builder Domains
+# Fix Potential Errors in Domain Auto-Connect
 
-## What This Does
-When a user enters a domain in the App Builder settings, the system will automatically detect their DNS provider (like Cloudflare, GoDaddy, Namecheap, etc.) and show a multi-step setup flow -- just like the Lovable screenshot you shared.
+## Issues Found
 
-## How It Works
+### 1. CORS Header Mismatch (will cause failures in some browsers)
+The `detect-registrar` edge function uses incomplete CORS headers. It's missing headers that the Supabase JS client automatically sends (`x-supabase-client-platform`, etc.). This can cause preflight request failures.
 
-### Step-by-step flow after clicking "Connect Domain":
-1. **Analyzing phase** -- A modal overlay appears showing progress steps:
-   - "Analyzed [domain]" (with checkmark)
-   - "Detected DNS provider: **Cloudflare**" (with checkmark + bold provider name)
-   - "Getting your setup details." (spinner)
-2. **Provider detected** -- Shows the provider's logo/icon, a message about one-time authorization, and:
-   - A primary "Open [Provider] DNS Settings" button (links to their DNS management page)
-   - A "Go to our manual setup" link (falls back to showing the raw DNS records)
-   - A "Change provider" and "Show added DNS records" links at the bottom
-3. **Provider not detected** -- Falls back to manual DNS record setup (current behavior)
+**Fix**: Update `supabase/functions/detect-registrar/index.ts` CORS headers to match the standard set used by other edge functions.
 
-### Technical Changes
+### 2. Analyzing overlay shows wrong registrar name during initial add
+During `handleAddDomain`, the analyzing overlay tries to show the detected provider name via `domains.find(d => d.domain === analyzingDomain)?.registrar?.name`. But the domain entry isn't added to `domains` state until **after** analysis completes -- so the registrar name will always be missing during the initial add flow.
 
-**File: `ProjectSettingsModal.tsx`**
-- Add `import { supabase }` for calling the edge function
-- Add new state: `registrarInfo`, `isAnalyzing`, `analysisStep` (tracks which step of the animation we're on), `showManualSetup`
-- Modify `handleAddDomain`:
-  1. After domain validation, set `isAnalyzing = true` and create the domain entry
-  2. Call `supabase.functions.invoke('detect-registrar', { body: { domain } })`
-  3. Animate through the analysis steps with short delays (matching Lovable's UX)
-  4. Store the registrar result on the domain entry
-  5. Show the provider authorization panel or fall back to manual
-- Extend `DomainEntry` interface with optional `registrar` field (name, icon, dnsUrl, instructions)
-- Add a new "analyzing" overlay UI that renders inside the domain detail area
-- Add provider panel UI with branded header, "Open DNS Settings" button, manual setup link
-- Add "Detect Provider" button on existing domains that don't have a detected registrar
+**Fix**: Store the detected registrar in a separate `detectedRegistrar` state variable during analysis, and reference that in the overlay instead of looking it up from `domains`.
 
-**No backend changes needed** -- the `detect-registrar` edge function already exists and supports GoDaddy, Cloudflare, Namecheap, Google Domains, Name.com, Hover, Route 53, Vercel, and Netlify.
+### 3. No cleanup if modal closes mid-analysis
+If the user closes the modal while the analyzing animation is running, the state (`isAnalyzing`, `analysisStep`, etc.) remains dirty. Reopening the modal could show a stale analyzing overlay.
 
-### UI Matching Lovable's Design
-- Analysis overlay with animated checkmarks and spinner for each step
-- Provider card with icon, name, and "Auto-detected" badge
-- Numbered step-by-step instructions from the provider-specific response
-- Direct link button to open the provider's DNS settings page
-- "Manual setup" fallback link to show raw DNS records
-- "Change provider" link at the bottom
+**Fix**: Add a `useEffect` cleanup that resets analysis state when `open` changes to `false`.
+
+### 4. No error state for failed edge function calls
+If the `detect-registrar` call fails (network error, timeout), the user sees no feedback -- the animation just finishes silently.
+
+**Fix**: Add a try/catch toast in `handleAddDomain` so if detection throws, the user sees a warning and falls back gracefully to manual setup.
+
+---
+
+## Technical Changes
+
+| File | Change |
+|------|--------|
+| `supabase/functions/detect-registrar/index.ts` | Update CORS `Access-Control-Allow-Headers` to include `x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version` |
+| `src/components/ai-builder/ProjectSettingsModal.tsx` | (a) Add `detectedRegistrar` state, use it in the overlay for step 2 label. (b) Add `useEffect` to reset analysis state when `open` becomes false. (c) Improve error handling in the analysis flow. |
 
