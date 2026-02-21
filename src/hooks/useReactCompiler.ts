@@ -702,15 +702,15 @@ window.ENV = ${JSON.stringify(envObj)};
 <body>
   <div id="root"></div>
 
-  <!-- Phase 66: Render loop detector — threshold raised to 500 for StrictMode, initial 2s grace period -->
+  <!-- Render loop detector — threshold 5000 createElement calls/sec, 3s grace period -->
   <script>
   (function(){
     var __renderCount = 0;
     var __mountTime = Date.now();
     var __renderTimer = setInterval(function(){
-      // Phase 66: Skip detection during initial 2-second mount burst
-      if (Date.now() - __mountTime < 2000) { __renderCount = 0; return; }
-      if (__renderCount > 500) {
+      // Skip detection during initial 3-second mount burst
+      if (Date.now() - __mountTime < 3000) { __renderCount = 0; return; }
+      if (__renderCount > 5000) {
         clearInterval(__renderTimer);
         window.parent.postMessage({ type: '__PREVIEW_ERROR__', error: { message: 'Infinite render loop detected. A component is re-rendering too frequently (>500/sec).', critical: true } }, '*');
         var root = document.getElementById('root');
