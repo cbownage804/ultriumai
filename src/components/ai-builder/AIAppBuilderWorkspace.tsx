@@ -193,8 +193,13 @@ import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 
 // Toast deduplication: suppress identical automated messages within 5s
+// Phase 4: Compilation-aware gate — suppress non-error toasts during compilation
 const _toastDedupeMap = new Map<string, number>();
+let _compilationToastGate = false;
+export function setCompilationToastGate(compiling: boolean) { _compilationToastGate = compiling; }
 function dedupeToast(method: 'success' | 'error' | 'info', message: string, opts?: any) {
+  // Suppress non-error toasts during compilation to prevent accumulation
+  if (_compilationToastGate && method !== 'error') return;
   const now = Date.now();
   const last = _toastDedupeMap.get(message) || 0;
   if (now - last < 5000) return;
@@ -342,7 +347,11 @@ export function AIAppBuilderWorkspace() {
   const [fixAttemptCount, setFixAttemptCount] = useState(0);
   const [lastFixError, setLastFixError] = useState<string | null>(null);
   const MAX_FIX_ATTEMPTS = 3;
-  const [isCompiling, setIsCompiling] = useState(false);
+  const [isCompiling, setIsCompilingRaw] = useState(false);
+  const setIsCompiling = useCallback((v: boolean) => {
+    setIsCompilingRaw(v);
+    setCompilationToastGate(v);
+  }, []);
   const [selectedModel, setSelectedModel] = useState('google/gemini-3-flash-preview');
   const [previewSlug, setPreviewSlug] = useState<string | null>(null);
   const [pendingConflicts, setPendingConflicts] = useState<{ path: string; userContent: string; aiContent: string }[] | null>(null);

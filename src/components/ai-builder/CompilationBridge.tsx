@@ -6,7 +6,7 @@ import type { CDNPackage } from './PackageManager';
 import type { LinkedGPTConfig } from './GPTConnectorPanel';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 
-const COMPILE_TIMEOUT_MS = 10_000;
+const COMPILE_TIMEOUT_MS = 20_000;
 
 interface CompilationBridgeProps {
   files: ProjectFile[];
@@ -160,42 +160,52 @@ export function CompilationBridge({
         }
       }, COMPILE_TIMEOUT_MS);
 
+      // Phase 1: Async compilation with yield points to keep browser responsive
+      const runCompilation = async () => {
+        if (cancelled) return;
+        try {
+          console.time('[liveCompiledHTML]');
+          let result: string | null = null;
+          // Yield to browser before heavy work
+          await new Promise(r => setTimeout(r, 0));
+          if (cancelled) return;
+          if (isReactProject) {
+            const compiled = await compileReactProjectRef.current(filesRef.current, {
+              supabaseConfig: supabaseConfig || undefined,
+              stripeConfig: stripeConfig || undefined,
+              envVars,
+            });
+            if (compiled.errors.length > 0) {
+              console.warn('[ReactCompiler] Warnings:', compiled.errors);
+            }
+            result = compiled.html || null;
+          } else {
+            result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
+          }
+          // Yield to browser after heavy work before state update
+          await new Promise(r => setTimeout(r, 0));
+          console.timeEnd('[liveCompiledHTML]');
+          if (!cancelled) {
+            clearTimeout(safetyTimeout);
+            onCompilingChangeRef.current?.(false);
+            compilationAttemptedRef.current = true;
+            setLiveCompiledHTML(result);
+          }
+        } catch (e) {
+          console.error('[ReactCompiler] Compilation crashed:', e);
+          if (!cancelled) {
+            clearTimeout(safetyTimeout);
+            onCompilingChangeRef.current?.(false);
+            compilationAttemptedRef.current = true;
+            setLiveCompiledHTML(null);
+          }
+        }
+      };
+      // Defer start with rAF + short timeout for a paint frame
       const rafId = requestAnimationFrame(() => {
         if (cancelled) return;
         const compileTimer = setTimeout(() => {
-          if (cancelled) return;
-          try {
-            console.time('[liveCompiledHTML]');
-            let result: string | null = null;
-            if (isReactProject) {
-              const compiled = compileReactProjectRef.current(filesRef.current, {
-                supabaseConfig: supabaseConfig || undefined,
-                stripeConfig: stripeConfig || undefined,
-                envVars,
-              });
-              if (compiled.errors.length > 0) {
-                console.warn('[ReactCompiler] Warnings:', compiled.errors);
-              }
-              result = compiled.html || null;
-            } else {
-              result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
-            }
-            console.timeEnd('[liveCompiledHTML]');
-            if (!cancelled) {
-              clearTimeout(safetyTimeout);
-              onCompilingChangeRef.current?.(false);
-              compilationAttemptedRef.current = true;
-              setLiveCompiledHTML(result);
-            }
-          } catch (e) {
-            console.error('[ReactCompiler] Compilation crashed:', e);
-            if (!cancelled) {
-              clearTimeout(safetyTimeout);
-              onCompilingChangeRef.current?.(false);
-              compilationAttemptedRef.current = true;
-              setLiveCompiledHTML(null);
-            }
-          }
+          runCompilation();
         }, 100);
         compileTimerId = compileTimer;
       });
@@ -237,6 +247,12 @@ export function CompilationBridge({
     const doCompile = () => {
       try {
         console.time('[compiledForHosting]');
+        // Phase 2: Reuse live preview result for React projects to eliminate double compilation
+        if (isReactProject && liveCompiledHTML) {
+          console.timeEnd('[compiledForHosting]');
+          setCompiledForHosting(liveCompiledHTML);
+          return;
+        }
         const result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current);
         console.timeEnd('[compiledForHosting]');
         setCompiledForHosting(result);
@@ -254,7 +270,7 @@ export function CompilationBridge({
       }
     }, 2000);
     return () => clearTimeout(timer);
-  }, [filesDigest, isGenerating, liveCompiledHTML]);
+  }, [filesDigest, isGenerating, liveCompiledHTML, isReactProject]);
 
   // Report compiledForHosting upstream
   useEffect(() => {
