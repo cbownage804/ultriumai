@@ -1771,6 +1771,7 @@ export function BuilderChatPanel({
                   >
                     <MessageCircle className="h-2.5 w-2.5" />
                     Chat
+                    <span className="text-[8px] opacity-60 ml-0.5">1cr</span>
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs max-w-[180px]">Discuss ideas, ask questions, and plan your project without generating code</TooltipContent>
@@ -1788,6 +1789,7 @@ export function BuilderChatPanel({
                   >
                     <Wand2 className="h-2.5 w-2.5" />
                     Build
+                    <span className="text-[8px] opacity-60 ml-0.5">2cr</span>
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs max-w-[180px]">Generate and modify code with the AI agent to build your app</TooltipContent>
