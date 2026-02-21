@@ -994,11 +994,16 @@ export function AIAppBuilderWorkspace() {
   latestRef.current.files = project.files;
   latestRef.current.messages = messages;
 
+  // Use a ref for saveToIDB so the effect doesn't depend on the idbPersistence object
+  // (which changes identity every render due to syncStatus state)
+  const saveToIDBRef = useRef(idbPersistence.saveToIDB);
+  saveToIDBRef.current = idbPersistence.saveToIDB;
+
   useEffect(() => {
     const flushDraft = () => {
       saveDraftImmediate(latestRef.current.name, latestRef.current.files, latestRef.current.messages);
       // Also flush to IndexedDB for more reliable recovery
-      idbPersistence.saveToIDB(sessionId, latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+      saveToIDBRef.current(sessionId, latestRef.current.name, latestRef.current.files, latestRef.current.messages);
     };
 
     const handleVisibility = () => {
@@ -1013,16 +1018,16 @@ export function AIAppBuilderWorkspace() {
       window.removeEventListener('beforeunload', flushDraft);
       flushDraft(); // also flush on unmount (route change)
     };
-  }, [saveDraftImmediate, idbPersistence, sessionId]);
+  }, [saveDraftImmediate, sessionId]);
 
-  // Strip ?new=true from URL once generation starts so tab recovery works
+  // Strip ?new=true immediately on mount so tab recovery works on reload
   useEffect(() => {
-    if (isGenerating && searchParams.get('new') === 'true') {
+    if (searchParams.get('new') === 'true') {
       const url = new URL(window.location.href);
       url.searchParams.delete('new');
       window.history.replaceState({}, '', url.pathname + url.search);
     }
-  }, [isGenerating, searchParams]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-load project from URL ?project=<id> param
   const initialProjectId = searchParams.get('project');
