@@ -1,50 +1,112 @@
 
 
-# Fix: Eliminate Remaining Browser Freeze During Streaming
+# Fix: Browser Freeze After Generation — Async Compilation
 
 ## Problem
 
-Despite removing mid-generation compilation, the browser still freezes during streaming (~30-40s in). The remaining freeze sources are scattered across multiple components that perform unnecessary work during active generation.
+When generation completes (`isGenerating` turns false), two heavy synchronous computations run inside `useMemo` in `CompilationBridge.tsx`:
 
-## Root Causes (3 sources)
+1. **`compiledForHosting`** (line 89): Calls `getCompiledHTML()` synchronously during render
+2. **`liveCompiledHTML`** (line 114): Calls `compileReactProject()` synchronously during render
 
-### Source 1: Chat message filter runs `getDisplayContent()` on every re-render
-In `BuilderChatPanel.tsx` (line 1280-1288), the `displayMessages.filter()` calls `getDisplayContent(msg)` for **every** assistant message. This function splits content by newlines and runs 7+ regex patterns per message. When `localStreamContent` updates every 2.5s, the entire filter re-runs, creating a burst of regex work.
-
-### Source 2: Framer Motion spring animations on every chat message
-Each message is wrapped in `<motion.div>` with spring physics (stiffness: 300, damping: 30). When `displayMessages` changes during streaming, Framer Motion recalculates layout for all animated messages, even ones that haven't moved. This is pure overhead.
-
-### Source 3: `SkeletonPreview` uses Framer Motion
-The skeleton shown during generation uses `motion.div` with `initial/animate` transitions and staggered delays on 3 card elements, continuously running JS animation frames.
+`compileReactProject` (771 lines in `useReactCompiler.ts`) performs regex-based TypeScript stripping, topological dependency sorting, and full transpilation of every file. For projects with 15-30+ files, this locks the main thread for multiple seconds, freezing the browser on the skeleton screen.
 
 ## Solution
 
-### Change 1: Memoize the message filter result (`BuilderChatPanel.tsx`)
-Wrap the `displayMessages.filter()` in its own `useMemo` so `getDisplayContent()` only re-runs when `displayMessages` actually changes identity, not on every render triggered by unrelated state.
+Convert both `useMemo` computations to `useEffect` + `setTimeout` so the browser can render a frame before heavy work starts.
 
-### Change 2: Replace `motion.div` with plain `div` for existing messages (`BuilderChatPanel.tsx`)
-Only animate the **last** message (new arrivals). All previous messages should use plain `<div>` with no animation overhead. This eliminates Framer Motion from recalculating spring physics for the entire message history.
+### Change 1: `CompilationBridge.tsx` — Async `compiledForHosting`
 
-### Change 3: Replace `SkeletonPreview` Framer Motion with CSS (`SkeletonPreview.tsx`)
-Remove the `motion` import and replace `motion.div` with plain `div` using CSS transitions (`animate-in fade-in`). The shimmer effect is already CSS-based; only the container and card entrance animations use JS.
+Replace the `useMemo` (lines 89-97) with `useEffect` + `useState`:
 
-### Change 4: Skip streaming content polling when content exceeds threshold (`BuilderChatPanel.tsx`)
-The existing 20KB guard (line 354) silently skips updates, but `localStreamContent` retains the last sub-20KB snapshot, still triggering re-renders. Change to clear `localStreamContent` when content exceeds the threshold, preventing stale-snapshot-driven renders.
+```text
+Before:
+  const compiledForHosting = useMemo(() => {
+    if (isGenerating) return null;
+    return getCompiledHTML(...);  // BLOCKS main thread
+  }, [...]);
 
-## Technical Details
+After:
+  const [compiledForHosting, setCompiledForHosting] = useState<string | null>(null);
+  useEffect(() => {
+    if (isGenerating) { setCompiledForHosting(null); return; }
+    if (files.length === 0) return;
+    const timer = setTimeout(() => {
+      try {
+        const result = getCompiledHTML(...);
+        setCompiledForHosting(result);
+      } catch (e) {
+        console.error('[compiledForHosting] crashed:', e);
+        setCompiledForHosting(null);
+      }
+    }, 100);  // yield to browser first
+    return () => clearTimeout(timer);
+  }, [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, isGenerating]);
+```
 
-### BuilderChatPanel.tsx
-- Add `useMemo` for `filteredMessages` that wraps the `.filter()` call, dependent on `displayMessages`
-- Change `motion.div` in the message `.map()` (line 1291) to conditionally use `div` for all but the last message
-- Update the 20KB guard to set `localStreamContent` to empty string
+### Change 2: `CompilationBridge.tsx` — Async `liveCompiledHTML`
 
-### SkeletonPreview.tsx
-- Remove `import { motion } from 'framer-motion'`
-- Replace `motion.div` elements with `div` using Tailwind `animate-in fade-in` utilities
-- Keep the CSS shimmer effect unchanged
+Replace the `useMemo` (lines 114-136) with `useEffect` + `useState`:
+
+```text
+Before:
+  const liveCompiledHTML = useMemo(() => {
+    if (isGenerating) return null;
+    return compileReactProject(files, options);  // BLOCKS main thread
+  }, [...]);
+
+After:
+  const [liveCompiledHTML, setLiveCompiledHTML] = useState<string | null>(null);
+  useEffect(() => {
+    if (isGenerating || files.length === 0 || stableHTMLRef.current) {
+      setLiveCompiledHTML(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      try {
+        if (isReactProject) {
+          const result = compileReactProject(files, { supabaseConfig, stripeConfig, envVars });
+          if (result.errors.length > 0) console.warn('[ReactCompiler] Warnings:', result.errors);
+          setLiveCompiledHTML(result.html || null);
+        } else {
+          setLiveCompiledHTML(getCompiledHTML(...) || null);
+        }
+      } catch (e) {
+        console.error('[ReactCompiler] crashed:', e);
+        setLiveCompiledHTML(null);
+      }
+    }, 50);  // yield to browser first
+    return () => clearTimeout(timer);
+  }, [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, isReactProject, isGenerating]);
+```
+
+### Change 3: `CompilationBridge.tsx` — Add `onCompilingChange` prop
+
+Add a new callback prop so the parent workspace can show "Compiling preview..." in the overlay:
+
+- Add `onCompilingChange?: (compiling: boolean) => void` to `CompilationBridgeProps`
+- Call `onCompilingChange(true)` before starting compilation in both effects
+- Call `onCompilingChange(false)` when compilation finishes
+
+### Change 4: `AIAppBuilderWorkspace.tsx` — Wire `isCompiling` state
+
+Pass `setIsCompiling` (which already exists in the workspace) to `CompilationBridge` as the `onCompilingChange` callback. The `GeneratingOverlay` already accepts `isCompiling` and shows "Compiling preview..." when true.
+
+### Change 5: Safety timeout (10 seconds)
+
+Wrap each compilation in a `Promise.race` with a 10-second timeout. If compilation hangs, set the error fallback HTML and stop blocking.
+
+## Files Changed
+
+| File | Change |
+|------|--------|
+| `src/components/ai-builder/CompilationBridge.tsx` | Replace both `useMemo` with async `useEffect` + `setTimeout`, add `onCompilingChange` prop |
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Pass `setIsCompiling` to CompilationBridge |
 
 ## Expected Result
-- No more "This page is slowing down Firefox" warnings during generation
-- Chat panel re-renders are lightweight (no spring physics, no regex re-evaluation)
-- Skeleton preview uses zero JS animation budget
-- Generation completes smoothly without any browser freeze
+
+- Browser never freezes after generation ends
+- User sees "Compiling preview..." overlay for 0.5-3 seconds while compilation runs
+- The workspace UI (chat, file tree, buttons) remains interactive throughout
+- If compilation takes over 10 seconds, an error fallback page appears instead of an infinite freeze
+
