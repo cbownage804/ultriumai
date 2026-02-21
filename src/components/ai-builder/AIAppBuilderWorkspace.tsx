@@ -1003,9 +1003,12 @@ export function AIAppBuilderWorkspace() {
 
   useEffect(() => {
     const flushDraft = () => {
+      // Synchronous localStorage save — guaranteed to complete before tab freeze
       saveDraftImmediate(latestRef.current.name, latestRef.current.files, latestRef.current.messages);
-      // Use immediate (non-debounced) IDB save — browser may discard tab before debounce fires
-      saveToIDBImmediateRef.current(sessionId, latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+      // Best-effort async IDB save — may not complete if tab is discarded
+      try {
+        saveToIDBImmediateRef.current(sessionId, latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+      } catch { /* ignore */ }
     };
 
     const handleVisibility = () => {
@@ -1056,40 +1059,34 @@ export function AIAppBuilderWorkspace() {
   // Restore draft on mount (only if no project param and not explicitly new)
   const isNewProject = searchParams.get('new') === 'true';
   useEffect(() => {
-    if (initialProjectId || isNewProject) return; // skip draft restore when loading a specific project or starting fresh
+    if (initialProjectId || isNewProject) return;
     if (project.files.length > 0 || messages.length > 0) return;
-    // Try IndexedDB first (larger, more reliable), fall back to localStorage draft
-    (async () => {
-      // Try both sources in parallel — pick whichever has more data
-      const [idbSession, lsDraft] = await Promise.all([
-        idbPersistence.checkRecovery().catch(() => null),
-        Promise.resolve(loadDraft()),
-      ]);
 
-      const idbFileCount = idbSession?.files?.length || 0;
-      const lsFileCount = lsDraft?.files?.length || 0;
-      const idbMsgCount = idbSession?.messages?.length || 0;
-      const lsMsgCount = lsDraft?.messages?.length || 0;
-
-      const useIDB = idbFileCount + idbMsgCount >= lsFileCount + lsMsgCount
-        && (idbFileCount > 0 || idbMsgCount > 0);
-      const useLS = !useIDB && (lsFileCount > 0 || lsMsgCount > 0);
-
-      if (useIDB && idbSession) {
-        setFiles(idbSession.files);
-        renameProject(idbSession.name);
-        if (idbSession.messages.length > 0) {
-          setMessages(idbSession.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-        }
-        dedupeToast('success', 'Session auto-restored');
-      } else if (useLS && lsDraft) {
-        setFiles(lsDraft.files);
-        renameProject(lsDraft.name);
-        if (lsDraft.messages.length > 0) {
-          setMessages(lsDraft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-        }
-        dedupeToast('success', 'Draft auto-restored');
+    // SYNC FIRST: Try localStorage immediately (no async delay)
+    const lsDraft = loadDraft();
+    if (lsDraft && (lsDraft.files.length > 0 || lsDraft.messages.length > 0)) {
+      setFiles(lsDraft.files);
+      renameProject(lsDraft.name);
+      if (lsDraft.messages.length > 0) {
+        setMessages(lsDraft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
       }
+    }
+
+    // ASYNC SECOND: Check IDB for potentially more complete data
+    (async () => {
+      try {
+        const idbSession = await idbPersistence.checkRecovery();
+        if (!idbSession) return;
+        const idbTotal = (idbSession.files?.length || 0) + (idbSession.messages?.length || 0);
+        const lsTotal = (lsDraft?.files?.length || 0) + (lsDraft?.messages?.length || 0);
+        if (idbTotal > lsTotal) {
+          setFiles(idbSession.files);
+          renameProject(idbSession.name);
+          if (idbSession.messages.length > 0) {
+            setMessages(idbSession.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+          }
+        }
+      } catch { /* IDB unavailable */ }
     })();
   }, []); // intentionally run once on mount
 

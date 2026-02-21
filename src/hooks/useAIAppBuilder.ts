@@ -172,7 +172,7 @@ function validateGeneratedFiles(files: ProjectFile[]): ValidationResult {
     // JS/TS: check for basic syntax issues
     if (['js', 'jsx', 'ts', 'tsx', 'mjs'].includes(ext)) {
       // Bracket balance
-      const opens = (f.content.match(/[{([\]]/g) || []).length;
+      const opens = (f.content.match(/[{(\[]/g) || []).length;
       const closes = (f.content.match(/[})\]]/g) || []).length;
       if (Math.abs(opens - closes) > 2) {
         errors.push({ file: f.path, message: `Unbalanced brackets: ${opens} open vs ${closes} close` });
