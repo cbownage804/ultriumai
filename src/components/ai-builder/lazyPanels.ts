@@ -1,9 +1,24 @@
 import { lazy } from 'react';
 
-// Helper to lazily import named exports
+// Helper to lazily import named exports with stale-chunk recovery.
+// If a dynamic import fails (e.g. after a new deployment invalidates hashed chunks),
+// we do a single hard reload so the browser fetches the latest assets.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const lz = (factory: () => Promise<any>, name: string): any =>
-  lazy(() => factory().then(m => ({ default: m[name] })));
+  lazy(() =>
+    factory()
+      .then(m => ({ default: m[name] }))
+      .catch((err: unknown) => {
+        // Only auto-reload once per session to avoid infinite loops
+        const key = '__chunk_reload__';
+        if (!sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, '1');
+          window.location.reload();
+        }
+        // If we already reloaded, surface the error so the ErrorBoundary catches it
+        throw err;
+      })
+  );
 
 // All panel components lazy-loaded to reduce initial bundle size
 export const PromptHistoryPanel = lz(() => import('./PromptHistoryPanel'), 'PromptHistoryPanel');
