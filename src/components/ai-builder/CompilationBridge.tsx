@@ -66,6 +66,16 @@ export function CompilationBridge({
   // ── React Compiler integration ──
   const { compileReactProject } = useReactCompiler();
 
+  // Stabilize function refs to prevent effect re-fires
+  const compileReactProjectRef = useRef(compileReactProject);
+  compileReactProjectRef.current = compileReactProject;
+  const getCompiledHTMLRef = useRef(getCompiledHTML);
+  getCompiledHTMLRef.current = getCompiledHTML;
+  const bundleForBrowserRef = useRef(bundleForBrowser);
+  bundleForBrowserRef.current = bundleForBrowser;
+  const onCompilingChangeRef = useRef(onCompilingChange);
+  onCompilingChangeRef.current = onCompilingChange;
+
   const isReactProject = useMemo(() => {
     try {
       return detectReactProject(files);
@@ -106,7 +116,9 @@ export function CompilationBridge({
 
     const timer = setTimeout(() => {
       try {
-        const result = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser);
+        console.time('[compiledForHosting]');
+        const result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current);
+        console.timeEnd('[compiledForHosting]');
         setCompiledForHosting(result);
       } catch (e) {
         console.error('[compiledForHosting] Compilation crashed:', e);
@@ -114,7 +126,7 @@ export function CompilationBridge({
       }
     }, 100);
     return () => clearTimeout(timer);
-  }, [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, isGenerating]);
+  }, [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, isGenerating]);
 
   // Report compiledForHosting upstream
   useEffect(() => {
@@ -147,13 +159,13 @@ export function CompilationBridge({
       return;
     }
 
-    onCompilingChange?.(true);
+    onCompilingChangeRef.current?.(true);
 
     let cancelled = false;
     const safetyTimeout = setTimeout(() => {
       if (!cancelled) {
         console.error('[Compilation] Safety timeout reached (10s) — showing error fallback');
-        onCompilingChange?.(false);
+        onCompilingChangeRef.current?.(false);
         compilationAttemptedRef.current = true;
         setLiveCompiledHTML(ERROR_FALLBACK_HTML);
       }
@@ -162,9 +174,10 @@ export function CompilationBridge({
     const compileTimer = setTimeout(() => {
       if (cancelled) return;
       try {
+        console.time('[liveCompiledHTML]');
         let result: string | null = null;
         if (isReactProject) {
-          const compiled = compileReactProject(files, {
+          const compiled = compileReactProjectRef.current(files, {
             supabaseConfig: supabaseConfig || undefined,
             stripeConfig: stripeConfig || undefined,
             envVars,
@@ -174,11 +187,12 @@ export function CompilationBridge({
           }
           result = compiled.html || null;
         } else {
-          result = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+          result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
         }
+        console.timeEnd('[liveCompiledHTML]');
         if (!cancelled) {
           clearTimeout(safetyTimeout);
-          onCompilingChange?.(false);
+          onCompilingChangeRef.current?.(false);
           compilationAttemptedRef.current = true;
           setLiveCompiledHTML(result);
         }
@@ -186,7 +200,7 @@ export function CompilationBridge({
         console.error('[ReactCompiler] Compilation crashed:', e);
         if (!cancelled) {
           clearTimeout(safetyTimeout);
-          onCompilingChange?.(false);
+          onCompilingChangeRef.current?.(false);
           compilationAttemptedRef.current = true;
           setLiveCompiledHTML(null);
         }
@@ -197,9 +211,9 @@ export function CompilationBridge({
       cancelled = true;
       clearTimeout(compileTimer);
       clearTimeout(safetyTimeout);
-      onCompilingChange?.(false);
+      onCompilingChangeRef.current?.(false);
     };
-  }, [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, isReactProject, compileReactProject, isGenerating]);
+  }, [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, linkedGPT, isReactProject, isGenerating]);
 
   const liveSync = useLivePreviewSync();
 
