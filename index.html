@@ -266,10 +266,7 @@
             });
         });
 
-        // Reload page when new SW takes control
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          window.location.reload();
-        });
+        // Let new SW activate silently — no auto-reload to preserve React state
       }
     </script>
   </body>
