@@ -107,19 +107,31 @@ export function CompilationBridge({
   // ── liveCompiledHTML (async, post-generation) ──
   const [liveCompiledHTML, setLiveCompiledHTML] = useState<string | null>(null);
   const compilationAttemptedRef = useRef(false);
+  const compilationLockRef = useRef(false);
 
   // Reset compilation attempted flag when generation starts
   useEffect(() => {
     if (isGenerating) {
       compilationAttemptedRef.current = false;
+      compilationLockRef.current = false;
     }
   }, [isGenerating]);
+
+  // Serialize file identity to prevent effect re-fires from reference changes
+  const filesDigest = useMemo(() => {
+    if (files.length === 0) return '';
+    return files.map(f => f.path + ':' + f.content.length).join('|');
+  }, [files]);
 
   useEffect(() => {
     if (isGenerating || files.length === 0 || stableHTMLRef.current) {
       setLiveCompiledHTML(null);
       return;
     }
+
+    // Prevent re-entry — only compile once per generation cycle
+    if (compilationLockRef.current) return;
+    compilationLockRef.current = true;
 
     onCompilingChangeRef.current?.(true);
 
@@ -133,49 +145,57 @@ export function CompilationBridge({
       }
     }, COMPILE_TIMEOUT_MS);
 
-    const compileTimer = setTimeout(() => {
+    // Use requestAnimationFrame → setTimeout to yield to browser before heavy work
+    const rafId = requestAnimationFrame(() => {
       if (cancelled) return;
-      try {
-        console.time('[liveCompiledHTML]');
-        let result: string | null = null;
-        if (isReactProject) {
-          const compiled = compileReactProjectRef.current(files, {
-            supabaseConfig: supabaseConfig || undefined,
-            stripeConfig: stripeConfig || undefined,
-            envVars,
-          });
-          if (compiled.errors.length > 0) {
-            console.warn('[ReactCompiler] Warnings:', compiled.errors);
+      const compileTimer = setTimeout(() => {
+        if (cancelled) return;
+        try {
+          console.time('[liveCompiledHTML]');
+          let result: string | null = null;
+          if (isReactProject) {
+            const compiled = compileReactProjectRef.current(files, {
+              supabaseConfig: supabaseConfig || undefined,
+              stripeConfig: stripeConfig || undefined,
+              envVars,
+            });
+            if (compiled.errors.length > 0) {
+              console.warn('[ReactCompiler] Warnings:', compiled.errors);
+            }
+            result = compiled.html || null;
+          } else {
+            result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
           }
-          result = compiled.html || null;
-        } else {
-          result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
+          console.timeEnd('[liveCompiledHTML]');
+          if (!cancelled) {
+            clearTimeout(safetyTimeout);
+            onCompilingChangeRef.current?.(false);
+            compilationAttemptedRef.current = true;
+            setLiveCompiledHTML(result);
+          }
+        } catch (e) {
+          console.error('[ReactCompiler] Compilation crashed:', e);
+          if (!cancelled) {
+            clearTimeout(safetyTimeout);
+            onCompilingChangeRef.current?.(false);
+            compilationAttemptedRef.current = true;
+            setLiveCompiledHTML(null);
+          }
         }
-        console.timeEnd('[liveCompiledHTML]');
-        if (!cancelled) {
-          clearTimeout(safetyTimeout);
-          onCompilingChangeRef.current?.(false);
-          compilationAttemptedRef.current = true;
-          setLiveCompiledHTML(result);
-        }
-      } catch (e) {
-        console.error('[ReactCompiler] Compilation crashed:', e);
-        if (!cancelled) {
-          clearTimeout(safetyTimeout);
-          onCompilingChangeRef.current?.(false);
-          compilationAttemptedRef.current = true;
-          setLiveCompiledHTML(null);
-        }
-      }
-    }, 50);
+      }, 50);
+
+      // Store for cleanup
+      (rafId as any).__compileTimer = compileTimer;
+    });
 
     return () => {
       cancelled = true;
-      clearTimeout(compileTimer);
+      cancelAnimationFrame(rafId);
+      clearTimeout((rafId as any)?.__compileTimer);
       clearTimeout(safetyTimeout);
       onCompilingChangeRef.current?.(false);
     };
-  }, [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, linkedGPT, isReactProject, isGenerating]);
+  }, [filesDigest, supabaseConfig, stripeConfig, isReactProject, isGenerating]);
 
   // ── compiledForHosting (deferred until live preview is done) ──
   const [compiledForHosting, setCompiledForHosting] = useState<string | null>(null);
