@@ -435,7 +435,8 @@ export function useReactCompiler() {
   /**
    * Compile a React project into a single HTML document for iframe preview.
    */
-  const compileReactProject = useCallback((
+  // Phase 3: Async compilation with yield points every 2 files
+  const compileReactProject = useCallback(async (
     files: ProjectFile[],
     options?: {
       supabaseConfig?: { url: string; anonKey: string } | null;
@@ -443,7 +444,7 @@ export function useReactCompiler() {
       envVars?: { key: string; value: string }[];
       userPackages?: CDNPackageEntry[];
     }
-  ): ReactCompilerResult => {
+  ): Promise<ReactCompilerResult> => {
     const errors: string[] = [];
 
     const reactFiles = files.filter(f => /\.(tsx?|jsx?)$/.test(f.path));
@@ -459,13 +460,17 @@ export function useReactCompiler() {
     // Sort files by dependency order
     const sorted = sortByDependency(reactFiles, moduleMap);
 
-    // Transpile each file
+    // Transpile each file with yield points every 2 files
     const transpiledChunks: string[] = [];
-    for (const file of sorted) {
+    for (let i = 0; i < sorted.length; i++) {
       try {
-        transpiledChunks.push(transpileFile(file, moduleMap));
+        transpiledChunks.push(transpileFile(sorted[i], moduleMap));
       } catch (err: any) {
-        errors.push(`Transpile error in ${file.path}: ${err.message}`);
+        errors.push(`Transpile error in ${sorted[i].path}: ${err.message}`);
+      }
+      // Yield to browser every 2 files to prevent "page not responding"
+      if (i > 0 && i % 2 === 0) {
+        await new Promise(r => setTimeout(r, 0));
       }
     }
 
