@@ -1189,6 +1189,9 @@ export function AIAppBuilderWorkspace() {
     // Build log tracking
     buildStartTimeRef.current = Date.now();
     buildLog.logBuildStart(input);
+    // Reset global auto-fix counters on new user message
+    totalFixAttemptsRef.current = 0;
+    autoFixInFlightRef.current = false;
 
     // Agent mode: enqueue task and let the auto-process useEffect handle execution
     if (mode === 'build') {
@@ -1263,9 +1266,14 @@ export function AIAppBuilderWorkspace() {
   const compilationEndedAt = useRef<number>(0);
   const prevIsGenerating = useRef(false);
   const prevIsCompilingRef = useRef(false);
+  // Global auto-fix circuit breaker: caps ALL fix attempts across error messages
+  const totalFixAttemptsRef = useRef(0);
+  const autoFixInFlightRef = useRef(false);
   useEffect(() => {
     if (!isGenerating && prevIsGenerating.current) {
       generationEndedAt.current = Date.now();
+      // Reset in-flight guard when generation completes
+      autoFixInFlightRef.current = false;
     }
     prevIsGenerating.current = isGenerating;
   }, [isGenerating]);
@@ -1283,10 +1291,21 @@ export function AIAppBuilderWorkspace() {
     if (error.message?.includes('Failed to load')) return;
     // Skip during generation or compilation
     if (isGenerating || isCompiling) return;
+    // In-flight guard: skip if a fix generation is already pending
+    if (autoFixInFlightRef.current) return;
+    // Global circuit breaker: max 3 total fix attempts per user message
+    if (totalFixAttemptsRef.current >= 3) {
+      dedupeToast('error', 'Auto-fix limit reached. Try describing the issue differently.');
+      return;
+    }
     // 3-second cooldown after generation ends to let preview stabilize
     if (Date.now() - generationEndedAt.current < 3000) return;
-    // 5-second cooldown after compilation ends
-    if (Date.now() - compilationEndedAt.current < 5000) return;
+    // 8-second cooldown after compilation ends (increased from 5s for CDN loading)
+    if (Date.now() - compilationEndedAt.current < 8000) return;
+
+    // Increment global fix counter and set in-flight guard
+    totalFixAttemptsRef.current++;
+    autoFixInFlightRef.current = true;
 
     // Forward error to chat for inline display
     forwardErrorToChat({ message: error.message, source: error.source, line: error.line });
@@ -1296,6 +1315,7 @@ export function AIAppBuilderWorkspace() {
       pushUndo('Before hot recovery rollback', project.files);
       setFiles(rollbackFiles);
       dedupeToast('info', 'Auto-rolled back to last working state');
+      autoFixInFlightRef.current = false;
       return;
     }
     // Phase 47: Use structured auto-fix loop with exponential backoff
@@ -1304,7 +1324,7 @@ export function AIAppBuilderWorkspace() {
       project.files,
       messages.slice(-4).map(m => m.content),
     );
-  }, [isGenerating, fixAttemptCount, autoRecovery, project.files, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel, forwardErrorToChat, getLastAIResponse]);
+  }, [isGenerating, isCompiling, fixAttemptCount, autoRecovery, project.files, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel, forwardErrorToChat, getLastAIResponse]);
 
   const handleForkFromMessage = useCallback(async (messageId: string) => {
     await saveProject(project.name, project.files, branches, activeBranch, messages);

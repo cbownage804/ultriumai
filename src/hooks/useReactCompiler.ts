@@ -447,7 +447,10 @@ export function useReactCompiler() {
   ): Promise<ReactCompilerResult> => {
     const errors: string[] = [];
 
-    const reactFiles = files.filter(f => /\.(tsx?|jsx?)$/.test(f.path));
+    const reactFiles = files
+      .filter(f => /\.(tsx?|jsx?)$/.test(f.path))
+      .filter(f => !/\.(test|spec)\.(tsx?|jsx?)$/.test(f.path))
+      .filter(f => !f.content.includes("from 'vitest'") && !f.content.includes('from "vitest"'));
     const cssFiles = files.filter(f => f.language === 'css' || f.language === 'scss');
     const htmlFiles = files.filter(f => f.language === 'html');
 
