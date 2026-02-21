@@ -132,6 +132,14 @@ export function CompilationBridge({
 
   // ── liveCompiledHTML (async, post-generation) ──
   const [liveCompiledHTML, setLiveCompiledHTML] = useState<string | null>(null);
+  const compilationAttemptedRef = useRef(false);
+
+  // Reset compilation attempted flag when generation starts
+  useEffect(() => {
+    if (isGenerating) {
+      compilationAttemptedRef.current = false;
+    }
+  }, [isGenerating]);
 
   useEffect(() => {
     if (isGenerating || files.length === 0 || stableHTMLRef.current) {
@@ -146,6 +154,7 @@ export function CompilationBridge({
       if (!cancelled) {
         console.error('[Compilation] Safety timeout reached (10s) — showing error fallback');
         onCompilingChange?.(false);
+        compilationAttemptedRef.current = true;
         setLiveCompiledHTML(ERROR_FALLBACK_HTML);
       }
     }, COMPILE_TIMEOUT_MS);
@@ -170,6 +179,7 @@ export function CompilationBridge({
         if (!cancelled) {
           clearTimeout(safetyTimeout);
           onCompilingChange?.(false);
+          compilationAttemptedRef.current = true;
           setLiveCompiledHTML(result);
         }
       } catch (e) {
@@ -177,6 +187,7 @@ export function CompilationBridge({
         if (!cancelled) {
           clearTimeout(safetyTimeout);
           onCompilingChange?.(false);
+          compilationAttemptedRef.current = true;
           setLiveCompiledHTML(null);
         }
       }
@@ -202,7 +213,7 @@ export function CompilationBridge({
         liveSync.resetSnapshot(files);
       }
     }
-    if (!isGenerating && !liveCompiledHTML && files.length > 0 && stableHTML === null) {
+    if (!isGenerating && !liveCompiledHTML && files.length > 0 && stableHTML === null && compilationAttemptedRef.current) {
       console.warn('[Preview] Generation complete but compilation returned null — showing error fallback');
       setStableHTML(ERROR_FALLBACK_HTML);
     }
