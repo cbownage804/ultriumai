@@ -1,153 +1,109 @@
 
-## Fix: The Preview Deadlock (The REAL Root Cause)
 
-### Why every previous fix failed
+## Fix: Tab-Switch Data Loss + Persistent Skeleton
 
-All previous fixes (type stripping, Proxy fallbacks, CDN timeouts, per-chunk isolation) operate **inside the iframe HTML**. They're correct and will help once the iframe actually loads. But the iframe never loads because the **outer React app** has a deadlock that prevents the compiled HTML from ever reaching the iframe.
+### Problem 1: Switching browser tabs wipes everything
 
-### The Deadlock (step by step)
+The URL stays as `?new=true` for the entire session. If the browser discards your tab to save memory (common on Windows with many tabs), when you go back, the component remounts from scratch. The draft restoration code sees `?new=true` and skips restoring your saved work -- everything is lost.
 
-Here's exactly what happens every time you generate an app:
+**Root cause:** `?new=true` is never removed from the URL after the first generation starts. It was designed to prevent restoring an old draft when you click "New App", but it stays active forever, blocking ALL future recovery attempts.
 
-```text
-1. AI finishes generating files
-   -> isGenerating = false
+### Problem 2: Preview stuck on skeleton
 
-2. CompilationBridge starts compiling (line 146)
-   -> isCompiling = true
-   -> Preview shows: <CompilationProgress /> (or <SkeletonPreview />)
+The skeleton shows during generation (normal), but after generation completes, two things can prevent the preview from appearing:
 
-3. Compilation finishes, sets liveCompiledHTML
-   -> isCompiling = false
+1. The `stableHTMLRef.current` check added in our last fix can block fresh generation previews. On a new project, `stableHTMLRef.current` starts as `null`, so the reset fires correctly. But the compilation effect at line 139 checks `stableHTMLRef.current` -- if for any reason it was set briefly (e.g., error fallback) and then the user sends another message, the guard `stableHTMLRef.current` being truthy prevents recompilation.
 
-4. Preview update effect (line 291) fires
-   -> Calls setStableHTML(liveCompiledHTML)
-   -> stableHTML is now set
-   -> Preview shows: <iframe srcDoc={stableHTML} />
+2. When `isGenerating` transitions false, the compilation effect depends on `filesDigest` which may not change if the files were already merged during streaming, causing the compilation effect to not fire.
 
-5. Iframe loads. CDN package fails or Babel error occurs.
-   -> Iframe posts error via postMessage
+### The Fix (2 files, 4 changes)
 
-6. handleAutoFixError fires
-   -> Calls sendMessage("Auto-fix error: ...")
-   -> isGenerating = true   <-- THIS IS THE PROBLEM
+**File 1: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-7. CompilationBridge line 111: "if isGenerating just turned on"
-   -> setStableHTML(null)   <-- NUKES the working preview
+**Change A: Strip `?new=true` from URL after first message is sent**
 
-8. CompilationBridge line 136: "if isGenerating"
-   -> setLiveCompiledHTML(null)   <-- KILLS compiled HTML
+After the user sends their first message and generation begins, remove `new=true` from the URL using `replaceState`. This ensures that if the tab is discarded and remounted, draft recovery will work.
 
-9. Preview panel line 451: html is null
-   -> Shows <SkeletonPreview /> instead of iframe
-
-10. Auto-fix generates new code, isGenerating = false
-    -> Back to step 2, but now another error occurs
-    -> LOOP repeats until fix attempts exhausted
-    -> Final state: stableHTML = null, skeleton forever
+Add a new effect after line 1012:
+```typescript
+// Strip ?new=true from URL once generation starts so tab recovery works
+useEffect(() => {
+  if (isGenerating && searchParams.get('new') === 'true') {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('new');
+    window.history.replaceState({}, '', url.pathname + url.search);
+  }
+}, [isGenerating, searchParams]);
 ```
 
-The skeleton you see is NOT from the first generation -- it's from step 7 where the auto-fix loop nukes `stableHTML`.
+**Change B: Also persist to IndexedDB on visibilitychange (not just localStorage)**
 
-### The Fix (3 targeted changes)
-
-**Change 1: Don't reset stableHTML during auto-fix** (`CompilationBridge.tsx`, lines 109-115)
-
-Currently, stableHTML is reset to null whenever `isGenerating` transitions to true. This makes sense for fresh user messages (you want a fresh preview) but is catastrophic during auto-fix (it destroys the existing preview).
-
-Add an `isAutoFix` prop to CompilationBridge. When it's an auto-fix generation, skip the stableHTML reset so the previous preview stays visible while the fix runs.
-
-Alternatively (simpler): just **never** null out stableHTML when transitioning to generating. Instead, let the new compiled result **replace** it when ready. The user sees the old preview (possibly with errors) while the fix runs, which is far better than a blank skeleton.
+The `visibilitychange` handler at line 997-1012 only saves to localStorage via `saveDraftImmediate`. IndexedDB (larger, more reliable) is not flushed. Add IDB flush alongside the draft flush:
 
 ```typescript
-// BEFORE (line 110-114):
-useEffect(() => {
-  if (isGenerating && !prevIsGeneratingForReset.current) {
-    setStableHTML(null);  // <-- DESTROYS preview on every generation
-  }
-  prevIsGeneratingForReset.current = isGenerating;
-}, [isGenerating, setStableHTML]);
+const flushDraft = () => {
+  saveDraftImmediate(latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+  // Also flush to IndexedDB for more reliable recovery
+  idbPersistence.saveToIDB(sessionId, latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+};
+```
 
-// AFTER:
+**File 2: `src/components/ai-builder/CompilationBridge.tsx`**
+
+**Change C: Always reset stableHTML on fresh generation (fix the guard)**
+
+The current guard `if (!stableHTMLRef.current)` was meant to preserve previews during auto-fix, but it also prevents resetting on fresh user messages. We need to distinguish auto-fix from fresh user messages.
+
+Replace the reset logic (lines 110-118) with:
+```typescript
 useEffect(() => {
   if (isGenerating && !prevIsGeneratingForReset.current) {
-    // Only reset if there's no existing preview (fresh generation, not auto-fix)
-    // If stableHTML already exists, keep showing it while fix runs
-    if (!stableHTMLRef.current) {
-      setStableHTML(null);
-    }
+    // Always reset stableHTML when a new generation starts.
+    // The old preview will be replaced by the new compilation result.
+    setStableHTML(null);
+    // Also reset compilation state so the new build can run
+    compilationAttemptedRef.current = false;
+    compilationLockRef.current = false;
   }
   prevIsGeneratingForReset.current = isGenerating;
 }, [isGenerating, setStableHTML]);
 ```
 
-**Change 2: Don't null liveCompiledHTML during generation** (`CompilationBridge.tsx`, line 136)
+This removes the `stableHTMLRef.current` guard that was blocking resets. Showing the skeleton during generation is the correct behavior -- the previous fix was wrong to try to keep the old preview visible. The real fix for auto-fix loops is handled separately via the auto-fix circuit breaker (max 3 attempts).
 
-Currently: `if (isGenerating) { setLiveCompiledHTML(null); return; }` -- this prevents recompilation during generation AND destroys the existing compiled HTML.
+**Change D: Force recompilation when filesDigest changes after generation**
 
-Fix: Only skip starting a new compilation during generation, but don't null out the existing result.
+Ensure the compilation effect fires even when `isGenerating` was already false but new files arrived (e.g., from auto-fix or streaming completion). Add an explicit trigger:
 
+Replace lines 138-141:
 ```typescript
-// BEFORE (line 135-139):
 useEffect(() => {
-  if (isGenerating || filesRef.current.length === 0 || stableHTMLRef.current) {
-    setLiveCompiledHTML(null);
+  if (isGenerating || filesRef.current.length === 0) {
     return;
   }
-
-// AFTER:
-useEffect(() => {
-  if (isGenerating || filesRef.current.length === 0 || stableHTMLRef.current) {
-    // Don't null out liveCompiledHTML if we already have it -- 
-    // prevents flashing skeleton during auto-fix
-    return;
+  // If stableHTML already exists but filesDigest changed, reset it so
+  // recompilation can run with the new files
+  if (stableHTMLRef.current && filesDigest !== prevFilesDigestRef.current) {
+    setStableHTML(null);
   }
+  prevFilesDigestRef.current = filesDigest;
 ```
 
-**Change 3: Remove compilation lock that prevents recompilation after auto-fix** (`CompilationBridge.tsx`, line 142)
-
-The `compilationLockRef` prevents recompilation within the same generation cycle. But after an auto-fix completes (new files), we NEED to recompile. Reset the lock when `filesDigest` changes.
-
+Add a `prevFilesDigestRef` to track when files actually change:
 ```typescript
-// BEFORE (lines 122-128):
-useEffect(() => {
-  if (isGenerating) {
-    compilationAttemptedRef.current = false;
-    compilationLockRef.current = false;
-  }
-}, [isGenerating]);
-
-// AFTER:
-useEffect(() => {
-  if (isGenerating) {
-    compilationAttemptedRef.current = false;
-    compilationLockRef.current = false;
-  }
-}, [isGenerating, filesDigest]);  // Also reset when files change (auto-fix produced new code)
+const prevFilesDigestRef = useRef<string>('');
 ```
 
-### Files to Edit
+### Why this fixes both issues
 
-1. **`src/components/ai-builder/CompilationBridge.tsx`** (3 targeted changes):
-   - Line 111: Don't null stableHTML if it already exists (keep showing old preview during fix)
-   - Line 137: Remove `setLiveCompiledHTML(null)` to prevent destroying compiled result
-   - Line 127: Add `filesDigest` dependency to reset compilation lock after auto-fix
+1. **Tab switch**: `?new=true` is removed as soon as generation starts. If the browser discards the tab, the draft/IDB recovery kicks in and restores your work.
 
-### Why This Actually Fixes It
+2. **Skeleton stuck**: `stableHTML` is properly reset on every generation, and the compilation lock is cleared so recompilation always runs when new files arrive.
 
-- Step 7 above no longer happens: stableHTML is preserved during auto-fix
-- The iframe stays visible showing the previous preview while the fix runs
-- When the fix produces new files and `isGenerating` goes false, recompilation runs normally
-- The new compiled HTML replaces the old one in the iframe
-- No more skeleton deadlock
+### Risk assessment
 
-### What About Fresh Generations?
+- Removing `?new=true` from URL is cosmetic and has zero side effects (it already served its purpose of preventing draft restore)
+- Dual IDB+localStorage flush adds minimal overhead (IDB save is debounced internally)
+- Resetting stableHTML on every generation means you'll briefly see the skeleton during generation -- this is the expected, correct behavior
+- The `prevFilesDigestRef` guard ensures recompilation fires when files actually change, not on every render
 
-For a brand new generation (user types a prompt from scratch), `stableHTMLRef.current` will be `null` (it was never set). The `if (!stableHTMLRef.current)` check in Change 1 means it WILL reset to null for fresh generations, correctly showing the skeleton/generating overlay for the initial build.
-
-### Risk Assessment
-
-- Zero risk to fresh generations (stableHTML is null, so the reset fires normally)
-- Auto-fix preserves existing preview instead of showing skeleton -- strictly better UX
-- The compilation lock reset on `filesDigest` change ensures recompilation fires after fixes
-- All previous iframe-level fixes (Proxy fallbacks, CDN timeouts, per-chunk isolation) will now actually take effect since the iframe will be rendered
