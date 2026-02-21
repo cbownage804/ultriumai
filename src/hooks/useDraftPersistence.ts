@@ -18,6 +18,8 @@ export function useDraftPersistence() {
   const writeDraft = useCallback((name: string, files: ProjectFile[], messages: any[]) => {
     const trySet = (data: DraftData): boolean => {
       try {
+        // Remove old value first to free quota before writing new value
+        localStorage.removeItem(DRAFT_KEY);
         localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
         return true;
       } catch {
