@@ -91,6 +91,7 @@ export function WorkspaceTopBar({
               onOpenSettings={() => setShowSettingsPanel(true)}
               onPublish={() => setShowPublishPanel(true)}
               onOpenBilling={() => setShowBilling(true)}
+              publishedUrl={publishedUrl}
             />
           )}
 
@@ -172,6 +173,15 @@ export function WorkspaceTopBar({
             <TooltipContent side="bottom" className="text-xs">Terminal</TooltipContent>
           </Tooltip>
           <div className="h-4 w-px bg-white/[0.08] mx-0.5" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="h-7 px-2 rounded-md flex items-center gap-1 text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors">
+                <Search className="h-3 w-3" />
+                <span className="text-[9px] font-mono text-white/20 bg-white/[0.04] px-1 py-0.5 rounded">⌘K</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Command Palette</TooltipContent>
+          </Tooltip>
           <ToolbarPanelsDropdown onOpenPanel={onOpenPanel} />
         </div>
 

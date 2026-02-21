@@ -85,6 +85,7 @@ interface ProjectDropdownMenuProps {
   onOpenSettings: () => void;
   onPublish: () => void;
   onOpenBilling: () => void;
+  publishedUrl?: string | null;
 }
 
 type ThemeChoice = 'light' | 'dark' | 'system';
@@ -97,6 +98,7 @@ export function ProjectDropdownMenu({
   onOpenSettings,
   onPublish,
   onOpenBilling,
+  publishedUrl,
 }: ProjectDropdownMenuProps) {
   const navigate = useNavigate();
   const [theme, setTheme] = useState<ThemeChoice>(() => {
@@ -139,7 +141,8 @@ export function ProjectDropdownMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-1 text-sm font-medium text-white/80 hover:text-white transition-colors truncate max-w-[200px]">
+        <button className="flex items-center gap-1.5 text-sm font-medium text-white/80 hover:text-white transition-colors truncate max-w-[200px]">
+          <div className={cn("h-2 w-2 rounded-full shrink-0", publishedUrl ? "bg-emerald-400" : "bg-white/20")} />
           {projectName}
           <ChevronDown className="h-3 w-3 text-white/30 shrink-0" />
         </button>
