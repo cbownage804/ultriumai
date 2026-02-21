@@ -997,6 +997,7 @@ export function AIAppBuilderWorkspace() {
   latestRef.current.name = project.name;
   latestRef.current.files = project.files;
   latestRef.current.messages = messages;
+  const lastSaveTimestampRef = useRef<number>(Date.now());
 
   // Use a ref for saveToIDB so the effect doesn't depend on the idbPersistence object
   // (which changes identity every render due to syncStatus state)
@@ -1019,20 +1020,46 @@ export function AIAppBuilderWorkspace() {
       if (document.visibilityState === 'hidden') {
         flushDraft();
       } else if (document.visibilityState === 'visible') {
-        // Safety net: If browser froze/discarded JS heap but kept the page,
-        // React state may be empty. Re-hydrate from storage.
+        // Always compare storage timestamp vs React state on tab return.
+        // This catches: empty state, partial corruption, stale heap after freeze.
         const current = latestRef.current;
-        if (current.files.length === 0 && current.messages.length === 0) {
-          const draft = loadDraft();
-          if (draft && (draft.files.length > 0 || draft.messages.length > 0)) {
-            console.info('[Draft] Re-hydrating state from localStorage after tab return');
+        const draft = loadDraft();
+
+        if (draft && (draft.files.length > 0 || draft.messages.length > 0)) {
+          const reactIsEmpty = current.files.length === 0 && current.messages.length === 0;
+          // Re-hydrate if React state is empty OR if the draft is newer
+          const draftTime = draft.savedAt ? new Date(draft.savedAt).getTime() : 0;
+          const shouldRestore = reactIsEmpty || draftTime > (lastSaveTimestampRef.current || 0);
+
+          if (shouldRestore) {
+            console.info('[Draft] Re-hydrating from storage (reactEmpty=%s, draftTime=%s)', reactIsEmpty, draft.savedAt);
             setFiles(draft.files);
             renameProject(draft.name);
             if (draft.messages.length > 0) {
               setMessages(draft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
             }
+            lastSaveTimestampRef.current = draftTime;
           }
         }
+
+        // Also try IDB (larger capacity) — async, so it may override localStorage result
+        (async () => {
+          try {
+            const idbSession = await idbPersistence.checkRecovery();
+            if (idbSession && idbSession.files.length > 0) {
+              const idbTime = idbSession.savedAt ? new Date(idbSession.savedAt).getTime() : 0;
+              if (idbTime > (lastSaveTimestampRef.current || 0)) {
+                console.info('[Draft] IDB has newer data, re-hydrating from IDB');
+                setFiles(idbSession.files);
+                renameProject(idbSession.name);
+                if (idbSession.messages && idbSession.messages.length > 0) {
+                  setMessages(idbSession.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+                }
+                lastSaveTimestampRef.current = idbTime;
+              }
+            }
+          } catch { /* IDB unavailable */ }
+        })();
       }
     };
 

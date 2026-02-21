@@ -16,11 +16,9 @@ export function useDraftPersistence() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const writeDraft = useCallback((name: string, files: ProjectFile[], messages: any[]) => {
-    const trySet = (data: DraftData): boolean => {
+    const trySet = (json: string): boolean => {
       try {
-        // Remove old value first to free quota before writing new value
-        localStorage.removeItem(DRAFT_KEY);
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+        localStorage.setItem(DRAFT_KEY, json);
         return true;
       } catch {
         return false;
@@ -34,8 +32,15 @@ export function useDraftPersistence() {
       savedAt: new Date().toISOString(),
     };
 
+    // Backup old draft in memory BEFORE removing — so we can restore on failure
+    const backup = localStorage.getItem(DRAFT_KEY);
+
+    // Remove old value once to free quota
+    localStorage.removeItem(DRAFT_KEY);
+
     // Tier 1: Full save (files + messages)
-    if (trySet(baseDraft)) return;
+    const fullJson = JSON.stringify(baseDraft);
+    if (trySet(fullJson)) return;
 
     // Tier 2: Files + slim messages (strip large content)
     console.warn('[Draft] localStorage quota exceeded, saving without message content');
@@ -43,14 +48,17 @@ export function useDraftPersistence() {
       role: m.role, timestamp: m.timestamp,
       content: typeof m.content === 'string' ? m.content.slice(0, 200) : '',
     }));
-    if (trySet({ ...baseDraft, messages: slimMessages })) return;
+    if (trySet(JSON.stringify({ ...baseDraft, messages: slimMessages }))) return;
 
     // Tier 3: Files only (no messages)
     console.warn('[Draft] localStorage still full, saving files only');
-    if (trySet({ ...baseDraft, messages: [] })) return;
+    if (trySet(JSON.stringify({ ...baseDraft, messages: [] }))) return;
 
-    // Tier 4: Give up
-    console.warn('[Draft] localStorage completely full, draft not saved');
+    // Tier 4: All writes failed — restore the old draft so we don't lose data
+    console.warn('[Draft] localStorage completely full, restoring previous draft');
+    if (backup) {
+      try { localStorage.setItem(DRAFT_KEY, backup); } catch { /* truly full */ }
+    }
   }, []);
 
   const saveDraft = useCallback((name: string, files: ProjectFile[], messages: any[]) => {
