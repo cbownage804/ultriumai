@@ -1758,16 +1758,13 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   // When the tab returns from background, the browser may have discarded
-  // iframe content. Force re-apply stableHTML so the preview re-renders.
+  // iframe content. Force iframe remount WITHOUT touching stableHTML
+  // (toggling stableHTML triggers broken recompilation in CompilationBridge).
+  const [previewRefreshKey, setPreviewRefreshKey] = useState(0);
   useEffect(() => {
     const handleVisible = () => {
       if (document.visibilityState === 'visible' && stableHTMLRef.current) {
-        const html = stableHTMLRef.current;
-        setStableHTML(null);
-        requestAnimationFrame(() => {
-          stableHTMLRef.current = html;
-          setStableHTML(html);
-        });
+        setPreviewRefreshKey(k => k + 1);
       }
     };
     document.addEventListener('visibilitychange', handleVisible);
@@ -1955,7 +1952,7 @@ export function AIAppBuilderWorkspace() {
                 </div>
               ) : undefined} />
             ) : mobileTab === 'preview' ? (
-                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
+                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
                   <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                 </BuilderPreviewPanel>
             ) : (
@@ -2314,7 +2311,7 @@ export function AIAppBuilderWorkspace() {
                               <ResizablePanelGroup direction="horizontal" className="h-full">
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="preview" className="h-full">
-                                    <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
+                                    <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
                                       <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                                     </BuilderPreviewPanel>
                                   </div>
@@ -2331,7 +2328,7 @@ export function AIAppBuilderWorkspace() {
                               </ResizablePanelGroup>
                             ) : rightTab === 'preview' || !hasFiles ? (
                               <div data-tour="preview" className="h-full">
-                                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
+                                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
                                   <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                                 </BuilderPreviewPanel>
                               </div>

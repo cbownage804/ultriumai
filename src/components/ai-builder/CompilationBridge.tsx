@@ -158,6 +158,13 @@ export function CompilationBridge({
     }
     prevFilesDigestRef.current = filesDigest;
 
+    // CRITICAL FIX: Always unlock when we have no preview.
+    // This handles auto-restore where files exist but stableHTML is null
+    // and compilationLockRef is still true from a previous session.
+    if (!stableHTMLRef.current) {
+      compilationLockRef.current = false;
+    }
+
     // Prevent re-entry — only compile once per generation cycle
     if (compilationLockRef.current) return;
 
