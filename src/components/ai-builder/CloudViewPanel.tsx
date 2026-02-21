@@ -1,9 +1,11 @@
-import { useState, Suspense } from 'react';
+import { useState, Suspense, lazy } from 'react';
 import { X, Database, Users, HardDrive, Zap, KeyRound, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Lazy imports for each sub-panel
-import { DatabasePanel, StorageBrowser, EdgeFunctionEditorPanel, SecretsManagerPanel } from './lazyPanels';
+const CloudDatabasePanel = lazy(() => import('./cloud/CloudDatabasePanel'));
+const AuthUsersPanel = lazy(() => import('./cloud/AuthUsersPanel'));
+import { StorageBrowser, EdgeFunctionEditorPanel, SecretsManagerPanel } from './lazyPanels';
 
 interface CloudViewPanelProps {
   isOpen: boolean;
@@ -90,28 +92,16 @@ export function CloudViewPanel({ isOpen, onClose, supabaseConfig, onOpenPanel }:
             <Suspense fallback={<PanelFallback />}>
               <div className="flex-1 overflow-auto">
                 {activeTab === 'database' && (
-                  <DatabasePanel
+                  <CloudDatabasePanel
                     supabaseUrl={supabaseConfig.supabaseUrl}
                     supabaseKey={supabaseConfig.supabaseKey}
-                    onInsertCode={() => {}}
                   />
                 )}
                 {activeTab === 'users' && (
-                  <div className="p-6 space-y-4">
-                    <h3 className="text-sm font-medium text-white/70">Auth Users</h3>
-                    <p className="text-xs text-white/30">
-                      View and manage authenticated users.
-                    </p>
-                    <a
-                      href={`https://supabase.com/dashboard/project/${supabaseConfig.supabaseUrl?.match(/https:\/\/([^.]+)/)?.[1]}/auth/users`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-violet-500/15 text-violet-300 border border-violet-500/25 hover:bg-violet-500/25 transition-colors"
-                    >
-                      <Users className="h-3 w-3" />
-                      Open in Supabase Dashboard
-                    </a>
-                  </div>
+                  <AuthUsersPanel
+                    supabaseUrl={supabaseConfig.supabaseUrl}
+                    supabaseKey={supabaseConfig.supabaseKey}
+                  />
                 )}
                 {activeTab === 'storage' && (
                   <StorageBrowser
