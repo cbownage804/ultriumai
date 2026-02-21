@@ -1,72 +1,46 @@
 
 
-# App Builder Settings Parity with Lovable
+# Auto-Connect Registrar Detection for App Builder Domains
 
-## Overview
-The current `ProjectSettingsModal` has the right tab structure but each tab is shallow compared to Lovable's real settings. This plan upgrades each tab to match Lovable's feature set.
+## What This Does
+When a user enters a domain in the App Builder settings, the system will automatically detect their DNS provider (like Cloudflare, GoDaddy, Namecheap, etc.) and show a multi-step setup flow -- just like the Lovable screenshot you shared.
 
----
+## How It Works
 
-## Current State vs Target
+### Step-by-step flow after clicking "Connect Domain":
+1. **Analyzing phase** -- A modal overlay appears showing progress steps:
+   - "Analyzed [domain]" (with checkmark)
+   - "Detected DNS provider: **Cloudflare**" (with checkmark + bold provider name)
+   - "Getting your setup details." (spinner)
+2. **Provider detected** -- Shows the provider's logo/icon, a message about one-time authorization, and:
+   - A primary "Open [Provider] DNS Settings" button (links to their DNS management page)
+   - A "Go to our manual setup" link (falls back to showing the raw DNS records)
+   - A "Change provider" and "Show added DNS records" links at the bottom
+3. **Provider not detected** -- Falls back to manual DNS record setup (current behavior)
 
-| Tab | Current | Missing from Lovable |
-|-----|---------|---------------------|
-| General | Name, description, sound toggle | Project visibility (public/private), Knowledge/Memory management link, "Remix this project" button |
-| Domains | Static published URL display | Inline custom domain management (add domain, DNS instructions, verification status, SSL status) -- the full `CustomDomainPanel` functionality should be embedded here |
-| Integrations | Read-only status badges | Action buttons to connect/disconnect services, link to open each integration's config panel |
-| Advanced | Hide badge, remixing toggle, delete | Reset project option, export project option, danger zone styling |
+### Technical Changes
 
----
+**File: `ProjectSettingsModal.tsx`**
+- Add `import { supabase }` for calling the edge function
+- Add new state: `registrarInfo`, `isAnalyzing`, `analysisStep` (tracks which step of the animation we're on), `showManualSetup`
+- Modify `handleAddDomain`:
+  1. After domain validation, set `isAnalyzing = true` and create the domain entry
+  2. Call `supabase.functions.invoke('detect-registrar', { body: { domain } })`
+  3. Animate through the analysis steps with short delays (matching Lovable's UX)
+  4. Store the registrar result on the domain entry
+  5. Show the provider authorization panel or fall back to manual
+- Extend `DomainEntry` interface with optional `registrar` field (name, icon, dnsUrl, instructions)
+- Add a new "analyzing" overlay UI that renders inside the domain detail area
+- Add provider panel UI with branded header, "Open DNS Settings" button, manual setup link
+- Add "Detect Provider" button on existing domains that don't have a detected registrar
 
-## Changes
+**No backend changes needed** -- the `detect-registrar` edge function already exists and supports GoDaddy, Cloudflare, Namecheap, Google Domains, Name.com, Hover, Route 53, Vercel, and Netlify.
 
-### 1. General Tab Enhancements
-- Add a "Project Visibility" toggle (Public / Private) with description
-- Add a "Manage Knowledge" link button that closes the modal and opens the knowledge/memory panel (if one exists) or shows a placeholder
-- Keep name, description, and sound toggle as-is
-
-### 2. Domains Tab -- Embed Custom Domain Management
-Instead of just showing the published URL, embed the core functionality from `CustomDomainPanel` directly:
-- Show published URL at top (existing)
-- Add an "Add Custom Domain" input with the add flow (domain input, TXT record instructions, verification simulation)
-- Show domain list with status badges (verifying, active, failed)
-- Remove/refresh actions per domain
-- This replaces the empty "No custom domain configured" placeholder with actionable UI
-
-### 3. Integrations Tab -- Add Action Buttons
-- Each integration row gets a "Configure" or "Connect" button
-- Clicking "Configure" closes the settings modal and opens the corresponding panel (Supabase, Stripe, GitHub settings)
-- Pass callback props: `onOpenSupabase`, `onOpenStripe`, `onOpenGithub`
-
-### 4. Advanced Tab -- Add Reset & Export
-- Keep existing: hide badge toggle, allow remixing toggle, delete project
-- Add "Reset Project" button (clears files, keeps settings) with confirmation
-- Add "Export Project" button that triggers the existing export flow
-- Style the delete/reset section as a "Danger Zone" with a subtle red border
-
----
-
-## Technical Details
-
-### File Changes
-
-| File | Changes |
-|------|---------|
-| `ProjectSettingsModal.tsx` | Expand all 4 tabs with the features described above; add new props for callbacks |
-| `AIAppBuilderWorkspace.tsx` | Pass additional callbacks (onOpenSupabase, onOpenStripe, onOpenGithub, onResetProject, onExportProject) to the modal |
-
-### New Props for ProjectSettingsModal
-```
-onOpenSupabaseConfig?: () => void;
-onOpenStripeConfig?: () => void;
-onOpenGithubConfig?: () => void;
-onResetProject?: () => void;
-onExportProject?: () => void;
-```
-
-### Priority
-1. Domains tab with inline domain management (biggest UX gap)
-2. Integrations tab with action buttons (currently passive)
-3. Advanced tab with reset/export (completes the danger zone)
-4. General tab polish (smallest gap)
+### UI Matching Lovable's Design
+- Analysis overlay with animated checkmarks and spinner for each step
+- Provider card with icon, name, and "Auto-detected" badge
+- Numbered step-by-step instructions from the provider-specific response
+- Direct link button to open the provider's DNS settings page
+- "Manual setup" fallback link to show raw DNS records
+- "Change provider" link at the bottom
 
