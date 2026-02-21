@@ -1,66 +1,74 @@
 
 
-## Fix: Preview Never Loads — Critical Runtime Bug
+## Fix: Await Module Registration — The Real Root Cause of Blank Previews
 
-### Root Cause
+### Problem
 
-**Line 722 of `useReactCompiler.ts` kills every template.**
+Every transpiled file is wrapped in an **un-awaited async IIFE** (line 385 of `useReactCompiler.ts`):
 
-The transpiler converts all external package imports (lucide-react, framer-motion, etc.) into `await import('...')` expressions. These end up inside the code string that gets passed through:
-
+```javascript
+// Current (broken):
+(async function() {
+  let __pkg_lucide_react;
+  try { __pkg_lucide_react = await import('lucide-react'); } catch(e) { ... }
+  const { Star, Heart } = __pkg_lucide_react;
+  // ... component code ...
+  __modules['App.tsx'] = __modules['App.tsx'] || {};
+  __modules['App.tsx'].default = App;
+})();   // <-- fire-and-forget! Never awaited!
 ```
-var fn = new Function(transformed.code);  // <-- SYNCHRONOUS function
-fn();                                       // <-- runs the code
+
+Because these IIFEs are not awaited, the execution flow is:
+
+```text
+1. File A async IIFE starts (not awaited) --> pending Promise
+2. File B async IIFE starts (not awaited) --> pending Promise
+3. Mount script runs IMMEDIATELY
+4. __modules['App.tsx'] is undefined --> nothing renders --> blank screen
+5. File A resolves (too late)
+6. File B resolves (too late)
 ```
 
-`new Function()` creates a **synchronous** function. `await` is only valid inside `async` functions. So every time the preview tries to run code with `await import('lucide-react')`, it throws:
-
-```
-SyntaxError: await is only valid in async functions and the top level bodies of modules
-```
-
-This crashes silently inside the try-catch, sends a `__PREVIEW_ERROR__` message, and the preview stays blank forever. Every single template that uses lucide-react (all of them) hits this exact crash.
+The `AsyncFunction` fix from the last edit made the **outer** wrapper support `await`, but the **inner** per-file wrappers still fire-and-forget. The `await` inside each file (for CDN imports) works within that file's scope, but the file's registration never completes before the mount script runs.
 
 ### The Fix
 
-**Change `new Function()` to `new AsyncFunction()`** so `await import()` works inside the transpiled code.
+Add `await` before each file's async IIFE so modules register sequentially before the mount script runs.
 
-```javascript
+**File: `src/hooks/useReactCompiler.ts`** (line 385)
+
+```typescript
 // Before (broken):
-var fn = new Function(transformed.code);
-fn();
+return `/* === ${file.path} === */\n(async function() {\n${code}\n${registration.join('\n')}\n})();`;
 
 // After (fixed):
-var AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-var fn = new AsyncFunction(transformed.code);
-await fn();
+return `/* === ${file.path} === */\nawait (async function() {\n${code}\n${registration.join('\n')}\n})();`;
 ```
 
-This is a 3-line change in the HTML template string at line 722-723 of `useReactCompiler.ts`. Since the outer wrapper is already `(async function() { ... })()`, the `await fn()` works naturally.
+This single word (`await`) ensures each file fully resolves (including CDN imports) and registers its exports into `__modules` before the next file or the mount script runs.
+
+### Why This Is the Actual Fix
+
+All previous fixes were correct but insufficient:
+- AsyncFunction constructor: allows `await` in the outer scope (correct, needed)
+- try-catch CDN wrappers: prevents crash on CDN failure (correct, needed)
+- NO_DEFAULT_EXPORT set: prevents undefined components (correct, needed)
+
+But none of them matter if the module registrations never complete before mounting. This single missing `await` is why every template shows a blank screen.
+
+### Expected Result
+
+```text
+Before:
+  File IIFEs fire-and-forget --> mount script finds empty __modules --> blank screen
+
+After:
+  await File A IIFE --> __modules['utils.tsx'] registered
+  await File B IIFE --> __modules['App.tsx'] registered  
+  Mount script runs --> finds App component --> renders successfully
+```
 
 ### Files to Edit
 
-1. **`src/hooks/useReactCompiler.ts`** (lines 722-723) -- Replace `new Function` with `new AsyncFunction` and `await fn()`
-
-### Why This Is the Only Fix Needed
-
-- The `await import()` transpilation logic (Phase 85) is correct
-- The try-catch wrapping is correct
-- The CDN preloading is correct
-- The import map is correct
-
-The ONLY problem is that `new Function()` can't execute `await`. Changing to `AsyncFunction` makes all of the previous fixes actually work at runtime.
-
-### Expected Impact
-
-```
-Before:
-  Every template with external imports --> SyntaxError: await is only valid in async functions
-  --> Preview shows blank white screen
-  --> Auto-fix triggers but can never fix a runtime engine bug
-
-After:
-  AsyncFunction supports await --> await import('lucide-react') resolves via CDN
-  --> Components render --> Preview shows the app
-```
+1. **`src/hooks/useReactCompiler.ts`** (line 385) -- Add `await` before the async IIFE
 
