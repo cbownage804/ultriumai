@@ -1289,6 +1289,12 @@ export function AIAppBuilderWorkspace() {
   const handleAutoFixError = useCallback((error: import('./ErrorConsole').PreviewError) => {
     // Skip resource load errors FIRST — don't even forward to chat
     if (error.message?.includes('Failed to load')) return;
+    // Phase 85: Suppress auto-fix for CDN/infrastructure errors (not code bugs)
+    if (error.message?.includes('Failed to fetch dynamically imported module') ||
+        error.message?.includes('error loading dynamically imported module') ||
+        error.message?.includes('esm.sh') ||
+        error.message?.includes('Failed to load lucide-react') ||
+        error.message?.includes('Failed to load framer-motion')) return;
     // Skip during generation or compilation
     if (isGenerating || isCompiling) return;
     // In-flight guard: skip if a fix generation is already pending
