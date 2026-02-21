@@ -382,7 +382,7 @@ export function useReactCompiler() {
     }
 
     // Phase 61: Use async IIFE so `await import()` works for external packages
-    return `/* === ${file.path} === */\n(async function() {\n${code}\n${registration.join('\n')}\n})();`;
+    return `/* === ${file.path} === */\nawait (async function() {\n${code}\n${registration.join('\n')}\n})();`;
   }, [stripTypeAnnotations]);
 
   /**
