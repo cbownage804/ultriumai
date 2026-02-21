@@ -287,6 +287,11 @@ export function useReactCompiler() {
       /^export\s+default\s+function\s*\(/gm,
       'const __DefaultExport = function('
     );
+    // export default { ... } → const __DefaultExport = { ... }
+    code = code.replace(
+      /^export\s+default\s+(\{)/gm,
+      'const __DefaultExport = $1'
+    );
 
     // export default X → __modules['path'].default = X;
     code = code.replace(
