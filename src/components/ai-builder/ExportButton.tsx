@@ -2,10 +2,11 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { Download, FileArchive, Container, Rocket, MonitorSmartphone } from 'lucide-react';
+import { Download, FileArchive, Container, Rocket, MonitorSmartphone, Palette } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportProject, type ExportMode, type ExportContext, type EdgeFunctionMeta } from './exportProject';
 import { exportTeamsApp } from './exportTeamsApp';
+import { useDesignTokenExport } from '@/hooks/useDesignTokenExport';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import type { SupabaseConfig, StripeConfig, ServiceKey, EnvVar } from './ProjectSettings';
 
@@ -29,6 +30,7 @@ export function ExportButton({
   edgeFunctions, storageBuckets, authProviders, publishedUrl,
 }: ExportButtonProps) {
   const hasIntegrations = !!(supabaseConfig || stripeConfig || (serviceKeys && serviceKeys.length > 0));
+  const { downloadTokens } = useDesignTokenExport();
 
   const handleExport = async (mode: ExportMode) => {
     try {
@@ -108,6 +110,14 @@ export function ExportButton({
             <div className="text-xs text-muted-foreground">
               {publishedUrl ? 'Sideloadable Teams tab package' : 'Publish app first to enable'}
             </div>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => { downloadTokens(files); toast.success('Design tokens exported!'); }}>
+          <Palette className="h-4 w-4 mr-2 text-emerald-400" />
+          <div>
+            <div className="font-medium">Export Design Tokens</div>
+            <div className="text-xs text-muted-foreground">Colors, typography, spacing as JSON</div>
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>

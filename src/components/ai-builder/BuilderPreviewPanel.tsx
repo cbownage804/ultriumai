@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
   Copy, CheckCircle, Maximize2, Minimize2, ExternalLink, RefreshCw, Activity,
-  ArrowLeft, ArrowRight, Globe, Lock, Wrench, X,
+  ArrowLeft, ArrowRight, Globe, Lock, Wrench, X, Terminal, Info, AlertTriangle as AlertTriangleIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ErrorConsole, type PreviewError } from './ErrorConsole';
@@ -58,6 +58,8 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const [errors, setErrors] = useState<PreviewError[]>([]);
+  const [consoleLogs, setConsoleLogs] = useState<{ level: string; message: string; timestamp: Date }[]>([]);
+  const [consoleTab, setConsoleTab] = useState<'errors' | 'console'>('errors');
   const [internalVisualEdit, setInternalVisualEdit] = useState(false);
   const isVisualEditActive = externalVisualEdit ?? internalVisualEdit;
   const toggleVisualEdit = externalToggleVisualEdit ?? (() => setInternalVisualEdit(v => !v));
@@ -253,6 +255,17 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
     };
   }, [html, isGenerating, iframeRef, isCompiling]);
 
+  // Listen for console logs from iframe
+  useEffect(() => {
+    const consoleHandler = (e: MessageEvent) => {
+      if (e.data?.type === '__CONSOLE_LOG__' && (e.data.level === 'log' || e.data.level === 'info')) {
+        setConsoleLogs(prev => [...prev.slice(-49), { level: e.data.level, message: e.data.message, timestamp: new Date() }]);
+      }
+    };
+    window.addEventListener('message', consoleHandler);
+    return () => window.removeEventListener('message', consoleHandler);
+  }, []);
+
   // Listen for error messages from iframe (including critical errors from error boundary)
   useEffect(() => {
     const handler = (e: MessageEvent) => {
@@ -290,7 +303,7 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
   }, [onAutoFixError, isGenerating]);
 
   useEffect(() => { 
-    setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0);
+    setErrors([]); setConsoleLogs([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0);
     // Phase 36: Reset scroll position on new build
     if (iframeRef.current?.contentWindow) iframeRef.current.contentWindow.scrollTo(0, 0);
   }, [html]);
@@ -646,18 +659,50 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
         </div>
       )}
 
-      {/* Error Console */}
-      <ErrorConsole
-        errors={errors}
-        onClear={() => setErrors([])}
-        onFixRequest={(err) => onFixError?.(`Fix this error in my app: "${err.message}"${err.source ? ` (in ${err.source}${err.line ? `:${err.line}` : ''})` : ''}`)}
-        onSmartFixRequest={(err, ctx) => {
-          setErrors(prev => prev.map(e => e.id === err.id ? { ...e, fixAttempts: err.fixAttempts } : e));
-          onSmartFixError?.(err, ctx);
-        }}
-        projectFiles={projectFiles}
-        onStartOver={onStartOver}
-      />
+      {/* Console tab switcher + Error Console */}
+      <div className="border-t border-white/[0.06]">
+        <div className="flex items-center gap-0.5 px-2 py-1 bg-[#0a0a10]">
+          <button
+            onClick={() => setConsoleTab('errors')}
+            className={cn("text-[10px] px-2 py-0.5 rounded font-medium transition-colors", consoleTab === 'errors' ? "bg-white/[0.06] text-white/60" : "text-white/25 hover:text-white/40")}
+          >
+            Errors {errors.filter(e => e.type === 'error').length > 0 && <span className="ml-1 text-red-400">{errors.filter(e => e.type === 'error').length}</span>}
+          </button>
+          <button
+            onClick={() => setConsoleTab('console')}
+            className={cn("text-[10px] px-2 py-0.5 rounded font-medium transition-colors", consoleTab === 'console' ? "bg-white/[0.06] text-white/60" : "text-white/25 hover:text-white/40")}
+          >
+            Console {consoleLogs.length > 0 && <span className="ml-1 text-white/30">{consoleLogs.length}</span>}
+          </button>
+          {consoleTab === 'console' && consoleLogs.length > 0 && (
+            <button onClick={() => setConsoleLogs([])} className="ml-auto text-[9px] text-white/20 hover:text-white/40">Clear</button>
+          )}
+        </div>
+        {consoleTab === 'console' && consoleLogs.length > 0 && (
+          <div className="max-h-32 overflow-auto bg-[#0a0a10] px-2 pb-1 space-y-0.5">
+            {consoleLogs.map((log, i) => (
+              <div key={i} className="flex items-start gap-1.5 text-[10px] font-mono py-0.5">
+                {log.level === 'info' ? <Info className="h-2.5 w-2.5 text-blue-400/50 shrink-0 mt-0.5" /> : <Terminal className="h-2.5 w-2.5 text-white/20 shrink-0 mt-0.5" />}
+                <span className="text-white/40 break-all">{log.message}</span>
+                <span className="text-white/10 shrink-0 ml-auto">{log.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      {consoleTab === 'errors' && (
+        <ErrorConsole
+          errors={errors}
+          onClear={() => setErrors([])}
+          onFixRequest={(err) => onFixError?.(`Fix this error in my app: "${err.message}"${err.source ? ` (in ${err.source}${err.line ? `:${err.line}` : ''})` : ''}`)}
+          onSmartFixRequest={(err, ctx) => {
+            setErrors(prev => prev.map(e => e.id === err.id ? { ...e, fixAttempts: err.fixAttempts } : e));
+            onSmartFixError?.(err, ctx);
+          }}
+          projectFiles={projectFiles}
+          onStartOver={onStartOver}
+        />
+      )}
     </div>
   );
 }

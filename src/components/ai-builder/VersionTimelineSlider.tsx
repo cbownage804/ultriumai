@@ -103,7 +103,7 @@ export function VersionTimelineSlider({ snapshots, currentIndex, onNavigate, onE
             <GitBranch className="h-2 w-2" />
             {current?.type || 'auto'}
           </div>
-          <span className="text-[10px] text-white/50 truncate">{current?.label || 'Unknown'}</span>
+          <span className="text-[10px] text-white/50 truncate">{current?.commitMessage || current?.label || 'Unknown'}</span>
         </div>
 
         {hasChanges && (

@@ -266,7 +266,7 @@ export function AIAppBuilderWorkspace() {
   // ── Pre-generation snapshot for undo/rollback ──
   const preGenSnapshotRef = useRef<ProjectFile[] | null>(null);
   // Ref to break circular declaration order (versionTimeline declared after callbacks)
-  const addSnapshotRef = useRef<(label: string, files: ProjectFile[], type: 'auto' | 'manual' | 'ai-generation' | 'revert', messageId?: string) => void>(() => {});
+  const addSnapshotRef = useRef<(label: string, files: ProjectFile[], type: 'auto' | 'manual' | 'ai-generation' | 'revert', messageId?: string, commitMessage?: string) => void>(() => {});
 
   // Background generation: server-side builds that survive tab close
   // Saves a snapshot before applying, enabling one-click rollback
@@ -971,12 +971,20 @@ export function AIAppBuilderWorkspace() {
       buildLog.logBuildComplete(latestFiles.length, duration);
       // Build chime + counter
       buildChime.onGeneratingChange(false);
-      setBuildCount(prev => prev + 1);
+      const newBuildCount = buildCount + 1;
+      setBuildCount(newBuildCount);
+      // Confetti milestones
+      if ([10, 25, 50, 100].includes(newBuildCount)) {
+        import('canvas-confetti').then(m => m.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } }));
+        dedupeToast('success', `🔥 ${newBuildCount} builds today! You're on fire!`);
+      }
       // Auto commit message
       const diffs = commitMessages.computeDiffs(previousFiles, latestFiles);
+      let commitMsg = '';
       if (diffs.length > 0) {
         const cm = commitMessages.generateLocal(diffs);
-        setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, commitMessage: `${cm.type}(${cm.scope}): ${cm.subject}` } : m));
+        commitMsg = `${cm.type}(${cm.scope}): ${cm.subject}`;
+        setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, commitMessage: commitMsg } : m));
       }
       // Issue 4 fix: Defer non-critical post-build work to unblock preview
       // Run smoke test synchronously (fast, needed for error annotations)
@@ -1043,7 +1051,7 @@ export function AIAppBuilderWorkspace() {
       // Mark preview as good for hot recovery & update conflict resolver base snapshot
       hotRecovery.markAsGood([...project.files]);
       conflictResolver.setBaseSnapshot([...project.files]);
-      versionTimeline.addSnapshot(`AI: ${messages[messages.length - 2]?.content?.slice(0, 40) || 'generation'}`, [...project.files], 'ai-generation');
+      versionTimeline.addSnapshot(`AI: ${messages[messages.length - 2]?.content?.slice(0, 40) || 'generation'}`, [...project.files], 'ai-generation', undefined, commitMsg);
 
       // Record build analytics (Phase 60: compute actual credit cost based on mode)
       const lastMsg = messages[messages.length - 1];
