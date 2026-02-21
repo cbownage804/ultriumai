@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -88,24 +89,25 @@ export const AIStudioDashboardHub = () => {
     });
   };
 
-  const deleteProject = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm('Delete this project? This cannot be undone.')) return;
-    const { error } = await supabase.from('builder_projects').delete().eq('id', id);
-    if (error) { toast.error('Failed to delete project'); return; }
-    setRecentProjects(prev => prev.filter(p => p.id !== id));
-    setTotalProjects(prev => prev - 1);
-    toast.success('Project deleted');
-  };
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: 'project' | 'gpt'; name?: string } | null>(null);
 
-  const deleteGPT = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm('Delete this GPT? This cannot be undone.')) return;
-    const { error } = await supabase.from('custom_gpts').delete().eq('id', id);
-    if (error) { toast.error('Failed to delete GPT'); return; }
-    setRecentGPTs(prev => prev.filter(g => g.id !== id));
-    setTotalGPTs(prev => prev - 1);
-    toast.success('GPT deleted');
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const { id, type } = deleteTarget;
+    if (type === 'project') {
+      const { error } = await supabase.from('builder_projects').delete().eq('id', id);
+      if (error) { toast.error('Failed to delete project'); setDeleteTarget(null); return; }
+      setRecentProjects(prev => prev.filter(p => p.id !== id));
+      setTotalProjects(prev => prev - 1);
+      toast.success('Project deleted');
+    } else {
+      const { error } = await supabase.from('custom_gpts').delete().eq('id', id);
+      if (error) { toast.error('Failed to delete GPT'); setDeleteTarget(null); return; }
+      setRecentGPTs(prev => prev.filter(g => g.id !== id));
+      setTotalGPTs(prev => prev - 1);
+      toast.success('GPT deleted');
+    }
+    setDeleteTarget(null);
   };
 
   useEffect(() => {
@@ -498,7 +500,7 @@ export const AIStudioDashboardHub = () => {
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => deleteProject(p.id, e as any)}>
+                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: p.id, type: 'project', name: p.name }); }}>
                         <Trash2 className="h-3.5 w-3.5 mr-2" />
                         Delete
                       </DropdownMenuItem>
@@ -545,7 +547,7 @@ export const AIStudioDashboardHub = () => {
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => deleteGPT(g.id, e as any)}>
+                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: g.id, type: 'gpt', name: g.name }); }}>
                         <Trash2 className="h-3.5 w-3.5 mr-2" />
                         Delete
                       </DropdownMenuItem>
@@ -657,6 +659,22 @@ export const AIStudioDashboardHub = () => {
         </motion.div>
       )}
       <AIStudioUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {deleteTarget?.type === 'gpt' ? 'GPT' : 'project'}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{deleteTarget?.name}". This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 };
