@@ -17,32 +17,57 @@ export interface BackgroundJob {
   created_at?: string;
   started_at?: string;
   completed_at?: string;
+  input_mode?: string;
+}
+
+export interface BuildHistoryEntry {
+  id: string;
+  status: string;
+  input_mode: string;
+  progress_percent: number | null;
+  bytes_received: number | null;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  error_message: string | null;
 }
 
 interface UseBackgroundGenerationOptions {
   onComplete?: (job: BackgroundJob) => void;
   onError?: (job: BackgroundJob) => void;
   onProgress?: (job: BackgroundJob) => void;
+  onStreamDelta?: (delta: string, totalContent: string) => void;
   pollIntervalMs?: number;
 }
 
 /**
- * Hook for server-side background generation.
- * Submits a build job to the edge function, then uses Realtime + polling for status.
+ * Hook for server-side background generation with SSE streaming, build queue, and history.
  * Generation survives tab close — user can come back and see results.
  */
 export function useBackgroundGeneration(options: UseBackgroundGenerationOptions = {}) {
-  const { onComplete, onError, onProgress, pollIntervalMs = 3000 } = options;
+  const { onComplete, onError, onProgress, onStreamDelta, pollIntervalMs = 3000 } = options;
   const [activeJob, setActiveJob] = useState<BackgroundJob | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [buildQueue, setBuildQueue] = useState<{ id: string; status: string }[]>([]);
+  const [buildHistory, setBuildHistory] = useState<BuildHistoryEntry[]>([]);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const realtimeChannelRef = useRef<any>(null);
+  const sseAbortRef = useRef<AbortController | null>(null);
+  const streamedContentRef = useRef<string>('');
   const onCompleteRef = useRef(onComplete);
   const onErrorRef = useRef(onError);
   const onProgressRef = useRef(onProgress);
+  const onStreamDeltaRef = useRef(onStreamDelta);
   onCompleteRef.current = onComplete;
   onErrorRef.current = onError;
   onProgressRef.current = onProgress;
+  onStreamDeltaRef.current = onStreamDelta;
+
+  // ── Pending queue for messages sent during active builds ──
+  const pendingQueueRef = useRef<Array<{
+    params: any;
+    resolve: (jobId: string | null) => void;
+  }>>([]);
 
   const cleanup = useCallback(() => {
     if (pollTimerRef.current) {
@@ -53,10 +78,34 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       supabase.removeChannel(realtimeChannelRef.current);
       realtimeChannelRef.current = null;
     }
+    if (sseAbortRef.current) {
+      sseAbortRef.current.abort();
+      sseAbortRef.current = null;
+    }
     setIsPolling(false);
   }, []);
 
-  /** Handle a job status update (from Realtime or polling) */
+  /** Process the next item in the pending queue */
+  const processQueue = useCallback(async () => {
+    if (pendingQueueRef.current.length === 0) return;
+    const next = pendingQueueRef.current.shift();
+    if (!next) return;
+    // Will be processed by submitJob's internal logic
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-builder-background', {
+        body: { action: 'start', ...next.params, jobUserId: next.params.userId },
+      });
+      if (error || !data?.jobId) {
+        next.resolve(null);
+        return;
+      }
+      next.resolve(data.jobId);
+    } catch {
+      next.resolve(null);
+    }
+  }, []);
+
+  /** Handle a job status update */
   const handleJobUpdate = useCallback((job: BackgroundJob) => {
     setActiveJob(job);
 
@@ -66,20 +115,99 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       cleanup();
       console.info('[BG] Job completed:', job.id);
       onCompleteRef.current?.(job);
+      // Process next queued job
+      processQueue();
     } else if (job.status === 'failed') {
       cleanup();
       console.error('[BG] Job failed:', job.error_message);
       onErrorRef.current?.(job);
       toast.error(`Build failed: ${job.error_message?.slice(0, 100) || 'Unknown error'}`);
+      processQueue();
     } else if (job.status === 'cancelled') {
       cleanup();
       console.info('[BG] Job cancelled:', job.id);
+      processQueue();
     }
-  }, [cleanup]);
+  }, [cleanup, processQueue]);
+
+  /** Start SSE stream for live token updates */
+  const startSSEStream = useCallback(async (jobId: string) => {
+    sseAbortRef.current?.abort();
+    const controller = new AbortController();
+    sseAbortRef.current = controller;
+    streamedContentRef.current = '';
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-builder-background`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ action: 'stream', jobId }),
+          signal: controller.signal,
+        }
+      );
+
+      if (!response.ok || !response.body) {
+        console.warn('[BG SSE] Failed to start stream, falling back to polling');
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        let newlineIndex: number;
+        while ((newlineIndex = buffer.indexOf('\n\n')) !== -1) {
+          const chunk = buffer.slice(0, newlineIndex).trim();
+          buffer = buffer.slice(newlineIndex + 2);
+
+          if (!chunk.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(chunk.slice(6));
+            
+            if (data.type === 'delta') {
+              streamedContentRef.current += data.content;
+              onStreamDeltaRef.current?.(data.content, streamedContentRef.current);
+              // Update active job with progressive content
+              setActiveJob(prev => prev ? {
+                ...prev,
+                output_content: streamedContentRef.current,
+                progress_percent: data.progress || prev.progress_percent,
+              } : null);
+            } else if (data.type === 'progress') {
+              setActiveJob(prev => prev ? { ...prev, progress_percent: data.progress } : null);
+            } else if (data.type === 'complete') {
+              // Final status will come via Realtime/polling
+            } else if (data.type === 'error') {
+              console.error('[BG SSE] Error:', data.error);
+            }
+          } catch {
+            // Skip malformed
+          }
+        }
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.warn('[BG SSE] Stream error, polling handles it:', err.message);
+      }
+    }
+  }, []);
 
   /** Subscribe to Realtime updates for a job */
   const subscribeToJob = useCallback((jobId: string) => {
-    // Clean up any existing subscription
     if (realtimeChannelRef.current) {
       supabase.removeChannel(realtimeChannelRef.current);
     }
@@ -95,8 +223,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
           filter: `id=eq.${jobId}`,
         },
         (payload: any) => {
-          const job = payload.new as BackgroundJob;
-          handleJobUpdate(job);
+          handleJobUpdate(payload.new as BackgroundJob);
         }
       )
       .subscribe();
@@ -104,38 +231,36 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
     realtimeChannelRef.current = channel;
   }, [handleJobUpdate]);
 
-  /** Poll for job status (fallback if Realtime misses updates) */
+  /** Poll for job status (fallback) */
   const pollJob = useCallback(async (jobId: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('ai-builder-background', {
         body: { action: 'status', jobId },
       });
-
-      if (error) {
-        console.error('[BG Poll] Error:', error);
-        return;
-      }
-
+      if (error) return;
       handleJobUpdate(data as BackgroundJob);
     } catch (err) {
       console.error('[BG Poll] Exception:', err);
     }
   }, [handleJobUpdate]);
 
-  /** Start watching a job via Realtime + polling fallback */
+  /** Start watching a job via SSE + Realtime + polling */
   const startWatching = useCallback((jobId: string) => {
     cleanup();
     setIsPolling(true);
 
-    // Subscribe to Realtime for instant updates
+    // Start SSE for live streaming
+    startSSEStream(jobId);
+
+    // Subscribe to Realtime for completion events
     subscribeToJob(jobId);
 
-    // Also poll as fallback (Realtime can miss events during reconnects)
-    pollJob(jobId); // Immediate first poll
+    // Poll as fallback
+    pollJob(jobId);
     pollTimerRef.current = setInterval(() => pollJob(jobId), pollIntervalMs);
-  }, [cleanup, subscribeToJob, pollJob, pollIntervalMs]);
+  }, [cleanup, startSSEStream, subscribeToJob, pollJob, pollIntervalMs]);
 
-  /** Submit a new background generation job */
+  /** Submit a new background generation job (with queue support) */
   const submitJob = useCallback(async (params: {
     messages: any[];
     mode: string;
@@ -146,13 +271,18 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
     currentFiles?: any[];
     userId?: string;
   }): Promise<string | null> => {
+    // If a job is already running, queue this one
+    if (activeJob && ['pending', 'processing', 'streaming'].includes(activeJob.status)) {
+      return new Promise((resolve) => {
+        pendingQueueRef.current.push({ params, resolve });
+        setBuildQueue(prev => [...prev, { id: `queued-${Date.now()}`, status: 'queued' }]);
+        toast.info('Build queued — will start after the current build finishes.', { duration: 3000 });
+      });
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke('ai-builder-background', {
-        body: {
-          action: 'start',
-          ...params,
-          jobUserId: params.userId,
-        },
+        body: { action: 'start', ...params, jobUserId: params.userId },
       });
 
       if (error) {
@@ -176,7 +306,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       toast.error('Failed to start background build');
       return null;
     }
-  }, [startWatching]);
+  }, [startWatching, activeJob]);
 
   /** Cancel the active job */
   const cancelJob = useCallback(async (jobId?: string) => {
@@ -194,10 +324,41 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
     }
   }, [activeJob?.id, cleanup]);
 
+  /** Fetch build history from the server */
+  const fetchBuildHistory = useCallback(async (userId: string, limit = 20) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-builder-background', {
+        body: { action: 'history', userId, limit },
+      });
+      if (!error && data?.builds) {
+        setBuildHistory(data.builds);
+      }
+      return data?.builds || [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  /** Restore files from a historical build */
+  const restoreFromBuild = useCallback(async (jobId: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-builder-background', {
+        body: { action: 'restore', jobId },
+      });
+      if (error || !data?.output_content) {
+        toast.error('Failed to restore build');
+        return null;
+      }
+      return data.output_content;
+    } catch {
+      toast.error('Failed to restore build');
+      return null;
+    }
+  }, []);
+
   /** Check for any active jobs on mount (recovery after tab close) */
   const checkPendingJobs = useCallback(async (userId: string) => {
     try {
-      // Check for active jobs
       const { data: jobs } = await supabase
         .from('app_builder_jobs')
         .select('id, status, progress_percent, created_at')
@@ -208,14 +369,13 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
 
       if (jobs && jobs.length > 0) {
         const job = jobs[0];
-        console.info('[BG] Found active job from previous session:', job.id, job.status);
+        console.info('[BG] Found active job from previous session:', job.id);
         toast.info('Resuming your build from where it left off...', { duration: 4000 });
         setActiveJob({ id: job.id, status: job.status as BackgroundJob['status'], progress_percent: job.progress_percent ?? undefined });
         startWatching(job.id);
         return job.id;
       }
 
-      // Check for recently completed jobs that might not have been consumed
       const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       const { data: completedJobs } = await supabase
         .from('app_builder_jobs')
@@ -250,7 +410,9 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
     }
   }, [startWatching]);
 
-  // Cleanup on unmount
+  /** Get streamed content ref for incremental file parsing */
+  const getStreamedContent = useCallback(() => streamedContentRef.current, []);
+
   useEffect(() => {
     return () => cleanup();
   }, [cleanup]);
@@ -258,10 +420,16 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
   return {
     activeJob,
     isPolling,
+    buildQueue,
+    buildHistory,
     submitJob,
     cancelJob,
     checkPendingJobs,
     startWatching,
     cleanup,
+    fetchBuildHistory,
+    restoreFromBuild,
+    getStreamedContent,
+    streamedContentRef,
   };
 }
