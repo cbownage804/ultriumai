@@ -1289,22 +1289,11 @@ export function useAIAppBuilder() {
       }
 
       console.info('[AI Builder] Background job submitted:', jobId);
-      
-      // Store the job ID so the workspace can track it
-      // The workspace's useBackgroundGeneration hook handles polling/Realtime
-      // and calls onComplete which triggers file parsing + application
-      window.dispatchEvent(new CustomEvent('bg-job-started', { detail: { jobId } }));
 
-      // Deduct credits (only for non-fix requests)
-      if (!isFixRequest) {
-        await deductCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
-      }
-
-      // Wait for the background job to actually complete before returning.
-      // This is critical for agent mode which `await`s sendMessage to know when
-      // code has been generated and applied before moving to verify/complete steps.
+      // IMPORTANT: Register completion listeners BEFORE dispatching bg-job-started
+      // to prevent a race condition where the job completes before listeners exist.
       const TOTAL_BUILD_MAX_MS = 3 * 60 * 1000; // 3 minutes
-      await new Promise<void>((resolve, reject) => {
+      const buildCompletePromise = new Promise<void>((resolve, reject) => {
         const onComplete = (e: Event) => {
           const detail = (e as CustomEvent).detail;
           if (detail?.jobId === jobId) {
@@ -1331,6 +1320,17 @@ export function useAIAppBuilder() {
         window.addEventListener('bg-job-completed', onComplete);
         window.addEventListener('bg-job-failed', onFailed);
       });
+
+      // NOW dispatch the start event — listeners are already in place
+      window.dispatchEvent(new CustomEvent('bg-job-started', { detail: { jobId } }));
+
+      // Deduct credits (only for non-fix requests)
+      if (!isFixRequest) {
+        await deductCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
+      }
+
+      // Wait for the background job to actually complete before returning.
+      await buildCompletePromise;
     } catch (err: any) {
       console.error('AI Builder error:', err);
       const classified = classifyError(0, err.message || '', err);
