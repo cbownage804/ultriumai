@@ -31,6 +31,8 @@ export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFil
       setLocalCompleted(0);
       return;
     }
+    // Phase 6: Skip polling during compilation-only phase (no new files to show)
+    if (isCompiling && !isGenerating) return;
     const interval = setInterval(() => {
       const files = partialFilesRef.current;
       const completed = completedFileCountRef.current;
@@ -38,7 +40,7 @@ export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFil
       setLocalCompleted(prev => prev !== completed ? completed : prev);
     }, 2000);
     return () => clearInterval(interval);
-  }, [showOverlay, partialFilesRef, completedFileCountRef]);
+  }, [showOverlay, isCompiling, isGenerating, partialFilesRef, completedFileCountRef]);
 
   const totalFiles = localFiles.length;
   const progress = totalFiles > 0 ? (localCompleted / totalFiles) * 100 : 0;

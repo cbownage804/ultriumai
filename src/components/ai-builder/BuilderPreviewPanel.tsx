@@ -184,13 +184,19 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
   const consecutiveFailsRef = useRef(0);
   const lastGoodHtmlRef = useRef<string | null>(null);
   const lastHealthToastRef = useRef(0);
+  // Phase 8: Cap iframe reloads to 2 per compilation cycle
+  const reloadCountRef = useRef(0);
+  const lastCompilationCycleRef = useRef(0);
   const HEALTH_CHECK_INTERVAL = 2000;
   const MAX_CONSECUTIVE_FAILS = 3;
+  const MAX_RELOADS_PER_CYCLE = 2;
 
   // Track last good HTML for rollback
   useEffect(() => {
     if (html && !isGenerating) {
       lastGoodHtmlRef.current = html;
+      // Reset reload counter when we get new good HTML (new compilation cycle)
+      reloadCountRef.current = 0;
     }
   }, [html, isGenerating]);
 
@@ -226,6 +232,9 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
 
       if (consecutiveFailsRef.current >= MAX_CONSECUTIVE_FAILS) {
         consecutiveFailsRef.current = 0;
+        // Phase 8: Cap reloads to prevent infinite reload loops
+        if (reloadCountRef.current >= MAX_RELOADS_PER_CYCLE) return;
+        reloadCountRef.current++;
         const now = Date.now();
         if (now - lastHealthToastRef.current > 30000) {
           lastHealthToastRef.current = now;

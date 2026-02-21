@@ -42,9 +42,14 @@ export function StreamingCodeEditor({
       onStreamingFileChange?.(null);
       return;
     }
+     // Phase 7: Deep equality check — only setState if file count or last path changed
      const interval = setInterval(() => {
        const files = partialFilesRef.current;
-       setEditorStreamFiles(prev => prev !== files ? files : prev);
+       setEditorStreamFiles(prev => {
+         if (prev === files) return prev;
+         if (prev.length === files.length && prev.length > 0 && prev[prev.length - 1]?.path === files[files.length - 1]?.path) return prev;
+         return files;
+       });
      }, 3000);
     return () => clearInterval(interval);
   }, [isStreamingPreview, partialFilesRef, onStreamingFileChange]);
