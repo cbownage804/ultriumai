@@ -1,74 +1,56 @@
 
 
-## Fix: Await Module Registration — The Real Root Cause of Blank Previews
+## Fix: Enable Top-Level Await in Babel Transform
 
-### Problem
+### The Problem
 
-Every transpiled file is wrapped in an **un-awaited async IIFE** (line 385 of `useReactCompiler.ts`):
+The previous fixes correctly added `await` before each file's async IIFE (line 385) and switched to `AsyncFunction` (line 722). However, there is one remaining blocker:
 
-```javascript
-// Current (broken):
-(async function() {
-  let __pkg_lucide_react;
-  try { __pkg_lucide_react = await import('lucide-react'); } catch(e) { ... }
-  const { Star, Heart } = __pkg_lucide_react;
-  // ... component code ...
-  __modules['App.tsx'] = __modules['App.tsx'] || {};
-  __modules['App.tsx'].default = App;
-})();   // <-- fire-and-forget! Never awaited!
-```
-
-Because these IIFEs are not awaited, the execution flow is:
-
-```text
-1. File A async IIFE starts (not awaited) --> pending Promise
-2. File B async IIFE starts (not awaited) --> pending Promise
-3. Mount script runs IMMEDIATELY
-4. __modules['App.tsx'] is undefined --> nothing renders --> blank screen
-5. File A resolves (too late)
-6. File B resolves (too late)
-```
-
-The `AsyncFunction` fix from the last edit made the **outer** wrapper support `await`, but the **inner** per-file wrappers still fire-and-forget. The `await` inside each file (for CDN imports) works within that file's scope, but the file's registration never completes before the mount script runs.
+The transpiled code passes through `Babel.transform()` (line 718) before reaching `AsyncFunction`. Babel's default parsing mode is `sourceType: 'script'`, which does NOT allow top-level `await`. Babel throws a SyntaxError during parsing, before the code ever reaches the `AsyncFunction` runtime.
 
 ### The Fix
 
-Add `await` before each file's async IIFE so modules register sequentially before the mount script runs.
+Add `sourceType: 'module'` to the Babel transform options. This tells Babel's parser that top-level `await` is valid syntax.
 
-**File: `src/hooks/useReactCompiler.ts`** (line 385)
+**File: `src/hooks/useReactCompiler.ts`** (line 718-720)
 
 ```typescript
-// Before (broken):
-return `/* === ${file.path} === */\n(async function() {\n${code}\n${registration.join('\n')}\n})();`;
+// Before:
+var transformed = Babel.transform(code, {
+  presets: ['react', ['typescript', { isTSX: true, allExtensions: true }]],
+  filename: 'app.tsx',
+});
 
-// After (fixed):
-return `/* === ${file.path} === */\nawait (async function() {\n${code}\n${registration.join('\n')}\n})();`;
+// After:
+var transformed = Babel.transform(code, {
+  presets: ['react', ['typescript', { isTSX: true, allExtensions: true }]],
+  filename: 'app.tsx',
+  sourceType: 'module',
+});
 ```
 
-This single word (`await`) ensures each file fully resolves (including CDN imports) and registers its exports into `__modules` before the next file or the mount script runs.
+This is safe because:
+- The transpiled chunks have already had all `import`/`export` statements stripped and replaced with `await import()` calls
+- There are no remaining ES module statements for Babel to transform
+- The only effect of `sourceType: 'module'` is enabling the parser to accept top-level `await`
 
-### Why This Is the Actual Fix
+### Technical Details
 
-All previous fixes were correct but insufficient:
-- AsyncFunction constructor: allows `await` in the outer scope (correct, needed)
-- try-catch CDN wrappers: prevents crash on CDN failure (correct, needed)
-- NO_DEFAULT_EXPORT set: prevents undefined components (correct, needed)
+**File to edit:** `src/hooks/useReactCompiler.ts` (line 719)
 
-But none of them matter if the module registrations never complete before mounting. This single missing `await` is why every template shows a blank screen.
+Add `sourceType: 'module'` to the Babel.transform options object.
 
 ### Expected Result
 
-```text
+```
 Before:
-  File IIFEs fire-and-forget --> mount script finds empty __modules --> blank screen
+  Code contains "await (async function() {...})()"
+  --> Babel.transform (sourceType: 'script') --> SyntaxError: await is not allowed
+  --> catch block shows error --> blank preview
 
 After:
-  await File A IIFE --> __modules['utils.tsx'] registered
-  await File B IIFE --> __modules['App.tsx'] registered  
-  Mount script runs --> finds App component --> renders successfully
+  Code contains "await (async function() {...})()"
+  --> Babel.transform (sourceType: 'module') --> parses successfully
+  --> AsyncFunction executes --> modules register sequentially --> preview renders
 ```
-
-### Files to Edit
-
-1. **`src/hooks/useReactCompiler.ts`** (line 385) -- Add `await` before the async IIFE
 
