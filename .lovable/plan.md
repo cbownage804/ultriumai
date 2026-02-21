@@ -1,93 +1,66 @@
 
 
-## Fix: Templates Failing Due to CDN Import Errors
+## Fix: Preview Never Loads — Critical Runtime Bug
 
-### Problem
-Every template generates code that imports from `lucide-react` and `framer-motion`, but these imports frequently fail at runtime inside the preview iframe, causing a blank screen and triggering the auto-fix loop. The auto-fix loop then burns credits trying to fix import errors it can never resolve because the root cause is in the compiler, not the generated code.
+### Root Cause
 
-### Root Causes
+**Line 722 of `useReactCompiler.ts` kills every template.**
 
-**1. Default import mismatch for lucide-react**
-The AI generates `import LucideIcon from 'lucide-react'` (a default import), but lucide-react has NO default export. The transpiler converts this to:
-```javascript
-const LucideIcon = (await import('lucide-react')).default || (await import('lucide-react'));
+The transpiler converts all external package imports (lucide-react, framer-motion, etc.) into `await import('...')` expressions. These end up inside the code string that gets passed through:
+
 ```
-Since `.default` is undefined, `LucideIcon` becomes the entire module namespace object, which is not a valid React component. This causes "React received undefined" errors.
+var fn = new Function(transformed.code);  // <-- SYNCHRONOUS function
+fn();                                       // <-- runs the code
+```
 
-**2. CDN loading race conditions**
-The esm.sh CDN URLs for lucide-react (~500KB) and framer-motion (~800KB) take 2-5 seconds to load. During this time, Babel's `new Function()` block is executing, and any `await import()` that hasn't resolved causes the entire preview to hang or error out.
+`new Function()` creates a **synchronous** function. `await` is only valid inside `async` functions. So every time the preview tries to run code with `await import('lucide-react')`, it throws:
 
-**3. The auto-fix loop diagnoses symptoms, not causes**
-The auto-fix detects "lucide-react icons imported incorrectly" and rewrites the imports, but the transpiler transforms them the same way every time, so the same error recurs.
+```
+SyntaxError: await is only valid in async functions and the top level bodies of modules
+```
 
-### Fix Plan
+This crashes silently inside the try-catch, sends a `__PREVIEW_ERROR__` message, and the preview stays blank forever. Every single template that uses lucide-react (all of them) hits this exact crash.
 
-#### 1. Harden default import handling for known named-export-only packages
-**File: `src/hooks/useReactCompiler.ts`** (transpileFile function, ~line 214-223)
+### The Fix
 
-For packages known to have NO default export (lucide-react, date-fns, recharts), convert default imports to namespace imports:
+**Change `new Function()` to `new AsyncFunction()`** so `await import()` works inside the transpiled code.
 
-```typescript
-// Before (current):
-const LucideIcon = (await import('lucide-react')).default || (await import('lucide-react'));
+```javascript
+// Before (broken):
+var fn = new Function(transformed.code);
+fn();
 
 // After (fixed):
-const LucideIcon = await import('lucide-react');
-// AND for named imports alongside:
-const { Star, Heart } = await import('lucide-react');
+var AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+var fn = new AsyncFunction(transformed.code);
+await fn();
 ```
 
-Add a set of packages that are known to not have a default export, and skip the `.default` fallback for them. This prevents the "undefined component" error entirely.
-
-#### 2. Add import error resilience wrapper
-**File: `src/hooks/useReactCompiler.ts`** (transpileFile function)
-
-Wrap each external `await import()` in a try-catch so one failed CDN fetch doesn't crash the entire app:
-
-```typescript
-let lucideReact;
-try { lucideReact = await import('lucide-react'); } 
-catch(e) { console.warn('Failed to load lucide-react:', e); lucideReact = {}; }
-const { Star, Heart } = lucideReact;
-```
-
-This way if framer-motion CDN is slow, the rest of the app still renders.
-
-#### 3. Add CDN preload hints to the HTML head
-**File: `src/hooks/useReactCompiler.ts`** (compileReactProject HTML template, ~line 576)
-
-Scan the generated code for external package imports and add `<link rel="modulepreload">` tags for the corresponding CDN URLs. This tells the browser to start fetching these modules immediately instead of waiting for the JavaScript to execute:
-
-```html
-<link rel="modulepreload" href="https://esm.sh/lucide-react@0.462.0?external=react" />
-<link rel="modulepreload" href="https://esm.sh/framer-motion@12.23.0?external=react,react-dom" />
-```
-
-#### 4. Suppress auto-fix for CDN/import errors
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`** (handleAutoFixError)
-
-Add pattern matching to suppress auto-fix attempts for errors that originate from CDN loading failures or import resolution. These are infrastructure errors, not code errors:
-
-```typescript
-if (error.message?.includes('Failed to fetch dynamically imported module') ||
-    error.message?.includes('error loading dynamically imported module') ||
-    error.message?.includes('esm.sh')) return;
-```
+This is a 3-line change in the HTML template string at line 722-723 of `useReactCompiler.ts`. Since the outer wrapper is already `(async function() { ... })()`, the `await fn()` works naturally.
 
 ### Files to Edit
 
-1. **`src/hooks/useReactCompiler.ts`** -- Fix default import handling, add try-catch wrappers, add modulepreload hints
-2. **`src/components/ai-builder/AIAppBuilderWorkspace.tsx`** -- Suppress auto-fix for CDN errors
+1. **`src/hooks/useReactCompiler.ts`** (lines 722-723) -- Replace `new Function` with `new AsyncFunction` and `await fn()`
+
+### Why This Is the Only Fix Needed
+
+- The `await import()` transpilation logic (Phase 85) is correct
+- The try-catch wrapping is correct
+- The CDN preloading is correct
+- The import map is correct
+
+The ONLY problem is that `new Function()` can't execute `await`. Changing to `AsyncFunction` makes all of the previous fixes actually work at runtime.
 
 ### Expected Impact
 
 ```
 Before:
-  Template generates code --> lucide-react default import fails --> blank preview
-  --> auto-fix triggers --> same error --> loop burns 3+ credits --> still blank
+  Every template with external imports --> SyntaxError: await is only valid in async functions
+  --> Preview shows blank white screen
+  --> Auto-fix triggers but can never fix a runtime engine bug
 
 After:
-  Template generates code --> lucide-react imported as namespace (no .default) --> works
-  CDN slow? --> try-catch catches it, rest of app renders with fallback
-  CDN error detected? --> auto-fix skips it (infrastructure issue, not code bug)
+  AsyncFunction supports await --> await import('lucide-react') resolves via CDN
+  --> Components render --> Preview shows the app
 ```
+
