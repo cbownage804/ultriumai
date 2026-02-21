@@ -104,44 +104,6 @@ export function CompilationBridge({
     prevIsGeneratingForReset.current = isGenerating;
   }, [isGenerating, setStableHTML]);
 
-  // ── compiledForHosting (async) ──
-  const [compiledForHosting, setCompiledForHosting] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (isGenerating) {
-      setCompiledForHosting(null);
-      return;
-    }
-    if (files.length === 0) return;
-
-    const timer = setTimeout(() => {
-      try {
-        console.time('[compiledForHosting]');
-        const result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current);
-        console.timeEnd('[compiledForHosting]');
-        setCompiledForHosting(result);
-      } catch (e) {
-        console.error('[compiledForHosting] Compilation crashed:', e);
-        setCompiledForHosting(null);
-      }
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, isGenerating]);
-
-  // Report compiledForHosting upstream
-  useEffect(() => {
-    onCompiledForHosting(compiledForHosting);
-  }, [compiledForHosting, onCompiledForHosting]);
-
-  // Upload preview when ready
-  useEffect(() => {
-    if (previewSlug && compiledForHosting) {
-      uploadPreview(previewSlug, compiledForHosting);
-    }
-    return () => clearPreviewTimer();
-  }, [compiledForHosting, previewSlug, uploadPreview, clearPreviewTimer]);
-
-
   // ── liveCompiledHTML (async, post-generation) ──
   const [liveCompiledHTML, setLiveCompiledHTML] = useState<string | null>(null);
   const compilationAttemptedRef = useRef(false);
@@ -214,6 +176,47 @@ export function CompilationBridge({
       onCompilingChangeRef.current?.(false);
     };
   }, [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, linkedGPT, isReactProject, isGenerating]);
+
+  // ── compiledForHosting (deferred until live preview is done) ──
+  const [compiledForHosting, setCompiledForHosting] = useState<string | null>(null);
+
+  // Only compile for hosting AFTER liveCompiledHTML is settled to avoid
+  // two heavy synchronous compilations running back-to-back and freezing the page.
+  useEffect(() => {
+    if (isGenerating) {
+      setCompiledForHosting(null);
+      return;
+    }
+    if (files.length === 0) return;
+    // Wait until the live preview compilation is done
+    if (!compilationAttemptedRef.current) return;
+
+    const timer = setTimeout(() => {
+      try {
+        console.time('[compiledForHosting]');
+        const result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current);
+        console.timeEnd('[compiledForHosting]');
+        setCompiledForHosting(result);
+      } catch (e) {
+        console.error('[compiledForHosting] Compilation crashed:', e);
+        setCompiledForHosting(null);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, isGenerating, liveCompiledHTML]);
+
+  // Report compiledForHosting upstream
+  useEffect(() => {
+    onCompiledForHosting(compiledForHosting);
+  }, [compiledForHosting, onCompiledForHosting]);
+
+  // Upload preview when ready
+  useEffect(() => {
+    if (previewSlug && compiledForHosting) {
+      uploadPreview(previewSlug, compiledForHosting);
+    }
+    return () => clearPreviewTimer();
+  }, [compiledForHosting, previewSlug, uploadPreview, clearPreviewTimer]);
 
   const liveSync = useLivePreviewSync();
 
