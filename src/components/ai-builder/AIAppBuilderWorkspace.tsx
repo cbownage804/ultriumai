@@ -319,19 +319,13 @@ export function AIAppBuilderWorkspace() {
     }]);
     setIsGeneratingOverride(false);
 
-    // Queue the job completion event — it will fire AFTER compilation finishes
-    // so the agent doesn't verify before the preview has recompiled
-    console.info('[Workspace] 📥 Queuing bg-job-completed for jobId:', job.id, '(will dispatch after compilation)');
-    pendingBgJobCompletedRef.current.push(job.id);
-    // Safety: if no compilation triggers within 5s (e.g., no file changes), dispatch anyway
+    // Dispatch bg-job-completed after a short delay to let React render the new files
+    // and trigger any recompilation before the agent proceeds to verify
+    const jobId = job.id;
     setTimeout(() => {
-      const idx = pendingBgJobCompletedRef.current.indexOf(job.id);
-      if (idx >= 0) {
-        pendingBgJobCompletedRef.current.splice(idx, 1);
-        console.info('[Workspace] 📣 Dispatching bg-job-completed for jobId:', job.id, '(safety timeout — no compilation detected)');
-        window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId: job.id } }));
-      }
-    }, 5000);
+      console.info('[Workspace] 📣 Dispatching bg-job-completed for jobId:', jobId);
+      window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
+    }, 2000);
   }, [project.files, setFiles, setMessages]);
 
   // SSE streaming: apply files incrementally as they arrive
@@ -543,25 +537,9 @@ export function AIAppBuilderWorkspace() {
   const [lastFixError, setLastFixError] = useState<string | null>(null);
   const MAX_FIX_ATTEMPTS = 3;
   const [isCompiling, setIsCompilingRaw] = useState(false);
-  // Pending bg-job-completed events: dispatched only after compilation finishes
-  const pendingBgJobCompletedRef = useRef<string[]>([]);
-  const isCompilingRef = useRef(false);
   const setIsCompiling = useCallback((v: boolean) => {
-    const wasCompiling = isCompilingRef.current;
-    isCompilingRef.current = v;
     setIsCompilingRaw(v);
     setCompilationToastGate(v);
-    // When compilation finishes (true → false), dispatch any pending job-completed events
-    if (wasCompiling && !v) {
-      const pending = pendingBgJobCompletedRef.current;
-      if (pending.length > 0) {
-        pendingBgJobCompletedRef.current = [];
-        for (const jobId of pending) {
-          console.info('[Workspace] 📣 Dispatching bg-job-completed for jobId:', jobId, '(post-compilation)');
-          window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
-        }
-      }
-    }
   }, []);
   const [selectedModel, setSelectedModel] = useState('google/gemini-3-flash-preview');
   const [previewSlug, setPreviewSlug] = useState<string | null>(null);
