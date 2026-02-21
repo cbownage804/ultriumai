@@ -1241,6 +1241,84 @@ export type Database = {
         }
         Relationships: []
       }
+      app_builder_jobs: {
+        Row: {
+          active_services: Json | null
+          bytes_received: number | null
+          completed_at: string | null
+          created_at: string
+          current_files: Json | null
+          error_message: string | null
+          id: string
+          input_messages: Json
+          input_mode: string
+          input_model: string | null
+          output_content: string | null
+          output_deletions: Json | null
+          output_edge_functions: Json | null
+          output_edits: Json | null
+          output_files: Json | null
+          output_migrations: Json | null
+          progress_percent: number | null
+          started_at: string | null
+          status: string
+          stripe_config: Json | null
+          supabase_config: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_services?: Json | null
+          bytes_received?: number | null
+          completed_at?: string | null
+          created_at?: string
+          current_files?: Json | null
+          error_message?: string | null
+          id?: string
+          input_messages: Json
+          input_mode?: string
+          input_model?: string | null
+          output_content?: string | null
+          output_deletions?: Json | null
+          output_edge_functions?: Json | null
+          output_edits?: Json | null
+          output_files?: Json | null
+          output_migrations?: Json | null
+          progress_percent?: number | null
+          started_at?: string | null
+          status?: string
+          stripe_config?: Json | null
+          supabase_config?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_services?: Json | null
+          bytes_received?: number | null
+          completed_at?: string | null
+          created_at?: string
+          current_files?: Json | null
+          error_message?: string | null
+          id?: string
+          input_messages?: Json
+          input_mode?: string
+          input_model?: string | null
+          output_content?: string | null
+          output_deletions?: Json | null
+          output_edge_functions?: Json | null
+          output_edits?: Json | null
+          output_files?: Json | null
+          output_migrations?: Json | null
+          progress_percent?: number | null
+          started_at?: string | null
+          status?: string
+          stripe_config?: Json | null
+          supabase_config?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_builder_live_previews: {
         Row: {
           compiled_html: string

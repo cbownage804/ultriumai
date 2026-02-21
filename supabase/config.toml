@@ -343,6 +343,9 @@ verify_jwt = false
 [functions.ai-app-builder]
 verify_jwt = false
 
+[functions.ai-builder-background]
+verify_jwt = false
+
 [functions.github-push]
 verify_jwt = false
 
