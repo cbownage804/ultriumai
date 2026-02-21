@@ -1,72 +1,89 @@
 
+# True Lovable Parity: Real Credits + Final Polish
 
-## Permanent Fix: Project State Loss on Tab Switch
-
-### Root Cause Found
-
-There is a **data-destroying bug** in the localStorage save logic. The `trySet` helper calls `localStorage.removeItem(DRAFT_KEY)` before every write attempt. When the write fails (quota exceeded), the old draft has already been deleted. Each fallback tier repeats this, so if all tiers fail, the project data is permanently lost.
-
-This means switching tabs actually **deletes** the user's work instead of saving it.
-
-### Fix Strategy
-
-Three changes to make persistence bulletproof:
+## Overview
+Two categories of work: (1) fix the hardcoded credit bar in the project dropdown to show real data, and (2) implement remaining Lovable parity features that are still missing.
 
 ---
 
-### Change 1: Fix the destructive save in `useDraftPersistence.ts`
+## 1. Real Credit Balance in Project Dropdown
 
-- Move `localStorage.removeItem` to happen only ONCE, at the top of `writeDraft`, but ONLY after confirming the new data can be serialized successfully
-- Use a "write-then-swap" pattern: serialize the data first, remove old, then write. If the write fails, keep a backup of the old data and restore it
-- This prevents the "delete old, fail to write new" data loss scenario
+**Problem**: The `ProjectDropdownMenu` currently shows a hardcoded `width: '65%'` gradient bar instead of actual credit data from `useUserCredits`.
 
-### Change 2: Make IDB the primary persistence, localStorage as backup
-
-- In the `visibilitychange` handler, the IDB immediate save is wrapped in a `try/catch` that silently ignores failures. Since IDB has no size limit (unlike localStorage's 5MB), it should be treated as the primary storage
-- Make the flushDraft function `await` the IDB save (using a sync-compatible approach for `beforeunload`)
-- On tab return, check IDB first (it has no quota issues), then fall back to localStorage
-
-### Change 3: Always re-hydrate on tab return, not just when state is empty
-
-- The current guard `if (current.files.length === 0 && current.messages.length === 0)` is too strict. If React state was partially corrupted or the component re-rendered with defaults, this check might not trigger
-- Change to: always read from storage on visibility change to `visible`, and compare timestamps. If storage is newer, restore from it. If React state is current, do nothing
+**Fix**:
+- Import `useUserCredits` into `ProjectDropdownMenu`
+- Calculate segment widths for Daily (blue), Monthly (violet), and Bonus (amber) proportionally
+- Show the actual total remaining number next to "Credits"
+- Match the Lovable screenshot: segmented progress bar with "Credits" label and "View details" link
 
 ---
 
-### Technical Details
+## 2. Additional Lovable Parity Features
 
-**File 1: `src/hooks/useDraftPersistence.ts`**
+### A. "Try to Fix" Auto-Error Detection
+When the preview iframe throws a console error, show a non-intrusive banner with a "Try to fix" button that auto-sends the error context to the AI -- just like Lovable does. This is free (no credit cost) and dramatically improves UX.
 
-Replace the `writeDraft` function:
+**Changes**:
+- Add error listener in `BuilderPreviewPanel` that captures runtime errors
+- Show a collapsible error banner above the preview with the error message and a "Try to fix" button
+- On click, auto-inject the error into the chat as a system-tagged message with `skipCreditDeduction: true`
+
+### B. Thinking/Reasoning Indicator
+Lovable shows a "Thinking..." phase before streaming begins. Currently, the builder jumps straight to "Generating...".
+
+**Changes**:
+- Add a `thinking` state to the generation lifecycle (before first token arrives)
+- Show a subtle "Thinking..." label with a pulsing dot in the chat and overlay
+- Transition to "Generating..." once the first content token streams in
+
+### C. Smart Follow-Up Suggestions
+After a build completes, Lovable suggests 2-3 contextual follow-up actions (e.g., "Add authentication", "Style the header"). 
+
+**Changes**:
+- After `handleBgComplete`, parse the AI output for suggested next steps
+- If none found, generate 2-3 generic suggestions based on the files that were created/modified
+- Render as clickable chips below the AI response in the chat panel
+
+### D. Inline Edit Selection (Visual Edit Mode)
+Lovable lets users click elements in the preview to edit them. Add a lightweight version: a "Select to Edit" toggle that lets users click an element in the preview iframe and auto-generates a prompt like "Change the text of the h1 on the homepage to..."
+
+**Changes**:
+- Add a crosshair/pointer toggle button in the preview toolbar
+- When active, inject a small script into the preview iframe that highlights elements on hover and sends the element's tag, text, and CSS selector on click via `postMessage`
+- Pre-fill the chat input with a contextual edit prompt
+
+---
+
+## Technical Details
+
+### File Changes
+
+| File | Change |
+|------|--------|
+| `src/components/ai-builder/ProjectDropdownMenu.tsx` | Import `useUserCredits`, replace hardcoded bar with real segmented credit data |
+| `src/components/ai-builder/BuilderPreviewPanel.tsx` | Add error capture and "Try to fix" banner UI |
+| `src/hooks/useAIAppBuilder.ts` | Add `skipCreditDeduction` flag support for auto-fix messages |
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Add thinking state, follow-up suggestions after completion, visual edit mode toggle |
+| `src/components/ai-builder/WorkspaceTopBar.tsx` | Add "Select to Edit" toggle button in preview toolbar |
+| `src/components/ai-builder/GeneratingOverlay.tsx` | Support "Thinking..." vs "Generating..." phases |
+
+### Credit Bar Calculation (ProjectDropdownMenu)
 
 ```text
-writeDraft flow (before - BROKEN):
-  trySet(full):   removeItem -> setItem FAILS -> data GONE
-  trySet(slim):   removeItem -> setItem FAILS -> data GONE
-  trySet(files):  removeItem -> setItem FAILS -> data GONE
-  Result: complete data loss
-
-writeDraft flow (after - SAFE):
-  backup = getItem(key)        // save old draft in memory
-  removeItem(key)              // free quota
-  try setItem(full)            // attempt write
-  try setItem(slim)            // fallback 1
-  try setItem(files)           // fallback 2
-  if all failed: setItem(backup)  // RESTORE old draft
-  Result: at worst, old draft survives
+totalLimit = dailyLimit + monthlyLimit + bonusCredits
+dailyWidth = (dailyRemaining / totalLimit) * 100
+monthlyWidth = (monthlyRemaining / totalLimit) * 100
+bonusWidth = (bonusRemaining / totalLimit) * 100
 ```
 
-**File 2: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+Three colored segments rendered as stacked divs inside the progress track:
+- Blue segment (daily)
+- Violet segment (monthly)  
+- Amber segment (bonus)
 
-Update the `handleVisibility` function in the `visibilitychange` effect:
-- On `visible`: always compare storage draft timestamp vs React state. If storage is newer or React state looks empty/stale, re-hydrate
-- On `hidden`: flush to both localStorage and IDB (unchanged, but with safe write logic)
-
-### Summary
-
-| Problem | Root Cause | Fix |
-|---------|-----------|-----|
-| Data lost on tab switch | `removeItem` before `setItem` destroys old draft when write fails | Backup old draft in memory, restore if write fails |
-| Large projects can't save to localStorage | 5MB quota limit | IDB as primary (no limit), localStorage as fallback with safe writes |
-| Re-hydration doesn't always trigger | Guard too strict (both files AND messages must be empty) | Always compare timestamps on tab return |
-
+### Priority Order
+1. Real credit balance (quick fix, immediate value)
+2. Try-to-fix error detection (highest UX impact)
+3. Thinking indicator (polish)
+4. Follow-up suggestions (engagement)
+5. Visual edit mode (advanced parity)
