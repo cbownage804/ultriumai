@@ -470,7 +470,7 @@ export function useReactCompiler() {
     }
 
     // Phase 41: Generate import map for NPM packages
-    const importMap = generateImportMap(options?.userPackages || []);
+    const importMap = generateImportMap([...DEFAULT_PACKAGES, ...(options?.userPackages || [])]);
     const importMapJSON = JSON.stringify({ imports: importMap }, null, 2);
 
     // Phase 48: Detect react-router-dom usage for MemoryRouter wrapping
