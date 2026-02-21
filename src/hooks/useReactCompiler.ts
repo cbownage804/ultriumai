@@ -198,10 +198,16 @@ export function useReactCompiler() {
             return parts.join('\n');
           }
           if (specifier === 'react-dom' || specifier === 'react-dom/client') {
-            if (defaultImport) return `const ${defaultImport} = ReactDOM;`;
+            if (defaultImport && defaultImport !== 'ReactDOM') return `const ${defaultImport} = ReactDOM;`;
             if (namedImports) {
-              const names = namedImports.split(',').map((n: string) => n.trim());
-              return names.map(n => `const ${n.trim()} = ReactDOM.${n.trim()};`).join('\n');
+              const names = namedImports.split(',').map((n: string) => n.trim().split(/\s+as\s+/));
+              return names
+                .filter(([orig, alias]: string[]) => {
+                  const target = (alias || orig).trim();
+                  return target !== orig.trim() || !['createRoot','hydrateRoot','render','hydrate','createPortal','flushSync','unmountComponentAtNode','findDOMNode'].includes(target);
+                })
+                .map(([orig, alias]: string[]) => `const ${(alias || orig).trim()} = ReactDOM.${orig.trim()};`)
+                .join('\n');
             }
             return '';
           }

@@ -141,6 +141,7 @@ export function CompilationBridge({
     onCompilingChangeRef.current?.(true);
 
     let cancelled = false;
+    let compileTimerId: ReturnType<typeof setTimeout>;
     const safetyTimeout = setTimeout(() => {
       if (!cancelled) {
         console.error('[Compilation] Safety timeout reached (10s) — showing error fallback');
@@ -190,13 +191,13 @@ export function CompilationBridge({
       }, 50);
 
       // Store for cleanup
-      (rafId as any).__compileTimer = compileTimer;
+      compileTimerId = compileTimer;
     });
 
     return () => {
       cancelled = true;
       cancelAnimationFrame(rafId);
-      clearTimeout((rafId as any)?.__compileTimer);
+      clearTimeout(compileTimerId);
       clearTimeout(safetyTimeout);
       onCompilingChangeRef.current?.(false);
     };
