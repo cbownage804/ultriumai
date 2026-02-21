@@ -109,7 +109,10 @@ export function CompilationBridge({
   const prevIsGeneratingForReset = useRef(false);
   useEffect(() => {
     if (isGenerating && !prevIsGeneratingForReset.current) {
-      setStableHTML(null);
+      // Only reset if there's no existing preview (fresh generation, not auto-fix)
+      if (!stableHTMLRef.current) {
+        setStableHTML(null);
+      }
     }
     prevIsGeneratingForReset.current = isGenerating;
   }, [isGenerating, setStableHTML]);
@@ -125,7 +128,7 @@ export function CompilationBridge({
       compilationAttemptedRef.current = false;
       compilationLockRef.current = false;
     }
-  }, [isGenerating]);
+  }, [isGenerating, filesDigest]);
 
 
   // Phase 5: Debounce compilation — 500ms delay so rapid setFiles calls consolidate
@@ -134,7 +137,6 @@ export function CompilationBridge({
 
   useEffect(() => {
     if (isGenerating || filesRef.current.length === 0 || stableHTMLRef.current) {
-      setLiveCompiledHTML(null);
       return;
     }
 
