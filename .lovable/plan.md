@@ -1,58 +1,40 @@
 
 
-## Fix: Syntax Error Caused by Type Annotation Stripping
+## Fix: Handle `export default { ... }` (Object Literal Exports)
 
-### Root Cause
+### Problem
 
-In `src/hooks/useReactCompiler.ts`, line 142, the `stripTypeAnnotations` function has this regex:
-
+The generated `tailwind.config.js` file contains:
+```js
+export default {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  ...
+}
 ```
-/: (?:React\.(?:FC|ReactNode|...)|string|number|boolean|...|object|Record<...>|Array<...>|\w+(?:\[\])?(?:\s*\|\s*\w+(?:\[\])?)*)/g
-```
 
-The final catch-all alternative `\w+` is meant to match custom TypeScript type names (e.g., `Props`, `MyType`), but `\w` includes digits (`[a-zA-Z0-9_]`). This causes it to match numeric values inside object literals:
+The React compiler wraps all file code inside `(async function() { ... })()`, which means `export` statements are illegal. The compiler already transforms several `export default` patterns:
+- `export default function Name` -- handled
+- `export default function(` -- handled  
+- `export default () =>` -- handled
+- `export default Name` (identifier) -- handled
 
-- `duration: 0.5` -- matches `: 0`, leaving `duration.5` (broken)
-- `delay: 1` -- matches `: 1`, leaving `delay` (broken)
-- `key: value` -- matches `: value`, leaving `key` (broken)
-
-This is why the preview shows "Unexpected token, expected `,`" on `transition={{ duration: 0.5 }}`.
+But it does NOT handle `export default {` (object literal), which is what `tailwind.config.js` uses. This leaves a raw `export default` inside the async wrapper, causing the syntax error.
 
 ### Fix (single file: `src/hooks/useReactCompiler.ts`)
 
-**Change the `\w+` catch-all to `[A-Z]\w*`** so it only matches identifiers starting with an uppercase letter (which is the TypeScript convention for custom types like `Props`, `State`, `ReactNode`, etc.):
+Add one more regex replacement after the existing anonymous default export handlers (around line 289) to catch `export default {`:
 
-```text
-Before:  \w+(?:\[\])?(?:\s*\|\s*\w+(?:\[\])?)*
-After:   [A-Z]\w*(?:\[\])?(?:\s*\|\s*[A-Z]\w*(?:\[\])?)*
+```javascript
+// export default { ... } → const __DefaultExport = { ... }
+code = code.replace(
+  /^export\s+default\s+(\{)/gm,
+  'const __DefaultExport = $1'
+);
 ```
 
-This preserves matching for all real type annotations:
-- `param: Props` -- still matched (starts with uppercase)
-- `value: MyCustomType` -- still matched
-- `items: Item[]` -- still matched
-- `x: String | Number` -- still matched
-
-But stops matching object literal values:
-- `duration: 0.5` -- no longer matched (starts with digit)
-- `color: red` -- no longer matched (starts with lowercase)
-- `key: value` -- no longer matched (starts with lowercase)
-
-Built-in lowercase types (`string`, `number`, `boolean`, `void`, `any`, `null`, `undefined`, `never`, `unknown`, `object`) are already explicitly listed in the regex, so they continue to work.
+This transforms `export default { content: [...] }` into `const __DefaultExport = { content: [...] }`, which is valid inside a function scope.
 
 ### Technical Detail
 
-The exact edit is on line 142 of `useReactCompiler.ts`. The replacement changes the regex from:
-
-```javascript
-result = result.replace(/: (?:React\.(?:FC|ReactNode|MouseEvent|ChangeEvent|FormEvent|CSSProperties|RefObject)(?:<[^>]+>)?|string|number|boolean|void|any|null|undefined|never|unknown|object|Record<[^>]+>|Array<[^>]+>|\w+(?:\[\])?(?:\s*\|\s*\w+(?:\[\])?)*)/g, '');
-```
-
-to:
-
-```javascript
-result = result.replace(/: (?:React\.(?:FC|ReactNode|MouseEvent|ChangeEvent|FormEvent|CSSProperties|RefObject)(?:<[^>]+>)?|string|number|boolean|void|any|null|undefined|never|unknown|object|Record<[^>]+>|Array<[^>]+>|[A-Z]\w*(?:\[\])?(?:\s*\|\s*[A-Z]\w*(?:\[\])?)*)/g, '');
-```
-
-Only two character sequences change: `\w+` becomes `[A-Z]\w*` in two places within the regex.
+The new regex is inserted after line 289 (after the anonymous function handler) and before line 291 (the named default handler). It catches the one remaining pattern: object literal default exports. The existing module registration logic at the bottom of `transpileFile` will pick up `__DefaultExport` and register it as the module's default export.
 
