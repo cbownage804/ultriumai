@@ -263,22 +263,18 @@ export function AIAppBuilderWorkspace() {
   // Background generation: server-side builds that survive tab close
   const handleBgComplete = useCallback((job: BackgroundJob) => {
     if (!job.output_content) return;
-    const { files: parsedFiles, deletions, edits } = parseMultiFileOutput(job.output_content);
+    const { files: parsedFiles, deletions } = parseMultiFileOutput(job.output_content);
     if (parsedFiles.length > 0 || deletions.length > 0) {
       let mergedFiles = [...project.files];
       if (deletions.length > 0) mergedFiles = mergedFiles.filter(f => !deletions.includes(f.path));
       for (const newFile of parsedFiles) {
         const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
-        if (existingIdx >= 0) {
-          mergedFiles[existingIdx] = newFile;
-        } else {
-          mergedFiles.push(newFile);
-        }
+        if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
+        else mergedFiles.push(newFile);
       }
       setFiles(mergedFiles);
-      toast.success(`Background build complete — ${parsedFiles.length} files generated`, { duration: 5000 });
+      toast.success(`Build complete — ${parsedFiles.length} files generated`, { duration: 5000 });
     }
-    // Add assistant message with the output
     setMessages(prev => [...prev, {
       id: crypto.randomUUID(),
       role: 'assistant' as const,
@@ -288,17 +284,34 @@ export function AIAppBuilderWorkspace() {
     }]);
   }, [project.files, setFiles, setMessages]);
 
+  const handleBgProgress = useCallback((job: BackgroundJob) => {
+    if (job.output_content && streamingContentRef) {
+      streamingContentRef.current = job.output_content;
+    }
+  }, [streamingContentRef]);
+
   const backgroundGen = useBackgroundGeneration({
     onComplete: handleBgComplete,
+    onProgress: handleBgProgress,
     onError: (job) => {
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant' as const,
-        content: `⚠️ Background build failed: ${job.error_message || 'Unknown error'}\n\nPlease try again.`,
+        content: `⚠️ Build failed: ${job.error_message || 'Unknown error'}\n\nPlease try again.`,
         timestamp: new Date(),
       }]);
     },
   });
+
+  // Wire bg-job-started events from sendMessage to the backgroundGen hook
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const jobId = (e as CustomEvent).detail?.jobId;
+      if (jobId) backgroundGen.startWatching?.(jobId);
+    };
+    window.addEventListener('bg-job-started', handler);
+    return () => window.removeEventListener('bg-job-started', handler);
+  }, [backgroundGen]);
 
   // Phase 47: Wire useAutoFixLoop for structured error auto-fix
   const autoFixLoop = useAutoFixLoop({
