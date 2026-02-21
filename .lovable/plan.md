@@ -1,139 +1,109 @@
 
 
-## Fix: Preview White Screen + Tab Recovery (Root Causes)
+## Fix: Tab-Switch State Loss + False "Code Quality" Error Toast
 
-### What's happening
+### Problem 1: Project resets when switching tabs
 
-Three interacting bugs create a cycle where the preview stays white and never recovers:
+When you leave the tab and come back, the project loses all state and shows the empty "What do you want to build?" screen.
 
-**Bug 1: Tab-return handler triggers unnecessary recompilation**
+**Root cause:** The `visibilitychange` handler calls `saveToIDBImmediate`, which is an async function (returns a Promise). The browser can freeze or discard the tab before the IndexedDB writes complete. Meanwhile, `saveDraftImmediate` (localStorage) IS synchronous and works — but the draft restore on mount has a subtle race condition.
 
-When you switch back to the tab, the visibility handler does this:
+The restore logic (line 1058-1094) runs inside an `async` IIFE, but `isNewProject` is read from `searchParams.get('new')` at line 1057 — which was already stripped at line 1026-1031. So `isNewProject` is always `false` on mount. The real issue is that `checkRecovery()` opens IndexedDB, reads 3 stores, and returns the result — but by the time it resolves, the component may have already rendered with empty state and skipped the restore.
+
+**Fix:** Make the localStorage draft restore synchronous and immediate (no async IIFE needed for it), and keep IDB as a backup. Also, ensure the `flushDraft` in the visibility handler uses synchronous localStorage as the primary persistence — since it's guaranteed to complete before the tab freezes.
+
+### Problem 2: False "Code quality issues detected" toast
+
+The bracket-counting regex at line 175-176 of `useAIAppBuilder.ts` is broken:
+
+```text
+Line 175: /[{([\]]/g   -- Intended: match { ( [
+Line 176: /[})\]]/g   -- Intended: match } ) ]
 ```
-setStableHTML(null)  -->  CompilationBridge sees null  -->  tries to recompile
-requestAnimationFrame(() => setStableHTML(html))  -->  but CompilationBridge already started recompiling
-```
 
-Setting `stableHTML` to `null` propagates into `CompilationBridge` which interprets it as "no preview exists, need to compile." This is wrong -- we just want to force the iframe to re-render the same HTML.
+The character class `[{([\]]` actually matches `{`, `(`, and `]` (the `[` is treated as part of the class definition, not a literal bracket). So open-bracket `[` is never counted but close-bracket `]` IS counted, causing a mismatch on virtually every JSX file.
 
-**Fix:** Instead of toggling `stableHTML` null/back, increment the iframe key directly. The `BuilderPreviewPanel` already accepts `iframeKey` logic -- we just need to force a remount without touching `stableHTML`.
-
-**Bug 2: Compilation lock blocks auto-restored files**
-
-After auto-restore from IDB, `filesDigest` changes but `compilationLockRef` may still be `true` from the previous session. The unlock logic at line 150-154 only fires when `stableHTMLRef.current` is truthy, but after restore it's `null`. So the code falls through to line 162 (`if (compilationLockRef.current) return`) and silently exits -- no compilation ever runs.
-
-**Fix:** Reset `compilationLockRef` whenever `filesDigest` changes and `stableHTML` is null. This is the "we have files but no preview" state that should always trigger compilation.
-
-**Bug 3: Health check reloads iframe but doesn't trigger recompilation**
-
-The health monitor detects a blank iframe body and calls `setIframeKey(k + 1)`. This destroys and recreates the iframe element, but the new iframe gets the same (possibly broken) `srcdoc`. No recompilation is triggered, so the blank screen persists.
-
-**Fix:** When health check detects a crash, also notify the parent to force recompilation instead of just remounting the same broken HTML.
+**Fix:** Escape the square brackets properly: `/[{(\[]/g` and `/[})\]]/g`.
 
 ---
 
 ### Changes
 
-**File 1: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`** (1 change)
+**File 1: `src/hooks/useIndexedDBPersistence.ts`**
 
-Replace the visibility handler that toggles `stableHTML` null/back. Instead, use a simple counter to force iframe remount:
+Make `saveToIDBImmediate` more resilient by not awaiting each write sequentially. The current implementation already uses `Promise.all` which is good, but the function needs a synchronous fallback signal. However, the real fix is in the workspace.
+
+**File 2: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`** (visibility handler, ~line 1004-1023)
+
+Ensure `flushDraft` prioritizes synchronous localStorage, and add a try-catch around the async IDB save so it doesn't block:
 
 ```typescript
-const [previewRefreshKey, setPreviewRefreshKey] = useState(0);
+const flushDraft = () => {
+  // Synchronous localStorage save — guaranteed to complete before tab freeze
+  saveDraftImmediate(latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+  // Best-effort async IDB save — may not complete if tab is discarded
+  try {
+    saveToIDBImmediateRef.current(sessionId, latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+  } catch { /* ignore */ }
+};
+```
 
+Also fix the draft restore (line 1058-1094) to try localStorage synchronously first, then enhance with IDB data if available:
+
+```typescript
 useEffect(() => {
-  const handleVisible = () => {
-    if (document.visibilityState === 'visible' && stableHTMLRef.current) {
-      // Force iframe remount without touching stableHTML
-      setPreviewRefreshKey(k => k + 1);
+  if (initialProjectId || isNewProject) return;
+  if (project.files.length > 0 || messages.length > 0) return;
+
+  // SYNC FIRST: Try localStorage immediately (no async delay)
+  const lsDraft = loadDraft();
+  if (lsDraft && (lsDraft.files.length > 0 || lsDraft.messages.length > 0)) {
+    setFiles(lsDraft.files);
+    renameProject(lsDraft.name);
+    if (lsDraft.messages.length > 0) {
+      setMessages(lsDraft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
     }
-  };
-  document.addEventListener('visibilitychange', handleVisible);
-  return () => document.removeEventListener('visibilitychange', handleVisible);
+  }
+
+  // ASYNC SECOND: Check IDB for potentially more complete data
+  (async () => {
+    try {
+      const idbSession = await idbPersistence.checkRecovery();
+      if (!idbSession) return;
+      const idbTotal = (idbSession.files?.length || 0) + (idbSession.messages?.length || 0);
+      const lsTotal = (lsDraft?.files?.length || 0) + (lsDraft?.messages?.length || 0);
+      if (idbTotal > lsTotal) {
+        setFiles(idbSession.files);
+        renameProject(idbSession.name);
+        if (idbSession.messages.length > 0) {
+          setMessages(idbSession.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+        }
+      }
+    } catch { /* IDB unavailable */ }
+  })();
 }, []);
 ```
 
-Then pass `previewRefreshKey` as a key or prop to the preview panel so the iframe remounts with the existing HTML. The `compiledHTML` value stays stable -- no recompilation triggered.
+**File 3: `src/hooks/useAIAppBuilder.ts`** (line 175-176)
 
-Also update where `compiledHTML` is passed to `BuilderPreviewPanel` to include the key on the iframe (or pass `previewRefreshKey` as a prop).
-
-**File 2: `src/components/ai-builder/CompilationBridge.tsx`** (1 change)
-
-Fix the compilation lock so it always resets when we have files but no preview:
+Fix the bracket-counting regex:
 
 ```typescript
-// Line 159-162, after prevFilesDigestRef update:
-prevFilesDigestRef.current = filesDigest;
+// Before (broken):
+const opens = (f.content.match(/[{([\]]/g) || []).length;
+const closes = (f.content.match(/[})\]]/g) || []).length;
 
-// If we have files but no stableHTML and no liveCompiledHTML, always allow compilation
-if (!stableHTMLRef.current && !compilationLockRef.current === false) {
-  // already unlocked, proceed
-}
-// Actually simpler: just reset the lock when stableHTML is null
-if (!stableHTMLRef.current) {
-  compilationLockRef.current = false;
-}
-```
-
-More precisely, move the lock reset to be unconditional when `stableHTML` is null:
-
-```typescript
-useEffect(() => {
-  if (isGenerating || filesRef.current.length === 0) return;
-
-  // If stableHTML exists and filesDigest changed, reset for recompilation
-  if (stableHTMLRef.current && filesDigest !== prevFilesDigestRef.current) {
-    prevFilesDigestRef.current = filesDigest;
-    setStableHTML(null);
-    compilationLockRef.current = false;
-  } else if (stableHTMLRef.current) {
-    return; // Already have a valid preview, skip
-  }
-  prevFilesDigestRef.current = filesDigest;
-
-  // CRITICAL FIX: Always unlock when we have no preview
-  // This handles auto-restore where files exist but stableHTML is null
-  compilationLockRef.current = false;
-
-  // ... rest of compilation logic unchanged ...
-```
-
-**File 3: `src/components/ai-builder/BuilderPreviewPanel.tsx`** (1 change)
-
-Add a `refreshKey` prop that forces iframe remount when the tab returns:
-
-```typescript
-interface BuilderPreviewPanelProps {
-  // ... existing props ...
-  refreshKey?: number;
-}
-```
-
-Combine it with the existing `iframeKey`:
-
-```typescript
-// In the iframe element:
-<iframe
-  ref={iframeRef}
-  key={`${iframeKey}-${refreshKey ?? 0}`}
-  srcDoc={htmlWithErrorCapture || ''}
-  ...
-/>
+// After (fixed):
+const opens = (f.content.match(/[{(\[]/g) || []).length;
+const closes = (f.content.match(/[})\]]/g) || []).length;
 ```
 
 ---
 
-### Technical summary
+### Summary
 
-| Bug | Root Cause | Fix |
-|-----|-----------|-----|
-| White screen on tab return | Visibility handler nullifies `stableHTML`, triggering broken recompilation | Use `refreshKey` counter instead of toggling stableHTML |
-| White screen after auto-restore | `compilationLockRef` blocks compilation when `stableHTML` is null | Always reset lock when no preview exists |
-| Health check doesn't recover | Iframe remount reuses same broken HTML | Ensure compilation runs when iframe is blank |
-
-### Why this fixes it
-
-- Tab return now forces a clean iframe remount without touching the compilation pipeline. The existing compiled HTML is simply re-rendered in a fresh iframe.
-- Auto-restored files always trigger compilation because the lock is cleared whenever there's no preview.
-- The compilation pipeline only runs when actually needed (new/changed files), not on every tab switch.
+| Issue | Root Cause | Fix |
+|-------|-----------|-----|
+| Project resets on tab switch | IDB writes are async and don't complete before tab freeze; restore only tries async path | Restore from localStorage synchronously first, then upgrade from IDB |
+| False "code quality" toast | Bracket regex counts `]` as open and misses `[` | Fix regex escaping |
 
