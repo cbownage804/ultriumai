@@ -1,101 +1,112 @@
 
 
-## Nuclear Fix: Page Freezing and Black Preview
+## Fix: Infinite Auto-Fix Loop and Permanent Skeleton Preview
 
-### Root Cause (Final Diagnosis)
+### Problem Diagnosis
 
-The page freezes because the compilation in `CompilationBridge.tsx` calls `compileReactProject()` **synchronously on the main thread**. This function (in `useReactCompiler.ts`) does three heavy operations in one synchronous call:
+From the screenshots, the issue flow is:
 
-1. **`buildModuleMap()`** -- iterates all files, creates multiple map entries per file
-2. **`sortByDependency()`** -- builds dependency graph with regex scanning of every file
-3. **`transpileFile()` loop** (line 464) -- runs `stripTypeAnnotations()` on every file (line-by-line parsing with regex), then transforms all imports/exports
+1. User asks to generate a landing page
+2. AI generates App.tsx + index.html (2 files, "Preview ready")
+3. Compilation runs but the generated code has 2 errors:
+   - **lucide-react default import** ("React received 'undefined'" - the AI used `import LucideIcon from 'lucide-react'` instead of named imports)
+   - **Vitest specifier** (a test file or utility referencing `vitest` gets bundled into the browser preview)
+4. These errors cause the preview iframe to crash (blank white screen)
+5. The auto-fix detects errors and triggers a fix generation
+6. The fix generation produces new files, which get compiled, but the SAME errors reappear
+7. This creates an infinite "Fixing issues" loop consuming credits endlessly
+8. Meanwhile the preview never renders because `compiledHTML` is always `null` or crashing
 
-The resulting HTML string is ~50KB+ and includes a `<script src="babel.min.js">` tag (~3MB Babel Standalone) that then does a SECOND transpilation pass inside the iframe. All of this blocks the main thread for 3-10+ seconds.
+### Root Causes
 
-Additionally, `getCompiledHTML()` is called AGAIN for the hosting compilation (another full synchronous pass), doubling the freeze time.
+**Issue 1: Auto-fix loop has no global circuit breaker.** The `useAutoFixLoop` tracks attempts per-error-message, but the fix often changes the error message slightly (e.g., different line number), resetting the counter. There's no global "stop after N total fix attempts across all errors" limit.
 
-The previous fixes (debouncing, requestIdleCallback, health check pausing) helped but didn't solve the core problem: **the compilation itself is synchronous and blocks the thread for seconds**.
+**Issue 2: The `handleAutoFixError` dependency array is stale.** It lists `isCompiling` but doesn't include it in the useCallback deps (line 1307), so the `isCompiling` check may use stale closure values.
 
-### Fix Strategy
+**Issue 3: No cooldown between fix rounds.** After one fix attempt completes (generation + compilation), the preview immediately reports errors, which triggers another fix attempt. The 5-second `compilationEndedAt` cooldown should help but the auto-fix loop's own `baseDelayMs` is only 500ms with exponential backoff that maxes at 2s.
 
-Instead of trying to make the synchronous compilation "less bad," we will:
+**Issue 4: The preview compiler doesn't filter out test files.** Files like `*.test.ts` or files importing `vitest` get transpiled into the preview bundle, causing runtime errors.
 
-1. **Move compilation to a Web Worker** so it runs off the main thread entirely
-2. **As a simpler immediate fix** (since Web Workers can't access hooks), use `setTimeout` chunking to yield control back to the browser between file transpilations
-3. **Eliminate the double compilation** by making the hosting compilation reuse the preview result
-4. **Add a hard guard** against the `getCompiledHTML` hosting path running while preview compilation is still in progress
+### Fix Plan
 
-### Phase 1: Chunked Async Compilation in CompilationBridge
-**File: `src/components/ai-builder/CompilationBridge.tsx`**
-
-Replace the synchronous `compileReactProject()` call with an async chunked approach:
-- Instead of calling `compileReactProject(files)` which does everything synchronously, break the work into microtasks
-- After the call returns, use `setTimeout(0)` to yield before setting state, giving the browser a paint frame
-- Wrap the entire compile call in a `new Promise` + `setTimeout` so it doesn't block
-
-Change the compilation from:
-```typescript
-const compiled = compileReactProjectRef.current(filesRef.current, options);
-setLiveCompiledHTML(compiled.html);
-```
-To:
-```typescript
-// Yield to browser before and after heavy work
-await new Promise(r => setTimeout(r, 0));
-const compiled = compileReactProjectRef.current(filesRef.current, options);
-await new Promise(r => setTimeout(r, 0));
-setLiveCompiledHTML(compiled.html);
-```
-
-### Phase 2: Eliminate Double Compilation for Hosting
-**File: `src/components/ai-builder/CompilationBridge.tsx`**
-
-The hosting compilation (line 237) calls `getCompiledHTMLRef.current()` which is a SECOND full synchronous compilation. Instead, reuse the `liveCompiledHTML` result for hosting when available:
-
-```typescript
-// Instead of recompiling, reuse the preview result
-setCompiledForHosting(liveCompiledHTML);
-```
-
-Only fall back to `getCompiledHTML()` for non-React projects where the preview and hosting formats differ.
-
-### Phase 3: Add Yield Points Inside transpileFile Loop
-**File: `src/hooks/useReactCompiler.ts`**
-
-Make `compileReactProject` return a Promise and add yield points between file transpilations so the browser can paint:
-
-- Convert `compileReactProject` to async
-- After every 2 files transpiled, `await new Promise(r => setTimeout(r, 0))` to yield
-- This keeps the total compilation time the same but prevents the "page not responding" dialog
-
-### Phase 4: Suppress Toasts During Compilation Window
+#### 1. Add global fix attempt cap to `handleAutoFixError`
 **File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-Add a compilation-aware gate to the `dedupeToast` helper. During `isCompiling=true`, suppress all non-error toasts entirely. This prevents any remaining toast accumulation from triggering during the compilation window.
+Add a `totalFixAttemptsRef` that tracks ALL fix attempts across all error messages. Cap at 3 total attempts per generation cycle. Reset when user sends a new message.
 
-### Phase 5: Increase Compilation Safety Timeout
-**File: `src/components/ai-builder/CompilationBridge.tsx`**
+```typescript
+const totalFixAttemptsRef = useRef(0);
 
-Increase `COMPILE_TIMEOUT_MS` from 10s to 20s. With the yield points added in Phase 3, the wall-clock time for compilation will increase slightly (yielding adds overhead), so the safety timeout needs to accommodate this.
+// In handleAutoFixError:
+if (totalFixAttemptsRef.current >= 3) {
+  dedupeToast('error', 'Auto-fix limit reached. Try describing the issue differently.');
+  return;
+}
+totalFixAttemptsRef.current++;
+```
+
+Reset in the generation start handler:
+```typescript
+totalFixAttemptsRef.current = 0;
+```
+
+#### 2. Fix stale closure in `handleAutoFixError`
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+
+Add `isCompiling` to the dependency array of `handleAutoFixError` useCallback (it's referenced in the body but missing from deps at line 1307).
+
+#### 3. Filter test files from React compilation
+**File: `src/hooks/useReactCompiler.ts`**
+
+In `compileReactProject`, filter out files matching test patterns BEFORE transpilation:
+
+```typescript
+const reactFiles = files
+  .filter(f => /\.(tsx?|jsx?)$/.test(f.path))
+  .filter(f => !/\.(test|spec)\.(tsx?|jsx?)$/.test(f.path))
+  .filter(f => !f.content.includes("from 'vitest'") && !f.content.includes('from "vitest"'));
+```
+
+This prevents the "Vitest specifier" error entirely.
+
+#### 4. Increase post-compilation cooldown
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+
+Increase the post-compilation cooldown from 5 seconds to 8 seconds. This gives the iframe more time to fully load CDN resources (React, Tailwind, etc.) before error detection kicks in, reducing false-positive "undefined" errors from race conditions.
+
+#### 5. Suppress duplicate auto-fix triggers within the same compilation cycle
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+
+Add a flag `autoFixInFlightRef` that prevents new fix attempts while one is already in-flight (generation is happening from a previous auto-fix). Currently `isGenerating` should handle this, but the 500ms delay in `useAutoFixLoop` means the error fires before `isGenerating` flips to true.
+
+```typescript
+const autoFixInFlightRef = useRef(false);
+
+// In handleAutoFixError:
+if (autoFixInFlightRef.current) return;
+autoFixInFlightRef.current = true;
+
+// Reset when generation ends:
+autoFixInFlightRef.current = false;
+```
 
 ### Files to Edit
-1. `src/components/ai-builder/CompilationBridge.tsx` -- async compilation with yields, eliminate double compilation, increase timeout
-2. `src/hooks/useReactCompiler.ts` -- convert compileReactProject to async with yield points between files
-3. `src/components/ai-builder/AIAppBuilderWorkspace.tsx` -- suppress non-error toasts during compilation
+
+1. **`src/components/ai-builder/AIAppBuilderWorkspace.tsx`** - Global fix cap, stale closure fix, cooldown increase, in-flight guard
+2. **`src/hooks/useReactCompiler.ts`** - Filter test files from compilation
 
 ### Expected Impact
 
-```text
+```
 Before:
-  compileReactProject() blocks main thread 3-10s (synchronous)
-  getCompiledHTML() blocks another 3-10s (hosting, synchronous)
-  Total: 6-20s of main thread blocking
-  Result: "This page isn't responding"
+  Error detected --> auto-fix --> new error --> auto-fix --> infinite loop
+  Credits consumed: unlimited
+  Preview: permanently blank
 
 After:
-  compileReactProject() yields every 2 files (~50ms chunks)
-  Hosting reuses preview result (0ms)
-  Total: same compilation time, but spread across yielding chunks
-  Result: Browser stays responsive, progress indicator visible
+  Error detected --> auto-fix (attempt 1/3) --> same error --> auto-fix (2/3) --> still failing --> auto-fix (3/3) --> STOP
+  Credits consumed: max 3 per generation
+  Preview: shows error fallback after exhaustion, not blank skeleton
+  Test files: excluded from compilation entirely
 ```
 
