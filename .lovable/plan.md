@@ -1,112 +1,93 @@
 
 
-## Fix: Infinite Auto-Fix Loop and Permanent Skeleton Preview
+## Fix: Templates Failing Due to CDN Import Errors
 
-### Problem Diagnosis
-
-From the screenshots, the issue flow is:
-
-1. User asks to generate a landing page
-2. AI generates App.tsx + index.html (2 files, "Preview ready")
-3. Compilation runs but the generated code has 2 errors:
-   - **lucide-react default import** ("React received 'undefined'" - the AI used `import LucideIcon from 'lucide-react'` instead of named imports)
-   - **Vitest specifier** (a test file or utility referencing `vitest` gets bundled into the browser preview)
-4. These errors cause the preview iframe to crash (blank white screen)
-5. The auto-fix detects errors and triggers a fix generation
-6. The fix generation produces new files, which get compiled, but the SAME errors reappear
-7. This creates an infinite "Fixing issues" loop consuming credits endlessly
-8. Meanwhile the preview never renders because `compiledHTML` is always `null` or crashing
+### Problem
+Every template generates code that imports from `lucide-react` and `framer-motion`, but these imports frequently fail at runtime inside the preview iframe, causing a blank screen and triggering the auto-fix loop. The auto-fix loop then burns credits trying to fix import errors it can never resolve because the root cause is in the compiler, not the generated code.
 
 ### Root Causes
 
-**Issue 1: Auto-fix loop has no global circuit breaker.** The `useAutoFixLoop` tracks attempts per-error-message, but the fix often changes the error message slightly (e.g., different line number), resetting the counter. There's no global "stop after N total fix attempts across all errors" limit.
+**1. Default import mismatch for lucide-react**
+The AI generates `import LucideIcon from 'lucide-react'` (a default import), but lucide-react has NO default export. The transpiler converts this to:
+```javascript
+const LucideIcon = (await import('lucide-react')).default || (await import('lucide-react'));
+```
+Since `.default` is undefined, `LucideIcon` becomes the entire module namespace object, which is not a valid React component. This causes "React received undefined" errors.
 
-**Issue 2: The `handleAutoFixError` dependency array is stale.** It lists `isCompiling` but doesn't include it in the useCallback deps (line 1307), so the `isCompiling` check may use stale closure values.
+**2. CDN loading race conditions**
+The esm.sh CDN URLs for lucide-react (~500KB) and framer-motion (~800KB) take 2-5 seconds to load. During this time, Babel's `new Function()` block is executing, and any `await import()` that hasn't resolved causes the entire preview to hang or error out.
 
-**Issue 3: No cooldown between fix rounds.** After one fix attempt completes (generation + compilation), the preview immediately reports errors, which triggers another fix attempt. The 5-second `compilationEndedAt` cooldown should help but the auto-fix loop's own `baseDelayMs` is only 500ms with exponential backoff that maxes at 2s.
-
-**Issue 4: The preview compiler doesn't filter out test files.** Files like `*.test.ts` or files importing `vitest` get transpiled into the preview bundle, causing runtime errors.
+**3. The auto-fix loop diagnoses symptoms, not causes**
+The auto-fix detects "lucide-react icons imported incorrectly" and rewrites the imports, but the transpiler transforms them the same way every time, so the same error recurs.
 
 ### Fix Plan
 
-#### 1. Add global fix attempt cap to `handleAutoFixError`
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+#### 1. Harden default import handling for known named-export-only packages
+**File: `src/hooks/useReactCompiler.ts`** (transpileFile function, ~line 214-223)
 
-Add a `totalFixAttemptsRef` that tracks ALL fix attempts across all error messages. Cap at 3 total attempts per generation cycle. Reset when user sends a new message.
+For packages known to have NO default export (lucide-react, date-fns, recharts), convert default imports to namespace imports:
 
 ```typescript
-const totalFixAttemptsRef = useRef(0);
+// Before (current):
+const LucideIcon = (await import('lucide-react')).default || (await import('lucide-react'));
 
-// In handleAutoFixError:
-if (totalFixAttemptsRef.current >= 3) {
-  dedupeToast('error', 'Auto-fix limit reached. Try describing the issue differently.');
-  return;
-}
-totalFixAttemptsRef.current++;
+// After (fixed):
+const LucideIcon = await import('lucide-react');
+// AND for named imports alongside:
+const { Star, Heart } = await import('lucide-react');
 ```
 
-Reset in the generation start handler:
+Add a set of packages that are known to not have a default export, and skip the `.default` fallback for them. This prevents the "undefined component" error entirely.
+
+#### 2. Add import error resilience wrapper
+**File: `src/hooks/useReactCompiler.ts`** (transpileFile function)
+
+Wrap each external `await import()` in a try-catch so one failed CDN fetch doesn't crash the entire app:
+
 ```typescript
-totalFixAttemptsRef.current = 0;
+let lucideReact;
+try { lucideReact = await import('lucide-react'); } 
+catch(e) { console.warn('Failed to load lucide-react:', e); lucideReact = {}; }
+const { Star, Heart } = lucideReact;
 ```
 
-#### 2. Fix stale closure in `handleAutoFixError`
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+This way if framer-motion CDN is slow, the rest of the app still renders.
 
-Add `isCompiling` to the dependency array of `handleAutoFixError` useCallback (it's referenced in the body but missing from deps at line 1307).
+#### 3. Add CDN preload hints to the HTML head
+**File: `src/hooks/useReactCompiler.ts`** (compileReactProject HTML template, ~line 576)
 
-#### 3. Filter test files from React compilation
-**File: `src/hooks/useReactCompiler.ts`**
+Scan the generated code for external package imports and add `<link rel="modulepreload">` tags for the corresponding CDN URLs. This tells the browser to start fetching these modules immediately instead of waiting for the JavaScript to execute:
 
-In `compileReactProject`, filter out files matching test patterns BEFORE transpilation:
-
-```typescript
-const reactFiles = files
-  .filter(f => /\.(tsx?|jsx?)$/.test(f.path))
-  .filter(f => !/\.(test|spec)\.(tsx?|jsx?)$/.test(f.path))
-  .filter(f => !f.content.includes("from 'vitest'") && !f.content.includes('from "vitest"'));
+```html
+<link rel="modulepreload" href="https://esm.sh/lucide-react@0.462.0?external=react" />
+<link rel="modulepreload" href="https://esm.sh/framer-motion@12.23.0?external=react,react-dom" />
 ```
 
-This prevents the "Vitest specifier" error entirely.
+#### 4. Suppress auto-fix for CDN/import errors
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`** (handleAutoFixError)
 
-#### 4. Increase post-compilation cooldown
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
-
-Increase the post-compilation cooldown from 5 seconds to 8 seconds. This gives the iframe more time to fully load CDN resources (React, Tailwind, etc.) before error detection kicks in, reducing false-positive "undefined" errors from race conditions.
-
-#### 5. Suppress duplicate auto-fix triggers within the same compilation cycle
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
-
-Add a flag `autoFixInFlightRef` that prevents new fix attempts while one is already in-flight (generation is happening from a previous auto-fix). Currently `isGenerating` should handle this, but the 500ms delay in `useAutoFixLoop` means the error fires before `isGenerating` flips to true.
+Add pattern matching to suppress auto-fix attempts for errors that originate from CDN loading failures or import resolution. These are infrastructure errors, not code errors:
 
 ```typescript
-const autoFixInFlightRef = useRef(false);
-
-// In handleAutoFixError:
-if (autoFixInFlightRef.current) return;
-autoFixInFlightRef.current = true;
-
-// Reset when generation ends:
-autoFixInFlightRef.current = false;
+if (error.message?.includes('Failed to fetch dynamically imported module') ||
+    error.message?.includes('error loading dynamically imported module') ||
+    error.message?.includes('esm.sh')) return;
 ```
 
 ### Files to Edit
 
-1. **`src/components/ai-builder/AIAppBuilderWorkspace.tsx`** - Global fix cap, stale closure fix, cooldown increase, in-flight guard
-2. **`src/hooks/useReactCompiler.ts`** - Filter test files from compilation
+1. **`src/hooks/useReactCompiler.ts`** -- Fix default import handling, add try-catch wrappers, add modulepreload hints
+2. **`src/components/ai-builder/AIAppBuilderWorkspace.tsx`** -- Suppress auto-fix for CDN errors
 
 ### Expected Impact
 
 ```
 Before:
-  Error detected --> auto-fix --> new error --> auto-fix --> infinite loop
-  Credits consumed: unlimited
-  Preview: permanently blank
+  Template generates code --> lucide-react default import fails --> blank preview
+  --> auto-fix triggers --> same error --> loop burns 3+ credits --> still blank
 
 After:
-  Error detected --> auto-fix (attempt 1/3) --> same error --> auto-fix (2/3) --> still failing --> auto-fix (3/3) --> STOP
-  Credits consumed: max 3 per generation
-  Preview: shows error fallback after exhaustion, not blank skeleton
-  Test files: excluded from compilation entirely
+  Template generates code --> lucide-react imported as namespace (no .default) --> works
+  CDN slow? --> try-catch catches it, rest of app renders with fallback
+  CDN error detected? --> auto-fix skips it (infrastructure issue, not code bug)
 ```
-
