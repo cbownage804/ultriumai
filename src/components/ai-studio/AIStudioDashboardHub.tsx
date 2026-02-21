@@ -94,20 +94,23 @@ export const AIStudioDashboardHub = () => {
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     const { id, type } = deleteTarget;
+    // Close dialog FIRST to prevent Radix pointer-events lock
+    setDeleteTarget(null);
+    // Safety: force-remove any lingering pointer-events block from Radix overlay
+    requestAnimationFrame(() => { document.body.style.pointerEvents = ''; });
     if (type === 'project') {
       const { error } = await supabase.from('builder_projects').delete().eq('id', id);
-      if (error) { toast.error('Failed to delete project'); setDeleteTarget(null); return; }
+      if (error) { toast.error('Failed to delete project'); return; }
       setRecentProjects(prev => prev.filter(p => p.id !== id));
       setTotalProjects(prev => prev - 1);
       toast.success('Project deleted');
     } else {
       const { error } = await supabase.from('custom_gpts').delete().eq('id', id);
-      if (error) { toast.error('Failed to delete GPT'); setDeleteTarget(null); return; }
+      if (error) { toast.error('Failed to delete GPT'); return; }
       setRecentGPTs(prev => prev.filter(g => g.id !== id));
       setTotalGPTs(prev => prev - 1);
       toast.success('GPT deleted');
     }
-    setDeleteTarget(null);
   };
 
   useEffect(() => {
@@ -659,7 +662,7 @@ export const AIStudioDashboardHub = () => {
         </motion.div>
       )}
       <AIStudioUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); requestAnimationFrame(() => { document.body.style.pointerEvents = ''; }); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {deleteTarget?.type === 'gpt' ? 'GPT' : 'project'}?</AlertDialogTitle>
