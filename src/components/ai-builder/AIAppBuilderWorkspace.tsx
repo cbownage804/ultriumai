@@ -260,9 +260,20 @@ export function AIAppBuilderWorkspace() {
   } = useAgentMode();
   const autoRecovery = useAutoErrorRecovery();
 
+  // ── Pre-generation snapshot for undo/rollback ──
+  const preGenSnapshotRef = useRef<ProjectFile[] | null>(null);
+  // Ref to break circular declaration order (versionTimeline declared after callbacks)
+  const addSnapshotRef = useRef<(label: string, files: ProjectFile[], type: 'auto' | 'manual' | 'ai-generation' | 'revert', messageId?: string) => void>(() => {});
+
   // Background generation: server-side builds that survive tab close
+  // Saves a snapshot before applying, enabling one-click rollback
   const handleBgComplete = useCallback((job: BackgroundJob) => {
     if (!job.output_content) return;
+
+    // Save pre-generation snapshot for undo
+    preGenSnapshotRef.current = [...project.files];
+    addSnapshotRef.current('Pre-build snapshot', project.files, 'auto');
+
     const { files: parsedFiles, deletions } = parseMultiFileOutput(job.output_content);
     if (parsedFiles.length > 0 || deletions.length > 0) {
       let mergedFiles = [...project.files];
@@ -273,7 +284,15 @@ export function AIAppBuilderWorkspace() {
         else mergedFiles.push(newFile);
       }
       setFiles(mergedFiles);
-      toast.success(`Build complete — ${parsedFiles.length} files generated`, { duration: 5000 });
+
+      // Post-build snapshot for history
+      addSnapshotRef.current(
+        `Build: ${parsedFiles.length} files`,
+        mergedFiles,
+        'ai-generation'
+      );
+
+      dedupeToast('success', `Build complete — ${parsedFiles.length} files generated`, { duration: 5000 });
     }
     setMessages(prev => [...prev, {
       id: crypto.randomUUID(),
@@ -282,7 +301,34 @@ export function AIAppBuilderWorkspace() {
       timestamp: new Date(),
       filesGenerated: parsedFiles.length + deletions.length,
     }]);
+    setIsGeneratingOverride(false);
   }, [project.files, setFiles, setMessages]);
+
+  // SSE streaming: apply files incrementally as they arrive
+  const lastIncrementalParseRef = useRef(0);
+  const handleStreamDelta = useCallback((delta: string, totalContent: string) => {
+    // Update streaming ref for chat display
+    if (streamingContentRef) {
+      streamingContentRef.current = totalContent;
+    }
+
+    // Incremental file application: parse and apply files as they appear
+    // Only re-parse every 2KB of new content to avoid excessive parsing
+    if (totalContent.length - lastIncrementalParseRef.current > 2000) {
+      lastIncrementalParseRef.current = totalContent.length;
+      const { files: parsedFiles } = parseMultiFileOutput(totalContent);
+      if (parsedFiles.length > 0) {
+        // Apply files incrementally — users see files appear one by one
+        let mergedFiles = [...project.files];
+        for (const newFile of parsedFiles) {
+          const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
+          if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
+          else mergedFiles.push(newFile);
+        }
+        setFiles(mergedFiles);
+      }
+    }
+  }, [project.files, setFiles, streamingContentRef]);
 
   const handleBgProgress = useCallback((job: BackgroundJob) => {
     if (job.output_content && streamingContentRef) {
@@ -290,9 +336,13 @@ export function AIAppBuilderWorkspace() {
     }
   }, [streamingContentRef]);
 
+  // Track generating state for overlay (background jobs are async)
+  const [isGeneratingOverride, setIsGeneratingOverride] = useState(false);
+
   const backgroundGen = useBackgroundGeneration({
     onComplete: handleBgComplete,
     onProgress: handleBgProgress,
+    onStreamDelta: handleStreamDelta,
     onError: (job) => {
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
@@ -300,8 +350,41 @@ export function AIAppBuilderWorkspace() {
         content: `⚠️ Build failed: ${job.error_message || 'Unknown error'}\n\nPlease try again.`,
         timestamp: new Date(),
       }]);
+      setIsGeneratingOverride(false);
     },
   });
+
+  /** One-click undo: revert to the snapshot taken before the last build */
+  const undoLastBuild = useCallback(() => {
+    if (preGenSnapshotRef.current) {
+      setFiles(preGenSnapshotRef.current);
+      addSnapshotRef.current('Undo last build', preGenSnapshotRef.current, 'revert');
+      preGenSnapshotRef.current = null;
+      dedupeToast('success', 'Reverted to pre-build state');
+    } else {
+      dedupeToast('error', 'No build to undo');
+    }
+  }, [setFiles]);
+
+  /** Restore from a historical build (fetched from DB) */
+  const restoreHistoricalBuild = useCallback(async (jobId: string) => {
+    const content = await backgroundGen.restoreFromBuild(jobId);
+    if (!content) return;
+    
+    preGenSnapshotRef.current = [...project.files];
+    const { files: parsedFiles, deletions } = parseMultiFileOutput(content);
+    let mergedFiles: ProjectFile[] = [];
+    if (deletions.length > 0) mergedFiles = project.files.filter(f => !deletions.includes(f.path));
+    else mergedFiles = [...project.files];
+    for (const newFile of parsedFiles) {
+      const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
+      if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
+      else mergedFiles.push(newFile);
+    }
+    setFiles(mergedFiles);
+    addSnapshotRef.current(`Restored build ${jobId.slice(0, 8)}`, mergedFiles, 'revert');
+    dedupeToast('success', `Restored build with ${parsedFiles.length} files`);
+  }, [backgroundGen, project.files, setFiles]);
 
   // Wire bg-job-started events from sendMessage to the backgroundGen hook
   useEffect(() => {
@@ -327,6 +410,8 @@ export function AIAppBuilderWorkspace() {
   const inlineAIEdit = useInlineAIEdit((prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel));
 
   const versionTimeline = useVersionTimeline();
+  // Wire the ref now that versionTimeline is declared
+  addSnapshotRef.current = versionTimeline.addSnapshot;
   const buildLog = useBuildLog();
   const smokeTest = usePostBuildSmokeTest(buildLog.addEntry);
   const hotRecovery = useHotModuleRecovery(buildLog.addEntry);
