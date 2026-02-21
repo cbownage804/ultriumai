@@ -1300,8 +1300,37 @@ export function useAIAppBuilder() {
         await deductCredits(creditCost, `App Builder ${effectiveMode === 'build' ? 'build' : 'chat'}`);
       }
 
-      // Keep isGenerating true — the workspace will set it false when the job completes
-      // This is managed by the onComplete callback in AIAppBuilderWorkspace
+      // Wait for the background job to actually complete before returning.
+      // This is critical for agent mode which `await`s sendMessage to know when
+      // code has been generated and applied before moving to verify/complete steps.
+      const TOTAL_BUILD_MAX_MS = 3 * 60 * 1000; // 3 minutes
+      await new Promise<void>((resolve, reject) => {
+        const onComplete = (e: Event) => {
+          const detail = (e as CustomEvent).detail;
+          if (detail?.jobId === jobId) {
+            cleanup();
+            resolve();
+          }
+        };
+        const onFailed = (e: Event) => {
+          const detail = (e as CustomEvent).detail;
+          if (detail?.jobId === jobId) {
+            cleanup();
+            reject(new Error(detail?.error || 'Build failed'));
+          }
+        };
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error('Build timed out'));
+        }, TOTAL_BUILD_MAX_MS);
+        const cleanup = () => {
+          clearTimeout(timer);
+          window.removeEventListener('bg-job-completed', onComplete);
+          window.removeEventListener('bg-job-failed', onFailed);
+        };
+        window.addEventListener('bg-job-completed', onComplete);
+        window.addEventListener('bg-job-failed', onFailed);
+      });
     } catch (err: any) {
       console.error('AI Builder error:', err);
       const classified = classifyError(0, err.message || '', err);
