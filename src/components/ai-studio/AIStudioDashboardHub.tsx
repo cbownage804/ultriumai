@@ -97,7 +97,14 @@ export const AIStudioDashboardHub = () => {
     // Close dialog FIRST to prevent Radix pointer-events lock
     setDeleteTarget(null);
     // Safety: force-remove any lingering pointer-events block from Radix overlay
-    requestAnimationFrame(() => { document.body.style.pointerEvents = ''; });
+    requestAnimationFrame(() => {
+      document.body.style.removeProperty('pointer-events');
+      document.body.style.pointerEvents = '';
+    });
+    // Double-safety: also clear after a short delay in case Radix re-applies
+    setTimeout(() => {
+      document.body.style.removeProperty('pointer-events');
+    }, 100);
     if (type === 'project') {
       const { error } = await supabase.from('builder_projects').delete().eq('id', id);
       if (error) { toast.error('Failed to delete project'); return; }
@@ -487,7 +494,7 @@ export const AIStudioDashboardHub = () => {
                     </div>
                   )}
                   <Badge className="absolute top-2 left-2 text-[10px] bg-violet-500/80 border-0">App</Badge>
-                  <DropdownMenu>
+                  <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                       <button className="absolute top-2 right-2 h-6 w-6 rounded-md bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity hover:bg-black/60">
                         <MoreVertical className="h-3.5 w-3.5 text-white/80" />
@@ -503,7 +510,7 @@ export const AIStudioDashboardHub = () => {
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: p.id, type: 'project', name: p.name }); }}>
+                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); setTimeout(() => setDeleteTarget({ id: p.id, type: 'project', name: p.name }), 0); }}>
                         <Trash2 className="h-3.5 w-3.5 mr-2" />
                         Delete
                       </DropdownMenuItem>
@@ -534,7 +541,7 @@ export const AIStudioDashboardHub = () => {
                     <Bot className="h-6 w-6 text-muted-foreground/30" />
                   )}
                   <Badge className="absolute top-2 left-2 text-[10px] bg-primary/80 border-0">GPT</Badge>
-                  <DropdownMenu>
+                  <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                       <button className="absolute top-2 right-2 h-6 w-6 rounded-md bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity hover:bg-black/60">
                         <MoreVertical className="h-3.5 w-3.5 text-white/80" />
@@ -550,7 +557,7 @@ export const AIStudioDashboardHub = () => {
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: g.id, type: 'gpt', name: g.name }); }}>
+                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); setTimeout(() => setDeleteTarget({ id: g.id, type: 'gpt', name: g.name }), 0); }}>
                         <Trash2 className="h-3.5 w-3.5 mr-2" />
                         Delete
                       </DropdownMenuItem>
@@ -662,7 +669,7 @@ export const AIStudioDashboardHub = () => {
         </motion.div>
       )}
       <AIStudioUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); requestAnimationFrame(() => { document.body.style.pointerEvents = ''; }); } }}>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); requestAnimationFrame(() => { document.body.style.removeProperty('pointer-events'); }); setTimeout(() => { document.body.style.removeProperty('pointer-events'); }, 100); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {deleteTarget?.type === 'gpt' ? 'GPT' : 'project'}?</AlertDialogTitle>
