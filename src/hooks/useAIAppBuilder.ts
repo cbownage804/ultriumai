@@ -1296,13 +1296,16 @@ export function useAIAppBuilder() {
       const buildCompletePromise = new Promise<void>((resolve, reject) => {
         const onComplete = (e: Event) => {
           const detail = (e as CustomEvent).detail;
+          console.info('[AI Builder] ⚡ Received bg-job-completed event, detail:', detail, 'waiting for jobId:', jobId);
           if (detail?.jobId === jobId) {
             cleanup();
+            console.info('[AI Builder] ✅ Build complete promise resolving for job:', jobId);
             resolve();
           }
         };
         const onFailed = (e: Event) => {
           const detail = (e as CustomEvent).detail;
+          console.info('[AI Builder] ❌ Received bg-job-failed event, detail:', detail, 'waiting for jobId:', jobId);
           if (detail?.jobId === jobId) {
             cleanup();
             reject(new Error(detail?.error || 'Build failed'));
@@ -1310,6 +1313,7 @@ export function useAIAppBuilder() {
         };
         const timer = setTimeout(() => {
           cleanup();
+          console.error('[AI Builder] ⏰ Build timed out after 3 minutes for job:', jobId);
           reject(new Error('Build timed out'));
         }, TOTAL_BUILD_MAX_MS);
         const cleanup = () => {
@@ -1319,9 +1323,11 @@ export function useAIAppBuilder() {
         };
         window.addEventListener('bg-job-completed', onComplete);
         window.addEventListener('bg-job-failed', onFailed);
+        console.info('[AI Builder] 🎧 Listeners registered for bg-job-completed/failed, jobId:', jobId);
       });
 
       // NOW dispatch the start event — listeners are already in place
+      console.info('[AI Builder] 📡 Dispatching bg-job-started for jobId:', jobId);
       window.dispatchEvent(new CustomEvent('bg-job-started', { detail: { jobId } }));
 
       // Deduct credits (only for non-fix requests)
@@ -1330,7 +1336,9 @@ export function useAIAppBuilder() {
       }
 
       // Wait for the background job to actually complete before returning.
+      console.info('[AI Builder] ⏳ Awaiting buildCompletePromise for job:', jobId);
       await buildCompletePromise;
+      console.info('[AI Builder] 🏁 buildCompletePromise resolved, sendMessage returning for job:', jobId);
     } catch (err: any) {
       console.error('AI Builder error:', err);
       const classified = classifyError(0, err.message || '', err);

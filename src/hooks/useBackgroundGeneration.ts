@@ -113,13 +113,13 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       onProgressRef.current?.(job);
     } else if (job.status === 'completed') {
       cleanup();
-      console.info('[BG] Job completed:', job.id);
+      console.info('[BG] ✅ Job completed:', job.id, '— calling onComplete callback');
       onCompleteRef.current?.(job);
       // Process next queued job
       processQueue();
     } else if (job.status === 'failed') {
       cleanup();
-      console.error('[BG] Job failed:', job.error_message);
+      console.error('[BG] ❌ Job failed:', job.id, job.error_message);
       onErrorRef.current?.(job);
       toast.error(`Build failed: ${job.error_message?.slice(0, 100) || 'Unknown error'}`);
       processQueue();

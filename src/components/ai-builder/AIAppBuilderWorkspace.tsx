@@ -320,6 +320,7 @@ export function AIAppBuilderWorkspace() {
     setIsGeneratingOverride(false);
 
     // Notify sendMessage that the job is done so agent mode can proceed
+    console.info('[Workspace] 📣 Dispatching bg-job-completed for jobId:', job.id);
     window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId: job.id } }));
   }, [project.files, setFiles, setMessages]);
 
@@ -382,6 +383,7 @@ export function AIAppBuilderWorkspace() {
       setIsGeneratingOverride(false);
 
       // Notify sendMessage that the job failed so agent mode can handle it
+      console.info('[Workspace] 📣 Dispatching bg-job-failed for jobId:', job.id, 'error:', job.error_message);
       window.dispatchEvent(new CustomEvent('bg-job-failed', { detail: { jobId: job.id, error: job.error_message } }));
     },
   });
@@ -432,6 +434,7 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     const handler = (e: Event) => {
       const jobId = (e as CustomEvent).detail?.jobId;
+      console.info('[Workspace] 📥 Received bg-job-started, calling startWatching for:', jobId);
       if (jobId) backgroundGen.startWatching?.(jobId);
     };
     window.addEventListener('bg-job-started', handler);
