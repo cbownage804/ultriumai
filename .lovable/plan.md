@@ -1,124 +1,153 @@
 
+## Fix: The Preview Deadlock (The REAL Root Cause)
 
-## Fix: Unblock the Preview Pipeline (The Actual Root Cause)
+### Why every previous fix failed
 
-### Why the preview is blank
+All previous fixes (type stripping, Proxy fallbacks, CDN timeouts, per-chunk isolation) operate **inside the iframe HTML**. They're correct and will help once the iframe actually loads. But the iframe never loads because the **outer React app** has a deadlock that prevents the compiled HTML from ever reaching the iframe.
 
-The compiled HTML runs an async IIFE inside the iframe:
+### The Deadlock (step by step)
 
+Here's exactly what happens every time you generate an app:
+
+```text
+1. AI finishes generating files
+   -> isGenerating = false
+
+2. CompilationBridge starts compiling (line 146)
+   -> isCompiling = true
+   -> Preview shows: <CompilationProgress /> (or <SkeletonPreview />)
+
+3. Compilation finishes, sets liveCompiledHTML
+   -> isCompiling = false
+
+4. Preview update effect (line 291) fires
+   -> Calls setStableHTML(liveCompiledHTML)
+   -> stableHTML is now set
+   -> Preview shows: <iframe srcDoc={stableHTML} />
+
+5. Iframe loads. CDN package fails or Babel error occurs.
+   -> Iframe posts error via postMessage
+
+6. handleAutoFixError fires
+   -> Calls sendMessage("Auto-fix error: ...")
+   -> isGenerating = true   <-- THIS IS THE PROBLEM
+
+7. CompilationBridge line 111: "if isGenerating just turned on"
+   -> setStableHTML(null)   <-- NUKES the working preview
+
+8. CompilationBridge line 136: "if isGenerating"
+   -> setLiveCompiledHTML(null)   <-- KILLS compiled HTML
+
+9. Preview panel line 451: html is null
+   -> Shows <SkeletonPreview /> instead of iframe
+
+10. Auto-fix generates new code, isGenerating = false
+    -> Back to step 2, but now another error occurs
+    -> LOOP repeats until fix attempts exhausted
+    -> Final state: stableHTML = null, skeleton forever
 ```
-(async function() {
-  // Step A: Load packages (CAN HANG FOREVER)
-  await import('lucide-react');     // esm.sh can take 30s+
-  await import('framer-motion');    // or never resolve
-  
-  // Step B: Babel transform (NEVER REACHED if A hangs)
-  Babel.transform(code, ...);
-  
-  // Step C: Mount React app (NEVER REACHED)
-  root.render(...)
-})();
-```
 
-There is NO timeout on Step A. If any `await import()` hangs (common with esm.sh for large packages), Steps B and C never run. The `#root` div stays empty. The page is blank white.
+The skeleton you see is NOT from the first generation -- it's from step 7 where the auto-fix loop nukes `stableHTML`.
 
-All previous fixes (type stripping, Proxy fallbacks, CDN retry, per-chunk isolation) only help after Step A finishes. They do nothing when Step A hangs.
+### The Fix (3 targeted changes)
 
-### The Fix (3 changes, 1 file)
+**Change 1: Don't reset stableHTML during auto-fix** (`CompilationBridge.tsx`, lines 109-115)
 
-All changes in `src/hooks/useReactCompiler.ts`.
+Currently, stableHTML is reset to null whenever `isGenerating` transitions to true. This makes sense for fresh user messages (you want a fresh preview) but is catastrophic during auto-fix (it destroys the existing preview).
 
-#### Change 1: Add per-package timeout (5 seconds max)
+Add an `isAutoFix` prop to CompilationBridge. When it's an auto-fix generation, skip the stableHTML reset so the previous preview stays visible while the fix runs.
 
-Wrap every `await import()` in `Promise.race` with a 5-second timeout so no single package can block the pipeline.
+Alternatively (simpler): just **never** null out stableHTML when transitioning to generating. Instead, let the new compiled result **replace** it when ready. The user sees the old preview (possibly with errors) while the fix runs, which is far better than a blank skeleton.
 
-Current code (lines 753-757):
-```javascript
-window.__pkg_X = {};
-try { window.__pkg_X = await import('pkg'); } 
-catch(__e) { try { window.__pkg_X = await import('cdn.jsdelivr...'); } catch(__e2) { ... } }
-```
-
-New code:
-```javascript
-window.__pkg_X = {};
-try {
-  window.__pkg_X = await Promise.race([
-    import('pkg'),
-    new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000))
-  ]);
-} catch(__e) {
-  try {
-    window.__pkg_X = await Promise.race([
-      import('https://cdn.jsdelivr.net/npm/pkg/+esm'),
-      new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000))
-    ]);
-  } catch(__e2) {
-    console.warn('Package pkg unavailable');
+```typescript
+// BEFORE (line 110-114):
+useEffect(() => {
+  if (isGenerating && !prevIsGeneratingForReset.current) {
+    setStableHTML(null);  // <-- DESTROYS preview on every generation
   }
-}
-```
+  prevIsGeneratingForReset.current = isGenerating;
+}, [isGenerating, setStableHTML]);
 
-This ensures no single package import blocks for more than 5 seconds. If it times out, the jsdelivr fallback is tried (also with 5s limit). If both fail, the Proxy fallbacks from the previous fix handle the missing components.
-
-#### Change 2: Show loading indicator while packages load
-
-Add a "Loading packages..." message in `#root` BEFORE the async IIFE runs, so the user sees activity instead of a blank page.
-
-Add before the async IIFE script (around line 746):
-```html
-<script>
-  document.getElementById('root').innerHTML = 
-    '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui;color:#888">' +
-    '<div style="text-align:center"><div style="width:24px;height:24px;border:2px solid #8882;border-top-color:#888;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px"></div>' +
-    '<p style="font-size:13px">Loading preview...</p></div></div>' +
-    '<style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
-</script>
-```
-
-This immediately shows a spinner. When React mounts, it replaces this with the actual app. If nothing mounts, the user sees "Loading preview..." instead of a blank white page.
-
-#### Change 3: Global IIFE timeout (20 seconds)
-
-Add a safety timeout that fires if the async IIFE hasn't completed after 20 seconds, rendering a diagnostic message.
-
-Wrap the async IIFE with a race against a 20-second timer:
-```javascript
-var __iifeDone = false;
-(async function() {
-  try {
-    // ... existing preamble + babel + mount ...
-    __iifeDone = true;
-  } catch(e) { ... __iifeDone = true; }
-})();
-setTimeout(function() {
-  if (!__iifeDone && document.getElementById('root').innerHTML.indexOf('Loading preview') > -1) {
-    document.getElementById('root').innerHTML = 
-      '<div style="padding:40px;text-align:center;font-family:system-ui;color:#f59e0b">' +
-      '<h2>Preview timed out</h2>' +
-      '<p style="color:#888;margin-top:8px">External packages took too long to load. Try regenerating or check your network.</p></div>';
-    window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: 'Preview timed out waiting for CDN packages', source: 'preamble' }, '*');
+// AFTER:
+useEffect(() => {
+  if (isGenerating && !prevIsGeneratingForReset.current) {
+    // Only reset if there's no existing preview (fresh generation, not auto-fix)
+    // If stableHTML already exists, keep showing it while fix runs
+    if (!stableHTMLRef.current) {
+      setStableHTML(null);
+    }
   }
-}, 20000);
+  prevIsGeneratingForReset.current = isGenerating;
+}, [isGenerating, setStableHTML]);
 ```
 
-### Technical Details
+**Change 2: Don't null liveCompiledHTML during generation** (`CompilationBridge.tsx`, line 136)
 
-**File:** `src/hooks/useReactCompiler.ts`
+Currently: `if (isGenerating) { setLiveCompiledHTML(null); return; }` -- this prevents recompilation during generation AND destroys the existing compiled HTML.
 
-**Edit locations:**
-1. Lines 753-757: Wrap `await import()` calls with `Promise.race` timeout
-2. Around line 746 (before async IIFE script): Add loading spinner script
-3. Lines 748-785 (async IIFE): Wrap in completion flag + 20s safety timeout
+Fix: Only skip starting a new compilation during generation, but don't null out the existing result.
 
-### Why this actually fixes the blank page
+```typescript
+// BEFORE (line 135-139):
+useEffect(() => {
+  if (isGenerating || filesRef.current.length === 0 || stableHTMLRef.current) {
+    setLiveCompiledHTML(null);
+    return;
+  }
 
-- **5s per-package timeout** -- No import can hang indefinitely. Maximum total wait = 5s x number_of_packages (typically 1-3 packages = 5-15s)
-- **Loading spinner** -- User sees immediate feedback instead of blank white
-- **20s global timeout** -- Guaranteed diagnostic instead of infinite blank page
-- **Previous fixes still apply** -- Proxy fallbacks handle missing components after timeout, per-chunk isolation prevents cascade failures
+// AFTER:
+useEffect(() => {
+  if (isGenerating || filesRef.current.length === 0 || stableHTMLRef.current) {
+    // Don't null out liveCompiledHTML if we already have it -- 
+    // prevents flashing skeleton during auto-fix
+    return;
+  }
+```
 
-### What was wrong with previous fixes
+**Change 3: Remove compilation lock that prevents recompilation after auto-fix** (`CompilationBridge.tsx`, line 142)
 
-The Proxy fallbacks, CDN retry, per-chunk isolation, and type stripping fixes all operate AFTER the package loading step. They never get a chance to run if `await import()` hangs. Adding a timeout is the missing piece that connects all the other fixes together.
+The `compilationLockRef` prevents recompilation within the same generation cycle. But after an auto-fix completes (new files), we NEED to recompile. Reset the lock when `filesDigest` changes.
 
+```typescript
+// BEFORE (lines 122-128):
+useEffect(() => {
+  if (isGenerating) {
+    compilationAttemptedRef.current = false;
+    compilationLockRef.current = false;
+  }
+}, [isGenerating]);
+
+// AFTER:
+useEffect(() => {
+  if (isGenerating) {
+    compilationAttemptedRef.current = false;
+    compilationLockRef.current = false;
+  }
+}, [isGenerating, filesDigest]);  // Also reset when files change (auto-fix produced new code)
+```
+
+### Files to Edit
+
+1. **`src/components/ai-builder/CompilationBridge.tsx`** (3 targeted changes):
+   - Line 111: Don't null stableHTML if it already exists (keep showing old preview during fix)
+   - Line 137: Remove `setLiveCompiledHTML(null)` to prevent destroying compiled result
+   - Line 127: Add `filesDigest` dependency to reset compilation lock after auto-fix
+
+### Why This Actually Fixes It
+
+- Step 7 above no longer happens: stableHTML is preserved during auto-fix
+- The iframe stays visible showing the previous preview while the fix runs
+- When the fix produces new files and `isGenerating` goes false, recompilation runs normally
+- The new compiled HTML replaces the old one in the iframe
+- No more skeleton deadlock
+
+### What About Fresh Generations?
+
+For a brand new generation (user types a prompt from scratch), `stableHTMLRef.current` will be `null` (it was never set). The `if (!stableHTMLRef.current)` check in Change 1 means it WILL reset to null for fresh generations, correctly showing the skeleton/generating overlay for the initial build.
+
+### Risk Assessment
+
+- Zero risk to fresh generations (stableHTML is null, so the reset fires normally)
+- Auto-fix preserves existing preview instead of showing skeleton -- strictly better UX
+- The compilation lock reset on `filesDigest` change ensures recompilation fires after fixes
+- All previous iframe-level fixes (Proxy fallbacks, CDN timeouts, per-chunk isolation) will now actually take effect since the iframe will be rendered
