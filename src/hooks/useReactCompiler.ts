@@ -743,17 +743,41 @@ window.ENV = ${JSON.stringify(envObj)};
   <!-- Babel Standalone for runtime JSX transpilation -->
   <script src="${CDN.babel}"></script>
 
+  <!-- Phase 102: Loading spinner shown immediately while packages load -->
+  <script>
+  document.getElementById('root').innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui;color:#888">' +
+    '<div style="text-align:center"><div style="width:24px;height:24px;border:2px solid #8882;border-top-color:#888;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px"></div>' +
+    '<p style="font-size:13px">Loading preview...</p></div></div>' +
+    '<style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+  </script>
+
   <!-- Phase 67: Manual Babel.transform with try-catch for error capture -->
   <script>
+  var __iifeDone = false;
   (async function() {
     try {
       window.__modules = window.__modules || {};
 
-      // Phase 99: Phase A — Pre-load external packages (async, no Babel needed)
+      // Phase 99: Phase A — Pre-load external packages with 5s per-package timeout
       ${Array.from(allExternalPackages).map(pkg => {
         const varName = `__pkg_${pkg.replace(/[^a-zA-Z0-9]/g, '_')}`;
-        // Phase 100: CDN retry with jsdelivr fallback
-        return `window.${varName} = {};\n      try { window.${varName} = await import('${pkg}'); } catch(__e) { try { window.${varName} = await import('https://cdn.jsdelivr.net/npm/${pkg}/+esm'); } catch(__e2) { console.warn('Package ${pkg} unavailable from both CDNs'); } }`;
+        return `window.${varName} = {};
+      try {
+        window.${varName} = await Promise.race([
+          import('${pkg}'),
+          new Promise(function(_, r) { setTimeout(function() { r(new Error('timeout')); }, 5000); })
+        ]);
+      } catch(__e) {
+        try {
+          window.${varName} = await Promise.race([
+            import('https://cdn.jsdelivr.net/npm/${pkg}/+esm'),
+            new Promise(function(_, r) { setTimeout(function() { r(new Error('timeout')); }, 5000); })
+          ]);
+        } catch(__e2) {
+          console.warn('Package ${pkg} unavailable from both CDNs (timeout or error)');
+        }
+      }`;
       }).join('\n      ')}
 
       // Phase 99: Phase B — Synchronous code execution (Babel sourceType: 'script')
@@ -773,7 +797,9 @@ window.ENV = ${JSON.stringify(envObj)};
         sourceType: 'script',
       });
       new Function(transformed.code)();
+      __iifeDone = true;
     } catch(e) {
+      __iifeDone = true;
       console.error('[Babel] Transpilation error:', e.message);
       window.parent.postMessage({
         type: '__PREVIEW_ERROR__',
@@ -783,6 +809,16 @@ window.ENV = ${JSON.stringify(envObj)};
       if (root) root.innerHTML = '<div style="padding:40px;color:#ef4444;font-family:system-ui"><h2>Syntax Error</h2><pre style="white-space:pre-wrap;margin-top:12px;font-size:13px;color:#fca5a5">' + e.message + '</pre></div>';
     }
   })();
+  // Phase 103: Global 20s safety timeout — guaranteed diagnostic instead of infinite blank page
+  setTimeout(function() {
+    if (!__iifeDone && document.getElementById('root') && document.getElementById('root').innerHTML.indexOf('Loading preview') > -1) {
+      document.getElementById('root').innerHTML =
+        '<div style="padding:40px;text-align:center;font-family:system-ui;color:#f59e0b">' +
+        '<h2>Preview timed out</h2>' +
+        '<p style="color:#888;margin-top:8px">External packages took too long to load. Try regenerating or check your network.</p></div>';
+      window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: 'Preview timed out waiting for CDN packages', source: 'preamble' }, '*');
+    }
+  }, 20000);
   </script>
 
   <!-- Phase 95: Inherit parent dark mode preference -->
