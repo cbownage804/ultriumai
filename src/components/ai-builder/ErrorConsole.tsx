@@ -64,8 +64,6 @@ export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest,
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState<'all' | 'error' | 'warning'>('all');
 
-  if (errors.length === 0) return null;
-
   const errorCount = errors.filter(e => e.type === 'error').length;
   const warnCount = errors.filter(e => e.type === 'warning').length;
   const allExhausted = errors.every(e => (e.fixAttempts ?? 0) >= maxRetries);
@@ -81,6 +79,8 @@ export function ErrorConsole({ errors, onClear, onFixRequest, onSmartFixRequest,
       return true;
     });
   }, [errors, searchQuery, severityFilter]);
+
+  if (errors.length === 0) return null;
 
   const handleSmartFix = (err: PreviewError) => {
     if ((err.fixAttempts ?? 0) >= maxRetries) return;
