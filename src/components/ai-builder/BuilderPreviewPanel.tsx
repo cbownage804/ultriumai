@@ -42,9 +42,11 @@ interface BuilderPreviewPanelProps {
   onStartOver?: () => void;
   /** Called when the preview URL changes (for syncing with parent) */
   onUrlChange?: (url: string) => void;
+  /** When true, health checks are paused (iframe expected blank during compilation) */
+  isCompiling?: boolean;
 }
 
-export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
@@ -200,6 +202,11 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
     }
 
     healthCheckRef.current = setInterval(() => {
+      // Pause health checks during compilation — iframe is expected blank
+      if (isCompiling) {
+        consecutiveFailsRef.current = 0;
+        return;
+      }
       const iframe = (iframeRef as React.RefObject<HTMLIFrameElement>)?.current;
       if (!iframe) return;
 
@@ -232,7 +239,7 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
     return () => {
       if (healthCheckRef.current) clearInterval(healthCheckRef.current);
     };
-  }, [html, isGenerating, iframeRef]);
+  }, [html, isGenerating, iframeRef, isCompiling]);
 
   // Listen for error messages from iframe (including critical errors from error boundary)
   useEffect(() => {

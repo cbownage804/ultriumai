@@ -188,7 +188,7 @@ export function CompilationBridge({
             setLiveCompiledHTML(null);
           }
         }
-      }, 50);
+      }, 100);
 
       // Store for cleanup
       compileTimerId = compileTimer;
@@ -222,7 +222,7 @@ export function CompilationBridge({
     if (hostingLockRef.current) return;
     hostingLockRef.current = true;
 
-    const timer = setTimeout(() => {
+    const doCompile = () => {
       try {
         console.time('[compiledForHosting]');
         const result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current);
@@ -232,7 +232,15 @@ export function CompilationBridge({
         console.error('[compiledForHosting] Compilation crashed:', e);
         setCompiledForHosting(null);
       }
-    }, 500);
+    };
+    // Defer hosting compilation 2s + requestIdleCallback to avoid main-thread contention
+    const timer = setTimeout(() => {
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(() => doCompile(), { timeout: 5000 });
+      } else {
+        setTimeout(doCompile, 100);
+      }
+    }, 2000);
     return () => clearTimeout(timer);
   }, [filesDigest, isGenerating, liveCompiledHTML]);
 
