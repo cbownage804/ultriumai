@@ -16,7 +16,7 @@ import { useBranching } from '@/hooks/useBranching';
 import { useProjectPersistence } from '@/hooks/useProjectPersistence';
 import { useDraftPersistence } from '@/hooks/useDraftPersistence';
 import { useBackgroundGeneration, type BackgroundJob } from '@/hooks/useBackgroundGeneration';
-import { parseMultiFileOutput } from '@/hooks/useAIAppBuilder';
+import { parseMultiFileOutput, applyHunkPatch } from '@/hooks/useAIAppBuilder';
 import { usePreviewHosting } from '@/hooks/usePreviewHosting';
 import { usePreviewCapture } from '@/hooks/usePreviewCapture';
 import type { SupabaseConfig, GithubConfig, StripeConfig, VercelConfig, ServiceKey, EnvVar } from './ProjectSettings';
@@ -274,8 +274,8 @@ export function AIAppBuilderWorkspace() {
     preGenSnapshotRef.current = [...project.files];
     addSnapshotRef.current('Pre-build snapshot', project.files, 'auto');
 
-    const { files: parsedFiles, deletions } = parseMultiFileOutput(job.output_content);
-    if (parsedFiles.length > 0 || deletions.length > 0) {
+    const { files: parsedFiles, deletions, edits } = parseMultiFileOutput(job.output_content);
+    if (parsedFiles.length > 0 || deletions.length > 0 || edits.length > 0) {
       let mergedFiles = [...project.files];
       if (deletions.length > 0) mergedFiles = mergedFiles.filter(f => !deletions.includes(f.path));
       for (const newFile of parsedFiles) {
@@ -283,16 +283,29 @@ export function AIAppBuilderWorkspace() {
         if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
         else mergedFiles.push(newFile);
       }
+      // Apply diff-based edits (===EDIT: with @@ hunks)
+      for (const edit of edits) {
+        const fileIdx = mergedFiles.findIndex(f => f.path === edit.path);
+        if (fileIdx >= 0) {
+          const patched = applyHunkPatch(mergedFiles[fileIdx].content, edit.hunks);
+          if (patched !== null) {
+            mergedFiles[fileIdx] = { ...mergedFiles[fileIdx], content: patched };
+          } else {
+            console.warn(`[Build] Hunk patch failed for ${edit.path}, skipping`);
+          }
+        }
+      }
       setFiles(mergedFiles);
 
       // Post-build snapshot for history
+      const totalChanges = parsedFiles.length + edits.length;
       addSnapshotRef.current(
-        `Build: ${parsedFiles.length} files`,
+        `Build: ${totalChanges} files${edits.length ? ` (${edits.length} patched)` : ''}`,
         mergedFiles,
         'ai-generation'
       );
 
-      dedupeToast('success', `Build complete — ${parsedFiles.length} files generated`, { duration: 5000 });
+      dedupeToast('success', `Build complete — ${totalChanges} files updated`, { duration: 5000 });
     }
     setMessages(prev => [...prev, {
       id: crypto.randomUUID(),
@@ -316,14 +329,24 @@ export function AIAppBuilderWorkspace() {
     // Only re-parse every 2KB of new content to avoid excessive parsing
     if (totalContent.length - lastIncrementalParseRef.current > 2000) {
       lastIncrementalParseRef.current = totalContent.length;
-      const { files: parsedFiles } = parseMultiFileOutput(totalContent);
-      if (parsedFiles.length > 0) {
+      const { files: parsedFiles, edits } = parseMultiFileOutput(totalContent);
+      if (parsedFiles.length > 0 || edits.length > 0) {
         // Apply files incrementally — users see files appear one by one
         let mergedFiles = [...project.files];
         for (const newFile of parsedFiles) {
           const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
           if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
           else mergedFiles.push(newFile);
+        }
+        // Apply diff-based edits incrementally too
+        for (const edit of edits) {
+          const fileIdx = mergedFiles.findIndex(f => f.path === edit.path);
+          if (fileIdx >= 0) {
+            const patched = applyHunkPatch(mergedFiles[fileIdx].content, edit.hunks);
+            if (patched !== null) {
+              mergedFiles[fileIdx] = { ...mergedFiles[fileIdx], content: patched };
+            }
+          }
         }
         setFiles(mergedFiles);
       }
@@ -372,7 +395,7 @@ export function AIAppBuilderWorkspace() {
     if (!content) return;
     
     preGenSnapshotRef.current = [...project.files];
-    const { files: parsedFiles, deletions } = parseMultiFileOutput(content);
+    const { files: parsedFiles, deletions, edits } = parseMultiFileOutput(content);
     let mergedFiles: ProjectFile[] = [];
     if (deletions.length > 0) mergedFiles = project.files.filter(f => !deletions.includes(f.path));
     else mergedFiles = [...project.files];
@@ -381,9 +404,19 @@ export function AIAppBuilderWorkspace() {
       if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
       else mergedFiles.push(newFile);
     }
+    // Apply edit hunks from restored build
+    for (const edit of edits) {
+      const fileIdx = mergedFiles.findIndex(f => f.path === edit.path);
+      if (fileIdx >= 0) {
+        const patched = applyHunkPatch(mergedFiles[fileIdx].content, edit.hunks);
+        if (patched !== null) {
+          mergedFiles[fileIdx] = { ...mergedFiles[fileIdx], content: patched };
+        }
+      }
+    }
     setFiles(mergedFiles);
     addSnapshotRef.current(`Restored build ${jobId.slice(0, 8)}`, mergedFiles, 'revert');
-    dedupeToast('success', `Restored build with ${parsedFiles.length} files`);
+    dedupeToast('success', `Restored build with ${parsedFiles.length + edits.length} files`);
   }, [backgroundGen, project.files, setFiles]);
 
   // Wire bg-job-started events from sendMessage to the backgroundGen hook

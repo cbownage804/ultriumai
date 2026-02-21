@@ -380,7 +380,7 @@ function isConversationalLine(line: string): boolean {
 }
 
 /** Apply a single hunk patch to existing file content */
-function applyHunkPatch(
+export function applyHunkPatch(
   existingContent: string,
   hunks: { startLine: number; endLine: number; newLines: string[] }[]
 ): string | null {
