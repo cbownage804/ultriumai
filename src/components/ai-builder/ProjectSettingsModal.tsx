@@ -242,9 +242,9 @@ export function ProjectSettingsModal({
 
           {/* ═══════════ DOMAINS ═══════════ */}
           {tab === 'domains' && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {/* Published URL */}
-              {publishedUrl && (
+              {publishedUrl && !domains.length && (
                 <div className="p-3 rounded-lg border border-white/[0.06] bg-white/[0.02]">
                   <div className="flex items-center gap-2 mb-1.5">
                     <Server className="h-3 w-3 text-white/30" />
@@ -260,151 +260,138 @@ export function ProjectSettingsModal({
                 </div>
               )}
 
-              {/* Domain List */}
-              {domains.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-white/30 uppercase tracking-wider">Connected Domains</span>
-                    <span className="text-[10px] text-white/20">{domains.length} domain{domains.length !== 1 ? 's' : ''}</span>
-                  </div>
-                  {domains.map(d => {
-                    const sc = STATUS_CONFIG[d.status];
-                    return (
+              {/* Connected Domains — Lovable-style flat layout */}
+              {domains.map(d => {
+                const sc = STATUS_CONFIG[d.status];
+                return (
+                  <div key={d.id} className="space-y-4">
+                    {/* Domain header row */}
+                    <div className="flex items-center justify-between py-2 border-b border-white/[0.06]">
+                      <span className="text-sm font-medium text-white/90 font-mono">{d.domain}</span>
                       <button
-                        key={d.id}
-                        onClick={() => setSelectedDomain(selectedDomain?.id === d.id ? null : d)}
-                        className={cn(
-                          "w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left",
-                          selectedDomain?.id === d.id
-                            ? "bg-white/[0.04] border-cyan-500/20"
-                            : "bg-white/[0.02] border-white/[0.06] hover:border-white/[0.1]"
-                        )}
+                        onClick={() => handleRemoveDomain(d.id)}
+                        className="h-7 w-7 flex items-center justify-center rounded text-red-400/50 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                        title="Remove domain"
                       >
-                        <div className={cn("h-2 w-2 rounded-full shrink-0", d.status === 'active' ? 'bg-emerald-400' : d.status === 'verifying' ? 'bg-amber-400 animate-pulse' : d.status === 'setting_up' ? 'bg-blue-400 animate-pulse' : 'bg-red-400')} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-mono text-white/80 truncate">{d.domain}</span>
-                            {d.isPrimary && <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-[8px] px-1.5 py-0">Primary</Badge>}
-                          </div>
-                        </div>
-                        <Badge className={cn("text-[8px] px-1.5 py-0", sc.bg, sc.color, sc.border)}>{sc.label}</Badge>
-                        {d.sslStatus === 'active' && <Shield className="h-3 w-3 text-emerald-400/50" />}
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
-                    );
-                  })}
-                </div>
-              )}
+                    </div>
 
-              {/* Selected Domain Detail */}
-              {selectedDomain && (
-                <div className="p-4 rounded-xl border border-white/[0.08] bg-white/[0.02] space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-semibold text-white/80">{selectedDomain.domain}</h3>
-                    <div className="flex items-center gap-1">
-                      {!selectedDomain.isPrimary && selectedDomain.status === 'active' && (
-                        <Button size="sm" variant="ghost" onClick={() => handleSetPrimary(selectedDomain.id)} className="h-6 px-2 text-[9px] text-white/40 hover:text-white/70">
-                          Set Primary
-                        </Button>
-                      )}
-                      <Button size="sm" variant="ghost" onClick={() => handleRemoveDomain(selectedDomain.id)} className="h-6 w-6 p-0 text-red-400/50 hover:text-red-400 hover:bg-red-500/10">
-                        <Trash2 className="h-3 w-3" />
+                    {/* Required DNS Records */}
+                    <div className="space-y-3">
+                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">Required DNS Records</span>
+
+                      {/* TXT Record */}
+                      <div className="p-3.5 rounded-lg bg-black/30 border border-white/[0.06] space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">TXT Record (Verification)</span>
+                          {d.status !== 'verifying' && (
+                            <span className="text-[9px] text-emerald-400 flex items-center gap-1"><CheckCircle className="h-2.5 w-2.5" />Verified</span>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <div>
+                            <div className="text-[10px] text-white/30 mb-0.5">Name</div>
+                            <div className="flex items-center gap-1.5">
+                              <code className="text-[12px] text-cyan-400/80 font-mono">_ultriumai</code>
+                              <button onClick={() => copyToClipboard('_ultriumai')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-white/30 mb-0.5">Value</div>
+                            <div className="flex items-center gap-1.5">
+                              <code className="text-[12px] text-cyan-400/80 font-mono truncate">{d.txtRecord}</code>
+                              <button onClick={() => copyToClipboard(d.txtRecord!)} className="text-white/20 hover:text-white/50 transition-colors shrink-0"><Copy className="h-3 w-3" /></button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* A Record (Root) */}
+                      <div className="p-3.5 rounded-lg bg-black/30 border border-white/[0.06] space-y-2.5">
+                        <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">A Record (Root Domain)</span>
+                        <div className="space-y-2">
+                          <div>
+                            <div className="text-[10px] text-white/30 mb-0.5">Name</div>
+                            <div className="flex items-center gap-1.5">
+                              <code className="text-[12px] text-cyan-400/80 font-mono">@</code>
+                              <button onClick={() => copyToClipboard('@')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-white/30 mb-0.5">Value</div>
+                            <div className="flex items-center gap-1.5">
+                              <code className="text-[12px] text-cyan-400/80 font-mono">159.203.128.171</code>
+                              <button onClick={() => copyToClipboard('159.203.128.171')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* A Record (www) */}
+                      <div className="p-3.5 rounded-lg bg-black/30 border border-white/[0.06] space-y-2.5">
+                        <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">A Record (WWW Subdomain)</span>
+                        <div className="space-y-2">
+                          <div>
+                            <div className="text-[10px] text-white/30 mb-0.5">Name</div>
+                            <div className="flex items-center gap-1.5">
+                              <code className="text-[12px] text-cyan-400/80 font-mono">www</code>
+                              <button onClick={() => copyToClipboard('www')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-white/30 mb-0.5">Value</div>
+                            <div className="flex items-center gap-1.5">
+                              <code className="text-[12px] text-cyan-400/80 font-mono">159.203.128.171</code>
+                              <button onClick={() => copyToClipboard('159.203.128.171')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SSL Certificate */}
+                    <div className="flex items-center gap-2.5 p-3 rounded-lg bg-black/30 border border-white/[0.06]">
+                      <Shield className={cn("h-4 w-4", d.sslStatus === 'active' ? 'text-emerald-400' : 'text-white/25')} />
+                      <span className="text-[11px] text-white/50 flex-1">SSL Certificate</span>
+                      <Badge className={cn("text-[9px] px-2 py-0.5",
+                        d.sslStatus === 'active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                        d.sslStatus === 'provisioning' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                        'bg-white/5 text-white/40 border-white/10'
+                      )}>
+                        {d.sslStatus === 'active' ? 'Active' : d.sslStatus === 'provisioning' ? 'Provisioning...' : 'Pending verification'}
+                      </Badge>
+                    </div>
+
+                    {/* Verify button */}
+                    {d.status === 'verifying' && (
+                      <Button onClick={() => handleVerifyDomain(d.id)} className="w-full bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600 text-white border-0 text-xs">
+                        <RefreshCw className="h-3 w-3 mr-1.5" />Verify DNS Records
                       </Button>
-                    </div>
+                    )}
                   </div>
+                );
+              })}
 
-                  {/* DNS Records */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] text-white/30 uppercase tracking-wider">Required DNS Records</span>
-                    {/* TXT */}
-                    <div className="p-2.5 rounded-lg bg-black/30 border border-white/[0.06] space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] text-white/25 uppercase">TXT Record (Verification)</span>
-                        {selectedDomain.status !== 'verifying' && (
-                          <span className="text-[8px] text-emerald-400 flex items-center gap-1"><CheckCircle className="h-2.5 w-2.5" />Verified</span>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[10px]">
-                        <span className="text-white/25">Name</span>
-                        <div className="flex items-center gap-1">
-                          <code className="text-white/60 font-mono">_ultriumai</code>
-                          <button onClick={() => copyToClipboard('_ultriumai')} className="text-white/15 hover:text-white/40"><Copy className="h-2.5 w-2.5" /></button>
-                        </div>
-                        <span className="text-white/25">Value</span>
-                        <div className="flex items-center gap-1">
-                          <code className="text-cyan-400/60 font-mono truncate">{selectedDomain.txtRecord}</code>
-                          <button onClick={() => copyToClipboard(selectedDomain.txtRecord!)} className="text-white/15 hover:text-white/40 shrink-0"><Copy className="h-2.5 w-2.5" /></button>
-                        </div>
-                      </div>
-                    </div>
-                    {/* A Records */}
-                    {[
-                      { label: 'A Record (Root Domain)', name: '@' },
-                      { label: 'A Record (www subdomain)', name: 'www' },
-                    ].map(rec => (
-                      <div key={rec.name} className="p-2.5 rounded-lg bg-black/30 border border-white/[0.06] space-y-1.5">
-                        <span className="text-[9px] text-white/25 uppercase">{rec.label}</span>
-                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[10px]">
-                          <span className="text-white/25">Name</span>
-                          <div className="flex items-center gap-1">
-                            <code className="text-white/60 font-mono">{rec.name}</code>
-                            <button onClick={() => copyToClipboard(rec.name)} className="text-white/15 hover:text-white/40"><Copy className="h-2.5 w-2.5" /></button>
-                          </div>
-                          <span className="text-white/25">Value</span>
-                          <div className="flex items-center gap-1">
-                            <code className="text-cyan-400/60 font-mono">159.203.128.171</code>
-                            <button onClick={() => copyToClipboard('159.203.128.171')} className="text-white/15 hover:text-white/40"><Copy className="h-2.5 w-2.5" /></button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* SSL */}
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg bg-black/30 border border-white/[0.06]">
-                    <Shield className={cn("h-3.5 w-3.5", selectedDomain.sslStatus === 'active' ? 'text-emerald-400' : 'text-white/20')} />
-                    <span className="text-[10px] text-white/40 flex-1">SSL Certificate</span>
-                    <Badge className={cn("text-[8px]",
-                      selectedDomain.sslStatus === 'active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                      selectedDomain.sslStatus === 'provisioning' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                      'bg-white/5 text-white/30 border-white/10'
-                    )}>
-                      {selectedDomain.sslStatus === 'active' ? 'Active' : selectedDomain.sslStatus === 'provisioning' ? 'Provisioning...' : 'Pending verification'}
-                    </Badge>
-                  </div>
-
-                  {/* Verify */}
-                  {selectedDomain.status === 'verifying' && (
-                    <Button onClick={() => handleVerifyDomain(selectedDomain.id)} className="w-full bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600 text-white border-0 text-xs">
-                      <RefreshCw className="h-3 w-3 mr-1.5" />Verify DNS Records
-                    </Button>
-                  )}
-
-                  <p className="text-[9px] text-white/20 flex items-start gap-1.5">
-                    <AlertCircle className="h-3 w-3 shrink-0 mt-0.5" />
-                    DNS changes can take up to 48 hours to propagate. SSL is automatically provisioned once DNS is verified.
-                  </p>
-                </div>
-              )}
-
-              {/* Add Domain Form */}
+              {/* Add Domain */}
               {showAddForm ? (
                 <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.03] space-y-3">
                   <div className="flex items-center gap-2">
                     <Globe className="h-3.5 w-3.5 text-cyan-400" />
-                    <span className="text-xs font-medium text-white/80">Add Custom Domain</span>
+                    <span className="text-xs font-medium text-white/80">Connect Domain</span>
                   </div>
                   <input
                     value={newDomain}
                     onChange={e => setNewDomain(e.target.value.toLowerCase())}
-                    placeholder="example.com or app.example.com"
-                    className="w-full h-8 px-3 text-xs bg-black/30 border border-white/[0.08] rounded-lg text-white/80 outline-none focus:border-cyan-500/30 font-mono placeholder:text-white/15"
+                    placeholder="example.com"
+                    className="w-full h-9 px-3 text-xs bg-black/30 border border-white/[0.08] rounded-lg text-white/80 outline-none focus:border-cyan-500/30 font-mono placeholder:text-white/15"
                     autoFocus
                     onKeyDown={e => e.key === 'Enter' && handleAddDomain()}
                   />
                   <div className="flex gap-2">
                     <Button onClick={handleAddDomain} disabled={isAddingDomain || !newDomain.trim()} size="sm" className="flex-1 bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600 text-white border-0 text-xs h-8">
                       {isAddingDomain ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <ArrowRight className="h-3 w-3 mr-1" />}
-                      {isAddingDomain ? 'Adding...' : 'Add Domain'}
+                      {isAddingDomain ? 'Connecting...' : 'Connect Domain'}
                     </Button>
                     <Button onClick={() => { setShowAddForm(false); setNewDomain(''); }} size="sm" variant="ghost" className="text-xs h-8 text-white/40">Cancel</Button>
                   </div>
@@ -415,28 +402,15 @@ export function ProjectSettingsModal({
                   className="w-full flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-white/[0.06] hover:border-cyan-500/20 text-white/30 hover:text-cyan-400 transition-all"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  <span className="text-xs">Add Custom Domain</span>
+                  <span className="text-xs">{domains.length > 0 ? 'Add Another Domain' : 'Connect Domain'}</span>
                 </button>
               )}
 
-              {/* Help */}
+              {/* Help text when no domains */}
               {domains.length === 0 && !showAddForm && (
-                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-3">
-                  <h4 className="text-xs font-medium text-white/60">How it works</h4>
-                  <div className="space-y-2">
-                    {[
-                      { step: '1', text: 'Enter your domain name above' },
-                      { step: '2', text: 'Add the DNS records at your domain registrar' },
-                      { step: '3', text: 'Click "Verify DNS Records" — we\'ll check your configuration' },
-                      { step: '4', text: 'SSL certificate is provisioned automatically' },
-                    ].map(s => (
-                      <div key={s.step} className="flex items-start gap-2.5">
-                        <span className="h-5 w-5 rounded-full bg-cyan-500/10 text-cyan-400 text-[9px] flex items-center justify-center shrink-0 font-semibold">{s.step}</span>
-                        <span className="text-[11px] text-white/40 leading-relaxed">{s.text}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <p className="text-[10px] text-white/20 text-center px-4">
+                  Connect a custom domain to serve your app from your own URL. You'll need to configure DNS records at your registrar.
+                </p>
               )}
             </div>
           )}
