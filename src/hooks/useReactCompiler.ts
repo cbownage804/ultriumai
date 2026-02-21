@@ -270,13 +270,15 @@ export function useReactCompiler() {
             if (hasNoDefault) {
               parts.push(`var ${defaultImport} = window.${importVar} || {};`);
             } else {
-              parts.push(`var ${defaultImport} = (window.${importVar} || {}).default || window.${importVar} || {};`);
+              // Phase 100: Proxy fallback for default imports (e.g., framer-motion's `motion`)
+              parts.push(`var ${defaultImport} = (window.${importVar} || {}).default || new Proxy(window.${importVar} || {}, { get: function(_, p) { if (typeof p === 'symbol') return function() { return ''; }; return (window.${importVar} || {})[p] || function(props) { return React.createElement(typeof p === 'string' && /^[a-z]/.test(p) ? p : 'div', props); }; } });`);
             }
           }
           if (namedImports) {
             const names = namedImports.split(',').map((n: string) => n.trim().split(/\s+as\s+/));
             const destructure = names.map(([orig, alias]: string[]) => alias ? `${orig.trim()}: ${alias.trim()}` : orig.trim()).join(', ');
-            parts.push(`var { ${destructure} } = window.${importVar} || {};`);
+            // Phase 100: Proxy fallback — undefined components render as <span> instead of crashing React
+            parts.push(`var { ${destructure} } = new Proxy(window.${importVar} || {}, { get: function(t, p) { if (typeof p === 'symbol' || p === 'toString' || p === 'valueOf') return function() { return ''; }; return t[p] != null ? t[p] : function(props) { return React.createElement('span', props); }; } });`);
           }
           return parts.length > 0 ? parts.join('\n') : `// [external] ${specifier}`;
         }
@@ -750,7 +752,8 @@ window.ENV = ${JSON.stringify(envObj)};
       // Phase 99: Phase A — Pre-load external packages (async, no Babel needed)
       ${Array.from(allExternalPackages).map(pkg => {
         const varName = `__pkg_${pkg.replace(/[^a-zA-Z0-9]/g, '_')}`;
-        return `window.${varName} = {};\n      try { window.${varName} = await import('${pkg}'); } catch(__e) { console.warn('Failed to load ${pkg}:', __e); }`;
+        // Phase 100: CDN retry with jsdelivr fallback
+        return `window.${varName} = {};\n      try { window.${varName} = await import('${pkg}'); } catch(__e) { try { window.${varName} = await import('https://cdn.jsdelivr.net/npm/${pkg}/+esm'); } catch(__e2) { console.warn('Package ${pkg} unavailable from both CDNs'); } }`;
       }).join('\n      ')}
 
       // Phase 99: Phase B — Synchronous code execution (Babel sourceType: 'script')
@@ -760,7 +763,7 @@ window.ENV = ${JSON.stringify(envObj)};
     var { createRoot, createPortal, flushSync } = ReactDOM;
     ${options?.supabaseConfig ? `var supabase = window.__supabaseClient;` : ''}
 
-    ${transpiledChunks.join('\n\n')}
+    ${transpiledChunks.map(chunk => `try { ${chunk} } catch(__chunkErr) { console.error('[Module Error]', __chunkErr.message); }`).join('\n\n')}
 
     ${mountScript}
       `)};
