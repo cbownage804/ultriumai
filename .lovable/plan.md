@@ -1,133 +1,72 @@
 
 
-## Fix: Tab-Switch State Loss (Round 2)
+## Permanent Fix: Project State Loss on Tab Switch
 
-### Root Cause
+### Root Cause Found
 
-The previous fix added synchronous localStorage save + restore, which is the right approach. However, it still fails for real projects because:
+There is a **data-destroying bug** in the localStorage save logic. The `trySet` helper calls `localStorage.removeItem(DRAFT_KEY)` before every write attempt. When the write fails (quota exceeded), the old draft has already been deleted. Each fallback tier repeats this, so if all tiers fail, the project data is permanently lost.
 
-1. **localStorage quota overflow**: The `writeDraft` function serializes the entire project (files + messages) into a single JSON string. A real generated site with 4 files of HTML/CSS/JS plus AI chat messages easily exceeds localStorage's ~5MB limit. The `catch {}` block silently swallows the `QuotaExceededError`, so the save never actually persists -- but the code thinks it did.
+This means switching tabs actually **deletes** the user's work instead of saving it.
 
-2. **Messages bloat**: The `messages` array contains full AI responses with embedded code blocks, which are the largest contributor to storage size.
+### Fix Strategy
 
-### Solution
+Three changes to make persistence bulletproof:
 
-**A. Make localStorage save resilient to quota limits** (`useDraftPersistence.ts`)
+---
 
-- Add a tiered save strategy inside `writeDraft`:
-  1. Try saving everything (files + messages)
-  2. If that throws (quota exceeded), retry with messages trimmed to just metadata (role, timestamp) -- strip the large `content` field
-  3. If that still fails, retry with files only (no messages at all)
-  4. If even that fails, silently give up (truly out of space)
-- This ensures the most important data (the generated files) survives even when localStorage is tight.
+### Change 1: Fix the destructive save in `useDraftPersistence.ts`
 
-**B. Add a console warning on save failure** (`useDraftPersistence.ts`)
+- Move `localStorage.removeItem` to happen only ONCE, at the top of `writeDraft`, but ONLY after confirming the new data can be serialized successfully
+- Use a "write-then-swap" pattern: serialize the data first, remove old, then write. If the write fails, keep a backup of the old data and restore it
+- This prevents the "delete old, fail to write new" data loss scenario
 
-- Instead of completely silent failure, log a `console.warn` so developers can diagnose issues. Still no user-facing error since it's a background save.
+### Change 2: Make IDB the primary persistence, localStorage as backup
 
-**C. Harden the restore effect** (`AIAppBuilderWorkspace.tsx`)
+- In the `visibilitychange` handler, the IDB immediate save is wrapped in a `try/catch` that silently ignores failures. Since IDB has no size limit (unlike localStorage's 5MB), it should be treated as the primary storage
+- Make the flushDraft function `await` the IDB save (using a sync-compatible approach for `beforeunload`)
+- On tab return, check IDB first (it has no quota issues), then fall back to localStorage
 
-- Use a `mounted` ref guard to prevent the IDB async callback from applying state after the component unmounts or after localStorage already restored successfully.
-- Add a `hasRestoredRef` to prevent double-restoration if both localStorage and IDB succeed.
+### Change 3: Always re-hydrate on tab return, not just when state is empty
 
-### Changes
+- The current guard `if (current.files.length === 0 && current.messages.length === 0)` is too strict. If React state was partially corrupted or the component re-rendered with defaults, this check might not trigger
+- Change to: always read from storage on visibility change to `visible`, and compare timestamps. If storage is newer, restore from it. If React state is current, do nothing
+
+---
+
+### Technical Details
 
 **File 1: `src/hooks/useDraftPersistence.ts`**
 
-Update `writeDraft` with tiered fallback:
+Replace the `writeDraft` function:
 
-```typescript
-const writeDraft = useCallback((name: string, files: ProjectFile[], messages: any[]) => {
-  const trySet = (data: DraftData): boolean => {
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
-      return true;
-    } catch {
-      return false;
-    }
-  };
+```text
+writeDraft flow (before - BROKEN):
+  trySet(full):   removeItem -> setItem FAILS -> data GONE
+  trySet(slim):   removeItem -> setItem FAILS -> data GONE
+  trySet(files):  removeItem -> setItem FAILS -> data GONE
+  Result: complete data loss
 
-  const baseDraft: DraftData = {
-    name,
-    files: files.map(f => ({ path: f.path, content: f.content, language: f.language })),
-    messages,
-    savedAt: new Date().toISOString(),
-  };
-
-  // Tier 1: Full save (files + messages)
-  if (trySet(baseDraft)) return;
-
-  // Tier 2: Files + slim messages (strip large content)
-  console.warn('[Draft] localStorage quota exceeded, saving without message content');
-  const slimMessages = messages.map((m: any) => ({
-    role: m.role, timestamp: m.timestamp,
-    content: typeof m.content === 'string' ? m.content.slice(0, 200) : '',
-  }));
-  if (trySet({ ...baseDraft, messages: slimMessages })) return;
-
-  // Tier 3: Files only (no messages)
-  console.warn('[Draft] localStorage still full, saving files only');
-  if (trySet({ ...baseDraft, messages: [] })) return;
-
-  // Tier 4: Give up
-  console.warn('[Draft] localStorage completely full, draft not saved');
-}, []);
+writeDraft flow (after - SAFE):
+  backup = getItem(key)        // save old draft in memory
+  removeItem(key)              // free quota
+  try setItem(full)            // attempt write
+  try setItem(slim)            // fallback 1
+  try setItem(files)           // fallback 2
+  if all failed: setItem(backup)  // RESTORE old draft
+  Result: at worst, old draft survives
 ```
 
 **File 2: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-Add a `hasRestoredRef` guard to the restore effect to prevent race conditions:
-
-```typescript
-const hasRestoredRef = useRef(false);
-
-useEffect(() => {
-  if (initialProjectId || isNewProject) return;
-  if (project.files.length > 0 || messages.length > 0) return;
-  if (hasRestoredRef.current) return;
-
-  // SYNC FIRST: Try localStorage immediately
-  const lsDraft = loadDraft();
-  if (lsDraft && (lsDraft.files.length > 0 || lsDraft.messages.length > 0)) {
-    hasRestoredRef.current = true;
-    setFiles(lsDraft.files);
-    renameProject(lsDraft.name);
-    if (lsDraft.messages.length > 0) {
-      setMessages(lsDraft.messages.map((m: any) => ({
-        ...m, timestamp: new Date(m.timestamp)
-      })));
-    }
-  }
-
-  // ASYNC SECOND: Check IDB for more complete data
-  let cancelled = false;
-  (async () => {
-    try {
-      const idbSession = await idbPersistence.checkRecovery();
-      if (cancelled || !idbSession) return;
-      const idbTotal = (idbSession.files?.length || 0) + (idbSession.messages?.length || 0);
-      const lsTotal = (lsDraft?.files?.length || 0) + (lsDraft?.messages?.length || 0);
-      if (idbTotal > lsTotal) {
-        hasRestoredRef.current = true;
-        setFiles(idbSession.files);
-        renameProject(idbSession.name);
-        if (idbSession.messages.length > 0) {
-          setMessages(idbSession.messages.map((m: any) => ({
-            ...m, timestamp: new Date(m.timestamp)
-          })));
-        }
-      }
-    } catch { /* IDB unavailable */ }
-  })();
-
-  return () => { cancelled = true; };
-}, []);
-```
+Update the `handleVisibility` function in the `visibilitychange` effect:
+- On `visible`: always compare storage draft timestamp vs React state. If storage is newer or React state looks empty/stale, re-hydrate
+- On `hidden`: flush to both localStorage and IDB (unchanged, but with safe write logic)
 
 ### Summary
 
-| Problem | Cause | Fix |
-|---------|-------|-----|
-| State lost on tab switch | localStorage save silently fails due to 5MB quota | Tiered save: full -> slim messages -> files only |
-| Potential double-restore race | IDB async callback applies after LS already restored | `hasRestoredRef` guard + cancellation token |
+| Problem | Root Cause | Fix |
+|---------|-----------|-----|
+| Data lost on tab switch | `removeItem` before `setItem` destroys old draft when write fails | Backup old draft in memory, restore if write fails |
+| Large projects can't save to localStorage | 5MB quota limit | IDB as primary (no limit), localStorage as fallback with safe writes |
+| Re-hydration doesn't always trigger | Guard too strict (both files AND messages must be empty) | Always compare timestamps on tab return |
 
