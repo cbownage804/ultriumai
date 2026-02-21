@@ -1287,8 +1287,8 @@ export function BuilderChatPanel({
             placeholder="Search messages..."
             className="flex-1 bg-transparent text-[11px] text-white/60 placeholder:text-white/20 outline-none"
           />
-          <span className="text-[9px] text-white/20">
-            {messageSearch ? `${messages.filter(m => m.content.toLowerCase().includes(messageSearch.toLowerCase())).length} found` : ''}
+          <span className="text-[9px] text-white/20 shrink-0">
+            {messageSearch ? `${messages.filter(m => m.content.toLowerCase().includes(messageSearch.toLowerCase())).length} of ${messages.length}` : ''}
           </span>
           <button onClick={() => { setShowSearch(false); setMessageSearch(''); }} className="text-white/20 hover:text-white/50">
             <X className="h-3 w-3" />
@@ -1296,17 +1296,39 @@ export function BuilderChatPanel({
         </div>
       )}
 
-      {/* Pinned messages section */}
-      {messages.some(m => m.pinned) && (
-        <div className="border-b border-white/[0.06] bg-amber-500/[0.02] px-3 py-2 max-h-28 overflow-auto">
-          <div className="text-[10px] text-amber-400/50 uppercase tracking-wider font-medium mb-1 flex items-center gap-1">
-            <Pin className="h-2.5 w-2.5" /> Pinned
+      {/* Pinned messages section — collapsible */}
+      {messages.some(m => m.pinned) && (() => {
+        const pinnedMsgs = messages.filter(m => m.pinned);
+        return (
+          <div className="border-b border-white/[0.06] bg-amber-500/[0.02]">
+            <button
+              onClick={() => setThinkingCollapsed(prev => ({ ...prev, __pinned__: !prev.__pinned__ }))}
+              className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-white/[0.02] transition-colors"
+            >
+              <div className="text-[10px] text-amber-400/50 uppercase tracking-wider font-medium flex items-center gap-1">
+                <Pin className="h-2.5 w-2.5" /> Pinned ({pinnedMsgs.length})
+              </div>
+              <ChevronDown className={cn("h-2.5 w-2.5 text-white/20 transition-transform", thinkingCollapsed.__pinned__ && "-rotate-90")} />
+            </button>
+            {!thinkingCollapsed.__pinned__ && (
+              <div className="px-3 pb-2 max-h-28 overflow-auto space-y-0.5">
+                {pinnedMsgs.map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      const el = document.getElementById(`msg-${m.id}`);
+                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    className="w-full text-left text-[11px] text-white/50 truncate py-0.5 hover:text-white/70 transition-colors"
+                  >
+                    {m.role === 'user' ? '👤 ' : '🤖 '}{getCleanUserContent(m.content).slice(0, 120)}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          {messages.filter(m => m.pinned).map(m => (
-            <div key={m.id} className="text-[11px] text-white/50 truncate py-0.5">{m.content.slice(0, 120)}</div>
-          ))}
-        </div>
-      )}
+        );
+      })()}
 
       {/* Version History Drawer */}
       {showHistory && versions.length > 0 && (
@@ -1437,10 +1459,12 @@ export function BuilderChatPanel({
               return (
               <Wrapper
                 key={msg.id}
+                id={`msg-${msg.id}`}
                 {...wrapperProps}
                 className={cn(
                   'group/msg relative',
-                  msg.role === 'user' ? 'flex justify-end' : ''
+                  msg.role === 'user' ? 'flex justify-end' : '',
+                  messageSearch && msg.content.toLowerCase().includes(messageSearch.toLowerCase()) ? 'ring-1 ring-cyan-500/30 rounded-xl' : ''
                 )}
               >
                 <div className="relative max-w-[90%]">

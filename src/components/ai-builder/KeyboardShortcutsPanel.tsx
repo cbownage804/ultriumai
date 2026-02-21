@@ -14,11 +14,15 @@ const SHORTCUTS: Shortcut[] = [
   { keys: ['⌘', 'S'], description: 'Save project', category: 'Navigation' },
   { keys: ['⌘', '⇧', 'F'], description: 'Search across files', category: 'Navigation' },
   { keys: ['⌘', '/'], description: 'Show keyboard shortcuts', category: 'Navigation' },
+  { keys: ['⌘', 'B'], description: 'Toggle file tree', category: 'Navigation' },
   { keys: ['⌘', 'Z'], description: 'Undo', category: 'Editing' },
   { keys: ['⌘', '⇧', 'Z'], description: 'Redo', category: 'Editing' },
   { keys: ['Enter'], description: 'Send message', category: 'Chat' },
   { keys: ['⇧', 'Enter'], description: 'New line in chat', category: 'Chat' },
+  { keys: ['⌘', 'Enter'], description: 'Quick send', category: 'Chat' },
   { keys: ['Esc'], description: 'Stop generation', category: 'Chat' },
+  { keys: ['⌘', 'E'], description: 'Toggle preview/code', category: 'Build' },
+  { keys: ['⌘', 'J'], description: 'Toggle console', category: 'Build' },
 ];
 
 interface KeyboardShortcutsPanelProps {

@@ -8,6 +8,7 @@ export interface TimelineSnapshot {
   timestamp: Date;
   messageId?: string;
   type: 'auto' | 'manual' | 'ai-generation' | 'revert';
+  commitMessage?: string;
 }
 
 const IDB_NAME = 'ai-builder-versions';
@@ -109,7 +110,7 @@ export function useVersionTimeline() {
     return () => clearTimeout(saveDebounce.current);
   }, [snapshots]);
 
-  const addSnapshot = useCallback((label: string, files: ProjectFile[], type: TimelineSnapshot['type'] = 'auto', messageId?: string) => {
+  const addSnapshot = useCallback((label: string, files: ProjectFile[], type: TimelineSnapshot['type'] = 'auto', messageId?: string, commitMessage?: string) => {
     if (files.length === 0) return;
     const snapshot: TimelineSnapshot = {
       id: crypto.randomUUID(),
@@ -118,6 +119,7 @@ export function useVersionTimeline() {
       timestamp: new Date(),
       messageId,
       type,
+      commitMessage,
     };
     setSnapshots(prev => {
       const newSnapshots = [...prev, snapshot].slice(-50);
