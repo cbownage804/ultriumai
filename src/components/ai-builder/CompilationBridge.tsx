@@ -150,6 +150,8 @@ export function CompilationBridge({
     if (stableHTMLRef.current && filesDigest !== prevFilesDigestRef.current) {
       prevFilesDigestRef.current = filesDigest;
       setStableHTML(null);
+      // Also unlock compilation so restored/changed files can recompile
+      compilationLockRef.current = false;
       // Don't return — fall through to start recompilation
     } else if (stableHTMLRef.current) {
       return;
