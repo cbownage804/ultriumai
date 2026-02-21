@@ -14,6 +14,8 @@ interface ProjectFileTreeProps {
   onDeleteFile: (path: string) => void;
   onCreateFile?: (path: string) => void;
   onRenameFile?: (oldPath: string, newPath: string) => void;
+  /** Previous files snapshot for diff indicators */
+  previousFiles?: ProjectFile[];
 }
 
 function getFileIcon(path: string) {
@@ -92,6 +94,7 @@ function TreeItem({
   node, depth, activeFilePath, expandedFolders, searchQuery,
   onSelectFile, onDeleteFile, onToggleFolder, renamingPath, renameValue,
   onStartRename, onRenameChange, onFinishRename, onCancelRename, onRenameFile, onDownload,
+  fileStatus,
 }: {
   node: TreeNode;
   depth: number;
@@ -109,6 +112,7 @@ function TreeItem({
   onCancelRename: () => void;
   onRenameFile?: (oldPath: string, newPath: string) => void;
   onDownload: (file: ProjectFile) => void;
+  fileStatus?: Map<string, 'new' | 'modified'>;
 }) {
   const isExpanded = expandedFolders.has(node.path);
   const isActive = activeFilePath === node.path;
@@ -158,6 +162,7 @@ function TreeItem({
             onCancelRename={onCancelRename}
             onRenameFile={onRenameFile}
             onDownload={onDownload}
+            fileStatus={fileStatus}
           />
         ))}
       </div>
@@ -166,6 +171,7 @@ function TreeItem({
 
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
+  const status = fileStatus?.get(node.path);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -206,6 +212,12 @@ function TreeItem({
             />
           ) : (
             <span className="truncate flex-1 font-mono">{node.name}</span>
+          )}
+          {status && (
+            <div className={cn(
+              "h-1.5 w-1.5 rounded-full shrink-0 ml-1",
+              status === 'new' ? "bg-emerald-400" : "bg-amber-400"
+            )} title={status === 'new' ? 'New file' : 'Modified'} />
           )}
         </button>
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
@@ -269,7 +281,7 @@ function TreeItem({
   );
 }
 
-export function ProjectFileTree({ files, activeFilePath, onSelectFile, onDeleteFile, onCreateFile, onRenameFile }: ProjectFileTreeProps) {
+export function ProjectFileTree({ files, activeFilePath, onSelectFile, onDeleteFile, onCreateFile, onRenameFile, previousFiles }: ProjectFileTreeProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const [renamingPath, setRenamingPath] = useState<string | null>(null);
@@ -291,6 +303,19 @@ export function ProjectFileTree({ files, activeFilePath, onSelectFile, onDeleteF
   }, [files.length]);
 
   const tree = useMemo(() => buildNestedTree(files), [files]);
+
+  // Compute file diff status compared to previousFiles
+  const fileStatus = useMemo(() => {
+    if (!previousFiles || previousFiles.length === 0) return undefined;
+    const statusMap = new Map<string, 'new' | 'modified'>();
+    const prevMap = new Map(previousFiles.map(f => [f.path, f.content]));
+    for (const f of files) {
+      const prev = prevMap.get(f.path);
+      if (prev === undefined) statusMap.set(f.path, 'new');
+      else if (prev !== f.content) statusMap.set(f.path, 'modified');
+    }
+    return statusMap.size > 0 ? statusMap : undefined;
+  }, [files, previousFiles]);
 
   const filteredTree = useMemo(() => {
     if (!searchQuery.trim()) return tree;
@@ -446,6 +471,7 @@ export function ProjectFileTree({ files, activeFilePath, onSelectFile, onDeleteF
               onCancelRename={() => { setRenamingPath(null); setRenameValue(''); }}
               onRenameFile={onRenameFile}
               onDownload={downloadFile}
+              fileStatus={fileStatus}
             />
           ))}
         </div>
