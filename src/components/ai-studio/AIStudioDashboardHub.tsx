@@ -486,7 +486,7 @@ export const AIStudioDashboardHub = () => {
                   <Badge className="absolute top-2 left-2 text-[10px] bg-violet-500/80 border-0">App</Badge>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <button className="absolute top-2 right-2 h-6 w-6 rounded-md bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60">
+                      <button className="absolute top-2 right-2 h-6 w-6 rounded-md bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity hover:bg-black/60">
                         <MoreVertical className="h-3.5 w-3.5 text-white/80" />
                       </button>
                     </DropdownMenuTrigger>
@@ -533,7 +533,7 @@ export const AIStudioDashboardHub = () => {
                   <Badge className="absolute top-2 left-2 text-[10px] bg-primary/80 border-0">GPT</Badge>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <button className="absolute top-2 right-2 h-6 w-6 rounded-md bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60">
+                      <button className="absolute top-2 right-2 h-6 w-6 rounded-md bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity hover:bg-black/60">
                         <MoreVertical className="h-3.5 w-3.5 text-white/80" />
                       </button>
                     </DropdownMenuTrigger>
