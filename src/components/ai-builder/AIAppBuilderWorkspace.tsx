@@ -2261,7 +2261,7 @@ export function AIAppBuilderWorkspace() {
             ) : (
             <ResizablePanel defaultSize={28} minSize={20} maxSize={40}>
               <div className="h-full relative flex flex-col">
-                <button onClick={() => setIsChatCollapsed(true)} className="absolute top-2 right-2 z-10 h-6 w-6 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors" title="Collapse chat">
+                <button onClick={() => setIsChatCollapsed(true)} className="absolute top-12 right-1 z-10 h-6 w-6 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors" title="Collapse chat">
                   <PanelLeftClose className="h-3.5 w-3.5" />
                 </button>
                 {/* Agent mode step tracker */}
