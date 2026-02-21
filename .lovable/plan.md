@@ -1,63 +1,35 @@
 
 
-## Fix: Two Remaining Runtime Errors
+## Fix: "Failed to resolve module specifier 'lucide-react'"
 
-### Issue 1: "Cannot create property '__compileTimer' on number"
+### Root Cause
 
-In `CompilationBridge.tsx` line 193, `rafId` is the return value of `requestAnimationFrame()`, which is a plain number. The code tries to attach a property to it:
-```js
-(rafId as any).__compileTimer = compileTimer;
-```
-This is illegal in JavaScript -- you cannot set properties on primitive numbers.
-
-**Fix**: Store `compileTimer` in a separate `let` variable declared alongside `rafId`, so cleanup can clear both independently.
-
-```typescript
-let compileTimerId: ReturnType<typeof setTimeout>;
-// ...
-const rafId = requestAnimationFrame(() => {
-  compileTimerId = setTimeout(() => { ... }, 50);
-});
-
-return () => {
-  cancelled = true;
-  cancelAnimationFrame(rafId);
-  clearTimeout(compileTimerId);
-  clearTimeout(safetyTimeout);
-};
+In `src/hooks/useReactCompiler.ts` line 473:
+```javascript
+const importMap = generateImportMap(options?.userPackages || []);
 ```
 
-### Issue 2: "Cannot access 'ReactDOM' before initialization"
+The `generateImportMap` function only adds the packages passed to it. `DEFAULT_PACKAGES` (defined in `cdnPackageRegistry.ts`) contains lucide-react, framer-motion, recharts, react-router-dom, and 20+ other common packages -- but they are never passed in. The resulting import map only has react and react-dom entries.
 
-In `useReactCompiler.ts` line 201, when the import is `import ReactDOM from 'react-dom'`, the compiler generates:
-```js
-const ReactDOM = ReactDOM;
-```
-This creates a Temporal Dead Zone -- the local `const` shadows the global `ReactDOM` before the right-hand side can read it.
+When the transpiler converts `import { Home } from 'lucide-react'` into `await import('lucide-react')`, the browser tries to resolve the bare specifier via the import map, finds no entry, and throws "Failed to resolve module specifier 'lucide-react'".
 
-**Fix**: Add the same guard used for React -- skip the declaration when the default import name matches the global:
+### Fix (single line change in `src/hooks/useReactCompiler.ts`)
 
-```typescript
-if (specifier === 'react-dom' || specifier === 'react-dom/client') {
-  if (defaultImport && defaultImport !== 'ReactDOM') return `const ${defaultImport} = ReactDOM;`;
-  if (namedImports) {
-    const names = namedImports.split(',').map(n => n.trim().split(/\s+as\s+/));
-    return names
-      .filter(([orig, alias]) => {
-        const target = (alias || orig).trim();
-        return target !== orig.trim() || !['createRoot','hydrateRoot','render','hydrate'].includes(target);
-      })
-      .map(([orig, alias]) => `const ${(alias || orig).trim()} = ReactDOM.${orig.trim()};`)
-      .join('\n');
-  }
-  return '';
-}
+Change line 473 from:
+```javascript
+const importMap = generateImportMap(options?.userPackages || []);
 ```
 
-This prevents `const createRoot = ReactDOM.createRoot;` when `createRoot` is already destructured from the global, and prevents `const ReactDOM = ReactDOM;` entirely.
+to:
+```javascript
+const importMap = generateImportMap([...DEFAULT_PACKAGES, ...(options?.userPackages || [])]);
+```
+
+This ensures all default CDN packages (lucide-react, framer-motion, recharts, date-fns, clsx, zustand, etc.) are included in the HTML import map, allowing the browser to resolve them at runtime.
+
+`DEFAULT_PACKAGES` is already imported at line 3 of the file, so no new imports are needed.
 
 ### Files to Edit
 
-1. **`src/components/ai-builder/CompilationBridge.tsx`** -- fix `__compileTimer` property assignment on number
-2. **`src/hooks/useReactCompiler.ts`** -- fix ReactDOM TDZ, same pattern as the React fix
+1. **`src/hooks/useReactCompiler.ts`** -- line 473: include `DEFAULT_PACKAGES` in the import map generation call
 
