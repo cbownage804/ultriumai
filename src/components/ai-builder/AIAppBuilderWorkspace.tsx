@@ -955,8 +955,12 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     if (prevIsGeneratingRef.current && !isGenerating) {
       postGenTimestampRef.current = Date.now();
+      // Immediately save to cloud when generation finishes so project appears in recents
+      if (project.files.length > 0) {
+        saveProject(project.name, project.files, undefined, undefined, messages, { versions });
+      }
     }
-  }, [isGenerating]);
+  }, [isGenerating]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save to IndexedDB (Phase 10 — fast local persistence)
   const sessionId = currentProjectId || 'draft';
