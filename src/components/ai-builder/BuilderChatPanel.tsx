@@ -339,6 +339,15 @@ export function BuilderChatPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const contextWarningShown = useRef(false);
+
+  // Context budget warning toast at 80%
+  useEffect(() => {
+    if (contextBudget && contextBudget.percentUsed >= 80 && !contextWarningShown.current) {
+      contextWarningShown.current = true;
+      toast.warning('Context window 80% full — consider starting a new conversation', { duration: 6000 });
+    }
+  }, [contextBudget]);
 
   // Local state for streaming content — polls ref every 300ms, only THIS component re-renders
   const [localStreamContent, setLocalStreamContent] = useState('');
@@ -922,6 +931,61 @@ export function BuilderChatPanel({
 
         {/* Removed: conversational summary text — task card is sufficient */}
 
+        {/* Build changes summary — created/modified/deleted */}
+        {isCompleted && fileNames.length > 0 && !isStreaming && (
+          <div className="flex flex-wrap gap-1.5 px-1">
+            {(() => {
+              const created = fileNames.filter(f => !previousFiles.some(p => p.path === f));
+              const modified = fileNames.filter(f => previousFiles.some(p => p.path === f));
+              return (
+                <>
+                  {created.length > 0 && <span className="text-[10px] text-emerald-400/60 flex items-center gap-1"><Plus className="h-2.5 w-2.5" />{created.length} created</span>}
+                  {modified.length > 0 && <span className="text-[10px] text-cyan-400/60 flex items-center gap-1"><Pencil className="h-2.5 w-2.5" />{modified.length} modified</span>}
+                </>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* Inline diffs — collapsible per file */}
+        {isCompleted && !isStreaming && previousFiles.length > 0 && fileNames.length > 0 && (
+          <div className="space-y-1">
+            {fileNames.map(name => {
+              const prev = previousFiles.find(p => p.path === name);
+              const curr = latestFiles.find(p => p.path === name);
+              if (!prev || !curr) return null;
+              const diffId = `${msg.id}-${name}`;
+              const isExpanded = expandedBuildMessages.has(diffId);
+              // Quick line count
+              const added = curr.content.split('\n').length - prev.content.split('\n').length;
+              return (
+                <div key={name} className="rounded-lg border border-white/[0.06] overflow-hidden">
+                  <button
+                    onClick={() => {
+                      setExpandedBuildMessages(s => {
+                        const n = new Set(s);
+                        if (n.has(diffId)) n.delete(diffId); else n.add(diffId);
+                        return n;
+                      });
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-white/40 hover:text-white/60 hover:bg-white/[0.02] transition-colors"
+                  >
+                    <ChevronDown className={cn("h-2.5 w-2.5 transition-transform", !isExpanded && "-rotate-90")} />
+                    <FileCode className="h-3 w-3" />
+                    <span className="font-mono truncate">{name.split('/').pop()}</span>
+                    <span className="ml-auto text-[9px]">
+                      {added >= 0 ? <span className="text-emerald-400/50">+{added}</span> : <span className="text-red-400/50">{added}</span>}
+                    </span>
+                  </button>
+                  {isExpanded && (
+                    <CodeDiffViewer oldContent={prev.content} newContent={curr.content} fileName={name} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Inline error recovery */}
         {msg.inlineError && !isStreaming && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/[0.06] border border-red-500/20 text-xs">
@@ -1458,7 +1522,22 @@ export function BuilderChatPanel({
               </PopoverTrigger>
               <PopoverContent side="top" align="start" className="w-48 p-1 bg-[#1a1a22] border-white/[0.1] shadow-xl">
                 <button
-                  onClick={() => { setPlusMenuOpen(false); /* screenshot placeholder */ }}
+                  onClick={async () => {
+                    setPlusMenuOpen(false);
+                    try {
+                      // Find the preview iframe
+                      const iframe = document.querySelector('iframe[title="Preview"]') as HTMLIFrameElement | null;
+                      if (!iframe) { toast.error('No preview to capture'); return; }
+                      const html2canvas = (await import('html2canvas')).default;
+                      const canvas = await html2canvas(iframe.contentDocument?.body || iframe, {
+                        width: iframe.clientWidth, height: iframe.clientHeight,
+                        scale: 0.5, useCORS: true, allowTaint: true, backgroundColor: '#0a0a0a', logging: false,
+                      });
+                      const dataUrl = canvas.toDataURL('image/png', 0.8);
+                      setImagePreviews(prev => [...prev, dataUrl]);
+                      toast.success('Screenshot captured');
+                    } catch { toast.error('Could not capture screenshot'); }
+                  }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
                 >
                   <Camera className="h-4 w-4 text-white/40" />
@@ -1532,20 +1611,33 @@ export function BuilderChatPanel({
                 <Square className="h-3 w-3" />
               </button>
             ) : (
-              <button
-                onClick={handleSend}
-                disabled={!input.trim()}
-                className={cn(
-                  "h-8 w-8 rounded-lg flex items-center justify-center transition-all shrink-0",
-                  input.trim()
-                    ? mode === 'build'
-                      ? "bg-gradient-to-br from-violet-500 to-violet-400 text-white hover:opacity-90 shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
-                      : "bg-gradient-to-br from-cyan-500 to-cyan-400 text-black hover:opacity-90 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40"
-                    : "bg-white/5 text-white/20"
+              <div className="flex items-center gap-1.5 shrink-0">
+                {/* Credit cost badge */}
+                {input.trim() && (
+                  <span className={cn(
+                    "text-[9px] font-medium px-1.5 py-0.5 rounded-md border",
+                    mode === 'build'
+                      ? "text-amber-400/70 bg-amber-500/[0.08] border-amber-500/20"
+                      : "text-emerald-400/70 bg-emerald-500/[0.08] border-emerald-500/20"
+                  )}>
+                    {mode === 'build' ? '1 credit' : 'Free'}
+                  </span>
                 )}
-              >
-                <Send className="h-3.5 w-3.5" />
-              </button>
+                <button
+                  onClick={handleSend}
+                  disabled={!input.trim()}
+                  className={cn(
+                    "h-8 w-8 rounded-lg flex items-center justify-center transition-all",
+                    input.trim()
+                      ? mode === 'build'
+                        ? "bg-gradient-to-br from-violet-500 to-violet-400 text-white hover:opacity-90 shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
+                        : "bg-gradient-to-br from-cyan-500 to-cyan-400 text-black hover:opacity-90 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40"
+                      : "bg-white/5 text-white/20"
+                  )}
+                >
+                  <Send className="h-3.5 w-3.5" />
+                </button>
+              </div>
             )}
           </div>
           {/* Bottom bar: mode toggle + model selector */}
@@ -1670,7 +1762,7 @@ export function BuilderChatPanel({
               )}
               {(() => {
                 const userMsgCount = messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length;
-                if (userMsgCount === 0) return <span className="text-[9px] text-white/40 font-mono flex items-center gap-1"><Zap className="h-2.5 w-2.5 text-amber-400/60" />1 credit/msg</span>;
+                if (userMsgCount === 0) return <span className="text-[9px] text-white/40 font-mono flex items-center gap-1"><Coins className="h-2.5 w-2.5 text-amber-400/60" />{mode === 'build' ? '1 credit' : 'Free'}</span>;
                 const analysis = analyzeConversationComplexity(messages.map(m => ({ role: m.role, content: m.content })));
                 const userTexts = messages.filter(m => m.role === 'user').map(m => m.content);
                 const tone = detectCommunicationStyle(userTexts);
