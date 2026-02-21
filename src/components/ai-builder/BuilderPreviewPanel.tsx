@@ -181,6 +181,7 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
   const healthCheckRef = useRef<NodeJS.Timeout | null>(null);
   const consecutiveFailsRef = useRef(0);
   const lastGoodHtmlRef = useRef<string | null>(null);
+  const lastHealthToastRef = useRef(0);
   const HEALTH_CHECK_INTERVAL = 2000;
   const MAX_CONSECUTIVE_FAILS = 3;
 
@@ -218,7 +219,11 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
 
       if (consecutiveFailsRef.current >= MAX_CONSECUTIVE_FAILS) {
         consecutiveFailsRef.current = 0;
-        toast.error('Preview crashed — rolled back to last working version', { duration: 4000 });
+        const now = Date.now();
+        if (now - lastHealthToastRef.current > 30000) {
+          lastHealthToastRef.current = now;
+          toast.error('Preview crashed — rolled back to last working version', { duration: 4000 });
+        }
         // Force iframe reload
         setIframeKey(k => k + 1);
       }

@@ -192,6 +192,20 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 
+// Toast deduplication: suppress identical automated messages within 5s
+const _toastDedupeMap = new Map<string, number>();
+function dedupeToast(method: 'success' | 'error' | 'info', message: string, opts?: any) {
+  const now = Date.now();
+  const last = _toastDedupeMap.get(message) || 0;
+  if (now - last < 5000) return;
+  _toastDedupeMap.set(message, now);
+  // Prune old entries every 50 calls
+  if (_toastDedupeMap.size > 50) {
+    for (const [k, v] of _toastDedupeMap) { if (now - v > 10000) _toastDedupeMap.delete(k); }
+  }
+  toast[method](message, opts);
+}
+
 const PanelLoader = () => <div className="flex items-center justify-center h-full text-white/15 text-xs">Loading...</div>;
 
 export function AIAppBuilderWorkspace() {
@@ -753,7 +767,7 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     if (prevIsGeneratingRef.current && !isGenerating && latestFiles.length > 0) {
       const duration = buildStartTimeRef.current ? Date.now() - buildStartTimeRef.current : 0;
-      toast.success(`Generated ${latestFiles.length} file${latestFiles.length > 1 ? 's' : ''}`, {
+      dedupeToast('success', `Generated ${latestFiles.length} file${latestFiles.length > 1 ? 's' : ''}`, {
         action: { label: 'View', onClick: () => setRightTab('preview') },
       });
       setBuildNotifications(prev => [{
@@ -1211,7 +1225,7 @@ export function AIAppBuilderWorkspace() {
     const newCount = isSameError ? fixAttemptCount + 1 : 1;
     setFixAttemptCount(newCount);
     setLastFixError(error.message);
-    if (newCount > MAX_FIX_ATTEMPTS) { toast.error('Unable to auto-fix — try describing the issue differently.'); return; }
+    if (newCount > MAX_FIX_ATTEMPTS) { dedupeToast('error', 'Unable to auto-fix — try describing the issue differently.'); return; }
     const retryContext = newCount > 1 ? `\n\nThis is attempt ${newCount}/${MAX_FIX_ATTEMPTS}. Previous fix attempts did not resolve the issue. Try a COMPLETELY DIFFERENT approach — rewrite the broken function from scratch.` : '';
     const diagnosisContext = buildErrorDiagnosisContext(
       { message: error.message, source: error.source, line: error.line },
@@ -1250,7 +1264,7 @@ export function AIAppBuilderWorkspace() {
     if (rollbackFiles) {
       pushUndo('Before hot recovery rollback', project.files);
       setFiles(rollbackFiles);
-      toast.info('Auto-rolled back to last working state');
+      dedupeToast('info', 'Auto-rolled back to last working state');
       return;
     }
     // Phase 47: Use structured auto-fix loop with exponential backoff
