@@ -1012,7 +1012,24 @@ export function AIAppBuilderWorkspace() {
     };
 
     const handleVisibility = () => {
-      if (document.visibilityState === 'hidden') flushDraft();
+      if (document.visibilityState === 'hidden') {
+        flushDraft();
+      } else if (document.visibilityState === 'visible') {
+        // Safety net: If browser froze/discarded JS heap but kept the page,
+        // React state may be empty. Re-hydrate from storage.
+        const current = latestRef.current;
+        if (current.files.length === 0 && current.messages.length === 0) {
+          const draft = loadDraft();
+          if (draft && (draft.files.length > 0 || draft.messages.length > 0)) {
+            console.info('[Draft] Re-hydrating state from localStorage after tab return');
+            setFiles(draft.files);
+            renameProject(draft.name);
+            if (draft.messages.length > 0) {
+              setMessages(draft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+            }
+          }
+        }
+      }
     };
 
     document.addEventListener('visibilitychange', handleVisibility);
@@ -1023,7 +1040,7 @@ export function AIAppBuilderWorkspace() {
       window.removeEventListener('beforeunload', flushDraft);
       flushDraft(); // also flush on unmount (route change)
     };
-  }, [saveDraftImmediate, sessionId]);
+  }, [saveDraftImmediate, sessionId, loadDraft, setFiles, renameProject, setMessages]);
 
   // Strip ?new=true immediately on mount so tab recovery works on reload
   useEffect(() => {
