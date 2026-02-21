@@ -16,12 +16,14 @@ interface WorkspaceStatusBarProps {
   onToggleAutocomplete: () => void;
   isSaving: boolean;
   lastSaved: Date | null;
+  buildCount?: number;
 }
 
 export function WorkspaceStatusBar({
   hasFiles, isMobile, isGenerating, activeFileLanguage, cursorPosition,
   fileCount, activeBranchName, dirtyFilesCount,
   aiAutocompleteEnabled, onToggleAutocomplete, isSaving, lastSaved,
+  buildCount,
 }: WorkspaceStatusBarProps) {
   if (!hasFiles || isMobile) return null;
 
@@ -46,9 +48,14 @@ export function WorkspaceStatusBar({
           {dirtyFilesCount} unsaved
         </span>
       )}
+      {buildCount !== undefined && buildCount > 0 && (
+        <>
+          <div className="h-3 w-px bg-white/[0.06]" />
+          <span className="text-violet-400/50">{buildCount} build{buildCount !== 1 ? 's' : ''} today</span>
+        </>
+      )}
       <div className="flex-1" />
       <AIAutocompleteIndicator enabled={aiAutocompleteEnabled} onToggle={onToggleAutocomplete} />
-      <div className="h-3 w-px bg-white/[0.06]" />
       <div className="h-3 w-px bg-white/[0.06]" />
       <span>{isSaving ? 'Saving...' : lastSaved ? `Saved ${lastSaved.toLocaleTimeString()}` : ''}</span>
     </div>

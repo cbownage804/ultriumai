@@ -5,6 +5,7 @@ import {
   Zap, MessageCircle, Wand2, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
   LayoutGrid, Wrench, AlertTriangle, Copy, RotateCcw, Pencil, GitFork, ChevronDown, Check,
   Crosshair, ClipboardCheck, ThumbsUp, ThumbsDown, Plus, Camera, Paperclip, AtSign, ExternalLink, Clock, Coins, Link,
+  Pin, Search, RotateCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -109,6 +110,8 @@ interface BuilderChatPanelProps {
   questionsSlot?: React.ReactNode;
   /** Ref-based streaming: content ref to avoid workspace re-renders */
   streamingContentRef?: MutableRefObject<string>;
+  /** New conversation handler — clears messages but keeps files */
+  onNewConversation?: () => void;
 }
 
 
@@ -327,7 +330,7 @@ export function BuilderChatPanel({
   onForkFromMessage, onRevertToMessage, selectedModel, onModelChange,
   onToggleVisualEdit, isVisualEditActive, onOpenEditHistory, onSelectStarterTemplate, onReview,
   supabaseConfig, onUpdateMessages, questionsSlot,
-  streamingContentRef,
+  streamingContentRef, onNewConversation,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -340,6 +343,8 @@ export function BuilderChatPanel({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const contextWarningShown = useRef(false);
+  const [messageSearch, setMessageSearch] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
 
   // Context budget warning toast at 80%
   useEffect(() => {
@@ -1223,20 +1228,78 @@ export function BuilderChatPanel({
             </Tooltip>
           )}
           {messages.length > 0 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={onClear}
-                  className="h-6 w-6 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Clear chat</TooltipContent>
-            </Tooltip>
+            <>
+              {onNewConversation && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={onNewConversation}
+                      className="h-6 w-6 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors"
+                    >
+                      <RotateCw className="h-3 w-3" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">New conversation</TooltipContent>
+                </Tooltip>
+              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setShowSearch(s => !s)}
+                    className={cn("h-6 w-6 rounded-md flex items-center justify-center transition-colors", showSearch ? "text-cyan-400 bg-cyan-500/10" : "text-white/25 hover:text-white/50 hover:bg-white/5")}
+                  >
+                    <Search className="h-3 w-3" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">Search messages</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onClear}
+                    className="h-6 w-6 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">Clear chat</TooltipContent>
+              </Tooltip>
+            </>
           )}
         </div>
       </div>
+
+      {/* Search bar */}
+      {showSearch && (
+        <div className="px-3 py-1.5 border-b border-white/[0.06] flex items-center gap-2">
+          <Search className="h-3 w-3 text-white/20 shrink-0" />
+          <input
+            autoFocus
+            value={messageSearch}
+            onChange={e => setMessageSearch(e.target.value)}
+            placeholder="Search messages..."
+            className="flex-1 bg-transparent text-[11px] text-white/60 placeholder:text-white/20 outline-none"
+          />
+          <span className="text-[9px] text-white/20">
+            {messageSearch ? `${messages.filter(m => m.content.toLowerCase().includes(messageSearch.toLowerCase())).length} found` : ''}
+          </span>
+          <button onClick={() => { setShowSearch(false); setMessageSearch(''); }} className="text-white/20 hover:text-white/50">
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+
+      {/* Pinned messages section */}
+      {messages.some(m => m.pinned) && (
+        <div className="border-b border-white/[0.06] bg-amber-500/[0.02] px-3 py-2 max-h-28 overflow-auto">
+          <div className="text-[10px] text-amber-400/50 uppercase tracking-wider font-medium mb-1 flex items-center gap-1">
+            <Pin className="h-2.5 w-2.5" /> Pinned
+          </div>
+          {messages.filter(m => m.pinned).map(m => (
+            <div key={m.id} className="text-[11px] text-white/50 truncate py-0.5">{m.content.slice(0, 120)}</div>
+          ))}
+        </div>
+      )}
 
       {/* Version History Drawer */}
       {showHistory && versions.length > 0 && (

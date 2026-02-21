@@ -326,6 +326,10 @@ export interface BuilderMessage {
   migrations?: import('@/components/ai-builder/MigrationApprovalCard').MigrationBlock[];
   /** Edge function blocks parsed from AI output (Phase 16) */
   edgeFunctions?: import('@/components/ai-builder/EdgeFunctionCard').EdgeFunctionBlock[];
+  /** Whether this message is pinned by the user */
+  pinned?: boolean;
+  /** Auto-generated commit message for this build */
+  commitMessage?: string;
 }
 
 export type BuilderMode = 'build' | 'discuss';

@@ -404,12 +404,30 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
               </button>
             </div>
 
-            {/* URL bar */}
-            <div className="flex-1 flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.06] rounded-lg h-7 px-2.5 hover:border-white/[0.1] transition-colors">
+            {/* Editable URL bar */}
+            <div className="flex-1 flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.06] rounded-lg h-7 px-2.5 hover:border-white/[0.1] transition-colors focus-within:border-cyan-500/30 focus-within:ring-1 focus-within:ring-cyan-500/20">
               <Lock className="h-2.5 w-2.5 text-emerald-400/60 shrink-0" />
-              <span className="text-[11px] text-white/40 font-mono truncate">
-                localhost:3000{currentUrl}
-              </span>
+              <span className="text-[11px] text-white/25 font-mono shrink-0">localhost:3000</span>
+              <input
+                value={currentUrl}
+                onChange={e => setCurrentUrl(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    const path = currentUrl.startsWith('/') ? currentUrl : '/' + currentUrl;
+                    setCurrentUrl(path);
+                    setUrlHistory(prev => [...prev.slice(0, historyIndex + 1), path]);
+                    setHistoryIndex(prev => prev + 1);
+                    onUrlChange?.(path);
+                    // Navigate iframe via postMessage
+                    const iframe = (iframeRef as React.RefObject<HTMLIFrameElement>)?.current;
+                    if (iframe?.contentWindow) {
+                      iframe.contentWindow.postMessage({ type: '__NAVIGATE__', path }, '*');
+                    }
+                  }
+                }}
+                className="flex-1 bg-transparent text-[11px] text-white/40 font-mono outline-none min-w-0"
+                spellCheck={false}
+              />
             </div>
 
             {/* Right toolbar */}
