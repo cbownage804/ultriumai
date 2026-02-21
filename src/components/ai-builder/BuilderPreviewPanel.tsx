@@ -10,6 +10,7 @@ import { PreviewZoomControls } from './PreviewZoomControls';
 import { VisualEditOverlay } from './VisualEditOverlay';
 import { ResponsivePreviewBar, type ViewportMode, getViewportWidth } from './ResponsivePreviewBar';
 import { SkeletonPreview } from './SkeletonPreview';
+import { CompilationProgress } from './CompilationProgress';
 import { DeviceFrameOverlay, type DeviceType } from './DeviceFrameOverlay';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import previewBg from '@/assets/preview-placeholder-bg.jpg';
@@ -481,6 +482,8 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
           </DeviceFrameOverlay>
         ) : isGenerating ? (
           <SkeletonPreview />
+        ) : isCompiling ? (
+          <CompilationProgress fileCount={projectFiles?.length} />
         ) : (
           <div className="flex flex-col items-center justify-center h-full w-full text-center relative overflow-hidden select-none">
             {/* Vibrant background image — full bleed */}
