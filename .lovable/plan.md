@@ -1,35 +1,51 @@
 
+# Fix: Agent "Task Complete" Before Build Actually Finishes
 
-# Fix Potential Errors in Domain Auto-Connect
+## Problem
+Two related bugs visible in your screenshots:
 
-## Issues Found
+1. **"Task complete" shows while still building** -- The agent panel shows "Completed 4 of 4 tasks / All done" while the build log still says "Building..." and the "Analyzing your request..." overlay is still active.
+2. **Changes never applied** -- The logo wasn't replaced because the agent finished its verify step before any code was actually generated.
 
-### 1. CORS Header Mismatch (will cause failures in some browsers)
-The `detect-registrar` edge function uses incomplete CORS headers. It's missing headers that the Supabase JS client automatically sends (`x-supabase-client-platform`, etc.). This can cause preflight request failures.
+## Root Cause
 
-**Fix**: Update `supabase/functions/detect-registrar/index.ts` CORS headers to match the standard set used by other edge functions.
+The `sendMessage` function in `useAIAppBuilder.ts` submits a background job and **returns immediately** (line ~1296). It fires a `bg-job-started` event and exits. The agent mode (`useAgentMode.ts` line 348) does `await sendMessage(...)` expecting it to block until the build is done -- but it doesn't. So the agent instantly moves through verify and complete steps before any files are generated.
 
-### 2. Analyzing overlay shows wrong registrar name during initial add
-During `handleAddDomain`, the analyzing overlay tries to show the detected provider name via `domains.find(d => d.domain === analyzingDomain)?.registrar?.name`. But the domain entry isn't added to `domains` state until **after** analysis completes -- so the registrar name will always be missing during the initial add flow.
+```text
+CURRENT (broken):
+  sendMessage() ---> submits job ---> returns immediately
+  Agent: "Code generated!" (nothing generated yet)
+  Agent: "Verifying..." (no files to verify)
+  Agent: "Task complete!" (preview unchanged)
+  ...meanwhile, background job is still streaming...
 
-**Fix**: Store the detected registrar in a separate `detectedRegistrar` state variable during analysis, and reference that in the overlay instead of looking it up from `domains`.
+FIXED:
+  sendMessage() ---> submits job ---> waits for bg-job-completed event
+  ...background job streams, files are applied...
+  Agent: "Code generated!" (files exist now)
+  Agent: "Verifying..." (checks real output)
+  Agent: "Task complete!" (preview shows changes)
+```
 
-### 3. No cleanup if modal closes mid-analysis
-If the user closes the modal while the analyzing animation is running, the state (`isAnalyzing`, `analysisStep`, etc.) remains dirty. Reopening the modal could show a stale analyzing overlay.
+## Solution
 
-**Fix**: Add a `useEffect` cleanup that resets analysis state when `open` changes to `false`.
+Make `sendMessage` return a Promise that resolves only when the background job actually completes (or fails). This requires:
 
-### 4. No error state for failed edge function calls
-If the `detect-registrar` call fails (network error, timeout), the user sees no feedback -- the animation just finishes silently.
+### File: `src/hooks/useAIAppBuilder.ts`
+- After dispatching the `bg-job-started` event, instead of returning immediately, listen for a corresponding `bg-job-completed` or `bg-job-failed` custom event.
+- Wrap this in a Promise with a timeout (e.g., 3 minutes to match the existing `TOTAL_BUILD_MAX_MS`).
+- When the job completes, resolve the Promise. When it fails or times out, reject/throw.
+- The workspace already fires completion logic via `onComplete` in `useBackgroundGeneration` -- we need it to also emit a `bg-job-completed` event.
 
-**Fix**: Add a try/catch toast in `handleAddDomain` so if detection throws, the user sees a warning and falls back gracefully to manual setup.
+### File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
+- In the `onComplete` callback of `useBackgroundGeneration`, dispatch a `bg-job-completed` custom event with the job ID.
+- Similarly, in `onError`, dispatch a `bg-job-failed` event.
 
----
+### No changes needed to `useAgentMode.ts`
+The agent already correctly `await`s `sendMessage` -- it just needs `sendMessage` to actually wait.
 
-## Technical Changes
-
-| File | Change |
-|------|--------|
-| `supabase/functions/detect-registrar/index.ts` | Update CORS `Access-Control-Allow-Headers` to include `x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version` |
-| `src/components/ai-builder/ProjectSettingsModal.tsx` | (a) Add `detectedRegistrar` state, use it in the overlay for step 2 label. (b) Add `useEffect` to reset analysis state when `open` becomes false. (c) Improve error handling in the analysis flow. |
-
+## What This Fixes
+- "Task complete" will only show after all files are generated and applied
+- The verify step will check real output, not empty state
+- Auto-fix will trigger on actual errors, not phantom ones
+- The entire agent Plan-Execute-Verify-Fix loop will work as designed
