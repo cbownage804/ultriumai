@@ -318,6 +318,9 @@ export function AIAppBuilderWorkspace() {
       filesGenerated: parsedFiles.length + deletions.length,
     }]);
     setIsGeneratingOverride(false);
+
+    // Notify sendMessage that the job is done so agent mode can proceed
+    window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId: job.id } }));
   }, [project.files, setFiles, setMessages]);
 
   // SSE streaming: apply files incrementally as they arrive
@@ -377,6 +380,9 @@ export function AIAppBuilderWorkspace() {
         timestamp: new Date(),
       }]);
       setIsGeneratingOverride(false);
+
+      // Notify sendMessage that the job failed so agent mode can handle it
+      window.dispatchEvent(new CustomEvent('bg-job-failed', { detail: { jobId: job.id, error: job.error_message } }));
     },
   });
 
