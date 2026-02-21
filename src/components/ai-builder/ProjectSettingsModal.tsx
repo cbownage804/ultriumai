@@ -3,7 +3,7 @@
  * Tabs: General, Domains, Integrations, Advanced
  * Parity with Lovable's settings experience
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -13,10 +13,20 @@ import {
   Settings, Globe, Puzzle, Shield, Trash2, Share2, Eye, EyeOff,
   Plus, Copy, RefreshCw, CheckCircle, Loader2, AlertCircle,
   ExternalLink, Download, RotateCcw, BookOpen, Lock, Unlock,
-  Server, ArrowRight, X,
+  Server, ArrowRight, X, Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+
+/* ── Registrar info from detect-registrar edge function ── */
+interface RegistrarInfo {
+  name: string;
+  id: string;
+  icon: string;
+  dnsUrl: string;
+  instructions: string[];
+}
 
 /* ── Domain types ── */
 interface DomainEntry {
@@ -28,6 +38,7 @@ interface DomainEntry {
   addedAt: Date;
   verifiedAt?: Date;
   txtRecord?: string;
+  registrar?: RegistrarInfo | null;
 }
 
 const STATUS_CONFIG: Record<DomainEntry['status'], { label: string; color: string; bg: string; border: string }> = {
@@ -53,7 +64,6 @@ interface ProjectSettingsModalProps {
   soundEnabled: boolean;
   onToggleSound: (v: boolean) => void;
   onDeleteProject?: () => void;
-  // New parity props
   onOpenSupabaseConfig?: () => void;
   onOpenStripeConfig?: () => void;
   onOpenGithubConfig?: () => void;
@@ -70,6 +80,24 @@ const TABS: { id: Tab; label: string; icon: typeof Settings }[] = [
   { id: 'integrations', label: 'Integrations', icon: Puzzle },
   { id: 'advanced', label: 'Advanced', icon: Shield },
 ];
+
+/* ── Analysis step component ── */
+function AnalysisStep({ label, done, active }: { label: React.ReactNode; done: boolean; active: boolean }) {
+  return (
+    <div className="flex items-center gap-2.5 py-1.5">
+      {done ? (
+        <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
+      ) : active ? (
+        <Loader2 className="h-4 w-4 text-cyan-400 animate-spin shrink-0" />
+      ) : (
+        <div className="h-4 w-4 rounded-full border border-white/10 shrink-0" />
+      )}
+      <span className={cn("text-xs", done ? "text-white/70" : active ? "text-white/60" : "text-white/25")}>
+        {label}
+      </span>
+    </div>
+  );
+}
 
 export function ProjectSettingsModal({
   open, onOpenChange, projectName, onRename, publishedUrl,
@@ -91,6 +119,12 @@ export function ProjectSettingsModal({
   const [isAddingDomain, setIsAddingDomain] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<DomainEntry | null>(null);
 
+  // Registrar detection state
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisStep, setAnalysisStep] = useState(0); // 0=not started, 1=analyzed domain, 2=detected provider, 3=getting details
+  const [analyzingDomain, setAnalyzingDomain] = useState('');
+  const [showManualSetup, setShowManualSetup] = useState<Record<string, boolean>>({});
+
   // Advanced state
   const [allowRemixing, setAllowRemixing] = useState(true);
   const [resetConfirm, setResetConfirm] = useState('');
@@ -107,20 +141,109 @@ export function ProjectSettingsModal({
     toast.success('Copied to clipboard');
   };
 
+  /* ── Registrar detection ── */
+  const detectRegistrar = async (domain: string): Promise<RegistrarInfo | null> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('detect-registrar', {
+        body: { domain },
+      });
+      if (error) throw error;
+      if (data?.detected && data?.registrar) {
+        return data.registrar as RegistrarInfo;
+      }
+      return null;
+    } catch (err) {
+      console.error('[detectRegistrar] Failed:', err);
+      return null;
+    }
+  };
+
   /* ── Domain handlers ── */
   const handleAddDomain = async () => {
     const cleaned = newDomain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '');
     if (!cleaned || !cleaned.includes('.')) { toast.error('Enter a valid domain like example.com'); return; }
     if (domains.some(d => d.domain === cleaned)) { toast.error('Domain already added'); return; }
+
+    // Start analyzing phase
     setIsAddingDomain(true);
-    await new Promise(r => setTimeout(r, 1200));
+    setIsAnalyzing(true);
+    setAnalyzingDomain(cleaned);
+    setAnalysisStep(0);
+
+    // Step 1: Analyzed domain (animate after small delay)
+    await new Promise(r => setTimeout(r, 600));
+    setAnalysisStep(1);
+
+    // Step 2: Detect DNS provider
+    const registrar = await detectRegistrar(cleaned);
+    await new Promise(r => setTimeout(r, 500));
+    setAnalysisStep(2);
+
+    // Step 3: Getting setup details
+    await new Promise(r => setTimeout(r, 800));
+    setAnalysisStep(3);
+
+    // Create the domain entry
     const entry: DomainEntry = {
-      id: crypto.randomUUID(), domain: cleaned, status: 'verifying', isPrimary: domains.length === 0,
-      sslStatus: 'pending', addedAt: new Date(), txtRecord: `ultriumai-verify=${crypto.randomUUID().split('-')[0]}`,
+      id: crypto.randomUUID(),
+      domain: cleaned,
+      status: 'verifying',
+      isPrimary: domains.length === 0,
+      sslStatus: 'pending',
+      addedAt: new Date(),
+      txtRecord: `ultriumai-verify=${crypto.randomUUID().split('-')[0]}`,
+      registrar,
     };
+
+    await new Promise(r => setTimeout(r, 400));
     setDomains(prev => [...prev, entry]);
-    setNewDomain(''); setShowAddForm(false); setIsAddingDomain(false); setSelectedDomain(entry);
-    toast.success(`Domain ${cleaned} added — configure DNS records below`);
+    setNewDomain('');
+    setShowAddForm(false);
+    setIsAddingDomain(false);
+    setIsAnalyzing(false);
+    setAnalysisStep(0);
+    setAnalyzingDomain('');
+    setSelectedDomain(entry);
+
+    if (registrar) {
+      toast.success(`Detected ${registrar.name} — follow the setup instructions below`);
+    } else {
+      toast.success(`Domain ${cleaned} added — configure DNS records below`);
+      setShowManualSetup(prev => ({ ...prev, [entry.id]: true }));
+    }
+  };
+
+  const handleDetectRegistrar = async (domainId: string) => {
+    const domain = domains.find(d => d.id === domainId);
+    if (!domain) return;
+
+    setIsAnalyzing(true);
+    setAnalyzingDomain(domain.domain);
+    setAnalysisStep(0);
+
+    await new Promise(r => setTimeout(r, 600));
+    setAnalysisStep(1);
+
+    const registrar = await detectRegistrar(domain.domain);
+    await new Promise(r => setTimeout(r, 500));
+    setAnalysisStep(2);
+
+    await new Promise(r => setTimeout(r, 800));
+    setAnalysisStep(3);
+
+    setDomains(prev => prev.map(d => d.id === domainId ? { ...d, registrar } : d));
+    
+    await new Promise(r => setTimeout(r, 400));
+    setIsAnalyzing(false);
+    setAnalysisStep(0);
+    setAnalyzingDomain('');
+
+    if (registrar) {
+      toast.success(`Detected ${registrar.name}`);
+    } else {
+      toast.info('Could not auto-detect DNS provider');
+      setShowManualSetup(prev => ({ ...prev, [domainId]: true }));
+    }
   };
 
   const handleVerifyDomain = async (id: string) => {
@@ -144,6 +267,157 @@ export function ProjectSettingsModal({
   const closeAndOpen = (fn?: () => void) => {
     onOpenChange(false);
     setTimeout(() => fn?.(), 150);
+  };
+
+  /* ── DNS Records section (manual setup) ── */
+  const renderDnsRecords = (d: DomainEntry) => (
+    <div className="space-y-3">
+      <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">Required DNS Records</span>
+
+      {/* TXT Record */}
+      <div className="p-3.5 rounded-lg bg-black/30 border border-white/[0.06] space-y-2.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">TXT Record (Verification)</span>
+          {d.status !== 'verifying' && (
+            <span className="text-[9px] text-emerald-400 flex items-center gap-1"><CheckCircle className="h-2.5 w-2.5" />Verified</span>
+          )}
+        </div>
+        <div className="space-y-2">
+          <div>
+            <div className="text-[10px] text-white/30 mb-0.5">Name</div>
+            <div className="flex items-center gap-1.5">
+              <code className="text-[12px] text-cyan-400/80 font-mono">_ultriumai</code>
+              <button onClick={() => copyToClipboard('_ultriumai')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] text-white/30 mb-0.5">Value</div>
+            <div className="flex items-center gap-1.5">
+              <code className="text-[12px] text-cyan-400/80 font-mono truncate">{d.txtRecord}</code>
+              <button onClick={() => copyToClipboard(d.txtRecord!)} className="text-white/20 hover:text-white/50 transition-colors shrink-0"><Copy className="h-3 w-3" /></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* A Record (Root) */}
+      <div className="p-3.5 rounded-lg bg-black/30 border border-white/[0.06] space-y-2.5">
+        <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">A Record (Root Domain)</span>
+        <div className="space-y-2">
+          <div>
+            <div className="text-[10px] text-white/30 mb-0.5">Name</div>
+            <div className="flex items-center gap-1.5">
+              <code className="text-[12px] text-cyan-400/80 font-mono">@</code>
+              <button onClick={() => copyToClipboard('@')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] text-white/30 mb-0.5">Value</div>
+            <div className="flex items-center gap-1.5">
+              <code className="text-[12px] text-cyan-400/80 font-mono">159.203.128.171</code>
+              <button onClick={() => copyToClipboard('159.203.128.171')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* A Record (www) */}
+      <div className="p-3.5 rounded-lg bg-black/30 border border-white/[0.06] space-y-2.5">
+        <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">A Record (WWW Subdomain)</span>
+        <div className="space-y-2">
+          <div>
+            <div className="text-[10px] text-white/30 mb-0.5">Name</div>
+            <div className="flex items-center gap-1.5">
+              <code className="text-[12px] text-cyan-400/80 font-mono">www</code>
+              <button onClick={() => copyToClipboard('www')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] text-white/30 mb-0.5">Value</div>
+            <div className="flex items-center gap-1.5">
+              <code className="text-[12px] text-cyan-400/80 font-mono">159.203.128.171</code>
+              <button onClick={() => copyToClipboard('159.203.128.171')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  /* ── Provider setup panel ── */
+  const renderRegistrarPanel = (d: DomainEntry) => {
+    if (!d.registrar) return null;
+    const reg = d.registrar;
+    const isManual = showManualSetup[d.id];
+
+    return (
+      <div className="space-y-4">
+        {/* Provider card */}
+        <div className="p-4 rounded-xl border border-cyan-500/15 bg-cyan-500/[0.03] space-y-4">
+          {/* Provider header */}
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{reg.icon}</span>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-white/90">{reg.name}</span>
+                <Badge className="text-[9px] px-1.5 py-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                  Auto-detected
+                </Badge>
+              </div>
+              <p className="text-[10px] text-white/35 mt-0.5">
+                We detected your DNS is managed by {reg.name}. Follow the steps below to connect.
+              </p>
+            </div>
+          </div>
+
+          {/* Step-by-step instructions */}
+          <div className="space-y-2">
+            <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">Setup Steps</span>
+            <ol className="space-y-1.5">
+              {reg.instructions.map((step, i) => (
+                <li key={i} className="flex gap-2 text-[11px] text-white/60">
+                  <span className="text-cyan-400/70 font-mono text-[10px] mt-px shrink-0">{i + 1}.</span>
+                  <span>{step.replace('(shown below)', d.txtRecord || '(shown below)')}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          {/* Open DNS Settings button */}
+          <a
+            href={reg.dnsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full h-9 rounded-lg bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600 text-white text-xs font-medium transition-all"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Open {reg.name} DNS Settings
+          </a>
+
+          {/* Secondary actions */}
+          <div className="flex items-center justify-between pt-1">
+            <button
+              onClick={() => setShowManualSetup(prev => ({ ...prev, [d.id]: !prev[d.id] }))}
+              className="text-[10px] text-white/30 hover:text-cyan-400/70 transition-colors underline underline-offset-2"
+            >
+              {isManual ? 'Hide DNS records' : 'Show DNS records to add'}
+            </button>
+            <button
+              onClick={() => {
+                setDomains(prev => prev.map(dm => dm.id === d.id ? { ...dm, registrar: null } : dm));
+                setShowManualSetup(prev => ({ ...prev, [d.id]: true }));
+              }}
+              className="text-[10px] text-white/30 hover:text-white/50 transition-colors"
+            >
+              Change provider
+            </button>
+          </div>
+        </div>
+
+        {/* Manual DNS records (toggled) */}
+        {isManual && renderDnsRecords(d)}
+      </div>
+    );
   };
 
   return (
@@ -243,8 +517,42 @@ export function ProjectSettingsModal({
           {/* ═══════════ DOMAINS ═══════════ */}
           {tab === 'domains' && (
             <div className="space-y-4">
+
+              {/* Analyzing overlay */}
+              {isAnalyzing && (
+                <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.03] space-y-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Search className="h-3.5 w-3.5 text-cyan-400" />
+                    <span className="text-xs font-medium text-white/80">Setting up domain</span>
+                  </div>
+                  <div className="space-y-0.5">
+                    <AnalysisStep
+                      label={<>Analyzed <span className="font-mono text-cyan-400/70">{analyzingDomain}</span></>}
+                      done={analysisStep >= 1}
+                      active={analysisStep === 0}
+                    />
+                    <AnalysisStep
+                      label={
+                        analysisStep >= 2
+                          ? <>Detected DNS provider{domains.find(d => d.domain === analyzingDomain)?.registrar
+                              ? <>: <span className="font-semibold text-white/80">{domains.find(d => d.domain === analyzingDomain)?.registrar?.name}</span></>
+                              : null}</>
+                          : 'Detecting DNS provider...'
+                      }
+                      done={analysisStep >= 2}
+                      active={analysisStep === 1}
+                    />
+                    <AnalysisStep
+                      label="Getting your setup details."
+                      done={analysisStep >= 3}
+                      active={analysisStep === 2}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Published URL */}
-              {publishedUrl && !domains.length && (
+              {publishedUrl && !domains.length && !isAnalyzing && (
                 <div className="p-3 rounded-lg border border-white/[0.06] bg-white/[0.02]">
                   <div className="flex items-center gap-2 mb-1.5">
                     <Server className="h-3 w-3 text-white/30" />
@@ -260,9 +568,12 @@ export function ProjectSettingsModal({
                 </div>
               )}
 
-              {/* Connected Domains — Lovable-style flat layout */}
-              {domains.map(d => {
+              {/* Connected Domains */}
+              {!isAnalyzing && domains.map(d => {
                 const sc = STATUS_CONFIG[d.status];
+                const hasRegistrar = !!d.registrar;
+                const isManual = showManualSetup[d.id];
+
                 return (
                   <div key={d.id} className="space-y-4">
                     {/* Domain header row */}
@@ -277,78 +588,22 @@ export function ProjectSettingsModal({
                       </button>
                     </div>
 
-                    {/* Required DNS Records */}
-                    <div className="space-y-3">
-                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">Required DNS Records</span>
-
-                      {/* TXT Record */}
-                      <div className="p-3.5 rounded-lg bg-black/30 border border-white/[0.06] space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">TXT Record (Verification)</span>
-                          {d.status !== 'verifying' && (
-                            <span className="text-[9px] text-emerald-400 flex items-center gap-1"><CheckCircle className="h-2.5 w-2.5" />Verified</span>
-                          )}
-                        </div>
-                        <div className="space-y-2">
-                          <div>
-                            <div className="text-[10px] text-white/30 mb-0.5">Name</div>
-                            <div className="flex items-center gap-1.5">
-                              <code className="text-[12px] text-cyan-400/80 font-mono">_ultriumai</code>
-                              <button onClick={() => copyToClipboard('_ultriumai')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-[10px] text-white/30 mb-0.5">Value</div>
-                            <div className="flex items-center gap-1.5">
-                              <code className="text-[12px] text-cyan-400/80 font-mono truncate">{d.txtRecord}</code>
-                              <button onClick={() => copyToClipboard(d.txtRecord!)} className="text-white/20 hover:text-white/50 transition-colors shrink-0"><Copy className="h-3 w-3" /></button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* A Record (Root) */}
-                      <div className="p-3.5 rounded-lg bg-black/30 border border-white/[0.06] space-y-2.5">
-                        <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">A Record (Root Domain)</span>
-                        <div className="space-y-2">
-                          <div>
-                            <div className="text-[10px] text-white/30 mb-0.5">Name</div>
-                            <div className="flex items-center gap-1.5">
-                              <code className="text-[12px] text-cyan-400/80 font-mono">@</code>
-                              <button onClick={() => copyToClipboard('@')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-[10px] text-white/30 mb-0.5">Value</div>
-                            <div className="flex items-center gap-1.5">
-                              <code className="text-[12px] text-cyan-400/80 font-mono">159.203.128.171</code>
-                              <button onClick={() => copyToClipboard('159.203.128.171')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* A Record (www) */}
-                      <div className="p-3.5 rounded-lg bg-black/30 border border-white/[0.06] space-y-2.5">
-                        <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">A Record (WWW Subdomain)</span>
-                        <div className="space-y-2">
-                          <div>
-                            <div className="text-[10px] text-white/30 mb-0.5">Name</div>
-                            <div className="flex items-center gap-1.5">
-                              <code className="text-[12px] text-cyan-400/80 font-mono">www</code>
-                              <button onClick={() => copyToClipboard('www')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-[10px] text-white/30 mb-0.5">Value</div>
-                            <div className="flex items-center gap-1.5">
-                              <code className="text-[12px] text-cyan-400/80 font-mono">159.203.128.171</code>
-                              <button onClick={() => copyToClipboard('159.203.128.171')} className="text-white/20 hover:text-white/50 transition-colors"><Copy className="h-3 w-3" /></button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    {/* Provider panel or manual setup */}
+                    {hasRegistrar ? (
+                      renderRegistrarPanel(d)
+                    ) : (
+                      <>
+                        {/* Detect provider button for domains without registrar */}
+                        <button
+                          onClick={() => handleDetectRegistrar(d.id)}
+                          className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg border border-dashed border-cyan-500/20 bg-cyan-500/[0.02] text-cyan-400/60 hover:text-cyan-400 hover:border-cyan-500/30 transition-all text-xs"
+                        >
+                          <Search className="h-3 w-3" />
+                          Detect DNS Provider
+                        </button>
+                        {renderDnsRecords(d)}
+                      </>
+                    )}
 
                     {/* SSL Certificate */}
                     <div className="flex items-center gap-2.5 p-3 rounded-lg bg-black/30 border border-white/[0.06]">
@@ -374,7 +629,7 @@ export function ProjectSettingsModal({
               })}
 
               {/* Add Domain */}
-              {showAddForm ? (
+              {!isAnalyzing && (showAddForm ? (
                 <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.03] space-y-3">
                   <div className="flex items-center gap-2">
                     <Globe className="h-3.5 w-3.5 text-cyan-400" />
@@ -404,12 +659,12 @@ export function ProjectSettingsModal({
                   <Plus className="h-3.5 w-3.5" />
                   <span className="text-xs">{domains.length > 0 ? 'Add Another Domain' : 'Connect Domain'}</span>
                 </button>
-              )}
+              ))}
 
               {/* Help text when no domains */}
-              {domains.length === 0 && !showAddForm && (
+              {domains.length === 0 && !showAddForm && !isAnalyzing && (
                 <p className="text-[10px] text-white/20 text-center px-4">
-                  Connect a custom domain to serve your app from your own URL. You'll need to configure DNS records at your registrar.
+                  Connect a custom domain to serve your app from your own URL. We'll auto-detect your DNS provider and guide you through setup.
                 </p>
               )}
             </div>
