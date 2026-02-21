@@ -360,7 +360,7 @@ export function useProjectPersistence() {
       if (files.length > 0) {
         saveProject(name, files, undefined, undefined, chatMessages, extraSettings);
       }
-    }, 30000);
+    }, 5000); // Save after 5s of inactivity so projects appear in recents quickly
   }, [saveProject]);
 
   useEffect(() => {
