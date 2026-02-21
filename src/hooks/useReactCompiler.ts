@@ -184,11 +184,15 @@ export function useReactCompiler() {
           // Map common packages to globals
           if (specifier === 'react') {
             const parts: string[] = [];
-            if (defaultImport) parts.push(`const ${defaultImport} = React;`);
+            if (defaultImport && defaultImport !== 'React') parts.push(`const ${defaultImport} = React;`);
             if (namedImports) {
               const names = namedImports.split(',').map((n: string) => n.trim().split(/\s+as\s+/));
               for (const [orig, alias] of names) {
-                parts.push(`const ${(alias || orig).trim()} = React.${orig.trim()};`);
+                const target = (alias || orig).trim();
+                // Skip if the alias matches what's already globally available
+                if (target !== orig.trim() || !['useState','useEffect','useCallback','useMemo','useRef','useContext','createContext','memo','forwardRef','Fragment','useReducer','useLayoutEffect','useId','useSyncExternalStore','useTransition','useDeferredValue','useInsertionEffect','createElement','Children','cloneElement','isValidElement','Suspense','lazy','StrictMode','Component','PureComponent','createRef','startTransition'].includes(target)) {
+                  parts.push(`const ${target} = React.${orig.trim()};`);
+                }
               }
             }
             return parts.join('\n');
@@ -334,7 +338,8 @@ export function useReactCompiler() {
     // Phase 71: Check for anonymous default export (__DefaultExport) or named default
     const defaultMatch = file.content.match(/export\s+default\s+(?:function\s+|class\s+)?(\w+)/);
     const hasAnonymousDefault = /export\s+default\s+(?:\([^)]*\)|[a-zA-Z_$]\w*)\s*=>/.test(file.content) ||
-                                 /export\s+default\s+function\s*\(/.test(file.content);
+                                 /export\s+default\s+function\s*\(/.test(file.content) ||
+                                 /export\s+default\s+\{/.test(file.content);
     const defaultExport = hasAnonymousDefault ? '__DefaultExport' : defaultMatch?.[1];
     const registration: string[] = [];
 
