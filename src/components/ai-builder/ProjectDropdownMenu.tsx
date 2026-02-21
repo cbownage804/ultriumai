@@ -21,8 +21,44 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useUserCredits } from '@/hooks/useUserCredits';
 
-// Half-circle appearance icon
+// Extracted credit bar so the hook is always called at component top level
+function CreditBarItem({ onOpenBilling }: { onOpenBilling: () => void }) {
+  const { credits, dailyRemaining, monthlyRemaining, totalRemaining } = useUserCredits();
+  const dailyLimit = credits.daily_credits_limit;
+  const monthlyLimit = credits.monthly_credits_limit;
+  const bonus = Math.max(0, credits.bonus_credits);
+  const totalLimit = dailyLimit + monthlyLimit + bonus;
+  const safeDaily = Math.max(0, dailyRemaining);
+  const safeMonthly = Math.max(0, monthlyRemaining);
+  const safeBonus = Math.max(0, bonus);
+  const dailyW = totalLimit > 0 ? (safeDaily / totalLimit) * 100 : 0;
+  const monthlyW = totalLimit > 0 ? (safeMonthly / totalLimit) * 100 : 0;
+  const bonusW = totalLimit > 0 ? (safeBonus / totalLimit) * 100 : 0;
+
+  return (
+    <DropdownMenuItem
+      onClick={onOpenBilling}
+      className="flex-col items-start gap-1 cursor-pointer px-2.5 py-2.5"
+    >
+      <div className="flex items-center justify-between w-full">
+        <span className="text-sm font-medium text-white/80">Credits</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-mono text-white/60">{Math.max(0, totalRemaining)}</span>
+          <span className="text-xs text-white/40">View details →</span>
+        </div>
+      </div>
+      <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden flex">
+        {dailyW > 0 && <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${dailyW}%` }} />}
+        {monthlyW > 0 && <div className="h-full bg-violet-500 transition-all duration-500" style={{ width: `${monthlyW}%` }} />}
+        {bonusW > 0 && <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${bonusW}%` }} />}
+      </div>
+    </DropdownMenuItem>
+  );
+}
+
+
 const AppearanceIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
     <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
@@ -114,19 +150,8 @@ export function ProjectDropdownMenu({
 
         <DropdownMenuSeparator className="bg-white/[0.06] my-1" />
 
-        {/* Credits */}
-        <DropdownMenuItem
-          onClick={onOpenBilling}
-          className="flex-col items-start gap-1 cursor-pointer px-2.5 py-2.5"
-        >
-          <div className="flex items-center justify-between w-full">
-            <span className="text-sm font-medium text-white/80">Credits</span>
-            <span className="text-xs text-white/50">View details →</span>
-          </div>
-          <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-blue-500 via-violet-500 to-amber-500" style={{ width: '65%' }} />
-          </div>
-        </DropdownMenuItem>
+        {/* Credits — real data */}
+        <CreditBarItem onOpenBilling={onOpenBilling} />
 
         <DropdownMenuSeparator className="bg-white/[0.06] my-1" />
 
