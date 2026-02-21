@@ -15,6 +15,8 @@ import { useInlineAIEdit } from '@/hooks/useInlineAIEdit';
 import { useBranching } from '@/hooks/useBranching';
 import { useProjectPersistence } from '@/hooks/useProjectPersistence';
 import { useDraftPersistence } from '@/hooks/useDraftPersistence';
+import { useBackgroundGeneration, type BackgroundJob } from '@/hooks/useBackgroundGeneration';
+import { parseMultiFileOutput } from '@/hooks/useAIAppBuilder';
 import { usePreviewHosting } from '@/hooks/usePreviewHosting';
 import { usePreviewCapture } from '@/hooks/usePreviewCapture';
 import type { SupabaseConfig, GithubConfig, StripeConfig, VercelConfig, ServiceKey, EnvVar } from './ProjectSettings';
@@ -257,6 +259,46 @@ export function AIAppBuilderWorkspace() {
     executeAgentTask, getNextQueuedTask, isAnyRunning: isAgentRunning,
   } = useAgentMode();
   const autoRecovery = useAutoErrorRecovery();
+
+  // Background generation: server-side builds that survive tab close
+  const handleBgComplete = useCallback((job: BackgroundJob) => {
+    if (!job.output_content) return;
+    const { files: parsedFiles, deletions, edits } = parseMultiFileOutput(job.output_content);
+    if (parsedFiles.length > 0 || deletions.length > 0) {
+      let mergedFiles = [...project.files];
+      if (deletions.length > 0) mergedFiles = mergedFiles.filter(f => !deletions.includes(f.path));
+      for (const newFile of parsedFiles) {
+        const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
+        if (existingIdx >= 0) {
+          mergedFiles[existingIdx] = newFile;
+        } else {
+          mergedFiles.push(newFile);
+        }
+      }
+      setFiles(mergedFiles);
+      toast.success(`Background build complete — ${parsedFiles.length} files generated`, { duration: 5000 });
+    }
+    // Add assistant message with the output
+    setMessages(prev => [...prev, {
+      id: crypto.randomUUID(),
+      role: 'assistant' as const,
+      content: job.output_content!,
+      timestamp: new Date(),
+      filesGenerated: parsedFiles.length + deletions.length,
+    }]);
+  }, [project.files, setFiles, setMessages]);
+
+  const backgroundGen = useBackgroundGeneration({
+    onComplete: handleBgComplete,
+    onError: (job) => {
+      setMessages(prev => [...prev, {
+        id: crypto.randomUUID(),
+        role: 'assistant' as const,
+        content: `⚠️ Background build failed: ${job.error_message || 'Unknown error'}\n\nPlease try again.`,
+        timestamp: new Date(),
+      }]);
+    },
+  });
 
   // Phase 47: Wire useAutoFixLoop for structured error auto-fix
   const autoFixLoop = useAutoFixLoop({
