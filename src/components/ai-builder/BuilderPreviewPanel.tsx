@@ -329,8 +329,10 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
           onUrlChange?.(href);
           setUrlHistory(prev => [...prev.slice(0, historyIndex + 1), href]);
           setHistoryIndex(prev => prev + 1);
+        } else if (href.startsWith('http://') || href.startsWith('https://')) {
+          // External URLs — open in a new tab
+          window.open(href, '_blank', 'noopener,noreferrer');
         }
-        // External URLs — just log, don't update
       }
     };
     window.addEventListener('message', handler);
