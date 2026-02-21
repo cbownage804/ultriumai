@@ -1,109 +1,98 @@
 
 
-## Fix: Tab-Switch Data Loss + Persistent Skeleton
+## Fix: Tab-Switch Data Loss (3 Root Causes)
 
-### Problem 1: Switching browser tabs wipes everything
+### Root Cause 1: Service Worker Force-Reloads the Page
 
-The URL stays as `?new=true` for the entire session. If the browser discards your tab to save memory (common on Windows with many tabs), when you go back, the component remounts from scratch. The draft restoration code sees `?new=true` and skips restoring your saved work -- everything is lost.
+In `index.html` (line 270-272), there's a listener that reloads the entire page whenever a new service worker takes control:
 
-**Root cause:** `?new=true` is never removed from the URL after the first generation starts. It was designed to prevent restoring an old draft when you click "New App", but it stays active forever, blocking ALL future recovery attempts.
+```javascript
+navigator.serviceWorker.addEventListener('controllerchange', () => {
+  window.location.reload();  // <-- DESTROYS all React state
+});
+```
 
-### Problem 2: Preview stuck on skeleton
+The service worker checks for updates every 60 seconds (line 250). If the server returns even a slightly different `sw.js`, the new worker installs, calls `skipWaiting()`, activates with `clients.claim()`, and triggers `controllerchange`. This causes a full page reload that wipes all React state. The user might see this as "switching tabs wiped my progress" because the reload can coincide with returning to the tab.
 
-The skeleton shows during generation (normal), but after generation completes, two things can prevent the preview from appearing:
+**Fix:** Remove the automatic `controllerchange` reload. Let the new service worker activate silently. The next natural navigation will pick it up.
 
-1. The `stableHTMLRef.current` check added in our last fix can block fresh generation previews. On a new project, `stableHTMLRef.current` starts as `null`, so the reset fires correctly. But the compilation effect at line 139 checks `stableHTMLRef.current` -- if for any reason it was set briefly (e.g., error fallback) and then the user sends another message, the guard `stableHTMLRef.current` being truthy prevents recompilation.
+### Root Cause 2: Effect Dependency Causes Listener Gaps
 
-2. When `isGenerating` transitions false, the compilation effect depends on `filesDigest` which may not change if the files were already merged during streaming, causing the compilation effect to not fire.
+In `AIAppBuilderWorkspace.tsx` (line 1016), `idbPersistence` is in the effect dependency array:
 
-### The Fix (2 files, 4 changes)
+```javascript
+}, [saveDraftImmediate, idbPersistence, sessionId]);
+```
 
-**File 1: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+`idbPersistence` is a new object reference on every render (it contains `syncStatus` state). Every time `syncStatus` changes (synced -> unsaved -> syncing -> synced), the effect re-runs: it removes the `visibilitychange` listener, then re-adds it. During this brief gap, a tab switch might not be caught, and the data won't flush.
 
-**Change A: Strip `?new=true` from URL after first message is sent**
+Worse, calling `saveToIDB` inside the cleanup function changes `syncStatus`, which triggers a re-render, which re-runs the effect, creating a feedback cycle (stopped by hash check, but still causes unnecessary churn).
 
-After the user sends their first message and generation begins, remove `new=true` from the URL using `replaceState`. This ensures that if the tab is discarded and remounted, draft recovery will work.
+**Fix:** Use a ref to store `saveToIDB` instead of putting the entire `idbPersistence` object in the dependency array. The effect should only depend on stable references.
 
-Add a new effect after line 1012:
+### Root Cause 3: `?new=true` Stripping Depends on `isGenerating`
+
+The effect that strips `?new=true` from the URL (line 1019-1025) only fires when `isGenerating` becomes true. If the page reloads BEFORE the user sends their first message (e.g., from the SW reload above), `?new=true` is still in the URL, and the mount effect at line 1101-1106 clears all saved drafts:
+
+```javascript
+if (isNewProject) {
+  clearDraft();                    // Wipes localStorage
+  idbPersistence.clearSession();   // Wipes IndexedDB
+}
+```
+
+**Fix:** Strip `?new=true` from the URL immediately on first mount (after checking it once), not waiting for `isGenerating`. This way, even if the page reloads unexpectedly, the URL is clean and draft recovery works.
+
+---
+
+### Changes
+
+**File 1: `index.html`** (1 change)
+
+Remove the `controllerchange` auto-reload (lines 269-272). Replace with a no-op or remove entirely. The service worker will still update; the new version just takes effect on the next natural page load.
+
+**File 2: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`** (2 changes)
+
+Change A: Use a ref for `idbPersistence.saveToIDB` in the visibility flush effect:
+
 ```typescript
-// Strip ?new=true from URL once generation starts so tab recovery works
+const saveToIDBRef = useRef(idbPersistence.saveToIDB);
+saveToIDBRef.current = idbPersistence.saveToIDB;
+
 useEffect(() => {
-  if (isGenerating && searchParams.get('new') === 'true') {
+  const flushDraft = () => {
+    saveDraftImmediate(latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+    saveToIDBRef.current(sessionId, latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+  };
+  // ... rest of effect unchanged ...
+}, [saveDraftImmediate, sessionId]);
+// idbPersistence REMOVED from deps -- use ref instead
+```
+
+Change B: Strip `?new=true` immediately on mount, not waiting for `isGenerating`:
+
+```typescript
+// Strip ?new=true immediately after mount so tab recovery works on reload
+useEffect(() => {
+  if (searchParams.get('new') === 'true') {
     const url = new URL(window.location.href);
     url.searchParams.delete('new');
     window.history.replaceState({}, '', url.pathname + url.search);
   }
-}, [isGenerating, searchParams]);
+}, []); // Run once on mount
 ```
 
-**Change B: Also persist to IndexedDB on visibilitychange (not just localStorage)**
+Remove the old effect that depended on `isGenerating`.
 
-The `visibilitychange` handler at line 997-1012 only saves to localStorage via `saveDraftImmediate`. IndexedDB (larger, more reliable) is not flushed. Add IDB flush alongside the draft flush:
+### Why This Fixes It
 
-```typescript
-const flushDraft = () => {
-  saveDraftImmediate(latestRef.current.name, latestRef.current.files, latestRef.current.messages);
-  // Also flush to IndexedDB for more reliable recovery
-  idbPersistence.saveToIDB(sessionId, latestRef.current.name, latestRef.current.files, latestRef.current.messages);
-};
-```
+1. No more surprise page reloads from service worker updates -- React state survives tab switches
+2. The `visibilitychange` listener is always active (no gaps from effect churn) -- data always flushes when the tab goes hidden
+3. Even if a reload does happen, `?new=true` is already gone from the URL, so draft recovery works instead of clearing everything
 
-**File 2: `src/components/ai-builder/CompilationBridge.tsx`**
+### Risk Assessment
 
-**Change C: Always reset stableHTML on fresh generation (fix the guard)**
-
-The current guard `if (!stableHTMLRef.current)` was meant to preserve previews during auto-fix, but it also prevents resetting on fresh user messages. We need to distinguish auto-fix from fresh user messages.
-
-Replace the reset logic (lines 110-118) with:
-```typescript
-useEffect(() => {
-  if (isGenerating && !prevIsGeneratingForReset.current) {
-    // Always reset stableHTML when a new generation starts.
-    // The old preview will be replaced by the new compilation result.
-    setStableHTML(null);
-    // Also reset compilation state so the new build can run
-    compilationAttemptedRef.current = false;
-    compilationLockRef.current = false;
-  }
-  prevIsGeneratingForReset.current = isGenerating;
-}, [isGenerating, setStableHTML]);
-```
-
-This removes the `stableHTMLRef.current` guard that was blocking resets. Showing the skeleton during generation is the correct behavior -- the previous fix was wrong to try to keep the old preview visible. The real fix for auto-fix loops is handled separately via the auto-fix circuit breaker (max 3 attempts).
-
-**Change D: Force recompilation when filesDigest changes after generation**
-
-Ensure the compilation effect fires even when `isGenerating` was already false but new files arrived (e.g., from auto-fix or streaming completion). Add an explicit trigger:
-
-Replace lines 138-141:
-```typescript
-useEffect(() => {
-  if (isGenerating || filesRef.current.length === 0) {
-    return;
-  }
-  // If stableHTML already exists but filesDigest changed, reset it so
-  // recompilation can run with the new files
-  if (stableHTMLRef.current && filesDigest !== prevFilesDigestRef.current) {
-    setStableHTML(null);
-  }
-  prevFilesDigestRef.current = filesDigest;
-```
-
-Add a `prevFilesDigestRef` to track when files actually change:
-```typescript
-const prevFilesDigestRef = useRef<string>('');
-```
-
-### Why this fixes both issues
-
-1. **Tab switch**: `?new=true` is removed as soon as generation starts. If the browser discards the tab, the draft/IDB recovery kicks in and restores your work.
-
-2. **Skeleton stuck**: `stableHTML` is properly reset on every generation, and the compilation lock is cleared so recompilation always runs when new files arrive.
-
-### Risk assessment
-
-- Removing `?new=true` from URL is cosmetic and has zero side effects (it already served its purpose of preventing draft restore)
-- Dual IDB+localStorage flush adds minimal overhead (IDB save is debounced internally)
-- Resetting stableHTML on every generation means you'll briefly see the skeleton during generation -- this is the expected, correct behavior
-- The `prevFilesDigestRef` guard ensures recompilation fires when files actually change, not on every render
+- Removing the SW `controllerchange` reload means users won't auto-get new code on the app builder page until they navigate away and back. This is acceptable since the app builder is a long-lived session.
+- Using a ref for `saveToIDB` is a standard React pattern for stable callbacks in effects.
+- Stripping `?new=true` on mount is safe because the initial "skip draft restore" check at line 1052 already captured the value before the effect runs (both use `searchParams.get('new')` at render time).
 
