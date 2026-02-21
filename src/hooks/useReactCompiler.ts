@@ -213,12 +213,33 @@ export function useReactCompiler() {
           }
           // Other external packages — resolve via CDN import map (Phase 41)
           // They'll be resolved at runtime via the import map, so we use dynamic import
+          // Phase 85: Packages known to have NO default export — skip .default fallback
+          const NO_DEFAULT_EXPORT = new Set([
+            'lucide-react', 'date-fns', 'recharts', 'react-icons',
+            '@radix-ui/react-slot', '@radix-ui/react-icons',
+            'class-variance-authority', 'tailwind-merge', 'clsx',
+            'lodash-es', 'uuid',
+          ]);
+          const hasNoDefault = NO_DEFAULT_EXPORT.has(specifier);
           const parts: string[] = [];
-          if (defaultImport) parts.push(`const ${defaultImport} = (await import('${specifier}')).default || (await import('${specifier}'));`);
+          // Phase 85: Wrap each external import in try-catch for CDN resilience
+          const importVar = `__pkg_${specifier.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          if (defaultImport || namedImports) {
+            parts.push(`let ${importVar};`);
+            parts.push(`try { ${importVar} = await import('${specifier}'); } catch(__e) { console.warn('Failed to load ${specifier}:', __e); ${importVar} = {}; }`);
+          }
+          if (defaultImport) {
+            if (hasNoDefault) {
+              // Namespace import — no .default for packages that don't have one
+              parts.push(`const ${defaultImport} = ${importVar};`);
+            } else {
+              parts.push(`const ${defaultImport} = ${importVar}.default || ${importVar};`);
+            }
+          }
           if (namedImports) {
             const names = namedImports.split(',').map((n: string) => n.trim().split(/\s+as\s+/));
             const destructure = names.map(([orig, alias]: string[]) => alias ? `${orig.trim()}: ${alias.trim()}` : orig.trim()).join(', ');
-            parts.push(`const { ${destructure} } = await import('${specifier}');`);
+            parts.push(`const { ${destructure} } = ${importVar};`);
           }
           return parts.length > 0 ? parts.join('\n') : `// [external] ${specifier}`;
         }
@@ -573,12 +594,20 @@ try {
     // Check for custom HTML shell
     const htmlShell = htmlFiles.find(f => f.path === 'index.html');
 
+    // Phase 85: Detect which CDN packages are actually used and add modulepreload hints
+    const usedPackages = DEFAULT_PACKAGES.filter(pkg =>
+      reactFiles.some(f => f.content.includes(`from '${pkg.name}'`) || f.content.includes(`from "${pkg.name}"`))
+    );
+    const preloadHints = usedPackages.map(p => `  <link rel="modulepreload" href="${p.cdnUrl}" />`).join('\n');
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>React Preview</title>
+
+${preloadHints}
 
   <!-- Phase 64: Tailwind CSS Play CDN with defer-like loading -->
   <script src="${CDN.tailwind}" onerror="console.warn('Tailwind CDN failed'); document.head.insertAdjacentHTML('beforeend', '<style>body{font-family:sans-serif;padding:20px;line-height:1.5}</style>')" onload="document.dispatchEvent(new Event('tailwind-ready'))"></script>
