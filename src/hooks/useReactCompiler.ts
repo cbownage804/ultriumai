@@ -164,8 +164,18 @@ export function useReactCompiler() {
    * Transpile a single file's JSX/TSX content into browser-executable JS.
    * Uses regex-based transforms (no Babel dependency for the host app).
    */
-  const transpileFile = useCallback((file: ProjectFile, moduleMap: Map<string, ProjectFile>): string => {
+  const transpileFile = useCallback((file: ProjectFile, moduleMap: Map<string, ProjectFile>): { code: string; externalPackages: string[] } => {
+    const usedExternalPackages = new Set<string>();
     let code = file.content;
+
+    // Phase 99: Normalize multi-line imports into single lines before regex processing
+    code = code.replace(
+      /import\s*\{([^}]*)\}/gs,
+      (_match, names) => {
+        const cleaned = names.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        return `import { ${cleaned} }`;
+      }
+    );
 
     // Step 1: Strip TypeScript if .tsx or .ts
     if (file.path.endsWith('.tsx') || file.path.endsWith('.ts')) {
@@ -211,9 +221,7 @@ export function useReactCompiler() {
             }
             return '';
           }
-          // Other external packages — resolve via CDN import map (Phase 41)
-          // They'll be resolved at runtime via the import map, so we use dynamic import
-          // Phase 85: Packages known to have NO default export — skip .default fallback
+          // Phase 99: External packages — reference pre-loaded globals from window.__pkg_X
           const NO_DEFAULT_EXPORT = new Set([
             'lucide-react', 'date-fns', 'recharts', 'react-icons',
             '@radix-ui/react-slot', '@radix-ui/react-icons',
@@ -222,24 +230,20 @@ export function useReactCompiler() {
           ]);
           const hasNoDefault = NO_DEFAULT_EXPORT.has(specifier);
           const parts: string[] = [];
-          // Phase 85: Wrap each external import in try-catch for CDN resilience
           const importVar = `__pkg_${specifier.replace(/[^a-zA-Z0-9]/g, '_')}`;
-          if (defaultImport || namedImports) {
-            parts.push(`let ${importVar};`);
-            parts.push(`try { ${importVar} = await import('${specifier}'); } catch(__e) { console.warn('Failed to load ${specifier}:', __e); ${importVar} = {}; }`);
-          }
+          // Track this package for the async preamble
+          usedExternalPackages.add(specifier);
           if (defaultImport) {
             if (hasNoDefault) {
-              // Namespace import — no .default for packages that don't have one
-              parts.push(`const ${defaultImport} = ${importVar};`);
+              parts.push(`var ${defaultImport} = window.${importVar} || {};`);
             } else {
-              parts.push(`const ${defaultImport} = ${importVar}.default || ${importVar};`);
+              parts.push(`var ${defaultImport} = (window.${importVar} || {}).default || window.${importVar} || {};`);
             }
           }
           if (namedImports) {
             const names = namedImports.split(',').map((n: string) => n.trim().split(/\s+as\s+/));
             const destructure = names.map(([orig, alias]: string[]) => alias ? `${orig.trim()}: ${alias.trim()}` : orig.trim()).join(', ');
-            parts.push(`const { ${destructure} } = ${importVar};`);
+            parts.push(`var { ${destructure} } = window.${importVar} || {};`);
           }
           return parts.length > 0 ? parts.join('\n') : `// [external] ${specifier}`;
         }
@@ -381,8 +385,8 @@ export function useReactCompiler() {
       registration.push(`__modules['${file.path}']['${name}'] = typeof ${name} !== 'undefined' ? ${name} : undefined;`);
     }
 
-    // Phase 61: Use async IIFE so `await import()` works for external packages
-    return `/* === ${file.path} === */\nawait (async function() {\n${code}\n${registration.join('\n')}\n})();`;
+    // Phase 99: Synchronous IIFE — external packages are pre-loaded in the preamble
+    return { code: `/* === ${file.path} === */\n(function() {\n${code}\n${registration.join('\n')}\n})();`, externalPackages: Array.from(usedExternalPackages) };
   }, [stripTypeAnnotations]);
 
   /**
@@ -486,9 +490,12 @@ export function useReactCompiler() {
 
     // Transpile each file with yield points every 2 files
     const transpiledChunks: string[] = [];
+    const allExternalPackages = new Set<string>();
     for (let i = 0; i < sorted.length; i++) {
       try {
-        transpiledChunks.push(transpileFile(sorted[i], moduleMap));
+        const result = transpileFile(sorted[i], moduleMap);
+        transpiledChunks.push(result.code);
+        for (const pkg of result.externalPackages) allExternalPackages.add(pkg);
       } catch (err: any) {
         errors.push(`Transpile error in ${sorted[i].path}: ${err.message}`);
       }
@@ -504,6 +511,8 @@ export function useReactCompiler() {
 
     // Phase 48: Detect react-router-dom usage for MemoryRouter wrapping
     const usesReactRouter = reactFiles.some(f => /from\s+['"]react-router-dom['"]/.test(f.content));
+    // Ensure react-router-dom is pre-loaded if used (mount script references it)
+    if (usesReactRouter) allExternalPackages.add('react-router-dom');
 
     // Find the entry point (main.tsx, App.tsx, index.tsx, or first .tsx)
     const entryFile = files.find(f => f.path === 'main.tsx') ||
@@ -531,14 +540,14 @@ export function useReactCompiler() {
       // Auto-mount: render the App component into #root
       // Phase 48: Wrap in MemoryRouter if react-router-dom is used
       const routerWrapStart = usesReactRouter ? `
-    const { MemoryRouter } = await import('react-router-dom');
-    const wrappedElement = React.createElement(MemoryRouter, null, React.createElement(RootComponent));` : `
-    const wrappedElement = React.createElement(RootComponent);`;
+    var { MemoryRouter } = window.__pkg_react_router_dom || {};
+    var wrappedElement = React.createElement(MemoryRouter, null, React.createElement(RootComponent));` : `
+    var wrappedElement = React.createElement(RootComponent);`;
 
       mountScript = `
-(async function() {
+(function() {
 try {
-  const RootComponent = __modules['${appFile?.path || 'App.tsx'}']?.default || 
+  var RootComponent = __modules['${appFile?.path || 'App.tsx'}']?.default || 
                          __modules['App.tsx']?.default ||
                          (typeof ${rootComponent} !== 'undefined' ? ${rootComponent} : null);
   if (RootComponent) {
@@ -558,7 +567,7 @@ try {
         return this.props.children;
       }
     }
-    const root = ReactDOM.createRoot(document.getElementById('root'));
+    var root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(React.createElement(ErrorBoundary, null, wrappedElement));
     window.parent.postMessage({ type: '__PREVIEW_READY__' }, '*');
   } else {
@@ -704,12 +713,19 @@ window.ENV = ${JSON.stringify(envObj)};
   (async function() {
     try {
       window.__modules = window.__modules || {};
+
+      // Phase 99: Phase A — Pre-load external packages (async, no Babel needed)
+      ${Array.from(allExternalPackages).map(pkg => {
+        const varName = `__pkg_${pkg.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        return `window.${varName} = {};\n      try { window.${varName} = await import('${pkg}'); } catch(__e) { console.warn('Failed to load ${pkg}:', __e); }`;
+      }).join('\n      ')}
+
+      // Phase 99: Phase B — Synchronous code execution (Babel sourceType: 'script')
       var code = ${JSON.stringify(`
     // React globals available to all components
-    // Phase 65: Full React 18 hook set
-    const { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, useInsertionEffect, Suspense, lazy, StrictMode } = React;
-    const { createRoot, createPortal, flushSync } = ReactDOM;
-    ${options?.supabaseConfig ? `const supabase = window.__supabaseClient;` : ''}
+    var { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, useInsertionEffect, Suspense, lazy, StrictMode } = React;
+    var { createRoot, createPortal, flushSync } = ReactDOM;
+    ${options?.supabaseConfig ? `var supabase = window.__supabaseClient;` : ''}
 
     ${transpiledChunks.join('\n\n')}
 
@@ -718,11 +734,9 @@ window.ENV = ${JSON.stringify(envObj)};
       var transformed = Babel.transform(code, {
         presets: ['react', ['typescript', { isTSX: true, allExtensions: true }]],
         filename: 'app.tsx',
-        sourceType: 'module',
+        sourceType: 'script',
       });
-      var AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-      var fn = new AsyncFunction(transformed.code);
-      await fn();
+      new Function(transformed.code)();
     } catch(e) {
       console.error('[Babel] Transpilation error:', e.message);
       window.parent.postMessage({
