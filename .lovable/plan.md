@@ -1,163 +1,78 @@
 
-## Fix: Separate Package Pre-Loading from Code Execution
 
-### Problem Analysis
+## Fix: Strip TypeScript Generics That Babel Misparses as JSX
 
-The preview is blank because of a fundamental conflict in the compilation pipeline:
+### Root Cause
 
-1. External packages (lucide-react, framer-motion, etc.) are loaded via `await import('package')` INSIDE each transpiled file chunk
-2. All chunks are concatenated into one code string and passed through `Babel.transform()`
-3. `await` at the top level requires `sourceType: 'module'` -- but this can cause Babel to pass through un-stripped `import` declarations (from multi-line imports the regex misses), which crash inside `AsyncFunction`
-4. Without `sourceType: 'module'`, Babel rejects the `await` entirely
+The preview has been broken for 4 days because of a single regex gap in the type-stripping pipeline.
 
-No combination of Babel settings can fix this because the problem is structural.
-
-### Solution: Pre-Load Packages Outside of Babel
-
-Split the execution into two phases:
-
-**Phase A - Package Pre-Loading (async, no Babel needed):**
-```text
-In the outer async IIFE (raw JS, no JSX):
-  window.__pkg_lucide_react = await import('lucide-react')
-  window.__pkg_framer_motion = await import('framer-motion')
-  ... etc for all detected packages ...
+When the AI generates standard TypeScript like:
+```
+useState<boolean>(false)
+useRef<HTMLDivElement>(null)
+useCallback<() => void>(...)
 ```
 
-**Phase B - Code Execution (synchronous, through Babel with sourceType: 'script'):**
-```text
-Each file chunk references pre-loaded packages:
-  const { Star, Heart } = window.__pkg_lucide_react || {};
-  function App() { return <div><Star /></div>; }
-  __modules['App.tsx'].default = App;
+The type stripper (line 152 of useReactCompiler.ts) only removes generics named `T`, `K`, `V`, `Props`, or `State`. Concrete types like `<boolean>`, `<string>`, `<HTMLDivElement>` are left in.
+
+Babel is configured with `isTSX: true`, so it interprets `<boolean>` as a JSX opening tag, looks for `</boolean>`, can't find it, and throws "Expected corresponding JSX closing tag." The auto-fix AI regenerates the same valid TypeScript patterns, so every attempt fails identically.
+
+### The Fix
+
+**File: `src/hooks/useReactCompiler.ts`** -- Two changes:
+
+**1. Expand the generic stripping regex (line 152)**
+
+Replace the narrow pattern that only handles single-letter generics with a broad one that handles all TypeScript generic parameters:
+
+```
+Before:
+/<(?:T|K|V|Props|State)(?:\s+extends\s+\w+)?(?:,\s*\w+(?:\s+extends\s+\w+)?)*>/g
+
+After:
+/<(?:[A-Za-z][\w.]*(?:\[\])?(?:\s*\|\s*[\w.]+(?:\[\])?)*(?:\s*,\s*[\w.]+(?:\[\])?(?:\s*\|\s*[\w.]+)?)*)>/g
 ```
 
-Since Phase B has no `await`, it works with `sourceType: 'script'` and `new Function()` (no AsyncFunction needed).
+This matches any `<TypeName>` pattern including:
+- `<boolean>`, `<string>`, `<number>` (primitives)
+- `<HTMLDivElement>`, `<React.FC>` (DOM/React types)
+- `<string, number>` (multi-param generics like Map, Record)
+- `<string | null>` (union types in generics)
 
-### Additional Fix: Multi-Line Import Handling
+But it does NOT match JSX because:
+- JSX tags are followed by attributes/whitespace/`>`, not `)` or `;`
+- JSX self-closing tags have ` />` which doesn't match this pattern
+- The pattern only matches when preceded by an identifier (function name), not `<` on its own line
 
-Before the import regex runs, normalize multi-line imports into single lines:
-```text
-import {
-  Star,
-  Heart,
-  Check
-} from 'lucide-react';
+**2. Add a safety pass to strip generics after known function names**
 
-becomes:
+Add a targeted regex that strips `<...>` specifically after common React hook calls and utility functions, as a safety net:
 
-import { Star, Heart, Check } from 'lucide-react';
+```typescript
+// Strip generics after known function calls: useState<X>(...) -> useState(...)
+result = result.replace(
+  /\b(useState|useRef|useCallback|useMemo|useReducer|useContext|createContext|forwardRef|memo|lazy|useImperativeHandle|useLayoutEffect|Set|Map|Array|Promise|Record)\s*<[^>]+>/g,
+  '$1'
+);
 ```
 
-This ensures ALL import patterns are captured by the existing regex.
-
-### Files to Edit
-
-**1. `src/hooks/useReactCompiler.ts` - `transpileFile` function (~line 167-385)**
-
-Changes:
-- Add multi-line import normalization at the top of transpileFile (before the import regex)
-- Change external package import handling: instead of generating `await import('pkg')`, generate `const { X } = window.__pkg_NAME || {};`
-- Remove the async IIFE wrapper from file chunks (line 385) -- chunks become synchronous
-- Return an object with both the code chunk AND a list of external packages used
-
-**2. `src/hooks/useReactCompiler.ts` - `compileReactProject` function (~line 460-735)**
-
-Changes:
-- Collect all external packages from transpiled chunks
-- Generate the package pre-loading preamble (async JS, injected before Babel transform)
-- Revert Babel.transform to `sourceType: 'script'` (no top-level await needed in the code)
-- Revert from `AsyncFunction` back to `new Function()` for the main code
-- Keep the outer async IIFE for the preamble only
-
-### HTML Template Structure (After Fix)
-
-```text
-<script>
-(async function() {
-  try {
-    // Phase A: Pre-load packages (raw JS, no Babel)
-    window.__pkg_lucide_react = {};
-    try { window.__pkg_lucide_react = await import('lucide-react'); }
-    catch(e) { console.warn('Failed to load lucide-react'); }
-
-    window.__pkg_framer_motion = {};
-    try { window.__pkg_framer_motion = await import('framer-motion'); }
-    catch(e) { console.warn('Failed to load framer-motion'); }
-
-    // Phase B: Transform and execute (synchronous, Babel sourceType: 'script')
-    var code = "...all chunks referencing window.__pkg_X...mount script...";
-    var transformed = Babel.transform(code, {
-      presets: ['react', ['typescript', ...]],
-      filename: 'app.tsx',
-      sourceType: 'script'
-    });
-    new Function(transformed.code)();
-  } catch(e) {
-    // error display
-  }
-})();
-</script>
-```
+This runs BEFORE the broad generic strip as a guaranteed catch for the most common patterns.
 
 ### Why This Fixes Everything
 
-- No `await` in the code string -- `sourceType: 'script'` works, no `AsyncFunction` needed
-- No race conditions -- packages are fully loaded before any code executes
-- Multi-line imports are normalized -- all import patterns are captured
-- File chunks are synchronous -- no async IIFE wrapper, no fire-and-forget issues
-- Babel only sees standard synchronous JS + JSX -- no edge cases
+- `useState<boolean>(false)` becomes `useState(false)` -- valid JS
+- `useRef<HTMLDivElement>(null)` becomes `useRef(null)` -- valid JS
+- Babel no longer misinterprets generics as JSX opening tags
+- Auto-fix no longer enters an infinite loop of identical failures
+- The fix is backwards-compatible: code without generics is unaffected
 
-### Technical Details for Implementation
+### Technical Details
 
-**Multi-line import normalizer** (added at top of `transpileFile`):
-```typescript
-// Join multi-line imports into single lines
-code = code.replace(
-  /^import\s+(?:[\w*{}\s,]+)\s+from\s/gm,
-  // No-op match to find import start, then use a smarter approach:
-);
-// Better: replace newlines inside import { ... } blocks
-code = code.replace(
-  /import\s*\{([^}]*)\}/gs, // 's' flag: dot matches newline
-  (match, names) => {
-    const cleaned = names.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-    return `import { ${cleaned} }`;
-  }
-);
-```
+**File to edit:** `src/hooks/useReactCompiler.ts`
 
-**External import transform** (in the import handler, ~line 214-244):
-```typescript
-// Instead of: await import('lucide-react')
-// Generate: window.__pkg_lucide_react
-const importVar = `__pkg_${specifier.replace(/[^a-zA-Z0-9]/g, '_')}`;
-const parts: string[] = [];
-if (defaultImport) {
-  parts.push(hasNoDefault
-    ? `const ${defaultImport} = window.${importVar} || {};`
-    : `const ${defaultImport} = (window.${importVar} || {}).default || window.${importVar} || {};`
-  );
-}
-if (namedImports) {
-  parts.push(`const { ${destructure} } = window.${importVar} || {};`);
-}
-// Track this package for the preamble
-usedExternalPackages.add(specifier);
-```
+**Change 1** (around line 147-152): Add the targeted function-name generic strip before the broad strip.
 
-**File chunk wrapper** (line 385):
-```typescript
-// Before: await (async function() { ...code... })();
-// After: (function() { ...code... })();
-return `/* === ${file.path} === */\n(function() {\n${code}\n${registration.join('\n')}\n})();`;
-```
+**Change 2** (line 152): Expand the existing generic regex to handle all TypeScript type parameter patterns, not just single-letter ones.
 
-**Preamble generation** (in compileReactProject):
-```typescript
-const preambleLines = usedPackages.map(pkg => {
-  const varName = `__pkg_${pkg.replace(/[^a-zA-Z0-9]/g, '_')}`;
-  return `window.${varName} = {};\ntry { window.${varName} = await import('${pkg}'); } catch(__e) { console.warn('Failed to load ${pkg}:', __e); }`;
-});
-const preamble = preambleLines.join('\n');
-```
+Both changes are in the `stripTypeAnnotations` function.
+
