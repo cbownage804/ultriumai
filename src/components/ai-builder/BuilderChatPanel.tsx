@@ -351,7 +351,10 @@ export function BuilderChatPanel({
     const interval = setInterval(() => {
       const current = streamingContentRef.current;
       // Skip updates for very large content -- only file names matter during streaming
-      if (current.length > 20_000) return;
+      if (current.length > 20_000) {
+        setLocalStreamContent(prev => prev ? '' : prev);
+        return;
+      }
       setLocalStreamContent(prev => current !== prev ? current : prev);
     }, 2500);
     return () => clearInterval(interval);
@@ -374,6 +377,18 @@ export function BuilderChatPanel({
     }
     return messages;
   }, [messages, isGenerating, localStreamContent]);
+
+  const filteredMessages = useMemo(() => {
+    return displayMessages.filter((msg) => {
+      if (isInternalMessage(msg.content)) return false;
+      if (msg.role === 'assistant') {
+        const { text, fileNames } = getDisplayContent(msg);
+        const hasFiles = msg.filesGenerated && msg.filesGenerated > 0;
+        if (!text && fileNames.length === 0 && !hasFiles) return false;
+      }
+      return true;
+    });
+  }, [displayMessages]);
 
   useEffect(() => {
     // ScrollArea's actual scrollable element is the Viewport child
@@ -1277,28 +1292,18 @@ export function BuilderChatPanel({
               </motion.div>
             </div>
           ) : (
-            displayMessages.filter((msg) => {
-              // Hide any message containing internal planning/system prompts
-              if (isInternalMessage(msg.content)) return false;
-              // Hide assistant messages that are only internal planning JSON
-              if (msg.role === 'assistant') {
-                const { text, fileNames } = getDisplayContent(msg);
-                const hasFiles = msg.filesGenerated && msg.filesGenerated > 0;
-                if (!text && fileNames.length === 0 && !hasFiles) return false;
-              }
-              return true;
-            }).map((msg, idx, filteredArr) => (
-              <motion.div
+            filteredMessages.map((msg, idx) => {
+              const isLast = idx === filteredMessages.length - 1;
+              const Wrapper = isLast ? motion.div : 'div' as any;
+              const wrapperProps = isLast ? {
+                initial: { opacity: 0, y: 10 },
+                animate: { opacity: 1, y: 0 },
+                transition: { duration: 0.3, type: 'spring', stiffness: 300, damping: 30 },
+              } : {};
+              return (
+              <Wrapper
                 key={msg.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ 
-                  duration: 0.3, 
-                  delay: idx === filteredArr.length - 1 ? 0.05 : 0,
-                  type: 'spring',
-                  stiffness: 300,
-                  damping: 30,
-                }}
+                {...wrapperProps}
                 className={cn(
                   'group/msg relative',
                   msg.role === 'user' ? 'flex justify-end' : ''
@@ -1344,7 +1349,7 @@ export function BuilderChatPanel({
                     )}
                   >
                     {msg.role === 'assistant' ? (
-                      renderAssistantMessage(msg, idx === filteredArr.length - 1)
+                      renderAssistantMessage(msg, idx === filteredMessages.length - 1)
                     ) : (
                       <div>
                         {(msg.imageUrls || (msg.imageUrl ? [msg.imageUrl] : [])).map((url, i) => (
@@ -1375,8 +1380,8 @@ export function BuilderChatPanel({
                     {msg.tokenEstimate && ` · ~${msg.tokenEstimate} tokens`}
                   </div>
                 </div>
-              </motion.div>
-            ))
+              </Wrapper>
+              );})
           )}
 
           {/* Thinking / typing indicator — only show when no content is streaming yet */}
