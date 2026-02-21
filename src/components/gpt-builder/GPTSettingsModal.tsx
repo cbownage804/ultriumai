@@ -41,7 +41,7 @@ export function GPTSettingsModal({
 }: GPTSettingsModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#0d0d14] border-white/[0.08] text-white max-w-md">
+      <DialogContent className="bg-[#0d0d14] border-white/[0.08] text-white max-w-md" onCloseAutoFocus={() => { document.body.style.pointerEvents = ''; }}>
         <DialogHeader>
           <DialogTitle className="text-sm font-semibold text-white/90 flex items-center gap-2">
             <Settings2 className="h-4 w-4 text-primary" />

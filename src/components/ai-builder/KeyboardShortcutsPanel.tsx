@@ -35,7 +35,7 @@ export function KeyboardShortcutsPanel({ open, onOpenChange }: KeyboardShortcuts
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#0d0d14] border-white/[0.08] text-white max-w-sm">
+      <DialogContent className="bg-[#0d0d14] border-white/[0.08] text-white max-w-sm" onCloseAutoFocus={() => { document.body.style.pointerEvents = ''; }}>
         <DialogHeader>
           <DialogTitle className="text-sm font-semibold text-white/90 flex items-center gap-2">
             <Keyboard className="h-4 w-4 text-cyan-400" />
