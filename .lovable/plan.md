@@ -1,137 +1,84 @@
 
 
-# Next-Level Parity: The Remaining Feature Sweep
+# Final Polish: Remaining Parity Gaps
 
 ## Overview
-After auditing all 250+ components and hooks, here are the genuinely missing or incomplete features organized into actionable tiers.
+After auditing everything implemented so far, here are the genuinely remaining gaps -- features that were planned but not yet wired, plus a few new ideas to truly finish the builder.
 
 ---
 
-## Tier 1 -- Completion Sounds and Haptics
-
-### A. Build Completion Sound
-Lovable plays a subtle chime when generation finishes. We have no audio feedback.
-
-**Changes**:
-- Add a tiny audio chime (Web Audio API oscillator, no file needed -- ~10 lines)
-- Play on `isGenerating` transitioning from `true` to `false` in `AIAppBuilderWorkspace.tsx`
-- Add a "Mute sounds" toggle in project settings, persisted to localStorage
-
----
-
-## Tier 2 -- Consolidated Project Settings Modal
-
-### B. Tabbed Settings Dialog (Still Missing)
-`ProjectSettingsModal.tsx` was planned but never created. Settings are currently scattered across the dropdown and bottom bar.
-
-**Changes**:
-- Create `ProjectSettingsModal.tsx` with tabs: **General** (name, description, avatar), **Domains** (custom domain panel), **Integrations** (Supabase/Stripe/GitHub status), **Advanced** (hide badge, remix toggle, delete, transfer)
-- Wire from the project dropdown "Settings" item
-- Move the "Hide Badge" toggle into the Advanced tab
+## Already Done (No Work Needed)
+- Build completion chime (useBuildChime)
+- New conversation button (wired in chat header)
+- Message pinning (pin icon in chat actions)
+- File diff indicators in ProjectFileTree (green/amber dots)
+- Auto commit message generation (useAICommitMessages + wired in workspace)
+- Consolidated ProjectSettingsModal (created and wired)
+- Prompt templates in "+" menu
+- Console log capture from iframe (__CONSOLE_LOG__ already intercepted and shown in ConsolePanel)
+- Editable URL bar with back/forward navigation
+- Build counter in WorkspaceStatusBar
+- Cost badge near send button
+- Context warning toast at 80%
 
 ---
 
-## Tier 3 -- Chat UX Gaps
+## What's Still Missing
 
-### C. Message Pinning / Bookmarks
-Let users pin important AI responses (e.g., architecture decisions) so they can find them later without scrolling.
-
-**Changes**:
-- Add a `pinned` boolean to `BuilderMessage` type
-- Add a pin icon to message action bar (next to thumbs up/down)
-- Render pinned messages in a collapsible "Pinned" section at the top of the chat
-- Persist pins in the message array (already saved to cloud)
-
-### D. "New Conversation" Button (Context Reset)
-When context is full, users must clear everything. Add a "New conversation" option that keeps the project files but resets messages and context budget.
+### 1. Version Timeline: Show Commit Messages
+The `VersionTimelineSlider` displays "label" and "type" but never shows the auto-generated `commitMessage` from each build. The data is generated and stored on messages, but the timeline snapshots don't carry it.
 
 **Changes**:
-- Add a "New conversation" button in the chat header (next to clear)
-- On click, clear messages array but keep project files intact
-- Reset context budget counter
+- Add an optional `commitMessage?: string` field to `TimelineSnapshot`
+- When creating snapshots in `useVersionTimeline`, pass the commit message from the corresponding `BuilderMessage`
+- In `VersionTimelineSlider.tsx`, display the commit message below the snapshot label (e.g., "feat(auth): add login page")
 
-### E. Message Search
-Let users search through chat history with Cmd+F scoped to the chat panel.
-
-**Changes**:
-- Add a search input toggle in the chat header
-- Filter and highlight matching messages with a "X of Y" navigator
-
----
-
-## Tier 4 -- Preview Enhancements
-
-### F. Multi-Page Route Navigation
-Lovable shows a URL bar in the preview that lets you navigate between routes. We have a URL display but no editable navigation.
+### 2. Keyboard Shortcut Cheat Sheet Overlay (Cmd+/)
+The `KeyboardShortcutsPanel` exists as a dialog but there's no `Cmd+/` binding to open it from within the builder workspace. The `GlobalKeyboardShortcuts` component uses `Shift+?` but that's for the global app, not the builder-specific context.
 
 **Changes**:
-- Make the preview URL bar editable -- typing a path and pressing Enter navigates the iframe via `postMessage`
-- Add forward/back browser buttons that track iframe navigation history
-- Already partially wired (`previewCurrentUrl` state exists)
+- In `AIAppBuilderWorkspace.tsx`, add a `Cmd+/` keydown listener that toggles a `showShortcutsOverlay` state
+- Render `KeyboardShortcutsPanel` with that state
+- Add builder-specific shortcuts to the panel (Build, Preview, Panels)
 
-### G. Preview Console Log Viewer (Enhanced)
-The `ErrorConsole` shows errors but not general `console.log` output. Add a full console panel visible in the preview area.
-
-**Changes**:
-- Extend the iframe `message` listener to capture `console.log`, `console.warn`, `console.info` (not just errors)
-- Add a "Console" tab in the preview footer alongside "Errors"
-- Show log entries with level icons and timestamps
-
----
-
-## Tier 5 -- Developer Experience
-
-### H. AI Commit Messages
-When saving/publishing, auto-generate a commit-style summary of what changed.
+### 3. Message Search Highlighting
+The search bar exists in the chat header, but matched messages aren't visually highlighted with the search term emphasized in the text.
 
 **Changes**:
-- After generation completes, compare `previousFiles` vs `latestFiles` to build a diff summary
-- Auto-generate a one-line commit message (e.g., "Add login page and auth hook")
-- Show in the version timeline and publish dialog
+- In `BuilderChatPanel.tsx`, when search is active and a message matches, wrap matching text spans in a `<mark>` tag with a highlight style
+- Add "X of Y" match counter next to the search input
+- Add up/down arrows to navigate between matches
 
-### I. File Diff on Hover in File Tree
-In the file tree, show a green/amber dot for new/modified files since last generation.
-
-**Changes**:
-- Compare current files against `previousFiles` snapshot
-- Add colored indicators next to file names in `ProjectFileTree`
-- Green dot = new file, amber dot = modified, no dot = unchanged
-
-### J. Keyboard Shortcut Cheat Sheet Overlay
-`Cmd+/` opens a visual overlay showing all keyboard shortcuts, grouped by category.
+### 4. Console Tab in Preview Footer
+Console logs are captured and shown in the standalone `ConsolePanel`, but the `ErrorConsole` at the bottom of the preview only shows errors/warnings. Add a "Console" tab alongside "Errors" directly in the preview panel footer.
 
 **Changes**:
-- Create a styled overlay component triggered by `Cmd+/`
-- Group shortcuts: Navigation, Editing, Build, Preview, Panels
-- Already have `KeyboardShortcutsPanel` but it's a side panel -- this is a quick-reference overlay
+- In `BuilderPreviewPanel.tsx`, listen for `__CONSOLE_LOG__` messages and store them in local state
+- Add a tab toggle ("Errors" | "Console") in the preview footer
+- Show `console.log/info` entries with level icons and timestamps in the Console tab
 
----
-
-## Tier 6 -- Engagement and Polish
-
-### K. Build Streak / Usage Stats
-Show a small "builds today" counter in the status bar to give users a sense of productivity.
+### 5. Design Tokens Export Button
+The `useDesignTokenExport` hook was created but never wired to the UI.
 
 **Changes**:
-- Track build count per session in `AIAppBuilderWorkspace.tsx`
-- Show in status bar: "5 builds today"
-- Optionally show a confetti animation on milestone builds (10, 25, 50)
+- Add an "Export Design Tokens" option in the `ExportButton` dropdown menu
+- Call `useDesignTokenExport().exportTokens(files)` and trigger a JSON file download
 
-### L. Prompt Templates / Quick Actions
-Pre-built prompt templates for common tasks (add auth, make responsive, add dark mode, etc.) accessible from the "+" menu.
-
-**Changes**:
-- Add a "Templates" section in the plus menu with 8-10 pre-built prompts
-- Already have `/slash` commands but these would be visual cards with descriptions
-- Categories: Design, Backend, Features, Polish
-
-### M. Export as Figma-Ready Design Tokens
-Export the project's color palette, typography, and spacing as a JSON design token file.
+### 6. Build Streak Milestones with Confetti
+The build counter exists but the confetti celebration at milestones (10, 25, 50 builds) was planned but not implemented.
 
 **Changes**:
-- Parse Tailwind classes from all project files to extract colors, fonts, spacing
-- Generate a `design-tokens.json` file
-- Add an "Export Design Tokens" option in the export menu
+- In `AIAppBuilderWorkspace.tsx`, after incrementing `buildCount`, check for milestones
+- Use `canvas-confetti` (already installed) to fire a celebration animation
+- Show a toast: "10 builds today! You're on fire!"
+
+### 7. Pinned Messages Section at Chat Top
+The pin toggle button exists on messages, but there's no dedicated "Pinned" section rendering at the top of the chat scroll area.
+
+**Changes**:
+- In `BuilderChatPanel.tsx`, filter messages where `pinned === true`
+- Render a collapsible "Pinned" section above the message list
+- Each pinned item shows a compact preview with a click-to-scroll-to-original action
 
 ---
 
@@ -140,28 +87,20 @@ Export the project's color palette, typography, and spacing as a JSON design tok
 ### File Changes Summary
 
 | File | Changes |
-|------|--------|
-| `AIAppBuilderWorkspace.tsx` | Build completion sound, build counter, new conversation handler, settings modal wiring |
-| `ProjectSettingsModal.tsx` (new) | Tabbed settings dialog with General/Domains/Integrations/Advanced tabs |
-| `BuilderChatPanel.tsx` | Pin messages, message search, new conversation button, prompt template cards in plus menu |
-| `BuilderPreviewPanel.tsx` | Editable URL bar, console.log capture, console tab |
-| `ProjectFileTree.tsx` | File diff indicators (new/modified dots) |
-| `WorkspaceStatusBar.tsx` | Build counter display |
-| `useAIAppBuilder.ts` | Add `pinned` field to `BuilderMessage`, auto-commit message generation |
-| `VersionTimelineSlider.tsx` | Show auto-generated commit messages |
+|------|---------|
+| `VersionTimelineSlider.tsx` | Display commit messages from snapshots |
+| `useVersionTimeline.ts` | Add `commitMessage` field to `TimelineSnapshot` |
+| `AIAppBuilderWorkspace.tsx` | Cmd+/ shortcut, confetti milestones, pass commit messages to timeline |
+| `BuilderChatPanel.tsx` | Search highlighting with mark tags, pinned messages section |
+| `BuilderPreviewPanel.tsx` | Console tab in preview footer |
+| `ExportButton.tsx` | Wire design tokens export |
 
 ### Priority Order
-1. Build completion sound (A) -- instant delight, 10 lines
-2. New conversation button (D) -- solves real pain point
-3. File diff indicators in tree (I) -- high visibility, low effort
-4. Consolidated settings modal (B) -- organization
-5. Message pinning (C) -- power user feature
-6. Editable preview URL bar (F) -- multi-page apps
-7. Console log viewer (G) -- debugging
-8. AI commit messages (H) -- polish
-9. Message search (E) -- quality of life
-10. Keyboard shortcut overlay (J) -- discoverability
-11. Prompt templates (L) -- engagement
-12. Build counter (K) -- fun
-13. Design tokens export (M) -- advanced
+1. Version timeline commit messages -- data already generated, just needs display
+2. Pinned messages section -- UI gap, pin button already works
+3. Search highlighting -- search bar exists, needs visual feedback
+4. Console tab in preview -- logs captured, needs tab UI
+5. Keyboard shortcut overlay -- quick win
+6. Build streak confetti -- fun polish
+7. Design tokens export -- advanced feature
 
