@@ -76,14 +76,24 @@ export function CompilationBridge({
   const onCompilingChangeRef = useRef(onCompilingChange);
   onCompilingChangeRef.current = onCompilingChange;
 
+  // Store files in a ref so effects can read latest data without depending on the array reference
+  const filesRef = useRef(files);
+  filesRef.current = files;
+
+  // Serialize file identity to prevent effect re-fires from reference changes
+  const filesDigest = useMemo(() => {
+    if (files.length === 0) return '';
+    return files.map(f => f.path + ':' + f.content.length).join('|');
+  }, [files]);
+
   const isReactProject = useMemo(() => {
     try {
-      return detectReactProject(files);
+      return detectReactProject(filesRef.current);
     } catch (e) {
       console.error('[detectReactProject] crashed:', e);
       return false;
     }
-  }, [files]);
+  }, [filesDigest]);
 
   // ── stableHTML state ──
   const [stableHTML, setStableHTMLLocal] = useState<string | null>(null);
@@ -117,14 +127,9 @@ export function CompilationBridge({
     }
   }, [isGenerating]);
 
-  // Serialize file identity to prevent effect re-fires from reference changes
-  const filesDigest = useMemo(() => {
-    if (files.length === 0) return '';
-    return files.map(f => f.path + ':' + f.content.length).join('|');
-  }, [files]);
 
   useEffect(() => {
-    if (isGenerating || files.length === 0 || stableHTMLRef.current) {
+    if (isGenerating || filesRef.current.length === 0 || stableHTMLRef.current) {
       setLiveCompiledHTML(null);
       return;
     }
@@ -154,7 +159,7 @@ export function CompilationBridge({
           console.time('[liveCompiledHTML]');
           let result: string | null = null;
           if (isReactProject) {
-            const compiled = compileReactProjectRef.current(files, {
+            const compiled = compileReactProjectRef.current(filesRef.current, {
               supabaseConfig: supabaseConfig || undefined,
               stripeConfig: stripeConfig || undefined,
               envVars,
@@ -202,14 +207,19 @@ export function CompilationBridge({
 
   // Only compile for hosting AFTER liveCompiledHTML is settled to avoid
   // two heavy synchronous compilations running back-to-back and freezing the page.
+  const hostingLockRef = useRef(false);
   useEffect(() => {
     if (isGenerating) {
       setCompiledForHosting(null);
+      hostingLockRef.current = false;
       return;
     }
-    if (files.length === 0) return;
+    if (filesRef.current.length === 0) return;
     // Wait until the live preview compilation is done
     if (!compilationAttemptedRef.current) return;
+    // Prevent re-entry
+    if (hostingLockRef.current) return;
+    hostingLockRef.current = true;
 
     const timer = setTimeout(() => {
       try {
@@ -223,7 +233,7 @@ export function CompilationBridge({
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, isGenerating, liveCompiledHTML]);
+  }, [filesDigest, isGenerating, liveCompiledHTML]);
 
   // Report compiledForHosting upstream
   useEffect(() => {
@@ -244,24 +254,24 @@ export function CompilationBridge({
   useEffect(() => {
     if (liveCompiledHTML) {
       if (stableHTML && stableHTML.length > 0) return;
-      const patched = liveSync.applyPatches(previewIframeRef, files);
+      const patched = liveSync.applyPatches(previewIframeRef, filesRef.current);
       if (!patched) {
         setStableHTML(liveCompiledHTML);
-        liveSync.resetSnapshot(files);
+        liveSync.resetSnapshot(filesRef.current);
       }
     }
-    if (!isGenerating && !liveCompiledHTML && files.length > 0 && stableHTML === null && compilationAttemptedRef.current) {
+    if (!isGenerating && !liveCompiledHTML && filesRef.current.length > 0 && stableHTML === null && compilationAttemptedRef.current) {
       console.warn('[Preview] Generation complete but compilation returned null — showing error fallback');
       setStableHTML(ERROR_FALLBACK_HTML);
     }
-  }, [isGenerating, liveCompiledHTML, files, stableHTML, setStableHTML]);
+  }, [isGenerating, liveCompiledHTML, filesDigest, stableHTML, setStableHTML]);
 
   // Hot-patch during manual edits
   useEffect(() => {
-    if (!isGenerating && stableHTML && files.length > 0) {
-      liveSync.applyPatches(previewIframeRef, files);
+    if (!isGenerating && stableHTML && filesRef.current.length > 0) {
+      liveSync.applyPatches(previewIframeRef, filesRef.current);
     }
-  }, [files, isGenerating, stableHTML]);
+  }, [filesDigest, isGenerating, stableHTML]);
 
 
   // This component renders nothing — it only manages compilation state
