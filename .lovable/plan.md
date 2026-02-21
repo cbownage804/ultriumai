@@ -1,98 +1,111 @@
 
 
-## Fix: Tab-Switch Data Loss (3 Root Causes)
+## Fix: Auto-Recovery + Preview White Screen
 
-### Root Cause 1: Service Worker Force-Reloads the Page
+### Two issues to fix
 
-In `index.html` (line 270-272), there's a listener that reloads the entire page whenever a new service worker takes control:
+**Issue 1: Recovery dialog asks instead of auto-restoring**
 
-```javascript
-navigator.serviceWorker.addEventListener('controllerchange', () => {
-  window.location.reload();  // <-- DESTROYS all React state
-});
+When you switch tabs and come back, the app shows a "Recover unsaved work?" dialog forcing you to click "Restore". You want it to just restore automatically.
+
+**Issue 2: Preview stuck on white screen**
+
+The preview shows a blank white screen because of a guard in `CompilationBridge.tsx` line 311:
+```typescript
+if (stableHTML && stableHTML.length > 0) return;
 ```
-
-The service worker checks for updates every 60 seconds (line 250). If the server returns even a slightly different `sw.js`, the new worker installs, calls `skipWaiting()`, activates with `clients.claim()`, and triggers `controllerchange`. This causes a full page reload that wipes all React state. The user might see this as "switching tabs wiped my progress" because the reload can coincide with returning to the tab.
-
-**Fix:** Remove the automatic `controllerchange` reload. Let the new service worker activate silently. The next natural navigation will pick it up.
-
-### Root Cause 2: Effect Dependency Causes Listener Gaps
-
-In `AIAppBuilderWorkspace.tsx` (line 1016), `idbPersistence` is in the effect dependency array:
-
-```javascript
-}, [saveDraftImmediate, idbPersistence, sessionId]);
-```
-
-`idbPersistence` is a new object reference on every render (it contains `syncStatus` state). Every time `syncStatus` changes (synced -> unsaved -> syncing -> synced), the effect re-runs: it removes the `visibilitychange` listener, then re-adds it. During this brief gap, a tab switch might not be caught, and the data won't flush.
-
-Worse, calling `saveToIDB` inside the cleanup function changes `syncStatus`, which triggers a re-render, which re-runs the effect, creating a feedback cycle (stopped by hash check, but still causes unnecessary churn).
-
-**Fix:** Use a ref to store `saveToIDB` instead of putting the entire `idbPersistence` object in the dependency array. The effect should only depend on stable references.
-
-### Root Cause 3: `?new=true` Stripping Depends on `isGenerating`
-
-The effect that strips `?new=true` from the URL (line 1019-1025) only fires when `isGenerating` becomes true. If the page reloads BEFORE the user sends their first message (e.g., from the SW reload above), `?new=true` is still in the URL, and the mount effect at line 1101-1106 clears all saved drafts:
-
-```javascript
-if (isNewProject) {
-  clearDraft();                    // Wipes localStorage
-  idbPersistence.clearSession();   // Wipes IndexedDB
-}
-```
-
-**Fix:** Strip `?new=true` from the URL immediately on first mount (after checking it once), not waiting for `isGenerating`. This way, even if the page reloads unexpectedly, the URL is clean and draft recovery works.
+This check prevents `liveCompiledHTML` from ever replacing `stableHTML` once it's set. So if the first compilation produces an error fallback or partial result, all subsequent compilations are ignored -- the preview never updates.
 
 ---
 
 ### Changes
 
-**File 1: `index.html`** (1 change)
+**File 1: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`** (1 change)
 
-Remove the `controllerchange` auto-reload (lines 269-272). Replace with a no-op or remove entirely. The service worker will still update; the new version just takes effect on the next natural page load.
-
-**File 2: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`** (2 changes)
-
-Change A: Use a ref for `idbPersistence.saveToIDB` in the visibility flush effect:
+Replace the recovery dialog flow with automatic restore. Instead of calling `setShowRecoveryDialog(true)` at line 1063, directly restore the session inline:
 
 ```typescript
-const saveToIDBRef = useRef(idbPersistence.saveToIDB);
-saveToIDBRef.current = idbPersistence.saveToIDB;
+// BEFORE (lines 1061-1064):
+const idbSession = await idbPersistence.checkRecovery();
+if (idbSession && (idbSession.files.length > 0 || idbSession.messages.length > 0)) {
+  setShowRecoveryDialog(true);
+  return;
+}
 
-useEffect(() => {
-  const flushDraft = () => {
-    saveDraftImmediate(latestRef.current.name, latestRef.current.files, latestRef.current.messages);
-    saveToIDBRef.current(sessionId, latestRef.current.name, latestRef.current.files, latestRef.current.messages);
-  };
-  // ... rest of effect unchanged ...
-}, [saveDraftImmediate, sessionId]);
-// idbPersistence REMOVED from deps -- use ref instead
-```
-
-Change B: Strip `?new=true` immediately on mount, not waiting for `isGenerating`:
-
-```typescript
-// Strip ?new=true immediately after mount so tab recovery works on reload
-useEffect(() => {
-  if (searchParams.get('new') === 'true') {
-    const url = new URL(window.location.href);
-    url.searchParams.delete('new');
-    window.history.replaceState({}, '', url.pathname + url.search);
+// AFTER:
+const idbSession = await idbPersistence.checkRecovery();
+if (idbSession && (idbSession.files.length > 0 || idbSession.messages.length > 0)) {
+  // Auto-restore without asking -- user should never lose work
+  setFiles(idbSession.files);
+  renameProject(idbSession.name);
+  if (idbSession.messages.length > 0) {
+    setMessages(idbSession.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
   }
-}, []); // Run once on mount
+  dedupeToast('success', 'Session auto-restored');
+  return;
+}
 ```
 
-Remove the old effect that depended on `isGenerating`.
+The `SessionRecoveryDialog` component and its handlers can remain in the code (no harm), but they simply won't be triggered anymore.
 
-### Why This Fixes It
+**File 2: `src/components/ai-builder/CompilationBridge.tsx`** (1 change)
 
-1. No more surprise page reloads from service worker updates -- React state survives tab switches
-2. The `visibilitychange` listener is always active (no gaps from effect churn) -- data always flushes when the tab goes hidden
-3. Even if a reload does happen, `?new=true` is already gone from the URL, so draft recovery works instead of clearing everything
+Fix the preview update effect at line 309-322. The guard `if (stableHTML && stableHTML.length > 0) return;` prevents new compiled HTML from ever replacing the current preview. This means if the first compilation result was wrong (error fallback, partial render), the preview is stuck forever.
 
-### Risk Assessment
+Replace with logic that allows `liveCompiledHTML` to replace `stableHTML` when the compiled content has actually changed:
 
-- Removing the SW `controllerchange` reload means users won't auto-get new code on the app builder page until they navigate away and back. This is acceptable since the app builder is a long-lived session.
-- Using a ref for `saveToIDB` is a standard React pattern for stable callbacks in effects.
-- Stripping `?new=true` on mount is safe because the initial "skip draft restore" check at line 1052 already captured the value before the effect runs (both use `searchParams.get('new')` at render time).
+```typescript
+// BEFORE (lines 309-322):
+useEffect(() => {
+  if (liveCompiledHTML) {
+    if (stableHTML && stableHTML.length > 0) return;  // <-- BLOCKS all updates
+    const patched = liveSync.applyPatches(previewIframeRef, filesRef.current);
+    if (!patched) {
+      setStableHTML(liveCompiledHTML);
+      liveSync.resetSnapshot(filesRef.current);
+    }
+  }
+  ...
+}, [...]);
+
+// AFTER:
+useEffect(() => {
+  if (liveCompiledHTML) {
+    // If stableHTML is the same as liveCompiledHTML, skip (no change)
+    if (stableHTML === liveCompiledHTML) return;
+    // Try live-patching first; if that fails, replace the whole preview
+    const patched = liveSync.applyPatches(previewIframeRef, filesRef.current);
+    if (!patched) {
+      setStableHTML(liveCompiledHTML);
+      liveSync.resetSnapshot(filesRef.current);
+    }
+  }
+  if (!isGenerating && !liveCompiledHTML && filesRef.current.length > 0 && stableHTML === null && compilationAttemptedRef.current) {
+    console.warn('[Preview] Generation complete but compilation returned null — showing error fallback');
+    setStableHTML(ERROR_FALLBACK_HTML);
+  }
+}, [isGenerating, liveCompiledHTML, filesDigest, stableHTML, setStableHTML]);
+```
+
+The key change: instead of `if (stableHTML && stableHTML.length > 0) return` (which blocks ALL updates), we use `if (stableHTML === liveCompiledHTML) return` (which only skips if the content is identical). This allows new compilations to replace old/broken previews.
+
+---
+
+### Technical details
+
+| Change | File | Lines | What it does |
+|--------|------|-------|-------------|
+| Auto-restore | AIAppBuilderWorkspace.tsx | 1061-1064 | Skip dialog, restore directly |
+| Fix preview guard | CompilationBridge.tsx | 309-322 | Allow new compilations to replace stale previews |
+
+### Why this works
+
+- **Auto-restore**: When the tab remounts and finds saved work in IndexedDB, it restores immediately. No dialog, no user action needed. Your files, messages, and project name are all preserved.
+- **White screen fix**: The preview update effect now allows new compiled HTML to replace old/broken HTML. The only skip condition is if the content is identical (no-op optimization). This means every successful recompilation actually shows up in the preview.
+
+### Risk assessment
+
+- Auto-restore is strictly better UX -- the dialog was an unnecessary friction point
+- The `stableHTML === liveCompiledHTML` identity check is safe because React state updates produce new string references when content changes
+- Live-patching still runs first (performance optimization), full replacement is the fallback
 
