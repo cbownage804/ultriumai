@@ -1,44 +1,58 @@
 
 
-## Fix: Prevent Preview Freeze by Stabilizing All Compilation Effects
+## Fix: Syntax Error Caused by Type Annotation Stripping
 
-### Problem
-The preview freezes ("This page isn't responding") because three `useEffect` hooks inside `CompilationBridge.tsx` still depend on the raw `files` array, which creates a new reference on every render. This causes:
-1. The `compiledForHosting` effect to re-run heavy compilation repeatedly
-2. The preview update effect to re-fire constantly
-3. The hot-patch effect to loop indefinitely
+### Root Cause
 
-Only the `liveCompiledHTML` effect was previously fixed to use `filesDigest` -- the other three were missed.
+In `src/hooks/useReactCompiler.ts`, line 142, the `stripTypeAnnotations` function has this regex:
 
-### Fix (single file: `CompilationBridge.tsx`)
-
-1. **Store `files` in a ref** so effects can access the latest file data without depending on the array reference:
-   - Add `const filesRef = useRef(files); filesRef.current = files;`
-   
-2. **Replace `files` with `filesDigest`** in the dependency arrays of all three remaining effects:
-   - `compiledForHosting` effect (line 226): change `[files, ...]` to `[filesDigest, ...]`
-   - Preview update effect (line 257): change `[..., files, ...]` to `[..., filesDigest, ...]`
-   - Hot-patch effect (line 264): change `[files, ...]` to `[filesDigest, ...]`
-   
-3. **Use `filesRef.current`** inside those effect bodies wherever `files` is read (e.g., passing to `getCompiledHTMLRef.current(...)` or `liveSync.applyPatches(...)`)
-
-4. **Add a lock for `compiledForHosting`** similar to `compilationLockRef` to prevent the hosting compilation from running more than once per cycle
-
-5. **Fix `detectReactProject` memo** (line 86): change dependency from `[files]` to `[filesDigest]` and use `filesRef.current` inside, since it also re-runs on every files reference change
-
-### Technical Details
-
-```text
-Current deps (BROKEN - fires every render):
-  compiledForHosting:  [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, isGenerating, liveCompiledHTML]
-  preview update:      [isGenerating, liveCompiledHTML, files, stableHTML, setStableHTML]
-  hot-patch:           [files, isGenerating, stableHTML]
-
-Fixed deps (stable - fires only on real changes):
-  compiledForHosting:  [filesDigest, isGenerating, liveCompiledHTML]
-  preview update:      [isGenerating, liveCompiledHTML, filesDigest, stableHTML, setStableHTML]
-  hot-patch:           [filesDigest, isGenerating, stableHTML]
+```
+/: (?:React\.(?:FC|ReactNode|...)|string|number|boolean|...|object|Record<...>|Array<...>|\w+(?:\[\])?(?:\s*\|\s*\w+(?:\[\])?)*)/g
 ```
 
-All config props (`supabaseConfig`, `stripeConfig`, `envVars`, etc.) will also be removed from the `compiledForHosting` dependency array since they are already accessed via refs and rarely change -- their inclusion was causing additional unnecessary re-fires.
+The final catch-all alternative `\w+` is meant to match custom TypeScript type names (e.g., `Props`, `MyType`), but `\w` includes digits (`[a-zA-Z0-9_]`). This causes it to match numeric values inside object literals:
+
+- `duration: 0.5` -- matches `: 0`, leaving `duration.5` (broken)
+- `delay: 1` -- matches `: 1`, leaving `delay` (broken)
+- `key: value` -- matches `: value`, leaving `key` (broken)
+
+This is why the preview shows "Unexpected token, expected `,`" on `transition={{ duration: 0.5 }}`.
+
+### Fix (single file: `src/hooks/useReactCompiler.ts`)
+
+**Change the `\w+` catch-all to `[A-Z]\w*`** so it only matches identifiers starting with an uppercase letter (which is the TypeScript convention for custom types like `Props`, `State`, `ReactNode`, etc.):
+
+```text
+Before:  \w+(?:\[\])?(?:\s*\|\s*\w+(?:\[\])?)*
+After:   [A-Z]\w*(?:\[\])?(?:\s*\|\s*[A-Z]\w*(?:\[\])?)*
+```
+
+This preserves matching for all real type annotations:
+- `param: Props` -- still matched (starts with uppercase)
+- `value: MyCustomType` -- still matched
+- `items: Item[]` -- still matched
+- `x: String | Number` -- still matched
+
+But stops matching object literal values:
+- `duration: 0.5` -- no longer matched (starts with digit)
+- `color: red` -- no longer matched (starts with lowercase)
+- `key: value` -- no longer matched (starts with lowercase)
+
+Built-in lowercase types (`string`, `number`, `boolean`, `void`, `any`, `null`, `undefined`, `never`, `unknown`, `object`) are already explicitly listed in the regex, so they continue to work.
+
+### Technical Detail
+
+The exact edit is on line 142 of `useReactCompiler.ts`. The replacement changes the regex from:
+
+```javascript
+result = result.replace(/: (?:React\.(?:FC|ReactNode|MouseEvent|ChangeEvent|FormEvent|CSSProperties|RefObject)(?:<[^>]+>)?|string|number|boolean|void|any|null|undefined|never|unknown|object|Record<[^>]+>|Array<[^>]+>|\w+(?:\[\])?(?:\s*\|\s*\w+(?:\[\])?)*)/g, '');
+```
+
+to:
+
+```javascript
+result = result.replace(/: (?:React\.(?:FC|ReactNode|MouseEvent|ChangeEvent|FormEvent|CSSProperties|RefObject)(?:<[^>]+>)?|string|number|boolean|void|any|null|undefined|never|unknown|object|Record<[^>]+>|Array<[^>]+>|[A-Z]\w*(?:\[\])?(?:\s*\|\s*[A-Z]\w*(?:\[\])?)*)/g, '');
+```
+
+Only two character sequences change: `\w+` becomes `[A-Z]\w*` in two places within the regex.
 
