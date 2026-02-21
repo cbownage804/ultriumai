@@ -687,7 +687,7 @@ export default function AIStudioProjectsPage() {
                             </div>
 
                             {!selectionMode && (
-                              <DropdownMenu>
+                              <DropdownMenu modal={false}>
                                 <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                   <button className="h-6 w-6 rounded flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted/50 transition-all">
                                     <MoreHorizontal className="h-3.5 w-3.5" />
@@ -714,7 +714,7 @@ export default function AIStudioProjectsPage() {
                                   )}
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
-                                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(item); }}
+                                    onClick={(e) => { e.stopPropagation(); setTimeout(() => setDeleteTarget(item), 0); }}
                                     className="text-destructive focus:text-destructive"
                                   >
                                     <Trash2 className="h-4 w-4 mr-2" /> Delete
@@ -832,7 +832,7 @@ export default function AIStudioProjectsPage() {
                     </td>
                     <td className="px-2 py-3">
                       {!selectionMode && (
-                        <DropdownMenu>
+                        <DropdownMenu modal={false}>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                             <button className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted/50 transition-all">
                               <MoreHorizontal className="h-4 w-4" />
@@ -859,7 +859,7 @@ export default function AIStudioProjectsPage() {
                             )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={(e) => { e.stopPropagation(); setDeleteTarget(item); }}
+                              onClick={(e) => { e.stopPropagation(); setTimeout(() => setDeleteTarget(item), 0); }}
                               className="text-destructive focus:text-destructive"
                             >
                               <Trash2 className="h-4 w-4 mr-2" /> Delete
