@@ -2710,6 +2710,12 @@ export function AIAppBuilderWorkspace() {
           soundEnabled={soundEnabled}
           onToggleSound={(v) => { setSoundEnabled(v); localStorage.setItem('builder-sound', String(v)); }}
           onDeleteProject={() => { if (currentProjectId) { deleteProject(currentProjectId); resetProject(); setStableHTML(null); dedupeToast('success', 'Project deleted'); } }}
+          onOpenSupabaseConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
+          onOpenStripeConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
+          onOpenGithubConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
+          onResetProject={() => { resetProject(); setStableHTML(null); }}
+          onExportProject={() => { setShowSettingsModal(false); setTimeout(() => setShowExportGuide(true), 150); }}
+          onOpenKnowledge={() => { setShowSettingsModal(false); setTimeout(() => setShowKnowledge(true), 150); }}
         />
       </div>
 
