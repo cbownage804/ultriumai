@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   ArrowLeft, Settings, Heart, Pencil, Rocket,
-  Sun, Moon, Monitor, ExternalLink, ChevronDown, Check,
+  Sun, Moon, Monitor, ExternalLink, ChevronDown, ChevronRight, Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -37,22 +37,33 @@ function CreditBarItem({ onOpenBilling }: { onOpenBilling: () => void }) {
   const monthlyW = totalLimit > 0 ? (safeMonthly / totalLimit) * 100 : 0;
   const bonusW = totalLimit > 0 ? (safeBonus / totalLimit) * 100 : 0;
 
+  // Determine which credit pool is active
+  const activePool = safeDaily > 0 ? 'daily' : safeMonthly > 0 ? 'monthly' : safeBonus > 0 ? 'bonus' : 'daily';
+  const activeLabel = activePool === 'daily' ? 'Using daily credits' : activePool === 'monthly' ? 'Using monthly credits' : activePool === 'bonus' ? 'Using bonus credits' : 'Using daily credits';
+  const activeColor = activePool === 'daily' ? 'bg-blue-500' : activePool === 'monthly' ? 'bg-violet-500' : 'bg-amber-500';
+  const dotColor = activePool === 'daily' ? 'text-blue-500' : activePool === 'monthly' ? 'text-violet-500' : 'text-amber-500';
+
+  // For the bar, show used vs total like Lovable
+  const usedW = totalLimit > 0 ? (Math.max(0, totalRemaining) / totalLimit) * 100 : 0;
+
   return (
     <DropdownMenuItem
       onClick={onOpenBilling}
-      className="flex-col items-start gap-1 cursor-pointer px-2.5 py-2.5"
+      className="flex-col items-start gap-1.5 cursor-pointer px-2.5 py-2.5"
     >
       <div className="flex items-center justify-between w-full">
         <span className="text-sm font-medium text-white/80">Credits</span>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-white/60">{Math.max(0, totalRemaining)}</span>
-          <span className="text-xs text-white/40">View details →</span>
+        <div className="flex items-center gap-1">
+          <span className="text-sm font-medium text-white/70">{Math.max(0, totalRemaining).toLocaleString()} left</span>
+          <ChevronRight className="h-3.5 w-3.5 text-white/40" />
         </div>
       </div>
-      <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden flex">
-        {dailyW > 0 && <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${dailyW}%` }} />}
-        {monthlyW > 0 && <div className="h-full bg-violet-500 transition-all duration-500" style={{ width: `${monthlyW}%` }} />}
-        {bonusW > 0 && <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${bonusW}%` }} />}
+      <div className="w-full h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+        <div className={`h-full rounded-full ${activeColor} transition-all duration-500`} style={{ width: `${usedW}%` }} />
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className={`text-[8px] ${dotColor}`}>●</span>
+        <span className="text-[11px] text-white/50">{activeLabel}</span>
       </div>
     </DropdownMenuItem>
   );
