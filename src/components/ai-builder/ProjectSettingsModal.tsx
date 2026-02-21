@@ -54,7 +54,7 @@ export function ProjectSettingsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#0d0d14] border-white/[0.08] text-white max-w-lg p-0 gap-0">
+      <DialogContent className="bg-[#0d0d14] border-white/[0.08] text-white max-w-lg p-0 gap-0" onCloseAutoFocus={() => { document.body.style.pointerEvents = ''; }}>
         <DialogHeader className="px-5 pt-5 pb-3">
           <DialogTitle className="text-sm font-semibold text-white/90">Project Settings</DialogTitle>
         </DialogHeader>
