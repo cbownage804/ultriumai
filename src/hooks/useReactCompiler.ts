@@ -719,8 +719,9 @@ window.ENV = ${JSON.stringify(envObj)};
         presets: ['react', ['typescript', { isTSX: true, allExtensions: true }]],
         filename: 'app.tsx',
       });
-      var fn = new Function(transformed.code);
-      fn();
+      var AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      var fn = new AsyncFunction(transformed.code);
+      await fn();
     } catch(e) {
       console.error('[Babel] Transpilation error:', e.message);
       window.parent.postMessage({
