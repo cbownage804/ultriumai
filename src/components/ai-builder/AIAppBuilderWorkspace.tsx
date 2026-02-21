@@ -1026,8 +1026,8 @@ export function AIAppBuilderWorkspace() {
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') {
         flushDraft();
-        // Update the timestamp AFTER flushing so savedAt >= lastSaveTimestamp
-        lastSaveTimestampRef.current = Date.now();
+        // Do NOT update lastSaveTimestampRef here — the draft's savedAt
+        // must remain > lastSaveTimestampRef so restoration triggers on return.
       } else if (document.visibilityState === 'visible') {
         // ALWAYS try to restore — catches empty state, heap discard, partial corruption
         const current = latestRef.current;
