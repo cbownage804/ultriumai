@@ -62,6 +62,21 @@ function classifyError(status: number, errorMsg: string, err?: Error): Classifie
   };
 }
 
+/** Detect if the user wants to generate an image/logo/icon via AI */
+function detectImageGenerationIntent(input: string): { prompt: string; quality: 'standard' | 'high' } | null {
+  const lowerInput = input.toLowerCase();
+  // Must contain a "generate/create/make" verb AND an image-related noun
+  const hasGenVerb = /\b(generate|create|make|design|draw|produce)\b/.test(lowerInput);
+  const hasImageNoun = /\b(logo|image|icon|illustration|graphic|picture|avatar|banner|mascot|badge|emblem)\b/.test(lowerInput);
+  if (!hasGenVerb || !hasImageNoun) return null;
+
+  // Build a refined prompt for the image generation model
+  const quality = /\b(high.?quality|detailed|premium|professional|hd|4k)\b/.test(lowerInput) ? 'high' as const : 'standard' as const;
+  // Pass the user's original request as the image prompt, cleaned up
+  const prompt = input.replace(/\b(please|can you|could you|i want|i need|for my|for the|website|app|project|page)\b/gi, '').trim();
+  return { prompt, quality };
+}
+
 /** Fast string hash (djb2) for change detection — not cryptographic */
 function hashString(str: string): string {
   let hash = 5381;
@@ -852,6 +867,35 @@ export function useAIAppBuilder() {
     const visualContext = buildVisualIntelligenceContext(!!(imageDataUrls?.length), input);
     if (visualContext) systemParts.push(visualContext);
 
+    // ── Image generation intent detection ──
+    // If the user asks to "generate a logo/image/icon", call the image-generation edge function
+    // and pass the resulting data URL so the AI can embed it in code
+    const imageGenIntent = detectImageGenerationIntent(input);
+    let generatedImageDataUrls = imageDataUrls ? [...imageDataUrls] : [];
+    if (imageGenIntent) {
+      toast.info('Generating image...', { duration: 4000 });
+      setThinkingPhase('analyzing');
+      try {
+        const { data: imgData, error: imgError } = await supabase.functions.invoke('image-generation', {
+          body: { prompt: imageGenIntent.prompt, quality: imageGenIntent.quality },
+        });
+        if (!imgError && imgData?.image) {
+          generatedImageDataUrls = [...generatedImageDataUrls, imgData.image];
+          toast.success('Image generated! Embedding in your project...');
+          // Inject context so the AI knows about the generated image
+          systemParts.push(`[AI-GENERATED IMAGE]\nThe user asked to generate an image. An image has been generated and is attached as a data URL in this message.\nYou MUST use this generated image in the project by embedding the exact data URL in an <img> tag.\nPrompt used: "${imageGenIntent.prompt}"\n\nDo NOT generate a placeholder SVG or icon — use the ACTUAL generated image data URL provided.`);
+        } else {
+          console.warn('Image generation failed:', imgError);
+          toast.warning('Image generation failed — AI will use a placeholder instead.');
+        }
+      } catch (imgErr) {
+        console.warn('Image generation error:', imgErr);
+        toast.warning('Could not generate image — AI will use a placeholder instead.');
+      }
+    }
+    // Replace imageDataUrls with potentially augmented version
+    const effectiveImageDataUrls = generatedImageDataUrls.length > 0 ? generatedImageDataUrls : imageDataUrls;
+
     // Phase 86: Inject schema context if Supabase is connected and types.ts exists
     if (supabaseConfig && currentFiles.some(f => f.path === 'types.ts' || f.path === 'src/types.ts')) {
       const typesFile = currentFiles.find(f => f.path.endsWith('types.ts'));
@@ -906,9 +950,9 @@ export function useAIAppBuilder() {
       }
 
       // If images are also attached, add explicit priority instructions WITH the actual data URLs
-      if (imageDataUrls?.length) {
-        const logoUrls = imageDataUrls.map((url, i) => `IMAGE_${i + 1}_DATA_URL: ${url}`).join('\n');
-        apiMessages.push({ role: 'system', content: `[ASSET PRIORITY — CRITICAL]\nThe user has uploaded ${imageDataUrls.length} image(s) to use as the logo/branding.\n\nYou MUST embed the uploaded image in the navbar and footer using the exact data URL below.\nDo NOT use a text placeholder like "Glenn's Body Shop Logo" — use an <img> tag with this src:\n\n${logoUrls}\n\nExample usage:\n<img src="${imageDataUrls[0]}" alt="Logo" style="height:48px;" />\n\nUse the SCRAPED CONTENT for the site's text and data. The uploaded image is ONLY for the logo.` });
+      if (effectiveImageDataUrls?.length) {
+        const logoUrls = effectiveImageDataUrls.map((url, i) => `IMAGE_${i + 1}_DATA_URL: ${url}`).join('\n');
+        apiMessages.push({ role: 'system', content: `[ASSET PRIORITY — CRITICAL]\nThe user has uploaded ${effectiveImageDataUrls.length} image(s) to use as the logo/branding.\n\nYou MUST embed the uploaded image in the navbar and footer using the exact data URL below.\nDo NOT use a text placeholder like "Glenn's Body Shop Logo" — use an <img> tag with this src:\n\n${logoUrls}\n\nExample usage:\n<img src="${effectiveImageDataUrls[0]}" alt="Logo" style="height:48px;" />\n\nUse the SCRAPED CONTENT for the site's text and data. The uploaded image is ONLY for the logo.` });
       }
     }
 
@@ -1081,14 +1125,14 @@ export function useAIAppBuilder() {
       return `${manifest}${structureNote}${unchangedNote}\n\nFILE CONTENTS (with line numbers for ===EDIT: patches):\n${fileContext}${omittedNote}\n\nIMPORTANT: For small changes, use ===EDIT: path=== with @@ lineStart-endLine @@ hunks instead of rewriting entire files. Use ===FILE: path=== only for new files or major rewrites. To delete a file, use ===DELETE: path===. Do NOT re-output unchanged files.\n\nAFTER all code blocks, write a brief 1-2 sentence conversational summary of what you changed and why — be friendly and helpful like a coding assistant.\n\nUser request: ${userInput}`;
     };
 
-    if (imageDataUrls?.length) {
+    if (effectiveImageDataUrls?.length) {
       // Separate SVG data URLs from raster images.
       // Vision models can't process SVG data URLs — decode them to raw SVG
       // source and inject as a text block so the AI can embed it directly.
       const rasterUrls: string[] = [];
       const svgTextBlocks: string[] = [];
 
-      for (const url of imageDataUrls) {
+      for (const url of effectiveImageDataUrls) {
         if (url.startsWith('data:image/svg+xml')) {
           try {
             // Decode the SVG from the data URL (base64 or URI-encoded)
@@ -1129,7 +1173,8 @@ export function useAIAppBuilder() {
       // Vision models can "see" the image but cannot extract the data URL string from the image_url block.
       // BUT: cap data URL size to prevent token overflow (max ~50KB per image = ~67K chars base64)
       const MAX_DATA_URL_SIZE = 50000;
-      const isLogoIntent = /\b(logo|icon|favicon|brand|nav\s*bar|header|footer)\b/i.test(input)
+      const isLogoIntent = !!imageGenIntent
+        || /\b(logo|icon|favicon|brand|nav\s*bar|header|footer)\b/i.test(input)
         || /\b(use\s*(this|it|that|the\s*attach))/i.test(input);
       if (rasterUrls.length > 0 && isLogoIntent) {
         const dataUrlRef = rasterUrls.map((url, i) => {
