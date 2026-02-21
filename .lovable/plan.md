@@ -1,109 +1,133 @@
 
 
-## Fix: Tab-Switch State Loss + False "Code Quality" Error Toast
+## Fix: Tab-Switch State Loss (Round 2)
 
-### Problem 1: Project resets when switching tabs
+### Root Cause
 
-When you leave the tab and come back, the project loses all state and shows the empty "What do you want to build?" screen.
+The previous fix added synchronous localStorage save + restore, which is the right approach. However, it still fails for real projects because:
 
-**Root cause:** The `visibilitychange` handler calls `saveToIDBImmediate`, which is an async function (returns a Promise). The browser can freeze or discard the tab before the IndexedDB writes complete. Meanwhile, `saveDraftImmediate` (localStorage) IS synchronous and works — but the draft restore on mount has a subtle race condition.
+1. **localStorage quota overflow**: The `writeDraft` function serializes the entire project (files + messages) into a single JSON string. A real generated site with 4 files of HTML/CSS/JS plus AI chat messages easily exceeds localStorage's ~5MB limit. The `catch {}` block silently swallows the `QuotaExceededError`, so the save never actually persists -- but the code thinks it did.
 
-The restore logic (line 1058-1094) runs inside an `async` IIFE, but `isNewProject` is read from `searchParams.get('new')` at line 1057 — which was already stripped at line 1026-1031. So `isNewProject` is always `false` on mount. The real issue is that `checkRecovery()` opens IndexedDB, reads 3 stores, and returns the result — but by the time it resolves, the component may have already rendered with empty state and skipped the restore.
+2. **Messages bloat**: The `messages` array contains full AI responses with embedded code blocks, which are the largest contributor to storage size.
 
-**Fix:** Make the localStorage draft restore synchronous and immediate (no async IIFE needed for it), and keep IDB as a backup. Also, ensure the `flushDraft` in the visibility handler uses synchronous localStorage as the primary persistence — since it's guaranteed to complete before the tab freezes.
+### Solution
 
-### Problem 2: False "Code quality issues detected" toast
+**A. Make localStorage save resilient to quota limits** (`useDraftPersistence.ts`)
 
-The bracket-counting regex at line 175-176 of `useAIAppBuilder.ts` is broken:
+- Add a tiered save strategy inside `writeDraft`:
+  1. Try saving everything (files + messages)
+  2. If that throws (quota exceeded), retry with messages trimmed to just metadata (role, timestamp) -- strip the large `content` field
+  3. If that still fails, retry with files only (no messages at all)
+  4. If even that fails, silently give up (truly out of space)
+- This ensures the most important data (the generated files) survives even when localStorage is tight.
 
-```text
-Line 175: /[{([\]]/g   -- Intended: match { ( [
-Line 176: /[})\]]/g   -- Intended: match } ) ]
-```
+**B. Add a console warning on save failure** (`useDraftPersistence.ts`)
 
-The character class `[{([\]]` actually matches `{`, `(`, and `]` (the `[` is treated as part of the class definition, not a literal bracket). So open-bracket `[` is never counted but close-bracket `]` IS counted, causing a mismatch on virtually every JSX file.
+- Instead of completely silent failure, log a `console.warn` so developers can diagnose issues. Still no user-facing error since it's a background save.
 
-**Fix:** Escape the square brackets properly: `/[{(\[]/g` and `/[})\]]/g`.
+**C. Harden the restore effect** (`AIAppBuilderWorkspace.tsx`)
 
----
+- Use a `mounted` ref guard to prevent the IDB async callback from applying state after the component unmounts or after localStorage already restored successfully.
+- Add a `hasRestoredRef` to prevent double-restoration if both localStorage and IDB succeed.
 
 ### Changes
 
-**File 1: `src/hooks/useIndexedDBPersistence.ts`**
+**File 1: `src/hooks/useDraftPersistence.ts`**
 
-Make `saveToIDBImmediate` more resilient by not awaiting each write sequentially. The current implementation already uses `Promise.all` which is good, but the function needs a synchronous fallback signal. However, the real fix is in the workspace.
-
-**File 2: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`** (visibility handler, ~line 1004-1023)
-
-Ensure `flushDraft` prioritizes synchronous localStorage, and add a try-catch around the async IDB save so it doesn't block:
+Update `writeDraft` with tiered fallback:
 
 ```typescript
-const flushDraft = () => {
-  // Synchronous localStorage save — guaranteed to complete before tab freeze
-  saveDraftImmediate(latestRef.current.name, latestRef.current.files, latestRef.current.messages);
-  // Best-effort async IDB save — may not complete if tab is discarded
-  try {
-    saveToIDBImmediateRef.current(sessionId, latestRef.current.name, latestRef.current.files, latestRef.current.messages);
-  } catch { /* ignore */ }
-};
+const writeDraft = useCallback((name: string, files: ProjectFile[], messages: any[]) => {
+  const trySet = (data: DraftData): boolean => {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const baseDraft: DraftData = {
+    name,
+    files: files.map(f => ({ path: f.path, content: f.content, language: f.language })),
+    messages,
+    savedAt: new Date().toISOString(),
+  };
+
+  // Tier 1: Full save (files + messages)
+  if (trySet(baseDraft)) return;
+
+  // Tier 2: Files + slim messages (strip large content)
+  console.warn('[Draft] localStorage quota exceeded, saving without message content');
+  const slimMessages = messages.map((m: any) => ({
+    role: m.role, timestamp: m.timestamp,
+    content: typeof m.content === 'string' ? m.content.slice(0, 200) : '',
+  }));
+  if (trySet({ ...baseDraft, messages: slimMessages })) return;
+
+  // Tier 3: Files only (no messages)
+  console.warn('[Draft] localStorage still full, saving files only');
+  if (trySet({ ...baseDraft, messages: [] })) return;
+
+  // Tier 4: Give up
+  console.warn('[Draft] localStorage completely full, draft not saved');
+}, []);
 ```
 
-Also fix the draft restore (line 1058-1094) to try localStorage synchronously first, then enhance with IDB data if available:
+**File 2: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+
+Add a `hasRestoredRef` guard to the restore effect to prevent race conditions:
 
 ```typescript
+const hasRestoredRef = useRef(false);
+
 useEffect(() => {
   if (initialProjectId || isNewProject) return;
   if (project.files.length > 0 || messages.length > 0) return;
+  if (hasRestoredRef.current) return;
 
-  // SYNC FIRST: Try localStorage immediately (no async delay)
+  // SYNC FIRST: Try localStorage immediately
   const lsDraft = loadDraft();
   if (lsDraft && (lsDraft.files.length > 0 || lsDraft.messages.length > 0)) {
+    hasRestoredRef.current = true;
     setFiles(lsDraft.files);
     renameProject(lsDraft.name);
     if (lsDraft.messages.length > 0) {
-      setMessages(lsDraft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+      setMessages(lsDraft.messages.map((m: any) => ({
+        ...m, timestamp: new Date(m.timestamp)
+      })));
     }
   }
 
-  // ASYNC SECOND: Check IDB for potentially more complete data
+  // ASYNC SECOND: Check IDB for more complete data
+  let cancelled = false;
   (async () => {
     try {
       const idbSession = await idbPersistence.checkRecovery();
-      if (!idbSession) return;
+      if (cancelled || !idbSession) return;
       const idbTotal = (idbSession.files?.length || 0) + (idbSession.messages?.length || 0);
       const lsTotal = (lsDraft?.files?.length || 0) + (lsDraft?.messages?.length || 0);
       if (idbTotal > lsTotal) {
+        hasRestoredRef.current = true;
         setFiles(idbSession.files);
         renameProject(idbSession.name);
         if (idbSession.messages.length > 0) {
-          setMessages(idbSession.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+          setMessages(idbSession.messages.map((m: any) => ({
+            ...m, timestamp: new Date(m.timestamp)
+          })));
         }
       }
     } catch { /* IDB unavailable */ }
   })();
+
+  return () => { cancelled = true; };
 }, []);
 ```
 
-**File 3: `src/hooks/useAIAppBuilder.ts`** (line 175-176)
-
-Fix the bracket-counting regex:
-
-```typescript
-// Before (broken):
-const opens = (f.content.match(/[{([\]]/g) || []).length;
-const closes = (f.content.match(/[})\]]/g) || []).length;
-
-// After (fixed):
-const opens = (f.content.match(/[{(\[]/g) || []).length;
-const closes = (f.content.match(/[})\]]/g) || []).length;
-```
-
----
-
 ### Summary
 
-| Issue | Root Cause | Fix |
-|-------|-----------|-----|
-| Project resets on tab switch | IDB writes are async and don't complete before tab freeze; restore only tries async path | Restore from localStorage synchronously first, then upgrade from IDB |
-| False "code quality" toast | Bracket regex counts `]` as open and misses `[` | Fix regex escaping |
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| State lost on tab switch | localStorage save silently fails due to 5MB quota | Tiered save: full -> slim messages -> files only |
+| Potential double-restore race | IDB async callback applies after LS already restored | `hasRestoredRef` guard + cancellation token |
 
