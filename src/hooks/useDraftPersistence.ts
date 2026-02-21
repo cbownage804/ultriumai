@@ -78,8 +78,12 @@ export function useDraftPersistence() {
 
   /** Save immediately — use on visibilitychange / beforeunload / unmount */
   const saveDraftImmediate = useCallback((name: string, files: ProjectFile[], messages: any[]) => {
-    if (files.length === 0 && messages.length === 0) return;
+    if (files.length === 0 && messages.length === 0) {
+      console.info('[Draft] Skipping immediate save — no files or messages');
+      return;
+    }
     if (timer.current) clearTimeout(timer.current);
+    console.info('[Draft] Immediate save: %d files, %d msgs, name=%s', files.length, messages.length, name);
     writeDraft(name, files, messages);
   }, [writeDraft]);
 
