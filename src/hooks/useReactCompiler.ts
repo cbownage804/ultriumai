@@ -270,15 +270,16 @@ export function useReactCompiler() {
             if (hasNoDefault) {
               parts.push(`var ${defaultImport} = window.${importVar} || {};`);
             } else {
-              // Phase 100: Proxy fallback for default imports (e.g., framer-motion's `motion`)
-              parts.push(`var ${defaultImport} = (window.${importVar} || {}).default || new Proxy(window.${importVar} || {}, { get: function(_, p) { if (typeof p === 'symbol') return function() { return ''; }; return (window.${importVar} || {})[p] || function(props) { return React.createElement(typeof p === 'string' && /^[a-z]/.test(p) ? p : 'div', props); }; } });`);
+              // Proxy fallback for default imports (e.g., framer-motion's `motion`)
+              // Returns a component that renders the native HTML element (motion.div → div)
+              parts.push(`var ${defaultImport} = (window.${importVar} || {}).default || new Proxy({}, { get: function(_, p) { if (typeof p === 'symbol') return function() { return ''; }; var pkg = window.${importVar} || {}; if (pkg[p] != null) return pkg[p]; return React.forwardRef(function(props, ref) { var safe = {}; var html = typeof p === 'string' && /^[a-z]/.test(p) ? p : 'div'; Object.keys(props || {}).forEach(function(k) { if (k === 'children' || k === 'className' || k === 'style' || k === 'id' || k === 'ref' || k === 'key' || k === 'onClick' || k === 'onChange' || k === 'onSubmit' || k === 'href' || k === 'src' || k === 'alt' || k === 'type' || k === 'value' || k === 'placeholder' || k === 'disabled' || k === 'role' || /^aria-/.test(k) || /^data-/.test(k)) safe[k] = props[k]; }); safe.ref = ref; return React.createElement(html, safe); }); } });`);
             }
           }
           if (namedImports) {
             const names = namedImports.split(',').map((n: string) => n.trim().split(/\s+as\s+/));
             const destructure = names.map(([orig, alias]: string[]) => alias ? `${orig.trim()}: ${alias.trim()}` : orig.trim()).join(', ');
-            // Phase 100: Proxy fallback — undefined components render as <span> instead of crashing React
-            parts.push(`var { ${destructure} } = new Proxy(window.${importVar} || {}, { get: function(t, p) { if (typeof p === 'symbol' || p === 'toString' || p === 'valueOf') return function() { return ''; }; return t[p] != null ? t[p] : function(props) { return React.createElement('span', props); }; } });`);
+            // Proxy fallback — undefined components render as safe <span> filtering non-HTML props
+            parts.push(`var { ${destructure} } = new Proxy(window.${importVar} || {}, { get: function(t, p) { if (typeof p === 'symbol' || p === 'toString' || p === 'valueOf' || p === 'toJSON' || p === '$$typeof') return t[p] || function() { return ''; }; if (t[p] != null) return t[p]; return function(props) { var safe = {}; Object.keys(props || {}).forEach(function(k) { if (k === 'children' || k === 'className' || k === 'style' || k === 'id' || k === 'onClick' || k === 'role' || /^aria-/.test(k) || /^data-/.test(k)) safe[k] = props[k]; }); return React.createElement('span', safe); }; } });`);
           }
           return parts.length > 0 ? parts.join('\n') : `// [external] ${specifier}`;
         }

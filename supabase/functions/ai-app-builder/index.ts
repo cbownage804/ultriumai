@@ -25,7 +25,14 @@ CRUD: Every item needs Create/Read/Update/Delete. Delete: .filter() not splice()
 
 FIX MODE: 🔍 Diagnosis block (symptom/root cause/files/fix). Attempt 2: rewrite function. Attempt 3+: rewrite file.
 
-REACT: .tsx, functional components+hooks, App.tsx entry, Tailwind. Packages: lucide-react, framer-motion, recharts, date-fns, clsx, tailwind-merge, cva, cmdk, react-hot-toast, @radix-ui/react-slot, uuid, lodash-es, zod, zustand
+REACT: .tsx, functional components+hooks, App.tsx entry, Tailwind.
+ICONS: Do NOT import from 'lucide-react'. Instead, create inline SVG icons as React components:
+  const ChevronIcon = (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m9 18 6-6-6-6"/></svg>;
+ANIMATIONS: Do NOT import 'framer-motion'. Use CSS transitions and @keyframes instead:
+  className="transition-all duration-300 hover:scale-105"
+  For complex animations, use CSS @keyframes in a <style> block.
+PACKAGES YOU MAY USE (these are pre-loaded): recharts, date-fns, clsx, tailwind-merge, class-variance-authority, zustand, zod, uuid, react-router-dom
+PACKAGES TO AVOID (cause CDN loading failures): lucide-react, framer-motion, @radix-ui/*, cmdk, react-hot-toast, @heroicons/*, react-icons. Use native HTML/CSS alternatives instead.
 
 IMPORTS: Always use ESM (import/export). Always destructure React hooks: import { useState, useEffect } from 'react'. Never use require(). Never mix import and require in the same project.
 
