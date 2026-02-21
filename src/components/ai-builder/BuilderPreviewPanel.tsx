@@ -45,9 +45,11 @@ interface BuilderPreviewPanelProps {
   onUrlChange?: (url: string) => void;
   /** When true, health checks are paused (iframe expected blank during compilation) */
   isCompiling?: boolean;
+  /** Forces iframe remount (e.g. on tab return) without triggering recompilation */
+  refreshKey?: number;
 }
 
-export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
@@ -467,7 +469,7 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
             >
               <iframe
                 ref={iframeRef}
-                key={iframeKey}
+                key={`${iframeKey}-${refreshKey ?? 0}`}
                 srcDoc={htmlWithErrorCapture || ''}
                 className="w-full h-full border-0 bg-white rounded-[inherit] origin-top-left"
                 sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
