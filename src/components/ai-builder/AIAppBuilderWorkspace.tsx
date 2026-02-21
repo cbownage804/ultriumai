@@ -1060,7 +1060,13 @@ export function AIAppBuilderWorkspace() {
     (async () => {
       const idbSession = await idbPersistence.checkRecovery();
       if (idbSession && (idbSession.files.length > 0 || idbSession.messages.length > 0)) {
-        setShowRecoveryDialog(true);
+        // Auto-restore without asking -- user should never lose work
+        setFiles(idbSession.files);
+        renameProject(idbSession.name);
+        if (idbSession.messages.length > 0) {
+          setMessages(idbSession.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+        }
+        dedupeToast('success', 'Session auto-restored');
         return;
       }
       // Fall back to localStorage draft
