@@ -1,86 +1,126 @@
 
+## Comprehensive Fix: Toast Spam, Preview Freeze, and Main Thread Blocking
 
-## Multi-Phase Fix: Page Freezing During and After Generation
+### Root Cause Analysis
 
-### Problem
+The "page not responding" crash has **multiple compounding causes**:
 
-The page freezes because of several compounding issues beyond just toast spam (which was already fixed). The main thread gets blocked by:
+1. **Synchronous compilation blocks the main thread for 3-10+ seconds** -- `compileReactProject()` in `useReactCompiler.ts` transpiles ALL files in a tight synchronous loop (line 464). For even 4-5 files with Babel transformation, this locks the browser.
 
-1. **Synchronous compilation on the main thread** -- `compileReactProject()` is a heavy synchronous operation that processes all files (transpiling, sorting, bundling) in a single call, blocking the UI for seconds on larger projects
-2. **Health check triggers iframe reload loop during compilation** -- The 2s health check detects the iframe as "blank" during the compilation phase (before HTML is ready) and forces `setIframeKey(k+1)`, which re-mounts the iframe, which can trigger further error cascades
-3. **Auto-fix fires too soon after compilation** -- The 3-second post-generation cooldown doesn't account for compilation time (which can take 5-10s). Errors from a still-loading preview trigger the auto-fix pipeline, which sends AI requests, which trigger re-generation, which triggers re-compilation -- a freeze loop
-4. **Double compilation** -- `compiledForHosting` runs a second full compilation 500ms after the first one finishes, doubling the main-thread blocking time
+2. **Post-generation work avalanche** -- When generation ends (line 768), the workspace runs synchronously:
+   - `smokeTest.runSmokeTest(latestFiles)` -- synchronous
+   - `conflictDetection.detectConflicts(latestFiles)` -- synchronous
+   - `errorAnnotations.updateAnnotations(...)` -- synchronous
+   - Then `setTimeout(100ms)` fires MORE synchronous work: TS validation, Lighthouse audit, bundle analysis, auto-patching, companion file generation
+   - All of this cascades before the preview even renders
 
-### Phase 1: Pause Health Check During Compilation
-**File: `src/components/ai-builder/BuilderPreviewPanel.tsx`**
+3. **`bundleForBrowser` runs full AST bundler synchronously** -- called from CompilationBridge, it runs `incrementalCompiler.compileIncremental` + `astBundler.buildDependencyGraph` for every file
 
-Add an `isCompiling` prop and skip health checks while it's true. The iframe is expected to be blank/loading during compilation -- detecting it as "crashed" is a false positive.
+4. **`handlePublish` calls `getCompiledHTML` synchronously on click** (line 1621) -- this is a FULL compilation that blocks the main thread
 
-- Add `isCompiling?: boolean` to props
-- In the health check interval, early-return if `isCompiling` is true
-- Reset `consecutiveFailsRef` to 0 when compilation starts
+5. **`setFiles()` triggers cascading re-renders** -- When files are set after generation, it triggers `filesDigest` change in CompilationBridge, which starts compilation, which sets `isCompiling`, which triggers more re-renders across 3 BuilderPreviewPanel instances + GeneratingOverlay
 
-### Phase 2: Extend Auto-Fix Cooldown to Include Compilation
+6. **Multiple `setFiles()` calls in sequence** (lines 708, 828) -- The batched file merge at line 828 triggers a SECOND compilation cycle 100ms after the first one starts
+
+7. **127 toast calls** remain in AIAppBuilderWorkspace.tsx -- only 3 use `dedupeToast`, the other 124 fire direct `toast.success/error/info` calls that can still stack during rapid operations
+
+---
+
+### Fix Plan (8 Phases)
+
+#### Phase 1: Kill all remaining direct toast calls in high-frequency paths
 **File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-The current 3s cooldown only tracks generation end, not compilation end. Extend it:
+Replace ALL remaining `toast.success/error/info` calls with `dedupeToast` across the entire file. This is the single biggest contributor to DOM buildup -- 124 unprotected toast calls.
 
-- Update the `compilationEndedAt` ref (currently declared but never written to) when `isCompiling` transitions from true to false
-- In `handleAutoFixError`, add a check: skip if `Date.now() - compilationEndedAt.current < 5000` (5s after compilation ends)
-- This prevents transient iframe errors from triggering AI fix requests during the compilation settling window
-
-### Phase 3: Defer Hosting Compilation Further
-**File: `src/components/ai-builder/CompilationBridge.tsx`**
-
-The hosting compilation currently fires 500ms after preview compilation. Increase to 2000ms and wrap in `requestIdleCallback` (with setTimeout fallback) to avoid blocking the main thread while the user is interacting with the preview.
-
-- Change the 500ms timer to 2000ms
-- Wrap the compilation call in `requestIdleCallback` (or `setTimeout` as fallback for Safari)
-
-### Phase 4: Chunk the Transpilation Loop
-**File: `src/hooks/useReactCompiler.ts`**
-
-The `compileReactProject` function transpiles all files in a tight synchronous loop. For projects with 10+ files, this can freeze the main thread for several seconds. Break it into yielding chunks:
-
-- This is the riskiest change -- the compilation is currently synchronous and returns a result directly
-- Instead of making it fully async (which would require refactoring all callers), add a microtask yield every 5 files using a technique that keeps the function synchronous from the caller's perspective but gives the browser a chance to paint
-- Actually, since CompilationBridge already uses `setTimeout(fn, 50)`, the better approach is to split the `for` loop in CompilationBridge into batches with `setTimeout` between them -- but this requires making it async
-- **Simpler approach**: Just ensure the existing `requestAnimationFrame + setTimeout(50)` pattern in CompilationBridge is working correctly (it already defers), and increase the setTimeout to 100ms to give the browser more breathing room
-
-### Phase 5: Pass `isCompiling` to BuilderPreviewPanel
+#### Phase 2: Defer ALL post-generation work
 **File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-Wire the `isCompiling` state through to `BuilderPreviewPanel` so the health check can be paused:
+Move the synchronous smoke test, conflict detection, and error annotations into the existing `setTimeout(100)` deferred block (or increase to `setTimeout(500)` and use `requestIdleCallback`). Currently lines 783-792 run synchronously BEFORE the setTimeout block.
 
-- Add `isCompiling={isCompiling}` prop to all 3 instances of `<BuilderPreviewPanel>` in the JSX
+Change:
+```typescript
+// BEFORE (synchronous, blocks main thread)
+const smokeResult = smokeTest.runSmokeTest(latestFiles);
+const conflictWarnings = conflictDetection.detectConflicts(latestFiles);
+errorAnnotations.updateAnnotations(...);
 
-### Technical Details
-
-```text
-Freeze Loop (Before)
-Generation ends
-  --> Compilation starts (blocks main thread 3-8s)
-  --> Health check fires (iframe blank during compilation)
-  --> setIframeKey++ (iframe remounts)
-  --> Errors from half-loaded iframe
-  --> Auto-fix fires (3s cooldown already passed since gen ended)
-  --> New generation starts
-  --> Repeat
-
-Freeze Loop (After)
-Generation ends
-  --> Compilation starts
-  --> Health check PAUSED (isCompiling=true)
-  --> Compilation ends
-  --> 5s auto-fix cooldown starts
-  --> Health check resumes (iframe now has content)
-  --> Hosting compilation deferred 2s + requestIdleCallback
-  --> No false-positive crashes, no premature auto-fix
+// AFTER (all deferred)
+requestIdleCallback(() => {
+  const smokeResult = smokeTest.runSmokeTest(latestFiles);
+  // ... rest
+}, { timeout: 3000 });
 ```
 
-### Files to Edit
-1. `src/components/ai-builder/BuilderPreviewPanel.tsx` -- add `isCompiling` prop, pause health check during compilation
-2. `src/components/ai-builder/AIAppBuilderWorkspace.tsx` -- pass `isCompiling` prop, track `compilationEndedAt`, extend auto-fix cooldown
-3. `src/components/ai-builder/CompilationBridge.tsx` -- increase hosting compilation delay to 2s, use `requestIdleCallback`
-4. `src/hooks/useReactCompiler.ts` -- increase setTimeout breathing room from 50ms to 100ms (minor)
+#### Phase 3: Prevent double setFiles triggering double compilation
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
+The `setTimeout(100)` block at line 810-829 calls `setFiles()` again with patched files, which triggers a SECOND full compilation cycle. Instead, batch these patches into the FIRST `setFiles()` call, or gate the second one behind `requestIdleCallback` with a longer delay (2s+).
+
+#### Phase 4: Make `handlePublish` async-safe
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+
+`handlePublish` (line 1620) calls `getCompiledHTML()` synchronously. Instead, reuse the already-compiled `compiledForHosting` state (which is already available). The code already does this for `handleSave` (line 1538) but not for publish.
+
+Change:
+```typescript
+// BEFORE
+const compiledHTML = getCompiledHTML(supabaseConfig, stripeConfig, ...);
+
+// AFTER
+const compiledHTML = compiledForHosting || stableHTMLRef.current;
+```
+
+#### Phase 5: Add compilation debounce to CompilationBridge
+**File: `src/components/ai-builder/CompilationBridge.tsx`**
+
+When `filesDigest` changes rapidly (e.g., from multiple `setFiles` calls), the current `compilationLockRef` prevents re-entry but doesn't debounce. Add a 500ms debounce before starting compilation so rapid file changes consolidate into one compilation.
+
+#### Phase 6: Reduce GeneratingOverlay polling during compilation
+**File: `src/components/ai-builder/GeneratingOverlay.tsx`**
+
+The overlay polls `partialFilesRef` every 2 seconds even during the `isCompiling` phase (after generation ends). During compilation, there are no new files to show, so skip polling when `isCompiling && !isGenerating`.
+
+#### Phase 7: Reduce StreamingCodeEditor polling frequency
+**File: `src/components/ai-builder/StreamingCodeEditor.tsx`**
+
+The editor polls at 3000ms intervals. This is reasonable, but each poll triggers `setEditorStreamFiles` which can cascade re-renders. Add a deep equality check (file count + last file path) before calling setState.
+
+#### Phase 8: Cap health check restarts
+**File: `src/components/ai-builder/BuilderPreviewPanel.tsx`**
+
+The health check `setIframeKey(k => k + 1)` at line 235 forces a full iframe reload. Each reload triggers a new `srcdoc` write, which can trigger new errors, which can trigger more health check failures. Add a max reload count (e.g., 2 reloads per compilation cycle) to prevent infinite reload loops.
+
+---
+
+### Files to Edit
+
+1. **`src/components/ai-builder/AIAppBuilderWorkspace.tsx`** -- Phases 1-4 (toast dedup, defer post-gen work, prevent double setFiles, async publish)
+2. **`src/components/ai-builder/CompilationBridge.tsx`** -- Phase 5 (compilation debounce)
+3. **`src/components/ai-builder/GeneratingOverlay.tsx`** -- Phase 6 (skip polling during compilation)
+4. **`src/components/ai-builder/StreamingCodeEditor.tsx`** -- Phase 7 (smarter setState check)
+5. **`src/components/ai-builder/BuilderPreviewPanel.tsx`** -- Phase 8 (cap iframe reloads)
+
+### Expected Impact
+
+```text
+Before:
+  Generation ends
+    --> setFiles (triggers filesDigest change)
+    --> smokeTest + conflictDetection + errorAnnotations (SYNC, blocks ~200ms)
+    --> setTimeout(100ms): TS validation + Lighthouse + auto-patch (blocks ~500ms)
+    --> auto-patch calls setFiles AGAIN (triggers 2nd compilation)
+    --> CompilationBridge starts compilation (blocks 3-8s)
+    --> Health check detects blank iframe --> setIframeKey++ (reload loop)
+    --> 124 unprotected toasts fire from various callbacks
+    --> Browser: "This page isn't responding"
+
+After:
+  Generation ends
+    --> setFiles (single batch including patches)
+    --> ALL post-gen work deferred via requestIdleCallback
+    --> CompilationBridge debounces 500ms, compiles ONCE
+    --> Health check paused during compilation, max 2 reloads
+    --> All toasts deduplicated (5s window)
+    --> Browser stays responsive
+```
