@@ -1752,6 +1752,7 @@ export function AIAppBuilderWorkspace() {
           clearPreviewTimer={clearPreviewTimer}
           onStableHTML={handleStableHTML}
           onCompiledForHosting={handleCompiledForHosting}
+          onCompilingChange={setIsCompiling}
         />
       </PanelErrorBoundary>
       <WelcomeOverlay onQuickStart={(prompt) => handleSend(prompt)} />
